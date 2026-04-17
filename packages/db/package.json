@@ -1,0 +1,27 @@
+{
+  "name": "@forma360/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
+    },
+    "./schema": {
+      "types": "./src/schema/index.ts",
+      "default": "./src/schema/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "db:generate": "echo 'drizzle-kit generate — wired in PR 3'",
+    "db:migrate": "echo 'drizzle-kit migrate — wired in PR 3'",
+    "db:studio": "echo 'drizzle-kit studio — wired in PR 3'"
+  }
+}

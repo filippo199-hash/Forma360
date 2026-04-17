@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+playwright-report/
+*.md
+pnpm-lock.yaml
+
+# Spec documents — preserve original formatting.
+docs/*.html
