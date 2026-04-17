@@ -25,7 +25,7 @@
 
 | Concern | Choice | Why |
 |---|---|---|
-| Frontend web | Next.js 15 (App Router) + React 19 | Best-in-class SSR, Claude Code writes it fluently |
+| Frontend web | Next.js 16 (App Router) + React 19 | Best-in-class SSR, Claude Code writes it fluently. Locked to 16 per ADR 0005. |
 | Frontend mobile | Expo (React Native) — Phase 6 | Needed for real offline, camera, QR, GPS, push |
 | API | tRPC | End-to-end types, zero API duplication, great DX |
 | DB | Postgres 16 | Battle-tested, `pg_trgm` + tsvector for search |
@@ -54,7 +54,7 @@ forma360/
 │   ├── edge-cases.html         ← Tests + edge cases (source of truth)
 │   └── adr/                    ← Architecture decision records
 ├── apps/
-│   ├── web/                    ← Next.js 15 app (admin + responsive field UI)
+│   ├── web/                    ← Next.js 16 app (admin + responsive field UI)
 │   └── mobile/                 ← Expo app (Phase 6)
 ├── packages/
 │   ├── api/                    ← tRPC routers, one folder per module
@@ -74,9 +74,14 @@ forma360/
 │   │   └── migrations/
 │   ├── auth/                   ← better-auth config, session helpers
 │   ├── i18n/                   ← next-intl config, locale JSON files
-│   │   └── messages/
-│   │       ├── en.json
-│   │       ├── es.json
+│   │   ├── messages/           ← UI strings (one file per locale)
+│   │   │   ├── en.json
+│   │   │   ├── es.json
+│   │   │   └── ...
+│   │   └── emails/             ← email templates (subject/preheader/body)
+│   │       ├── en/
+│   │       │   ├── verification.json
+│   │       │   └── password-reset.json
 │   │       └── ...
 │   ├── ui/                     ← shadcn components shared across apps
 │   ├── jobs/                   ← BullMQ worker processes
@@ -101,8 +106,8 @@ forma360/
 Single project, six services, all communicating over private networking:
 
 1. **web** — Next.js app (public domain)
-2. **worker** — BullMQ worker process (no public domain)
-3. **cron** — Scheduled jobs runner (no public domain)
+2. **worker** — BullMQ worker process (no public domain). Runs all scheduled jobs as BullMQ repeatable jobs, including the nightly `pg_dump` → R2 backup.
+3. **cron** — Reserved Railway service, defined but empty in Phase 0. Reserved for future long-running scheduled work that doesn't fit inside the worker process (e.g. backfills). See ADR 0006.
 4. **postgres** — Primary DB (private only + Railway backups + nightly `pg_dump` → R2)
 5. **redis** — Queue + cache (private only)
 6. **r2** (external) — Object storage for photos/videos/PDFs/signatures
@@ -125,7 +130,7 @@ Ten phases. Each phase is a coherent deliverable, has a clear exit criterion, an
 
 **Deliverables:**
 - Monorepo initialised (pnpm + Turborepo)
-- Next.js 15 app deployed to Railway with custom domain
+- Next.js 16 app deployed to Railway with custom domain
 - Postgres + Redis provisioned, private networking verified
 - Drizzle configured with first migration (empty `tenants` table)
 - tRPC wired end-to-end (one `ping` procedure)
