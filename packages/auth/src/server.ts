@@ -117,6 +117,19 @@ export function createAuth(deps: AuthDeps) {
       },
     },
 
+    // Declare the Forma360 extension to the user table so the inferred
+    // session type exposes `session.user.tenantId` without a manual cast.
+    // Matches the column added in packages/db/src/schema/auth.ts.
+    user: {
+      additionalFields: {
+        tenantId: {
+          type: 'string',
+          required: true,
+          input: false, // never writable from the client via auth endpoints
+        },
+      },
+    },
+
     plugins: [twoFactor()],
   });
 }
