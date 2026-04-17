@@ -1,31 +1,26 @@
 import { setRequestLocale } from 'next-intl/server';
-import { getTranslations } from 'next-intl/server';
+import { headers } from 'next/headers';
+import { SignInCard } from '../../src/components/home/sign-in-card';
+import { WelcomeCard } from '../../src/components/home/welcome-card';
+import { auth } from '../../src/server/auth';
 
 /**
- * Locale-scoped landing page. Renders translated auth CTAs via next-intl
- * so the i18n lint rule has something real to validate against.
+ * Home page. Renders the sign-in form when the request has no session,
+ * otherwise the welcome card that pulls session fields from health.me.
  *
- * Actual sign-in / sign-up forms land in PR 9 with shadcn/ui.
+ * The session lookup happens server-side so the initial HTML contains the
+ * right card — no post-hydration flash for the most common path.
  */
 export default async function LocaleHome({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations();
+
+  const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
+  const isSignedIn = session !== null;
 
   return (
-    <main
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        fontFamily: 'system-ui, sans-serif',
-      }}
-    >
-      <div>
-        <h1>{t('auth.signIn.title')}</h1>
-        <p>{t('common.loading')}</p>
-      </div>
-    </main>
+    <section className="mx-auto flex max-w-6xl items-center justify-center px-4 py-16">
+      {isSignedIn ? <WelcomeCard /> : <SignInCard />}
+    </section>
   );
 }

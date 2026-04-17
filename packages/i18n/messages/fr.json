@@ -2,18 +2,38 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "theme": {
+      "toggle": "Toggle theme"
+    },
+    "locale": {
+      "switch": "Change language"
+    },
+    "navigation": {
+      "primary": "Primary navigation"
+    },
+    "footer": {
+      "tagline": "Operational excellence, in every language."
+    }
   },
   "auth": {
     "signIn": {
       "title": "Sign in to Forma360",
-      "submit": "Sign in"
+      "submit": "Sign in",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "emailPlaceholder": "you@example.com",
+      "passwordPlaceholder": "Your password",
+      "signUpPrompt": "New to Forma360?",
+      "signUpLink": "Create an account"
     },
     "signUp": {
       "title": "Create your Forma360 account"
     }
   },
   "health": {
-    "welcome": "Hello {name}"
+    "welcome": "Hello {name}",
+    "tenantLabel": "Tenant",
+    "signOut": "Sign out"
   }
 }
