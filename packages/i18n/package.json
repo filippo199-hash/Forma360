@@ -12,10 +12,21 @@
       "types": "./src/config.ts",
       "default": "./src/config.ts"
     },
+    "./request": {
+      "types": "./src/request.ts",
+      "default": "./src/request.ts"
+    },
+    "./routing": {
+      "types": "./src/routing.ts",
+      "default": "./src/routing.ts"
+    },
     "./messages/*": "./messages/*.json"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "next-intl": "^4.0.0"
   }
 }
