@@ -19,6 +19,14 @@
     "./storage": {
       "types": "./src/storage.ts",
       "default": "./src/storage.ts"
+    },
+    "./logger": {
+      "types": "./src/logger.ts",
+      "default": "./src/logger.ts"
+    },
+    "./email": {
+      "types": "./src/email.ts",
+      "default": "./src/email.ts"
     }
   },
   "scripts": {
@@ -31,11 +39,14 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.720.0",
     "@aws-sdk/s3-request-presigner": "^3.720.0",
+    "pino": "^9.5.0",
+    "resend": "^4.0.0",
     "ulid": "^2.3.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "@vitest/ui": "^2.1.0",
+    "pino-pretty": "^13.0.0",
     "tsx": "^4.19.0",
     "vitest": "^2.1.0"
   }
