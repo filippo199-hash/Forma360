@@ -1,15 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
   "files": [],
-  "references": [
-    { "path": "./apps/web" },
-    { "path": "./packages/api" },
-    { "path": "./packages/auth" },
-    { "path": "./packages/db" },
-    { "path": "./packages/i18n" },
-    { "path": "./packages/jobs" },
-    { "path": "./packages/permissions" },
-    { "path": "./packages/shared" },
-    { "path": "./packages/ui" }
-  ]
+  "include": [],
+  "exclude": ["node_modules", "dist", ".next", ".turbo", "coverage"]
 }

@@ -16,11 +16,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "incremental": true,
-    "verbatimModuleSyntax": false
+    "noEmit": true
   },
   "exclude": ["node_modules", "dist", ".next", ".turbo", "coverage"]
 }
