@@ -7,10 +7,23 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
     }
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.ts\""
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^2.1.0",
+    "vitest": "^2.1.0"
   }
 }
