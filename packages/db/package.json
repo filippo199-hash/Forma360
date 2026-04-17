@@ -20,8 +20,22 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
-    "db:generate": "echo 'drizzle-kit generate — wired in PR 3'",
-    "db:migrate": "echo 'drizzle-kit migrate — wired in PR 3'",
-    "db:studio": "echo 'drizzle-kit studio — wired in PR 3'"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@forma360/shared": "workspace:^",
+    "drizzle-orm": "^0.36.0",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.0",
+    "@types/pg": "^8.11.0",
+    "drizzle-kit": "^0.29.0",
+    "vitest": "^2.1.0"
   }
 }
