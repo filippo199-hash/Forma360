@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { newId } from './id.js';
-import { createR2Client, isObjectKey, objectKey, objectKeySchema } from './storage.js';
+import { newId } from './id';
+import { createR2Client, isObjectKey, objectKey, objectKeySchema } from './storage';
 
 const tenantId = newId();
 const entityId = newId();

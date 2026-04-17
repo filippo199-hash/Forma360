@@ -13,9 +13,9 @@ import { parseServerEnv } from '@forma360/shared/env';
 import { createLogger, type Logger } from '@forma360/shared/logger';
 import { Worker, type WorkerOptions } from 'bullmq';
 import { Redis } from 'ioredis';
-import { closeAllQueues, getQueue, QUEUE_NAMES } from './queues.js';
-import { createPgDumpHandler, PG_DUMP_CRON } from './workers/pg-dump-nightly.js';
-import { createTestQueueHandler } from './workers/test-queue.js';
+import { closeAllQueues, getQueue, QUEUE_NAMES } from './queues';
+import { createPgDumpHandler, PG_DUMP_CRON } from './workers/pg-dump-nightly';
+import { createTestQueueHandler } from './workers/test-queue';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses

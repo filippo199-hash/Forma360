@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createLogger } from './logger.js';
+import { createLogger } from './logger';
 
 describe('createLogger', () => {
   it('returns a pino instance with the requested level', () => {

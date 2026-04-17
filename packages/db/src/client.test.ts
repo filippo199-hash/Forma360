@@ -14,9 +14,9 @@ import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { eq } from 'drizzle-orm';
 import { newId } from '@forma360/shared/id';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import * as schema from './schema/index.js';
-import { tenants } from './schema/tenants.js';
-import { user } from './schema/auth.js';
+import * as schema from './schema/index';
+import { tenants } from './schema/tenants';
+import { user } from './schema/auth';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = join(__dirname, '..', 'migrations');

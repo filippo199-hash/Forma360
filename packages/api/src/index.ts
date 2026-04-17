@@ -1,2 +1,10 @@
-// @forma360/api — tRPC routers. Root router lands in PR 7.
-export {};
+/**
+ * @forma360/api — public entry point.
+ *
+ * The client consumes only the type of `appRouter` (via
+ * `import type { AppRouter } from '@forma360/api'`). Runtime code lives
+ * server-side in apps/web and tests.
+ */
+export { appRouter, type AppRouter } from './router';
+export { createContextFactory, createTestContext, type Context } from './context';
+export { createCallerFactory } from './trpc';

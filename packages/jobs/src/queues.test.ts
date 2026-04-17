@@ -4,8 +4,8 @@ import {
   QUEUE_NAMES,
   QUEUE_PAYLOAD_SCHEMAS,
   testPayloadSchema,
-} from './queues.js';
-import { backupObjectKey, PG_DUMP_CRON } from './workers/pg-dump-nightly.js';
+} from './queues';
+import { backupObjectKey, PG_DUMP_CRON } from './workers/pg-dump-nightly';
 
 describe('queue registry', () => {
   it('exposes the two Phase 0 queues', () => {

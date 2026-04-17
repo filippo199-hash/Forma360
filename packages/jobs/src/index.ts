@@ -5,5 +5,5 @@
  * (`./worker`, `./main`) is NOT re-exported here to keep BullMQ's heavy
  * server-only deps out of the web bundle.
  */
-export * from './queues.js';
-export * from './enqueue.js';
+export * from './queues';
+export * from './enqueue';
