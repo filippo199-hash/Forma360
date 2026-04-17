@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platform — Detailed Module Guide (Improved)</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0e13; --surface: #13171e; --surface-alt: #191e28;
+    --border: rgba(255,255,255,0.06); --border-strong: rgba(255,255,255,0.1);
+    --text: #dfe2ea; --text-dim: #858c9b; --text-bright: #f4f5f8;
+    --blue: #3b82f6; --red: #ef4444; --amber: #f59e0b; --violet: #8b5cf6;
+    --green: #10b981; --teal: #06b6d4; --pink: #ec4899; --orange: #f97316;
+    --slate: #64748b; --indigo: #6366f1;
+    --radius: 14px;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.72; -webkit-font-smoothing: antialiased; }
+  .noise { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 200px; }
+  .page { position: relative; z-index: 1; max-width: 920px; margin: 0 auto; padding: 56px 24px 80px; }
+  header { text-align: center; margin-bottom: 64px; }
+  .badge { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; color: var(--text-dim); border: 1px solid var(--border); border-radius: 999px; padding: 5px 16px; margin-bottom: 20px; }
+  header h1 { font-family: var(--font-display); font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+  header h1 em { font-style: italic; background: linear-gradient(135deg, var(--blue), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  header p.subtitle { max-width: 660px; margin: 16px auto 0; color: var(--text-dim); font-size: 1rem; }
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; margin-bottom: 56px; }
+  nav.toc h2 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; margin-bottom: 14px; }
+  nav.toc ol { list-style: none; counter-reset: toc; display: flex; flex-direction: column; gap: 6px; }
+  nav.toc ol li { counter-increment: toc; }
+  nav.toc ol li a { color: var(--text-dim); text-decoration: none; font-size: 0.92rem; transition: color 0.2s; }
+  nav.toc ol li a::before { content: counter(toc) ". "; color: var(--text-dim); opacity: 0.5; }
+  nav.toc ol li a:hover { color: var(--text-bright); }
+  .module { margin-bottom: 64px; }
+  .module-header { display: flex; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+  .module-header .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .module-header h2 { font-family: var(--font-display); font-size: 1.65rem; font-weight: 600; letter-spacing: -0.01em; }
+  .module-header .num { margin-left: auto; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-dim); opacity: 0.5; }
+  .module-intro { color: var(--text-dim); margin-bottom: 28px; font-size: 0.95rem; }
+  .feature { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 16px; transition: border-color 0.25s; }
+  .feature:hover { border-color: var(--border-strong); }
+  .feature h3 { font-size: 1rem; font-weight: 600; color: var(--text-bright); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .feature h3 .tag { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; padding: 2px 8px; border-radius: 6px; flex-shrink: 0; }
+  .feature h3 .improved { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; padding: 2px 8px; border-radius: 6px; background: rgba(16,185,129,0.15); color: var(--green); flex-shrink: 0; }
+  .feature p, .feature ul { color: var(--text); font-size: 0.9rem; }
+  .feature ul { padding-left: 18px; margin-top: 8px; }
+  .feature ul li { margin-bottom: 5px; }
+  .feature ul ul { margin-top: 4px; }
+  .feature p + p { margin-top: 8px; }
+  .cross-link { display: inline-block; margin-top: 10px; font-size: 0.8rem; font-weight: 500; padding: 4px 10px; border-radius: 6px; text-decoration: none; transition: opacity 0.2s; }
+  .cross-link:hover { opacity: 0.85; }
+  /* Module accent colours */
+  .mod-blue .module-header .dot { background: var(--blue); }
+  .mod-blue .feature h3 .tag { background: rgba(59,130,246,0.12); color: var(--blue); }
+  .mod-blue .cross-link { background: rgba(59,130,246,0.1); color: var(--blue); }
+  .mod-red .module-header .dot { background: var(--red); }
+  .mod-red .feature h3 .tag { background: rgba(239,68,68,0.12); color: var(--red); }
+  .mod-red .cross-link { background: rgba(239,68,68,0.1); color: var(--red); }
+  .mod-amber .module-header .dot { background: var(--amber); }
+  .mod-amber .feature h3 .tag { background: rgba(245,158,11,0.12); color: var(--amber); }
+  .mod-amber .cross-link { background: rgba(245,158,11,0.1); color: var(--amber); }
+  .mod-violet .module-header .dot { background: var(--violet); }
+  .mod-violet .feature h3 .tag { background: rgba(139,92,246,0.12); color: var(--violet); }
+  .mod-violet .cross-link { background: rgba(139,92,246,0.1); color: var(--violet); }
+  .mod-green .module-header .dot { background: var(--green); }
+  .mod-green .feature h3 .tag { background: rgba(16,185,129,0.12); color: var(--green); }
+  .mod-green .cross-link { background: rgba(16,185,129,0.1); color: var(--green); }
+  .mod-teal .module-header .dot { background: var(--teal); }
+  .mod-teal .feature h3 .tag { background: rgba(6,182,212,0.12); color: var(--teal); }
+  .mod-teal .cross-link { background: rgba(6,182,212,0.1); color: var(--teal); }
+  .mod-pink .module-header .dot { background: var(--pink); }
+  .mod-pink .feature h3 .tag { background: rgba(236,72,153,0.12); color: var(--pink); }
+  .mod-pink .cross-link { background: rgba(236,72,153,0.1); color: var(--pink); }
+  .mod-orange .module-header .dot { background: var(--orange); }
+  .mod-orange .feature h3 .tag { background: rgba(249,115,22,0.12); color: var(--orange); }
+  .mod-orange .cross-link { background: rgba(249,115,22,0.1); color: var(--orange); }
+  .mod-slate .module-header .dot { background: var(--slate); }
+  .mod-slate .feature h3 .tag { background: rgba(100,116,139,0.12); color: var(--slate); }
+  .mod-slate .cross-link { background: rgba(100,116,139,0.1); color: var(--slate); }
+  .mod-indigo .module-header .dot { background: var(--indigo); }
+  .mod-indigo .feature h3 .tag { background: rgba(99,102,241,0.12); color: var(--indigo); }
+  .mod-indigo .cross-link { background: rgba(99,102,241,0.1); color: var(--indigo); }
+  .interplay { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 32px; margin-bottom: 64px; }
+  .interplay h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; margin-bottom: 20px; text-align: center; }
+  .interplay .scenario { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 14px; }
+  .interplay .scenario:last-child { margin-bottom: 0; }
+  .interplay .scenario h4 { font-size: 0.88rem; font-weight: 600; color: var(--text-bright); margin-bottom: 8px; }
+  .interplay .scenario p { font-size: 0.88rem; color: var(--text); }
+  .interplay .scenario .step { color: var(--text-dim); font-size: 0.82rem; margin-top: 6px; }
+  footer { text-align: center; color: var(--text-dim); font-size: 0.75rem; opacity: 0.5; }
+  @media (max-width: 640px) { .page { padding: 36px 14px 60px; } .feature { padding: 18px 18px; } nav.toc { padding: 20px 20px; } .interplay { padding: 24px 18px; } }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="page">
+
+<header>
+  <div class="badge">Detailed Feature Guide — Improved Platform</div>
+  <h1>Platform <em>Module Overview</em></h1>
+  <p class="subtitle">A detailed walkthrough of how each module works, the features within it, improvements over the current SafetyCulture platform, and how the modules interact. Items marked <span style="color:var(--green);font-weight:600;font-size:0.85rem;">✦ IMPROVED</span> represent new or redesigned features.</p>
+</header>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#templates">Templates &amp; Inspections</a></li>
+    <li><a href="#issues">Issues</a></li>
+    <li><a href="#actions">Actions</a></li>
+    <li><a href="#headsup">Heads Up</a></li>
+    <li><a href="#assets">Assets &amp; Maintenance</a></li>
+    <li><a href="#documents">Documents</a></li>
+    <li><a href="#analytics">Analytics</a></li>
+    <li><a href="#compliance">Compliance</a></li>
+    <li><a href="#groups-sites">Groups &amp; Sites</a></li>
+    <li><a href="#settings">Settings</a></li>
+    <li><a href="#interplay">How the Modules Interact</a></li>
+  </ol>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 1. TEMPLATES & INSPECTIONS                -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="module mod-blue" id="templates">
+  <div class="module-header">
+    <span class="dot"></span>
+    <h2>Templates &amp; Inspections</h2>
+    <span class="num">Module 01</span>
+  </div>
+  <p class="module-intro">Templates define the structure, questions, and logic of every check your team performs. An inspection is a live instance of a template — the actual data capture. A completed inspection becomes a report that can be exported and shared.</p>
+
+  <div class="feature">
+    <h3>Building a Template <span class="tag">Template Editor</span></h3>
+    <p>Every template starts with a <strong>Title Page</strong> and at least one <strong>Inspection Page</strong>. On the title page, auto-populating response types capture metadata at the start of every inspection:</p>
+    <ul>
+      <li><strong>Site</strong> — links the inspection to a location or project.</li>
+      <li><strong>Conducted by</strong> — auto-fills with the user who starts the inspection.</li>
+      <li><strong>Inspection date</strong> — auto-fills with the start date/time.</li>
+      <li><strong>Document number</strong> — auto-increments per template (supports custom alphanumeric schemes, e.g. "AUDIT000001").</li>
+      <li><strong>Location</strong> — auto-captures device GPS coordinates and address.</li>
+      <li><strong>Asset</strong> — links the inspection to a specific asset.</li>
+      <li><strong>Company</strong> — links to a contractor company.</li>
+    </ul>
+    <p>On the inspection pages, the creator adds questions organised into <strong>sections</strong>. An <strong>inspection title format</strong> auto-generates unique names from title-page responses (e.g. "[Site] – [Date] – [Doc Number]").</p>
+  </div>
+
+  <div class="feature">
+    <h3>Response Types <span class="tag">Question Setup</span></h3>
+    <p>Each question is assigned a response type:</p>
+    <ul>
+      <li><strong>Multiple choice</strong> — predefined answers. Each response can have a colour and flagged status. Multi-select can be enabled. Users can create <strong>Custom Response Sets</strong> with tailored labels and colours, and <strong>Global Response Sets</strong> reusable across templates.</li>
+      <li><strong>Text</strong> — free-text answer.</li>
+      <li><strong>Number</strong> — numeric input within a configurable range.</li>
+      <li><strong>Date &amp; Time</strong> — date or time picker.</li>
+      <li><strong>Media</strong> — photo, video, or PDF upload (up to 10 MB/image, 3 min/video, 20 MB/PDF).</li>
+      <li><strong>Annotation</strong> — draw markups on an uploaded image (e.g. floor plan).</li>
+      <li><strong>Signature</strong> — digital signature capture (see Multi-Signature below).</li>
+      <li><strong>Slider</strong> — visual scale input.</li>
+      <li><strong>Checkbox</strong> — simple on/off check.</li>
+      <li><strong>Instruction</strong> — read-only text/image/PDF to guide the inspector (not an input).</li>
+    </ul>
+    <p>For every question, the user can optionally add a <strong>Note</strong>, attach <strong>Media</strong>, or create/link an <strong>Action</strong>.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Multi-Signature Flow <span class="tag">Signatures</span> <span class="improved">✦ Improved</span></h3>
+    <p>When adding a signature field to a template, the template creator can now configure <strong>how many signers are required</strong>. The options are:</p>
+    <ul>
+      <li><strong>Single signer</strong> — one person signs (current behaviour).</li>
+      <li><strong>Multiple signers</strong> — the creator specifies the number of required signers (e.g. 2, 3, 5) and defines a <strong>signing sequence</strong>:</li>
+      <ul>
+        <li><strong>Sequential signing</strong> — signers must sign in a defined order. Signer 1 receives the request first; once they sign, Signer 2 is notified, and so on. The inspection cannot be completed until all signers in the sequence have signed.</li>
+        <li><strong>Parallel signing</strong> — all signers are notified at once and can sign in any order. The inspection is blocked until all required signatures are collected.</li>
+      </ul>
+      <li>For each signer slot, the creator can either <strong>pre-assign a specific user or role</strong> (e.g. "Site Manager", "Quality Lead") or leave it for the inspector to <strong>select at the time of inspection</strong>.</li>
+      <li>Each signer's name, timestamp, and signature image are captured individually and appear in the inspection report.</li>
+    </ul>
+    <p>This is critical for workflows like work permits, order sign-offs, safety authorisations, and any form requiring multi-party approval.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Flagging Responses <span class="tag">Data Quality</span></h3>
+    <p>Responses can be individually <strong>flagged</strong>. When a flagged response is selected during an inspection, it is highlighted in reports and surfaces in Analytics dashboards as an item needing attention. <strong>Flagging is available only on multiple-choice response types.</strong> Each response option in a custom response set can be independently marked as "flagged" during template design.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Logic Fields <span class="tag">Conditional Logic</span></h3>
+    <p>Logic fields make templates dynamic. Set a <strong>condition</strong> (e.g. "if the answer is 'No'") and choose <strong>triggers</strong>:</p>
+    <ul>
+      <li><strong>Ask follow-up questions</strong> — additional questions/sections appear. Up to 40 nested levels.</li>
+      <li><strong>Require action</strong> — the inspection blocks until an action is created or linked for that question.</li>
+      <li><strong>Require evidence</strong> — user must attach a photo or video.</li>
+      <li><strong>Require note</strong> — user must type an explanation.</li>
+      <li><strong>Send notification</strong> — auto-notify specific users, groups, or site members (up to 500 recipients). Fire immediately or on completion.</li>
+    </ul>
+    <p>Multiple triggers can be stacked. Different logic paths can be set for different responses on the same question.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Table Types <span class="tag">Structured Data</span> <span class="improved">✦ Improved</span></h3>
+    <p>When adding a table to a template, the user now selects from <strong>pre-built table types</strong>:</p>
+    <ul>
+      <li><strong>Blank table</strong> — a standard empty table. The user defines columns (up to 20) and response types per column. Inspectors add rows (up to 100) during the inspection. Best for general-purpose repetitive data capture.</li>
+      <li><strong>Risk assessment table</strong> — pre-structured with columns for Hazard, Risk Description, Likelihood, Severity, Risk Rating (auto-calculated from Likelihood × Severity), and Control Measures. Colour-coded risk levels are applied automatically. Ideal for risk assessments, HIRA, and JSA workflows.</li>
+      <li><strong>Checklist table</strong> — pre-structured with Item, Status (Pass/Fail/N/A), and Comments columns. Best for equipment checklists, pre-start checks, and compliance verification.</li>
+      <li><strong>Inventory table</strong> — pre-structured with Item, Quantity, Condition, and Notes columns. For stock counts, PPE checks, and equipment inventories.</li>
+    </ul>
+    <p>All table types are fully customisable after selection — columns can be added, renamed, reordered, or removed. Within columns, flagged responses and notifications can be triggered. Tables export cleanly into PDF and Word reports.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Approval Pages <span class="tag">Workflows</span></h3>
+    <p>A template can include an <strong>Approval Page</strong>. When enabled, the inspector submits for review. The approver reviews and either approves or rejects (with comments). Rejected inspections return to "In Progress". Once approved, it cannot be marked as incomplete. Combined with Multi-Signature, this enables complex sign-off chains.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Template Creation Methods <span class="tag">Getting Started</span></h3>
+    <ul>
+      <li><strong>From scratch</strong> — drag-and-drop editor.</li>
+      <li><strong>AI-generated</strong> — describe the purpose in a prompt, upload a photo/PDF, and AI generates the template.</li>
+      <li><strong>Convert from file</strong> — import an existing Excel, PDF, or image.</li>
+      <li><strong>Public Library</strong> — browse and download from 100,000+ ready-made templates by industry and use case. All fully customisable.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Conducting an Inspection <span class="tag">Workflow</span></h3>
+    <p>The user selects a template (from the list, a schedule, or from within an asset/issue) and works through each page:</p>
+    <ul>
+      <li><strong>Offline support</strong> — start and complete without internet. Auto-saves locally, syncs on reconnect.</li>
+      <li><strong>Required questions</strong> — marked with an asterisk; blocks completion until answered.</li>
+      <li><strong>In-inspection actions</strong> — at any question, create or link an action. If logic requires it, the inspection blocks until done.</li>
+      <li><strong>Multi-signature collection</strong> — if the template requires multiple signatures, the inspector initiates the signing sequence. The inspection remains open until all signatures are collected.</li>
+      <li><strong>Edit after completion</strong> — reopen for editing (back to "In Progress"), unless an approval page was approved.</li>
+      <li><strong>Completion summary</strong> — shows all flagged items and pending actions. Bulk-assign or skip.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Scheduling Inspections <span class="tag">Automation</span> <span class="improved">✦ Improved</span></h3>
+    <p>Administrators create <strong>inspection schedules</strong> assigning templates to users, groups, or sites on a recurring basis. The improved scheduling system includes:</p>
+    <ul>
+      <li><strong>Calendar views</strong> — schedules are visualised in a <strong>daily, weekly, and monthly calendar view</strong> (not just a flat list). Colour-coded by template or site for clarity. Users can toggle between views.</li>
+      <li><strong>Drag-and-drop rescheduling</strong> — move or extend scheduled inspections by dragging them within the calendar.</li>
+      <li><strong>Frequency options</strong> — daily, weekly, fortnightly, monthly, quarterly, annually, or custom intervals.</li>
+      <li><strong>Assignment options</strong> — assign to specific users, groups, or sites. When assigned to a group/site, all current members receive the schedule.</li>
+      <li><strong>Automated reminders</strong> — configurable reminder notifications before the inspection is due (e.g. 1 day before, 2 hours before).</li>
+      <li><strong>Overdue tracking</strong> — missed/late inspections are flagged in the calendar view with clear visual indicators. Managers can see overdue counts per site or user.</li>
+      <li><strong>Completion dashboard</strong> — a real-time view showing completion rates by user, site, and time period. Identify who is falling behind at a glance.</li>
+      <li><strong>Workload balancing</strong> — when assigning, the system highlights users who already have a heavy schedule, helping managers distribute inspections evenly.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Action Deduplication in Recurring Inspections <span class="tag">Workflow</span> <span class="improved">✦ Improved</span></h3>
+    <p>A common problem with daily or recurring inspections: a user flags an issue on a question and creates an action. The next day, conducting the same inspection, they encounter the same question and the same problem — but have no visibility into the fact that an action was already created yesterday for this exact item.</p>
+    <p>The improved platform solves this:</p>
+    <ul>
+      <li><strong>Existing action indicator</strong> — when conducting a recurring inspection, if a previous inspection (from the same template and site) has an <strong>open action</strong> on the same question, a visible badge is shown: <em>"⚠ An open action already exists for this item."</em> The user can tap to view the existing action's details, assignee, and status.</li>
+      <li><strong>Link instead of duplicate</strong> — instead of creating a new action, the user can <strong>link the existing action</strong> to the current inspection, adding the new inspection as additional evidence. This prevents duplicate actions from piling up.</li>
+      <li><strong>Create anyway</strong> — if the issue is genuinely different or the existing action doesn't cover it, the user can still create a new action.</li>
+      <li><strong>Merge actions</strong> — if duplicate actions have already been created, users (with the right permissions) can <strong>merge two or more actions into one</strong>. Merging consolidates all linked inspections, comments, media, and activity into a single action. The merged (duplicate) actions are archived with a reference to the surviving action.</li>
+    </ul>
+    <a href="#actions" class="cross-link">→ Connects to: Actions</a>
+  </div>
+
+  <div class="feature">
+    <h3>Reports <span class="tag">Output</span></h3>
+    <p>Every completed inspection generates a report:</p>
+    <ul>
+      <li><strong>Export as PDF or Word</strong> — customisable report layouts control which info is shown/hidden.</li>
+      <li><strong>Web report link</strong> — live, read-only URL accessible without an account.</li>
+      <li><strong>AI summary</strong> — highlights critical findings, non-conformances, and required actions.</li>
+      <li><strong>Multi-signature report section</strong> — all collected signatures are displayed with signer name, role, timestamp, and signature image.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Access Control <span class="tag">Permissions</span></h3>
+    <p>Template access levels: <strong>Conduct</strong>, <strong>Conduct &amp; edit</strong>, <strong>Full access</strong> (archive/delete). Inspection access configurable per template: visible to inspector only, site members, specific groups, or the entire organisation. Access can be granted explicitly or dynamically based on group + site membership.</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 2. ISSUES                                 -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="module mod-red" id="issues">
+  <div class="module-header">
+    <span class="dot"></span>
+    <h2>Issues</h2>
+    <span class="num">Module 02</span>
+  </div>
+  <p class="module-intro">The Issues module is a dedicated incident and observation reporting system. Any worker can capture observations, hazards, near-misses, and incidents the moment they occur, then route them to the right people for resolution.</p>
+
+  <div class="feature">
+    <h3>Reporting an Issue — Step by Step <span class="tag">Workflow</span></h3>
+    <ul>
+      <li><strong>Step 1 — Choose the issue category.</strong> Select from pre-configured categories (e.g. "Near Miss", "Equipment Damage"). Each category has its own fields, questions, notification rules, and access settings.</li>
+      <li><strong>Step 2 — Enter the issue title.</strong> Short descriptive name. Always required.</li>
+      <li><strong>Step 3 — Complete the issue fields.</strong> Depending on the category: description, location (GPS), date occurred, site, photos/video/PDF, weather, custom questions. Fields are <strong>visible or hidden</strong> and <strong>required or optional</strong> per category.</li>
+      <li><strong>Step 4 — Submit.</strong> Issue is logged with a timestamp. Automated notifications fire.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Issue Categories <span class="tag">Configuration</span></h3>
+    <p>Each category is independently configured: custom field visibility, custom questions (up to 10 per category, text or multiple-choice), category visibility controls, access rules ("Report only" / "Report + view" / full edit), notification rules (Private/Summary/Detailed), Critical Alerts (bypass DND), and linked templates (up to 25).</p>
+  </div>
+
+  <div class="feature">
+    <h3>Issue QR Codes <span class="tag">Contactless Reporting</span></h3>
+    <p>Generate QR codes tied to a category and optionally pre-filled with a site. Anyone — even without an account — scans the code and fills out the issue form.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Issue Profile &amp; Collaboration <span class="tag">Management</span></h3>
+    <p>Three tabs: <strong>Overview</strong> (summary, responses, location, linked items), <strong>Files</strong> (all attachments), <strong>Activity</strong> (real-time audit trail). Team members add comments, files, and update fields — all logged.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Starting an Inspection from an Issue <span class="tag">Cross-module</span></h3>
+    <p>From an issue, start a linked inspection (from pre-linked templates). Auto-linked back to the issue for full traceability.</p>
+    <a href="#templates" class="cross-link">→ Connects to: Templates &amp; Inspections</a>
+  </div>
+
+  <div class="feature">
+    <h3>Creating an Action from an Issue <span class="tag">Cross-module</span></h3>
+    <p>Create an action to assign resolution. Auto-linked to the issue; progress visible in the Overview tab.</p>
+    <a href="#actions" class="cross-link">→ Connects to: Actions</a>
+  </div>
+
+  <div class="feature">
+    <h3>Investigations <span class="tag">Root Cause</span></h3>
+    <p>Create an investigation from an issue. Link multiple related issues, inspections, and media to uncover root causes. Own workspace, access controls, and audit trail.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Issue Reports, Views &amp; Analytics <span class="tag">Output</span></h3>
+    <p>Export as public link or PDF. Custom views with filters (status, category, site, date, assignee). Analytics dashboards show trends by category, status, and resolution time.</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 3. ACTIONS                                -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="module mod-amber" id="actions">
+  <div class="module-header">
+    <span class="dot"></span>
+    <h2>Actions</h2>
+    <span class="num">Module 03</span>
+  </div>
+  <p class="module-intro">The task management engine. Actions ensure findings turn into follow-through — from quick fixes during inspections to formal corrective actions to recurring work orders.</p>
+
+  <div class="feature">
+    <h3>Creating an Action — Where and How <span class="tag">Workflow</span></h3>
+    <p>Entry points: <strong>from an inspection question</strong> (notes/media carry over; logic can require it), <strong>from an issue</strong> (auto-linked), <strong>from an asset profile</strong> (asset/site pre-filled), <strong>from the maintenance table</strong>, <strong>from sensor alerts</strong>, or <strong>standalone</strong> (from the Actions list).</p>
+    <p>Fields: action type, title (255 chars), description (500 chars), assignee, priority, due date, site, labels, and custom fields.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Custom Action Types &amp; Fields <span class="tag">Configuration</span></h3>
+    <p>Define types like "Corrective Action", "Work Order", "Preventive Maintenance", "General Task". Each type has its own required/custom fields (text, currency, date/time).</p>
+  </div>
+
+  <div class="feature">
+    <h3>Priority &amp; Auto-calculated Due Dates <span class="tag">Configuration</span></h3>
+    <p>Three priority levels. Configure auto-calculated due dates per priority (e.g. High = 24h, Medium = 7d, Low = 30d).</p>
+  </div>
+
+  <div class="feature">
+    <h3>Recurring Actions <span class="tag">Automation</span></h3>
+    <p>Standalone actions can be set to recur on a schedule for routine tasks.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Custom Statuses &amp; Transition Controls <span class="tag">Workflow</span></h3>
+    <p>Rename statuses (e.g. "Awaiting Review", "Approved", "Closed"). Configure transition controls — restrict which users can move actions to specific statuses, enforcing review gates.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Merge Actions <span class="tag">Deduplication</span> <span class="improved">✦ Improved</span></h3>
+    <p>When duplicate actions exist (common with recurring inspections), users with the right permissions can <strong>merge two or more actions into one</strong>. Merging consolidates all linked inspections, comments, media, and activity into a single surviving action. Merged duplicates are archived with a reference link. This keeps the action list clean and avoids fragmented accountability.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Collaboration, Labels &amp; Access <span class="tag">Management</span></h3>
+    <p>Built-in chat per action. Labels for grouping. Detail field editing controls. Actions from inspections inherit inspection access; standalone actions configurable (all users / site members / creator + assignee).</p>
+  </div>
+
+  <div class="feature">
+    <h3>Linking Inspections to Actions <span class="tag">Cross-module</span></h3>
+    <p>Link templates to action types. Assignees can start an inspection from within an action. Up to 25 templates per action.</p>
+    <a href="#templates" class="cross-link">→ Connects to: Templates &amp; Inspections</a>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 4. HEADS UP                               -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="module mod-violet" id="headsup">
+  <div class="module-header">
+    <span class="dot"></span>
+    <h2>Heads Up</h2>
+    <span class="num">Module 04</span>
+  </div>
+  <p class="module-intro">One-to-many broadcast channel for reaching frontline workers. Consolidates workplace announcements into the same platform where teams do inspections and actions.</p>
+
+  <div class="feature">
+    <h3>Creating a Heads Up <span class="tag">Workflow</span></h3>
+    <p>Fill in: <strong>Title</strong> (required), <strong>Description</strong> (required), <strong>Media</strong> (images, videos, PDFs), <strong>Assignees</strong> (individuals, groups, or sites). Then choose: <strong>Publish immediately</strong>, <strong>Save as draft</strong>, or <strong>Schedule</strong> for later.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Three Engagement Levels <span class="tag">Accountability</span> <span class="improved">✦ Improved</span></h3>
+    <p>When creating a Heads Up, the admin configures which <strong>engagement levels</strong> they want from recipients. These are three independent options that can be combined in any way:</p>
+
+    <p><strong>1. View Tracking (always on)</strong></p>
+    <ul>
+      <li>Every Heads Up automatically tracks who has <strong>viewed</strong> it and who hasn't.</li>
+      <li>The creator sees a real-time list of viewers with timestamps.</li>
+      <li>This is passive — recipients don't need to take any action; the system logs when they open the message.</li>
+    </ul>
+
+    <p><strong>2. Request Acknowledgement (optional toggle)</strong></p>
+    <ul>
+      <li>When enabled, recipients see an <strong>"Acknowledge" button</strong> after viewing the Heads Up.</li>
+      <li>Acknowledging confirms the recipient has read and understood the message.</li>
+      <li>The creator sees a real-time breakdown: <em>Viewed</em> vs. <em>Acknowledged</em> vs. <em>Not yet viewed</em>.</li>
+      <li>Recipients who have viewed but not acknowledged can receive targeted reminders.</li>
+    </ul>
+
+    <p><strong>3. Request Signature (optional toggle)</strong></p>
+    <ul>
+      <li>When enabled, recipients see a <strong>"Sign" prompt</strong> — they must provide a digital signature (name, signature image, timestamp).</li>
+      <li>Signing is a stronger commitment than acknowledging — it creates a <strong>compliance-grade record</strong> that the recipient has formally signed off on the content.</li>
+      <li>The creator sees a real-time breakdown: <em>Viewed</em> vs. <em>Acknowledged</em> vs. <em>Signed</em> vs. <em>Not yet viewed</em>.</li>
+      <li>Reminders can be sent specifically to recipients who haven't signed.</li>
+      <li>The Heads Up report includes a full <strong>signature log</strong> with each signer's name, timestamp, and signature image.</li>
+      <li>Signed Heads Ups are stored with signature data for auditing and regulatory purposes.</li>
+    </ul>
+
+    <p><strong>Combinations:</strong> An admin can enable just view tracking (informational broadcast), view + acknowledge (important update), view + acknowledge + sign (policy sign-off or safety briefing), or even view + sign without acknowledgement (formal sign-off only). The tracking dashboard adapts to show whichever levels are active.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Engagement Dashboard <span class="tag">Monitoring</span></h3>
+    <p>Every Heads Up has a real-time <strong>engagement dashboard</strong> showing:</p>
+    <ul>
+      <li><strong>Summary bar</strong> — at a glance: X viewed, Y acknowledged, Z signed, W not yet viewed.</li>
+      <li><strong>Recipient list</strong> — filterable by status (viewed / acknowledged / signed / not viewed). Each row shows the recipient's name, group, site, and timestamps for each action they've taken.</li>
+      <li><strong>Export</strong> — the full engagement data can be exported as CSV or PDF for compliance records.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Linking to Documents <span class="tag">Cross-module</span></h3>
+    <p>Create a Heads Up linked to a document from the Documents module. Users with file access are auto-added as assignees. Great for broadcasting new SOPs, policies, or safety bulletins alongside the document.</p>
+    <a href="#documents" class="cross-link">→ Connects to: Documents</a>
+  </div>
+
+  <div class="feature">
+    <h3>Reminders, Comments &amp; Reactions <span class="tag">Engagement</span></h3>
+    <p>Send reminders to non-responders (filterable: remind only those who haven't acknowledged, or only those who haven't signed). Recipients reply with comments and emoji reactions. Workers can reply/react but cannot create Heads Ups.</p>
+  </div>
+
+  <div class="feature">
+    <h3>External Sharing, Editing &amp; Analytics <span class="tag">Management</span></h3>
+    <p>Public links for external sharing. Edit or delete published Heads Ups. Export list to CSV. Engagement feeds into Analytics — charts show reach, acknowledgement rates, and signature rates independently.</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 5. ASSETS & MAINTENANCE                   -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="module mod-green" id="assets">
+  <div class="module-header">
+    <span class="dot"></span>
+    <h2>Assets &amp; Maintenance</h2>
+    <span class="num">Module 05</span>
+  </div>
+  <p class="module-intro">Digital register for every physical item — machinery, vehicles, safety gear, tools, facilities. Each asset has its own profile connecting inspection history, actions, maintenance, usage data, and location tracking.</p>
+
+  <div class="feature">
+    <h3>Creating &amp; Managing Assets <span class="tag">Setup</span></h3>
+    <p>Add individually or in bulk via CSV. Each record: name, type, site, photo, custom fields. Bulk CSV for onboarding or standardising data.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Custom Asset Types &amp; Fields <span class="tag">Configuration</span></h3>
+    <p>Define types ("Generator", "Fire Extinguisher", "Delivery Truck") with custom fields (VIN, fuel type, warranty, serial number, etc.).</p>
+  </div>
+
+  <div class="feature">
+    <h3>Nested Assets (Parent–Child Hierarchy) <span class="tag">Structure</span> <span class="improved">✦ Improved</span></h3>
+    <p>Assets can be organised in a <strong>parent–child hierarchy</strong>. A main (parent) asset can have multiple sub-assets nested underneath it. For example:</p>
+    <ul>
+      <li>A <strong>Building</strong> (parent) contains sub-assets: HVAC Unit, Fire Alarm Panel, Lift A, Lift B.</li>
+      <li>A <strong>Production Line</strong> (parent) contains sub-assets: Conveyor Motor, Packaging Machine, Labelling Station.</li>
+      <li>A <strong>Vehicle</strong> (parent) contains sub-assets: Engine, Gearbox, Hydraulic System.</li>
+    </ul>
+    <p>When creating or editing an asset, the user can select a <strong>parent asset</strong> to nest it under. The parent asset's profile then displays all its sub-assets in a clear list. Sub-assets have their own full profiles (inspections, actions, readings, documents) just like any other asset.</p>
+
+    <p><strong>Maintenance plans can be attached at either level:</strong></p>
+    <ul>
+      <li><strong>Plan on the parent asset</strong> — e.g. a "Quarterly Building Safety Inspection" plan attached to the Building. Covers the parent as a whole.</li>
+      <li><strong>Plan on a sub-asset</strong> — e.g. a "Monthly HVAC Filter Change" plan attached specifically to the HVAC Unit. Only applies to that sub-asset.</li>
+      <li><strong>Both</strong> — a parent can have its own plans while each sub-asset also has independent plans. The maintenance table shows all plans in a flat view, with a column indicating whether the plan belongs to a parent or sub-asset, so nothing is hidden.</li>
+    </ul>
+
+    <p>This hierarchy also applies to <strong>inspections and actions</strong>: when starting an inspection from a sub-asset, both the sub-asset and its parent are linked. Actions created on a sub-asset are visible from both the sub-asset's profile and the parent's profile (under a "Sub-asset actions" section), giving the parent-level manager full visibility across all components.</p>
+
+    <p>Nesting is one level deep (parent → sub-asset) to keep things simple. Sub-assets cannot have their own children.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Asset Profile <span class="tag">Central Hub</span></h3>
+    <p>Single source of truth: name/type/site/photo, linked inspections and actions, maintenance plans, readings over time, last known location, attached documents/images. For parent assets, the profile also displays a <strong>sub-assets list</strong> with quick status indicators (e.g. overdue maintenance, open actions). From the profile: start an inspection (pre-filled), create an action (pre-filled), view maintenance schedule.</p>
+  </div>
+
+  <div class="feature">
+    <h3>QR Codes, Barcodes &amp; RFID <span class="tag">Field Access</span></h3>
+    <p>Unique QR/barcode per asset. Scan with mobile app to instantly open the profile. RFID supported on Zebra devices.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Asset Readings &amp; Utilisation <span class="tag">Data</span></h3>
+    <p>Track readings (odometer, runtime, temperature) manually via inspections or automatically via telematics (Samsara, Geotab, Caterpillar, AT&amp;T Fleet). Utilisation charts show usage over time. Export to CSV.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Location Tracking <span class="tag">Visibility</span></h3>
+    <p>Inspection GPS updates last known location. Telematics provides real-time Live Map and Event History for past movements.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Preventative Maintenance Plans <span class="tag">Automation</span> <span class="improved">✦ Improved</span></h3>
+    <p>The maintenance system has been <strong>simplified</strong>. Instead of the previous two-tier structure (programs containing plans), there is now a single concept: <strong>Maintenance Plans</strong>.</p>
+    <p>A maintenance plan defines when and how an asset should be serviced:</p>
+    <ul>
+      <li><strong>Plan name &amp; description</strong> — e.g. "Oil Change", "Quarterly Safety Check", "Brake Pad Replacement".</li>
+      <li><strong>Plan type</strong> — either <strong>usage-based</strong> (trigger at a set odometer/runtime reading) or <strong>time-based</strong> (trigger on a calendar interval, e.g. every 90 days).</li>
+      <li><strong>Assigned assets</strong> — select which assets this plan applies to, filtered by type or site.</li>
+      <li><strong>Last service details</strong> — record the most recent service reading or date to establish the baseline for calculating the next due date.</li>
+      <li><strong>Notifications</strong> — up to 10 reminders per plan, alerting users/groups when maintenance approaches or is overdue.</li>
+    </ul>
+    <p>The <strong>Maintenance Table</strong> gives a centralised view of every plan — on schedule, approaching, overdue, or missing data. From the table, create actions to assign servicing tasks. No need to navigate into a separate "program" layer first — everything is flat, visible, and actionable in one view.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Creating Actions &amp; Inspections from Assets <span class="tag">Cross-module</span></h3>
+    <p>Create actions from any asset profile (pre-filled). Set recurring actions for ongoing tasks. Connect templates via the Asset question type for scheduled inspections.</p>
+    <a href="#actions" class="cross-link">→ Connects to: Actions</a>
+    <a href="#templates" class="cross-link" style="margin-left:6px;">→ Connects to: Templates &amp; Inspections</a>
+  </div>
+
+  <div class="feature">
+    <h3>Offline Access &amp; Site Assignment <span class="tag">Field Readiness</span></h3>
+    <p>Works offline on mobile. Assets assigned to sites (individually or bulk CSV). Site membership controls visibility.</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 6. DOCUMENTS                              -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="module mod-pink" id="documents">
+  <div class="module-header">
+    <span class="dot"></span>
+    <h2>Documents</h2>
+    <span class="num">Module 06</span>
+  </div>
+  <p class="module-intro">A centralised, secure document management system that gives teams instant access to the files they need — SOPs, manuals, policies, safety bulletins, installation guides, and checklists — from any device, including offline.</p>
+
+  <div class="feature">
+    <h3>Uploading &amp; Organising Documents <span class="tag">Setup</span></h3>
+    <p>Upload files (PDF, Word, images, etc.) via the web app. Documents are organised into <strong>folders and subfolders</strong> with a main organisational folder structure. Labels can be applied for additional categorisation. Administrators with "Documents: Manage" permission can create and manage the folder structure.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Access Control <span class="tag">Permissions</span></h3>
+    <p>Document access is managed per file or folder. Control who can <strong>view</strong>, <strong>edit</strong>, and <strong>manage access</strong> to each document. Unlike sites (which are used for organisation/filtering in Documents, not access control), document access is granted explicitly to users or groups.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Site Assignment for Filtering <span class="tag">Organisation</span></h3>
+    <p>Documents can be assigned to <strong>sites</strong> for organisation and filtering purposes. This lets users filter the document library by location to quickly find files relevant to their site. Note: site assignment in Documents is for filtering only — it does not control view/edit access.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Offline Access &amp; Sync <span class="tag">Field Readiness</span></h3>
+    <p>Documents are available offline on the mobile app. Workers in the field or in remote areas can access critical files (e.g. equipment manuals, safety procedures) without connectivity. Changes sync automatically when back online.</p>
+  </div>
+
+  <div class="feature">
+    <h3>AI-Powered Answers <span class="tag">Assistance</span></h3>
+    <p>Workers can ask questions about documents and receive <strong>AI-generated answers</strong> drawn from the document content. This helps teams quickly find specific information within long documents without reading the entire file.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Linking Documents to Heads Ups <span class="tag">Cross-module</span></h3>
+    <p>From a document, create a <strong>Heads Up</strong> to broadcast it to the team. The document is attached, and users with file access are auto-added as assignees. This ensures that when a new SOP or policy is published, the right people are notified and can acknowledge or sign.</p>
+    <a href="#headsup" class="cross-link">→ Connects to: Heads Up</a>
+  </div>
+
+  <div class="feature">
+    <h3>Linking Documents to Inspections &amp; Assets <span class="tag">Cross-module</span></h3>
+    <p>Documents can be attached to <strong>asset profiles</strong> (manuals, warranties, service records) and referenced within <strong>inspection templates</strong> (as instruction fields or reference material). This keeps critical documentation accessible at the point of use.</p>
+    <a href="#assets" class="cross-link">→ Connects to: Assets</a>
+    <a href="#templates" class="cross-link" style="margin-left:6px;">→ Connects to: Templates &amp; Inspections</a>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 7. ANALYTICS                              -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="module mod-indigo" id="analytics">
+  <div class="module-header">
+    <span class="dot"></span>
+    <h2>Analytics</h2>
+    <span class="num">Module 07</span>
+  </div>
+  <p class="module-intro">Analytics sits across the entire platform, pulling data from every module into customisable dashboards and charts. It transforms operational data into actionable insights — helping teams spot trends, track KPIs, and make data-driven decisions.</p>
+
+  <div class="feature">
+    <h3>Dashboards <span class="tag">Core Concept</span></h3>
+    <p>A dashboard is a collection of charts on a single screen, focused on a specific theme (e.g. "Safety Performance", "Maintenance Compliance", "Issue Trends"). Users can create multiple dashboards. Each dashboard can be shared with specific users, groups, or the entire organisation.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Dashboard Templates <span class="tag">Getting Started</span> <span class="improved">✦ Improved</span></h3>
+    <p>To make it easier to get started, the platform provides <strong>pre-built dashboard templates</strong>:</p>
+    <ul>
+      <li><strong>Inspection Performance</strong> — completion rates, overdue inspections, flagged response trends, completion by site/user.</li>
+      <li><strong>Issue Management</strong> — issue volume by category, resolution times, open vs. closed, issues by site.</li>
+      <li><strong>Action Tracking</strong> — actions created vs. completed, overdue actions, average close time, breakdown by type/priority.</li>
+      <li><strong>Heads Up Engagement</strong> — reach, acknowledgement rates, signature rates, engagement by site/group.</li>
+      <li><strong>Asset &amp; Maintenance</strong> — maintenance compliance, overdue plans, asset utilisation, readings over time.</li>
+      <li><strong>Compliance Overview</strong> — overall compliance score, non-compliant rules, due-soon rules, score by category and site, trend over time, goal progress.</li>
+      <li><strong>Team Compliance</strong> — cross-module view combining inspections, training, and issue response metrics per site.</li>
+    </ul>
+    <p>Each template comes pre-configured with relevant charts and filters. Users can use them as-is or customise them (add/remove/edit charts, change filters, rename).</p>
+  </div>
+
+  <div class="feature">
+    <h3>Charts <span class="tag">Visualisation</span></h3>
+    <p>Charts are the building blocks of dashboards. Each chart has:</p>
+    <ul>
+      <li><strong>Data source</strong> — select from inspections, issues, actions, Heads Up, assets, maintenance, or training.</li>
+      <li><strong>Metric</strong> — what to measure (e.g. count, percentage, average time, score).</li>
+      <li><strong>Grouping</strong> — how to break down the data (by site, user, group, template, category, type, priority, time period, asset, asset type).</li>
+      <li><strong>Chart type</strong> — bar, line, pie, donut, table, or number card.</li>
+      <li><strong>Filters</strong> — narrow data by date range, site, group, user, template, category, status, priority, asset type, or any combination.</li>
+    </ul>
+    <p>Charts update in real-time as new data is captured across the platform.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Filters <span class="tag">Precision</span></h3>
+    <p>Filters can be applied at the <strong>dashboard level</strong> (affecting all charts) or at the <strong>individual chart level</strong>. Key filter dimensions include: date range, site (with hierarchy drill-down — e.g. Country → Region → Site), group, user, template, issue category, action type, action priority, asset, and asset type. Filters can be saved as part of the dashboard configuration.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Data Export <span class="tag">Output</span> <span class="improved">✦ Improved</span></h3>
+    <p>All analytics data can be exported:</p>
+    <ul>
+      <li><strong>CSV export</strong> — export the underlying data of any chart or entire dashboard as a CSV file for further analysis in Excel, Google Sheets, or BI tools.</li>
+      <li><strong>PDF export</strong> — export a dashboard as a formatted PDF report for sharing with stakeholders.</li>
+      <li><strong>Scheduled exports</strong> — configure automatic recurring exports (e.g. weekly CSV emailed to a distribution list).</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Cross-Module Analytics <span class="tag">Coverage</span></h3>
+    <p>Analytics can pull data from every module:</p>
+    <ul>
+      <li><strong>Inspections</strong> — completion rates, flagged responses, overdue counts, response distributions.</li>
+      <li><strong>Issues</strong> — volume by category/site, resolution times, open/closed ratios, trend lines.</li>
+      <li><strong>Actions</strong> — created vs. completed, on-time percentage, average close time, breakdown by type/priority.</li>
+      <li><strong>Heads Up</strong> — reach, acknowledgement rates, signature rates, engagement by audience.</li>
+      <li><strong>Assets</strong> — utilisation, reading trends, maintenance compliance, overdue plans.</li>
+      <li><strong>Compliance</strong> — compliance scores by category/site, non-compliant rule counts, trend lines, goal progress.</li>
+      <li><strong>Training</strong> — course completion, quiz scores, certification status.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Drill-Down &amp; Action from Analytics <span class="tag">Workflow</span></h3>
+    <p>Charts are interactive. Users can tap or click to drill down into the underlying data — e.g. click a bar showing "12 overdue actions at Manchester" to see the specific actions. From the drill-down, users can take action directly: update an action, start an inspection, or create a Heads Up. This closes the loop between insight and action.</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 8. COMPLIANCE                             -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="module mod-orange" id="compliance">
+  <div class="module-header">
+    <span class="dot"></span>
+    <h2>Compliance</h2>
+    <span class="num">Module 08</span>
+  </div>
+  <p class="module-intro">A simple, evidence-based compliance engine. Set up the frameworks your organisation must adhere to — ISO 45001, ISO 9001, internal quality standards, or anything custom — define the rules within each, and the platform automatically collects proof from inspections, actions, training, documents, and more. At a glance, see whether you're compliant, where the gaps are, and what needs to happen next. Inspired by platforms like Vanta, but radically simplified for operational teams.</p>
+
+  <div class="feature">
+    <h3>Core Concept: Frameworks → Rules → Evidence → Status <span class="tag">How It Works</span> <span class="improved">✦ New Module</span></h3>
+    <p>The Compliance module is built around one simple hierarchy:</p>
+    <ul>
+      <li><strong>Frameworks</strong> — you define which standards, certifications, or regulatory requirements your organisation needs to comply with (e.g. "ISO 45001", "ISO 9001", "UK HSE Regulations", "Internal Quality Manual"). A framework is a named container that holds a set of related rules.</li>
+      <li><strong>Rules</strong> — within each framework, you define the specific things your organisation must do (e.g. "Monthly fire safety audit at every site", "Risk assessments reviewed quarterly"). Each rule belongs to exactly one framework.</li>
+      <li><strong>Evidence</strong> — for each rule, you specify what counts as proof. The platform auto-collects evidence from activities already happening in other modules (inspections, actions, training, documents, Heads Ups). No extra work for the frontline.</li>
+      <li><strong>Status</strong> — the platform continuously evaluates whether evidence exists and is current. Each rule shows a live status: <strong>Compliant</strong>, <strong>Due Soon</strong>, or <strong>Non-Compliant</strong>. The framework inherits an overall score from the status of all its rules.</li>
+    </ul>
+    <p>That's it. Frameworks group rules. Rules define requirements. Evidence proves compliance. Status is calculated automatically.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Creating a Framework <span class="tag">Setup</span></h3>
+    <p>A framework represents a standard, certification, or set of requirements the organisation wants to track compliance against. To create one:</p>
+    <ul>
+      <li><strong>Framework name</strong> — e.g. "ISO 45001:2018", "ISO 9001:2015", "UK HSE Fire Safety Regulations", "Company Quality Manual v3".</li>
+      <li><strong>Description</strong> — a summary of what this framework covers and why the organisation follows it.</li>
+      <li><strong>Type</strong> — categorise the framework: <em>Health &amp; Safety</em>, <em>Quality</em>, <em>Environmental</em>, <em>Regulatory</em>, or <em>Custom</em>.</li>
+      <li><strong>Owner</strong> — the user or group responsible for maintaining this framework (e.g. "QHSE Manager", "Quality Team").</li>
+      <li><strong>Applicable sites</strong> — which sites this framework applies to. Can be all sites, a level in the hierarchy, or individually selected. Rules within the framework inherit this by default (but can be overridden per rule).</li>
+    </ul>
+    <p>Once created, the framework appears on the Compliance dashboard with its own compliance score. The user then populates it with rules — either manually or by importing a pre-built rule template pack.</p>
+    <p>An organisation can have <strong>multiple frameworks active simultaneously</strong>. For example, a manufacturing company might have ISO 45001 (H&amp;S), ISO 9001 (Quality), and ISO 14001 (Environmental) all running in parallel, each with their own set of rules and independent compliance scores.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Creating a Rule (within a Framework) <span class="tag">Workflow</span></h3>
+    <p>Rules live inside a framework. To create a compliance rule, the user selects the framework and fills in:</p>
+    <ul>
+      <li><strong>Rule name</strong> — a clear, human-readable name (e.g. "Monthly Fire Safety Audit").</li>
+      <li><strong>Clause / Reference</strong> — optional. The specific clause or section of the standard this rule maps to (e.g. "Clause 9.1.2", "Regulation 3(1)(a)"). This keeps a clear link between the rule and the source requirement.</li>
+      <li><strong>Description</strong> — what this rule requires and why it exists.</li>
+      <li><strong>Frequency</strong> — how often the rule must be satisfied: <em>one-time</em>, <em>weekly</em>, <em>monthly</em>, <em>quarterly</em>, <em>bi-annually</em>, <em>annually</em>, or a <em>custom interval</em>.</li>
+      <li><strong>Applicable sites</strong> — inherits from the framework by default. Can be narrowed to specific sites if the rule only applies to certain locations.</li>
+      <li><strong>Responsible party</strong> — the user, group, or role accountable for ensuring this rule is met.</li>
+      <li><strong>Evidence requirements</strong> — what constitutes proof (see below).</li>
+      <li><strong>Grace period</strong> — optional. Days after the due date before the rule is marked Non-Compliant.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Evidence Types — Auto-Collected from the Platform <span class="tag">Cross-module</span></h3>
+    <p>This is where the Compliance module connects to the entire ecosystem. For each rule, the user defines one or more <strong>evidence requirements</strong>. Evidence is auto-collected — the platform watches for matching activities and links them to the rule automatically. Evidence types include:</p>
+    <ul>
+      <li><strong>Inspection completed</strong> — "A completed inspection from template [X] at the applicable site within the period." The platform auto-detects when a matching inspection is completed and marks the evidence as collected.
+        <br><a href="#templates" class="cross-link">→ From: Templates &amp; Inspections</a></li>
+      <li><strong>Action completed</strong> — "A completed action of type [Y] at the applicable site within the period." Auto-detects when a matching action is marked complete.
+        <br><a href="#actions" class="cross-link">→ From: Actions</a></li>
+      <li><strong>Training completed</strong> — "All users in group [G] have completed course [Z] within the period." Auto-detects training completion.</li>
+      <li><strong>Document current</strong> — "Document [D] has been reviewed/updated within the last [N] days." Auto-checks the document's last-modified date.
+        <br><a href="#documents" class="cross-link">→ From: Documents</a></li>
+      <li><strong>Heads Up signed</strong> — "Heads Up [H] has been signed by all assignees." Auto-checks the signature status.
+        <br><a href="#headsup" class="cross-link">→ From: Heads Up</a></li>
+      <li><strong>Asset maintenance current</strong> — "All assets of type [T] at the applicable site have no overdue maintenance plans." Auto-checks the maintenance table.
+        <br><a href="#assets" class="cross-link">→ From: Assets &amp; Maintenance</a></li>
+      <li><strong>Issue resolution SLA met</strong> — "All issues in category [C] at the applicable site were resolved within [N] days." Auto-checks issue resolution times.
+        <br><a href="#issues" class="cross-link">→ From: Issues</a></li>
+      <li><strong>Manual evidence</strong> — for things that happen outside the platform (e.g. third-party audit certificates, government approvals, insurance documents). The responsible user uploads a file (PDF, image) and enters a validity date. The platform tracks the expiry and alerts when renewal is due.</li>
+    </ul>
+    <p>A single rule can require <strong>multiple evidence types</strong>. For example, "ISO 45001 — Emergency Preparedness" might require: (1) a completed Emergency Drill inspection, (2) all staff completed Fire Safety training, and (3) the Emergency Response Plan document reviewed within the last 12 months. All three must be satisfied for the rule to be Compliant.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Compliance Status — Per Rule, Per Site, Per Period <span class="tag">Tracking</span></h3>
+    <p>The platform continuously evaluates every rule against its evidence requirements. Status is calculated <strong>per rule, per applicable site, per time period</strong>:</p>
+    <ul>
+      <li><span style="color:var(--green);font-weight:600;">● Compliant</span> — all required evidence is present and current for this period.</li>
+      <li><span style="color:var(--amber);font-weight:600;">● Due Soon</span> — the current period's evidence deadline is approaching (configurable threshold, e.g. 7 days before due). Alerts are sent to the responsible party.</li>
+      <li><span style="color:var(--red);font-weight:600;">● Non-Compliant</span> — evidence is missing, expired, or the grace period has passed. Escalation notifications fire.</li>
+    </ul>
+    <p>Status updates are automatic and real-time. When an inspector completes an inspection, the platform immediately checks whether it satisfies any pending compliance rule — and if it does, the rule's status flips to Compliant without anyone needing to manually log or link it.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Compliance Dashboard <span class="tag">Visibility</span></h3>
+    <p>A single-screen view showing the organisation's compliance health:</p>
+    <ul>
+      <li><strong>Framework cards</strong> — each active framework is displayed as a card showing its name, type, overall compliance score, and a mini progress bar. Click to drill into the framework's rules. This is the primary entry point — the user sees at a glance which frameworks are healthy and which need attention.</li>
+      <li><strong>Overall compliance score</strong> — aggregated across all frameworks (e.g. "87% compliant across 3 frameworks, 42 rules").</li>
+      <li><strong>Breakdown by framework</strong> — each framework with its own score, number of compliant/due/non-compliant rules.</li>
+      <li><strong>Breakdown by site</strong> — compliance score per site, with the site hierarchy allowing roll-up views (e.g. all of "UK Region" at 91%, with individual sites underneath).</li>
+      <li><strong>Non-compliant rules list</strong> — prioritised across all frameworks, sorted by how long overdue. Each row shows the framework, rule name, clause reference, affected site(s), missing evidence, and responsible party.</li>
+      <li><strong>Due soon list</strong> — rules approaching their deadline, so teams can act proactively.</li>
+      <li><strong>Trend line</strong> — compliance score over time (per framework or aggregated), showing improvement or decline.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Notifications &amp; Escalations <span class="tag">Automation</span></h3>
+    <p>The Compliance module sends automated notifications at key moments:</p>
+    <ul>
+      <li><strong>Due soon reminder</strong> — sent to the responsible party when a rule's evidence deadline is approaching (configurable: 14 days, 7 days, 3 days, 1 day before).</li>
+      <li><strong>Overdue alert</strong> — sent when a rule becomes Non-Compliant.</li>
+      <li><strong>Escalation</strong> — if a rule remains Non-Compliant beyond a configurable escalation threshold (e.g. 7 days overdue), a notification is sent to the responsible party's manager or a designated escalation group.</li>
+      <li><strong>Compliance restored</strong> — sent when evidence is collected and the rule returns to Compliant status.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Compliance Goals <span class="tag">Targets</span></h3>
+    <p>Optionally, administrators can set <strong>compliance goals</strong> — per framework, per site, or organisation-wide. For example: "Achieve 95% compliance on ISO 45001 across all UK sites by Q3." Goals are tracked on the dashboard with a progress indicator showing current score vs. target and a projected trajectory based on recent trends.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Compliance Report — Auditor-Ready <span class="tag">Output</span></h3>
+    <p>Generate a <strong>Compliance Report</strong> for external auditors, regulators, or internal review:</p>
+    <ul>
+      <li>Select a <strong>specific framework</strong> (e.g. "ISO 45001:2018") or generate a cross-framework report.</li>
+      <li>Lists all rules within the selected framework, their status, clause references, and the evidence linked to each.</li>
+      <li>Filterable by site, time period, and status.</li>
+      <li>For each rule, the report shows: the clause/reference, requirement description, frequency, applicable sites, responsible party, all linked evidence (with links to the actual inspections, training records, documents, etc.), and a compliance history timeline.</li>
+      <li>Exportable as <strong>PDF</strong> (formatted for auditors) or <strong>CSV</strong> (for data analysis).</li>
+    </ul>
+    <p>During an ISO audit, for example, the user selects the "ISO 45001:2018" framework, exports the report, and hands it to the auditor — every clause mapped to a rule, every rule mapped to evidence, with full traceability.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Framework Templates <span class="tag">Getting Started</span></h3>
+    <p>To make setup fast, the platform provides <strong>pre-built framework templates</strong> — complete frameworks with rules already mapped to the relevant clauses:</p>
+    <ul>
+      <li><strong>ISO 45001:2018</strong> (Occupational Health &amp; Safety) — key clauses mapped to rules with suggested evidence types.</li>
+      <li><strong>ISO 9001:2015</strong> (Quality Management) — key clauses mapped to rules.</li>
+      <li><strong>ISO 14001:2015</strong> (Environmental Management) — key clauses mapped to rules.</li>
+      <li><strong>Local H&amp;S regulations</strong> — country-specific framework packs (e.g. UK HSE, OSHA).</li>
+      <li><strong>Blank framework</strong> — an empty framework for custom company policies or internal standards.</li>
+    </ul>
+    <p>A framework template is imported with one click, creating the framework and all its rules instantly. The user then customises: adjust frequencies, assign sites, link evidence types to the organisation's actual templates, courses, and documents. This gets teams from zero to a working compliance system in minutes, not weeks.</p>
+  </div>
+
+  <div class="feature">
+    <h3>How Compliance Connects to Every Module <span class="tag">Ecosystem</span></h3>
+    <p>The Compliance module is not a standalone silo — it sits on top of the entire platform, organised by framework, and draws evidence from every module:</p>
+    <ul>
+      <li><strong>Templates &amp; Inspections</strong> — completed inspections auto-satisfy inspection-based rules.</li>
+      <li><strong>Issues</strong> — issue resolution times are checked against SLA-based rules.</li>
+      <li><strong>Actions</strong> — completed actions of specific types satisfy action-based rules.</li>
+      <li><strong>Heads Up</strong> — signed Heads Ups satisfy briefing/sign-off rules.</li>
+      <li><strong>Assets &amp; Maintenance</strong> — maintenance plan compliance is checked for asset-based rules.</li>
+      <li><strong>Documents</strong> — document freshness is checked for document-based rules.</li>
+      <li><strong>Training</strong> — course completion across groups satisfies training-based rules.</li>
+      <li><strong>Analytics</strong> — compliance scores and trends feed into Analytics dashboards alongside operational data. A "Compliance" data source is available in the chart builder, filterable by framework.</li>
+      <li><strong>Groups &amp; Sites</strong> — frameworks are scoped to sites; responsibilities assigned to groups. Site hierarchy enables roll-up compliance views across regions.</li>
+    </ul>
+    <p>The result: teams don't need to do extra work for compliance. They keep doing their inspections, actions, training, and maintenance — and the Compliance module watches, collects evidence, and keeps score automatically across every active framework.</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 9. GROUPS & SITES                         -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="module mod-teal" id="groups-sites">
+  <div class="module-header">
+    <span class="dot"></span>
+    <h2>Groups &amp; Sites</h2>
+    <span class="num">Module 09</span>
+  </div>
+  <p class="module-intro">The organisational backbone. Groups control <strong>people and access</strong>. Sites control <strong>data and location</strong>. Together, they form the foundation every other module builds on.</p>
+
+  <div class="feature">
+    <h3>Groups vs. Sites <span class="tag">Concept</span></h3>
+    <p><strong>Groups</strong> organise users by team, role, or department. Primary purpose: manage access (templates, inspections, training, notifications). <strong>Sites</strong> organise data by location, project, or branch. Primary purpose: tag and filter operational data (inspections, actions, issues, assets). Users can belong to multiple groups and sites. Combined via advanced access rules for precise control.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Creating &amp; Managing Groups <span class="tag">Setup</span></h3>
+    <p>Create groups via web app. Add users manually, via CSV/Excel, or via <strong>rule-based membership</strong> (auto-add/remove based on custom user fields like role, department, shift). Up to 5 rules per group, 15,000 users per rule-based group, 100 groups per user.</p>
+  </div>
+
+  <div class="feature">
+    <h3>How Groups Control Access <span class="tag">Cross-module</span></h3>
+    <p>Groups are a target for access and assignment across every module: template access, training assignment, issue notifications, Heads Up targeting, action notifications, and lone worker escalations.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Creating Sites &amp; Site Hierarchy <span class="tag">Setup</span></h3>
+    <p>Add individually or bulk CSV. Up to 50,000 sites. Organise into a hierarchy (Country → Region → Area → Site). Higher levels aggregate data and membership. Manage members manually, via Site Matrix, CSV, or membership rules. Custom site labels to match organisational terminology.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Site Profiles <span class="tag">Central View</span></h3>
+    <p>Each site has a profile aggregating: members, inspections, actions, issues, and assets linked to that site.</p>
+  </div>
+
+  <div class="feature">
+    <h3>How Sites Control Data <span class="tag">Cross-module</span></h3>
+    <p>Inspections tagged to sites for filtering and access. Actions linkable to sites. Issues reportable per site. Assets assigned to sites for visibility. Heads Up targetable by site. Schedules assignable per site. Analytics filterable by site/hierarchy. Documents filterable by site (not access-controlled).</p>
+  </div>
+
+  <div class="feature">
+    <h3>Advanced Access Rules (Groups + Sites) <span class="tag">Permissions</span></h3>
+    <p>Combine group + site membership: e.g. "Grant access to users in 'Auditors' group AND members of 'Manchester' site." Available for templates, inspections, issues, actions, and training.</p>
+  </div>
+
+  <div class="feature">
+    <h3>Site Selection Settings &amp; Matrix <span class="tag">Admin</span></h3>
+    <p>Configure whether users see all sites or only their own. The Group &amp; Site Matrix is a grid for managing memberships at a glance, exportable as CSV.</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 10. SETTINGS                               -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="module mod-slate" id="settings">
+  <div class="module-header">
+    <span class="dot"></span>
+    <h2>Settings</h2>
+    <span class="num">Module 10</span>
+  </div>
+  <p class="module-intro">The Settings page is the central administration hub. What a user sees here depends on their permission set — administrators see everything; standard users see only their personal settings.</p>
+
+  <div class="feature">
+    <h3>Pricing Model <span class="tag">Concept</span> <span class="improved">✦ Improved</span></h3>
+    <p>The platform uses a <strong>per-company pricing model</strong>. There are no individual seat types or per-user charges. A company pays a single price for access to the platform. This means:</p>
+    <ul>
+      <li>No concept of "full seat" vs. "lite seat" vs. "guest seat". All users within a company have access to the platform.</li>
+      <li>What a user can <strong>do</strong> is controlled entirely by their <strong>permission set</strong> and <strong>group membership</strong> — not by how much the company pays per head.</li>
+      <li>Companies can add as many users as they need without worrying about per-seat cost implications.</li>
+      <li>This simplifies onboarding: add a user, assign them to the right group(s) and site(s), give them the right permission set, and they're ready to go.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Permission Sets <span class="tag">What Users Can Do</span></h3>
+    <p>Permission sets are bundles of granular permissions controlling which features a user can access. Default sets include:</p>
+    <ul>
+      <li><strong>Administrator</strong> — full control: users, groups, sites, billing, all features.</li>
+      <li><strong>Manager</strong> — create templates, manage training, manage feature settings.</li>
+      <li><strong>Standard</strong> — conduct inspections, report issues, complete actions and training.</li>
+    </ul>
+    <p>Custom permission sets can be created with any combination of granular permissions (e.g. "Actions: Settings", "Issues: Settings", "Assets: Manage", "Heads Up: Manage", "Analytics: Create dashboards", etc.). Every user must have exactly one permission set.</p>
+    <p><strong>Key distinction:</strong> Permission sets control <em>what features</em> a user can use. Groups and sites control <em>what data</em> they can see. Both work together.</p>
+  </div>
+
+  <div class="feature">
+    <h3>User Management <span class="tag">Admin</span></h3>
+    <p>From Settings, administrators can:</p>
+    <ul>
+      <li>Add, invite, deactivate, or reactivate users.</li>
+      <li>Assign or change permission sets (individually or in bulk via CSV).</li>
+      <li>Add users to groups and sites (individually, bulk CSV, or rule-based).</li>
+      <li>Manage custom user fields (role, department, location, etc.) used for rule-based membership.</li>
+      <li>Reset passwords and manage account credentials.</li>
+      <li>View and download the full user list as CSV.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Organisation Settings <span class="tag">Admin</span></h3>
+    <p>Organisation-level settings include:</p>
+    <ul>
+      <li><strong>Groups</strong> — create, edit, manage memberships and rules.</li>
+      <li><strong>Sites</strong> — create, edit, manage hierarchy and membership.</li>
+      <li><strong>Permission sets</strong> — create and edit permission bundles.</li>
+      <li><strong>Templates</strong> — manage Global Response Sets and default template settings.</li>
+      <li><strong>Actions</strong> — manage action types, custom fields, statuses, transition controls, labels, priority-based due dates, and access rules.</li>
+      <li><strong>Issues</strong> — manage categories, custom questions, notifications, Critical Alerts, QR codes, and access rules.</li>
+      <li><strong>Assets</strong> — manage asset types, fields, readings, maintenance plans, and settings.</li>
+      <li><strong>Heads Up</strong> — manage default settings.</li>
+      <li><strong>Compliance</strong> — manage frameworks, rule templates, notification thresholds, escalation policies, and goal targets.</li>
+      <li><strong>Training</strong> — manage courses, quizzes, and assignments.</li>
+      <li><strong>Integrations</strong> — connect to third-party tools (telematics, ERP, BI, etc.).</li>
+      <li><strong>Billing</strong> — manage the company subscription.</li>
+    </ul>
+  </div>
+
+  <div class="feature">
+    <h3>Personal Settings (All Users) <span class="tag">Self-service</span></h3>
+    <p>Every user can access their own personal settings:</p>
+    <ul>
+      <li>Edit name, email, and password.</li>
+      <li>Set timezone and language preferences.</li>
+      <li>Manage notification preferences (email, push, in-app).</li>
+      <li>View their group and site memberships.</li>
+      <li>View their assigned permission set (read-only).</li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 11. HOW THE MODULES INTERACT              -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="interplay" id="interplay">
+  <h2>How the Modules Interact</h2>
+
+  <div class="scenario">
+    <h4>Inspection → Action (with deduplication)</h4>
+    <p>A user conducts a daily inspection and flags a broken guardrail. They create an <strong>action</strong> from the question. The next day, during the same recurring inspection, the platform shows a badge: <em>"An open action already exists for this item."</em> The user links the existing action instead of creating a duplicate. If duplicates were already created, a manager merges them into one.</p>
+    <div class="step">Templates &amp; Inspection → Actions (dedup + merge)</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Issue → Inspection → Action</h4>
+    <p>A worker reports a hazard via <strong>Issues</strong>. A manager opens the issue, starts a <strong>linked inspection</strong> for detailed assessment. During the inspection, they create an <strong>action</strong> for the fix. The issue profile shows both linked items — full traceability.</p>
+    <div class="step">Issues → Templates &amp; Inspection → Actions</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Asset → Inspection → Maintenance Plan</h4>
+    <p>A technician scans an asset's <strong>QR code</strong>, opens the profile, starts a scheduled <strong>inspection</strong> (pre-filled). They log an odometer reading that triggers a <strong>maintenance plan</strong> threshold. They create an action (Work Order) from the maintenance table.</p>
+    <div class="step">Assets → Templates &amp; Inspection → Maintenance → Actions</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Parent Asset → Sub-Asset Maintenance</h4>
+    <p>A production line (parent asset) has three sub-assets: Conveyor Motor, Packaging Machine, and Labelling Station. Each sub-asset has its own <strong>maintenance plan</strong> (e.g. monthly lubrication for the motor, quarterly calibration for the labelling station). The parent also has a plan (annual safety audit). A manager views the parent asset's profile and sees all sub-assets with status indicators — the motor is overdue. They drill into the sub-asset, create an <strong>action</strong> (Work Order), and assign it. The parent profile shows the open action under "Sub-asset actions".</p>
+    <div class="step">Parent Asset → Sub-Assets → Maintenance Plans → Actions</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Multi-Signature Inspection → Approval</h4>
+    <p>A work permit template requires <strong>3 signatures</strong> in sequence: the inspector, the site supervisor, and the safety manager. The inspector completes the form and signs. The supervisor is notified, reviews, and signs. The safety manager signs last. Only then can the inspection be completed and the work permit issued as a report.</p>
+    <div class="step">Templates &amp; Inspection (multi-signature + approval)</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Issue → Action → Heads Up (with signature)</h4>
+    <p>An incident is reported via <strong>Issues</strong>. An action resolves it. A manager creates a <strong>Heads Up</strong> with updated safety procedures, attached as a <strong>Document</strong>, and requests <strong>signatures</strong>. All workers sign the Heads Up, and the signature log is stored for compliance.</p>
+    <div class="step">Issues → Actions → Documents → Heads Up (signature)</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Documents → Heads Up → Analytics</h4>
+    <p>A new SOP is uploaded to <strong>Documents</strong>. A <strong>Heads Up</strong> is created linking the document and requesting acknowledgement. <strong>Analytics</strong> tracks which sites and groups have acknowledged and which haven't, showing a completion heat map by region.</p>
+    <div class="step">Documents → Heads Up → Analytics</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Analytics → Drill-Down → Action</h4>
+    <p>A manager views the <strong>Analytics</strong> dashboard and sees 15 overdue actions at a specific site. They drill down to see the individual actions, update priorities, and send a <strong>Heads Up</strong> to the site team about the backlog.</p>
+    <div class="step">Analytics → Actions → Heads Up</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Compliance — Automatic Evidence Collection</h4>
+    <p>An organisation has an <strong>ISO 45001 framework</strong> with a rule: "Monthly Fire Safety Audit at every site." The rule is linked to a specific inspection template as evidence. When a site manager completes the fire safety inspection in January, the <strong>Compliance module</strong> auto-detects the completed inspection, matches it to the rule and site, and flips the status to <strong>Compliant</strong> for January. The ISO 45001 framework score ticks up. In February, the rule shows <strong>Due Soon</strong> — the site manager receives an automated reminder. If March arrives without an inspection, the status flips to <strong>Non-Compliant</strong> and an escalation fires to the regional safety lead.</p>
+    <div class="step">Templates &amp; Inspection → Compliance Framework (auto-evidence) → Notifications</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Compliance — Multi-Evidence Rule for ISO Audit</h4>
+    <p>Preparing for an ISO 45001 audit, the compliance manager opens the <strong>ISO 45001:2018 framework</strong> and reviews the rule for "Emergency Preparedness (Clause 8.2)." This rule requires three evidence items per quarter: (1) a completed Emergency Drill <strong>inspection</strong>, (2) all warehouse staff completed Fire Safety <strong>training</strong>, and (3) the Emergency Response Plan <strong>document</strong> reviewed within 12 months. The dashboard shows 2 of 3 collected — the document is 14 months old, so the rule is <strong>Non-Compliant</strong>. The responsible party uploads the updated document, the rule flips to Compliant, the framework score improves, and the auditor receives a generated <strong>Compliance Report</strong> filtered to the ISO 45001 framework with full clause-to-evidence traceability.</p>
+    <div class="step">Inspections + Training + Documents → Compliance Framework → Report</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Heads Up (signed) → Compliance Evidence</h4>
+    <p>A safety manager sends a <strong>Heads Up</strong> briefing on updated lifting procedures, linked to the new <strong>Document</strong>, with <strong>signature requested</strong>. Workers view, acknowledge, and sign. A compliance rule requires "All warehouse staff signed the Manual Handling Briefing annually." The Compliance module checks the Heads Up signature data and auto-marks the rule as <strong>Compliant</strong> once all assignees have signed.</p>
+    <div class="step">Documents → Heads Up (signature) → Compliance (auto-evidence)</div>
+  </div>
+
+  <div class="scenario">
+    <h4>Groups &amp; Sites — The Fabric Connecting Everything</h4>
+    <p><strong>Groups</strong> and <strong>Sites</strong> underpin every interaction. Template access → granted to groups. Inspection data → tagged to sites. Issue notifications → fire to groups/sites. Heads Up → targeted to groups/sites. Assets → assigned to sites. Compliance rules → scoped to sites, responsibilities assigned to groups. Analytics → filterable by group + site. Advanced access rules combine both for precision. The <strong>Settings</strong> page is where it all comes together — user management, permission sets, and organisational configuration. The per-company pricing model means no seat-type friction when adding users.</p>
+    <div class="step">Groups &amp; Sites + Settings → Every Module</div>
+  </div>
+</section>
+
+<footer>Platform — Detailed Module Guide (Improved) — April 2026</footer>
+
+</div>
+</body>
+</html>

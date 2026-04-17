@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platform — Edge Cases & Test Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0e13; --surface: #13171e; --surface-alt: #191e28;
+    --border: rgba(255,255,255,0.06); --border-strong: rgba(255,255,255,0.1);
+    --text: #dfe2ea; --text-dim: #858c9b; --text-bright: #f4f5f8;
+    --blue: #3b82f6; --red: #ef4444; --amber: #f59e0b; --violet: #8b5cf6;
+    --green: #10b981; --teal: #06b6d4; --pink: #ec4899; --orange: #f97316;
+    --slate: #64748b; --indigo: #6366f1;
+    --radius: 14px;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.72; -webkit-font-smoothing: antialiased; }
+  .noise { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 200px; }
+  .page { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 56px 24px 80px; }
+  header { text-align: center; margin-bottom: 64px; }
+  .badge { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; color: var(--text-dim); border: 1px solid var(--border); border-radius: 999px; padding: 5px 16px; margin-bottom: 20px; }
+  header h1 { font-family: var(--font-display); font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+  header h1 em { font-style: italic; background: linear-gradient(135deg, var(--red), var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  header p.subtitle { max-width: 660px; margin: 16px auto 0; color: var(--text-dim); font-size: 1rem; }
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; margin-bottom: 56px; }
+  nav.toc h2 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; margin-bottom: 14px; }
+  nav.toc ol { list-style: none; counter-reset: toc; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
+  nav.toc ol li { counter-increment: toc; }
+  nav.toc ol li a { color: var(--text-dim); text-decoration: none; font-size: 0.88rem; transition: color 0.2s; }
+  nav.toc ol li a::before { content: counter(toc) ". "; color: var(--text-dim); opacity: 0.5; }
+  nav.toc ol li a:hover { color: var(--text-bright); }
+
+  .module { margin-bottom: 72px; }
+  .module-header { display: flex; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 2px solid var(--border); margin-bottom: 28px; }
+  .module-header .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .module-header h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+
+  .section-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 16px; padding: 6px 14px; border-radius: 8px; display: inline-block; }
+  .section-label.edge { background: rgba(239,68,68,0.1); color: var(--red); }
+  .section-label.test { background: rgba(59,130,246,0.1); color: var(--blue); }
+
+  .edge-table, .test-table { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 0.87rem; }
+  .edge-table th, .test-table th { text-align: left; padding: 10px 14px; background: var(--surface-alt); color: var(--text-dim); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+  .edge-table td, .test-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .edge-table tr:hover td, .test-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .edge-table .id, .test-table .id { color: var(--text-dim); font-size: 0.78rem; font-family: monospace; white-space: nowrap; width: 60px; }
+  .edge-table .resolution { color: var(--green); }
+  .test-table .expected { color: var(--text-dim); }
+  .test-table .category { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+  .cat-func { background: rgba(59,130,246,0.1); color: var(--blue); }
+  .cat-edge { background: rgba(239,68,68,0.1); color: var(--red); }
+  .cat-perm { background: rgba(139,92,246,0.1); color: var(--violet); }
+  .cat-perf { background: rgba(245,158,11,0.1); color: var(--amber); }
+  .cat-integ { background: rgba(16,185,129,0.1); color: var(--green); }
+  .cat-offline { background: rgba(6,182,212,0.1); color: var(--teal); }
+
+  .dot-blue { background: var(--blue); }
+  .dot-red { background: var(--red); }
+  .dot-amber { background: var(--amber); }
+  .dot-violet { background: var(--violet); }
+  .dot-green { background: var(--green); }
+  .dot-teal { background: var(--teal); }
+  .dot-pink { background: var(--pink); }
+  .dot-orange { background: var(--orange); }
+  .dot-slate { background: var(--slate); }
+  .dot-indigo { background: var(--indigo); }
+
+  footer { text-align: center; color: var(--text-dim); font-size: 0.75rem; opacity: 0.5; margin-top: 40px; }
+  @media (max-width: 640px) {
+    .page { padding: 36px 14px 60px; }
+    nav.toc ol { grid-template-columns: 1fr; }
+    .edge-table, .test-table { display: block; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="page">
+
+<header>
+  <div class="badge">QA & Engineering Reference</div>
+  <h1>Edge Cases &amp; <em>Test Plan</em></h1>
+  <p class="subtitle">For each of the 10 platform modules plus cross-module interactions: identified edge cases with resolutions, and a complete test suite covering functional, edge case, permission, performance, integration, and offline scenarios.</p>
+</header>
+
+<nav class="toc">
+  <h2>Modules</h2>
+  <ol>
+    <li><a href="#m1">Templates &amp; Inspections</a></li>
+    <li><a href="#m2">Issues</a></li>
+    <li><a href="#m3">Actions</a></li>
+    <li><a href="#m4">Heads Up</a></li>
+    <li><a href="#m5">Assets &amp; Maintenance</a></li>
+    <li><a href="#m6">Documents</a></li>
+    <li><a href="#m7">Analytics</a></li>
+    <li><a href="#m8">Compliance</a></li>
+    <li><a href="#m9">Groups &amp; Sites</a></li>
+    <li><a href="#m10">Settings</a></li>
+    <li><a href="#m11">Cross-Module</a></li>
+  </ol>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODULE 1: TEMPLATES & INSPECTIONS                        -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m1">
+  <div class="module-header"><span class="dot dot-blue"></span><h2>01 — Templates &amp; Inspections</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">T-E01</td><td>A signer in a <strong>sequential multi-signature</strong> chain is deactivated or removed from the org while the inspection is waiting for their signature.</td><td class="resolution">The inspection flags the blocked signature slot. The inspection creator (or an admin) is notified and can reassign the slot to a different user. The inspection remains in "Awaiting Signatures" until resolved.</td></tr>
+    <tr><td class="id">T-E02</td><td>The same user is assigned to <strong>multiple signer slots</strong> in a multi-signature flow.</td><td class="resolution">Prevent at template design time — validate that no duplicate users appear across signer slots. If slots are "select at inspection time", validate at signing time that the same user cannot be selected twice.</td></tr>
+    <tr><td class="id">T-E03</td><td>Two users start the <strong>same scheduled inspection offline</strong> and both sync when reconnected.</td><td class="resolution">Both inspections are saved as separate records. The system flags the duplicate on sync and notifies the schedule owner, who can archive one or keep both. The schedule is marked as fulfilled by the first synced inspection.</td></tr>
+    <tr><td class="id">T-E04</td><td>A <strong>template is edited</strong> (questions added/removed) while inspections are in progress.</td><td class="resolution">Template changes only apply to new inspections. In-progress inspections continue with the version of the template they were started with. A version number is stored per inspection.</td></tr>
+    <tr><td class="id">T-E05</td><td>A <strong>template is archived or deleted</strong> while inspections are in progress.</td><td class="resolution">In-progress inspections can still be completed. No new inspections can be started from the archived template. Completed inspections and reports remain accessible. Schedules linked to the template are paused with a notification to the admin.</td></tr>
+    <tr><td class="id">T-E06</td><td>An <strong>approval page approver</strong> is deactivated while an inspection is pending their approval.</td><td class="resolution">The inspection is flagged as "Approval blocked". An admin is notified and can reassign the approval to another user. The inspection stays in "Pending Approval" state.</td></tr>
+    <tr><td class="id">T-E07</td><td><strong>Logic nesting exceeds 40 levels</strong> during template design.</td><td class="resolution">The template editor blocks further nesting at 40 levels with a clear error message. Existing logic is preserved.</td></tr>
+    <tr><td class="id">T-E08</td><td>A <strong>required question is inside a logic branch</strong> that is never triggered during an inspection.</td><td class="resolution">Required questions inside untriggered logic branches are not enforced — the inspection can be completed without answering them. The system only enforces required status on visible questions.</td></tr>
+    <tr><td class="id">T-E09</td><td>The <strong>inspection title format</strong> produces a string exceeding 250 characters.</td><td class="resolution">Truncate the title at 250 characters. When exporting reports, file names are also trimmed. Warn the template creator if the format is likely to produce long titles.</td></tr>
+    <tr><td class="id">T-E10</td><td>A user tries to add a <strong>101st row to a table</strong> during an inspection.</td><td class="resolution">Display a clear message: "Maximum 100 rows reached." The "Add row" button is disabled. The user can delete a row to add a new one.</td></tr>
+    <tr><td class="id">T-E11</td><td><strong>Multi-signature inspection conducted offline</strong> — other signers aren't available offline.</td><td class="resolution">The inspector completes and signs their part offline. The inspection syncs when online. The remaining signers are then notified. The inspection stays in "Awaiting Signatures" until all sign online.</td></tr>
+    <tr><td class="id">T-E12</td><td><strong>Action deduplication</strong>: the "existing action" indicator matches an action from a different site using the same template.</td><td class="resolution">Deduplication matching is scoped to the same template + same site + same question. Actions at different sites are not surfaced as duplicates.</td></tr>
+    <tr><td class="id">T-E13</td><td>A <strong>recurring inspection's template is updated</strong> between occurrences — old flagged questions no longer exist.</td><td class="resolution">Each inspection records the template version. Deduplication compares actions by question ID. If the question ID no longer exists in the new template version, no dedup indicator is shown.</td></tr>
+    <tr><td class="id">T-E14</td><td>The user <strong>converts a malformed PDF/Excel</strong> into a template — structure is broken.</td><td class="resolution">The conversion is a best-effort process. Show a preview for the user to review before saving. If parsing fails, display an error and suggest manual template creation. Never auto-publish a converted template.</td></tr>
+    <tr><td class="id">T-E15</td><td>A <strong>scheduled inspection is assigned to a group</strong>, but a user is removed from the group after the schedule is published.</td><td class="resolution">The removed user no longer receives schedule reminders or overdue notifications. Their in-progress inspections (if any) remain accessible for completion but the next occurrence won't be assigned to them.</td></tr>
+    <tr><td class="id">T-E16</td><td><strong>Calendar drag-and-drop rescheduling</strong> moves a recurring inspection — does it affect all future occurrences or just one?</td><td class="resolution">Prompt the user: "Reschedule this occurrence only" or "This and all future occurrences." Default to single occurrence.</td></tr>
+    <tr><td class="id">T-E17</td><td>A <strong>Global Response Set is edited</strong> — what happens to all templates using it and in-progress inspections?</td><td class="resolution">Templates using the Global Response Set are updated to the new version on next publish. In-progress inspections retain the version they were started with. Completed inspections are unaffected — historical data is preserved.</td></tr>
+    <tr><td class="id">T-E18</td><td>Two users with <strong>edit access open the same template simultaneously</strong> and both make changes.</td><td class="resolution">Last-save-wins with conflict detection. When the second user saves, they are warned: "This template was modified by [User] at [time]. Review their changes before saving." Show a diff of changes. The user can merge or overwrite.</td></tr>
+    <tr><td class="id">T-E19</td><td>An inspection contains <strong>50+ high-resolution photos</strong> — PDF export is very large.</td><td class="resolution">Photos are compressed for PDF export (configurable quality setting). If the export exceeds a size threshold (e.g. 100 MB), it runs as a background job with a download link. A warning is shown during export.</td></tr>
+    <tr><td class="id">T-E20</td><td><strong>Parallel signers attempt to sign at the exact same moment</strong> — race condition.</td><td class="resolution">Each signature is an atomic write operation. Both signatures are accepted independently. No conflict — parallel signing is designed for concurrent access. Timestamps reflect the actual moment each signed.</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">T-01</td><td><span class="category cat-func">Func</span></td><td>Create a template from scratch with title page, 3 sections, and at least one question per response type.</td><td class="expected">Template saves and publishes. All response types render correctly in preview.</td></tr>
+    <tr><td class="id">T-02</td><td><span class="category cat-func">Func</span></td><td>Create a template using AI generation from a text prompt.</td><td class="expected">Template is generated with relevant questions. User can edit before publishing.</td></tr>
+    <tr><td class="id">T-03</td><td><span class="category cat-func">Func</span></td><td>Convert a PDF form into a template.</td><td class="expected">Template is created with fields mapped from the PDF. Preview shows correct structure.</td></tr>
+    <tr><td class="id">T-04</td><td><span class="category cat-func">Func</span></td><td>Download a template from the Public Library and customise it.</td><td class="expected">Template downloads into the org. All fields are editable.</td></tr>
+    <tr><td class="id">T-05</td><td><span class="category cat-func">Func</span></td><td>Add logic fields with 3 nested levels: follow-up question → require evidence → send notification.</td><td class="expected">Logic triggers correctly during inspection. Evidence blocks completion if not provided.</td></tr>
+    <tr><td class="id">T-06</td><td><span class="category cat-func">Func</span></td><td>Add a "Require action" logic field. Start an inspection and try to complete without creating the action.</td><td class="expected">Inspection blocks completion. Error message shown. Action creation unblocks it.</td></tr>
+    <tr><td class="id">T-07</td><td><span class="category cat-func">Func</span></td><td>Create a template with a Blank Table (5 columns, add 10 rows during inspection).</td><td class="expected">Table renders correctly. All 10 rows saved. Report exports with table intact.</td></tr>
+    <tr><td class="id">T-08</td><td><span class="category cat-func">Func</span></td><td>Create a template with a Risk Assessment Table. Complete an inspection with risk scores.</td><td class="expected">Likelihood × Severity auto-calculates. Risk levels colour-coded. Report shows full table.</td></tr>
+    <tr><td class="id">T-09</td><td><span class="category cat-func">Func</span></td><td>Configure a single-signer signature field. Complete inspection with signature.</td><td class="expected">Signature captured with name and timestamp. Visible in report.</td></tr>
+    <tr><td class="id">T-10</td><td><span class="category cat-func">Func</span></td><td>Configure a <strong>3-person sequential</strong> multi-signature field. Complete the signing chain.</td><td class="expected">Signer 1 notified → signs → Signer 2 notified → signs → Signer 3 notified → signs. Inspection completable after all 3 sign. Report shows all 3 signatures with timestamps.</td></tr>
+    <tr><td class="id">T-11</td><td><span class="category cat-func">Func</span></td><td>Configure a <strong>2-person parallel</strong> multi-signature field. Both sign in reverse order.</td><td class="expected">Both notified simultaneously. Either can sign first. Inspection completable after both sign.</td></tr>
+    <tr><td class="id">T-12</td><td><span class="category cat-func">Func</span></td><td>Flag a multiple-choice response in template design. Select it during inspection.</td><td class="expected">Flagged response highlighted in inspection and report. Appears in Analytics flagged items.</td></tr>
+    <tr><td class="id">T-13</td><td><span class="category cat-func">Func</span></td><td>Add an approval page. Submit inspection for approval. Approver rejects it.</td><td class="expected">Inspection returns to "In Progress" with rejection comments. Inspector can revise and resubmit.</td></tr>
+    <tr><td class="id">T-14</td><td><span class="category cat-func">Func</span></td><td>Create a schedule: daily, assigned to a group, with 1-day-before reminder.</td><td class="expected">Schedule appears in calendar views (day/week/month). Members receive reminders. Overdue tracked if missed.</td></tr>
+    <tr><td class="id">T-15</td><td><span class="category cat-func">Func</span></td><td>Drag-and-drop reschedule a single occurrence in the calendar.</td><td class="expected">Only that occurrence moves. Future occurrences unaffected.</td></tr>
+    <tr><td class="id">T-16</td><td><span class="category cat-func">Func</span></td><td>Complete a recurring inspection. Next day, start the same recurring inspection. Verify action dedup indicator shows for a question with an open action.</td><td class="expected">Badge "An open action already exists" shown on the question. User can link or create new.</td></tr>
+    <tr><td class="id">T-17</td><td><span class="category cat-func">Func</span></td><td>Export a completed inspection as PDF and Word.</td><td class="expected">Both exports contain all data, photos, signatures, tables, and flagged items correctly formatted.</td></tr>
+    <tr><td class="id">T-18</td><td><span class="category cat-func">Func</span></td><td>Share inspection as a web report link. Open in incognito browser.</td><td class="expected">Report renders read-only without login.</td></tr>
+    <tr><td class="id">T-19</td><td><span class="category cat-edge">Edge</span></td><td>Deactivate Signer 2 in a sequential chain while inspection awaits their signature.</td><td class="expected">Inspection flags "Signature blocked". Creator/admin can reassign. (T-E01)</td></tr>
+    <tr><td class="id">T-20</td><td><span class="category cat-edge">Edge</span></td><td>Attempt to assign the same user to two signer slots in template editor.</td><td class="expected">Validation error prevents duplicate assignment. (T-E02)</td></tr>
+    <tr><td class="id">T-21</td><td><span class="category cat-edge">Edge</span></td><td>Two users start the same scheduled inspection offline. Both sync.</td><td class="expected">Both inspections saved. Duplicate flagged. Schedule fulfilled by first sync. (T-E03)</td></tr>
+    <tr><td class="id">T-22</td><td><span class="category cat-edge">Edge</span></td><td>Edit a template while an inspection from it is in progress. Complete the inspection.</td><td class="expected">In-progress inspection uses old version. New inspections use new version. (T-E04)</td></tr>
+    <tr><td class="id">T-23</td><td><span class="category cat-edge">Edge</span></td><td>Archive a template with in-progress inspections and active schedules.</td><td class="expected">In-progress inspections completable. No new starts. Schedules paused. (T-E05)</td></tr>
+    <tr><td class="id">T-24</td><td><span class="category cat-edge">Edge</span></td><td>Try to add a 101st row to a table during inspection.</td><td class="expected">"Maximum 100 rows reached" message. Add row disabled. (T-E10)</td></tr>
+    <tr><td class="id">T-25</td><td><span class="category cat-offline">Offline</span></td><td>Start inspection offline. Add photos, notes, and complete. Reconnect.</td><td class="expected">All data syncs. Photos upload. Inspection appears in completed list with correct timestamps.</td></tr>
+    <tr><td class="id">T-26</td><td><span class="category cat-offline">Offline</span></td><td>Start multi-signature inspection offline. Inspector signs. Go online.</td><td class="expected">Inspector's signature syncs. Remaining signers notified. Inspection stays awaiting. (T-E11)</td></tr>
+    <tr><td class="id">T-27</td><td><span class="category cat-perm">Perm</span></td><td>User with "Conduct" access tries to edit the template.</td><td class="expected">Edit option not visible. Only "Start inspection" available.</td></tr>
+    <tr><td class="id">T-28</td><td><span class="category cat-perm">Perm</span></td><td>User outside the template's access group tries to start an inspection.</td><td class="expected">Template not visible in their template list.</td></tr>
+    <tr><td class="id">T-29</td><td><span class="category cat-perf">Perf</span></td><td>Create a template with 500 questions across 20 sections. Start and complete an inspection.</td><td class="expected">No performance degradation. Inspection loads, saves, and completes within acceptable time.</td></tr>
+    <tr><td class="id">T-30</td><td><span class="category cat-perf">Perf</span></td><td>View the schedule calendar with 1,000+ scheduled inspections in a month.</td><td class="expected">Calendar renders within 3 seconds. Scrolling is smooth.</td></tr>
+    <tr><td class="id">T-31</td><td><span class="category cat-func">Func</span></td><td>Create a template with a Checklist Table. Complete inspection with Pass/Fail/N/A responses.</td><td class="expected">Table renders. Status column colour-coded. Report exports correctly.</td></tr>
+    <tr><td class="id">T-32</td><td><span class="category cat-func">Func</span></td><td>Create a template with an Inventory Table. Add 20 rows during inspection.</td><td class="expected">Quantity, condition, and notes captured per row. Exports correctly.</td></tr>
+    <tr><td class="id">T-33</td><td><span class="category cat-func">Func</span></td><td>Verify title page auto-populating fields: Conducted by, Inspection date, Location (GPS), Document number.</td><td class="expected">All fields auto-populated with correct data. Document number increments from previous inspection.</td></tr>
+    <tr><td class="id">T-34</td><td><span class="category cat-func">Func</span></td><td>Convert an Excel spreadsheet into a template.</td><td class="expected">Template created with columns mapped to questions. Preview available before publish.</td></tr>
+    <tr><td class="id">T-35</td><td><span class="category cat-func">Func</span></td><td>Complete an inspection and verify AI summary generation.</td><td class="expected">AI summary appears in report highlighting critical findings and flagged items.</td></tr>
+    <tr><td class="id">T-36</td><td><span class="category cat-func">Func</span></td><td>Create a Global Response Set. Apply it to 3 different templates. Edit the set.</td><td class="expected">All 3 templates reflect the updated set on next publish. In-progress inspections unaffected.</td></tr>
+    <tr><td class="id">T-37</td><td><span class="category cat-edge">Edge</span></td><td>Two users edit the same template simultaneously. Second user saves after the first.</td><td class="expected">Conflict warning shown to second user. Diff displayed. Merge or overwrite option. (T-E18)</td></tr>
+    <tr><td class="id">T-38</td><td><span class="category cat-edge">Edge</span></td><td>Export a completed inspection with 50+ photos as PDF.</td><td class="expected">Photos compressed. If oversized, background export with download link. (T-E19)</td></tr>
+    <tr><td class="id">T-39</td><td><span class="category cat-edge">Edge</span></td><td>Two parallel signers sign at the same moment.</td><td class="expected">Both signatures captured independently with correct timestamps. (T-E20)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODULE 2: ISSUES                                         -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m2">
+  <div class="module-header"><span class="dot dot-red"></span><h2>02 — Issues</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">I-E01</td><td>A user scans an <strong>Issue QR code without an account</strong>. What identity data is captured?</td><td class="resolution">Anonymous submissions capture the data entered in the form fields only (no user identity). The issue is created with "Reported by: Anonymous (QR)". Optionally, the form can include a "Your name" and "Your email" field.</td></tr>
+    <tr><td class="id">I-E02</td><td>An <strong>issue category is deleted</strong> while issues exist in it.</td><td class="resolution">Prevent deletion if open issues exist. Allow archiving instead — archived categories can't receive new issues, but existing issues remain accessible and filterable under the archived category name.</td></tr>
+    <tr><td class="id">I-E03</td><td>A <strong>custom question's response options are changed</strong> after issues have been reported with the old options.</td><td class="resolution">Existing issues retain their original responses. The change only applies to new issues. Historical data is preserved as-is.</td></tr>
+    <tr><td class="id">I-E04</td><td>A <strong>Critical Alert fires</strong> but the recipient has no mobile device registered.</td><td class="resolution">Fall back to email notification with "[CRITICAL]" prefix in the subject line. Log the failed mobile delivery in the notification audit trail.</td></tr>
+    <tr><td class="id">I-E05</td><td>An issue is <strong>reported offline</strong> — location shows coordinates instead of a full address.</td><td class="resolution">When the device reconnects, the platform reverse-geocodes the coordinates to a full address. Until then, coordinates are displayed.</td></tr>
+    <tr><td class="id">I-E06</td><td>A user with <strong>"Report only" access</strong> tries to view or edit the issue they reported.</td><td class="resolution">The user cannot view the issue after submission. They see a confirmation message with a reference number. To view, they'd need elevated access.</td></tr>
+    <tr><td class="id">I-E07</td><td>An <strong>investigation links issues from different sites</strong> — access rules conflict.</td><td class="resolution">Investigation access is independent of issue access. The investigation creator controls who can see the investigation. Linked issues are shown in summary form; full issue access still follows the issue's own rules.</td></tr>
+    <tr><td class="id">I-E08</td><td><strong>Category visibility is changed</strong> to exclude a user after they've already reported issues in that category.</td><td class="resolution">The user's existing issues remain. They can no longer report new issues in that category. Their access to view existing issues depends on the issue access setting, not category visibility.</td></tr>
+    <tr><td class="id">I-E09</td><td>A user tries to <strong>upload a file exceeding the size limit</strong> when reporting an issue.</td><td class="resolution">Display a clear error: "File exceeds the maximum size of X MB. Please reduce the file size." The issue form retains all other entered data.</td></tr>
+    <tr><td class="id">I-E10</td><td>The user starts an <strong>inspection from an issue</strong> but the linked template has been archived since the category was configured.</td><td class="resolution">The archived template is greyed out with a label "Template archived". The user can select another available template. Admin is notified to update the category's linked templates.</td></tr>
+    <tr><td class="id">I-E11</td><td>An <strong>Issue QR code is scanned for an archived category</strong>.</td><td class="resolution">Display: "This reporting category is no longer active. Contact your administrator." The QR code does not open a form.</td></tr>
+    <tr><td class="id">I-E12</td><td><strong>Multiple users report the same incident</strong> independently (near-duplicate issues).</td><td class="resolution">No automatic dedup for issues (unlike actions) — each report is valuable as independent evidence. However, the issue list shows a proximity indicator: "X other issues reported at this location in the last 24 hours." Managers can link related issues to the same investigation.</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">I-01</td><td><span class="category cat-func">Func</span></td><td>Report an issue: select category, enter title, fill all fields, attach photo, submit.</td><td class="expected">Issue created with timestamp. Notifications fire. Issue visible in list.</td></tr>
+    <tr><td class="id">I-02</td><td><span class="category cat-func">Func</span></td><td>Report an issue with only required fields (title and category). Leave optional fields empty.</td><td class="expected">Issue created successfully. Optional fields show as empty.</td></tr>
+    <tr><td class="id">I-03</td><td><span class="category cat-func">Func</span></td><td>Create 3 issue categories with different field configurations. Report an issue in each.</td><td class="expected">Each category shows its unique fields. Required fields enforced per category.</td></tr>
+    <tr><td class="id">I-04</td><td><span class="category cat-func">Func</span></td><td>Add custom questions (text + multiple choice) to a category. Report an issue.</td><td class="expected">Custom questions appear in the form. Responses saved and visible in issue profile.</td></tr>
+    <tr><td class="id">I-05</td><td><span class="category cat-func">Func</span></td><td>Generate an Issue QR code for a category. Scan with the mobile app. Submit an issue.</td><td class="expected">QR opens the correct category form. Issue created with category pre-selected.</td></tr>
+    <tr><td class="id">I-06</td><td><span class="category cat-func">Func</span></td><td>Start an inspection from an issue profile using a linked template.</td><td class="expected">Inspection starts with the issue linked. Completed inspection visible in issue's Overview.</td></tr>
+    <tr><td class="id">I-07</td><td><span class="category cat-func">Func</span></td><td>Create an action from an issue profile.</td><td class="expected">Action created and linked to the issue. Action progress visible in issue's Overview.</td></tr>
+    <tr><td class="id">I-08</td><td><span class="category cat-func">Func</span></td><td>Create an investigation from an issue. Link 2 additional issues to it.</td><td class="expected">Investigation created. All 3 issues linked. Investigation has its own audit trail.</td></tr>
+    <tr><td class="id">I-09</td><td><span class="category cat-func">Func</span></td><td>Share an issue report as a public link. Open without login.</td><td class="expected">Report renders read-only with all details.</td></tr>
+    <tr><td class="id">I-10</td><td><span class="category cat-func">Func</span></td><td>Export issue report as PDF.</td><td class="expected">PDF contains all fields, photos, comments, activity log.</td></tr>
+    <tr><td class="id">I-11</td><td><span class="category cat-func">Func</span></td><td>Set up a Critical Alert on a category. Report an issue while device is on Do Not Disturb.</td><td class="expected">Alert bypasses DND. Notification received.</td></tr>
+    <tr><td class="id">I-12</td><td><span class="category cat-func">Func</span></td><td>Create a custom view with filters (status: open, category: X, site: Y). Save the view.</td><td class="expected">View saved. Reopening shows filtered results. Download works.</td></tr>
+    <tr><td class="id">I-13</td><td><span class="category cat-edge">Edge</span></td><td>Scan Issue QR code without a SafetyCulture account. Submit an issue.</td><td class="expected">Issue created as anonymous. Form data captured. (I-E01)</td></tr>
+    <tr><td class="id">I-14</td><td><span class="category cat-edge">Edge</span></td><td>Try to delete a category that has open issues.</td><td class="expected">Deletion blocked. Archive option offered. (I-E02)</td></tr>
+    <tr><td class="id">I-15</td><td><span class="category cat-edge">Edge</span></td><td>Change custom question options after issues exist. View an old issue.</td><td class="expected">Old issue retains original response. New issues use new options. (I-E03)</td></tr>
+    <tr><td class="id">I-16</td><td><span class="category cat-offline">Offline</span></td><td>Report an issue offline with GPS location. Reconnect.</td><td class="expected">Issue syncs. Coordinates reverse-geocoded to address. (I-E05)</td></tr>
+    <tr><td class="id">I-17</td><td><span class="category cat-perm">Perm</span></td><td>User with "Report only" access submits an issue, then tries to view it.</td><td class="expected">Submission succeeds. Issue not visible in their list. (I-E06)</td></tr>
+    <tr><td class="id">I-18</td><td><span class="category cat-perm">Perm</span></td><td>Restrict category visibility to Group A. User in Group B tries to report.</td><td class="expected">Category not visible to Group B user.</td></tr>
+    <tr><td class="id">I-19</td><td><span class="category cat-perf">Perf</span></td><td>Load issue list with 10,000+ issues. Apply filters.</td><td class="expected">List loads and filters apply within 3 seconds. Pagination works.</td></tr>
+    <tr><td class="id">I-20</td><td><span class="category cat-func">Func</span></td><td>Configure issue email notifications as Private, Summary, and Detailed. Report an issue in each. Verify email content.</td><td class="expected">Private: minimal info. Summary: key fields. Detailed: full issue data. Each matches config.</td></tr>
+    <tr><td class="id">I-21</td><td><span class="category cat-func">Func</span></td><td>Report an issue. Add a comment. Verify Activity tab logs the comment with timestamp and user.</td><td class="expected">Comment visible in Activity tab. Timestamp and user correct. Cannot be edited or deleted.</td></tr>
+    <tr><td class="id">I-22</td><td><span class="category cat-edge">Edge</span></td><td>Scan a QR code for an archived issue category.</td><td class="expected">"Category no longer active" message. No form opens. (I-E11)</td></tr>
+    <tr><td class="id">I-23</td><td><span class="category cat-edge">Edge</span></td><td>Two users report the same incident independently at the same location within 1 hour.</td><td class="expected">Both issues created. Proximity indicator shown on issue list. (I-E12)</td></tr>
+    <tr><td class="id">I-24</td><td><span class="category cat-edge">Edge</span></td><td>Start an inspection from an issue where the linked template has been archived.</td><td class="expected">Archived template greyed out. Other templates selectable. (I-E10)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODULE 3: ACTIONS                                        -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m3">
+  <div class="module-header"><span class="dot dot-amber"></span><h2>03 — Actions</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">A-E01</td><td><strong>Merging actions with different assignees</strong> — who becomes the assignee of the merged action?</td><td class="resolution">The user performing the merge selects which assignee to keep. The other assignees are added as collaborators. All parties are notified.</td></tr>
+    <tr><td class="id">A-E02</td><td><strong>Merging actions of different types</strong> (e.g. "Corrective Action" and "Work Order").</td><td class="resolution">The user performing the merge selects which type the surviving action should have. A warning is shown that the type will change for merged items.</td></tr>
+    <tr><td class="id">A-E03</td><td><strong>Merging actions linked to different sites</strong>.</td><td class="resolution">Allow the merge but require the user to confirm the surviving action's site. Warn that the action will only be associated with one site post-merge.</td></tr>
+    <tr><td class="id">A-E04</td><td>A user creates a <strong>recurring action from an inspection</strong> (not a standalone action).</td><td class="resolution">Prevent this — the "Recur" option is only available on standalone actions. For inspection-linked actions, the recurrence is handled by the inspection schedule.</td></tr>
+    <tr><td class="id">A-E05</td><td><strong>Priority is changed after creation</strong> when priority-based due dates are configured — does the due date recalculate?</td><td class="resolution">Yes, changing priority recalculates the due date from the creation date using the new priority's rule. The user is shown a confirmation: "Due date will change to [X]. Proceed?"</td></tr>
+    <tr><td class="id">A-E06</td><td>All <strong>status transitions are configured to block</strong> the current user — the action is stuck.</td><td class="resolution">An admin override exists: users with "Actions: Settings" permission can always transition any action regardless of transition controls. Log the override in the audit trail.</td></tr>
+    <tr><td class="id">A-E07</td><td>The <strong>action assignee is deactivated</strong>.</td><td class="resolution">The action's status doesn't change, but a "No active assignee" warning is shown. The action creator and admins are notified. The action can be reassigned.</td></tr>
+    <tr><td class="id">A-E08</td><td>An action is linked to an inspection that is <strong>subsequently deleted</strong>.</td><td class="resolution">The action remains but the inspection link shows "Inspection deleted". The action retains any data (notes, photos) that was copied from the inspection at creation time.</td></tr>
+    <tr><td class="id">A-E09</td><td>A <strong>custom field is marked as required</strong> on an action type, but existing actions of that type don't have it filled.</td><td class="resolution">Required field enforcement only applies to new actions. Existing actions are not retroactively blocked. A report can identify actions with missing required fields.</td></tr>
+    <tr><td class="id">A-E10</td><td>A <strong>recurring action generates a new instance</strong> while the previous one is still open.</td><td class="resolution">The new instance is created regardless. The previous open instance remains. A warning indicator shows "Previous occurrence still open" on both actions.</td></tr>
+    <tr><td class="id">A-E11</td><td>An action is linked to <strong>both an inspection AND an issue</strong> — which access rules apply?</td><td class="resolution">The action inherits the most permissive access. Users with access to either the inspection or the issue can see the action. The action's activity log shows both source links.</td></tr>
+    <tr><td class="id">A-E12</td><td>A <strong>label is deleted</strong> while actions have it applied.</td><td class="resolution">The label is removed from all actions silently. Actions are not affected otherwise. A confirmation prompt warns: "This label is applied to X actions. Removing it will untag them."</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">A-01</td><td><span class="category cat-func">Func</span></td><td>Create an action from within an inspection question.</td><td class="expected">Action created. Linked to inspection. Question notes/photos carry over.</td></tr>
+    <tr><td class="id">A-02</td><td><span class="category cat-func">Func</span></td><td>Create a standalone action with all fields filled.</td><td class="expected">Action created. Visible in action list. Assignee notified.</td></tr>
+    <tr><td class="id">A-03</td><td><span class="category cat-func">Func</span></td><td>Create an action from an issue profile.</td><td class="expected">Action linked to issue. Visible in both action list and issue profile.</td></tr>
+    <tr><td class="id">A-04</td><td><span class="category cat-func">Func</span></td><td>Create an action from an asset profile.</td><td class="expected">Asset and site fields auto-filled. Action visible in asset profile.</td></tr>
+    <tr><td class="id">A-05</td><td><span class="category cat-func">Func</span></td><td>Create a recurring standalone action (weekly). Wait for 2 occurrences.</td><td class="expected">New action instance auto-generated each week.</td></tr>
+    <tr><td class="id">A-06</td><td><span class="category cat-func">Func</span></td><td>Set up 3 custom action types with different custom fields. Create one of each.</td><td class="expected">Each type shows its correct fields. Data saved per type.</td></tr>
+    <tr><td class="id">A-07</td><td><span class="category cat-func">Func</span></td><td>Configure priority-based due dates (High=24h, Med=7d, Low=30d). Create actions at each priority.</td><td class="expected">Due dates auto-calculated correctly for each priority.</td></tr>
+    <tr><td class="id">A-08</td><td><span class="category cat-func">Func</span></td><td>Customise status names to "Open" / "In Review" / "Closed". Transition an action through all statuses.</td><td class="expected">Statuses display with custom names. Transitions work.</td></tr>
+    <tr><td class="id">A-09</td><td><span class="category cat-func">Func</span></td><td>Configure transition control: only Managers can move to "Closed". Standard user tries to close.</td><td class="expected">Standard user blocked. Manager can close.</td></tr>
+    <tr><td class="id">A-10</td><td><span class="category cat-func">Func</span></td><td>Merge 3 duplicate actions into one.</td><td class="expected">Surviving action has all linked inspections, comments, media. Merged actions archived with reference link.</td></tr>
+    <tr><td class="id">A-11</td><td><span class="category cat-func">Func</span></td><td>Link a template to an action type. Start an inspection from within the action.</td><td class="expected">Inspection starts with action linked. Completed inspection visible in action profile.</td></tr>
+    <tr><td class="id">A-12</td><td><span class="category cat-func">Func</span></td><td>Add a comment and a file in the action's chat space.</td><td class="expected">Comment and file visible. Timestamped in activity log.</td></tr>
+    <tr><td class="id">A-13</td><td><span class="category cat-func">Func</span></td><td>Apply 2 labels to an action. Filter the action list by one label.</td><td class="expected">Filter returns only actions with that label.</td></tr>
+    <tr><td class="id">A-14</td><td><span class="category cat-edge">Edge</span></td><td>Merge actions with different assignees and different types.</td><td class="expected">User prompted to select assignee and type for surviving action. (A-E01, A-E02)</td></tr>
+    <tr><td class="id">A-15</td><td><span class="category cat-edge">Edge</span></td><td>Change priority on an existing action. Verify due date recalculates.</td><td class="expected">Confirmation prompt shown. Due date recalculated. (A-E05)</td></tr>
+    <tr><td class="id">A-16</td><td><span class="category cat-edge">Edge</span></td><td>Deactivate the action assignee. View the action.</td><td class="expected">"No active assignee" warning. Reassign option available. (A-E07)</td></tr>
+    <tr><td class="id">A-17</td><td><span class="category cat-perm">Perm</span></td><td>Configure standalone action access to "site members only". User outside the site tries to view.</td><td class="expected">Action not visible to the outside user.</td></tr>
+    <tr><td class="id">A-18</td><td><span class="category cat-perm">Perm</span></td><td>Lock due date editing. Non-admin tries to change due date.</td><td class="expected">Due date field is read-only for the non-admin user.</td></tr>
+    <tr><td class="id">A-19</td><td><span class="category cat-perf">Perf</span></td><td>Load action list with 50,000 actions. Apply multiple filters.</td><td class="expected">List loads and filters within 3 seconds. Pagination works.</td></tr>
+    <tr><td class="id">A-20</td><td><span class="category cat-func">Func</span></td><td>Create an action from the maintenance table when a plan is overdue.</td><td class="expected">Action created. Linked to asset. Maintenance table reflects assignment.</td></tr>
+    <tr><td class="id">A-21</td><td><span class="category cat-func">Func</span></td><td>Complete an inspection with 5 flagged items. Bulk-assign actions from the completion summary.</td><td class="expected">5 actions created. All linked to the inspection. Single assignee applied to all.</td></tr>
+    <tr><td class="id">A-22</td><td><span class="category cat-edge">Edge</span></td><td>Admin uses override to transition a stuck action (all transitions blocked for current user).</td><td class="expected">Transition succeeds. Override logged in audit trail. (A-E06)</td></tr>
+    <tr><td class="id">A-23</td><td><span class="category cat-edge">Edge</span></td><td>Recurring action generates new instance while previous is still open.</td><td class="expected">Both instances exist. "Previous occurrence still open" warning shown. (A-E10)</td></tr>
+    <tr><td class="id">A-24</td><td><span class="category cat-edge">Edge</span></td><td>Delete a label that is applied to 10 actions.</td><td class="expected">Warning shown. Label removed from all 10 actions. Actions unaffected otherwise. (A-E12)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODULE 4: HEADS UP                                       -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m4">
+  <div class="module-header"><span class="dot dot-violet"></span><h2>04 — Heads Up</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">H-E01</td><td>A user is <strong>added to a group after</strong> a Heads Up targeting that group was published.</td><td class="resolution">The new user does NOT see the Heads Up. Assignees are locked at the time of publishing. If the creator wants to include new members, they can edit the Heads Up and re-add assignees.</td></tr>
+    <tr><td class="id">H-E02</td><td>A user is <strong>removed from a group after</strong> a Heads Up was published but before they acknowledged/signed.</td><td class="resolution">The user retains access to the Heads Up (they were an assignee at publish time). They can still acknowledge/sign. Their status remains in the tracking dashboard.</td></tr>
+    <tr><td class="id">H-E03</td><td>A Heads Up is <strong>edited after some users have already signed</strong>. Are existing signatures invalidated?</td><td class="resolution">Warn the editor: "X users have already signed. Editing content will invalidate their signatures and they'll need to re-sign." The editor can proceed or cancel. If they proceed, all signatures are cleared and re-requested.</td></tr>
+    <tr><td class="id">H-E04</td><td>A <strong>signature is requested from a user on a device without touch capability</strong> (desktop browser).</td><td class="resolution">Provide a mouse-based signature pad (draw with cursor) and a "Type signature" fallback where the user types their name and it renders in a signature font. Both capture timestamp and user identity.</td></tr>
+    <tr><td class="id">H-E05</td><td>An <strong>external viewer</strong> (via public link) is asked to sign.</td><td class="resolution">External links provide view-only access. Signatures require a platform account. The external viewer sees a message: "Sign in to sign this Heads Up."</td></tr>
+    <tr><td class="id">H-E06</td><td>A Heads Up is <strong>scheduled for a future time</strong>, but the creator's account is deactivated before it publishes.</td><td class="resolution">The scheduled Heads Up is paused and flagged. An admin is notified. The admin can either publish it, reschedule, or delete it.</td></tr>
+    <tr><td class="id">H-E07</td><td>A Heads Up is sent to <strong>10,000+ recipients</strong>. Engagement tracking at scale.</td><td class="resolution">Tracking data is aggregated and paginated. The dashboard shows summary counts instantly; the full recipient list loads progressively. Exports handle large datasets in background with a download link sent via notification.</td></tr>
+    <tr><td class="id">H-E08</td><td>A user views a Heads Up <strong>offline</strong> — can their view/acknowledgement/signature be captured?</td><td class="resolution">If the Heads Up was cached before going offline, the user can view it. Acknowledgement and signature are queued locally and synced when back online. View timestamp reflects the offline view time.</td></tr>
+    <tr><td class="id">H-E09</td><td>Admin enables <strong>all three engagement levels</strong>: does the user see View + Acknowledge + Sign as three separate steps, or is it combined?</td><td class="resolution">View is passive (auto-tracked). Acknowledge and Sign are shown as two sequential buttons: "Acknowledge" appears first. After acknowledging, "Sign" appears. The user can skip straight to Sign if both are enabled (signing implies acknowledgement).</td></tr>
+    <tr><td class="id">H-E10</td><td>A <strong>linked document is updated after</strong> the Heads Up was published — do recipients see the old or new version?</td><td class="resolution">The Heads Up links to the live document, not a snapshot. Recipients always see the current version. If the content has materially changed, the admin should re-publish or edit the Heads Up and consider re-requesting signatures (which triggers the invalidation warning per H-E03).</td></tr>
+    <tr><td class="id">H-E11</td><td>An admin <strong>deletes a Heads Up that has collected signatures</strong> — compliance implications.</td><td class="resolution">Warn: "This Heads Up has X signatures. Deleting it will remove these compliance records." Offer "Archive" as an alternative (hides from feed but preserves all data). If deletion is confirmed, signature data is retained in an audit log for 90 days before permanent deletion.</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">H-01</td><td><span class="category cat-func">Func</span></td><td>Create and publish a Heads Up with title, description, image, assigned to a group.</td><td class="expected">Published. All group members see it. View tracking starts.</td></tr>
+    <tr><td class="id">H-02</td><td><span class="category cat-func">Func</span></td><td>Enable "Request Acknowledgement" only. Publish. Recipient acknowledges.</td><td class="expected">Dashboard shows: viewed ✓, acknowledged ✓. Non-acknowledgers listed.</td></tr>
+    <tr><td class="id">H-03</td><td><span class="category cat-func">Func</span></td><td>Enable "Request Signature" only. Publish. Recipient signs.</td><td class="expected">Signature captured (name, image, timestamp). Dashboard shows signed status.</td></tr>
+    <tr><td class="id">H-04</td><td><span class="category cat-func">Func</span></td><td>Enable both Acknowledge and Signature. Verify the user flow.</td><td class="expected">Acknowledge button shown first. After acknowledging, Sign prompt appears. Dashboard shows 3-tier status.</td></tr>
+    <tr><td class="id">H-05</td><td><span class="category cat-func">Func</span></td><td>Send a reminder to users who haven't signed.</td><td class="expected">Reminder sent only to unsigned users. Already-signed users not disturbed.</td></tr>
+    <tr><td class="id">H-06</td><td><span class="category cat-func">Func</span></td><td>Export engagement data as CSV.</td><td class="expected">CSV contains each recipient: name, group, site, view time, ack time, sign time.</td></tr>
+    <tr><td class="id">H-07</td><td><span class="category cat-func">Func</span></td><td>Create a Heads Up linked to a document. Verify auto-assignees.</td><td class="expected">Users with document access auto-added. Document attachment visible.</td></tr>
+    <tr><td class="id">H-08</td><td><span class="category cat-func">Func</span></td><td>Schedule a Heads Up for 24 hours from now. Verify it publishes on time.</td><td class="expected">Heads Up publishes at the scheduled time. Recipients notified.</td></tr>
+    <tr><td class="id">H-09</td><td><span class="category cat-func">Func</span></td><td>Save a Heads Up as a draft. Reopen, edit, and publish.</td><td class="expected">Draft preserved. Edits saved. Published successfully.</td></tr>
+    <tr><td class="id">H-10</td><td><span class="category cat-func">Func</span></td><td>Share a Heads Up externally via public link. Open link in incognito.</td><td class="expected">Content viewable. No sign/acknowledge buttons (external viewer).</td></tr>
+    <tr><td class="id">H-11</td><td><span class="category cat-func">Func</span></td><td>Post a comment on a Heads Up. React with an emoji.</td><td class="expected">Comment visible. Emoji reaction displayed.</td></tr>
+    <tr><td class="id">H-12</td><td><span class="category cat-edge">Edge</span></td><td>Edit a Heads Up after 5 users signed. Verify signature invalidation warning.</td><td class="expected">Warning shown. If confirmed, signatures cleared. Re-sign requests sent. (H-E03)</td></tr>
+    <tr><td class="id">H-13</td><td><span class="category cat-edge">Edge</span></td><td>Attempt to sign on a desktop browser (no touch screen).</td><td class="expected">Mouse-draw pad and "Type signature" fallback available. (H-E04)</td></tr>
+    <tr><td class="id">H-14</td><td><span class="category cat-edge">Edge</span></td><td>Add a user to the target group AFTER publishing. Check if they see the Heads Up.</td><td class="expected">New user does NOT see it. (H-E01)</td></tr>
+    <tr><td class="id">H-15</td><td><span class="category cat-offline">Offline</span></td><td>User receives and views a Heads Up offline. Acknowledges and signs offline. Reconnects.</td><td class="expected">View, ack, and signature sync with correct timestamps. (H-E08)</td></tr>
+    <tr><td class="id">H-16</td><td><span class="category cat-perm">Perm</span></td><td>Standard user (no "Heads Up: Manage" permission) tries to create a Heads Up.</td><td class="expected">Create option not visible.</td></tr>
+    <tr><td class="id">H-17</td><td><span class="category cat-perf">Perf</span></td><td>Publish a Heads Up to 10,000 recipients. Load engagement dashboard.</td><td class="expected">Summary counts load instantly. Full list loads progressively. (H-E07)</td></tr>
+    <tr><td class="id">H-18</td><td><span class="category cat-func">Func</span></td><td>Publish a Heads Up with view-only tracking (no ack, no sign). Verify dashboard shows view data only.</td><td class="expected">Dashboard shows "Viewed" vs. "Not viewed" only. No ack or sign columns.</td></tr>
+    <tr><td class="id">H-19</td><td><span class="category cat-func">Func</span></td><td>Delete a published Heads Up.</td><td class="expected">Heads Up removed from recipient feeds. Confirmation required.</td></tr>
+    <tr><td class="id">H-20</td><td><span class="category cat-edge">Edge</span></td><td>Update a linked document after Heads Up is published. Recipient opens it.</td><td class="expected">Recipient sees updated document version. (H-E10)</td></tr>
+    <tr><td class="id">H-21</td><td><span class="category cat-edge">Edge</span></td><td>Try to delete a Heads Up with active signatures.</td><td class="expected">Warning about compliance records. Archive offered as alternative. (H-E11)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODULE 5: ASSETS & MAINTENANCE                           -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m5">
+  <div class="module-header"><span class="dot dot-green"></span><h2>05 — Assets &amp; Maintenance</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">AS-E01</td><td>A <strong>parent asset is deleted</strong> — what happens to its sub-assets?</td><td class="resolution">Prevent deletion if sub-assets exist. Offer two options: (1) "Delete parent and promote sub-assets to standalone" — sub-assets become top-level assets. (2) "Delete parent and all sub-assets" — requires explicit confirmation and admin permission.</td></tr>
+    <tr><td class="id">AS-E02</td><td>A <strong>sub-asset is moved to a different parent</strong>. Its maintenance plans reference the old parent's site.</td><td class="resolution">Moving a sub-asset prompts: "Update site to match new parent?" If yes, site updates and maintenance plans recalculate. If no, site stays — the sub-asset can be at a different site than its parent.</td></tr>
+    <tr><td class="id">AS-E03</td><td>A <strong>maintenance plan is attached to a parent</strong> — does it automatically apply to sub-assets?</td><td class="resolution">No. Parent plans and sub-asset plans are independent. The parent's plan covers the parent as a whole. Sub-assets need their own plans. The parent profile shows a consolidated view of all plans (own + sub-assets').</td></tr>
+    <tr><td class="id">AS-E04</td><td>A <strong>QR code is scanned for a deleted/archived asset</strong>.</td><td class="resolution">Display a message: "This asset has been [deleted/archived] and is no longer active. Contact your administrator." For archived assets, optionally show read-only historical data.</td></tr>
+    <tr><td class="id">AS-E05</td><td><strong>Bulk CSV upload contains duplicate asset names</strong>.</td><td class="resolution">Allow duplicate names (different assets can share a name). Uniqueness is enforced by internal asset ID, not name. Flag duplicates in the upload review screen with a warning: "X assets share the same name — verify these are separate assets."</td></tr>
+    <tr><td class="id">AS-E06</td><td><strong>Telematics integration disconnects</strong> — location data becomes stale.</td><td class="resolution">Show a "Last updated: [timestamp]" indicator on the Live Map. After a configurable threshold (e.g. 24 hours of no data), show a "Stale data" warning on the asset. An admin notification fires.</td></tr>
+    <tr><td class="id">AS-E07</td><td>A <strong>usage-based maintenance plan</strong> exists but no readings have been submitted.</td><td class="resolution">The plan shows status "Awaiting first reading." No due date is calculated until a baseline reading exists. A reminder is sent to the responsible party to submit the first reading.</td></tr>
+    <tr><td class="id">AS-E08</td><td>A user enters a <strong>last service date in the future</strong>.</td><td class="resolution">Show a validation warning: "The service date is in the future. Are you sure?" Allow override (the user may be pre-logging a scheduled service). Calculate next due date from the future date.</td></tr>
+    <tr><td class="id">AS-E09</td><td>An <strong>asset is assigned to a site that is then deleted</strong>.</td><td class="resolution">The asset's site field becomes "Unassigned". The asset remains in the register. Admin is notified. The asset can be reassigned to a new site.</td></tr>
+    <tr><td class="id">AS-E10</td><td>An <strong>offline inspection captures a reading</strong> that has already been superseded by a newer online reading.</td><td class="resolution">When syncing, compare timestamps. If the offline reading is older than the latest online reading, flag it as "Backdated reading" and do not overwrite the current value. Both readings are stored in the history.</td></tr>
+    <tr><td class="id">AS-E11</td><td>A user tries to <strong>nest a sub-asset under another sub-asset</strong> (2 levels deep).</td><td class="resolution">Block the action with message: "Sub-assets cannot have their own children. Assets can only be nested one level deep." The UI disables the "Set parent" option for sub-assets.</td></tr>
+    <tr><td class="id">AS-E12</td><td>An <strong>asset type is deleted</strong> while assets of that type exist.</td><td class="resolution">Prevent deletion if assets exist with this type. Offer: "Reassign X assets to a different type before deleting." Provide a dropdown of available types. Alternatively, allow archiving the type.</td></tr>
+    <tr><td class="id">AS-E13</td><td><strong>Bulk CSV upload references parent asset names that don't exist yet</strong> (ordering issue in the file).</td><td class="resolution">Process the CSV in two passes: first create all assets, then establish parent-child relationships. If a referenced parent doesn't exist after processing, flag those rows as errors with: "Parent asset [name] not found."</td></tr>
+    <tr><td class="id">AS-E14</td><td><strong>Two telematics sources report conflicting locations</strong> for the same asset.</td><td class="resolution">The most recently received location wins and is displayed. Both sources are logged in the Event History with their respective timestamps and source labels, so the admin can investigate discrepancies.</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">AS-01</td><td><span class="category cat-func">Func</span></td><td>Create an asset with custom type, fields, photo, and site assignment.</td><td class="expected">Asset created. Profile shows all fields. Visible at the assigned site.</td></tr>
+    <tr><td class="id">AS-02</td><td><span class="category cat-func">Func</span></td><td>Create a parent asset and 3 sub-assets nested under it.</td><td class="expected">Parent profile shows sub-asset list. Each sub-asset's profile shows parent reference.</td></tr>
+    <tr><td class="id">AS-03</td><td><span class="category cat-func">Func</span></td><td>Bulk add 50 assets via CSV upload.</td><td class="expected">All 50 created. Types, sites, and fields populated from CSV.</td></tr>
+    <tr><td class="id">AS-04</td><td><span class="category cat-func">Func</span></td><td>Generate a QR code for an asset. Scan it with the mobile app.</td><td class="expected">Asset profile opens instantly. Start inspection and create action available.</td></tr>
+    <tr><td class="id">AS-05</td><td><span class="category cat-func">Func</span></td><td>Start an inspection from an asset profile.</td><td class="expected">Asset and site fields pre-filled. Inspection linked to asset on completion.</td></tr>
+    <tr><td class="id">AS-06</td><td><span class="category cat-func">Func</span></td><td>Create an action from an asset profile. Verify pre-fill.</td><td class="expected">Asset and site auto-populated. Action visible in asset profile.</td></tr>
+    <tr><td class="id">AS-07</td><td><span class="category cat-func">Func</span></td><td>Submit an odometer reading via inspection. View it on the asset profile.</td><td class="expected">Reading recorded. Utilisation chart updated.</td></tr>
+    <tr><td class="id">AS-08</td><td><span class="category cat-func">Func</span></td><td>Create a <strong>time-based maintenance plan</strong> (every 90 days). Assign 5 assets. Set last service.</td><td class="expected">Plan created. Next due dates calculated. Maintenance table shows all 5 assets.</td></tr>
+    <tr><td class="id">AS-09</td><td><span class="category cat-func">Func</span></td><td>Create a <strong>usage-based maintenance plan</strong> (every 10,000 km). Submit readings that trigger it.</td><td class="expected">Plan status changes to "Due" when threshold reached. Notification fires.</td></tr>
+    <tr><td class="id">AS-10</td><td><span class="category cat-func">Func</span></td><td>Attach a maintenance plan to a parent asset and a separate plan to a sub-asset.</td><td class="expected">Both plans appear independently. Parent profile shows consolidated view of own + sub-asset plans.</td></tr>
+    <tr><td class="id">AS-11</td><td><span class="category cat-func">Func</span></td><td>Create an action from the maintenance table when a plan is overdue.</td><td class="expected">Action created and linked to the asset. Maintenance table reflects assignment.</td></tr>
+    <tr><td class="id">AS-12</td><td><span class="category cat-func">Func</span></td><td>View the Live Map with telematics-connected assets.</td><td class="expected">Assets shown on map with current positions. Clicking opens profile.</td></tr>
+    <tr><td class="id">AS-13</td><td><span class="category cat-func">Func</span></td><td>Export asset utilisation data as CSV.</td><td class="expected">CSV contains asset name, type, readings, dates, site.</td></tr>
+    <tr><td class="id">AS-14</td><td><span class="category cat-edge">Edge</span></td><td>Delete a parent asset that has sub-assets.</td><td class="expected">Deletion blocked. Two options offered: promote or delete all. (AS-E01)</td></tr>
+    <tr><td class="id">AS-15</td><td><span class="category cat-edge">Edge</span></td><td>Try to nest a sub-asset under another sub-asset.</td><td class="expected">Blocked. "Assets can only be nested one level deep." (AS-E11)</td></tr>
+    <tr><td class="id">AS-16</td><td><span class="category cat-edge">Edge</span></td><td>Scan QR code for an archived asset.</td><td class="expected">"Asset archived" message with optional read-only data. (AS-E04)</td></tr>
+    <tr><td class="id">AS-17</td><td><span class="category cat-edge">Edge</span></td><td>Usage-based plan with no readings submitted. Check status.</td><td class="expected">"Awaiting first reading" status. No due date. Reminder sent. (AS-E07)</td></tr>
+    <tr><td class="id">AS-18</td><td><span class="category cat-offline">Offline</span></td><td>View an asset profile offline. Start an inspection offline. Sync.</td><td class="expected">Profile viewable. Inspection completes and syncs with correct data.</td></tr>
+    <tr><td class="id">AS-19</td><td><span class="category cat-perm">Perm</span></td><td>User without "Assets: Manage" permission tries to edit an asset.</td><td class="expected">Edit fields read-only. Only "Start inspection" and "Create action" available.</td></tr>
+    <tr><td class="id">AS-20</td><td><span class="category cat-perf">Perf</span></td><td>Load asset list with 10,000 assets across 200 sites. Filter by type and site.</td><td class="expected">List loads and filters within 3 seconds.</td></tr>
+    <tr><td class="id">AS-21</td><td><span class="category cat-func">Func</span></td><td>Move a sub-asset from Parent A to Parent B.</td><td class="expected">Sub-asset now appears under Parent B. Prompt to update site. Old parent no longer shows it.</td></tr>
+    <tr><td class="id">AS-22</td><td><span class="category cat-func">Func</span></td><td>Bulk update 50 assets via CSV (change sites and custom field values).</td><td class="expected">All 50 updated. Changes reflected in asset profiles.</td></tr>
+    <tr><td class="id">AS-23</td><td><span class="category cat-func">Func</span></td><td>View Event History for a telematics-connected asset. Verify route and movement data.</td><td class="expected">History shows timestamped locations, routes, and events.</td></tr>
+    <tr><td class="id">AS-24</td><td><span class="category cat-edge">Edge</span></td><td>Try to delete an asset type that has assets assigned.</td><td class="expected">Deletion blocked. Reassignment prompt shown. (AS-E12)</td></tr>
+    <tr><td class="id">AS-25</td><td><span class="category cat-edge">Edge</span></td><td>Bulk CSV upload with parent references that don't exist yet.</td><td class="expected">Assets created first, parents linked second pass. Invalid parents flagged. (AS-E13)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODULE 6: DOCUMENTS                                      -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m6">
+  <div class="module-header"><span class="dot dot-pink"></span><h2>06 — Documents</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">D-E01</td><td>A <strong>document linked to a Heads Up is deleted</strong>.</td><td class="resolution">The Heads Up retains its content but shows "Linked document has been deleted" in place of the document attachment. The Heads Up is not deleted.</td></tr>
+    <tr><td class="id">D-E02</td><td>A <strong>document is updated while a user has it cached offline</strong>.</td><td class="resolution">When the device reconnects, the new version syncs. The user sees a notification: "This document has been updated." The old offline version is replaced.</td></tr>
+    <tr><td class="id">D-E03</td><td>A user uploads a file <strong>exceeding the size limit</strong>.</td><td class="resolution">Upload blocked with message: "File exceeds maximum size of X MB." Suggest compression or splitting.</td></tr>
+    <tr><td class="id">D-E04</td><td><strong>AI answers are requested on a non-text document</strong> (e.g. a spreadsheet or image).</td><td class="resolution">For images: OCR is attempted. For spreadsheets: content is extracted as text. If extraction fails, display: "AI answers are not available for this file type."</td></tr>
+    <tr><td class="id">D-E05</td><td>A document is <strong>assigned to a site that is later deleted</strong>.</td><td class="resolution">The document's site assignment becomes "Unassigned." The document remains accessible — site assignment is for filtering only, not access control.</td></tr>
+    <tr><td class="id">D-E06</td><td>A <strong>folder is deleted</strong> — what happens to documents inside?</td><td class="resolution">Prevent deletion if the folder contains documents. Offer: "Move documents to another folder" or "Delete folder and all contents" (requires admin permission and confirmation).</td></tr>
+    <tr><td class="id">D-E07</td><td>A <strong>document used as compliance evidence is deleted</strong>.</td><td class="resolution">The compliance rule's evidence link shows "Document deleted." The rule's status reverts to Non-Compliant if no other evidence exists for that period. Admin is notified. The deletion is logged in the compliance audit trail.</td></tr>
+    <tr><td class="id">D-E08</td><td><strong>Two users edit the same document metadata simultaneously</strong> (e.g. both change the site assignment).</td><td class="resolution">Last-save-wins for metadata fields. The platform does not support real-time co-editing of document content — it's a file store, not a collaborative editor. For content changes, users upload a new version.</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">D-01</td><td><span class="category cat-func">Func</span></td><td>Upload a PDF, a Word doc, and an image. Organise into folders.</td><td class="expected">Files uploaded. Folder structure visible. Files accessible.</td></tr>
+    <tr><td class="id">D-02</td><td><span class="category cat-func">Func</span></td><td>Assign a document to a site. Filter the library by site.</td><td class="expected">Document appears when filtering by the assigned site.</td></tr>
+    <tr><td class="id">D-03</td><td><span class="category cat-func">Func</span></td><td>Grant view access to a group. Verify a member can view. Verify a non-member cannot.</td><td class="expected">Group member sees document. Non-member does not.</td></tr>
+    <tr><td class="id">D-04</td><td><span class="category cat-func">Func</span></td><td>Create a Heads Up linked to a document.</td><td class="expected">Document attached. Users with file access auto-added as assignees.</td></tr>
+    <tr><td class="id">D-05</td><td><span class="category cat-func">Func</span></td><td>Ask an AI question about a PDF document.</td><td class="expected">AI returns a relevant answer based on document content.</td></tr>
+    <tr><td class="id">D-06</td><td><span class="category cat-func">Func</span></td><td>Attach a document to an asset profile.</td><td class="expected">Document visible in asset profile. Accessible from the field.</td></tr>
+    <tr><td class="id">D-07</td><td><span class="category cat-offline">Offline</span></td><td>Access a document offline on mobile.</td><td class="expected">Document viewable if previously cached. Changes sync on reconnect.</td></tr>
+    <tr><td class="id">D-08</td><td><span class="category cat-edge">Edge</span></td><td>Delete a document linked to a published Heads Up.</td><td class="expected">Heads Up shows "Document deleted" placeholder. (D-E01)</td></tr>
+    <tr><td class="id">D-09</td><td><span class="category cat-edge">Edge</span></td><td>Update a document while a user has it cached offline. User reconnects.</td><td class="expected">New version syncs. "Document updated" notification shown. (D-E02)</td></tr>
+    <tr><td class="id">D-10</td><td><span class="category cat-perm">Perm</span></td><td>User without "Documents: Manage" permission tries to create a folder or upload a file.</td><td class="expected">Options not visible. View-only access.</td></tr>
+    <tr><td class="id">D-11</td><td><span class="category cat-func">Func</span></td><td>Search the document library by name. Filter by label and site.</td><td class="expected">Results match search term. Filters narrow results correctly.</td></tr>
+    <tr><td class="id">D-12</td><td><span class="category cat-func">Func</span></td><td>Apply a label to a document. Filter library by label.</td><td class="expected">Label applied. Filter returns only labelled documents.</td></tr>
+    <tr><td class="id">D-13</td><td><span class="category cat-integ">Integ</span></td><td>Create a compliance rule requiring a current document. Upload the document. Verify rule satisfied.</td><td class="expected">Compliance rule auto-detects current document. Status flips to Compliant.</td></tr>
+    <tr><td class="id">D-14</td><td><span class="category cat-edge">Edge</span></td><td>Delete a document used as compliance evidence.</td><td class="expected">Compliance rule reverts to Non-Compliant. Admin notified. (D-E07)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODULE 7: ANALYTICS                                      -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m7">
+  <div class="module-header"><span class="dot dot-indigo"></span><h2>07 — Analytics</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">AN-E01</td><td>A chart references a <strong>template or issue category that has been deleted</strong>.</td><td class="resolution">The chart shows "Source data unavailable" and suggests the user update the chart's data source. Historical data already captured remains visible.</td></tr>
+    <tr><td class="id">AN-E02</td><td>A <strong>scheduled CSV export fails</strong> because the recipient email is invalid.</td><td class="resolution">Log the failure. Notify the dashboard owner. Retry once. If still failing, pause the schedule and notify the owner to fix the email.</td></tr>
+    <tr><td class="id">AN-E03</td><td>A user filters by a <strong>site they don't have access to</strong>.</td><td class="resolution">Only sites the user has membership in (or their children in the hierarchy) appear in the filter dropdown. Inaccessible sites are not shown.</td></tr>
+    <tr><td class="id">AN-E04</td><td>An <strong>export of a very large dataset</strong> (100,000+ rows) causes timeout.</td><td class="resolution">Large exports run as background jobs. The user receives a notification with a download link when complete. Exports are available for 7 days.</td></tr>
+    <tr><td class="id">AN-E05</td><td>A <strong>chart is grouped by a custom field that has been renamed</strong>.</td><td class="resolution">Charts reference fields by internal ID, not name. Renaming a field auto-updates the chart's label. No data is lost.</td></tr>
+    <tr><td class="id">AN-E06</td><td>A user <strong>drills down from a chart</strong> and tries to take action on data they don't have permission to edit.</td><td class="resolution">The drill-down shows the data read-only. Action buttons (edit, update, etc.) are hidden for items outside the user's permission scope.</td></tr>
+    <tr><td class="id">AN-E07</td><td>A <strong>dashboard is loaded for a new organisation with no data</strong> (zero inspections, actions, issues).</td><td class="resolution">Charts display a friendly empty state: "No data yet. Start capturing inspections to see results here." No errors or broken visuals. Dashboard templates show placeholder illustrations.</td></tr>
+    <tr><td class="id">AN-E08</td><td><strong>Timezone mismatch</strong> — a chart groups data by day, but users are in different timezones. A midnight-boundary inspection is counted on different days for different users.</td><td class="resolution">Charts render in the viewing user's configured timezone. All timestamps are stored in UTC and converted at display time. A timezone indicator is shown on date-based charts.</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">AN-01</td><td><span class="category cat-func">Func</span></td><td>Create a dashboard from the "Inspection Performance" template.</td><td class="expected">Dashboard created with pre-configured charts. Data populates from inspections.</td></tr>
+    <tr><td class="id">AN-02</td><td><span class="category cat-func">Func</span></td><td>Create a custom chart: bar chart, data source = Actions, metric = count, grouped by site.</td><td class="expected">Chart renders with correct data. Bars represent action counts per site.</td></tr>
+    <tr><td class="id">AN-03</td><td><span class="category cat-func">Func</span></td><td>Apply a dashboard-level filter (date range + site). Verify all charts update.</td><td class="expected">All charts on the dashboard reflect the filtered data.</td></tr>
+    <tr><td class="id">AN-04</td><td><span class="category cat-func">Func</span></td><td>Export a dashboard as PDF.</td><td class="expected">PDF contains all charts, filters, and date range. Formatted for presentation.</td></tr>
+    <tr><td class="id">AN-05</td><td><span class="category cat-func">Func</span></td><td>Export a chart's underlying data as CSV.</td><td class="expected">CSV contains all data rows. Columns match the chart's dimensions.</td></tr>
+    <tr><td class="id">AN-06</td><td><span class="category cat-func">Func</span></td><td>Set up a scheduled weekly CSV export emailed to a distribution list.</td><td class="expected">Export fires weekly. Email received with CSV attachment.</td></tr>
+    <tr><td class="id">AN-07</td><td><span class="category cat-func">Func</span></td><td>Drill down into a chart bar. View underlying records. Take action on one.</td><td class="expected">Drill-down shows individual records. User can update action/inspection directly.</td></tr>
+    <tr><td class="id">AN-08</td><td><span class="category cat-func">Func</span></td><td>Create a chart with data source = Compliance. Group by framework.</td><td class="expected">Chart shows compliance scores per framework.</td></tr>
+    <tr><td class="id">AN-09</td><td><span class="category cat-func">Func</span></td><td>Share a dashboard with a specific group. Verify group member and non-member access.</td><td class="expected">Group member sees dashboard. Non-member does not.</td></tr>
+    <tr><td class="id">AN-10</td><td><span class="category cat-edge">Edge</span></td><td>Delete a template referenced by a chart. View the chart.</td><td class="expected">"Source data unavailable" message. (AN-E01)</td></tr>
+    <tr><td class="id">AN-11</td><td><span class="category cat-edge">Edge</span></td><td>Set up a scheduled export with an invalid email. Wait for execution.</td><td class="expected">Failure logged. Owner notified. Schedule paused after retry. (AN-E02)</td></tr>
+    <tr><td class="id">AN-12</td><td><span class="category cat-perm">Perm</span></td><td>User with "Analytics: View" permission tries to create a dashboard.</td><td class="expected">Create button not visible. View-only access.</td></tr>
+    <tr><td class="id">AN-13</td><td><span class="category cat-perf">Perf</span></td><td>Load a dashboard with 20 charts pulling data from 100,000+ records.</td><td class="expected">Dashboard loads within 5 seconds. Charts render progressively.</td></tr>
+    <tr><td class="id">AN-14</td><td><span class="category cat-perf">Perf</span></td><td>Export 100,000+ row dataset as CSV.</td><td class="expected">Background job completes. Download link sent. (AN-E04)</td></tr>
+    <tr><td class="id">AN-15</td><td><span class="category cat-func">Func</span></td><td>Create each chart type: line, pie, donut, table view, and number card. Verify rendering.</td><td class="expected">Each chart type renders correctly with data and is interactive.</td></tr>
+    <tr><td class="id">AN-16</td><td><span class="category cat-func">Func</span></td><td>Filter by site hierarchy: select a Region, verify data includes all child sites.</td><td class="expected">Chart aggregates data from all sites under the selected region.</td></tr>
+    <tr><td class="id">AN-17</td><td><span class="category cat-edge">Edge</span></td><td>Load a dashboard for a new org with zero data.</td><td class="expected">Friendly empty states on all charts. No errors. (AN-E07)</td></tr>
+    <tr><td class="id">AN-18</td><td><span class="category cat-edge">Edge</span></td><td>View a daily chart as two users in different timezones. Verify midnight-boundary inspection counted correctly per timezone.</td><td class="expected">Each user sees data grouped by their own timezone. (AN-E08)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODULE 8: COMPLIANCE                                     -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m8">
+  <div class="module-header"><span class="dot dot-orange"></span><h2>08 — Compliance</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">C-E01</td><td>A <strong>framework template is imported</strong> but the org doesn't have matching inspection templates or training courses yet.</td><td class="resolution">Rules are created with evidence requirements in a "Not linked" state. Each unlinked rule shows a setup prompt: "Link an inspection template to activate this rule." The framework score shows "X of Y rules configured."</td></tr>
+    <tr><td class="id">C-E02</td><td>A rule's evidence is linked to a <strong>template that is subsequently archived</strong>.</td><td class="resolution">The evidence requirement shows "Linked template archived." The rule's status becomes "Not Evaluable" (distinct from Non-Compliant). Admin is notified to update the evidence link.</td></tr>
+    <tr><td class="id">C-E03</td><td><strong>Multiple inspections satisfy the same rule</strong> in the same period (e.g. two fire audits in one month).</td><td class="resolution">The first matching inspection satisfies the rule. Additional inspections are logged as supplementary evidence but don't change the status. All are visible in the evidence trail.</td></tr>
+    <tr><td class="id">C-E04</td><td>A user uploads <strong>manual evidence with a validity date in the past</strong>.</td><td class="resolution">Allow it (the user may be back-filling records). The rule's status for that period is recalculated. If the validity date has already expired, the rule remains Non-Compliant for the current period. A warning is shown: "This evidence has already expired."</td></tr>
+    <tr><td class="id">C-E05</td><td>A <strong>framework is deleted</strong> — what happens to historical compliance data?</td><td class="resolution">Prompt: "Archive or permanently delete?" Archiving hides the framework from the dashboard but preserves all historical data, rules, and evidence for auditing. Permanent deletion removes all data — requires admin confirmation and a 30-day recovery window.</td></tr>
+    <tr><td class="id">C-E06</td><td>A <strong>rule's frequency is changed mid-period</strong> (e.g. from monthly to quarterly while in the middle of a month).</td><td class="resolution">The current period is completed under the old frequency. The new frequency takes effect from the next period. Warn the user: "This change will take effect from [next period start date]."</td></tr>
+    <tr><td class="id">C-E07</td><td>Evidence was <strong>auto-collected from an inspection that is later deleted</strong>.</td><td class="resolution">The evidence is removed from the rule. If no other evidence exists for that period, the status reverts to Non-Compliant. The deletion is logged in the compliance audit trail.</td></tr>
+    <tr><td class="id">C-E08</td><td>A <strong>site is removed from a framework</strong> but has existing compliance data for past periods.</td><td class="resolution">Historical data is preserved for audit purposes. The site stops appearing in current/future compliance calculations. The dashboard's historical trend lines still include the removed site's data for the periods it was active.</td></tr>
+    <tr><td class="id">C-E09</td><td>A <strong>compliance goal target is reached</strong>, but then compliance drops below the target.</td><td class="resolution">The goal shows "Target reached on [date] — current score below target." The trend line visualises the dip. No automatic action — goals are informational, not enforcement.</td></tr>
+    <tr><td class="id">C-E10</td><td>A rule requires "training completed by all members of Group X" — but <strong>new members are added to the group</strong> after the period started.</td><td class="resolution">New members are included in the requirement from the moment they join. If they haven't completed the training, the rule's evidence is incomplete for the current period. A notification fires to the responsible party: "New member [name] requires training completion."</td></tr>
+    <tr><td class="id">C-E11</td><td>The same inspection satisfies rules in <strong>two different frameworks</strong> (e.g. an ISO 45001 rule and an internal policy rule both require a fire audit).</td><td class="resolution">One inspection can serve as evidence for multiple rules across multiple frameworks. Each rule independently links to the inspection. No conflict.</td></tr>
+    <tr><td class="id">C-E12</td><td>The <strong>responsible party for a rule is a group</strong>, but all members of that group are deactivated.</td><td class="resolution">The rule's responsible party shows "No active members." Notifications cannot be delivered. The framework owner and admins are alerted: "Rule [X] has no active responsible party." The rule remains evaluable — evidence is still auto-collected — but no one receives reminders.</td></tr>
+    <tr><td class="id">C-E13</td><td>Evidence from <strong>Site A satisfies a rule scoped to Site B</strong> (e.g. an inspection completed at the wrong site).</td><td class="resolution">Evidence matching is strict: the inspection's site must match the rule's applicable site. An inspection at Site A does not satisfy a rule scoped to Site B, even if they use the same template. Each site must produce its own evidence.</td></tr>
+    <tr><td class="id">C-E14</td><td>The <strong>framework owner is deactivated</strong>.</td><td class="resolution">The framework remains active and functional. A warning is shown: "Framework owner [name] has been deactivated." Admins are prompted to reassign ownership. All rule-level responsibilities continue to function independently.</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">C-01</td><td><span class="category cat-func">Func</span></td><td>Create a framework (custom type, name, description, owner, sites).</td><td class="expected">Framework created. Appears on dashboard with 0% score.</td></tr>
+    <tr><td class="id">C-02</td><td><span class="category cat-func">Func</span></td><td>Import the "ISO 45001:2018" framework template.</td><td class="expected">Framework created with all pre-built rules. Rules show "Not linked" until evidence types are configured.</td></tr>
+    <tr><td class="id">C-03</td><td><span class="category cat-func">Func</span></td><td>Create a rule with clause reference, monthly frequency, 3 applicable sites, and an inspection-based evidence requirement.</td><td class="expected">Rule created within framework. Evidence requirement shows "Not yet satisfied" for each site.</td></tr>
+    <tr><td class="id">C-04</td><td><span class="category cat-func">Func</span></td><td>Complete an inspection that matches a rule's evidence requirement. Verify auto-collection.</td><td class="expected">Rule status flips to Compliant. No manual action needed. Evidence linked in trail.</td></tr>
+    <tr><td class="id">C-05</td><td><span class="category cat-func">Func</span></td><td>Create a rule with 3 evidence types (inspection + training + document). Satisfy 2 of 3.</td><td class="expected">Rule shows "2 of 3 evidence items collected." Status remains Non-Compliant until all 3 met.</td></tr>
+    <tr><td class="id">C-06</td><td><span class="category cat-func">Func</span></td><td>Upload manual evidence with a validity date 12 months from now.</td><td class="expected">Evidence accepted. Rule satisfied. Expiry tracked. Reminder fires before expiry.</td></tr>
+    <tr><td class="id">C-07</td><td><span class="category cat-func">Func</span></td><td>Verify a rule transitions: Compliant → Due Soon (as deadline approaches) → Non-Compliant (after grace period).</td><td class="expected">Status transitions at correct times. Notifications fire at each stage.</td></tr>
+    <tr><td class="id">C-08</td><td><span class="category cat-func">Func</span></td><td>View compliance dashboard with 3 active frameworks. Verify framework cards, scores, and drill-down.</td><td class="expected">Each framework shows its score. Clicking drills into rules. Non-compliant list prioritised.</td></tr>
+    <tr><td class="id">C-09</td><td><span class="category cat-func">Func</span></td><td>Set a compliance goal per framework. Track progress.</td><td class="expected">Goal displayed on dashboard with progress indicator and projection.</td></tr>
+    <tr><td class="id">C-10</td><td><span class="category cat-func">Func</span></td><td>Generate a compliance report for a specific framework. Export as PDF.</td><td class="expected">Report lists all rules with clause references, statuses, evidence links. PDF formatted for auditors.</td></tr>
+    <tr><td class="id">C-11</td><td><span class="category cat-func">Func</span></td><td>Verify a Heads Up signature satisfies a compliance rule requiring signed acknowledgement.</td><td class="expected">Rule auto-detects signed Heads Up. Status flips to Compliant once all assignees sign.</td></tr>
+    <tr><td class="id">C-12</td><td><span class="category cat-func">Func</span></td><td>Verify asset maintenance compliance: rule requires "no overdue plans for Type X at Site Y".</td><td class="expected">If any plans are overdue, rule is Non-Compliant. When plans cleared, rule flips to Compliant.</td></tr>
+    <tr><td class="id">C-13</td><td><span class="category cat-func">Func</span></td><td>Verify escalation: rule overdue beyond threshold. Escalation group notified.</td><td class="expected">Escalation fires at the configured threshold. Correct group receives notification.</td></tr>
+    <tr><td class="id">C-14</td><td><span class="category cat-edge">Edge</span></td><td>Import framework template when no inspection templates exist yet.</td><td class="expected">Rules created in "Not linked" state. Setup prompts shown. (C-E01)</td></tr>
+    <tr><td class="id">C-15</td><td><span class="category cat-edge">Edge</span></td><td>Archive a template that is linked as evidence for a compliance rule.</td><td class="expected">Rule shows "Linked template archived". Status becomes "Not Evaluable". (C-E02)</td></tr>
+    <tr><td class="id">C-16</td><td><span class="category cat-edge">Edge</span></td><td>Two inspections satisfy the same rule in one period.</td><td class="expected">First satisfies. Second logged as supplementary. Status remains Compliant. (C-E03)</td></tr>
+    <tr><td class="id">C-17</td><td><span class="category cat-edge">Edge</span></td><td>Delete an inspection that was auto-collected as compliance evidence.</td><td class="expected">Evidence removed. Rule reverts to Non-Compliant if no other evidence. (C-E07)</td></tr>
+    <tr><td class="id">C-18</td><td><span class="category cat-edge">Edge</span></td><td>One inspection satisfies rules in two different frameworks.</td><td class="expected">Both rules satisfied independently. (C-E11)</td></tr>
+    <tr><td class="id">C-19</td><td><span class="category cat-edge">Edge</span></td><td>Add a new member to a group after a training-based rule's period started.</td><td class="expected">New member included in requirement. If untrained, evidence incomplete. (C-E10)</td></tr>
+    <tr><td class="id">C-20</td><td><span class="category cat-integ">Integ</span></td><td>Complete an inspection, action, training, upload a document, and sign a Heads Up — each satisfying a different rule in the same framework.</td><td class="expected">All 5 rules auto-satisfied. Framework score updates with each event.</td></tr>
+    <tr><td class="id">C-21</td><td><span class="category cat-perf">Perf</span></td><td>Load compliance dashboard with 5 frameworks, 200 rules, 50 sites.</td><td class="expected">Dashboard loads within 5 seconds. Framework cards render with correct scores.</td></tr>
+    <tr><td class="id">C-22</td><td><span class="category cat-func">Func</span></td><td>View compliance trend line over 12 months for a framework.</td><td class="expected">Trend line renders showing score progression month by month.</td></tr>
+    <tr><td class="id">C-23</td><td><span class="category cat-func">Func</span></td><td>Filter compliance report by site. Export as CSV.</td><td class="expected">Report shows only rules applicable to the selected site. CSV exports correctly.</td></tr>
+    <tr><td class="id">C-24</td><td><span class="category cat-func">Func</span></td><td>Create a rule with "Issue resolution SLA met" evidence type. Resolve issues within and outside SLA.</td><td class="expected">Rule is Compliant when all issues resolved within SLA. Non-Compliant if any exceed it.</td></tr>
+    <tr><td class="id">C-25</td><td><span class="category cat-edge">Edge</span></td><td>Archive a template linked as evidence. View the rule's status.</td><td class="expected">"Not Evaluable" status displayed. Distinct from Non-Compliant. Admin notified. (C-E02)</td></tr>
+    <tr><td class="id">C-26</td><td><span class="category cat-edge">Edge</span></td><td>Complete an inspection at Site A for a rule scoped to Site B.</td><td class="expected">Rule at Site B remains unsatisfied. Inspection only counts for Site A rules. (C-E13)</td></tr>
+    <tr><td class="id">C-27</td><td><span class="category cat-edge">Edge</span></td><td>All members of the responsible group are deactivated. Rule approaches deadline.</td><td class="expected">"No active responsible party" warning. Framework owner and admins alerted. (C-E12)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODULE 9: GROUPS & SITES                                 -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m9">
+  <div class="module-header"><span class="dot dot-teal"></span><h2>09 — Groups &amp; Sites</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">G-E01</td><td>A <strong>rule-based membership rule creates a logical conflict</strong> (e.g. two rules that would add and remove the same user).</td><td class="resolution">Rules are evaluated in order. The last matching rule wins. Show a validation warning when saving conflicting rules: "These rules may produce conflicting results for some users."</td></tr>
+    <tr><td class="id">G-E02</td><td>A <strong>user reaches the 100-group limit</strong> and is matched by a rule-based membership rule for a 101st group.</td><td class="resolution">The user is not added to the 101st group. The admin is notified: "[User] could not be added to [Group] — maximum 100 groups reached." Suggest reviewing group memberships.</td></tr>
+    <tr><td class="id">G-E03</td><td>A <strong>group is deleted</strong> that has active template access, training assignments, and notification rules.</td><td class="resolution">Warn the admin: "This group is referenced by X templates, Y courses, Z notifications. Deleting it will remove these references." Require explicit confirmation. All references are cleared.</td></tr>
+    <tr><td class="id">G-E04</td><td>A <strong>site is deleted</strong> with linked inspections, actions, issues, and assets.</td><td class="resolution">Prevent deletion if data is linked. Offer archiving. Archived sites stop appearing in dropdowns but existing data retains the site reference for historical reporting.</td></tr>
+    <tr><td class="id">G-E05</td><td>A <strong>bulk CSV upload contains malformed data</strong> (missing columns, wrong encoding, duplicate emails).</td><td class="resolution">Show a review screen highlighting errors row by row. Valid rows can be imported; invalid rows are skipped with clear error descriptions. Download a CSV of rejected rows.</td></tr>
+    <tr><td class="id">G-E06</td><td>An <strong>advanced access rule</strong> (group + site) references a group or site that is later deleted.</td><td class="resolution">The access rule becomes invalid and is flagged. Admin is notified. The rule is suspended until updated. Access defaults to the most restrictive interpretation (no access) while suspended.</td></tr>
+    <tr><td class="id">G-E07</td><td>The <strong>site hierarchy exceeds practical depth</strong> (e.g. 10+ levels).</td><td class="resolution">Enforce a maximum hierarchy depth (e.g. 6 levels: Country → Region → State → Area → District → Site). Beyond this, suggest restructuring.</td></tr>
+    <tr><td class="id">G-E08</td><td>A <strong>rule-based group membership changes a user's group</strong>, which changes their template access, which affects an in-progress inspection.</td><td class="resolution">In-progress inspections are not affected by access changes. The inspection continues with the access state at the time it was started. Future inspections respect the new access.</td></tr>
+    <tr><td class="id">G-E09</td><td>A <strong>site is moved to a different level in the hierarchy</strong> — does linked data (inspections, actions, issues) follow?</td><td class="resolution">Yes. Data is linked to the site by ID, not by its position in the hierarchy. Moving a site changes only its hierarchical grouping for reporting and roll-ups. All linked data remains intact.</td></tr>
+    <tr><td class="id">G-E10</td><td><strong>Site membership rules and manual membership conflict</strong> on the same site — a rule removes a user who was manually added.</td><td class="resolution">Sites with membership rules only allow rule-based management. Manual adds/removes are disabled when rules are active. If an admin needs to override, they must either edit the rule or switch the site to manual membership mode (which clears existing rules).</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">G-01</td><td><span class="category cat-func">Func</span></td><td>Create a group. Add 5 users manually.</td><td class="expected">Group created. Users visible as members.</td></tr>
+    <tr><td class="id">G-02</td><td><span class="category cat-func">Func</span></td><td>Create a rule-based group: "Role = Maintenance AND Shift = Morning".</td><td class="expected">Matching users auto-added. Non-matching users excluded.</td></tr>
+    <tr><td class="id">G-03</td><td><span class="category cat-func">Func</span></td><td>Change a user's custom field so they no longer match a rule-based group.</td><td class="expected">User auto-removed from the group.</td></tr>
+    <tr><td class="id">G-04</td><td><span class="category cat-func">Func</span></td><td>Create a site hierarchy: Country → Region → Site. Add 3 sites.</td><td class="expected">Hierarchy visible. Roll-up works in Analytics filters.</td></tr>
+    <tr><td class="id">G-05</td><td><span class="category cat-func">Func</span></td><td>Add site members via the Site Matrix (check/uncheck).</td><td class="expected">Changes apply immediately. User sees assets/data for their sites.</td></tr>
+    <tr><td class="id">G-06</td><td><span class="category cat-func">Func</span></td><td>Bulk upload sites via CSV with member emails.</td><td class="expected">Sites created. Members assigned. Errors flagged for review.</td></tr>
+    <tr><td class="id">G-07</td><td><span class="category cat-func">Func</span></td><td>Set up an advanced access rule: "Auditors group + Manchester site". Grant template access.</td><td class="expected">Only users in both Auditors AND Manchester can access the template.</td></tr>
+    <tr><td class="id">G-08</td><td><span class="category cat-func">Func</span></td><td>Configure site selection settings: "Only sites the user belongs to". Verify dropdown in inspection.</td><td class="expected">User only sees their own sites in the dropdown.</td></tr>
+    <tr><td class="id">G-09</td><td><span class="category cat-func">Func</span></td><td>Download the Group &amp; Site Matrix as CSV.</td><td class="expected">CSV shows all users × all groups/sites with membership ticks.</td></tr>
+    <tr><td class="id">G-10</td><td><span class="category cat-func">Func</span></td><td>View a site profile. Verify it aggregates inspections, actions, issues, and assets.</td><td class="expected">All linked data visible under the site profile.</td></tr>
+    <tr><td class="id">G-11</td><td><span class="category cat-edge">Edge</span></td><td>Delete a group referenced by 3 templates and 2 training courses.</td><td class="expected">Warning shown with reference list. Admin must confirm. References cleared. (G-E03)</td></tr>
+    <tr><td class="id">G-12</td><td><span class="category cat-edge">Edge</span></td><td>Try to delete a site with linked inspections and assets.</td><td class="expected">Deletion blocked. Archive offered. (G-E04)</td></tr>
+    <tr><td class="id">G-13</td><td><span class="category cat-edge">Edge</span></td><td>Upload a malformed CSV with missing columns and duplicate emails.</td><td class="expected">Review screen shows errors. Valid rows importable. Rejected rows downloadable. (G-E05)</td></tr>
+    <tr><td class="id">G-14</td><td><span class="category cat-edge">Edge</span></td><td>User reaches 100-group limit. Rule-based membership tries to add them to another.</td><td class="expected">Addition blocked. Admin notified. (G-E02)</td></tr>
+    <tr><td class="id">G-15</td><td><span class="category cat-perf">Perf</span></td><td>Load the Site Matrix with 5,000 users × 200 sites.</td><td class="expected">Matrix loads with pagination/lazy loading. Checkbox changes save quickly.</td></tr>
+    <tr><td class="id">G-16</td><td><span class="category cat-func">Func</span></td><td>Customise site labels (e.g. rename "Site" to "Branch", "Region" to "District").</td><td class="expected">Custom labels appear everywhere: dropdowns, profiles, filters, reports.</td></tr>
+    <tr><td class="id">G-17</td><td><span class="category cat-func">Func</span></td><td>Move a site from one region to another in the hierarchy.</td><td class="expected">Site moves. All linked data stays intact. Analytics roll-ups update. (G-E09)</td></tr>
+    <tr><td class="id">G-18</td><td><span class="category cat-func">Func</span></td><td>Set up site membership rules on a site. Verify auto-add and auto-remove.</td><td class="expected">Matching users added. When field changes, users removed automatically.</td></tr>
+    <tr><td class="id">G-19</td><td><span class="category cat-edge">Edge</span></td><td>Delete a group referenced in an advanced access rule. Verify access rule handling.</td><td class="expected">Access rule flagged as invalid. Admin notified. Access suspended. (G-E06)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODULE 10: SETTINGS                                      -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m10">
+  <div class="module-header"><span class="dot dot-slate"></span><h2>10 — Settings</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">S-E01</td><td>A <strong>permission set is deleted</strong> while users are assigned to it.</td><td class="resolution">Prevent deletion if users are assigned. Offer: "Reassign X users to another permission set before deleting." Provide a dropdown to select the replacement set.</td></tr>
+    <tr><td class="id">S-E02</td><td>The <strong>last administrator</strong> tries to change their own permission set to Standard.</td><td class="resolution">Block the change: "You are the last administrator. At least one administrator must exist." The user must assign another user as Administrator first.</td></tr>
+    <tr><td class="id">S-E03</td><td>A <strong>new user is added without being assigned to any group or site</strong>.</td><td class="resolution">Allow it — the user will have platform access (based on their permission set) but won't see any site-scoped data or group-scoped templates until assigned. Show a warning: "This user has no group or site membership. They won't see site-specific data."</td></tr>
+    <tr><td class="id">S-E04</td><td>A <strong>custom user field used in rule-based group/site membership</strong> is deleted.</td><td class="resolution">Prevent deletion if the field is referenced by any membership rule. Warn: "This field is used by X membership rules. Remove it from those rules first." List the affected rules.</td></tr>
+    <tr><td class="id">S-E05</td><td>An admin <strong>bulk-imports users via CSV</strong> with some email addresses already existing in the org.</td><td class="resolution">Existing users are updated (group/site membership, permission set) rather than duplicated. New users are created. A summary shows: "X new users added, Y existing users updated, Z rows with errors."</td></tr>
+    <tr><td class="id">S-E06</td><td>The <strong>per-company pricing model</strong> is in place — but the company has grown to 10,000 users. Performance implications.</td><td class="resolution">Platform architecture supports tenant-level scaling. No per-user cost friction. Performance optimisations (lazy loading, pagination, background jobs) handle large user bases. Enterprise-grade SLAs kick in above configurable thresholds.</td></tr>
+    <tr><td class="id">S-E07</td><td>A user <strong>resets their password</strong> but has an active mobile session with cached data.</td><td class="resolution">The mobile session is invalidated on next sync attempt. The user is prompted to log in again. Offline data is preserved and syncs after re-authentication.</td></tr>
+    <tr><td class="id">S-E08</td><td>A <strong>user is deactivated</strong> but is currently an assignee on 15 actions, a signer on 3 inspections, and the responsible party for 4 compliance rules.</td><td class="resolution">On deactivation, show a cascade impact summary: "This user is assigned to X actions, Y inspections awaiting signature, Z compliance rules." Each item needs reassignment. Offer bulk reassignment to another user before confirming deactivation. Items not reassigned show "No active assignee/signer/responsible party" warnings.</td></tr>
+    <tr><td class="id">S-E09</td><td>A <strong>GDPR data deletion request</strong> is received for a user — data must be removed across all modules.</td><td class="resolution">Provide a "Data deletion" admin tool that: (1) identifies all data linked to the user across every module (inspections, issues, actions, signatures, comments, Heads Up engagement), (2) shows a preview of what will be anonymised or deleted, (3) on confirmation, anonymises the user's identity (replaces name/email with "Deleted User #XXX") across all records while preserving the operational data structure. Fully irreversible — requires admin confirmation and a 30-day cooling-off period.</td></tr>
+    <tr><td class="id">S-E10</td><td>An <strong>integration (telematics, ERP) is disconnected</strong> — how are dependent features affected?</td><td class="resolution">When an integration disconnects, dependent features degrade gracefully: asset location shows "Last updated: [timestamp] — integration disconnected", automated readings stop flowing but manual entry still works, and an admin notification fires. A banner appears in Settings: "Integration [X] disconnected. Reconnect to resume data flow." No data is lost.</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">S-01</td><td><span class="category cat-func">Func</span></td><td>Add a new user: assign permission set, group, and site.</td><td class="expected">User created. Can log in. Sees data per their access.</td></tr>
+    <tr><td class="id">S-02</td><td><span class="category cat-func">Func</span></td><td>Bulk import 100 users via CSV with permission set, groups, and sites.</td><td class="expected">All users created. Memberships assigned. Summary shows results.</td></tr>
+    <tr><td class="id">S-03</td><td><span class="category cat-func">Func</span></td><td>Create a custom permission set with specific granular permissions. Assign to a user.</td><td class="expected">User can only access enabled features. Disabled features are not visible.</td></tr>
+    <tr><td class="id">S-04</td><td><span class="category cat-func">Func</span></td><td>Change a user's permission set from Standard to Manager.</td><td class="expected">User immediately gains Manager capabilities. No re-login needed.</td></tr>
+    <tr><td class="id">S-05</td><td><span class="category cat-func">Func</span></td><td>Deactivate a user. Verify they can't log in but their data persists.</td><td class="expected">Login blocked. Historical inspections, actions, issues remain.</td></tr>
+    <tr><td class="id">S-06</td><td><span class="category cat-func">Func</span></td><td>Reactivate a deactivated user. Verify data continuity.</td><td class="expected">User can log in. All previous data accessible.</td></tr>
+    <tr><td class="id">S-07</td><td><span class="category cat-func">Func</span></td><td>Create custom user fields (role, department, shift). Assign values to a user.</td><td class="expected">Fields visible in user profile. Usable in rule-based membership.</td></tr>
+    <tr><td class="id">S-08</td><td><span class="category cat-func">Func</span></td><td>View the Organisation Settings page as an Administrator. Verify all sections are visible.</td><td class="expected">All settings sections visible: Groups, Sites, Permissions, Templates, Actions, Issues, Assets, Heads Up, Compliance, Training, Integrations, Billing.</td></tr>
+    <tr><td class="id">S-09</td><td><span class="category cat-func">Func</span></td><td>View the Settings page as a Standard user. Verify only personal settings visible.</td><td class="expected">Only name, email, password, timezone, language, notifications, memberships (read-only).</td></tr>
+    <tr><td class="id">S-10</td><td><span class="category cat-func">Func</span></td><td>Download the full user list as CSV.</td><td class="expected">CSV contains all users with names, emails, permission sets, groups, sites.</td></tr>
+    <tr><td class="id">S-11</td><td><span class="category cat-edge">Edge</span></td><td>Try to delete a permission set with users assigned.</td><td class="expected">Deletion blocked. Reassignment prompt shown. (S-E01)</td></tr>
+    <tr><td class="id">S-12</td><td><span class="category cat-edge">Edge</span></td><td>Last admin tries to downgrade their own permission set.</td><td class="expected">Blocked: "At least one administrator required." (S-E02)</td></tr>
+    <tr><td class="id">S-13</td><td><span class="category cat-edge">Edge</span></td><td>Add a user with no group or site membership.</td><td class="expected">User created with warning. No site-scoped data visible to them. (S-E03)</td></tr>
+    <tr><td class="id">S-14</td><td><span class="category cat-edge">Edge</span></td><td>Try to delete a custom user field used in a rule-based group.</td><td class="expected">Deletion blocked. Affected rules listed. (S-E04)</td></tr>
+    <tr><td class="id">S-15</td><td><span class="category cat-edge">Edge</span></td><td>Bulk CSV import with some existing emails.</td><td class="expected">Existing users updated. New users created. Summary accurate. (S-E05)</td></tr>
+    <tr><td class="id">S-16</td><td><span class="category cat-perf">Perf</span></td><td>Load user management page with 10,000 users. Filter and search.</td><td class="expected">Page loads with pagination. Search returns results within 2 seconds.</td></tr>
+    <tr><td class="id">S-17</td><td><span class="category cat-func">Func</span></td><td>Configure notification preferences: disable email for inspections, enable push for issues.</td><td class="expected">Preferences saved. User only receives notifications per their config.</td></tr>
+    <tr><td class="id">S-18</td><td><span class="category cat-func">Func</span></td><td>Connect a telematics integration. Verify asset readings flow. Disconnect it.</td><td class="expected">Readings flow when connected. On disconnect, graceful degradation with "disconnected" warning. (S-E10)</td></tr>
+    <tr><td class="id">S-19</td><td><span class="category cat-edge">Edge</span></td><td>Reset password while mobile app has cached offline data. Attempt sync.</td><td class="expected">Session invalidated. Re-login prompted. Offline data preserved and syncs after auth. (S-E07)</td></tr>
+    <tr><td class="id">S-20</td><td><span class="category cat-edge">Edge</span></td><td>Deactivate a user who is an action assignee, inspection signer, and compliance responsible party.</td><td class="expected">Cascade summary shown. Bulk reassignment offered. Unresolved items show warnings. (S-E08)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- CROSS-MODULE                                             -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="module" id="m11">
+  <div class="module-header"><span class="dot" style="background:linear-gradient(135deg,var(--blue),var(--red),var(--amber),var(--green));"></span><h2>11 — Cross-Module Edge Cases &amp; Tests</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">X-E01</td><td>A <strong>user is deactivated</strong> who is simultaneously: an action assignee, a multi-signature signer on a pending inspection, a Heads Up recipient who hasn't signed, the responsible party on 3 compliance rules, and an approver on an inspection awaiting approval.</td><td class="resolution">On deactivation, a cascade impact summary is shown listing every affected item across all modules. Each item can be individually or bulk-reassigned to another user. Items not reassigned show "No active assignee/signer/responsible party" warnings. The deactivation is blocked until the admin acknowledges the summary (not necessarily reassigns everything).</td></tr>
+    <tr><td class="id">X-E02</td><td>A <strong>site is archived</strong> — cascading impact across inspections (tagged to the site), actions (linked to site), issues (reported at site), assets (assigned to site), compliance rules (scoped to site), scheduled inspections (assigned to site), and Heads Ups (targeted to site members).</td><td class="resolution">Show a full cascade preview before archiving: "This site has X inspections, Y actions, Z issues, W assets, V compliance rules." All data retains the archived site reference for historical reporting. No new inspections/issues/actions can be tagged to the archived site. Schedules are paused. Compliance rules scoped only to this site become "Not Evaluable" (multi-site rules simply exclude this site from future periods). Assets remain in the register but lose their site filter.</td></tr>
+    <tr><td class="id">X-E03</td><td>A <strong>notification storm</strong> — a user receives 50+ notifications in rapid succession from different modules (overdue inspections, new issues, action assignments, Heads Ups, compliance alerts) all triggering at the same time.</td><td class="resolution">Implement notification batching. If more than N notifications fire for the same user within a 5-minute window, they are batched into a single digest notification: "You have X new items requiring attention" with a grouped summary. The user's notification preference settings control thresholds per channel (push vs. email vs. in-app).</td></tr>
+    <tr><td class="id">X-E04</td><td>An inspection is completed that <strong>simultaneously satisfies</strong>: an action dedup check (same template + site + question has an open action), a compliance rule (evidence auto-collected), an asset reading threshold (triggers maintenance plan), and an issue resolution (linked inspection from issue). All four cross-module effects fire at once.</td><td class="resolution">Each cross-module effect is processed independently and asynchronously. There is no ordering dependency between them. All four effects complete: the action dedup indicator updates, the compliance rule flips to Compliant, the maintenance plan status changes to "Due", and the issue profile shows the linked inspection. Notifications from each module are batched per X-E03.</td></tr>
+    <tr><td class="id">X-E05</td><td>A <strong>completed inspection is deleted</strong> that was linked to: an issue (as evidence), an action (as the source), a compliance rule (as auto-collected evidence), and an asset (as the latest reading).</td><td class="resolution">Each linked item handles the deletion gracefully: the issue shows "Linked inspection deleted" (issue remains open), the action retains its data but shows "Source inspection deleted", the compliance rule's evidence is removed (rule may revert to Non-Compliant), and the asset retains the reading in its history but the reading shows "Source inspection deleted". Deletion of inspections linked to other modules requires admin confirmation with a cascade preview.</td></tr>
+    <tr><td class="id">X-E06</td><td><strong>Offline sync conflict</strong> — a user creates an action offline from an inspection, while another user (online) creates an action from the same issue that the inspection is linked to, targeting the same problem.</td><td class="resolution">Both actions are created on sync. The platform detects they are related (same inspection/issue chain) and shows a "Possible duplicate" indicator on both. The online user's action is not overwritten. The merge feature (Actions module) can consolidate them if they are indeed duplicates.</td></tr>
+    <tr><td class="id">X-E07</td><td>A <strong>template is used across multiple modules</strong>: linked to issue categories, linked to action types, used in compliance rules, scheduled for recurring inspections, and connected to assets. The template is then archived.</td><td class="resolution">Before archiving, show a full dependency summary: "This template is referenced by X issue categories, Y action types, Z compliance rules, W schedules, V asset configurations." Archiving proceeds with cascade effects: issue categories show "Template archived" (users pick another), action types disable the "Start inspection" option, compliance rules become "Not Evaluable", schedules are paused, and asset-template links become inactive. Each dependent module's admin is notified.</td></tr>
+    <tr><td class="id">X-E08</td><td><strong>Data export across modules</strong> — a user requests a CSV export of inspections, but the inspection data references actions, issues, assets, and sites from other modules. How deep does the export go?</td><td class="resolution">Exports include the primary module's data plus reference IDs and names for linked items from other modules (e.g. action title, issue reference number, asset name, site name). They do not recursively export full data from linked modules. For deep cross-module analysis, use Analytics dashboards or build a custom report combining multiple data sources.</td></tr>
+  </table>
+
+  <span class="section-label test">Test Suite</span>
+  <table class="test-table">
+    <tr><th>ID</th><th>Cat</th><th>Test</th><th class="expected">Expected Result</th></tr>
+    <tr><td class="id">X-01</td><td><span class="category cat-integ">Integ</span></td><td><strong>End-to-end flow:</strong> Report an issue → Start an inspection from the issue → Create an action from the inspection → Complete the action → Create a Heads Up communicating the resolution → Verify all links in each module's profile.</td><td class="expected">Issue profile shows linked inspection and action. Inspection shows linked issue and action. Action shows source inspection and issue. Heads Up published. All cross-references intact.</td></tr>
+    <tr><td class="id">X-02</td><td><span class="category cat-integ">Integ</span></td><td><strong>End-to-end flow:</strong> Scan asset QR code → Start inspection → Log a reading that triggers maintenance → Create a Work Order action from maintenance table → Complete the action → Verify asset profile shows the full chain.</td><td class="expected">Asset profile shows: completed inspection, reading update, maintenance plan status change, linked action (completed). All timestamps correct.</td></tr>
+    <tr><td class="id">X-03</td><td><span class="category cat-integ">Integ</span></td><td><strong>Compliance end-to-end:</strong> Set up an ISO 45001 framework with 3 rules (inspection + training + signed Heads Up). Complete all three activities. Verify all 3 rules auto-satisfy. Export compliance report.</td><td class="expected">All 3 rules flip to Compliant. Framework score reaches 100%. Report shows all evidence linked with timestamps.</td></tr>
+    <tr><td class="id">X-04</td><td><span class="category cat-integ">Integ</span></td><td><strong>Multi-signature + approval + compliance:</strong> Template with 2-person sequential signature and approval page. Complete inspection, collect both signatures, get approval. Verify the inspection satisfies a compliance rule.</td><td class="expected">Signatures collected in sequence. Approval granted. Inspection marked complete. Compliance rule auto-satisfied.</td></tr>
+    <tr><td class="id">X-05</td><td><span class="category cat-edge">Edge</span></td><td>Deactivate a user who is an action assignee (5 actions), inspection signer (2 pending), and compliance responsible party (3 rules). Verify cascade.</td><td class="expected">Cascade summary shown. All items flagged with "No active" warnings. Bulk reassignment available. (X-E01)</td></tr>
+    <tr><td class="id">X-06</td><td><span class="category cat-edge">Edge</span></td><td>Archive a site with linked data across all modules. Verify cascade across inspections, actions, issues, assets, compliance, and schedules.</td><td class="expected">All data preserved with archived site reference. No new data can be tagged. Schedules paused. Compliance rules adjust. (X-E02)</td></tr>
+    <tr><td class="id">X-07</td><td><span class="category cat-edge">Edge</span></td><td>Complete an inspection that simultaneously triggers: action dedup, compliance evidence collection, asset maintenance threshold, and issue resolution.</td><td class="expected">All four cross-module effects process independently and correctly. (X-E04)</td></tr>
+    <tr><td class="id">X-08</td><td><span class="category cat-edge">Edge</span></td><td>Delete an inspection linked to an issue, an action, a compliance rule, and an asset reading.</td><td class="expected">Each linked item shows "Source deleted" gracefully. Compliance rule re-evaluates. Admin confirmation required with cascade preview. (X-E05)</td></tr>
+    <tr><td class="id">X-09</td><td><span class="category cat-edge">Edge</span></td><td>Archive a template referenced by issue categories, action types, compliance rules, schedules, and asset configurations.</td><td class="expected">Dependency summary shown. All downstream modules notified and affected features degrade gracefully. (X-E07)</td></tr>
+    <tr><td class="id">X-10</td><td><span class="category cat-perf">Perf</span></td><td>Trigger 50 notifications for the same user within 1 minute (mix of overdue inspections, action assignments, issue alerts, compliance warnings).</td><td class="expected">Notifications batched into a digest. User receives 1-2 grouped notifications, not 50 individual ones. (X-E03)</td></tr>
+    <tr><td class="id">X-11</td><td><span class="category cat-offline">Offline</span></td><td>User creates an action offline from an inspection. Another user (online) creates an action from the same linked issue. Offline user syncs.</td><td class="expected">Both actions created. "Possible duplicate" indicator shown. Merge available. (X-E06)</td></tr>
+    <tr><td class="id">X-12</td><td><span class="category cat-integ">Integ</span></td><td><strong>Analytics cross-module:</strong> Create a dashboard with one chart per data source (Inspections, Issues, Actions, Heads Up, Assets, Compliance). Apply a global site filter.</td><td class="expected">All 6 charts render with data filtered to the same site. Drill-down works on each.</td></tr>
+    <tr><td class="id">X-13</td><td><span class="category cat-integ">Integ</span></td><td><strong>Groups &amp; Sites across modules:</strong> Create a group. Grant template access, assign training, target a Heads Up, set as compliance responsible party, and configure issue notifications — all to the same group. Add a new user to the group.</td><td class="expected">New user immediately receives: template access, training assignment, Heads Up visibility, compliance responsibility, and issue notifications. All from a single group membership change.</td></tr>
+    <tr><td class="id">X-14</td><td><span class="category cat-integ">Integ</span></td><td><strong>Nested asset + compliance:</strong> Create a parent asset with 3 sub-assets. Attach maintenance plans to each sub-asset. Create a compliance rule requiring "no overdue maintenance for asset type X". Let one sub-asset's plan go overdue.</td><td class="expected">Compliance rule detects the overdue sub-asset plan. Rule status flips to Non-Compliant. Parent asset profile shows the overdue indicator.</td></tr>
+    <tr><td class="id">X-15</td><td><span class="category cat-integ">Integ</span></td><td><strong>Document + Heads Up + Compliance:</strong> Upload an SOP document. Create a Heads Up with signature request linked to the document. Create a compliance rule requiring the signed Heads Up. All users sign. Verify compliance.</td><td class="expected">Document uploaded. Heads Up published with signatures collected. Compliance rule auto-satisfied when all assignees sign. Full evidence trail in compliance report.</td></tr>
+  </table>
+</section>
+
+<footer>
+  Platform — Edge Cases &amp; Test Plan — April 2026<br>
+  Total: 127 edge cases &middot; 246 tests across 11 sections (10 modules + cross-module)
+</footer>
+
+</div>
+</body>
+</html>
