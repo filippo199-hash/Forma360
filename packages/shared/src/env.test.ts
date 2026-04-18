@@ -16,6 +16,7 @@ const validServerEnv = {
   RESEND_API_KEY: 're_123',
   RESEND_FROM: 'Forma360 <noreply@forma360.dev>',
   EMAIL_DELIVERY: 'console',
+  RENDER_SHARED_SECRET: 'r'.repeat(32),
   LOG_LEVEL: 'info',
 } as const;
 
@@ -53,6 +54,12 @@ describe('parseServerEnv', () => {
   it('rejects a BETTER_AUTH_SECRET shorter than 32 bytes', () => {
     expect(() => parseServerEnv({ ...validServerEnv, BETTER_AUTH_SECRET: 'short' })).toThrow(
       /BETTER_AUTH_SECRET/,
+    );
+  });
+
+  it('rejects a RENDER_SHARED_SECRET shorter than 32 bytes', () => {
+    expect(() => parseServerEnv({ ...validServerEnv, RENDER_SHARED_SECRET: 'short' })).toThrow(
+      /RENDER_SHARED_SECRET/,
     );
   });
 
