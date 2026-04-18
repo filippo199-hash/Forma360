@@ -151,5 +151,208 @@
       "permissionSetLabel": "Your permission set",
       "readOnlyNote": "Only administrators can change your permission set."
     }
+  },
+  "templates": {
+    "title": "Templates",
+    "subtitle": "Build, version, and publish inspection templates.",
+    "newButton": "New template",
+    "duplicateButton": "Duplicate",
+    "archiveButton": "Archive",
+    "unarchiveButton": "Unarchive",
+    "showArchived": "Show archived",
+    "empty": "No templates yet. Create your first template to get started.",
+    "table": {
+      "name": "Name",
+      "status": "Status",
+      "updated": "Updated",
+      "actions": "Actions"
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "create": {
+      "title": "Create a template",
+      "nameLabel": "Template name",
+      "descriptionLabel": "Description",
+      "submit": "Create template",
+      "namePlaceholder": "e.g. Daily safety walkaround"
+    },
+    "editor": {
+      "saveButton": "Save draft",
+      "savedAt": "Saved {time}",
+      "publishButton": "Publish",
+      "publishedAt": "Published {time}",
+      "backToList": "Back to templates",
+      "addSection": "Add section",
+      "addItem": "Add item",
+      "deleteSection": "Delete section",
+      "deleteItem": "Delete item",
+      "sectionTitle": "Section title",
+      "sectionDescription": "Description (optional)",
+      "questionPrompt": "Question",
+      "requiredLabel": "Required",
+      "itemNote": "Note (optional)",
+      "confirmDeleteSection": "Delete this section and all its items?",
+      "confirmDeleteItem": "Delete this item?",
+      "confirmDeletePage": "Delete this page and all its items?",
+      "conflictTitle": "Another editor saved changes",
+      "conflictBody": "Someone else updated this template while you were editing. Reload to see the latest version before saving.",
+      "conflictReload": "Reload",
+      "publishConfirmTitle": "Publish template?",
+      "publishConfirmBody": "Publishing creates a new version that can be used for new inspections. The current draft will become immutable.",
+      "publishConfirmCta": "Publish",
+      "saveError": "Could not save the template. Check the console for details.",
+      "saveSuccess": "Draft saved",
+      "publishSuccess": "Template published",
+      "validationError": "This template has validation errors. Fix them before publishing.",
+      "pages": "Pages",
+      "content": "Content",
+      "settings": "Settings",
+      "responseSets": "Response sets",
+      "logic": "Logic",
+      "titlePageBadge": "Title page",
+      "inspectionPageBadge": "Inspection page",
+      "pagesTab": {
+        "addPageButton": "Add inspection page",
+        "pageTitleLabel": "Page title",
+        "pageDescriptionLabel": "Page description"
+      },
+      "settingsTab": {
+        "templateTitleLabel": "Template title",
+        "templateDescriptionLabel": "Description",
+        "titleFormatLabel": "Inspection title format",
+        "titleFormatHelp": "Tokens: {date}, {site}, {conductedBy}, {templateName}.",
+        "documentNumberFormatLabel": "Document number format",
+        "documentNumberFormatHelp": "Tokens: {counter:N} — zero-padded sequential counter.",
+        "documentNumberStartLabel": "Document number start",
+        "accessRuleLabel": "Access rule (future)",
+        "accessRuleHelp": "Access rule picking will land in a later PR."
+      },
+      "questionType": {
+        "text": "Text",
+        "number": "Number",
+        "date": "Date",
+        "datetime": "Date & time",
+        "time": "Time",
+        "multipleChoice": "Multiple choice",
+        "checkbox": "Checkbox",
+        "signature": "Signature",
+        "media": "Media",
+        "slider": "Slider",
+        "instruction": "Instruction",
+        "conductedBy": "Conducted by",
+        "inspectionDate": "Inspection date",
+        "documentNumber": "Document number",
+        "site": "Site",
+        "location": "Location",
+        "asset": "Asset",
+        "company": "Company",
+        "annotation": "Annotation",
+        "table": "Table"
+      },
+      "questionCategory": {
+        "common": "Common",
+        "advanced": "Advanced",
+        "titlePage": "Title page"
+      },
+      "stubNotice": "Not yet editable in this UI — coming soon.",
+      "detail": {
+        "title": "Item settings",
+        "empty": "Select an item to edit its settings.",
+        "text": {
+          "multiline": "Multi-line",
+          "maxLength": "Max length"
+        },
+        "number": {
+          "min": "Minimum",
+          "max": "Maximum",
+          "decimalPlaces": "Decimal places",
+          "unit": "Unit"
+        },
+        "slider": {
+          "min": "Minimum",
+          "max": "Maximum",
+          "step": "Step"
+        },
+        "media": {
+          "mediaKind": "Media kind",
+          "maxCount": "Max count",
+          "kindAny": "Any",
+          "kindPhoto": "Photo",
+          "kindVideo": "Video",
+          "kindPdf": "PDF"
+        },
+        "signature": {
+          "mode": "Signing mode",
+          "modeSequential": "Sequential",
+          "modeParallel": "Parallel",
+          "addSlot": "Add slot",
+          "removeSlot": "Remove slot",
+          "slotLabel": "Slot label"
+        },
+        "multipleChoice": {
+          "responseSet": "Response set",
+          "noResponseSet": "Pick a response set",
+          "createResponseSet": "Create new response set"
+        },
+        "instruction": {
+          "body": "Body (markdown)"
+        },
+        "checkbox": {
+          "label": "Checkbox label"
+        }
+      },
+      "responseSetsTab": {
+        "addButton": "New response set",
+        "empty": "No custom response sets. Add one here or attach a global response set to a multiple-choice question.",
+        "nameLabel": "Name",
+        "multiSelectLabel": "Multi-select",
+        "optionsLabel": "Options",
+        "addOption": "Add option",
+        "removeOption": "Remove option",
+        "flaggedLabel": "Flagged",
+        "optionLabel": "Label"
+      },
+      "logicTab": {
+        "empty": "Select a multiple-choice question to edit its logic triggers.",
+        "intro": "Choose a response option, then add triggers that fire when an inspector picks it.",
+        "triggerKind": "Trigger",
+        "addTrigger": "Add trigger",
+        "removeTrigger": "Remove trigger",
+        "kind": {
+          "askFollowUp": "Ask follow-up",
+          "requireAction": "Require action",
+          "requireEvidence": "Require evidence",
+          "requireNote": "Require note",
+          "notify": "Notify"
+        },
+        "askFollowUp": {
+          "questionIds": "Follow-up question IDs (comma-separated)"
+        },
+        "requireAction": {
+          "actionTitle": "Action title"
+        },
+        "requireEvidence": {
+          "mediaKind": "Media kind",
+          "minCount": "Minimum count"
+        },
+        "requireNote": {
+          "placeholder": "Placeholder text"
+        },
+        "notify": {
+          "timing": "Timing",
+          "timingImmediate": "Immediate",
+          "timingOnCompletion": "On completion"
+        },
+        "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit."
+      },
+      "validation": {
+        "title": "Validation errors",
+        "fixBeforePublish": "Fix these issues before publishing.",
+        "genericError": "Template content is invalid."
+      }
+    }
   }
 }

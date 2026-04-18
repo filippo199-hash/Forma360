@@ -8,10 +8,12 @@ import { Toaster as SonnerToaster, type ToasterProps } from 'sonner';
  * from next-themes. Mounted once in the locale layout.
  */
 export function Toaster({ ...props }: ToasterProps) {
-  const { theme = 'system' } = useTheme();
+  const { theme } = useTheme();
+  const resolved: 'light' | 'dark' | 'system' =
+    theme === 'light' || theme === 'dark' ? theme : 'system';
   return (
     <SonnerToaster
-      theme={theme as ToasterProps['theme']}
+      theme={resolved}
       className="toaster group"
       toastOptions={{
         classNames: {
