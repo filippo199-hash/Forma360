@@ -1,0 +1,14 @@
+# Root Nixpacks config.
+#
+# Railway services that build from the repo root (Root Directory = `/`)
+# read this file. We force Node 22 + pnpm 9 so a fresh-clone monorepo
+# install never falls back to npm (which chokes on `workspace:^`).
+#
+# Service-specific overrides live in `apps/<svc>/nixpacks.toml` but are
+# only picked up when the service's Root Directory points at that folder.
+# For pnpm workspaces that path is broken — npm install tries to resolve
+# `workspace:^` and fails — so we set Root Directory to `/` and let this
+# file drive the setup phase instead. See docs/deployment.md.
+
+[phases.setup]
+nixPkgs = ['nodejs_22', 'pnpm-9_x']
