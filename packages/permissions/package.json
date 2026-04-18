@@ -23,6 +23,18 @@
     "./seed": {
       "types": "./src/seed.ts",
       "default": "./src/seed.ts"
+    },
+    "./rules": {
+      "types": "./src/rules.ts",
+      "default": "./src/rules.ts"
+    },
+    "./access": {
+      "types": "./src/access.ts",
+      "default": "./src/access.ts"
+    },
+    "./dependents": {
+      "types": "./src/dependents.ts",
+      "default": "./src/dependents.ts"
     }
   },
   "scripts": {
