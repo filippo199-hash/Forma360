@@ -33,10 +33,12 @@ import {
 } from '@forma360/permissions/dependents';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-// `rrule` is CJS; Node 22 ESM can't synthesize its named exports. See
-// packages/jobs/src/workers/schedule-rrule.ts for the same pattern.
-import rrulePkg from 'rrule';
-const { RRule, rrulestr } = rrulePkg;
+// This file is only consumed by Next.js via `@forma360/api`; Next's bundler
+// (webpack/turbopack) handles the CJS interop transparently, so named
+// imports from `rrule` Just Work here. The worker has no bundler — see
+// packages/jobs/src/workers/schedule-rrule.ts for the default-import
+// dance needed there.
+import { RRule, rrulestr } from 'rrule';
 import { and, count, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
