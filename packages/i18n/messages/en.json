@@ -354,5 +354,132 @@
         "genericError": "Template content is invalid."
       }
     }
+  },
+  "inspections": {
+    "title": "Inspections",
+    "subtitle": "Start, conduct, and submit inspections.",
+    "startButton": "Start inspection",
+    "empty": "No inspections yet. Start your first inspection from a published template.",
+    "filter": {
+      "inProgress": "In progress",
+      "awaitingSignatures": "Awaiting signatures",
+      "awaitingApproval": "Awaiting approval",
+      "completed": "Completed",
+      "rejected": "Rejected"
+    },
+    "table": {
+      "title": "Title",
+      "template": "Template",
+      "documentNumber": "Document #",
+      "status": "Status",
+      "startedAt": "Started",
+      "conductedBy": "Conducted by"
+    },
+    "status": {
+      "in_progress": "In progress",
+      "awaiting_signatures": "Awaiting signatures",
+      "awaiting_approval": "Awaiting approval",
+      "completed": "Completed",
+      "rejected": "Rejected"
+    },
+    "picker": {
+      "title": "Pick a template",
+      "description": "Choose a published template to start an inspection from.",
+      "empty": "No published templates are available yet.",
+      "submit": "Start",
+      "loadError": "Could not load templates."
+    },
+    "conduct": {
+      "back": "Back",
+      "saving": "Saving…",
+      "savedAt": "Saved {time}",
+      "offline": "Saving locally — will retry",
+      "conflictTitle": "Another editor saved changes",
+      "conflictBody": "This inspection was updated elsewhere. Reload to see the latest responses before continuing.",
+      "conflictReload": "Reload",
+      "submitButton": "Submit inspection",
+      "submitConfirmTitle": "Submit inspection?",
+      "submitConfirmBody": "Any signature slots that still need signing will move to the signature-collection view. Approval-required templates will wait for an approver.",
+      "submitConfirmCta": "Submit",
+      "submitSuccess": "Inspection submitted",
+      "submitError": "Could not submit the inspection.",
+      "uploadError": "Could not upload file.",
+      "requiredSuffix": " *",
+      "pageSelector": "Page",
+      "prevPage": "Previous",
+      "nextPage": "Next",
+      "missingRequired": "Fill every required item before submitting.",
+      "hiddenByLogic": "Hidden by logic",
+      "stubNotice": "Not yet supported in this UI — coming in a future release.",
+      "loadError": "Could not load this inspection.",
+      "notFound": "Inspection not found.",
+      "readonly": "Read only — inspection is {status}.",
+      "response": {
+        "text": {
+          "placeholder": "Type your answer",
+          "charsRemaining": "{count} characters remaining"
+        },
+        "number": {
+          "placeholder": "Enter a number",
+          "unitLabel": "Unit",
+          "belowMin": "Value must be ≥ {min}",
+          "aboveMax": "Value must be ≤ {max}"
+        },
+        "media": {
+          "upload": "Add photo",
+          "uploading": "Uploading…",
+          "uploaded": "{count} uploaded",
+          "remove": "Remove"
+        },
+        "signature": {
+          "signed": "Signed by {name}",
+          "sign": "Sign",
+          "clear": "Clear",
+          "save": "Save signature",
+          "signerNameLabel": "Your name",
+          "signerNamePlaceholder": "Full name",
+          "signerRoleLabel": "Role (optional)",
+          "saveError": "Could not save the signature.",
+          "saveSuccess": "Signature saved"
+        },
+        "multipleChoice": {
+          "select": "Select an option"
+        },
+        "checkbox": {
+          "confirm": "Confirm"
+        },
+        "slider": {
+          "value": "Value: {value}"
+        },
+        "date": {
+          "placeholder": "Select date"
+        },
+        "time": {
+          "placeholder": "Select time"
+        },
+        "datetime": {
+          "placeholder": "Select date & time"
+        }
+      }
+    },
+    "statusPage": {
+      "title": "Inspection status",
+      "back": "Back to inspections",
+      "awaitingSignaturesTitle": "Awaiting signatures",
+      "awaitingSignaturesBody": "{filled} of {total} slots signed.",
+      "awaitingApprovalTitle": "Awaiting approval",
+      "awaitingApprovalBody": "Submitted for approval.",
+      "completedTitle": "Inspection completed",
+      "completedBody": "All signatures and approvals are in.",
+      "rejectedTitle": "Inspection rejected",
+      "rejectedBody": "Reason: {reason}",
+      "inProgressTitle": "In progress",
+      "inProgressBody": "Continue conducting this inspection.",
+      "continueButton": "Continue",
+      "reopenButton": "Reopen",
+      "pdfButton": "Download PDF",
+      "pdfComingSoon": "PDF export coming soon",
+      "signSlot": "Sign slot {index}"
+    }
   }
 }
