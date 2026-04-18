@@ -69,4 +69,26 @@ describe('health router', () => {
     expect(me.email).toBe('alice@acme.test');
     expect(me.tenantId).toBe('01KPEXAMPLE00000000000TENANT');
   });
+
+  it('context carries a pre-supplied requestId through the procedure', async () => {
+    const presetId = '01KPFAKERQSTIDAAAAAAAAAAAA' as never;
+    const context = createTestContext({
+      db: pgliteDb as unknown as Database,
+      logger: silentLogger(),
+      requestId: presetId,
+    });
+    expect(context.requestId).toBe(presetId);
+
+    const caller = createCaller(context);
+    const result = await caller.health.ping();
+    expect(result.ok).toBe(true);
+  });
+
+  it('context generates a fresh ULID when no requestId is supplied', () => {
+    const context = createTestContext({
+      db: pgliteDb as unknown as Database,
+      logger: silentLogger(),
+    });
+    expect(context.requestId).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
+  });
 });

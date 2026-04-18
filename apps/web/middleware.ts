@@ -1,16 +1,36 @@
 import { routing } from '@forma360/i18n/routing';
 import createMiddleware from 'next-intl/middleware';
+import { NextResponse, type NextRequest } from 'next/server';
+import { ulid } from 'ulid';
+
+const intlMiddleware = createMiddleware(routing);
 
 /**
- * Locale detection + redirect. Strips away the bare-path navigation so
- * `/anything-without-a-locale` becomes `/<detected>/anything-without-a-locale`.
- * Detection order: cookie → Accept-Language → default.
+ * Root middleware. Runs for every request matching the matcher below
+ * (excluding /api/*, _next/*, _vercel/*, static files).
+ *
+ * Responsibilities:
+ *   1. Ensure every request carries `x-request-id`. Generated on entry so
+ *      downstream handlers, logs, and Sentry events can correlate without
+ *      coordinating on a separate id. Re-used when the client sends one
+ *      already (e.g. a retry from a monitoring tool).
+ *   2. Delegate locale detection + redirect to next-intl's middleware.
+ *
+ * /api/* route handlers generate their own request id — they're never
+ * reached by this middleware.
  */
-export default createMiddleware(routing);
+export default function middleware(request: NextRequest): NextResponse {
+  const requestId = request.headers.get('x-request-id') ?? ulid();
+
+  // Propagate x-request-id down to the handler via a request-header rewrite
+  // so RSC and the route layer see the same id.
+  request.headers.set('x-request-id', requestId);
+
+  const response = intlMiddleware(request) ?? NextResponse.next();
+  response.headers.set('x-request-id', requestId);
+  return response;
+}
 
 export const config = {
-  // Match every path except Next internals, /api/* (tRPC + better-auth),
-  // static assets, and the public folder. The locale segment is added by
-  // the middleware itself, so this matcher intentionally does NOT list it.
   matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
 };

@@ -11,6 +11,7 @@
  */
 import { parseServerEnv } from '@forma360/shared/env';
 import { createLogger, type Logger } from '@forma360/shared/logger';
+import * as Sentry from '@sentry/node';
 import { Worker, type WorkerOptions } from 'bullmq';
 import { Redis } from 'ioredis';
 import { closeAllQueues, getQueue, QUEUE_NAMES } from './queues';
@@ -88,6 +89,10 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
         { job_id: job?.id, queue: job?.queueName, err: err.message },
         '[worker] job failed',
       );
+      Sentry.captureException(err, {
+        tags: { queue: job?.queueName ?? 'unknown', job_name: job?.name ?? 'unknown' },
+        extra: { job_id: job?.id, attempts: job?.attemptsMade, data: job?.data },
+      });
     });
   }
 
