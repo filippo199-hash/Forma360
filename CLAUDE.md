@@ -169,6 +169,87 @@ pnpm --filter @forma360/shared test:r2  # manual R2 smoke test
   handler → passed into `createContext` → echoed back on response.
 - Playwright smoke at `apps/web/e2e/smoke.spec.ts`.
 
+## What Phase 1 left in place (so you don't duplicate it)
+
+Phase 1 ships the organisational backbone: tenants, users with custom
+fields, permission sets, groups, sites, advanced access rules, and the
+reconcile jobs that keep rule-based membership materialised.
+
+- **Permission catalogue** at `packages/permissions/src/catalogue.ts`.
+  64 keys across 17 modules. Import the type `PermissionKey` or use the
+  `isPermissionKey` guard at every boundary. Administrator ⇔ holds
+  `org.settings` (see `grantsAdminAccess`).
+- **`requirePermission(perm)` middleware** at
+  `packages/api/src/procedures.ts`. Wraps `tenantProcedure`; exposes
+  `ctx.permissions` downstream. Every Phase 1 mutation uses it.
+- **Permission-set primitives** at `@forma360/permissions/{seed,admins}`:
+  - `seedDefaultPermissionSets(db, tenantId)` — idempotent Administrator
+    / Manager / Standard seeding. Call from every new-tenant flow.
+  - `countAdmins(db, tenantId)` + `wouldDropBelowMinAdmins(db, input)` —
+    the S-E02 last-admin guard. Use these whenever a mutation could
+    decrease the admin count.
+- **Rule evaluator** at `@forma360/permissions/rules`: `evaluateRules`
+  (pure, OR across rules, AND across conditions) + `validateRuleConditions`
+  (router-side static check).
+- **Advanced access-rule resolver** at `@forma360/permissions/access`:
+  `resolveAccessRule(rule, user)`. Every Phase 2+ module that gates
+  features goes through this.
+- **`getDependents` cascade-preview registry** at
+  `@forma360/permissions/dependents`. Call `registerDependentResolver(
+  module, fn)` **once** at router boot from every future module. Phase 1
+  registers: `users`, `permissionSets`, `customUserFields`, `groups`,
+  `sites`, `accessRules`. Graceful-degrading:  a throwing resolver
+  counts as 0, so one buggy module cannot freeze the admin cascade UI.
+- **BullMQ queues** at `@forma360/jobs/queues`:
+  - `forma360:group-membership-reconcile` — enqueued on
+    `groups.setRules` + on user custom-field change (Phase 1 reconcile
+    handler evaluates every user and diffs into `group_members`; G-E02
+    15k cap is deterministic).
+  - `forma360:site-membership-reconcile` — analogous.
+  - `forma360:user-anonymisation` — async fan-out; Phase 1 handler
+    logs. Later phases attach per-module anonymiser hooks.
+- **Migrations**: `0002_permissions.sql` and `0003_phase1_org_backbone.sql`.
+  Forward-only.
+- **Routers at `packages/api/src/routers/`**:
+  - `permissions` — permission-sets CRUD + `assignToUser` (S-E02 guard).
+  - `users` — list / get / updateProfile / invite / deactivate /
+    reactivate / anonymise (S-E09) / setCustomFieldValue.
+  - `customFields` — CRUD + S-E04 deletion guard.
+  - `groups` — CRUD, manual membership, rule set, archive → G-E06
+    access-rule invalidation.
+  - `sites` — CRUD, hierarchy with G-17 move semantics, matrix, G-E06
+    invalidation on archive, G-E07 max-depth, G-E10 rule-based guard.
+  - `accessRules` — CRUD + `listInvalid` + re-activate on update.
+- **`invalidateAccessRulesReferencing(db, tenantId, 'group'|'site', id)`**
+  in `routers/accessRules` — the single helper future modules call when
+  they archive something referenced by access rules.
+
+## Phase 1 → Phase 2 handoff
+
+Phase 2 (Templates & Inspections) will depend on all of the below. The
+files are stable — do not duplicate, do not refactor without a separate
+PR.
+
+- **`requirePermission`** — use `templates.*`, `inspections.*` keys
+  from the catalogue. Procedures Phase 2 adds:
+  - `templatesRouter` at `packages/api/src/routers/templates.ts`.
+  - `inspectionsRouter` at `packages/api/src/routers/inspections.ts`.
+- **Access rules primitive** — templates are gated by a list of access
+  rules. Call `resolveAccessRule(rule, userSnapshot)` at every read.
+  Phase 2's inspection model takes a snapshot at start — see
+  [ADR 0007](./docs/adr/0007-access-state-at-time-of-action.md).
+- **`getDependents('template', id)`** — Phase 2 **registers** a
+  `templates` resolver. Phase 1 provides the registry; Phase 2 populates.
+- **Custom user fields** — templates can reference user fields in
+  conditional question logic and rule-based assignment. Read via
+  `@forma360/db/schema → customUserFields` + `userCustomFieldValues`.
+- **CSV import / export framework** — Phase 1's bulk user import +
+  export framework (arriving in a follow-on PR) is the pattern
+  templates will reuse for their own import / export.
+- **ADR 0007 (access state at time of action)** — the snapshot model
+  every in-progress action follows. Templates lock this in first
+  (template version snapshot on inspection start).
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)
@@ -177,6 +258,7 @@ pnpm --filter @forma360/shared test:r2  # manual R2 smoke test
 - [0004 — User-table tenant extension](./docs/adr/0004-user-table-tenant-extension.md)
 - [0005 — Next.js 16 over 15](./docs/adr/0005-nextjs-16-over-15.md)
 - [0006 — Scheduled jobs in BullMQ](./docs/adr/0006-scheduled-jobs-in-bullmq.md)
+- [0007 — Access state at time of action](./docs/adr/0007-access-state-at-time-of-action.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase
