@@ -97,7 +97,8 @@
       "emailPlaceholder": "you@example.com",
       "passwordPlaceholder": "Your password",
       "signUpPrompt": "New to Forma360?",
-      "signUpLink": "Create an account"
+      "signUpLink": "Create an account",
+      "inviteOnly": "Sign-in is invite-only during the private beta. Contact your administrator for access."
     },
     "signUp": {
       "title": "Create your Forma360 account"

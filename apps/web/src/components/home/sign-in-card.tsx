@@ -1,7 +1,6 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -52,12 +51,14 @@ export function SignInCard() {
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>{t('title')}</CardTitle>
-        <CardDescription>
-          {t('signUpPrompt')}{' '}
-          <Link href="/sign-up" className="underline underline-offset-4">
-            {t('signUpLink')}
-          </Link>
-        </CardDescription>
+        {/*
+         * Self-serve sign-up is intentionally disabled during the private
+         * demo — new tenants are provisioned via the bootstrap-tenant
+         * script (see packages/db/src/scripts/bootstrap-tenant.ts) and new
+         * users come in through the invite flow. Re-enable this card's
+         * "Sign up" link once the signup-creates-tenant page lands.
+         */}
+        <CardDescription>{t('inviteOnly')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">

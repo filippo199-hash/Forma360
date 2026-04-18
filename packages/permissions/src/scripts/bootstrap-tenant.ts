@@ -13,31 +13,36 @@
  *   FORMA360_BOOTSTRAP_TENANT_SLUG="acme"                       \
  *   FORMA360_BOOTSTRAP_ADMIN_EMAIL="you@example.com"            \
  *   FORMA360_BOOTSTRAP_ADMIN_NAME="You"                         \
- *   pnpm --filter @forma360/db db:bootstrap
+ *   FORMA360_BOOTSTRAP_ADMIN_PASSWORD="a-12+-char-password"     \
+ *   pnpm --filter @forma360/permissions db:bootstrap
  *
  * What it does:
  *   1. Creates the tenant if `slug` doesn't exist yet.
  *   2. Seeds the three system permission sets (Administrator / Manager /
  *      Standard) via the canonical `seedDefaultPermissionSets` helper.
- *   3. Creates the user (email-unique) and assigns them the Administrator
- *      permission set. If the user row exists for a DIFFERENT tenant the
- *      script refuses rather than silently re-homing them.
+ *   3. Creates / upserts the user (email-unique) with emailVerified=true
+ *      and the Administrator permission set. If the user row exists for a
+ *      DIFFERENT tenant the script refuses rather than silently re-homing.
+ *   4. Creates / upserts the matching credential account row with the
+ *      hashed password so email+password sign-in works immediately.
  *
- * Sign-in: after the first deploy, visit `APP_URL`, enter the admin email,
- * and click the magic link that lands in your inbox. better-auth verifies
- * the email against the user row created here and logs you in.
+ * Sign-in: after running this, visit APP_URL and sign in with the email +
+ * password you just set. No verification email needed — the bootstrap
+ * user is created pre-verified.
  */
+import { createDb } from '@forma360/db/client';
+import { account, tenants, user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
-import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
+import { hashPassword } from 'better-auth/crypto';
 import { and, eq } from 'drizzle-orm';
-import { createDb } from '../client';
-import { tenants, user } from '../schema';
+import { seedDefaultPermissionSets } from '../seed';
 
 interface BootstrapInput {
   tenantName: string;
   tenantSlug: string;
   adminEmail: string;
   adminName: string;
+  adminPassword: string;
 }
 
 function readEnv(name: string): string {
@@ -59,11 +64,19 @@ function readInputFromEnv(): BootstrapInput {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)) {
     throw new Error(`FORMA360_BOOTSTRAP_ADMIN_EMAIL is not a valid email: "${adminEmail}"`);
   }
+  const adminPassword = readEnv('FORMA360_BOOTSTRAP_ADMIN_PASSWORD');
+  // Better-auth's emailAndPassword config in packages/auth requires 12+ chars.
+  if (adminPassword.length < 12) {
+    throw new Error(
+      `FORMA360_BOOTSTRAP_ADMIN_PASSWORD must be at least 12 characters (got ${adminPassword.length})`,
+    );
+  }
   return {
     tenantName: readEnv('FORMA360_BOOTSTRAP_TENANT_NAME'),
     tenantSlug,
     adminEmail,
     adminName: readEnv('FORMA360_BOOTSTRAP_ADMIN_NAME'),
+    adminPassword,
   };
 }
 
@@ -104,12 +117,17 @@ async function main(): Promise<void> {
       `[bootstrap] permission sets ready (administrator=${sets.administrator}, manager=${sets.manager}, standard=${sets.standard})`,
     );
 
-    // 3. Upsert admin user by email.
+    // 3. Upsert admin user by email. Also create / replace the matching
+    // credential account row so better-auth's email+password sign-in path
+    // works immediately (no verification round-trip needed for the
+    // bootstrap admin). emailVerified is forced true for the same reason.
+    const passwordHash = await hashPassword(input.adminPassword);
     const existingUsers = await db
       .select()
       .from(user)
       .where(eq(user.email, input.adminEmail))
       .limit(1);
+    let userId: string;
     if (existingUsers[0] !== undefined) {
       const existing = existingUsers[0];
       if (existing.tenantId !== tenantId) {
@@ -117,39 +135,65 @@ async function main(): Promise<void> {
           `User with email "${input.adminEmail}" already exists in tenant ${existing.tenantId}; refusing to re-home. Drop or reassign that row manually first.`,
         );
       }
+      userId = existing.id;
+      const updates: Partial<typeof user.$inferInsert> = { updatedAt: new Date() };
       if (existing.permissionSetId !== sets.administrator) {
+        updates.permissionSetId = sets.administrator;
+      }
+      if (!existing.emailVerified) updates.emailVerified = true;
+      if (Object.keys(updates).length > 1) {
         await db
           .update(user)
-          .set({ permissionSetId: sets.administrator, updatedAt: new Date() })
+          .set(updates)
           .where(and(eq(user.id, existing.id), eq(user.tenantId, tenantId)));
-         
-        console.log(
-          `[bootstrap] user "${input.adminEmail}" existed; upgraded to Administrator`,
-        );
+        console.log(`[bootstrap] user "${input.adminEmail}" updated`);
       } else {
-         
-        console.log(
-          `[bootstrap] user "${input.adminEmail}" already exists and is Administrator; no change`,
-        );
+        console.log(`[bootstrap] user "${input.adminEmail}" already correct`);
       }
     } else {
-      const userId = `usr_${newId()}`;
+      userId = `usr_${newId()}`;
       await db.insert(user).values({
         id: userId,
         name: input.adminName,
         email: input.adminEmail,
-        emailVerified: false,
+        emailVerified: true,
         tenantId,
         permissionSetId: sets.administrator,
       });
-       
       console.log(
         `[bootstrap] admin user created (id=${userId}, email="${input.adminEmail}")`,
       );
     }
 
-     
-    console.log('[bootstrap] done. Sign in at APP_URL with the admin email.');
+    // 4. Upsert the credential account row with the hashed password.
+    // better-auth stores each auth mechanism in its own `account` row keyed
+    // by (userId, providerId). For email+password `providerId === 'credential'`
+    // and `accountId` is the email.
+    const existingAccount = await db
+      .select()
+      .from(account)
+      .where(and(eq(account.userId, userId), eq(account.providerId, 'credential')))
+      .limit(1);
+    if (existingAccount[0] !== undefined) {
+      await db
+        .update(account)
+        .set({ password: passwordHash, updatedAt: new Date() })
+        .where(eq(account.id, existingAccount[0].id));
+      console.log(`[bootstrap] credential account password updated`);
+    } else {
+      await db.insert(account).values({
+        id: `acc_${newId()}`,
+        userId,
+        accountId: input.adminEmail,
+        providerId: 'credential',
+        password: passwordHash,
+      });
+      console.log(`[bootstrap] credential account created`);
+    }
+
+    console.log(
+      `[bootstrap] done. Sign in at APP_URL with email="${input.adminEmail}" and the password you just set.`,
+    );
   } finally {
     await pool.end();
   }

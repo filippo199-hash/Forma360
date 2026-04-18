@@ -41,15 +41,18 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:bootstrap": "tsx src/scripts/bootstrap-tenant.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.0",
+    "tsx": "^4.19.0",
     "vitest": "^2.1.9"
   },
   "dependencies": {
     "@forma360/db": "workspace:^",
     "@forma360/shared": "workspace:^",
+    "better-auth": "^1.6.5",
     "drizzle-orm": "^0.45.0"
   }
 }
