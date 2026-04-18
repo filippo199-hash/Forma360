@@ -7,10 +7,19 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./catalogue": {
+      "types": "./src/catalogue.ts",
+      "default": "./src/catalogue.ts"
     }
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.ts\""
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.9"
   }
 }
