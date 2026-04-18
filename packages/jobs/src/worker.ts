@@ -14,9 +14,13 @@ import { createLogger, type Logger } from '@forma360/shared/logger';
 import * as Sentry from '@sentry/node';
 import { Worker, type WorkerOptions } from 'bullmq';
 import { Redis } from 'ioredis';
+import { createDb } from '@forma360/db/client';
 import { closeAllQueues, getQueue, QUEUE_NAMES } from './queues';
+import { createGroupReconcileHandler } from './workers/group-membership-reconcile';
 import { createPgDumpHandler, PG_DUMP_CRON } from './workers/pg-dump-nightly';
+import { createSiteReconcileHandler } from './workers/site-membership-reconcile';
 import { createTestQueueHandler } from './workers/test-queue';
+import { createUserAnonymisationHandler } from './workers/user-anonymisation';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -66,6 +70,37 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     workerOptions,
   );
 
+  // Worker-side db client — the reconcile handlers need direct DB access.
+  // Separate from the web app's pool so the two don't share a connection
+  // count cap.
+  const { db: workerDb } = createDb(env.DATABASE_URL);
+
+  const groupReconcileWorker = new Worker(
+    QUEUE_NAMES.GROUP_RECONCILE,
+    createGroupReconcileHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'group-reconcile' }),
+    }),
+    workerOptions,
+  );
+
+  const siteReconcileWorker = new Worker(
+    QUEUE_NAMES.SITE_RECONCILE,
+    createSiteReconcileHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'site-reconcile' }),
+    }),
+    workerOptions,
+  );
+
+  const userAnonymisationWorker = new Worker(
+    QUEUE_NAMES.USER_ANONYMISATION,
+    createUserAnonymisationHandler({
+      logger: logger.child({ handler: 'user-anonymisation' }),
+    }),
+    workerOptions,
+  );
+
   // Idempotent repeatable: every boot re-asserts the schedule. No duplicate
   // jobs; BullMQ's upsertJobScheduler keys off the given id.
   const backupsQueue = getQueue(QUEUE_NAMES.BACKUPS, connection);
@@ -80,7 +115,14 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
 
   logger.info({ cron: PG_DUMP_CRON }, '[worker] registered pg-dump-nightly repeatable');
 
-  for (const w of [testWorker, pgDumpWorker]) {
+  const allWorkers = [
+    testWorker,
+    pgDumpWorker,
+    groupReconcileWorker,
+    siteReconcileWorker,
+    userAnonymisationWorker,
+  ];
+  for (const w of allWorkers) {
     w.on('completed', (job) => {
       logger.info({ job_id: job.id, queue: job.queueName }, '[worker] job completed');
     });
@@ -98,7 +140,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
 
   const shutdown = async (): Promise<void> => {
     logger.info('[worker] shutdown requested');
-    await Promise.allSettled([testWorker.close(), pgDumpWorker.close()]);
+    await Promise.allSettled(allWorkers.map((w) => w.close()));
     await closeAllQueues();
     connection.disconnect();
     logger.info('[worker] shutdown complete');

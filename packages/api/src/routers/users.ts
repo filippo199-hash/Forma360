@@ -262,6 +262,13 @@ export const usersRouter = router({
         );
 
       ctx.logger.warn({ userId: input.userId, actor: ctx.auth.userId }, '[users] anonymised');
+      // Fan out to Phase 2+ modules registered via the async anonymiser
+      // hook — noop in Phase 1 beyond logging.
+      ctx.enqueue('forma360:user-anonymisation', {
+        tenantId: ctx.tenantId,
+        userId: input.userId,
+        actorId: ctx.auth.userId,
+      });
       return { ok: true as const };
     }),
 

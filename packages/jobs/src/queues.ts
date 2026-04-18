@@ -20,6 +20,21 @@ export const QUEUE_NAMES = {
   TEST: 'forma360:test',
   /** Nightly `pg_dump` → R2 snapshot. One job per night. */
   BACKUPS: 'forma360:backups',
+  /**
+   * Phase 1 § 1.3 — materialise `group_members` from
+   * `group_membership_rules`. Enqueued on rule save / user field change.
+   * Idempotent.
+   */
+  GROUP_RECONCILE: 'forma360:group-membership-reconcile',
+  /** Phase 1 § 1.4 — analogous for sites. */
+  SITE_RECONCILE: 'forma360:site-membership-reconcile',
+  /**
+   * Phase 1 § 1.1 — async fan-out of anonymisation across modules.
+   * Phase 1 anonymises `user` + `user_custom_field_values` inline;
+   * later phases extend the flow via the `registerAnonymiser(...)`
+   * hook that this job consumes.
+   */
+  USER_ANONYMISATION: 'forma360:user-anonymisation',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -41,6 +56,33 @@ export const pgDumpPayloadSchema = z.object({
 });
 export type PgDumpPayload = z.infer<typeof pgDumpPayloadSchema>;
 
+/** Rule materialisation — group reconcile. */
+export const groupReconcilePayloadSchema = z.object({
+  tenantId: z.string().length(26),
+  /** Optional: reconcile one group. If omitted, reconcile every rule-based group. */
+  groupId: z.string().length(26).optional(),
+  /** Actor id for audit (undefined = system / scheduled). */
+  actorId: z.string().optional(),
+});
+export type GroupReconcilePayload = z.infer<typeof groupReconcilePayloadSchema>;
+
+/** Rule materialisation — site reconcile. Same shape as group. */
+export const siteReconcilePayloadSchema = z.object({
+  tenantId: z.string().length(26),
+  siteId: z.string().length(26).optional(),
+  actorId: z.string().optional(),
+});
+export type SiteReconcilePayload = z.infer<typeof siteReconcilePayloadSchema>;
+
+/** Async anonymisation cascade. Phase 1 receives the payload; the cascade
+ *  itself is extended per-module in later phases. */
+export const userAnonymisationPayloadSchema = z.object({
+  tenantId: z.string().length(26),
+  userId: z.string(),
+  actorId: z.string(),
+});
+export type UserAnonymisationPayload = z.infer<typeof userAnonymisationPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -48,12 +90,18 @@ export type PgDumpPayload = z.infer<typeof pgDumpPayloadSchema>;
 export interface QueuePayloads {
   [QUEUE_NAMES.TEST]: TestPayload;
   [QUEUE_NAMES.BACKUPS]: PgDumpPayload;
+  [QUEUE_NAMES.GROUP_RECONCILE]: GroupReconcilePayload;
+  [QUEUE_NAMES.SITE_RECONCILE]: SiteReconcilePayload;
+  [QUEUE_NAMES.USER_ANONYMISATION]: UserAnonymisationPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
 export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.TEST]: testPayloadSchema,
   [QUEUE_NAMES.BACKUPS]: pgDumpPayloadSchema,
+  [QUEUE_NAMES.GROUP_RECONCILE]: groupReconcilePayloadSchema,
+  [QUEUE_NAMES.SITE_RECONCILE]: siteReconcilePayloadSchema,
+  [QUEUE_NAMES.USER_ANONYMISATION]: userAnonymisationPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────
