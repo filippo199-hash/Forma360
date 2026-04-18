@@ -25,7 +25,7 @@ import type { Logger } from './logger';
  */
 export interface OutgoingEmail {
   to: string;
-  kind: 'verification' | 'password-reset';
+  kind: 'verification' | 'password-reset' | 'schedule-reminder';
   url: string;
   /** User id the email concerns — included in log context for traceability. */
   userId: string;

@@ -31,7 +31,7 @@
  * full implementation updates it in PR 28. The registry pattern supports
  * re-registration so this is clean.
  */
-import { templates, templateVersions } from '@forma360/db/schema';
+import { templateSchedules, templates, templateVersions } from '@forma360/db/schema';
 import {
   registerDependentResolver,
   type DependentResolver,
@@ -501,13 +501,27 @@ export const templatesRouter = router({
     .use(requirePermission('templates.archive'))
     .input(archiveInput)
     .mutation(async ({ ctx, input }) => {
-      await ctx.db
-        .update(templates)
-        .set({ status: 'archived', archivedAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(templates.tenantId, ctx.tenantId), eq(templates.id, input.templateId)));
-      // T-E05: schedules are paused + in-progress inspections allowed to
-      // complete. Schedules table lands in PR 32; the pause happens there.
-      ctx.logger.info({ templateId: input.templateId }, '[templates] archived');
+      const now = new Date();
+      // T-E05: archive + pause any schedules in one transaction so the
+      // invariant "archived template has no active schedules" holds even
+      // under concurrent writes.
+      await ctx.db.transaction(async (tx) => {
+        await tx
+          .update(templates)
+          .set({ status: 'archived', archivedAt: now, updatedAt: now })
+          .where(and(eq(templates.tenantId, ctx.tenantId), eq(templates.id, input.templateId)));
+        await tx
+          .update(templateSchedules)
+          .set({ paused: true, updatedAt: now })
+          .where(
+            and(
+              eq(templateSchedules.tenantId, ctx.tenantId),
+              eq(templateSchedules.templateId, input.templateId),
+              eq(templateSchedules.paused, false),
+            ),
+          );
+      });
+      ctx.logger.info({ templateId: input.templateId }, '[templates] archived + schedules paused');
       return { ok: true as const };
     }),
 
