@@ -1,0 +1,8 @@
+# Nixpacks config for the Railway `worker` service.
+#
+# Node 22 + pnpm 9 + postgresql 16 so the nightly backup job's `pg_dump`
+# shell-out resolves. Without the `postgresql` pkg the pg-dump-nightly
+# handler throws ENOENT.
+
+[phases.setup]
+nixPkgs = ['nodejs_22', 'pnpm-9_x', 'postgresql_16']
