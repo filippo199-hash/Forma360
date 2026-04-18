@@ -14,11 +14,15 @@ import { buildAppRouter } from '@forma360/api';
 import { isId } from '@forma360/shared/id';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { exportsDeps } from '../../../../src/server/exports-deps';
+import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { createContext } from '../../../../src/server/trpc';
 
 // Build the router once with production dependencies (R2-backed
 // renderers, HMAC-signed render tokens, APP_URL-based share URLs).
-const appRouter = buildAppRouter({ exports: exportsDeps });
+const appRouter = buildAppRouter({
+  exports: exportsDeps,
+  inspectionsExport: inspectionsExportDeps,
+});
 
 async function handler(req: Request): Promise<Response> {
   const incomingId = req.headers.get('x-request-id');
