@@ -1,0 +1,440 @@
+'use client';
+
+import type { Item } from '@forma360/shared/template-schema';
+import { useTranslations } from 'next-intl';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Switch } from '../ui/switch';
+import { Textarea } from '../ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { useEditor } from './editor-context';
+
+/**
+ * Right-side detail panel. Renders type-specific editors for whatever
+ * item is currently selected. Exotic kinds (site / location / asset /
+ * company / annotation / table) render a "coming soon" note — they can
+ * be added to the template but not fine-tuned in this UI yet.
+ */
+export function ItemDetail() {
+  const t = useTranslations('templates.editor');
+  const { state } = useEditor();
+  const item =
+    state.selectedItemId === null
+      ? null
+      : findItem(state.content.pages.flatMap((p) => p.sections.flatMap((s) => s.items)), state.selectedItemId);
+
+  if (item === null) {
+    return (
+      <div className="rounded-md border bg-card p-3 text-sm text-muted-foreground">
+        {t('detail.empty')}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 rounded-md border bg-card p-3">
+      <h3 className="text-sm font-semibold">{t('detail.title')}</h3>
+      <CommonFields item={item} />
+      <TypeSpecificFields item={item} />
+    </div>
+  );
+}
+
+function findItem(items: Item[], id: string): Item | null {
+  return items.find((i) => i.id === id) ?? null;
+}
+
+function CommonFields({ item }: { item: Item }) {
+  const t = useTranslations('templates.editor');
+  const { dispatch } = useEditor();
+
+  if (item.type === 'instruction') {
+    return (
+      <div className="space-y-2">
+        <Label htmlFor={`body-${item.id}`}>{t('detail.instruction.body')}</Label>
+        <Textarea
+          id={`body-${item.id}`}
+          value={item.body}
+          onChange={(e) =>
+            dispatch({ type: 'updateItem', itemId: item.id, patch: { body: e.target.value } })
+          }
+          rows={4}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={`prompt-${item.id}`}>{t('questionPrompt')}</Label>
+      <Input
+        id={`prompt-${item.id}`}
+        value={item.prompt}
+        onChange={(e) =>
+          dispatch({ type: 'updateItem', itemId: item.id, patch: { prompt: e.target.value } })
+        }
+      />
+      <div className="flex items-center gap-2">
+        <Switch
+          id={`req-${item.id}`}
+          checked={item.required}
+          onCheckedChange={(v) =>
+            dispatch({ type: 'updateItem', itemId: item.id, patch: { required: v } })
+          }
+        />
+        <Label htmlFor={`req-${item.id}`}>{t('requiredLabel')}</Label>
+      </div>
+      <Label htmlFor={`note-${item.id}`}>{t('itemNote')}</Label>
+      <Textarea
+        id={`note-${item.id}`}
+        value={item.note ?? ''}
+        onChange={(e) =>
+          dispatch({ type: 'updateItem', itemId: item.id, patch: { note: e.target.value } })
+        }
+        rows={2}
+      />
+    </div>
+  );
+}
+
+function TypeSpecificFields({ item }: { item: Item }) {
+  const t = useTranslations('templates.editor.detail');
+  const tStub = useTranslations('templates.editor');
+  const { state, dispatch } = useEditor();
+
+  switch (item.type) {
+    case 'text':
+      return (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Switch
+              id={`ml-${item.id}`}
+              checked={item.multiline}
+              onCheckedChange={(v) =>
+                dispatch({ type: 'updateItem', itemId: item.id, patch: { multiline: v } })
+              }
+            />
+            <Label htmlFor={`ml-${item.id}`}>{t('text.multiline')}</Label>
+          </div>
+          <Label htmlFor={`max-${item.id}`}>{t('text.maxLength')}</Label>
+          <Input
+            id={`max-${item.id}`}
+            type="number"
+            min={1}
+            max={10000}
+            value={item.maxLength}
+            onChange={(e) =>
+              dispatch({
+                type: 'updateItem',
+                itemId: item.id,
+                patch: { maxLength: Math.max(1, Number(e.target.value) || 1) },
+              })
+            }
+          />
+        </div>
+      );
+    case 'number':
+      return (
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <Label htmlFor={`min-${item.id}`}>{t('number.min')}</Label>
+              <Input
+                id={`min-${item.id}`}
+                type="number"
+                value={item.min ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  dispatch({
+                    type: 'updateItem',
+                    itemId: item.id,
+                    patch: v === '' ? { min: undefined } : { min: Number(v) },
+                  });
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`max-n-${item.id}`}>{t('number.max')}</Label>
+              <Input
+                id={`max-n-${item.id}`}
+                type="number"
+                value={item.max ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  dispatch({
+                    type: 'updateItem',
+                    itemId: item.id,
+                    patch: v === '' ? { max: undefined } : { max: Number(v) },
+                  });
+                }}
+              />
+            </div>
+          </div>
+          <Label htmlFor={`dec-${item.id}`}>{t('number.decimalPlaces')}</Label>
+          <Input
+            id={`dec-${item.id}`}
+            type="number"
+            min={0}
+            max={10}
+            value={item.decimalPlaces}
+            onChange={(e) =>
+              dispatch({
+                type: 'updateItem',
+                itemId: item.id,
+                patch: { decimalPlaces: Math.max(0, Math.min(10, Number(e.target.value) || 0)) },
+              })
+            }
+          />
+          <Label htmlFor={`unit-${item.id}`}>{t('number.unit')}</Label>
+          <Input
+            id={`unit-${item.id}`}
+            value={item.unit ?? ''}
+            onChange={(e) =>
+              dispatch({ type: 'updateItem', itemId: item.id, patch: { unit: e.target.value } })
+            }
+          />
+        </div>
+      );
+    case 'slider':
+      return (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-1.5">
+            <Label htmlFor={`smin-${item.id}`}>{t('slider.min')}</Label>
+            <Input
+              id={`smin-${item.id}`}
+              type="number"
+              value={item.min}
+              onChange={(e) =>
+                dispatch({
+                  type: 'updateItem',
+                  itemId: item.id,
+                  patch: { min: Number(e.target.value) || 0 },
+                })
+              }
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`smax-${item.id}`}>{t('slider.max')}</Label>
+            <Input
+              id={`smax-${item.id}`}
+              type="number"
+              value={item.max}
+              onChange={(e) =>
+                dispatch({
+                  type: 'updateItem',
+                  itemId: item.id,
+                  patch: { max: Number(e.target.value) || 0 },
+                })
+              }
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`sstep-${item.id}`}>{t('slider.step')}</Label>
+            <Input
+              id={`sstep-${item.id}`}
+              type="number"
+              min={0.001}
+              step="any"
+              value={item.step}
+              onChange={(e) =>
+                dispatch({
+                  type: 'updateItem',
+                  itemId: item.id,
+                  patch: { step: Math.max(0.001, Number(e.target.value) || 1) },
+                })
+              }
+            />
+          </div>
+        </div>
+      );
+    case 'media':
+      return (
+        <div className="space-y-2">
+          <Label>{t('media.mediaKind')}</Label>
+          <Select
+            value={item.mediaKind}
+            onValueChange={(v) =>
+              dispatch({
+                type: 'updateItem',
+                itemId: item.id,
+                patch: { mediaKind: v as typeof item.mediaKind },
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">{t('media.kindAny')}</SelectItem>
+              <SelectItem value="photo">{t('media.kindPhoto')}</SelectItem>
+              <SelectItem value="video">{t('media.kindVideo')}</SelectItem>
+              <SelectItem value="pdf">{t('media.kindPdf')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Label htmlFor={`mc-${item.id}`}>{t('media.maxCount')}</Label>
+          <Input
+            id={`mc-${item.id}`}
+            type="number"
+            min={1}
+            max={50}
+            value={item.maxCount}
+            onChange={(e) =>
+              dispatch({
+                type: 'updateItem',
+                itemId: item.id,
+                patch: { maxCount: Math.max(1, Math.min(50, Number(e.target.value) || 1)) },
+              })
+            }
+          />
+        </div>
+      );
+    case 'signature':
+      return (
+        <div className="space-y-2">
+          <Label>{t('signature.mode')}</Label>
+          <Select
+            value={item.mode}
+            onValueChange={(v) =>
+              dispatch({
+                type: 'updateItem',
+                itemId: item.id,
+                patch: { mode: v as 'sequential' | 'parallel' },
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sequential">{t('signature.modeSequential')}</SelectItem>
+              <SelectItem value="parallel">{t('signature.modeParallel')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="space-y-1.5">
+            {item.slots.map((slot, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">#{idx + 1}</span>
+                <Input
+                  value={slot.label ?? ''}
+                  placeholder={t('signature.slotLabel')}
+                  aria-label={t('signature.slotLabel')}
+                  onChange={(e) => {
+                    const next = item.slots.map((s, i) =>
+                      i === idx ? { ...s, label: e.target.value } : s,
+                    );
+                    dispatch({ type: 'updateItem', itemId: item.id, patch: { slots: next } });
+                  }}
+                />
+                {item.slots.length > 1 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const next = item.slots
+                        .filter((_, i) => i !== idx)
+                        .map((s, i) => ({ ...s, slotIndex: i }));
+                      dispatch({
+                        type: 'updateItem',
+                        itemId: item.id,
+                        patch: { slots: next },
+                      });
+                    }}
+                    aria-label={t('signature.removeSlot')}
+                  >
+                    ×
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          {item.slots.length < 10 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const next = [
+                  ...item.slots,
+                  { slotIndex: item.slots.length, assigneeUserId: null },
+                ];
+                dispatch({ type: 'updateItem', itemId: item.id, patch: { slots: next } });
+              }}
+              aria-label={t('signature.addSlot')}
+            >
+              {t('signature.addSlot')}
+            </Button>
+          ) : null}
+        </div>
+      );
+    case 'checkbox':
+      return (
+        <div className="space-y-2">
+          <Label htmlFor={`clabel-${item.id}`}>{t('checkbox.label')}</Label>
+          <Input
+            id={`clabel-${item.id}`}
+            value={item.label}
+            onChange={(e) =>
+              dispatch({ type: 'updateItem', itemId: item.id, patch: { label: e.target.value } })
+            }
+          />
+        </div>
+      );
+    case 'multipleChoice': {
+      const sets = state.content.customResponseSets;
+      return (
+        <div className="space-y-2">
+          <Label>{t('multipleChoice.responseSet')}</Label>
+          <Select
+            value={item.responseSetId}
+            onValueChange={(v) =>
+              dispatch({
+                type: 'updateItem',
+                itemId: item.id,
+                patch: { responseSetId: v },
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={t('multipleChoice.noResponseSet')} />
+            </SelectTrigger>
+            <SelectContent>
+              {sets.length === 0 ? (
+                <div className="p-2 text-xs text-muted-foreground">
+                  {t('multipleChoice.noResponseSet')}
+                </div>
+              ) : (
+                sets.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+    case 'site':
+    case 'location':
+    case 'asset':
+    case 'company':
+    case 'annotation':
+      return (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          {tStub('stubNotice')}
+        </div>
+      );
+    default:
+      // No extra editor for date / datetime / time / conductedBy /
+      // inspectionDate / documentNumber — just the common fields.
+      return null;
+  }
+}
