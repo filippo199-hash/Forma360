@@ -16,10 +16,45 @@
     "close": "Close",
     "back": "Back",
     "search": "Search",
-    "theme": { "toggle": "Toggle theme" },
-    "locale": { "switch": "Change language" },
-    "navigation": { "primary": "Primary navigation" },
-    "footer": { "tagline": "Operational excellence, in every language." }
+    "theme": {
+      "toggle": "Toggle theme"
+    },
+    "locale": {
+      "switch": "Change language"
+    },
+    "navigation": {
+      "primary": "Primary navigation"
+    },
+    "footer": {
+      "tagline": "Operational excellence, in every language."
+    },
+    "archiveDialog": {
+      "defaultTitle": "Archive?",
+      "defaultDescription": "Review the impact before confirming. Archiving is reversible in most cases.",
+      "impactHeading": "This will affect:",
+      "noDependents": "No dependents found.",
+      "confirm": "Archive",
+      "cancel": "Cancel",
+      "modules": {
+        "users": "Users",
+        "groups": "Groups",
+        "sites": "Sites",
+        "permissionSets": "Permission sets",
+        "accessRules": "Access rules",
+        "customUserFields": "Custom user fields",
+        "templates": "Templates",
+        "inspections": "Inspections",
+        "issues": "Issues",
+        "actions": "Actions",
+        "headsUp": "Heads up",
+        "assets": "Assets",
+        "documents": "Documents",
+        "analytics": "Analytics",
+        "compliance": "Compliance",
+        "training": "Training",
+        "notifications": "Notifications"
+      }
+    }
   },
   "nav": {
     "inspections": "Inspections",
@@ -385,6 +420,13 @@
         "fixBeforePublish": "Fix these issues before publishing.",
         "genericError": "Template content is invalid."
       }
+    },
+    "export": {
+      "button": "Export CSV",
+      "title": "Export templates",
+      "description": "Download a CSV with every template in this tenant, including usage counts.",
+      "downloadNow": "Download now",
+      "cancel": "Cancel"
     }
   },
   "inspections": {
@@ -555,7 +597,29 @@
       "remainingHeading": "More slots to sign",
       "signNext": "Sign next",
       "allDoneCta": "Back to status"
-    }
+    },
+    "export": {
+      "button": "Export CSV",
+      "downloadReady": "{count} inspections exported",
+      "dialogTitle": "Export inspections",
+      "dialogDescription": "Download a CSV of inspections matching the current filter, or save it to R2 for later.",
+      "downloadNow": "Download now",
+      "saveToR2": "Save to R2",
+      "cancel": "Cancel"
+    },
+    "bulk": {
+      "toolbarLabel": "Bulk actions",
+      "selected": "{count} selected",
+      "selectAll": "Select all",
+      "selectRow": "Select inspection",
+      "exportSelected": "Export selected CSV",
+      "archiveSelected": "Archive selected",
+      "archiveDialogTitle": "Archive inspections?",
+      "archiveDialogDescription": "Archive {count} selected inspections. They will be hidden from the default list but kept in history.",
+      "archiveSuccess": "Inspections archived"
+    },
+    "showArchived": "Show archived",
+    "archivedBadge": "Archived"
   },
   "schedules": {
     "title": "Schedules",
