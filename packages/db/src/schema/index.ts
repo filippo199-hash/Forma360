@@ -11,3 +11,5 @@ export * from './users';
 export * from './groups';
 export * from './sites';
 export * from './accessRules';
+export * from './templates';
+export * from './globalResponseSets';

@@ -32,7 +32,11 @@ export type DependentEntity =
   | 'user'
   | 'permissionSet'
   | 'customUserField'
-  | 'accessRule';
+  | 'accessRule'
+  // ─── Phase 2+ anchors (registered by their own modules) ───
+  | 'template'
+  | 'inspection'
+  | 'action';
 
 /** Modules that may hold a reference to a `DependentEntity`. */
 export type DependentModule =
