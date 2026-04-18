@@ -29,6 +29,7 @@ export default defineConfig({
     './src/schema/globalResponseSets.ts',
     './src/schema/inspections.ts',
     './src/schema/actions.ts',
+    './src/schema/schedules.ts',
   ],
   out: './migrations',
   dialect: 'postgresql',
