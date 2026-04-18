@@ -11,6 +11,7 @@ import { SiteFooter } from '../../src/components/site-footer';
 import { SiteHeader } from '../../src/components/site-header';
 import { ThemeProvider } from '../../src/components/theme-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
+import { Toaster } from '../../src/components/ui/sonner';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -66,6 +67,7 @@ export default async function LocaleLayout({
                 <main className="flex-1">{children}</main>
                 <SiteFooter />
               </div>
+              <Toaster />
             </TRPCProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
