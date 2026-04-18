@@ -1,0 +1,19 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong.",
+    "retry": "Try again"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Sign in to Forma360",
+      "submit": "Sign in"
+    },
+    "signUp": {
+      "title": "Create your Forma360 account"
+    }
+  },
+  "health": {
+    "welcome": "Hello {name}"
+  }
+}

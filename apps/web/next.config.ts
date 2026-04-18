@@ -1,4 +1,8 @@
+import createNextIntlPlugin from 'next-intl/plugin';
 import type { NextConfig } from 'next';
+
+// Point next-intl at the request config living in the shared i18n package.
+const withNextIntl = createNextIntlPlugin('../../packages/i18n/src/request.ts');
 
 const nextConfig: NextConfig = {
   transpilePackages: [
@@ -17,10 +21,6 @@ const nextConfig: NextConfig = {
 
   serverExternalPackages: ['pg', 'bullmq', 'ioredis', '@aws-sdk/client-s3'],
 
-  // Internal packages use NodeNext-style `./foo.js` imports that resolve to
-  // `./foo.ts` at type-check time. Webpack does not do that substitution by
-  // default. Mutate config.resolve in place (rather than reassigning) so Next
-  // picks up the extensionAlias on every webpack layer (client, edge, node).
   webpack(config) {
     config.resolve = config.resolve ?? {};
     config.resolve.extensionAlias = {
@@ -34,9 +34,8 @@ const nextConfig: NextConfig = {
 
   turbopack: {
     resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
-    // Turbopack's own `.js`→`.ts` alias key; mirrors the webpack block.
     resolveAlias: {},
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

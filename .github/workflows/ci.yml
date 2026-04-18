@@ -47,8 +47,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Test
+      - name: Test (Vitest)
         run: pnpm test
+
+      - name: Test (ESLint rules)
+        run: pnpm test:eslint-rules
 
       - name: Build
         run: pnpm build

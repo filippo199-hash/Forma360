@@ -14,11 +14,13 @@
     "@forma360/api": "workspace:^",
     "@forma360/auth": "workspace:^",
     "@forma360/db": "workspace:^",
+    "@forma360/i18n": "workspace:^",
     "@forma360/shared": "workspace:^",
     "@trpc/server": "^11.0.0",
     "better-auth": "^1.6.5",
     "ioredis": "^5.4.1",
     "next": "^16.0.0",
+    "next-intl": "^4.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "superjson": "^2.2.1"
