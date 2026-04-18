@@ -18,9 +18,13 @@ import { createDb } from '@forma360/db/client';
 import { closeAllQueues, getQueue, QUEUE_NAMES } from './queues';
 import { createGroupReconcileHandler } from './workers/group-membership-reconcile';
 import { createPgDumpHandler, PG_DUMP_CRON } from './workers/pg-dump-nightly';
+import { createScheduleMaterialiseHandler } from './workers/schedule-materialise';
+import { createScheduleReminderHandler } from './workers/schedule-reminder';
+import { createScheduleTickHandler, SCHEDULE_TICK_CRON } from './workers/schedule-tick';
 import { createSiteReconcileHandler } from './workers/site-membership-reconcile';
 import { createTestQueueHandler } from './workers/test-queue';
 import { createUserAnonymisationHandler } from './workers/user-anonymisation';
+import { createSendEmail } from '@forma360/shared/email';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -101,6 +105,57 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     workerOptions,
   );
 
+  // ─── Phase 2 PR 32 — schedules ─────────────────────────────────────────
+  const scheduleTickWorker = new Worker(
+    QUEUE_NAMES.SCHEDULE_TICK,
+    createScheduleTickHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'schedule-tick' }),
+      connection,
+    }),
+    workerOptions,
+  );
+
+  const scheduleMaterialiseWorker = new Worker(
+    QUEUE_NAMES.SCHEDULE_MATERIALISE,
+    createScheduleMaterialiseHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'schedule-materialise' }),
+      connection,
+    }),
+    workerOptions,
+  );
+
+  const sendEmail = createSendEmail({
+    delivery: env.EMAIL_DELIVERY,
+    resendApiKey: env.RESEND_API_KEY,
+    resendFrom: env.RESEND_FROM,
+    logger: logger.child({ component: 'email' }),
+  });
+
+  const scheduleReminderWorker = new Worker(
+    QUEUE_NAMES.SCHEDULE_REMINDER,
+    createScheduleReminderHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'schedule-reminder' }),
+      sendEmail,
+      appUrl: env.APP_URL,
+    }),
+    workerOptions,
+  );
+
+  // Register the tick as a repeatable job — idempotent per boot.
+  const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
+  await scheduleTickQueue.upsertJobScheduler(
+    'schedule-tick',
+    { pattern: SCHEDULE_TICK_CRON, tz: 'UTC' },
+    {
+      name: 'schedule-tick',
+      data: {},
+    },
+  );
+  logger.info({ cron: SCHEDULE_TICK_CRON }, '[worker] registered schedule-tick repeatable');
+
   // Idempotent repeatable: every boot re-asserts the schedule. No duplicate
   // jobs; BullMQ's upsertJobScheduler keys off the given id.
   const backupsQueue = getQueue(QUEUE_NAMES.BACKUPS, connection);
@@ -121,6 +176,9 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     groupReconcileWorker,
     siteReconcileWorker,
     userAnonymisationWorker,
+    scheduleTickWorker,
+    scheduleMaterialiseWorker,
+    scheduleReminderWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {

@@ -35,6 +35,21 @@ export const QUEUE_NAMES = {
    * hook that this job consumes.
    */
   USER_ANONYMISATION: 'forma360:user-anonymisation',
+  /**
+   * Phase 2 PR 32 — schedule materialisation tick. Repeatable every
+   * 10 minutes; fans out to SCHEDULE_MATERIALISE for each due schedule.
+   */
+  SCHEDULE_TICK: 'forma360:schedule-tick',
+  /**
+   * Phase 2 PR 32 — compute the next 14 days of occurrences for a
+   * single schedule and upsert them. Idempotent via the unique
+   * (scheduleId, assigneeUserId, occurrenceAt) index.
+   */
+  SCHEDULE_MATERIALISE: 'forma360:schedule-materialise',
+  /**
+   * Phase 2 PR 32 — send one reminder email for one occurrence.
+   */
+  SCHEDULE_REMINDER: 'forma360:schedule-reminder',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -83,6 +98,27 @@ export const userAnonymisationPayloadSchema = z.object({
 });
 export type UserAnonymisationPayload = z.infer<typeof userAnonymisationPayloadSchema>;
 
+/** Schedule tick — no payload needed; worker fans out to every due schedule. */
+export const scheduleTickPayloadSchema = z.object({
+  /** ISO timestamp the tick represents. Optional — worker uses now() if omitted. */
+  tickAt: z.string().datetime().optional(),
+});
+export type ScheduleTickPayload = z.infer<typeof scheduleTickPayloadSchema>;
+
+/** Materialise one schedule's upcoming occurrences. */
+export const scheduleMaterialisePayloadSchema = z.object({
+  tenantId: z.string().length(26),
+  scheduleId: z.string().length(26),
+});
+export type ScheduleMaterialisePayload = z.infer<typeof scheduleMaterialisePayloadSchema>;
+
+/** Send a reminder for one occurrence. */
+export const scheduleReminderPayloadSchema = z.object({
+  tenantId: z.string().length(26),
+  occurrenceId: z.string().length(26),
+});
+export type ScheduleReminderPayload = z.infer<typeof scheduleReminderPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -93,6 +129,9 @@ export interface QueuePayloads {
   [QUEUE_NAMES.GROUP_RECONCILE]: GroupReconcilePayload;
   [QUEUE_NAMES.SITE_RECONCILE]: SiteReconcilePayload;
   [QUEUE_NAMES.USER_ANONYMISATION]: UserAnonymisationPayload;
+  [QUEUE_NAMES.SCHEDULE_TICK]: ScheduleTickPayload;
+  [QUEUE_NAMES.SCHEDULE_MATERIALISE]: ScheduleMaterialisePayload;
+  [QUEUE_NAMES.SCHEDULE_REMINDER]: ScheduleReminderPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -102,6 +141,9 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.GROUP_RECONCILE]: groupReconcilePayloadSchema,
   [QUEUE_NAMES.SITE_RECONCILE]: siteReconcilePayloadSchema,
   [QUEUE_NAMES.USER_ANONYMISATION]: userAnonymisationPayloadSchema,
+  [QUEUE_NAMES.SCHEDULE_TICK]: scheduleTickPayloadSchema,
+  [QUEUE_NAMES.SCHEDULE_MATERIALISE]: scheduleMaterialisePayloadSchema,
+  [QUEUE_NAMES.SCHEDULE_REMINDER]: scheduleReminderPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────
