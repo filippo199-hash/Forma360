@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '../../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../../src/components/ui/card';
 import { Skeleton } from '../../../../../src/components/ui/skeleton';
+import { ShareLinkDialog } from '../../../../../src/components/share-link-dialog';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
 
@@ -163,11 +164,19 @@ export default function InspectionStatusPage() {
                   {t('approvedBy', { user: approvedRow.approverUserId })}
                 </p>
               ) : null}
-              {/* TODO PR 31: wire real PDF export. Stub button disabled so
-                  the shape is stable. */}
-              <Button disabled title={t('pdfComingSoon')}>
-                {t('pdfButton')}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild>
+                  <a href={`/api/exports/pdf?inspectionId=${inspection.id}`}>
+                    {t('pdfButton')}
+                  </a>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href={`/api/exports/docx?inspectionId=${inspection.id}`}>
+                    {t('docxButton')}
+                  </a>
+                </Button>
+                <ShareLinkDialog inspectionId={inspection.id} />
+              </div>
             </>
           ) : null}
 

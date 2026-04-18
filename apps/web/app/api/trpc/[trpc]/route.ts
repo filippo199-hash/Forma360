@@ -10,10 +10,15 @@
  *   - Echo the id back to the caller on the response so they can correlate
  *     server logs with client-side telemetry.
  */
-import { appRouter } from '@forma360/api';
+import { buildAppRouter } from '@forma360/api';
 import { isId } from '@forma360/shared/id';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
+import { exportsDeps } from '../../../../src/server/exports-deps';
 import { createContext } from '../../../../src/server/trpc';
+
+// Build the router once with production dependencies (R2-backed
+// renderers, HMAC-signed render tokens, APP_URL-based share URLs).
+const appRouter = buildAppRouter({ exports: exportsDeps });
 
 async function handler(req: Request): Promise<Response> {
   const incomingId = req.headers.get('x-request-id');
