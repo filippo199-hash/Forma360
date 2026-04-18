@@ -33,7 +33,10 @@ import {
 } from '@forma360/permissions/dependents';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { RRule, rrulestr } from 'rrule';
+// `rrule` is CJS; Node 22 ESM can't synthesize its named exports. See
+// packages/jobs/src/workers/schedule-rrule.ts for the same pattern.
+import rrulePkg from 'rrule';
+const { RRule, rrulestr } = rrulePkg;
 import { and, count, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';

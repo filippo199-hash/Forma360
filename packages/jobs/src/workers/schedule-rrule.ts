@@ -5,8 +5,15 @@
  * non-bundler-friendly entry (as it has historically) we can patch in
  * one place instead of across every worker / router.
  */
-// `rrule` ships both CJS and ESM; we use the ESM default entry.
-import { RRule, RRuleSet, rrulestr } from 'rrule';
+// `rrule` ships as CJS with `module.exports = { RRule, RRuleSet, rrulestr, ... }`.
+// Node 22's ESM loader cannot synthesize those as named imports at runtime,
+// so we destructure the default import. Vitest's esbuild runtime does the
+// interop transparently — this works in tests but crashes on `node`.
+// The `type`-only named import is still allowed (TS erases it) so we can
+// reference `RRuleSet` / `RRule` as types in guards.
+import rrulePkg from 'rrule';
+import type { RRuleSet as RRuleSetType } from 'rrule';
+const { RRule, RRuleSet, rrulestr } = rrulePkg;
 
 export interface OccurrencesBetweenInput {
   /** The raw RRULE string (e.g. `FREQ=DAILY;BYHOUR=9`). */
@@ -54,7 +61,7 @@ export function validateRrule(rrule: string): string | null {
       return null;
     }
     if (parsed instanceof RRuleSet) {
-      if ((parsed as RRuleSet).rrules().length === 0) return 'RRULE set has no rules';
+      if ((parsed as RRuleSetType).rrules().length === 0) return 'RRULE set has no rules';
       return null;
     }
     return null;
