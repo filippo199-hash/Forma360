@@ -27,6 +27,10 @@
     "./email": {
       "types": "./src/email.ts",
       "default": "./src/email.ts"
+    },
+    "./csv": {
+      "types": "./src/csv.ts",
+      "default": "./src/csv.ts"
     }
   },
   "scripts": {
@@ -39,6 +43,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.720.0",
     "@aws-sdk/s3-request-presigner": "^3.720.0",
+    "csv-parse": "^5.6.0",
+    "csv-stringify": "^6.5.2",
     "pino": "^9.5.0",
     "resend": "^4.0.0",
     "ulid": "^2.3.0",

@@ -17,11 +17,21 @@
  *                                 deactivates + logs.
  *   - setCustomFieldValue (users.manage) — upserts one value.
  */
-import { customUserFields, user, userCustomFieldValues } from '@forma360/db/schema';
+import {
+  customUserFields,
+  groupMembers,
+  groups,
+  permissionSets,
+  siteMembers,
+  sites,
+  user,
+  userCustomFieldValues,
+} from '@forma360/db/schema';
 import { wouldDropBelowMinAdmins } from '@forma360/permissions/admins';
+import { parseCsv, toCsv } from '@forma360/shared/csv';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -313,5 +323,319 @@ export const usersRouter = router({
     // Reuse the primitive; direct import rather than rebuilding the query.
     const { countAdmins } = await import('@forma360/permissions/admins');
     return { count: await countAdmins(ctx.db, ctx.tenantId) };
+  }),
+
+  // ─── CSV bulk import (S-E05) ──────────────────────────────────────────────
+  /**
+   * Upsert-by-email bulk import. Existing users are updated in place; new
+   * users are created. Returns a { created, updated, skipped, errors }
+   * summary with per-row error messages for the G-E05 review screen.
+   *
+   * CSV columns (header-matched, all optional except email + name):
+   *   email, name, permissionSet, groups, sites
+   * `permissionSet` is a name-match against permission_sets; `groups` and
+   * `sites` are semicolon-separated name lists. Unknown names are
+   * rejected for the row rather than silently dropped.
+   */
+  bulkImport: tenantProcedure
+    .use(requirePermission('users.invite'))
+    .input(
+      z.object({
+        csv: z.string().min(1).max(10_000_000),
+        /** Dry-run; validate but do not write. */
+        dryRun: z.boolean().default(false),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const rowSchema = z.object({
+        email: z.string().email(),
+        name: z.string().min(1).max(120),
+        permissionSet: z.string().min(1).optional(),
+        groups: z.string().optional(),
+        sites: z.string().optional(),
+      });
+      const parsed = parseCsv(input.csv, { schema: rowSchema, limit: 10_000 });
+
+      // Load name → id maps once per import.
+      const [allSets, allGroups, allSites] = await Promise.all([
+        ctx.db
+          .select({ id: permissionSets.id, name: permissionSets.name })
+          .from(permissionSets)
+          .where(eq(permissionSets.tenantId, ctx.tenantId)),
+        ctx.db
+          .select({ id: groups.id, name: groups.name })
+          .from(groups)
+          .where(eq(groups.tenantId, ctx.tenantId)),
+        ctx.db
+          .select({ id: sites.id, name: sites.name })
+          .from(sites)
+          .where(eq(sites.tenantId, ctx.tenantId)),
+      ]);
+      const setByName = new Map(allSets.map((s) => [s.name, s.id]));
+      const groupByName = new Map(allGroups.map((g) => [g.name, g.id]));
+      const siteByName = new Map(allSites.map((s) => [s.name, s.id]));
+
+      const errors: { line: number; message: string; raw: Record<string, string> }[] = [
+        ...parsed.errors,
+      ];
+      let created = 0;
+      let updated = 0;
+
+      // Find default permission set (Standard) — used when the CSV omits.
+      const defaultSet = allSets.find((s) => s.name === 'Standard');
+
+      for (const { line, row } of parsed.ok) {
+        // Resolve names → ids with per-row error surfaces.
+        const resolvedSetId = row.permissionSet ? setByName.get(row.permissionSet) : defaultSet?.id;
+        if (resolvedSetId === undefined) {
+          errors.push({
+            line,
+            message: row.permissionSet
+              ? `Unknown permission set: ${row.permissionSet}`
+              : 'No permission set given and no "Standard" default found',
+            raw: row as unknown as Record<string, string>,
+          });
+          continue;
+        }
+
+        const groupNames = row.groups
+          ? row.groups
+              .split(';')
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0)
+          : [];
+        const siteNames = row.sites
+          ? row.sites
+              .split(';')
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0)
+          : [];
+        const resolvedGroupIds = groupNames
+          .map((n) => groupByName.get(n))
+          .filter((v): v is string => v !== undefined);
+        const resolvedSiteIds = siteNames
+          .map((n) => siteByName.get(n))
+          .filter((v): v is string => v !== undefined);
+
+        const unknownGroups = groupNames.filter((n) => !groupByName.has(n));
+        const unknownSites = siteNames.filter((n) => !siteByName.has(n));
+        if (unknownGroups.length > 0 || unknownSites.length > 0) {
+          const parts: string[] = [];
+          if (unknownGroups.length > 0) parts.push(`groups: ${unknownGroups.join(', ')}`);
+          if (unknownSites.length > 0) parts.push(`sites: ${unknownSites.join(', ')}`);
+          errors.push({
+            line,
+            message: `Unknown ${parts.join('; ')}`,
+            raw: row as unknown as Record<string, string>,
+          });
+          continue;
+        }
+
+        if (input.dryRun) {
+          // Count what would happen without writing.
+          const existing = await ctx.db
+            .select({ id: user.id })
+            .from(user)
+            .where(and(eq(user.tenantId, ctx.tenantId), eq(user.email, row.email)))
+            .limit(1);
+          if (existing[0] === undefined) created++;
+          else updated++;
+          continue;
+        }
+
+        // Upsert by (tenantId, email).
+        const existing = await ctx.db
+          .select({ id: user.id })
+          .from(user)
+          .where(and(eq(user.tenantId, ctx.tenantId), eq(user.email, row.email)))
+          .limit(1);
+
+        let userId: string;
+        if (existing[0] === undefined) {
+          userId = `usr_${newId()}`;
+          await ctx.db.insert(user).values({
+            id: userId,
+            tenantId: ctx.tenantId,
+            name: row.name,
+            email: row.email,
+            permissionSetId: resolvedSetId,
+          });
+          created++;
+          // Invite email is fire-and-forget via the queue — the
+          // user-invitation queue is a Phase 2 concern; for now, we
+          // rely on better-auth's password-setup flow initiated by the
+          // user on first sign-in.
+        } else {
+          userId = existing[0].id;
+          await ctx.db
+            .update(user)
+            .set({
+              name: row.name,
+              permissionSetId: resolvedSetId,
+              updatedAt: new Date(),
+            })
+            .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, userId)));
+          updated++;
+        }
+
+        // Membership upserts — clear manual rows for this user/tenant and
+        // re-add the requested set. Rule-based memberships are untouched.
+        if (resolvedGroupIds.length > 0) {
+          await ctx.db
+            .delete(groupMembers)
+            .where(
+              and(
+                eq(groupMembers.tenantId, ctx.tenantId),
+                eq(groupMembers.userId, userId),
+                eq(groupMembers.addedVia, 'manual'),
+              ),
+            );
+          await ctx.db
+            .insert(groupMembers)
+            .values(
+              resolvedGroupIds.map((groupId) => ({
+                tenantId: ctx.tenantId,
+                groupId,
+                userId,
+                addedVia: 'manual',
+                addedBy: ctx.auth.userId,
+              })),
+            )
+            .onConflictDoNothing();
+        }
+
+        if (resolvedSiteIds.length > 0) {
+          await ctx.db
+            .delete(siteMembers)
+            .where(
+              and(
+                eq(siteMembers.tenantId, ctx.tenantId),
+                eq(siteMembers.userId, userId),
+                eq(siteMembers.addedVia, 'manual'),
+              ),
+            );
+          await ctx.db
+            .insert(siteMembers)
+            .values(
+              resolvedSiteIds.map((siteId) => ({
+                tenantId: ctx.tenantId,
+                siteId,
+                userId,
+                addedVia: 'manual',
+              })),
+            )
+            .onConflictDoNothing();
+        }
+      }
+
+      ctx.logger.info(
+        { created, updated, errors: errors.length, dryRun: input.dryRun },
+        '[users] bulk import',
+      );
+
+      return {
+        created,
+        updated,
+        skipped: 0,
+        errorCount: errors.length,
+        errors: errors.slice(0, 50), // cap for response size; full CSV via rejectedCsv below
+        rejectedCsv: parsed.rejectedCsv(),
+      };
+    }),
+
+  // ─── CSV export (S-10) ────────────────────────────────────────────────────
+  /**
+   * Full tenant user list as CSV. Columns: id, name, email,
+   * permissionSet, groups, sites, activatedAt, deactivatedAt. The UI
+   * passes the returned string straight to a Blob download.
+   */
+  listExport: tenantProcedure.use(requirePermission('users.view')).query(async ({ ctx }) => {
+    const users = await ctx.db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        permissionSet: permissionSets.name,
+        createdAt: user.createdAt,
+        deactivatedAt: user.deactivatedAt,
+      })
+      .from(user)
+      .innerJoin(permissionSets, eq(user.permissionSetId, permissionSets.id))
+      .where(eq(user.tenantId, ctx.tenantId))
+      .orderBy(user.email);
+
+    if (users.length === 0) {
+      return {
+        csv: toCsv(
+          [],
+          [
+            'id',
+            'name',
+            'email',
+            'permissionSet',
+            'groups',
+            'sites',
+            'activatedAt',
+            'deactivatedAt',
+          ],
+        ),
+      };
+    }
+
+    const userIds = users.map((u) => u.id);
+    const [gRows, sRows] = await Promise.all([
+      ctx.db
+        .select({
+          userId: groupMembers.userId,
+          groupName: groups.name,
+        })
+        .from(groupMembers)
+        .innerJoin(groups, eq(groupMembers.groupId, groups.id))
+        .where(and(eq(groupMembers.tenantId, ctx.tenantId), inArray(groupMembers.userId, userIds))),
+      ctx.db
+        .select({
+          userId: siteMembers.userId,
+          siteName: sites.name,
+        })
+        .from(siteMembers)
+        .innerJoin(sites, eq(siteMembers.siteId, sites.id))
+        .where(and(eq(siteMembers.tenantId, ctx.tenantId), inArray(siteMembers.userId, userIds))),
+    ]);
+
+    const groupsByUser = new Map<string, string[]>();
+    for (const row of gRows) {
+      const list = groupsByUser.get(row.userId) ?? [];
+      list.push(row.groupName);
+      groupsByUser.set(row.userId, list);
+    }
+    const sitesByUser = new Map<string, string[]>();
+    for (const row of sRows) {
+      const list = sitesByUser.get(row.userId) ?? [];
+      list.push(row.siteName);
+      sitesByUser.set(row.userId, list);
+    }
+
+    const rows = users.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      permissionSet: u.permissionSet,
+      groups: (groupsByUser.get(u.id) ?? []).join(';'),
+      sites: (sitesByUser.get(u.id) ?? []).join(';'),
+      activatedAt: u.createdAt.toISOString(),
+      deactivatedAt: u.deactivatedAt !== null ? u.deactivatedAt.toISOString() : '',
+    }));
+
+    const csv = toCsv(rows, [
+      'id',
+      'name',
+      'email',
+      'permissionSet',
+      'groups',
+      'sites',
+      'activatedAt',
+      'deactivatedAt',
+    ]);
+    return { csv };
   }),
 });
