@@ -16,6 +16,13 @@ import { permissionsRouter } from './routers/permissions';
 import { sitesRouter } from './routers/sites';
 import { templatesRouter } from './routers/templates';
 import { usersRouter } from './routers/users';
+// Phase 2 PR 28 routers — imported AFTER templates so their
+// `registerDependentResolver('templates', ...)` call overwrites the PR 26
+// shim. Module-load ordering is the registration order.
+import { actionsRouter } from './routers/actions';
+import { approvalsRouter } from './routers/approvals';
+import { inspectionsRouter } from './routers/inspections';
+import { signaturesRouter } from './routers/signatures';
 import { router } from './trpc';
 
 export const appRouter = router({
@@ -28,6 +35,10 @@ export const appRouter = router({
   accessRules: accessRulesRouter,
   templates: templatesRouter,
   globalResponseSets: globalResponseSetsRouter,
+  inspections: inspectionsRouter,
+  signatures: signaturesRouter,
+  approvals: approvalsRouter,
+  actions: actionsRouter,
 });
 
 export type AppRouter = typeof appRouter;

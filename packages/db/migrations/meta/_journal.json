@@ -36,6 +36,13 @@
       "when": 1776517799666,
       "tag": "0004_phase2_templates_inspections",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776533428652,
+      "tag": "0005_phase2_inspections",
+      "breakpoints": true
     }
   ]
 }

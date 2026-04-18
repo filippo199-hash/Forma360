@@ -13,3 +13,5 @@ export * from './sites';
 export * from './accessRules';
 export * from './templates';
 export * from './globalResponseSets';
+export * from './inspections';
+export * from './actions';
