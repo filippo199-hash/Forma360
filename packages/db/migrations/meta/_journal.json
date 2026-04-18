@@ -22,6 +22,13 @@
       "when": 1776507752738,
       "tag": "0002_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776508403280,
+      "tag": "0003_phase1_org_backbone",
+      "breakpoints": true
     }
   ]
 }

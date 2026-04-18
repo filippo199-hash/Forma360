@@ -17,7 +17,15 @@ export default defineConfig({
   // The barrel `./src/schema/index.ts` is deliberately excluded because
   // drizzle-kit loads schema files via its own CJS resolver, which cannot
   // follow the `.js` extensions that tsc's NodeNext mode requires.
-  schema: ['./src/schema/tenants.ts', './src/schema/permissions.ts', './src/schema/auth.ts'],
+  schema: [
+    './src/schema/tenants.ts',
+    './src/schema/permissions.ts',
+    './src/schema/auth.ts',
+    './src/schema/users.ts',
+    './src/schema/groups.ts',
+    './src/schema/sites.ts',
+    './src/schema/accessRules.ts',
+  ],
   out: './migrations',
   dialect: 'postgresql',
   dbCredentials: {
