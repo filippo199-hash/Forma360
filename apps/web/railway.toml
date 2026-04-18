@@ -1,0 +1,21 @@
+# Railway service config for the `web` (Next.js) service.
+#
+# Railway picks this file up when the service root is set to `apps/web` in
+# the dashboard. See docs/deployment.md for the full walkthrough.
+
+[build]
+builder = "NIXPACKS"
+# Build the whole workspace from the repo root so pnpm resolves workspace
+# packages correctly. Railway clones the repo root; `rootDirectory` in the
+# dashboard is set to `/` (not `apps/web`).
+buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @forma360/web build"
+
+[deploy]
+# Apply pending migrations before serving traffic. Railway runs preDeploy
+# against the new image; a failure blocks the rollout.
+preDeployCommand = "pnpm --filter @forma360/db db:migrate"
+startCommand = "pnpm --filter @forma360/web start"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+healthcheckPath = "/api/trpc/health.ping"
+healthcheckTimeout = 30

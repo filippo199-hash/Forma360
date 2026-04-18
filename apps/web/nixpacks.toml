@@ -1,0 +1,5 @@
+# Nixpacks config for the Railway `web` service.
+# Node 22 + pnpm 9. No extra native packages needed.
+
+[phases.setup]
+nixPkgs = ['nodejs_22', 'pnpm-9_x']
