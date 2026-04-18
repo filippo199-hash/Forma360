@@ -39,6 +39,7 @@ const MIGRATION_FILES = [
   '0004_phase2_templates_inspections.sql',
   '0005_phase2_inspections.sql',
   '0006_phase2_schedules.sql',
+  '0007_inspections_archived_at.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -336,6 +337,70 @@ describe('templates router (Phase 2)', () => {
       )[0];
       expect(after?.content).toEqual(before?.content);
       expect(after?.publishedAt?.getTime()).toBe(before?.publishedAt?.getTime());
+    });
+  });
+
+  describe('exportAllCsv (PR 33)', () => {
+    it('returns header + one row per template with usage_count reflecting inspections', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId: t1 } = await caller.templates.create({ name: 'Busy' });
+      await caller.templates.saveDraft({ templateId: t1, content: validContent('Busy') });
+      await caller.templates.publish({ templateId: t1 });
+      const { templateId: t2 } = await caller.templates.create({ name: 'Empty' });
+      await caller.templates.saveDraft({ templateId: t2, content: validContent('Empty') });
+      await caller.templates.publish({ templateId: t2 });
+
+      // Two inspections on t1, zero on t2.
+      await caller.inspections.create({ templateId: t1 });
+      await caller.inspections.create({ templateId: t1 });
+
+      const { csv, rowCount } = await caller.templates.exportAllCsv();
+      expect(rowCount).toBe(2);
+      const lines = csv.split('\r\n').filter((l) => l.length > 0);
+      // Header + 2 rows
+      expect(lines).toHaveLength(3);
+      expect(lines[0]).toBe(
+        '"template_id","name","status","version_count","current_version_number","published_at","archived_at","usage_count"',
+      );
+      // Rows are sorted asc by name: Busy comes first.
+      const busyLine = lines.find((l) => l.includes('"Busy"'));
+      const emptyLine = lines.find((l) => l.includes('"Empty"'));
+      expect(busyLine).toBeDefined();
+      expect(emptyLine).toBeDefined();
+      // Last cell is usage_count.
+      expect(busyLine).toMatch(/,"2"\r?$/);
+      expect(emptyLine).toMatch(/,"0"\r?$/);
+    });
+
+    it('is tenant-scoped', async () => {
+      const otherTenantId = newId();
+      await db.insert(schema.tenants).values({ id: otherTenantId, name: 'Other', slug: 'other' });
+      const otherSeeded = await seedDefaultPermissionSets(
+        db as unknown as Database,
+        otherTenantId,
+      );
+      const otherAdminId = `usr_${newId()}`;
+      await db.insert(schema.user).values({
+        id: otherAdminId,
+        name: 'Other',
+        email: 'other@x.test',
+        tenantId: otherTenantId,
+        permissionSetId: otherSeeded.administrator,
+      });
+      const otherCaller = createCaller(
+        createTestContext({
+          db: db as unknown as Database,
+          logger: silent(),
+          auth: { userId: otherAdminId, email: 'other@x.test', tenantId: otherTenantId as never },
+        }),
+      );
+      // Create a template in tenantId
+      const caller = createCaller(ctxFor(adminUserId));
+      await caller.templates.create({ name: 'MyTenantOnly' });
+
+      const { csv, rowCount } = await otherCaller.templates.exportAllCsv();
+      expect(rowCount).toBe(0);
+      expect(csv).not.toContain('MyTenantOnly');
     });
   });
 });
