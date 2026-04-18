@@ -16,7 +16,10 @@ import { createLogger } from '@forma360/shared/logger';
 import { newId } from '@forma360/shared/id';
 import * as schema from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
-import { resetDependentsRegistryForTests } from '@forma360/permissions/dependents';
+import {
+  registerDependentResolver,
+  resetDependentsRegistryForTests,
+} from '@forma360/permissions/dependents';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
@@ -299,6 +302,60 @@ describe('Phase 1 admin routers', () => {
       const result = await caller.users.list({});
       expect(result.users).toHaveLength(1);
       expect(result.users[0]?.id).toBe(adminUserId);
+    });
+  });
+
+  describe('admin.previewDependents (PR 33)', () => {
+    it('returns counts from every registered resolver', async () => {
+      // Register three deterministic resolvers — one returns 3, one 0, one 1.
+      registerDependentResolver('groups', async () => 3);
+      registerDependentResolver('sites', async () => 0);
+      registerDependentResolver('inspections', async () => 1);
+      const caller = createCaller(ctxFor(adminUserId));
+      const targetId = newId();
+      const result = await caller.admin.previewDependents({
+        entity: 'template',
+        id: targetId,
+      });
+      // Sorted desc by count; same-count ties break alphabetically.
+      expect(result[0]).toEqual({ module: 'groups', count: 3 });
+      expect(result[1]).toEqual({ module: 'inspections', count: 1 });
+      const groupsEntry = result.find((r) => r.module === 'groups');
+      const sitesEntry = result.find((r) => r.module === 'sites');
+      expect(groupsEntry?.count).toBe(3);
+      expect(sitesEntry?.count).toBe(0);
+    });
+
+    it('gracefully degrades when one resolver throws', async () => {
+      registerDependentResolver('groups', async () => {
+        throw new Error('boom');
+      });
+      registerDependentResolver('sites', async () => 5);
+      const caller = createCaller(ctxFor(adminUserId));
+      const targetId = newId();
+      const result = await caller.admin.previewDependents({
+        entity: 'template',
+        id: targetId,
+      });
+      // Failing resolver → 0; the working one still reports its count.
+      const groups = result.find((r) => r.module === 'groups');
+      const sites = result.find((r) => r.module === 'sites');
+      expect(groups?.count).toBe(0);
+      expect(sites?.count).toBe(5);
+    });
+
+    it('passes the caller\u2019s tenantId to every resolver', async () => {
+      let observedTenantId: string | undefined;
+      registerDependentResolver('inspections', async (_deps, input) => {
+        observedTenantId = input.tenantId;
+        return 0;
+      });
+      const caller = createCaller(ctxFor(adminUserId));
+      await caller.admin.previewDependents({
+        entity: 'template',
+        id: newId(),
+      });
+      expect(observedTenantId).toBe(tenantId);
     });
   });
 });
