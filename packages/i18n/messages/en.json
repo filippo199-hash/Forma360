@@ -21,6 +21,38 @@
     "navigation": { "primary": "Primary navigation" },
     "footer": { "tagline": "Operational excellence, in every language." }
   },
+  "nav": {
+    "inspections": "Inspections",
+    "approvals": "Approvals"
+  },
+  "approvals": {
+    "queueTitle": "Approvals queue",
+    "queueSubtitle": "Inspections waiting for your approval.",
+    "empty": "Nothing awaiting approval.",
+    "submittedAt": "Submitted",
+    "backToQueue": "Back to queue",
+    "signaturesHeading": "Collected signatures",
+    "signedAt": "Signed {time}",
+    "approveButton": "Approve",
+    "rejectButton": "Reject",
+    "approveDialogTitle": "Approve inspection?",
+    "approveDialogBody": "The inspection will be marked as completed.",
+    "rejectDialogTitle": "Reject inspection?",
+    "rejectDialogBody": "The inspection will be marked as rejected. Provide a reason — the submitter will see it.",
+    "commentOptional": "Comment (optional)",
+    "commentRequired": "Reason for rejection",
+    "commentPlaceholder": "Type your note here",
+    "approveConfirmCta": "Approve",
+    "rejectConfirmCta": "Reject",
+    "approvedToast": "Inspection approved",
+    "rejectedToast": "Inspection rejected",
+    "decisionError": "Could not record the decision. Try again.",
+    "rejectReasonRequired": "A reason is required when rejecting an inspection.",
+    "notAwaiting": "This inspection is {status}; no decision can be taken here.",
+    "review": {
+      "empty": "No answer"
+    }
+  },
   "auth": {
     "signIn": {
       "title": "Sign in to Forma360",
@@ -469,8 +501,12 @@
       "awaitingSignaturesBody": "{filled} of {total} slots signed.",
       "awaitingApprovalTitle": "Awaiting approval",
       "awaitingApprovalBody": "Submitted for approval.",
+      "awaitingApprovalPending": "An approver will decide shortly.",
+      "openApproval": "Open approval",
       "completedTitle": "Inspection completed",
       "completedBody": "All signatures and approvals are in.",
+      "completedAt": "Completed {time}",
+      "approvedBy": "Approved by {user}",
       "rejectedTitle": "Inspection rejected",
       "rejectedBody": "Reason: {reason}",
       "inProgressTitle": "In progress",
@@ -479,7 +515,21 @@
       "reopenButton": "Reopen",
       "pdfButton": "Download PDF",
       "pdfComingSoon": "PDF export coming soon",
-      "signSlot": "Sign slot {index}"
+      "signSlot": "Sign slot {index}",
+      "signSlotCta": "Sign",
+      "signedBadge": "Signed"
+    },
+    "signatures": {
+      "title": "Sign inspection",
+      "slotHeading": "Slot {index}",
+      "saveSuccess": "Signature saved",
+      "saveError": "Could not save the signature.",
+      "alreadySigned": "This slot was already signed — returning to status.",
+      "invalidSlot": "That signature slot is not valid for this inspection.",
+      "savedBanner": "Signature saved.",
+      "remainingHeading": "More slots to sign",
+      "signNext": "Sign next",
+      "allDoneCta": "Back to status"
     }
   }
 }
