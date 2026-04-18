@@ -556,5 +556,72 @@
       "signNext": "Sign next",
       "allDoneCta": "Back to status"
     }
+  },
+  "schedules": {
+    "title": "Schedules",
+    "subtitle": "Recurring inspections across your organisation.",
+    "empty": "No schedules yet.",
+    "create": "Create schedule",
+    "filterTemplate": "Template",
+    "filterStatus": "Status",
+    "filterActive": "Active",
+    "filterPaused": "Paused",
+    "statusActive": "Active",
+    "statusPaused": "Paused",
+    "table": {
+      "name": "Name",
+      "template": "Template",
+      "timezone": "Timezone",
+      "nextRun": "Next run",
+      "status": "Status"
+    },
+    "form": {
+      "name": "Schedule name",
+      "timezone": "Timezone",
+      "rrule": "Recurrence rule (iCalendar RRULE)",
+      "rruleHelp": "Example: FREQ=WEEKLY;BYDAY=MO;BYHOUR=9",
+      "startAt": "Starts at",
+      "endAt": "Ends at (optional)",
+      "assigneesUsers": "Assignee users",
+      "assigneesPlaceholder": "Comma-separated user IDs",
+      "assigneesGroups": "Assignee groups",
+      "sites": "Sites",
+      "reminder": "Send reminder (minutes before)",
+      "previewHeading": "Next 5 occurrences",
+      "previewEmpty": "No upcoming occurrences match this rule.",
+      "save": "Save schedule",
+      "cancel": "Cancel",
+      "invalidRrule": "That RRULE is not valid.",
+      "atLeastOneAssignee": "At least one assignee is required."
+    },
+    "detail": {
+      "pauseButton": "Pause",
+      "resumeButton": "Resume",
+      "deleteButton": "Delete schedule",
+      "materialiseNow": "Materialise now",
+      "upcomingHeading": "Upcoming occurrences",
+      "upcomingEmpty": "No upcoming occurrences.",
+      "backToList": "Back to schedules"
+    },
+    "upcoming": {
+      "heading": "Upcoming inspections",
+      "itemDue": "Due {time}",
+      "startNow": "Start now"
+    },
+    "calendar": {
+      "title": "Schedule calendar",
+      "subtitle": "Occurrences across the next 30 days.",
+      "day": "Day",
+      "count": "{count} occurrences"
+    },
+    "toast": {
+      "created": "Schedule created",
+      "updated": "Schedule updated",
+      "paused": "Schedule paused",
+      "resumed": "Schedule resumed",
+      "deleted": "Schedule deleted",
+      "materialised": "Materialise job enqueued",
+      "error": "Could not save the schedule. Please try again."
+    }
   }
 }
