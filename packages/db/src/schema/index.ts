@@ -5,4 +5,5 @@
  * generating migrations and so the database client gets full typed schema.
  */
 export * from './tenants';
+export * from './permissions';
 export * from './auth';

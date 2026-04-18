@@ -17,10 +17,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from './schema/index';
 import { tenants } from './schema/tenants';
 import { user } from './schema/auth';
+import { permissionSets } from './schema/permissions';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = join(__dirname, '..', 'migrations');
-const MIGRATION_FILES = ['0000_initial.sql', '0001_auth.sql'];
+const MIGRATION_FILES = ['0000_initial.sql', '0001_auth.sql', '0002_permissions.sql'];
 
 async function bootDb(): Promise<{
   db: PgliteDatabase<typeof schema>;
@@ -116,13 +117,43 @@ describe('auth schema (pglite integration)', () => {
     await client.close();
   });
 
-  it('creates all five auth tables via the 0001 migration', async () => {
+  /**
+   * Seeds a tenant + a single permission set and returns the ids. Keeps
+   * the individual tests focused on user semantics rather than the
+   * permission-set foreign-key ritual.
+   */
+  async function seedTenantAndPermissionSet(): Promise<{
+    tenantId: string;
+    permissionSetId: string;
+  }> {
+    const tenantId = newId();
+    await db.insert(tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+    const permissionSetId = newId();
+    await db.insert(permissionSets).values({
+      id: permissionSetId,
+      tenantId,
+      name: 'Administrator',
+      permissions: ['org.settings'],
+      isSystem: true,
+    });
+    return { tenantId, permissionSetId };
+  }
+
+  it('creates every Phase 0 + Phase 1 table via the migrations', async () => {
     const result = await client.query<{ table_name: string }>(
       "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
     );
     const tableNames = new Set(result.rows.map((r) => r.table_name));
     expect(tableNames).toEqual(
-      new Set(['tenants', 'user', 'session', 'account', 'verification', 'two_factor']),
+      new Set([
+        'tenants',
+        'permission_sets',
+        'user',
+        'session',
+        'account',
+        'verification',
+        'two_factor',
+      ]),
     );
   });
 
@@ -144,19 +175,20 @@ describe('auth schema (pglite integration)', () => {
   });
 
   it('rejects a user insert referencing a non-existent tenant', async () => {
+    const { permissionSetId } = await seedTenantAndPermissionSet();
     await expect(
       db.insert(user).values({
         id: 'usr_nonexistent',
         name: 'Orphan',
         email: 'orphan@example.com',
         tenantId: 'tenant-does-not-exist',
+        permissionSetId,
       }),
     ).rejects.toThrow();
   });
 
   it('round-trips a user row linked to a real tenant', async () => {
-    const tenantId = newId();
-    await db.insert(tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+    const { tenantId, permissionSetId } = await seedTenantAndPermissionSet();
 
     const userId = 'usr_' + newId().toLowerCase();
     await db.insert(user).values({
@@ -164,24 +196,27 @@ describe('auth schema (pglite integration)', () => {
       name: 'Alice',
       email: 'alice@acme.test',
       tenantId,
+      permissionSetId,
     });
 
     const fetched = await db.select().from(user).where(eq(user.id, userId));
     expect(fetched).toHaveLength(1);
     expect(fetched[0]?.tenantId).toBe(tenantId);
+    expect(fetched[0]?.permissionSetId).toBe(permissionSetId);
     expect(fetched[0]?.emailVerified).toBe(false);
     expect(fetched[0]?.twoFactorEnabled).toBe(false);
+    expect(fetched[0]?.deactivatedAt).toBeNull();
   });
 
   it('enforces email uniqueness on user', async () => {
-    const tenantId = newId();
-    await db.insert(tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+    const { tenantId, permissionSetId } = await seedTenantAndPermissionSet();
 
     await db.insert(user).values({
       id: 'usr_1',
       name: 'A',
       email: 'dup@acme.test',
       tenantId,
+      permissionSetId,
     });
     await expect(
       db.insert(user).values({
@@ -189,18 +224,19 @@ describe('auth schema (pglite integration)', () => {
         name: 'B',
         email: 'dup@acme.test',
         tenantId,
+        permissionSetId,
       }),
     ).rejects.toThrow();
   });
 
   it('refuses to hard-delete a tenant referenced by a user (RESTRICT)', async () => {
-    const tenantId = newId();
-    await db.insert(tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+    const { tenantId, permissionSetId } = await seedTenantAndPermissionSet();
     await db.insert(user).values({
       id: 'usr_locked',
       name: 'Locked',
       email: 'locked@acme.test',
       tenantId,
+      permissionSetId,
     });
 
     await expect(db.delete(tenants).where(eq(tenants.id, tenantId))).rejects.toThrow();
