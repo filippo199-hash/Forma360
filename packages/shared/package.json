@@ -15,20 +15,28 @@
     "./id": {
       "types": "./src/id.ts",
       "default": "./src/id.ts"
+    },
+    "./storage": {
+      "types": "./src/storage.ts",
+      "default": "./src/storage.ts"
     }
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" \"scripts/**/*.ts\"",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:r2": "tsx scripts/test-r2.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.720.0",
+    "@aws-sdk/s3-request-presigner": "^3.720.0",
     "ulid": "^2.3.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "@vitest/ui": "^2.1.0",
+    "tsx": "^4.19.0",
     "vitest": "^2.1.0"
   }
 }
