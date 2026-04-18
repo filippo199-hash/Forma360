@@ -55,3 +55,120 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          # Build needs every env var the app parses at boot. We use fake values
+          # so no real service is contacted during `next build`.
+          NODE_ENV: production
+          APP_URL: http://localhost:3000
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci
+          REDIS_URL: redis://localhost:6379
+          BETTER_AUTH_SECRET: ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
+          BETTER_AUTH_URL: http://localhost:3000
+          R2_ACCOUNT_ID: ci
+          R2_ACCESS_KEY_ID: ci
+          R2_SECRET_ACCESS_KEY: ci
+          R2_BUCKET: ci
+          R2_PUBLIC_URL: https://r2.example.com
+          RESEND_API_KEY: ci
+          RESEND_FROM: noreply@example.com
+          EMAIL_DELIVERY: resend
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: verify
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: forma360
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm --filter @forma360/web exec playwright install --with-deps chromium
+
+      - name: Apply DB migrations
+        run: pnpm --filter @forma360/db db:migrate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forma360
+
+      - name: Build web app
+        run: pnpm --filter @forma360/web build
+        env:
+          NODE_ENV: production
+          APP_URL: http://localhost:3000
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forma360
+          REDIS_URL: redis://localhost:6379
+          BETTER_AUTH_SECRET: ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
+          BETTER_AUTH_URL: http://localhost:3000
+          R2_ACCOUNT_ID: ci
+          R2_ACCESS_KEY_ID: ci
+          R2_SECRET_ACCESS_KEY: ci
+          R2_BUCKET: ci
+          R2_PUBLIC_URL: https://r2.example.com
+          RESEND_API_KEY: ci
+          RESEND_FROM: noreply@example.com
+          EMAIL_DELIVERY: resend
+
+      - name: Run Playwright
+        run: pnpm --filter @forma360/web test:e2e
+        env:
+          NODE_ENV: production
+          APP_URL: http://localhost:3000
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forma360
+          REDIS_URL: redis://localhost:6379
+          BETTER_AUTH_SECRET: ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
+          BETTER_AUTH_URL: http://localhost:3000
+          R2_ACCOUNT_ID: ci
+          R2_ACCESS_KEY_ID: ci
+          R2_SECRET_ACCESS_KEY: ci
+          R2_BUCKET: ci
+          R2_PUBLIC_URL: https://r2.example.com
+          RESEND_API_KEY: ci
+          RESEND_FROM: noreply@example.com
+          EMAIL_DELIVERY: console
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7

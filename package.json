@@ -18,6 +18,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:eslint-rules": "node tools/eslint-rules/no-hardcoded-strings.test.js",
+    "test:e2e": "pnpm --filter @forma360/web test:e2e",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "db:studio": "turbo run db:studio",
