@@ -162,6 +162,9 @@ importers:
       '@forma360/db':
         specifier: workspace:^
         version: link:../db
+      '@forma360/permissions':
+        specifier: workspace:^
+        version: link:../permissions
       '@forma360/shared':
         specifier: workspace:^
         version: link:../shared
@@ -272,7 +275,20 @@ importers:
         version: 2.1.9(@types/node@22.19.17)(@vitest/ui@2.1.9)(happy-dom@16.8.1)(lightningcss@1.32.0)(terser@5.46.1)
 
   packages/permissions:
+    dependencies:
+      '@forma360/db':
+        specifier: workspace:^
+        version: link:../db
+      '@forma360/shared':
+        specifier: workspace:^
+        version: link:../shared
+      drizzle-orm:
+        specifier: ^0.45.0
+        version: 0.45.2(@electric-sql/pglite@0.2.17)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.28.16)(pg@8.20.0)
     devDependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.2.0
+        version: 0.2.17
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@22.19.17)(@vitest/ui@2.1.9)(happy-dom@16.8.1)(lightningcss@1.32.0)(terser@5.46.1)

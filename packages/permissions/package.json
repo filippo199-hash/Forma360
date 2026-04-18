@@ -11,6 +11,18 @@
     "./catalogue": {
       "types": "./src/catalogue.ts",
       "default": "./src/catalogue.ts"
+    },
+    "./requirePermission": {
+      "types": "./src/requirePermission.ts",
+      "default": "./src/requirePermission.ts"
+    },
+    "./admins": {
+      "types": "./src/admins.ts",
+      "default": "./src/admins.ts"
+    },
+    "./seed": {
+      "types": "./src/seed.ts",
+      "default": "./src/seed.ts"
     }
   },
   "scripts": {
@@ -20,6 +32,12 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.2.0",
     "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "@forma360/db": "workspace:^",
+    "@forma360/shared": "workspace:^",
+    "drizzle-orm": "^0.45.0"
   }
 }

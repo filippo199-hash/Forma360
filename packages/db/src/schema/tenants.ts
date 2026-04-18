@@ -7,7 +7,23 @@
  * supply a tenant id directly. See ADR 0002.
  */
 import { sql } from 'drizzle-orm';
-import { pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { jsonb, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+
+/**
+ * Tenant-level settings envelope. Shape stays intentionally loose so Phase N
+ * modules can add their own keys without a schema migration. Read through
+ * a Zod schema at every access to narrow.
+ *
+ * Phase 1 keys:
+ *   - `siteLabels`: array of level names (default `["Country","Region","Area","Site"]`).
+ *     Used by Module 9 to customise breadcrumb copy.
+ */
+export interface TenantSettings {
+  siteLabels?: readonly string[];
+  [key: string]: unknown;
+}
+
+const DEFAULT_SETTINGS: TenantSettings = {};
 
 export const tenants = pgTable('tenants', {
   /** ULID, 26 chars, Crockford base32. See ADR 0003. */
@@ -21,6 +37,16 @@ export const tenants = pgTable('tenants', {
    * alphanumeric + dashes enforced at the application layer (Zod).
    */
   slug: text('slug').notNull().unique(),
+
+  /**
+   * Tenant-wide settings (site labels, defaults, flags). Read through a
+   * Zod schema; writing is admin-only and goes through an `org.settings`
+   * permission check.
+   */
+  settings: jsonb('settings')
+    .notNull()
+    .$type<TenantSettings>()
+    .default(sql`'${sql.raw(JSON.stringify(DEFAULT_SETTINGS))}'::jsonb`),
 
   /** UTC timestamp of row creation, server-assigned. */
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
