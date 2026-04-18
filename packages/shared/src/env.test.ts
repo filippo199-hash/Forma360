@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EnvValidationError, parseClientEnv, parseServerEnv } from './env.js';
+import { EnvValidationError, parseClientEnv, parseServerEnv } from './env';
 
 const validServerEnv = {
   NODE_ENV: 'development',

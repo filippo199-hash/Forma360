@@ -11,7 +11,7 @@
 import { parseServerEnv } from '@forma360/shared/env';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import * as schema from './schema/index.js';
+import * as schema from './schema/index';
 
 export type Database = NodePgDatabase<typeof schema>;
 

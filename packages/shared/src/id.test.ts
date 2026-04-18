@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isId, newId } from './id.js';
+import { isId, newId } from './id';
 
 describe('newId', () => {
   it('generates a 26-character ULID', () => {

@@ -7,7 +7,7 @@
  */
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
-import type { TestPayload } from '../queues.js';
+import type { TestPayload } from '../queues';
 
 export function createTestQueueHandler(logger: Logger) {
   return async function handleTestJob(job: Job<TestPayload>): Promise<void> {

@@ -6,7 +6,7 @@
  * jobs instead of killing them mid-query.
  */
 import { createLogger } from '@forma360/shared/logger';
-import { startWorker } from './worker.js';
+import { startWorker } from './worker';
 
 const logger = createLogger({ service: 'worker', level: 'info', nodeEnv: 'production' });
 

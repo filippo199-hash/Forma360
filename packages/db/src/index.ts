@@ -5,5 +5,5 @@
  * subpath exports (`@forma360/db/client`, `@forma360/db/schema`) where
  * possible to keep bundle boundaries explicit.
  */
-export * from './schema/index.js';
-export { createDb, db, getDb, type Database } from './client.js';
+export * from './schema/index';
+export { createDb, db, getDb, type Database } from './client';

@@ -5,9 +5,26 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "dev": "echo 'next dev — wired in PR 7'",
-    "build": "echo 'next build — wired in PR 7'",
-    "start": "echo 'next start — wired in PR 7'"
+    "lint": "eslint \"app/**/*.{ts,tsx}\" \"src/**/*.{ts,tsx}\"",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@forma360/api": "workspace:^",
+    "@forma360/auth": "workspace:^",
+    "@forma360/db": "workspace:^",
+    "@forma360/shared": "workspace:^",
+    "@trpc/server": "^11.0.0",
+    "better-auth": "^1.6.5",
+    "ioredis": "^5.4.1",
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "superjson": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
   }
 }

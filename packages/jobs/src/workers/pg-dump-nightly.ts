@@ -16,7 +16,7 @@ import { Upload } from '@aws-sdk/lib-storage';
 import type { Logger } from '@forma360/shared/logger';
 import { createR2Client, type R2Config } from '@forma360/shared/storage';
 import type { Job } from 'bullmq';
-import type { PgDumpPayload } from '../queues.js';
+import type { PgDumpPayload } from '../queues';
 
 /** Cron expression: 03:00 UTC every night. */
 export const PG_DUMP_CRON = '0 3 * * *';

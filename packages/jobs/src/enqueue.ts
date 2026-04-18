@@ -6,7 +6,7 @@
  * and a payload and get back a job id.
  */
 import type { ConnectionOptions, JobsOptions } from 'bullmq';
-import { getQueue, QUEUE_PAYLOAD_SCHEMAS, type QueueName, type QueuePayloads } from './queues.js';
+import { getQueue, QUEUE_PAYLOAD_SCHEMAS, type QueueName, type QueuePayloads } from './queues';
 
 export interface EnqueueOptions {
   connection: ConnectionOptions;

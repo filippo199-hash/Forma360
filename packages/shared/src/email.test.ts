@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSendEmail, type EmailTemplate, renderEmail, type TemplateLoader } from './email.js';
-import { createLogger } from './logger.js';
+import { createSendEmail, type EmailTemplate, renderEmail, type TemplateLoader } from './email';
+import { createLogger } from './logger';
 
 const template: EmailTemplate = {
   subject: 'Verify your email',

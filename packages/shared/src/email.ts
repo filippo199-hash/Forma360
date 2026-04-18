@@ -14,7 +14,7 @@
  */
 import { Resend } from 'resend';
 import { z } from 'zod';
-import type { Logger } from './logger.js';
+import type { Logger } from './logger';
 
 // ─── Public types ───────────────────────────────────────────────────────────
 

@@ -15,9 +15,9 @@
  * Intentionally not a Vitest integration test: real R2 calls are slow,
  * flaky in CI without credentials, and billed per operation.
  */
-import { parseServerEnv } from '../src/env.js';
-import { newId } from '../src/id.js';
-import { createStorage, objectKey } from '../src/storage.js';
+import { parseServerEnv } from '../src/env';
+import { newId } from '../src/id';
+import { createStorage, objectKey } from '../src/storage';
 
 async function main(): Promise<void> {
   const env = parseServerEnv();
