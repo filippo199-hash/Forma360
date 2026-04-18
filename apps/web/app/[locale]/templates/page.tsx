@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
+import { ArchiveDialog } from '../../../src/components/archive-dialog';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import {
@@ -39,6 +40,8 @@ export default function TemplatesListPage() {
 
   const [includeArchived, setIncludeArchived] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
+  const [showExport, setShowExport] = useState(false);
 
   const { data: rows, isLoading } = trpc.templates.list.useQuery({ includeArchived });
 
@@ -46,7 +49,10 @@ export default function TemplatesListPage() {
     onSuccess: () => utils.templates.list.invalidate(),
   });
   const archive = trpc.templates.archive.useMutation({
-    onSuccess: () => utils.templates.list.invalidate(),
+    onSuccess: () => {
+      setArchiveTarget(null);
+      void utils.templates.list.invalidate();
+    },
   });
 
   return (
@@ -67,6 +73,13 @@ export default function TemplatesListPage() {
             />
             <span>{t('showArchived')}</span>
           </label>
+          <Button
+            variant="outline"
+            onClick={() => setShowExport(true)}
+            aria-label={t('export.button')}
+          >
+            {t('export.button')}
+          </Button>
           <Button onClick={() => setShowCreate(true)} aria-label={t('newButton')}>
             {t('newButton')}
           </Button>
@@ -127,7 +140,7 @@ export default function TemplatesListPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => archive.mutate({ templateId: r.id })}
+                          onClick={() => setArchiveTarget(r.id)}
                           aria-label={t('archiveButton')}
                         >
                           {t('archiveButton')}
@@ -143,7 +156,70 @@ export default function TemplatesListPage() {
       </Card>
 
       <CreateTemplateDialog open={showCreate} onOpenChange={setShowCreate} locale={locale} />
+      <ArchiveDialog
+        entity="template"
+        id={archiveTarget ?? ''}
+        open={archiveTarget !== null}
+        onOpenChange={(v) => {
+          if (!v) setArchiveTarget(null);
+        }}
+        onConfirm={() => {
+          if (archiveTarget !== null) archive.mutate({ templateId: archiveTarget });
+        }}
+        pending={archive.isPending}
+      />
+      <TemplatesExportDialog open={showExport} onOpenChange={setShowExport} />
     </div>
+  );
+}
+
+function TemplatesExportDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const t = useTranslations('templates.export');
+  const [running, setRunning] = useState(false);
+  const utils = trpc.useUtils();
+
+  async function downloadNow() {
+    setRunning(true);
+    try {
+      const result = await utils.templates.exportAllCsv.fetch();
+      const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `templates-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      onOpenChange(false);
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            {t('cancel')}
+          </Button>
+          <Button type="button" onClick={downloadNow} disabled={running}>
+            {t('downloadNow')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
