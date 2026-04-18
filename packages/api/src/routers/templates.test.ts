@@ -37,6 +37,8 @@ const MIGRATION_FILES = [
   '0002_permissions.sql',
   '0003_phase1_org_backbone.sql',
   '0004_phase2_templates_inspections.sql',
+  '0005_phase2_inspections.sql',
+  '0006_phase2_schedules.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {

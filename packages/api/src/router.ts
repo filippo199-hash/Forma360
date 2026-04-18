@@ -23,6 +23,7 @@ import { actionsRouter } from './routers/actions';
 import { approvalsRouter } from './routers/approvals';
 import { createExportsRouter, type ExportsRouterDeps } from './routers/exports';
 import { inspectionsRouter } from './routers/inspections';
+import { schedulesRouter } from './routers/schedules';
 import { signaturesRouter } from './routers/signatures';
 import { router } from './trpc';
 
@@ -49,6 +50,7 @@ export function buildAppRouter(deps: { exports: ExportsRouterDeps }) {
     signatures: signaturesRouter,
     approvals: approvalsRouter,
     actions: actionsRouter,
+    schedules: schedulesRouter,
     exports: createExportsRouter(deps.exports),
   });
 }
