@@ -493,7 +493,8 @@
       "completedAt": "Completed {time}",
       "approvedBy": "Approved by {user}",
       "signSlotCta": "Sign",
-      "signedBadge": "Signed"
+      "signedBadge": "Signed",
+      "docxButton": "Download Word"
     },
     "signatures": {
       "title": "Sign inspection",
@@ -506,6 +507,30 @@
       "remainingHeading": "More slots to sign",
       "signNext": "Sign next",
       "allDoneCta": "Back to status"
+    },
+    "exports": {
+      "shareButton": "Share link",
+      "shareDialogTitle": "Share this inspection",
+      "shareDialogDescription": "Anyone with the link can view this inspection in read-only mode until the link expires or is revoked.",
+      "expirationLabel": "Expires",
+      "expirationNever": "Never",
+      "expiration1h": "In 1 hour",
+      "expiration1d": "In 1 day",
+      "expiration1w": "In 1 week",
+      "expiration30d": "In 30 days",
+      "generateLink": "Generate link",
+      "generating": "Generating...",
+      "newLinkLabel": "New share link",
+      "copy": "Copy",
+      "copied": "Copied",
+      "existingLinksHeading": "Existing links",
+      "noLinks": "No share links yet.",
+      "loading": "Loading...",
+      "revoke": "Revoke",
+      "revokedBadge": "Revoked",
+      "expiredBadge": "Expired",
+      "expiresAt": "Expires {time}",
+      "neverExpires": "No expiration"
     }
   },
   "nav": {

@@ -47,6 +47,19 @@ const serverSchemaBase = z.object({
   RESEND_FROM: z.string().min(1),
   EMAIL_DELIVERY: emailDeliverySchema.default('resend'),
 
+  /**
+   * Shared secret for the internal render-token HMAC. Used by the
+   * PDF render path to gate `/render/inspection/<id>` against
+   * Puppeteer-only traffic. See ADR 0008. Min 32 chars — generate
+   * with `openssl rand -hex 32`.
+   */
+  RENDER_SHARED_SECRET: z
+    .string()
+    .min(
+      32,
+      'RENDER_SHARED_SECRET must be at least 32 characters (generate with `openssl rand -hex 32`)',
+    ),
+
   SENTRY_DSN: z.string().url().optional(),
 
   LOG_LEVEL: logLevelSchema.default('info'),

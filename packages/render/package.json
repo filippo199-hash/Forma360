@@ -1,0 +1,53 @@
+{
+  "name": "@forma360/render",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./pdf": {
+      "types": "./src/pdf.ts",
+      "default": "./src/pdf.ts"
+    },
+    "./docx": {
+      "types": "./src/docx.ts",
+      "default": "./src/docx.ts"
+    },
+    "./share": {
+      "types": "./src/share.ts",
+      "default": "./src/share.ts"
+    },
+    "./hmac": {
+      "types": "./src/hmac.ts",
+      "default": "./src/hmac.ts"
+    },
+    "./snapshot": {
+      "types": "./src/snapshot.ts",
+      "default": "./src/snapshot.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@forma360/db": "workspace:^",
+    "@forma360/shared": "workspace:^",
+    "docx": "^9.0.0",
+    "drizzle-orm": "^0.45.2",
+    "zod": "^3.24.0"
+  },
+  "optionalDependencies": {
+    "@sparticuz/chromium": "^131.0.0",
+    "puppeteer-core": "^24.0.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.0",
+    "vitest": "^2.1.0"
+  }
+}
