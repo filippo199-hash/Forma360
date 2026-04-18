@@ -3,18 +3,23 @@
     "loading": "Loading…",
     "error": "Something went wrong.",
     "retry": "Try again",
-    "theme": {
-      "toggle": "Toggle theme"
-    },
-    "locale": {
-      "switch": "Change language"
-    },
-    "navigation": {
-      "primary": "Primary navigation"
-    },
-    "footer": {
-      "tagline": "Operational excellence, in every language."
-    }
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "archive": "Archive",
+    "name": "Name",
+    "email": "Email",
+    "description": "Description",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back",
+    "search": "Search",
+    "theme": { "toggle": "Toggle theme" },
+    "locale": { "switch": "Change language" },
+    "navigation": { "primary": "Primary navigation" },
+    "footer": { "tagline": "Operational excellence, in every language." }
   },
   "auth": {
     "signIn": {
@@ -35,5 +40,116 @@
     "welcome": "Hello {name}",
     "tenantLabel": "Tenant",
     "signOut": "Sign out"
+  },
+  "settings": {
+    "title": "Settings",
+    "nav": {
+      "users": "Users",
+      "groups": "Groups",
+      "sites": "Sites",
+      "permissions": "Permission sets",
+      "customFields": "Custom user fields",
+      "profile": "My profile",
+      "templates": "Templates",
+      "actions": "Actions",
+      "issues": "Issues",
+      "assets": "Assets",
+      "headsUp": "Heads Up",
+      "documents": "Documents",
+      "compliance": "Compliance",
+      "training": "Training",
+      "integrations": "Integrations",
+      "billing": "Billing"
+    },
+    "comingInPhase": "Coming in Phase {phase}",
+    "users": {
+      "title": "Users",
+      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "inviteButton": "Invite user",
+      "importButton": "Import CSV",
+      "exportButton": "Export CSV",
+      "invite": {
+        "title": "Invite a user",
+        "emailLabel": "Email",
+        "nameLabel": "Full name",
+        "permissionSetLabel": "Permission set",
+        "submit": "Send invitation"
+      },
+      "table": {
+        "name": "Name",
+        "email": "Email",
+        "permissionSet": "Permission set",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "deactivated": "Deactivated"
+      },
+      "row": {
+        "deactivate": "Deactivate",
+        "reactivate": "Reactivate",
+        "anonymise": "Anonymise"
+      },
+      "import": {
+        "title": "Import users from CSV",
+        "help": "Upload a CSV with columns: email, name, permissionSet, groups, sites. Existing users are updated by email; new users are created.",
+        "dryRunLabel": "Validate only (no changes)",
+        "submit": "Import",
+        "summary": "{created} created, {updated} updated, {errors} errors",
+        "downloadErrors": "Download rejected rows",
+        "noFile": "Choose a CSV file to begin."
+      },
+      "anonymise": {
+        "title": "Anonymise user",
+        "warning": "This is irreversible. The user's name, email, and custom-field values will be overwritten with tombstone placeholders. Historical records remain intact.",
+        "confirmLabel": "Type the user's current email to confirm",
+        "submit": "Anonymise"
+      }
+    },
+    "permissions": {
+      "title": "Permission sets",
+      "subtitle": "Control what features each user can access.",
+      "createButton": "New permission set",
+      "systemBadge": "System",
+      "usersBadge": "{count} user(s)",
+      "edit": {
+        "title": "Edit permission set",
+        "nameLabel": "Name",
+        "descriptionLabel": "Description",
+        "permissionsLabel": "Permissions"
+      }
+    },
+    "groups": {
+      "title": "Groups",
+      "subtitle": "Organise users by role, department, or team — manually or via rules.",
+      "createButton": "New group",
+      "table": {
+        "name": "Name",
+        "mode": "Mode",
+        "members": "Members"
+      },
+      "mode": {
+        "manual": "Manual",
+        "rule_based": "Rule-based"
+      }
+    },
+    "sites": {
+      "title": "Sites",
+      "subtitle": "Organise your operational data by location or branch.",
+      "createButton": "New site",
+      "table": {
+        "name": "Name",
+        "depth": "Level",
+        "mode": "Mode"
+      }
+    },
+    "profile": {
+      "title": "My profile",
+      "nameLabel": "Name",
+      "emailLabel": "Email",
+      "permissionSetLabel": "Your permission set",
+      "readOnlyNote": "Only administrators can change your permission set."
+    }
   }
 }
