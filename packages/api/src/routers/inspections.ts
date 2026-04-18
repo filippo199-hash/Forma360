@@ -45,7 +45,7 @@ import {
 } from '@forma360/permissions/dependents';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -194,6 +194,7 @@ export const inspectionsRouter = router({
       const where = [eq(inspections.tenantId, ctx.tenantId)];
       if (input.status !== undefined) where.push(eq(inspections.status, input.status));
       if (input.templateId !== undefined) where.push(eq(inspections.templateId, input.templateId));
+      if (!input.includeArchived) where.push(isNull(inspections.archivedAt));
       return ctx.db
         .select({
           id: inspections.id,
@@ -207,6 +208,7 @@ export const inspectionsRouter = router({
           startedAt: inspections.startedAt,
           submittedAt: inspections.submittedAt,
           completedAt: inspections.completedAt,
+          archivedAt: inspections.archivedAt,
           createdBy: inspections.createdBy,
           updatedAt: inspections.updatedAt,
         })

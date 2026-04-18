@@ -9,3 +9,4 @@ export { appRouter, buildAppRouter, type AppRouter } from './router';
 export { createContextFactory, createTestContext, type Context } from './context';
 export { createCallerFactory } from './trpc';
 export type { ExportsRouterDeps } from './routers/exports';
+export type { InspectionsExportDeps } from './routers/inspectionsExport';

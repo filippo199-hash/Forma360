@@ -8,6 +8,7 @@
  * in PR 28+.
  */
 import { accessRulesRouter } from './routers/accessRules';
+import { adminRouter } from './routers/admin';
 import { customFieldsRouter } from './routers/customFields';
 import { globalResponseSetsRouter } from './routers/globalResponseSets';
 import { groupsRouter } from './routers/groups';
@@ -23,6 +24,10 @@ import { actionsRouter } from './routers/actions';
 import { approvalsRouter } from './routers/approvals';
 import { createExportsRouter, type ExportsRouterDeps } from './routers/exports';
 import { inspectionsRouter } from './routers/inspections';
+import {
+  createInspectionsExportRouter,
+  type InspectionsExportDeps,
+} from './routers/inspectionsExport';
 import { schedulesRouter } from './routers/schedules';
 import { signaturesRouter } from './routers/signatures';
 import { router } from './trpc';
@@ -35,9 +40,13 @@ import { router } from './trpc';
  * that the tRPC layer doesn't own). The web app wires these at boot;
  * tests pass deterministic mocks.
  */
-export function buildAppRouter(deps: { exports: ExportsRouterDeps }) {
+export function buildAppRouter(deps: {
+  exports: ExportsRouterDeps;
+  inspectionsExport: InspectionsExportDeps;
+}) {
   return router({
     health: healthRouter,
+    admin: adminRouter,
     permissions: permissionsRouter,
     users: usersRouter,
     customFields: customFieldsRouter,
@@ -47,6 +56,7 @@ export function buildAppRouter(deps: { exports: ExportsRouterDeps }) {
     templates: templatesRouter,
     globalResponseSets: globalResponseSetsRouter,
     inspections: inspectionsRouter,
+    inspectionsExport: createInspectionsExportRouter(deps.inspectionsExport),
     signatures: signaturesRouter,
     approvals: approvalsRouter,
     actions: actionsRouter,
@@ -76,6 +86,19 @@ const stubExportsDeps: ExportsRouterDeps = {
   },
 };
 
-export const appRouter = buildAppRouter({ exports: stubExportsDeps });
+/**
+ * Default inspections-export deps — test-friendly. The `uploadCsv` stub
+ * captures the body in a module-level map so tests that exercise the
+ * `appRouter` default wiring can still read it back if needed.
+ */
+const stubInspectionsExportDeps: InspectionsExportDeps = {
+  uploadCsv: async ({ key }) => ({ url: `stub://inspections-export/${key}` }),
+  now: () => new Date(),
+};
+
+export const appRouter = buildAppRouter({
+  exports: stubExportsDeps,
+  inspectionsExport: stubInspectionsExportDeps,
+});
 
 export type AppRouter = typeof appRouter;

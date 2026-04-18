@@ -26,6 +26,7 @@ const MIGRATION_FILES = [
   '0004_phase2_templates_inspections.sql',
   '0005_phase2_inspections.sql',
   '0006_phase2_schedules.sql',
+  '0007_inspections_archived_at.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {

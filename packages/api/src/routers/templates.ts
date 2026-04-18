@@ -31,7 +31,12 @@
  * full implementation updates it in PR 28. The registry pattern supports
  * re-registration so this is clean.
  */
-import { templateSchedules, templates, templateVersions } from '@forma360/db/schema';
+import {
+  inspections,
+  templateSchedules,
+  templates,
+  templateVersions,
+} from '@forma360/db/schema';
 import {
   registerDependentResolver,
   type DependentResolver,
@@ -44,7 +49,7 @@ import {
   type TemplateContent,
 } from '@forma360/shared/template-schema';
 import { TRPCError } from '@trpc/server';
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -60,6 +65,29 @@ const templatesResolver: DependentResolver = async (_deps, input) => {
 registerDependentResolver('templates', templatesResolver);
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
+
+/**
+ * Single-row CSV serialiser (RFC 4180: quote every cell, double embedded
+ * quotes, \r\n terminator). Used by `exportAllCsv`.
+ */
+function csvQuoteRow(values: readonly unknown[]): string {
+  return (
+    values
+      .map((v) => {
+        if (v === null || v === undefined) return '""';
+        const str =
+          typeof v === 'string'
+            ? v
+            : typeof v === 'number' || typeof v === 'boolean'
+              ? String(v)
+              : typeof v === 'object'
+                ? JSON.stringify(v)
+                : String(v);
+        return `"${str.replace(/"/g, '""')}"`;
+      })
+      .join(',') + '\r\n'
+  );
+}
 
 /** Build a minimum valid content blob for a new template. */
 function emptyContent(title: string): TemplateContent {
@@ -561,6 +589,113 @@ export const templatesRouter = router({
       }
       if (version === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
       return { content: version.content };
+    }),
+
+  /**
+   * Export every template in the tenant as a CSV. Includes an
+   * `usage_count` column (number of inspections referencing any version
+   * of the template) computed via a left join aggregate so the list is
+   * one query rather than N+1. PR 33.
+   */
+  exportAllCsv: tenantProcedure
+    .use(requirePermission('templates.manage'))
+    .query(async ({ ctx }) => {
+      const rows = await ctx.db
+        .select({
+          id: templates.id,
+          name: templates.name,
+          status: templates.status,
+          currentVersionId: templates.currentVersionId,
+          archivedAt: templates.archivedAt,
+        })
+        .from(templates)
+        .where(eq(templates.tenantId, ctx.tenantId))
+        .orderBy(asc(templates.name));
+
+      // Version-count per template + currentVersionNumber + publishedAt —
+      // pulled from template_versions in one grouped query.
+      const versionAgg = await ctx.db
+        .select({
+          templateId: templateVersions.templateId,
+          versionCount: sql<number>`count(*)::int`,
+        })
+        .from(templateVersions)
+        .where(eq(templateVersions.tenantId, ctx.tenantId))
+        .groupBy(templateVersions.templateId);
+      const versionCountByTemplate = new Map<string, number>();
+      for (const v of versionAgg) versionCountByTemplate.set(v.templateId, v.versionCount);
+
+      // Usage-count per template — one grouped query across inspections.
+      const usageAgg = await ctx.db
+        .select({
+          templateId: inspections.templateId,
+          usageCount: sql<number>`count(*)::int`,
+        })
+        .from(inspections)
+        .where(eq(inspections.tenantId, ctx.tenantId))
+        .groupBy(inspections.templateId);
+      const usageByTemplate = new Map<string, number>();
+      for (const u of usageAgg) usageByTemplate.set(u.templateId, u.usageCount);
+
+      // Current version number + publishedAt — targeted fetch for only
+      // those templates that have one.
+      const currentVersionIds = rows
+        .map((r) => r.currentVersionId)
+        .filter((id): id is string => id !== null);
+      const versionMetaById = new Map<
+        string,
+        { versionNumber: number; publishedAt: Date | null }
+      >();
+      if (currentVersionIds.length > 0) {
+        const versionRows = await ctx.db
+          .select({
+            id: templateVersions.id,
+            versionNumber: templateVersions.versionNumber,
+            publishedAt: templateVersions.publishedAt,
+          })
+          .from(templateVersions)
+          .where(
+            and(
+              eq(templateVersions.tenantId, ctx.tenantId),
+              inArray(templateVersions.id, currentVersionIds),
+            ),
+          );
+        for (const v of versionRows) {
+          versionMetaById.set(v.id, {
+            versionNumber: v.versionNumber,
+            publishedAt: v.publishedAt,
+          });
+        }
+      }
+
+      const header = [
+        'template_id',
+        'name',
+        'status',
+        'version_count',
+        'current_version_number',
+        'published_at',
+        'archived_at',
+        'usage_count',
+      ];
+      const lines: string[] = [csvQuoteRow(header)];
+      for (const r of rows) {
+        const meta = r.currentVersionId !== null ? versionMetaById.get(r.currentVersionId) : undefined;
+        lines.push(
+          csvQuoteRow([
+            r.id,
+            r.name,
+            r.status,
+            versionCountByTemplate.get(r.id) ?? 0,
+            meta?.versionNumber ?? null,
+            meta?.publishedAt?.toISOString() ?? null,
+            r.archivedAt?.toISOString() ?? null,
+            usageByTemplate.get(r.id) ?? 0,
+          ]),
+        );
+      }
+      const csv = lines.join('');
+      return { csv, rowCount: rows.length };
     }),
 
   importJson: tenantProcedure

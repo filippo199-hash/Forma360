@@ -5,10 +5,14 @@
 import { buildAppRouter } from '@forma360/api';
 import { NextResponse } from 'next/server';
 import { exportsDeps } from '../../../../src/server/exports-deps';
+import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { storage } from '../../../../src/server/storage';
 import { createContext } from '../../../../src/server/trpc';
 
-const appRouter = buildAppRouter({ exports: exportsDeps });
+const appRouter = buildAppRouter({
+  exports: exportsDeps,
+  inspectionsExport: inspectionsExportDeps,
+});
 
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);

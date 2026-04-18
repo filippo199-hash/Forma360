@@ -135,6 +135,14 @@ export const inspections = pgTable(
     rejectedAt: timestamp('rejected_at', { withTimezone: true, mode: 'date' }),
     rejectedReason: text('rejected_reason'),
 
+    /**
+     * Soft-archive timestamp (Phase 2 PR 33). Null for live inspections; set
+     * by the bulk archive flow. Archived inspections are hidden from the
+     * default list view but remain in the database for audit history and
+     * exports with `includeArchived: true`.
+     */
+    archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'date' }),
+
     createdBy: text('created_by').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
       .notNull()
@@ -149,6 +157,7 @@ export const inspections = pgTable(
     index('inspections_tenant_version_idx').on(table.tenantId, table.templateVersionId),
     index('inspections_tenant_createdby_idx').on(table.tenantId, table.createdBy),
     index('inspections_tenant_site_idx').on(table.tenantId, table.siteId),
+    index('inspections_tenant_archived_idx').on(table.tenantId, table.archivedAt),
   ],
 );
 
