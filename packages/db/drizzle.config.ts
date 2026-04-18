@@ -27,6 +27,8 @@ export default defineConfig({
     './src/schema/accessRules.ts',
     './src/schema/templates.ts',
     './src/schema/globalResponseSets.ts',
+    './src/schema/inspections.ts',
+    './src/schema/actions.ts',
   ],
   out: './migrations',
   dialect: 'postgresql',
