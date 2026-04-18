@@ -14,34 +14,36 @@ import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { eq } from 'drizzle-orm';
 import { newId } from '@forma360/shared/id';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import * as schema from './schema/index.js';
 import { tenants } from './schema/tenants.js';
+import { user } from './schema/auth.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const MIGRATION_PATH = join(__dirname, '..', 'migrations', '0000_initial.sql');
+const MIGRATIONS_DIR = join(__dirname, '..', 'migrations');
+const MIGRATION_FILES = ['0000_initial.sql', '0001_auth.sql'];
 
 async function bootDb(): Promise<{
-  db: PgliteDatabase<{ tenants: typeof tenants }>;
+  db: PgliteDatabase<typeof schema>;
   client: PGlite;
 }> {
   const client = new PGlite();
-  const db = drizzle(client, { schema: { tenants } });
-  const sqlText = await readFile(MIGRATION_PATH, 'utf-8');
-  // The migration file uses `--> statement-breakpoint` as a separator between
-  // logical statements. For a single-statement migration like 0000_initial it
-  // doesn't matter, but keep the split for future-proofing.
-  const statements = sqlText
-    .split('--> statement-breakpoint')
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-  for (const stmt of statements) {
-    await client.exec(stmt);
+  const db = drizzle(client, { schema });
+  for (const file of MIGRATION_FILES) {
+    const sqlText = await readFile(join(MIGRATIONS_DIR, file), 'utf-8');
+    const statements = sqlText
+      .split('--> statement-breakpoint')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    for (const stmt of statements) {
+      await client.exec(stmt);
+    }
   }
   return { db, client };
 }
 
 describe('tenants table (pglite integration)', () => {
   let client: PGlite;
-  let db: PgliteDatabase<{ tenants: typeof tenants }>;
+  let db: PgliteDatabase<typeof schema>;
 
   beforeEach(async () => {
     ({ client, db } = await bootDb());
@@ -99,5 +101,112 @@ describe('tenants table (pglite integration)', () => {
 
     expect(active[0]?.archivedAt).toBeNull();
     expect(archived[0]?.archivedAt).toBeInstanceOf(Date);
+  });
+});
+
+describe('auth schema (pglite integration)', () => {
+  let client: PGlite;
+  let db: PgliteDatabase<typeof schema>;
+
+  beforeEach(async () => {
+    ({ client, db } = await bootDb());
+  });
+
+  afterEach(async () => {
+    await client.close();
+  });
+
+  it('creates all five auth tables via the 0001 migration', async () => {
+    const result = await client.query<{ table_name: string }>(
+      "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
+    );
+    const tableNames = new Set(result.rows.map((r) => r.table_name));
+    expect(tableNames).toEqual(
+      new Set(['tenants', 'user', 'session', 'account', 'verification', 'two_factor']),
+    );
+  });
+
+  it('installs the user.tenant_id -> tenants.id FK with ON DELETE RESTRICT', async () => {
+    const result = await client.query<{
+      constraint_name: string;
+      delete_rule: string;
+    }>(
+      `SELECT tc.constraint_name, rc.delete_rule
+         FROM information_schema.table_constraints tc
+         JOIN information_schema.referential_constraints rc
+           ON tc.constraint_name = rc.constraint_name
+        WHERE tc.table_name = 'user'
+          AND tc.constraint_type = 'FOREIGN KEY'
+          AND tc.constraint_name LIKE '%tenant%'`,
+    );
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]?.delete_rule).toBe('RESTRICT');
+  });
+
+  it('rejects a user insert referencing a non-existent tenant', async () => {
+    await expect(
+      db.insert(user).values({
+        id: 'usr_nonexistent',
+        name: 'Orphan',
+        email: 'orphan@example.com',
+        tenantId: 'tenant-does-not-exist',
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('round-trips a user row linked to a real tenant', async () => {
+    const tenantId = newId();
+    await db.insert(tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+
+    const userId = 'usr_' + newId().toLowerCase();
+    await db.insert(user).values({
+      id: userId,
+      name: 'Alice',
+      email: 'alice@acme.test',
+      tenantId,
+    });
+
+    const fetched = await db.select().from(user).where(eq(user.id, userId));
+    expect(fetched).toHaveLength(1);
+    expect(fetched[0]?.tenantId).toBe(tenantId);
+    expect(fetched[0]?.emailVerified).toBe(false);
+    expect(fetched[0]?.twoFactorEnabled).toBe(false);
+  });
+
+  it('enforces email uniqueness on user', async () => {
+    const tenantId = newId();
+    await db.insert(tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+
+    await db.insert(user).values({
+      id: 'usr_1',
+      name: 'A',
+      email: 'dup@acme.test',
+      tenantId,
+    });
+    await expect(
+      db.insert(user).values({
+        id: 'usr_2',
+        name: 'B',
+        email: 'dup@acme.test',
+        tenantId,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('refuses to hard-delete a tenant referenced by a user (RESTRICT)', async () => {
+    const tenantId = newId();
+    await db.insert(tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+    await db.insert(user).values({
+      id: 'usr_locked',
+      name: 'Locked',
+      email: 'locked@acme.test',
+      tenantId,
+    });
+
+    await expect(db.delete(tenants).where(eq(tenants.id, tenantId))).rejects.toThrow();
+
+    // The tenant row must still be present — RESTRICT blocks the delete.
+    const survivors = await db.select().from(tenants).where(eq(tenants.id, tenantId));
+    expect(survivors).toHaveLength(1);
   });
 });

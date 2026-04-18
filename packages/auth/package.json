@@ -16,5 +16,13 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@better-auth/redis-storage": "^1.6.5",
+    "@forma360/db": "workspace:^",
+    "@forma360/shared": "workspace:^",
+    "better-auth": "^1.6.5",
+    "drizzle-orm": "^0.45.0",
+    "ioredis": "^5.4.1"
   }
 }
