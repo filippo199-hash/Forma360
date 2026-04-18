@@ -250,6 +250,205 @@ PR.
   every in-progress action follows. Templates lock this in first
   (template version snapshot on inspection start).
 
+## What Phase 2 left in place (so you don't duplicate it)
+
+Phase 2 ships Templates + Inspections end-to-end: the template content
+schema, versioned templates, global response sets, the inspection
+lifecycle (start → save progress → sign → approve → complete), rendered
+output (PDF / Word / public share link), and the scheduling engine that
+materialises recurring inspections. It also lands the `admin`
+cross-module cascade-preview primitive.
+
+- **Template content schema** at `packages/shared/src/template-schema.ts`:
+  `templateContentSchema`, `TEMPLATE_SCHEMA_VERSION` (currently `1`),
+  `TemplateContent`, `parseTemplateContent`. This is the single Zod
+  schema that every template-payload boundary runs through — the
+  builder, `templates.saveDraft`, `templates.publish`, `importJson`,
+  and the conduct reducer. Validates logic nesting ≤ 40 levels (T-E07),
+  rejects duplicate signer-slot user assignments (T-E02), enforces
+  dense `slotIndex` numbering, and preserves custom response-set
+  snapshots (T-E17). See [ADR 0009](./docs/adr/0009-template-content-schema.md).
+- **`templates` + `template_versions` tables** at
+  `packages/db/src/schema/templates.ts`. Immutability contract:
+  **published `template_versions.content` is never UPDATEd**. A "save"
+  to a published template always writes a new draft version; publish
+  flips `isCurrent` in the same tx. The router enforces this — the DB
+  allows UPDATE only so the publish tx can toggle the previous
+  current flag to false.
+- **`templatesRouter`** at `packages/api/src/routers/templates.ts`:
+  `list` / `get` / `getVersion` / `create` / `saveDraft` / `publish` /
+  `duplicate` / `archive` / `exportJson` / `importJson` / `exportAllCsv`.
+  Carries T-E04 (pin on start), T-E05 (archive pauses schedules in the
+  same tx), T-E07 (logic depth), T-E17 (response-set snapshot),
+  T-E18 (optimistic concurrency via `expectedUpdatedAt`).
+- **`global_response_sets` table + `globalResponseSetsRouter`** at
+  `packages/api/src/routers/globalResponseSets.ts`: `list` / `create` /
+  `update` / `archive`. Custom response sets are snapshotted into the
+  template version content on save — T-E17 semantics.
+- **Inspections subgraph tables** at `packages/db/src/schema/inspections.ts`:
+  - `inspections` — the conduct row. Pins `templateVersionId` at
+    start (T-E04) and freezes an `accessSnapshot` (groups, sites,
+    permissions) per [ADR 0007](./docs/adr/0007-access-state-at-time-of-action.md).
+    `documentNumber` is stamped inside the create tx, incrementing a
+    per-template counter atomically. `archivedAt` added in PR 33 for
+    soft-delete (migration 0007).
+  - `inspection_signatures` — one row per filled slot. The unique
+    `(inspection_id, slot_index)` index is the T-E20 race protection;
+    a conflicting insert bubbles up as a tRPC `CONFLICT`.
+  - `inspection_approvals` — append-only log of approve / reject
+    decisions. Terminal status stamped on the parent `inspections`
+    row.
+  - `public_inspection_links` — opaque-token public share links
+    (revocable). Schema landed in PR 28; the runtime is wired by the
+    exports router in PR 31.
+- **Phase 2 routers under `packages/api/src/routers/`**:
+  - `inspections` — `list` / `get` / `create` / `saveProgress` /
+    `submit` / `reject` / `delete`. `create` is the access-snapshot
+    site; `saveProgress` uses `expectedUpdatedAt` optimistic
+    concurrency.
+  - `signatures` — `listSlots` / `sign`. Atomic insert + unique-index
+    lean on the DB for T-E20.
+  - `approvals` — `approve` / `reject`.
+  - `actions` — stub router: `createFromInspectionQuestion` + `list`.
+    Phase 3/4 extends this with issue → action conversion and the
+    richer action type catalogue.
+  - `inspectionsExport` — `exportCsv` / `exportCsvUrl` / `archiveMany`.
+    CSV fan-out with an injected `uploadCsv` dep (R2 in prod, stub in
+    tests).
+  - `exports` — `renderPdf` / `renderDocx` / `createShareLink` /
+    `listShareLinks` / `revokeShareLink`. Built via DI
+    (`createExportsRouter({ renderPdf, renderDocx, generateShareToken,
+    buildShareUrl })`); `buildAppRouter` wires the real implementations
+    in prod.
+  - `admin` — `previewDependents`. The cross-module cascade preview
+    that every destructive admin UI (archive template, anonymise user,
+    delete group, …) calls before confirmation. Runs every registered
+    resolver in parallel via `getDependents`.
+- **`@forma360/render` package** (new in PR 31) at
+  `packages/render/src/`. ADR 0008. Surfaces:
+  - `renderInspectionPdf` — Puppeteer-backed; a stub fallback returns
+    a minimal PDF when Puppeteer is unavailable so tests and the dev
+    loop stay green without Chromium.
+  - `renderInspectionDocx` — pure `docx` npm-package pipeline.
+  - `generateShareToken` / `validateShareToken` / `buildShareUrl` /
+    `revokeShareLinkRow` — opaque tokens backed by
+    `public_inspection_links`. `SHARE_TOKEN_BYTES = 32`.
+  - `signRenderToken` / `verifyRenderToken` — HMAC-signed internal
+    token (`RENDER_SHARED_SECRET`) for the Puppeteer-facing `/render`
+    route. Default TTL `DEFAULT_RENDER_TOKEN_TTL_SECONDS`.
+  - `loadInspectionSnapshot` / `hashInspectionSnapshot` — shared read
+    that every renderer consumes.
+- **Scheduling** (PR 32):
+  - Tables `template_schedules` + `scheduled_inspection_occurrences`
+    at `packages/db/src/schema/schedules.ts`. Unique
+    `(scheduleId, assigneeUserId, occurrenceAt)` is the idempotency
+    key for materialise.
+  - `schedulesRouter` at `packages/api/src/routers/schedules.ts`:
+    `list` / `listForTemplate` / `get` / `create` / `update` /
+    `pause` / `resume` / `delete` / `materialiseNow` / `listUpcoming`.
+    `rrule`-backed (rrulestr, validated router-side).
+  - Three BullMQ queues in `@forma360/jobs/queues`:
+    - `forma360:schedule-tick` — repeatable every ~10 min. Fans
+      out to SCHEDULE_MATERIALISE per due schedule.
+    - `forma360:schedule-materialise` — computes the next 14 days
+      of occurrences and upserts them. Idempotent.
+    - `forma360:schedule-reminder` — sends one reminder email for
+      one occurrence. Stamps `reminderSentAt` to dedupe.
+  - Workers at `packages/jobs/src/workers/schedule-{tick,materialise,reminder}.ts`;
+    rrule helper at `workers/schedule-rrule.ts`.
+- **Archive hook (T-E05)** — `templates.archive` opens a single tx
+  that sets `templates.status='archived'` **and** pauses every
+  `template_schedules` row for that template. In-progress inspections
+  stay completable; no new starts; schedules won't fire.
+- **Dependents resolvers Phase 2 registers**:
+  - `templates` (inspections count) — registered by
+    `routers/templates.ts` with a zero-returning shim, then overwritten
+    by `routers/inspections.ts` with the real inspection count. The
+    root router imports templates **before** the PR 28 modules so this
+    ordering is deterministic.
+  - `inspections` (actions count) — registered by `routers/inspections.ts`.
+  - `notifications` (schedules count, keyed on `entity === 'template'`) —
+    registered by `routers/schedules.ts` so the archive-template cascade
+    preview shows schedule impact.
+- **Migrations** (forward-only):
+  - `0004_phase2_templates_inspections.sql` — templates,
+    template_versions, global_response_sets (+ inspections scaffolding).
+  - `0005_phase2_inspections.sql` — inspection_signatures,
+    inspection_approvals, public_inspection_links.
+  - `0006_phase2_schedules.sql` — template_schedules,
+    scheduled_inspection_occurrences.
+  - `0007_inspections_archived_at.sql` — `inspections.archived_at`
+    for bulk archive.
+- **Web routes** (`apps/web/app`):
+  - `[locale]/templates` (list) + `[locale]/templates/[templateId]`
+    (editor — content, response-sets, logic, settings tabs).
+  - `[locale]/inspections` (list) + `[locale]/inspections/[inspectionId]`
+    (conduct) + `.../status` + `.../signatures/[slotIndex]`.
+  - `[locale]/approvals` + `[locale]/approvals/[inspectionId]`.
+  - `[locale]/schedules` + `.../new` + `.../[scheduleId]` + `.../calendar`.
+  - `render/inspection/[inspectionId]` — unlocalised Puppeteer-facing
+    print route, HMAC-gated.
+  - `s/[token]` — public share route; unlocalised; token-gated.
+  - `api/upload` — inspection attachments (R2 direct upload).
+  - `api/exports/*` — PDF / DOCX download endpoints.
+- **Environment**: `RENDER_SHARED_SECRET` (HMAC for `/render` token) is
+  now required. Added to `packages/shared/src/env.ts`; `.env.example`
+  carries a dummy placeholder. ADR 0008.
+- **Test harness**: the `bootDb` helper in `templates.test.ts` /
+  `inspections.test.ts` / `schedules.test.ts` now runs `MIGRATION_FILES`
+  through `0007_inspections_archived_at.sql`. Add the next migration to
+  that list when Phase 3 lands its first schema change.
+- **Conduct state machine** at `apps/web/src/components/inspections/conduct-state.ts`
+  (+ its test). The reducer is the single source of truth for the
+  mobile/desktop conduct UI — updates, logic-triggered visibility, and
+  required-question validation all run through it.
+- **Template editor reducer** at `apps/web/src/components/templates/editor-state.ts`.
+  Unit-tested; wired to the editor UI.
+
+## Phase 2 → Phase 3 handoff
+
+Phase 3 (Issues + Investigations) depends on the surfaces below. The
+files are stable — do not duplicate, do not refactor without a separate
+PR.
+
+- **`inspectionsRouter`** — Phase 3 reads from it for the "raise an
+  issue from an inspection response" flow. The question-id dedup model
+  (T-E12 / T-E13) is already wired into the actions router; issues
+  will extend the same question-anchor pattern.
+- **`actions` stub router** at `packages/api/src/routers/actions.ts`.
+  Currently exposes `createFromInspectionQuestion` + `list`. Phase 3
+  turns this into the issue → action conversion surface; Phase 4 lands
+  the full action-type catalogue.
+- **`getDependents('inspection', id)`** — counts actions, registered by
+  `routers/inspections.ts` in Phase 2. Phase 3 registers a new
+  `'issues'` resolver (and may register `'issues'` counts against the
+  `inspection` anchor if issues reference inspections directly).
+- **Access rule primitive** (`resolveAccessRule`, `evaluateRules`) —
+  still applies. Issues can reference groups, sites, templates, and
+  custom user fields via the same rule machinery Phase 1 + Phase 2 use.
+- **Dependents registry** — Phase 3 registers the `'issues'` module
+  resolver at its router boot. The Phase 1 → Phase 2 pattern holds:
+  one `registerDependentResolver('issues', resolver)` call at module
+  top-level, executed once when the router is imported.
+- **Permission catalogue** — `issues.*` keys already exist in
+  `packages/permissions/src/catalogue.ts` (unused until Phase 3).
+  Administrator set already holds them. No catalogue change needed.
+- **Scheduling pattern** — the three-queue shape
+  (`*-tick` → `*-materialise` → `*-reminder`) is a reusable template
+  for Phase 3's periodic-investigation reminders. Copy the
+  `packages/jobs/src/workers/schedule-*.ts` triad when you need
+  rrule-driven fan-out.
+- **Render / share-link pattern** — Phase 3's issue public share links
+  reuse `generateShareToken` / `validateShareToken` / `buildShareUrl`
+  from `@forma360/render`. The `public_inspection_links` table is the
+  reference shape for a per-entity share-link table.
+- **Access snapshot model (ADR 0007)** — issues that are "in progress"
+  (e.g. an investigation with a multi-step workflow) should freeze
+  access state at the start event, same as inspections do.
+- **Cascade-preview UI hook** — `admin.previewDependents` is the single
+  endpoint every destructive admin UI calls. Phase 3's issue archive /
+  category delete flows reuse it.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)
@@ -259,6 +458,8 @@ PR.
 - [0005 — Next.js 16 over 15](./docs/adr/0005-nextjs-16-over-15.md)
 - [0006 — Scheduled jobs in BullMQ](./docs/adr/0006-scheduled-jobs-in-bullmq.md)
 - [0007 — Access state at time of action](./docs/adr/0007-access-state-at-time-of-action.md)
+- [0008 — Rendered output strategy](./docs/adr/0008-rendered-output-strategy.md)
+- [0009 — Template content schema](./docs/adr/0009-template-content-schema.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase
