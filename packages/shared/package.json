@@ -11,6 +11,10 @@
     "./env": {
       "types": "./src/env.ts",
       "default": "./src/env.ts"
+    },
+    "./id": {
+      "types": "./src/id.ts",
+      "default": "./src/id.ts"
     }
   },
   "scripts": {
@@ -20,6 +24,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "ulid": "^2.3.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

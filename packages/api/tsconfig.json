@@ -1,15 +1,4 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "composite": true
-  },
-  "include": ["src/**/*"],
-  "references": [
-    { "path": "../shared" },
-    { "path": "../db" },
-    { "path": "../auth" },
-    { "path": "../permissions" }
-  ]
+  "include": ["src/**/*"]
 }

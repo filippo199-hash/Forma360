@@ -1,2 +1,7 @@
-// Drizzle schema barrel — populated in PR 3 (tenants) and PR 4 (auth tables).
-export {};
+/**
+ * Drizzle schema barrel.
+ *
+ * Explicitly re-exports every table so drizzle-kit can discover them when
+ * generating migrations. New tables are added here as they're introduced.
+ */
+export * from './tenants.js';
