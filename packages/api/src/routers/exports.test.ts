@@ -21,6 +21,12 @@ import { createTestContext, type Context } from '../context';
 import { buildAppRouter } from '../router';
 import { createCallerFactory } from '../trpc';
 import type { ExportsRouterDeps } from './exports';
+import type { InspectionsExportDeps } from './inspectionsExport';
+
+const stubInspectionsExportDeps: InspectionsExportDeps = {
+  uploadCsv: async ({ key }) => ({ url: `stub://${key}` }),
+  now: () => new Date('2026-04-01T00:00:00Z'),
+};
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = join(__dirname, '..', '..', '..', 'db', 'migrations');
@@ -31,6 +37,8 @@ const MIGRATION_FILES = [
   '0003_phase1_org_backbone.sql',
   '0004_phase2_templates_inspections.sql',
   '0005_phase2_inspections.sql',
+  '0006_phase2_schedules.sql',
+  '0007_inspections_archived_at.sql',
 ];
 
 async function bootDb() {
@@ -136,7 +144,7 @@ describe('exports router (Phase 2 PR 31)', () => {
   });
 
   function callerForAdmin() {
-    const router = buildAppRouter({ exports: exportsDeps });
+    const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps });
     const factory = createCallerFactory(router);
     return factory(ctxFor(adminUserId));
   }
@@ -230,7 +238,7 @@ describe('exports router (Phase 2 PR 31)', () => {
           throw new Error('should not be called');
         },
       };
-      const router = buildAppRouter({ exports: deps });
+      const router = buildAppRouter({ exports: deps, inspectionsExport: stubInspectionsExportDeps });
       const caller = createCallerFactory(router)(ctxFor(adminUserId));
       await expect(() =>
         caller.exports.renderPdf({ inspectionId: newId() }),
@@ -263,7 +271,7 @@ describe('exports router (Phase 2 PR 31)', () => {
         tenantId,
         permissionSetId: restrictedId,
       });
-      const router = buildAppRouter({ exports: exportsDeps });
+      const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps });
       const caller = createCallerFactory(router)(ctxFor(standardUserId));
       await expect(() =>
         caller.exports.createShareLink({ inspectionId }),
