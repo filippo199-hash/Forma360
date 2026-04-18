@@ -1,7 +1,7 @@
+import { withSentryConfig } from '@sentry/nextjs';
 import createNextIntlPlugin from 'next-intl/plugin';
 import type { NextConfig } from 'next';
 
-// Point next-intl at the request config living in the shared i18n package.
 const withNextIntl = createNextIntlPlugin('../../packages/i18n/src/request.ts');
 
 const nextConfig: NextConfig = {
@@ -38,4 +38,15 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+// Wrap with next-intl first (the i18n plugin has to be the innermost wrap so
+// Sentry can instrument the final handler), then with Sentry.
+export default withSentryConfig(withNextIntl(nextConfig), {
+  // Only upload source maps in CI where SENTRY_AUTH_TOKEN is set.
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+  // Disable telemetry pings from the Sentry build plugin.
+  telemetry: false,
+  // Hide source maps from clients even when uploaded.
+  hideSourceMaps: true,
+  // Automatically tree-shake Sentry's logger code in production.
+  disableLogger: true,
+});

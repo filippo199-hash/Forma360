@@ -6,7 +6,13 @@
  * jobs instead of killing them mid-query.
  */
 import { createLogger } from '@forma360/shared/logger';
+import * as Sentry from '@sentry/node';
+import { initSentry } from './sentry';
 import { startWorker } from './worker';
+
+// Sentry initialises before any handler imports so instrumentation wraps
+// the BullMQ connection and queue state.
+initSentry();
 
 const logger = createLogger({ service: 'worker', level: 'info', nodeEnv: 'production' });
 
@@ -17,9 +23,10 @@ startWorker({ logger })
       shutdown()
         .catch((err: unknown) => {
           logger.error({ err }, '[worker] shutdown error');
+          Sentry.captureException(err);
         })
         .finally(() => {
-          process.exit(0);
+          void Sentry.close(2_000).finally(() => process.exit(0));
         });
     };
     process.on('SIGTERM', () => onSignal('SIGTERM'));
@@ -27,5 +34,6 @@ startWorker({ logger })
   })
   .catch((err: unknown) => {
     logger.error({ err }, '[worker] failed to boot');
+    Sentry.captureException(err);
     process.exitCode = 1;
   });
