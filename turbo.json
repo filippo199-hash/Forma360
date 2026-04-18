@@ -20,7 +20,7 @@
       "outputs": ["*.tsbuildinfo"]
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^typecheck"],
       "outputs": ["coverage/**"]
     },
     "db:generate": {
