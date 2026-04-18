@@ -39,14 +39,21 @@ const nextConfig: NextConfig = {
 };
 
 // Wrap with next-intl first (the i18n plugin has to be the innermost wrap so
-// Sentry can instrument the final handler), then with Sentry.
-export default withSentryConfig(withNextIntl(nextConfig), {
-  // Only upload source maps in CI where SENTRY_AUTH_TOKEN is set.
-  silent: !process.env.SENTRY_AUTH_TOKEN,
-  // Disable telemetry pings from the Sentry build plugin.
-  telemetry: false,
-  // Hide source maps from clients even when uploaded.
-  hideSourceMaps: true,
-  // Automatically tree-shake Sentry's logger code in production.
-  disableLogger: true,
-});
+// Sentry can instrument the final handler), then with Sentry — but only
+// when SENTRY_DSN is configured. Without a DSN, skipping the Sentry wrap
+// avoids pulling @sentry/nextjs's server-side instrumentation into the
+// middleware + RSC bundles, which matters because the current Sentry
+// release (8.x) isn't certified against Next 16 and its edge code path
+// trips on `node:crypto`. Set SENTRY_DSN when you're ready for production
+// error tracking; the wrap re-engages automatically on the next build.
+const withIntl = withNextIntl(nextConfig);
+const finalConfig = process.env.SENTRY_DSN
+  ? withSentryConfig(withIntl, {
+      silent: !process.env.SENTRY_AUTH_TOKEN,
+      telemetry: false,
+      hideSourceMaps: true,
+      disableLogger: true,
+    })
+  : withIntl;
+
+export default finalConfig;

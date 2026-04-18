@@ -33,4 +33,13 @@ export default function middleware(request: NextRequest): NextResponse {
 
 export const config = {
   matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
+  // Run on the Node.js runtime, not the edge runtime. Three reasons:
+  //   1. @sentry/nextjs 8.x wraps middleware and transitively imports
+  //      node:crypto, which blows up the edge runtime.
+  //   2. `next-intl`'s middleware + our request-id logic are modest enough
+  //      that edge cold-start gains don't matter.
+  //   3. Railway is a single-region Node server — there's no CDN edge to
+  //      exploit anyway.
+  // Stable since Next 15.3; see https://nextjs.org/docs/app/api-reference/file-conventions/middleware#runtime
+  runtime: 'nodejs',
 };
