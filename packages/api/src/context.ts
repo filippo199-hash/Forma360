@@ -3,14 +3,13 @@
  *
  * Built per-request by the route handler in apps/web. The context carries
  * everything a procedure might need that isn't part of its input: the db
- * client, logger, request id, and (optionally) the authenticated user plus
- * the tenant they belong to.
+ * client, logger, request id, (optionally) the authenticated user plus
+ * the tenant they belong to, and an `enqueue` function for queueing
+ * async work without reaching into the BullMQ connection directly.
  *
  * Construction is factored as `createContextFactory(staticDeps) → (perRequest) → Context`.
- * The static deps (db, logger, auth) are built once at boot; the per-request
- * inputs (headers, resHeaders) are passed on each request. This keeps the
- * heavy setup out of the hot path and lets tests construct contexts without
- * a Request object.
+ * The static deps (db, logger, auth, enqueue) are built once at boot; the
+ * per-request inputs (headers, resHeaders) are passed on each request.
  */
 import type { Auth } from '@forma360/auth/server';
 import type { Database } from '@forma360/db/client';
@@ -27,18 +26,29 @@ export interface AuthedCtx {
   tenantId: Id;
 }
 
+/**
+ * Fire-and-forget enqueue used by mutations that trigger async work
+ * (reconcile jobs, anonymisation fan-out). Callers do not await the
+ * underlying BullMQ round-trip — we just log any enqueue error. The web
+ * app wires this to `@forma360/jobs/enqueue`; tests pass a noop.
+ */
+export type Enqueue = (name: string, payload: unknown) => void;
+
 export interface Context {
   db: Database;
   logger: Logger;
   requestId: Id;
   /** Null for public procedures; populated for authed ones. */
   auth: AuthedCtx | null;
+  /** Enqueue helper for async work. Noop when not wired. */
+  enqueue: Enqueue;
 }
 
 export interface ContextStaticDeps {
   db: Database;
   auth: Auth;
   logger: Logger;
+  enqueue?: Enqueue;
 }
 
 export interface ContextPerRequest {
@@ -48,11 +58,14 @@ export interface ContextPerRequest {
   requestId?: Id;
 }
 
+const noopEnqueue: Enqueue = () => undefined;
+
 /**
  * Build a per-request context factory from static deps. Call once at app
  * boot; pass the returned function to the tRPC fetch adapter.
  */
 export function createContextFactory(deps: ContextStaticDeps) {
+  const enqueue = deps.enqueue ?? noopEnqueue;
   return async function createContext(input: ContextPerRequest): Promise<Context> {
     const requestId = input.requestId ?? newId();
     const requestLogger = deps.logger.child({ request_id: requestId });
@@ -64,7 +77,6 @@ export function createContextFactory(deps: ContextStaticDeps) {
         ? {
             userId: session.user.id,
             email: session.user.email,
-            // better-auth returns our custom tenantId field via the Drizzle adapter.
             tenantId: session.user.tenantId as Id,
           }
         : null;
@@ -74,6 +86,7 @@ export function createContextFactory(deps: ContextStaticDeps) {
       logger: requestLogger,
       requestId,
       auth,
+      enqueue,
     };
   };
 }
@@ -88,6 +101,7 @@ export function createTestContext(
   return {
     requestId: overrides.requestId ?? newId(),
     auth: overrides.auth ?? null,
+    enqueue: overrides.enqueue ?? noopEnqueue,
     ...overrides,
   };
 }
