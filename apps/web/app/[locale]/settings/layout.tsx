@@ -50,10 +50,10 @@ function SettingsNav({ locale, isAdmin }: { locale: string; isAdmin: boolean }) 
     { key: 'groups', href: `/${locale}/settings/groups` },
     { key: 'sites', href: `/${locale}/settings/sites` },
     { key: 'customFields', href: `/${locale}/settings/custom-fields` },
+    { key: 'templates', href: `/${locale}/templates` },
   ] as const;
 
   const placeholderSections = [
-    { key: 'templates', phase: 2 },
     { key: 'issues', phase: 3 },
     { key: 'actions', phase: 4 },
     { key: 'headsUp', phase: 5 },
