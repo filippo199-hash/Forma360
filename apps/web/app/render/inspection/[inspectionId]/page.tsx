@@ -16,6 +16,7 @@ import { notFound } from 'next/navigation';
 import { PrintLayout } from '../../../../src/components/print-layout';
 import { env } from '../../../../src/server/env';
 import { db } from '../../../../src/server/db';
+import { fetchLogoUrl } from '../../../../src/server/storage';
 
 interface Props {
   params: Promise<{ inspectionId: string }>;
@@ -57,5 +58,10 @@ export default async function RenderInspectionPage({ params, searchParams }: Pro
   });
   if (snapshot === null) notFound();
 
-  return <PrintLayout snapshot={snapshot} />;
+  const brandingKey = (
+    snapshot.template.content as { settings?: { branding?: { logoStorageKey?: string } } } | undefined
+  )?.settings?.branding?.logoStorageKey;
+  const logoUrl = await fetchLogoUrl(brandingKey);
+
+  return <PrintLayout snapshot={snapshot} logoUrl={logoUrl} />;
 }

@@ -29,3 +29,22 @@ export const storage: Storage = new Proxy({} as Storage, {
     return s[prop];
   },
 });
+
+/**
+ * Resolve a template branding logo storage key into a fetchable URL.
+ * Returns `null` when the key is empty or the signed URL fails. In
+ * development, where R2 isn't available, we point the caller at the
+ * dev-only `GET /api/upload/template-logo/signed-url` handler which
+ * streams the file out of `.local-storage/<key>`.
+ */
+export async function fetchLogoUrl(key: string | undefined): Promise<string | null> {
+  if (key === undefined || key === '') return null;
+  if (env.NODE_ENV !== 'production') {
+    return `/api/upload/template-logo/signed-url?key=${encodeURIComponent(key)}`;
+  }
+  try {
+    return await getStorage().getSignedDownloadUrl({ key });
+  } catch {
+    return null;
+  }
+}

@@ -33,10 +33,27 @@ interface TemplateContentLike {
       }>;
     }>;
   }>;
+  settings?: {
+    branding?: {
+      logoStorageKey?: string;
+      primaryColor?: string;
+      accentColor?: string;
+    };
+  };
 }
 
-export function PrintLayout({ snapshot }: { snapshot: InspectionRenderSnapshot }) {
+export function PrintLayout({
+  snapshot,
+  logoUrl = null,
+}: {
+  snapshot: InspectionRenderSnapshot;
+  /** Pre-resolved signed URL for `settings.branding.logoStorageKey`. Caller is responsible for fetching this. */
+  logoUrl?: string | null;
+}) {
   const content = snapshot.template.content as TemplateContentLike | undefined;
+  const branding = content?.settings?.branding;
+  const primary = branding?.primaryColor;
+  const accent = branding?.accentColor;
   return (
     <>
       {/*
@@ -54,8 +71,12 @@ export function PrintLayout({ snapshot }: { snapshot: InspectionRenderSnapshot }
             .print-body h3 { font-size: 12pt; margin: 0.4cm 0 0.1cm 0; }
             .print-body .print-meta { margin-bottom: 0.4cm; }
             .print-body .print-meta div { margin: 0.1cm 0; }
+            .print-body .print-cover { display: flex; align-items: center; gap: 0.4cm; padding: 0.3cm 0.5cm; margin: 0 0 0.4cm 0; color: #fff; border-radius: 0.15cm; }
+            .print-body .print-cover img { height: 1.4cm; width: auto; object-fit: contain; background: rgba(255,255,255,0.15); padding: 0.1cm; border-radius: 0.1cm; }
+            .print-body .print-cover h1 { color: #fff; margin: 0; }
             .print-body .print-section { page-break-before: always; }
             .print-body .print-section:first-of-type { page-break-before: auto; }
+            .print-body .print-section h2 { border-bottom: 2px solid #ccc; padding-bottom: 0.1cm; }
             .print-body .print-response { margin: 0.2cm 0 0.3cm 0; }
             .print-body .print-response .prompt { font-weight: 600; }
             .print-body .print-response .answer { margin-top: 0.1cm; white-space: pre-wrap; }
@@ -66,7 +87,17 @@ export function PrintLayout({ snapshot }: { snapshot: InspectionRenderSnapshot }
         }}
       />
       <div className="print-body">
-        <h1>{snapshot.inspection.title}</h1>
+        {primary !== undefined || logoUrl !== null ? (
+          <div
+            className="print-cover"
+            style={primary !== undefined ? { backgroundColor: primary } : undefined}
+          >
+            {logoUrl !== null ? <img src={logoUrl} alt="logo" /> : null}
+            <h1>{snapshot.inspection.title}</h1>
+          </div>
+        ) : (
+          <h1>{snapshot.inspection.title}</h1>
+        )}
         <div className="print-meta">
           {snapshot.inspection.documentNumber !== null ? (
             <div>Document: {snapshot.inspection.documentNumber}</div>
@@ -82,7 +113,9 @@ export function PrintLayout({ snapshot }: { snapshot: InspectionRenderSnapshot }
           if (page.type === 'title') return null;
           return (
             <section key={page.id ?? i} className="print-section">
-              <h2>{page.title}</h2>
+              <h2 style={accent !== undefined ? { borderBottomColor: accent } : undefined}>
+                {page.title}
+              </h2>
               {(page.sections ?? []).map((section, si) => (
                 <div key={section.id ?? si}>
                   <h3>{section.title}</h3>
