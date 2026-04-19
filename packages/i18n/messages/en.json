@@ -285,7 +285,11 @@
       "pagesTab": {
         "addPageButton": "Add inspection page",
         "pageTitleLabel": "Page title",
-        "pageDescriptionLabel": "Page description"
+        "pageDescriptionLabel": "Page description",
+        "dragHandleLabel": "Reorder page",
+        "cannotDeleteTitle": "Title page is required",
+        "cannotDeleteLastInspection": "At least one inspection page is required",
+        "titlePageRequiredBadge": "Required"
       },
       "settingsTab": {
         "templateTitleLabel": "Template title",
@@ -296,7 +300,37 @@
         "documentNumberFormatHelp": "Tokens: {counter:N} — zero-padded sequential counter.",
         "documentNumberStartLabel": "Document number start",
         "accessRuleLabel": "Access rule (future)",
-        "accessRuleHelp": "Access rule picking will land in a later PR."
+        "accessRuleHelp": "Access rule picking will land in a later PR.",
+        "branding": {
+          "title": "Branding",
+          "uploadLogo": "Upload logo",
+          "removeLogo": "Remove logo",
+          "primaryColor": "Primary color",
+          "accentColor": "Accent color",
+          "preview": "Preview",
+          "uploadError": "Could not upload the logo. Check the file type and size and try again."
+        }
+      },
+      "visibilityControl": {
+        "toggle": "Show only when…",
+        "targetLabel": "Target question",
+        "operatorLabel": "Operator",
+        "valueLabel": "Value",
+        "operators": {
+          "answered": "is answered",
+          "notAnswered": "is not answered",
+          "equals": "equals",
+          "notEquals": "does not equal",
+          "containsAny": "contains any",
+          "containsNone": "contains none",
+          "gt": "greater than",
+          "lt": "less than",
+          "gte": "greater than or equal",
+          "lte": "less than or equal"
+        },
+        "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
+        "depthBlock": "Logic depth {depth}/{max} — cannot publish until depth is reduced.",
+        "noPriorItems": "Add an earlier question before gating this one."
       },
       "questionType": {
         "text": "Text",

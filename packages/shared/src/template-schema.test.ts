@@ -689,3 +689,38 @@ describe('maxLogicDepth', () => {
     expect(maxLogicDepth(minimalContent())).toBe(0);
   });
 });
+
+// ─── Branding (PR 35) ──────────────────────────────────────────────────────
+
+describe('templateContentSchema — branding', () => {
+  it('parses without any branding field', () => {
+    const content = minimalContent();
+    expect('branding' in content.settings).toBe(false);
+    expect(templateContentSchema.safeParse(content).success).toBe(true);
+  });
+
+  it('accepts valid hex colors and a storage key', () => {
+    const content = minimalContent();
+    content.settings.branding = {
+      logoStorageKey: '01ARZ3NDEKTSV4RRFFQ69G5FAV/templates/01ARZ3NDEKTSV4RRFFQ69G5FAV/logo.png',
+      primaryColor: '#0F766E',
+      accentColor: '#abcdef',
+    };
+    expect(templateContentSchema.safeParse(content).success).toBe(true);
+  });
+
+  it('rejects invalid hex colors', () => {
+    for (const bad of ['red', '#FFF', '#GGGGGG', '0F766E', '#0F766', '#0F766E0']) {
+      const content = minimalContent();
+      content.settings.branding = { primaryColor: bad };
+      const result = templateContentSchema.safeParse(content);
+      expect(result.success, `expected invalid: ${bad}`).toBe(false);
+    }
+  });
+
+  it('accepts branding with only one color set', () => {
+    const content = minimalContent();
+    content.settings.branding = { primaryColor: '#123456' };
+    expect(templateContentSchema.safeParse(content).success).toBe(true);
+  });
+});

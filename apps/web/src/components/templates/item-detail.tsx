@@ -1,7 +1,9 @@
 'use client';
 
 import type { Item } from '@forma360/shared/template-schema';
+import { maxLogicDepth, TEMPLATE_LIMITS } from '@forma360/shared/template-schema';
 import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -15,6 +17,7 @@ import {
   SelectValue,
 } from '../ui/select';
 import { useEditor } from './editor-context';
+import { VisibilityControl } from './visibility-control';
 
 /**
  * Right-side detail panel. Renders type-specific editors for whatever
@@ -43,6 +46,63 @@ export function ItemDetail() {
       <h3 className="text-sm font-semibold">{t('detail.title')}</h3>
       <CommonFields item={item} />
       <TypeSpecificFields item={item} />
+      <VisibilitySection item={item} />
+    </div>
+  );
+}
+
+/**
+ * Walks pages → sections → items and collects every item strictly before
+ * `targetId`. Returns [] if `targetId` is never encountered.
+ */
+function itemsBefore(pages: ReturnType<typeof useEditor>['state']['content']['pages'], targetId: string): Item[] {
+  const acc: Item[] = [];
+  for (const p of pages) {
+    for (const s of p.sections) {
+      for (const i of s.items) {
+        if (i.id === targetId) return acc;
+        acc.push(i);
+      }
+    }
+  }
+  return acc;
+}
+
+function VisibilitySection({ item }: { item: Item }) {
+  const t = useTranslations('templates.editor.visibilityControl');
+  const { state } = useEditor();
+
+  // Instructions don't carry a visibility field — bail out.
+  if (item.type === 'instruction') return null;
+  // The non-question stubs (site/location/asset/company/annotation) render
+  // a coming-soon notice already; skip visibility there too.
+  if (
+    item.type === 'site' ||
+    item.type === 'location' ||
+    item.type === 'asset' ||
+    item.type === 'company' ||
+    item.type === 'annotation' ||
+    item.type === 'table'
+  ) {
+    return null;
+  }
+
+  const prior = useMemo(() => itemsBefore(state.content.pages, item.id), [state.content.pages, item.id]);
+  const depth = useMemo(() => maxLogicDepth(state.content), [state.content]);
+  const max = TEMPLATE_LIMITS.MAX_LOGIC_NESTING_DEPTH;
+
+  return (
+    <div className="space-y-2">
+      <VisibilityControl item={item} allItemsBefore={prior} />
+      {depth >= max ? (
+        <p className="rounded-md border border-red-400 bg-red-50 p-2 text-xs text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100">
+          {t('depthBlock').replace('{depth}', String(depth)).replace('{max}', String(max))}
+        </p>
+      ) : depth >= max - 5 ? (
+        <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          {t('depthWarning').replace('{depth}', String(depth)).replace('{max}', String(max))}
+        </p>
+      ) : null}
     </div>
   );
 }

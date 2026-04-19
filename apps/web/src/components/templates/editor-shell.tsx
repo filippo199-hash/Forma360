@@ -133,7 +133,7 @@ export function EditorShell({ templateId }: { templateId: string }) {
           <LogicTab />
         </TabsContent>
         <TabsContent value="settings">
-          <SettingsTab />
+          <SettingsTab templateId={templateId} />
         </TabsContent>
       </Tabs>
 

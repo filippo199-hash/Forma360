@@ -13,6 +13,7 @@ import { validateShareToken, loadInspectionSnapshot } from '@forma360/render';
 import { notFound } from 'next/navigation';
 import { PrintLayout } from '../../../src/components/print-layout';
 import { db } from '../../../src/server/db';
+import { fetchLogoUrl } from '../../../src/server/storage';
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -29,9 +30,14 @@ export default async function SharedInspectionPage({ params }: Props) {
   });
   if (snapshot === null) notFound();
 
+  const brandingKey = (
+    snapshot.template.content as { settings?: { branding?: { logoStorageKey?: string } } } | undefined
+  )?.settings?.branding?.logoStorageKey;
+  const logoUrl = await fetchLogoUrl(brandingKey);
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <PrintLayout snapshot={snapshot} />
+      <PrintLayout snapshot={snapshot} logoUrl={logoUrl} />
     </div>
   );
 }
