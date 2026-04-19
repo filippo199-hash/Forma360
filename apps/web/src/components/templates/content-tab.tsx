@@ -79,33 +79,47 @@ function PagesRail() {
   const t = useTranslations('templates.editor');
   const { state, dispatch } = useEditor();
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (over === null || active.id === over.id) return;
+    const pages = state.content.pages;
+    const from = pages.findIndex((p) => p.id === active.id);
+    const to = pages.findIndex((p) => p.id === over.id);
+    if (from < 0 || to < 0) return;
+    dispatch({ type: 'reorderPages', fromIndex: from, toIndex: to });
+  }
+
+  // Title page is fixed — omit from the sortable set so dnd-kit never
+  // lets it leave index 0.
+  const sortableIds = state.content.pages.filter((p) => p.type !== 'title').map((p) => p.id);
+
   return (
     <aside className="space-y-2">
       <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {t('pages')}
       </h3>
-      <nav className="space-y-1" aria-label={t('pages')}>
-        {state.content.pages.map((p) => {
-          const isActive = state.selectedPageId === p.id;
-          const badge =
-            p.type === 'title' ? t('titlePageBadge') : t('inspectionPageBadge');
-          return (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => dispatch({ type: 'selectPage', pageId: p.id })}
-              className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-                isActive
-                  ? 'bg-accent text-accent-foreground'
-                  : 'hover:bg-accent/60'
-              }`}
-            >
-              <div className="truncate font-medium">{p.title}</div>
-              <div className="truncate text-xs text-muted-foreground">{badge}</div>
-            </button>
-          );
-        })}
-      </nav>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <nav className="space-y-1" aria-label={t('pages')}>
+          {state.content.pages.map((p) =>
+            p.type === 'title' ? (
+              <TitlePageRow key={p.id} page={p} />
+            ) : (
+              <SortableContext
+                key={p.id}
+                items={sortableIds}
+                strategy={verticalListSortingStrategy}
+              >
+                <SortablePageRow page={p} />
+              </SortableContext>
+            ),
+          )}
+        </nav>
+      </DndContext>
       <Button
         variant="outline"
         size="sm"
@@ -119,9 +133,85 @@ function PagesRail() {
   );
 }
 
+function TitlePageRow({ page }: { page: Page }) {
+  const t = useTranslations('templates.editor');
+  const { state, dispatch } = useEditor();
+  const isActive = state.selectedPageId === page.id;
+  return (
+    <button
+      type="button"
+      onClick={() => dispatch({ type: 'selectPage', pageId: page.id })}
+      className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+        isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60'
+      }`}
+    >
+      <div className="truncate font-medium">{page.title}</div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-xs text-muted-foreground">{t('titlePageBadge')}</span>
+        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+          {t('pagesTab.titlePageRequiredBadge')}
+        </span>
+      </div>
+    </button>
+  );
+}
+
+function SortablePageRow({ page }: { page: Page }) {
+  const t = useTranslations('templates.editor');
+  const { state, dispatch } = useEditor();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: page.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const isActive = state.selectedPageId === page.id;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors ${
+        isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60'
+      }`}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="cursor-grab select-none px-1 text-muted-foreground"
+        aria-label={t('pagesTab.dragHandleLabel')}
+      >
+        ⋮⋮
+      </button>
+      <button
+        type="button"
+        onClick={() => dispatch({ type: 'selectPage', pageId: page.id })}
+        className="flex-1 rounded-md px-1 py-1 text-left text-sm"
+      >
+        <div className="truncate font-medium">{page.title}</div>
+        <div className="truncate text-xs text-muted-foreground">
+          {t('inspectionPageBadge')}
+        </div>
+      </button>
+    </div>
+  );
+}
+
 function PageEditor({ page }: { page: Page }) {
   const t = useTranslations('templates.editor');
-  const { dispatch } = useEditor();
+  const { state, dispatch } = useEditor();
+
+  const inspectionPageCount = state.content.pages.filter((p) => p.type === 'inspection').length;
+  const isLastInspection = page.type === 'inspection' && inspectionPageCount <= 1;
+  const deleteDisabled = page.type === 'title' || isLastInspection;
+  const deleteTooltip = (() => {
+    if (page.type === 'title') return t('pagesTab.cannotDeleteTitle');
+    if (isLastInspection) return t('pagesTab.cannotDeleteLastInspection');
+    return null;
+  })();
 
   return (
     <div className="space-y-3">
@@ -153,20 +243,21 @@ function PageEditor({ page }: { page: Page }) {
           className="w-full resize-none bg-transparent text-sm text-muted-foreground outline-none"
           aria-label={t('pagesTab.pageDescriptionLabel')}
         />
-        {page.type !== 'title' ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (window.confirm(t('confirmDeletePage'))) {
-                dispatch({ type: 'deletePage', pageId: page.id });
-              }
-            }}
-            aria-label={t('deleteSection')}
-          >
-            {t('deleteSection')}
-          </Button>
-        ) : null}
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={deleteDisabled}
+          title={deleteTooltip ?? undefined}
+          onClick={() => {
+            if (deleteDisabled) return;
+            if (window.confirm(t('confirmDeletePage'))) {
+              dispatch({ type: 'deletePage', pageId: page.id });
+            }
+          }}
+          aria-label={t('deleteSection')}
+        >
+          {t('deleteSection')}
+        </Button>
       </div>
 
       {page.sections.map((section, idx) => (

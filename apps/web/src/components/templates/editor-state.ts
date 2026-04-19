@@ -52,6 +52,7 @@ export type EditorAction =
   | { type: 'updateSettings'; patch: Partial<TemplateSettings> }
   | { type: 'addInspectionPage' }
   | { type: 'deletePage'; pageId: string }
+  | { type: 'reorderPages'; fromIndex: number; toIndex: number }
   | { type: 'updatePage'; pageId: string; patch: Partial<Pick<Page, 'title' | 'description'>> }
   | { type: 'addSection'; pageId: string }
   | { type: 'deleteSection'; pageId: string; sectionId: string }
@@ -197,6 +198,12 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'deletePage': {
       const target = state.content.pages.find((p) => p.id === action.pageId);
       if (target === undefined || target.type === 'title') return state;
+      // Refuse to delete the last remaining inspection page — the root
+      // schema requires at least one non-title page for a useful template.
+      const inspectionPages = state.content.pages.filter((p) => p.type === 'inspection');
+      if (target.type === 'inspection' && inspectionPages.length <= 1) {
+        return state;
+      }
       const remaining = state.content.pages.filter((p) => p.id !== action.pageId);
       const nextSelected = remaining[0]?.id ?? state.selectedPageId;
       return {
@@ -205,6 +212,28 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         selectedPageId: nextSelected,
         selectedItemId: null,
         content: { ...state.content, pages: remaining },
+      };
+    }
+    case 'reorderPages': {
+      // Title page is fixed at index 0 — refuse any swap that involves it.
+      if (action.fromIndex === 0 || action.toIndex === 0) return state;
+      const pages = state.content.pages;
+      if (
+        action.fromIndex < 0 ||
+        action.toIndex < 0 ||
+        action.fromIndex >= pages.length ||
+        action.toIndex >= pages.length
+      ) {
+        return state;
+      }
+      const next = [...pages];
+      const [moved] = next.splice(action.fromIndex, 1);
+      if (moved === undefined) return state;
+      next.splice(action.toIndex, 0, moved);
+      return {
+        ...state,
+        isDirty: true,
+        content: { ...state.content, pages: next },
       };
     }
     case 'updatePage':
