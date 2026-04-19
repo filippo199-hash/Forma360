@@ -29,6 +29,11 @@ const ulid = z.string().length(26);
 const markdown = z.string().max(50_000);
 const nonEmptyString = z.string().min(1).max(500);
 
+/** Hex color validator for branding fields (6-digit form, e.g. "#0F766E"). */
+const hexColor = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a 6-digit hex color like #0F766E');
+
 // ─── Response sets (snapshotted into each template version) ────────────────
 
 /**
@@ -364,11 +369,25 @@ const approvalPageSchema = z.object({
 });
 export type ApprovalPage = z.infer<typeof approvalPageSchema>;
 
+/**
+ * Per-template branding. Optional — templates without branding fall back
+ * to tenant defaults in rendered output. `logoStorageKey` is an R2 key
+ * under `<tenantId>/templates/<templateId>/<filename>`; resolved to a
+ * signed URL at render time.
+ */
+const brandingSchema = z.object({
+  logoStorageKey: z.string().max(500).optional(),
+  primaryColor: hexColor.optional(),
+  accentColor: hexColor.optional(),
+});
+export type TemplateBranding = z.infer<typeof brandingSchema>;
+
 const settingsSchema = z.object({
   titleFormat: z.string().max(TEMPLATE_LIMITS.MAX_TITLE_FORMAT_LENGTH).default('{date}'),
   documentNumberFormat: z.string().max(120).default('{counter:6}'),
   documentNumberStart: z.number().int().min(1).default(1),
   approvalPage: approvalPageSchema.optional(),
+  branding: brandingSchema.optional(),
 });
 export type TemplateSettings = z.infer<typeof settingsSchema>;
 
