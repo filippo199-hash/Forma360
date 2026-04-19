@@ -140,6 +140,100 @@ describe('editorReducer', () => {
     expect(next.content.pages).toHaveLength(2);
   });
 
+  it('deletePage refuses to delete the last inspection page', () => {
+    const s = initialState();
+    const next = editorReducer(s, {
+      type: 'deletePage',
+      pageId: 'cccccccccccccccccccccccccc',
+    });
+    // Unchanged — cannot leave a template with only a title page.
+    expect(next.content.pages).toHaveLength(2);
+    expect(next.isDirty).toBe(false);
+  });
+
+  it('deletePage succeeds when at least one inspection page remains', () => {
+    const s = initialState();
+    const withExtra = editorReducer(s, { type: 'addInspectionPage' });
+    expect(withExtra.content.pages).toHaveLength(3);
+    const deleted = editorReducer(withExtra, {
+      type: 'deletePage',
+      pageId: 'cccccccccccccccccccccccccc',
+    });
+    expect(deleted.content.pages).toHaveLength(2);
+    expect(deleted.content.pages.find((p) => p.id === 'cccccccccccccccccccccccccc')).toBeUndefined();
+    expect(deleted.isDirty).toBe(true);
+  });
+
+  it('reorderPages swaps two inspection pages', () => {
+    const s = initialState();
+    const a = editorReducer(s, { type: 'addInspectionPage' });
+    const secondId = a.content.pages[2]?.id ?? '';
+    const swapped = editorReducer(a, {
+      type: 'reorderPages',
+      fromIndex: 1,
+      toIndex: 2,
+    });
+    expect(swapped.content.pages.map((p) => p.id)).toEqual([
+      'aaaaaaaaaaaaaaaaaaaaaaaaaa',
+      secondId,
+      'cccccccccccccccccccccccccc',
+    ]);
+    expect(swapped.isDirty).toBe(true);
+  });
+
+  it('reorderPages refuses fromIndex=0 (title page stays first)', () => {
+    const s = initialState();
+    const a = editorReducer(s, { type: 'addInspectionPage' });
+    const before = a.content.pages.map((p) => p.id);
+    const next = editorReducer(a, { type: 'reorderPages', fromIndex: 0, toIndex: 1 });
+    expect(next.content.pages.map((p) => p.id)).toEqual(before);
+  });
+
+  it('reorderPages refuses toIndex=0 (cannot displace the title page)', () => {
+    const s = initialState();
+    const a = editorReducer(s, { type: 'addInspectionPage' });
+    const before = a.content.pages.map((p) => p.id);
+    const next = editorReducer(a, { type: 'reorderPages', fromIndex: 2, toIndex: 0 });
+    expect(next.content.pages.map((p) => p.id)).toEqual(before);
+  });
+
+  it('updateItem with visibility undefined clears the gate', () => {
+    const s = initialState();
+    const dep = makeItem('checkbox');
+    const dependent = makeItem('text');
+    let next = editorReducer(s, {
+      type: 'addItem',
+      pageId: 'cccccccccccccccccccccccccc',
+      sectionId: 'dddddddddddddddddddddddddd',
+      item: dep,
+    });
+    next = editorReducer(next, {
+      type: 'addItem',
+      pageId: 'cccccccccccccccccccccccccc',
+      sectionId: 'dddddddddddddddddddddddddd',
+      item: dependent,
+    });
+    const withVis = editorReducer(next, {
+      type: 'updateItem',
+      itemId: dependent.id,
+      patch: { visibility: { dependsOn: dep.id, operator: 'equals', value: true } },
+    });
+    const after = withVis.content.pages[1]?.sections[0]?.items[1];
+    expect(after && 'visibility' in after ? after.visibility : null).toEqual({
+      dependsOn: dep.id,
+      operator: 'equals',
+      value: true,
+    });
+    const cleared = editorReducer(withVis, {
+      type: 'updateItem',
+      itemId: dependent.id,
+      patch: { visibility: undefined },
+    });
+    const finalItem = cleared.content.pages[1]?.sections[0]?.items[1];
+    // `undefined` on the patch removes the field via spread
+    expect(finalItem && 'visibility' in finalItem ? finalItem.visibility : undefined).toBeUndefined();
+  });
+
   it('addResponseSet → addResponseOption → deleteResponseOption', () => {
     const s = initialState();
     const set = {
