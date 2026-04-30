@@ -171,7 +171,7 @@ export function EditorShell({ templateId }: { templateId: string }) {
 
       {/* ─── Content area ────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
-        {activeTab === 'build' && <ContentTab />}
+        {activeTab === 'build' && <ContentTab templateId={templateId} />}
         {activeTab === 'responseSets' && <ResponseSetsTab />}
         {activeTab === 'logic' && <LogicTab />}
         {activeTab === 'settings' && <SettingsTab templateId={templateId} />}

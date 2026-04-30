@@ -422,7 +422,9 @@
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
         "depthBlock": "Logic depth {depth}/{max} — cannot publish until depth is reduced.",
         "noPriorItems": "Add an earlier question before gating this one."
-      }
+      },
+      "clickToUploadLogo": "Click to upload logo",
+      "uploadingLogo": "Uploading…"
     },
     "export": {
       "button": "Export CSV",

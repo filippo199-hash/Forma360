@@ -474,7 +474,9 @@
         "title": "Validation errors",
         "fixBeforePublish": "Fix these issues before publishing.",
         "genericError": "Template content is invalid."
-      }
+      },
+      "clickToUploadLogo": "Click to upload logo",
+      "uploadingLogo": "Uploading…"
     },
     "export": {
       "button": "Export CSV",

@@ -10,6 +10,7 @@
  *   - Each page renders collapsible SectionBlocks.
  *   - Each section renders a 2-column question table with inline expansion.
  *   - TypeOfResponsePicker opens as a popover with two columns.
+ *   - Inspection pages are drag-reorderable; title page is pinned.
  */
 
 import type { CustomResponseSet, Item, Page, Section } from '@forma360/shared/template-schema';
@@ -54,7 +55,7 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useEditor } from './editor-context';
@@ -91,11 +92,30 @@ const OTHER_TYPES: ReadonlyArray<{
  * Single-column canvas — no sidebar, no right panel.
  * Returned as a flex-1 div so it fits into the editor shell's flex container.
  */
-export function ContentTab() {
-  const { state } = useEditor();
+export function ContentTab({ templateId }: { templateId: string }) {
+  const { state, dispatch } = useEditor();
 
   // Identify the "selected" page for the floating toolbar's quick-add.
   const selectedPageId = state.selectedPageId;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const sortablePageIds = state.content.pages
+    .filter((p) => p.type !== 'title')
+    .map((p) => p.id);
+
+  function onPageDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (over === null || active.id === over.id) return;
+    const pages = state.content.pages;
+    const from = pages.findIndex((p) => p.id === active.id);
+    const to = pages.findIndex((p) => p.id === over.id);
+    if (from < 0 || to < 0) return;
+    dispatch({ type: 'reorderPages', fromIndex: from, toIndex: to });
+  }
 
   return (
     <div className="relative flex-1 overflow-y-auto bg-muted/30">
@@ -103,16 +123,62 @@ export function ContentTab() {
       <FloatingToolbar selectedPageId={selectedPageId} />
 
       {/* Canvas */}
-      <div className="mx-auto max-w-3xl space-y-4 px-4 py-8">
-        <TemplateHeaderCard />
+      <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+        <TemplateHeaderCard templateId={templateId} />
 
-        {state.content.pages.map((page) => (
-          <PageBlock key={page.id} page={page} />
-        ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={onPageDragEnd}
+        >
+          {state.content.pages.map((page) =>
+            page.type === 'title' ? (
+              <PageBlock key={page.id} page={page} templateId={templateId} />
+            ) : (
+              <SortableContext
+                key={page.id}
+                items={sortablePageIds}
+                strategy={verticalListSortingStrategy}
+              >
+                <SortablePageBlock page={page} templateId={templateId} />
+              </SortableContext>
+            ),
+          )}
+        </DndContext>
 
         {/* Add page button at bottom of canvas */}
-        <AddPageButton />
+        <div className="mt-4">
+          <AddPageButton />
+        </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Sortable page block wrapper ──────────────────────────────────────────────
+
+function SortablePageBlock({
+  page,
+  templateId,
+}: {
+  page: Page;
+  templateId: string;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: page.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      <PageBlock
+        page={page}
+        templateId={templateId}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
     </div>
   );
 }
@@ -168,16 +234,108 @@ function FloatingToolbar({ selectedPageId }: { selectedPageId: string }) {
 
 // ─── Template header card ─────────────────────────────────────────────────────
 
-function TemplateHeaderCard() {
+function TemplateHeaderCard({ templateId }: { templateId: string }) {
   const t = useTranslations('templates.editor');
   const { state, dispatch } = useEditor();
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const logoStorageKey = state.content.settings.branding?.logoStorageKey;
+
+  useEffect(() => {
+    if (logoStorageKey === undefined || logoStorageKey === '') {
+      setPreviewUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/upload/template-logo/signed-url?key=${encodeURIComponent(logoStorageKey)}`,
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as { url: string };
+        if (!cancelled) {
+          setPreviewUrl(data.url);
+        }
+      } catch {
+        // silently ignore — preview simply stays null
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [logoStorageKey]);
+
+  async function onFileSelected(file: File) {
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('templateId', templateId);
+      form.append('file', file);
+
+      const res = await fetch('/api/upload/template-logo', {
+        method: 'POST',
+        body: form,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = (await res.json()) as { key: string };
+
+      dispatch({
+        type: 'updateSettings',
+        patch: {
+          branding: {
+            ...(state.content.settings.branding ?? {}),
+            logoStorageKey: data.key,
+          },
+        },
+      });
+    } catch {
+      // Error is surfaced via toast in a future iteration; for now we just stop uploading.
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="flex items-start gap-6 rounded-lg border bg-card p-6">
-      {/* Logo placeholder */}
-      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted">
-        <ImagePlus className="h-8 w-8 text-muted-foreground/40" />
-      </div>
+      {/* Logo upload button */}
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted"
+        aria-label={t('clickToUploadLogo')}
+      >
+        {previewUrl !== null ? (
+          <img src={previewUrl} alt="logo" className="h-full w-full rounded-lg object-contain" />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center">
+            <ImagePlus className="h-8 w-8 text-muted-foreground/40" />
+          </span>
+        )}
+        {uploading ? (
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/30 text-xs text-white">
+            {t('uploadingLogo')}
+          </div>
+        ) : null}
+      </button>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f !== undefined) void onFileSelected(f);
+        }}
+      />
 
       {/* Title + description */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -185,7 +343,7 @@ function TemplateHeaderCard() {
           type="text"
           value={state.content.title}
           onChange={(e) => dispatch({ type: 'updateContentTitle', title: e.target.value })}
-          className="w-full bg-transparent text-2xl font-bold text-foreground outline-none"
+          className="mb-2 w-full bg-transparent text-2xl font-bold text-foreground outline-none"
           aria-label={t('settingsTab.templateTitleLabel')}
         />
         <input
@@ -194,7 +352,7 @@ function TemplateHeaderCard() {
           onChange={(e) =>
             dispatch({ type: 'updateContentDescription', description: e.target.value })
           }
-          placeholder={t('pagesTab.pageDescriptionLabel')}
+          placeholder="Add a description…"
           className="w-full bg-transparent text-sm text-muted-foreground outline-none"
           aria-label={t('pagesTab.pageDescriptionLabel')}
         />
@@ -223,7 +381,15 @@ function AddPageButton() {
 
 // ─── Page block ───────────────────────────────────────────────────────────────
 
-function PageBlock({ page }: { page: Page }) {
+function PageBlock({
+  page,
+  templateId: _templateId,
+  dragHandleProps,
+}: {
+  page: Page;
+  templateId: string;
+  dragHandleProps?: React.HTMLAttributes<HTMLElement>;
+}) {
   const t = useTranslations('templates.editor');
   const { state, dispatch } = useEditor();
   const [collapsed, setCollapsed] = useState(false);
@@ -235,7 +401,19 @@ function PageBlock({ page }: { page: Page }) {
   return (
     <div className="rounded-lg border bg-card shadow-sm">
       {/* Page header */}
-      <div className="flex items-center gap-2 px-4 py-3">
+      <div className="flex items-center gap-2 px-5 py-4">
+        {/* Drag handle — inspection pages only */}
+        {dragHandleProps !== undefined ? (
+          <button
+            type="button"
+            {...dragHandleProps}
+            className="shrink-0 cursor-grab text-muted-foreground/50 hover:text-muted-foreground"
+            aria-label="Reorder page"
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        ) : null}
+
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
@@ -258,11 +436,11 @@ function PageBlock({ page }: { page: Page }) {
               dispatch({ type: 'updatePage', pageId: page.id, patch: { title: e.target.value } })
             }
             onBlur={() => setEditingTitle(false)}
-            className="flex-1 bg-transparent text-base font-semibold text-foreground outline-none"
+            className="flex-1 bg-transparent text-lg font-semibold text-foreground outline-none"
             aria-label={t('pagesTab.pageTitleLabel')}
           />
         ) : (
-          <h2 className="flex-1 text-base font-semibold">{page.title}</h2>
+          <h2 className="flex-1 text-lg font-semibold">{page.title}</h2>
         )}
 
         {/* Edit pencil */}
@@ -292,14 +470,17 @@ function PageBlock({ page }: { page: Page }) {
         ) : null}
       </div>
 
+      {/* Divider between header and body */}
+      <div className="h-px bg-border" />
+
       {/* Description */}
       {(page.description ?? '') !== '' ? (
-        <p className="px-4 pb-2 text-sm text-muted-foreground">{page.description}</p>
+        <p className="px-5 pb-2 pt-3 text-sm text-muted-foreground">{page.description}</p>
       ) : null}
 
       {/* Sections */}
       {!collapsed ? (
-        <div className="space-y-3 px-4 pb-4">
+        <div className="space-y-4 px-5 pb-5 pt-4">
           {page.sections.map((section, idx) => (
             <SectionBlock
               key={section.id}
@@ -372,7 +553,7 @@ function SectionBlock({
     <div id={`section-${section.id}`} className="space-y-2">
       {/* Section header (only when multiple sections) */}
       {showSectionHeader ? (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 px-1 pb-2 pt-1">
           <input
             type="text"
             value={section.title}
@@ -384,7 +565,7 @@ function SectionBlock({
                 patch: { title: e.target.value },
               })
             }
-            className="flex-1 bg-transparent text-sm font-medium text-foreground outline-none"
+            className="flex-1 bg-transparent text-[11px] font-semibold uppercase tracking-wide text-muted-foreground outline-none"
             aria-label={t('sectionTitle')}
           />
           {sectionIndex > 0 ? (
@@ -405,9 +586,9 @@ function SectionBlock({
       ) : null}
 
       {/* Question table */}
-      <div className="overflow-hidden rounded-lg border bg-card">
+      <div className={`overflow-hidden rounded-lg border bg-card${showSectionHeader ? ' mt-1' : ''}`}>
         {/* Table header */}
-        <div className="grid grid-cols-[24px_1fr_260px_40px] border-b bg-muted/30 px-3 py-2 text-xs font-medium text-muted-foreground">
+        <div className="grid grid-cols-[24px_1fr_260px_40px] border-b bg-muted/30 px-4 py-2.5 text-xs font-medium text-muted-foreground">
           <div /> {/* drag handle spacer */}
           <div>{t('questionColumnHeader')}</div>
           <div>{t('typeColumnHeader')}</div>
@@ -444,7 +625,7 @@ function SectionBlock({
         </DndContext>
 
         {/* Add new footer */}
-        <div className="border-t px-3 py-2">
+        <div className="border-t px-4 py-3">
           <button
             type="button"
             onClick={addQuestion}
@@ -544,7 +725,7 @@ function SortableQuestionRow({
         </button>
 
         {/* Question text */}
-        <div className="flex items-center gap-1 py-3 pr-3">
+        <div className="flex items-center gap-1 py-3.5 pr-3">
           {required ? <span className="shrink-0 text-xs text-destructive">*</span> : null}
           <input
             type="text"
@@ -552,7 +733,7 @@ function SortableQuestionRow({
             onChange={(e) => handlePromptChange(e.target.value)}
             onClick={() => dispatch({ type: 'selectItem', itemId: item.id })}
             placeholder={t('questionPlaceholder')}
-            className={`flex-1 bg-transparent text-sm outline-none ${
+            className={`flex-1 bg-transparent text-sm font-medium outline-none ${
               isSelected ? 'ring-1 ring-primary rounded px-1' : ''
             }`}
           />
@@ -577,7 +758,7 @@ function SortableQuestionRow({
       {/* ── Inline expansion (selected only) ── */}
       {isSelected ? (
         <>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-accent/20 px-3 py-2 text-sm">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-dashed border-muted-foreground/20 border-l-2 border-l-primary bg-muted/20 px-4 py-2.5 text-sm">
             {/* Add logic toggle */}
             <button
               type="button"
@@ -614,7 +795,7 @@ function SortableQuestionRow({
 
           {/* Logic editor */}
           {showLogic ? (
-            <div className="border-b bg-muted/10 px-4 py-3">
+            <div className="border-t border-dashed border-muted-foreground/20 bg-muted/10 px-4 py-3">
               <p className="mb-2 text-xs font-medium text-muted-foreground">{t('logicLabel')}</p>
               <VisibilityControl item={item} allItemsBefore={itemsBefore} />
             </div>
@@ -672,11 +853,12 @@ function TypeOfResponsePicker({
   const [search, setSearch] = useState('');
 
   const customResponseSets = state.content.customResponseSets;
-  const filteredSets = search.trim() === ''
-    ? customResponseSets
-    : customResponseSets.filter((rs) =>
-        rs.name.toLowerCase().includes(search.toLowerCase()),
-      );
+  const filteredSets =
+    search.trim() === ''
+      ? customResponseSets
+      : customResponseSets.filter((rs) =>
+          rs.name.toLowerCase().includes(search.toLowerCase()),
+        );
 
   /** Replace the item type by deleting + re-adding with copied prompt. */
   function replaceItemType(newType: SupportedItemType | StubItemType, responseSetId?: string) {
@@ -730,7 +912,7 @@ function TypeOfResponsePicker({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-full w-full items-center gap-2 border-l px-3 py-2 text-sm hover:bg-muted/20"
+          className="flex h-full w-full items-center gap-2 border-l px-4 py-3.5 text-sm hover:bg-muted/20"
         >
           <span className="flex flex-1 flex-wrap gap-1 overflow-hidden">
             <ResponseTypeTrigger item={item} customResponseSets={customResponseSets} tType={tType} />
