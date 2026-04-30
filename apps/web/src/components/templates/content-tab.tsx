@@ -1,6 +1,6 @@
 'use client';
 
-import type { Item, Page } from '@forma360/shared/template-schema';
+import type { Item, Page, Section } from '@forma360/shared/template-schema';
 import {
   DndContext,
   KeyboardSensor,
@@ -18,17 +18,11 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useEditor } from './editor-context';
 import {
   makeItem,
@@ -39,18 +33,13 @@ import {
 import { ItemDetail } from './item-detail';
 
 /**
- * Content tab: three-column layout.
+ * Build tab: three-panel layout that fills the editor's flex-1 content area.
  *
- *   [ Pages rail ]  [ Sections + items for the selected page ]  [ Detail ]
- *
- * The middle column is where the bulk of the authoring happens. Sections
- * and items are drag-sortable within their own parent (via @dnd-kit).
- * Cross-section item moves are supported by moveItemAcrossSections but
- * the in-UI drag right now is scoped to within-section only — a later
- * iteration can extend this to cross-section without reshaping state.
+ *   [ Left sidebar: Pages + section sub-rows ]
+ *   [ Centre canvas: PageCanvas with sections + items ]
+ *   [ Right panel: ItemDetail ]
  */
 export function ContentTab() {
-  const t = useTranslations('templates.editor');
   const { state } = useEditor();
 
   const selectedPage = useMemo(
@@ -59,23 +48,28 @@ export function ContentTab() {
   );
 
   return (
-    <div className="grid grid-cols-[200px_minmax(0,1fr)_320px] gap-4">
-      <PagesRail />
-      <div className="min-w-0 space-y-3">
+    <>
+      {/* Left sidebar */}
+      <PagesSidebar />
+
+      {/* Centre canvas */}
+      <div className="flex-1 overflow-y-auto bg-[#F5F6F8] p-6">
         {selectedPage !== null ? (
-          <PageEditor page={selectedPage} />
-        ) : (
-          <p className="text-sm text-muted-foreground">{t('detail.empty')}</p>
-        )}
+          <PageCanvas page={selectedPage} />
+        ) : null}
       </div>
-      <aside className="space-y-3">
+
+      {/* Right panel */}
+      <div className="w-80 shrink-0 overflow-y-auto border-l border-[#E5E7EB] bg-white">
         <ItemDetail />
-      </aside>
-    </div>
+      </div>
+    </>
   );
 }
 
-function PagesRail() {
+// ─── Pages sidebar ────────────────────────────────────────────────────────────
+
+function PagesSidebar() {
   const t = useTranslations('templates.editor');
   const { state, dispatch } = useEditor();
 
@@ -94,17 +88,18 @@ function PagesRail() {
     dispatch({ type: 'reorderPages', fromIndex: from, toIndex: to });
   }
 
-  // Title page is fixed — omit from the sortable set so dnd-kit never
-  // lets it leave index 0.
-  const sortableIds = state.content.pages.filter((p) => p.type !== 'title').map((p) => p.id);
+  const sortableIds = state.content.pages
+    .filter((p) => p.type !== 'title')
+    .map((p) => p.id);
 
   return (
-    <aside className="space-y-2">
-      <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="flex w-60 shrink-0 flex-col overflow-hidden border-r border-[#E5E7EB] bg-white">
+      <p className="px-4 pb-2 pt-4 text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
         {t('pages')}
-      </h3>
+      </p>
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <nav className="space-y-1" aria-label={t('pages')}>
+        <nav className="flex-1 overflow-y-auto px-2 pb-2" aria-label={t('pages')}>
           {state.content.pages.map((p) =>
             p.type === 'title' ? (
               <TitlePageRow key={p.id} page={p} />
@@ -120,16 +115,20 @@ function PagesRail() {
           )}
         </nav>
       </DndContext>
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full"
-        onClick={() => dispatch({ type: 'addInspectionPage' })}
-        aria-label={t('pagesTab.addPageButton')}
-      >
-        {t('pagesTab.addPageButton')}
-      </Button>
-    </aside>
+
+      <div className="border-t border-[#E5E7EB] p-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full text-[#00B47E] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+          onClick={() => dispatch({ type: 'addInspectionPage' })}
+          aria-label={t('pagesTab.addPageButton')}
+        >
+          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          {t('pagesTab.addPageButton')}
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -137,22 +136,29 @@ function TitlePageRow({ page }: { page: Page }) {
   const t = useTranslations('templates.editor');
   const { state, dispatch } = useEditor();
   const isActive = state.selectedPageId === page.id;
+
   return (
-    <button
-      type="button"
-      onClick={() => dispatch({ type: 'selectPage', pageId: page.id })}
-      className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-        isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60'
-      }`}
-    >
-      <div className="truncate font-medium">{page.title}</div>
-      <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-xs text-muted-foreground">{t('titlePageBadge')}</span>
-        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
-          {t('pagesTab.titlePageRequiredBadge')}
-        </span>
-      </div>
-    </button>
+    <div>
+      <button
+        type="button"
+        onClick={() => dispatch({ type: 'selectPage', pageId: page.id })}
+        className={`flex h-9 w-full items-start rounded-md px-2 py-1 text-left text-sm transition-colors ${
+          isActive
+            ? 'border-l-2 border-[#00B47E] bg-[#F0FBF7] text-[#00B47E]'
+            : 'hover:bg-[#F9FAFB]'
+        }`}
+      >
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate font-medium leading-tight">{page.title}</span>
+          <span className="truncate text-[10px] text-[#6B7280]">{t('titlePageBadge')}</span>
+        </div>
+      </button>
+      {/* Sub-rows for sections when selected */}
+      {isActive &&
+        page.sections.map((section) => (
+          <SectionSubRow key={section.id} section={section} />
+        ))}
+    </div>
   );
 }
 
@@ -168,100 +174,116 @@ function SortablePageRow({ page }: { page: Page }) {
     opacity: isDragging ? 0.5 : 1,
   };
   const isActive = state.selectedPageId === page.id;
+  const sectionCount = page.sections.length;
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-center gap-1 rounded-md px-1 py-0.5 transition-colors ${
-        isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60'
-      }`}
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        className="cursor-grab select-none px-1 text-muted-foreground"
-        aria-label={t('pagesTab.dragHandleLabel')}
+    <div ref={setNodeRef} style={style}>
+      <div
+        className={`flex h-9 items-center gap-1 rounded-md transition-colors ${
+          isActive
+            ? 'border-l-2 border-[#00B47E] bg-[#F0FBF7] text-[#00B47E]'
+            : 'hover:bg-[#F9FAFB]'
+        }`}
       >
-        ⋮⋮
-      </button>
-      <button
-        type="button"
-        onClick={() => dispatch({ type: 'selectPage', pageId: page.id })}
-        className="flex-1 rounded-md px-1 py-1 text-left text-sm"
-      >
-        <div className="truncate font-medium">{page.title}</div>
-        <div className="truncate text-xs text-muted-foreground">
-          {t('inspectionPageBadge')}
-        </div>
-      </button>
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="shrink-0 cursor-grab px-1 text-[#9CA3AF]"
+          aria-label={t('pagesTab.dragHandleLabel')}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => dispatch({ type: 'selectPage', pageId: page.id })}
+          className="flex min-w-0 flex-1 items-center justify-between gap-1 pr-1 text-left"
+        >
+          <span className="truncate text-sm font-medium leading-tight">{page.title}</span>
+          <span className="shrink-0 rounded bg-[#F3F4F6] px-1 py-0.5 text-[10px] text-[#6B7280]">
+            {sectionCount}
+          </span>
+        </button>
+      </div>
+      {/* Sub-rows for sections when selected */}
+      {isActive &&
+        page.sections.map((section) => (
+          <SectionSubRow key={section.id} section={section} />
+        ))}
     </div>
   );
 }
 
-function PageEditor({ page }: { page: Page }) {
+function SectionSubRow({ section }: { section: Section }) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        const el = document.getElementById(`section-${section.id}`);
+        if (el !== null) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }}
+      className="flex h-7 w-full items-center truncate pl-6 pr-2 text-left text-xs text-[#6B7280] hover:bg-[#F9FAFB]"
+    >
+      <span className="truncate">{section.title}</span>
+    </button>
+  );
+}
+
+// ─── Centre canvas ────────────────────────────────────────────────────────────
+
+function PageCanvas({ page }: { page: Page }) {
   const t = useTranslations('templates.editor');
   const { state, dispatch } = useEditor();
 
   const inspectionPageCount = state.content.pages.filter((p) => p.type === 'inspection').length;
   const isLastInspection = page.type === 'inspection' && inspectionPageCount <= 1;
-  const deleteDisabled = page.type === 'title' || isLastInspection;
-  const deleteTooltip = (() => {
-    if (page.type === 'title') return t('pagesTab.cannotDeleteTitle');
-    if (isLastInspection) return t('pagesTab.cannotDeleteLastInspection');
-    return null;
-  })();
+  const canDelete = page.type !== 'title' && !isLastInspection;
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-2 rounded-md border bg-card p-3">
-        <input
-          type="text"
-          value={page.title}
-          onChange={(e) =>
-            dispatch({
-              type: 'updatePage',
-              pageId: page.id,
-              patch: { title: e.target.value },
-            })
-          }
-          className="w-full bg-transparent text-lg font-semibold outline-none"
-          aria-label={t('pagesTab.pageTitleLabel')}
-        />
+    <div className="space-y-4">
+      {/* Page header card */}
+      <div className="rounded-lg bg-white p-4" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <div className="flex items-start justify-between gap-2">
+          <input
+            type="text"
+            value={page.title}
+            onChange={(e) =>
+              dispatch({ type: 'updatePage', pageId: page.id, patch: { title: e.target.value } })
+            }
+            className="flex-1 bg-transparent text-xl font-semibold text-[#111827] outline-none"
+            aria-label={t('pagesTab.pageTitleLabel')}
+          />
+          {canDelete ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="shrink-0 text-[#6B7280] hover:text-red-600"
+              onClick={() => {
+                if (window.confirm(t('confirmDeletePage'))) {
+                  dispatch({ type: 'deletePage', pageId: page.id });
+                }
+              }}
+              aria-label={t('deleteSection')}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null}
+        </div>
         <textarea
           value={page.description ?? ''}
           onChange={(e) =>
-            dispatch({
-              type: 'updatePage',
-              pageId: page.id,
-              patch: { description: e.target.value },
-            })
+            dispatch({ type: 'updatePage', pageId: page.id, patch: { description: e.target.value } })
           }
           placeholder={t('pagesTab.pageDescriptionLabel')}
           rows={2}
-          className="w-full resize-none bg-transparent text-sm text-muted-foreground outline-none"
+          className="mt-1 w-full resize-none bg-transparent text-sm text-[#6B7280] outline-none"
           aria-label={t('pagesTab.pageDescriptionLabel')}
         />
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={deleteDisabled}
-          title={deleteTooltip ?? undefined}
-          onClick={() => {
-            if (deleteDisabled) return;
-            if (window.confirm(t('confirmDeletePage'))) {
-              dispatch({ type: 'deletePage', pageId: page.id });
-            }
-          }}
-          aria-label={t('deleteSection')}
-        >
-          {t('deleteSection')}
-        </Button>
       </div>
 
+      {/* Sections */}
       {page.sections.map((section, idx) => (
-        <SectionEditor
+        <SectionCard
           key={section.id}
           pageId={page.id}
           sectionIndex={idx}
@@ -270,19 +292,22 @@ function PageEditor({ page }: { page: Page }) {
         />
       ))}
 
+      {/* Add section */}
       <Button
         variant="outline"
         size="sm"
+        className="border-[#00B47E] text-[#00B47E] hover:bg-[#F0FBF7]"
         onClick={() => dispatch({ type: 'addSection', pageId: page.id })}
         aria-label={t('addSection')}
       >
+        <Plus className="mr-1.5 h-3.5 w-3.5" />
         {t('addSection')}
       </Button>
     </div>
   );
 }
 
-function SectionEditor({
+function SectionCard({
   pageId,
   sectionIndex,
   sectionTotal,
@@ -311,18 +336,18 @@ function SectionEditor({
     const from = section.items.findIndex((i) => i.id === active.id);
     const to = section.items.findIndex((i) => i.id === over.id);
     if (from < 0 || to < 0) return;
-    dispatch({
-      type: 'reorderItems',
-      pageId,
-      sectionId: section.id,
-      fromIndex: from,
-      toIndex: to,
-    });
+    dispatch({ type: 'reorderItems', pageId, sectionId: section.id, fromIndex: from, toIndex: to });
   }
 
   return (
-    <Card className="space-y-2 p-3">
-      <div className="flex items-center justify-between gap-2">
+    <div
+      id={`section-${section.id}`}
+      className="rounded-lg bg-white"
+      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+    >
+      {/* Section header */}
+      <div className="flex items-center gap-2 border-b border-[#E5E7EB] px-3 py-2">
+        <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-[#9CA3AF]" />
         <input
           type="text"
           value={section.title}
@@ -334,35 +359,33 @@ function SectionEditor({
               patch: { title: e.target.value },
             })
           }
-          className="flex-1 bg-transparent text-base font-medium outline-none"
+          className="flex-1 bg-transparent text-sm font-medium text-[#111827] outline-none"
           aria-label={t('sectionTitle')}
         />
         {sectionTotal > 1 ? (
           <Button
             variant="ghost"
             size="sm"
+            className="h-6 w-6 shrink-0 p-0 text-[#9CA3AF] hover:text-red-600"
             onClick={() => {
               if (window.confirm(t('confirmDeleteSection'))) {
-                dispatch({
-                  type: 'deleteSection',
-                  pageId,
-                  sectionId: section.id,
-                });
+                dispatch({ type: 'deleteSection', pageId, sectionId: section.id });
               }
             }}
             aria-label={t('deleteSection')}
           >
-            {t('deleteSection')}
+            <Trash2 className="h-3.5 w-3.5" />
           </Button>
         ) : null}
       </div>
 
+      {/* Items */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext
           items={section.items.map((i) => i.id)}
           strategy={verticalListSortingStrategy}
         >
-          <ul className="space-y-1.5">
+          <ul>
             {section.items.map((item) => (
               <SortableItem key={item.id} item={item} />
             ))}
@@ -370,12 +393,11 @@ function SectionEditor({
         </SortableContext>
       </DndContext>
 
-      <AddItemDropdown
-        pageId={pageId}
-        sectionId={section.id}
-        isTitlePage={isTitlePage}
-      />
-    </Card>
+      {/* Add question */}
+      <div className="px-3 py-2">
+        <AddItemPopover pageId={pageId} sectionId={section.id} isTitlePage={isTitlePage} />
+      </div>
+    </div>
   );
 }
 
@@ -392,36 +414,42 @@ function SortableItem({ item }: { item: Item }) {
   };
   const isSelected = state.selectedItemId === item.id;
   const label = itemPreview(item);
-  const type = tType(item.type as Parameters<typeof tType>[0]);
+  const typeLabel = tType(item.type as Parameters<typeof tType>[0]);
 
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 rounded-md border bg-background p-2 transition-colors ${
-        isSelected ? 'border-primary' : ''
+      className={`group flex h-12 items-center gap-2 border-b border-[#E5E7EB] px-3 transition-colors last:border-b-0 ${
+        isSelected
+          ? 'border-l-2 border-l-[#00B47E] bg-[#F0FBF7]'
+          : 'hover:bg-[#F9FAFB]'
       }`}
     >
       <button
         type="button"
         {...attributes}
         {...listeners}
-        className="cursor-grab select-none px-1 text-muted-foreground"
+        className="shrink-0 cursor-grab text-[#9CA3AF] opacity-0 transition-opacity group-hover:opacity-100"
         aria-label="drag"
       >
-        ⋮⋮
+        <GripVertical className="h-3.5 w-3.5" />
       </button>
+      {/* Type badge */}
+      <span className="shrink-0 rounded bg-[#F3F4F6] px-1 py-0.5 text-[10px] font-medium uppercase text-[#6B7280]">
+        {typeLabel.slice(0, 2)}
+      </span>
       <button
         type="button"
         onClick={() => dispatch({ type: 'selectItem', itemId: item.id })}
-        className="flex-1 text-left"
+        className="flex min-w-0 flex-1 items-center text-left"
       >
-        <div className="truncate text-sm">{label}</div>
-        <div className="text-xs text-muted-foreground">{type}</div>
+        <span className="truncate text-sm text-[#111827]">{label}</span>
       </button>
       <Button
         variant="ghost"
         size="sm"
+        className="h-6 w-6 shrink-0 p-0 text-[#9CA3AF] opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
         onClick={() => {
           if (window.confirm(t('confirmDeleteItem'))) {
             dispatch({ type: 'deleteItem', itemId: item.id });
@@ -441,7 +469,9 @@ function itemPreview(item: Item): string {
   return '(item)';
 }
 
-function AddItemDropdown({
+// ─── Add item popover ─────────────────────────────────────────────────────────
+
+function AddItemPopover({
   pageId,
   sectionId,
   isTitlePage,
@@ -452,8 +482,9 @@ function AddItemDropdown({
 }) {
   const t = useTranslations('templates.editor');
   const tCat = useTranslations('templates.editor.questionCategory');
+  const tType = useTranslations('templates.editor.questionType');
   const { dispatch } = useEditor();
-  const [value, setValue] = useState('');
+  const [open, setOpen] = useState(false);
 
   const common: SupportedItemType[] = [
     'text',
@@ -479,54 +510,69 @@ function AddItemDropdown({
     const item = makeItem(type);
     dispatch({ type: 'addItem', pageId, sectionId, item });
     dispatch({ type: 'selectItem', itemId: item.id });
-    setValue('');
+    setOpen(false);
   }
 
   return (
-    <Select
-      value={value}
-      onValueChange={(v) => handleAdd(v as SupportedItemType | StubItemType)}
-    >
-      <SelectTrigger className="h-9 w-48">
-        <SelectValue placeholder={t('addItem')} />
-      </SelectTrigger>
-      <SelectContent>
-        <div className="px-2 py-1 text-xs font-semibold uppercase text-muted-foreground">
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-[#00B47E] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+          aria-label={t('addItem')}
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" />
+          {t('addItem')}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-1" align="start">
+        <div className="px-2 py-1 text-[10px] font-semibold uppercase text-[#6B7280]">
           {tCat('common')}
         </div>
         {common.map((type) => (
-          <SelectItem key={type} value={type}>
-            <QuestionTypeLabel type={type} />
-          </SelectItem>
+          <button
+            key={type}
+            type="button"
+            onClick={() => handleAdd(type)}
+            className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-[#111827] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+          >
+            {tType(type as Parameters<typeof tType>[0])}
+          </button>
         ))}
         {isTitlePage ? (
           <>
-            <div className="px-2 py-1 text-xs font-semibold uppercase text-muted-foreground">
+            <div className="mt-1 px-2 py-1 text-[10px] font-semibold uppercase text-[#6B7280]">
               {tCat('titlePage')}
             </div>
             {titlePageOnly.map((type) => (
-              <SelectItem key={type} value={type}>
-                <QuestionTypeLabel type={type} />
-              </SelectItem>
+              <button
+                key={type}
+                type="button"
+                onClick={() => handleAdd(type)}
+                className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-[#111827] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+              >
+                {tType(type as Parameters<typeof tType>[0])}
+              </button>
             ))}
           </>
         ) : null}
-        <div className="px-2 py-1 text-xs font-semibold uppercase text-muted-foreground">
+        <div className="mt-1 px-2 py-1 text-[10px] font-semibold uppercase text-[#6B7280]">
           {tCat('advanced')}
         </div>
         {advanced.map((type) => (
-          <SelectItem key={type} value={type}>
-            <QuestionTypeLabel type={type} />
-          </SelectItem>
+          <button
+            key={type}
+            type="button"
+            onClick={() => handleAdd(type)}
+            className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-[#111827] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+          >
+            {tType(type as Parameters<typeof tType>[0])}
+          </button>
         ))}
-      </SelectContent>
-    </Select>
+      </PopoverContent>
+    </Popover>
   );
-}
-
-function QuestionTypeLabel({ type }: { type: SupportedItemType | StubItemType }) {
-  const tType = useTranslations('templates.editor.questionType');
-  return <>{tType(type as Parameters<typeof tType>[0])}</>;
 }
 
 // arrayMove is imported to keep dnd-kit happy for future cross-section moves;

@@ -20,6 +20,8 @@ export function SettingsTab({ templateId }: { templateId: string }) {
   const branding = state.content.settings.branding ?? {};
 
   return (
+    <div className="flex-1 overflow-y-auto p-6">
+    <div className="mx-auto max-w-3xl">
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <Card>
         <CardHeader>
@@ -133,6 +135,8 @@ export function SettingsTab({ templateId }: { templateId: string }) {
           />
         </CardContent>
       </Card>
+    </div>
+    </div>
     </div>
   );
 }

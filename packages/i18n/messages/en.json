@@ -277,6 +277,8 @@
       "validationError": "This template has validation errors. Fix them before publishing.",
       "pages": "Pages",
       "content": "Content",
+      "build": "Build",
+      "previewButton": "Preview",
       "settings": "Settings",
       "responseSets": "Response sets",
       "logic": "Logic",
@@ -448,7 +450,11 @@
           "timingImmediate": "Immediate",
           "timingOnCompletion": "On completion"
         },
-        "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit."
+        "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
+        "mcQuestionsHeader": "MC Questions",
+        "noResponseSetAssigned": "This question has no response set assigned. Go to Response Sets to create one.",
+        "triggerCountSingular": "action",
+        "triggerCountPlural": "actions"
       },
       "validation": {
         "title": "Validation errors",

@@ -2,6 +2,7 @@
 
 import type { Item } from '@forma360/shared/template-schema';
 import { maxLogicDepth, TEMPLATE_LIMITS } from '@forma360/shared/template-schema';
+import { FileQuestion } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import { Button } from '../ui/button';
@@ -27,26 +28,43 @@ import { VisibilityControl } from './visibility-control';
  */
 export function ItemDetail() {
   const t = useTranslations('templates.editor');
+  const tType = useTranslations('templates.editor.questionType');
   const { state } = useEditor();
   const item =
     state.selectedItemId === null
       ? null
-      : findItem(state.content.pages.flatMap((p) => p.sections.flatMap((s) => s.items)), state.selectedItemId);
+      : findItem(
+          state.content.pages.flatMap((p) => p.sections.flatMap((s) => s.items)),
+          state.selectedItemId,
+        );
 
   if (item === null) {
     return (
-      <div className="rounded-md border bg-card p-3 text-sm text-muted-foreground">
-        {t('detail.empty')}
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center">
+        <FileQuestion className="h-12 w-12 text-[#D1D5DB]" />
+        <p className="text-sm text-[#9CA3AF]">{t('detail.empty')}</p>
       </div>
     );
   }
 
+  const typeLabel = tType(item.type as Parameters<typeof tType>[0]);
+
   return (
-    <div className="space-y-3 rounded-md border bg-card p-3">
-      <h3 className="text-sm font-semibold">{t('detail.title')}</h3>
-      <CommonFields item={item} />
-      <TypeSpecificFields item={item} />
-      <VisibilitySection item={item} />
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="border-b border-[#E5E7EB] px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+          {t('detail.title')}
+        </p>
+        <p className="mt-0.5 text-sm font-medium text-[#111827]">{typeLabel}</p>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+        <CommonFields item={item} />
+        <TypeSpecificFields item={item} />
+        <VisibilitySection item={item} />
+      </div>
     </div>
   );
 }
@@ -55,7 +73,10 @@ export function ItemDetail() {
  * Walks pages → sections → items and collects every item strictly before
  * `targetId`. Returns [] if `targetId` is never encountered.
  */
-function itemsBefore(pages: ReturnType<typeof useEditor>['state']['content']['pages'], targetId: string): Item[] {
+function itemsBefore(
+  pages: ReturnType<typeof useEditor>['state']['content']['pages'],
+  targetId: string,
+): Item[] {
   const acc: Item[] = [];
   for (const p of pages) {
     for (const s of p.sections) {
@@ -87,22 +108,30 @@ function VisibilitySection({ item }: { item: Item }) {
     return null;
   }
 
-  const prior = useMemo(() => itemsBefore(state.content.pages, item.id), [state.content.pages, item.id]);
+  const prior = useMemo(
+    () => itemsBefore(state.content.pages, item.id),
+    [state.content.pages, item.id],
+  );
   const depth = useMemo(() => maxLogicDepth(state.content), [state.content]);
   const max = TEMPLATE_LIMITS.MAX_LOGIC_NESTING_DEPTH;
 
   return (
     <div className="space-y-2">
-      <VisibilityControl item={item} allItemsBefore={prior} />
-      {depth >= max ? (
-        <p className="rounded-md border border-red-400 bg-red-50 p-2 text-xs text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100">
-          {t('depthBlock').replace('{depth}', String(depth)).replace('{max}', String(max))}
+      <div className="border-t border-[#E5E7EB] pt-4">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+          {t('toggle')}
         </p>
-      ) : depth >= max - 5 ? (
-        <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-          {t('depthWarning').replace('{depth}', String(depth)).replace('{max}', String(max))}
-        </p>
-      ) : null}
+        <VisibilityControl item={item} allItemsBefore={prior} />
+        {depth >= max ? (
+          <p className="mt-2 rounded-md border border-red-400 bg-red-50 p-2 text-xs text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100">
+            {t('depthBlock').replace('{depth}', String(depth)).replace('{max}', String(max))}
+          </p>
+        ) : depth >= max - 5 ? (
+          <p className="mt-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+            {t('depthWarning').replace('{depth}', String(depth)).replace('{max}', String(max))}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -118,48 +147,70 @@ function CommonFields({ item }: { item: Item }) {
   if (item.type === 'instruction') {
     return (
       <div className="space-y-2">
-        <Label htmlFor={`body-${item.id}`}>{t('detail.instruction.body')}</Label>
         <Textarea
           id={`body-${item.id}`}
           value={item.body}
           onChange={(e) =>
             dispatch({ type: 'updateItem', itemId: item.id, patch: { body: e.target.value } })
           }
+          placeholder={t('detail.instruction.body')}
           rows={4}
+          aria-label={t('detail.instruction.body')}
         />
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor={`prompt-${item.id}`}>{t('questionPrompt')}</Label>
+    <div className="space-y-3">
+      {/* Prompt input — no extra label, just the input */}
       <Input
         id={`prompt-${item.id}`}
         value={item.prompt}
         onChange={(e) =>
           dispatch({ type: 'updateItem', itemId: item.id, patch: { prompt: e.target.value } })
         }
+        placeholder={t('questionPrompt')}
+        className="font-medium"
+        aria-label={t('questionPrompt')}
       />
-      <div className="flex items-center gap-2">
-        <Switch
-          id={`req-${item.id}`}
-          checked={item.required}
-          onCheckedChange={(v) =>
-            dispatch({ type: 'updateItem', itemId: item.id, patch: { required: v } })
-          }
-        />
-        <Label htmlFor={`req-${item.id}`}>{t('requiredLabel')}</Label>
+
+      {/* Toggles row */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Switch
+            id={`req-${item.id}`}
+            checked={item.required}
+            onCheckedChange={(v) =>
+              dispatch({ type: 'updateItem', itemId: item.id, patch: { required: v } })
+            }
+          />
+          <Label htmlFor={`req-${item.id}`} className="text-sm text-[#111827]">
+            {t('requiredLabel')}
+          </Label>
+        </div>
       </div>
-      <Label htmlFor={`note-${item.id}`}>{t('itemNote')}</Label>
-      <Textarea
-        id={`note-${item.id}`}
-        value={item.note ?? ''}
-        onChange={(e) =>
-          dispatch({ type: 'updateItem', itemId: item.id, patch: { note: e.target.value } })
-        }
-        rows={2}
-      />
+
+      {/* Note */}
+      <div className="space-y-1.5">
+        <Textarea
+          id={`note-${item.id}`}
+          value={item.note ?? ''}
+          onChange={(e) =>
+            dispatch({ type: 'updateItem', itemId: item.id, patch: { note: e.target.value } })
+          }
+          placeholder={t('itemNote')}
+          rows={2}
+          aria-label={t('itemNote')}
+        />
+      </div>
+
+      {/* Type settings header */}
+      <div className="border-t border-[#E5E7EB] pt-3">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+          {t('detail.title')}
+        </p>
+      </div>
     </div>
   );
 }
@@ -380,7 +431,7 @@ function TypeSpecificFields({ item }: { item: Item }) {
           <div className="space-y-1.5">
             {item.slots.map((slot, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">#{idx + 1}</span>
+                <span className="text-xs text-[#6B7280]">#{idx + 1}</span>
                 <Input
                   value={slot.label ?? ''}
                   placeholder={t('signature.slotLabel')}
@@ -467,7 +518,7 @@ function TypeSpecificFields({ item }: { item: Item }) {
             </SelectTrigger>
             <SelectContent>
               {sets.length === 0 ? (
-                <div className="p-2 text-xs text-muted-foreground">
+                <div className="p-2 text-xs text-[#6B7280]">
                   {t('multipleChoice.noResponseSet')}
                 </div>
               ) : (
