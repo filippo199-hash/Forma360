@@ -41,8 +41,8 @@ export function ItemDetail() {
   if (item === null) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center">
-        <FileQuestion className="h-12 w-12 text-[#D1D5DB]" />
-        <p className="text-sm text-[#9CA3AF]">{t('detail.empty')}</p>
+        <FileQuestion className="h-12 w-12 text-muted-foreground/50" />
+        <p className="text-sm text-muted-foreground">{t('detail.empty')}</p>
       </div>
     );
   }
@@ -52,11 +52,11 @@ export function ItemDetail() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="border-b border-[#E5E7EB] px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+      <div className="border-b px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t('detail.title')}
         </p>
-        <p className="mt-0.5 text-sm font-medium text-[#111827]">{typeLabel}</p>
+        <p className="mt-0.5 text-sm font-medium text-foreground">{typeLabel}</p>
       </div>
 
       {/* Body */}
@@ -117,8 +117,8 @@ function VisibilitySection({ item }: { item: Item }) {
 
   return (
     <div className="space-y-2">
-      <div className="border-t border-[#E5E7EB] pt-4">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+      <div className="border-t pt-4">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t('toggle')}
         </p>
         <VisibilityControl item={item} allItemsBefore={prior} />
@@ -185,7 +185,7 @@ function CommonFields({ item }: { item: Item }) {
               dispatch({ type: 'updateItem', itemId: item.id, patch: { required: v } })
             }
           />
-          <Label htmlFor={`req-${item.id}`} className="text-sm text-[#111827]">
+          <Label htmlFor={`req-${item.id}`} className="text-sm text-foreground">
             {t('requiredLabel')}
           </Label>
         </div>
@@ -206,8 +206,8 @@ function CommonFields({ item }: { item: Item }) {
       </div>
 
       {/* Type settings header */}
-      <div className="border-t border-[#E5E7EB] pt-3">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+      <div className="border-t pt-3">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t('detail.title')}
         </p>
       </div>
@@ -431,7 +431,7 @@ function TypeSpecificFields({ item }: { item: Item }) {
           <div className="space-y-1.5">
             {item.slots.map((slot, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                <span className="text-xs text-[#6B7280]">#{idx + 1}</span>
+                <span className="text-xs text-muted-foreground">#{idx + 1}</span>
                 <Input
                   value={slot.label ?? ''}
                   placeholder={t('signature.slotLabel')}
@@ -518,7 +518,7 @@ function TypeSpecificFields({ item }: { item: Item }) {
             </SelectTrigger>
             <SelectContent>
               {sets.length === 0 ? (
-                <div className="p-2 text-xs text-[#6B7280]">
+                <div className="p-2 text-xs text-muted-foreground">
                   {t('multipleChoice.noResponseSet')}
                 </div>
               ) : (

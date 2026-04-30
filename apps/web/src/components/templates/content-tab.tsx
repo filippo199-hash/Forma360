@@ -53,14 +53,14 @@ export function ContentTab() {
       <PagesSidebar />
 
       {/* Centre canvas */}
-      <div className="flex-1 overflow-y-auto bg-[#F5F6F8] p-6">
+      <div className="flex-1 overflow-y-auto bg-muted/30 p-6">
         {selectedPage !== null ? (
           <PageCanvas page={selectedPage} />
         ) : null}
       </div>
 
       {/* Right panel */}
-      <div className="w-80 shrink-0 overflow-y-auto border-l border-[#E5E7EB] bg-white">
+      <div className="w-80 shrink-0 overflow-y-auto border-l bg-background">
         <ItemDetail />
       </div>
     </>
@@ -93,8 +93,8 @@ function PagesSidebar() {
     .map((p) => p.id);
 
   return (
-    <div className="flex w-60 shrink-0 flex-col overflow-hidden border-r border-[#E5E7EB] bg-white">
-      <p className="px-4 pb-2 pt-4 text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+    <div className="flex w-60 shrink-0 flex-col overflow-hidden border-r bg-background">
+      <p className="px-4 pb-2 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {t('pages')}
       </p>
 
@@ -116,11 +116,11 @@ function PagesSidebar() {
         </nav>
       </DndContext>
 
-      <div className="border-t border-[#E5E7EB] p-2">
+      <div className="border-t p-2">
         <Button
           variant="ghost"
           size="sm"
-          className="w-full text-[#00B47E] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+          className="w-full text-primary hover:bg-accent hover:text-primary"
           onClick={() => dispatch({ type: 'addInspectionPage' })}
           aria-label={t('pagesTab.addPageButton')}
         >
@@ -144,13 +144,13 @@ function TitlePageRow({ page }: { page: Page }) {
         onClick={() => dispatch({ type: 'selectPage', pageId: page.id })}
         className={`flex h-9 w-full items-start rounded-md px-2 py-1 text-left text-sm transition-colors ${
           isActive
-            ? 'border-l-2 border-[#00B47E] bg-[#F0FBF7] text-[#00B47E]'
-            : 'hover:bg-[#F9FAFB]'
+            ? 'border-l-2 border-primary bg-accent text-accent-foreground'
+            : 'hover:bg-accent/60'
         }`}
       >
         <div className="flex min-w-0 flex-col">
           <span className="truncate font-medium leading-tight">{page.title}</span>
-          <span className="truncate text-[10px] text-[#6B7280]">{t('titlePageBadge')}</span>
+          <span className="truncate text-[10px] text-muted-foreground">{t('titlePageBadge')}</span>
         </div>
       </button>
       {/* Sub-rows for sections when selected */}
@@ -181,15 +181,15 @@ function SortablePageRow({ page }: { page: Page }) {
       <div
         className={`flex h-9 items-center gap-1 rounded-md transition-colors ${
           isActive
-            ? 'border-l-2 border-[#00B47E] bg-[#F0FBF7] text-[#00B47E]'
-            : 'hover:bg-[#F9FAFB]'
+            ? 'border-l-2 border-primary bg-accent text-accent-foreground'
+            : 'hover:bg-accent/60'
         }`}
       >
         <button
           type="button"
           {...attributes}
           {...listeners}
-          className="shrink-0 cursor-grab px-1 text-[#9CA3AF]"
+          className="shrink-0 cursor-grab px-1 text-muted-foreground"
           aria-label={t('pagesTab.dragHandleLabel')}
         >
           <GripVertical className="h-3.5 w-3.5" />
@@ -200,7 +200,7 @@ function SortablePageRow({ page }: { page: Page }) {
           className="flex min-w-0 flex-1 items-center justify-between gap-1 pr-1 text-left"
         >
           <span className="truncate text-sm font-medium leading-tight">{page.title}</span>
-          <span className="shrink-0 rounded bg-[#F3F4F6] px-1 py-0.5 text-[10px] text-[#6B7280]">
+          <span className="shrink-0 rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
             {sectionCount}
           </span>
         </button>
@@ -222,7 +222,7 @@ function SectionSubRow({ section }: { section: Section }) {
         const el = document.getElementById(`section-${section.id}`);
         if (el !== null) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }}
-      className="flex h-7 w-full items-center truncate pl-6 pr-2 text-left text-xs text-[#6B7280] hover:bg-[#F9FAFB]"
+      className="flex h-7 w-full items-center truncate pl-6 pr-2 text-left text-xs text-muted-foreground hover:bg-accent/60"
     >
       <span className="truncate">{section.title}</span>
     </button>
@@ -242,7 +242,7 @@ function PageCanvas({ page }: { page: Page }) {
   return (
     <div className="space-y-4">
       {/* Page header card */}
-      <div className="rounded-lg bg-white p-4" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+      <div className="rounded-md border bg-card p-3 shadow-sm">
         <div className="flex items-start justify-between gap-2">
           <input
             type="text"
@@ -250,14 +250,14 @@ function PageCanvas({ page }: { page: Page }) {
             onChange={(e) =>
               dispatch({ type: 'updatePage', pageId: page.id, patch: { title: e.target.value } })
             }
-            className="flex-1 bg-transparent text-xl font-semibold text-[#111827] outline-none"
+            className="flex-1 bg-transparent text-xl font-semibold text-foreground outline-none"
             aria-label={t('pagesTab.pageTitleLabel')}
           />
           {canDelete ? (
             <Button
               variant="ghost"
               size="sm"
-              className="shrink-0 text-[#6B7280] hover:text-red-600"
+              className="shrink-0 text-muted-foreground hover:text-destructive"
               onClick={() => {
                 if (window.confirm(t('confirmDeletePage'))) {
                   dispatch({ type: 'deletePage', pageId: page.id });
@@ -276,7 +276,7 @@ function PageCanvas({ page }: { page: Page }) {
           }
           placeholder={t('pagesTab.pageDescriptionLabel')}
           rows={2}
-          className="mt-1 w-full resize-none bg-transparent text-sm text-[#6B7280] outline-none"
+          className="mt-1 w-full resize-none bg-transparent text-sm text-muted-foreground outline-none"
           aria-label={t('pagesTab.pageDescriptionLabel')}
         />
       </div>
@@ -296,7 +296,6 @@ function PageCanvas({ page }: { page: Page }) {
       <Button
         variant="outline"
         size="sm"
-        className="border-[#00B47E] text-[#00B47E] hover:bg-[#F0FBF7]"
         onClick={() => dispatch({ type: 'addSection', pageId: page.id })}
         aria-label={t('addSection')}
       >
@@ -342,12 +341,11 @@ function SectionCard({
   return (
     <div
       id={`section-${section.id}`}
-      className="rounded-lg bg-white"
-      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+      className="rounded-md border bg-card shadow-sm"
     >
       {/* Section header */}
-      <div className="flex items-center gap-2 border-b border-[#E5E7EB] px-3 py-2">
-        <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-[#9CA3AF]" />
+      <div className="flex items-center gap-2 border-b px-3 py-2">
+        <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" />
         <input
           type="text"
           value={section.title}
@@ -359,14 +357,14 @@ function SectionCard({
               patch: { title: e.target.value },
             })
           }
-          className="flex-1 bg-transparent text-sm font-medium text-[#111827] outline-none"
+          className="flex-1 bg-transparent text-sm font-medium text-foreground outline-none"
           aria-label={t('sectionTitle')}
         />
         {sectionTotal > 1 ? (
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 shrink-0 p-0 text-[#9CA3AF] hover:text-red-600"
+            className="h-6 w-6 shrink-0 p-0 text-muted-foreground hover:text-destructive"
             onClick={() => {
               if (window.confirm(t('confirmDeleteSection'))) {
                 dispatch({ type: 'deleteSection', pageId, sectionId: section.id });
@@ -420,23 +418,23 @@ function SortableItem({ item }: { item: Item }) {
     <li
       ref={setNodeRef}
       style={style}
-      className={`group flex h-12 items-center gap-2 border-b border-[#E5E7EB] px-3 transition-colors last:border-b-0 ${
+      className={`group flex h-12 items-center gap-2 border-b px-3 transition-colors last:border-b-0 ${
         isSelected
-          ? 'border-l-2 border-l-[#00B47E] bg-[#F0FBF7]'
-          : 'hover:bg-[#F9FAFB]'
+          ? 'border-l-2 border-l-primary bg-accent'
+          : 'hover:bg-accent/60'
       }`}
     >
       <button
         type="button"
         {...attributes}
         {...listeners}
-        className="shrink-0 cursor-grab text-[#9CA3AF] opacity-0 transition-opacity group-hover:opacity-100"
+        className="shrink-0 cursor-grab text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
         aria-label="drag"
       >
         <GripVertical className="h-3.5 w-3.5" />
       </button>
       {/* Type badge */}
-      <span className="shrink-0 rounded bg-[#F3F4F6] px-1 py-0.5 text-[10px] font-medium uppercase text-[#6B7280]">
+      <span className="shrink-0 rounded bg-muted px-1 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
         {typeLabel.slice(0, 2)}
       </span>
       <button
@@ -444,12 +442,12 @@ function SortableItem({ item }: { item: Item }) {
         onClick={() => dispatch({ type: 'selectItem', itemId: item.id })}
         className="flex min-w-0 flex-1 items-center text-left"
       >
-        <span className="truncate text-sm text-[#111827]">{label}</span>
+        <span className="truncate text-sm text-foreground">{label}</span>
       </button>
       <Button
         variant="ghost"
         size="sm"
-        className="h-6 w-6 shrink-0 p-0 text-[#9CA3AF] opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
+        className="h-6 w-6 shrink-0 p-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
         onClick={() => {
           if (window.confirm(t('confirmDeleteItem'))) {
             dispatch({ type: 'deleteItem', itemId: item.id });
@@ -519,7 +517,7 @@ function AddItemPopover({
         <Button
           variant="ghost"
           size="sm"
-          className="text-[#00B47E] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+          className="text-primary hover:bg-accent hover:text-primary"
           aria-label={t('addItem')}
         >
           <Plus className="mr-1 h-3.5 w-3.5" />
@@ -527,7 +525,7 @@ function AddItemPopover({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-56 p-1" align="start">
-        <div className="px-2 py-1 text-[10px] font-semibold uppercase text-[#6B7280]">
+        <div className="px-2 py-1 text-[10px] font-semibold uppercase text-muted-foreground">
           {tCat('common')}
         </div>
         {common.map((type) => (
@@ -535,14 +533,14 @@ function AddItemPopover({
             key={type}
             type="button"
             onClick={() => handleAdd(type)}
-            className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-[#111827] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+            className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-accent hover:text-primary"
           >
             {tType(type as Parameters<typeof tType>[0])}
           </button>
         ))}
         {isTitlePage ? (
           <>
-            <div className="mt-1 px-2 py-1 text-[10px] font-semibold uppercase text-[#6B7280]">
+            <div className="mt-1 px-2 py-1 text-[10px] font-semibold uppercase text-muted-foreground">
               {tCat('titlePage')}
             </div>
             {titlePageOnly.map((type) => (
@@ -550,14 +548,14 @@ function AddItemPopover({
                 key={type}
                 type="button"
                 onClick={() => handleAdd(type)}
-                className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-[#111827] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+                className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-accent hover:text-primary"
               >
                 {tType(type as Parameters<typeof tType>[0])}
               </button>
             ))}
           </>
         ) : null}
-        <div className="mt-1 px-2 py-1 text-[10px] font-semibold uppercase text-[#6B7280]">
+        <div className="mt-1 px-2 py-1 text-[10px] font-semibold uppercase text-muted-foreground">
           {tCat('advanced')}
         </div>
         {advanced.map((type) => (
@@ -565,7 +563,7 @@ function AddItemPopover({
             key={type}
             type="button"
             onClick={() => handleAdd(type)}
-            className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-[#111827] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+            className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-accent hover:text-primary"
           >
             {tType(type as Parameters<typeof tType>[0])}
           </button>

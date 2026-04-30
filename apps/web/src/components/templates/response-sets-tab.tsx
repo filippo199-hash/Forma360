@@ -41,14 +41,14 @@ export function ResponseSetsTab() {
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden">
       {/* Left panel */}
-      <div className="flex w-60 shrink-0 flex-col border-r border-[#E5E7EB] bg-white">
-        <p className="px-4 pb-2 pt-4 text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
+      <div className="flex w-60 shrink-0 flex-col border-r bg-background">
+        <p className="px-4 pb-2 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t('nameLabel')}
         </p>
 
         <div className="flex-1 overflow-y-auto px-2 pb-2">
           {sets.length === 0 ? (
-            <p className="px-2 py-3 text-xs text-[#9CA3AF]">{t('empty')}</p>
+            <p className="px-2 py-3 text-xs text-muted-foreground">{t('empty')}</p>
           ) : (
             sets.map((set) => {
               const isSelected = set.id === selectedSetId;
@@ -59,14 +59,14 @@ export function ResponseSetsTab() {
                   onClick={() => setSelectedSetId(set.id)}
                   className={`flex h-11 w-full items-center justify-between rounded-md px-2 text-left text-sm transition-colors ${
                     isSelected
-                      ? 'bg-[#F0FBF7] text-[#00B47E]'
-                      : 'text-[#111827] hover:bg-[#F9FAFB]'
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-foreground hover:bg-accent/60'
                   }`}
                 >
                   <span className="truncate font-medium">{set.name}</span>
                   <span
                     className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${
-                      isSelected ? 'bg-[#D1FAE5] text-[#059669]' : 'bg-[#F3F4F6] text-[#6B7280]'
+                      isSelected ? 'bg-emerald-100 text-emerald-700' : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {set.options.length}
@@ -77,11 +77,11 @@ export function ResponseSetsTab() {
           )}
         </div>
 
-        <div className="border-t border-[#E5E7EB] p-2">
+        <div className="border-t p-2">
           <Button
             variant="ghost"
             size="sm"
-            className="w-full text-[#00B47E] hover:bg-[#F0FBF7] hover:text-[#00B47E]"
+            className="w-full text-primary hover:bg-accent hover:text-primary"
             onClick={handleAdd}
             aria-label={t('addButton')}
           >
@@ -95,7 +95,7 @@ export function ResponseSetsTab() {
       <div className="flex-1 overflow-y-auto p-6">
         {selectedSet === null ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-[#9CA3AF]">{t('empty')}</p>
+            <p className="text-sm text-muted-foreground">{t('empty')}</p>
           </div>
         ) : (
           <div className="mx-auto max-w-xl space-y-6">
@@ -132,7 +132,7 @@ export function ResponseSetsTab() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="pb-1 text-[#9CA3AF] hover:text-red-600"
+                className="pb-1 text-muted-foreground hover:text-destructive"
                 onClick={() => {
                   dispatch({ type: 'deleteResponseSet', setId: selectedSet.id });
                   setSelectedSetId(
@@ -148,11 +148,11 @@ export function ResponseSetsTab() {
             {/* Options list */}
             <div className="space-y-2">
               <Label>{t('optionsLabel')}</Label>
-              <div className="rounded-lg border border-[#E5E7EB] bg-white">
+              <div className="rounded-md border bg-card">
                 {selectedSet.options.map((opt, optIdx) => (
                   <div
                     key={opt.id}
-                    className="flex items-center gap-2 border-b border-[#E5E7EB] px-3 py-2 last:border-b-0"
+                    className="flex items-center gap-2 border-b px-3 py-2 last:border-b-0"
                   >
                     <Input
                       value={opt.label}
@@ -181,7 +181,7 @@ export function ResponseSetsTab() {
                           })
                         }
                       />
-                      <Label htmlFor={`flag-${opt.id}`} className="text-xs text-[#6B7280]">
+                      <Label htmlFor={`flag-${opt.id}`} className="text-xs text-muted-foreground">
                         {t('flaggedLabel')}
                       </Label>
                     </div>
@@ -189,7 +189,7 @@ export function ResponseSetsTab() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0 text-[#9CA3AF] hover:text-red-600"
+                        className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                         onClick={() =>
                           dispatch({
                             type: 'deleteResponseOption',
@@ -210,7 +210,6 @@ export function ResponseSetsTab() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#00B47E] text-[#00B47E] hover:bg-[#F0FBF7]"
                 onClick={() =>
                   dispatch({ type: 'addResponseOption', setId: selectedSet.id })
                 }

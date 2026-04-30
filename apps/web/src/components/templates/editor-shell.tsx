@@ -91,10 +91,10 @@ export function EditorShell({ templateId }: { templateId: string }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#F5F6F8]">
+    <div className="fixed inset-0 z-50 flex flex-col bg-muted/30">
       {/* ─── Top bar ─────────────────────────────────────────────────────── */}
       <header
-        className="flex h-[60px] shrink-0 items-center border-b border-[#E5E7EB] bg-white px-4"
+        className="flex h-[60px] shrink-0 items-center border-b bg-background px-4"
         style={{ gap: 0 }}
       >
         {/* Left group */}
@@ -103,27 +103,27 @@ export function EditorShell({ templateId }: { templateId: string }) {
             variant="ghost"
             size="sm"
             asChild
-            className="shrink-0 text-[#6B7280] hover:text-[#111827]"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
           >
             <Link href={`/${locale}/templates`}>← {t('backToList')}</Link>
           </Button>
-          <span className="shrink-0 text-[#9CA3AF]">/</span>
+          <span className="shrink-0 text-muted-foreground">/</span>
           <input
             type="text"
             value={state.content.title}
             onChange={(e) =>
               dispatch({ type: 'updateContentTitle', title: e.target.value })
             }
-            className="min-w-0 flex-1 truncate bg-transparent text-sm font-medium text-[#111827] outline-none"
+            className="min-w-0 flex-1 truncate bg-transparent text-sm font-medium text-foreground outline-none"
             aria-label={t('settingsTab.templateTitleLabel')}
           />
           {/* Status badge */}
           {state.isDirty ? (
-            <span className="shrink-0 rounded-full bg-[#FEF3C7] px-2 py-0.5 text-xs font-medium text-[#D97706]">
+            <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
               {tStatus('draft')}
             </span>
           ) : (
-            <span className="shrink-0 rounded-full bg-[#D1FAE5] px-2 py-0.5 text-xs font-medium text-[#059669]">
+            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
               {tStatus('published')}
             </span>
           )}
@@ -138,8 +138,8 @@ export function EditorShell({ templateId }: { templateId: string }) {
               onClick={() => setActiveTab(tab.id)}
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-[#F0FBF7] text-[#00B47E]'
-                  : 'text-[#6B7280] hover:bg-[#F5F6F8] hover:text-[#111827]'
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -162,7 +162,6 @@ export function EditorShell({ templateId }: { templateId: string }) {
             size="sm"
             onClick={() => setShowPublishConfirm(true)}
             disabled={publish.isPending}
-            className="bg-[#00B47E] text-white hover:bg-[#00A370]"
             aria-label={t('publishButton')}
           >
             {t('publishButton')}
