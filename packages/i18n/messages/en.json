@@ -590,7 +590,8 @@
         "multipleSelectionLabel": "Multiple selection",
         "flaggedLabel": "Flagged",
         "optionLabel": "Option label",
-        "closeLabel": "Close"
+        "closeLabel": "Close",
+        "setNamePlaceholder": "e.g. Pass / Fail / N/A"
       },
       "clickToUploadLogo": "Click to upload logo",
       "uploadingLogo": "Uploading…"

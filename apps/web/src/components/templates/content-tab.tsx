@@ -1183,24 +1183,22 @@ function TypeOfResponsePicker({
   }
 
   function handleCreateNewSet() {
-    // Build a sensible default set and attach to the current item in-place.
+    // Create a blank-slate set so the user explicitly defines what options
+    // they want — no Yes/No/N/A presets to mislead them. One placeholder
+    // row is kept because the schema requires at least one option; the user
+    // renames it (or deletes + adds new) in the Sheet that opens next.
     const newSetId = newId();
     dispatch({
       type: 'addResponseSet',
       set: {
         id: newSetId,
-        name: 'New response set',
+        name: '',
         sourceGlobalId: null,
         multiSelect: false,
-        options: [
-          { id: newId(), label: 'Yes', flagged: false },
-          { id: newId(), label: 'No', flagged: true },
-          { id: newId(), label: 'N/A', flagged: false },
-        ],
+        options: [{ id: newId(), label: 'Option 1', flagged: false }],
       },
     });
-    // Attach (or swap) the set onto the current item. We do this without
-    // closing the popover so the user can keep editing immediately.
+    // Attach (or swap) the set onto the current item.
     if (item.type === 'multipleChoice') {
       dispatch({
         type: 'updateItem',
@@ -1208,8 +1206,6 @@ function TypeOfResponsePicker({
         patch: { responseSetId: newSetId } as Partial<Item>,
       });
     } else {
-      // Inline equivalent of `replaceItemType('multipleChoice', newSetId)`
-      // that does NOT close the popover.
       const savedPrompt =
         item.type === 'instruction' ? item.body : 'prompt' in item ? item.prompt : 'New question';
       dispatch({ type: 'deleteItem', itemId: item.id });
@@ -1221,6 +1217,9 @@ function TypeOfResponsePicker({
       dispatch({ type: 'addItem', pageId, sectionId, item: newItem });
       dispatch({ type: 'selectItem', itemId: newItem.id });
     }
+    // Close the picker popover and open the manage Sheet so the user is
+    // looking at exactly one surface — the set they're about to build.
+    setOpen(false);
     setEditingSetId(newSetId);
   }
 
@@ -1410,6 +1409,8 @@ function ResponseSetManageSheet({
               <Input
                 id={`set-name-${set.id}`}
                 value={set.name}
+                placeholder={tPicker('setNamePlaceholder')}
+                autoFocus={set.name === ''}
                 onChange={(e) =>
                   dispatch({
                     type: 'updateResponseSet',
