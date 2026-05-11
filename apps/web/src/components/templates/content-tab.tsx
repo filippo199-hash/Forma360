@@ -285,64 +285,39 @@ function SortablePageBlock({
   );
 }
 
-// ─── Section navigator ───────────────────────────────────────────────────────
+// ─── Page navigator ──────────────────────────────────────────────────────────
 
 /**
- * Sticky "table of contents" rail anchored to the left gutter. Lists every
- * section across every page; clicking one scrolls its card into view.
- * Especially useful on long templates where the canvas can run dozens of
- * sections tall. Replaces the old "+ Question / + Section" floating toolbar
- * — both add affordances are already available inline at the page/section
- * level so they don't need a duplicate entry point here.
+ * Sticky list of page titles anchored to the left gutter. No card, no
+ * header, no subsections — just plain clickable labels that scroll their
+ * page card into view. Easy way to jump around long templates.
  */
 function SectionNavigator() {
-  const t = useTranslations('templates.editor');
   const { state } = useEditor();
 
-  function scrollTo(sectionId: string) {
-    const el = document.getElementById(`section-${sectionId}`);
+  function scrollTo(pageId: string) {
+    const el = document.getElementById(`page-${pageId}`);
     if (el !== null) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  const hasAnySections = state.content.pages.some((p) => p.sections.length > 0);
-  if (!hasAnySections) return null;
+  if (state.content.pages.length === 0) return null;
 
   return (
-    <div className="absolute left-4 top-8 z-10">
-      <div className="sticky top-8 w-44 overflow-hidden rounded-xl border bg-background shadow-sm">
-        <div className="border-b px-3 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {t('sectionsNavTitle')}
-        </div>
-        <div className="max-h-[calc(100vh-10rem)] overflow-y-auto py-1">
-          {state.content.pages.map((page) => {
-            if (page.sections.length === 0) return null;
-            return (
-              <div key={page.id} className="border-b last:border-b-0">
-                <div
-                  className="truncate px-3 pb-0.5 pt-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
-                  title={page.title}
-                >
-                  {page.title}
-                </div>
-                <ul className="pb-1.5">
-                  {page.sections.map((s) => (
-                    <li key={s.id}>
-                      <button
-                        type="button"
-                        onClick={() => scrollTo(s.id)}
-                        className="block w-full truncate px-3 py-1.5 text-left text-xs text-foreground hover:bg-accent hover:text-accent-foreground"
-                        title={s.title}
-                      >
-                        {s.title === '' ? t('sectionsNavUntitled') : s.title}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+    <div className="absolute left-4 top-10 z-10">
+      <ul className="sticky top-10 w-48 space-y-1">
+        {state.content.pages.map((page) => (
+          <li key={page.id}>
+            <button
+              type="button"
+              onClick={() => scrollTo(page.id)}
+              className="block w-full truncate rounded px-2 py-1 text-left text-sm text-muted-foreground hover:text-foreground"
+              title={page.title}
+            >
+              {page.title}
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -516,7 +491,10 @@ function PageBlock({
   const canDelete = page.type !== 'title' && inspectionPageCount > 1;
 
   return (
-    <div className="rounded-lg border border-border/60 bg-card shadow-sm">
+    <div
+      id={`page-${page.id}`}
+      className="scroll-mt-8 rounded-lg border border-border/60 bg-card shadow-sm"
+    >
       {/* Page header */}
       <div className="flex items-center gap-2 px-5 py-4">
         {/* Drag handle — inspection pages only */}
