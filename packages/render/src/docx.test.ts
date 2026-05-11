@@ -24,6 +24,7 @@ const MIGRATION_FILES = [
   '0005_phase2_inspections.sql',
   '0006_phase2_schedules.sql',
   '0007_inspections_archived_at.sql',
+  '0008_invitations.sql',
 ];
 
 async function bootDb() {

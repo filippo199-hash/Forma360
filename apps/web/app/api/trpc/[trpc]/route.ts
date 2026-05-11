@@ -13,15 +13,19 @@
 import { buildAppRouter } from '@forma360/api';
 import { isId } from '@forma360/shared/id';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
+import { authDeps } from '../../../../src/server/auth-deps';
 import { exportsDeps } from '../../../../src/server/exports-deps';
 import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { createContext } from '../../../../src/server/trpc';
+// Side-effect import: wires the users router's invite email + appUrl deps.
+import '../../../../src/server/users-deps';
 
 // Build the router once with production dependencies (R2-backed
 // renderers, HMAC-signed render tokens, APP_URL-based share URLs).
 const appRouter = buildAppRouter({
   exports: exportsDeps,
   inspectionsExport: inspectionsExportDeps,
+  auth: authDeps,
 });
 
 async function handler(req: Request): Promise<Response> {

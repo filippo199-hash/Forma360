@@ -10,3 +10,5 @@ export { createContextFactory, createTestContext, type Context } from './context
 export { createCallerFactory } from './trpc';
 export type { ExportsRouterDeps } from './routers/exports';
 export type { InspectionsExportDeps } from './routers/inspectionsExport';
+export type { AuthRouterDeps } from './routers/auth';
+export { setUsersRouterDeps, type UsersRouterDeps } from './routers/users';

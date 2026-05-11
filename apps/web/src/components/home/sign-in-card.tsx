@@ -1,21 +1,22 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 
 /**
  * Sign-in form. Posts to better-auth's /api/auth/sign-in/email endpoint.
- * Phase 0 deliberately uses fetch directly rather than better-auth's React
- * client so we keep the footprint minimal; the richer sign-up / MFA flows
- * land in Phase 1 with the full auth client.
+ * Self-serve sign-up lives at `/sign-up`; the bottom of this card links
+ * over there.
  */
 export function SignInCard() {
   const t = useTranslations('auth.signIn');
   const tCommon = useTranslations('common');
+  const locale = useLocale();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,14 +52,6 @@ export function SignInCard() {
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>{t('title')}</CardTitle>
-        {/*
-         * Self-serve sign-up is intentionally disabled during the private
-         * demo — new tenants are provisioned via the bootstrap-tenant
-         * script (see packages/db/src/scripts/bootstrap-tenant.ts) and new
-         * users come in through the invite flow. Re-enable this card's
-         * "Sign up" link once the signup-creates-tenant page lands.
-         */}
-        <CardDescription>{t('inviteOnly')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -93,6 +86,15 @@ export function SignInCard() {
             {pending ? tCommon('loading') : t('submit')}
           </Button>
         </form>
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          {t('noAccountQuestion')}{' '}
+          <Link
+            href={`/${locale}/sign-up`}
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            {t('signUpLink')}
+          </Link>
+        </p>
       </CardContent>
     </Card>
   );

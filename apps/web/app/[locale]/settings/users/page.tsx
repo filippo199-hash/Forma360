@@ -2,8 +2,14 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
@@ -11,20 +17,42 @@ import { trpc } from '../../../../src/lib/trpc/client';
 
 /**
  * Users admin page. Three capabilities:
- *   - invite (opens the invite panel)
+ *   - invite (opens the invite panel) — emails the invitee on submit
  *   - per-row deactivate / reactivate / anonymise
  *   - CSV import (dialog) + CSV export (one-click download)
+ *
+ * Below the existing users table we render a "Pending invitations"
+ * section backed by `users.listInvitations`. Each row offers Resend
+ * (which re-issues the invite with a refreshed token / TTL) and
+ * Cancel (hard-delete of the invitations row).
  */
 export default function UsersPage() {
   const t = useTranslations('settings.users');
+  const tInvitations = useTranslations('settings.users.invitations');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.users.list.useQuery({});
   const { data: sets } = trpc.permissions.list.useQuery();
+  const invitationsQuery = trpc.users.listInvitations.useQuery();
+
   const invite = trpc.users.invite.useMutation({
-    onSuccess: () => {
+    onSuccess: (_result, vars) => {
       void utils.users.list.invalidate();
+      void utils.users.listInvitations.invalidate();
       setShowInvite(false);
+      toast.success(t('inviteSentToast', { email: vars.email }));
+    },
+  });
+  const cancelInvite = trpc.users.cancelInvite.useMutation({
+    onSuccess: () => {
+      void utils.users.listInvitations.invalidate();
+      toast.success(tInvitations('cancelSuccess'));
+    },
+  });
+  const resendInvite = trpc.users.invite.useMutation({
+    onSuccess: (_result, vars) => {
+      void utils.users.listInvitations.invalidate();
+      toast.success(tInvitations('resendSuccess', { email: vars.email }));
     },
   });
   const deactivate = trpc.users.deactivate.useMutation({
@@ -46,6 +74,24 @@ export default function UsersPage() {
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  // We need a permission set id to resend. Pick the same set the
+  // invitation row was issued with; the backend already validates it
+  // belongs to the tenant.
+  function onResend(payload: {
+    email: string;
+    name: string | null;
+    permissionSetId: string;
+  }) {
+    resendInvite.mutate({
+      email: payload.email,
+      ...(payload.name !== null ? { name: payload.name } : {}),
+      permissionSetId: payload.permissionSetId,
+    });
+  }
+
+  const invitations = invitationsQuery.data?.invitations ?? [];
+  const userById = new Map((data?.users ?? []).map((u) => [u.id, u]));
 
   return (
     <div className="space-y-6">
@@ -115,6 +161,90 @@ export default function UsersPage() {
                     </td>
                   </tr>
                 ))
+              )}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{tInvitations('title')}</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-muted/40">
+              <tr className="text-left">
+                <th className="px-3 py-2 font-medium">{tInvitations('headerEmail')}</th>
+                <th className="px-3 py-2 font-medium">{tInvitations('headerName')}</th>
+                <th className="px-3 py-2 font-medium">{tInvitations('headerExpires')}</th>
+                <th className="px-3 py-2 text-right font-medium">
+                  {tInvitations('headerActions')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {invitationsQuery.isLoading ? (
+                <tr>
+                  <td colSpan={4} className="p-4">
+                    <Skeleton className="h-4 w-full" />
+                  </td>
+                </tr>
+              ) : invitations.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-3 py-6 text-center text-sm text-muted-foreground"
+                  >
+                    {tInvitations('emptyState')}
+                  </td>
+                </tr>
+              ) : (
+                invitations.map((inv) => {
+                  const inviter = userById.get(inv.invitedByUserId);
+                  return (
+                    <tr key={inv.id} className="border-b last:border-0">
+                      <td className="px-3 py-2 font-mono text-xs">{inv.email}</td>
+                      <td className="px-3 py-2">
+                        <div>{inv.name ?? ''}</div>
+                        {inviter !== undefined ? (
+                          <div className="text-xs text-muted-foreground">
+                            {tInvitations('invitedBy', { name: inviter.name })}
+                          </div>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
+                        {tInvitations('expiresAt', {
+                          time: new Date(inv.expiresAt).toLocaleString(),
+                        })}
+                      </td>
+                      <td className="space-x-1 px-3 py-2 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            onResend({
+                              email: inv.email,
+                              name: inv.name,
+                              permissionSetId: inv.permissionSetId,
+                            })
+                          }
+                          disabled={resendInvite.isPending}
+                        >
+                          {tInvitations('resendButton')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => cancelInvite.mutate({ invitationId: inv.id })}
+                          disabled={cancelInvite.isPending}
+                        >
+                          {tInvitations('cancelButton')}
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

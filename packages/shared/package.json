@@ -28,6 +28,10 @@
       "types": "./src/email.ts",
       "default": "./src/email.ts"
     },
+    "./email-domains": {
+      "types": "./src/email-domains.ts",
+      "default": "./src/email-domains.ts"
+    },
     "./csv": {
       "types": "./src/csv.ts",
       "default": "./src/csv.ts"

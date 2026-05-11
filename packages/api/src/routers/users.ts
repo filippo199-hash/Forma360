@@ -6,10 +6,13 @@
  *   - get (users.view)          — one user + their custom-field values.
  *   - updateProfile (self)      — name; available to every authed user
  *                                 on their own row (no `users.manage`).
- *   - invite (users.invite)     — creates a user shell with default
- *                                 permission set and `deactivatedAt=null`;
- *                                 the email invite itself is wired by the
- *                                 CSV import flow in a later PR.
+ *   - invite (users.invite)     — creates an `invitations` row + sends
+ *                                 the invite email. Re-uses an existing
+ *                                 active invite for the same email if
+ *                                 one exists (refreshes the token + ttl).
+ *   - cancelInvite (users.invite)    — deletes the invitations row.
+ *   - listInvitations (users.view)   — lists active (un-accepted,
+ *                                 un-expired) invitations.
  *   - deactivate (users.deactivate) — sets deactivatedAt, runs S-E02
  *                                 last-admin guard.
  *   - reactivate (users.manage) — clears deactivatedAt.
@@ -17,21 +20,25 @@
  *                                 deactivates + logs.
  *   - setCustomFieldValue (users.manage) — upserts one value.
  */
+import { randomBytes } from 'node:crypto';
 import {
   customUserFields,
   groupMembers,
   groups,
+  invitations,
   permissionSets,
   siteMembers,
   sites,
+  tenants,
   user,
   userCustomFieldValues,
 } from '@forma360/db/schema';
 import { wouldDropBelowMinAdmins } from '@forma360/permissions/admins';
 import { parseCsv, toCsv } from '@forma360/shared/csv';
+import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -43,6 +50,42 @@ const listInput = z
     includeDeactivated: z.boolean().default(false),
   })
   .default({});
+
+/**
+ * Mutable side-channel for the few mutations on this router that need to
+ * dispatch email (the invite flow). The web app populates this at boot
+ * via `setUsersRouterDeps`; tests that exercise invite-by-email
+ * populate it themselves before building the router. By default, no
+ * email is sent and the row is just persisted — keeps non-invite tests
+ * working without wiring a dispatcher.
+ */
+export interface UsersRouterDeps {
+  sendEmail: SendTemplatedEmail | null;
+  appUrl: string;
+}
+
+const usersDeps: UsersRouterDeps = {
+  sendEmail: null,
+  appUrl: 'http://localhost:3000',
+};
+
+/**
+ * Wire (or rewire) the email + appUrl deps used by users.invite. Called
+ * from `apps/web/src/server/users-deps.ts` at boot, and from tests that
+ * need to observe the invite email payload.
+ */
+export function setUsersRouterDeps(deps: UsersRouterDeps): void {
+  usersDeps.sendEmail = deps.sendEmail;
+  usersDeps.appUrl = deps.appUrl;
+}
+
+/** Seven-day TTL on a freshly-issued invitation. */
+const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** 64-hex random token (32 bytes → 64 hex chars). */
+function newInviteToken(): string {
+  return randomBytes(32).toString('hex');
+}
 
 export const usersRouter = router({
   list: tenantProcedure
@@ -137,29 +180,188 @@ export const usersRouter = router({
       return { ok: true as const };
     }),
 
+  /**
+   * Create or refresh an invitation. Inserts into `invitations`; does
+   * NOT create a user row (that happens when the invitee accepts).
+   *
+   * If an active (un-accepted) invitation already exists for the same
+   * (tenant, email) we update it in place — new token, new 7-day ttl,
+   * permissionSet / name overwritten — and email the refreshed link.
+   * This means re-inviting is idempotent and never produces duplicate
+   * row collisions against the partial unique index.
+   */
   invite: tenantProcedure
     .use(requirePermission('users.invite'))
     .input(
       z.object({
         email: z.string().email(),
-        name: z.string().min(1).max(120),
+        name: z.string().min(1).max(120).optional(),
         permissionSetId: z.string().length(26),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const id = `usr_${newId()}`;
-      await ctx.db.insert(user).values({
-        id,
-        tenantId: ctx.tenantId,
-        name: input.name,
-        email: input.email,
-        permissionSetId: input.permissionSetId,
-        emailVerified: false,
-      });
-      ctx.logger.info({ userId: id }, '[users] invited');
-      // Invite email is sent by the CSV-import flow's email task (PR 22).
-      // The single-invite path reuses the same task once that lands.
-      return { id };
+      const emailLower = input.email.toLowerCase().trim();
+
+      // Refuse if a real user already exists at this address — they
+      // should use forgot-password rather than the invite flow.
+      const existingUser = await ctx.db
+        .select({ id: user.id })
+        .from(user)
+        .where(and(eq(user.tenantId, ctx.tenantId), eq(user.email, emailLower)))
+        .limit(1);
+      if (existingUser[0] !== undefined) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'A user with this email already exists in this tenant.',
+        });
+      }
+
+      // Verify the permission set belongs to this tenant.
+      const ps = await ctx.db
+        .select({ id: permissionSets.id })
+        .from(permissionSets)
+        .where(
+          and(
+            eq(permissionSets.tenantId, ctx.tenantId),
+            eq(permissionSets.id, input.permissionSetId),
+          ),
+        )
+        .limit(1);
+      if (ps[0] === undefined) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Permission set not found' });
+      }
+
+      const token = newInviteToken();
+      const expiresAt = new Date(Date.now() + INVITATION_TTL_MS);
+      const name = input.name ?? null;
+
+      // Look up any active invitation for (tenant, email) — the partial
+      // unique index makes this at-most-one. If found, update in place;
+      // otherwise insert.
+      const existingInvite = await ctx.db
+        .select({ id: invitations.id })
+        .from(invitations)
+        .where(
+          and(
+            eq(invitations.tenantId, ctx.tenantId),
+            sql`lower(${invitations.email}) = ${emailLower}`,
+            isNull(invitations.acceptedAt),
+          ),
+        )
+        .limit(1);
+
+      let invitationId: string;
+      if (existingInvite[0] !== undefined) {
+        invitationId = existingInvite[0].id;
+        await ctx.db
+          .update(invitations)
+          .set({
+            email: emailLower,
+            name,
+            permissionSetId: input.permissionSetId,
+            token,
+            invitedByUserId: ctx.auth.userId,
+            expiresAt,
+          })
+          .where(eq(invitations.id, invitationId));
+      } else {
+        invitationId = newId();
+        await ctx.db.insert(invitations).values({
+          id: invitationId,
+          tenantId: ctx.tenantId,
+          email: emailLower,
+          name,
+          permissionSetId: input.permissionSetId,
+          token,
+          invitedByUserId: ctx.auth.userId,
+          expiresAt,
+        });
+      }
+
+      // Send the invite email if a dispatcher is wired. In tests with
+      // no dispatcher (most existing tests), this is a no-op — the row
+      // is created and the test reads it directly.
+      if (usersDeps.sendEmail !== null) {
+        const [tenantRow] = await ctx.db
+          .select({ name: tenants.name })
+          .from(tenants)
+          .where(eq(tenants.id, ctx.tenantId))
+          .limit(1);
+        const [inviterRow] = await ctx.db
+          .select({ name: user.name })
+          .from(user)
+          .where(eq(user.id, ctx.auth.userId))
+          .limit(1);
+        const inviteUrl = `${usersDeps.appUrl.replace(/\/$/, '')}/en/invite/${token}`;
+        await usersDeps.sendEmail({
+          to: emailLower,
+          templateKey: 'invite',
+          variables: {
+            inviterName: inviterRow?.name ?? 'A Forma360 administrator',
+            tenantName: tenantRow?.name ?? 'Forma360',
+            inviteUrl,
+            expiresIn: '7 days',
+          },
+        });
+      }
+
+      ctx.logger.info({ invitationId, email: emailLower }, '[users] invitation issued');
+      return { invitationId, token };
+    }),
+
+  /**
+   * Admin-only: cancel an outstanding invitation by id. Hard-deletes
+   * the row; the partial unique index then frees up the (tenant, email)
+   * slot for re-issuing if needed.
+   */
+  cancelInvite: tenantProcedure
+    .use(requirePermission('users.invite'))
+    .input(z.object({ invitationId: z.string().length(26) }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.db
+        .delete(invitations)
+        .where(
+          and(
+            eq(invitations.tenantId, ctx.tenantId),
+            eq(invitations.id, input.invitationId),
+          ),
+        )
+        .returning({ id: invitations.id });
+      if (result[0] === undefined) {
+        throw new TRPCError({ code: 'NOT_FOUND' });
+      }
+      ctx.logger.info({ invitationId: input.invitationId }, '[users] invitation cancelled');
+      return { ok: true as const };
+    }),
+
+  /**
+   * List active (un-accepted, un-expired) invitations for the tenant.
+   * Sorted by newest first.
+   */
+  listInvitations: tenantProcedure
+    .use(requirePermission('users.view'))
+    .query(async ({ ctx }) => {
+      const now = new Date();
+      const rows = await ctx.db
+        .select({
+          id: invitations.id,
+          email: invitations.email,
+          name: invitations.name,
+          permissionSetId: invitations.permissionSetId,
+          invitedByUserId: invitations.invitedByUserId,
+          expiresAt: invitations.expiresAt,
+          createdAt: invitations.createdAt,
+        })
+        .from(invitations)
+        .where(
+          and(
+            eq(invitations.tenantId, ctx.tenantId),
+            isNull(invitations.acceptedAt),
+            gt(invitations.expiresAt, now),
+          ),
+        )
+        .orderBy(sql`${invitations.createdAt} DESC`);
+      return { invitations: rows };
     }),
 
   deactivate: tenantProcedure

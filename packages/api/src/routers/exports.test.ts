@@ -18,7 +18,7 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
-import { buildAppRouter } from '../router';
+import { buildAppRouter, stubAuthDeps } from '../router';
 import { createCallerFactory } from '../trpc';
 import type { ExportsRouterDeps } from './exports';
 import type { InspectionsExportDeps } from './inspectionsExport';
@@ -39,6 +39,7 @@ const MIGRATION_FILES = [
   '0005_phase2_inspections.sql',
   '0006_phase2_schedules.sql',
   '0007_inspections_archived_at.sql',
+  '0008_invitations.sql',
 ];
 
 async function bootDb() {
@@ -144,7 +145,7 @@ describe('exports router (Phase 2 PR 31)', () => {
   });
 
   function callerForAdmin() {
-    const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps });
+    const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps });
     const factory = createCallerFactory(router);
     return factory(ctxFor(adminUserId));
   }
@@ -238,7 +239,7 @@ describe('exports router (Phase 2 PR 31)', () => {
           throw new Error('should not be called');
         },
       };
-      const router = buildAppRouter({ exports: deps, inspectionsExport: stubInspectionsExportDeps });
+      const router = buildAppRouter({ exports: deps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps });
       const caller = createCallerFactory(router)(ctxFor(adminUserId));
       await expect(() =>
         caller.exports.renderPdf({ inspectionId: newId() }),
@@ -271,7 +272,7 @@ describe('exports router (Phase 2 PR 31)', () => {
         tenantId,
         permissionSetId: restrictedId,
       });
-      const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps });
+      const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps });
       const caller = createCallerFactory(router)(ctxFor(standardUserId));
       await expect(() =>
         caller.exports.createShareLink({ inspectionId }),

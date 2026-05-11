@@ -1,0 +1,8 @@
+{
+  "subject": "{inviterName} invited you to {tenantName} on Forma360",
+  "preheader": "Accept the invitation to set up your Forma360 account.",
+  "greeting": "Hi,",
+  "body": "{inviterName} has invited you to join {tenantName} on Forma360. The link below is valid for {expiresIn}.",
+  "cta": "Accept invitation",
+  "footer": "If you were not expecting this invitation, you can safely ignore this message."
+}

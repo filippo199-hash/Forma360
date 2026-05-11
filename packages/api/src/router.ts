@@ -7,8 +7,11 @@
  * `inspections`, `signatures`, `approvals`, `schedules`, `actions` land
  * in PR 28+.
  */
+import type { DeliveryResult } from '@forma360/shared/email';
+import { createLogger } from '@forma360/shared/logger';
 import { accessRulesRouter } from './routers/accessRules';
 import { adminRouter } from './routers/admin';
+import { createAuthRouter, type AuthRouterDeps } from './routers/auth';
 import { customFieldsRouter } from './routers/customFields';
 import { globalResponseSetsRouter } from './routers/globalResponseSets';
 import { groupsRouter } from './routers/groups';
@@ -16,6 +19,7 @@ import { healthRouter } from './routers/health';
 import { permissionsRouter } from './routers/permissions';
 import { sitesRouter } from './routers/sites';
 import { templatesRouter } from './routers/templates';
+import { tenantsRouter } from './routers/tenants';
 import { usersRouter } from './routers/users';
 // Phase 2 PR 28 routers — imported AFTER templates so their
 // `registerDependentResolver('templates', ...)` call overwrites the PR 26
@@ -43,11 +47,14 @@ import { router } from './trpc';
 export function buildAppRouter(deps: {
   exports: ExportsRouterDeps;
   inspectionsExport: InspectionsExportDeps;
+  auth: AuthRouterDeps;
 }) {
   return router({
     health: healthRouter,
+    auth: createAuthRouter(deps.auth),
     admin: adminRouter,
     permissions: permissionsRouter,
+    tenants: tenantsRouter,
     users: usersRouter,
     customFields: customFieldsRouter,
     groups: groupsRouter,
@@ -96,9 +103,40 @@ const stubInspectionsExportDeps: InspectionsExportDeps = {
   now: () => new Date(),
 };
 
+/**
+ * Default auth-router deps — captures sent emails in a module-local
+ * buffer (`__authStubMailbox`) so tests that exercise the default
+ * `appRouter` can introspect what would have been sent. Production
+ * wiring replaces these via {@link buildAppRouter}.
+ */
+export interface AuthStubMail {
+  to: string;
+  templateKey: string;
+  variables: Record<string, string>;
+}
+export const __authStubMailbox: AuthStubMail[] = [];
+
+/**
+ * Test-only auth deps. Re-exported so tests can pass this when calling
+ * `buildAppRouter` themselves and don't care about the auth surface.
+ */
+export const stubAuthDeps: AuthRouterDeps = {
+  sendEmail: async (mail): Promise<DeliveryResult> => {
+    __authStubMailbox.push({
+      to: mail.to,
+      templateKey: mail.templateKey,
+      variables: mail.variables,
+    });
+    return { delivery: 'console' };
+  },
+  logger: createLogger({ service: 'auth-stub', level: 'fatal', nodeEnv: 'test' }),
+  appUrl: 'http://localhost:3000',
+};
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
+  auth: stubAuthDeps,
 });
 
 export type AppRouter = typeof appRouter;

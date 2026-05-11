@@ -93,6 +93,84 @@ export function renderEmail(
   return { subject: template.subject, text };
 }
 
+// ─── Templated email (variable interpolation) ───────────────────────────────
+
+/**
+ * Newer, more flexible email-send shape used by the sign-up / invite /
+ * request-to-join flow. Unlike {@link OutgoingEmail}, the caller picks
+ * the template by name and passes a `variables` map for `{placeholder}`
+ * substitution. The "kind" union on `OutgoingEmail` is kept for the
+ * pre-existing better-auth and schedule-reminder code paths.
+ */
+export interface TemplatedEmail {
+  to: string;
+  /** Maps to packages/i18n/emails/<locale>/<templateKey>.json. */
+  templateKey: string;
+  /** Replacements for `{name}` placeholders in subject + body + cta. */
+  variables: Record<string, string>;
+}
+
+export type SendTemplatedEmail = (email: TemplatedEmail) => Promise<DeliveryResult>;
+
+/**
+ * Template loader for the templated-email path. Loads from
+ * `packages/i18n/emails/en/<key>.json` by default. The shape is the same
+ * `{subject, preheader, greeting, body, cta, footer}` as `EmailTemplate`,
+ * but every field is allowed to contain `{var}` placeholders that the
+ * dispatcher substitutes at render time.
+ */
+export type TemplatedTemplateLoader = (key: string) => Promise<EmailTemplate>;
+
+export const defaultTemplatedTemplateLoader: TemplatedTemplateLoader = async (key) => {
+  // Dynamic-import the JSON the same way the legacy loader does.
+  const mod = await import(`../../i18n/emails/en/${key}.json`, {
+    with: { type: 'json' },
+  });
+  return templateSchema.parse(mod.default);
+};
+
+/**
+ * Substitute every `{name}` occurrence in `input` with `vars[name]`. Unknown
+ * placeholders are left as-is — that fails loudly in QA rather than silently
+ * dropping content. These are plaintext emails so no HTML escaping is done.
+ */
+export function interpolate(input: string, vars: Record<string, string>): string {
+  return input.replace(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g, (match, key: string) => {
+    if (Object.prototype.hasOwnProperty.call(vars, key)) {
+      const v = vars[key];
+      return v ?? match;
+    }
+    return match;
+  });
+}
+
+/**
+ * Render a templated email (subject + plaintext body). Variables drive
+ * the placeholder substitution; the CTA is composed as `"{cta}: {url}"`
+ * when a `url`-shaped variable is present, otherwise the CTA stands alone.
+ */
+export function renderTemplatedEmail(
+  template: EmailTemplate,
+  vars: Record<string, string>,
+): { subject: string; text: string } {
+  const subject = interpolate(template.subject, vars);
+  const url = vars['url'] ?? vars['ctaUrl'] ?? vars['inviteUrl'] ?? vars['settingsUrl'];
+  const ctaText = interpolate(template.cta, vars);
+  const ctaLine = url !== undefined ? `${ctaText}: ${url}` : ctaText;
+  const text = [
+    interpolate(template.preheader, vars),
+    '',
+    interpolate(template.greeting, vars),
+    '',
+    interpolate(template.body, vars),
+    '',
+    ctaLine,
+    '',
+    interpolate(template.footer, vars),
+  ].join('\n');
+  return { subject, text };
+}
+
 // ─── Dispatcher ─────────────────────────────────────────────────────────────
 
 export interface EmailDeps {
@@ -180,6 +258,99 @@ export function createSendEmail(deps: EmailDeps): SendEmail {
         to: email.to,
         kind: email.kind,
         userId: email.userId,
+        resendId: parsed.data.id,
+      },
+      '[email] sent',
+    );
+    return { delivery: 'resend', id: parsed.data.id };
+  };
+}
+
+// ─── Templated dispatcher ──────────────────────────────────────────────────
+
+export interface TemplatedEmailDeps {
+  delivery: 'resend' | 'console';
+  resendApiKey?: string;
+  resendFrom?: string;
+  logger: Logger;
+  /** Override in tests; defaults to reading from packages/i18n/emails/en. */
+  loadTemplate?: TemplatedTemplateLoader;
+}
+
+/**
+ * Build a {@link SendTemplatedEmail} dispatcher. Shares the same delivery
+ * routing as {@link createSendEmail} (Resend in prod, pino-console in dev)
+ * but takes the more flexible `{ templateKey, variables }` shape.
+ */
+export function createSendTemplatedEmail(deps: TemplatedEmailDeps): SendTemplatedEmail {
+  const {
+    delivery,
+    resendApiKey,
+    resendFrom,
+    logger,
+    loadTemplate = defaultTemplatedTemplateLoader,
+  } = deps;
+
+  let resend: Resend | undefined;
+  if (delivery === 'resend') {
+    if (resendApiKey === undefined || resendApiKey.length === 0) {
+      throw new Error('EMAIL_DELIVERY=resend requires RESEND_API_KEY to be set');
+    }
+    if (resendFrom === undefined || resendFrom.length === 0) {
+      throw new Error('EMAIL_DELIVERY=resend requires RESEND_FROM to be set');
+    }
+    resend = new Resend(resendApiKey);
+  }
+
+  return async function sendTemplatedEmail(email): Promise<DeliveryResult> {
+    const template = await loadTemplate(email.templateKey);
+    const { subject, text } = renderTemplatedEmail(template, email.variables);
+
+    if (delivery === 'console') {
+      logger.info(
+        {
+          email_delivery: 'console',
+          to: email.to,
+          templateKey: email.templateKey,
+          variables: email.variables,
+          subject,
+        },
+        '[email] (console) would send',
+      );
+      return { delivery: 'console' };
+    }
+
+    if (resend === undefined || resendFrom === undefined) {
+      throw new Error('Resend client not initialised');
+    }
+
+    const raw = await resend.emails.send({
+      from: resendFrom,
+      to: email.to,
+      subject,
+      text,
+    });
+    const parsed = resendResponseSchema.parse(raw);
+    if (parsed.error !== null) {
+      logger.error(
+        {
+          email_delivery: 'resend',
+          to: email.to,
+          templateKey: email.templateKey,
+          error: parsed.error,
+        },
+        '[email] resend failed',
+      );
+      throw new Error(`Resend failed: ${parsed.error.message}`);
+    }
+    if (parsed.data === null) {
+      throw new Error('Resend returned neither data nor error');
+    }
+    logger.info(
+      {
+        email_delivery: 'resend',
+        to: email.to,
+        templateKey: email.templateKey,
         resendId: parsed.data.id,
       },
       '[email] sent',

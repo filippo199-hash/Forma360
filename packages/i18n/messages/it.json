@@ -54,7 +54,12 @@
         "training": "Training",
         "notifications": "Notifications"
       }
-    }
+    },
+    "profileLink": "Profile",
+    "settingsLink": "Settings",
+    "signOut": "Sign out",
+    "copy": "Copy",
+    "copied": "Copied"
   },
   "auth": {
     "signIn": {
@@ -65,11 +70,47 @@
       "emailPlaceholder": "you@example.com",
       "passwordPlaceholder": "Your password",
       "signUpPrompt": "New to Forma360?",
-      "signUpLink": "Create an account",
-      "inviteOnly": "Sign-in is invite-only during the private beta. Contact your administrator for access."
+      "signUpLink": "Sign up",
+      "inviteOnly": "Sign-in is invite-only during the private beta. Contact your administrator for access.",
+      "noAccountQuestion": "Don't have an account?"
     },
     "signUp": {
-      "title": "Create your Forma360 account"
+      "title": "Create your account",
+      "subtitle": "Forma360 — operational excellence for your whole organisation.",
+      "nameLabel": "Your name",
+      "emailLabel": "Work email",
+      "companyLabel": "Company name",
+      "passwordLabel": "Password",
+      "passwordMinLength": "Use 12 or more characters.",
+      "submit": "Create account",
+      "alreadyHaveAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "emailInUseError": "An account already exists for this email. Sign in instead.",
+      "joinModalTitle": "{tenantName} already has an account",
+      "joinModalBody": "Would you like to ask {tenantName}'s administrators to invite you, or create a separate account for your own organisation?",
+      "joinButton": "Request to join",
+      "createSeparateButton": "Create separate account",
+      "joinRequestSuccess": "We've notified {tenantName}'s admins. They'll send you an invite if approved.",
+      "signUpError": "Could not create your account. Please try again.",
+      "creating": "Creating account…"
+    },
+    "invite": {
+      "title": "{inviterName} invited you to join {tenantName}",
+      "subtitle": "Finish setting up your account to get started.",
+      "expiredTitle": "This invitation has expired",
+      "expiredBody": "Ask your administrator to send a new invitation.",
+      "acceptedTitle": "This invitation has already been accepted",
+      "acceptedBody": "Sign in with the password you set when you accepted it.",
+      "notFoundTitle": "Invitation not found",
+      "notFoundBody": "This invitation link is invalid. Ask your administrator to resend it.",
+      "nameLabel": "Your name",
+      "emailLabel": "Email",
+      "passwordLabel": "Choose a password",
+      "passwordHint": "Use 12 or more characters.",
+      "acceptButton": "Accept invitation",
+      "accepting": "Accepting…",
+      "error": "Could not accept the invitation. Please try again.",
+      "backToSignIn": "Back to sign in"
     }
   },
   "health": {
@@ -95,7 +136,8 @@
       "compliance": "Compliance",
       "training": "Training",
       "integrations": "Integrations",
-      "billing": "Billing"
+      "billing": "Billing",
+      "company": "Company"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -141,7 +183,22 @@
         "warning": "This is irreversible. The user's name, email, and custom-field values will be overwritten with tombstone placeholders. Historical records remain intact.",
         "confirmLabel": "Type the user's current email to confirm",
         "submit": "Anonymise"
-      }
+      },
+      "invitations": {
+        "title": "Pending invitations",
+        "emptyState": "No pending invitations.",
+        "expiresAt": "Expires {time}",
+        "invitedBy": "Invited by {name}",
+        "cancelButton": "Cancel",
+        "resendButton": "Resend",
+        "resendSuccess": "Invitation resent to {email}.",
+        "cancelSuccess": "Invitation cancelled.",
+        "headerEmail": "Email",
+        "headerName": "Name",
+        "headerExpires": "Expires",
+        "headerActions": "Actions"
+      },
+      "inviteSentToast": "Invitation sent to {email}."
     },
     "permissions": {
       "title": "Permission sets",
@@ -186,6 +243,21 @@
       "emailLabel": "Email",
       "permissionSetLabel": "Your permission set",
       "readOnlyNote": "Only administrators can change your permission set."
+    },
+    "company": {
+      "title": "Company",
+      "subtitle": "Settings for your organisation.",
+      "companyNameLabel": "Company name",
+      "slugLabel": "Slug",
+      "membersLabel": "Members",
+      "planLabel": "Plan",
+      "planValuePlaceholder": "Free",
+      "saveButton": "Save changes",
+      "saving": "Saving…",
+      "saveSuccess": "Company updated.",
+      "saveError": "Could not save the company. Please try again.",
+      "copySlug": "Copy slug",
+      "slugCopied": "Slug copied"
     }
   },
   "templates": {
