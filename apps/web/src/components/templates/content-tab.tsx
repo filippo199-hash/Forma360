@@ -302,9 +302,15 @@ function SectionNavigator() {
 
   if (state.content.pages.length === 0) return null;
 
+  // Zero-height sticky band pinned to the top of the scrolling canvas.
+  // The absolute child holds the nav itself — it stays in place at
+  // top-10/left-4 as the user scrolls because the wrapping sticky box
+  // is what's actually anchored to the container's top. Using
+  // `position: absolute` alone would scroll with the content (a quirk
+  // of absolutely-positioned children of an overflow-auto element).
   return (
-    <div className="absolute left-4 top-10 z-10">
-      <ul className="sticky top-10 w-48 space-y-1">
+    <div className="sticky top-0 z-10 h-0">
+      <ul className="absolute left-4 top-10 w-48 space-y-1">
         {state.content.pages.map((page) => (
           <li key={page.id}>
             <button
