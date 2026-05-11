@@ -8,9 +8,11 @@
  *      initial title + document number.
  *   2. Progresses — autosave via `saveProgress` (optimistic concurrency
  *      via expectedUpdatedAt, T-E18 style).
- *   3. Submits — `submit` transitions to awaiting_signatures /
- *      awaiting_approval / completed depending on what the pinned
- *      version requires.
+ *   3. Submits — `submit` transitions to awaiting_signature_workflow /
+ *      awaiting_signatures / awaiting_approval / completed depending on
+ *      what the pinned version requires. Workflow takes precedence over
+ *      the item-level signature path when both are configured (workflow
+ *      is the post-submission review gate).
  *   4. Ends — via approvals router or an explicit `reject`.
  *
  * ADR 0007 snapshot columns are populated in `create`; the ADR 0007 read
@@ -22,6 +24,9 @@
  *   - 'templates' — REPLACES the shim registered by the templates router
  *     with a real resolver that counts inspections referencing any
  *     version of the template.
+ *
+ * Built as a factory `createInspectionsRouter({ sendEmail, appUrl, logger })`
+ * so the signature-workflow email side-effects can be tested.
  */
 import {
   actions,
@@ -29,6 +34,7 @@ import {
   groupMembers,
   inspectionApprovals,
   inspectionSignatures,
+  inspectionWorkflowSigners,
   inspections,
   permissionSets,
   siteMembers,
@@ -43,9 +49,12 @@ import {
   registerDependentResolver,
   type DependentResolver,
 } from '@forma360/permissions/dependents';
+import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
+import type { Logger } from '@forma360/shared/logger';
+import type { SignatureWorkflow } from '@forma360/shared/template-schema';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -125,7 +134,14 @@ registerDependentResolver('templates', templatesResolverReal);
 const listInput = z
   .object({
     status: z
-      .enum(['in_progress', 'awaiting_signatures', 'awaiting_approval', 'completed', 'rejected'])
+      .enum([
+        'in_progress',
+        'awaiting_signatures',
+        'awaiting_signature_workflow',
+        'awaiting_approval',
+        'completed',
+        'rejected',
+      ])
       .optional(),
     templateId: z.string().length(26).optional(),
     includeArchived: z.boolean().default(false),
@@ -153,6 +169,12 @@ const rejectInput = z.object({
 });
 
 const deleteInput = z.object({ inspectionId: z.string().length(26) });
+
+const signWorkflowInput = z.object({
+  inspectionId: z.string().length(26),
+  signatureData: z.string().min(1).max(2_000_000),
+  comment: z.string().max(2000).optional(),
+});
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -184,346 +206,747 @@ async function loadAccessSnapshot(
   };
 }
 
-// ─── Router ─────────────────────────────────────────────────────────────────
+// ─── Router factory ─────────────────────────────────────────────────────────
 
-export const inspectionsRouter = router({
-  list: tenantProcedure
-    .use(requirePermission('inspections.view'))
-    .input(listInput)
-    .query(async ({ ctx, input }) => {
-      const where = [eq(inspections.tenantId, ctx.tenantId)];
-      if (input.status !== undefined) where.push(eq(inspections.status, input.status));
-      if (input.templateId !== undefined) where.push(eq(inspections.templateId, input.templateId));
-      if (!input.includeArchived) where.push(isNull(inspections.archivedAt));
-      return ctx.db
-        .select({
-          id: inspections.id,
-          templateId: inspections.templateId,
-          templateVersionId: inspections.templateVersionId,
-          status: inspections.status,
-          title: inspections.title,
-          documentNumber: inspections.documentNumber,
-          siteId: inspections.siteId,
-          score: inspections.score,
-          startedAt: inspections.startedAt,
-          submittedAt: inspections.submittedAt,
-          completedAt: inspections.completedAt,
-          archivedAt: inspections.archivedAt,
-          createdBy: inspections.createdBy,
-          updatedAt: inspections.updatedAt,
-        })
-        .from(inspections)
-        .where(and(...where))
-        .orderBy(desc(inspections.startedAt));
-    }),
+/** Injected dependencies for the inspections router (wired at app boot). */
+export interface InspectionsRouterDeps {
+  /** Sends templated emails. Resend in prod, pino-console in dev. */
+  sendEmail: SendTemplatedEmail;
+  /** Canonical APP_URL — e.g. "https://app.forma360.com" (no trailing slash). */
+  appUrl: string;
+  /** Pino logger. Per-request child loggers also flow through ctx.logger. */
+  logger: Logger;
+}
 
-  get: tenantProcedure
-    .use(requirePermission('inspections.view'))
-    .input(getInput)
-    .query(async ({ ctx, input }) => {
-      const rows = await ctx.db
-        .select()
-        .from(inspections)
-        .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
-        .limit(1);
-      const insp = rows[0];
-      if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+export function createInspectionsRouter(deps: InspectionsRouterDeps) {
+  const appUrl = deps.appUrl.replace(/\/$/, '');
 
-      const versionRows = await ctx.db
-        .select()
-        .from(templateVersions)
-        .where(eq(templateVersions.id, insp.templateVersionId))
-        .limit(1);
-      const version = versionRows[0];
-      if (version === undefined) {
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Pinned version missing' });
-      }
+  /**
+   * Resolve a user's display name / email. Used to compose the
+   * `requesterName` / `signerName` / `recipientName` email variables.
+   * Falls back to userId when the row is missing — keeps the email
+   * deliverable rather than swallowing the send.
+   */
+  async function userLabel(
+    db: Parameters<DependentResolver>[0]['db'],
+    userId: string,
+  ): Promise<{ name: string; email: string }> {
+    const rows = await db
+      .select({ name: user.name, email: user.email })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+    const row = rows[0];
+    if (row === undefined) {
+      return { name: userId, email: '' };
+    }
+    return { name: row.name, email: row.email };
+  }
 
-      const sigs = await ctx.db
-        .select()
-        .from(inspectionSignatures)
-        .where(
-          and(
-            eq(inspectionSignatures.tenantId, ctx.tenantId),
-            eq(inspectionSignatures.inspectionId, insp.id),
-          ),
-        )
-        .orderBy(inspectionSignatures.slotIndex);
+  /**
+   * Send a signature-workflow-request email to one signer.
+   *
+   * Errors are logged but never thrown — email delivery is best-effort.
+   * The signer can always reach the inspection via the in-app
+   * `listAwaitingMySignature` query.
+   */
+  async function sendSignatureRequestEmail(args: {
+    db: Parameters<DependentResolver>[0]['db'];
+    inspectionId: string;
+    inspectionTitle: string;
+    requesterUserId: string;
+    signerUserId: string;
+  }): Promise<void> {
+    const [signer, requester] = await Promise.all([
+      userLabel(args.db, args.signerUserId),
+      userLabel(args.db, args.requesterUserId),
+    ]);
+    if (signer.email.length === 0) {
+      deps.logger.warn(
+        { signerUserId: args.signerUserId, inspectionId: args.inspectionId },
+        '[inspections] skipped signature request email: signer has no email',
+      );
+      return;
+    }
+    try {
+      await deps.sendEmail({
+        to: signer.email,
+        templateKey: 'signature-workflow-request',
+        variables: {
+          inspectionTitle: args.inspectionTitle,
+          requesterName: requester.name,
+          signerName: signer.name,
+          signUrl: `${appUrl}/en/inspections/${args.inspectionId}/sign`,
+        },
+      });
+    } catch (err) {
+      deps.logger.error(
+        { err, inspectionId: args.inspectionId, signerUserId: args.signerUserId },
+        '[inspections] signature request email failed',
+      );
+    }
+  }
 
-      const approvalRows = await ctx.db
-        .select()
-        .from(inspectionApprovals)
-        .where(
-          and(
-            eq(inspectionApprovals.tenantId, ctx.tenantId),
-            eq(inspectionApprovals.inspectionId, insp.id),
-          ),
-        )
-        .orderBy(inspectionApprovals.decidedAt);
-
-      return { inspection: insp, version, signatures: sigs, approvals: approvalRows };
-    }),
-
-  create: tenantProcedure
-    .use(requirePermission('inspections.conduct'))
-    .input(createInput)
-    .mutation(async ({ ctx, input }) => {
-      // 1. Look up template — must exist, not be archived, be in current tenant.
-      const tplRows = await ctx.db
-        .select()
-        .from(templates)
-        .where(and(eq(templates.tenantId, ctx.tenantId), eq(templates.id, input.templateId)))
-        .limit(1);
-      const tpl = tplRows[0];
-      if (tpl === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
-      if (tpl.archivedAt !== null) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Cannot start an inspection on an archived template',
+  async function sendCompletionEmails(args: {
+    db: Parameters<DependentResolver>[0]['db'];
+    inspectionId: string;
+    inspectionTitle: string;
+    recipientUserIds: readonly string[];
+  }): Promise<void> {
+    for (const userId of args.recipientUserIds) {
+      const recipient = await userLabel(args.db, userId);
+      if (recipient.email.length === 0) continue;
+      try {
+        await deps.sendEmail({
+          to: recipient.email,
+          templateKey: 'signature-workflow-complete',
+          variables: {
+            inspectionTitle: args.inspectionTitle,
+            recipientName: recipient.name,
+            viewUrl: `${appUrl}/en/inspections/${args.inspectionId}`,
+          },
         });
+      } catch (err) {
+        deps.logger.error(
+          { err, inspectionId: args.inspectionId, recipientUserId: userId },
+          '[inspections] completion email failed',
+        );
       }
+    }
+  }
 
-      // 2. Access-rule gate. If the template has a rule, the caller must satisfy it.
-      if (tpl.accessRuleId !== null) {
-        const ruleRows = await ctx.db
+  return router({
+    list: tenantProcedure
+      .use(requirePermission('inspections.view'))
+      .input(listInput)
+      .query(async ({ ctx, input }) => {
+        const where = [eq(inspections.tenantId, ctx.tenantId)];
+        if (input.status !== undefined) where.push(eq(inspections.status, input.status));
+        if (input.templateId !== undefined) where.push(eq(inspections.templateId, input.templateId));
+        if (!input.includeArchived) where.push(isNull(inspections.archivedAt));
+        return ctx.db
+          .select({
+            id: inspections.id,
+            templateId: inspections.templateId,
+            templateVersionId: inspections.templateVersionId,
+            status: inspections.status,
+            title: inspections.title,
+            documentNumber: inspections.documentNumber,
+            siteId: inspections.siteId,
+            score: inspections.score,
+            startedAt: inspections.startedAt,
+            submittedAt: inspections.submittedAt,
+            completedAt: inspections.completedAt,
+            archivedAt: inspections.archivedAt,
+            createdBy: inspections.createdBy,
+            updatedAt: inspections.updatedAt,
+          })
+          .from(inspections)
+          .where(and(...where))
+          .orderBy(desc(inspections.startedAt));
+      }),
+
+    get: tenantProcedure
+      .use(requirePermission('inspections.view'))
+      .input(getInput)
+      .query(async ({ ctx, input }) => {
+        const rows = await ctx.db
           .select()
-          .from(accessRules)
-          .where(and(eq(accessRules.tenantId, ctx.tenantId), eq(accessRules.id, tpl.accessRuleId)))
+          .from(inspections)
+          .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
           .limit(1);
-        const rule = ruleRows[0];
-        if (rule === undefined) {
+        const insp = rows[0];
+        if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+        const versionRows = await ctx.db
+          .select()
+          .from(templateVersions)
+          .where(eq(templateVersions.id, insp.templateVersionId))
+          .limit(1);
+        const version = versionRows[0];
+        if (version === undefined) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Pinned version missing' });
+        }
+
+        const sigs = await ctx.db
+          .select()
+          .from(inspectionSignatures)
+          .where(
+            and(
+              eq(inspectionSignatures.tenantId, ctx.tenantId),
+              eq(inspectionSignatures.inspectionId, insp.id),
+            ),
+          )
+          .orderBy(inspectionSignatures.slotIndex);
+
+        const approvalRows = await ctx.db
+          .select()
+          .from(inspectionApprovals)
+          .where(
+            and(
+              eq(inspectionApprovals.tenantId, ctx.tenantId),
+              eq(inspectionApprovals.inspectionId, insp.id),
+            ),
+          )
+          .orderBy(inspectionApprovals.decidedAt);
+
+        const workflowSigners = await ctx.db
+          .select()
+          .from(inspectionWorkflowSigners)
+          .where(
+            and(
+              eq(inspectionWorkflowSigners.tenantId, ctx.tenantId),
+              eq(inspectionWorkflowSigners.inspectionId, insp.id),
+            ),
+          )
+          .orderBy(asc(inspectionWorkflowSigners.position));
+
+        return {
+          inspection: insp,
+          version,
+          signatures: sigs,
+          approvals: approvalRows,
+          workflowSigners,
+        };
+      }),
+
+    create: tenantProcedure
+      .use(requirePermission('inspections.conduct'))
+      .input(createInput)
+      .mutation(async ({ ctx, input }) => {
+        // 1. Look up template — must exist, not be archived, be in current tenant.
+        const tplRows = await ctx.db
+          .select()
+          .from(templates)
+          .where(and(eq(templates.tenantId, ctx.tenantId), eq(templates.id, input.templateId)))
+          .limit(1);
+        const tpl = tplRows[0];
+        if (tpl === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (tpl.archivedAt !== null) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Cannot start an inspection on an archived template',
+          });
+        }
+
+        // 2. Access-rule gate. If the template has a rule, the caller must satisfy it.
+        if (tpl.accessRuleId !== null) {
+          const ruleRows = await ctx.db
+            .select()
+            .from(accessRules)
+            .where(and(eq(accessRules.tenantId, ctx.tenantId), eq(accessRules.id, tpl.accessRuleId)))
+            .limit(1);
+          const rule = ruleRows[0];
+          if (rule === undefined) {
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Template references a missing access rule',
+            });
+          }
+          // Load the caller's groups + sites for the rule check.
+          const groupRows = await ctx.db
+            .select({ groupId: groupMembers.groupId })
+            .from(groupMembers)
+            .where(
+              and(eq(groupMembers.tenantId, ctx.tenantId), eq(groupMembers.userId, ctx.auth.userId)),
+            );
+          const siteRows = await ctx.db
+            .select({ siteId: siteMembers.siteId })
+            .from(siteMembers)
+            .where(
+              and(eq(siteMembers.tenantId, ctx.tenantId), eq(siteMembers.userId, ctx.auth.userId)),
+            );
+          const allowed = resolveAccessRule(
+            {
+              id: rule.id,
+              groupIds: rule.groupIds,
+              siteIds: rule.siteIds,
+              invalidatedAt: rule.invalidatedAt,
+            },
+            {
+              groupIds: groupRows.map((r) => r.groupId),
+              siteIds: siteRows.map((r) => r.siteId),
+            },
+          );
+          if (!allowed) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'You do not satisfy this template’s access rule',
+            });
+          }
+        }
+
+        // 3. Find the currently-published version. No published → can't conduct.
+        const currentVersionId = tpl.currentVersionId;
+        if (currentVersionId === null) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Template has no published version',
+          });
+        }
+        const versionRows = await ctx.db
+          .select()
+          .from(templateVersions)
+          .where(eq(templateVersions.id, currentVersionId))
+          .limit(1);
+        const version = versionRows[0];
+        if (version === undefined) {
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
-            message: 'Template references a missing access rule',
+            message: 'Current template version missing',
           });
         }
-        // Load the caller's groups + sites for the rule check.
-        const groupRows = await ctx.db
-          .select({ groupId: groupMembers.groupId })
-          .from(groupMembers)
-          .where(
-            and(eq(groupMembers.tenantId, ctx.tenantId), eq(groupMembers.userId, ctx.auth.userId)),
-          );
-        const siteRows = await ctx.db
-          .select({ siteId: siteMembers.siteId })
-          .from(siteMembers)
-          .where(
-            and(eq(siteMembers.tenantId, ctx.tenantId), eq(siteMembers.userId, ctx.auth.userId)),
-          );
-        const allowed = resolveAccessRule(
-          {
-            id: rule.id,
-            groupIds: rule.groupIds,
-            siteIds: rule.siteIds,
-            invalidatedAt: rule.invalidatedAt,
-          },
-          {
-            groupIds: groupRows.map((r) => r.groupId),
-            siteIds: siteRows.map((r) => r.siteId),
-          },
+
+        // 4. Build the access snapshot (ADR 0007).
+        const accessSnapshot = await loadAccessSnapshot(ctx.db, ctx.tenantId, ctx.auth.userId);
+
+        // 5. Increment document-number counter + render title / doc number.
+        const inspectionId = newId();
+        const now = new Date();
+        const settings = version.content.settings;
+
+        const inserted = await ctx.db.transaction(async (tx) => {
+          const counterRows = await tx
+            .update(templates)
+            .set({
+              documentNumberCounter: tpl.documentNumberCounter + 1,
+              updatedAt: now,
+            })
+            .where(eq(templates.id, tpl.id))
+            .returning({ counter: templates.documentNumberCounter });
+          const counter = counterRows[0]?.counter ?? tpl.documentNumberCounter + 1;
+          const documentNumber = renderDocumentNumber(settings.documentNumberFormat, counter);
+          const title = renderTitle(tpl.titleFormat, {
+            date: now,
+            site: input.siteId,
+            conductedBy: ctx.auth.userId,
+            documentNumber,
+          });
+
+          await tx.insert(inspections).values({
+            id: inspectionId,
+            tenantId: ctx.tenantId,
+            templateId: tpl.id,
+            templateVersionId: version.id,
+            status: 'in_progress',
+            title,
+            documentNumber,
+            conductedBy: ctx.auth.userId,
+            siteId: input.siteId ?? null,
+            responses: {},
+            score: null,
+            accessSnapshot,
+            startedAt: now,
+            createdBy: ctx.auth.userId,
+            createdAt: now,
+            updatedAt: now,
+          });
+          return { inspectionId, title, documentNumber };
+        });
+
+        ctx.logger.info(
+          { inspectionId: inserted.inspectionId, templateId: tpl.id },
+          '[inspections] created',
         );
-        if (!allowed) {
+        return { inspectionId: inserted.inspectionId };
+      }),
+
+    saveProgress: tenantProcedure
+      .use(requirePermission('inspections.conduct'))
+      .input(saveProgressInput)
+      .mutation(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select()
+          .from(inspections)
+          .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
+          .limit(1);
+        const insp = rows[0];
+        if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (insp.status !== 'in_progress') {
           throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'You do not satisfy this template\u2019s access rule',
+            code: 'BAD_REQUEST',
+            message: 'Only in-progress inspections can be updated',
           });
         }
-      }
+        if (input.expectedUpdatedAt !== undefined) {
+          const expected = new Date(input.expectedUpdatedAt).getTime();
+          const current = insp.updatedAt.getTime();
+          if (current !== expected) {
+            throw new TRPCError({
+              code: 'CONFLICT',
+              message: 'Inspection was modified elsewhere. Refresh before saving.',
+              cause: {
+                code: 'CONFLICT',
+                serverUpdatedAt: insp.updatedAt.toISOString(),
+              },
+            });
+          }
+        }
+        const now = new Date();
+        await ctx.db
+          .update(inspections)
+          .set({ responses: input.responses, updatedAt: now })
+          .where(eq(inspections.id, insp.id));
+        return { updatedAt: now.toISOString() };
+      }),
 
-      // 3. Find the currently-published version. No published → can't conduct.
-      const currentVersionId = tpl.currentVersionId;
-      if (currentVersionId === null) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Template has no published version',
-        });
-      }
-      const versionRows = await ctx.db
-        .select()
-        .from(templateVersions)
-        .where(eq(templateVersions.id, currentVersionId))
-        .limit(1);
-      const version = versionRows[0];
-      if (version === undefined) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Current template version missing',
-        });
-      }
+    submit: tenantProcedure
+      .use(requirePermission('inspections.conduct'))
+      .input(submitInput)
+      .mutation(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select()
+          .from(inspections)
+          .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
+          .limit(1);
+        const insp = rows[0];
+        if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (insp.status !== 'in_progress') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Only in-progress inspections can be submitted',
+          });
+        }
 
-      // 4. Build the access snapshot (ADR 0007).
-      const accessSnapshot = await loadAccessSnapshot(ctx.db, ctx.tenantId, ctx.auth.userId);
+        // Introspect the pinned version to decide the next status.
+        const versionRows = await ctx.db
+          .select()
+          .from(templateVersions)
+          .where(eq(templateVersions.id, insp.templateVersionId))
+          .limit(1);
+        const version = versionRows[0];
+        if (version === undefined) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Pinned version missing' });
+        }
+        const workflow: SignatureWorkflow | undefined =
+          version.content.settings.signatureWorkflow;
+        const workflowEnabled =
+          workflow !== undefined &&
+          workflow.enabled &&
+          workflow.signatoryUserIds.length > 0;
 
-      // 5. Increment document-number counter + render title / doc number.
-      const inspectionId = newId();
-      const now = new Date();
-      const settings = version.content.settings;
+        // Workflow takes precedence: it's the post-submission review gate.
+        // Item-level signature slots / approval page are evaluated only when
+        // the workflow is not in play.
+        if (workflowEnabled && workflow !== undefined) {
+          const now = new Date();
+          await ctx.db.transaction(async (tx) => {
+            await tx
+              .update(inspections)
+              .set({
+                status: 'awaiting_signature_workflow',
+                submittedAt: now,
+                updatedAt: now,
+              })
+              .where(eq(inspections.id, insp.id));
+            const rowsToInsert = workflow.signatoryUserIds.map((signerUserId, idx) => ({
+              id: newId(),
+              tenantId: ctx.tenantId,
+              inspectionId: insp.id,
+              position: idx,
+              signerUserId,
+              status: 'pending' as const,
+            }));
+            if (rowsToInsert.length > 0) {
+              await tx.insert(inspectionWorkflowSigners).values(rowsToInsert);
+            }
+          });
 
-      const inserted = await ctx.db.transaction(async (tx) => {
-        const counterRows = await tx
-          .update(templates)
+          // Outside the tx, fire emails.
+          const recipients =
+            workflow.mode === 'sequential'
+              ? workflow.signatoryUserIds.slice(0, 1)
+              : workflow.signatoryUserIds;
+          for (const signerUserId of recipients) {
+            await sendSignatureRequestEmail({
+              db: ctx.db,
+              inspectionId: insp.id,
+              inspectionTitle: insp.title,
+              requesterUserId: ctx.auth.userId,
+              signerUserId,
+            });
+          }
+          return { status: 'awaiting_signature_workflow' as const };
+        }
+
+        const hasSignatureSlots = version.content.pages.some((p) =>
+          p.sections.some((s) => s.items.some((i) => i.type === 'signature')),
+        );
+        const hasApprovalPage = version.content.settings.approvalPage !== undefined;
+
+        const now = new Date();
+        const nextStatus = hasSignatureSlots
+          ? ('awaiting_signatures' as const)
+          : hasApprovalPage
+            ? ('awaiting_approval' as const)
+            : ('completed' as const);
+
+        await ctx.db
+          .update(inspections)
           .set({
-            documentNumberCounter: tpl.documentNumberCounter + 1,
+            status: nextStatus,
+            submittedAt: now,
+            completedAt: nextStatus === 'completed' ? now : null,
             updatedAt: now,
           })
-          .where(eq(templates.id, tpl.id))
-          .returning({ counter: templates.documentNumberCounter });
-        const counter = counterRows[0]?.counter ?? tpl.documentNumberCounter + 1;
-        const documentNumber = renderDocumentNumber(settings.documentNumberFormat, counter);
-        const title = renderTitle(tpl.titleFormat, {
-          date: now,
-          site: input.siteId,
-          conductedBy: ctx.auth.userId,
-          documentNumber,
-        });
+          .where(eq(inspections.id, insp.id));
+        return { status: nextStatus };
+      }),
 
-        await tx.insert(inspections).values({
-          id: inspectionId,
-          tenantId: ctx.tenantId,
-          templateId: tpl.id,
-          templateVersionId: version.id,
-          status: 'in_progress',
-          title,
-          documentNumber,
-          conductedBy: ctx.auth.userId,
-          siteId: input.siteId ?? null,
-          responses: {},
-          score: null,
-          accessSnapshot,
-          startedAt: now,
-          createdBy: ctx.auth.userId,
-          createdAt: now,
-          updatedAt: now,
-        });
-        return { inspectionId, title, documentNumber };
-      });
-
-      ctx.logger.info(
-        { inspectionId: inserted.inspectionId, templateId: tpl.id },
-        '[inspections] created',
-      );
-      return { inspectionId: inserted.inspectionId };
-    }),
-
-  saveProgress: tenantProcedure
-    .use(requirePermission('inspections.conduct'))
-    .input(saveProgressInput)
-    .mutation(async ({ ctx, input }) => {
-      const rows = await ctx.db
-        .select()
-        .from(inspections)
-        .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
-        .limit(1);
-      const insp = rows[0];
-      if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
-      if (insp.status !== 'in_progress') {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Only in-progress inspections can be updated',
-        });
-      }
-      if (input.expectedUpdatedAt !== undefined) {
-        const expected = new Date(input.expectedUpdatedAt).getTime();
-        const current = insp.updatedAt.getTime();
-        if (current !== expected) {
+    /**
+     * Workflow signer signs off. Caller must be the current pending signer:
+     *   - Sequential: the lowest-position pending signer.
+     *   - Parallel: any pending signer for this inspection.
+     * If this sign brings every signer to `signed`, the inspection flips
+     * to `completed` and (optionally) completion emails fan out. Otherwise
+     * in sequential mode the next signer is notified.
+     */
+    signWorkflow: tenantProcedure
+      .input(signWorkflowInput)
+      .mutation(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select()
+          .from(inspections)
+          .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
+          .limit(1);
+        const insp = rows[0];
+        if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (insp.status !== 'awaiting_signature_workflow') {
           throw new TRPCError({
-            code: 'CONFLICT',
-            message: 'Inspection was modified elsewhere. Refresh before saving.',
-            cause: {
-              code: 'CONFLICT',
-              serverUpdatedAt: insp.updatedAt.toISOString(),
-            },
+            code: 'BAD_REQUEST',
+            message: 'Inspection is not awaiting workflow signatures',
           });
         }
-      }
-      const now = new Date();
-      await ctx.db
-        .update(inspections)
-        .set({ responses: input.responses, updatedAt: now })
-        .where(eq(inspections.id, insp.id));
-      return { updatedAt: now.toISOString() };
-    }),
 
-  submit: tenantProcedure
-    .use(requirePermission('inspections.conduct'))
-    .input(submitInput)
-    .mutation(async ({ ctx, input }) => {
-      const rows = await ctx.db
-        .select()
-        .from(inspections)
-        .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
-        .limit(1);
-      const insp = rows[0];
-      if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
-      if (insp.status !== 'in_progress') {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Only in-progress inspections can be submitted',
+        const versionRows = await ctx.db
+          .select()
+          .from(templateVersions)
+          .where(eq(templateVersions.id, insp.templateVersionId))
+          .limit(1);
+        const version = versionRows[0];
+        if (version === undefined) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Pinned version missing' });
+        }
+        const workflow: SignatureWorkflow | undefined =
+          version.content.settings.signatureWorkflow;
+        if (workflow === undefined) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Inspection in workflow state but template has no workflow',
+          });
+        }
+
+        const signerRows = await ctx.db
+          .select()
+          .from(inspectionWorkflowSigners)
+          .where(
+            and(
+              eq(inspectionWorkflowSigners.tenantId, ctx.tenantId),
+              eq(inspectionWorkflowSigners.inspectionId, insp.id),
+            ),
+          )
+          .orderBy(asc(inspectionWorkflowSigners.position));
+
+        const myRow = signerRows.find((r) => r.signerUserId === ctx.auth.userId);
+        if (myRow === undefined) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You are not a signatory on this inspection',
+          });
+        }
+        if (myRow.status !== 'pending') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'You have already signed this inspection',
+          });
+        }
+        if (workflow.mode === 'sequential') {
+          const lowestPending = signerRows.find((r) => r.status === 'pending');
+          if (lowestPending === undefined || lowestPending.id !== myRow.id) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'It is not your turn to sign',
+            });
+          }
+        }
+
+        const now = new Date();
+        const allSignedAfter = signerRows.every((r) =>
+          r.id === myRow.id ? true : r.status === 'signed',
+        );
+
+        await ctx.db.transaction(async (tx) => {
+          await tx
+            .update(inspectionWorkflowSigners)
+            .set({
+              status: 'signed',
+              signedAt: now,
+              signatureData: input.signatureData,
+              comment: input.comment ?? null,
+            })
+            .where(eq(inspectionWorkflowSigners.id, myRow.id));
+
+          if (allSignedAfter) {
+            await tx
+              .update(inspections)
+              .set({
+                status: 'completed',
+                completedAt: now,
+                updatedAt: now,
+              })
+              .where(eq(inspections.id, insp.id));
+          } else {
+            await tx
+              .update(inspections)
+              .set({ updatedAt: now })
+              .where(eq(inspections.id, insp.id));
+          }
+        });
+
+        if (allSignedAfter) {
+          if (workflow.notifyOnCompletion) {
+            await sendCompletionEmails({
+              db: ctx.db,
+              inspectionId: insp.id,
+              inspectionTitle: insp.title,
+              recipientUserIds: workflow.signatoryUserIds,
+            });
+          }
+          return { status: 'completed' as const, allSigned: true };
+        }
+
+        if (workflow.mode === 'sequential') {
+          // Find the next pending signer (post-update) and notify them.
+          const nextPending = signerRows
+            .filter((r) => r.id !== myRow.id && r.status === 'pending')
+            .sort((a, b) => a.position - b.position)[0];
+          if (nextPending !== undefined) {
+            await sendSignatureRequestEmail({
+              db: ctx.db,
+              inspectionId: insp.id,
+              inspectionTitle: insp.title,
+              // Forward the original requester (inspection creator) so the
+              // email phrasing stays consistent across the chain.
+              requesterUserId: insp.createdBy,
+              signerUserId: nextPending.signerUserId,
+            });
+          }
+        }
+        return { status: 'awaiting_signature_workflow' as const, allSigned: false };
+      }),
+
+    /**
+     * List inspections that the caller is currently expected to sign.
+     *
+     *   - Sequential: the caller's row must be the lowest-position pending
+     *     signer (i.e. it's their turn now).
+     *   - Parallel: any pending row keyed to the caller.
+     */
+    listAwaitingMySignature: tenantProcedure.query(async ({ ctx }) => {
+      const myPending = await ctx.db
+        .select({
+          rowId: inspectionWorkflowSigners.id,
+          inspectionId: inspectionWorkflowSigners.inspectionId,
+          position: inspectionWorkflowSigners.position,
+          title: inspections.title,
+          submittedAt: inspections.submittedAt,
+          createdBy: inspections.createdBy,
+          status: inspections.status,
+          templateVersionId: inspections.templateVersionId,
+        })
+        .from(inspectionWorkflowSigners)
+        .innerJoin(inspections, eq(inspectionWorkflowSigners.inspectionId, inspections.id))
+        .where(
+          and(
+            eq(inspectionWorkflowSigners.tenantId, ctx.tenantId),
+            eq(inspectionWorkflowSigners.signerUserId, ctx.auth.userId),
+            eq(inspectionWorkflowSigners.status, 'pending'),
+            eq(inspections.status, 'awaiting_signature_workflow'),
+          ),
+        )
+        .orderBy(desc(inspections.submittedAt));
+
+      // For each row, fetch all signer rows so we can resolve the mode
+      // and (for sequential) determine if it's actually this user's turn.
+      const out: {
+        inspectionId: string;
+        title: string;
+        requesterName: string;
+        tenantId: string;
+        mode: 'sequential' | 'parallel';
+        position: number;
+        submittedAt: Date | null;
+      }[] = [];
+      for (const row of myPending) {
+        const versionRows = await ctx.db
+          .select({ content: templateVersions.content })
+          .from(templateVersions)
+          .where(eq(templateVersions.id, row.templateVersionId))
+          .limit(1);
+        const version = versionRows[0];
+        const mode: 'sequential' | 'parallel' =
+          version?.content.settings.signatureWorkflow?.mode ?? 'parallel';
+        if (mode === 'sequential') {
+          // Confirm the caller is the lowest pending position.
+          const allSigners = await ctx.db
+            .select()
+            .from(inspectionWorkflowSigners)
+            .where(
+              and(
+                eq(inspectionWorkflowSigners.tenantId, ctx.tenantId),
+                eq(inspectionWorkflowSigners.inspectionId, row.inspectionId),
+              ),
+            )
+            .orderBy(asc(inspectionWorkflowSigners.position));
+          const lowestPending = allSigners.find((s) => s.status === 'pending');
+          if (lowestPending === undefined || lowestPending.signerUserId !== ctx.auth.userId) {
+            continue;
+          }
+        }
+        const requester = await userLabel(ctx.db, row.createdBy);
+        out.push({
+          inspectionId: row.inspectionId,
+          title: row.title,
+          requesterName: requester.name,
+          tenantId: ctx.tenantId,
+          mode,
+          position: row.position,
+          submittedAt: row.submittedAt,
         });
       }
-
-      // Introspect the pinned version to decide the next status.
-      const versionRows = await ctx.db
-        .select()
-        .from(templateVersions)
-        .where(eq(templateVersions.id, insp.templateVersionId))
-        .limit(1);
-      const version = versionRows[0];
-      if (version === undefined) {
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Pinned version missing' });
-      }
-      const hasSignatureSlots = version.content.pages.some((p) =>
-        p.sections.some((s) => s.items.some((i) => i.type === 'signature')),
-      );
-      const hasApprovalPage = version.content.settings.approvalPage !== undefined;
-
-      const now = new Date();
-      const nextStatus = hasSignatureSlots
-        ? ('awaiting_signatures' as const)
-        : hasApprovalPage
-          ? ('awaiting_approval' as const)
-          : ('completed' as const);
-
-      await ctx.db
-        .update(inspections)
-        .set({
-          status: nextStatus,
-          submittedAt: now,
-          completedAt: nextStatus === 'completed' ? now : null,
-          updatedAt: now,
-        })
-        .where(eq(inspections.id, insp.id));
-      return { status: nextStatus };
+      return out;
     }),
 
-  reject: tenantProcedure
-    .use(requirePermission('inspections.manage'))
-    .input(rejectInput)
-    .mutation(async ({ ctx, input }) => {
-      const now = new Date();
-      const result = await ctx.db
-        .update(inspections)
-        .set({
-          status: 'rejected',
-          rejectedAt: now,
-          rejectedReason: input.reason,
-          updatedAt: now,
-        })
-        .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
-        .returning({ id: inspections.id });
-      if (result.length === 0) throw new TRPCError({ code: 'NOT_FOUND' });
-      return { ok: true as const };
-    }),
+    reject: tenantProcedure
+      .use(requirePermission('inspections.manage'))
+      .input(rejectInput)
+      .mutation(async ({ ctx, input }) => {
+        const now = new Date();
+        const result = await ctx.db
+          .update(inspections)
+          .set({
+            status: 'rejected',
+            rejectedAt: now,
+            rejectedReason: input.reason,
+            updatedAt: now,
+          })
+          .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
+          .returning({ id: inspections.id });
+        if (result.length === 0) throw new TRPCError({ code: 'NOT_FOUND' });
+        return { ok: true as const };
+      }),
 
-  delete: tenantProcedure
-    .use(requirePermission('inspections.manage'))
-    .input(deleteInput)
-    .mutation(async ({ ctx, input }) => {
-      const result = await ctx.db
-        .delete(inspections)
-        .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
-        .returning({ id: inspections.id });
-      if (result.length === 0) throw new TRPCError({ code: 'NOT_FOUND' });
-      return { ok: true as const };
-    }),
-});
+    delete: tenantProcedure
+      .use(requirePermission('inspections.manage'))
+      .input(deleteInput)
+      .mutation(async ({ ctx, input }) => {
+        const result = await ctx.db
+          .delete(inspections)
+          .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)))
+          .returning({ id: inspections.id });
+        if (result.length === 0) throw new TRPCError({ code: 'NOT_FOUND' });
+        return { ok: true as const };
+      }),
+  });
+}
+

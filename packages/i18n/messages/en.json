@@ -397,6 +397,23 @@
           "accentColor": "Accent color",
           "preview": "Preview",
           "uploadError": "Could not upload the logo. Check the file type and size and try again."
+        },
+        "signatureWorkflow": {
+          "title": "Signature Workflow",
+          "subtitle": "Configure who needs to review and sign this form after it's submitted.",
+          "addSignature": "Add signature",
+          "workflowType": "Workflow Type",
+          "sequential": "Sequential",
+          "sequentialDescription": "Signatories review in order, one after another",
+          "parallel": "Parallel",
+          "parallelDescription": "All signatories receive at the same time",
+          "signatories": "Signatories",
+          "addSignatory": "Add Signatory",
+          "addFirstSignatory": "Add First Signatory",
+          "noSignatoriesTitle": "No signatories added",
+          "noSignatoriesBody": "Add people who need to review and sign this form",
+          "additionalSettings": "Additional Settings",
+          "notifyOnCompletion": "Notify on completion (Send notification when all signatures are collected)"
         }
       },
       "visibilityControl": {

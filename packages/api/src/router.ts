@@ -27,7 +27,10 @@ import { usersRouter } from './routers/users';
 import { actionsRouter } from './routers/actions';
 import { approvalsRouter } from './routers/approvals';
 import { createExportsRouter, type ExportsRouterDeps } from './routers/exports';
-import { inspectionsRouter } from './routers/inspections';
+import {
+  createInspectionsRouter,
+  type InspectionsRouterDeps,
+} from './routers/inspections';
 import {
   createInspectionsExportRouter,
   type InspectionsExportDeps,
@@ -48,6 +51,7 @@ export function buildAppRouter(deps: {
   exports: ExportsRouterDeps;
   inspectionsExport: InspectionsExportDeps;
   auth: AuthRouterDeps;
+  inspections: InspectionsRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -62,7 +66,7 @@ export function buildAppRouter(deps: {
     accessRules: accessRulesRouter,
     templates: templatesRouter,
     globalResponseSets: globalResponseSetsRouter,
-    inspections: inspectionsRouter,
+    inspections: createInspectionsRouter(deps.inspections),
     inspectionsExport: createInspectionsExportRouter(deps.inspectionsExport),
     signatures: signaturesRouter,
     approvals: approvalsRouter,
@@ -108,6 +112,10 @@ const stubInspectionsExportDeps: InspectionsExportDeps = {
  * buffer (`__authStubMailbox`) so tests that exercise the default
  * `appRouter` can introspect what would have been sent. Production
  * wiring replaces these via {@link buildAppRouter}.
+ *
+ * The signature-workflow tests share THIS mailbox (the
+ * `stubInspectionsDeps` `sendEmail` also pushes into `__authStubMailbox`)
+ * so a single import handles both surfaces. Tests reset it in `beforeEach`.
  */
 export interface AuthStubMail {
   to: string;
@@ -133,10 +141,29 @@ export const stubAuthDeps: AuthRouterDeps = {
   appUrl: 'http://localhost:3000',
 };
 
+/**
+ * Default inspections-router deps. Shares the `__authStubMailbox` so
+ * tests have one place to read every captured email regardless of which
+ * router sent it.
+ */
+export const stubInspectionsDeps: InspectionsRouterDeps = {
+  sendEmail: async (mail): Promise<DeliveryResult> => {
+    __authStubMailbox.push({
+      to: mail.to,
+      templateKey: mail.templateKey,
+      variables: mail.variables,
+    });
+    return { delivery: 'console' };
+  },
+  logger: createLogger({ service: 'inspections-stub', level: 'fatal', nodeEnv: 'test' }),
+  appUrl: 'http://localhost:3000',
+};
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
   auth: stubAuthDeps,
+  inspections: stubInspectionsDeps,
 });
 
 export type AppRouter = typeof appRouter;

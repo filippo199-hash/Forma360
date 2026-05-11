@@ -382,12 +382,33 @@ const brandingSchema = z.object({
 });
 export type TemplateBranding = z.infer<typeof brandingSchema>;
 
+/**
+ * Template-level signature workflow.
+ *
+ * Independent of the item-level `signature` question type. When enabled,
+ * after an inspection is submitted it transitions into
+ * `awaiting_signature_workflow` and the listed users sign off in
+ * sequential or parallel mode before the inspection is marked completed.
+ *
+ * `signatoryUserIds` order is significant for sequential mode (position 0
+ * signs first). For parallel mode, all signers are notified at once and
+ * order does not matter beyond presentation.
+ */
+const signatureWorkflowSchema = z.object({
+  enabled: z.boolean(),
+  mode: z.enum(['sequential', 'parallel']),
+  signatoryUserIds: z.array(z.string().min(1)).max(10).default([]),
+  notifyOnCompletion: z.boolean(),
+});
+export type SignatureWorkflow = z.infer<typeof signatureWorkflowSchema>;
+
 const settingsSchema = z.object({
   titleFormat: z.string().max(TEMPLATE_LIMITS.MAX_TITLE_FORMAT_LENGTH).default('{date}'),
   documentNumberFormat: z.string().max(120).default('{counter:6}'),
   documentNumberStart: z.number().int().min(1).default(1),
   approvalPage: approvalPageSchema.optional(),
   branding: brandingSchema.optional(),
+  signatureWorkflow: signatureWorkflowSchema.optional(),
 });
 export type TemplateSettings = z.infer<typeof settingsSchema>;
 
@@ -635,4 +656,26 @@ export function maxLogicDepth(content: TemplateContent): number {
     if (d > max) max = d;
   }
   return max;
+}
+
+/**
+ * Validate the template-level signature workflow settings.
+ *
+ * Catches the configuration mistake where workflow is enabled but no
+ * signatories are listed — that would leave a submitted inspection
+ * stranded in `awaiting_signature_workflow` with nobody able to sign.
+ * Called at the templates router publish boundary.
+ */
+export function validateSignatureWorkflow(content: TemplateContent): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const sw = content.settings.signatureWorkflow;
+  if (sw !== undefined && sw.enabled) {
+    if (sw.signatoryUserIds.length < 1) {
+      errors.push('Signature workflow is enabled but has no signatories.');
+    }
+  }
+  return { valid: errors.length === 0, errors };
 }

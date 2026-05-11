@@ -277,3 +277,62 @@ export const publicInspectionLinks = pgTable(
 
 export type PublicInspectionLink = typeof publicInspectionLinks.$inferSelect;
 export type NewPublicInspectionLink = typeof publicInspectionLinks.$inferInsert;
+
+/**
+ * Template-level signature workflow signers. One row per signatory per
+ * inspection. Created at submit time when the pinned template version's
+ * `settings.signatureWorkflow.enabled === true`. Distinct from item-level
+ * `inspection_signatures` rows (which live on the form itself).
+ *
+ *   - `position` is 0-based. Sequential mode requires lowest-position
+ *     pending signer to sign before the next is notified.
+ *   - `status` ∈ {'pending','signed','declined'} (CHECK constraint).
+ *   - Unique (inspection_id, position) prevents two rows competing for
+ *     the same turn.
+ *   - Partial index on `signer_user_id` WHERE status='pending' makes
+ *     "list inspections awaiting my signature" cheap.
+ */
+export const workflowSignerStatus = ['pending', 'signed', 'declined'] as const;
+export type WorkflowSignerStatus = (typeof workflowSignerStatus)[number];
+
+export const inspectionWorkflowSigners = pgTable(
+  'inspection_workflow_signers',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    inspectionId: varchar('inspection_id', { length: 26 })
+      .notNull()
+      .references(() => inspections.id, { onDelete: 'cascade' }),
+
+    /** 0-based slot for sequential ordering. */
+    position: integer('position').notNull(),
+    /** Signer user id. FK RESTRICT so we can't lose history by deleting users. */
+    signerUserId: text('signer_user_id').notNull(),
+    /** 'pending' | 'signed' | 'declined' — enforced by CHECK constraint in SQL. */
+    status: varchar('status', { length: 20 }).notNull().default('pending'),
+
+    signedAt: timestamp('signed_at', { withTimezone: true, mode: 'date' }),
+    /** SVG or data URL written at the moment of signing. */
+    signatureData: text('signature_data'),
+    comment: text('comment'),
+
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    index('inspection_workflow_signers_inspection_idx').on(table.inspectionId),
+    uniqueIndex('inspection_workflow_signers_position_uq').on(
+      table.inspectionId,
+      table.position,
+    ),
+    index('inspection_workflow_signers_pending_idx')
+      .on(table.signerUserId)
+      .where(sql`${table.status} = 'pending'`),
+  ],
+);
+
+export type InspectionWorkflowSigner = typeof inspectionWorkflowSigners.$inferSelect;
+export type NewInspectionWorkflowSigner = typeof inspectionWorkflowSigners.$inferInsert;

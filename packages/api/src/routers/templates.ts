@@ -46,6 +46,7 @@ import {
   parseTemplateContent,
   templateContentSchema,
   TEMPLATE_SCHEMA_VERSION,
+  validateSignatureWorkflow,
   type TemplateContent,
 } from '@forma360/shared/template-schema';
 import { TRPCError } from '@trpc/server';
@@ -431,6 +432,14 @@ export const templatesRouter = router({
           code: 'BAD_REQUEST',
           message: 'Draft content failed validation',
           cause: { zodIssues: parsed.error.flatten() },
+        });
+      }
+      // Cross-field signature-workflow check (enabled + at least one signer).
+      const sw = validateSignatureWorkflow(parsed.data);
+      if (!sw.valid) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: sw.errors.join(' '),
         });
       }
 

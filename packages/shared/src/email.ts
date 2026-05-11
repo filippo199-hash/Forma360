@@ -154,7 +154,13 @@ export function renderTemplatedEmail(
   vars: Record<string, string>,
 ): { subject: string; text: string } {
   const subject = interpolate(template.subject, vars);
-  const url = vars['url'] ?? vars['ctaUrl'] ?? vars['inviteUrl'] ?? vars['settingsUrl'];
+  const url =
+    vars['url'] ??
+    vars['ctaUrl'] ??
+    vars['inviteUrl'] ??
+    vars['settingsUrl'] ??
+    vars['signUrl'] ??
+    vars['viewUrl'];
   const ctaText = interpolate(template.cta, vars);
   const ctaLine = url !== undefined ? `${ctaText}: ${url}` : ctaText;
   const text = [

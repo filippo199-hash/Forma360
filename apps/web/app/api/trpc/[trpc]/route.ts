@@ -15,6 +15,7 @@ import { isId } from '@forma360/shared/id';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { authDeps } from '../../../../src/server/auth-deps';
 import { exportsDeps } from '../../../../src/server/exports-deps';
+import { inspectionsDeps } from '../../../../src/server/inspections-deps';
 import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { createContext } from '../../../../src/server/trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps.
@@ -26,6 +27,7 @@ const appRouter = buildAppRouter({
   exports: exportsDeps,
   inspectionsExport: inspectionsExportDeps,
   auth: authDeps,
+  inspections: inspectionsDeps,
 });
 
 async function handler(req: Request): Promise<Response> {

@@ -6,6 +6,7 @@ import { buildAppRouter } from '@forma360/api';
 import { NextResponse } from 'next/server';
 import { authDeps } from '../../../../src/server/auth-deps';
 import { exportsDeps } from '../../../../src/server/exports-deps';
+import { inspectionsDeps } from '../../../../src/server/inspections-deps';
 import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { storage } from '../../../../src/server/storage';
 import { createContext } from '../../../../src/server/trpc';
@@ -14,6 +15,7 @@ const appRouter = buildAppRouter({
   exports: exportsDeps,
   inspectionsExport: inspectionsExportDeps,
   auth: authDeps,
+  inspections: inspectionsDeps,
 });
 
 export async function GET(req: Request): Promise<Response> {

@@ -1,0 +1,8 @@
+{
+  "subject": "All signatures collected: {inspectionTitle}",
+  "preheader": "{inspectionTitle} is now complete",
+  "greeting": "Hi {recipientName},",
+  "body": "Every signatory has signed '{inspectionTitle}'. The inspection is now marked as completed.",
+  "cta": "View inspection",
+  "footer": "You're receiving this because you were a signatory on this inspection."
+}
