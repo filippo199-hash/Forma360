@@ -219,6 +219,9 @@ importers:
       '@trpc/server':
         specifier: ^11.0.0
         version: 11.16.0(typescript@5.9.3)
+      drizzle-orm:
+        specifier: ^0.45.0
+        version: 0.45.2(@electric-sql/pglite@0.2.17)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.28.16)(pg@8.20.0)
       rrule:
         specifier: ^2.8.1
         version: 2.8.1
@@ -232,9 +235,6 @@ importers:
       '@electric-sql/pglite':
         specifier: ^0.2.0
         version: 0.2.17
-      drizzle-orm:
-        specifier: ^0.45.0
-        version: 0.45.2(@electric-sql/pglite@0.2.17)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.28.16)(pg@8.20.0)
       vitest:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@25.6.0)(@vitest/ui@2.1.9)(happy-dom@16.8.1)(lightningcss@1.32.0)(terser@5.46.1)
@@ -323,6 +323,9 @@ importers:
       rrule:
         specifier: ^2.8.1
         version: 2.8.1
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
       zod:
         specifier: ^3.24.0
         version: 3.25.76
@@ -330,9 +333,6 @@ importers:
       '@electric-sql/pglite':
         specifier: ^0.2.0
         version: 0.2.17
-      tsx:
-        specifier: ^4.19.0
-        version: 4.21.0
       vitest:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@25.6.0)(@vitest/ui@2.1.9)(happy-dom@16.8.1)(lightningcss@1.32.0)(terser@5.46.1)

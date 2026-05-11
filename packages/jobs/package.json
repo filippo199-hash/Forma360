@@ -36,11 +36,11 @@
     "drizzle-orm": "^0.45.0",
     "ioredis": "^5.4.1",
     "rrule": "^2.8.1",
+    "tsx": "^4.19.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.0",
-    "tsx": "^4.19.0",
     "vitest": "^2.1.0"
   }
 }
