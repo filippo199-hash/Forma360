@@ -47,13 +47,7 @@ import { useMemo, useState } from 'react';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
 import { useEditor } from './editor-context';
@@ -136,6 +130,8 @@ function WorkflowTypeSection({
   onChange: (next: SignatureWorkflow) => void;
 }) {
   const t = useTranslations('templates.editor.settingsTab.signatureWorkflow');
+  const sequentialSelected = workflow.mode === 'sequential';
+  const parallelSelected = workflow.mode === 'parallel';
   return (
     <section>
       <h3 className="mb-2 text-sm font-semibold">{t('workflowType')}</h3>
@@ -144,14 +140,17 @@ function WorkflowTypeSection({
           type="button"
           onClick={() => onChange({ ...workflow, mode: 'sequential' })}
           className={
-            workflow.mode === 'sequential'
-              ? 'flex flex-col items-start gap-2 rounded-lg border-2 border-primary bg-accent/50 p-4 text-left transition-colors'
-              : 'flex flex-col items-start gap-2 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/40'
+            sequentialSelected
+              ? 'flex flex-col items-start gap-2 rounded-lg border-2 border-primary bg-primary/5 p-4 text-left transition-colors'
+              : 'flex flex-col items-start gap-2 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent/30'
           }
-          aria-pressed={workflow.mode === 'sequential'}
+          aria-pressed={sequentialSelected}
         >
           <div className="flex items-center gap-2">
-            <ArrowRightCircle className="h-5 w-5 text-primary" aria-hidden="true" />
+            <ArrowRightCircle
+              className={`h-5 w-5 ${sequentialSelected ? 'text-primary' : 'text-muted-foreground'}`}
+              aria-hidden="true"
+            />
             <span className="text-sm font-medium">{t('sequential')}</span>
           </div>
           <p className="text-xs text-muted-foreground">{t('sequentialDescription')}</p>
@@ -160,14 +159,17 @@ function WorkflowTypeSection({
           type="button"
           onClick={() => onChange({ ...workflow, mode: 'parallel' })}
           className={
-            workflow.mode === 'parallel'
-              ? 'flex flex-col items-start gap-2 rounded-lg border-2 border-primary bg-accent/50 p-4 text-left transition-colors'
-              : 'flex flex-col items-start gap-2 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/40'
+            parallelSelected
+              ? 'flex flex-col items-start gap-2 rounded-lg border-2 border-primary bg-primary/5 p-4 text-left transition-colors'
+              : 'flex flex-col items-start gap-2 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent/30'
           }
-          aria-pressed={workflow.mode === 'parallel'}
+          aria-pressed={parallelSelected}
         >
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden="true" />
+            <CheckCircle2
+              className={`h-5 w-5 ${parallelSelected ? 'text-primary' : 'text-muted-foreground'}`}
+              aria-hidden="true"
+            />
             <span className="text-sm font-medium">{t('parallel')}</span>
           </div>
           <p className="text-xs text-muted-foreground">{t('parallelDescription')}</p>
@@ -254,10 +256,7 @@ function SignatoriesSection({
         </div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext
-            items={workflow.signatoryUserIds}
-            strategy={verticalListSortingStrategy}
-          >
+          <SortableContext items={workflow.signatoryUserIds} strategy={verticalListSortingStrategy}>
             <ul className="space-y-2">
               {workflow.signatoryUserIds.map((userId, idx) => {
                 const u = usersById.get(userId);

@@ -489,7 +489,35 @@
       "validation": {
         "title": "Validation errors",
         "fixBeforePublish": "Fix these issues before publishing.",
-        "genericError": "Template content is invalid."
+        "genericError": "Template content is invalid.",
+        "signatureWorkflowEmpty": "Add at least one signatory or turn off the signature workflow."
+      },
+      "inlineActions": {
+        "addLogic": "Logic",
+        "hideLogic": "Hide logic",
+        "addNote": "Note",
+        "hideNote": "Hide note",
+        "duplicate": "Duplicate question",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "more": "More",
+        "delete": "Delete",
+        "flaggedCount": "{count} flagged",
+        "addAction": "Add action",
+        "removeAction": "Remove action",
+        "notePlaceholder": "Add a note (markdown supported)…"
+      },
+      "responseSetsPicker": {
+        "createNew": "Create response set",
+        "editSet": "Edit response set",
+        "manageSet": "Manage response set",
+        "deleteSet": "Delete response set",
+        "addOption": "Add option",
+        "setNameLabel": "Set name",
+        "multipleSelectionLabel": "Multiple selection",
+        "flaggedLabel": "Flagged",
+        "optionLabel": "Option label",
+        "closeLabel": "Close"
       },
       "visibilityControl": {
         "toggle": "Show only when…",

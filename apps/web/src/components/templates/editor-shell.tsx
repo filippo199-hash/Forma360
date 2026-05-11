@@ -17,11 +17,9 @@ import {
 import { trpc } from '../../lib/trpc/client';
 import { ContentTab } from './content-tab';
 import { useEditor } from './editor-context';
-import { LogicTab } from './logic-tab';
-import { ResponseSetsTab } from './response-sets-tab';
 import { SettingsTab } from './settings-tab';
 
-type ActiveTab = 'build' | 'responseSets' | 'logic' | 'settings';
+type ActiveTab = 'build' | 'settings';
 
 /**
  * Full-screen editor shell replicating the iAuditor / SafetyCulture layout.
@@ -63,7 +61,15 @@ export function EditorShell({ templateId }: { templateId: string }) {
       void utils.templates.get.invalidate({ templateId });
       void utils.templates.list.invalidate();
     },
-    onError: () => {
+    onError: (err) => {
+      const message = err.message.toLowerCase();
+      const isSignatureWorkflow =
+        err.data?.code === 'BAD_REQUEST' &&
+        (message.includes('signature') || message.includes('signatory'));
+      if (isSignatureWorkflow) {
+        toast.error(t('validation.signatureWorkflowEmpty'));
+        return;
+      }
       toast.error(t('validationError'));
     },
   });
@@ -72,9 +78,7 @@ export function EditorShell({ templateId }: { templateId: string }) {
     const payload: Parameters<typeof saveDraft.mutate>[0] = {
       templateId,
       content: state.content,
-      ...(state.loadedUpdatedAt !== null
-        ? { expectedUpdatedAt: state.loadedUpdatedAt }
-        : {}),
+      ...(state.loadedUpdatedAt !== null ? { expectedUpdatedAt: state.loadedUpdatedAt } : {}),
     };
     saveDraft.mutate(payload);
   }
@@ -85,8 +89,6 @@ export function EditorShell({ templateId }: { templateId: string }) {
 
   const tabs: { id: ActiveTab; label: string }[] = [
     { id: 'build', label: t('build') },
-    { id: 'responseSets', label: t('responseSets') },
-    { id: 'logic', label: t('logic') },
     { id: 'settings', label: t('settings') },
   ];
 
@@ -111,9 +113,7 @@ export function EditorShell({ templateId }: { templateId: string }) {
           <input
             type="text"
             value={state.content.title}
-            onChange={(e) =>
-              dispatch({ type: 'updateContentTitle', title: e.target.value })
-            }
+            onChange={(e) => dispatch({ type: 'updateContentTitle', title: e.target.value })}
             className="min-w-0 flex-1 truncate bg-transparent text-sm font-medium text-foreground outline-none"
             aria-label={t('settingsTab.templateTitleLabel')}
           />
@@ -172,8 +172,6 @@ export function EditorShell({ templateId }: { templateId: string }) {
       {/* ─── Content area ────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
         {activeTab === 'build' && <ContentTab templateId={templateId} />}
-        {activeTab === 'responseSets' && <ResponseSetsTab />}
-        {activeTab === 'logic' && <LogicTab />}
         {activeTab === 'settings' && <SettingsTab templateId={templateId} />}
       </div>
 
@@ -210,10 +208,7 @@ export function EditorShell({ templateId }: { templateId: string }) {
             <DialogDescription>{t('conflictBody')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              onClick={() => window.location.reload()}
-              aria-label={t('conflictReload')}
-            >
+            <Button onClick={() => window.location.reload()} aria-label={t('conflictReload')}>
               {t('conflictReload')}
             </Button>
           </DialogFooter>
