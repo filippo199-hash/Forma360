@@ -60,6 +60,7 @@ import { Button } from '../ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useEditor } from './editor-context';
 import { makeItem, type StubItemType, type SupportedItemType } from './editor-state';
+import { SignatureWorkflowCard } from './signature-workflow-card';
 import { VisibilityControl } from './visibility-control';
 
 // arrayMove is imported for dnd-kit; silence unused-var lint.
@@ -149,6 +150,11 @@ export function ContentTab({ templateId }: { templateId: string }) {
         {/* Add page button at bottom of canvas */}
         <div className="mt-4">
           <AddPageButton />
+        </div>
+
+        {/* Signature workflow — pinned at the bottom of the template */}
+        <div className="mt-6">
+          <SignatureWorkflowCard />
         </div>
       </div>
     </div>

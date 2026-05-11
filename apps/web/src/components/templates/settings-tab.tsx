@@ -8,7 +8,6 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { useEditor } from './editor-context';
-import { SignatureWorkflowCard } from './signature-workflow-card';
 
 /**
  * Template-level settings: title, description, inspection-title format,
@@ -136,8 +135,6 @@ export function SettingsTab({ templateId }: { templateId: string }) {
           />
         </CardContent>
       </Card>
-
-      <SignatureWorkflowCard />
     </div>
     </div>
     </div>
