@@ -53,7 +53,6 @@ import {
   Image as ImageIcon,
   ImagePlus,
   Info,
-  LayoutList,
   ListChecks,
   MapPin,
   MoreHorizontal,
@@ -199,9 +198,6 @@ function typeChip(type: string): TypeChipStyle {
 export function ContentTab({ templateId }: { templateId: string }) {
   const { state, dispatch } = useEditor();
 
-  // Identify the "selected" page for the floating toolbar's quick-add.
-  const selectedPageId = state.selectedPageId;
-
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -221,8 +217,8 @@ export function ContentTab({ templateId }: { templateId: string }) {
 
   return (
     <div className="relative flex-1 overflow-y-auto bg-muted/30">
-      {/* Floating toolbar — left gutter */}
-      <FloatingToolbar selectedPageId={selectedPageId} />
+      {/* Sticky section navigator — left gutter */}
+      <SectionNavigator />
 
       {/* Canvas */}
       <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
@@ -289,49 +285,62 @@ function SortablePageBlock({
   );
 }
 
-// ─── Floating toolbar ─────────────────────────────────────────────────────────
+// ─── Section navigator ───────────────────────────────────────────────────────
 
-function FloatingToolbar({ selectedPageId }: { selectedPageId: string }) {
+/**
+ * Sticky "table of contents" rail anchored to the left gutter. Lists every
+ * section across every page; clicking one scrolls its card into view.
+ * Especially useful on long templates where the canvas can run dozens of
+ * sections tall. Replaces the old "+ Question / + Section" floating toolbar
+ * — both add affordances are already available inline at the page/section
+ * level so they don't need a duplicate entry point here.
+ */
+function SectionNavigator() {
   const t = useTranslations('templates.editor');
-  const { state, dispatch } = useEditor();
+  const { state } = useEditor();
 
-  function handleAddQuestion() {
-    const page = state.content.pages.find((p) => p.id === selectedPageId);
-    if (page === undefined) return;
-    const firstSection = page.sections[0];
-    if (firstSection === undefined) return;
-    const item = makeItem('text');
-    dispatch({ type: 'addItem', pageId: selectedPageId, sectionId: firstSection.id, item });
-    dispatch({ type: 'selectItem', itemId: item.id });
+  function scrollTo(sectionId: string) {
+    const el = document.getElementById(`section-${sectionId}`);
+    if (el !== null) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function handleAddSection() {
-    dispatch({ type: 'addSection', pageId: selectedPageId });
-  }
+  const hasAnySections = state.content.pages.some((p) => p.sections.length > 0);
+  if (!hasAnySections) return null;
 
   return (
     <div className="absolute left-4 top-8 z-10">
-      <div className="sticky top-8 rounded-xl border bg-background shadow-sm">
-        <div className="flex flex-col items-center gap-1 p-1">
-          <button
-            type="button"
-            onClick={handleAddQuestion}
-            className="flex w-full flex-col items-center gap-0.5 rounded-lg p-2 text-center hover:bg-accent"
-            aria-label={t('addQuestion')}
-          >
-            <Plus className="h-4 w-4" />
-            <span className="text-[10px]">{t('addQuestion')}</span>
-          </button>
-          <div className="h-px w-6 bg-border" />
-          <button
-            type="button"
-            onClick={handleAddSection}
-            className="flex w-full flex-col items-center gap-0.5 rounded-lg p-2 text-center hover:bg-accent"
-            aria-label={t('addSection')}
-          >
-            <LayoutList className="h-4 w-4" />
-            <span className="text-[10px]">{t('addSection')}</span>
-          </button>
+      <div className="sticky top-8 w-44 overflow-hidden rounded-xl border bg-background shadow-sm">
+        <div className="border-b px-3 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {t('sectionsNavTitle')}
+        </div>
+        <div className="max-h-[calc(100vh-10rem)] overflow-y-auto py-1">
+          {state.content.pages.map((page) => {
+            if (page.sections.length === 0) return null;
+            return (
+              <div key={page.id} className="border-b last:border-b-0">
+                <div
+                  className="truncate px-3 pb-0.5 pt-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+                  title={page.title}
+                >
+                  {page.title}
+                </div>
+                <ul className="pb-1.5">
+                  {page.sections.map((s) => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => scrollTo(s.id)}
+                        className="block w-full truncate px-3 py-1.5 text-left text-xs text-foreground hover:bg-accent hover:text-accent-foreground"
+                        title={s.title}
+                      >
+                        {s.title === '' ? t('sectionsNavUntitled') : s.title}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

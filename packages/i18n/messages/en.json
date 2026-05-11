@@ -594,7 +594,9 @@
         "setNamePlaceholder": "e.g. Pass / Fail / N/A"
       },
       "clickToUploadLogo": "Click to upload logo",
-      "uploadingLogo": "Uploading…"
+      "uploadingLogo": "Uploading…",
+      "sectionsNavTitle": "Sections",
+      "sectionsNavUntitled": "Untitled section"
     },
     "export": {
       "button": "Export CSV",
