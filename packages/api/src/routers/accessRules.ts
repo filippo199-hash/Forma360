@@ -20,7 +20,7 @@ import {
 } from '@forma360/permissions/dependents';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, count, eq, isNotNull, sql } from 'drizzle-orm';
+import { and, count, eq, isNotNull, notLike, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -91,10 +91,13 @@ const updateInput = z.object({
 
 export const accessRulesRouter = router({
   list: tenantProcedure.use(requirePermission('permissions.view')).query(async ({ ctx }) => {
+    // Hide template-owned auto-rules (created by templates.publish when the
+    // user picks "specific groups & sites"). They are managed inside the
+    // template editor, not the access-rules admin UI.
     return ctx.db
       .select()
       .from(accessRules)
-      .where(eq(accessRules.tenantId, ctx.tenantId))
+      .where(and(eq(accessRules.tenantId, ctx.tenantId), notLike(accessRules.name, '[auto] %')))
       .orderBy(accessRules.name);
   }),
 

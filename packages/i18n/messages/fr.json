@@ -492,6 +492,34 @@
         "genericError": "Template content is invalid.",
         "signatureWorkflowEmpty": "Add at least one signatory or turn off the signature workflow."
       },
+      "publish": "Publish",
+      "publishTab": {
+        "title": "Publish template",
+        "subtitle": "Make this template available for inspections.",
+        "accessTitle": "Who can use this template?",
+        "accessSubtitle": "Pick the groups and sites that should see this template.",
+        "everyoneLabel": "Everyone in your organisation",
+        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "specificLabel": "Specific groups & sites",
+        "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
+        "groupsLabel": "Groups",
+        "sitesLabel": "Sites",
+        "addGroups": "Add groups",
+        "addSites": "Add sites",
+        "pickerSearchPlaceholder": "Search…",
+        "pickerEmpty": "No matches",
+        "pickerDone": "Done",
+        "noGroupsSelected": "Available to all groups",
+        "noSitesSelected": "Available at all sites",
+        "publishButton": "Publish template",
+        "publishing": "Publishing…",
+        "backToBuild": "Back to build",
+        "publishSuccess": "Template published",
+        "validation": {
+          "generic": "This template has validation errors. Fix them before publishing.",
+          "signatureWorkflowEmpty": "Add at least one signatory or turn off the signature workflow."
+        }
+      },
       "inlineActions": {
         "addLogic": "Logic",
         "hideLogic": "Hide logic",

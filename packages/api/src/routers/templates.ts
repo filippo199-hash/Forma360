@@ -32,11 +32,15 @@
  * re-registration so this is clean.
  */
 import {
+  accessRules,
+  groupMembers,
   inspections,
+  siteMembers,
   templateSchedules,
   templates,
   templateVersions,
 } from '@forma360/db/schema';
+import { resolveAccessRule } from '@forma360/permissions/access';
 import {
   registerDependentResolver,
   type DependentResolver,
@@ -148,6 +152,19 @@ const saveDraftInput = z.object({
 
 const publishInput = z.object({
   templateId: z.string().length(26),
+  /**
+   * Optional audience scoping. Omit to leave the template's existing
+   * accessRuleId alone (back-compat for callers that pre-date the Publish
+   * tab). 'everyone' clears the rule; 'specific' creates or updates a
+   * `[auto] Template: …` rule and points the template at it.
+   */
+  access: z
+    .object({
+      mode: z.enum(['everyone', 'specific']),
+      groupIds: z.array(z.string().length(26)).max(100).default([]),
+      siteIds: z.array(z.string().length(26)).max(100).default([]),
+    })
+    .optional(),
 });
 
 const duplicateInput = z.object({
@@ -182,7 +199,7 @@ export const templatesRouter = router({
       const where = [eq(templates.tenantId, ctx.tenantId)];
       if (!input.includeArchived) where.push(isNull(templates.archivedAt));
       if (input.status !== undefined) where.push(eq(templates.status, input.status));
-      return ctx.db
+      const rows = await ctx.db
         .select({
           id: templates.id,
           name: templates.name,
@@ -196,6 +213,48 @@ export const templatesRouter = router({
         .from(templates)
         .where(and(...where))
         .orderBy(desc(templates.updatedAt));
+
+      // Admin / template-manager users see every template regardless of
+      // access rule. For everyone else we gate by the rule: null = visible
+      // to all, non-null = caller's group/site memberships must satisfy it.
+      const isManager = ctx.permissions.includes('templates.manage');
+      if (isManager) return rows;
+
+      const userGroupRows = await ctx.db
+        .select({ groupId: groupMembers.groupId })
+        .from(groupMembers)
+        .where(
+          and(eq(groupMembers.tenantId, ctx.tenantId), eq(groupMembers.userId, ctx.auth.userId)),
+        );
+      const userSiteRows = await ctx.db
+        .select({ siteId: siteMembers.siteId })
+        .from(siteMembers)
+        .where(
+          and(eq(siteMembers.tenantId, ctx.tenantId), eq(siteMembers.userId, ctx.auth.userId)),
+        );
+      const userSnapshot = {
+        groupIds: userGroupRows.map((r) => r.groupId),
+        siteIds: userSiteRows.map((r) => r.siteId),
+      };
+
+      const ruleIds = Array.from(
+        new Set(rows.map((r) => r.accessRuleId).filter((id): id is string => id !== null)),
+      );
+      const ruleRows =
+        ruleIds.length === 0
+          ? []
+          : await ctx.db
+              .select()
+              .from(accessRules)
+              .where(and(eq(accessRules.tenantId, ctx.tenantId), inArray(accessRules.id, ruleIds)));
+      const ruleMap = new Map(ruleRows.map((r) => [r.id, r]));
+
+      return rows.filter((tpl) => {
+        if (tpl.accessRuleId === null) return true;
+        const rule = ruleMap.get(tpl.accessRuleId);
+        if (rule === undefined) return false;
+        return resolveAccessRule(rule, userSnapshot);
+      });
     }),
 
   get: tenantProcedure
@@ -443,6 +502,52 @@ export const templatesRouter = router({
         });
       }
 
+      // Resolve the new accessRuleId from the input. We compute this BEFORE
+      // the publish transaction so any rule-shaped errors surface cleanly
+      // rather than aborting the publish tx. `undefined` means "leave the
+      // existing accessRuleId alone" (back-compat for callers that don't
+      // know about the access input yet).
+      let newAccessRuleId: string | null | undefined;
+      if (input.access === undefined) {
+        newAccessRuleId = undefined;
+      } else if (input.access.mode === 'everyone') {
+        newAccessRuleId = null;
+      } else {
+        const ruleName = `[auto] Template: ${template.name}`;
+        const ruleGroupIds = input.access.groupIds;
+        const ruleSiteIds = input.access.siteIds;
+        if (template.accessRuleId !== null) {
+          // Update the existing auto-rule in place.
+          await ctx.db
+            .update(accessRules)
+            .set({
+              name: ruleName,
+              groupIds: ruleGroupIds,
+              siteIds: ruleSiteIds,
+              invalidatedAt: null,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(accessRules.id, template.accessRuleId),
+                eq(accessRules.tenantId, ctx.tenantId),
+              ),
+            );
+          newAccessRuleId = template.accessRuleId;
+        } else {
+          // Create a fresh auto-rule.
+          const id = newId();
+          await ctx.db.insert(accessRules).values({
+            id,
+            tenantId: ctx.tenantId,
+            name: ruleName,
+            groupIds: ruleGroupIds,
+            siteIds: ruleSiteIds,
+          });
+          newAccessRuleId = id;
+        }
+      }
+
       const now = new Date();
       await ctx.db.transaction(async (tx) => {
         // Flip previous current off.
@@ -462,21 +567,74 @@ export const templatesRouter = router({
             updatedAt: now,
           })
           .where(eq(templateVersions.id, draft.id));
-        // Update template.
-        await tx
-          .update(templates)
-          .set({
-            status: 'published',
-            currentVersionId: draft.id,
-            updatedAt: now,
-          })
-          .where(eq(templates.id, input.templateId));
+        // Update template — include accessRuleId only when the caller
+        // explicitly opted in via the input.
+        const templateUpdate: {
+          status: 'published';
+          currentVersionId: string;
+          updatedAt: Date;
+          accessRuleId?: string | null;
+        } = {
+          status: 'published',
+          currentVersionId: draft.id,
+          updatedAt: now,
+        };
+        if (newAccessRuleId !== undefined) {
+          templateUpdate.accessRuleId = newAccessRuleId;
+        }
+        await tx.update(templates).set(templateUpdate).where(eq(templates.id, input.templateId));
       });
       ctx.logger.info(
         { templateId: input.templateId, versionId: draft.id },
         '[templates] published',
       );
       return { versionId: draft.id };
+    }),
+
+  /**
+   * Read the current audience-scoping config for a template — used by the
+   * Publish tab to hydrate the picker UI.
+   *
+   * If `accessRuleId` is null OR the referenced rule no longer exists
+   * (defensive), we report 'everyone'. Otherwise we hand back the rule's
+   * groupIds + siteIds for the picker to render.
+   */
+  getAccess: tenantProcedure
+    .use(requirePermission('templates.view'))
+    .input(z.object({ templateId: z.string().length(26) }))
+    .query(async ({ ctx, input }) => {
+      const tplRows = await ctx.db
+        .select({ accessRuleId: templates.accessRuleId })
+        .from(templates)
+        .where(and(eq(templates.tenantId, ctx.tenantId), eq(templates.id, input.templateId)))
+        .limit(1);
+      const tpl = tplRows[0];
+      if (tpl === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (tpl.accessRuleId === null) {
+        return {
+          mode: 'everyone' as const,
+          groupIds: [] as readonly string[],
+          siteIds: [] as readonly string[],
+        };
+      }
+      const ruleRows = await ctx.db
+        .select()
+        .from(accessRules)
+        .where(and(eq(accessRules.id, tpl.accessRuleId), eq(accessRules.tenantId, ctx.tenantId)))
+        .limit(1);
+      const rule = ruleRows[0];
+      if (rule === undefined) {
+        return {
+          mode: 'everyone' as const,
+          groupIds: [] as readonly string[],
+          siteIds: [] as readonly string[],
+        };
+      }
+      return {
+        mode: 'specific' as const,
+        groupIds: rule.groupIds,
+        siteIds: rule.siteIds,
+      };
     }),
 
   duplicate: tenantProcedure
@@ -689,7 +847,8 @@ export const templatesRouter = router({
       ];
       const lines: string[] = [csvQuoteRow(header)];
       for (const r of rows) {
-        const meta = r.currentVersionId !== null ? versionMetaById.get(r.currentVersionId) : undefined;
+        const meta =
+          r.currentVersionId !== null ? versionMetaById.get(r.currentVersionId) : undefined;
         lines.push(
           csvQuoteRow([
             r.id,

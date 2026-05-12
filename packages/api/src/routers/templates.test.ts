@@ -377,10 +377,7 @@ describe('templates router (Phase 2)', () => {
     it('is tenant-scoped', async () => {
       const otherTenantId = newId();
       await db.insert(schema.tenants).values({ id: otherTenantId, name: 'Other', slug: 'other' });
-      const otherSeeded = await seedDefaultPermissionSets(
-        db as unknown as Database,
-        otherTenantId,
-      );
+      const otherSeeded = await seedDefaultPermissionSets(db as unknown as Database, otherTenantId);
       const otherAdminId = `usr_${newId()}`;
       await db.insert(schema.user).values({
         id: otherAdminId,
@@ -403,6 +400,255 @@ describe('templates router (Phase 2)', () => {
       const { csv, rowCount } = await otherCaller.templates.exportAllCsv();
       expect(rowCount).toBe(0);
       expect(csv).not.toContain('MyTenantOnly');
+    });
+  });
+
+  describe('publish with audience scoping (Publish tab)', () => {
+    it('clears the rule when access.mode === "everyone"', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId } = await caller.templates.create({ name: 'Audience' });
+      await caller.templates.saveDraft({ templateId, content: validContent('Audience') });
+
+      // Pre-seed an existing access rule on the template so we can verify
+      // that publishing with "everyone" actually clears it.
+      const ruleId = newId();
+      await db.insert(schema.accessRules).values({
+        id: ruleId,
+        tenantId,
+        name: '[auto] Template: Audience',
+        groupIds: [],
+        siteIds: [],
+      });
+      await db
+        .update(schema.templates)
+        .set({ accessRuleId: ruleId })
+        .where(eq(schema.templates.id, templateId));
+
+      await caller.templates.publish({
+        templateId,
+        access: { mode: 'everyone', groupIds: [], siteIds: [] },
+      });
+
+      const tpl = (
+        await db.select().from(schema.templates).where(eq(schema.templates.id, templateId))
+      )[0];
+      expect(tpl?.accessRuleId).toBeNull();
+    });
+
+    it('creates a new auto-rule on first publish with access.mode === "specific"', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const groupId = newId();
+      const siteId = newId();
+      await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'Auditors' });
+      await db.insert(schema.sites).values({ id: siteId, tenantId, name: 'HQ' });
+
+      const { templateId } = await caller.templates.create({ name: 'Scoped' });
+      await caller.templates.saveDraft({ templateId, content: validContent('Scoped') });
+
+      await caller.templates.publish({
+        templateId,
+        access: { mode: 'specific', groupIds: [groupId], siteIds: [siteId] },
+      });
+
+      const tpl = (
+        await db.select().from(schema.templates).where(eq(schema.templates.id, templateId))
+      )[0];
+      expect(tpl?.accessRuleId).not.toBeNull();
+      const rule = (
+        await db
+          .select()
+          .from(schema.accessRules)
+          .where(eq(schema.accessRules.id, tpl?.accessRuleId ?? ''))
+      )[0];
+      expect(rule?.name).toBe('[auto] Template: Scoped');
+      expect(rule?.groupIds).toEqual([groupId]);
+      expect(rule?.siteIds).toEqual([siteId]);
+    });
+
+    it('updates the existing auto-rule on re-publish (does not create a new one)', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const g1 = newId();
+      const g2 = newId();
+      const s1 = newId();
+      await db.insert(schema.groups).values([
+        { id: g1, tenantId, name: 'Auditors' },
+        { id: g2, tenantId, name: 'Managers' },
+      ]);
+      await db.insert(schema.sites).values({ id: s1, tenantId, name: 'HQ' });
+
+      const { templateId } = await caller.templates.create({ name: 'Reuse' });
+      await caller.templates.saveDraft({ templateId, content: validContent('Reuse') });
+      await caller.templates.publish({
+        templateId,
+        access: { mode: 'specific', groupIds: [g1], siteIds: [s1] },
+      });
+
+      const firstRuleId = (
+        await db.select().from(schema.templates).where(eq(schema.templates.id, templateId))
+      )[0]?.accessRuleId;
+
+      // Save another draft + re-publish with a different audience.
+      await caller.templates.saveDraft({ templateId, content: validContent('Reuse') });
+      await caller.templates.publish({
+        templateId,
+        access: { mode: 'specific', groupIds: [g2], siteIds: [s1] },
+      });
+
+      const secondRuleId = (
+        await db.select().from(schema.templates).where(eq(schema.templates.id, templateId))
+      )[0]?.accessRuleId;
+      expect(secondRuleId).toBe(firstRuleId);
+
+      const rules = await db
+        .select()
+        .from(schema.accessRules)
+        .where(eq(schema.accessRules.tenantId, tenantId));
+      // Exactly one auto-rule for this template.
+      expect(rules).toHaveLength(1);
+      expect(rules[0]?.groupIds).toEqual([g2]);
+    });
+
+    it('getAccess returns mode "everyone" for a template with accessRuleId: null', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId } = await caller.templates.create({ name: 'NoRule' });
+      const access = await caller.templates.getAccess({ templateId });
+      expect(access.mode).toBe('everyone');
+      expect(access.groupIds).toEqual([]);
+      expect(access.siteIds).toEqual([]);
+    });
+  });
+
+  describe('templates.list filters by access rule', () => {
+    /** Build a Standard user (no `templates.manage`) attached to the given group/site. */
+    async function createStandardUser(input: {
+      groupIds: readonly string[];
+      siteIds: readonly string[];
+    }): Promise<string> {
+      const seeded = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
+      const userId = `usr_${newId()}`;
+      await db.insert(schema.user).values({
+        id: userId,
+        name: 'Std',
+        email: `std-${userId}@x.test`,
+        tenantId,
+        permissionSetId: seeded.standard,
+      });
+      for (const gid of input.groupIds) {
+        await db.insert(schema.groupMembers).values({ tenantId, groupId: gid, userId });
+      }
+      for (const sid of input.siteIds) {
+        await db.insert(schema.siteMembers).values({ tenantId, siteId: sid, userId });
+      }
+      return userId;
+    }
+
+    it('returns every template (including gated ones) to users with templates.manage', async () => {
+      const admin = createCaller(ctxFor(adminUserId));
+      const groupId = newId();
+      const siteId = newId();
+      await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'Auditors' });
+      await db.insert(schema.sites).values({ id: siteId, tenantId, name: 'HQ' });
+
+      const { templateId: gatedId } = await admin.templates.create({ name: 'Gated' });
+      await admin.templates.saveDraft({ templateId: gatedId, content: validContent('Gated') });
+      await admin.templates.publish({
+        templateId: gatedId,
+        access: { mode: 'specific', groupIds: [groupId], siteIds: [siteId] },
+      });
+
+      const { templateId: openId } = await admin.templates.create({ name: 'Open' });
+      await admin.templates.saveDraft({ templateId: openId, content: validContent('Open') });
+      await admin.templates.publish({ templateId: openId });
+
+      const list = await admin.templates.list();
+      const ids = list.map((t) => t.id);
+      expect(ids).toContain(gatedId);
+      expect(ids).toContain(openId);
+    });
+
+    it('filters out templates whose access rule excludes the caller', async () => {
+      const admin = createCaller(ctxFor(adminUserId));
+      const auditorsGroup = newId();
+      const managersGroup = newId();
+      const hqSite = newId();
+      await db.insert(schema.groups).values([
+        { id: auditorsGroup, tenantId, name: 'Auditors' },
+        { id: managersGroup, tenantId, name: 'Managers' },
+      ]);
+      await db.insert(schema.sites).values({ id: hqSite, tenantId, name: 'HQ' });
+
+      // Two gated templates.
+      const { templateId: auditorTplId } = await admin.templates.create({ name: 'AuditorOnly' });
+      await admin.templates.saveDraft({
+        templateId: auditorTplId,
+        content: validContent('AuditorOnly'),
+      });
+      await admin.templates.publish({
+        templateId: auditorTplId,
+        access: { mode: 'specific', groupIds: [auditorsGroup], siteIds: [hqSite] },
+      });
+
+      const { templateId: managerTplId } = await admin.templates.create({ name: 'ManagerOnly' });
+      await admin.templates.saveDraft({
+        templateId: managerTplId,
+        content: validContent('ManagerOnly'),
+      });
+      await admin.templates.publish({
+        templateId: managerTplId,
+        access: { mode: 'specific', groupIds: [managersGroup], siteIds: [hqSite] },
+      });
+
+      // Auditor-group standard user should see the Auditor template, not the
+      // Manager template.
+      const auditorUserId = await createStandardUser({
+        groupIds: [auditorsGroup],
+        siteIds: [hqSite],
+      });
+      const stdCaller = createCaller(ctxFor(auditorUserId));
+      const visible = await stdCaller.templates.list();
+      const visibleIds = visible.map((t) => t.id);
+      expect(visibleIds).toContain(auditorTplId);
+      expect(visibleIds).not.toContain(managerTplId);
+    });
+
+    it('returns null-rule templates to every user, gated or not', async () => {
+      const admin = createCaller(ctxFor(adminUserId));
+      const { templateId: openId } = await admin.templates.create({ name: 'Open2' });
+      await admin.templates.saveDraft({ templateId: openId, content: validContent('Open2') });
+      await admin.templates.publish({
+        templateId: openId,
+        access: { mode: 'everyone', groupIds: [], siteIds: [] },
+      });
+
+      // User with no group/site memberships.
+      const userId = await createStandardUser({ groupIds: [], siteIds: [] });
+      const stdCaller = createCaller(ctxFor(userId));
+      const visible = await stdCaller.templates.list();
+      expect(visible.map((t) => t.id)).toContain(openId);
+    });
+  });
+
+  describe('accessRules.list hides [auto] rules', () => {
+    it('omits rules whose name starts with "[auto] "', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      // One user-facing rule, one auto-rule.
+      const userRuleId = newId();
+      const autoRuleId = newId();
+      await db.insert(schema.accessRules).values([
+        { id: userRuleId, tenantId, name: 'User-facing rule', groupIds: [], siteIds: [] },
+        {
+          id: autoRuleId,
+          tenantId,
+          name: '[auto] Template: Something',
+          groupIds: [],
+          siteIds: [],
+        },
+      ]);
+
+      const list = await caller.accessRules.list();
+      const ids = list.map((r) => r.id);
+      expect(ids).toContain(userRuleId);
+      expect(ids).not.toContain(autoRuleId);
     });
   });
 });
