@@ -39,6 +39,10 @@
     "./template-schema": {
       "types": "./src/template-schema.ts",
       "default": "./src/template-schema.ts"
+    },
+    "./issues-schema": {
+      "types": "./src/issues-schema.ts",
+      "default": "./src/issues-schema.ts"
     }
   },
   "scripts": {

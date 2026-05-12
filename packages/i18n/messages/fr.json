@@ -334,9 +334,11 @@
       "publishConfirmTitle": "Publish template?",
       "publishConfirmBody": "Publishing creates a new version that can be used for new inspections. The current draft will become immutable.",
       "publishConfirmCta": "Publish",
+      "publishConfirmCancel": "Cancel",
       "saveError": "Could not save the template. Check the console for details.",
       "saveSuccess": "Draft saved",
       "publishSuccess": "Template published",
+      "nothingToPublish": "Nothing to publish — make changes first.",
       "validationError": "This template has validation errors. Fix them before publishing.",
       "pages": "Pages",
       "content": "Content",
@@ -516,6 +518,7 @@
         "signatureWorkflowEmpty": "Add at least one signatory or turn off the signature workflow."
       },
       "publish": "Publish",
+      "visibility": "Visibility",
       "publishTab": {
         "title": "Publish template",
         "subtitle": "Make this template available for inspections.",
@@ -542,6 +545,30 @@
           "generic": "This template has validation errors. Fix them before publishing.",
           "signatureWorkflowEmpty": "Add at least one signatory or turn off the signature workflow."
         }
+      },
+      "visibilityTab": {
+        "title": "Visibility",
+        "subtitle": "Control who can use this template.",
+        "accessTitle": "Who can use this template?",
+        "accessSubtitle": "Pick the groups and sites that should see this template.",
+        "everyoneLabel": "Everyone in your organisation",
+        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "specificLabel": "Specific groups & sites",
+        "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
+        "groupsLabel": "Groups",
+        "sitesLabel": "Sites",
+        "addGroups": "Add groups",
+        "addSites": "Add sites",
+        "pickerSearchPlaceholder": "Search…",
+        "pickerEmpty": "No matches",
+        "pickerDone": "Done",
+        "noGroupsSelected": "Available to all groups",
+        "noSitesSelected": "Available at all sites",
+        "saveButton": "Save changes",
+        "saving": "Saving…",
+        "backToBuild": "Back to build",
+        "saveSuccess": "Visibility updated",
+        "saveError": "Could not update visibility"
       },
       "inlineActions": {
         "addLogic": "Logic",

@@ -25,7 +25,7 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
-import { buildAppRouter, stubAuthDeps, stubInspectionsDeps } from '../router';
+import { buildAppRouter, stubAuthDeps, stubInspectionsDeps, stubIssuesDeps } from '../router';
 import { createCallerFactory } from '../trpc';
 import type { ExportsRouterDeps } from './exports';
 import {
@@ -49,6 +49,7 @@ const MIGRATION_FILES = [
   '0007_inspections_archived_at.sql',
   '0008_invitations.sql',
   '0009_signature_workflow.sql',
+  '0010_issues.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -199,6 +200,7 @@ describe('inspectionsExport router', () => {
       inspectionsExport: inspectionsExportDeps.deps,
       auth: stubAuthDeps,
       inspections: stubInspectionsDeps,
+      issues: stubIssuesDeps,
     });
     const factory = createCallerFactory(router);
     return factory(ctx);

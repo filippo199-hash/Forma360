@@ -1,0 +1,8 @@
+{
+  "subject": "[{categoryName}] New issue: {issueTitle}",
+  "preheader": "{reportedByName} reported a new {categoryName} issue",
+  "greeting": "Hi {recipientName},",
+  "body": "{reportedByName} reported a new issue in the '{categoryName}' category.\n\nTitle: {issueTitle}\nReference: {referenceNumber}\nReported: {reportedAt}",
+  "cta": "View issue",
+  "footer": "You're receiving this because you have manage access to issues in your workspace."
+}

@@ -17,10 +17,10 @@ import {
 import { trpc } from '../../lib/trpc/client';
 import { ContentTab } from './content-tab';
 import { useEditor } from './editor-context';
-import { PublishTab } from './publish-tab';
 import { SettingsTab } from './settings-tab';
+import { VisibilityTab } from './visibility-tab';
 
-type ActiveTab = 'build' | 'settings' | 'publish';
+type ActiveTab = 'build' | 'settings' | 'visibility';
 
 /**
  * Full-screen editor shell replicating the iAuditor / SafetyCulture layout.
@@ -36,6 +36,7 @@ export function EditorShell({ templateId }: { templateId: string }) {
   const { state, dispatch } = useEditor();
   const utils = trpc.useUtils();
   const [showConflict, setShowConflict] = useState(false);
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('build');
 
   const saveDraft = trpc.templates.saveDraft.useMutation({
@@ -54,6 +55,24 @@ export function EditorShell({ templateId }: { templateId: string }) {
     },
   });
 
+  const publish = trpc.templates.publish.useMutation({
+    onSuccess: () => {
+      setShowPublishConfirm(false);
+      toast.success(t('publishSuccess'));
+      void utils.templates.get.invalidate({ templateId });
+      void utils.templates.list.invalidate();
+    },
+    onError: (err) => {
+      const message = err.message ?? '';
+      if (err.data?.code === 'BAD_REQUEST' && /no draft to publish/i.test(message)) {
+        setShowPublishConfirm(false);
+        toast.error(t('nothingToPublish'));
+        return;
+      }
+      toast.error(t('saveError'));
+    },
+  });
+
   function handleSave() {
     const payload: Parameters<typeof saveDraft.mutate>[0] = {
       templateId,
@@ -63,10 +82,16 @@ export function EditorShell({ templateId }: { templateId: string }) {
     saveDraft.mutate(payload);
   }
 
+  function handlePublishConfirm() {
+    // No `access` field — publish is purely about creating a new immutable
+    // version. Visibility is changed independently via the Visibility tab.
+    publish.mutate({ templateId });
+  }
+
   const tabs: { id: ActiveTab; label: string }[] = [
     { id: 'build', label: t('build') },
     { id: 'settings', label: t('settings') },
-    { id: 'publish', label: t('publish') },
+    { id: 'visibility', label: t('visibility') },
   ];
 
   return (
@@ -135,7 +160,12 @@ export function EditorShell({ templateId }: { templateId: string }) {
           >
             {t('saveButton')}
           </Button>
-          <Button size="sm" onClick={() => setActiveTab('publish')} aria-label={t('publishButton')}>
+          <Button
+            size="sm"
+            onClick={() => setShowPublishConfirm(true)}
+            disabled={publish.isPending}
+            aria-label={t('publishButton')}
+          >
             {t('publishButton')}
           </Button>
         </div>
@@ -145,8 +175,8 @@ export function EditorShell({ templateId }: { templateId: string }) {
       <div className="flex flex-1 overflow-hidden">
         {activeTab === 'build' && <ContentTab templateId={templateId} />}
         {activeTab === 'settings' && <SettingsTab templateId={templateId} />}
-        {activeTab === 'publish' && (
-          <PublishTab templateId={templateId} onBackToBuild={() => setActiveTab('build')} />
+        {activeTab === 'visibility' && (
+          <VisibilityTab templateId={templateId} onBackToBuild={() => setActiveTab('build')} />
         )}
       </div>
 
@@ -160,6 +190,31 @@ export function EditorShell({ templateId }: { templateId: string }) {
           <DialogFooter>
             <Button onClick={() => window.location.reload()} aria-label={t('conflictReload')}>
               {t('conflictReload')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPublishConfirm} onOpenChange={setShowPublishConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('publishConfirmTitle')}</DialogTitle>
+            <DialogDescription>{t('publishConfirmBody')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPublishConfirm(false)}
+              disabled={publish.isPending}
+            >
+              {t('publishConfirmCancel')}
+            </Button>
+            <Button
+              onClick={handlePublishConfirm}
+              disabled={publish.isPending}
+              aria-label={t('publishConfirmCta')}
+            >
+              {t('publishConfirmCta')}
             </Button>
           </DialogFooter>
         </DialogContent>

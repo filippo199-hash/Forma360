@@ -592,8 +592,94 @@ export const templatesRouter = router({
     }),
 
   /**
+   * Update only the audience scoping (accessRuleId) for a template — used
+   * by the Visibility tab. Decoupled from `publish` so visibility can be
+   * changed on a clean, already-published template without needing a draft.
+   *
+   *   - mode === 'everyone' → clears `accessRuleId` (leaves the orphaned
+   *     auto-rule row in the DB; it's filtered out of `accessRules.list`).
+   *   - mode === 'specific' → upserts the `[auto] Template: …` access rule
+   *     and points the template at it.
+   *
+   * Refuses on archived templates (same guard as `publish`).
+   */
+  updateAccess: tenantProcedure
+    .use(requirePermission('templates.manage'))
+    .input(
+      z.object({
+        templateId: z.string().length(26),
+        access: z.object({
+          mode: z.enum(['everyone', 'specific']),
+          groupIds: z.array(z.string().length(26)).max(100).default([]),
+          siteIds: z.array(z.string().length(26)).max(100).default([]),
+        }),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tplRows = await ctx.db
+        .select()
+        .from(templates)
+        .where(and(eq(templates.id, input.templateId), eq(templates.tenantId, ctx.tenantId)))
+        .limit(1);
+      const template = tplRows[0];
+      if (template === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (template.archivedAt !== null) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cannot edit an archived template',
+        });
+      }
+
+      let newAccessRuleId: string | null;
+      if (input.access.mode === 'everyone') {
+        newAccessRuleId = null;
+      } else {
+        const ruleName = `[auto] Template: ${template.name}`;
+        if (template.accessRuleId !== null) {
+          await ctx.db
+            .update(accessRules)
+            .set({
+              name: ruleName,
+              groupIds: input.access.groupIds,
+              siteIds: input.access.siteIds,
+              invalidatedAt: null,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(accessRules.id, template.accessRuleId),
+                eq(accessRules.tenantId, ctx.tenantId),
+              ),
+            );
+          newAccessRuleId = template.accessRuleId;
+        } else {
+          const id = newId();
+          await ctx.db.insert(accessRules).values({
+            id,
+            tenantId: ctx.tenantId,
+            name: ruleName,
+            groupIds: input.access.groupIds,
+            siteIds: input.access.siteIds,
+          });
+          newAccessRuleId = id;
+        }
+      }
+
+      await ctx.db
+        .update(templates)
+        .set({ accessRuleId: newAccessRuleId, updatedAt: new Date() })
+        .where(and(eq(templates.id, input.templateId), eq(templates.tenantId, ctx.tenantId)));
+
+      ctx.logger.info(
+        { templateId: input.templateId, accessRuleId: newAccessRuleId },
+        '[templates] access updated',
+      );
+      return { templateId: input.templateId, accessRuleId: newAccessRuleId };
+    }),
+
+  /**
    * Read the current audience-scoping config for a template — used by the
-   * Publish tab to hydrate the picker UI.
+   * Visibility tab to hydrate the picker UI.
    *
    * If `accessRuleId` is null OR the referenced rule no longer exists
    * (defensive), we report 'everyone'. Otherwise we hand back the rule's

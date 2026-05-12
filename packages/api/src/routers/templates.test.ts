@@ -42,6 +42,7 @@ const MIGRATION_FILES = [
   '0007_inspections_archived_at.sql',
   '0008_invitations.sql',
   '0009_signature_workflow.sql',
+  '0010_issues.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -515,6 +516,87 @@ describe('templates router (Phase 2)', () => {
       expect(access.mode).toBe('everyone');
       expect(access.groupIds).toEqual([]);
       expect(access.siteIds).toEqual([]);
+    });
+  });
+
+  describe('updateAccess (Visibility tab)', () => {
+    it('updates visibility on a published template without requiring a draft', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const groupId = newId();
+      await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'Auditors' });
+
+      // Create + publish so there's NO draft left.
+      const { templateId } = await caller.templates.create({ name: 'CleanPub' });
+      await caller.templates.saveDraft({ templateId, content: validContent('CleanPub') });
+      await caller.templates.publish({ templateId });
+
+      // Confirm a follow-up publish would now fail — no draft exists.
+      await expect(caller.templates.publish({ templateId })).rejects.toThrow(/No draft to publish/);
+
+      // updateAccess must succeed on this same clean published template.
+      const result = await caller.templates.updateAccess({
+        templateId,
+        access: { mode: 'specific', groupIds: [groupId], siteIds: [] },
+      });
+      expect(result.accessRuleId).not.toBeNull();
+
+      const tpl = (
+        await db.select().from(schema.templates).where(eq(schema.templates.id, templateId))
+      )[0];
+      expect(tpl?.accessRuleId).toBe(result.accessRuleId);
+      const rule = (
+        await db
+          .select()
+          .from(schema.accessRules)
+          .where(eq(schema.accessRules.id, result.accessRuleId ?? ''))
+      )[0];
+      expect(rule?.name).toBe('[auto] Template: CleanPub');
+      expect(rule?.groupIds).toEqual([groupId]);
+    });
+
+    it('flips back to mode "everyone" and clears accessRuleId', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const groupId = newId();
+      await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'Auditors' });
+
+      const { templateId } = await caller.templates.create({ name: 'FlipBack' });
+      await caller.templates.saveDraft({ templateId, content: validContent('FlipBack') });
+      await caller.templates.publish({ templateId });
+
+      // First scope to specific groups.
+      await caller.templates.updateAccess({
+        templateId,
+        access: { mode: 'specific', groupIds: [groupId], siteIds: [] },
+      });
+      const before = (
+        await db.select().from(schema.templates).where(eq(schema.templates.id, templateId))
+      )[0];
+      expect(before?.accessRuleId).not.toBeNull();
+
+      // Now flip back to everyone.
+      const result = await caller.templates.updateAccess({
+        templateId,
+        access: { mode: 'everyone', groupIds: [], siteIds: [] },
+      });
+      expect(result.accessRuleId).toBeNull();
+
+      const after = (
+        await db.select().from(schema.templates).where(eq(schema.templates.id, templateId))
+      )[0];
+      expect(after?.accessRuleId).toBeNull();
+    });
+
+    it('refuses on archived templates', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId } = await caller.templates.create({ name: 'ArchivedVis' });
+      await caller.templates.archive({ templateId });
+
+      await expect(
+        caller.templates.updateAccess({
+          templateId,
+          access: { mode: 'everyone', groupIds: [], siteIds: [] },
+        }),
+      ).rejects.toThrow(/Cannot edit an archived template|BAD_REQUEST/);
     });
   });
 

@@ -18,7 +18,7 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
-import { buildAppRouter, stubAuthDeps, stubInspectionsDeps } from '../router';
+import { buildAppRouter, stubAuthDeps, stubInspectionsDeps, stubIssuesDeps } from '../router';
 import { createCallerFactory } from '../trpc';
 import type { ExportsRouterDeps } from './exports';
 import type { InspectionsExportDeps } from './inspectionsExport';
@@ -41,6 +41,7 @@ const MIGRATION_FILES = [
   '0007_inspections_archived_at.sql',
   '0008_invitations.sql',
   '0009_signature_workflow.sql',
+  '0010_issues.sql',
 ];
 
 async function bootDb() {
@@ -146,7 +147,7 @@ describe('exports router (Phase 2 PR 31)', () => {
   });
 
   function callerForAdmin() {
-    const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps, inspections: stubInspectionsDeps });
+    const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps, inspections: stubInspectionsDeps, issues: stubIssuesDeps });
     const factory = createCallerFactory(router);
     return factory(ctxFor(adminUserId));
   }
@@ -240,7 +241,7 @@ describe('exports router (Phase 2 PR 31)', () => {
           throw new Error('should not be called');
         },
       };
-      const router = buildAppRouter({ exports: deps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps, inspections: stubInspectionsDeps });
+      const router = buildAppRouter({ exports: deps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps, inspections: stubInspectionsDeps, issues: stubIssuesDeps });
       const caller = createCallerFactory(router)(ctxFor(adminUserId));
       await expect(() =>
         caller.exports.renderPdf({ inspectionId: newId() }),
@@ -273,7 +274,7 @@ describe('exports router (Phase 2 PR 31)', () => {
         tenantId,
         permissionSetId: restrictedId,
       });
-      const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps, inspections: stubInspectionsDeps });
+      const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps, inspections: stubInspectionsDeps, issues: stubIssuesDeps });
       const caller = createCallerFactory(router)(ctxFor(standardUserId));
       await expect(() =>
         caller.exports.createShareLink({ inspectionId }),

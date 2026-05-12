@@ -35,6 +35,7 @@ import {
   createInspectionsExportRouter,
   type InspectionsExportDeps,
 } from './routers/inspectionsExport';
+import { createIssuesRouter, type IssuesRouterDeps } from './routers/issues';
 import { schedulesRouter } from './routers/schedules';
 import { signaturesRouter } from './routers/signatures';
 import { router } from './trpc';
@@ -52,6 +53,7 @@ export function buildAppRouter(deps: {
   inspectionsExport: InspectionsExportDeps;
   auth: AuthRouterDeps;
   inspections: InspectionsRouterDeps;
+  issues: IssuesRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -73,6 +75,7 @@ export function buildAppRouter(deps: {
     actions: actionsRouter,
     schedules: schedulesRouter,
     exports: createExportsRouter(deps.exports),
+    issues: createIssuesRouter(deps.issues),
   });
 }
 
@@ -159,11 +162,30 @@ export const stubInspectionsDeps: InspectionsRouterDeps = {
   appUrl: 'http://localhost:3000',
 };
 
+/**
+ * Default issues-router deps. Shares the `__authStubMailbox` so tests
+ * exercising the issue-created notification path have one place to read
+ * what would have been sent.
+ */
+export const stubIssuesDeps: IssuesRouterDeps = {
+  sendEmail: async (mail): Promise<DeliveryResult> => {
+    __authStubMailbox.push({
+      to: mail.to,
+      templateKey: mail.templateKey,
+      variables: mail.variables,
+    });
+    return { delivery: 'console' };
+  },
+  logger: createLogger({ service: 'issues-stub', level: 'fatal', nodeEnv: 'test' }),
+  appUrl: 'http://localhost:3000',
+};
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
   auth: stubAuthDeps,
   inspections: stubInspectionsDeps,
+  issues: stubIssuesDeps,
 });
 
 export type AppRouter = typeof appRouter;

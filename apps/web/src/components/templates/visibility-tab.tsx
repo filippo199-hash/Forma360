@@ -12,22 +12,23 @@ import { GroupPicker, SitePicker } from './audience-pickers';
 type AccessMode = 'everyone' | 'specific';
 
 /**
- * Third step of the template editor. Users pick the audience that should
- * see and use the template (groups + sites) and then trigger the actual
- * publish from inside the tab.
+ * Visibility tab of the template editor. Users pick the audience that
+ * should see and use the template (groups + sites) and persist that
+ * choice via `templates.updateAccess` — independent of publishing a new
+ * template version.
  *
  * Audience scoping is fronted as "Everyone" vs "Specific groups & sites".
  * Behind the scenes the server creates / updates a single `[auto] …`
  * access_rule keyed to the template. Users never see the rule.
  */
-export function PublishTab({
+export function VisibilityTab({
   templateId,
   onBackToBuild,
 }: {
   templateId: string;
   onBackToBuild: () => void;
 }) {
-  const t = useTranslations('templates.editor.publishTab');
+  const t = useTranslations('templates.editor.visibilityTab');
   const utils = trpc.useUtils();
 
   const { data: currentAccess } = trpc.templates.getAccess.useQuery({ templateId });
@@ -44,28 +45,20 @@ export function PublishTab({
     setSiteIds([...currentAccess.siteIds]);
   }, [currentAccess]);
 
-  const publish = trpc.templates.publish.useMutation({
+  const updateAccess = trpc.templates.updateAccess.useMutation({
     onSuccess: () => {
-      toast.success(t('publishSuccess'));
+      toast.success(t('saveSuccess'));
       void utils.templates.get.invalidate({ templateId });
       void utils.templates.list.invalidate();
       void utils.templates.getAccess.invalidate({ templateId });
     },
-    onError: (err) => {
-      const message = err.message.toLowerCase();
-      const isSignatureWorkflow =
-        err.data?.code === 'BAD_REQUEST' &&
-        (message.includes('signature') || message.includes('signatory'));
-      if (isSignatureWorkflow) {
-        toast.error(t('validation.signatureWorkflowEmpty'));
-        return;
-      }
-      toast.error(t('validation.generic'));
+    onError: () => {
+      toast.error(t('saveError'));
     },
   });
 
-  function handlePublish() {
-    publish.mutate({
+  function handleSave() {
+    updateAccess.mutate({
       templateId,
       access: { mode, groupIds, siteIds },
     });
@@ -131,8 +124,8 @@ export function PublishTab({
           <Button variant="outline" onClick={onBackToBuild}>
             {t('backToBuild')}
           </Button>
-          <Button onClick={handlePublish} disabled={publish.isPending} className="min-w-[140px]">
-            {publish.isPending ? t('publishing') : t('publishButton')}
+          <Button onClick={handleSave} disabled={updateAccess.isPending} className="min-w-[140px]">
+            {updateAccess.isPending ? t('saving') : t('saveButton')}
           </Button>
         </div>
       </div>

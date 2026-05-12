@@ -36,7 +36,10 @@ export type DependentEntity =
   // ─── Phase 2+ anchors (registered by their own modules) ───
   | 'template'
   | 'inspection'
-  | 'action';
+  | 'action'
+  // ─── Phase 3 anchors ───
+  | 'issueCategory'
+  | 'issue';
 
 /** Modules that may hold a reference to a `DependentEntity`. */
 export type DependentModule =
@@ -48,6 +51,7 @@ export type DependentModule =
   | 'customUserFields'
   | 'templates'
   | 'inspections'
+  | 'issueCategories'
   | 'issues'
   | 'actions'
   | 'headsUp'
@@ -93,6 +97,7 @@ const ALL_MODULES: readonly DependentModule[] = [
   'customUserFields',
   'templates',
   'inspections',
+  'issueCategories',
   'issues',
   'actions',
   'headsUp',
@@ -139,6 +144,7 @@ export async function getDependents(
     customUserFields: 0,
     templates: 0,
     inspections: 0,
+    issueCategories: 0,
     issues: 0,
     actions: 0,
     headsUp: 0,
