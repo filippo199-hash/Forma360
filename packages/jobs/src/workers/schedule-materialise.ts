@@ -19,6 +19,7 @@ import type { Database } from '@forma360/db/client';
 import {
   groupMembers,
   scheduledInspectionOccurrences,
+  siteMembers,
   templateSchedules,
 } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
@@ -45,6 +46,7 @@ async function resolveAssignees(
   tenantId: string,
   directUserIds: readonly string[],
   groupIds: readonly string[],
+  siteIds: readonly string[],
 ): Promise<string[]> {
   const all = new Set<string>(directUserIds);
   if (groupIds.length > 0) {
@@ -53,6 +55,15 @@ async function resolveAssignees(
       .from(groupMembers)
       .where(
         and(eq(groupMembers.tenantId, tenantId), inArray(groupMembers.groupId, [...groupIds])),
+      );
+    for (const r of rows) all.add(r.userId);
+  }
+  if (siteIds.length > 0) {
+    const rows = await db
+      .select({ userId: siteMembers.userId })
+      .from(siteMembers)
+      .where(
+        and(eq(siteMembers.tenantId, tenantId), inArray(siteMembers.siteId, [...siteIds])),
       );
     for (const r of rows) all.add(r.userId);
   }
@@ -113,6 +124,7 @@ export function createScheduleMaterialiseHandler(deps: ScheduleMaterialiseDeps) 
       tenantId,
       sched.assigneeUserIds,
       sched.assigneeGroupIds,
+      sched.siteIds,
     );
     if (assignees.length === 0) {
       log.warn('[schedule-materialise] schedule has no assignees');

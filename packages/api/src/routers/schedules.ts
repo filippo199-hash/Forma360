@@ -141,11 +141,19 @@ function assertValidRrule(rrule: string): void {
   }
 }
 
-function assertAtLeastOneAssignee(input: z.infer<typeof baseScheduleInput>): void {
-  if (input.assigneeUserIds.length === 0 && input.assigneeGroupIds.length === 0) {
+function assertAtLeastOneAssignee(input: {
+  assigneeUserIds: readonly string[];
+  assigneeGroupIds: readonly string[];
+  siteIds: readonly string[];
+}): void {
+  if (
+    input.assigneeUserIds.length === 0 &&
+    input.assigneeGroupIds.length === 0 &&
+    input.siteIds.length === 0
+  ) {
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: 'A schedule must have at least one assignee user or group.',
+      message: 'no-assignees',
     });
   }
 }

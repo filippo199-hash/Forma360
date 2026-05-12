@@ -206,3 +206,27 @@ export function SitePicker({ selected, onChange }: AudiencePickerProps) {
     />
   );
 }
+
+export function UserPicker({ selected, onChange }: AudiencePickerProps) {
+  const t = useTranslations('templates.editor.publishTab');
+  const { data, isLoading } = trpc.users.list.useQuery({ limit: 200 });
+  const options = useMemo<AudienceOption[]>(
+    () =>
+      (data?.users ?? []).map((u) => ({
+        id: u.id,
+        label: u.name !== '' ? u.name : u.email,
+      })),
+    [data],
+  );
+  return (
+    <AudiencePicker
+      selected={selected}
+      onChange={onChange}
+      options={options}
+      isLoading={isLoading}
+      labelText={t('usersLabel')}
+      emptySelectionText={t('noUsersSelected')}
+      addText={t('addUsers')}
+    />
+  );
+}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { GroupPicker, SitePicker, UserPicker } from '../../../../src/components/templates/audience-pickers';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -34,9 +35,9 @@ export default function ScheduleEditPage() {
   const [startAt, setStartAt] = useState('');
   const [endAt, setEndAt] = useState('');
   const [reminderMinutes, setReminderMinutes] = useState('');
-  const [assigneeUserIds, setAssigneeUserIds] = useState('');
-  const [assigneeGroupIds, setAssigneeGroupIds] = useState('');
-  const [siteIds, setSiteIds] = useState('');
+  const [assigneeUserIds, setAssigneeUserIds] = useState<string[]>([]);
+  const [assigneeGroupIds, setAssigneeGroupIds] = useState<string[]>([]);
+  const [siteIds, setSiteIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (data === undefined) return;
@@ -47,10 +48,13 @@ export default function ScheduleEditPage() {
     setStartAt(new Date(s.startAt).toISOString().slice(0, 16));
     setEndAt(s.endAt === null ? '' : new Date(s.endAt).toISOString().slice(0, 16));
     setReminderMinutes(s.reminderMinutesBefore === null ? '' : String(s.reminderMinutesBefore));
-    setAssigneeUserIds(s.assigneeUserIds.join(','));
-    setAssigneeGroupIds(s.assigneeGroupIds.join(','));
-    setSiteIds(s.siteIds.join(','));
+    setAssigneeUserIds([...s.assigneeUserIds]);
+    setAssigneeGroupIds([...s.assigneeGroupIds]);
+    setSiteIds([...s.siteIds]);
   }, [data]);
+
+  const noAssignees =
+    assigneeUserIds.length === 0 && assigneeGroupIds.length === 0 && siteIds.length === 0;
 
   async function onSave(): Promise<void> {
     try {
@@ -61,18 +65,9 @@ export default function ScheduleEditPage() {
         rrule,
         startAt: new Date(startAt).toISOString(),
         endAt: endAt === '' ? null : new Date(endAt).toISOString(),
-        assigneeUserIds: assigneeUserIds
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        assigneeGroupIds: assigneeGroupIds
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        siteIds: siteIds
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
+        assigneeUserIds,
+        assigneeGroupIds,
+        siteIds,
         reminderMinutesBefore: reminderMinutes === '' ? null : Number.parseInt(reminderMinutes, 10),
       });
       toast.success(t('toast.updated'));
@@ -192,45 +187,49 @@ export default function ScheduleEditPage() {
               />
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="users">{t('form.assigneesUsers')}</Label>
-              <Input
-                id="users"
-                value={assigneeUserIds}
-                onChange={(e) => setAssigneeUserIds(e.target.value)}
-                placeholder={t('form.assigneesPlaceholder')}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="groups">{t('form.assigneesGroups')}</Label>
-              <Input
-                id="groups"
-                value={assigneeGroupIds}
-                onChange={(e) => setAssigneeGroupIds(e.target.value)}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="reminder">{t('form.reminder')}</Label>
+            <Input
+              id="reminder"
+              type="number"
+              value={reminderMinutes}
+              onChange={(e) => setReminderMinutes(e.target.value)}
+            />
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="sites">{t('form.sites')}</Label>
-              <Input id="sites" value={siteIds} onChange={(e) => setSiteIds(e.target.value)} />
+          <section className="space-y-4 rounded-md border border-border bg-muted/30 p-4">
+            <div className="space-y-1">
+              <h2 className="text-sm font-semibold">{t('form.assignedSectionHeading')}</h2>
+              <p className="text-xs text-muted-foreground">{t('form.assignedHint')}</p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="reminder">{t('form.reminder')}</Label>
-              <Input
-                id="reminder"
-                type="number"
-                value={reminderMinutes}
-                onChange={(e) => setReminderMinutes(e.target.value)}
-              />
+            <div className="space-y-4">
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t('form.assignedUsersLabel')}
+                </p>
+                <UserPicker selected={assigneeUserIds} onChange={setAssigneeUserIds} />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t('form.assignedGroupsLabel')}
+                </p>
+                <GroupPicker selected={assigneeGroupIds} onChange={setAssigneeGroupIds} />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t('form.assignedSitesLabel')}
+                </p>
+                <SitePicker selected={siteIds} onChange={setSiteIds} />
+              </div>
             </div>
-          </div>
+            {noAssignees ? (
+              <p className="text-xs text-destructive">{t('form.noAssigneesError')}</p>
+            ) : null}
+          </section>
           <div className="flex justify-end gap-2">
             <Button variant="outline" asChild>
               <Link href={`/${locale}/schedules`}>{tCommon('cancel')}</Link>
             </Button>
-            <Button onClick={onSave} disabled={updateMutation.isPending}>
+            <Button onClick={onSave} disabled={updateMutation.isPending || noAssignees}>
               {t('form.save')}
             </Button>
           </div>

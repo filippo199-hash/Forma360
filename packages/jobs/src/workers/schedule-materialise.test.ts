@@ -200,4 +200,129 @@ describe('schedule-materialise worker', () => {
     const result = await handler(fakeJob({ tenantId, scheduleId }));
     expect(result.created).toBe(0);
   });
+
+  it('resolves site members into occurrences when siteIds is set', async () => {
+    // Build a site with `userId` as a member, no direct users / groups.
+    const siteId = newId();
+    await db.insert(schema.sites).values({
+      id: siteId,
+      tenantId,
+      name: 'Site A',
+      parentId: null,
+      depth: 0,
+      path: '',
+    });
+    await db.insert(schema.siteMembers).values({
+      tenantId,
+      siteId,
+      userId,
+      addedVia: 'manual',
+    });
+
+    const scheduleId = newId();
+    const startAt = new Date('2026-04-11T00:00:00Z');
+    const fakeNow = new Date('2026-04-18T00:00:00Z');
+    await db.insert(schema.templateSchedules).values({
+      id: scheduleId,
+      tenantId,
+      templateId,
+      name: 'Site-only',
+      timezone: 'UTC',
+      // One occurrence at the next BYHOUR=9 inside the 14-day window.
+      rrule: 'FREQ=WEEKLY;BYDAY=MO;BYHOUR=9',
+      startAt,
+      assigneeUserIds: [],
+      assigneeGroupIds: [],
+      siteIds: [siteId],
+      paused: false,
+      createdBy: userId,
+    });
+
+    const handler = createScheduleMaterialiseHandler({
+      db: db as unknown as Database,
+      logger: silent(),
+      connection: {} as never,
+      now: () => fakeNow,
+    });
+    const result = await handler(fakeJob({ tenantId, scheduleId }));
+    expect(result.created).toBeGreaterThan(0);
+
+    const rows = await db
+      .select()
+      .from(schema.scheduledInspectionOccurrences)
+      .where(eq(schema.scheduledInspectionOccurrences.scheduleId, scheduleId));
+    expect(rows.every((r) => r.assigneeUserId === userId)).toBe(true);
+  });
+
+  it('deduplicates a user that overlaps users + groups + sites at the same fire time', async () => {
+    // The same `userId` is a direct assignee AND a member of a group AND a
+    // member of a site. We should still get exactly one occurrence per
+    // fire time — the unique index on (scheduleId, assigneeUserId,
+    // occurrenceAt) backs this.
+    const groupId = newId();
+    await db.insert(schema.groups).values({
+      id: groupId,
+      tenantId,
+      name: 'Inspectors',
+    });
+    await db.insert(schema.groupMembers).values({
+      tenantId,
+      groupId,
+      userId,
+      addedVia: 'manual',
+      addedBy: userId,
+    });
+
+    const siteId = newId();
+    await db.insert(schema.sites).values({
+      id: siteId,
+      tenantId,
+      name: 'Site B',
+      parentId: null,
+      depth: 0,
+      path: '',
+    });
+    await db.insert(schema.siteMembers).values({
+      tenantId,
+      siteId,
+      userId,
+      addedVia: 'manual',
+    });
+
+    const scheduleId = newId();
+    const startAt = new Date('2026-04-11T00:00:00Z');
+    const fakeNow = new Date('2026-04-18T00:00:00Z');
+    await db.insert(schema.templateSchedules).values({
+      id: scheduleId,
+      tenantId,
+      templateId,
+      name: 'Overlap',
+      timezone: 'UTC',
+      rrule: 'FREQ=DAILY;BYHOUR=9;BYMINUTE=0',
+      startAt,
+      assigneeUserIds: [userId],
+      assigneeGroupIds: [groupId],
+      siteIds: [siteId],
+      paused: false,
+      createdBy: userId,
+    });
+
+    const handler = createScheduleMaterialiseHandler({
+      db: db as unknown as Database,
+      logger: silent(),
+      connection: {} as never,
+      now: () => fakeNow,
+    });
+    const result = await handler(fakeJob({ tenantId, scheduleId }));
+    // Daily × 1 unique user = 14 rows (one per day in the window).
+    expect(result.created).toBe(14);
+
+    const rows = await db
+      .select()
+      .from(schema.scheduledInspectionOccurrences)
+      .where(eq(schema.scheduledInspectionOccurrences.scheduleId, scheduleId));
+    expect(rows).toHaveLength(14);
+    // Every row points to the same user — no duplicates.
+    expect(new Set(rows.map((r) => r.assigneeUserId)).size).toBe(1);
+  });
 });

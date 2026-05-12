@@ -188,7 +188,38 @@ describe('schedules router (Phase 2 PR 32)', () => {
           siteIds: [],
           reminderMinutesBefore: null,
         }),
-      ).rejects.toThrow(/assignee/i);
+      ).rejects.toThrow(/no-assignees/);
+    });
+
+    it('accepts a schedule whose only audience is a site', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const templateId = await createTemplate(caller);
+
+      // Create a site directly — the sites router would also do this but
+      // we want to keep the test tight on the schedules surface.
+      const siteId = newId();
+      await db.insert(schema.sites).values({
+        id: siteId,
+        tenantId,
+        name: 'Site only',
+        parentId: null,
+        depth: 0,
+        path: '',
+      });
+
+      const { scheduleId } = await caller.schedules.create({
+        templateId,
+        name: 'site-only',
+        timezone: 'UTC',
+        rrule: 'FREQ=DAILY',
+        startAt: new Date('2026-05-01T00:00:00Z').toISOString(),
+        endAt: null,
+        assigneeUserIds: [],
+        assigneeGroupIds: [],
+        siteIds: [siteId],
+        reminderMinutesBefore: null,
+      });
+      expect(scheduleId).toHaveLength(26);
     });
   });
 

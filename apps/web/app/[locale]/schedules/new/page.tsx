@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { GroupPicker, SitePicker, UserPicker } from '../../../../src/components/templates/audience-pickers';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -29,10 +30,15 @@ export default function NewSchedulePage() {
   const [rrule, setRrule] = useState('FREQ=WEEKLY;BYDAY=MO;BYHOUR=9');
   const [startAt, setStartAt] = useState(new Date().toISOString().slice(0, 16));
   const [endAt, setEndAt] = useState('');
-  const [assigneeUserIds, setAssigneeUserIds] = useState('');
   const [reminderMinutes, setReminderMinutes] = useState('');
+  const [assigneeUserIds, setAssigneeUserIds] = useState<string[]>([]);
+  const [assigneeGroupIds, setAssigneeGroupIds] = useState<string[]>([]);
+  const [siteIds, setSiteIds] = useState<string[]>([]);
 
   const createMutation = trpc.schedules.create.useMutation();
+
+  const noAssignees =
+    assigneeUserIds.length === 0 && assigneeGroupIds.length === 0 && siteIds.length === 0;
 
   async function onSubmit(): Promise<void> {
     try {
@@ -43,12 +49,9 @@ export default function NewSchedulePage() {
         rrule,
         startAt: new Date(startAt).toISOString(),
         endAt: endAt === '' ? null : new Date(endAt).toISOString(),
-        assigneeUserIds: assigneeUserIds
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        assigneeGroupIds: [],
-        siteIds: [],
+        assigneeUserIds,
+        assigneeGroupIds,
+        siteIds,
         reminderMinutesBefore: reminderMinutes === '' ? null : Number.parseInt(reminderMinutes, 10),
       });
       toast.success(t('toast.created'));
@@ -128,33 +131,53 @@ export default function NewSchedulePage() {
               />
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="users">{t('form.assigneesUsers')}</Label>
-              <Input
-                id="users"
-                value={assigneeUserIds}
-                onChange={(e) => setAssigneeUserIds(e.target.value)}
-                placeholder={t('form.assigneesPlaceholder')}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="reminder">{t('form.reminder')}</Label>
-              <Input
-                id="reminder"
-                type="number"
-                value={reminderMinutes}
-                onChange={(e) => setReminderMinutes(e.target.value)}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="reminder">{t('form.reminder')}</Label>
+            <Input
+              id="reminder"
+              type="number"
+              value={reminderMinutes}
+              onChange={(e) => setReminderMinutes(e.target.value)}
+            />
           </div>
+          <section className="space-y-4 rounded-md border border-border bg-muted/30 p-4">
+            <div className="space-y-1">
+              <h2 className="text-sm font-semibold">{t('form.assignedSectionHeading')}</h2>
+              <p className="text-xs text-muted-foreground">{t('form.assignedHint')}</p>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t('form.assignedUsersLabel')}
+                </p>
+                <UserPicker selected={assigneeUserIds} onChange={setAssigneeUserIds} />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t('form.assignedGroupsLabel')}
+                </p>
+                <GroupPicker selected={assigneeGroupIds} onChange={setAssigneeGroupIds} />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t('form.assignedSitesLabel')}
+                </p>
+                <SitePicker selected={siteIds} onChange={setSiteIds} />
+              </div>
+            </div>
+            {noAssignees ? (
+              <p className="text-xs text-destructive">{t('form.noAssigneesError')}</p>
+            ) : null}
+          </section>
           <div className="flex justify-end gap-2">
             <Button variant="outline" asChild>
               <Link href={`/${locale}/schedules`}>{tCommon('cancel')}</Link>
             </Button>
             <Button
               onClick={onSubmit}
-              disabled={createMutation.isPending || templateId === '' || name === ''}
+              disabled={
+                createMutation.isPending || templateId === '' || name === '' || noAssignees
+              }
             >
               {t('form.save')}
             </Button>
