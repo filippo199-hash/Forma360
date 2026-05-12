@@ -720,6 +720,71 @@ export const templatesRouter = router({
       return { ok: true as const };
     }),
 
+  /**
+   * Restore an archived template back to draft state.
+   *
+   * Clears `archivedAt`, flips `status` back to `'draft'`. Schedules paused
+   * by `archive` stay paused — the operator can resume them manually from
+   * the schedules UI. Same permission as `archive` since restoring is the
+   * inverse half of the same admin capability.
+   */
+  unarchive: tenantProcedure
+    .use(requirePermission('templates.archive'))
+    .input(z.object({ templateId: z.string().length(26) }))
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const result = await ctx.db
+        .update(templates)
+        .set({ archivedAt: null, status: 'draft', updatedAt: now })
+        .where(and(eq(templates.id, input.templateId), eq(templates.tenantId, ctx.tenantId)))
+        .returning({ id: templates.id });
+      const row = result[0];
+      if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      ctx.logger.info({ templateId: row.id }, '[templates] unarchived');
+      return row;
+    }),
+
+  /**
+   * Move a published template back to draft state.
+   *
+   * Used by the list page's "Move to draft" action. Crucially we keep
+   * `currentVersionId` intact so any in-progress inspections that pinned
+   * this version still resolve their content (ADR 0007 — access state at
+   * time of action). The next saveDraft + publish cycle will flip
+   * `isCurrent` on the prior version, same as a normal re-publish.
+   *
+   * Idempotent: no-op on drafts, refuses on archived templates.
+   */
+  unpublish: tenantProcedure
+    .use(requirePermission('templates.manage'))
+    .input(z.object({ templateId: z.string().length(26) }))
+    .mutation(async ({ ctx, input }) => {
+      const tpl = await ctx.db
+        .select({ status: templates.status })
+        .from(templates)
+        .where(and(eq(templates.id, input.templateId), eq(templates.tenantId, ctx.tenantId)))
+        .limit(1);
+      const current = tpl[0];
+      if (current === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (current.status === 'archived') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'cannot-unpublish-archived' });
+      }
+      if (current.status === 'draft') {
+        // Already a draft — idempotent no-op.
+        return { id: input.templateId };
+      }
+      const now = new Date();
+      const result = await ctx.db
+        .update(templates)
+        .set({ status: 'draft', updatedAt: now })
+        .where(and(eq(templates.id, input.templateId), eq(templates.tenantId, ctx.tenantId)))
+        .returning({ id: templates.id });
+      const row = result[0];
+      if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      ctx.logger.info({ templateId: row.id }, '[templates] unpublished (back to draft)');
+      return row;
+    }),
+
   exportJson: tenantProcedure
     .use(requirePermission('templates.view'))
     .input(z.object({ templateId: z.string().length(26) }))

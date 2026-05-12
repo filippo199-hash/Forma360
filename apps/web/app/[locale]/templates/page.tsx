@@ -1,10 +1,22 @@
 'use client';
 
+import {
+  Archive,
+  ArchiveRestore,
+  Copy,
+  FileEdit,
+  MoreHorizontal,
+  Pencil,
+  QrCode,
+  Send,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { toast } from 'sonner';
 import { ArchiveDialog } from '../../../src/components/archive-dialog';
+import { QrCodeDialog } from '../../../src/components/templates/qr-code-dialog';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import {
@@ -15,6 +27,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../../src/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../../src/components/ui/dropdown-menu';
 import { Input } from '../../../src/components/ui/input';
 import { Label } from '../../../src/components/ui/label';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -23,14 +42,17 @@ import { trpc } from '../../../src/lib/trpc/client';
 
 /**
  * Templates list. Admin-only (see layout). Shows every non-archived
- * template, surfaces draft/published status, and lets the operator:
+ * template, surfaces draft/published status, and exposes a kebab
+ * "row actions" dropdown (modelled on SafetyCulture / iAuditor's list
+ * pattern) with status-contextual options:
  *
- *   - create a new template (modal → redirects into the editor)
- *   - duplicate an existing one
- *   - archive / unarchive
- *   - toggle the archived filter
+ *   - Draft     → Edit · Publish · Duplicate · QR · Copy link · Archive
+ *   - Published → Edit · Move to draft · Duplicate · QR · Copy link · Archive
+ *   - Archived  → Restore · Duplicate · QR · Copy link
  *
- * Mutations invalidate the list query so the table stays in sync.
+ * Plus a "show archived" toggle, a new-template modal, and a CSV export
+ * dialog (PR 33). All mutations invalidate `templates.list` so the table
+ * stays in sync.
  */
 export default function TemplatesListPage() {
   const t = useTranslations('templates');
@@ -42,12 +64,10 @@ export default function TemplatesListPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
+  const [qrTarget, setQrTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { data: rows, isLoading } = trpc.templates.list.useQuery({ includeArchived });
 
-  const duplicate = trpc.templates.duplicate.useMutation({
-    onSuccess: () => utils.templates.list.invalidate(),
-  });
   const archive = trpc.templates.archive.useMutation({
     onSuccess: () => {
       setArchiveTarget(null);
@@ -127,25 +147,14 @@ export default function TemplatesListPage() {
                     <td className="px-3 py-2 text-muted-foreground">
                       {formatRelative(r.updatedAt)}
                     </td>
-                    <td className="space-x-1 px-3 py-2 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => duplicate.mutate({ templateId: r.id })}
-                        aria-label={t('duplicateButton')}
-                      >
-                        {t('duplicateButton')}
-                      </Button>
-                      {r.archivedAt === null ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setArchiveTarget(r.id)}
-                          aria-label={t('archiveButton')}
-                        >
-                          {t('archiveButton')}
-                        </Button>
-                      ) : null}
+                    <td className="px-3 py-2 text-right">
+                      <RowActionsMenu
+                        templateId={r.id}
+                        status={normaliseStatus(r.status)}
+                        locale={locale}
+                        onArchive={() => setArchiveTarget(r.id)}
+                        onQrCode={() => setQrTarget({ id: r.id, name: r.name })}
+                      />
                     </td>
                   </tr>
                 ))
@@ -169,7 +178,189 @@ export default function TemplatesListPage() {
         pending={archive.isPending}
       />
       <TemplatesExportDialog open={showExport} onOpenChange={setShowExport} />
+      {qrTarget !== null ? (
+        <QrCodeDialog
+          open={qrTarget !== null}
+          onOpenChange={(v) => {
+            if (!v) setQrTarget(null);
+          }}
+          templateId={qrTarget.id}
+          templateName={qrTarget.name}
+        />
+      ) : null}
     </div>
+  );
+}
+
+type NormalisedStatus = 'draft' | 'published' | 'archived';
+
+function normaliseStatus(status: string): NormalisedStatus {
+  return status === 'published' || status === 'archived' ? status : 'draft';
+}
+
+interface RowActionsMenuProps {
+  templateId: string;
+  status: NormalisedStatus;
+  locale: string;
+  onArchive: () => void;
+  onQrCode: () => void;
+}
+
+function RowActionsMenu({
+  templateId,
+  status,
+  locale,
+  onArchive,
+  onQrCode,
+}: RowActionsMenuProps) {
+  const t = useTranslations('templates.list');
+  const router = useRouter();
+  const utils = trpc.useUtils();
+
+  const duplicate = trpc.templates.duplicate.useMutation({
+    onSuccess: () => {
+      void utils.templates.list.invalidate();
+    },
+  });
+  const unarchive = trpc.templates.unarchive.useMutation({
+    onSuccess: () => {
+      toast.success(t('restoreSuccess'));
+      void utils.templates.list.invalidate();
+    },
+    onError: () => toast.error(t('restoreError')),
+  });
+  const unpublish = trpc.templates.unpublish.useMutation({
+    onSuccess: () => {
+      toast.success(t('unpublishSuccess'));
+      void utils.templates.list.invalidate();
+    },
+    onError: () => toast.error(t('unpublishError')),
+  });
+
+  function goToEditor() {
+    router.push(`/${locale}/templates/${templateId}`);
+  }
+
+  async function copyPublicLink() {
+    if (typeof window === 'undefined') return;
+    const url = `${window.location.origin}/${locale}/templates/${templateId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(t('copyLinkSuccess'));
+    } catch {
+      toast.error(t('copyLinkSuccess'));
+    }
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          aria-label={t('actionsMenuLabel')}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {status === 'draft' ? (
+          <>
+            <DropdownMenuItem onSelect={goToEditor}>
+              <Pencil className="mr-2 h-4 w-4" />
+              {t('actionEdit')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={goToEditor}>
+              <Send className="mr-2 h-4 w-4" />
+              {t('actionPublish')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => duplicate.mutate({ templateId })}
+              disabled={duplicate.isPending}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              {t('actionDuplicate')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onQrCode}>
+              <QrCode className="mr-2 h-4 w-4" />
+              {t('actionQrCode')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={copyPublicLink}>
+              <Copy className="mr-2 h-4 w-4" />
+              {t('actionCopyLink')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive" onSelect={onArchive}>
+              <Archive className="mr-2 h-4 w-4" />
+              {t('actionArchive')}
+            </DropdownMenuItem>
+          </>
+        ) : status === 'published' ? (
+          <>
+            <DropdownMenuItem onSelect={goToEditor}>
+              <Pencil className="mr-2 h-4 w-4" />
+              {t('actionEdit')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => unpublish.mutate({ templateId })}
+              disabled={unpublish.isPending}
+            >
+              <FileEdit className="mr-2 h-4 w-4" />
+              {t('actionUnpublish')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => duplicate.mutate({ templateId })}
+              disabled={duplicate.isPending}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              {t('actionDuplicate')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onQrCode}>
+              <QrCode className="mr-2 h-4 w-4" />
+              {t('actionQrCode')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={copyPublicLink}>
+              <Copy className="mr-2 h-4 w-4" />
+              {t('actionCopyLink')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive" onSelect={onArchive}>
+              <Archive className="mr-2 h-4 w-4" />
+              {t('actionArchive')}
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <>
+            <DropdownMenuItem
+              onSelect={() => unarchive.mutate({ templateId })}
+              disabled={unarchive.isPending}
+            >
+              <ArchiveRestore className="mr-2 h-4 w-4" />
+              {t('actionRestore')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => duplicate.mutate({ templateId })}
+              disabled={duplicate.isPending}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              {t('actionDuplicate')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onQrCode}>
+              <QrCode className="mr-2 h-4 w-4" />
+              {t('actionQrCode')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={copyPublicLink}>
+              <Copy className="mr-2 h-4 w-4" />
+              {t('actionCopyLink')}
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

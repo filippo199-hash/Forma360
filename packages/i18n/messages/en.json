@@ -312,6 +312,29 @@
       "published": "Published",
       "archived": "Archived"
     },
+    "list": {
+      "actionEdit": "Edit",
+      "actionPublish": "Publish",
+      "actionUnpublish": "Move to draft",
+      "actionDuplicate": "Duplicate",
+      "actionQrCode": "Generate QR code",
+      "actionCopyLink": "Copy public link",
+      "actionArchive": "Archive",
+      "actionRestore": "Restore",
+      "actionsMenuLabel": "More actions",
+      "copyLinkSuccess": "Link copied",
+      "unpublishSuccess": "Moved to draft",
+      "unpublishError": "Could not move to draft",
+      "restoreSuccess": "Template restored",
+      "restoreError": "Could not restore the template",
+      "qrDialog": {
+        "title": "QR code for {name}",
+        "description": "Anyone with this code can open the template.",
+        "downloadButton": "Download PNG",
+        "copyButton": "Copy link",
+        "copySuccess": "Link copied"
+      }
+    },
     "create": {
       "title": "Create a template",
       "nameLabel": "Template name",

@@ -628,6 +628,71 @@ describe('templates router (Phase 2)', () => {
     });
   });
 
+  describe('unarchive', () => {
+    it('clears archivedAt and sets status to draft for an archived template', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId } = await caller.templates.create({ name: 'ToRestore' });
+      await caller.templates.archive({ templateId });
+
+      // Confirm archived state first.
+      const before = await caller.templates.get({ templateId });
+      expect(before.template.archivedAt).toBeInstanceOf(Date);
+      expect(before.template.status).toBe('archived');
+
+      await caller.templates.unarchive({ templateId });
+
+      const after = await caller.templates.get({ templateId });
+      expect(after.template.archivedAt).toBeNull();
+      expect(after.template.status).toBe('draft');
+    });
+  });
+
+  describe('unpublish', () => {
+    it('flips status to draft but leaves currentVersionId unchanged', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId } = await caller.templates.create({ name: 'PubThenDraft' });
+      await caller.templates.saveDraft({ templateId, content: validContent('PubThenDraft') });
+      const { versionId } = await caller.templates.publish({ templateId });
+
+      const before = await caller.templates.get({ templateId });
+      expect(before.template.status).toBe('published');
+      expect(before.template.currentVersionId).toBe(versionId);
+
+      await caller.templates.unpublish({ templateId });
+
+      const after = await caller.templates.get({ templateId });
+      expect(after.template.status).toBe('draft');
+      // Crucially the pinned current version stays — in-progress inspections
+      // that referenced this version can still resolve their content.
+      expect(after.template.currentVersionId).toBe(versionId);
+    });
+
+    it('is a no-op on a draft template', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId } = await caller.templates.create({ name: 'AlreadyDraft' });
+
+      const before = await caller.templates.get({ templateId });
+      expect(before.template.status).toBe('draft');
+
+      // Should not throw; should not change anything.
+      await caller.templates.unpublish({ templateId });
+
+      const after = await caller.templates.get({ templateId });
+      expect(after.template.status).toBe('draft');
+      expect(after.template.currentVersionId).toBe(before.template.currentVersionId);
+    });
+
+    it('throws BAD_REQUEST on an archived template', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId } = await caller.templates.create({ name: 'Archived' });
+      await caller.templates.archive({ templateId });
+
+      await expect(caller.templates.unpublish({ templateId })).rejects.toThrow(
+        /cannot-unpublish-archived|BAD_REQUEST/,
+      );
+    });
+  });
+
   describe('accessRules.list hides [auto] rules', () => {
     it('omits rules whose name starts with "[auto] "', async () => {
       const caller = createCaller(ctxFor(adminUserId));
