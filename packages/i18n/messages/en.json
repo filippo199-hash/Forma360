@@ -62,8 +62,13 @@
     "copied": "Copied"
   },
   "nav": {
+    "primaryLabel": "Primary navigation",
+    "templates": "Templates",
     "inspections": "Inspections",
-    "approvals": "Approvals"
+    "approvals": "Approvals",
+    "schedules": "Schedules",
+    "issues": "Issues",
+    "settings": "Settings"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -941,6 +946,140 @@
       "deleted": "Schedule deleted",
       "materialised": "Materialise job enqueued",
       "error": "Could not save the schedule. Please try again."
+    }
+  },
+  "issues": {
+    "list": {
+      "title": "Issues",
+      "subtitle": "Track and resolve safety, quality, and compliance issues.",
+      "newButton": "New issue",
+      "manageCategoriesButton": "Manage categories",
+      "empty": "No issues yet",
+      "emptyCta": "Create your first issue",
+      "filterStatus": "Status",
+      "filterCategory": "Category",
+      "filterCategoryAll": "All categories",
+      "filterSite": "Site",
+      "filterSiteAll": "All sites",
+      "showArchived": "Show archived",
+      "columns": {
+        "reference": "Reference",
+        "title": "Title",
+        "category": "Category",
+        "site": "Site",
+        "status": "Status",
+        "created": "Created"
+      },
+      "loadMore": "Load more"
+    },
+    "status": {
+      "open": "Open",
+      "investigation": "Investigation",
+      "closed": "Closed"
+    },
+    "reportedVia": {
+      "app": "App",
+      "qr": "QR code"
+    },
+    "new": {
+      "title": "New issue",
+      "categoryLabel": "Category",
+      "categoryPlaceholder": "Select a category",
+      "titleLabel": "Title",
+      "descriptionLabel": "Description",
+      "siteLabel": "Site",
+      "sitePlaceholder": "Select a site",
+      "dateLabel": "Date occurred",
+      "locationLabel": "Location address",
+      "customFieldsHeading": "Additional details",
+      "customQuestionsHeading": "Questions",
+      "cancelButton": "Cancel",
+      "submitButton": "Create issue",
+      "successToast": "Issue {ref} created.",
+      "errorToast": "Could not create the issue. Please try again."
+    },
+    "detail": {
+      "backLink": "Back to issues",
+      "descriptionTitle": "Description",
+      "customFieldsTitle": "Details",
+      "customQuestionsTitle": "Questions",
+      "commentsTitle": "Comments",
+      "commentsEmpty": "No comments yet.",
+      "addCommentPlaceholder": "Add a comment",
+      "addCommentButton": "Add comment",
+      "actionsTitle": "Actions",
+      "actionsLocked": "You don't have permission to manage this issue.",
+      "editButton": "Edit",
+      "closeButton": "Close issue",
+      "reopenButton": "Reopen issue",
+      "archiveButton": "Archive",
+      "moreLabel": "More",
+      "closeDialogTitle": "Close this issue?",
+      "closeDialogBody": "The issue will be marked as closed. You can reopen it later if needed.",
+      "closeReasonPlaceholder": "Reason (optional)",
+      "editDialogTitle": "Edit issue",
+      "editTitleLabel": "Title",
+      "editDescriptionLabel": "Description",
+      "editSiteLabel": "Site",
+      "editDateLabel": "Date occurred",
+      "commentEdit": "Edit",
+      "commentDelete": "Delete",
+      "metaCategory": "Category",
+      "metaSite": "Site",
+      "metaReportedBy": "Reported by",
+      "metaReportedVia": "Reported via",
+      "metaDateOccurred": "Date occurred",
+      "metaCreated": "Created",
+      "metaLocation": "Location",
+      "metaClosedReason": "Close reason",
+      "reportedAnonymous": "Anonymous",
+      "updateToast": "Issue updated.",
+      "closeToast": "Issue closed.",
+      "reopenToast": "Issue reopened.",
+      "archiveToast": "Issue archived."
+    },
+    "categories": {
+      "title": "Issue categories",
+      "subtitle": "Define the categories users can pick when reporting issues.",
+      "backLink": "Back to issues",
+      "newButton": "New category",
+      "empty": "No categories yet",
+      "showArchived": "Show archived",
+      "columns": {
+        "name": "Name",
+        "description": "Description",
+        "notifications": "Notification rule",
+        "criticalAlerts": "Critical alerts",
+        "archived": "Archived",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "createTitle": "Create category",
+      "createSubtitle": "Define a new category for issue reports.",
+      "editTitle": "Edit category",
+      "editSubtitle": "Update this category's settings.",
+      "nameLabel": "Name",
+      "descriptionLabel": "Description",
+      "notificationRuleLabel": "Notification rule",
+      "notificationRule": {
+        "private": "Private",
+        "summary": "Summary",
+        "detailed": "Detailed"
+      },
+      "criticalAlertsLabel": "Send critical alerts",
+      "accessRuleLabel": "Access rule",
+      "accessRuleNone": "Everyone with issue access",
+      "linkedTemplatesLabel": "Linked templates",
+      "linkedTemplatesHelp": "Optional — templates whose inspections may reference this category.",
+      "customFieldsDeferred": "Custom fields and custom questions editing is coming in a follow-up release.",
+      "saveButton": "Save",
+      "cancelButton": "Cancel",
+      "restoreButton": "Restore",
+      "createToast": "Category created.",
+      "updateToast": "Category updated.",
+      "archiveToast": "Category archived.",
+      "restoreToast": "Category restored.",
+      "deleteToast": "Category deleted."
     }
   }
 }

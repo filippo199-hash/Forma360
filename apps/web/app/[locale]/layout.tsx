@@ -3,15 +3,18 @@ import '../globals.css';
 import { LOCALES } from '@forma360/i18n/config';
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
+import { headers } from 'next/headers';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { SiteFooter } from '../../src/components/site-footer';
 import { SiteHeader } from '../../src/components/site-header';
+import { SiteSidebar } from '../../src/components/site-sidebar';
 import { ThemeProvider } from '../../src/components/theme-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
 import { Toaster } from '../../src/components/ui/sonner';
+import { auth } from '../../src/server/auth';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -52,6 +55,9 @@ export default async function LocaleLayout({
   }
   setRequestLocale(locale);
 
+  const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
+  const isSignedIn = session !== null;
+
   return (
     <html
       lang={locale}
@@ -64,7 +70,14 @@ export default async function LocaleLayout({
             <TRPCProvider>
               <div className="flex min-h-screen flex-col">
                 <SiteHeader />
-                <main className="flex-1">{children}</main>
+                {isSignedIn ? (
+                  <div className="flex flex-1">
+                    <SiteSidebar locale={locale} />
+                    <main className="min-w-0 flex-1">{children}</main>
+                  </div>
+                ) : (
+                  <main className="flex-1">{children}</main>
+                )}
                 <SiteFooter />
               </div>
               <Toaster />
