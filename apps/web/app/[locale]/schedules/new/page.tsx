@@ -20,7 +20,9 @@ export default function NewSchedulePage() {
   const router = useRouter();
   const locale = params.locale ?? 'en';
 
-  const { data: templates } = trpc.templates.list.useQuery({});
+  // Schedules can only run published templates — drafts and archived
+  // ones don't have a usable currentVersionId to pin against.
+  const { data: templates } = trpc.templates.list.useQuery({ status: 'published' });
   const [templateId, setTemplateId] = useState(searchParams.get('templateId') ?? '');
   const [name, setName] = useState('');
   const [timezone, setTimezone] = useState('UTC');
