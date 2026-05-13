@@ -170,13 +170,18 @@ export default function QrCodesPage() {
                 {rows.map((row) => (
                   <tr key={row.categoryId} className="border-b last:border-0">
                     <td className="px-3 py-2">
-                      <div className="flex items-center gap-2 font-medium">
+                      <button
+                        type="button"
+                        onClick={() => setShowDialog({ open: true, row })}
+                        className="flex items-center gap-2 font-medium hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                        aria-label={t('actions.show')}
+                      >
                         <QrCodeIcon
                           className="h-4 w-4 text-muted-foreground"
                           aria-hidden="true"
                         />
                         <span>{row.categoryName}</span>
-                      </div>
+                      </button>
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {formatRelative(row.createdAt)}

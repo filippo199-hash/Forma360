@@ -871,6 +871,7 @@
     "create": "Create schedule",
     "filterTemplate": "Template",
     "filterStatus": "Status",
+    "filterStatusAll": "All statuses",
     "filterActive": "Active",
     "filterPaused": "Paused",
     "statusActive": "Active",
@@ -951,6 +952,7 @@
       "empty": "No observations yet",
       "emptyCta": "Report your first observation",
       "filterStatus": "Status",
+      "filterStatusAll": "All statuses",
       "filterCategory": "Category",
       "filterCategoryAll": "All categories",
       "filterSite": "Site",
@@ -1089,7 +1091,37 @@
         }
       },
       "inspectionsEmpty": "Linked inspections will appear here.",
-      "linkedActionsEmpty": "Linked actions will appear here."
+      "linkedActionsEmpty": "Linked actions will appear here.",
+      "shareToast": "Link copied to clipboard.",
+      "addInspectionDialog": {
+        "title": "Start an inspection from this observation",
+        "subtitle": "Pick a published template. The inspection opens in a new tab so you can keep this observation open.",
+        "pickTemplate": "Template",
+        "noTemplates": "No published templates available. Publish a template first, then come back here.",
+        "linkedTemplatesLabel": "Linked to this category",
+        "otherTemplatesLabel": "All published templates",
+        "startButton": "Start inspection"
+      },
+      "addActionDialog": {
+        "title": "Add an action",
+        "subtitle": "Track follow-up work tied to this observation.",
+        "actionTitleLabel": "Title",
+        "actionTitlePlaceholder": "What needs to happen?",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Optional details, references, links",
+        "priorityLabel": "Priority",
+        "noPriority": "No priority",
+        "dueDateLabel": "Due date",
+        "saveButton": "Create action",
+        "toast": "Action created."
+      },
+      "linkedActions": {
+        "title": "Title",
+        "status": "Status",
+        "priority": "Priority",
+        "due": "Due",
+        "noDue": "—"
+      }
     },
     "categories": {
       "title": "Manage observation categories",

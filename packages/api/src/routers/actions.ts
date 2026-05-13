@@ -28,9 +28,25 @@ const createInput = z.object({
   dueAt: z.string().datetime().optional(),
 });
 
+/**
+ * Ad-hoc action raised from an observation. No `sourceItemId` — observations
+ * don't have the per-question dedup model that inspections do, so the same
+ * observation can spawn N actions and each gets its own row. The actions
+ * table's unique index treats NULL `source_item_id` as distinct (Postgres
+ * default), so this is safe.
+ */
+const createFromIssueInput = z.object({
+  issueId: z.string().length(26),
+  title: z.string().min(1).max(500),
+  description: z.string().max(20_000).optional(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  assigneeUserId: z.string().optional(),
+  dueAt: z.string().datetime().optional(),
+});
+
 const listInput = z
   .object({
-    sourceType: z.enum(['inspection']).optional(),
+    sourceType: z.enum(['inspection', 'issue']).optional(),
     sourceId: z.string().length(26).optional(),
   })
   .default({});
@@ -113,6 +129,37 @@ export const actionsRouter = router({
         return { actionId: race[0].id, created: false as const };
       }
       return { actionId: id, created: true as const };
+    }),
+
+  /**
+   * Ad-hoc action raised from an observation. Unlike inspection actions
+   * (idempotent per question), each call here creates a new row — see
+   * `createFromIssueInput` for the rationale. The unique index tolerates
+   * NULL `source_item_id` rows so we don't need a dedup query.
+   */
+  createFromIssue: tenantProcedure
+    .use(requirePermission('actions.create'))
+    .input(createFromIssueInput)
+    .mutation(async ({ ctx, input }) => {
+      const id = newId();
+      const now = new Date();
+      await ctx.db.insert(actions).values({
+        id,
+        tenantId: ctx.tenantId,
+        sourceType: 'issue',
+        sourceId: input.issueId,
+        sourceItemId: null,
+        title: input.title,
+        description: input.description ?? null,
+        status: 'open',
+        priority: input.priority ?? null,
+        assigneeUserId: input.assigneeUserId ?? null,
+        dueAt: input.dueAt !== undefined ? new Date(input.dueAt) : null,
+        createdBy: ctx.auth.userId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { actionId: id };
     }),
 
   list: tenantProcedure

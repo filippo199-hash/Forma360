@@ -98,7 +98,7 @@ export default function ObservationsListPage() {
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>
-                {s === 'all' ? tCommon('search') : tStatus(s)}
+                {s === 'all' ? t('filterStatusAll') : tStatus(s)}
               </option>
             ))}
           </select>

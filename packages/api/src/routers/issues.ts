@@ -983,6 +983,45 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         return { ok: true as const };
       }),
 
+    /**
+     * Generic status transition for non-terminal moves (open → investigation,
+     * investigation → open). `close` / `reopen` remain the dedicated entry
+     * points for the `closed` terminal — they carry close-reason + clear
+     * the closed-* columns and we want to keep that audit clarity.
+     */
+    setStatus: tenantProcedure
+      .use(requirePermission('issues.manage'))
+      .input(
+        z.object({
+          issueId: z.string().length(26),
+          status: z.enum(['open', 'investigation']),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        if (issue.status === input.status) {
+          return { ok: true as const };
+        }
+        if (issue.status === 'closed') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'issue-closed-use-reopen',
+          });
+        }
+        await ctx.db
+          .update(issues)
+          .set({ status: input.status, updatedAt: new Date() })
+          .where(eq(issues.id, issue.id));
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          issueId: issue.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'status_changed',
+          payload: { from: issue.status, to: input.status },
+        });
+        return { ok: true as const };
+      }),
+
     archive: tenantProcedure
       .use(requirePermission('issues.manage'))
       .input(issueIdInput)

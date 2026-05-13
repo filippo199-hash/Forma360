@@ -11,7 +11,6 @@ import {
   Pencil,
   Plus,
   Share2,
-  Trash2,
   Upload,
   X,
 } from 'lucide-react';
@@ -100,6 +99,8 @@ export default function ObservationDetailPage() {
   const [editingDescription, setEditingDescription] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [closeOpen, setCloseOpen] = useState(false);
+  const [addInspectionOpen, setAddInspectionOpen] = useState(false);
+  const [addActionOpen, setAddActionOpen] = useState(false);
 
   const update = trpc.issues.issues.update.useMutation({
     onSuccess: () => {
@@ -123,6 +124,15 @@ export default function ObservationDetailPage() {
   const reopen = trpc.issues.issues.reopen.useMutation({
     onSuccess: () => {
       toast.success(t('reopenToast'));
+      void utils.issues.issues.get.invalidate({ issueId });
+      void utils.issues.activity.list.invalidate({ issueId });
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  const setStatus = trpc.issues.issues.setStatus.useMutation({
+    onSuccess: () => {
+      toast.success(t('updateToast'));
       void utils.issues.issues.get.invalidate({ issueId });
       void utils.issues.activity.list.invalidate({ issueId });
     },
@@ -248,33 +258,46 @@ export default function ObservationDetailPage() {
               canManage={canManage}
               onClose={() => setCloseOpen(true)}
               onReopen={() => reopen.mutate({ issueId })}
+              onSetStatus={(next) => setStatus.mutate({ issueId, status: next })}
               tStatus={(k) => tStatus(k)}
             />
           </div>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" disabled>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (typeof window === 'undefined') return;
+                void navigator.clipboard
+                  .writeText(window.location.href)
+                  .then(() => toast.success(t('shareToast')))
+                  .catch(() => toast.error(tCommon('error')));
+              }}
+            >
               <Share2 className="mr-1 h-4 w-4" />
               {t('actions.share')}
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" variant="default">
-                  <Plus className="mr-1 h-4 w-4" />
-                  {t('actions.add')}
-                  <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem disabled>
-                  <FileText className="mr-2 h-4 w-4" />
-                  {t('actions.addInspection')}
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('actions.addAction')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {canManage ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="default">
+                    <Plus className="mr-1 h-4 w-4" />
+                    {t('actions.add')}
+                    <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setAddInspectionOpen(true)}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    {t('actions.addInspection')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setAddActionOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t('actions.addAction')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
             {canManage ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -290,14 +313,12 @@ export default function ObservationDetailPage() {
                     <Archive className="mr-2 h-4 w-4" />
                     {t('archiveButton')}
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onSelect={() => archive.mutate({ issueId })}
-                    disabled={archive.isPending}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {t('deleteButton')}
-                  </DropdownMenuItem>
+                  {/*
+                    "Delete" was a duplicate Archive — there is no hard-delete
+                    procedure for issues (would orphan attachments + activity).
+                    Archive is the right destructive action; removing the
+                    duplicate avoids the misleading red-text menu item.
+                  */}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
@@ -524,18 +545,24 @@ export default function ObservationDetailPage() {
 
       {tab === 'inspections' ? (
         <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            {t('inspectionsEmpty')}
+          <CardContent className="space-y-4 p-6 text-sm">
+            <p className="text-muted-foreground">{t('inspectionsEmpty')}</p>
+            {canManage ? (
+              <Button type="button" onClick={() => setAddInspectionOpen(true)}>
+                <Plus className="mr-1 h-4 w-4" />
+                {t('actions.addInspection')}
+              </Button>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}
 
       {tab === 'actions' ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            {t('linkedActionsEmpty')}
-          </CardContent>
-        </Card>
+        <LinkedActionsCard
+          issueId={issueId}
+          canManage={canManage}
+          onOpenAdd={() => setAddActionOpen(true)}
+        />
       ) : null}
 
       <Dialog open={closeOpen} onOpenChange={setCloseOpen}>
@@ -558,6 +585,27 @@ export default function ObservationDetailPage() {
           />
         </DialogContent>
       </Dialog>
+
+      {addInspectionOpen ? (
+        <AddInspectionDialog
+          open={addInspectionOpen}
+          onOpenChange={setAddInspectionOpen}
+          categoryId={issue.categoryId}
+          locale={locale}
+          observationId={issueId}
+        />
+      ) : null}
+
+      {addActionOpen ? (
+        <AddActionDialog
+          open={addActionOpen}
+          onOpenChange={setAddActionOpen}
+          issueId={issueId}
+          onCreated={() => {
+            void utils.issues.activity.list.invalidate({ issueId });
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -602,12 +650,14 @@ function StatusDropdown({
   canManage,
   onClose,
   onReopen,
+  onSetStatus,
   tStatus,
 }: {
   status: string;
   canManage: boolean;
   onClose: () => void;
   onReopen: () => void;
+  onSetStatus: (next: 'open' | 'investigation') => void;
   tStatus: (k: 'open' | 'investigation' | 'closed') => string;
 }) {
   type S = 'open' | 'investigation' | 'closed';
@@ -633,6 +683,24 @@ function StatusDropdown({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
+        {/*
+          Transitions:
+            - open          → investigation, closed
+            - investigation → open, closed
+            - closed        → open (reopen)
+          Closed is the terminal status — close goes through `close.mutate`
+          (carries a reason), all other transitions go through `setStatus`.
+        */}
+        {normalised === 'open' ? (
+          <DropdownMenuItem onSelect={() => onSetStatus('investigation')}>
+            {tStatus('investigation')}
+          </DropdownMenuItem>
+        ) : null}
+        {normalised === 'investigation' ? (
+          <DropdownMenuItem onSelect={() => onSetStatus('open')}>
+            {tStatus('open')}
+          </DropdownMenuItem>
+        ) : null}
         {normalised !== 'closed' ? (
           <DropdownMenuItem onSelect={onClose}>{tStatus('closed')}</DropdownMenuItem>
         ) : (
@@ -1104,5 +1172,306 @@ function toLocalDatetime(d: Date | string | null | undefined): string {
   if (Number.isNaN(dt.getTime())) return '';
   const pad = (n: number) => n.toString().padStart(2, '0');
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+
+/**
+ * Start-inspection-from-observation flow.
+ *
+ * SafetyCulture parity: when staff triage an observation they often need to
+ * kick off the matching inspection (eg. raise an audit on a "near-miss").
+ * We surface the category's linked-templates list at the top of the picker
+ * and let the user pick any other published template as a fall-back. The
+ * link from inspection → observation is not persisted yet (would need a
+ * schema column); for now we just navigate the user to /inspections/new
+ * with the template pre-selected. That's the same flow the Schedules
+ * module uses to pre-select a template, so the new-inspection page already
+ * handles the query param.
+ */
+function AddInspectionDialog({
+  open,
+  onOpenChange,
+  categoryId,
+  locale,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  categoryId: string;
+  locale: string;
+  observationId: string;
+}) {
+  const t = useTranslations('issues.detail.addInspectionDialog');
+  const tCommon = useTranslations('common');
+  const router = useRouter();
+  const { data: cat } = trpc.issues.categories.get.useQuery({ categoryId });
+  const { data: templates } = trpc.templates.list.useQuery({ status: 'published' });
+  const [selected, setSelected] = useState<string>('');
+
+  const linkedIds: ReadonlyArray<string> = cat?.linkedTemplateIds ?? [];
+  const publishedTemplates = templates ?? [];
+  const linkedTemplates = publishedTemplates.filter((t) => linkedIds.includes(t.id));
+  const otherTemplates = publishedTemplates.filter((t) => !linkedIds.includes(t.id));
+  const noPublished = publishedTemplates.length === 0;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('subtitle')}</DialogDescription>
+        </DialogHeader>
+        {noPublished ? (
+          <p className="text-sm text-muted-foreground">{t('noTemplates')}</p>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="template-select">{t('pickTemplate')}</Label>
+            <select
+              id="template-select"
+              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+            >
+              <option value="">—</option>
+              {linkedTemplates.length > 0 ? (
+                <optgroup label={t('linkedTemplatesLabel')}>
+                  {linkedTemplates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
+              {otherTemplates.length > 0 ? (
+                <optgroup label={t('otherTemplatesLabel')}>
+                  {otherTemplates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
+            </select>
+          </div>
+        )}
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            {tCommon('cancel')}
+          </Button>
+          <Button
+            type="button"
+            disabled={selected === '' || noPublished}
+            onClick={() => {
+              if (selected === '') return;
+              onOpenChange(false);
+              router.push(`/${locale}/inspections/new?templateId=${selected}`);
+            }}
+          >
+            {t('startButton')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Create-action-from-observation flow. Inserts directly into the `actions`
+ * table via the actions router (sourceType='issue'); no inspection question
+ * dedup model here. Lighter than the inspection flow because actions don't
+ * need a separate "start" step.
+ */
+function AddActionDialog({
+  open,
+  onOpenChange,
+  issueId,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  issueId: string;
+  onCreated: () => void;
+}) {
+  const t = useTranslations('issues.detail.addActionDialog');
+  const tPriority = useTranslations('issues.priority');
+  const tCommon = useTranslations('common');
+  const utils = trpc.useUtils();
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<'' | Priority>('');
+  const [dueAt, setDueAt] = useState('');
+
+  const create = trpc.actions.createFromIssue.useMutation({
+    onSuccess: () => {
+      toast.success(t('toast'));
+      void utils.actions.list.invalidate({ sourceType: 'issue', sourceId: issueId });
+      onCreated();
+      onOpenChange(false);
+      setTitle('');
+      setDescription('');
+      setPriority('');
+      setDueAt('');
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  const canSubmit = title.trim().length > 0 && !create.isPending;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('subtitle')}</DialogDescription>
+        </DialogHeader>
+        <form
+          className="space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!canSubmit) return;
+            const input: {
+              issueId: string;
+              title: string;
+              description?: string;
+              priority?: Priority;
+              dueAt?: string;
+            } = { issueId, title: title.trim() };
+            if (description.trim().length > 0) input.description = description.trim();
+            if (priority !== '') input.priority = priority;
+            if (dueAt !== '') input.dueAt = new Date(dueAt).toISOString();
+            create.mutate(input);
+          }}
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="act-title">{t('actionTitleLabel')}</Label>
+            <Input
+              id="act-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t('actionTitlePlaceholder')}
+              required
+              autoFocus
+              maxLength={500}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="act-desc">{t('descriptionLabel')}</Label>
+            <Textarea
+              id="act-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t('descriptionPlaceholder')}
+              rows={3}
+              maxLength={20_000}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="act-priority">{t('priorityLabel')}</Label>
+              <select
+                id="act-priority"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as '' | Priority)}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t('noPriority')}</option>
+                {PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    {tPriority(p)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="act-due">{t('dueDateLabel')}</Label>
+              <Input
+                id="act-due"
+                type="datetime-local"
+                value={dueAt}
+                onChange={(e) => setDueAt(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button type="submit" disabled={!canSubmit}>
+              {t('saveButton')}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Linked-actions list on the Actions tab. Queries via the actions router
+ * (sourceType='issue', sourceId=issueId). Empty-state offers the same
+ * "+ Add action" CTA as the top toolbar so the tab is reachable from
+ * either entry point.
+ */
+function LinkedActionsCard({
+  issueId,
+  canManage,
+  onOpenAdd,
+}: {
+  issueId: string;
+  canManage: boolean;
+  onOpenAdd: () => void;
+}) {
+  const t = useTranslations('issues.detail');
+  const tPriority = useTranslations('issues.priority');
+  const tCols = useTranslations('issues.detail.linkedActions');
+  const { data, isLoading } = trpc.actions.list.useQuery({
+    sourceType: 'issue',
+    sourceId: issueId,
+  });
+  const rows = data ?? [];
+  return (
+    <Card>
+      <CardContent className="space-y-4 p-6 text-sm">
+        {isLoading ? (
+          <Skeleton className="h-12 w-full" />
+        ) : rows.length === 0 ? (
+          <p className="text-muted-foreground">{t('linkedActionsEmpty')}</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="border-b bg-muted/40">
+              <tr className="text-left">
+                <th className="px-3 py-2 font-medium">{tCols('title')}</th>
+                <th className="px-3 py-2 font-medium">{tCols('status')}</th>
+                <th className="px-3 py-2 font-medium">{tCols('priority')}</th>
+                <th className="px-3 py-2 font-medium">{tCols('due')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id} className="border-b last:border-0">
+                  <td className="px-3 py-2 font-medium">{row.title}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{row.status}</td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {row.priority !== null && row.priority !== '' &&
+                    (row.priority === 'low' || row.priority === 'medium' ||
+                      row.priority === 'high' || row.priority === 'critical')
+                      ? tPriority(row.priority)
+                      : tCols('noDue')}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {row.dueAt !== null ? new Date(row.dueAt).toLocaleString() : tCols('noDue')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {canManage ? (
+          <Button type="button" onClick={onOpenAdd}>
+            <Plus className="mr-1 h-4 w-4" />
+            {t('actions.addAction')}
+          </Button>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
 }
 
