@@ -44,7 +44,7 @@
         "customUserFields": "Custom user fields",
         "templates": "Templates",
         "inspections": "Inspections",
-        "issues": "Issues",
+        "issues": "Observations",
         "actions": "Actions",
         "headsUp": "Heads up",
         "assets": "Assets",
@@ -129,7 +129,7 @@
       "profile": "My profile",
       "templates": "Templates",
       "actions": "Actions",
-      "issues": "Issues",
+      "issues": "Observations",
       "assets": "Assets",
       "headsUp": "Heads Up",
       "documents": "Documents",
@@ -833,7 +833,7 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Issues",
+    "issues": "Observations",
     "settings": "Settings"
   },
   "approvals": {
@@ -938,13 +938,18 @@
     }
   },
   "issues": {
+    "tabs": {
+      "observations": "Observations",
+      "categories": "Categories",
+      "qrCodes": "QR codes"
+    },
     "list": {
-      "title": "Issues",
-      "subtitle": "Track and resolve safety, quality, and compliance issues.",
-      "newButton": "New issue",
+      "title": "Observations",
+      "subtitle": "Track and resolve safety, quality, and compliance observations.",
+      "newButton": "Report observation",
       "manageCategoriesButton": "Manage categories",
-      "empty": "No issues yet",
-      "emptyCta": "Create your first issue",
+      "empty": "No observations yet",
+      "emptyCta": "Report your first observation",
       "filterStatus": "Status",
       "filterCategory": "Category",
       "filterCategoryAll": "All categories",
@@ -971,24 +976,30 @@
       "qr": "QR code"
     },
     "new": {
-      "title": "New issue",
-      "categoryLabel": "Category",
+      "title": "Report observation",
+      "categoryLabel": "What type of observation?",
       "categoryPlaceholder": "Select a category",
       "titleLabel": "Title",
       "descriptionLabel": "Description",
+      "descriptionCounter": "{count}/30000",
       "siteLabel": "Site",
       "sitePlaceholder": "Select a site",
-      "dateLabel": "Date occurred",
-      "locationLabel": "Location address",
+      "dateLabel": "Date",
+      "locationLabel": "Location",
+      "mediaHeading": "Add images or video?",
+      "mediaPlaceholder": "Image and video upload coming soon",
+      "mediaButton": "Add media",
+      "mapButton": "Map",
+      "mapComingSoon": "Coming soon",
       "customFieldsHeading": "Additional details",
       "customQuestionsHeading": "Questions",
       "cancelButton": "Cancel",
-      "submitButton": "Create issue",
-      "successToast": "Issue {ref} created.",
-      "errorToast": "Could not create the issue. Please try again."
+      "submitButton": "Submit",
+      "successToast": "Observation {ref} reported.",
+      "errorToast": "Could not report the observation. Please try again."
     },
     "detail": {
-      "backLink": "Back to issues",
+      "backLink": "Back to observations",
       "descriptionTitle": "Description",
       "customFieldsTitle": "Details",
       "customQuestionsTitle": "Questions",
@@ -997,16 +1008,16 @@
       "addCommentPlaceholder": "Add a comment",
       "addCommentButton": "Add comment",
       "actionsTitle": "Actions",
-      "actionsLocked": "You don't have permission to manage this issue.",
+      "actionsLocked": "You don't have permission to manage this observation.",
       "editButton": "Edit",
-      "closeButton": "Close issue",
-      "reopenButton": "Reopen issue",
+      "closeButton": "Close observation",
+      "reopenButton": "Reopen observation",
       "archiveButton": "Archive",
       "moreLabel": "More",
-      "closeDialogTitle": "Close this issue?",
-      "closeDialogBody": "The issue will be marked as closed. You can reopen it later if needed.",
+      "closeDialogTitle": "Close this observation?",
+      "closeDialogBody": "The observation will be marked as closed. You can reopen it later if needed.",
       "closeReasonPlaceholder": "Reason (optional)",
-      "editDialogTitle": "Edit issue",
+      "editDialogTitle": "Edit observation",
       "editTitleLabel": "Title",
       "editDescriptionLabel": "Description",
       "editSiteLabel": "Site",
@@ -1022,16 +1033,16 @@
       "metaLocation": "Location",
       "metaClosedReason": "Close reason",
       "reportedAnonymous": "Anonymous",
-      "updateToast": "Issue updated.",
-      "closeToast": "Issue closed.",
-      "reopenToast": "Issue reopened.",
-      "archiveToast": "Issue archived."
+      "updateToast": "Observation updated.",
+      "closeToast": "Observation closed.",
+      "reopenToast": "Observation reopened.",
+      "archiveToast": "Observation archived."
     },
     "categories": {
-      "title": "Issue categories",
-      "subtitle": "Define the categories users can pick when reporting issues.",
-      "backLink": "Back to issues",
-      "newButton": "New category",
+      "title": "Manage observation categories",
+      "subtitle": "Define the categories users can pick when reporting an observation.",
+      "backLink": "Back to observations",
+      "newButton": "Add category",
       "empty": "No categories yet",
       "showArchived": "Show archived",
       "columns": {
@@ -1043,24 +1054,23 @@
         "created": "Created",
         "actions": "Actions"
       },
-      "createTitle": "Create category",
-      "createSubtitle": "Define a new category for issue reports.",
-      "editTitle": "Edit category",
-      "editSubtitle": "Update this category's settings.",
-      "nameLabel": "Name",
+      "createDialogTitle": "Create category",
+      "createDialogSubtitle": "Give the category a name and short description. You can configure questions, notifications and access after creating it.",
+      "createSaveButton": "Create",
+      "nameLabel": "Category name",
       "descriptionLabel": "Description",
-      "notificationRuleLabel": "Notification rule",
+      "notificationRuleLabel": "Email notification type",
       "notificationRule": {
         "private": "Private",
         "summary": "Summary",
         "detailed": "Detailed"
       },
+      "notificationRuleDescriptions": {
+        "private": "Only includes the observation title, category, reporter, and reported time.",
+        "summary": "Includes the observation title, category, description, site, reporter, and reported time.",
+        "detailed": "Includes everything in Summary plus custom question responses."
+      },
       "criticalAlertsLabel": "Send critical alerts",
-      "accessRuleLabel": "Access rule",
-      "accessRuleNone": "Everyone with issue access",
-      "linkedTemplatesLabel": "Linked templates",
-      "linkedTemplatesHelp": "Optional — templates whose inspections may reference this category.",
-      "customFieldsDeferred": "Custom fields and custom questions editing is coming in a follow-up release.",
       "saveButton": "Save",
       "cancelButton": "Cancel",
       "restoreButton": "Restore",
@@ -1069,18 +1079,75 @@
       "archiveToast": "Category archived.",
       "restoreToast": "Category restored.",
       "deleteToast": "Category deleted.",
-      "wizardSteps": {
-        "basics": "Basics",
-        "questions": "Questions",
-        "access": "Access"
+      "detail": {
+        "backLink": "Back to categories",
+        "breadcrumb": "Categories",
+        "deleteButton": "Delete",
+        "deleteConfirmTitle": "Delete this category?",
+        "deleteConfirmBody": "The category will be archived. Existing observations are unaffected.",
+        "deleteCancel": "Cancel",
+        "deleteConfirm": "Delete",
+        "tabWorkflow": "Workflow",
+        "tabAccess": "Access",
+        "editButton": "Edit",
+        "saveCard": "Save",
+        "cancelCard": "Cancel",
+        "detailsCard": {
+          "title": "Category details",
+          "subtitle": "Basic information about this category.",
+          "nameLabel": "Category name",
+          "descriptionLabel": "Description",
+          "nameEmpty": "—",
+          "descriptionEmpty": "—"
+        },
+        "notificationsCard": {
+          "title": "Notifications",
+          "subtitle": "Notify selected people when an observation is reported in this category.",
+          "recipientsLabel": "Send notification to",
+          "recipientsPlaceholder": "Recipient list coming soon",
+          "emailTypeLabel": "Email notification type"
+        },
+        "criticalCard": {
+          "title": "Critical Alerts notifications",
+          "subtitle": "Automatically notify selected people when a Critical Alert is reported. Critical Alerts override silent mode and should only be used for serious incidents.",
+          "sendLabel": "Send critical alerts"
+        },
+        "questionsCard": {
+          "title": "Custom questions",
+          "subtitle": "Automatically ask these questions when an observation is reported.",
+          "banner": "Add up to 10 custom questions to capture critical information for each observation."
+        },
+        "linkedTemplatesCard": {
+          "title": "Linked templates",
+          "subtitle": "Automatically show these templates for users to quickly start inspections from observations related to this category.",
+          "empty": "No templates linked.",
+          "linkButton": "Link templates",
+          "dialogTitle": "Link templates",
+          "dialogSearchPlaceholder": "Search templates",
+          "dialogEmpty": "No templates found.",
+          "dialogDone": "Done"
+        },
+        "visibilityCard": {
+          "title": "Category visibility",
+          "subtitle": "This category can be reported by:",
+          "everyone": "All users ({tenantName})",
+          "specificSummary": "Specific groups and sites",
+          "specificEmpty": "No groups or sites selected.",
+          "everyoneOption": "All users",
+          "specificOption": "Specific groups & sites",
+          "enabledLabel": "Apply visibility rule",
+          "saveSuccess": "Visibility saved.",
+          "saveError": "Could not save visibility."
+        },
+        "accessCard": {
+          "title": "Access",
+          "subtitle": "Select who has access to observations raised in this category and their level of access.",
+          "reporterLabel": "Reporter",
+          "reporterBadge": "View, edit",
+          "reporterBody": "Users have full view and edit access to observations in this category.",
+          "note": "Notifying or assigning a user to an observation will give them view and edit access, regardless of their category access."
+        }
       },
-      "wizardNext": "Next",
-      "wizardBack": "Back",
-      "wizardSave": "Save category",
-      "step1Title": "Define category basics",
-      "step1Subtitle": "Give the category a name and short description.",
-      "step3Title": "Who can use this and who gets notified?",
-      "step3Subtitle": "Restrict to specific groups or sites, and choose how teammates are notified about new issues.",
       "questionBuilder": {
         "title": "Custom questions",
         "subtitle": "Add questions specific to this category. Defaults like Title, Description, Site, and Date are always included on top of these.",
@@ -1098,6 +1165,12 @@
         "validationPromptEmpty": "Question prompt is required.",
         "validationOptionsEmpty": "Add at least one choice."
       }
+    },
+    "qrCodes": {
+      "title": "QR codes",
+      "subtitle": "Coming soon.",
+      "emptyTitle": "QR codes for observations",
+      "emptyBody": "Soon, you'll be able to generate QR codes that let people report observations without signing in."
     }
   }
 }

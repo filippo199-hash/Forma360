@@ -1,39 +1,40 @@
 'use client';
 
-import type {
-  IssueCustomQuestion,
-  IssueNotificationRule,
-} from '@forma360/shared/issues-schema';
-import { ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  CategoryWizard,
-  EMPTY_CATEGORY_WIZARD_VALUES,
-  type CategoryWizardSubmit,
-  type CategoryWizardValues,
-} from '../../../../src/components/issues/category-wizard';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '../../../../src/components/ui/dialog';
+import { Input } from '../../../../src/components/ui/input';
+import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
+const MAX_NAME = 200;
+const MAX_DESCRIPTION = 2000;
+
 /**
- * Issue categories admin. Gated by `issues.settings` — non-admins are
- * redirected to the issues list. Lets admins create / edit / archive /
- * restore / delete categories.
+ * Observation categories admin. Gated by `issues.settings` — non-admins
+ * are redirected to the observations list. The list view shows every
+ * category in the tenant, with a small "+ Add category" Dialog that
+ * collects only Name + Description and then lands the admin on the
+ * detail page where the rest (notifications, custom questions, linked
+ * templates, visibility) is configured.
  *
- * The create / edit Dialog hosts a 3-step wizard (Basics → Questions →
- * Access). Linked-template selection is deferred and intentionally not
- * surfaced; the schema accepts it (we always send an empty array).
+ * The Edit row action also navigates to the detail page now — the
+ * inline-edit wizard has been retired (see custom-questions-editor.tsx
+ * for the reusable question builder).
  */
 export default function CategoriesPage() {
   const t = useTranslations('issues.categories');
@@ -47,7 +48,7 @@ export default function CategoriesPage() {
   useEffect(() => {
     if (!canManageSettings) {
       toast.error(tCommon('error'));
-      router.push(`/${locale}/issues`);
+      router.push(`/${locale}/observations`);
     }
   }, [canManageSettings, locale, router, tCommon]);
 
@@ -55,13 +56,8 @@ export default function CategoriesPage() {
   const { data: categories, isLoading } = trpc.issues.categories.list.useQuery({
     includeArchived,
   });
-  const { data: accessRules } = trpc.accessRules.list.useQuery();
 
-  const [dialogState, setDialogState] = useState<
-    | { mode: 'create'; values: CategoryWizardValues }
-    | { mode: 'edit'; categoryId: string; values: CategoryWizardValues }
-    | null
-  >(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const archive = trpc.issues.categories.archive.useMutation({
     onSuccess: () => {
@@ -89,15 +85,6 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={`/${locale}/issues`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('backLink')}
-        </Link>
-      </div>
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
@@ -113,13 +100,7 @@ export default function CategoriesPage() {
             />
             <span>{t('showArchived')}</span>
           </label>
-          <Button
-            onClick={() =>
-              setDialogState({ mode: 'create', values: EMPTY_CATEGORY_WIZARD_VALUES })
-            }
-          >
-            {t('newButton')}
-          </Button>
+          <Button onClick={() => setCreateOpen(true)}>{t('newButton')}</Button>
         </div>
       </header>
 
@@ -172,19 +153,7 @@ export default function CategoriesPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() =>
-                            setDialogState({
-                              mode: 'edit',
-                              categoryId: c.id,
-                              values: {
-                                name: c.name,
-                                description: c.description ?? '',
-                                notificationRule:
-                                  (c.notificationRule as IssueNotificationRule) ?? 'summary',
-                                criticalAlerts: c.criticalAlerts,
-                                accessRuleId: c.accessRuleId ?? '',
-                                customQuestions: Array.from(c.customQuestions) as IssueCustomQuestion[],
-                              },
-                            })
+                            router.push(`/${locale}/observations/categories/${c.id}`)
                           }
                         >
                           {tCommon('edit')}
@@ -232,124 +201,107 @@ export default function CategoriesPage() {
         </CardContent>
       </Card>
 
-      {dialogState !== null ? (
-        <CategoryWizardDialog
-          state={dialogState}
-          onClose={() => setDialogState(null)}
-          accessRules={accessRules ?? []}
+      {createOpen ? (
+        <CreateCategoryDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          locale={locale}
         />
       ) : null}
     </div>
   );
 }
 
-function CategoryWizardDialog({
-  state,
-  onClose,
-  accessRules,
+function CreateCategoryDialog({
+  open,
+  onOpenChange,
+  locale,
 }: {
-  state:
-    | { mode: 'create'; values: CategoryWizardValues }
-    | { mode: 'edit'; categoryId: string; values: CategoryWizardValues };
-  onClose: () => void;
-  accessRules: ReadonlyArray<{ id: string; name: string }>;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  locale: string;
 }) {
   const t = useTranslations('issues.categories');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
+  const router = useRouter();
+
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
 
   const create = trpc.issues.categories.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast.success(t('createToast'));
       void utils.issues.categories.list.invalidate();
-      onClose();
+      onOpenChange(false);
+      router.push(`/${locale}/observations/categories/${result.categoryId}`);
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
-  const update = trpc.issues.categories.update.useMutation({
-    onSuccess: () => {
-      toast.success(t('updateToast'));
-      void utils.issues.categories.list.invalidate();
-      onClose();
-    },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
-  });
+  const canSubmit = name.trim().length > 0 && !create.isPending;
 
-  function handleSave(values: CategoryWizardSubmit) {
-    if (state.mode === 'create') {
-      const input: {
-        name: string;
-        description?: string;
-        accessRuleId?: string;
-        notificationRule?: IssueNotificationRule;
-        criticalAlerts?: boolean;
-        customFields?: never[];
-        customQuestions?: IssueCustomQuestion[];
-        linkedTemplateIds?: string[];
-      } = {
-        name: values.name,
-        notificationRule: values.notificationRule,
-        criticalAlerts: values.criticalAlerts,
-        customFields: [],
-        customQuestions: values.customQuestions,
-        linkedTemplateIds: [],
-      };
-      if (values.description.length > 0) input.description = values.description;
-      if (values.accessRuleId !== '') input.accessRuleId = values.accessRuleId;
-      create.mutate(input);
-    } else {
-      // Send only diffs. customQuestions is always sent so the schema sees
-      // the wizard's final state even when the count is the same.
-      const original = state.values;
-      const input: {
-        categoryId: string;
-        name?: string;
-        description?: string | null;
-        accessRuleId?: string | null;
-        notificationRule?: IssueNotificationRule;
-        criticalAlerts?: boolean;
-        customFields?: never[];
-        customQuestions?: IssueCustomQuestion[];
-        linkedTemplateIds?: string[];
-      } = { categoryId: state.categoryId };
-      if (values.name !== original.name.trim()) input.name = values.name;
-      const originalDesc = original.description.trim();
-      if (values.description !== originalDesc) {
-        input.description = values.description.length > 0 ? values.description : null;
-      }
-      if (values.accessRuleId !== original.accessRuleId) {
-        input.accessRuleId = values.accessRuleId === '' ? null : values.accessRuleId;
-      }
-      if (values.notificationRule !== original.notificationRule) {
-        input.notificationRule = values.notificationRule;
-      }
-      if (values.criticalAlerts !== original.criticalAlerts) {
-        input.criticalAlerts = values.criticalAlerts;
-      }
-      if (
-        JSON.stringify(values.customQuestions) !==
-        JSON.stringify(original.customQuestions)
-      ) {
-        input.customQuestions = values.customQuestions;
-      }
-      update.mutate(input);
-    }
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    const input: {
+      name: string;
+      description?: string;
+      notificationRule: 'private' | 'summary' | 'detailed';
+      criticalAlerts: boolean;
+      customFields: never[];
+      customQuestions: never[];
+      linkedTemplateIds: string[];
+    } = {
+      name: name.trim(),
+      notificationRule: 'summary',
+      criticalAlerts: false,
+      customFields: [],
+      customQuestions: [],
+      linkedTemplateIds: [],
+    };
+    if (description.trim().length > 0) input.description = description.trim();
+    create.mutate(input);
   }
 
-  const submitting = create.isPending || update.isPending;
-
   return (
-    <Dialog open onOpenChange={(v) => (v ? null : onClose())}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <CategoryWizard
-          mode={state.mode}
-          defaultValues={state.values}
-          accessRules={accessRules}
-          submitting={submitting}
-          onSave={handleSave}
-          onCancel={onClose}
-        />
+        <DialogHeader>
+          <DialogTitle>{t('createDialogTitle')}</DialogTitle>
+          <DialogDescription>{t('createDialogSubtitle')}</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="cat-name">{t('nameLabel')}</Label>
+            <Input
+              id="cat-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={MAX_NAME}
+              required
+              autoFocus
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cat-desc">{t('descriptionLabel')}</Label>
+            <Textarea
+              id="cat-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              maxLength={MAX_DESCRIPTION}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button type="submit" disabled={!canSubmit}>
+              {t('createSaveButton')}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

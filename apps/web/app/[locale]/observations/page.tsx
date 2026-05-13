@@ -15,12 +15,13 @@ type StatusFilter = 'all' | IssueStatusValue;
 const STATUSES: readonly StatusFilter[] = ['all', 'open', 'investigation', 'closed'];
 
 /**
- * Issues list. Filterable by status / category / site / archived. Cursor
- * pagination via `nextCursor`. Hides "New issue" + "Manage categories"
- * buttons for users without the relevant permissions (server still
- * enforces).
+ * Observations list. Filterable by status / category / site / archived.
+ * Cursor pagination via `nextCursor`. Hides "Report observation" +
+ * "Manage categories" buttons for users without the relevant permissions
+ * (server still enforces). The backend tRPC namespace is still
+ * `trpc.issues.*` — the rename is UI-only.
  */
-export default function IssuesListPage() {
+export default function ObservationsListPage() {
   const t = useTranslations('issues.list');
   const tStatus = useTranslations('issues.status');
   const tCommon = useTranslations('common');
@@ -68,12 +69,14 @@ export default function IssuesListPage() {
         <div className="flex items-center gap-2">
           {canManageSettings ? (
             <Button asChild variant="outline">
-              <Link href={`/${locale}/issues/categories`}>{t('manageCategoriesButton')}</Link>
+              <Link href={`/${locale}/observations/categories`}>
+                {t('manageCategoriesButton')}
+              </Link>
             </Button>
           ) : null}
           {canReport ? (
             <Button asChild>
-              <Link href={`/${locale}/issues/new`}>{t('newButton')}</Link>
+              <Link href={`/${locale}/observations/new`}>{t('newButton')}</Link>
             </Button>
           ) : null}
         </div>
@@ -182,7 +185,7 @@ export default function IssuesListPage() {
                     <div>{t('empty')}</div>
                     {canReport ? (
                       <Link
-                        href={`/${locale}/issues/new`}
+                        href={`/${locale}/observations/new`}
                         className="mt-2 inline-block text-primary hover:underline"
                       >
                         {t('emptyCta')}
@@ -198,7 +201,7 @@ export default function IssuesListPage() {
                     </td>
                     <td className="px-3 py-2">
                       <Link
-                        href={`/${locale}/issues/${row.id}`}
+                        href={`/${locale}/observations/${row.id}`}
                         className="font-medium hover:underline"
                       >
                         {row.title}
@@ -213,7 +216,7 @@ export default function IssuesListPage() {
                         : '—'}
                     </td>
                     <td className="px-3 py-2">
-                      <IssueStatusBadge status={row.status} />
+                      <ObservationStatusBadge status={row.status} />
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {formatRelative(row.createdAt)}
@@ -265,7 +268,7 @@ function LoadMoreButton({
   );
 }
 
-function IssueStatusBadge({ status }: { status: string }) {
+function ObservationStatusBadge({ status }: { status: string }) {
   const t = useTranslations('issues.status');
   const normalised: IssueStatusValue =
     status === 'open' || status === 'investigation' || status === 'closed'

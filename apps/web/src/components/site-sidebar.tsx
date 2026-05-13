@@ -50,7 +50,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
     { key: 'inspections', href: `/${locale}/inspections`, icon: ClipboardCheck },
     { key: 'approvals', href: `/${locale}/approvals`, icon: CheckSquare },
     { key: 'schedules', href: `/${locale}/schedules`, icon: Calendar },
-    { key: 'issues', href: `/${locale}/issues`, icon: AlertTriangle },
+    { key: 'issues', href: `/${locale}/observations`, icon: AlertTriangle },
   ];
 
   const settingsItem: NavItem = {

@@ -30,17 +30,19 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 /**
- * Issue detail view. Two-column on desktop: details + comments on the
- * left, action sidebar on the right. Mutations are gated by
+ * Observation detail view. Two-column on desktop: details + comments on
+ * the left, action sidebar on the right. Mutations are gated by
  * `issues.manage`; the UI hides them when the viewer doesn't have it
- * (the server is the source of truth).
+ * (the server is the source of truth). The route segment is
+ * `[observationId]` but the tRPC layer still uses the `issueId` argument
+ * name — backend rename is intentionally deferred.
  */
-export default function IssueDetailPage() {
+export default function ObservationDetailPage() {
   const t = useTranslations('issues.detail');
   const tCommon = useTranslations('common');
-  const params = useParams<{ locale: string; issueId: string }>();
+  const params = useParams<{ locale: string; observationId: string }>();
   const locale = params.locale ?? 'en';
-  const issueId = params.issueId ?? '';
+  const issueId = params.observationId ?? '';
   const router = useRouter();
   const utils = trpc.useUtils();
 
@@ -70,7 +72,7 @@ export default function IssueDetailPage() {
   const archive = trpc.issues.issues.archive.useMutation({
     onSuccess: () => {
       toast.success(t('archiveToast'));
-      router.push(`/${locale}/issues`);
+      router.push(`/${locale}/observations`);
     },
     onError: () => toast.error(tCommon('error')),
   });
@@ -89,7 +91,7 @@ export default function IssueDetailPage() {
     return (
       <div className="space-y-4">
         <Link
-          href={`/${locale}/issues`}
+          href={`/${locale}/observations`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -108,7 +110,7 @@ export default function IssueDetailPage() {
     <div className="space-y-6">
       <div>
         <Link
-          href={`/${locale}/issues`}
+          href={`/${locale}/observations`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -116,7 +118,7 @@ export default function IssueDetailPage() {
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">{issue.title}</h1>
-          <IssueStatusBadge status={issue.status} />
+          <ObservationStatusBadge status={issue.status} />
           <span className="font-mono text-xs text-muted-foreground">{issue.referenceNumber}</span>
         </div>
       </div>
@@ -249,7 +251,7 @@ export default function IssueDetailPage() {
       </div>
 
       {editOpen ? (
-        <EditIssueDialog
+        <EditObservationDialog
           open={editOpen}
           onOpenChange={setEditOpen}
           issueId={issueId}
@@ -262,7 +264,7 @@ export default function IssueDetailPage() {
       ) : null}
 
       {closeOpen ? (
-        <CloseIssueDialog
+        <CloseObservationDialog
           open={closeOpen}
           onOpenChange={setCloseOpen}
           issueId={issueId}
@@ -283,7 +285,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function IssueStatusBadge({ status }: { status: string }) {
+function ObservationStatusBadge({ status }: { status: string }) {
   const t = useTranslations('issues.status');
   type Status = 'open' | 'investigation' | 'closed';
   const normalised: Status =
@@ -449,7 +451,7 @@ function CommentsSection({
   );
 }
 
-function EditIssueDialog({
+function EditObservationDialog({
   open,
   onOpenChange,
   issueId,
@@ -585,7 +587,7 @@ function EditIssueDialog({
   );
 }
 
-function CloseIssueDialog({
+function CloseObservationDialog({
   open,
   onOpenChange,
   issueId,
