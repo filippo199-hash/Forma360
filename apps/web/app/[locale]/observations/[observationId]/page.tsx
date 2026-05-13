@@ -562,6 +562,7 @@ export default function ObservationDetailPage() {
           issueId={issueId}
           canManage={canManage}
           onOpenAdd={() => setAddActionOpen(true)}
+          locale={locale}
         />
       ) : null}
 
@@ -1414,14 +1415,17 @@ function LinkedActionsCard({
   issueId,
   canManage,
   onOpenAdd,
+  locale,
 }: {
   issueId: string;
   canManage: boolean;
   onOpenAdd: () => void;
+  locale: string;
 }) {
   const t = useTranslations('issues.detail');
   const tPriority = useTranslations('issues.priority');
   const tCols = useTranslations('issues.detail.linkedActions');
+  const tActionStatus = useTranslations('actions.status');
   const { data, isLoading } = trpc.actions.list.useQuery({
     sourceType: 'issue',
     sourceId: issueId,
@@ -1445,21 +1449,48 @@ function LinkedActionsCard({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b last:border-0">
-                  <td className="px-3 py-2 font-medium">{row.title}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{row.status}</td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {row.priority === 'low' || row.priority === 'medium' ||
-                    row.priority === 'high' || row.priority === 'critical'
-                      ? tPriority(row.priority)
-                      : tCols('noDue')}
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {row.dueAt !== null ? new Date(row.dueAt).toLocaleString() : tCols('noDue')}
-                  </td>
-                </tr>
-              ))}
+              {rows.map((row) => {
+                // Localize the raw status text and surface the row as a
+                // link to the action detail. Reads `actions.status.*`
+                // from i18n, so "open" → "Open" etc. Falls back to the
+                // raw string if it isn't one of the known values.
+                const statusLabel =
+                  row.status === 'open' ||
+                  row.status === 'in_progress' ||
+                  row.status === 'completed' ||
+                  row.status === 'cancelled'
+                    ? tActionStatus(row.status)
+                    : row.status;
+                return (
+                  <tr
+                    key={row.id}
+                    className="border-b last:border-0 hover:bg-muted/30"
+                  >
+                    <td className="px-3 py-2 font-medium">
+                      <Link
+                        href={`/${locale}/actions/${row.id}`}
+                        className="hover:underline"
+                      >
+                        {row.title}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{statusLabel}</td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {row.priority === 'low' ||
+                      row.priority === 'medium' ||
+                      row.priority === 'high' ||
+                      row.priority === 'critical'
+                        ? tPriority(row.priority)
+                        : tCols('noDue')}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {row.dueAt !== null
+                        ? new Date(row.dueAt).toLocaleString()
+                        : tCols('noDue')}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

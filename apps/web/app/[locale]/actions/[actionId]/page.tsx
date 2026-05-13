@@ -61,10 +61,13 @@ export default function ActionDetailPage() {
   const [tab, setTab] = useState<Tab>('overview');
   const [editingDescription, setEditingDescription] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState('');
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
 
   const { data, isLoading } = trpc.actions.get.useQuery({ actionId });
   const action = data?.action;
   const assignee = data?.assignee ?? null;
+  const source = data?.source ?? null;
   const { data: sites } = trpc.sites.list.useQuery();
 
   const update = trpc.actions.update.useMutation({
@@ -113,6 +116,18 @@ export default function ActionDetailPage() {
     action.status !== 'cancelled' &&
     new Date(action.dueAt).getTime() < Date.now();
 
+  // Archived actions are read-only by default — manager can restore
+  // first if they want to edit. This mirrors how the observations
+  // detail handles archived rows. `canEdit` is the flag every inline
+  // editor on this page should gate on.
+  const isArchived = action.archivedAt !== null;
+  const canEdit = canManage && !isArchived;
+  // Consistent reference fallback: use referenceNumber when present,
+  // else the last 6 chars of the internal id (uppercased ULID tail).
+  // The header pill, Details card, and observation Actions table all
+  // call this so they never disagree.
+  const refLabel = action.referenceNumber ?? action.id.slice(-6);
+
   return (
     <div className="space-y-6">
       <div>
@@ -128,14 +143,67 @@ export default function ActionDetailPage() {
       <header className="space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs">
-              {action.referenceNumber ?? action.id.slice(-6)}
-            </span>
-            <h1 className="text-2xl font-semibold tracking-tight">{action.title}</h1>
+            <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs">{refLabel}</span>
+            {editingTitle ? (
+              <form
+                className="flex items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const next = titleDraft.trim();
+                  if (next.length === 0 || next === action.title) {
+                    setEditingTitle(false);
+                    return;
+                  }
+                  update.mutate({ actionId, title: next });
+                  setEditingTitle(false);
+                }}
+              >
+                <Input
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  maxLength={500}
+                  autoFocus
+                  className="text-2xl font-semibold"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setEditingTitle(false);
+                  }}
+                />
+                <Button type="submit" size="sm" disabled={update.isPending}>
+                  {t('actions.saveTitle')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditingTitle(false)}
+                >
+                  {t('actions.cancelTitle')}
+                </Button>
+              </form>
+            ) : (
+              <h1
+                className={cn(
+                  'text-2xl font-semibold tracking-tight',
+                  canEdit ? 'cursor-text hover:underline' : '',
+                )}
+                onClick={() => {
+                  if (!canEdit) return;
+                  setTitleDraft(action.title);
+                  setEditingTitle(true);
+                }}
+                title={canEdit ? t('actions.editTitleHint') : ''}
+              >
+                {action.title}
+              </h1>
+            )}
             {canManage ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" className="inline-flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={isArchived}
+                  >
                     <span
                       className={cn(
                         'rounded-md px-2 py-0.5 text-xs font-medium',
@@ -167,7 +235,7 @@ export default function ActionDetailPage() {
                 {tStatus(action.status as Status)}
               </span>
             )}
-            {action.archivedAt !== null ? (
+            {isArchived ? (
               <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                 {t('archivedBadge')}
               </span>
@@ -231,7 +299,7 @@ export default function ActionDetailPage() {
               <CardContent className="space-y-3 p-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-base font-semibold">{t('descriptionTitle')}</h2>
-                  {canManage ? (
+                  {canEdit ? (
                     editingDescription ? null : (
                       <Button
                         type="button"
@@ -293,21 +361,17 @@ export default function ActionDetailPage() {
               </CardContent>
             </Card>
 
-            <SourceCard
-              sourceType={action.sourceType}
-              sourceId={action.sourceId}
-              locale={locale}
-            />
+            <SourceCard source={source} sourceId={action.sourceId} locale={locale} />
           </div>
 
           <Card>
             <CardContent className="space-y-3 p-6 text-sm">
               <h2 className="text-base font-semibold">{t('detailsTitle')}</h2>
               <DetailRow label={tFields('reference')}>
-                <span className="font-mono text-xs">{action.referenceNumber ?? '—'}</span>
+                <span className="font-mono text-xs">{refLabel}</span>
               </DetailRow>
               <DetailRow label={tFields('priority')}>
-                {canManage ? (
+                {canEdit ? (
                   <select
                     value={action.priority ?? ''}
                     onChange={(e) =>
@@ -342,13 +406,13 @@ export default function ActionDetailPage() {
                 <AssigneePicker
                   currentId={action.assigneeUserId}
                   currentName={assignee?.name ?? null}
-                  canManage={canManage}
+                  canManage={canEdit}
                   onChange={(next) => update.mutate({ actionId, assigneeUserId: next })}
                   tFields={tFields}
                 />
               </DetailRow>
               <DetailRow label={tFields('dueDate')}>
-                {canManage ? (
+                {canEdit ? (
                   <Input
                     type="datetime-local"
                     value={toLocalDatetime(action.dueAt)}
@@ -370,7 +434,7 @@ export default function ActionDetailPage() {
                 )}
               </DetailRow>
               <DetailRow label={tFields('site')}>
-                {canManage ? (
+                {canEdit ? (
                   <select
                     value={action.siteId ?? ''}
                     onChange={(e) =>
@@ -395,7 +459,7 @@ export default function ActionDetailPage() {
                 )}
               </DetailRow>
               <DetailRow label={tFields('label')}>
-                {canManage ? (
+                {canEdit ? (
                   <LabelInput
                     initial={action.label ?? ''}
                     onCommit={(next) =>
@@ -416,9 +480,17 @@ export default function ActionDetailPage() {
         </div>
       ) : null}
 
-      {tab === 'activity' ? <ActivityTimeline actionId={actionId} /> : null}
+      {tab === 'activity' ? (
+        <ActivityTimeline
+          actionId={actionId}
+          createdAt={action.createdAt}
+          createdByName={data?.creatorName ?? null}
+        />
+      ) : null}
 
-      {tab === 'comments' ? <CommentsThread actionId={actionId} /> : null}
+      {tab === 'comments' ? (
+        <CommentsThread actionId={actionId} readOnly={isArchived} />
+      ) : null}
     </div>
   );
 }
@@ -527,16 +599,20 @@ function AssigneePicker({
 }
 
 function SourceCard({
-  sourceType,
+  source,
   sourceId,
   locale,
 }: {
-  sourceType: string;
+  source: {
+    type: 'issue' | 'inspection' | 'standalone';
+    referenceNumber: string | null;
+    title: string | null;
+  } | null;
   sourceId: string | null;
   locale: string;
 }) {
   const t = useTranslations('actions.detail');
-  if (sourceType === 'standalone' || sourceId === null) {
+  if (source === null || source.type === 'standalone' || sourceId === null) {
     return (
       <Card>
         <CardContent className="p-6 text-sm text-muted-foreground">
@@ -546,41 +622,74 @@ function SourceCard({
     );
   }
   const href =
-    sourceType === 'issue'
+    source.type === 'issue'
       ? `/${locale}/observations/${sourceId}`
-      : sourceType === 'inspection'
-      ? `/${locale}/inspections/${sourceId}`
-      : '';
+      : `/${locale}/inspections/${sourceId}`;
+  // Prefer the real reference (ISS-000002 / INS-...). Fall back to the
+  // last 6 chars of the internal id only when the source has been deleted
+  // or no reference was ever assigned. The title (when present) goes on
+  // a second line so the row is scannable without sacrificing detail.
+  const reference = source.referenceNumber ?? sourceId.slice(-6);
   return (
     <Card>
-      <CardContent className="flex items-center justify-between p-6 text-sm">
-        <p>
-          {sourceType === 'issue'
-            ? t('sourceLinkIssue', { referenceNumber: sourceId.slice(-6) })
-            : t('sourceLinkInspection', { referenceNumber: sourceId.slice(-6) })}
-        </p>
-        {href !== '' ? (
-          <Button asChild type="button" variant="outline" size="sm">
-            <Link href={href}>{t('sourceLinkOpen')}</Link>
-          </Button>
-        ) : null}
+      <CardContent className="flex items-start justify-between gap-2 p-6 text-sm">
+        <div className="space-y-0.5">
+          <p>
+            {source.type === 'issue'
+              ? t('sourceLinkIssue', { referenceNumber: reference })
+              : t('sourceLinkInspection', { referenceNumber: reference })}
+          </p>
+          {source.title !== null && source.title.length > 0 ? (
+            <p className="text-muted-foreground">{source.title}</p>
+          ) : null}
+        </div>
+        <Button asChild type="button" variant="outline" size="sm">
+          <Link href={href}>{t('sourceLinkOpen')}</Link>
+        </Button>
       </CardContent>
     </Card>
   );
 }
 
-function ActivityTimeline({ actionId }: { actionId: string }) {
-  const t = useTranslations('actions.detail.activity');
+function ActivityTimeline({
+  actionId,
+  createdAt,
+  createdByName,
+}: {
+  actionId: string;
+  createdAt: Date | string;
+  createdByName: string | null;
+}) {
   const tEvents = useTranslations('actions.detail.activity.events');
   const tStatus = useTranslations('actions.status');
   const tPriority = useTranslations('actions.priority');
   const { data, isLoading } = trpc.actions.activity.list.useQuery({ actionId });
   if (isLoading) return <Skeleton className="h-32 w-full" />;
   const rows = data ?? [];
+  // Pre-migration actions (created before action_activity existed)
+  // don't have a `created` row in the log. Synthesise one from
+  // `action.createdAt` + `action.createdBy` so the timeline always
+  // has at least one entry. The synthetic row uses `'created-synth'`
+  // as its id to avoid colliding with real activity ids.
   if (rows.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6 text-sm text-muted-foreground">{t('empty')}</CardContent>
+        <CardContent className="space-y-3 p-6 text-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
+              {(createdByName ?? '?').slice(0, 1).toUpperCase()}
+            </div>
+            <div>
+              <p>
+                <span className="font-medium">{createdByName ?? '—'}</span>{' '}
+                <span className="text-muted-foreground">{tEvents('created')}</span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(createdAt).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </CardContent>
       </Card>
     );
   }
@@ -654,7 +763,13 @@ function ActivityTimeline({ actionId }: { actionId: string }) {
   );
 }
 
-function CommentsThread({ actionId }: { actionId: string }) {
+function CommentsThread({
+  actionId,
+  readOnly,
+}: {
+  actionId: string;
+  readOnly: boolean;
+}) {
   const t = useTranslations('actions.detail.comments');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
@@ -679,26 +794,34 @@ function CommentsThread({ actionId }: { actionId: string }) {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardContent className="space-y-3 p-6">
-          <Textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder={t('placeholder')}
-            rows={3}
-            maxLength={20_000}
-          />
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              disabled={body.trim().length === 0 || create.isPending}
-              onClick={() => create.mutate({ actionId, body: body.trim() })}
-            >
-              {t('submit')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {readOnly ? (
+        <Card>
+          <CardContent className="p-4 text-sm text-muted-foreground">
+            {t('archivedNotice')}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="space-y-3 p-6">
+            <Textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder={t('placeholder')}
+              rows={3}
+              maxLength={20_000}
+            />
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                disabled={body.trim().length === 0 || create.isPending}
+                onClick={() => create.mutate({ actionId, body: body.trim() })}
+              >
+                {t('submit')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {isLoading ? (
         <Skeleton className="h-24 w-full" />

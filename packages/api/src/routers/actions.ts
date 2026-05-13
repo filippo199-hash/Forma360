@@ -12,7 +12,7 @@
  * action-type → template linking are explicitly out of scope here —
  * they'll land in a Phase 4 follow-on once the MVP is on prod.
  */
-import { user } from '@forma360/db/schema';
+import { inspections, issues, user } from '@forma360/db/schema';
 import {
   actionActivity,
   actionComments,
@@ -319,9 +319,56 @@ export const actionsRouter = router({
               .where(eq(user.id, action.assigneeUserId))
               .limit(1)
           : [];
+      // Resolve the creator's display name so the detail page (notably
+      // the synthetic-created-event fallback in the Activity timeline)
+      // doesn't have to show the raw user id.
+      const creatorRows = await ctx.db
+        .select({ name: user.name })
+        .from(user)
+        .where(eq(user.id, action.createdBy))
+        .limit(1);
+      // Resolve the linked source entity's display reference + title so
+      // the source-link card on the detail page can render "Linked to
+      // observation ISS-000002 — Wet floor near loading dock" instead
+      // of the previous "Linked to observation 76X52B" (raw slice of the
+      // internal id). Lazy: only fires when sourceId is set.
+      let source: {
+        type: 'issue' | 'inspection' | 'standalone';
+        referenceNumber: string | null;
+        title: string | null;
+      } | null = null;
+      if (action.sourceType === 'standalone' || action.sourceId === null) {
+        source = { type: 'standalone', referenceNumber: null, title: null };
+      } else if (action.sourceType === 'issue') {
+        const rows = await ctx.db
+          .select({ referenceNumber: issues.referenceNumber, title: issues.title })
+          .from(issues)
+          .where(and(eq(issues.tenantId, ctx.tenantId), eq(issues.id, action.sourceId)))
+          .limit(1);
+        const row = rows[0];
+        source = {
+          type: 'issue',
+          referenceNumber: row?.referenceNumber ?? null,
+          title: row?.title ?? null,
+        };
+      } else if (action.sourceType === 'inspection') {
+        const rows = await ctx.db
+          .select({ documentNumber: inspections.documentNumber, title: inspections.title })
+          .from(inspections)
+          .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, action.sourceId)))
+          .limit(1);
+        const row = rows[0];
+        source = {
+          type: 'inspection',
+          referenceNumber: row?.documentNumber ?? null,
+          title: row?.title ?? null,
+        };
+      }
       return {
         action,
         assignee: assigneeRows[0] ?? null,
+        source,
+        creatorName: creatorRows[0]?.name ?? null,
       };
     }),
 

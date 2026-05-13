@@ -1439,7 +1439,10 @@
         "more": "More",
         "saveDescription": "Save",
         "cancelDescription": "Cancel",
-        "editDescription": "Edit"
+        "editDescription": "Edit",
+        "saveTitle": "Save",
+        "cancelTitle": "Cancel",
+        "editTitleHint": "Click to rename"
       },
       "shareToast": "Link copied to clipboard.",
       "updateToast": "Action updated.",
@@ -1480,7 +1483,8 @@
         "save": "Save",
         "cancel": "Cancel",
         "createdToast": "Comment posted.",
-        "deletedToast": "Comment deleted."
+        "deletedToast": "Comment deleted.",
+        "archivedNotice": "This action is archived. Restore it to post new comments."
       },
       "archivedBadge": "Archived"
     },
