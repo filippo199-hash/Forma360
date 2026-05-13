@@ -1188,9 +1188,60 @@
     },
     "qrCodes": {
       "title": "QR codes",
-      "subtitle": "Coming soon.",
-      "emptyTitle": "QR codes for observations",
-      "emptyBody": "Soon, you'll be able to generate QR codes that let people report observations without signing in."
+      "subtitle": "Generate QR codes so anyone can report observations by scanning.",
+      "createButton": "Create QR code",
+      "columns": {
+        "name": "Name",
+        "created": "Created",
+        "site": "Site",
+        "category": "Category"
+      },
+      "actions": {
+        "show": "Show QR code",
+        "rotate": "Rotate token",
+        "revoke": "Revoke",
+        "menuLabel": "QR code actions"
+      },
+      "rotateConfirm": {
+        "title": "Rotate this QR code?",
+        "body": "Anyone using the old QR code will no longer be able to report. Continue?",
+        "cancel": "Cancel",
+        "confirm": "Rotate"
+      },
+      "revokeConfirm": {
+        "title": "Revoke this QR code?",
+        "body": "This will permanently revoke the QR code.",
+        "cancel": "Cancel",
+        "confirm": "Revoke"
+      },
+      "empty": {
+        "title": "No QR codes yet",
+        "body": "Create one to let people report observations without signing in."
+      },
+      "showDialog": {
+        "title": "QR code for {name}",
+        "description": "Scan this QR code or share the link to report an observation in this category.",
+        "copyButton": "Copy link",
+        "downloadButton": "Download PNG",
+        "copySuccess": "Link copied to clipboard.",
+        "urlLabel": "Public URL"
+      },
+      "createSheet": {
+        "title": "Create observation QR code",
+        "categoryLabel": "Category",
+        "categoryPlaceholder": "Select a category",
+        "categoryHelp": "Each category can have one QR code at a time.",
+        "about": "When someone scans this QR code, they'll be taken to a public form to report an observation in this category. They don't need to sign in.",
+        "cancel": "Cancel",
+        "create": "Create",
+        "noAvailable": "Every category already has a QR code. Revoke an existing QR code or create a new category first."
+      },
+      "toast": {
+        "created": "QR code created.",
+        "rotated": "QR code rotated.",
+        "revoked": "QR code revoked.",
+        "error": "Could not update the QR code. Please try again."
+      }
     }
   }
 }

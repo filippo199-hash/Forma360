@@ -207,6 +207,52 @@ describe('issues router (Phase 3 PR 1)', () => {
       const fresh = await caller.issues.categories.generateShareToken({ categoryId });
       expect(fresh.token).not.toBe(first.token);
     });
+
+    describe('publicGetByShareToken', () => {
+      it('returns category info for a valid token', async () => {
+        const adminCaller = createCaller(ctxFor(adminUserId));
+        const { categoryId } = await adminCaller.issues.categories.create({
+          name: 'QRPub',
+        });
+        const { token } = await adminCaller.issues.categories.generateShareToken({
+          categoryId,
+        });
+        const publicCaller = createCaller(publicCtx());
+        const result = await publicCaller.issues.categories.publicGetByShareToken({
+          token,
+        });
+        expect(result).not.toBeNull();
+        expect(result?.categoryId).toBe(categoryId);
+        expect(result?.tenantId).toBe(tenantId);
+        expect(result?.tenantName).toBe('Acme');
+        expect(result?.categoryName).toBe('QRPub');
+        expect(Array.isArray(result?.customQuestions)).toBe(true);
+      });
+
+      it('returns null for an unknown token', async () => {
+        const publicCaller = createCaller(publicCtx());
+        const result = await publicCaller.issues.categories.publicGetByShareToken({
+          token: 'does-not-exist-xyz',
+        });
+        expect(result).toBeNull();
+      });
+
+      it('returns null when the category is archived', async () => {
+        const adminCaller = createCaller(ctxFor(adminUserId));
+        const { categoryId } = await adminCaller.issues.categories.create({
+          name: 'QRArchPub',
+        });
+        const { token } = await adminCaller.issues.categories.generateShareToken({
+          categoryId,
+        });
+        await adminCaller.issues.categories.archive({ categoryId });
+        const publicCaller = createCaller(publicCtx());
+        const result = await publicCaller.issues.categories.publicGetByShareToken({
+          token,
+        });
+        expect(result).toBeNull();
+      });
+    });
   });
 
   // ─── Issues ──────────────────────────────────────────────────────────────

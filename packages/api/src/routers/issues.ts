@@ -191,6 +191,10 @@ const createFromShareTokenInput = z.object({
   customQuestionResponses: z.record(z.unknown()).optional(),
 });
 
+const publicGetByShareTokenInput = z.object({
+  token: z.string().min(1).max(64),
+});
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 type Db = DependentResolverDeps['db'];
@@ -557,6 +561,45 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           .set({ publicShareToken: null, updatedAt: new Date() })
           .where(eq(issueCategories.id, cat.id));
         return { ok: true as const };
+      }),
+
+    /**
+     * Resolve a public share token to the minimal category info the
+     * unauthenticated scan landing page needs to render its form. Returns
+     * `null` for unknown / archived categories — the page renders an
+     * "invalid QR" state. Does not leak the access rule, notification
+     * settings, or custom fields beyond what the reporter form needs.
+     */
+    publicGetByShareToken: publicProcedure
+      .input(publicGetByShareTokenInput)
+      .query(async ({ ctx, input }) => {
+        const catRows = await ctx.db
+          .select({
+            categoryId: issueCategories.id,
+            tenantId: issueCategories.tenantId,
+            name: issueCategories.name,
+            customQuestions: issueCategories.customQuestions,
+            archivedAt: issueCategories.archivedAt,
+          })
+          .from(issueCategories)
+          .where(eq(issueCategories.publicShareToken, input.token))
+          .limit(1);
+        const cat = catRows[0];
+        if (cat === undefined) return null;
+        if (cat.archivedAt !== null) return null;
+        const tenantRows = await ctx.db
+          .select({ name: tenants.name })
+          .from(tenants)
+          .where(eq(tenants.id, cat.tenantId))
+          .limit(1);
+        const tenantName = tenantRows[0]?.name ?? '';
+        return {
+          categoryId: cat.categoryId,
+          tenantId: cat.tenantId,
+          tenantName,
+          categoryName: cat.name,
+          customQuestions: cat.customQuestions,
+        };
       }),
   });
 
