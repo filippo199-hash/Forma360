@@ -1450,9 +1450,8 @@ function LinkedActionsCard({
                   <td className="px-3 py-2 font-medium">{row.title}</td>
                   <td className="px-3 py-2 text-muted-foreground">{row.status}</td>
                   <td className="px-3 py-2 text-muted-foreground">
-                    {row.priority !== null && row.priority !== '' &&
-                    (row.priority === 'low' || row.priority === 'medium' ||
-                      row.priority === 'high' || row.priority === 'critical')
+                    {row.priority === 'low' || row.priority === 'medium' ||
+                    row.priority === 'high' || row.priority === 'critical'
                       ? tPriority(row.priority)
                       : tCols('noDue')}
                   </td>

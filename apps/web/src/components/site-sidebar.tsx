@@ -6,6 +6,7 @@ import {
   CheckSquare,
   ClipboardCheck,
   FileText,
+  ListChecks,
   Settings,
   type LucideIcon,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ interface NavItem {
     | 'approvals'
     | 'schedules'
     | 'issues'
+    | 'actions'
     | 'settings';
   href: string;
   icon: LucideIcon;
@@ -51,6 +53,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
     { key: 'approvals', href: `/${locale}/approvals`, icon: CheckSquare },
     { key: 'schedules', href: `/${locale}/schedules`, icon: Calendar },
     { key: 'issues', href: `/${locale}/observations`, icon: AlertTriangle },
+    { key: 'actions', href: `/${locale}/actions`, icon: ListChecks },
   ];
 
   const settingsItem: NavItem = {

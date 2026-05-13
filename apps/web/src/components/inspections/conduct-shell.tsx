@@ -398,12 +398,21 @@ function ItemRow({
   const required = 'required' in item && item.required === true;
   return (
     <li className="space-y-2">
-      {prompt !== null ? (
-        <label className="text-sm font-medium" htmlFor={`item-${item.id}`}>
-          {prompt}
-          {required ? <span className="ml-1 text-destructive">*</span> : null}
-        </label>
-      ) : null}
+      <div className="flex items-start justify-between gap-2">
+        {prompt !== null ? (
+          <label className="text-sm font-medium" htmlFor={`item-${item.id}`}>
+            {prompt}
+            {required ? <span className="ml-1 text-destructive">*</span> : null}
+          </label>
+        ) : (
+          <span />
+        )}
+        <RaiseActionTrigger
+          inspectionId={state.inspectionId}
+          questionId={item.id}
+          questionPrompt={prompt}
+        />
+      </div>
       <div id={`item-${item.id}`}>
         <ResponseInput item={item} readonly={readonly} responseSets={customResponseSets} />
       </div>
@@ -442,4 +451,185 @@ function clearPending(inspectionId: string) {
   } catch {
     // ignore
   }
+}
+
+/**
+ * Per-question "Raise action" affordance. Opens a small inline dialog;
+ * on submit fires `actions.createFromInspectionQuestion` (idempotent on
+ * the {inspectionId, questionId} pair — re-raising surfaces the existing
+ * action). The hook lives inline rather than as its own file so we don't
+ * fan out a tiny component across the codebase; if it grows past a few
+ * hundred lines, lift it out.
+ */
+function RaiseActionTrigger({
+  inspectionId,
+  questionId,
+  questionPrompt,
+}: {
+  inspectionId: string;
+  questionId: string;
+  questionPrompt: string | null;
+}) {
+  const t = useTranslations('actions.raiseFromInspection');
+  const tPriority = useTranslations('actions.priority');
+  const tCommon = useTranslations('common');
+  const utils = trpc.useUtils();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<'' | 'low' | 'medium' | 'high' | 'critical'>('');
+  const [dueAt, setDueAt] = useState('');
+
+  // Pre-seed the title with the question prompt so the assignee has
+  // context without the reporter having to retype it.
+  useEffect(() => {
+    if (open && title === '' && questionPrompt !== null) {
+      setTitle(questionPrompt);
+    }
+  }, [open, title, questionPrompt]);
+
+  const create = trpc.actions.createFromInspectionQuestion.useMutation({
+    onSuccess: () => {
+      toast.success(t('createdToast'));
+      setOpen(false);
+      setTitle('');
+      setDescription('');
+      setPriority('');
+      setDueAt('');
+      void utils.actions.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+      >
+        {t('triggerLabel')}
+      </button>
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg space-y-4 rounded-md bg-background p-6 shadow-lg">
+            <div>
+              <h3 className="text-base font-semibold">{t('dialogTitle')}</h3>
+              <p className="text-sm text-muted-foreground">{t('dialogSubtitle')}</p>
+            </div>
+            {questionPrompt !== null ? (
+              <p className="rounded-md bg-muted px-3 py-2 text-xs">
+                <span className="font-medium">{t('questionLabel')}: </span>
+                {questionPrompt}
+              </p>
+            ) : null}
+            <form
+              className="space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (title.trim().length === 0) return;
+                const payload: {
+                  inspectionId: string;
+                  sourceItemId: string;
+                  title: string;
+                  description?: string;
+                  priority?: 'low' | 'medium' | 'high' | 'critical';
+                  dueAt?: string;
+                } = {
+                  inspectionId,
+                  sourceItemId: questionId,
+                  title: title.trim(),
+                };
+                if (description.trim().length > 0) payload.description = description.trim();
+                if (priority !== '') payload.priority = priority;
+                if (dueAt !== '') payload.dueAt = new Date(dueAt).toISOString();
+                create.mutate(payload);
+              }}
+            >
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground" htmlFor="ra-title">
+                  {t('titleLabel')}
+                </label>
+                <input
+                  id="ra-title"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={t('titlePlaceholder')}
+                  maxLength={500}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <label
+                  className="text-xs font-medium text-muted-foreground"
+                  htmlFor="ra-description"
+                >
+                  {t('descriptionLabel')}
+                </label>
+                <textarea
+                  id="ra-description"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={t('descriptionPlaceholder')}
+                  rows={3}
+                  maxLength={20_000}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label
+                    className="text-xs font-medium text-muted-foreground"
+                    htmlFor="ra-priority"
+                  >
+                    {t('priorityLabel')}
+                  </label>
+                  <select
+                    id="ra-priority"
+                    value={priority}
+                    onChange={(e) =>
+                      setPriority(
+                        e.target.value as '' | 'low' | 'medium' | 'high' | 'critical',
+                      )
+                    }
+                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">—</option>
+                    <option value="low">{tPriority('low')}</option>
+                    <option value="medium">{tPriority('medium')}</option>
+                    <option value="high">{tPriority('high')}</option>
+                    <option value="critical">{tPriority('critical')}</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="ra-due">
+                    {t('dueDateLabel')}
+                  </label>
+                  <input
+                    id="ra-due"
+                    type="datetime-local"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={dueAt}
+                    onChange={(e) => setDueAt(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                  {t('cancelButton')}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={title.trim().length === 0 || create.isPending}
+                >
+                  {t('saveButton')}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
 }

@@ -68,6 +68,7 @@
     "approvals": "Approvals",
     "schedules": "Schedules",
     "issues": "Observations",
+    "actions": "Actions",
     "settings": "Settings"
   },
   "approvals": {
@@ -1359,6 +1360,179 @@
         "revoked": "QR code revoked.",
         "error": "Could not update the QR code. Please try again."
       }
+    }
+  },
+  "actions": {
+    "nav": {
+      "label": "Actions"
+    },
+    "list": {
+      "title": "Actions",
+      "subtitle": "Track follow-up work raised from inspections, observations, or as standalone tasks.",
+      "newButton": "Create action",
+      "filterStatus": "Status",
+      "filterStatusAll": "All statuses",
+      "filterAssignee": "Assignee",
+      "filterAssigneeAll": "Anyone",
+      "filterAssigneeMe": "Assigned to me",
+      "filterSite": "Site",
+      "filterSiteAll": "All sites",
+      "filterSource": "Source",
+      "filterSourceAll": "Any source",
+      "filterSourceStandalone": "Standalone",
+      "filterSourceInspection": "From inspection",
+      "filterSourceIssue": "From observation",
+      "hideClosed": "Hide closed",
+      "showArchived": "Show archived",
+      "overdueChip": "Overdue",
+      "columns": {
+        "reference": "Ref",
+        "title": "Title",
+        "status": "Status",
+        "priority": "Priority",
+        "assignee": "Assignee",
+        "due": "Due",
+        "source": "Source",
+        "created": "Created"
+      },
+      "empty": "No actions yet",
+      "emptyCta": "Create your first action",
+      "sourceStandalone": "Standalone",
+      "sourceInspection": "Inspection",
+      "sourceIssue": "Observation",
+      "overdueLabel": "Overdue",
+      "noAssignee": "Unassigned",
+      "noDueDate": "—",
+      "noPriority": "—",
+      "loadMore": "Load more"
+    },
+    "detail": {
+      "backLink": "Back to actions",
+      "breadcrumb": "Actions",
+      "descriptionTitle": "Description",
+      "descriptionEmpty": "No description.",
+      "detailsTitle": "Details",
+      "fields": {
+        "status": "Status",
+        "priority": "Priority",
+        "assignee": "Assignee",
+        "site": "Site",
+        "label": "Label",
+        "dueDate": "Due date",
+        "reference": "Reference",
+        "source": "Source",
+        "noAssignee": "Unassigned",
+        "noPriority": "No priority",
+        "noDueDate": "No due date",
+        "noSite": "No site",
+        "noLabel": "No label",
+        "pickUser": "Choose user",
+        "clearAssignee": "Clear",
+        "searchUsers": "Search users"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "activity": "Activity",
+        "comments": "Comments"
+      },
+      "actions": {
+        "share": "Share",
+        "archive": "Archive",
+        "restore": "Restore",
+        "more": "More",
+        "saveDescription": "Save",
+        "cancelDescription": "Cancel",
+        "editDescription": "Edit"
+      },
+      "shareToast": "Link copied to clipboard.",
+      "updateToast": "Action updated.",
+      "archiveToast": "Action archived.",
+      "restoreToast": "Action restored.",
+      "statusChangedToast": "Status updated.",
+      "sourceLinkInspection": "Linked to inspection {referenceNumber}",
+      "sourceLinkIssue": "Linked to observation {referenceNumber}",
+      "sourceLinkStandalone": "Standalone action",
+      "sourceLinkOpen": "Open",
+      "activity": {
+        "empty": "No activity yet.",
+        "events": {
+          "created": "created this action",
+          "status_changed": "changed status from {from} to {to}",
+          "priority_changed": "set priority to {to}",
+          "assignee_changed": "set assignee to {to}",
+          "assignee_cleared": "cleared the assignee",
+          "due_date_changed": "set due date to {to}",
+          "due_date_cleared": "cleared the due date",
+          "site_changed": "set site to {to}",
+          "site_cleared": "cleared the site",
+          "label_changed": "set label to {to}",
+          "title_changed": "renamed the action",
+          "description_changed": "updated the description",
+          "commented": "commented",
+          "archived": "archived this action",
+          "restored": "restored this action"
+        }
+      },
+      "comments": {
+        "placeholder": "Write a comment...",
+        "submit": "Post",
+        "empty": "No comments yet.",
+        "delete": "Delete",
+        "deleteConfirm": "Delete this comment?",
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel",
+        "createdToast": "Comment posted.",
+        "deletedToast": "Comment deleted."
+      },
+      "archivedBadge": "Archived"
+    },
+    "create": {
+      "title": "Create action",
+      "subtitle": "Standalone actions live on their own — use “Raise action” on an inspection question or an observation to anchor one there instead.",
+      "titleLabel": "Title",
+      "titlePlaceholder": "What needs to happen?",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Optional details, references, links",
+      "priorityLabel": "Priority",
+      "noPriority": "No priority",
+      "dueDateLabel": "Due date",
+      "siteLabel": "Site",
+      "siteNoneOption": "No site",
+      "labelLabel": "Label",
+      "labelPlaceholder": "e.g. Maintenance, Safety, Corrective",
+      "assigneeLabel": "Assignee",
+      "saveButton": "Create",
+      "cancelButton": "Cancel",
+      "backLink": "Back to actions",
+      "createdToast": "Action created."
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "raiseFromInspection": {
+      "triggerLabel": "Raise action",
+      "dialogTitle": "Raise an action from this question",
+      "dialogSubtitle": "The action will link back to this inspection and question.",
+      "questionLabel": "Question",
+      "titleLabel": "Action title",
+      "titlePlaceholder": "Summarise what needs to happen",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Optional context",
+      "priorityLabel": "Priority",
+      "dueDateLabel": "Due date",
+      "saveButton": "Create action",
+      "cancelButton": "Cancel",
+      "createdToast": "Action raised."
     }
   }
 }

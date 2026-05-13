@@ -1,55 +1,87 @@
 /**
- * Actions router — Phase 2 PR 28 stub.
+ * Actions router — Phase 4 build.
  *
- * The full Actions module (Phase 4) will replace this. Phase 2 PR 28 ships
- * the minimum surface needed for:
+ * Phase 2 PR 28 landed a stub with just `createFromInspectionQuestion`
+ * (idempotent on `sourceItemId`) plus a basic `list`. PR-5 (Observations
+ * polish) added `createFromIssue` for ad-hoc actions raised from an
+ * observation. This file is the full Phase 4 surface: standalone create,
+ * full CRUD on the detail row, status transitions, activity log,
+ * comments, archive / restore, and a filterable list.
  *
- *   - createFromInspectionQuestion — idempotent creation of an Action when
- *     an inspection question fires a trigger. Dedup via the
- *     (sourceType, sourceId, sourceItemId) unique index — a duplicate call
- *     no-ops and returns the existing row's id.
- *   - list — used by the dependents resolver + simple admin listing.
+ * Custom action types, custom statuses, recurring actions, merge, and
+ * action-type → template linking are explicitly out of scope here —
+ * they'll land in a Phase 4 follow-on once the MVP is on prod.
  */
-import { actions } from '@forma360/db/schema';
+import { user } from '@forma360/db/schema';
+import {
+  actionActivity,
+  actionComments,
+  actionPriority,
+  actionStatus,
+  actions,
+  type Action,
+  type ActionActivityKind,
+} from '@forma360/db/schema';
+import { type DependentResolverDeps } from '@forma360/permissions';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, eq } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
-const createInput = z.object({
-  inspectionId: z.string().length(26),
-  sourceItemId: z.string().min(1).max(200),
-  title: z.string().min(1).max(500),
-  description: z.string().max(20_000).optional(),
-  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-  assigneeUserId: z.string().optional(),
-  dueAt: z.string().datetime().optional(),
-});
+type Db = DependentResolverDeps['db'];
+
+const actionIdInput = z.object({ actionId: z.string().length(26) });
+
+const ACTION_LIST_LIMIT = 100;
 
 /**
- * Ad-hoc action raised from an observation. No `sourceItemId` — observations
- * don't have the per-question dedup model that inspections do, so the same
- * observation can spawn N actions and each gets its own row. The actions
- * table's unique index treats NULL `source_item_id` as distinct (Postgres
- * default), so this is safe.
+ * Render an "AC-000042"-style reference number. Counts every action ever
+ * created in the tenant and adds one — same trade-off as issues
+ * (display value, gaps are acceptable).
  */
-const createFromIssueInput = z.object({
-  issueId: z.string().length(26),
-  title: z.string().min(1).max(500),
-  description: z.string().max(20_000).optional(),
-  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-  assigneeUserId: z.string().optional(),
-  dueAt: z.string().datetime().optional(),
-});
+async function nextActionReferenceNumber(db: Db, tenantId: string): Promise<string> {
+  const totalRows = await db
+    .select({ c: count() })
+    .from(actions)
+    .where(eq(actions.tenantId, tenantId));
+  const next = (totalRows[0]?.c ?? 0) + 1;
+  return `AC-${next.toString().padStart(6, '0')}`;
+}
 
-const listInput = z
-  .object({
-    sourceType: z.enum(['inspection', 'issue']).optional(),
-    sourceId: z.string().length(26).optional(),
-  })
-  .default({});
+async function loadActionOrThrow(db: Db, tenantId: string, actionId: string): Promise<Action> {
+  const rows = await db
+    .select()
+    .from(actions)
+    .where(and(eq(actions.tenantId, tenantId), eq(actions.id, actionId)))
+    .limit(1);
+  const row = rows[0];
+  if (row === undefined) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'action-not-found' });
+  }
+  return row;
+}
+
+async function writeActivity(
+  db: Db,
+  args: {
+    tenantId: string;
+    actionId: string;
+    actorUserId: string;
+    kind: ActionActivityKind;
+    payload?: Record<string, unknown>;
+  },
+): Promise<void> {
+  await db.insert(actionActivity).values({
+    id: newId(),
+    tenantId: args.tenantId,
+    actionId: args.actionId,
+    actorUserId: args.actorUserId,
+    kind: args.kind,
+    payload: args.payload ?? {},
+  });
+}
 
 function isUniqueViolation(err: unknown): boolean {
   const visit = (e: unknown): boolean => {
@@ -64,12 +96,211 @@ function isUniqueViolation(err: unknown): boolean {
   return visit(err);
 }
 
+const priorityEnum = z.enum(actionPriority);
+const statusEnum = z.enum(actionStatus);
+
+const listInput = z
+  .object({
+    status: statusEnum.optional(),
+    sourceType: z.enum(['inspection', 'issue', 'standalone']).optional(),
+    sourceId: z.string().length(26).optional(),
+    assigneeUserId: z.string().optional(),
+    siteId: z.string().length(26).optional(),
+    includeArchived: z.boolean().default(false),
+    /**
+     * When true, the list omits `completed` and `cancelled` rows.
+     * Matches SafetyCulture's "Hide closed" toggle.
+     */
+    hideClosed: z.boolean().default(false),
+    /** Caller-bounded; default sorts by createdAt desc. */
+    limit: z.number().int().min(1).max(ACTION_LIST_LIMIT).default(ACTION_LIST_LIMIT),
+  })
+  .default({ includeArchived: false, hideClosed: false, limit: ACTION_LIST_LIMIT });
+
+const createStandaloneInput = z.object({
+  title: z.string().min(1).max(500),
+  description: z.string().max(20_000).optional(),
+  priority: priorityEnum.optional(),
+  assigneeUserId: z.string().optional(),
+  dueAt: z.string().datetime().optional(),
+  siteId: z.string().length(26).optional(),
+  label: z.string().max(80).optional(),
+});
+
+const createFromInspectionQuestionInput = z.object({
+  inspectionId: z.string().length(26),
+  sourceItemId: z.string().min(1).max(200),
+  title: z.string().min(1).max(500),
+  description: z.string().max(20_000).optional(),
+  priority: priorityEnum.optional(),
+  assigneeUserId: z.string().optional(),
+  dueAt: z.string().datetime().optional(),
+  siteId: z.string().length(26).optional(),
+  label: z.string().max(80).optional(),
+});
+
+const createFromIssueInput = z.object({
+  issueId: z.string().length(26),
+  title: z.string().min(1).max(500),
+  description: z.string().max(20_000).optional(),
+  priority: priorityEnum.optional(),
+  assigneeUserId: z.string().optional(),
+  dueAt: z.string().datetime().optional(),
+  siteId: z.string().length(26).optional(),
+  label: z.string().max(80).optional(),
+});
+
+const updateInput = z.object({
+  actionId: z.string().length(26),
+  title: z.string().min(1).max(500).optional(),
+  description: z.string().max(20_000).nullable().optional(),
+  priority: priorityEnum.nullable().optional(),
+  dueAt: z.string().datetime().nullable().optional(),
+  assigneeUserId: z.string().nullable().optional(),
+  siteId: z.string().length(26).nullable().optional(),
+  label: z.string().max(80).nullable().optional(),
+});
+
+const setStatusInput = z.object({
+  actionId: z.string().length(26),
+  status: statusEnum,
+});
+
+const createCommentInput = z.object({
+  actionId: z.string().length(26),
+  body: z.string().min(1).max(20_000),
+});
+
+const updateCommentInput = z.object({
+  commentId: z.string().length(26),
+  body: z.string().min(1).max(20_000),
+});
+
+const deleteCommentInput = z.object({
+  commentId: z.string().length(26),
+});
+
+const listActivityInput = z.object({
+  actionId: z.string().length(26),
+  limit: z.number().int().min(1).max(200).default(100),
+});
+
+const listCommentsInput = z.object({
+  actionId: z.string().length(26),
+});
+
 export const actionsRouter = router({
+  list: tenantProcedure
+    .use(requirePermission('actions.view'))
+    .input(listInput)
+    .query(async ({ ctx, input }) => {
+      const where = [eq(actions.tenantId, ctx.tenantId)];
+      if (input.status !== undefined) where.push(eq(actions.status, input.status));
+      if (input.sourceType !== undefined) where.push(eq(actions.sourceType, input.sourceType));
+      if (input.sourceId !== undefined) where.push(eq(actions.sourceId, input.sourceId));
+      if (input.assigneeUserId !== undefined) {
+        where.push(eq(actions.assigneeUserId, input.assigneeUserId));
+      }
+      if (input.siteId !== undefined) where.push(eq(actions.siteId, input.siteId));
+      if (!input.includeArchived) where.push(isNull(actions.archivedAt));
+      if (input.hideClosed) {
+        where.push(ne(actions.status, 'completed'));
+        where.push(ne(actions.status, 'cancelled'));
+      }
+      const rows = await ctx.db
+        .select({
+          id: actions.id,
+          referenceNumber: actions.referenceNumber,
+          title: actions.title,
+          status: actions.status,
+          priority: actions.priority,
+          label: actions.label,
+          assigneeUserId: actions.assigneeUserId,
+          dueAt: actions.dueAt,
+          siteId: actions.siteId,
+          sourceType: actions.sourceType,
+          sourceId: actions.sourceId,
+          createdAt: actions.createdAt,
+          updatedAt: actions.updatedAt,
+          archivedAt: actions.archivedAt,
+          assigneeName: user.name,
+        })
+        .from(actions)
+        .leftJoin(user, eq(user.id, actions.assigneeUserId))
+        .where(and(...where))
+        .orderBy(desc(actions.createdAt))
+        .limit(input.limit);
+      return rows;
+    }),
+
+  get: tenantProcedure
+    .use(requirePermission('actions.view'))
+    .input(actionIdInput)
+    .query(async ({ ctx, input }) => {
+      const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      const assigneeRows =
+        action.assigneeUserId !== null
+          ? await ctx.db
+              .select({ id: user.id, name: user.name, email: user.email })
+              .from(user)
+              .where(eq(user.id, action.assigneeUserId))
+              .limit(1)
+          : [];
+      return {
+        action,
+        assignee: assigneeRows[0] ?? null,
+      };
+    }),
+
+  /**
+   * Standalone create — no inspection / issue anchor. Picks a fresh
+   * AC-NNNNNN reference number, writes a `created` activity row.
+   */
+  createStandalone: tenantProcedure
+    .use(requirePermission('actions.create'))
+    .input(createStandaloneInput)
+    .mutation(async ({ ctx, input }) => {
+      const id = newId();
+      const referenceNumber = await nextActionReferenceNumber(ctx.db, ctx.tenantId);
+      const now = new Date();
+      await ctx.db.insert(actions).values({
+        id,
+        tenantId: ctx.tenantId,
+        sourceType: 'standalone',
+        sourceId: null,
+        sourceItemId: null,
+        referenceNumber,
+        title: input.title,
+        description: input.description ?? null,
+        status: 'open',
+        priority: input.priority ?? null,
+        label: input.label ?? null,
+        assigneeUserId: input.assigneeUserId ?? null,
+        dueAt: input.dueAt !== undefined ? new Date(input.dueAt) : null,
+        siteId: input.siteId ?? null,
+        createdBy: ctx.auth.userId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await writeActivity(ctx.db, {
+        tenantId: ctx.tenantId,
+        actionId: id,
+        actorUserId: ctx.auth.userId,
+        kind: 'created',
+        payload: { sourceType: 'standalone' },
+      });
+      return { actionId: id, referenceNumber };
+    }),
+
+  /**
+   * Inspection-question raised. Idempotent on
+   * (sourceType=inspection, inspectionId, sourceItemId) — replays return
+   * the existing row.
+   */
   createFromInspectionQuestion: tenantProcedure
     .use(requirePermission('actions.create'))
-    .input(createInput)
+    .input(createFromInspectionQuestionInput)
     .mutation(async ({ ctx, input }) => {
-      // Dedup: look up first, INSERT on miss, catch unique violation race.
       const existing = await ctx.db
         .select({ id: actions.id })
         .from(actions)
@@ -87,6 +318,7 @@ export const actionsRouter = router({
       }
 
       const id = newId();
+      const referenceNumber = await nextActionReferenceNumber(ctx.db, ctx.tenantId);
       const now = new Date();
       try {
         await ctx.db.insert(actions).values({
@@ -95,19 +327,21 @@ export const actionsRouter = router({
           sourceType: 'inspection',
           sourceId: input.inspectionId,
           sourceItemId: input.sourceItemId,
+          referenceNumber,
           title: input.title,
           description: input.description ?? null,
           status: 'open',
           priority: input.priority ?? null,
+          label: input.label ?? null,
           assigneeUserId: input.assigneeUserId ?? null,
           dueAt: input.dueAt !== undefined ? new Date(input.dueAt) : null,
+          siteId: input.siteId ?? null,
           createdBy: ctx.auth.userId,
           createdAt: now,
           updatedAt: now,
         });
       } catch (err) {
         if (!isUniqueViolation(err)) throw err;
-        // Another caller won the race — fetch + return their row.
         const race = await ctx.db
           .select({ id: actions.id })
           .from(actions)
@@ -128,20 +362,25 @@ export const actionsRouter = router({
         }
         return { actionId: race[0].id, created: false as const };
       }
-      return { actionId: id, created: true as const };
+      await writeActivity(ctx.db, {
+        tenantId: ctx.tenantId,
+        actionId: id,
+        actorUserId: ctx.auth.userId,
+        kind: 'created',
+        payload: { sourceType: 'inspection', sourceId: input.inspectionId },
+      });
+      return { actionId: id, referenceNumber, created: true as const };
     }),
 
   /**
-   * Ad-hoc action raised from an observation. Unlike inspection actions
-   * (idempotent per question), each call here creates a new row — see
-   * `createFromIssueInput` for the rationale. The unique index tolerates
-   * NULL `source_item_id` rows so we don't need a dedup query.
+   * Issue / Observation raised. No dedup — each call creates a row.
    */
   createFromIssue: tenantProcedure
     .use(requirePermission('actions.create'))
     .input(createFromIssueInput)
     .mutation(async ({ ctx, input }) => {
       const id = newId();
+      const referenceNumber = await nextActionReferenceNumber(ctx.db, ctx.tenantId);
       const now = new Date();
       await ctx.db.insert(actions).values({
         id,
@@ -149,29 +388,371 @@ export const actionsRouter = router({
         sourceType: 'issue',
         sourceId: input.issueId,
         sourceItemId: null,
+        referenceNumber,
         title: input.title,
         description: input.description ?? null,
         status: 'open',
         priority: input.priority ?? null,
+        label: input.label ?? null,
         assigneeUserId: input.assigneeUserId ?? null,
         dueAt: input.dueAt !== undefined ? new Date(input.dueAt) : null,
+        siteId: input.siteId ?? null,
         createdBy: ctx.auth.userId,
         createdAt: now,
         updatedAt: now,
       });
-      return { actionId: id };
+      await writeActivity(ctx.db, {
+        tenantId: ctx.tenantId,
+        actionId: id,
+        actorUserId: ctx.auth.userId,
+        kind: 'created',
+        payload: { sourceType: 'issue', sourceId: input.issueId },
+      });
+      return { actionId: id, referenceNumber };
     }),
 
-  list: tenantProcedure
+  /**
+   * Generic field update — title / description / priority / due / label.
+   * Writes one activity row per changed field. Mirrors the per-field
+   * activity approach `issues.update` uses; the diff is calculated by
+   * comparing the loaded row to the input.
+   */
+  update: tenantProcedure
+    .use(requirePermission('actions.manage'))
+    .input(updateInput)
+    .mutation(async ({ ctx, input }) => {
+      const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      const updates: Partial<typeof actions.$inferInsert> = { updatedAt: new Date() };
+      const events: Array<{
+        kind: ActionActivityKind;
+        payload: Record<string, unknown>;
+      }> = [];
+
+      if (input.title !== undefined && input.title !== action.title) {
+        updates.title = input.title;
+        events.push({
+          kind: 'title_changed',
+          payload: { from: action.title, to: input.title },
+        });
+      }
+      if (input.description !== undefined) {
+        const next = input.description;
+        if (next !== action.description) {
+          updates.description = next;
+          events.push({
+            kind: 'description_changed',
+            payload: { from: action.description, to: next },
+          });
+        }
+      }
+      if (input.priority !== undefined) {
+        const next = input.priority;
+        if (next !== action.priority) {
+          updates.priority = next;
+          events.push({
+            kind: 'priority_changed',
+            payload: { from: action.priority, to: next },
+          });
+        }
+      }
+      if (input.dueAt !== undefined) {
+        const nextDate = input.dueAt === null ? null : new Date(input.dueAt);
+        const prevMillis = action.dueAt === null ? null : action.dueAt.getTime();
+        const nextMillis = nextDate === null ? null : nextDate.getTime();
+        if (prevMillis !== nextMillis) {
+          updates.dueAt = nextDate;
+          events.push({
+            kind: nextDate === null ? 'due_date_cleared' : 'due_date_changed',
+            payload: {
+              from: action.dueAt?.toISOString() ?? null,
+              to: nextDate?.toISOString() ?? null,
+            },
+          });
+        }
+      }
+      if (input.assigneeUserId !== undefined) {
+        const next = input.assigneeUserId;
+        if (next !== action.assigneeUserId) {
+          updates.assigneeUserId = next;
+          events.push({
+            kind: next === null ? 'assignee_cleared' : 'assignee_changed',
+            payload: { from: action.assigneeUserId, to: next },
+          });
+        }
+      }
+      if (input.siteId !== undefined) {
+        const next = input.siteId;
+        if (next !== action.siteId) {
+          updates.siteId = next;
+          events.push({
+            kind: next === null ? 'site_cleared' : 'site_changed',
+            payload: { from: action.siteId, to: next },
+          });
+        }
+      }
+      if (input.label !== undefined) {
+        const next = input.label;
+        if (next !== action.label) {
+          updates.label = next;
+          events.push({
+            kind: 'label_changed',
+            payload: { from: action.label, to: next },
+          });
+        }
+      }
+
+      if (events.length === 0) return { ok: true as const };
+
+      await ctx.db.update(actions).set(updates).where(eq(actions.id, action.id));
+      for (const ev of events) {
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          actionId: action.id,
+          actorUserId: ctx.auth.userId,
+          kind: ev.kind,
+          payload: ev.payload,
+        });
+      }
+      return { ok: true as const };
+    }),
+
+  /**
+   * Status transition. `completed` and `cancelled` are terminal — the
+   * action stamps `closedAt` / `closedByUserId` and refuses further
+   * status transitions until a manager explicitly moves it back.
+   */
+  setStatus: tenantProcedure
+    .use(requirePermission('actions.manage'))
+    .input(setStatusInput)
+    .mutation(async ({ ctx, input }) => {
+      const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      if (action.status === input.status) return { ok: true as const };
+
+      const now = new Date();
+      const wasTerminal = action.status === 'completed' || action.status === 'cancelled';
+      const willBeTerminal = input.status === 'completed' || input.status === 'cancelled';
+
+      const updates: Partial<typeof actions.$inferInsert> = {
+        status: input.status,
+        updatedAt: now,
+      };
+
+      if (willBeTerminal && !wasTerminal) {
+        updates.closedAt = now;
+        updates.closedByUserId = ctx.auth.userId;
+      }
+      if (!willBeTerminal && wasTerminal) {
+        updates.closedAt = null;
+        updates.closedByUserId = null;
+      }
+
+      await ctx.db.update(actions).set(updates).where(eq(actions.id, action.id));
+      await writeActivity(ctx.db, {
+        tenantId: ctx.tenantId,
+        actionId: action.id,
+        actorUserId: ctx.auth.userId,
+        kind: 'status_changed',
+        payload: { from: action.status, to: input.status },
+      });
+      return { ok: true as const };
+    }),
+
+  archive: tenantProcedure
+    .use(requirePermission('actions.manage'))
+    .input(actionIdInput)
+    .mutation(async ({ ctx, input }) => {
+      const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      if (action.archivedAt !== null) return { ok: true as const };
+      const now = new Date();
+      await ctx.db
+        .update(actions)
+        .set({ archivedAt: now, updatedAt: now })
+        .where(eq(actions.id, action.id));
+      await writeActivity(ctx.db, {
+        tenantId: ctx.tenantId,
+        actionId: action.id,
+        actorUserId: ctx.auth.userId,
+        kind: 'archived',
+        payload: {},
+      });
+      return { ok: true as const };
+    }),
+
+  restore: tenantProcedure
+    .use(requirePermission('actions.manage'))
+    .input(actionIdInput)
+    .mutation(async ({ ctx, input }) => {
+      const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      if (action.archivedAt === null) return { ok: true as const };
+      const now = new Date();
+      await ctx.db
+        .update(actions)
+        .set({ archivedAt: null, updatedAt: now })
+        .where(eq(actions.id, action.id));
+      await writeActivity(ctx.db, {
+        tenantId: ctx.tenantId,
+        actionId: action.id,
+        actorUserId: ctx.auth.userId,
+        kind: 'restored',
+        payload: {},
+      });
+      return { ok: true as const };
+    }),
+
+  activity: router({
+    list: tenantProcedure
+      .use(requirePermission('actions.view'))
+      .input(listActivityInput)
+      .query(async ({ ctx, input }) => {
+        await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+        const rows = await ctx.db
+          .select({
+            id: actionActivity.id,
+            actorUserId: actionActivity.actorUserId,
+            kind: actionActivity.kind,
+            payload: actionActivity.payload,
+            createdAt: actionActivity.createdAt,
+            actorName: user.name,
+            actorEmail: user.email,
+          })
+          .from(actionActivity)
+          .leftJoin(user, eq(user.id, actionActivity.actorUserId))
+          .where(eq(actionActivity.actionId, input.actionId))
+          .orderBy(desc(actionActivity.createdAt))
+          .limit(input.limit);
+        return rows;
+      }),
+  }),
+
+  comments: router({
+    list: tenantProcedure
+      .use(requirePermission('actions.view'))
+      .input(listCommentsInput)
+      .query(async ({ ctx, input }) => {
+        await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+        const rows = await ctx.db
+          .select({
+            id: actionComments.id,
+            actionId: actionComments.actionId,
+            authorUserId: actionComments.authorUserId,
+            body: actionComments.body,
+            createdAt: actionComments.createdAt,
+            updatedAt: actionComments.updatedAt,
+            authorName: user.name,
+            authorEmail: user.email,
+          })
+          .from(actionComments)
+          .leftJoin(user, eq(user.id, actionComments.authorUserId))
+          .where(eq(actionComments.actionId, input.actionId))
+          .orderBy(actionComments.createdAt);
+        return rows;
+      }),
+
+    create: tenantProcedure
+      .use(requirePermission('actions.view'))
+      .input(createCommentInput)
+      .mutation(async ({ ctx, input }) => {
+        const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+        const id = newId();
+        await ctx.db.insert(actionComments).values({
+          id,
+          tenantId: ctx.tenantId,
+          actionId: action.id,
+          authorUserId: ctx.auth.userId,
+          body: input.body,
+        });
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          actionId: action.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'commented',
+          payload: { commentId: id },
+        });
+        return { commentId: id };
+      }),
+
+    update: tenantProcedure
+      .use(requirePermission('actions.view'))
+      .input(updateCommentInput)
+      .mutation(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select()
+          .from(actionComments)
+          .where(
+            and(
+              eq(actionComments.tenantId, ctx.tenantId),
+              eq(actionComments.id, input.commentId),
+            ),
+          )
+          .limit(1);
+        const row = rows[0];
+        if (row === undefined) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'comment-not-found' });
+        }
+        if (row.authorUserId !== ctx.auth.userId) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'not-comment-author' });
+        }
+        await ctx.db
+          .update(actionComments)
+          .set({ body: input.body, updatedAt: new Date() })
+          .where(eq(actionComments.id, row.id));
+        return { ok: true as const };
+      }),
+
+    delete: tenantProcedure
+      .use(requirePermission('actions.view'))
+      .input(deleteCommentInput)
+      .mutation(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select()
+          .from(actionComments)
+          .where(
+            and(
+              eq(actionComments.tenantId, ctx.tenantId),
+              eq(actionComments.id, input.commentId),
+            ),
+          )
+          .limit(1);
+        const row = rows[0];
+        if (row === undefined) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'comment-not-found' });
+        }
+        // Author or anyone with `actions.manage`.
+        if (row.authorUserId !== ctx.auth.userId) {
+          if (!ctx.permissions.includes('actions.manage')) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'not-comment-author-or-manager',
+            });
+          }
+        }
+        await ctx.db.delete(actionComments).where(eq(actionComments.id, row.id));
+        return { ok: true as const };
+      }),
+  }),
+
+  /**
+   * Counts grouped by status — used by the list page chips and dashboard
+   * tiles. Cheap enough to call on every list view.
+   */
+  countsByStatus: tenantProcedure
     .use(requirePermission('actions.view'))
-    .input(listInput)
+    .input(z.object({ includeArchived: z.boolean().default(false) }).default({ includeArchived: false }))
     .query(async ({ ctx, input }) => {
       const where = [eq(actions.tenantId, ctx.tenantId)];
-      if (input.sourceType !== undefined) where.push(eq(actions.sourceType, input.sourceType));
-      if (input.sourceId !== undefined) where.push(eq(actions.sourceId, input.sourceId));
-      return ctx.db
-        .select()
+      if (!input.includeArchived) where.push(isNull(actions.archivedAt));
+      const rows = await ctx.db
+        .select({
+          status: actions.status,
+          c: count(),
+        })
         .from(actions)
-        .where(and(...where));
+        .where(and(...where))
+        .groupBy(actions.status);
+      const map: Record<string, number> = {};
+      for (const r of rows) {
+        map[r.status] = Number(r.c);
+      }
+      return map;
     }),
 });

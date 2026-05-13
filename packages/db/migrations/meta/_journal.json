@@ -85,6 +85,13 @@
       "when": 1778400000000,
       "tag": "0011_observations_richer",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778600000000,
+      "tag": "0012_actions_phase4",
+      "breakpoints": true
     }
   ]
 }
