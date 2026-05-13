@@ -1201,10 +1201,10 @@
           "note": "Notifying or assigning a user to an observation will give them view and edit access, regardless of their category access."
         },
         "issueFieldsCard": {
-          "title": "Issue fields",
-          "subtitle": "These fields can be automatically or manually captured when an issue is initially reported.",
+          "title": "Observation fields",
+          "subtitle": "These fields can be automatically or manually captured when an observation is initially reported.",
           "requiredBadge": "Required",
-          "saveSuccess": "Issue fields updated.",
+          "saveSuccess": "Observation fields updated.",
           "rows": {
             "title": "Title",
             "description": "Description",

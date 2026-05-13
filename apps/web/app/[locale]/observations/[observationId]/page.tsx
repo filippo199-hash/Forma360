@@ -76,6 +76,7 @@ const PRIORITY_DOT_CLASS: Record<Priority, string> = {
 
 export default function ObservationDetailPage() {
   const t = useTranslations('issues.detail');
+  const tFields = useTranslations('issues.detail.fields');
   const tStatus = useTranslations('issues.status');
   const tPriority = useTranslations('issues.priority');
   const tReportedVia = useTranslations('issues.reportedVia');
@@ -395,7 +396,7 @@ export default function ObservationDetailPage() {
                       currentName={assignee?.name ?? null}
                       canManage={canManage}
                       onChange={updateAssignee}
-                      tFields={t}
+                      tFields={tFields}
                     />
                   </Field>
                   <Field label={t('fields.priority')}>

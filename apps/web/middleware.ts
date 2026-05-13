@@ -32,7 +32,19 @@ export default function middleware(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
+  // Exclude unlocalised top-level routes from the i18n middleware:
+  //   - `api/*`        — route handlers (own request-id flow)
+  //   - `_next/*`,
+  //     `_vercel/*`,
+  //     `.*\\..*`       — Next.js internals + static assets
+  //   - `scan/*`       — public observation QR-code landing
+  //                      (apps/web/app/scan/[token]/page.tsx)
+  //   - `s/*`          — public inspection share-link landing
+  //                      (apps/web/app/s/[token]/page.tsx)
+  //   - `render/*`     — HMAC-gated Puppeteer-facing print routes
+  //                      (apps/web/app/render/inspection/[inspectionId])
+  // Locale prefix on these would 404 because they live outside `[locale]/`.
+  matcher: ['/((?!api|_next|_vercel|scan|s|render|.*\\..*).*)'],
   // Run on the Node.js runtime, not the edge runtime. Three reasons:
   //   1. @sentry/nextjs 8.x wraps middleware and transitively imports
   //      node:crypto, which blows up the edge runtime.
