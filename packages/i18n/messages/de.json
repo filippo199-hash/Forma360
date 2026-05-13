@@ -1068,7 +1068,36 @@
       "updateToast": "Category updated.",
       "archiveToast": "Category archived.",
       "restoreToast": "Category restored.",
-      "deleteToast": "Category deleted."
+      "deleteToast": "Category deleted.",
+      "wizardSteps": {
+        "basics": "Basics",
+        "questions": "Questions",
+        "access": "Access"
+      },
+      "wizardNext": "Next",
+      "wizardBack": "Back",
+      "wizardSave": "Save category",
+      "step1Title": "Define category basics",
+      "step1Subtitle": "Give the category a name and short description.",
+      "step3Title": "Who can use this and who gets notified?",
+      "step3Subtitle": "Restrict to specific groups or sites, and choose how teammates are notified about new issues.",
+      "questionBuilder": {
+        "title": "Custom questions",
+        "subtitle": "Add questions specific to this category. Defaults like Title, Description, Site, and Date are always included on top of these.",
+        "addButton": "Add question",
+        "removeButton": "Remove question",
+        "typeLabel": "Type",
+        "typeText": "Text",
+        "typeMultipleChoice": "Multiple choice",
+        "promptPlaceholder": "Type your question…",
+        "requiredLabel": "Required",
+        "choicesLabel": "Choices",
+        "addChoiceButton": "Add choice",
+        "choicePlaceholder": "Option text",
+        "counter": "{count} / 10 questions",
+        "validationPromptEmpty": "Question prompt is required.",
+        "validationOptionsEmpty": "Add at least one choice."
+      }
     }
   }
 }

@@ -1,57 +1,39 @@
 'use client';
 
-import type { IssueNotificationRule } from '@forma360/shared/issues-schema';
+import type {
+  IssueCustomQuestion,
+  IssueNotificationRule,
+} from '@forma360/shared/issues-schema';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import {
+  CategoryWizard,
+  EMPTY_CATEGORY_WIZARD_VALUES,
+  type CategoryWizardSubmit,
+  type CategoryWizardValues,
+} from '../../../../src/components/issues/category-wizard';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '../../../../src/components/ui/dialog';
-import { Input } from '../../../../src/components/ui/input';
-import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
-import { Switch } from '../../../../src/components/ui/switch';
-import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
-
-const NOTIFICATION_RULES: readonly IssueNotificationRule[] = ['private', 'summary', 'detailed'];
-
-interface CategoryFormState {
-  name: string;
-  description: string;
-  notificationRule: IssueNotificationRule;
-  criticalAlerts: boolean;
-  accessRuleId: string;
-  linkedTemplateIds: string[];
-}
-
-const EMPTY_FORM: CategoryFormState = {
-  name: '',
-  description: '',
-  notificationRule: 'summary',
-  criticalAlerts: false,
-  accessRuleId: '',
-  linkedTemplateIds: [],
-};
 
 /**
  * Issue categories admin. Gated by `issues.settings` — non-admins are
  * redirected to the issues list. Lets admins create / edit / archive /
  * restore / delete categories.
  *
- * Custom-field and custom-question editing is deferred to a follow-on
- * PR; for now the dialog handles the headline fields only.
+ * The create / edit Dialog hosts a 3-step wizard (Basics → Questions →
+ * Access). Linked-template selection is deferred and intentionally not
+ * surfaced; the schema accepts it (we always send an empty array).
  */
 export default function CategoriesPage() {
   const t = useTranslations('issues.categories');
@@ -74,10 +56,11 @@ export default function CategoriesPage() {
     includeArchived,
   });
   const { data: accessRules } = trpc.accessRules.list.useQuery();
-  const { data: templates } = trpc.templates.list.useQuery({});
 
   const [dialogState, setDialogState] = useState<
-    { mode: 'create'; form: CategoryFormState } | { mode: 'edit'; categoryId: string; form: CategoryFormState } | null
+    | { mode: 'create'; values: CategoryWizardValues }
+    | { mode: 'edit'; categoryId: string; values: CategoryWizardValues }
+    | null
   >(null);
 
   const archive = trpc.issues.categories.archive.useMutation({
@@ -130,7 +113,11 @@ export default function CategoriesPage() {
             />
             <span>{t('showArchived')}</span>
           </label>
-          <Button onClick={() => setDialogState({ mode: 'create', form: EMPTY_FORM })}>
+          <Button
+            onClick={() =>
+              setDialogState({ mode: 'create', values: EMPTY_CATEGORY_WIZARD_VALUES })
+            }
+          >
             {t('newButton')}
           </Button>
         </div>
@@ -188,14 +175,14 @@ export default function CategoriesPage() {
                             setDialogState({
                               mode: 'edit',
                               categoryId: c.id,
-                              form: {
+                              values: {
                                 name: c.name,
                                 description: c.description ?? '',
                                 notificationRule:
                                   (c.notificationRule as IssueNotificationRule) ?? 'summary',
                                 criticalAlerts: c.criticalAlerts,
                                 accessRuleId: c.accessRuleId ?? '',
-                                linkedTemplateIds: Array.from(c.linkedTemplateIds),
+                                customQuestions: Array.from(c.customQuestions) as IssueCustomQuestion[],
                               },
                             })
                           }
@@ -246,35 +233,30 @@ export default function CategoriesPage() {
       </Card>
 
       {dialogState !== null ? (
-        <CategoryDialog
+        <CategoryWizardDialog
           state={dialogState}
           onClose={() => setDialogState(null)}
           accessRules={accessRules ?? []}
-          templates={templates ?? []}
         />
       ) : null}
     </div>
   );
 }
 
-function CategoryDialog({
+function CategoryWizardDialog({
   state,
   onClose,
   accessRules,
-  templates,
 }: {
   state:
-    | { mode: 'create'; form: CategoryFormState }
-    | { mode: 'edit'; categoryId: string; form: CategoryFormState };
+    | { mode: 'create'; values: CategoryWizardValues }
+    | { mode: 'edit'; categoryId: string; values: CategoryWizardValues };
   onClose: () => void;
   accessRules: ReadonlyArray<{ id: string; name: string }>;
-  templates: ReadonlyArray<{ id: string; name: string; archivedAt: Date | null }>;
 }) {
   const t = useTranslations('issues.categories');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
-
-  const [form, setForm] = useState<CategoryFormState>(state.form);
 
   const create = trpc.issues.categories.create.useMutation({
     onSuccess: () => {
@@ -294,11 +276,7 @@ function CategoryDialog({
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const name = form.name.trim();
-    if (name.length === 0) return;
-
+  function handleSave(values: CategoryWizardSubmit) {
     if (state.mode === 'create') {
       const input: {
         name: string;
@@ -306,18 +284,24 @@ function CategoryDialog({
         accessRuleId?: string;
         notificationRule?: IssueNotificationRule;
         criticalAlerts?: boolean;
+        customFields?: never[];
+        customQuestions?: IssueCustomQuestion[];
         linkedTemplateIds?: string[];
       } = {
-        name,
-        notificationRule: form.notificationRule,
-        criticalAlerts: form.criticalAlerts,
+        name: values.name,
+        notificationRule: values.notificationRule,
+        criticalAlerts: values.criticalAlerts,
+        customFields: [],
+        customQuestions: values.customQuestions,
+        linkedTemplateIds: [],
       };
-      const desc = form.description.trim();
-      if (desc.length > 0) input.description = desc;
-      if (form.accessRuleId !== '') input.accessRuleId = form.accessRuleId;
-      if (form.linkedTemplateIds.length > 0) input.linkedTemplateIds = form.linkedTemplateIds;
+      if (values.description.length > 0) input.description = values.description;
+      if (values.accessRuleId !== '') input.accessRuleId = values.accessRuleId;
       create.mutate(input);
     } else {
+      // Send only diffs. customQuestions is always sent so the schema sees
+      // the wizard's final state even when the count is the same.
+      const original = state.values;
       const input: {
         categoryId: string;
         name?: string;
@@ -325,138 +309,47 @@ function CategoryDialog({
         accessRuleId?: string | null;
         notificationRule?: IssueNotificationRule;
         criticalAlerts?: boolean;
+        customFields?: never[];
+        customQuestions?: IssueCustomQuestion[];
         linkedTemplateIds?: string[];
       } = { categoryId: state.categoryId };
-      if (name !== state.form.name) input.name = name;
-      const desc = form.description.trim();
-      if (desc !== (state.form.description ?? '').trim()) {
-        input.description = desc.length > 0 ? desc : null;
+      if (values.name !== original.name.trim()) input.name = values.name;
+      const originalDesc = original.description.trim();
+      if (values.description !== originalDesc) {
+        input.description = values.description.length > 0 ? values.description : null;
       }
-      if (form.accessRuleId !== state.form.accessRuleId) {
-        input.accessRuleId = form.accessRuleId === '' ? null : form.accessRuleId;
+      if (values.accessRuleId !== original.accessRuleId) {
+        input.accessRuleId = values.accessRuleId === '' ? null : values.accessRuleId;
       }
-      if (form.notificationRule !== state.form.notificationRule) {
-        input.notificationRule = form.notificationRule;
+      if (values.notificationRule !== original.notificationRule) {
+        input.notificationRule = values.notificationRule;
       }
-      if (form.criticalAlerts !== state.form.criticalAlerts) {
-        input.criticalAlerts = form.criticalAlerts;
+      if (values.criticalAlerts !== original.criticalAlerts) {
+        input.criticalAlerts = values.criticalAlerts;
       }
       if (
-        JSON.stringify(form.linkedTemplateIds) !== JSON.stringify(state.form.linkedTemplateIds)
+        JSON.stringify(values.customQuestions) !==
+        JSON.stringify(original.customQuestions)
       ) {
-        input.linkedTemplateIds = form.linkedTemplateIds;
+        input.customQuestions = values.customQuestions;
       }
       update.mutate(input);
     }
   }
 
   const submitting = create.isPending || update.isPending;
-  const availableTemplates = templates.filter((tpl) => tpl.archivedAt === null);
 
   return (
     <Dialog open onOpenChange={(v) => (v ? null : onClose())}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {state.mode === 'create' ? t('createTitle') : t('editTitle')}
-          </DialogTitle>
-          <DialogDescription>
-            {state.mode === 'create' ? t('createSubtitle') : t('editSubtitle')}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="cat-name">{t('nameLabel')}</Label>
-            <Input
-              id="cat-name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              maxLength={200}
-              required
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cat-desc">{t('descriptionLabel')}</Label>
-            <Textarea
-              id="cat-desc"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              rows={3}
-              maxLength={2000}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cat-notif">{t('notificationRuleLabel')}</Label>
-            <select
-              id="cat-notif"
-              value={form.notificationRule}
-              onChange={(e) =>
-                setForm({ ...form, notificationRule: e.target.value as IssueNotificationRule })
-              }
-              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              {NOTIFICATION_RULES.map((r) => (
-                <option key={r} value={r}>
-                  {t(`notificationRule.${r}`)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-3">
-            <Switch
-              id="cat-critical"
-              checked={form.criticalAlerts}
-              onCheckedChange={(v) => setForm({ ...form, criticalAlerts: v })}
-            />
-            <Label htmlFor="cat-critical">{t('criticalAlertsLabel')}</Label>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cat-access">{t('accessRuleLabel')}</Label>
-            <select
-              id="cat-access"
-              value={form.accessRuleId}
-              onChange={(e) => setForm({ ...form, accessRuleId: e.target.value })}
-              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">{t('accessRuleNone')}</option>
-              {accessRules.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cat-templates">{t('linkedTemplatesLabel')}</Label>
-            <select
-              id="cat-templates"
-              multiple
-              value={form.linkedTemplateIds}
-              onChange={(e) => {
-                const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
-                setForm({ ...form, linkedTemplateIds: selected });
-              }}
-              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              size={Math.min(5, Math.max(3, availableTemplates.length))}
-            >
-              {availableTemplates.map((tpl) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {tpl.name}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-muted-foreground">{t('linkedTemplatesHelp')}</p>
-          </div>
-          <p className="text-xs text-muted-foreground">{t('customFieldsDeferred')}</p>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={onClose}>
-              {t('cancelButton')}
-            </Button>
-            <Button type="submit" disabled={submitting || form.name.trim().length === 0}>
-              {t('saveButton')}
-            </Button>
-          </DialogFooter>
-        </form>
+        <CategoryWizard
+          mode={state.mode}
+          defaultValues={state.values}
+          accessRules={accessRules}
+          submitting={submitting}
+          onSave={handleSave}
+          onCancel={onClose}
+        />
       </DialogContent>
     </Dialog>
   );
