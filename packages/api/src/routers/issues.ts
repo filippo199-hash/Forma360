@@ -22,6 +22,8 @@
 import {
   accessRules,
   groupMembers,
+  issueActivity,
+  issueAttachments,
   issueCategories,
   issueComments,
   issues,
@@ -32,9 +34,11 @@ import {
   user,
   type Issue,
   type IssueAccessSnapshot,
+  type IssueActivityKind,
   type IssueCategory,
   type IssueCategorySnapshot,
   type IssueComment,
+  type IssuePriority,
 } from '@forma360/db/schema';
 import { resolveAccessRule } from '@forma360/permissions/access';
 import { isPermissionKey } from '@forma360/permissions/catalogue';
@@ -51,9 +55,12 @@ import {
   NOTIFICATION_RULES,
   issueCustomFieldsSchema,
   issueCustomQuestionsSchema,
+  issueEnabledBuiltInFieldsSchema,
   issueGpsSchema,
+  issuePrioritySchema,
 } from '@forma360/shared/issues-schema';
 import type { Logger } from '@forma360/shared/logger';
+import type { Storage } from '@forma360/shared/storage';
 import { TRPCError } from '@trpc/server';
 import crypto from 'node:crypto';
 import { and, count, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
@@ -119,6 +126,7 @@ const updateCategoryInput = z.object({
   notificationRule: z.enum(NOTIFICATION_RULES).optional(),
   criticalAlerts: z.boolean().optional(),
   linkedTemplateIds: z.array(z.string().length(26)).max(25).optional(),
+  enabledBuiltInFields: issueEnabledBuiltInFieldsSchema.optional(),
 });
 
 const listIssuesInput = z
@@ -152,6 +160,9 @@ const updateIssueInput = z.object({
   siteId: z.string().length(26).nullable().optional(),
   customFieldValues: z.record(z.unknown()).optional(),
   customQuestionResponses: z.record(z.unknown()).optional(),
+  priority: issuePrioritySchema.nullable().optional(),
+  dueAt: z.string().datetime().nullable().optional(),
+  assigneeUserId: z.string().nullable().optional(),
 });
 
 const closeIssueInput = z.object({
@@ -193,6 +204,22 @@ const createFromShareTokenInput = z.object({
 
 const publicGetByShareTokenInput = z.object({
   token: z.string().min(1).max(64),
+});
+
+const listActivityInput = z.object({ issueId: z.string().length(26) });
+
+const listAttachmentsInput = z.object({ issueId: z.string().length(26) });
+
+const createAttachmentInput = z.object({
+  issueId: z.string().length(26),
+  filename: z.string().min(1).max(500),
+  mimeType: z.string().min(1).max(200),
+  sizeBytes: z.number().int().min(0).max(100 * 1024 * 1024),
+  storageKey: z.string().min(1).max(1024),
+});
+
+const deleteAttachmentInput = z.object({
+  attachmentId: z.string().length(26),
 });
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -287,6 +314,27 @@ async function loadIssueOrThrow(db: Db, tenantId: string, issueId: string): Prom
   return row;
 }
 
+async function writeActivity(
+  db: Db,
+  args: {
+    tenantId: string;
+    issueId: string;
+    actorUserId: string | null;
+    kind: IssueActivityKind;
+    payload?: Record<string, unknown>;
+  },
+): Promise<void> {
+  await db.insert(issueActivity).values({
+    id: newId(),
+    tenantId: args.tenantId,
+    issueId: args.issueId,
+    actorUserId: args.actorUserId,
+    kind: args.kind,
+    payload: args.payload ?? {},
+    createdAt: new Date(),
+  });
+}
+
 async function loadCommentOrThrow(
   db: Db,
   tenantId: string,
@@ -379,6 +427,11 @@ export interface IssuesRouterDeps {
   logger: Logger;
   /** Canonical APP_URL — e.g. "https://app.forma360.com" (no trailing slash). */
   appUrl: string;
+  /**
+   * Storage facade used to mint signed download URLs for attachments. The
+   * web app wires the real R2 storage; tests pass a stub.
+   */
+  storage: Pick<Storage, 'getSignedDownloadUrl'>;
 }
 
 export function createIssuesRouter(deps: IssuesRouterDeps) {
@@ -453,6 +506,8 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         if (input.criticalAlerts !== undefined) patch.criticalAlerts = input.criticalAlerts;
         if (input.linkedTemplateIds !== undefined)
           patch.linkedTemplateIds = input.linkedTemplateIds;
+        if (input.enabledBuiltInFields !== undefined)
+          patch.enabledBuiltInFields = input.enabledBuiltInFields;
         await ctx.db
           .update(issueCategories)
           .set(patch)
@@ -579,6 +634,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
             tenantId: issueCategories.tenantId,
             name: issueCategories.name,
             customQuestions: issueCategories.customQuestions,
+            enabledBuiltInFields: issueCategories.enabledBuiltInFields,
             archivedAt: issueCategories.archivedAt,
           })
           .from(issueCategories)
@@ -599,6 +655,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           tenantName,
           categoryName: cat.name,
           customQuestions: cat.customQuestions,
+          enabledBuiltInFields: cat.enabledBuiltInFields,
         };
       }),
   });
@@ -752,6 +809,13 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         });
 
         const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, id);
+        // Audit event — append-only.
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          issueId: id,
+          actorUserId: ctx.auth.userId,
+          kind: 'created',
+        });
         // Email fan-out (best-effort).
         await notifyManagersOfNewIssue({
           db: ctx.db,
@@ -770,6 +834,11 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .mutation(async ({ ctx, input }) => {
         const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
         const patch: Partial<typeof issues.$inferInsert> = { updatedAt: new Date() };
+        const activityEvents: Array<{
+          kind: IssueActivityKind;
+          payload: Record<string, unknown>;
+        }> = [];
+
         if (input.title !== undefined) patch.title = input.title;
         if (input.description !== undefined) patch.description = input.description;
         if (input.dateOccurred !== undefined) patch.dateOccurred = new Date(input.dateOccurred);
@@ -777,7 +846,78 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         if (input.customFieldValues !== undefined) patch.customFieldValues = input.customFieldValues;
         if (input.customQuestionResponses !== undefined)
           patch.customQuestionResponses = input.customQuestionResponses;
+
+        // Priority change → one event.
+        if (input.priority !== undefined) {
+          const next = input.priority;
+          if (next !== issue.priority) {
+            patch.priority = next as IssuePriority | null;
+            activityEvents.push({
+              kind: 'priority_changed',
+              payload: { from: issue.priority, to: next },
+            });
+          }
+        }
+
+        // Due-date change → one event.
+        if (input.dueAt !== undefined) {
+          const nextDate = input.dueAt === null ? null : new Date(input.dueAt);
+          const prevIso = issue.dueAt === null ? null : issue.dueAt.toISOString();
+          const nextIso = nextDate === null ? null : nextDate.toISOString();
+          if (nextIso !== prevIso) {
+            patch.dueAt = nextDate;
+            activityEvents.push({
+              kind: 'due_date_changed',
+              payload: { from: prevIso, to: nextIso },
+            });
+          }
+        }
+
+        // Assignee change → one event.
+        if (input.assigneeUserId !== undefined) {
+          const next = input.assigneeUserId;
+          if (next !== issue.assigneeUserId) {
+            patch.assigneeUserId = next;
+            activityEvents.push({
+              kind: 'assignee_changed',
+              payload: { from: issue.assigneeUserId, to: next },
+            });
+          }
+        }
+
+        // If any free-form field changed, log a generic `edited` event in
+        // addition to (or instead of) the structured events above.
+        const editedFields: string[] = [];
+        if (input.title !== undefined && input.title !== issue.title) editedFields.push('title');
+        if (
+          input.description !== undefined &&
+          (input.description ?? null) !== issue.description
+        ) {
+          editedFields.push('description');
+        }
+        if (
+          input.dateOccurred !== undefined &&
+          new Date(input.dateOccurred).toISOString() !== issue.dateOccurred.toISOString()
+        ) {
+          editedFields.push('dateOccurred');
+        }
+        if (input.siteId !== undefined && (input.siteId ?? null) !== issue.siteId) {
+          editedFields.push('siteId');
+        }
+        if (editedFields.length > 0) {
+          activityEvents.push({ kind: 'edited', payload: { fields: editedFields } });
+        }
+
         await ctx.db.update(issues).set(patch).where(eq(issues.id, issue.id));
+        for (const event of activityEvents) {
+          await writeActivity(ctx.db, {
+            tenantId: ctx.tenantId,
+            issueId: issue.id,
+            actorUserId: ctx.auth.userId,
+            kind: event.kind,
+            payload: event.payload,
+          });
+        }
         return { ok: true as const };
       }),
 
@@ -790,6 +930,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           throw new TRPCError({ code: 'CONFLICT', message: 'issue-already-closed' });
         }
         const now = new Date();
+        const prevStatus = issue.status;
         await ctx.db
           .update(issues)
           .set({
@@ -800,6 +941,17 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
             updatedAt: now,
           })
           .where(eq(issues.id, issue.id));
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          issueId: issue.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'status_changed',
+          payload: {
+            from: prevStatus,
+            to: 'closed',
+            reason: input.reason ?? null,
+          },
+        });
         return { ok: true as const };
       }),
 
@@ -821,6 +973,13 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
             updatedAt: new Date(),
           })
           .where(eq(issues.id, issue.id));
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          issueId: issue.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'status_changed',
+          payload: { from: 'closed', to: 'open' },
+        });
         return { ok: true as const };
       }),
 
@@ -940,6 +1099,15 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         });
 
         const issue = await loadIssueOrThrow(ctx.db, input.tenantId, id);
+        // Audit event — system-actor (no userId) since this is an
+        // anonymous QR submission.
+        await writeActivity(ctx.db, {
+          tenantId: input.tenantId,
+          issueId: id,
+          actorUserId: null,
+          kind: 'created',
+          payload: { via: 'qr' },
+        });
         await notifyManagersOfNewIssue({
           db: ctx.db,
           tenantId: input.tenantId,
@@ -991,6 +1159,13 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           createdAt: now,
           updatedAt: now,
         });
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          issueId: issue.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'commented',
+          payload: { commentId: id, body: input.body },
+        });
         return { commentId: id };
       }),
 
@@ -1028,9 +1203,167 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       }),
   });
 
+  // ─── Activity sub-router ──────────────────────────────────────────────────
+  const activityRouter = router({
+    /**
+     * Append-only activity feed for an issue. Returns at most the latest
+     * 100 events with the actor's name + email joined in.
+     */
+    list: tenantProcedure
+      .use(requirePermission('issues.view'))
+      .input(listActivityInput)
+      .query(async ({ ctx, input }) => {
+        await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        const rows = await ctx.db
+          .select({
+            id: issueActivity.id,
+            issueId: issueActivity.issueId,
+            actorUserId: issueActivity.actorUserId,
+            kind: issueActivity.kind,
+            payload: issueActivity.payload,
+            createdAt: issueActivity.createdAt,
+            actorName: user.name,
+            actorEmail: user.email,
+          })
+          .from(issueActivity)
+          .leftJoin(user, eq(user.id, issueActivity.actorUserId))
+          .where(
+            and(
+              eq(issueActivity.tenantId, ctx.tenantId),
+              eq(issueActivity.issueId, input.issueId),
+            ),
+          )
+          .orderBy(desc(issueActivity.createdAt))
+          .limit(100);
+        return rows;
+      }),
+  });
+
+  // ─── Attachments sub-router ──────────────────────────────────────────────
+  const attachmentsRouter = router({
+    list: tenantProcedure
+      .use(requirePermission('issues.view'))
+      .input(listAttachmentsInput)
+      .query(async ({ ctx, input }) => {
+        await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        const rows = await ctx.db
+          .select()
+          .from(issueAttachments)
+          .where(
+            and(
+              eq(issueAttachments.tenantId, ctx.tenantId),
+              eq(issueAttachments.issueId, input.issueId),
+            ),
+          )
+          .orderBy(desc(issueAttachments.uploadedAt));
+        const out: Array<typeof rows[number] & { signedUrl: string | null }> = [];
+        for (const row of rows) {
+          let signedUrl: string | null = null;
+          try {
+            signedUrl = await deps.storage.getSignedDownloadUrl({ key: row.storageKey });
+          } catch (err) {
+            deps.logger.warn(
+              { err, attachmentId: row.id },
+              '[issues] attachment signed URL failed',
+            );
+          }
+          out.push({ ...row, signedUrl });
+        }
+        return out;
+      }),
+
+    create: tenantProcedure
+      .use(requirePermission('issues.view'))
+      .input(createAttachmentInput)
+      .mutation(async ({ ctx, input }) => {
+        const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        const id = newId();
+        const now = new Date();
+        await ctx.db.insert(issueAttachments).values({
+          id,
+          tenantId: ctx.tenantId,
+          issueId: issue.id,
+          storageKey: input.storageKey,
+          filename: input.filename,
+          mimeType: input.mimeType,
+          sizeBytes: input.sizeBytes,
+          uploadedByUserId: ctx.auth.userId,
+          uploadedAt: now,
+        });
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          issueId: issue.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'attachment_added',
+          payload: {
+            attachmentId: id,
+            filename: input.filename,
+            mimeType: input.mimeType,
+            sizeBytes: input.sizeBytes,
+          },
+        });
+        const row = (
+          await ctx.db
+            .select()
+            .from(issueAttachments)
+            .where(eq(issueAttachments.id, id))
+            .limit(1)
+        )[0];
+        return row ?? { id };
+      }),
+
+    delete: tenantProcedure
+      .use(requirePermission('issues.view'))
+      .input(deleteAttachmentInput)
+      .mutation(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select()
+          .from(issueAttachments)
+          .where(
+            and(
+              eq(issueAttachments.tenantId, ctx.tenantId),
+              eq(issueAttachments.id, input.attachmentId),
+            ),
+          )
+          .limit(1);
+        const row = rows[0];
+        if (row === undefined) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'attachment-not-found' });
+        }
+        // Authors of an attachment can always delete; otherwise the caller
+        // needs `issues.manage`. The R2 object is intentionally not deleted
+        // — a future cleanup job will reconcile orphaned blobs.
+        if (row.uploadedByUserId !== ctx.auth.userId) {
+          const perms = await loadUserPermissions(ctx.db, ctx.tenantId, ctx.auth.userId);
+          if (!perms.includes('issues.manage')) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'not-attachment-author-or-manager',
+            });
+          }
+        }
+        await ctx.db
+          .delete(issueAttachments)
+          .where(eq(issueAttachments.id, row.id));
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          issueId: row.issueId,
+          actorUserId: ctx.auth.userId,
+          kind: 'attachment_removed',
+          payload: {
+            attachmentId: row.id,
+            filename: row.filename,
+          },
+        });
+        return { ok: true as const };
+      }),
+  });
+
   return router({
     categories: categoriesRouter,
     issues: coreRouter,
     comments: commentsRouter,
+    activity: activityRouter,
+    attachments: attachmentsRouter,
   });
 }

@@ -21,7 +21,10 @@
  * `scan-page-copy.ts`) because the locale-independent route cannot use
  * `next-intl`.
  */
-import type { IssueCustomQuestion } from '@forma360/shared/issues-schema';
+import type {
+  IssueCustomQuestion,
+  IssueToggleableBuiltInField,
+} from '@forma360/shared/issues-schema';
 import { Loader2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -98,6 +101,16 @@ export default function ScanReportPage() {
   const customQuestions: ReadonlyArray<IssueCustomQuestion> =
     (category?.customQuestions ?? []) as ReadonlyArray<IssueCustomQuestion>;
 
+  const enabledBuiltInFields: ReadonlyArray<IssueToggleableBuiltInField> =
+    (category?.enabledBuiltInFields ?? [
+      'description',
+      'site',
+      'media',
+      'location',
+    ]) as ReadonlyArray<IssueToggleableBuiltInField>;
+  const showDescription = enabledBuiltInFields.includes('description');
+  const showLocation = enabledBuiltInFields.includes('location');
+
   const canSubmit = useMemo(
     () =>
       category !== null &&
@@ -114,7 +127,9 @@ export default function ScanReportPage() {
     if (!canSubmit || category === null || category === undefined) return;
 
     const descriptionParts: string[] = [];
-    if (description.trim().length > 0) descriptionParts.push(description.trim());
+    if (showDescription && description.trim().length > 0) {
+      descriptionParts.push(description.trim());
+    }
     // Public form: surface optional reporter contact info inside the
     // description body so it's visible to staff even though the report
     // is technically anonymous (no userId is attached).
@@ -145,7 +160,7 @@ export default function ScanReportPage() {
     if (dateOccurred !== '') {
       input.dateOccurred = new Date(dateOccurred).toISOString();
     }
-    if (locationAddress.trim().length > 0) {
+    if (showLocation && locationAddress.trim().length > 0) {
       input.locationAddress = locationAddress.trim();
     }
     const trimmedQuestionResponses = Object.fromEntries(
@@ -242,17 +257,19 @@ export default function ScanReportPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="description">{COPY.fields.descriptionLabel}</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                maxLength={MAX_DESCRIPTION}
-                placeholder={COPY.fields.descriptionPlaceholder}
-              />
-            </div>
+            {showDescription ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="description">{COPY.fields.descriptionLabel}</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  maxLength={MAX_DESCRIPTION}
+                  placeholder={COPY.fields.descriptionPlaceholder}
+                />
+              </div>
+            ) : null}
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -292,16 +309,18 @@ export default function ScanReportPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="location">{COPY.fields.locationAddressLabel}</Label>
-              <Input
-                id="location"
-                value={locationAddress}
-                onChange={(e) => setLocationAddress(e.target.value)}
-                maxLength={MAX_LOCATION}
-                placeholder={COPY.fields.locationAddressPlaceholder}
-              />
-            </div>
+            {showLocation ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="location">{COPY.fields.locationAddressLabel}</Label>
+                <Input
+                  id="location"
+                  value={locationAddress}
+                  onChange={(e) => setLocationAddress(e.target.value)}
+                  maxLength={MAX_LOCATION}
+                  placeholder={COPY.fields.locationAddressPlaceholder}
+                />
+              </div>
+            ) : null}
 
             {customQuestions.length > 0 ? (
               <div className="space-y-3 border-t pt-5">

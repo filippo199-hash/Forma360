@@ -7,6 +7,7 @@ import type { IssuesRouterDeps } from '@forma360/api';
 import { createSendTemplatedEmail } from '@forma360/shared/email';
 import { env } from './env';
 import { logger } from './logger';
+import { storage } from './storage';
 
 const sendTemplatedEmail = createSendTemplatedEmail({
   delivery: env.EMAIL_DELIVERY,
@@ -20,4 +21,5 @@ export const issuesDeps: IssuesRouterDeps = {
   sendEmail: sendTemplatedEmail,
   logger: logger.child({ component: 'issues-router' }),
   appUrl: env.APP_URL,
+  storage,
 };

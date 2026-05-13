@@ -178,6 +178,9 @@ export const stubIssuesDeps: IssuesRouterDeps = {
   },
   logger: createLogger({ service: 'issues-stub', level: 'fatal', nodeEnv: 'test' }),
   appUrl: 'http://localhost:3000',
+  storage: {
+    getSignedDownloadUrl: async ({ key }) => `stub://issue-attachment/${key}`,
+  },
 };
 
 export const appRouter = buildAppRouter({

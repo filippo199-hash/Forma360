@@ -43,6 +43,7 @@ const MIGRATION_FILES = [
   '0008_invitations.sql',
   '0009_signature_workflow.sql',
   '0010_issues.sql',
+  '0011_observations_richer.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {

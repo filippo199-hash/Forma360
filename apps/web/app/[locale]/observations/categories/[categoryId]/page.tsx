@@ -3,8 +3,16 @@
 import type {
   IssueCustomQuestion,
   IssueNotificationRule,
+  IssueToggleableBuiltInField,
 } from '@forma360/shared/issues-schema';
-import { ArrowLeft, Pencil, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ImageIcon,
+  MapPin,
+  Pencil,
+  Type as TypeIcon,
+  X,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -167,6 +175,13 @@ export default function CategoryDetailPage() {
           <CriticalAlertsCard
             categoryId={categoryId}
             criticalAlerts={category.criticalAlerts}
+            onSaved={invalidateCategory}
+          />
+          <IssueFieldsCard
+            categoryId={categoryId}
+            enabledBuiltInFields={
+              Array.from(category.enabledBuiltInFields) as IssueToggleableBuiltInField[]
+            }
             onSaved={invalidateCategory}
           />
           <CustomQuestionsCard
@@ -1030,6 +1045,112 @@ function VisibilityCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+interface IssueFieldRow {
+  key: 'title' | IssueToggleableBuiltInField;
+  required: boolean;
+  Icon: React.ComponentType<{ className?: string }>;
+}
+
+const ISSUE_FIELD_ROWS: ReadonlyArray<IssueFieldRow> = [
+  { key: 'title', required: true, Icon: TypeIcon },
+  { key: 'description', required: false, Icon: TypeIcon },
+  { key: 'site', required: false, Icon: MapPin },
+  { key: 'media', required: false, Icon: ImageIcon },
+  { key: 'location', required: false, Icon: MapPin },
+];
+
+function IssueFieldsCard({
+  categoryId,
+  enabledBuiltInFields,
+  onSaved,
+}: {
+  categoryId: string;
+  enabledBuiltInFields: IssueToggleableBuiltInField[];
+  onSaved: () => void;
+}) {
+  const tDetail = useTranslations('issues.categories.detail');
+  const t = useTranslations('issues.categories');
+  const tCommon = useTranslations('common');
+
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<IssueToggleableBuiltInField[]>(enabledBuiltInFields);
+  useEffect(() => setDraft(enabledBuiltInFields), [enabledBuiltInFields]);
+
+  const update = trpc.issues.categories.update.useMutation({
+    onSuccess: () => {
+      toast.success(t('updateToast'));
+      setEditing(false);
+      onSaved();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  function toggle(key: IssueToggleableBuiltInField) {
+    setDraft((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  }
+
+  const dirty = useMemo(() => {
+    const a = [...draft].sort();
+    const b = [...enabledBuiltInFields].sort();
+    if (a.length !== b.length) return true;
+    return a.some((v, i) => v !== b[i]);
+  }, [draft, enabledBuiltInFields]);
+
+  return (
+    <CardShell
+      title={tDetail('issueFieldsCard.title')}
+      subtitle={tDetail('issueFieldsCard.subtitle')}
+      editing={editing}
+      onEdit={() => setEditing(true)}
+      onCancel={() => {
+        setDraft(enabledBuiltInFields);
+        setEditing(false);
+      }}
+      onSave={() => update.mutate({ categoryId, enabledBuiltInFields: draft })}
+      saveDisabled={!dirty}
+      saving={update.isPending}
+    >
+      <ul className="divide-y rounded-md border">
+        {ISSUE_FIELD_ROWS.map((row) => {
+          const isToggleable = row.key !== 'title';
+          const checked =
+            row.key === 'title' ? true : draft.includes(row.key as IssueToggleableBuiltInField);
+          return (
+            <li key={row.key} className="flex items-center justify-between gap-3 p-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <row.Icon className="h-4 w-4" />
+                </span>
+                <div>
+                  <div className="text-sm font-medium">
+                    {tDetail(`issueFieldsCard.rows.${row.key}`)}
+                  </div>
+                  {row.required ? (
+                    <span className="text-xs text-muted-foreground">
+                      {tDetail('issueFieldsCard.requiredBadge')}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+              <Switch
+                id={`built-in-${row.key}`}
+                checked={checked}
+                disabled={!editing || !isToggleable}
+                onCheckedChange={() => {
+                  if (!isToggleable) return;
+                  toggle(row.key as IssueToggleableBuiltInField);
+                }}
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </CardShell>
   );
 }
 

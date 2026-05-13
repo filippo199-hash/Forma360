@@ -48,3 +48,38 @@ export type IssueNotificationRule = (typeof NOTIFICATION_RULES)[number];
 
 export const ISSUE_STATUSES = ['open', 'investigation', 'closed'] as const;
 export type IssueStatusValue = (typeof ISSUE_STATUSES)[number];
+
+/** Priority values. Mirrors `issuePriorities` in the db schema. */
+export const ISSUE_PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
+export const issuePrioritySchema = z.enum(ISSUE_PRIORITIES);
+export type IssuePriority = z.infer<typeof issuePrioritySchema>;
+
+/**
+ * Subset of `issueBuiltInFields` the admin can toggle per category. Title
+ * is always-on (required) and intentionally not in this list.
+ */
+export const ISSUE_TOGGLEABLE_BUILT_IN_FIELDS = [
+  'description',
+  'site',
+  'media',
+  'location',
+] as const;
+export const issueEnabledBuiltInFieldsSchema = z
+  .array(z.enum(ISSUE_TOGGLEABLE_BUILT_IN_FIELDS))
+  .max(4);
+export type IssueToggleableBuiltInField = (typeof ISSUE_TOGGLEABLE_BUILT_IN_FIELDS)[number];
+
+/** Activity log event kinds. Mirrors `issueActivityKinds` in the db schema. */
+export const ISSUE_ACTIVITY_KINDS = [
+  'created',
+  'status_changed',
+  'priority_changed',
+  'assignee_changed',
+  'due_date_changed',
+  'commented',
+  'attachment_added',
+  'attachment_removed',
+  'edited',
+] as const;
+export const issueActivityKindSchema = z.enum(ISSUE_ACTIVITY_KINDS);
+export type IssueActivityKind = z.infer<typeof issueActivityKindSchema>;

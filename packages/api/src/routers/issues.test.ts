@@ -59,6 +59,7 @@ const MIGRATION_FILES = [
   '0008_invitations.sql',
   '0009_signature_workflow.sql',
   '0010_issues.sql',
+  '0011_observations_richer.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -566,6 +567,122 @@ describe('issues router (Phase 3 PR 1)', () => {
         body: 'Updated',
       });
       expect(result.ok).toBe(true);
+    });
+  });
+
+  // ─── PR-3 additions: activity / attachments / priority / assignee / due ──
+  describe('PR-3 activity + attachments', () => {
+    async function bootIssue(): Promise<string> {
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      const { categoryId } = await adminCaller.issues.categories.create({
+        name: 'PR3',
+      });
+      const { issueId } = await adminCaller.issues.issues.create({
+        categoryId,
+        title: 'PR-3 sample',
+      });
+      return issueId;
+    }
+
+    it('create writes a `created` activity event', async () => {
+      const issueId = await bootIssue();
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      const events = await adminCaller.issues.activity.list({ issueId });
+      const created = events.find((e) => e.kind === 'created');
+      expect(created).toBeDefined();
+      expect(created?.actorUserId).toBe(adminUserId);
+    });
+
+    it('update with priority writes a priority_changed activity event', async () => {
+      const issueId = await bootIssue();
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      await adminCaller.issues.issues.update({ issueId, priority: 'high' });
+      const events = await adminCaller.issues.activity.list({ issueId });
+      const prio = events.find((e) => e.kind === 'priority_changed');
+      expect(prio).toBeDefined();
+      expect((prio?.payload as Record<string, unknown>).to).toBe('high');
+    });
+
+    it('update with assignee writes an assignee_changed activity event', async () => {
+      const issueId = await bootIssue();
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      await adminCaller.issues.issues.update({
+        issueId,
+        assigneeUserId: managerUserId,
+      });
+      const events = await adminCaller.issues.activity.list({ issueId });
+      const assignee = events.find((e) => e.kind === 'assignee_changed');
+      expect(assignee).toBeDefined();
+      expect((assignee?.payload as Record<string, unknown>).to).toBe(managerUserId);
+    });
+
+    it('update with dueAt writes a due_date_changed activity event', async () => {
+      const issueId = await bootIssue();
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      const due = new Date(Date.now() + 7 * 24 * 3_600_000).toISOString();
+      await adminCaller.issues.issues.update({ issueId, dueAt: due });
+      const events = await adminCaller.issues.activity.list({ issueId });
+      const dueEvent = events.find((e) => e.kind === 'due_date_changed');
+      expect(dueEvent).toBeDefined();
+      expect((dueEvent?.payload as Record<string, unknown>).to).toBe(due);
+    });
+
+    it('close writes a status_changed activity event', async () => {
+      const issueId = await bootIssue();
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      await adminCaller.issues.issues.close({ issueId, reason: 'Done' });
+      const events = await adminCaller.issues.activity.list({ issueId });
+      const statusEvent = events.find((e) => e.kind === 'status_changed');
+      expect(statusEvent).toBeDefined();
+      expect((statusEvent?.payload as Record<string, unknown>).from).toBe('open');
+      expect((statusEvent?.payload as Record<string, unknown>).to).toBe('closed');
+    });
+
+    it('comments.create writes a `commented` activity event', async () => {
+      const issueId = await bootIssue();
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      await adminCaller.issues.comments.create({ issueId, body: 'Hello' });
+      const events = await adminCaller.issues.activity.list({ issueId });
+      const commented = events.find((e) => e.kind === 'commented');
+      expect(commented).toBeDefined();
+      expect((commented?.payload as Record<string, unknown>).body).toBe('Hello');
+    });
+
+    it('attachments.create writes an attachment_added activity event', async () => {
+      const issueId = await bootIssue();
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      await adminCaller.issues.attachments.create({
+        issueId,
+        filename: 'photo.jpg',
+        mimeType: 'image/jpeg',
+        sizeBytes: 12345,
+        storageKey: `${tenantId}/issues/${issueId}/photo.jpg`,
+      });
+      const events = await adminCaller.issues.activity.list({ issueId });
+      const added = events.find((e) => e.kind === 'attachment_added');
+      expect(added).toBeDefined();
+      expect((added?.payload as Record<string, unknown>).filename).toBe('photo.jpg');
+    });
+
+    it('activity.list returns events in DESC order', async () => {
+      const issueId = await bootIssue();
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      // Add at least two follow-up events with small delays so the
+      // timestamps differ deterministically.
+      await new Promise((r) => setTimeout(r, 5));
+      await adminCaller.issues.issues.update({ issueId, priority: 'low' });
+      await new Promise((r) => setTimeout(r, 5));
+      await adminCaller.issues.comments.create({ issueId, body: 'A comment' });
+      const events = await adminCaller.issues.activity.list({ issueId });
+      // We expect a strictly non-increasing createdAt sequence.
+      const times = events.map((e) => new Date(e.createdAt).getTime());
+      for (let i = 1; i < times.length; i++) {
+        const prev = times[i - 1] ?? 0;
+        const cur = times[i] ?? 0;
+        expect(prev).toBeGreaterThanOrEqual(cur);
+      }
+      // The most recent event should be the commented one.
+      expect(events[0]?.kind).toBe('commented');
     });
   });
 });

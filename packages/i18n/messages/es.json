@@ -1000,7 +1000,12 @@
     },
     "detail": {
       "backLink": "Back to observations",
+      "breadcrumb": "Observations",
       "descriptionTitle": "Description",
+      "detailsTitle": "Details",
+      "locationTitle": "Location",
+      "filesTitle": "Files",
+      "inspectionsTitle": "Inspections",
       "customFieldsTitle": "Details",
       "customQuestionsTitle": "Questions",
       "commentsTitle": "Comments",
@@ -1013,6 +1018,7 @@
       "closeButton": "Close observation",
       "reopenButton": "Reopen observation",
       "archiveButton": "Archive",
+      "deleteButton": "Delete",
       "moreLabel": "More",
       "closeDialogTitle": "Close this observation?",
       "closeDialogBody": "The observation will be marked as closed. You can reopen it later if needed.",
@@ -1036,7 +1042,54 @@
       "updateToast": "Observation updated.",
       "closeToast": "Observation closed.",
       "reopenToast": "Observation reopened.",
-      "archiveToast": "Observation archived."
+      "archiveToast": "Observation archived.",
+      "tabs": {
+        "overview": "Overview",
+        "activity": "Activity",
+        "files": "Files",
+        "inspections": "Inspections",
+        "actions": "Actions"
+      },
+      "fields": {
+        "category": "Category",
+        "site": "Site",
+        "assignee": "Assignee",
+        "priority": "Priority",
+        "dueDate": "Due date",
+        "dateOccurred": "Date occurred",
+        "reference": "Reference",
+        "reportedVia": "Reported via",
+        "noAssignee": "Unassigned",
+        "noPriority": "No priority",
+        "noDueDate": "No due date",
+        "pickUser": "Choose user",
+        "clearAssignee": "Clear",
+        "searchUsers": "Search users"
+      },
+      "actions": {
+        "share": "Share",
+        "add": "Add",
+        "addInspection": "Add inspection",
+        "addAction": "Add action"
+      },
+      "activity": {
+        "empty": "No activity yet.",
+        "events": {
+          "created": "created this observation",
+          "statusChanged": "changed status from {from} to {to}",
+          "priorityChanged": "set priority to {to}",
+          "assigneeChanged": "set assignee to {to}",
+          "assigneeCleared": "cleared the assignee",
+          "dueDateChanged": "set due date to {to}",
+          "dueDateCleared": "cleared the due date",
+          "commented": "commented",
+          "attachmentAdded": "added file {filename}",
+          "attachmentRemoved": "removed file {filename}",
+          "edited": "edited the observation"
+        }
+      },
+      "inspectionsEmpty": "Linked inspections will appear here.",
+      "linkedActionsEmpty": "Linked actions will appear here."
     },
     "categories": {
       "title": "Manage observation categories",
@@ -1146,6 +1199,19 @@
           "reporterBadge": "View, edit",
           "reporterBody": "Users have full view and edit access to observations in this category.",
           "note": "Notifying or assigning a user to an observation will give them view and edit access, regardless of their category access."
+        },
+        "issueFieldsCard": {
+          "title": "Issue fields",
+          "subtitle": "These fields can be automatically or manually captured when an issue is initially reported.",
+          "requiredBadge": "Required",
+          "saveSuccess": "Issue fields updated.",
+          "rows": {
+            "title": "Title",
+            "description": "Description",
+            "site": "Site",
+            "media": "Image and video",
+            "location": "Location"
+          }
         }
       },
       "questionBuilder": {
@@ -1222,6 +1288,26 @@
         "revoked": "QR code revoked.",
         "error": "Could not update the QR code. Please try again."
       }
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "attachments": {
+      "dropZone": "Drag and drop files, or click to browse",
+      "uploading": "Uploading…",
+      "uploadError": "Could not upload the file. Please try again.",
+      "deleteConfirm": "Remove this file?",
+      "deleteAction": "Remove",
+      "emptyTitle": "No files yet",
+      "emptyBody": "Files added to this observation will appear here.",
+      "sizeBytes": "{count} bytes",
+      "sizeKb": "{count} KB",
+      "sizeMb": "{count} MB",
+      "uploadedBy": "Uploaded by {name}",
+      "filenameLabel": "Filename"
     }
   }
 }
