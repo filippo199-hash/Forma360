@@ -1385,7 +1385,23 @@
       "noAssignee": "Unassigned",
       "noDueDate": "—",
       "noPriority": "—",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "searchLabel": "Search",
+      "searchPlaceholder": "Search titles…",
+      "filterPriority": "Priority",
+      "filterPriorityAll": "Any priority",
+      "sortLabel": "Sort by",
+      "sortBy": {
+        "created": "Newest first",
+        "due": "Due date",
+        "priority": "Priority",
+        "updated": "Recently updated"
+      },
+      "viewToggleLabel": "Switch view",
+      "viewList": "List",
+      "viewBoard": "Board",
+      "boardColumnEmpty": "Nothing here",
+      "boardCountAria": "Cards in column"
     },
     "detail": {
       "backLink": "Back to actions",

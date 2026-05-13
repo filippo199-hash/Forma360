@@ -25,7 +25,7 @@ import {
 import { type DependentResolverDeps } from '@forma360/permissions';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, isNull, ne } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, isNotNull, isNull, lt, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -104,18 +104,45 @@ const listInput = z
     status: statusEnum.optional(),
     sourceType: z.enum(['inspection', 'issue', 'standalone']).optional(),
     sourceId: z.string().length(26).optional(),
+    /**
+     * Server-resolved "assigned to me" filter — flips to `ctx.auth.userId`
+     * inside the resolver so the client never has to know its own id.
+     */
+    assignedToMe: z.boolean().default(false),
     assigneeUserId: z.string().optional(),
     siteId: z.string().length(26).optional(),
+    priority: priorityEnum.optional(),
+    /** Case-insensitive search on `title`. Server uses ILIKE. */
+    query: z.string().max(200).optional(),
+    /**
+     * When true: only rows whose due_at has passed and which aren't in
+     * `completed` / `cancelled`. SafetyCulture parity for the "Overdue"
+     * chip in the toolbar.
+     */
+    overdueOnly: z.boolean().default(false),
     includeArchived: z.boolean().default(false),
     /**
      * When true, the list omits `completed` and `cancelled` rows.
      * Matches SafetyCulture's "Hide closed" toggle.
      */
     hideClosed: z.boolean().default(false),
+    /**
+     * Sort options. `created` (desc, default) is the most useful for a
+     * triaged inbox; `due` (asc) for "what's next"; `priority` (high → low)
+     * for a workload view; `updated` (desc) for catching up after time off.
+     */
+    sortBy: z.enum(['created', 'due', 'priority', 'updated']).default('created'),
     /** Caller-bounded; default sorts by createdAt desc. */
     limit: z.number().int().min(1).max(ACTION_LIST_LIMIT).default(ACTION_LIST_LIMIT),
   })
-  .default({ includeArchived: false, hideClosed: false, limit: ACTION_LIST_LIMIT });
+  .default({
+    assignedToMe: false,
+    overdueOnly: false,
+    includeArchived: false,
+    hideClosed: false,
+    sortBy: 'created',
+    limit: ACTION_LIST_LIMIT,
+  });
 
 const createStandaloneInput = z.object({
   title: z.string().min(1).max(500),
@@ -198,15 +225,61 @@ export const actionsRouter = router({
       if (input.status !== undefined) where.push(eq(actions.status, input.status));
       if (input.sourceType !== undefined) where.push(eq(actions.sourceType, input.sourceType));
       if (input.sourceId !== undefined) where.push(eq(actions.sourceId, input.sourceId));
+      // "Assigned to me" is server-resolved against the caller's id so the
+      // client doesn't need to know it. `assigneeUserId` (explicit) wins
+      // if both are passed — useful for the future "filter by another
+      // user" admin view.
       if (input.assigneeUserId !== undefined) {
         where.push(eq(actions.assigneeUserId, input.assigneeUserId));
+      } else if (input.assignedToMe) {
+        where.push(eq(actions.assigneeUserId, ctx.auth.userId));
       }
       if (input.siteId !== undefined) where.push(eq(actions.siteId, input.siteId));
+      if (input.priority !== undefined) where.push(eq(actions.priority, input.priority));
+      if (input.query !== undefined && input.query.trim().length > 0) {
+        // Postgres ILIKE for case-insensitive prefix-anywhere match. Wrap
+        // both sides in lower() not strictly needed for ILIKE but keeps
+        // the SQL portable if we move off PG later.
+        where.push(ilike(actions.title, `%${input.query.trim()}%`));
+      }
+      if (input.overdueOnly) {
+        // Due in the past, not in a terminal status. Open / in_progress
+        // both count as "still actionable".
+        where.push(isNotNull(actions.dueAt));
+        where.push(lt(actions.dueAt, new Date()));
+        where.push(ne(actions.status, 'completed'));
+        where.push(ne(actions.status, 'cancelled'));
+      }
       if (!input.includeArchived) where.push(isNull(actions.archivedAt));
       if (input.hideClosed) {
         where.push(ne(actions.status, 'completed'));
         where.push(ne(actions.status, 'cancelled'));
       }
+
+      // Sort order. Priority sort puts NULL last (NULLS LAST) so blank-
+      // priority rows don't crowd the top. `CASE` maps the priority text
+      // values to a numeric weight so the SQL is portable to other
+      // backends; PG could use an enum here but actions.priority is `text`.
+      const sortOrder = (() => {
+        switch (input.sortBy) {
+          case 'due':
+            return [
+              sql`${actions.dueAt} ASC NULLS LAST`,
+              desc(actions.createdAt),
+            ];
+          case 'priority':
+            return [
+              sql`CASE ${actions.priority} WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END ASC`,
+              desc(actions.createdAt),
+            ];
+          case 'updated':
+            return [desc(actions.updatedAt)];
+          case 'created':
+          default:
+            return [desc(actions.createdAt)];
+        }
+      })();
+
       const rows = await ctx.db
         .select({
           id: actions.id,
@@ -228,7 +301,7 @@ export const actionsRouter = router({
         .from(actions)
         .leftJoin(user, eq(user.id, actions.assigneeUserId))
         .where(and(...where))
-        .orderBy(desc(actions.createdAt))
+        .orderBy(...sortOrder)
         .limit(input.limit);
       return rows;
     }),
