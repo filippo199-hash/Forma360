@@ -172,10 +172,10 @@ export default function ActionsListPage() {
               {s === 'all'
                 ? t('filterSourceAll')
                 : s === 'standalone'
-                ? t('filterSourceStandalone')
-                : s === 'inspection'
-                ? t('filterSourceInspection')
-                : t('filterSourceIssue')}
+                  ? t('filterSourceStandalone')
+                  : s === 'inspection'
+                    ? t('filterSourceInspection')
+                    : t('filterSourceIssue')}
             </option>
           ))}
         </Select>
@@ -364,6 +364,7 @@ function ListView({
             <tr className="text-left">
               <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
               <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
+              <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
               <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
               <th className="px-3 py-2 font-medium">{t('columns.priority')}</th>
               <th className="px-3 py-2 font-medium">{t('columns.assignee')}</th>
@@ -374,13 +375,13 @@ function ListView({
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="p-4">
+                <td colSpan={8} className="p-4">
                   <Skeleton className="h-4 w-full" />
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                <td colSpan={8} className="p-8 text-center text-muted-foreground">
                   <p>{t('empty')}</p>
                   {canCreate ? (
                     <Link
@@ -410,6 +411,30 @@ function ListView({
                       <Link href={`/${locale}/actions/${row.id}`} className="hover:underline">
                         {row.title}
                       </Link>
+                      {row.recurrence !== null && row.recurrence !== undefined ? (
+                        <span
+                          className="ml-2 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-200"
+                          title={t('recurringBadge')}
+                        >
+                          {t('recurringBadge')}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2">
+                      {row.actionTypeName !== null ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
+                          {row.actionTypeColor !== null && row.actionTypeColor.length > 0 ? (
+                            <span
+                              className="h-2 w-2 rounded-full"
+                              style={{ backgroundColor: row.actionTypeColor }}
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          {row.actionTypeName}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {row.status === 'open' ||
@@ -445,8 +470,8 @@ function ListView({
                       {row.sourceType === 'inspection'
                         ? t('sourceInspection')
                         : row.sourceType === 'issue'
-                        ? t('sourceIssue')
-                        : t('sourceStandalone')}
+                          ? t('sourceIssue')
+                          : t('sourceStandalone')}
                     </td>
                   </tr>
                 );
@@ -508,13 +533,7 @@ function BoardView({
               </p>
             ) : (
               rows.map((row) => (
-                <BoardCard
-                  key={row.id}
-                  row={row}
-                  locale={locale}
-                  tPriority={tPriority}
-                  t={t}
-                />
+                <BoardCard key={row.id} row={row} locale={locale} tPriority={tPriority} t={t} />
               ))
             )}
           </div>
@@ -545,12 +564,12 @@ function BoardCard({
     row.priority === 'critical'
       ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100'
       : row.priority === 'high'
-      ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-100'
-      : row.priority === 'medium'
-      ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100'
-      : row.priority === 'low'
-      ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
-      : '';
+        ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-100'
+        : row.priority === 'medium'
+          ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100'
+          : row.priority === 'low'
+            ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'
+            : '';
 
   return (
     <Link
@@ -562,12 +581,33 @@ function BoardCard({
           {row.sourceType === 'inspection'
             ? t('sourceInspection')
             : row.sourceType === 'issue'
-            ? t('sourceIssue')
-            : t('sourceStandalone')}
+              ? t('sourceIssue')
+              : t('sourceStandalone')}
         </span>
         <span className="font-mono">{row.referenceNumber ?? row.id.slice(-6)}</span>
       </div>
       <p className="line-clamp-2 font-medium">{row.title}</p>
+      {row.actionTypeName !== null || row.recurrence !== null ? (
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          {row.actionTypeName !== null ? (
+            <span className="inline-flex items-center gap-1 rounded-full border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
+              {row.actionTypeColor !== null && row.actionTypeColor.length > 0 ? (
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: row.actionTypeColor }}
+                  aria-hidden="true"
+                />
+              ) : null}
+              {row.actionTypeName}
+            </span>
+          ) : null}
+          {row.recurrence !== null ? (
+            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-200">
+              {t('recurringBadge')}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
         {row.priority === 'low' ||
         row.priority === 'medium' ||
@@ -582,9 +622,7 @@ function BoardCard({
             {new Date(row.dueAt).toLocaleDateString()}
           </span>
         ) : null}
-        <span className="text-muted-foreground">
-          {row.assigneeName ?? t('noAssignee')}
-        </span>
+        <span className="text-muted-foreground">{row.assigneeName ?? t('noAssignee')}</span>
       </div>
     </Link>
   );
@@ -602,6 +640,10 @@ interface ActionRow {
   siteId: string | null;
   sourceType: string;
   sourceId: string | null;
+  actionTypeId: string | null;
+  actionTypeName: string | null;
+  actionTypeColor: string | null;
+  recurrence: unknown;
   createdAt: Date;
   updatedAt: Date;
   archivedAt: Date | null;

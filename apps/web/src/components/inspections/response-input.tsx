@@ -73,7 +73,13 @@ function StubNotice() {
   return <p className="text-sm italic text-muted-foreground">{t('stubNotice')}</p>;
 }
 
-function TextInput({ item, readonly }: { item: Extract<Item, { type: 'text' }>; readonly: boolean }) {
+function TextInput({
+  item,
+  readonly,
+}: {
+  item: Extract<Item, { type: 'text' }>;
+  readonly: boolean;
+}) {
   const t = useTranslations('inspections.conduct.response.text');
   const { state, dispatch } = useConduct();
   const raw = state.responses[item.id];
@@ -97,9 +103,7 @@ function TextInput({ item, readonly }: { item: Extract<Item, { type: 'text' }>; 
           className="min-h-[96px]"
           aria-label={item.prompt}
         />
-        <p className="text-xs text-muted-foreground">
-          {t('charsRemaining', { count: remaining })}
-        </p>
+        <p className="text-xs text-muted-foreground">{t('charsRemaining', { count: remaining })}</p>
       </div>
     );
   }
@@ -114,9 +118,7 @@ function TextInput({ item, readonly }: { item: Extract<Item, { type: 'text' }>; 
         placeholder={t('placeholder')}
         aria-label={item.prompt}
       />
-      <p className="text-xs text-muted-foreground">
-        {t('charsRemaining', { count: remaining })}
-      </p>
+      <p className="text-xs text-muted-foreground">{t('charsRemaining', { count: remaining })}</p>
     </div>
   );
 }
@@ -143,7 +145,9 @@ function NumberInput({
           type="number"
           inputMode="decimal"
           value={value}
-          onChange={(e) => dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: e.target.value })}
+          onChange={(e) =>
+            dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: e.target.value })
+          }
           min={item.min}
           max={item.max}
           step={item.decimalPlaces === 0 ? 1 : 10 ** -item.decimalPlaces}
@@ -176,7 +180,8 @@ function DateLikeInput({
   const { state, dispatch } = useConduct();
   const raw = state.responses[item.id];
   const value = typeof raw === 'string' ? raw : '';
-  const inputType = item.type === 'date' ? 'date' : item.type === 'time' ? 'time' : 'datetime-local';
+  const inputType =
+    item.type === 'date' ? 'date' : item.type === 'time' ? 'time' : 'datetime-local';
   return (
     <Input
       type={inputType}
@@ -236,7 +241,9 @@ function MultipleChoiceInput({
                 type={set.multiSelect ? 'checkbox' : 'radio'}
                 name={item.id}
                 checked={isSelected}
-                onChange={() => (set.multiSelect ? toggleMulti(option.id) : toggleSingle(option.id))}
+                onChange={() =>
+                  set.multiSelect ? toggleMulti(option.id) : toggleSingle(option.id)
+                }
                 disabled={readonly}
                 className="h-5 w-5"
               />
@@ -269,7 +276,9 @@ function CheckboxInput({
       <input
         type="checkbox"
         checked={checked}
-        onChange={(e) => dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: e.target.checked })}
+        onChange={(e) =>
+          dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: e.target.checked })
+        }
         disabled={readonly}
         className="h-5 w-5"
       />
@@ -297,7 +306,9 @@ function SliderInput({
         max={item.max}
         step={item.step}
         value={value}
-        onChange={(e) => dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: Number(e.target.value) })}
+        onChange={(e) =>
+          dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: Number(e.target.value) })
+        }
         disabled={readonly}
         className="w-full"
         aria-label={item.prompt}
@@ -433,10 +444,7 @@ function SignatureInput({
         const existing = signed.find((s) => s.slotId === item.id && s.slotIndex === slot.slotIndex);
         if (existing !== undefined) {
           return (
-            <div
-              key={slot.slotIndex}
-              className="rounded-md border bg-muted/20 px-3 py-2 text-sm"
-            >
+            <div key={slot.slotIndex} className="rounded-md border bg-muted/20 px-3 py-2 text-sm">
               <p>{t('signed', { name: existing.signerName })}</p>
               {slot.label !== undefined ? (
                 <p className="text-xs text-muted-foreground">{slot.label}</p>
@@ -446,9 +454,7 @@ function SignatureInput({
         }
         return (
           <div key={slot.slotIndex} className="space-y-2 rounded-md border p-3">
-            {slot.label !== undefined ? (
-              <p className="text-sm font-medium">{slot.label}</p>
-            ) : null}
+            {slot.label !== undefined ? <p className="text-sm font-medium">{slot.label}</p> : null}
             <SignaturePad
               saving={sign.isPending}
               onSave={({ signatureData, signerName, signerRole }) => {
@@ -462,9 +468,7 @@ function SignatureInput({
                 });
               }}
             />
-            {readonly ? (
-              <p className="text-xs italic text-muted-foreground">{t('sign')}</p>
-            ) : null}
+            {readonly ? <p className="text-xs italic text-muted-foreground">{t('sign')}</p> : null}
           </div>
         );
       })}
@@ -478,7 +482,5 @@ function ReadonlyField({ kind }: { kind: 'conductedBy' | 'inspectionDate' | 'doc
   if (kind === 'conductedBy') value = state.conductedByUserId;
   else if (kind === 'inspectionDate') value = state.startedAt.slice(0, 10);
   else value = state.documentNumber ?? '';
-  return (
-    <Input type="text" value={value} readOnly className="max-w-[24rem] bg-muted/30" />
-  );
+  return <Input type="text" value={value} readOnly className="max-w-[24rem] bg-muted/30" />;
 }

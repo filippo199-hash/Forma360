@@ -206,13 +206,7 @@ interface RowActionsMenuProps {
   onQrCode: () => void;
 }
 
-function RowActionsMenu({
-  templateId,
-  status,
-  locale,
-  onArchive,
-  onQrCode,
-}: RowActionsMenuProps) {
+function RowActionsMenu({ templateId, status, locale, onArchive, onQrCode }: RowActionsMenuProps) {
   const t = useTranslations('templates.list');
   const router = useRouter();
   const utils = trpc.useUtils();

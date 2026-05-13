@@ -77,10 +77,7 @@ export default function InspectionsListPage() {
   async function exportCurrentFilter() {
     try {
       const res = await utils.client.inspectionsExport.exportCsv.mutate({ filter: listInput });
-      triggerCsvDownload(
-        res.csv,
-        `inspections-${new Date().toISOString().slice(0, 10)}.csv`,
-      );
+      triggerCsvDownload(res.csv, `inspections-${new Date().toISOString().slice(0, 10)}.csv`);
       toast.success(tExport('downloadReady', { count: res.rowCount }));
     } catch {
       toast.error(tCommon('error'));
@@ -160,11 +157,7 @@ export default function InspectionsListPage() {
             <Button size="sm" variant="outline" onClick={exportSelected}>
               {tBulk('exportSelected')}
             </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => setBulkArchiveOpen(true)}
-            >
+            <Button size="sm" variant="destructive" onClick={() => setBulkArchiveOpen(true)}>
               {tBulk('archiveSelected')}
             </Button>
           </div>
@@ -276,11 +269,7 @@ export default function InspectionsListPage() {
         </CardContent>
       </Card>
 
-      <TemplatePickerDialog
-        open={showPicker}
-        onOpenChange={setShowPicker}
-        locale={locale}
-      />
+      <TemplatePickerDialog open={showPicker} onOpenChange={setShowPicker} locale={locale} />
 
       <Dialog open={bulkArchiveOpen} onOpenChange={setBulkArchiveOpen}>
         <DialogContent>
@@ -432,10 +421,7 @@ function TemplatePickerDialog({
           )}
         </div>
         <DialogFooter>
-          <Button
-            onClick={onSubmit}
-            disabled={selected.length !== 26 || create.isPending}
-          >
+          <Button onClick={onSubmit} disabled={selected.length !== 26 || create.isPending}>
             {t('submit')}
           </Button>
         </DialogFooter>

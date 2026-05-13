@@ -66,8 +66,9 @@ export default function NewObservationPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const { data: categories, isLoading: loadingCategories } =
-    trpc.issues.categories.list.useQuery({ includeArchived: false });
+  const { data: categories, isLoading: loadingCategories } = trpc.issues.categories.list.useQuery({
+    includeArchived: false,
+  });
   const { data: sites } = trpc.sites.list.useQuery();
   const { data: category } = trpc.issues.categories.get.useQuery(
     { categoryId },
@@ -201,14 +202,14 @@ export default function NewObservationPage() {
       toast.success(t('successToast', { ref: result.referenceNumber }));
       router.push(`/${locale}/observations/${result.issueId}`);
     } catch (err) {
-      const message = err instanceof Error && err.message.length > 0 ? err.message : t('errorToast');
+      const message =
+        err instanceof Error && err.message.length > 0 ? err.message : t('errorToast');
       toast.error(message);
     }
   }
 
   const categorySelected = categoryId !== '';
-  const customQuestions: ReadonlyArray<IssueCustomQuestion> =
-    category?.customQuestions ?? [];
+  const customQuestions: ReadonlyArray<IssueCustomQuestion> = category?.customQuestions ?? [];
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">

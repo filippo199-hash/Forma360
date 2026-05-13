@@ -120,7 +120,8 @@ export default function SignSlotPage() {
   }
 
   const unsignedRemaining = slots.data.slots.filter(
-    (s) => !slots.data.signed.some((x) => x.slotIndex === s.slotIndex) && s.slotIndex !== slotIndexNum,
+    (s) =>
+      !slots.data.signed.some((x) => x.slotIndex === s.slotIndex) && s.slotIndex !== slotIndexNum,
   );
 
   const justSigned = sign.isSuccess;
@@ -135,9 +136,7 @@ export default function SignSlotPage() {
       <Card>
         <CardContent className="space-y-4 p-6">
           <div className="space-y-1">
-            <p className="text-sm font-medium">
-              {t('slotHeading', { index: slotIndexNum + 1 })}
-            </p>
+            <p className="text-sm font-medium">{t('slotHeading', { index: slotIndexNum + 1 })}</p>
             {matchedSlot.label !== undefined ? (
               <p className="text-xs text-muted-foreground">{matchedSlot.label}</p>
             ) : null}

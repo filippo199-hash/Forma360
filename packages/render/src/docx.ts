@@ -160,9 +160,7 @@ async function buildDocxBuffer(snap: InspectionRenderSnapshot): Promise<Uint8Arr
             children: ['Slot', 'Signer', 'Role', 'Signed at'].map(
               (h) =>
                 new TableCell({
-                  children: [
-                    new Paragraph({ children: [new TextRun({ text: h, bold: true })] }),
-                  ],
+                  children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
                 }),
             ),
           }),
@@ -239,15 +237,13 @@ async function uploadDocx(
 ): Promise<void> {
   const url = await deps.storage.getSignedUploadUrl({
     key: input.key,
-    contentType:
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     expiresInSeconds: 60 * 5,
   });
   const res = await fetch(url, {
     method: 'PUT',
     headers: {
-      'Content-Type':
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     },
     // Uint8Array is valid BodyInit at runtime; cast to bypass the
     // Next lib-dom strictness.

@@ -101,9 +101,7 @@ registerDependentResolver('issues', issueCommentsResolver);
 const categoryIdInput = z.object({ categoryId: z.string().length(26) });
 const issueIdInput = z.object({ issueId: z.string().length(26) });
 
-const listCategoriesInput = z
-  .object({ includeArchived: z.boolean().default(false) })
-  .default({});
+const listCategoriesInput = z.object({ includeArchived: z.boolean().default(false) }).default({});
 
 const createCategoryInput = z.object({
   name: z.string().min(1).max(200),
@@ -172,7 +170,12 @@ const closeIssueInput = z.object({
 
 const nearbyCountInput = z.object({
   siteId: z.string().length(26),
-  withinHours: z.number().int().min(1).max(24 * 30).default(24),
+  withinHours: z
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 30)
+    .default(24),
 });
 
 const listCommentsInput = z.object({ issueId: z.string().length(26) });
@@ -214,7 +217,11 @@ const createAttachmentInput = z.object({
   issueId: z.string().length(26),
   filename: z.string().min(1).max(500),
   mimeType: z.string().min(1).max(200),
-  sizeBytes: z.number().int().min(0).max(100 * 1024 * 1024),
+  sizeBytes: z
+    .number()
+    .int()
+    .min(0)
+    .max(100 * 1024 * 1024),
   storageKey: z.string().min(1).max(1024),
 });
 
@@ -508,10 +515,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           patch.linkedTemplateIds = input.linkedTemplateIds;
         if (input.enabledBuiltInFields !== undefined)
           patch.enabledBuiltInFields = input.enabledBuiltInFields;
-        await ctx.db
-          .update(issueCategories)
-          .set(patch)
-          .where(eq(issueCategories.id, cat.id));
+        await ctx.db.update(issueCategories).set(patch).where(eq(issueCategories.id, cat.id));
         return { ok: true as const };
       }),
 
@@ -737,9 +741,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         const hasMore = rows.length > input.limit;
         const slice = hasMore ? rows.slice(0, input.limit) : rows;
         const nextCursor =
-          hasMore && slice.length > 0
-            ? slice[slice.length - 1]?.createdAt.toISOString()
-            : null;
+          hasMore && slice.length > 0 ? slice[slice.length - 1]?.createdAt.toISOString() : null;
         return { items: slice, nextCursor };
       }),
 
@@ -765,12 +767,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
             message: 'category-archived',
           });
         }
-        await assertCallerSatisfiesCategoryAccess(
-          ctx.db,
-          ctx.tenantId,
-          ctx.auth.userId,
-          category,
-        );
+        await assertCallerSatisfiesCategoryAccess(ctx.db, ctx.tenantId, ctx.auth.userId, category);
 
         const accessSnapshot = await loadAccessSnapshot(ctx.db, ctx.tenantId, ctx.auth.userId);
         // Snapshot the reporter's display name at submission time.
@@ -797,8 +794,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           siteId: input.siteId ?? null,
           locationGps: input.locationGps ?? null,
           locationAddress: input.locationAddress ?? null,
-          dateOccurred:
-            input.dateOccurred !== undefined ? new Date(input.dateOccurred) : now,
+          dateOccurred: input.dateOccurred !== undefined ? new Date(input.dateOccurred) : now,
           customFieldValues: input.customFieldValues ?? {},
           customQuestionResponses: input.customQuestionResponses ?? {},
           categorySnapshot: buildCategorySnapshot(category),
@@ -843,7 +839,8 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         if (input.description !== undefined) patch.description = input.description;
         if (input.dateOccurred !== undefined) patch.dateOccurred = new Date(input.dateOccurred);
         if (input.siteId !== undefined) patch.siteId = input.siteId;
-        if (input.customFieldValues !== undefined) patch.customFieldValues = input.customFieldValues;
+        if (input.customFieldValues !== undefined)
+          patch.customFieldValues = input.customFieldValues;
         if (input.customQuestionResponses !== undefined)
           patch.customQuestionResponses = input.customQuestionResponses;
 
@@ -889,10 +886,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         // addition to (or instead of) the structured events above.
         const editedFields: string[] = [];
         if (input.title !== undefined && input.title !== issue.title) editedFields.push('title');
-        if (
-          input.description !== undefined &&
-          (input.description ?? null) !== issue.description
-        ) {
+        if (input.description !== undefined && (input.description ?? null) !== issue.description) {
           editedFields.push('description');
         }
         if (
@@ -1126,8 +1120,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           siteId: input.siteId ?? null,
           locationGps: input.locationGps ?? null,
           locationAddress: input.locationAddress ?? null,
-          dateOccurred:
-            input.dateOccurred !== undefined ? new Date(input.dateOccurred) : now,
+          dateOccurred: input.dateOccurred !== undefined ? new Date(input.dateOccurred) : now,
           customFieldValues: input.customFieldValues ?? {},
           customQuestionResponses: input.customQuestionResponses ?? {},
           categorySnapshot: buildCategorySnapshot(category),
@@ -1174,10 +1167,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           .select()
           .from(issueComments)
           .where(
-            and(
-              eq(issueComments.tenantId, ctx.tenantId),
-              eq(issueComments.issueId, input.issueId),
-            ),
+            and(eq(issueComments.tenantId, ctx.tenantId), eq(issueComments.issueId, input.issueId)),
           )
           .orderBy(issueComments.createdAt);
       }),
@@ -1267,10 +1257,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           .from(issueActivity)
           .leftJoin(user, eq(user.id, issueActivity.actorUserId))
           .where(
-            and(
-              eq(issueActivity.tenantId, ctx.tenantId),
-              eq(issueActivity.issueId, input.issueId),
-            ),
+            and(eq(issueActivity.tenantId, ctx.tenantId), eq(issueActivity.issueId, input.issueId)),
           )
           .orderBy(desc(issueActivity.createdAt))
           .limit(100);
@@ -1295,7 +1282,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
             ),
           )
           .orderBy(desc(issueAttachments.uploadedAt));
-        const out: Array<typeof rows[number] & { signedUrl: string | null }> = [];
+        const out: Array<(typeof rows)[number] & { signedUrl: string | null }> = [];
         for (const row of rows) {
           let signedUrl: string | null = null;
           try {
@@ -1342,11 +1329,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           },
         });
         const row = (
-          await ctx.db
-            .select()
-            .from(issueAttachments)
-            .where(eq(issueAttachments.id, id))
-            .limit(1)
+          await ctx.db.select().from(issueAttachments).where(eq(issueAttachments.id, id)).limit(1)
         )[0];
         return row ?? { id };
       }),
@@ -1381,9 +1364,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
             });
           }
         }
-        await ctx.db
-          .delete(issueAttachments)
-          .where(eq(issueAttachments.id, row.id));
+        await ctx.db.delete(issueAttachments).where(eq(issueAttachments.id, row.id));
         await writeActivity(ctx.db, {
           tenantId: ctx.tenantId,
           issueId: row.issueId,

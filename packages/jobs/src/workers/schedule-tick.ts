@@ -50,10 +50,7 @@ export function createScheduleTickHandler(deps: ScheduleTickDeps) {
             lt(templateSchedules.lastMaterialisedAt, stale),
           ),
           // Skip schedules whose endAt has already passed.
-          or(
-            isNull(templateSchedules.endAt),
-            sql`${templateSchedules.endAt} > now()`,
-          ),
+          or(isNull(templateSchedules.endAt), sql`${templateSchedules.endAt} > now()`),
         ),
       );
 

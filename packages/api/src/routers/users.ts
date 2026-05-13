@@ -320,12 +320,7 @@ export const usersRouter = router({
     .mutation(async ({ ctx, input }) => {
       const result = await ctx.db
         .delete(invitations)
-        .where(
-          and(
-            eq(invitations.tenantId, ctx.tenantId),
-            eq(invitations.id, input.invitationId),
-          ),
-        )
+        .where(and(eq(invitations.tenantId, ctx.tenantId), eq(invitations.id, input.invitationId)))
         .returning({ id: invitations.id });
       if (result[0] === undefined) {
         throw new TRPCError({ code: 'NOT_FOUND' });
@@ -338,31 +333,29 @@ export const usersRouter = router({
    * List active (un-accepted, un-expired) invitations for the tenant.
    * Sorted by newest first.
    */
-  listInvitations: tenantProcedure
-    .use(requirePermission('users.view'))
-    .query(async ({ ctx }) => {
-      const now = new Date();
-      const rows = await ctx.db
-        .select({
-          id: invitations.id,
-          email: invitations.email,
-          name: invitations.name,
-          permissionSetId: invitations.permissionSetId,
-          invitedByUserId: invitations.invitedByUserId,
-          expiresAt: invitations.expiresAt,
-          createdAt: invitations.createdAt,
-        })
-        .from(invitations)
-        .where(
-          and(
-            eq(invitations.tenantId, ctx.tenantId),
-            isNull(invitations.acceptedAt),
-            gt(invitations.expiresAt, now),
-          ),
-        )
-        .orderBy(sql`${invitations.createdAt} DESC`);
-      return { invitations: rows };
-    }),
+  listInvitations: tenantProcedure.use(requirePermission('users.view')).query(async ({ ctx }) => {
+    const now = new Date();
+    const rows = await ctx.db
+      .select({
+        id: invitations.id,
+        email: invitations.email,
+        name: invitations.name,
+        permissionSetId: invitations.permissionSetId,
+        invitedByUserId: invitations.invitedByUserId,
+        expiresAt: invitations.expiresAt,
+        createdAt: invitations.createdAt,
+      })
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.tenantId, ctx.tenantId),
+          isNull(invitations.acceptedAt),
+          gt(invitations.expiresAt, now),
+        ),
+      )
+      .orderBy(sql`${invitations.createdAt} DESC`);
+    return { invitations: rows };
+  }),
 
   deactivate: tenantProcedure
     .use(requirePermission('users.deactivate'))

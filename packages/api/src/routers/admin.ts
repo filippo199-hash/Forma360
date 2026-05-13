@@ -37,15 +37,13 @@ const previewDependentsInput = z.object({
 });
 
 export const adminRouter = router({
-  previewDependents: tenantProcedure
-    .input(previewDependentsInput)
-    .query(async ({ ctx, input }) => {
-      const counts = await getDependents(
-        { db: ctx.db },
-        { entity: input.entity, id: input.id, tenantId: ctx.tenantId },
-      );
-      return Object.entries(counts)
-        .map(([module, count]) => ({ module, count }))
-        .sort((a, b) => b.count - a.count || a.module.localeCompare(b.module));
-    }),
+  previewDependents: tenantProcedure.input(previewDependentsInput).query(async ({ ctx, input }) => {
+    const counts = await getDependents(
+      { db: ctx.db },
+      { entity: input.entity, id: input.id, tenantId: ctx.tenantId },
+    );
+    return Object.entries(counts)
+      .map(([module, count]) => ({ module, count }))
+      .sort((a, b) => b.count - a.count || a.module.localeCompare(b.module));
+  }),
 });

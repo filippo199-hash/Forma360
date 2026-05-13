@@ -160,7 +160,9 @@ describe('editorReducer', () => {
       pageId: 'cccccccccccccccccccccccccc',
     });
     expect(deleted.content.pages).toHaveLength(2);
-    expect(deleted.content.pages.find((p) => p.id === 'cccccccccccccccccccccccccc')).toBeUndefined();
+    expect(
+      deleted.content.pages.find((p) => p.id === 'cccccccccccccccccccccccccc'),
+    ).toBeUndefined();
     expect(deleted.isDirty).toBe(true);
   });
 
@@ -231,7 +233,9 @@ describe('editorReducer', () => {
     });
     const finalItem = cleared.content.pages[1]?.sections[0]?.items[1];
     // `undefined` on the patch removes the field via spread
-    expect(finalItem && 'visibility' in finalItem ? finalItem.visibility : undefined).toBeUndefined();
+    expect(
+      finalItem && 'visibility' in finalItem ? finalItem.visibility : undefined,
+    ).toBeUndefined();
   });
 
   it('addResponseSet → addResponseOption → deleteResponseOption', () => {

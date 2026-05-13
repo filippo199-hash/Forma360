@@ -134,11 +134,14 @@ describe('conductReducer', () => {
     const next = conductReducer(s, { type: 'SET_RESPONSE', itemId: ITEM_TEXT, value: 'hi' });
     expect(next.responses[ITEM_TEXT]).toBe('hi');
 
-    const readonly = conductReducer({ ...s, inspectionStatus: 'completed' }, {
-      type: 'SET_RESPONSE',
-      itemId: ITEM_TEXT,
-      value: 'blocked',
-    });
+    const readonly = conductReducer(
+      { ...s, inspectionStatus: 'completed' },
+      {
+        type: 'SET_RESPONSE',
+        itemId: ITEM_TEXT,
+        value: 'blocked',
+      },
+    );
     expect(readonly.responses[ITEM_TEXT]).toBeUndefined();
   });
 
@@ -175,12 +178,8 @@ describe('evaluateVisibility', () => {
     expect(
       evaluateVisibility({ dependsOn: ITEM_MC, operator: 'answered' }, { [ITEM_MC]: OPT_YES }),
     ).toBe(true);
-    expect(
-      evaluateVisibility({ dependsOn: ITEM_MC, operator: 'answered' }, {}),
-    ).toBe(false);
-    expect(
-      evaluateVisibility({ dependsOn: ITEM_MC, operator: 'notAnswered' }, {}),
-    ).toBe(true);
+    expect(evaluateVisibility({ dependsOn: ITEM_MC, operator: 'answered' }, {})).toBe(false);
+    expect(evaluateVisibility({ dependsOn: ITEM_MC, operator: 'notAnswered' }, {})).toBe(true);
   });
 
   it('equals / notEquals', () => {

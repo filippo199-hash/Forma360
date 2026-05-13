@@ -270,11 +270,7 @@ export function SignUpCard() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={onCreateSeparate}
-              disabled={requestToJoin.isPending}
-            >
+            <Button variant="outline" onClick={onCreateSeparate} disabled={requestToJoin.isPending}>
               {t('createSeparateButton')}
             </Button>
             <Button onClick={onRequestToJoin} disabled={requestToJoin.isPending}>

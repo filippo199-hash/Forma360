@@ -76,9 +76,7 @@ export async function loadInspectionSnapshot(
   const inspRows = await db
     .select()
     .from(inspections)
-    .where(
-      and(eq(inspections.tenantId, input.tenantId), eq(inspections.id, input.inspectionId)),
-    )
+    .where(and(eq(inspections.tenantId, input.tenantId), eq(inspections.id, input.inspectionId)))
     .limit(1);
   const insp = inspRows[0];
   if (insp === undefined) return null;

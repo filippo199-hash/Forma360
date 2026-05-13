@@ -25,12 +25,10 @@ import { usersRouter } from './routers/users';
 // `registerDependentResolver('templates', ...)` call overwrites the PR 26
 // shim. Module-load ordering is the registration order.
 import { actionsRouter } from './routers/actions';
+import { actionTypesRouter } from './routers/actionTypes';
 import { approvalsRouter } from './routers/approvals';
 import { createExportsRouter, type ExportsRouterDeps } from './routers/exports';
-import {
-  createInspectionsRouter,
-  type InspectionsRouterDeps,
-} from './routers/inspections';
+import { createInspectionsRouter, type InspectionsRouterDeps } from './routers/inspections';
 import {
   createInspectionsExportRouter,
   type InspectionsExportDeps,
@@ -73,6 +71,7 @@ export function buildAppRouter(deps: {
     signatures: signaturesRouter,
     approvals: approvalsRouter,
     actions: actionsRouter,
+    actionTypes: actionTypesRouter,
     schedules: schedulesRouter,
     exports: createExportsRouter(deps.exports),
     issues: createIssuesRouter(deps.issues),

@@ -95,7 +95,7 @@ async function main(): Promise<void> {
     let tenantId: string;
     if (existingTenants[0] !== undefined) {
       tenantId = existingTenants[0].id;
-       
+
       console.log(
         `[bootstrap] tenant slug="${input.tenantSlug}" already exists (id=${tenantId}); reusing`,
       );
@@ -106,13 +106,13 @@ async function main(): Promise<void> {
         name: input.tenantName,
         slug: input.tenantSlug,
       });
-       
+
       console.log(`[bootstrap] tenant created (id=${tenantId}, slug="${input.tenantSlug}")`);
     }
 
     // 2. Seed default permission sets (idempotent).
     const sets = await seedDefaultPermissionSets(db, tenantId);
-     
+
     console.log(
       `[bootstrap] permission sets ready (administrator=${sets.administrator}, manager=${sets.manager}, standard=${sets.standard})`,
     );
@@ -160,9 +160,7 @@ async function main(): Promise<void> {
         tenantId,
         permissionSetId: sets.administrator,
       });
-      console.log(
-        `[bootstrap] admin user created (id=${userId}, email="${input.adminEmail}")`,
-      );
+      console.log(`[bootstrap] admin user created (id=${userId}, email="${input.adminEmail}")`);
     }
 
     // 4. Upsert the credential account row with the hashed password.
@@ -200,7 +198,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-   
   console.error('[bootstrap] FAILED:', err);
   process.exit(1);
 });

@@ -265,8 +265,7 @@ export default function ApprovalDetailPage() {
               variant="destructive"
               onClick={submitReject}
               disabled={
-                reject.isPending ||
-                (dialog.kind === 'reject' && dialog.comment.trim().length === 0)
+                reject.isPending || (dialog.kind === 'reject' && dialog.comment.trim().length === 0)
               }
             >
               {t('rejectConfirmCta')}

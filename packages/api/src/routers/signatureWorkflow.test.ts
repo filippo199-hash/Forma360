@@ -48,6 +48,8 @@ const MIGRATION_FILES = [
   '0009_signature_workflow.sql',
   '0010_issues.sql',
   '0011_observations_richer.sql',
+  '0012_actions_phase4.sql',
+  '0013_actions_phase4b.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -84,9 +86,7 @@ function workflowContent(args: {
           {
             id: newId(),
             title: 's',
-            items: [
-              { id: newId(), type: 'conductedBy', prompt: 'Conducted by', required: false },
-            ],
+            items: [{ id: newId(), type: 'conductedBy', prompt: 'Conducted by', required: false }],
           },
         ],
       },
@@ -230,10 +230,7 @@ describe('template-level signature workflow', () => {
       expect(res.status).toBe('awaiting_signature_workflow');
 
       const inspRow = (
-        await db
-          .select()
-          .from(schema.inspections)
-          .where(eq(schema.inspections.id, inspectionId))
+        await db.select().from(schema.inspections).where(eq(schema.inspections.id, inspectionId))
       )[0];
       expect(inspRow?.status).toBe('awaiting_signature_workflow');
       expect(inspRow?.submittedAt).toBeInstanceOf(Date);
@@ -291,10 +288,7 @@ describe('template-level signature workflow', () => {
       expect(r.allSigned).toBe(false);
 
       const inspRow = (
-        await db
-          .select()
-          .from(schema.inspections)
-          .where(eq(schema.inspections.id, inspectionId))
+        await db.select().from(schema.inspections).where(eq(schema.inspections.id, inspectionId))
       )[0];
       expect(inspRow?.status).toBe('awaiting_signature_workflow');
 
@@ -346,10 +340,7 @@ describe('template-level signature workflow', () => {
       expect(r3.allSigned).toBe(true);
 
       const inspRow = (
-        await db
-          .select()
-          .from(schema.inspections)
-          .where(eq(schema.inspections.id, inspectionId))
+        await db.select().from(schema.inspections).where(eq(schema.inspections.id, inspectionId))
       )[0];
       expect(inspRow?.status).toBe('completed');
       expect(inspRow?.completedAt).toBeInstanceOf(Date);
@@ -388,10 +379,7 @@ describe('template-level signature workflow', () => {
       expect(r2.status).toBe('completed');
 
       const inspRow = (
-        await db
-          .select()
-          .from(schema.inspections)
-          .where(eq(schema.inspections.id, inspectionId))
+        await db.select().from(schema.inspections).where(eq(schema.inspections.id, inspectionId))
       )[0];
       expect(inspRow?.status).toBe('completed');
     });

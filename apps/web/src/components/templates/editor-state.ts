@@ -41,7 +41,13 @@ export interface EditorState {
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
 export type EditorAction =
-  | { type: 'hydrate'; content: TemplateContent; name: string; description: string | null; loadedUpdatedAt: string | null }
+  | {
+      type: 'hydrate';
+      content: TemplateContent;
+      name: string;
+      description: string | null;
+      loadedUpdatedAt: string | null;
+    }
   | { type: 'markClean' }
   | { type: 'selectPage'; pageId: string }
   | { type: 'selectItem'; itemId: string | null }
@@ -263,7 +269,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return mapSection(state, action.pageId, action.sectionId, (s) => ({
         ...s,
         ...(action.patch.title !== undefined ? { title: action.patch.title } : {}),
-        ...(action.patch.description !== undefined ? { description: action.patch.description } : {}),
+        ...(action.patch.description !== undefined
+          ? { description: action.patch.description }
+          : {}),
       }));
     case 'reorderSections': {
       return mapPage(state, action.pageId, (p) => {
@@ -288,8 +296,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       }));
       return {
         ...next,
-        selectedItemId:
-          state.selectedItemId === action.itemId ? null : state.selectedItemId,
+        selectedItemId: state.selectedItemId === action.itemId ? null : state.selectedItemId,
       };
     }
     case 'updateItem': {
@@ -322,16 +329,11 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (detached === null) return state;
       // Attach at target
       const moved: Item = detached;
-      return mapSection(
-        withoutSource,
-        action.targetPageId,
-        action.targetSectionId,
-        (s) => {
-          const next = [...s.items];
-          next.splice(Math.max(0, Math.min(action.targetIndex, next.length)), 0, moved);
-          return { ...s, items: next };
-        },
-      );
+      return mapSection(withoutSource, action.targetPageId, action.targetSectionId, (s) => {
+        const next = [...s.items];
+        next.splice(Math.max(0, Math.min(action.targetIndex, next.length)), 0, moved);
+        return { ...s, items: next };
+      });
     }
     case 'addResponseSet':
       return {
@@ -392,10 +394,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
             rs.id === action.setId
               ? {
                   ...rs,
-                  options: [
-                    ...rs.options,
-                    { id: newId(), label: 'New option', flagged: false },
-                  ],
+                  options: [...rs.options, { id: newId(), label: 'New option', flagged: false }],
                 }
               : rs,
           ),

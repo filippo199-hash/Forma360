@@ -49,12 +49,7 @@ import { tenants } from './tenants';
  *                  future sweeper job; PR 32 leaves missed unstamped
  *                  and "pending" after the fact serves the same signal)
  */
-export const scheduleOccurrenceStatus = [
-  'pending',
-  'in_progress',
-  'completed',
-  'missed',
-] as const;
+export const scheduleOccurrenceStatus = ['pending', 'in_progress', 'completed', 'missed'] as const;
 export type ScheduleOccurrenceStatus = (typeof scheduleOccurrenceStatus)[number];
 
 export const templateSchedules = pgTable(
@@ -191,7 +186,5 @@ export const scheduledInspectionOccurrences = pgTable(
   ],
 );
 
-export type ScheduledInspectionOccurrence =
-  typeof scheduledInspectionOccurrences.$inferSelect;
-export type NewScheduledInspectionOccurrence =
-  typeof scheduledInspectionOccurrences.$inferInsert;
+export type ScheduledInspectionOccurrence = typeof scheduledInspectionOccurrences.$inferSelect;
+export type NewScheduledInspectionOccurrence = typeof scheduledInspectionOccurrences.$inferInsert;

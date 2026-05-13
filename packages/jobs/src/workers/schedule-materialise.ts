@@ -62,9 +62,7 @@ async function resolveAssignees(
     const rows = await db
       .select({ userId: siteMembers.userId })
       .from(siteMembers)
-      .where(
-        and(eq(siteMembers.tenantId, tenantId), inArray(siteMembers.siteId, [...siteIds])),
-      );
+      .where(and(eq(siteMembers.tenantId, tenantId), inArray(siteMembers.siteId, [...siteIds])));
     for (const r of rows) all.add(r.userId);
   }
   return [...all];
@@ -87,9 +85,7 @@ export function createScheduleMaterialiseHandler(deps: ScheduleMaterialiseDeps) 
     const schedRows = await deps.db
       .select()
       .from(templateSchedules)
-      .where(
-        and(eq(templateSchedules.tenantId, tenantId), eq(templateSchedules.id, scheduleId)),
-      )
+      .where(and(eq(templateSchedules.tenantId, tenantId), eq(templateSchedules.id, scheduleId)))
       .limit(1);
     const sched = schedRows[0];
     if (sched === undefined) {
@@ -171,9 +167,7 @@ export function createScheduleMaterialiseHandler(deps: ScheduleMaterialiseDeps) 
         // Reminder scheduling — only if a reminder is configured AND the
         // reminder time is in the future but inside the look-ahead window.
         if (sched.reminderMinutesBefore !== null) {
-          const reminderAt = new Date(
-            fireTime.getTime() - sched.reminderMinutesBefore * 60 * 1000,
-          );
+          const reminderAt = new Date(fireTime.getTime() - sched.reminderMinutesBefore * 60 * 1000);
           if (reminderAt > now && reminderAt <= windowEnd) {
             await enqueue(
               QUEUE_NAMES.SCHEDULE_REMINDER,
@@ -193,7 +187,10 @@ export function createScheduleMaterialiseHandler(deps: ScheduleMaterialiseDeps) 
       .set({ lastMaterialisedAt: now, updatedAt: now })
       .where(eq(templateSchedules.id, sched.id));
 
-    log.info({ created, fireTimes: fireTimes.length, assignees: assignees.length }, '[schedule-materialise] done');
+    log.info(
+      { created, fireTimes: fireTimes.length, assignees: assignees.length },
+      '[schedule-materialise] done',
+    );
     return { created };
   };
 }

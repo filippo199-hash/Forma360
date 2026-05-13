@@ -142,9 +142,7 @@ export function CustomQuestionsEditor({ questions, onChange }: CustomQuestionsEd
  * Mirrors the old wizard's handleSave behaviour so the validation contract
  * the API enforces stays the same.
  */
-export function normaliseCustomQuestions(
-  questions: IssueCustomQuestion[],
-): IssueCustomQuestion[] {
+export function normaliseCustomQuestions(questions: IssueCustomQuestion[]): IssueCustomQuestion[] {
   return questions.map((q) => {
     const base: IssueCustomQuestion = {
       id: q.id,
@@ -209,9 +207,7 @@ function QuestionRow({
           <Label className="text-xs text-muted-foreground">{tQ('typeLabel')}</Label>
           <select
             value={question.type}
-            onChange={(e) =>
-              onChange({ type: e.target.value as IssueCustomQuestion['type'] })
-            }
+            onChange={(e) => onChange({ type: e.target.value as IssueCustomQuestion['type'] })}
             className="block w-full rounded-md border border-input bg-background px-2 py-2 text-sm"
           >
             <option value="text">{tQ('typeText')}</option>
@@ -219,9 +215,7 @@ function QuestionRow({
           </select>
         </div>
         <div className="flex-1 space-y-1.5">
-          <Label className="text-xs text-muted-foreground">
-            {tQ('promptPlaceholder')}
-          </Label>
+          <Label className="text-xs text-muted-foreground">{tQ('promptPlaceholder')}</Label>
           <Input
             value={question.prompt}
             onChange={(e) => onChange({ prompt: e.target.value })}
@@ -291,9 +285,7 @@ function QuestionRow({
               {tQ('addChoiceButton')}
             </Button>
             {optionsInvalid ? (
-              <span className="text-xs text-destructive">
-                {tQ('validationOptionsEmpty')}
-              </span>
+              <span className="text-xs text-destructive">{tQ('validationOptionsEmpty')}</span>
             ) : null}
           </div>
         </div>

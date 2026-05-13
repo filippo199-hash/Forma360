@@ -54,7 +54,10 @@ export function QrCodeDialog({ open, onOpenChange, templateId, templateName }: Q
   }, [open, locale, templateId]);
 
   function safeFileName(name: string): string {
-    const trimmed = name.trim().replace(/[^a-zA-Z0-9-_]+/g, '-').replace(/-+/g, '-');
+    const trimmed = name
+      .trim()
+      .replace(/[^a-zA-Z0-9-_]+/g, '-')
+      .replace(/-+/g, '-');
     return trimmed.length === 0 ? 'template' : trimmed;
   }
 

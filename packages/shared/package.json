@@ -43,6 +43,10 @@
     "./issues-schema": {
       "types": "./src/issues-schema.ts",
       "default": "./src/issues-schema.ts"
+    },
+    "./actions-schema": {
+      "types": "./src/actions-schema.ts",
+      "default": "./src/actions-schema.ts"
     }
   },
   "scripts": {

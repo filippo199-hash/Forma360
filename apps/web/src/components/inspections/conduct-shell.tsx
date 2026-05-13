@@ -104,7 +104,14 @@ export function ConductShell() {
         expectedUpdatedAt: state.loadedUpdatedAt,
       });
     }, AUTOSAVE_DEBOUNCE_MS);
-  }, [dispatch, readonly, saveProgress, state.inspectionId, state.loadedUpdatedAt, state.responses]);
+  }, [
+    dispatch,
+    readonly,
+    saveProgress,
+    state.inspectionId,
+    state.loadedUpdatedAt,
+    state.responses,
+  ]);
 
   useEffect(() => {
     if (readonly) return;
@@ -206,12 +213,7 @@ export function ConductShell() {
 
       <main className="flex-1">
         <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-          {currentPage === null ? null : (
-            <PageBody
-              page={currentPage}
-              readonly={readonly}
-            />
-          )}
+          {currentPage === null ? null : <PageBody page={currentPage} readonly={readonly} />}
 
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
             <Button
@@ -292,7 +294,13 @@ function StatusPill({
   status: string;
   tStatus: ReturnType<typeof useTranslations<'inspections.status'>>;
 }) {
-  const known = ['in_progress', 'awaiting_signatures', 'awaiting_approval', 'completed', 'rejected'];
+  const known = [
+    'in_progress',
+    'awaiting_signatures',
+    'awaiting_approval',
+    'completed',
+    'rejected',
+  ];
   const key = known.includes(status) ? (status as 'in_progress') : 'in_progress';
   const colors: Record<string, string> = {
     in_progress: 'bg-blue-100 text-blue-900 dark:bg-blue-900/40 dark:text-blue-100',
@@ -312,13 +320,16 @@ function SaveIndicator() {
   const t = useTranslations('inspections.conduct');
   const { state } = useConduct();
   const s = state.saveStatus;
-  if (s.kind === 'saving') return <span className="text-xs text-muted-foreground">{t('saving')}</span>;
+  if (s.kind === 'saving')
+    return <span className="text-xs text-muted-foreground">{t('saving')}</span>;
   if (s.kind === 'saved') {
     const time = new Date(s.at).toLocaleTimeString();
     return <span className="text-xs text-muted-foreground">{t('savedAt', { time })}</span>;
   }
-  if (s.kind === 'offline') return <span className="text-xs text-amber-700 dark:text-amber-400">{t('offline')}</span>;
-  if (s.kind === 'conflict') return <span className="text-xs text-destructive">{t('conflictTitle')}</span>;
+  if (s.kind === 'offline')
+    return <span className="text-xs text-amber-700 dark:text-amber-400">{t('offline')}</span>;
+  if (s.kind === 'conflict')
+    return <span className="text-xs text-destructive">{t('conflictTitle')}</span>;
   return null;
 }
 
@@ -334,7 +345,9 @@ function PageTabs() {
             type="button"
             onClick={() => dispatch({ type: 'SET_PAGE', pageId: p.id })}
             className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs transition-colors ${
-              active ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/60'
+              active
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:bg-accent/60'
             }`}
           >
             {i + 1}. {p.title}
@@ -589,9 +602,7 @@ function RaiseActionTrigger({
                     id="ra-priority"
                     value={priority}
                     onChange={(e) =>
-                      setPriority(
-                        e.target.value as '' | 'low' | 'medium' | 'high' | 'critical',
-                      )
+                      setPriority(e.target.value as '' | 'low' | 'medium' | 'high' | 'critical')
                     }
                     className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
@@ -619,10 +630,7 @@ function RaiseActionTrigger({
                 <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                   {t('cancelButton')}
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={title.trim().length === 0 || create.isPending}
-                >
+                <Button type="submit" disabled={title.trim().length === 0 || create.isPending}>
                   {t('saveButton')}
                 </Button>
               </div>

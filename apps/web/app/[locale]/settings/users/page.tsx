@@ -4,12 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../../../src/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
@@ -78,11 +73,7 @@ export default function UsersPage() {
   // We need a permission set id to resend. Pick the same set the
   // invitation row was issued with; the backend already validates it
   // belongs to the tenant.
-  function onResend(payload: {
-    email: string;
-    name: string | null;
-    permissionSetId: string;
-  }) {
+  function onResend(payload: { email: string; name: string | null; permissionSetId: string }) {
     resendInvite.mutate({
       email: payload.email,
       ...(payload.name !== null ? { name: payload.name } : {}),
@@ -192,10 +183,7 @@ export default function UsersPage() {
                 </tr>
               ) : invitations.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-3 py-6 text-center text-sm text-muted-foreground"
-                  >
+                  <td colSpan={4} className="px-3 py-6 text-center text-sm text-muted-foreground">
                     {tInvitations('emptyState')}
                   </td>
                 </tr>

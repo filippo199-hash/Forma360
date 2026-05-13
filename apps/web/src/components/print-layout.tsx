@@ -106,7 +106,9 @@ export function PrintLayout({
           {snapshot.inspection.completedAt !== null ? (
             <div>Completed: {snapshot.inspection.completedAt}</div>
           ) : null}
-          <div>Template: {snapshot.template.name} (v{snapshot.template.versionNumber})</div>
+          <div>
+            Template: {snapshot.template.name} (v{snapshot.template.versionNumber})
+          </div>
         </div>
 
         {(content?.pages ?? []).map((page, i) => {

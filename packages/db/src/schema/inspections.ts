@@ -324,10 +324,7 @@ export const inspectionWorkflowSigners = pgTable(
   },
   (table) => [
     index('inspection_workflow_signers_inspection_idx').on(table.inspectionId),
-    uniqueIndex('inspection_workflow_signers_position_uq').on(
-      table.inspectionId,
-      table.position,
-    ),
+    uniqueIndex('inspection_workflow_signers_position_uq').on(table.inspectionId, table.position),
     index('inspection_workflow_signers_pending_idx')
       .on(table.signerUserId)
       .where(sql`${table.status} = 'pending'`),

@@ -55,13 +55,7 @@ export type IssueReportedVia = (typeof issueReportedVia)[number];
 export const issuePriorities = ['low', 'medium', 'high', 'critical'] as const;
 export type IssuePriority = (typeof issuePriorities)[number];
 
-export const issueBuiltInFields = [
-  'title',
-  'description',
-  'site',
-  'media',
-  'location',
-] as const;
+export const issueBuiltInFields = ['title', 'description', 'site', 'media', 'location'] as const;
 export type IssueBuiltInField = (typeof issueBuiltInFields)[number];
 
 export const issueActivityKinds = [
@@ -127,9 +121,7 @@ export const issueCategories = pgTable(
       .default(sql`'[]'::jsonb`),
 
     /** 'private' | 'summary' | 'detailed' — enforced by CHECK constraint in SQL. */
-    notificationRule: varchar('notification_rule', { length: 20 })
-      .notNull()
-      .default('summary'),
+    notificationRule: varchar('notification_rule', { length: 20 }).notNull().default('summary'),
     criticalAlerts: boolean('critical_alerts').notNull().default(false),
 
     /** Template ids that may pull this category's metadata in (Phase 3+). */

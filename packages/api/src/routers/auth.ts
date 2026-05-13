@@ -22,18 +22,9 @@
  *     the tenant name and inviter context before the user types a password.
  */
 import { hashPassword } from '@forma360/auth/crypto';
-import {
-  account,
-  invitations,
-  permissionSets,
-  tenants,
-  user,
-} from '@forma360/db/schema';
+import { account, invitations, permissionSets, tenants, user } from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
-import {
-  getEmailDomain,
-  isFreeEmailDomain,
-} from '@forma360/shared/email-domains';
+import { getEmailDomain, isFreeEmailDomain } from '@forma360/shared/email-domains';
 import { newId } from '@forma360/shared/id';
 import type { Logger } from '@forma360/shared/logger';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
@@ -140,8 +131,7 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       const found = matches[0];
       return {
         status: 'business' as const,
-        existingTenant:
-          found === undefined ? null : { id: found.tenantId, name: found.tenantName },
+        existingTenant: found === undefined ? null : { id: found.tenantId, name: found.tenantName },
         emailExists,
       };
     }),
@@ -310,8 +300,7 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       const userId = `usr_${newId()}`;
 
       const result = await ctx.db.transaction(async (tx) => {
-        const displayName =
-          input.name ?? invite.name ?? inviteEmail.split('@')[0] ?? 'New user';
+        const displayName = input.name ?? invite.name ?? inviteEmail.split('@')[0] ?? 'New user';
         await tx.insert(user).values({
           id: userId,
           name: displayName,
@@ -346,37 +335,35 @@ export function createAuthRouter(deps: AuthRouterDeps) {
      * invite matches (the page should then render its 404 state). Never
      * exposes the token itself or any hashed value.
      */
-    getInviteDetails: publicProcedure
-      .input(getInviteDetailsInput)
-      .query(async ({ ctx, input }) => {
-        const rows = await ctx.db
-          .select({
-            email: invitations.email,
-            name: invitations.name,
-            expiresAt: invitations.expiresAt,
-            acceptedAt: invitations.acceptedAt,
-            tenantName: tenants.name,
-            inviterName: user.name,
-          })
-          .from(invitations)
-          .innerJoin(tenants, eq(invitations.tenantId, tenants.id))
-          .innerJoin(user, eq(invitations.invitedByUserId, user.id))
-          .where(eq(invitations.token, input.token))
-          .limit(1);
+    getInviteDetails: publicProcedure.input(getInviteDetailsInput).query(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({
+          email: invitations.email,
+          name: invitations.name,
+          expiresAt: invitations.expiresAt,
+          acceptedAt: invitations.acceptedAt,
+          tenantName: tenants.name,
+          inviterName: user.name,
+        })
+        .from(invitations)
+        .innerJoin(tenants, eq(invitations.tenantId, tenants.id))
+        .innerJoin(user, eq(invitations.invitedByUserId, user.id))
+        .where(eq(invitations.token, input.token))
+        .limit(1);
 
-        const i = rows[0];
-        if (i === undefined) return null;
-        const expired = i.expiresAt.getTime() < Date.now();
-        const status: 'accepted' | 'expired' | 'active' =
-          i.acceptedAt !== null ? 'accepted' : expired ? 'expired' : 'active';
-        return {
-          email: i.email,
-          name: i.name,
-          tenantName: i.tenantName,
-          inviterName: i.inviterName,
-          status,
-        };
-      }),
+      const i = rows[0];
+      if (i === undefined) return null;
+      const expired = i.expiresAt.getTime() < Date.now();
+      const status: 'accepted' | 'expired' | 'active' =
+        i.acceptedAt !== null ? 'accepted' : expired ? 'expired' : 'active';
+      return {
+        email: i.email,
+        name: i.name,
+        tenantName: i.tenantName,
+        inviterName: i.inviterName,
+        status,
+      };
+    }),
   });
 }
 

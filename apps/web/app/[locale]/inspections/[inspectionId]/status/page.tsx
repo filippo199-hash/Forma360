@@ -80,9 +80,7 @@ export default function InspectionStatusPage() {
               <h2 className="text-base font-semibold">{t('inProgressTitle')}</h2>
               <p className="text-sm text-muted-foreground">{t('inProgressBody')}</p>
               <Button asChild>
-                <Link href={`/${locale}/inspections/${inspection.id}`}>
-                  {t('continueButton')}
-                </Link>
+                <Link href={`/${locale}/inspections/${inspection.id}`}>{t('continueButton')}</Link>
               </Button>
             </>
           ) : null}
@@ -138,9 +136,7 @@ export default function InspectionStatusPage() {
               <p className="text-sm text-muted-foreground">{t('awaitingApprovalBody')}</p>
               {canManage ? (
                 <Button asChild>
-                  <Link href={`/${locale}/approvals/${inspection.id}`}>
-                    {t('openApproval')}
-                  </Link>
+                  <Link href={`/${locale}/approvals/${inspection.id}`}>{t('openApproval')}</Link>
                 </Button>
               ) : (
                 <p className="text-xs text-muted-foreground">{t('awaitingApprovalPending')}</p>
@@ -166,14 +162,10 @@ export default function InspectionStatusPage() {
               ) : null}
               <div className="flex flex-wrap gap-2">
                 <Button asChild>
-                  <a href={`/api/exports/pdf?inspectionId=${inspection.id}`}>
-                    {t('pdfButton')}
-                  </a>
+                  <a href={`/api/exports/pdf?inspectionId=${inspection.id}`}>{t('pdfButton')}</a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href={`/api/exports/docx?inspectionId=${inspection.id}`}>
-                    {t('docxButton')}
-                  </a>
+                  <a href={`/api/exports/docx?inspectionId=${inspection.id}`}>{t('docxButton')}</a>
                 </Button>
                 <ShareLinkDialog inspectionId={inspection.id} />
               </div>

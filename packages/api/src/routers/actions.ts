@@ -18,12 +18,23 @@ import {
   actionComments,
   actionPriority,
   actionStatus,
+  actionTypes,
   actions,
+  tenantActionSettings,
   type Action,
   type ActionActivityKind,
+  type ActionType,
 } from '@forma360/db/schema';
 import { type DependentResolverDeps } from '@forma360/permissions';
 import { newId } from '@forma360/shared/id';
+import {
+  DEFAULT_PRIORITY_DUE_DATE_DAYS,
+  recurrenceConfigSchema,
+  type ActionCustomQuestion,
+  type PriorityDueDateDays,
+  type RecurrenceConfig,
+  type TransitionRules,
+} from '@forma360/shared/actions-schema';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, ilike, isNotNull, isNull, lt, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -82,6 +93,191 @@ async function writeActivity(
     payload: args.payload ?? {},
   });
 }
+
+/**
+ * Loads an action type for the given tenant. Returns null when the type
+ * doesn't exist or is archived — callers translate that into a 404 or
+ * silently drop the type id as appropriate. Active-only on purpose:
+ * we never let a new action be created against an archived type.
+ */
+async function loadActiveActionType(
+  db: Db,
+  tenantId: string,
+  typeId: string,
+): Promise<ActionType | null> {
+  const rows = await db
+    .select()
+    .from(actionTypes)
+    .where(
+      and(
+        eq(actionTypes.tenantId, tenantId),
+        eq(actionTypes.id, typeId),
+        isNull(actionTypes.archivedAt),
+      ),
+    )
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Loads the tenant's priority → due-date-days table. Returns defaults
+ * (low=30, medium=7, high=1, critical=1) when no row exists, mirroring
+ * the actionTypesRouter.settings.get behaviour.
+ */
+async function loadPriorityDueDateDays(db: Db, tenantId: string): Promise<PriorityDueDateDays> {
+  const rows = await db
+    .select({ days: tenantActionSettings.priorityDueDateDays })
+    .from(tenantActionSettings)
+    .where(eq(tenantActionSettings.tenantId, tenantId))
+    .limit(1);
+  return rows[0]?.days ?? DEFAULT_PRIORITY_DUE_DATE_DAYS;
+}
+
+/**
+ * Computes the auto-due-date for a new action. Returns the user-supplied
+ * value when it's set; otherwise looks up the tenant's per-priority
+ * default days and adds them to `now`. Returns null when the user didn't
+ * pick a priority OR the priority's default is `null` (meaning
+ * "leave the due-date empty").
+ */
+function computeAutoDueAt(
+  now: Date,
+  priority: (typeof actionPriority)[number] | null | undefined,
+  daysByPriority: PriorityDueDateDays,
+  explicit: string | null | undefined,
+): Date | null {
+  if (explicit !== undefined && explicit !== null) return new Date(explicit);
+  if (priority === undefined || priority === null) return null;
+  const days = daysByPriority[priority];
+  if (days === null || days === undefined) return null;
+  const out = new Date(now);
+  out.setDate(out.getDate() + days);
+  return out;
+}
+
+/**
+ * Validates the response map against a type's custom-question shape.
+ * Required questions must have a non-empty answer; multipleChoice
+ * answers must be one of the listed options. Throws BAD_REQUEST on
+ * any violation. Returns the cleaned response map (drops keys that
+ * aren't in the question list).
+ */
+function validateCustomResponses(
+  questions: ReadonlyArray<ActionCustomQuestion>,
+  responses: Record<string, unknown>,
+): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = {};
+  const byId = new Map(questions.map((q) => [q.id, q]));
+  for (const q of questions) {
+    const value = responses[q.id];
+    if (q.required) {
+      const isEmpty =
+        value === undefined ||
+        value === null ||
+        (typeof value === 'string' && value.trim().length === 0);
+      if (isEmpty) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `custom-question-required:${q.id}`,
+        });
+      }
+    }
+    if (value !== undefined && q.type === 'multipleChoice' && (q.options ?? []).length > 0) {
+      if (typeof value !== 'string' || !(q.options ?? []).includes(value)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `custom-question-invalid-option:${q.id}`,
+        });
+      }
+    }
+    if (value !== undefined) cleaned[q.id] = value;
+  }
+  // Silently drop response keys that aren't in the question list — the
+  // admin removed the question after answers were submitted.
+  for (const key of Object.keys(responses)) {
+    if (!byId.has(key) && cleaned[key] === undefined) {
+      continue;
+    }
+  }
+  return cleaned;
+}
+
+/**
+ * Checks whether the caller is allowed to move an action of the given
+ * type into the given gated status (completed / cancelled). Anyone with
+ * `org.settings` (admin) always passes. With `actions.manage` the
+ * caller passes if the type's `allowedGroupIds` list is empty OR they
+ * belong to one of the listed groups. Throws FORBIDDEN otherwise.
+ */
+async function assertCanTransitionTo(
+  db: Db,
+  tenantId: string,
+  userId: string,
+  permissions: readonly string[],
+  type: ActionType | null,
+  next: 'completed' | 'cancelled',
+): Promise<void> {
+  if (permissions.includes('org.settings')) return;
+  if (!permissions.includes('actions.manage')) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'missing-actions-manage' });
+  }
+  const rules: TransitionRules = type?.transitionRules ?? {
+    completed: { allowedGroupIds: [] },
+    cancelled: { allowedGroupIds: [] },
+  };
+  const allowed = rules[next].allowedGroupIds;
+  if (allowed.length === 0) return;
+  // Caller must belong to one of the allowed groups. Group membership
+  // is materialised in group_members (Phase 1). Lazy import avoided —
+  // we only check when the gate is actually configured.
+  const { groupMembers } = await import('@forma360/db/schema');
+  const rows = await db
+    .select({ id: groupMembers.groupId })
+    .from(groupMembers)
+    .where(and(eq(groupMembers.tenantId, tenantId), eq(groupMembers.userId, userId)));
+  const callerGroups = new Set(rows.map((r) => r.id));
+  if (!allowed.some((g) => callerGroups.has(g))) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: `not-in-allowed-group-for:${next}`,
+    });
+  }
+}
+
+/**
+ * Light-weight RRULE evaluator — enough for the four frequencies we
+ * surface in the UI (DAILY / WEEKLY / MONTHLY / YEARLY). Returns the
+ * next occurrence after `from`, or null when the rule can't be parsed.
+ * A full RFC 5545 implementation lives in the worker package (Phase 2
+ * schedules); we're avoiding the cross-package import here because
+ * this path runs inline in a tRPC mutation.
+ */
+function computeNextRecurrenceDate(from: Date, recurrence: RecurrenceConfig): Date | null {
+  const rule = recurrence.rrule.toUpperCase();
+  const freqMatch = rule.match(/FREQ=([A-Z]+)/);
+  const intervalMatch = rule.match(/INTERVAL=(\d+)/);
+  const interval = intervalMatch !== null ? Number.parseInt(intervalMatch[1] ?? '1', 10) : 1;
+  const freq = freqMatch?.[1] ?? null;
+  const next = new Date(from);
+  switch (freq) {
+    case 'DAILY':
+      next.setDate(next.getDate() + interval);
+      return next;
+    case 'WEEKLY':
+      next.setDate(next.getDate() + 7 * interval);
+      return next;
+    case 'MONTHLY':
+      next.setMonth(next.getMonth() + interval);
+      return next;
+    case 'YEARLY':
+      next.setFullYear(next.getFullYear() + interval);
+      return next;
+    default:
+      return null;
+  }
+}
+
+void recurrenceConfigSchema; // Imported but only used in input schemas elsewhere.
 
 function isUniqueViolation(err: unknown): boolean {
   const visit = (e: unknown): boolean => {
@@ -152,6 +348,12 @@ const createStandaloneInput = z.object({
   dueAt: z.string().datetime().optional(),
   siteId: z.string().length(26).optional(),
   label: z.string().max(80).optional(),
+  /** Optional action type. NULL = no type (legacy / quick-create). */
+  actionTypeId: z.string().length(26).optional(),
+  /** Map of `{ questionId: response }`. Validated against the type. */
+  customQuestionResponses: z.record(z.string(), z.unknown()).optional(),
+  /** Optional recurrence config (rrule + endDate). */
+  recurrence: recurrenceConfigSchema.nullable().optional(),
 });
 
 const createFromInspectionQuestionInput = z.object({
@@ -186,6 +388,13 @@ const updateInput = z.object({
   assigneeUserId: z.string().nullable().optional(),
   siteId: z.string().length(26).nullable().optional(),
   label: z.string().max(80).nullable().optional(),
+  actionTypeId: z.string().length(26).nullable().optional(),
+  /**
+   * Full replacement of the action's custom-question response map.
+   * Validated against the action's current type at the router boundary.
+   */
+  customQuestionResponses: z.record(z.string(), z.unknown()).optional(),
+  recurrence: recurrenceConfigSchema.nullable().optional(),
 });
 
 const setStatusInput = z.object({
@@ -263,10 +472,7 @@ export const actionsRouter = router({
       const sortOrder = (() => {
         switch (input.sortBy) {
           case 'due':
-            return [
-              sql`${actions.dueAt} ASC NULLS LAST`,
-              desc(actions.createdAt),
-            ];
+            return [sql`${actions.dueAt} ASC NULLS LAST`, desc(actions.createdAt)];
           case 'priority':
             return [
               sql`CASE ${actions.priority} WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END ASC`,
@@ -293,6 +499,10 @@ export const actionsRouter = router({
           siteId: actions.siteId,
           sourceType: actions.sourceType,
           sourceId: actions.sourceId,
+          actionTypeId: actions.actionTypeId,
+          actionTypeName: actionTypes.name,
+          actionTypeColor: actionTypes.color,
+          recurrence: actions.recurrence,
           createdAt: actions.createdAt,
           updatedAt: actions.updatedAt,
           archivedAt: actions.archivedAt,
@@ -300,6 +510,7 @@ export const actionsRouter = router({
         })
         .from(actions)
         .leftJoin(user, eq(user.id, actions.assigneeUserId))
+        .leftJoin(actionTypes, eq(actionTypes.id, actions.actionTypeId))
         .where(and(...where))
         .orderBy(...sortOrder)
         .limit(input.limit);
@@ -364,8 +575,23 @@ export const actionsRouter = router({
           title: row?.title ?? null,
         };
       }
+      // Resolve the action type so the detail page can render the
+      // type chip + the custom-question definitions (needed to map
+      // `customQuestionResponses[questionId]` back to a prompt).
+      let actionType: ActionType | null = null;
+      if (action.actionTypeId !== null) {
+        const tRows = await ctx.db
+          .select()
+          .from(actionTypes)
+          .where(
+            and(eq(actionTypes.tenantId, ctx.tenantId), eq(actionTypes.id, action.actionTypeId)),
+          )
+          .limit(1);
+        actionType = tRows[0] ?? null;
+      }
       return {
         action,
+        actionType,
         assignee: assigneeRows[0] ?? null,
         source,
         creatorName: creatorRows[0]?.name ?? null,
@@ -380,9 +606,34 @@ export const actionsRouter = router({
     .use(requirePermission('actions.create'))
     .input(createStandaloneInput)
     .mutation(async ({ ctx, input }) => {
+      // Resolve the (optional) action type up-front so we can validate
+      // custom-question responses + check that the type isn't archived.
+      let type: ActionType | null = null;
+      if (input.actionTypeId !== undefined) {
+        type = await loadActiveActionType(ctx.db, ctx.tenantId, input.actionTypeId);
+        if (type === null) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'action-type-not-found-or-archived',
+          });
+        }
+      }
+      // Validate custom responses against the type's question set —
+      // throws BAD_REQUEST on missing required answers / invalid
+      // multipleChoice options.
+      const cleanedResponses =
+        type !== null
+          ? validateCustomResponses(type.customQuestions, input.customQuestionResponses ?? {})
+          : {};
+
+      // Auto-compute due date from priority when the caller didn't set
+      // one explicitly. Uses the tenant's priority → days table.
+      const daysByPriority = await loadPriorityDueDateDays(ctx.db, ctx.tenantId);
+      const now = new Date();
+      const dueAt = computeAutoDueAt(now, input.priority ?? null, daysByPriority, input.dueAt);
+
       const id = newId();
       const referenceNumber = await nextActionReferenceNumber(ctx.db, ctx.tenantId);
-      const now = new Date();
       await ctx.db.insert(actions).values({
         id,
         tenantId: ctx.tenantId,
@@ -396,8 +647,11 @@ export const actionsRouter = router({
         priority: input.priority ?? null,
         label: input.label ?? null,
         assigneeUserId: input.assigneeUserId ?? null,
-        dueAt: input.dueAt !== undefined ? new Date(input.dueAt) : null,
+        dueAt,
         siteId: input.siteId ?? null,
+        actionTypeId: type?.id ?? null,
+        customQuestionResponses: cleanedResponses,
+        recurrence: input.recurrence ?? null,
         createdBy: ctx.auth.userId,
         createdAt: now,
         updatedAt: now,
@@ -407,7 +661,7 @@ export const actionsRouter = router({
         actionId: id,
         actorUserId: ctx.auth.userId,
         kind: 'created',
-        payload: { sourceType: 'standalone' },
+        payload: { sourceType: 'standalone', actionTypeId: type?.id ?? null },
       });
       return { actionId: id, referenceNumber };
     }),
@@ -620,8 +874,59 @@ export const actionsRouter = router({
           });
         }
       }
+      if (input.actionTypeId !== undefined) {
+        const next = input.actionTypeId;
+        if (next !== action.actionTypeId) {
+          // Validate that the target type is active.
+          if (next !== null) {
+            const type = await loadActiveActionType(ctx.db, ctx.tenantId, next);
+            if (type === null) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: 'action-type-not-found-or-archived',
+              });
+            }
+          }
+          updates.actionTypeId = next;
+          // Changing types clears the response map — the old questions
+          // no longer apply. Future enhancement: ask the user to confirm.
+          updates.customQuestionResponses = {};
+          events.push({
+            kind: 'type_changed',
+            payload: { from: action.actionTypeId, to: next },
+          });
+        }
+      }
+      if (input.customQuestionResponses !== undefined && action.actionTypeId !== null) {
+        // Validate against the current type's question set.
+        const type = await loadActiveActionType(ctx.db, ctx.tenantId, action.actionTypeId);
+        if (type !== null) {
+          const cleaned = validateCustomResponses(
+            type.customQuestions,
+            input.customQuestionResponses,
+          );
+          updates.customQuestionResponses = cleaned;
+          // No activity event for per-question edits to avoid spamming
+          // the timeline; a single coarse "edited" event covers it.
+        }
+      }
+      if (input.recurrence !== undefined) {
+        const prev = action.recurrence;
+        const next = input.recurrence;
+        const prevSig = prev === null || prev === undefined ? null : JSON.stringify(prev);
+        const nextSig = next === null ? null : JSON.stringify(next);
+        if (prevSig !== nextSig) {
+          updates.recurrence = next;
+          events.push({
+            kind: 'recurrence_changed',
+            payload: { from: prev, to: next },
+          });
+        }
+      }
 
-      if (events.length === 0) return { ok: true as const };
+      if (events.length === 0 && updates.customQuestionResponses === undefined) {
+        return { ok: true as const };
+      }
 
       await ctx.db.update(actions).set(updates).where(eq(actions.id, action.id));
       for (const ev of events) {
@@ -652,6 +957,24 @@ export const actionsRouter = router({
       const wasTerminal = action.status === 'completed' || action.status === 'cancelled';
       const willBeTerminal = input.status === 'completed' || input.status === 'cancelled';
 
+      // Transition gate: per-type rule decides who can move into the
+      // gated terminal statuses. Helper throws FORBIDDEN on rejection;
+      // admins (org.settings) always pass.
+      if (willBeTerminal) {
+        let type: ActionType | null = null;
+        if (action.actionTypeId !== null) {
+          type = await loadActiveActionType(ctx.db, ctx.tenantId, action.actionTypeId);
+        }
+        await assertCanTransitionTo(
+          ctx.db,
+          ctx.tenantId,
+          ctx.auth.userId,
+          ctx.permissions,
+          type,
+          input.status as 'completed' | 'cancelled',
+        );
+      }
+
       const updates: Partial<typeof actions.$inferInsert> = {
         status: input.status,
         updatedAt: now,
@@ -674,6 +997,58 @@ export const actionsRouter = router({
         kind: 'status_changed',
         payload: { from: action.status, to: input.status },
       });
+
+      // Recurrence: when a recurring action moves to `completed`,
+      // materialise the next occurrence with a fresh reference number
+      // and link it back to this one via `recurrence_parent_id`. We do
+      // a simple "due_at + period" computation client-side here rather
+      // than full RRULE iteration — the rrule string is stored, and a
+      // worker can replace this in the future. The new row inherits the
+      // current rrule + endDate so the chain continues indefinitely.
+      if (
+        input.status === 'completed' &&
+        action.recurrence !== null &&
+        action.recurrence !== undefined
+      ) {
+        const next = computeNextRecurrenceDate(action.dueAt ?? now, action.recurrence);
+        const endDate =
+          action.recurrence.endDate !== null ? new Date(action.recurrence.endDate) : null;
+        if (next !== null && (endDate === null || next <= endDate)) {
+          const newId_ = newId();
+          const referenceNumber = await nextActionReferenceNumber(ctx.db, ctx.tenantId);
+          await ctx.db.insert(actions).values({
+            id: newId_,
+            tenantId: ctx.tenantId,
+            sourceType: action.sourceType,
+            sourceId: action.sourceId,
+            sourceItemId: null,
+            referenceNumber,
+            title: action.title,
+            description: action.description,
+            status: 'open',
+            priority: action.priority,
+            label: action.label,
+            assigneeUserId: action.assigneeUserId,
+            dueAt: next,
+            siteId: action.siteId,
+            actionTypeId: action.actionTypeId,
+            customQuestionResponses: {},
+            recurrence: action.recurrence,
+            recurrenceParentId: action.recurrenceParentId ?? action.id,
+            createdBy: ctx.auth.userId,
+            createdAt: now,
+            updatedAt: now,
+          });
+          await writeActivity(ctx.db, {
+            tenantId: ctx.tenantId,
+            actionId: newId_,
+            actorUserId: ctx.auth.userId,
+            kind: 'recurred',
+            payload: { parentId: action.id, parentReference: action.referenceNumber },
+          });
+        }
+      }
+
       return { ok: true as const };
     }),
 
@@ -799,10 +1174,7 @@ export const actionsRouter = router({
           .select()
           .from(actionComments)
           .where(
-            and(
-              eq(actionComments.tenantId, ctx.tenantId),
-              eq(actionComments.id, input.commentId),
-            ),
+            and(eq(actionComments.tenantId, ctx.tenantId), eq(actionComments.id, input.commentId)),
           )
           .limit(1);
         const row = rows[0];
@@ -827,10 +1199,7 @@ export const actionsRouter = router({
           .select()
           .from(actionComments)
           .where(
-            and(
-              eq(actionComments.tenantId, ctx.tenantId),
-              eq(actionComments.id, input.commentId),
-            ),
+            and(eq(actionComments.tenantId, ctx.tenantId), eq(actionComments.id, input.commentId)),
           )
           .limit(1);
         const row = rows[0];
@@ -857,7 +1226,9 @@ export const actionsRouter = router({
    */
   countsByStatus: tenantProcedure
     .use(requirePermission('actions.view'))
-    .input(z.object({ includeArchived: z.boolean().default(false) }).default({ includeArchived: false }))
+    .input(
+      z.object({ includeArchived: z.boolean().default(false) }).default({ includeArchived: false }),
+    )
     .query(async ({ ctx, input }) => {
       const where = [eq(actions.tenantId, ctx.tenantId)];
       if (!input.includeArchived) where.push(isNull(actions.archivedAt));

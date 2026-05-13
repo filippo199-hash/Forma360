@@ -5,14 +5,7 @@ import type {
   IssueNotificationRule,
   IssueToggleableBuiltInField,
 } from '@forma360/shared/issues-schema';
-import {
-  ArrowLeft,
-  ImageIcon,
-  MapPin,
-  Pencil,
-  Type as TypeIcon,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, ImageIcon, MapPin, Pencil, Type as TypeIcon, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -600,9 +593,7 @@ function CustomQuestionsCard({
         setDraft(customQuestions);
         setEditing(false);
       }}
-      onSave={() =>
-        update.mutate({ categoryId, customQuestions: normaliseCustomQuestions(draft) })
-      }
+      onSave={() => update.mutate({ categoryId, customQuestions: normaliseCustomQuestions(draft) })}
       saveDisabled={!valid}
       saving={update.isPending}
     >
@@ -701,9 +692,7 @@ function LinkedTemplatesCard({
   }
 
   function togglePickerDraft(id: string) {
-    setPickerDraft((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setPickerDraft((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
   function commitPicker() {
@@ -727,16 +716,13 @@ function LinkedTemplatesCard({
       }}
       onSave={() => update.mutate({ categoryId, linkedTemplateIds: draft })}
       saveDisabled={
-        JSON.stringify(draft.slice().sort()) ===
-        JSON.stringify(linkedTemplateIds.slice().sort())
+        JSON.stringify(draft.slice().sort()) === JSON.stringify(linkedTemplateIds.slice().sort())
       }
       saving={update.isPending}
     >
       <div className="space-y-3">
         {(editing ? draft : linkedTemplateIds).length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {tDetail('linkedTemplatesCard.empty')}
-          </p>
+          <p className="text-sm text-muted-foreground">{tDetail('linkedTemplatesCard.empty')}</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {(editing ? draft : linkedTemplateIds).map((id) => {
@@ -938,9 +924,7 @@ function VisibilityCard({
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-base font-semibold">
-                {tDetail('visibilityCard.title')}
-              </h2>
+              <h2 className="text-base font-semibold">{tDetail('visibilityCard.title')}</h2>
               {editing ? (
                 <div className="flex items-center gap-2">
                   <Switch
@@ -962,12 +946,7 @@ function VisibilityCard({
             </p>
           </div>
           {!editing ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setEditing(true)}
-            >
+            <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
               <Pencil className="mr-1 h-4 w-4" />
               {tDetail('editButton')}
             </Button>
@@ -990,9 +969,7 @@ function VisibilityCard({
                   className="mt-1 h-4 w-4 cursor-pointer accent-primary"
                 />
                 <div>
-                  <div className="font-medium">
-                    {tDetail('visibilityCard.everyoneOption')}
-                  </div>
+                  <div className="font-medium">{tDetail('visibilityCard.everyoneOption')}</div>
                 </div>
               </label>
               <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3 hover:bg-accent/30">
@@ -1006,9 +983,7 @@ function VisibilityCard({
                   className="mt-1 h-4 w-4 cursor-pointer accent-primary"
                 />
                 <div>
-                  <div className="font-medium">
-                    {tDetail('visibilityCard.specificOption')}
-                  </div>
+                  <div className="font-medium">{tDetail('visibilityCard.specificOption')}</div>
                 </div>
               </label>
             </fieldset>
@@ -1026,12 +1001,8 @@ function VisibilityCard({
                 onClick={() => {
                   setEnabled(accessRuleId !== null);
                   setMode(accessRuleId === null ? 'everyone' : 'specific');
-                  setGroupIds(
-                    currentRule !== null ? [...(currentRule.groupIds ?? [])] : [],
-                  );
-                  setSiteIds(
-                    currentRule !== null ? [...(currentRule.siteIds ?? [])] : [],
-                  );
+                  setGroupIds(currentRule !== null ? [...(currentRule.groupIds ?? [])] : []);
+                  setSiteIds(currentRule !== null ? [...(currentRule.siteIds ?? [])] : []);
                   setEditing(false);
                 }}
               >
@@ -1089,9 +1060,7 @@ function IssueFieldsCard({
   });
 
   function toggle(key: IssueToggleableBuiltInField) {
-    setDraft((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
-    );
+    setDraft((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   }
 
   const dirty = useMemo(() => {

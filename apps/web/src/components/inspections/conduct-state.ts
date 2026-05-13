@@ -7,12 +7,7 @@
  * page. Visibility and required-completeness are derived as pure helpers
  * so both the render layer and the submit-gate can compute them cheaply.
  */
-import type {
-  Item,
-  Section,
-  TemplateContent,
-  Visibility,
-} from '@forma360/shared/template-schema';
+import type { Item, Section, TemplateContent, Visibility } from '@forma360/shared/template-schema';
 
 // ─── Response value shapes ──────────────────────────────────────────────────
 
@@ -185,10 +180,7 @@ export function isItemVisible(item: Item, responses: Responses): boolean {
  *
  * Media: requires at least one key in the responses entry.
  */
-export function findUnansweredRequired(
-  content: TemplateContent,
-  responses: Responses,
-): string[] {
+export function findUnansweredRequired(content: TemplateContent, responses: Responses): string[] {
   const missing: string[] = [];
   for (const page of content.pages) {
     for (const section of page.sections) {

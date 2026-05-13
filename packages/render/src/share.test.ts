@@ -96,7 +96,13 @@ describe('validateShareToken', () => {
       templateId,
       versionNumber: 1,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      content: { schemaVersion: '1', title: 'Tpl', pages: [], settings: {}, customResponseSets: [] } as any,
+      content: {
+        schemaVersion: '1',
+        title: 'Tpl',
+        pages: [],
+        settings: {},
+        customResponseSets: [],
+      } as any,
       publishedAt: new Date(),
     });
     await db.insert(schema.inspections).values({
@@ -165,10 +171,7 @@ describe('validateShareToken', () => {
   });
 
   it('returns null for a forged / unknown token', async () => {
-    const claims = await validateShareToken(
-      db as unknown as Database,
-      generateShareToken(),
-    );
+    const claims = await validateShareToken(db as unknown as Database, generateShareToken());
     expect(claims).toBeNull();
   });
 
@@ -199,14 +202,22 @@ describe('revokeShareLinkRow', () => {
     const templateId = '01HYZTEMPLATE00000000000001'.slice(0, 26);
     const versionId = '01HYZVERSION0000000000002A';
     await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
-    await db.insert(schema.templates).values({ id: templateId, tenantId, name: "Tpl", createdBy: "u1" });
+    await db
+      .insert(schema.templates)
+      .values({ id: templateId, tenantId, name: 'Tpl', createdBy: 'u1' });
     await db.insert(schema.templateVersions).values({
       id: versionId,
       tenantId,
       templateId,
       versionNumber: 1,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      content: { schemaVersion: '1', title: 'Tpl', pages: [], settings: {}, customResponseSets: [] } as any,
+      content: {
+        schemaVersion: '1',
+        title: 'Tpl',
+        pages: [],
+        settings: {},
+        customResponseSets: [],
+      } as any,
       publishedAt: new Date(),
     });
     await db.insert(schema.inspections).values({

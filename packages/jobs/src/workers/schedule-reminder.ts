@@ -9,10 +9,7 @@
  *   4. Stamp `reminderSentAt` so retries do not double-send.
  */
 import type { Database } from '@forma360/db/client';
-import {
-  scheduledInspectionOccurrences,
-  user as userTable,
-} from '@forma360/db/schema';
+import { scheduledInspectionOccurrences, user as userTable } from '@forma360/db/schema';
 import type { SendEmail } from '@forma360/shared/email';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';

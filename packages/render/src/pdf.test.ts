@@ -62,7 +62,12 @@ function memStorage(): Storage & { uploads: Map<string, Uint8Array> } {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (...args: Parameters<typeof fetch>) => {
     const [input, init] = args;
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : (input as Request).url;
     if (url.startsWith('mem://') && init?.method === 'PUT') {
       const key = url.slice('mem://'.length);
       const body = init.body as Uint8Array | undefined;
@@ -87,14 +92,22 @@ describe('renderInspectionPdf', () => {
     const templateId = 'TPL23456789012345678901234';
     const versionId = 'V12345678901234567890123456'.slice(0, 26);
     await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
-    await db.insert(schema.templates).values({ id: templateId, tenantId, name: "Tpl", createdBy: "u1" });
+    await db
+      .insert(schema.templates)
+      .values({ id: templateId, tenantId, name: 'Tpl', createdBy: 'u1' });
     await db.insert(schema.templateVersions).values({
       id: versionId,
       tenantId,
       templateId,
       versionNumber: 1,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      content: { schemaVersion: '1', title: 'Tpl', pages: [], settings: {}, customResponseSets: [] } as any,
+      content: {
+        schemaVersion: '1',
+        title: 'Tpl',
+        pages: [],
+        settings: {},
+        customResponseSets: [],
+      } as any,
       publishedAt: new Date(),
     });
     await db.insert(schema.inspections).values({
@@ -132,7 +145,9 @@ describe('renderInspectionPdf', () => {
       { tenantId, inspectionId },
     );
 
-    expect(key).toMatch(new RegExp(`^${tenantId}/inspections/${inspectionId}/pdf-[0-9a-f]{64}\\.pdf$`));
+    expect(key).toMatch(
+      new RegExp(`^${tenantId}/inspections/${inspectionId}/pdf-[0-9a-f]{64}\\.pdf$`),
+    );
     expect(bytes).toBe(fakeBytes.length);
     expect(stub).toBe(true); // 5 bytes is < 1500-byte stub threshold
     expect(storage.uploads.get(key)).toEqual(fakeBytes);

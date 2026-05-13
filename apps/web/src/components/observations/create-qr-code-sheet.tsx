@@ -63,8 +63,7 @@ export function CreateQrCodeSheet({
       onOpenChange(false);
       await onCreated(result.token, variables.categoryId);
     },
-    onError: (err) =>
-      toast.error(err.message.length > 0 ? err.message : tToast('error')),
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tToast('error')),
   });
 
   const canSubmit = categoryId !== '' && !generate.isPending;
@@ -113,11 +112,7 @@ export function CreateQrCodeSheet({
           ) : null}
 
           <SheetFooter className="pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               {t('cancel')}
             </Button>
             <Button type="submit" disabled={!canSubmit}>

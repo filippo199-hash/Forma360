@@ -4,12 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../../../src/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';

@@ -55,7 +55,10 @@ export function ShowQrCodeDialog({
   }, [open, token]);
 
   function safeFileName(name: string): string {
-    const trimmed = name.trim().replace(/[^a-zA-Z0-9-_]+/g, '-').replace(/-+/g, '-');
+    const trimmed = name
+      .trim()
+      .replace(/[^a-zA-Z0-9-_]+/g, '-')
+      .replace(/-+/g, '-');
     return trimmed.length === 0 ? 'qr-code' : trimmed;
   }
 
@@ -111,12 +114,7 @@ export function ShowQrCodeDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={copyLink}
-            disabled={url.length === 0}
-          >
+          <Button type="button" variant="outline" onClick={copyLink} disabled={url.length === 0}>
             {t('copyButton')}
           </Button>
           <Button type="button" onClick={downloadPng} disabled={url.length === 0}>

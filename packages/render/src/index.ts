@@ -12,12 +12,7 @@
  *
  * See ADR 0008 for the architectural decisions behind each surface.
  */
-export {
-  renderInspectionPdf,
-  pdfObjectKey,
-  type RenderDeps,
-  type RenderResult,
-} from './pdf';
+export { renderInspectionPdf, pdfObjectKey, type RenderDeps, type RenderResult } from './pdf';
 export {
   renderInspectionDocx,
   docxObjectKey,
@@ -32,11 +27,7 @@ export {
   SHARE_TOKEN_BYTES,
   type ShareTokenClaims,
 } from './share';
-export {
-  signRenderToken,
-  verifyRenderToken,
-  DEFAULT_RENDER_TOKEN_TTL_SECONDS,
-} from './hmac';
+export { signRenderToken, verifyRenderToken, DEFAULT_RENDER_TOKEN_TTL_SECONDS } from './hmac';
 export {
   loadInspectionSnapshot,
   hashInspectionSnapshot,

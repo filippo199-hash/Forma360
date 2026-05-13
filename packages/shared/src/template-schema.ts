@@ -30,9 +30,7 @@ const markdown = z.string().max(50_000);
 const nonEmptyString = z.string().min(1).max(500);
 
 /** Hex color validator for branding fields (6-digit form, e.g. "#0F766E"). */
-const hexColor = z
-  .string()
-  .regex(/^#[0-9a-fA-F]{6}$/, 'Must be a 6-digit hex color like #0F766E');
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Must be a 6-digit hex color like #0F766E');
 
 // ─── Response sets (snapshotted into each template version) ────────────────
 

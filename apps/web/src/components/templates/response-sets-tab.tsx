@@ -66,7 +66,9 @@ export function ResponseSetsTab() {
                   <span className="truncate font-medium">{set.name}</span>
                   <span
                     className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${
-                      isSelected ? 'bg-emerald-100 text-emerald-700' : 'bg-muted text-muted-foreground'
+                      isSelected
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {set.options.length}
@@ -135,9 +137,7 @@ export function ResponseSetsTab() {
                 className="pb-1 text-muted-foreground hover:text-destructive"
                 onClick={() => {
                   dispatch({ type: 'deleteResponseSet', setId: selectedSet.id });
-                  setSelectedSetId(
-                    sets.find((s) => s.id !== selectedSet.id)?.id ?? null,
-                  );
+                  setSelectedSetId(sets.find((s) => s.id !== selectedSet.id)?.id ?? null);
                 }}
                 aria-label={t('removeOption')}
               >
@@ -210,9 +210,7 @@ export function ResponseSetsTab() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  dispatch({ type: 'addResponseOption', setId: selectedSet.id })
-                }
+                onClick={() => dispatch({ type: 'addResponseOption', setId: selectedSet.id })}
                 aria-label={t('addOption')}
               >
                 <Plus className="mr-1 h-3.5 w-3.5" />

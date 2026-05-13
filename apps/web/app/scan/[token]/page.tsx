@@ -68,13 +68,11 @@ export default function ScanReportPage() {
   const [description, setDescription] = useState('');
   const [reporterName, setReporterName] = useState('');
   const [reporterEmail, setReporterEmail] = useState('');
-  const [dateOccurred, setDateOccurred] = useState(() =>
-    formatLocalDatetime(new Date()),
-  );
+  const [dateOccurred, setDateOccurred] = useState(() => formatLocalDatetime(new Date()));
   const [locationAddress, setLocationAddress] = useState('');
-  const [customQuestionResponses, setCustomQuestionResponses] = useState<
-    Record<string, string>
-  >({});
+  const [customQuestionResponses, setCustomQuestionResponses] = useState<Record<string, string>>(
+    {},
+  );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState<SuccessState | null>(null);
 
@@ -98,8 +96,8 @@ export default function ScanReportPage() {
     if (submitError !== null) setSubmitError(null);
   }, [formFingerprint, submitError]);
 
-  const customQuestions: ReadonlyArray<IssueCustomQuestion> =
-    (category?.customQuestions ?? []) as ReadonlyArray<IssueCustomQuestion>;
+  const customQuestions: ReadonlyArray<IssueCustomQuestion> = (category?.customQuestions ??
+    []) as ReadonlyArray<IssueCustomQuestion>;
 
   const enabledBuiltInFields: ReadonlyArray<IssueToggleableBuiltInField> =
     (category?.enabledBuiltInFields ?? [
@@ -280,9 +278,7 @@ export default function ScanReportPage() {
                   onChange={(e) => setReporterName(e.target.value)}
                   maxLength={MAX_NAME}
                 />
-                <p className="text-xs text-muted-foreground">
-                  {COPY.fields.reporterNameSubtitle}
-                </p>
+                <p className="text-xs text-muted-foreground">{COPY.fields.reporterNameSubtitle}</p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="reporter-email">{COPY.fields.reporterEmailLabel}</Label>
@@ -293,9 +289,7 @@ export default function ScanReportPage() {
                   onChange={(e) => setReporterEmail(e.target.value)}
                   maxLength={MAX_EMAIL}
                 />
-                <p className="text-xs text-muted-foreground">
-                  {COPY.fields.reporterEmailSubtitle}
-                </p>
+                <p className="text-xs text-muted-foreground">{COPY.fields.reporterEmailSubtitle}</p>
               </div>
             </div>
 
@@ -324,14 +318,10 @@ export default function ScanReportPage() {
 
             {customQuestions.length > 0 ? (
               <div className="space-y-3 border-t pt-5">
-                <h2 className="text-sm font-medium">
-                  {COPY.fields.customQuestionsHeading}
-                </h2>
+                <h2 className="text-sm font-medium">{COPY.fields.customQuestionsHeading}</h2>
                 {customQuestions.map((q) => (
                   <div key={q.id} className="space-y-1.5">
-                    <Label htmlFor={`cq-${q.id}`}>
-                      {`${q.prompt}${q.required ? ' *' : ''}`}
-                    </Label>
+                    <Label htmlFor={`cq-${q.id}`}>{`${q.prompt}${q.required ? ' *' : ''}`}</Label>
                     {q.type === 'multipleChoice' && q.options !== undefined ? (
                       <select
                         id={`cq-${q.id}`}
@@ -392,13 +382,7 @@ export default function ScanReportPage() {
   );
 }
 
-function PageShell({
-  children,
-  tenantName,
-}: {
-  children: React.ReactNode;
-  tenantName?: string;
-}) {
+function PageShell({ children, tenantName }: { children: React.ReactNode; tenantName?: string }) {
   const COPY = SCAN_PAGE_COPY;
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-4 py-10">

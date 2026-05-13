@@ -30,11 +30,7 @@ function SiteHeaderInner({
           <LocalePicker />
           <ThemeToggle />
           {session !== null ? (
-            <UserMenu
-              name={session.user.name ?? ''}
-              email={session.user.email}
-              locale={locale}
-            />
+            <UserMenu name={session.user.name ?? ''} email={session.user.email} locale={locale} />
           ) : null}
         </nav>
       </div>

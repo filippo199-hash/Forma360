@@ -20,14 +20,7 @@ interface SiteSidebarProps {
 }
 
 interface NavItem {
-  key:
-    | 'templates'
-    | 'inspections'
-    | 'approvals'
-    | 'schedules'
-    | 'issues'
-    | 'actions'
-    | 'settings';
+  key: 'templates' | 'inspections' | 'approvals' | 'schedules' | 'issues' | 'actions' | 'settings';
   href: string;
   icon: LucideIcon;
 }
@@ -89,10 +82,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
 
   return (
     <aside className="sticky top-0 hidden h-screen w-56 shrink-0 border-r bg-card md:flex md:flex-col">
-      <nav
-        aria-label={t('primaryLabel')}
-        className="flex h-full flex-col gap-1 p-3"
-      >
+      <nav aria-label={t('primaryLabel')} className="flex h-full flex-col gap-1 p-3">
         {primary.map(renderItem)}
         <div className="mt-auto border-t pt-3">{renderItem(settingsItem)}</div>
       </nav>

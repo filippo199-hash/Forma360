@@ -1,5 +1,6 @@
 'use client';
 
+import type { ActionCustomQuestion } from '@forma360/shared/actions-schema';
 import { Archive, ArrowLeft, Pencil, Share2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -66,6 +67,7 @@ export default function ActionDetailPage() {
 
   const { data, isLoading } = trpc.actions.get.useQuery({ actionId });
   const action = data?.action;
+  const actionType = data?.actionType ?? null;
   const assignee = data?.assignee ?? null;
   const source = data?.source ?? null;
   const { data: sites } = trpc.sites.list.useQuery();
@@ -235,6 +237,23 @@ export default function ActionDetailPage() {
                 {tStatus(action.status as Status)}
               </span>
             )}
+            {actionType !== null ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
+                {actionType.color !== null && actionType.color.length > 0 ? (
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: actionType.color }}
+                    aria-hidden="true"
+                  />
+                ) : null}
+                {actionType.name}
+              </span>
+            ) : null}
+            {action.recurrence !== null ? (
+              <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-200">
+                {t('recurringBadge')}
+              </span>
+            ) : null}
             {isArchived ? (
               <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                 {t('archivedBadge')}
@@ -342,9 +361,7 @@ export default function ActionDetailPage() {
                           update.mutate({
                             actionId,
                             description:
-                              descriptionDraft.trim().length === 0
-                                ? null
-                                : descriptionDraft.trim(),
+                              descriptionDraft.trim().length === 0 ? null : descriptionDraft.trim(),
                           });
                           setEditingDescription(false);
                         }}
@@ -354,7 +371,13 @@ export default function ActionDetailPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className={action.description !== null && action.description.length > 0 ? '' : 'text-muted-foreground'}>
+                  <p
+                    className={
+                      action.description !== null && action.description.length > 0
+                        ? ''
+                        : 'text-muted-foreground'
+                    }
+                  >
                     {action.description ?? t('descriptionEmpty')}
                   </p>
                 )}
@@ -362,6 +385,21 @@ export default function ActionDetailPage() {
             </Card>
 
             <SourceCard source={source} sourceId={action.sourceId} locale={locale} />
+
+            {actionType !== null ? (
+              <CustomQuestionsCard
+                actionId={actionId}
+                actionType={actionType}
+                responses={(action.customQuestionResponses ?? {}) as Record<string, unknown>}
+                canEdit={canEdit}
+              />
+            ) : null}
+
+            <RecurrenceCard
+              actionId={actionId}
+              recurrence={action.recurrence as RecurrenceCardValue}
+              canEdit={canEdit}
+            />
           </div>
 
           <Card>
@@ -377,10 +415,7 @@ export default function ActionDetailPage() {
                     onChange={(e) =>
                       update.mutate({
                         actionId,
-                        priority:
-                          e.target.value === ''
-                            ? null
-                            : (e.target.value as Priority),
+                        priority: e.target.value === '' ? null : (e.target.value as Priority),
                       })
                     }
                     className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
@@ -420,9 +455,7 @@ export default function ActionDetailPage() {
                       update.mutate({
                         actionId,
                         dueAt:
-                          e.target.value === ''
-                            ? null
-                            : new Date(e.target.value).toISOString(),
+                          e.target.value === '' ? null : new Date(e.target.value).toISOString(),
                       })
                     }
                     className={overdue ? 'border-destructive text-destructive' : ''}
@@ -453,7 +486,7 @@ export default function ActionDetailPage() {
                     ))}
                   </select>
                 ) : action.siteId !== null ? (
-                  (sites ?? []).find((s) => s.id === action.siteId)?.name ?? '—'
+                  ((sites ?? []).find((s) => s.id === action.siteId)?.name ?? '—')
                 ) : (
                   tFields('noSite')
                 )}
@@ -488,9 +521,7 @@ export default function ActionDetailPage() {
         />
       ) : null}
 
-      {tab === 'comments' ? (
-        <CommentsThread actionId={actionId} readOnly={isArchived} />
-      ) : null}
+      {tab === 'comments' ? <CommentsThread actionId={actionId} readOnly={isArchived} /> : null}
     </div>
   );
 }
@@ -533,13 +564,7 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
  * Label edits commit on blur so we don't fire a mutation per keystroke;
  * the local state keeps the field responsive while typing.
  */
-function LabelInput({
-  initial,
-  onCommit,
-}: {
-  initial: string;
-  onCommit: (next: string) => void;
-}) {
+function LabelInput({ initial, onCommit }: { initial: string; onCommit: (next: string) => void }) {
   const [value, setValue] = useState(initial);
   const lastCommit = useRef(initial);
   useEffect(() => {
@@ -579,7 +604,9 @@ function AssigneePicker({
   const users = usersData?.users ?? [];
   if (!canManage) {
     return (
-      <span>{currentName !== null && currentName.length > 0 ? currentName : tFields('noAssignee')}</span>
+      <span>
+        {currentName !== null && currentName.length > 0 ? currentName : tFields('noAssignee')}
+      </span>
     );
   }
   return (
@@ -763,13 +790,7 @@ function ActivityTimeline({
   );
 }
 
-function CommentsThread({
-  actionId,
-  readOnly,
-}: {
-  actionId: string;
-  readOnly: boolean;
-}) {
+function CommentsThread({ actionId, readOnly }: { actionId: string; readOnly: boolean }) {
   const t = useTranslations('actions.detail.comments');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
@@ -868,4 +889,343 @@ function toLocalDatetime(d: Date | string | null | undefined): string {
   if (Number.isNaN(dt.getTime())) return '';
   const pad = (n: number) => n.toString().padStart(2, '0');
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+
+interface ActionTypeShape {
+  id: string;
+  name: string;
+  color: string | null;
+  description: string | null;
+  customQuestions: ReadonlyArray<ActionCustomQuestion>;
+}
+
+/**
+ * Read-only render of the type's custom-question answers, with an
+ * inline editor for managers. The form mirrors the create-page form
+ * exactly so the data shape stays consistent.
+ */
+function CustomQuestionsCard({
+  actionId,
+  actionType,
+  responses,
+  canEdit,
+}: {
+  actionId: string;
+  actionType: ActionTypeShape;
+  responses: Record<string, unknown>;
+  canEdit: boolean;
+}) {
+  const t = useTranslations('actions.detail.customQuestions');
+  const tCommon = useTranslations('common');
+  const utils = trpc.useUtils();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<Record<string, unknown>>(responses);
+
+  // Reset draft whenever the server-side responses change.
+  useEffect(() => {
+    setDraft(responses);
+  }, [responses]);
+
+  const update = trpc.actions.update.useMutation({
+    onSuccess: () => {
+      toast.success(t('savedToast'));
+      void utils.actions.get.invalidate({ actionId });
+      setEditing(false);
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  if (actionType.customQuestions.length === 0) return null;
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-6 text-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold">{t('title')}</h2>
+          {canEdit && !editing ? (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
+              {tCommon('edit')}
+            </Button>
+          ) : null}
+        </div>
+        {editing ? (
+          <div className="space-y-3">
+            {actionType.customQuestions.map((q) => (
+              <div key={q.id} className="space-y-1.5">
+                <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {q.prompt}
+                  {q.required ? <span className="ml-1 text-destructive">*</span> : null}
+                </label>
+                {q.type === 'text' ? (
+                  <Textarea
+                    value={typeof draft[q.id] === 'string' ? (draft[q.id] as string) : ''}
+                    onChange={(e) => setDraft({ ...draft, [q.id]: e.target.value })}
+                    rows={2}
+                    maxLength={2000}
+                  />
+                ) : q.type === 'number' ? (
+                  <Input
+                    type="number"
+                    value={
+                      typeof draft[q.id] === 'number'
+                        ? String(draft[q.id])
+                        : typeof draft[q.id] === 'string'
+                          ? (draft[q.id] as string)
+                          : ''
+                    }
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        [q.id]: e.target.value === '' ? '' : Number(e.target.value),
+                      })
+                    }
+                  />
+                ) : (
+                  <select
+                    value={typeof draft[q.id] === 'string' ? (draft[q.id] as string) : ''}
+                    onChange={(e) => setDraft({ ...draft, [q.id]: e.target.value })}
+                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">—</option>
+                    {(q.options ?? []).map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            ))}
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setDraft(responses);
+                  setEditing(false);
+                }}
+                disabled={update.isPending}
+              >
+                {tCommon('cancel')}
+              </Button>
+              <Button
+                type="button"
+                disabled={update.isPending}
+                onClick={() => update.mutate({ actionId, customQuestionResponses: draft })}
+              >
+                {tCommon('save')}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <dl className="space-y-2">
+            {actionType.customQuestions.map((q) => {
+              const v = responses[q.id];
+              const hasValue =
+                v !== undefined && v !== null && !(typeof v === 'string' && v === '');
+              return (
+                <div key={q.id} className="grid grid-cols-1 gap-0.5 sm:grid-cols-[140px_1fr]">
+                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {q.prompt}
+                  </dt>
+                  <dd className={hasValue ? '' : 'text-muted-foreground'}>
+                    {hasValue ? String(v) : t('noAnswer')}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface RecurrenceCardValue {
+  rrule: string;
+  endDate: string | null;
+}
+
+/**
+ * Recurrence config card. The schema is intentionally minimal — a
+ * single RRULE string plus an optional end date. The worker that
+ * materialises future occurrences parses the rule on completion.
+ *
+ * UI picker only supports the common DAILY / WEEKLY / MONTHLY /
+ * YEARLY × interval flow; users who need more (BYDAY, COUNT, …) can
+ * edit the raw rule string in the advanced text area.
+ */
+function RecurrenceCard({
+  actionId,
+  recurrence,
+  canEdit,
+}: {
+  actionId: string;
+  recurrence: RecurrenceCardValue | null | undefined;
+  canEdit: boolean;
+}) {
+  const t = useTranslations('actions.detail.recurrence');
+  const tCommon = useTranslations('common');
+  const utils = trpc.useUtils();
+  const [editing, setEditing] = useState(false);
+
+  const initial = recurrence ?? null;
+  const [enabled, setEnabled] = useState(initial !== null);
+  const [freq, setFreq] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'>(
+    parseFreq(initial?.rrule) ?? 'WEEKLY',
+  );
+  const [interval, setInterval] = useState<number>(parseInterval(initial?.rrule) ?? 1);
+  const [endDate, setEndDate] = useState<string>(
+    initial?.endDate !== null && initial?.endDate !== undefined ? initial.endDate.slice(0, 10) : '',
+  );
+
+  useEffect(() => {
+    setEnabled(initial !== null);
+    setFreq(parseFreq(initial?.rrule) ?? 'WEEKLY');
+    setInterval(parseInterval(initial?.rrule) ?? 1);
+    setEndDate(
+      initial?.endDate !== null && initial?.endDate !== undefined
+        ? initial.endDate.slice(0, 10)
+        : '',
+    );
+  }, [initial?.rrule, initial?.endDate]);
+
+  const update = trpc.actions.update.useMutation({
+    onSuccess: () => {
+      toast.success(t('savedToast'));
+      void utils.actions.get.invalidate({ actionId });
+      setEditing(false);
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  function save() {
+    if (!enabled) {
+      update.mutate({ actionId, recurrence: null });
+      return;
+    }
+    const rrule = `FREQ=${freq};INTERVAL=${Math.max(1, Math.min(99, interval))}`;
+    update.mutate({
+      actionId,
+      recurrence: {
+        rrule,
+        endDate: endDate === '' ? null : new Date(`${endDate}T23:59:59Z`).toISOString(),
+      },
+    });
+  }
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-6 text-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold">{t('title')}</h2>
+          {canEdit && !editing ? (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
+              {tCommon('edit')}
+            </Button>
+          ) : null}
+        </div>
+        {!editing ? (
+          initial === null ? (
+            <p className="text-muted-foreground">{t('notRecurring')}</p>
+          ) : (
+            <div className="space-y-1">
+              <p>
+                {t('summary', {
+                  freq: t(`freq.${parseFreq(initial.rrule) ?? 'WEEKLY'}`),
+                  interval: String(parseInterval(initial.rrule) ?? 1),
+                })}
+              </p>
+              {initial.endDate !== null ? (
+                <p className="text-xs text-muted-foreground">
+                  {t('endsOn', { date: new Date(initial.endDate).toLocaleDateString() })}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">{t('noEnd')}</p>
+              )}
+            </div>
+          )
+        ) : (
+          <div className="space-y-3">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={enabled}
+                onChange={(e) => setEnabled(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <span>{t('enableLabel')}</span>
+            </label>
+            {enabled ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {t('freqLabel')}
+                  </label>
+                  <select
+                    value={freq}
+                    onChange={(e) => setFreq(e.target.value as typeof freq)}
+                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="DAILY">{t('freq.DAILY')}</option>
+                    <option value="WEEKLY">{t('freq.WEEKLY')}</option>
+                    <option value="MONTHLY">{t('freq.MONTHLY')}</option>
+                    <option value="YEARLY">{t('freq.YEARLY')}</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {t('intervalLabel')}
+                  </label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={interval}
+                    onChange={(e) => setInterval(Number(e.target.value) || 1)}
+                  />
+                </div>
+                <div className="col-span-2 space-y-1.5">
+                  <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {t('endDateLabel')}
+                  </label>
+                  <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                </div>
+              </div>
+            ) : null}
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setEditing(false)}
+                disabled={update.isPending}
+              >
+                {tCommon('cancel')}
+              </Button>
+              <Button type="button" disabled={update.isPending} onClick={save}>
+                {tCommon('save')}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function parseFreq(
+  rrule: string | null | undefined,
+): 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | null {
+  if (rrule === null || rrule === undefined) return null;
+  const m = /FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)/.exec(rrule);
+  if (m === null) return null;
+  return m[1] as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+}
+
+function parseInterval(rrule: string | null | undefined): number | null {
+  if (rrule === null || rrule === undefined) return null;
+  const m = /INTERVAL=(\d+)/.exec(rrule);
+  if (m === null) return 1;
+  const n = Number(m[1]);
+  return Number.isFinite(n) && n > 0 ? n : 1;
 }

@@ -21,122 +21,126 @@ export function SettingsTab({ templateId }: { templateId: string }) {
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
-    <div className="mx-auto max-w-3xl">
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('templateTitleLabel')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="tpl-name">{t('templateTitleLabel')}</Label>
-            <Input
-              id="tpl-name"
-              value={state.content.title}
-              onChange={(e) => dispatch({ type: 'updateContentTitle', title: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="tpl-desc">{t('templateDescriptionLabel')}</Label>
-            <Textarea
-              id="tpl-desc"
-              value={state.content.description ?? ''}
-              onChange={(e) =>
-                dispatch({ type: 'updateContentDescription', description: e.target.value })
-              }
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mx-auto max-w-3xl">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('templateTitleLabel')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="tpl-name">{t('templateTitleLabel')}</Label>
+                <Input
+                  id="tpl-name"
+                  value={state.content.title}
+                  onChange={(e) => dispatch({ type: 'updateContentTitle', title: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="tpl-desc">{t('templateDescriptionLabel')}</Label>
+                <Textarea
+                  id="tpl-desc"
+                  value={state.content.description ?? ''}
+                  onChange={(e) =>
+                    dispatch({ type: 'updateContentDescription', description: e.target.value })
+                  }
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('titleFormatLabel')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="title-fmt">{t('titleFormatLabel')}</Label>
-            <Input
-              id="title-fmt"
-              value={state.content.settings.titleFormat}
-              onChange={(e) =>
-                dispatch({ type: 'updateSettings', patch: { titleFormat: e.target.value } })
-              }
-            />
-            <p className="text-xs text-muted-foreground">{t('titleFormatHelp')}</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="doc-fmt">{t('documentNumberFormatLabel')}</Label>
-            <Input
-              id="doc-fmt"
-              value={state.content.settings.documentNumberFormat}
-              onChange={(e) =>
-                dispatch({
-                  type: 'updateSettings',
-                  patch: { documentNumberFormat: e.target.value },
-                })
-              }
-            />
-            <p className="text-xs text-muted-foreground">{t('documentNumberFormatHelp')}</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="doc-start">{t('documentNumberStartLabel')}</Label>
-            <Input
-              id="doc-start"
-              type="number"
-              min={1}
-              value={state.content.settings.documentNumberStart}
-              onChange={(e) =>
-                dispatch({
-                  type: 'updateSettings',
-                  patch: { documentNumberStart: Math.max(1, Number(e.target.value) || 1) },
-                })
-              }
-            />
-          </div>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('titleFormatLabel')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="title-fmt">{t('titleFormatLabel')}</Label>
+                <Input
+                  id="title-fmt"
+                  value={state.content.settings.titleFormat}
+                  onChange={(e) =>
+                    dispatch({ type: 'updateSettings', patch: { titleFormat: e.target.value } })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">{t('titleFormatHelp')}</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="doc-fmt">{t('documentNumberFormatLabel')}</Label>
+                <Input
+                  id="doc-fmt"
+                  value={state.content.settings.documentNumberFormat}
+                  onChange={(e) =>
+                    dispatch({
+                      type: 'updateSettings',
+                      patch: { documentNumberFormat: e.target.value },
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">{t('documentNumberFormatHelp')}</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="doc-start">{t('documentNumberStartLabel')}</Label>
+                <Input
+                  id="doc-start"
+                  type="number"
+                  min={1}
+                  value={state.content.settings.documentNumberStart}
+                  onChange={(e) =>
+                    dispatch({
+                      type: 'updateSettings',
+                      patch: { documentNumberStart: Math.max(1, Number(e.target.value) || 1) },
+                    })
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('accessRuleLabel')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">{t('accessRuleHelp')}</p>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('accessRuleLabel')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">{t('accessRuleHelp')}</p>
+            </CardContent>
+          </Card>
 
-      <Card className="md:col-span-2">
-        <CardHeader>
-          <CardTitle>{t('branding.title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BrandingForm
-            templateId={templateId}
-            logoStorageKey={branding.logoStorageKey}
-            primaryColor={branding.primaryColor}
-            accentColor={branding.accentColor}
-            onChange={(patch) => {
-              const next = {
-                ...(state.content.settings.branding ?? {}),
-                ...patch,
-              };
-              // Drop keys explicitly set to undefined so we don't persist
-              // empty strings against the hex-color regex.
-              const cleaned: { logoStorageKey?: string; primaryColor?: string; accentColor?: string } = {};
-              if (next.logoStorageKey !== undefined) cleaned.logoStorageKey = next.logoStorageKey;
-              if (next.primaryColor !== undefined) cleaned.primaryColor = next.primaryColor;
-              if (next.accentColor !== undefined) cleaned.accentColor = next.accentColor;
-              const brandingPatch =
-                Object.keys(cleaned).length === 0 ? undefined : cleaned;
-              dispatch({ type: 'updateSettings', patch: { branding: brandingPatch } });
-            }}
-          />
-        </CardContent>
-      </Card>
-    </div>
-    </div>
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>{t('branding.title')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BrandingForm
+                templateId={templateId}
+                logoStorageKey={branding.logoStorageKey}
+                primaryColor={branding.primaryColor}
+                accentColor={branding.accentColor}
+                onChange={(patch) => {
+                  const next = {
+                    ...(state.content.settings.branding ?? {}),
+                    ...patch,
+                  };
+                  // Drop keys explicitly set to undefined so we don't persist
+                  // empty strings against the hex-color regex.
+                  const cleaned: {
+                    logoStorageKey?: string;
+                    primaryColor?: string;
+                    accentColor?: string;
+                  } = {};
+                  if (next.logoStorageKey !== undefined)
+                    cleaned.logoStorageKey = next.logoStorageKey;
+                  if (next.primaryColor !== undefined) cleaned.primaryColor = next.primaryColor;
+                  if (next.accentColor !== undefined) cleaned.accentColor = next.accentColor;
+                  const brandingPatch = Object.keys(cleaned).length === 0 ? undefined : cleaned;
+                  dispatch({ type: 'updateSettings', patch: { branding: brandingPatch } });
+                }}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -239,12 +243,8 @@ function BrandingForm({
             }}
             className="block w-full text-sm"
           />
-          {uploading ? (
-            <p className="text-xs text-muted-foreground">…</p>
-          ) : null}
-          {uploadError !== null ? (
-            <p className="text-xs text-red-600">{uploadError}</p>
-          ) : null}
+          {uploading ? <p className="text-xs text-muted-foreground">…</p> : null}
+          {uploadError !== null ? <p className="text-xs text-red-600">{uploadError}</p> : null}
           {logoStorageKey !== undefined && logoStorageKey !== '' ? (
             <Button
               type="button"
@@ -292,23 +292,13 @@ function BrandingForm({
             style={{ backgroundColor: primaryColor ?? '#0F766E' }}
           >
             {previewUrl !== null ? (
-              <img
-                src={previewUrl}
-                alt="logo"
-                className="h-8 w-auto object-contain"
-              />
+              <img src={previewUrl} alt="logo" className="h-8 w-auto object-contain" />
             ) : (
-              <div
-                className="h-8 w-12 rounded bg-white/30"
-                aria-hidden="true"
-              />
+              <div className="h-8 w-12 rounded bg-white/30" aria-hidden="true" />
             )}
             <span className="text-sm font-medium">Forma360</span>
           </div>
-          <div
-            className="h-2 w-full"
-            style={{ backgroundColor: accentColor ?? '#38bdf8' }}
-          />
+          <div className="h-2 w-full" style={{ backgroundColor: accentColor ?? '#38bdf8' }} />
         </div>
       </div>
     </div>

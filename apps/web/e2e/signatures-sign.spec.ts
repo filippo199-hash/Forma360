@@ -9,9 +9,7 @@ import { expect, test } from '@playwright/test';
  * e2e DB seed helper does.
  */
 test('anonymous visit to /en/inspections/<id>/signatures/0 redirects away', async ({ page }) => {
-  const response = await page.goto(
-    '/en/inspections/01HYYYYYYYYYYYYYYYYYYYYYYY/signatures/0',
-  );
+  const response = await page.goto('/en/inspections/01HYYYYYYYYYYYYYYYYYYYYYYY/signatures/0');
   expect(response?.ok()).toBeTruthy();
   await expect(page).toHaveURL(/\/en(\/.*)?$/);
 });

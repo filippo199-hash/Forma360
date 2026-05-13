@@ -43,6 +43,8 @@ const MIGRATION_FILES = [
   '0009_signature_workflow.sql',
   '0010_issues.sql',
   '0011_observations_richer.sql',
+  '0012_actions_phase4.sql',
+  '0013_actions_phase4b.sql',
 ];
 
 async function bootDb() {
@@ -122,7 +124,7 @@ describe('exports router (Phase 2 PR 31)', () => {
         pages: [],
         settings: {},
         customResponseSets: [],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
       publishedAt: new Date(),
     });
@@ -148,7 +150,13 @@ describe('exports router (Phase 2 PR 31)', () => {
   });
 
   function callerForAdmin() {
-    const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps, inspections: stubInspectionsDeps, issues: stubIssuesDeps });
+    const router = buildAppRouter({
+      exports: exportsDeps,
+      inspectionsExport: stubInspectionsExportDeps,
+      auth: stubAuthDeps,
+      inspections: stubInspectionsDeps,
+      issues: stubIssuesDeps,
+    });
     const factory = createCallerFactory(router);
     return factory(ctxFor(adminUserId));
   }
@@ -218,9 +226,7 @@ describe('exports router (Phase 2 PR 31)', () => {
 
     it('404s when the link id is unknown', async () => {
       const caller = callerForAdmin();
-      await expect(() =>
-        caller.exports.revokeShareLink({ linkId: newId() }),
-      ).rejects.toThrow();
+      await expect(() => caller.exports.revokeShareLink({ linkId: newId() })).rejects.toThrow();
     });
   });
 
@@ -242,11 +248,15 @@ describe('exports router (Phase 2 PR 31)', () => {
           throw new Error('should not be called');
         },
       };
-      const router = buildAppRouter({ exports: deps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps, inspections: stubInspectionsDeps, issues: stubIssuesDeps });
+      const router = buildAppRouter({
+        exports: deps,
+        inspectionsExport: stubInspectionsExportDeps,
+        auth: stubAuthDeps,
+        inspections: stubInspectionsDeps,
+        issues: stubIssuesDeps,
+      });
       const caller = createCallerFactory(router)(ctxFor(adminUserId));
-      await expect(() =>
-        caller.exports.renderPdf({ inspectionId: newId() }),
-      ).rejects.toThrow();
+      await expect(() => caller.exports.renderPdf({ inspectionId: newId() })).rejects.toThrow();
       expect(rendererCalls).toBe(0);
     });
   });
@@ -275,11 +285,17 @@ describe('exports router (Phase 2 PR 31)', () => {
         tenantId,
         permissionSetId: restrictedId,
       });
-      const router = buildAppRouter({ exports: exportsDeps, inspectionsExport: stubInspectionsExportDeps, auth: stubAuthDeps, inspections: stubInspectionsDeps, issues: stubIssuesDeps });
+      const router = buildAppRouter({
+        exports: exportsDeps,
+        inspectionsExport: stubInspectionsExportDeps,
+        auth: stubAuthDeps,
+        inspections: stubInspectionsDeps,
+        issues: stubIssuesDeps,
+      });
       const caller = createCallerFactory(router)(ctxFor(standardUserId));
-      await expect(() =>
-        caller.exports.createShareLink({ inspectionId }),
-      ).rejects.toThrow(/FORBIDDEN|inspections.export/);
+      await expect(() => caller.exports.createShareLink({ inspectionId })).rejects.toThrow(
+        /FORBIDDEN|inspections.export/,
+      );
       // But viewing is fine — listShareLinks requires inspections.view only.
       const viewable = await caller.exports.listShareLinks({ inspectionId });
       expect(Array.isArray(viewable)).toBe(true);

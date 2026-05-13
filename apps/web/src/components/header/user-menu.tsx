@@ -45,12 +45,7 @@ export function UserMenu({ name, email, locale }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex items-center gap-2"
-          aria-label={display}
-        >
+        <Button variant="ghost" size="sm" className="flex items-center gap-2" aria-label={display}>
           <UserRound className="h-4 w-4" aria-hidden />
           <span className="hidden max-w-[14ch] truncate sm:inline">{display}</span>
         </Button>

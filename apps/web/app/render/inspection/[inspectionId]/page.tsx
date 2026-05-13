@@ -59,7 +59,9 @@ export default async function RenderInspectionPage({ params, searchParams }: Pro
   if (snapshot === null) notFound();
 
   const brandingKey = (
-    snapshot.template.content as { settings?: { branding?: { logoStorageKey?: string } } } | undefined
+    snapshot.template.content as
+      | { settings?: { branding?: { logoStorageKey?: string } } }
+      | undefined
   )?.settings?.branding?.logoStorageKey;
   const logoUrl = await fetchLogoUrl(brandingKey);
 

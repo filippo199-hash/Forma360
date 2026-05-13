@@ -17,13 +17,7 @@
  * mocks (same pattern as the exports router — see `ExportsRouterDeps`).
  */
 import type { Database } from '@forma360/db/client';
-import {
-  inspections,
-  sites,
-  templateVersions,
-  templates,
-  user,
-} from '@forma360/db/schema';
+import { inspections, sites, templateVersions, templates, user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, gte, inArray, isNull, lte } from 'drizzle-orm';
@@ -47,10 +41,7 @@ export interface InspectionsExportDeps {
    * clients can use to download. Tests pass a stub that stores the bytes
    * in a Map.
    */
-  uploadCsv: (input: {
-    key: string;
-    body: string;
-  }) => Promise<{ url: string }>;
+  uploadCsv: (input: { key: string; body: string }) => Promise<{ url: string }>;
   /** Wall-clock for deterministic filenames in tests. */
   now: () => Date;
 }
@@ -233,7 +224,8 @@ async function queryCsvRows(
     status: r.status,
     templateName: r.templateName,
     templateVersionNumber: r.templateVersionNumber,
-    conductedByName: r.conductedBy === null ? null : (userNameById.get(r.conductedBy) ?? r.conductedBy),
+    conductedByName:
+      r.conductedBy === null ? null : (userNameById.get(r.conductedBy) ?? r.conductedBy),
     siteName: r.siteName,
     startedAt: r.startedAt,
     submittedAt: r.submittedAt,
@@ -262,10 +254,7 @@ export function createInspectionsExportRouter(deps: InspectionsExportDeps) {
       .mutation(async ({ ctx, input }) => {
         const rows = await queryCsvRows(ctx.db, ctx.tenantId, input);
         const csv = buildCsv(rows);
-        ctx.logger.info(
-          { rowCount: rows.length, bytes: csv.length },
-          '[inspections] exportCsv',
-        );
+        ctx.logger.info({ rowCount: rows.length, bytes: csv.length }, '[inspections] exportCsv');
         return { csv, rowCount: rows.length };
       }),
 
@@ -277,10 +266,7 @@ export function createInspectionsExportRouter(deps: InspectionsExportDeps) {
         const csv = buildCsv(rows);
         const key = inspectionsExportKey(ctx.tenantId, deps.now());
         const { url } = await deps.uploadCsv({ key, body: csv });
-        ctx.logger.info(
-          { rowCount: rows.length, key },
-          '[inspections] exportCsvUrl',
-        );
+        ctx.logger.info({ rowCount: rows.length, key }, '[inspections] exportCsvUrl');
         return { key, url, rowCount: rows.length };
       }),
 

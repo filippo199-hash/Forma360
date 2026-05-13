@@ -57,9 +57,7 @@ export const invitations = pgTable(
     /** Null until the invitee successfully accepts; set in the accept tx. */
     acceptedAt: timestamp('accepted_at', { withTimezone: true, mode: 'date' }),
 
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   },
   (t) => ({
     tenantIdx: index('invitations_tenant_id_idx').on(t.tenantId),

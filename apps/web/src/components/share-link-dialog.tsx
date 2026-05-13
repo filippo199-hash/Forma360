@@ -123,11 +123,7 @@ export function ShareLinkDialog({ inspectionId }: Props) {
                         value={newUrl}
                         className="flex-1 rounded-md border border-input bg-background px-3 py-2 font-mono text-xs"
                       />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCopy(newUrl, 'new')}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => handleCopy(newUrl, 'new')}>
                         {justCopied === 'new' ? t('copied') : t('copy')}
                       </Button>
                     </div>

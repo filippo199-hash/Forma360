@@ -135,9 +135,7 @@ export default function CategoriesPage() {
                 (categories ?? []).map((c) => (
                   <tr key={c.id} className="border-b last:border-0">
                     <td className="px-3 py-2 font-medium">{c.name}</td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {c.description ?? '—'}
-                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{c.description ?? '—'}</td>
                     <td className="px-3 py-2 text-muted-foreground">{c.notificationRule}</td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {c.criticalAlerts ? '✓' : '—'}
@@ -152,9 +150,7 @@ export default function CategoriesPage() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() =>
-                            router.push(`/${locale}/observations/categories/${c.id}`)
-                          }
+                          onClick={() => router.push(`/${locale}/observations/categories/${c.id}`)}
                         >
                           {tCommon('edit')}
                         </Button>
@@ -202,11 +198,7 @@ export default function CategoriesPage() {
       </Card>
 
       {createOpen ? (
-        <CreateCategoryDialog
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          locale={locale}
-        />
+        <CreateCategoryDialog open={createOpen} onOpenChange={setCreateOpen} locale={locale} />
       ) : null}
     </div>
   );

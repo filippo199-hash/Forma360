@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  FREE_EMAIL_DOMAINS,
-  getEmailDomain,
-  isFreeEmailDomain,
-} from './email-domains';
+import { FREE_EMAIL_DOMAINS, getEmailDomain, isFreeEmailDomain } from './email-domains';
 
 describe('getEmailDomain', () => {
   it('returns the lowercase domain for a well-formed address', () => {

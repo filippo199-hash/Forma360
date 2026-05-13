@@ -22,11 +22,7 @@
  * Also registers a `schedules` dependents resolver used by the
  * template-archive cascade preview.
  */
-import {
-  scheduledInspectionOccurrences,
-  templateSchedules,
-  templates,
-} from '@forma360/db/schema';
+import { scheduledInspectionOccurrences, templateSchedules, templates } from '@forma360/db/schema';
 import {
   registerDependentResolver,
   type DependentResolver,
@@ -121,7 +117,13 @@ const baseScheduleInput = z.object({
   assigneeUserIds: z.array(z.string()).max(500).default([]),
   assigneeGroupIds: idArraySchema,
   siteIds: idArraySchema,
-  reminderMinutesBefore: z.number().int().min(1).max(60 * 24 * 30).nullable().default(null),
+  reminderMinutesBefore: z
+    .number()
+    .int()
+    .min(1)
+    .max(60 * 24 * 30)
+    .nullable()
+    .default(null),
 });
 
 const createInput = baseScheduleInput.extend({

@@ -60,6 +60,8 @@ const MIGRATION_FILES = [
   '0009_signature_workflow.sql',
   '0010_issues.sql',
   '0011_observations_richer.sql',
+  '0012_actions_phase4.sql',
+  '0013_actions_phase4b.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -369,9 +371,7 @@ describe('issues router (Phase 3 PR 1)', () => {
         categoryId,
         title: 'Email me',
       });
-      const issueMails = __authStubMailbox.filter(
-        (m) => m.templateKey === 'issue-created',
-      );
+      const issueMails = __authStubMailbox.filter((m) => m.templateKey === 'issue-created');
       // Administrator + Manager seeded sets both hold issues.manage.
       expect(issueMails.length).toBeGreaterThanOrEqual(1);
       const first = issueMails[0];
@@ -402,7 +402,12 @@ describe('issues router (Phase 3 PR 1)', () => {
         dateOccurred: old,
         categorySnapshot: { categoryId, name: 'Near', customFields: [], customQuestions: [] },
         referenceNumber: 'ISS-OLD',
-        accessSnapshot: { groupIds: [], siteIds: [], permissions: [], snapshotAt: old.toISOString() },
+        accessSnapshot: {
+          groupIds: [],
+          siteIds: [],
+          permissions: [],
+          snapshotAt: old.toISOString(),
+        },
         createdAt: old,
         updatedAt: old,
       });

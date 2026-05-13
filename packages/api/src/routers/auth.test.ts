@@ -44,6 +44,8 @@ const MIGRATION_FILES = [
   '0009_signature_workflow.sql',
   '0010_issues.sql',
   '0011_observations_richer.sql',
+  '0012_actions_phase4.sql',
+  '0013_actions_phase4b.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -130,7 +132,6 @@ describe('auth router', () => {
       expect(result.existingTenant?.name).toBe('Acme Safety');
       expect(result.emailExists).toBe(false);
     });
-
   });
 
   describe('signUpWithTenant', () => {
@@ -161,9 +162,7 @@ describe('auth router', () => {
       expect(adminSet).toBeDefined();
 
       // User row.
-      const userRow = (
-        await db.select().from(schema.user).where(eq(schema.user.id, userId))
-      )[0];
+      const userRow = (await db.select().from(schema.user).where(eq(schema.user.id, userId)))[0];
       expect(userRow).toBeDefined();
       expect(userRow?.email).toBe('founder@my-startup.example');
       expect(userRow?.emailVerified).toBe(true);
@@ -217,9 +216,7 @@ describe('auth router', () => {
         name: 'Alice',
         companyName: 'Case Co',
       });
-      const row = (
-        await db.select().from(schema.user).where(eq(schema.user.id, userId))
-      )[0];
+      const row = (await db.select().from(schema.user).where(eq(schema.user.id, userId)))[0];
       expect(row?.email).toBe('mixed@case.example');
     });
   });
@@ -285,9 +282,7 @@ describe('auth router', () => {
       });
 
       expect(returnedTenant).toBe(tenantId);
-      const userRow = (
-        await db.select().from(schema.user).where(eq(schema.user.id, userId))
-      )[0];
+      const userRow = (await db.select().from(schema.user).where(eq(schema.user.id, userId)))[0];
       expect(userRow).toBeDefined();
       expect(userRow?.email).toBe('invitee@acme.test');
       expect(userRow?.tenantId).toBe(tenantId);
@@ -361,9 +356,7 @@ describe('auth router', () => {
     it('sends one email per administrator of the tenant', async () => {
       // Seed a tenant with two admins.
       const tenantId = newId();
-      await db
-        .insert(schema.tenants)
-        .values({ id: tenantId, name: 'Acme', slug: 'acme-request' });
+      await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme-request' });
       const sets = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
       const admin1 = `usr_${newId()}`;
       const admin2 = `usr_${newId()}`;

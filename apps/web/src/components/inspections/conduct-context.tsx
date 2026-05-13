@@ -2,7 +2,12 @@
 
 import type { Dispatch, ReactNode } from 'react';
 import { createContext, useContext, useMemo, useReducer } from 'react';
-import { conductReducer, initialConductState, type ConductAction, type ConductState } from './conduct-state';
+import {
+  conductReducer,
+  initialConductState,
+  type ConductAction,
+  type ConductState,
+} from './conduct-state';
 
 interface ConductContextValue {
   state: ConductState;

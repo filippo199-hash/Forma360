@@ -1369,6 +1369,7 @@
       "columns": {
         "reference": "Ref",
         "title": "Title",
+        "type": "Type",
         "status": "Status",
         "priority": "Priority",
         "assignee": "Assignee",
@@ -1401,7 +1402,8 @@
       "viewList": "List",
       "viewBoard": "Board",
       "boardColumnEmpty": "Nothing here",
-      "boardCountAria": "Cards in column"
+      "boardCountAria": "Cards in column",
+      "recurringBadge": "Recurring"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -1486,7 +1488,31 @@
         "deletedToast": "Comment deleted.",
         "archivedNotice": "This action is archived. Restore it to post new comments."
       },
-      "archivedBadge": "Archived"
+      "archivedBadge": "Archived",
+      "recurringBadge": "Recurring",
+      "customQuestions": {
+        "title": "Type-specific questions",
+        "noAnswer": "No answer",
+        "savedToast": "Answers saved."
+      },
+      "recurrence": {
+        "title": "Recurrence",
+        "notRecurring": "This action does not recur.",
+        "enableLabel": "Make this action recurring",
+        "freqLabel": "Repeat",
+        "freq": {
+          "DAILY": "Daily",
+          "WEEKLY": "Weekly",
+          "MONTHLY": "Monthly",
+          "YEARLY": "Yearly"
+        },
+        "intervalLabel": "Every",
+        "endDateLabel": "End date (optional)",
+        "summary": "Repeats {freq} every {interval} interval(s).",
+        "endsOn": "Ends on {date}.",
+        "noEnd": "No end date.",
+        "savedToast": "Recurrence saved."
+      }
     },
     "create": {
       "title": "Create action",
@@ -1506,7 +1532,16 @@
       "saveButton": "Create",
       "cancelButton": "Cancel",
       "backLink": "Back to actions",
-      "createdToast": "Action created."
+      "createdToast": "Action created.",
+      "type": {
+        "label": "Action type",
+        "none": "No type",
+        "defaultSuffix": "default"
+      },
+      "questions": {
+        "heading": "Type-specific questions",
+        "selectPlaceholder": "— Choose an option —"
+      }
     },
     "status": {
       "open": "Open",
@@ -1534,6 +1569,125 @@
       "saveButton": "Create action",
       "cancelButton": "Cancel",
       "createdToast": "Action raised."
+    }
+  },
+  "actionsSettings": {
+    "title": "Action settings",
+    "subtitle": "Configure action types, custom questions, default due dates, and who can move actions to closed statuses.",
+    "typesHeading": "Action types",
+    "typesSubtitle": "Group actions by category. Each type can have its own custom questions, required fields, visibility, and transition rules.",
+    "showArchived": "Show archived",
+    "newType": "New type",
+    "columns": {
+      "name": "Name",
+      "activeActions": "Active actions",
+      "questions": "Questions",
+      "visibility": "Visibility",
+      "default": "Default",
+      "actions": "Actions"
+    },
+    "empty": "No action types yet. Create one to start grouping work.",
+    "archivedBadge": "Archived",
+    "defaultBadge": "Default",
+    "setDefault": "Make default",
+    "setDefaultToast": "Default type updated.",
+    "archiveToast": "Action type archived.",
+    "restoreToast": "Action type restored.",
+    "restoreButton": "Restore",
+    "visibility": {
+      "all_users": "All users",
+      "site_members": "Site members",
+      "creator_and_assignee": "Creator and assignee"
+    },
+    "dueDatesHeading": "Priority-based due dates",
+    "dueDatesSubtitle": "Default number of days from creation to due date for each priority. Leave blank to skip the default for that priority.",
+    "dueDatesSavedToast": "Default due dates saved.",
+    "daysSuffix": "days",
+    "saveDueDates": "Save",
+    "create": {
+      "title": "Create action type",
+      "subtitle": "After creating, you'll be able to add custom questions and configure visibility and transition rules.",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Maintenance, Corrective, Safety",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Optional summary shown when picking a type",
+      "colorLabel": "Colour",
+      "createButton": "Create type",
+      "createdToast": "Action type created."
+    }
+  },
+  "actionTypeDetail": {
+    "backLink": "Back to action settings",
+    "archivedNotice": "This action type is archived. Restore it from the settings list to start using it again.",
+    "savedToast": "Action type saved.",
+    "done": "Done",
+    "basics": {
+      "title": "Basics",
+      "nameLabel": "Name",
+      "descriptionLabel": "Description",
+      "colorLabel": "Colour"
+    },
+    "questions": {
+      "title": "Custom questions",
+      "subtitle": "Optional prompts that the reporter answers when raising an action of this type.",
+      "empty": "No custom questions yet.",
+      "addButton": "Add question",
+      "counter": "{count} of {max}",
+      "typeLabel": "Type",
+      "types": {
+        "text": "Text",
+        "number": "Number",
+        "multipleChoice": "Multiple choice"
+      },
+      "promptLabel": "Prompt",
+      "promptPlaceholder": "What do you want to ask?",
+      "requiredLabel": "Required",
+      "removeButton": "Remove question",
+      "choicesLabel": "Choices",
+      "choicePlaceholder": "Option text",
+      "addChoiceButton": "Add choice",
+      "validationPromptEmpty": "Enter a prompt.",
+      "validationOptionsEmpty": "Every choice needs text."
+    },
+    "required": {
+      "title": "Required fields",
+      "subtitle": "Built-in fields the reporter must fill in before they can save the action.",
+      "fields": {
+        "description": "Description",
+        "assignee": "Assignee",
+        "priority": "Priority",
+        "dueDate": "Due date",
+        "site": "Site"
+      }
+    },
+    "visibility": {
+      "title": "Visibility",
+      "subtitle": "Who can see actions of this type.",
+      "options": {
+        "all_users": {
+          "label": "All users",
+          "help": "Every user in the tenant with permission to view actions."
+        },
+        "site_members": {
+          "label": "Site members only",
+          "help": "Only users who belong to the action's site (falls back to all users when an action has no site)."
+        },
+        "creator_and_assignee": {
+          "label": "Creator and assignee only",
+          "help": "Just the user who created the action and the current assignee. Admins always see everything."
+        }
+      }
+    },
+    "transitions": {
+      "title": "Status transition rules",
+      "subtitle": "Optionally restrict who can move an action to a closed status. Leaving every box unchecked means anyone with permission can do it.",
+      "status": {
+        "completed": "Move to Completed",
+        "cancelled": "Move to Cancelled"
+      },
+      "anyoneHelp": "Anyone with permission to manage actions.",
+      "groupsHelp": "Restricted to {count} group(s).",
+      "noGroups": "No groups exist yet. Create one in Settings → Groups to use this rule."
     }
   }
 }

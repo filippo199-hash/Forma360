@@ -96,10 +96,7 @@ export async function POST(req: Request): Promise<Response> {
         headers: { 'content-type': file.type || 'application/octet-stream' },
       });
       if (!res.ok) {
-        ctx.logger.error(
-          { key, status: res.status },
-          '[observation-attachment] R2 PUT failed',
-        );
+        ctx.logger.error({ key, status: res.status }, '[observation-attachment] R2 PUT failed');
         return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
       }
     } catch (err) {

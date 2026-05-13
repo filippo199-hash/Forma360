@@ -174,7 +174,7 @@ export default function ObservationDetailPage() {
 
   const issue = data.issue;
   const siteName =
-    issue.siteId !== null ? (sites ?? []).find((s) => s.id === issue.siteId)?.name ?? '—' : '—';
+    issue.siteId !== null ? ((sites ?? []).find((s) => s.id === issue.siteId)?.name ?? '—') : '—';
   const assignee =
     issue.assigneeUserId !== null && issue.assigneeUserId !== undefined
       ? (users?.users ?? []).find((u) => u.id === issue.assigneeUserId)
@@ -222,10 +222,7 @@ export default function ObservationDetailPage() {
 
   const breadcrumb = (
     <div className="text-sm text-muted-foreground">
-      <Link
-        href={`/${locale}/observations`}
-        className="hover:text-foreground hover:underline"
-      >
+      <Link href={`/${locale}/observations`} className="hover:text-foreground hover:underline">
         {t('breadcrumb')}
       </Link>
       <span className="mx-2">/</span>
@@ -328,15 +325,31 @@ export default function ObservationDetailPage() {
 
       <nav className="border-b" aria-label={t('tabs.overview')}>
         <div className="flex gap-6">
-          <TabButton active={tab === 'overview'} onClick={() => setTab('overview')} label={t('tabs.overview')} />
-          <TabButton active={tab === 'activity'} onClick={() => setTab('activity')} label={t('tabs.activity')} />
-          <TabButton active={tab === 'files'} onClick={() => setTab('files')} label={t('tabs.files')} />
+          <TabButton
+            active={tab === 'overview'}
+            onClick={() => setTab('overview')}
+            label={t('tabs.overview')}
+          />
+          <TabButton
+            active={tab === 'activity'}
+            onClick={() => setTab('activity')}
+            label={t('tabs.activity')}
+          />
+          <TabButton
+            active={tab === 'files'}
+            onClick={() => setTab('files')}
+            label={t('tabs.files')}
+          />
           <TabButton
             active={tab === 'inspections'}
             onClick={() => setTab('inspections')}
             label={t('tabs.inspections')}
           />
-          <TabButton active={tab === 'actions'} onClick={() => setTab('actions')} label={t('tabs.actions')} />
+          <TabButton
+            active={tab === 'actions'}
+            onClick={() => setTab('actions')}
+            label={t('tabs.actions')}
+          />
         </div>
       </nav>
 
@@ -440,7 +453,9 @@ export default function ObservationDetailPage() {
                       </select>
                     ) : priority !== null ? (
                       <span className="inline-flex items-center gap-2">
-                        <span className={cn('h-2 w-2 rounded-full', PRIORITY_DOT_CLASS[priority])} />
+                        <span
+                          className={cn('h-2 w-2 rounded-full', PRIORITY_DOT_CLASS[priority])}
+                        />
                         {tPriority(priority)}
                       </span>
                     ) : (
@@ -541,7 +556,9 @@ export default function ObservationDetailPage() {
 
       {tab === 'activity' ? <ActivityTimeline issueId={issueId} /> : null}
 
-      {tab === 'files' ? <AttachmentsCard issueId={issueId} canManage={canManage} compact={false} /> : null}
+      {tab === 'files' ? (
+        <AttachmentsCard issueId={issueId} canManage={canManage} compact={false} />
+      ) : null}
 
       {tab === 'inspections' ? (
         <Card>
@@ -730,19 +747,17 @@ function AssigneePicker({
   const { data: users } = trpc.users.list.useQuery({}, { enabled: open });
   const list = users?.users ?? [];
   const needle = search.trim().toLowerCase();
-  const filtered = needle === ''
-    ? list
-    : list.filter(
-        (u) =>
-          u.name.toLowerCase().includes(needle) || u.email.toLowerCase().includes(needle),
-      );
+  const filtered =
+    needle === ''
+      ? list
+      : list.filter(
+          (u) => u.name.toLowerCase().includes(needle) || u.email.toLowerCase().includes(needle),
+        );
 
   if (!canManage) {
     return (
       <span>
-        {currentName !== null && currentName.length > 0
-          ? currentName
-          : tFields('noAssignee')}
+        {currentName !== null && currentName.length > 0 ? currentName : tFields('noAssignee')}
       </span>
     );
   }
@@ -756,9 +771,7 @@ function AssigneePicker({
         onClick={() => setOpen(true)}
         className="justify-start"
       >
-        {currentName !== null && currentName.length > 0
-          ? currentName
-          : tFields('pickUser')}
+        {currentName !== null && currentName.length > 0 ? currentName : tFields('pickUser')}
       </Button>
       {currentId !== null ? (
         <button
@@ -843,9 +856,7 @@ function ActivityTimeline({ issueId }: { issueId: string }) {
                       {String((event.payload as Record<string, unknown>).body ?? '')}
                     </p>
                   ) : null}
-                  <p className="text-xs text-muted-foreground">
-                    {formatDate(event.createdAt)}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{formatDate(event.createdAt)}</p>
                 </div>
               </li>
             );
@@ -1029,10 +1040,7 @@ function AttachmentsCard({
         ) : (
           <ul className={cn('grid gap-2', compact ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2')}>
             {rows.map((a) => (
-              <li
-                key={a.id}
-                className="flex items-center gap-3 rounded-md border p-2 text-sm"
-              >
+              <li key={a.id} className="flex items-center gap-3 rounded-md border p-2 text-sm">
                 <AttachmentThumb mimeType={a.mimeType} signedUrl={a.signedUrl} />
                 <div className="min-w-0 flex-1">
                   <a
@@ -1043,9 +1051,7 @@ function AttachmentsCard({
                   >
                     {a.filename}
                   </a>
-                  <p className="text-xs text-muted-foreground">
-                    {formatSize(a.sizeBytes)}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{formatSize(a.sizeBytes)}</p>
                 </div>
                 {canManage ? (
                   <button
@@ -1070,21 +1076,9 @@ function AttachmentsCard({
   );
 }
 
-function AttachmentThumb({
-  mimeType,
-  signedUrl,
-}: {
-  mimeType: string;
-  signedUrl: string | null;
-}) {
+function AttachmentThumb({ mimeType, signedUrl }: { mimeType: string; signedUrl: string | null }) {
   if (mimeType.startsWith('image/') && signedUrl !== null) {
-    return (
-      <img
-        src={signedUrl}
-        alt=""
-        className="h-10 w-10 flex-shrink-0 rounded object-cover"
-      />
-    );
+    return <img src={signedUrl} alt="" className="h-10 w-10 flex-shrink-0 rounded object-cover" />;
   }
   return (
     <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-muted">
@@ -1462,15 +1456,9 @@ function LinkedActionsCard({
                     ? tActionStatus(row.status)
                     : row.status;
                 return (
-                  <tr
-                    key={row.id}
-                    className="border-b last:border-0 hover:bg-muted/30"
-                  >
+                  <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
                     <td className="px-3 py-2 font-medium">
-                      <Link
-                        href={`/${locale}/actions/${row.id}`}
-                        className="hover:underline"
-                      >
+                      <Link href={`/${locale}/actions/${row.id}`} className="hover:underline">
                         {row.title}
                       </Link>
                     </td>
@@ -1484,9 +1472,7 @@ function LinkedActionsCard({
                         : tCols('noDue')}
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">
-                      {row.dueAt !== null
-                        ? new Date(row.dueAt).toLocaleString()
-                        : tCols('noDue')}
+                      {row.dueAt !== null ? new Date(row.dueAt).toLocaleString() : tCols('noDue')}
                     </td>
                   </tr>
                 );
@@ -1504,4 +1490,3 @@ function LinkedActionsCard({
     </Card>
   );
 }
-

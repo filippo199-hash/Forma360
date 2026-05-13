@@ -5,7 +5,11 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { GroupPicker, SitePicker, UserPicker } from '../../../../src/components/templates/audience-pickers';
+import {
+  GroupPicker,
+  SitePicker,
+  UserPicker,
+} from '../../../../src/components/templates/audience-pickers';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -175,9 +179,7 @@ export default function NewSchedulePage() {
             </Button>
             <Button
               onClick={onSubmit}
-              disabled={
-                createMutation.isPending || templateId === '' || name === '' || noAssignees
-              }
+              disabled={createMutation.isPending || templateId === '' || name === '' || noAssignees}
             >
               {t('form.save')}
             </Button>

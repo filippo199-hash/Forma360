@@ -51,6 +51,8 @@ const MIGRATION_FILES = [
   '0009_signature_workflow.sql',
   '0010_issues.sql',
   '0011_observations_richer.sql',
+  '0012_actions_phase4.sql',
+  '0013_actions_phase4b.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -214,12 +216,10 @@ describe('inspectionsExport router', () => {
 
     tenantId = newId();
     otherTenantId = newId();
-    await db
-      .insert(schema.tenants)
-      .values([
-        { id: tenantId, name: 'Acme', slug: 'acme' },
-        { id: otherTenantId, name: 'Other', slug: 'other' },
-      ]);
+    await db.insert(schema.tenants).values([
+      { id: tenantId, name: 'Acme', slug: 'acme' },
+      { id: otherTenantId, name: 'Other', slug: 'other' },
+    ]);
 
     const seeded = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
     const otherSeeded = await seedDefaultPermissionSets(db as unknown as Database, otherTenantId);
@@ -301,9 +301,7 @@ describe('inspectionsExport router', () => {
     const result = await caller.inspectionsExport.exportCsvUrl({});
     expect(result.rowCount).toBe(1);
     expect(result.key).toMatch(
-      new RegExp(
-        `^${tenantId}/inspections/[0-9A-HJKMNP-TV-Z]{26}/inspections-.*\\.csv$`,
-      ),
+      new RegExp(`^${tenantId}/inspections/[0-9A-HJKMNP-TV-Z]{26}/inspections-.*\\.csv$`),
     );
     expect(result.url).toBe(`stub://${result.key}`);
     const stored = inspectionsExportDeps.uploads.get(result.key);
@@ -326,12 +324,11 @@ describe('inspectionsExport router', () => {
   it('archiveMany is tenant-scoped — cannot archive another tenant\u2019s row', async () => {
     const mine = await createTenantWithInspection('Mine');
     const other = makeCaller(ctxFor(otherAdminId, otherTenantId));
-    await expect(other.inspectionsExport.archiveMany({ ids: [mine.inspectionId] })).rejects.toThrow();
+    await expect(
+      other.inspectionsExport.archiveMany({ ids: [mine.inspectionId] }),
+    ).rejects.toThrow();
     const row = (
-      await db
-        .select()
-        .from(schema.inspections)
-        .where(eq(schema.inspections.id, mine.inspectionId))
+      await db.select().from(schema.inspections).where(eq(schema.inspections.id, mine.inspectionId))
     )[0];
     expect(row?.archivedAt).toBeNull();
   });
@@ -343,9 +340,7 @@ describe('inspectionsExport router', () => {
     const first = await caller.inspectionsExport.archiveMany({ ids: [a.inspectionId] });
     expect(first.count).toBe(1);
     // Second throws NOT_FOUND because nothing to archive
-    await expect(
-      caller.inspectionsExport.archiveMany({ ids: [a.inspectionId] }),
-    ).rejects.toThrow();
+    await expect(caller.inspectionsExport.archiveMany({ ids: [a.inspectionId] })).rejects.toThrow();
   });
 
   it('inspections.list excludes archived rows by default, includes with flag', async () => {

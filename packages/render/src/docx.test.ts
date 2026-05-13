@@ -60,7 +60,11 @@ function memStorage(): Storage & { uploads: Map<string, Uint8Array> } {
   globalThis.fetch = (async (...args: Parameters<typeof fetch>) => {
     const [input, init] = args;
     const url =
-      typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : (input as Request).url;
     if (url.startsWith('mem://') && init?.method === 'PUT') {
       const key = url.slice('mem://'.length);
       const body = init.body as Uint8Array | undefined;
@@ -85,7 +89,9 @@ describe('renderInspectionDocx', () => {
     const templateId = 'TPL23456789012345678901234';
     const versionId = 'V12345678901234567890123499'.slice(0, 26);
     await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
-    await db.insert(schema.templates).values({ id: templateId, tenantId, name: "Tpl", createdBy: "u1" });
+    await db
+      .insert(schema.templates)
+      .values({ id: templateId, tenantId, name: 'Tpl', createdBy: 'u1' });
     await db.insert(schema.templateVersions).values({
       id: versionId,
       tenantId,

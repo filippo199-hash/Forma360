@@ -69,9 +69,7 @@ export default function ObservationsListPage() {
         <div className="flex items-center gap-2">
           {canManageSettings ? (
             <Button asChild variant="outline">
-              <Link href={`/${locale}/observations/categories`}>
-                {t('manageCategoriesButton')}
-              </Link>
+              <Link href={`/${locale}/observations/categories`}>{t('manageCategoriesButton')}</Link>
             </Button>
           ) : null}
           {canReport ? (
@@ -207,12 +205,10 @@ export default function ObservationsListPage() {
                         {row.title}
                       </Link>
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.categorySnapshot.name}
-                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{row.categorySnapshot.name}</td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {row.siteId !== null
-                        ? (sites ?? []).find((s) => s.id === row.siteId)?.name ?? '—'
+                        ? ((sites ?? []).find((s) => s.id === row.siteId)?.name ?? '—')
                         : '—'}
                     </td>
                     <td className="px-3 py-2">
@@ -238,9 +234,7 @@ export default function ObservationsListPage() {
         >
           {tCommon('back')}
         </Button>
-        {data !== undefined &&
-        data.nextCursor !== null &&
-        data.nextCursor !== undefined ? (
+        {data !== undefined && data.nextCursor !== null && data.nextCursor !== undefined ? (
           <LoadMoreButton
             cursor={data.nextCursor}
             label={t('loadMore')}

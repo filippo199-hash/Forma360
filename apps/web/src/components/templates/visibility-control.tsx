@@ -21,13 +21,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { useEditor } from './editor-context';
 
@@ -100,7 +94,7 @@ export function VisibilityControl({ item, allItemsBefore }: VisibilityControlPro
     () =>
       visibility === undefined
         ? null
-        : referenceable.find((i) => i.id === visibility.dependsOn) ?? null,
+        : (referenceable.find((i) => i.id === visibility.dependsOn) ?? null),
     [visibility, referenceable],
   );
   const operators = operatorsForTarget(target);
@@ -128,8 +122,7 @@ export function VisibilityControl({ item, allItemsBefore }: VisibilityControlPro
     if (t === undefined) return;
     // Reset operator + value to defaults that match the new target type.
     const ops = operatorsForTarget(t);
-    const operator: VisibilityOperator =
-      ops.find((o) => SCHEMA_OPERATORS.has(o)) ?? 'equals';
+    const operator: VisibilityOperator = ops.find((o) => SCHEMA_OPERATORS.has(o)) ?? 'equals';
     setVisibility({ dependsOn: id, operator, value: defaultValue(t) });
   }
 
@@ -137,9 +130,9 @@ export function VisibilityControl({ item, allItemsBefore }: VisibilityControlPro
     if (visibility === undefined) return;
     // Map UI operator back onto a schema operator. Anything outside the
     // schema's union is stored as `equals` (documented TODO above).
-    const op = (SCHEMA_OPERATORS.has(raw as VisibilityOperator)
-      ? raw
-      : 'equals') as VisibilityOperator;
+    const op = (
+      SCHEMA_OPERATORS.has(raw as VisibilityOperator) ? raw : 'equals'
+    ) as VisibilityOperator;
     setVisibility({ ...visibility, operator: op });
   }
 

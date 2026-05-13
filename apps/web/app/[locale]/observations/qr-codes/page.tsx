@@ -114,8 +114,7 @@ export default function QrCodesPage() {
         });
       }
     },
-    onError: (err) =>
-      toast.error(err.message.length > 0 ? err.message : t('toast.error')),
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('toast.error')),
   });
 
   const revoke = trpc.issues.categories.revokeShareToken.useMutation({
@@ -124,8 +123,7 @@ export default function QrCodesPage() {
       setRevokeConfirm(null);
       await utils.issues.categories.list.invalidate();
     },
-    onError: (err) =>
-      toast.error(err.message.length > 0 ? err.message : t('toast.error')),
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('toast.error')),
   });
 
   if (!canManageSettings) {
@@ -176,10 +174,7 @@ export default function QrCodesPage() {
                         className="flex items-center gap-2 font-medium hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                         aria-label={t('actions.show')}
                       >
-                        <QrCodeIcon
-                          className="h-4 w-4 text-muted-foreground"
-                          aria-hidden="true"
-                        />
+                        <QrCodeIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                         <span>{row.categoryName}</span>
                       </button>
                     </td>
@@ -205,11 +200,7 @@ export default function QrCodesPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              setShowDialog({ open: true, row })
-                            }
-                          >
+                          <DropdownMenuItem onSelect={() => setShowDialog({ open: true, row })}>
                             <QrCodeIcon className="mr-2 h-4 w-4" />
                             {t('actions.show')}
                           </DropdownMenuItem>
@@ -263,9 +254,7 @@ export default function QrCodesPage() {
       {showDialog.row !== null ? (
         <ShowQrCodeDialog
           open={showDialog.open}
-          onOpenChange={(o) =>
-            setShowDialog((prev) => ({ ...prev, open: o }))
-          }
+          onOpenChange={(o) => setShowDialog((prev) => ({ ...prev, open: o }))}
           categoryName={showDialog.row.categoryName}
           token={showDialog.row.publicShareToken}
         />
@@ -283,11 +272,7 @@ export default function QrCodesPage() {
             <DialogDescription>{t('rotateConfirm.body')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setRotateConfirm(null)}
-            >
+            <Button type="button" variant="ghost" onClick={() => setRotateConfirm(null)}>
               {t('rotateConfirm.cancel')}
             </Button>
             <Button
@@ -317,11 +302,7 @@ export default function QrCodesPage() {
             <DialogDescription>{t('revokeConfirm.body')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setRevokeConfirm(null)}
-            >
+            <Button type="button" variant="ghost" onClick={() => setRevokeConfirm(null)}>
               {t('revokeConfirm.cancel')}
             </Button>
             <Button
@@ -347,14 +328,9 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
   const t = useTranslations('issues.qrCodes');
   return (
     <div className="space-y-3 p-10 text-center">
-      <QrCodeIcon
-        className="mx-auto h-10 w-10 text-muted-foreground"
-        aria-hidden="true"
-      />
+      <QrCodeIcon className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden="true" />
       <h2 className="text-base font-semibold">{t('empty.title')}</h2>
-      <p className="mx-auto max-w-md text-sm text-muted-foreground">
-        {t('empty.body')}
-      </p>
+      <p className="mx-auto max-w-md text-sm text-muted-foreground">{t('empty.body')}</p>
       <div className="pt-2">
         <Button onClick={onCreate}>
           <QrCodeIcon className="mr-2 h-4 w-4" />

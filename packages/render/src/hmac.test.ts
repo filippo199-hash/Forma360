@@ -12,9 +12,9 @@ const SECRET = 'a'.repeat(32);
 describe('render-token HMAC', () => {
   it('round-trips a freshly-signed token', () => {
     const token = signRenderToken({ secret: SECRET, inspectionId: 'INS' + '0'.repeat(23) });
-    expect(
-      verifyRenderToken({ secret: SECRET, inspectionId: 'INS' + '0'.repeat(23), token }),
-    ).toBe(true);
+    expect(verifyRenderToken({ secret: SECRET, inspectionId: 'INS' + '0'.repeat(23), token })).toBe(
+      true,
+    );
   });
 
   it('rejects an expired token', () => {
@@ -25,9 +25,9 @@ describe('render-token HMAC', () => {
       ttlSeconds: 10,
       now: past,
     });
-    expect(
-      verifyRenderToken({ secret: SECRET, inspectionId: 'INS' + '0'.repeat(23), token }),
-    ).toBe(false);
+    expect(verifyRenderToken({ secret: SECRET, inspectionId: 'INS' + '0'.repeat(23), token })).toBe(
+      false,
+    );
   });
 
   it('rejects a token signed for a different inspection', () => {
