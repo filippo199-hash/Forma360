@@ -95,7 +95,7 @@ export function EditorShell({ templateId }: { templateId: string }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-muted/30">
+    <div className="fixed inset-0 z-50 flex flex-col bg-muted">
       {/* ─── Top bar ─────────────────────────────────────────────────────── */}
       <header
         className="flex h-[60px] shrink-0 items-center border-b bg-background px-4"
