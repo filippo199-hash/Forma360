@@ -27,13 +27,19 @@ import { usersRouter } from './routers/users';
 import { actionsRouter } from './routers/actions';
 import { actionTypesRouter } from './routers/actionTypes';
 import { approvalsRouter } from './routers/approvals';
+import { assetTypesRouter } from './routers/assetTypes';
+import { assetsRouter } from './routers/assets';
+import { documentFoldersRouter } from './routers/documentFolders';
+import { documentsRouter } from './routers/documents';
 import { createExportsRouter, type ExportsRouterDeps } from './routers/exports';
+import { headsUpsRouter } from './routers/headsUps';
 import { createInspectionsRouter, type InspectionsRouterDeps } from './routers/inspections';
 import {
   createInspectionsExportRouter,
   type InspectionsExportDeps,
 } from './routers/inspectionsExport';
 import { createIssuesRouter, type IssuesRouterDeps } from './routers/issues';
+import { maintenancePlansRouter } from './routers/maintenancePlans';
 import { schedulesRouter } from './routers/schedules';
 import { signaturesRouter } from './routers/signatures';
 import { router } from './trpc';
@@ -75,6 +81,12 @@ export function buildAppRouter(deps: {
     schedules: schedulesRouter,
     exports: createExportsRouter(deps.exports),
     issues: createIssuesRouter(deps.issues),
+    headsUps: headsUpsRouter,
+    assetTypes: assetTypesRouter,
+    assets: assetsRouter,
+    maintenancePlans: maintenancePlansRouter,
+    documentFolders: documentFoldersRouter,
+    documents: documentsRouter,
   });
 }
 

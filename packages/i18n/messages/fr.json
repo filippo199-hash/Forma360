@@ -848,7 +848,11 @@
     "schedules": "Schedules",
     "issues": "Observations",
     "actions": "Actions",
-    "settings": "Settings"
+    "settings": "Settings",
+    "headsUp": "Heads Up",
+    "assets": "Assets",
+    "maintenance": "Maintenance",
+    "documents": "Documents"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -1701,6 +1705,278 @@
       "anyoneHelp": "Anyone with permission to manage actions.",
       "groupsHelp": "Restricted to {count} group(s).",
       "noGroups": "No groups exist yet. Create one in Settings → Groups to use this rule."
+    }
+  },
+  "headsUp": {
+    "list": {
+      "title": "Heads Up",
+      "subtitle": "Broadcast messages to your team.",
+      "newButton": "New heads up",
+      "empty": "No heads-up messages yet.",
+      "emptyCta": "Create the first one",
+      "filterAll": "All",
+      "status": {
+        "all": "All",
+        "draft": "Draft",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "engagement": {
+        "view": "View only",
+        "acknowledge": "Acknowledge",
+        "sign": "Sign"
+      },
+      "columns": {
+        "title": "Title",
+        "status": "Status",
+        "engagement": "Engagement",
+        "createdBy": "Created by",
+        "createdAt": "Created"
+      }
+    },
+    "new": {
+      "title": "New Heads Up",
+      "backLink": "Back to Heads Up",
+      "createdToast": "Heads up created",
+      "submitButton": "Save as draft",
+      "fields": {
+        "title": "Title",
+        "titlePlaceholder": "Enter a title",
+        "description": "Description",
+        "descriptionPlaceholder": "Write your message here…",
+        "engagementLevel": "Engagement level",
+        "requireAcknowledgement": "Require acknowledgement",
+        "requireSignature": "Require signature"
+      },
+      "engagement": {
+        "view": "View only",
+        "acknowledge": "Acknowledgement required",
+        "sign": "Signature required"
+      }
+    },
+    "detail": {
+      "backLink": "Back to Heads Up",
+      "publishButton": "Publish",
+      "archiveToast": "Archived",
+      "archivedBadge": "Archived",
+      "createdBy": "Created by {name}",
+      "commentCreatedToast": "Comment added",
+      "commentPlaceholder": "Write a comment…",
+      "commentSubmit": "Post comment",
+      "noComments": "No comments yet.",
+      "noDescription": "No description.",
+      "descriptionHeading": "Message",
+      "detailsHeading": "Details",
+      "notYet": "Not yet",
+      "noRecipients": "No recipients match this filter.",
+      "status": {
+        "draft": "Draft",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "engagement": {
+        "view": "View only",
+        "acknowledge": "Acknowledge",
+        "sign": "Sign"
+      },
+      "fields": {
+        "engagement": "Engagement",
+        "recipients": "Recipients",
+        "publishAt": "Scheduled publish",
+        "expiresAt": "Expires"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "engagement": "Engagement",
+        "comments": "Comments"
+      },
+      "stats": {
+        "total": "Total",
+        "viewed": "Viewed",
+        "acknowledged": "Acknowledged",
+        "signed": "Signed"
+      },
+      "recipientFilter": {
+        "all": "All",
+        "viewed": "Viewed",
+        "not_viewed": "Not viewed",
+        "acknowledged": "Acknowledged",
+        "signed": "Signed"
+      },
+      "recipientColumns": {
+        "name": "Name",
+        "email": "Email",
+        "viewed": "Viewed",
+        "acknowledged": "Acknowledged",
+        "signed": "Signed"
+      }
+    }
+  },
+  "assets": {
+    "list": {
+      "title": "Assets",
+      "subtitle": "Your asset register.",
+      "newButton": "New asset",
+      "empty": "No assets found.",
+      "emptyCta": "Create the first asset",
+      "filterType": "Type",
+      "filterTypeAll": "All types",
+      "showArchived": "Show archived",
+      "columns": {
+        "name": "Name",
+        "type": "Type",
+        "site": "Site",
+        "qr": "QR code",
+        "updatedAt": "Updated"
+      }
+    },
+    "new": {
+      "title": "New Asset",
+      "backLink": "Back to Assets",
+      "createdToast": "Asset created",
+      "submitButton": "Create asset",
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": "e.g. Forklift #3",
+        "type": "Asset type",
+        "noType": "No type",
+        "parent": "Parent asset",
+        "noParent": "No parent"
+      }
+    },
+    "detail": {
+      "backLink": "Back to Assets",
+      "archiveToast": "Asset archived",
+      "restoreToast": "Asset restored",
+      "archivedBadge": "Archived",
+      "qrLabel": "QR",
+      "detailsHeading": "Details",
+      "latestReadingsHeading": "Latest readings",
+      "noReadings": "No readings recorded yet.",
+      "addReadingHeading": "Record reading",
+      "readingFieldNamePlaceholder": "Field (e.g. odometer)",
+      "readingValuePlaceholder": "Value",
+      "readingUnitPlaceholder": "Unit",
+      "addReadingButton": "Record",
+      "readingAddedToast": "Reading recorded",
+      "maintenancePlansHint": "Maintenance plans are managed in the Maintenance section.",
+      "maintenancePlansLink": "Go to Maintenance",
+      "tabs": {
+        "overview": "Overview",
+        "readings": "Readings",
+        "maintenance": "Maintenance"
+      },
+      "fields": {
+        "type": "Type",
+        "site": "Site",
+        "parent": "Parent",
+        "children": "Sub-assets"
+      },
+      "readingColumns": {
+        "field": "Field",
+        "value": "Value",
+        "source": "Source",
+        "capturedAt": "Captured",
+        "capturedBy": "By"
+      }
+    }
+  },
+  "assetTypes": {
+    "pageTitle": "Asset Types",
+    "pageSubtitle": "Define asset categories and their custom fields.",
+    "newButton": "New type",
+    "createTitle": "New asset type",
+    "namePlaceholder": "e.g. Vehicle",
+    "customFieldsCount": "Custom fields",
+    "empty": "No asset types defined yet.",
+    "createdToast": "Asset type created",
+    "archivedToast": "Asset type archived",
+    "archiveConfirm": "Archive this asset type? It cannot be used for new assets."
+  },
+  "maintenancePlans": {
+    "table": {
+      "title": "Maintenance",
+      "subtitle": "Maintenance schedule across all assets.",
+      "empty": "No maintenance plans configured yet.",
+      "columns": {
+        "asset": "Asset",
+        "plan": "Plan",
+        "type": "Type",
+        "lastService": "Last service",
+        "status": "Status"
+      },
+      "planType": {
+        "time": "Time-based",
+        "usage": "Usage-based"
+      },
+      "status": {
+        "awaiting_first_reading": "Awaiting first reading",
+        "on_schedule": "On schedule",
+        "approaching": "Approaching due",
+        "overdue": "Overdue"
+      }
+    }
+  },
+  "documents": {
+    "list": {
+      "title": "Documents",
+      "subtitle": "Files organised in folders.",
+      "newFolderButton": "New folder",
+      "newFolderPlaceholder": "Folder name",
+      "folderCreatedToast": "Folder created",
+      "allDocuments": "All documents",
+      "searchPlaceholder": "Search documents…",
+      "empty": "No documents here.",
+      "staleTag": "Stale",
+      "columns": {
+        "name": "Name",
+        "size": "Size",
+        "version": "Version",
+        "uploadedBy": "Uploaded by",
+        "updatedAt": "Updated"
+      }
+    },
+    "detail": {
+      "backLink": "Back to Documents",
+      "archiveToast": "Document archived",
+      "restoreToast": "Document restored",
+      "archivedBadge": "Archived",
+      "staleBadge": "Stale",
+      "uploadedBy": "Uploaded by {name}",
+      "descriptionHeading": "Description",
+      "noDescription": "No description.",
+      "detailsHeading": "Details",
+      "noFolder": "No folder",
+      "noVersions": "No version history.",
+      "noAccessRules": "No access rules configured.",
+      "accessHeading": "Access control",
+      "freshnessValue": "Stale after {days} days",
+      "tabs": {
+        "overview": "Overview",
+        "versions": "Versions",
+        "access": "Access"
+      },
+      "fields": {
+        "folder": "Folder",
+        "filename": "Filename",
+        "size": "Size",
+        "version": "Version",
+        "type": "File type",
+        "freshness": "Freshness",
+        "labels": "Labels"
+      },
+      "versionColumns": {
+        "version": "Version",
+        "filename": "Filename",
+        "size": "Size",
+        "uploadedBy": "Uploaded by",
+        "uploadedAt": "Uploaded"
+      },
+      "accessColumns": {
+        "subject": "Subject",
+        "permission": "Permission",
+        "grantedAt": "Granted"
+      }
     }
   }
 }

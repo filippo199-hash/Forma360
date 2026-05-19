@@ -2,12 +2,15 @@
 
 import {
   AlertTriangle,
+  Bell,
   Calendar,
   CheckSquare,
   ClipboardCheck,
   FileText,
+  FolderOpen,
   ListChecks,
   Settings,
+  Wrench,
   type LucideIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -20,7 +23,18 @@ interface SiteSidebarProps {
 }
 
 interface NavItem {
-  key: 'templates' | 'inspections' | 'approvals' | 'schedules' | 'issues' | 'actions' | 'settings';
+  key:
+    | 'templates'
+    | 'inspections'
+    | 'approvals'
+    | 'schedules'
+    | 'issues'
+    | 'actions'
+    | 'headsUp'
+    | 'assets'
+    | 'maintenance'
+    | 'documents'
+    | 'settings';
   href: string;
   icon: LucideIcon;
 }
@@ -47,6 +61,10 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
     { key: 'schedules', href: `/${locale}/schedules`, icon: Calendar },
     { key: 'issues', href: `/${locale}/observations`, icon: AlertTriangle },
     { key: 'actions', href: `/${locale}/actions`, icon: ListChecks },
+    { key: 'headsUp', href: `/${locale}/heads-up`, icon: Bell },
+    { key: 'assets', href: `/${locale}/assets`, icon: Wrench },
+    { key: 'maintenance', href: `/${locale}/maintenance`, icon: Calendar },
+    { key: 'documents', href: `/${locale}/documents`, icon: FolderOpen },
   ];
 
   const settingsItem: NavItem = {
