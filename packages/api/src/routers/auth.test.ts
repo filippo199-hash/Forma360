@@ -6,9 +6,9 @@
  *   - lookupEmailDomain → "free" for gmail.com
  *   - lookupEmailDomain → "business" + null tenant for unknown business domain
  *   - lookupEmailDomain → "business" + existing tenant when a user exists
- *   - signUpWithTenant creates tenant + user + credential account
+ *   - signUpWithTenant creates tenant + user (no password — OTP flow)
  *   - signUpWithTenant rejects duplicate email with CONFLICT
- *   - acceptInvite happy path
+ *   - acceptInvite happy path (no password — OTP flow)
  *   - acceptInvite rejects expired invite
  *   - acceptInvite rejects already-accepted invite
  */
@@ -20,11 +20,10 @@ import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
-import { verifyPassword } from '@forma360/auth/crypto';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { createTestContext, type Context } from '../context';
 import { __authStubMailbox, appRouter, type AuthStubMail } from '../router';
 import { createCallerFactory } from '../trpc';
@@ -135,11 +134,10 @@ describe('auth router', () => {
   });
 
   describe('signUpWithTenant', () => {
-    it('creates tenant + user + credential account with hashed password', async () => {
+    it('creates tenant + unverified user — OTP flow, no password stored', async () => {
       const caller = createCaller(publicCtx());
       const { tenantId, userId } = await caller.auth.signUpWithTenant({
         email: 'founder@my-startup.example',
-        password: 'CorrectHorseBatteryStaple123!',
         name: 'Founder',
         companyName: 'My Startup',
       });
@@ -161,47 +159,32 @@ describe('auth router', () => {
       const adminSet = sets.find((s) => s.name === 'Administrator');
       expect(adminSet).toBeDefined();
 
-      // User row.
+      // User row — emailVerified=false until they complete OTP.
       const userRow = (await db.select().from(schema.user).where(eq(schema.user.id, userId)))[0];
       expect(userRow).toBeDefined();
       expect(userRow?.email).toBe('founder@my-startup.example');
-      expect(userRow?.emailVerified).toBe(true);
+      expect(userRow?.emailVerified).toBe(false);
       expect(userRow?.tenantId).toBe(tenantId);
       expect(userRow?.permissionSetId).toBe(adminSet?.id);
 
-      // Credential account with hashed password — verify via better-auth's
-      // verifyPassword that the hash matches the input.
-      const accountRow = (
-        await db
-          .select()
-          .from(schema.account)
-          .where(
-            and(eq(schema.account.userId, userId), eq(schema.account.providerId, 'credential')),
-          )
-      )[0];
-      if (accountRow === undefined || accountRow.password === null) {
-        throw new Error('account row missing password');
-      }
-      expect(accountRow.password).not.toBe('CorrectHorseBatteryStaple123!');
-      const ok = await verifyPassword({
-        hash: accountRow.password,
-        password: 'CorrectHorseBatteryStaple123!',
-      });
-      expect(ok).toBe(true);
+      // No credential account row — Forma360 is passwordless.
+      const accountRows = await db
+        .select()
+        .from(schema.account)
+        .where(eq(schema.account.userId, userId));
+      expect(accountRows).toHaveLength(0);
     });
 
     it('rejects duplicate email with CONFLICT', async () => {
       const caller = createCaller(publicCtx());
       await caller.auth.signUpWithTenant({
         email: 'taken@example.com',
-        password: 'CorrectHorseBatteryStaple123!',
         name: 'First',
         companyName: 'Org A',
       });
       await expect(() =>
         caller.auth.signUpWithTenant({
           email: 'taken@example.com',
-          password: 'AnotherSafePassword789!',
           name: 'Second',
           companyName: 'Org B',
         }),
@@ -212,7 +195,6 @@ describe('auth router', () => {
       const caller = createCaller(publicCtx());
       const { userId } = await caller.auth.signUpWithTenant({
         email: 'Mixed@CASE.example',
-        password: 'CorrectHorseBatteryStaple123!',
         name: 'Alice',
         companyName: 'Case Co',
       });
@@ -269,7 +251,7 @@ describe('auth router', () => {
       };
     }
 
-    it('happy path: creates user + credential account, marks invite accepted', async () => {
+    it('happy path: creates verified user (no password), marks invite accepted', async () => {
       const { tenantId, permissionSetId, token, inviteId } = await seedInvite({
         expiresAt: new Date(Date.now() + 60 * 60 * 1000),
       });
@@ -277,7 +259,6 @@ describe('auth router', () => {
       const caller = createCaller(publicCtx());
       const { userId, tenantId: returnedTenant } = await caller.auth.acceptInvite({
         token,
-        password: 'CorrectHorseBatteryStaple123!',
         name: 'Invitee Person',
       });
 
@@ -285,27 +266,17 @@ describe('auth router', () => {
       const userRow = (await db.select().from(schema.user).where(eq(schema.user.id, userId)))[0];
       expect(userRow).toBeDefined();
       expect(userRow?.email).toBe('invitee@acme.test');
+      expect(userRow?.emailVerified).toBe(true);
       expect(userRow?.tenantId).toBe(tenantId);
       expect(userRow?.permissionSetId).toBe(permissionSetId);
       expect(userRow?.name).toBe('Invitee Person');
 
-      // Credential account exists + password verifies.
-      const accountRow = (
-        await db
-          .select()
-          .from(schema.account)
-          .where(
-            and(eq(schema.account.userId, userId), eq(schema.account.providerId, 'credential')),
-          )
-      )[0];
-      if (accountRow === undefined || accountRow.password === null) {
-        throw new Error('account row missing password');
-      }
-      const ok = await verifyPassword({
-        hash: accountRow.password,
-        password: 'CorrectHorseBatteryStaple123!',
-      });
-      expect(ok).toBe(true);
+      // No credential account row — Forma360 is passwordless.
+      const accountRows = await db
+        .select()
+        .from(schema.account)
+        .where(eq(schema.account.userId, userId));
+      expect(accountRows).toHaveLength(0);
 
       // Invite is stamped as accepted.
       const inviteRow = (
@@ -319,12 +290,7 @@ describe('auth router', () => {
         expiresAt: new Date(Date.now() - 60 * 1000),
       });
       const caller = createCaller(publicCtx());
-      await expect(() =>
-        caller.auth.acceptInvite({
-          token,
-          password: 'CorrectHorseBatteryStaple123!',
-        }),
-      ).rejects.toThrow(/expired/);
+      await expect(() => caller.auth.acceptInvite({ token })).rejects.toThrow(/expired/);
     });
 
     it('rejects already-accepted invite', async () => {
@@ -333,22 +299,16 @@ describe('auth router', () => {
         acceptedAt: new Date(),
       });
       const caller = createCaller(publicCtx());
-      await expect(() =>
-        caller.auth.acceptInvite({
-          token,
-          password: 'CorrectHorseBatteryStaple123!',
-        }),
-      ).rejects.toThrow(/already-accepted|CONFLICT/);
+      await expect(() => caller.auth.acceptInvite({ token })).rejects.toThrow(
+        /already-accepted|CONFLICT/,
+      );
     });
 
     it('rejects unknown token with NOT_FOUND', async () => {
       const caller = createCaller(publicCtx());
-      await expect(() =>
-        caller.auth.acceptInvite({
-          token: '0'.repeat(64),
-          password: 'CorrectHorseBatteryStaple123!',
-        }),
-      ).rejects.toThrow(/invite-not-found|NOT_FOUND/);
+      await expect(() => caller.auth.acceptInvite({ token: '0'.repeat(64) })).rejects.toThrow(
+        /invite-not-found|NOT_FOUND/,
+      );
     });
   });
 
