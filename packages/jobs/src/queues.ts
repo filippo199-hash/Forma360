@@ -17,51 +17,51 @@ import { z } from 'zod';
 
 export const QUEUE_NAMES = {
   /** No-op queue used by the deliberately-simple Phase 0 smoke test. */
-  TEST: 'forma360:test',
+  TEST: 'forma360-test',
   /** Nightly `pg_dump` → R2 snapshot. One job per night. */
-  BACKUPS: 'forma360:backups',
+  BACKUPS: 'forma360-backups',
   /**
    * Phase 1 § 1.3 — materialise `group_members` from
    * `group_membership_rules`. Enqueued on rule save / user field change.
    * Idempotent.
    */
-  GROUP_RECONCILE: 'forma360:group-membership-reconcile',
+  GROUP_RECONCILE: 'forma360-group-membership-reconcile',
   /** Phase 1 § 1.4 — analogous for sites. */
-  SITE_RECONCILE: 'forma360:site-membership-reconcile',
+  SITE_RECONCILE: 'forma360-site-membership-reconcile',
   /**
    * Phase 1 § 1.1 — async fan-out of anonymisation across modules.
    * Phase 1 anonymises `user` + `user_custom_field_values` inline;
    * later phases extend the flow via the `registerAnonymiser(...)`
    * hook that this job consumes.
    */
-  USER_ANONYMISATION: 'forma360:user-anonymisation',
+  USER_ANONYMISATION: 'forma360-user-anonymisation',
   /**
    * Phase 2 PR 32 — schedule materialisation tick. Repeatable every
    * 10 minutes; fans out to SCHEDULE_MATERIALISE for each due schedule.
    */
-  SCHEDULE_TICK: 'forma360:schedule-tick',
+  SCHEDULE_TICK: 'forma360-schedule-tick',
   /**
    * Phase 2 PR 32 — compute the next 14 days of occurrences for a
    * single schedule and upsert them. Idempotent via the unique
    * (scheduleId, assigneeUserId, occurrenceAt) index.
    */
-  SCHEDULE_MATERIALISE: 'forma360:schedule-materialise',
+  SCHEDULE_MATERIALISE: 'forma360-schedule-materialise',
   /**
    * Phase 2 PR 32 — send one reminder email for one occurrence.
    */
-  SCHEDULE_REMINDER: 'forma360:schedule-reminder',
+  SCHEDULE_REMINDER: 'forma360-schedule-reminder',
   /**
    * Phase 8 — evaluate one compliance rule and write a new
    * compliance_evaluations row. Enqueued by the router on demand or by a
    * periodic tick.
    */
-  COMPLIANCE_EVALUATE: 'forma360:compliance-evaluate',
+  COMPLIANCE_EVALUATE: 'forma360-compliance-evaluate',
   /**
    * Phase 8 — compute today's daily roll-up for one framework and upsert
    * a compliance_snapshots row. Enqueued after every evaluate job
    * completes.
    */
-  COMPLIANCE_SNAPSHOT: 'forma360:compliance-snapshot',
+  COMPLIANCE_SNAPSHOT: 'forma360-compliance-snapshot',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
