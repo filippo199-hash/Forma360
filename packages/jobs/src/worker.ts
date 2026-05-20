@@ -25,6 +25,8 @@ import { createSiteReconcileHandler } from './workers/site-membership-reconcile'
 import { createTestQueueHandler } from './workers/test-queue';
 import { createUserAnonymisationHandler } from './workers/user-anonymisation';
 import { createSendEmail } from '@forma360/shared/email';
+import { createComplianceEvaluateHandler } from './workers/compliance-evaluate';
+import { createComplianceSnapshotHandler } from './workers/compliance-snapshot';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -144,6 +146,28 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     workerOptions,
   );
 
+  // ─── Phase 8 — Compliance ───────────────────────────────────────────────
+  const complianceSnapshotQueue = getQueue(QUEUE_NAMES.COMPLIANCE_SNAPSHOT, connection);
+  async function enqueueComplianceSnapshot(frameworkId: string, tenantId: string): Promise<void> {
+    await complianceSnapshotQueue.add(QUEUE_NAMES.COMPLIANCE_SNAPSHOT, { tenantId, frameworkId });
+  }
+
+  const complianceEvaluateWorker = new Worker(
+    QUEUE_NAMES.COMPLIANCE_EVALUATE,
+    createComplianceEvaluateHandler(
+      workerDb,
+      logger.child({ handler: 'compliance-evaluate' }),
+      enqueueComplianceSnapshot,
+    ),
+    workerOptions,
+  );
+
+  const complianceSnapshotWorker = new Worker(
+    QUEUE_NAMES.COMPLIANCE_SNAPSHOT,
+    createComplianceSnapshotHandler(workerDb, logger.child({ handler: 'compliance-snapshot' })),
+    workerOptions,
+  );
+
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
   await scheduleTickQueue.upsertJobScheduler(
@@ -179,6 +203,8 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     scheduleTickWorker,
     scheduleMaterialiseWorker,
     scheduleReminderWorker,
+    complianceEvaluateWorker,
+    complianceSnapshotWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {

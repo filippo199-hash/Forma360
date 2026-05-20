@@ -14,3 +14,4 @@ export type { AuthRouterDeps } from './routers/auth';
 export type { InspectionsRouterDeps } from './routers/inspections';
 export type { IssuesRouterDeps } from './routers/issues';
 export { setUsersRouterDeps, type UsersRouterDeps } from './routers/users';
+export type { ComplianceRouterDeps } from './routers/compliance';

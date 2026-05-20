@@ -25,7 +25,7 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
-import { buildAppRouter, stubAuthDeps, stubInspectionsDeps, stubIssuesDeps } from '../router';
+import { buildAppRouter, stubAuthDeps, stubComplianceDeps, stubInspectionsDeps, stubIssuesDeps } from '../router';
 import { createCallerFactory } from '../trpc';
 import type { ExportsRouterDeps } from './exports';
 import {
@@ -204,6 +204,7 @@ describe('inspectionsExport router', () => {
       auth: stubAuthDeps,
       inspections: stubInspectionsDeps,
       issues: stubIssuesDeps,
+      compliance: stubComplianceDeps,
     });
     const factory = createCallerFactory(router);
     return factory(ctx);

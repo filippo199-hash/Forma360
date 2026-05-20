@@ -40,6 +40,7 @@ import {
 } from './routers/inspectionsExport';
 import { createIssuesRouter, type IssuesRouterDeps } from './routers/issues';
 import { maintenancePlansRouter } from './routers/maintenancePlans';
+import { createComplianceRouter, type ComplianceRouterDeps } from './routers/compliance';
 import { schedulesRouter } from './routers/schedules';
 import { signaturesRouter } from './routers/signatures';
 import { router } from './trpc';
@@ -58,6 +59,7 @@ export function buildAppRouter(deps: {
   auth: AuthRouterDeps;
   inspections: InspectionsRouterDeps;
   issues: IssuesRouterDeps;
+  compliance: ComplianceRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -87,6 +89,7 @@ export function buildAppRouter(deps: {
     maintenancePlans: maintenancePlansRouter,
     documentFolders: documentFoldersRouter,
     documents: documentsRouter,
+    compliance: createComplianceRouter(deps.compliance),
   });
 }
 
@@ -194,12 +197,19 @@ export const stubIssuesDeps: IssuesRouterDeps = {
   },
 };
 
+export const stubComplianceDeps: ComplianceRouterDeps = {
+  enqueueEvaluate: async () => {
+    // no-op stub — real wiring via buildAppRouter
+  },
+};
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
   auth: stubAuthDeps,
   inspections: stubInspectionsDeps,
   issues: stubIssuesDeps,
+  compliance: stubComplianceDeps,
 });
 
 export type AppRouter = typeof appRouter;

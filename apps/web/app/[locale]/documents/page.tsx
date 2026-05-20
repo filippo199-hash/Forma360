@@ -210,7 +210,7 @@ export default function DocumentsPage() {
                             {formatBytes(doc.sizeBytes)}
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">
-                            v{doc.currentVersion}
+                            {t('versionNum', { n: String(doc.currentVersion) })}
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">
                             {doc.uploaderName ?? '—'}

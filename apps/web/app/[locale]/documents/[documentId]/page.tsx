@@ -145,7 +145,7 @@ export default function DocumentDetailPage() {
               <DetailRow label={t('fields.folder')}>{folderName ?? t('noFolder')}</DetailRow>
               <DetailRow label={t('fields.filename')}>{doc.filename}</DetailRow>
               <DetailRow label={t('fields.size')}>{formatBytes(doc.sizeBytes)}</DetailRow>
-              <DetailRow label={t('fields.version')}>v{doc.currentVersion}</DetailRow>
+              <DetailRow label={t('fields.version')}>{t('versionNum', { n: String(doc.currentVersion) })}</DetailRow>
               <DetailRow label={t('fields.type')}>{doc.mimeType}</DetailRow>
               {doc.freshnessDays !== null ? (
                 <DetailRow label={t('fields.freshness')}>
@@ -187,7 +187,7 @@ export default function DocumentDetailPage() {
               <tbody>
                 {(versionsData ?? versions).map((v) => (
                   <tr key={v.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-3 py-2 font-mono text-xs font-medium">v{v.version}</td>
+                    <td className="px-3 py-2 font-mono text-xs font-medium">{t('versionNum', { n: String(v.version) })}</td>
                     <td className="px-3 py-2">{v.filename}</td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {formatBytes(v.sizeBytes)}

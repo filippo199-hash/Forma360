@@ -18,7 +18,7 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
-import { buildAppRouter, stubAuthDeps, stubInspectionsDeps, stubIssuesDeps } from '../router';
+import { buildAppRouter, stubAuthDeps, stubComplianceDeps, stubInspectionsDeps, stubIssuesDeps } from '../router';
 import { createCallerFactory } from '../trpc';
 import type { ExportsRouterDeps } from './exports';
 import type { InspectionsExportDeps } from './inspectionsExport';
@@ -156,6 +156,7 @@ describe('exports router (Phase 2 PR 31)', () => {
       auth: stubAuthDeps,
       inspections: stubInspectionsDeps,
       issues: stubIssuesDeps,
+      compliance: stubComplianceDeps,
     });
     const factory = createCallerFactory(router);
     return factory(ctxFor(adminUserId));
@@ -254,6 +255,7 @@ describe('exports router (Phase 2 PR 31)', () => {
         auth: stubAuthDeps,
         inspections: stubInspectionsDeps,
         issues: stubIssuesDeps,
+        compliance: stubComplianceDeps,
       });
       const caller = createCallerFactory(router)(ctxFor(adminUserId));
       await expect(() => caller.exports.renderPdf({ inspectionId: newId() })).rejects.toThrow();
@@ -291,6 +293,7 @@ describe('exports router (Phase 2 PR 31)', () => {
         auth: stubAuthDeps,
         inspections: stubInspectionsDeps,
         issues: stubIssuesDeps,
+        compliance: stubComplianceDeps,
       });
       const caller = createCallerFactory(router)(ctxFor(standardUserId));
       await expect(() => caller.exports.createShareLink({ inspectionId })).rejects.toThrow(
