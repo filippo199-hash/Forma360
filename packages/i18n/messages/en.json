@@ -1841,7 +1841,17 @@
         "acknowledge": "Acknowledgement required",
         "sign": "Signature required"
       },
-      "publishedToast": "Heads up published"
+      "publishedToast": "Heads up published",
+      "settingsHeading": "Settings",
+      "publishTime9am": "9:00 am",
+      "previewAuthorInitials": "Me",
+      "previewAuthorYou": "You",
+      "previewStats": {
+        "views": "0 views",
+        "acknowledged": "| 0 acknowledged",
+        "signed": "| 0 signed",
+        "comments": "| 0 comments"
+      }
     },
     "detail": {
       "backLink": "Back to Heads Up",
@@ -1873,8 +1883,13 @@
         "engagement": "Engagement",
         "recipients": "Recipients",
         "publishAt": "Scheduled publish",
-        "expiresAt": "Expires"
+        "expiresAt": "Expires",
+        "comments": "Comments",
+        "reactions": "Reactions"
       },
+      "attachmentsHeading": "Attachments",
+      "fileSizeKb": "{kb} KB",
+      "doneBadge": "✓ Done",
       "tabs": {
         "overview": "Overview",
         "engagement": "Engagement",
@@ -1974,6 +1989,15 @@
       "subtitle": "Define categories and their custom fields. Each asset can be tagged with a category.",
       "backLink": "Back to Assets",
       "newButton": "New category",
+      "customFieldsLabel": "Custom fields",
+      "addFieldBtn": "Add field",
+      "noCustomFieldsYet": "No custom fields yet.",
+      "archiveCategoryBtn": "Archive category",
+      "saveChangesBtn": "Save changes",
+      "nameLabel": "Name",
+      "descriptionLabel": "Description",
+      "optionalPlaceholder": "Optional",
+      "noNewFieldsYet": "No fields yet — you can add them now or after creating the category.",
       "empty": "No categories yet.",
       "emptySubtitle": "Create your first category to start organising assets by type.",
       "searchPlaceholder": "Search categories…",

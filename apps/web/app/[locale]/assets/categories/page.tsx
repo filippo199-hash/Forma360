@@ -319,7 +319,7 @@ function CategoryRow({
           {/* Custom fields */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">Custom fields</p>
+              <p className="text-sm font-medium">{tCat('customFieldsLabel')}</p>
               {canManage ? (
                 <Button
                   type="button"
@@ -328,14 +328,14 @@ function CategoryRow({
                   onClick={addField}
                 >
                   <Plus className="mr-1 h-3.5 w-3.5" />
-                  Add field
+                  {tCat('addFieldBtn')}
                 </Button>
               ) : null}
             </div>
 
             {fields.length === 0 ? (
               <p className="rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground">
-                No custom fields yet.{' '}
+                {tCat('noCustomFieldsYet')}{' '}
                 {canManage ? 'Click "Add field" to define what data to collect for each asset.' : ''}
               </p>
             ) : (
@@ -368,7 +368,7 @@ function CategoryRow({
                 ) : (
                   <Trash2 className="mr-1 h-3.5 w-3.5" />
                 )}
-                Archive category
+                {tCat('archiveCategoryBtn')}
               </Button>
 
               <Button
@@ -378,7 +378,7 @@ function CategoryRow({
                 size="sm"
               >
                 {saving ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}
-                Save changes
+                {tCat('saveChangesBtn')}
               </Button>
             </div>
           ) : null}
@@ -488,7 +488,7 @@ export default function AssetCategoriesPage() {
             {/* Name + description */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="new-cat-name">Name <span className="text-destructive">*</span></Label>
+                <Label htmlFor="new-cat-name">{t('nameLabel')} <span className="text-destructive">*</span></Label>
                 <Input
                   id="new-cat-name"
                   value={newName}
@@ -499,13 +499,13 @@ export default function AssetCategoriesPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="new-cat-desc">Description</Label>
+                <Label htmlFor="new-cat-desc">{t('descriptionLabel')}</Label>
                 <Input
                   id="new-cat-desc"
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   maxLength={5000}
-                  placeholder="Optional"
+                  placeholder={t('optionalPlaceholder')}
                 />
               </div>
             </div>
@@ -513,10 +513,10 @@ export default function AssetCategoriesPage() {
             {/* Custom fields for new category */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Custom fields</p>
+                <p className="text-sm font-medium">{t('customFieldsLabel')}</p>
                 <Button type="button" variant="outline" size="sm" onClick={addNewField}>
                   <Plus className="mr-1 h-3.5 w-3.5" />
-                  Add field
+                  {t('addFieldBtn')}
                 </Button>
               </div>
               {newFields.length > 0 ? (
@@ -534,7 +534,7 @@ export default function AssetCategoriesPage() {
                 </div>
               ) : (
                 <p className="rounded-lg border border-dashed py-4 text-center text-xs text-muted-foreground">
-                  No fields yet — you can add them now or after creating the category.
+                  {t('noNewFieldsYet')}
                 </p>
               )}
             </div>

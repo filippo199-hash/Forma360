@@ -152,11 +152,10 @@ const selectClass =
 export function RRuleBuilder({ value, onChange }: RRuleBuilderProps) {
   const [state, setState] = useState<RRuleState>(() => parseRRule(value));
 
-  // Parse incoming value on mount (and when it changes externally)
+  // Parse incoming value on mount only — subsequent external changes are
+  // intentionally ignored to avoid overwriting in-progress edits.
   useEffect(() => {
     setState(parseRRule(value));
-    // We intentionally only parse when the prop changes, not on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function update(patch: Partial<RRuleState>) {

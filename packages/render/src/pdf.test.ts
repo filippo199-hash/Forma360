@@ -100,13 +100,13 @@ describe('renderInspectionPdf', () => {
       tenantId,
       templateId,
       versionNumber: 1,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       content: {
         schemaVersion: '1',
         title: 'Tpl',
         pages: [],
         settings: {},
         customResponseSets: [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
       publishedAt: new Date(),
     });

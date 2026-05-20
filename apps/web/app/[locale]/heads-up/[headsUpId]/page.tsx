@@ -233,7 +233,7 @@ export default function HeadsUpDetailPage() {
                         >
                           <span>{att.filename}</span>
                           <span className="text-muted-foreground">
-                            {(att.sizeBytes / 1024).toFixed(0)} KB
+                            {t('fileSizeKb', { kb: (att.sizeBytes / 1024).toFixed(0) })}
                           </span>
                         </div>
                       ))}
@@ -322,7 +322,7 @@ export default function HeadsUpDetailPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => copyShareLink(headsUp.shareToken!)}
+                        onClick={() => copyShareLink(headsUp.shareToken ?? '')}
                       >
                         <Copy className="mr-1 h-3.5 w-3.5" />
                         {t('shareLink.copyButton')}
@@ -522,7 +522,7 @@ export default function HeadsUpDetailPage() {
                               {t('remindButton')}
                             </Button>
                           ) : (
-                            <span className="text-xs text-emerald-600">✓ Done</span>
+                            <span className="text-xs text-emerald-600">{t('doneBadge')}</span>
                           )}
                         </td>
                       ) : null}

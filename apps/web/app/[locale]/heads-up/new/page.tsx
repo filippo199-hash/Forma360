@@ -233,9 +233,9 @@ export default function NewHeadsUpPage() {
       return;
     }
     const readyAttachments = pendingFiles
-      .filter((f) => f.storageKey !== null && f.error === null)
+      .filter((f): f is typeof f & { storageKey: string } => f.storageKey !== null && f.error === null)
       .map((f) => ({
-        storageKey: f.storageKey!,
+        storageKey: f.storageKey,
         filename: f.file.name,
         mimeType: f.file.type || 'application/octet-stream',
         sizeBytes: f.file.size,
@@ -312,7 +312,6 @@ export default function NewHeadsUpPage() {
                     className="flex items-center gap-3 rounded-md border bg-muted/30 px-3 py-2"
                   >
                     {pf.previewUrl !== null ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={pf.previewUrl}
                         alt={pf.file.name}
@@ -489,7 +488,7 @@ export default function NewHeadsUpPage() {
 
           {/* ── Settings ── */}
           <section>
-            <h2 className="mb-3 text-sm font-semibold">{t('settings')}</h2>
+            <h2 className="mb-3 text-sm font-semibold">{t('settingsHeading')}</h2>
             <div className="divide-y rounded-lg border">
               <SettingRow
                 label={t('settings.allowComments')}
@@ -576,7 +575,7 @@ export default function NewHeadsUpPage() {
                     }}
                   >
                     <span className="flex-1">{t('publishTomorrow')}</span>
-                    <span className="text-xs text-muted-foreground">9:00 am</span>
+                    <span className="text-xs text-muted-foreground">{t('publishTime9am')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
@@ -640,10 +639,10 @@ export default function NewHeadsUpPage() {
               {/* Author row */}
               <div className="mb-4 flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold">
-                  JB
+                  {t('previewAuthorInitials')}
                 </div>
                 <div>
-                  <p className="text-xs font-medium">You</p>
+                  <p className="text-xs font-medium">{t('previewAuthorYou')}</p>
                   <p className="text-[10px] text-muted-foreground">{t('previewJustNow')}</p>
                 </div>
               </div>
@@ -663,7 +662,6 @@ export default function NewHeadsUpPage() {
                 <div className="mb-4 flex flex-wrap gap-2">
                   {pendingFiles.map((pf) =>
                     pf.previewUrl !== null ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         key={pf.localId}
                         src={pf.previewUrl}
@@ -686,12 +684,12 @@ export default function NewHeadsUpPage() {
 
               {/* Stats row */}
               <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span>0 views</span>
+                <span>{t('previewStats.views')}</span>
                 {engagementLevel === 'acknowledge' || engagementLevel === 'sign' ? (
-                  <span>| 0 acknowledged</span>
+                  <span>{t('previewStats.acknowledged')}</span>
                 ) : null}
-                {engagementLevel === 'sign' ? <span>| 0 signed</span> : null}
-                {allowComments ? <span>| 0 comments</span> : null}
+                {engagementLevel === 'sign' ? <span>{t('previewStats.signed')}</span> : null}
+                {allowComments ? <span>{t('previewStats.comments')}</span> : null}
               </div>
 
               {/* Reactions */}

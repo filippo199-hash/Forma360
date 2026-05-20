@@ -817,8 +817,11 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
           for (const r of rows) {
             const key = r.emoji as AllowedEmoji;
             if (key in counts) {
-              counts[key]!.count += 1;
-              if (r.userId === ctx.auth.userId) counts[key]!.reacted = true;
+              const entry = counts[key];
+              if (entry !== undefined) {
+                entry.count += 1;
+                if (r.userId === ctx.auth.userId) entry.reacted = true;
+              }
             }
           }
           return counts;
@@ -848,7 +851,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             // Remove existing reaction.
             await ctx.db
               .delete(headsUpReactions)
-              .where(eq(headsUpReactions.id, existing[0]!.id));
+              .where(eq(headsUpReactions.id, existing[0]?.id ?? ''));
             return { action: 'removed' as const };
           }
 

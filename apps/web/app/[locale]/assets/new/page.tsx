@@ -151,7 +151,7 @@ export default function NewAssetPage() {
                 ) : photoPreview !== null ? (
                   <>
                     {/* Preview is a local blob URL — Image component not suitable for object URLs */}
-                    <img // eslint-disable-line
+                    <img
                       src={photoPreview}
                       alt=""
                       className="h-full w-full rounded-xl object-cover"
