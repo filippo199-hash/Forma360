@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, QrCode } from 'lucide-react';
+import { FolderCog, Plus, QrCode } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -36,14 +36,24 @@ export default function AssetsListPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
-        {canManage ? (
-          <Button asChild>
-            <Link href={`/${locale}/assets/new`}>
-              <Plus className="mr-1 h-4 w-4" />
-              {t('newButton')}
-            </Link>
-          </Button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {canManage ? (
+            <Button variant="outline" asChild>
+              <Link href={`/${locale}/assets/categories`}>
+                <FolderCog className="mr-1 h-4 w-4" />
+                {t('categoriesButton')}
+              </Link>
+            </Button>
+          ) : null}
+          {canManage ? (
+            <Button asChild>
+              <Link href={`/${locale}/assets/new`}>
+                <Plus className="mr-1 h-4 w-4" />
+                {t('newButton')}
+              </Link>
+            </Button>
+          ) : null}
+        </div>
       </header>
 
       <div className="flex flex-wrap items-end gap-4">

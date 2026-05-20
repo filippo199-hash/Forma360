@@ -1755,24 +1755,66 @@
       }
     },
     "new": {
-      "title": "New Heads Up",
-      "backLink": "Back to Heads Up",
-      "createdToast": "Heads up created",
-      "submitButton": "Save as draft",
+      "pageTitle": "New Heads Up",
+      "backLink": "← Back to Heads Up",
+      "savedToast": "Saved as draft",
+      "titleRequired": "Title is required",
+      "waitForUploads": "Please wait for uploads to finish",
+      "maxFilesError": "Maximum 6 files allowed",
+      "addMedia": "Add media",
+      "dragFiles": "Drag your files here",
+      "browseUpload": "Browse to link or upload",
+      "mediaHint": "Up to 6 files, 50 MB each. Supports pdf, jpg and mov",
+      "shareExternally": "Share externally",
+      "shareExternallyHint": "Anyone with this link can view",
+      "shareLinkAfterSave": "Save first to generate a shareable link",
+      "settings": {
+        "requestAcknowledgement": "Request Acknowledgement",
+        "allowComments": "Comments enabled",
+        "allowReactions": "Reactions enabled"
+      },
+      "publish": "Publish",
+      "saveDraft": "Save as draft",
+      "publishMenu": "Publish",
+      "publishTomorrow": "Tomorrow",
+      "publishNextWeek": "Next week",
+      "scheduledFor": "Scheduled for",
+      "preview": "Preview",
+      "previewDevice": {
+        "tablet": "Tablet",
+        "mobile": "Mobile"
+      },
+      "previewUntitled": "Untitled",
+      "previewJustNow": "just now",
+      "previewAcknowledge": "Acknowledge",
+      "previewCommentPrompt": "Add a comment to start a conversation...",
       "fields": {
         "title": "Title",
         "titlePlaceholder": "Enter a title",
         "description": "Description",
         "descriptionPlaceholder": "Write your message here…",
-        "engagementLevel": "Engagement level",
-        "requireAcknowledgement": "Require acknowledgement",
-        "requireSignature": "Require signature"
+        "assignTo": "Assign to",
+        "assignToPlaceholder": "Select groups or people",
+        "schedulePublish": "Schedule publish",
+        "groups": "Groups",
+        "noGroups": "No groups yet",
+        "publishNow": "Publish immediately",
+        "publishTomorrow": "Tomorrow at 9:00 am",
+        "publishNextWeek": "Next week",
+        "publishCustom": "Choose date & time"
+      },
+      "engagementLevel": "Engagement level",
+      "engagementHint": {
+        "view": "Just track who views",
+        "acknowledge": "Recipients must confirm they read it",
+        "sign": "Recipients must sign off"
       },
       "engagement": {
         "view": "View only",
         "acknowledge": "Acknowledgement required",
         "sign": "Signature required"
-      }
+      },
+      "publishedToast": "Heads up published"
     },
     "detail": {
       "backLink": "Back to Heads Up",
@@ -1811,11 +1853,19 @@
         "engagement": "Engagement",
         "comments": "Comments"
       },
+      "remindButton": "Remind",
+      "remindAllButton": "Remind all",
+      "reminderSentToast": "Reminder sent",
+      "remindAllSentToast": "{count} reminder(s) sent",
       "stats": {
         "total": "Total",
         "viewed": "Viewed",
         "acknowledged": "Acknowledged",
-        "signed": "Signed"
+        "signed": "Signed",
+        "notViewed": "Not viewed",
+        "notAcknowledged": "Not acknowledged",
+        "notSigned": "Not signed",
+        "pending": "Pending"
       },
       "recipientFilter": {
         "all": "All",
@@ -1829,7 +1879,23 @@
         "email": "Email",
         "viewed": "Viewed",
         "acknowledged": "Acknowledged",
-        "signed": "Signed"
+        "signed": "Signed",
+        "actions": "Actions",
+        "lastReminder": "Last reminder"
+      },
+      "shareLink": {
+        "section": "Share externally",
+        "hint": "Anyone with this link can view",
+        "createButton": "Create link",
+        "copyButton": "Copy link",
+        "disableButton": "Disable link",
+        "copied": "Link copied!",
+        "created": "Share link created"
+      },
+      "reactions": {
+        "celebrate": "🎉",
+        "clap": "👏",
+        "smile": "😄"
       }
     }
   },
@@ -1838,6 +1904,7 @@
       "title": "Assets",
       "subtitle": "Your asset register.",
       "newButton": "New asset",
+      "categoriesButton": "Manage categories",
       "empty": "No assets found.",
       "emptyCta": "Create the first asset",
       "filterType": "Type",
@@ -1856,13 +1923,77 @@
       "backLink": "Back to Assets",
       "createdToast": "Asset created",
       "submitButton": "Create asset",
+      "uploadingPhoto": "Uploading…",
+      "photoSection": "Asset photo",
+      "photoHint": "JPEG, PNG or WebP · max 2 MB",
+      "photoChange": "Change photo",
+      "photoUploadError": "Photo upload failed",
+      "moreOptions": "More options",
+      "newCategoryLink": "New category",
       "fields": {
         "name": "Name",
         "namePlaceholder": "e.g. Forklift #3",
         "type": "Asset type",
         "noType": "No type",
         "parent": "Parent asset",
-        "noParent": "No parent"
+        "noParent": "No parent",
+        "site": "Site",
+        "noSite": "No site",
+        "customFieldsHeading": "Category fields"
+      }
+    },
+    "categories": {
+      "title": "Asset categories",
+      "subtitle": "Define categories and their custom fields. Each asset can be tagged with a category.",
+      "backLink": "Back to Assets",
+      "newButton": "New category",
+      "empty": "No categories yet.",
+      "emptySubtitle": "Create your first category to start organising assets by type.",
+      "searchPlaceholder": "Search categories…",
+      "columns": {
+        "name": "Name",
+        "description": "Description",
+        "fields": "Fields",
+        "assets": "Assets"
+      },
+      "create": {
+        "title": "New category",
+        "namePlaceholder": "e.g. Vehicle",
+        "descriptionPlaceholder": "Optional description",
+        "submitButton": "Create category",
+        "createdToast": "Category created"
+      },
+      "edit": {
+        "title": "Edit category",
+        "namePlaceholder": "e.g. Vehicle",
+        "descriptionPlaceholder": "Optional description",
+        "submitButton": "Save changes",
+        "savedToast": "Category saved"
+      },
+      "archive": {
+        "button": "Archive",
+        "confirm": "Archive this category? Assets using it will keep their data but no new assets can be assigned this category.",
+        "toast": "Category archived",
+        "errorHasAssets": "Cannot archive: {count} active asset(s) use this category."
+      },
+      "fields": {
+        "sectionTitle": "Custom fields",
+        "sectionSubtitle": "Fields appear on every asset in this category.",
+        "addButton": "Add field",
+        "empty": "No custom fields yet.",
+        "nameLabel": "Field name",
+        "namePlaceholder": "e.g. Serial number",
+        "typeLabel": "Type",
+        "requiredLabel": "Required",
+        "optionsLabel": "Options (one per line)",
+        "optionsPlaceholder": "Option A\nOption B\nOption C",
+        "removeButton": "Remove",
+        "types": {
+          "text": "Text",
+          "number": "Number",
+          "date": "Date",
+          "select": "Select (dropdown)"
+        }
       }
     },
     "detail": {
@@ -1911,6 +2042,7 @@
     "customFieldsCount": "Custom fields",
     "empty": "No asset types defined yet.",
     "createdToast": "Asset type created",
+    "updatedToast": "Category saved",
     "archivedToast": "Asset type archived",
     "archiveConfirm": "Archive this asset type? It cannot be used for new assets."
   },
