@@ -59,7 +59,9 @@
     "settingsLink": "Settings",
     "signOut": "Sign out",
     "copy": "Copy",
-    "copied": "Copied"
+    "copied": "Copied",
+    "enabled": "已启用",
+    "disabled": "已禁用"
   },
   "auth": {
     "signIn": {
