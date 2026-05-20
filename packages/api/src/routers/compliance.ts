@@ -50,7 +50,10 @@ const createFrameworkInput = z.object({
   description: z.string().max(50_000).default(''),
   type: z.enum(frameworkTypes).default('custom'),
   ownerUserId: z.string().length(26).optional(),
+  /** Empty array = company-wide; non-empty = applies to these sites only. */
   applicableSites: z.array(z.string().length(26)).default([]),
+  /** Free-text country / region / jurisdiction (e.g. "European Union"). Null = global. */
+  jurisdiction: z.string().max(200).optional(),
   targetScore: z.number().min(0).max(100).optional(),
   /** When provided, auto-seed rules from the pre-built catalogue entry. */
   catalogueId: z.string().optional(),
@@ -63,6 +66,7 @@ const updateFrameworkInput = z.object({
   type: z.enum(frameworkTypes).optional(),
   ownerUserId: z.string().length(26).nullable().optional(),
   applicableSites: z.array(z.string().length(26)).optional(),
+  jurisdiction: z.string().max(200).nullable().optional(),
   targetScore: z.number().min(0).max(100).nullable().optional(),
 });
 
@@ -221,6 +225,7 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
               type: input.type,
               ownerUserId: input.ownerUserId ?? null,
               applicableSites: input.applicableSites,
+              jurisdiction: input.jurisdiction ?? null,
               targetScore: input.targetScore !== undefined ? String(input.targetScore) : null,
               createdByUserId: ctx.auth.userId,
               createdAt: now,
@@ -267,6 +272,7 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
           if (input.type !== undefined) updates.type = input.type;
           if (input.ownerUserId !== undefined) updates.ownerUserId = input.ownerUserId;
           if (input.applicableSites !== undefined) updates.applicableSites = input.applicableSites;
+          if (input.jurisdiction !== undefined) updates.jurisdiction = input.jurisdiction;
           if (input.targetScore !== undefined)
             updates.targetScore = input.targetScore !== null ? String(input.targetScore) : null;
           await ctx.db

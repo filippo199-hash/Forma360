@@ -21,7 +21,7 @@
  *
  * See ADR 0002 (tenant scope + RESTRICT FKs).
  */
-import { date, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { date, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 import { tenants } from './tenants';
 
@@ -92,8 +92,14 @@ export const complianceFrameworks = pgTable(
     /** One of the FrameworkType literals. */
     type: text('type').notNull().default('custom'),
     ownerUserId: text('owner_user_id').references(() => user.id),
-    /** Array of site ids this framework applies to. Empty means all sites. */
+    /** Array of site ids this framework applies to. Empty means all sites (company-wide). */
     applicableSites: jsonb('applicable_sites').notNull().default([]),
+    /**
+     * Optional free-text jurisdiction / country / region this framework satisfies.
+     * Examples: "European Union", "United Kingdom", "California", "Australia".
+     * Null / empty string means the framework is global / not jurisdiction-specific.
+     */
+    jurisdiction: varchar('jurisdiction', { length: 200 }),
     targetScore: numeric('target_score'),
     createdByUserId: text('created_by_user_id')
       .notNull()

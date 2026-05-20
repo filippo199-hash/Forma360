@@ -127,11 +127,32 @@ export default function FrameworkDetailPage() {
         {fw.description.length > 0 ? (
           <p className="mt-1 text-sm text-muted-foreground">{fw.description}</p>
         ) : null}
-        {fw.targetScore !== null ? (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t('targetScore')}: {fw.targetScore}%
-          </p>
-        ) : null}
+
+        {/* Scope + jurisdiction metadata row */}
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          {/* Scope */}
+          {Array.isArray(fw.applicableSites) && (fw.applicableSites as string[]).length > 0 ? (
+            <span className="inline-flex items-center rounded-full border bg-background px-2.5 py-0.5 text-xs text-muted-foreground">
+              {t('scopeSites', { count: (fw.applicableSites as string[]).length })}
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full border bg-background px-2.5 py-0.5 text-xs text-muted-foreground">
+              {t('scopeCompanyWide')}
+            </span>
+          )}
+          {/* Jurisdiction */}
+          {fw.jurisdiction !== null && fw.jurisdiction.length > 0 ? (
+            <span className="inline-flex items-center rounded-full border bg-background px-2.5 py-0.5 text-xs text-muted-foreground">
+              {t('jurisdictionLabel')}: {fw.jurisdiction}
+            </span>
+          ) : null}
+          {/* Target score */}
+          {fw.targetScore !== null ? (
+            <span className="inline-flex items-center rounded-full border bg-background px-2.5 py-0.5 text-xs text-muted-foreground">
+              {t('targetScore')}: {fw.targetScore}%
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {/* Rules table */}

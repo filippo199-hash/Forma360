@@ -39,6 +39,16 @@ export default function NewFrameworkPage() {
   const [description, setDescription] = useState('');
   const [rulesOpen, setRulesOpen] = useState(false);
 
+  // Scope state
+  const [scopeMode, setScopeMode] = useState<'company' | 'sites'>('company');
+  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
+  const [jurisdiction, setJurisdiction] = useState('');
+
+  const { data: sitesData } = trpc.sites.list.useQuery(undefined, {
+    enabled: step.id === 'confirm',
+  });
+  const sites = sitesData ?? [];
+
   // Fetch catalogue entries for the selected type (only when on step 'standard').
   const selectedType = step.id !== 'type' ? step.type : null;
   const { data: catalogueEntries } = trpc.compliance.catalogue.list.useQuery(
@@ -101,7 +111,15 @@ export default function NewFrameworkPage() {
       description: description.trim(),
       type: step.id !== 'type' ? step.type : 'custom',
       catalogueId: step.id === 'confirm' && step.catalogueId !== null ? step.catalogueId : undefined,
+      applicableSites: scopeMode === 'sites' ? selectedSiteIds : [],
+      jurisdiction: jurisdiction.trim().length > 0 ? jurisdiction.trim() : undefined,
     });
+  }
+
+  function toggleSite(siteId: string) {
+    setSelectedSiteIds((prev) =>
+      prev.includes(siteId) ? prev.filter((id) => id !== siteId) : [...prev, siteId],
+    );
   }
 
   return (
@@ -307,6 +325,91 @@ export default function NewFrameworkPage() {
                   maxLength={50_000}
                   className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
+              </div>
+
+              {/* ── Scope ─────────────────────────────────────────────────────── */}
+              <div className="rounded-xl border bg-background p-5 space-y-4">
+                <div>
+                  <p className="text-sm font-medium">{t('scopeLabel')}</p>
+                </div>
+
+                {/* Company-wide vs Specific sites toggle */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setScopeMode('company')}
+                    className={cn(
+                      'rounded-lg border-2 p-3 text-left text-sm transition-colors',
+                      scopeMode === 'company'
+                        ? 'border-primary bg-primary/5 font-medium'
+                        : 'border-border hover:border-muted-foreground',
+                    )}
+                  >
+                    <span className="block font-medium">{t('scopeCompanyWide')}</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {t('scopeCompanyWideHint')}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScopeMode('sites')}
+                    className={cn(
+                      'rounded-lg border-2 p-3 text-left text-sm transition-colors',
+                      scopeMode === 'sites'
+                        ? 'border-primary bg-primary/5 font-medium'
+                        : 'border-border hover:border-muted-foreground',
+                    )}
+                  >
+                    <span className="block font-medium">{t('scopeSpecificSites')}</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {t('scopeSpecificSitesHint')}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Site multi-select (shown only when 'sites' selected) */}
+                {scopeMode === 'sites' ? (
+                  <div className="space-y-2">
+                    {sites.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">{t('scopeSitesPlaceholder')}</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {sites.map((site) => (
+                          <button
+                            key={site.id}
+                            type="button"
+                            onClick={() => toggleSite(site.id)}
+                            className={cn(
+                              'rounded-full border px-3 py-1 text-xs transition-colors',
+                              selectedSiteIds.includes(site.id)
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border bg-background hover:border-primary',
+                            )}
+                          >
+                            {site.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
+                {/* Jurisdiction */}
+                <div className="space-y-1.5 border-t pt-4">
+                  <label htmlFor="fw-jurisdiction" className="text-sm font-medium">
+                    {t('jurisdictionLabel')}
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      {t('jurisdictionHint')}
+                    </span>
+                  </label>
+                  <Input
+                    id="fw-jurisdiction"
+                    value={jurisdiction}
+                    onChange={(e) => setJurisdiction(e.target.value)}
+                    placeholder={t('jurisdictionPlaceholder')}
+                    maxLength={200}
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 border-t pt-4">

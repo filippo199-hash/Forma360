@@ -141,6 +141,13 @@
       "when": 1748200000000,
       "tag": "0019_schedule_enhancements",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1748300000000,
+      "tag": "0020_compliance_scope",
+      "breakpoints": true
     }
   ]
 }
