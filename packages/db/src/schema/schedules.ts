@@ -106,6 +106,9 @@ export const templateSchedules = pgTable(
     /** Auto-flipped true when the template is archived. */
     paused: boolean('paused').notNull().default(false),
 
+    /** When true, assignees may submit after the occurrence window closes. */
+    allowLateSubmissions: boolean('allow_late_submissions').notNull().default(true),
+
     /** Idempotency cursor used by the tick worker. */
     lastMaterialisedAt: timestamp('last_materialised_at', {
       withTimezone: true,

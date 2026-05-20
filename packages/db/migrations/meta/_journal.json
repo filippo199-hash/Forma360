@@ -134,6 +134,13 @@
       "when": 1748100000000,
       "tag": "0018_documents_v2",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1748200000000,
+      "tag": "0019_schedule_enhancements",
+      "breakpoints": true
     }
   ]
 }

@@ -22,7 +22,7 @@
  * Also registers a `schedules` dependents resolver used by the
  * template-archive cascade preview.
  */
-import { scheduledInspectionOccurrences, templateSchedules, templates } from '@forma360/db/schema';
+import { inspections, scheduledInspectionOccurrences, templateSchedules, templates } from '@forma360/db/schema';
 import {
   registerDependentResolver,
   type DependentResolver,
@@ -124,6 +124,7 @@ const baseScheduleInput = z.object({
     .max(60 * 24 * 30)
     .nullable()
     .default(null),
+  allowLateSubmissions: z.boolean().default(true),
 });
 
 const createInput = baseScheduleInput.extend({
@@ -276,6 +277,7 @@ export const schedulesRouter = router({
         assigneeGroupIds: input.assigneeGroupIds,
         siteIds: input.siteIds,
         reminderMinutesBefore: input.reminderMinutesBefore,
+        allowLateSubmissions: input.allowLateSubmissions,
         paused: false,
         createdBy: ctx.auth.userId,
       });
@@ -315,6 +317,7 @@ export const schedulesRouter = router({
           assigneeGroupIds: input.assigneeGroupIds,
           siteIds: input.siteIds,
           reminderMinutesBefore: input.reminderMinutesBefore,
+          allowLateSubmissions: input.allowLateSubmissions,
           // Invalidate the materialise cursor so the next tick refreshes
           // occurrences against the new rule.
           lastMaterialisedAt: null,
@@ -397,6 +400,43 @@ export const schedulesRouter = router({
         scheduleId: input.scheduleId,
       });
       return { ok: true as const };
+    }),
+
+  /**
+   * List completed occurrences for a schedule, joined with their inspection
+   * rows. Used by the schedule detail page "Past inspections" section.
+   */
+  listOccurrences: tenantProcedure
+    .use(requirePermission('templates.schedules.manage'))
+    .input(
+      z.object({
+        scheduleId: idSchema,
+        limit: z.number().int().min(1).max(100).default(50),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({
+          id: scheduledInspectionOccurrences.id,
+          occurrenceAt: scheduledInspectionOccurrences.occurrenceAt,
+          status: scheduledInspectionOccurrences.status,
+          assigneeUserId: scheduledInspectionOccurrences.assigneeUserId,
+          inspectionId: scheduledInspectionOccurrences.inspectionId,
+          inspectionTitle: inspections.title,
+          inspectionStatus: inspections.status,
+        })
+        .from(scheduledInspectionOccurrences)
+        .leftJoin(inspections, eq(inspections.id, scheduledInspectionOccurrences.inspectionId))
+        .where(
+          and(
+            eq(scheduledInspectionOccurrences.tenantId, ctx.tenantId),
+            eq(scheduledInspectionOccurrences.scheduleId, input.scheduleId),
+            eq(scheduledInspectionOccurrences.status, 'completed'),
+          ),
+        )
+        .orderBy(desc(scheduledInspectionOccurrences.occurrenceAt))
+        .limit(input.limit);
+      return rows;
     }),
 
   /**
