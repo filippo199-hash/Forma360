@@ -13,18 +13,26 @@
  *   - action:      at least one completed action (of actionTypeId if given)
  *   - issue_sla:   all resolved issues closed within slaMaxDays
  *   - training:    stub → always 'not_evaluable'
- *   - manual:      stub → 'not_evaluable'
+ *   - manual:      checks most recent attestation; falls back to 'not_evaluable'
+ *
+ * After writing the evaluation row:
+ *   - Computes nextDueAt from rule frequency + evaluatedAt
+ *   - Detects status transitions (previous → current) and sends email alerts
+ *     to responsibleUserId (rule) or ownerUserId (framework) when status
+ *     changes to 'due_soon' or 'non_compliant'
  */
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type * as schema from '@forma360/db/schema';
-import { eq, and, gte, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, gte, isNull, isNotNull, desc } from 'drizzle-orm';
 import { newId } from '@forma360/shared/id';
 import {
   complianceRules,
   complianceRuleEvidence,
   complianceEvaluations,
+  complianceFrameworks,
+  complianceAttestations,
   type ComplianceStatus,
   type EvidenceSummaryItem,
   type EvidenceConfig,
@@ -35,6 +43,14 @@ import type { ComplianceEvaluatePayload } from '../queues';
 
 type Db = NodePgDatabase<typeof schema>;
 
+type SendAlertFn = (args: {
+  to: string;
+  ruleName: string;
+  frameworkName: string;
+  status: string;
+  frameworkUrl: string;
+}) => Promise<void>;
+
 function overallStatus(items: EvidenceSummaryItem[]): ComplianceStatus {
   if (items.length === 0) return 'not_evaluable';
   if (items.some((i) => i.status === 'non_compliant')) return 'non_compliant';
@@ -42,6 +58,38 @@ function overallStatus(items: EvidenceSummaryItem[]): ComplianceStatus {
   if (items.some((i) => i.status === 'due_soon')) return 'due_soon';
   return 'not_evaluable';
 }
+
+/**
+ * Compute the next-due date from the evaluation timestamp and rule frequency.
+ * Returns null when frequency is 'once' (one-time requirement, no recurrence).
+ */
+function computeNextDueAt(evaluatedAt: Date, frequency: string, frequencyDays: number | null): Date | null {
+  const map: Record<string, number> = {
+    daily: 1,
+    weekly: 7,
+    monthly: 30,
+    quarterly: 91,
+    yearly: 365,
+  };
+  const days = frequencyDays ?? map[frequency];
+  if (days === undefined || frequency === 'once') return null;
+  const next = new Date(evaluatedAt.getTime() + days * 24 * 60 * 60 * 1000);
+  return next;
+}
+
+/** Format a Date as 'YYYY-MM-DD' (Drizzle date column format). */
+function toDateString(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/** True when the status change should trigger an email alert. */
+function shouldAlert(prev: string | null, next: ComplianceStatus): boolean {
+  if (next !== 'due_soon' && next !== 'non_compliant') return false;
+  // Avoid re-alerting on the same bad status (only alert on transition)
+  return prev !== next;
+}
+
+// ─── Evidence check functions ────────────────────────────────────────────────
 
 async function checkInspection(
   db: Db,
@@ -51,7 +99,6 @@ async function checkInspection(
   const frequencyDays = config.frequencyDays ?? 30;
   const since = new Date(Date.now() - frequencyDays * 24 * 60 * 60 * 1000);
 
-  // Import inspections table inline to avoid circular type issues
   const { inspections } = await import('@forma360/db/schema');
   const rows = await db
     .select({ id: inspections.id })
@@ -94,7 +141,6 @@ async function checkHeadsUp(
   config: Extract<EvidenceConfig, { type: 'heads_up' }>,
 ): Promise<ComplianceStatus> {
   const { headsUpRecipients } = await import('@forma360/db/schema');
-  // All recipients must have signed (if requireSignature) or acknowledged
   const allRows = await db
     .select({
       signedAt: headsUpRecipients.signedAt,
@@ -126,8 +172,6 @@ async function checkMaintenance(
 
   if (plans.length === 0) return 'not_evaluable';
 
-  // A maintenance plan is "overdue" when its time-based interval_days have
-  // elapsed since last_service_date.
   for (const plan of plans) {
     if (plan.planType !== 'time') continue;
     if (plan.lastServiceDate === null || plan.intervalDays === null) continue;
@@ -179,9 +223,39 @@ async function checkIssueSla(
   return allWithinSla ? 'compliant' : 'non_compliant';
 }
 
+/**
+ * Manual evidence: compliant when there is at least one attestation within
+ * the validityDays window; otherwise 'not_evaluable' (requires human action).
+ */
+async function checkManual(
+  db: Db,
+  tenantId: string,
+  ruleId: string,
+  config: Extract<EvidenceConfig, { type: 'manual' }>,
+): Promise<ComplianceStatus> {
+  const validityDays = config.validityDays ?? 365;
+  const since = new Date(Date.now() - validityDays * 24 * 60 * 60 * 1000);
+  const sinceDate = toDateString(since);
+
+  const rows = await db
+    .select({ id: complianceAttestations.id })
+    .from(complianceAttestations)
+    .where(
+      and(
+        eq(complianceAttestations.ruleId, ruleId),
+        eq(complianceAttestations.tenantId, tenantId),
+        gte(complianceAttestations.attestedAt, sinceDate),
+      ),
+    )
+    .limit(1);
+
+  return rows.length > 0 ? 'compliant' : 'not_evaluable';
+}
+
 async function runEvidenceCheck(
   db: Db,
   tenantId: string,
+  ruleId: string,
   evidenceReqId: string,
   evidenceType: string,
   rawConfig: unknown,
@@ -215,8 +289,7 @@ async function runEvidenceCheck(
         detail = 'training-check-not-yet-implemented';
         break;
       case 'manual':
-        status = 'not_evaluable';
-        detail = 'manual-evidence-requires-human-review';
+        status = await checkManual(db, tenantId, ruleId, config as Extract<EvidenceConfig, { type: 'manual' }>);
         break;
       default:
         status = 'not_evaluable';
@@ -243,6 +316,7 @@ export function createComplianceEvaluateHandler(
   db: Db,
   logger: Logger,
   enqueueSnapshot: (frameworkId: string, tenantId: string) => Promise<void>,
+  sendAlert?: SendAlertFn,
 ) {
   return async function handleComplianceEvaluate(
     job: Job<ComplianceEvaluatePayload>,
@@ -271,37 +345,94 @@ export function createComplianceEvaluateHandler(
       return { status: 'skipped:archived' };
     }
 
-    // 2. Load evidence requirements
+    // 2. Load the parent framework (for notifications + nextDueAt)
+    const frameworkRows = await db
+      .select()
+      .from(complianceFrameworks)
+      .where(eq(complianceFrameworks.id, rule.frameworkId))
+      .limit(1);
+    const framework = frameworkRows[0];
+
+    // 3. Fetch previous evaluation status (for transition detection)
+    const prevEvalRows = await db
+      .select({ status: complianceEvaluations.status })
+      .from(complianceEvaluations)
+      .where(
+        and(
+          eq(complianceEvaluations.ruleId, ruleId),
+          eq(complianceEvaluations.tenantId, tenantId),
+        ),
+      )
+      .orderBy(desc(complianceEvaluations.evaluatedAt))
+      .limit(1);
+    const previousStatus = prevEvalRows[0]?.status ?? null;
+
+    // 4. Load evidence requirements
     const evidenceReqs = await db
       .select()
       .from(complianceRuleEvidence)
       .where(eq(complianceRuleEvidence.ruleId, ruleId));
 
-    // 3. Run each evidence check
+    // 5. Run each evidence check
     const summaryItems: EvidenceSummaryItem[] = await Promise.all(
       evidenceReqs.map((req) =>
-        runEvidenceCheck(db, tenantId, req.id, req.evidenceType, req.config),
+        runEvidenceCheck(db, tenantId, ruleId, req.id, req.evidenceType, req.config),
       ),
     );
 
-    // 4. Compute overall status
+    // 6. Compute overall status
     const status = overallStatus(summaryItems);
 
-    // 5. Write evaluation row
+    // 7. Compute next-due date
     const now = new Date();
+    const nextDueDate = computeNextDueAt(now, rule.frequency, rule.frequencyDays);
+
+    // 8. Write evaluation row
     const evaluationId = newId();
     await db.insert(complianceEvaluations).values({
       id: evaluationId,
       ruleId,
       tenantId,
       status,
+      previousStatus,
       evidenceSummary: summaryItems,
       evaluatedAt: now,
+      nextDueAt: nextDueDate !== null ? toDateString(nextDueDate) : null,
     });
 
-    log.info({ status, evidenceCount: summaryItems.length }, '[compliance-evaluate] evaluation written');
+    log.info({ status, previousStatus, evidenceCount: summaryItems.length }, '[compliance-evaluate] evaluation written');
 
-    // 6. Enqueue snapshot for the parent framework
+    // 9. Send alert email on status transitions to 'due_soon' or 'non_compliant'
+    if (sendAlert !== undefined && shouldAlert(previousStatus, status) && framework !== undefined) {
+      // Prefer the rule's responsibleUserId, fall back to framework ownerUserId
+      const alertUserId = rule.responsibleUserId ?? framework.ownerUserId;
+      if (alertUserId !== null && alertUserId !== undefined) {
+        try {
+          const { user } = await import('@forma360/db/schema');
+          const userRows = await db
+            .select({ email: user.email })
+            .from(user)
+            .where(eq(user.id, alertUserId))
+            .limit(1);
+          const email = userRows[0]?.email;
+          if (email !== undefined) {
+            await sendAlert({
+              to: email,
+              ruleName: rule.name,
+              frameworkName: framework.name,
+              status,
+              frameworkUrl: `/compliance/frameworks/${framework.id}`,
+            });
+            log.info({ alertUserId, status }, '[compliance-evaluate] alert email sent');
+          }
+        } catch (alertErr) {
+          // Non-fatal: log but don't fail the job
+          log.warn({ err: alertErr }, '[compliance-evaluate] failed to send alert email');
+        }
+      }
+    }
+
+    // 10. Enqueue snapshot for the parent framework
     await enqueueSnapshot(rule.frameworkId, tenantId);
 
     return { status };

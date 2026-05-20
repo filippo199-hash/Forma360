@@ -1,0 +1,8 @@
+{
+  "subject": "Compliance alert: {{ruleName}}",
+  "preheader": "A compliance rule requires your attention on Forma360.",
+  "greeting": "Hi,",
+  "body": "The compliance rule \"{{ruleName}}\" in framework \"{{frameworkName}}\" has changed status to {{status}}. Please review it and take the necessary action to restore compliance.",
+  "cta": "View compliance framework",
+  "footer": "You are receiving this because you are listed as the responsible person for this compliance rule in Forma360."
+}

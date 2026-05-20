@@ -2262,6 +2262,10 @@
       }
     }
   },
+  "entitySelect": {
+    "loading": "Loading…",
+    "noResults": "No results."
+  },
   "compliance": {
     "dashboard": {
       "title": "Compliance",
@@ -2332,6 +2336,7 @@
         "scopeCompanyWide": "Company-wide",
         "scopeSites": "{count, plural, one {# site} other {# sites}}",
         "jurisdictionLabel": "Jurisdiction",
+        "ownerLabel": "Owner",
         "rulesTitle": "Rules",
         "addRuleButton": "Add rule",
         "noRules": "No rules in this framework yet. Add your first rule.",
@@ -2339,12 +2344,51 @@
         "evaluateEnqueued": "Evaluation job enqueued.",
         "evaluateRuleButton": "Evaluate now",
         "neverEvaluated": "Never evaluated",
+        "exportButton": "Export report",
+        "exportToast": "Report downloaded.",
         "table": {
           "name": "Rule",
           "clauseRef": "Clause ref.",
           "frequency": "Frequency",
           "status": "Status",
+          "nextDue": "Next due",
+          "responsible": "Responsible",
           "actions": "Actions"
+        },
+        "attestation": {
+          "buttonLabel": "Attest",
+          "dialogTitle": "Record manual attestation",
+          "dialogDescription": "Confirm that this compliance requirement was met.",
+          "attestedAtLabel": "Date of compliance",
+          "notesLabel": "Notes / justification",
+          "notesPlaceholder": "Describe how compliance was achieved…",
+          "submitButton": "Save attestation",
+          "submitting": "Saving…",
+          "successToast": "Attestation recorded.",
+          "historyTitle": "Attestation history",
+          "noHistory": "No attestations recorded yet.",
+          "byLabel": "by"
+        },
+        "remediate": {
+          "buttonLabel": "Remediate",
+          "actionTitle": "Remediate: {ruleName}",
+          "actionDescription": "Non-compliant: {frameworkName} — {clauseRef}",
+          "successToast": "Remediation action created."
+        },
+        "certification": {
+          "sectionTitle": "Certification",
+          "editButton": "Edit certification",
+          "noCertification": "No certification recorded yet.",
+          "certifyingBodyLabel": "Certifying body",
+          "certificationNumberLabel": "Certificate number",
+          "certifiedAtLabel": "Certified on",
+          "expiresAtLabel": "Expires",
+          "nextAuditAtLabel": "Next audit",
+          "notesLabel": "Notes",
+          "dialogTitle": "Certification details",
+          "saveButton": "Save",
+          "saving": "Saving…",
+          "successToast": "Certification saved."
         }
       }
     },
@@ -2377,18 +2421,33 @@
           "action": "Action completed",
           "document": "Document freshness",
           "heads_up": "Heads-up acknowledgement",
-          "maintenance": "Maintenance up to date"
+          "maintenance": "Maintenance up to date",
+          "issue_sla": "Issue SLA compliance",
+          "training": "Training completion",
+          "manual": "Manual attestation"
         },
         "evidence": {
-          "templateId": "Template ID",
-          "templateIdPlaceholder": "Paste a template ULID",
+          "templateLabel": "Inspection template",
+          "templatePlaceholder": "Select a template…",
+          "templateSearchPlaceholder": "Search templates…",
           "frequencyDays": "Check window (days)",
+          "documentLabel": "Document (optional)",
+          "documentPlaceholder": "Select a document…",
+          "documentSearchPlaceholder": "Search documents…",
           "freshnessDays": "Max age (days)",
-          "headsUpId": "Heads-up ID",
-          "headsUpIdPlaceholder": "Paste a heads-up ULID",
+          "headsUpLabel": "Heads-up",
+          "headsUpPlaceholder": "Select a heads-up…",
+          "headsUpSearchPlaceholder": "Search heads-up…",
           "requireSignature": "Require signature",
-          "assetTypeId": "Asset type ID (optional)",
-          "assetTypeIdPlaceholder": "Paste an asset type ULID"
+          "assetTypeLabel": "Asset type (optional)",
+          "assetTypePlaceholder": "Select an asset type…",
+          "assetTypeSearchPlaceholder": "Search asset types…",
+          "slaMaxDays": "Max days to resolve",
+          "issueCategoryLabel": "Issue category (optional)",
+          "issueCategoryPlaceholder": "All categories",
+          "manualDescription": "Description of what to attest",
+          "manualDescriptionPlaceholder": "e.g. Monthly fire-extinguisher check completed",
+          "manualValidityDays": "Attestation validity (days)"
         }
       }
     }

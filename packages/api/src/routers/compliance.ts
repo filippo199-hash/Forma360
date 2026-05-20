@@ -2,14 +2,17 @@
  * Compliance router — Phase 8.
  *
  * Namespaces:
- *   compliance.frameworks.list / get / create / update / archive
- *   compliance.rules.list / get / create / update / archive
+ *   compliance.frameworks.list / get / create / update / archive / exportReport
+ *   compliance.catalogue.list / get
+ *   compliance.rules.list / get / create / update / archive / evaluate
  *   compliance.evidence.list / create / delete
- *   compliance.dashboard.overview
- *   compliance.dashboard.trends
- *   compliance.rules.evaluate
+ *   compliance.attestations.list / create
+ *   compliance.certifications.get / upsert
+ *   compliance.dashboard.overview / trends
  */
 import {
+  complianceAttestations,
+  complianceCertifications,
   complianceEvaluations,
   complianceFrameworks,
   complianceRuleEvidence,
@@ -172,6 +175,29 @@ async function loadRuleOrThrow(db: Db, tenantId: string, ruleId: string) {
   return row;
 }
 
+/**
+ * Look up user names by id from the `user` table.
+ * Returns a map of userId → displayName (falls back to email).
+ */
+async function resolveUserNames(db: Db, userIds: string[]): Promise<Map<string, string>> {
+  if (userIds.length === 0) return new Map();
+  const { user } = await import('@forma360/db/schema');
+  const rows = await db
+    .select({ id: user.id, name: user.name, email: user.email })
+    .from(user)
+    .where(inArray(user.id, userIds));
+  return new Map(rows.map((r) => [r.id, r.name ?? r.email]));
+}
+
+/** CSV helper: escape a cell value. */
+function csvCell(v: string | null | undefined): string {
+  const s = v ?? '';
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
 // ─── Router factory ───────────────────────────────────────────────────────────
 
 export function createComplianceRouter(deps: ComplianceRouterDeps) {
@@ -199,7 +225,14 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
         .use(requirePermission('compliance.view'))
         .input(frameworkIdInput)
         .query(async ({ ctx, input }) => {
-          return loadFrameworkOrThrow(ctx.db, ctx.tenantId, input.frameworkId);
+          const fw = await loadFrameworkOrThrow(ctx.db, ctx.tenantId, input.frameworkId);
+          // Resolve owner name if set
+          let ownerName: string | null = null;
+          if (fw.ownerUserId !== null) {
+            const names = await resolveUserNames(ctx.db, [fw.ownerUserId]);
+            ownerName = names.get(fw.ownerUserId) ?? null;
+          }
+          return { ...fw, ownerName };
         }),
 
       create: tenantProcedure
@@ -294,6 +327,117 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
             .where(eq(complianceFrameworks.id, fw.id));
           return { ok: true as const };
         }),
+
+      /**
+       * Export an audit-ready CSV covering all rules in the framework:
+       * clause ref, rule name, frequency, status, last evaluated, next due,
+       * responsible user, evidence types.
+       */
+      exportReport: tenantProcedure
+        .use(requirePermission('compliance.view'))
+        .input(frameworkIdInput)
+        .query(async ({ ctx, input }) => {
+          const fw = await loadFrameworkOrThrow(ctx.db, ctx.tenantId, input.frameworkId);
+
+          const rules = await ctx.db
+            .select()
+            .from(complianceRules)
+            .where(
+              and(
+                eq(complianceRules.tenantId, ctx.tenantId),
+                eq(complianceRules.frameworkId, input.frameworkId),
+                isNull(complianceRules.archivedAt),
+              ),
+            )
+            .orderBy(asc(complianceRules.clauseRef), asc(complianceRules.name));
+
+          // Latest eval per rule
+          const ruleIds = rules.map((r) => r.id);
+          const latestEvals =
+            ruleIds.length > 0
+              ? await ctx.db
+                  .select({
+                    ruleId: complianceEvaluations.ruleId,
+                    status: complianceEvaluations.status,
+                    evaluatedAt: complianceEvaluations.evaluatedAt,
+                    nextDueAt: complianceEvaluations.nextDueAt,
+                  })
+                  .from(complianceEvaluations)
+                  .where(
+                    and(
+                      eq(complianceEvaluations.tenantId, ctx.tenantId),
+                      inArray(complianceEvaluations.ruleId, ruleIds),
+                    ),
+                  )
+                  .orderBy(desc(complianceEvaluations.evaluatedAt))
+              : [];
+
+          const latestByRule = new Map<string, { status: string; evaluatedAt: Date | null; nextDueAt: string | null }>();
+          for (const ev of latestEvals) {
+            if (!latestByRule.has(ev.ruleId)) {
+              latestByRule.set(ev.ruleId, {
+                status: ev.status,
+                evaluatedAt: ev.evaluatedAt,
+                nextDueAt: ev.nextDueAt,
+              });
+            }
+          }
+
+          // Evidence reqs per rule
+          const evidenceReqs =
+            ruleIds.length > 0
+              ? await ctx.db
+                  .select({
+                    ruleId: complianceRuleEvidence.ruleId,
+                    evidenceType: complianceRuleEvidence.evidenceType,
+                  })
+                  .from(complianceRuleEvidence)
+                  .where(inArray(complianceRuleEvidence.ruleId, ruleIds))
+              : [];
+
+          const evidenceByRule = new Map<string, string[]>();
+          for (const e of evidenceReqs) {
+            const existing = evidenceByRule.get(e.ruleId) ?? [];
+            existing.push(e.evidenceType);
+            evidenceByRule.set(e.ruleId, existing);
+          }
+
+          // Responsible user names
+          const userIds = [...new Set(rules.map((r) => r.responsibleUserId).filter((id): id is string => id !== null))];
+          const userNames = await resolveUserNames(ctx.db, userIds);
+
+          // Build CSV
+          const header = [
+            'Clause Ref',
+            'Rule Name',
+            'Description',
+            'Frequency',
+            'Status',
+            'Last Evaluated',
+            'Next Due',
+            'Responsible',
+            'Evidence Types',
+          ].map(csvCell).join(',');
+
+          const rows = rules.map((rule) => {
+            const eval_ = latestByRule.get(rule.id);
+            return [
+              csvCell(rule.clauseRef),
+              csvCell(rule.name),
+              csvCell(rule.description),
+              csvCell(rule.frequency),
+              csvCell(eval_?.status ?? 'not_evaluated'),
+              csvCell(eval_?.evaluatedAt?.toISOString().slice(0, 10) ?? ''),
+              csvCell(eval_?.nextDueAt ?? ''),
+              csvCell(rule.responsibleUserId !== null ? (userNames.get(rule.responsibleUserId) ?? '') : ''),
+              csvCell((evidenceByRule.get(rule.id) ?? []).join('; ')),
+            ].join(',');
+          });
+
+          const csv = [`# ${fw.name} — Compliance Report`, `# Generated: ${new Date().toISOString().slice(0, 10)}`, '', header, ...rows].join('\n');
+
+          return { csv, filename: `${fw.name.replace(/[^a-zA-Z0-9]/g, '_')}_compliance_report_${new Date().toISOString().slice(0, 10)}.csv` };
+        }),
     }),
 
     // ── catalogue (static, no DB) ────────────────────────────────────────────
@@ -371,6 +515,7 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
               ruleId: complianceEvaluations.ruleId,
               status: complianceEvaluations.status,
               evaluatedAt: complianceEvaluations.evaluatedAt,
+              nextDueAt: complianceEvaluations.nextDueAt,
             })
             .from(complianceEvaluations)
             .where(
@@ -382,17 +527,27 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
             .orderBy(desc(complianceEvaluations.evaluatedAt));
 
           // Keep only the latest eval per rule
-          const latestByRule = new Map<string, { status: string; evaluatedAt: Date | null }>();
+          const latestByRule = new Map<string, { status: string; evaluatedAt: Date | null; nextDueAt: string | null }>();
           for (const ev of latestEvals) {
             if (!latestByRule.has(ev.ruleId)) {
-              latestByRule.set(ev.ruleId, { status: ev.status, evaluatedAt: ev.evaluatedAt });
+              latestByRule.set(ev.ruleId, {
+                status: ev.status,
+                evaluatedAt: ev.evaluatedAt,
+                nextDueAt: ev.nextDueAt,
+              });
             }
           }
+
+          // Resolve responsible user names
+          const userIds = [...new Set(rules.map((r) => r.responsibleUserId).filter((id): id is string => id !== null))];
+          const userNames = await resolveUserNames(ctx.db, userIds);
 
           return rules.map((r) => ({
             ...r,
             latestEvalStatus: latestByRule.get(r.id)?.status ?? null,
             latestEvaluatedAt: latestByRule.get(r.id)?.evaluatedAt?.toISOString() ?? null,
+            nextDueAt: latestByRule.get(r.id)?.nextDueAt ?? null,
+            responsibleUserName: r.responsibleUserId !== null ? (userNames.get(r.responsibleUserId) ?? null) : null,
           }));
         }),
 
@@ -419,7 +574,13 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
               .orderBy(desc(complianceEvaluations.evaluatedAt))
               .limit(10),
           ]);
-          return { rule, evidenceReqs, latestEvals };
+          // Resolve responsible user name
+          let responsibleUserName: string | null = null;
+          if (rule.responsibleUserId !== null) {
+            const names = await resolveUserNames(ctx.db, [rule.responsibleUserId]);
+            responsibleUserName = names.get(rule.responsibleUserId) ?? null;
+          }
+          return { rule: { ...rule, responsibleUserName }, evidenceReqs, latestEvals };
         }),
 
       create: tenantProcedure
@@ -548,6 +709,146 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
             .delete(complianceRuleEvidence)
             .where(eq(complianceRuleEvidence.id, input.evidenceId));
           return { ok: true as const };
+        }),
+    }),
+
+    // ── attestations ─────────────────────────────────────────────────────────
+    attestations: router({
+      /** List attestations for a rule, newest first. */
+      list: tenantProcedure
+        .use(requirePermission('compliance.evidence.view'))
+        .input(ruleIdInput)
+        .query(async ({ ctx, input }) => {
+          await loadRuleOrThrow(ctx.db, ctx.tenantId, input.ruleId);
+          const rows = await ctx.db
+            .select()
+            .from(complianceAttestations)
+            .where(
+              and(
+                eq(complianceAttestations.ruleId, input.ruleId),
+                eq(complianceAttestations.tenantId, ctx.tenantId),
+              ),
+            )
+            .orderBy(desc(complianceAttestations.attestedAt))
+            .limit(20);
+
+          // Resolve attester names
+          const attesterIds = [...new Set(rows.map((r) => r.attestedBy))];
+          const userNames = await resolveUserNames(ctx.db, attesterIds);
+          return rows.map((r) => ({
+            ...r,
+            attesterName: userNames.get(r.attestedBy) ?? r.attestedBy,
+          }));
+        }),
+
+      /** Record a new manual attestation for a rule. */
+      create: tenantProcedure
+        .use(requirePermission('compliance.manage'))
+        .input(
+          z.object({
+            ruleId: z.string().length(26),
+            attestedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+            notes: z.string().max(5_000).default(''),
+          }),
+        )
+        .mutation(async ({ ctx, input }) => {
+          await loadRuleOrThrow(ctx.db, ctx.tenantId, input.ruleId);
+          const id = newId();
+          await ctx.db.insert(complianceAttestations).values({
+            id,
+            ruleId: input.ruleId,
+            tenantId: ctx.tenantId,
+            attestedBy: ctx.auth.userId,
+            attestedAt: input.attestedAt,
+            notes: input.notes,
+            createdAt: new Date(),
+          });
+          return { attestationId: id };
+        }),
+    }),
+
+    // ── certifications ───────────────────────────────────────────────────────
+    certifications: router({
+      /** Get the certification record for a framework (null if none yet). */
+      get: tenantProcedure
+        .use(requirePermission('compliance.view'))
+        .input(frameworkIdInput)
+        .query(async ({ ctx, input }) => {
+          await loadFrameworkOrThrow(ctx.db, ctx.tenantId, input.frameworkId);
+          const rows = await ctx.db
+            .select()
+            .from(complianceCertifications)
+            .where(
+              and(
+                eq(complianceCertifications.frameworkId, input.frameworkId),
+                eq(complianceCertifications.tenantId, ctx.tenantId),
+              ),
+            )
+            .limit(1);
+          return rows[0] ?? null;
+        }),
+
+      /** Create or update the certification record for a framework (upsert by frameworkId). */
+      upsert: tenantProcedure
+        .use(requirePermission('compliance.frameworks.manage'))
+        .input(
+          z.object({
+            frameworkId: z.string().length(26),
+            certifyingBody: z.string().max(500).default(''),
+            certificationNumber: z.string().max(200).default(''),
+            certifiedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+            expiresAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+            nextAuditAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+            notes: z.string().max(10_000).default(''),
+          }),
+        )
+        .mutation(async ({ ctx, input }) => {
+          await loadFrameworkOrThrow(ctx.db, ctx.tenantId, input.frameworkId);
+
+          // Check if a record already exists
+          const existing = await ctx.db
+            .select({ id: complianceCertifications.id })
+            .from(complianceCertifications)
+            .where(
+              and(
+                eq(complianceCertifications.frameworkId, input.frameworkId),
+                eq(complianceCertifications.tenantId, ctx.tenantId),
+              ),
+            )
+            .limit(1);
+
+          const now = new Date();
+          if (existing.length > 0 && existing[0] !== undefined) {
+            await ctx.db
+              .update(complianceCertifications)
+              .set({
+                certifyingBody: input.certifyingBody,
+                certificationNumber: input.certificationNumber,
+                certifiedAt: input.certifiedAt ?? null,
+                expiresAt: input.expiresAt ?? null,
+                nextAuditAt: input.nextAuditAt ?? null,
+                notes: input.notes,
+                updatedAt: now,
+              })
+              .where(eq(complianceCertifications.id, existing[0].id));
+            return { certificationId: existing[0].id };
+          }
+
+          const id = newId();
+          await ctx.db.insert(complianceCertifications).values({
+            id,
+            frameworkId: input.frameworkId,
+            tenantId: ctx.tenantId,
+            certifyingBody: input.certifyingBody,
+            certificationNumber: input.certificationNumber,
+            certifiedAt: input.certifiedAt ?? null,
+            expiresAt: input.expiresAt ?? null,
+            nextAuditAt: input.nextAuditAt ?? null,
+            notes: input.notes,
+            createdAt: now,
+            updatedAt: now,
+          });
+          return { certificationId: id };
         }),
     }),
 

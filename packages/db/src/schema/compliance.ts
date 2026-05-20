@@ -187,11 +187,21 @@ export const complianceEvaluations = pgTable(
       .references(() => tenants.id),
     /** Overall ComplianceStatus for this evaluation. */
     status: text('status').notNull(),
+    /**
+     * Status from the previous evaluation row — used by the notification worker
+     * to detect transitions (e.g. compliant → non_compliant) without an extra query.
+     */
+    previousStatus: text('previous_status'),
     /** Array of EvidenceSummaryItem objects. */
     evidenceSummary: jsonb('evidence_summary').notNull().default([]),
     periodStart: timestamp('period_start', { withTimezone: true }),
     periodEnd: timestamp('period_end', { withTimezone: true }),
     evaluatedAt: timestamp('evaluated_at', { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * Pre-computed next-due date derived from the rule frequency + evaluatedAt.
+     * Stored so the UI can display it without re-computing.
+     */
+    nextDueAt: date('next_due_at'),
   },
   (t) => [
     index('compliance_evaluations_rule_idx').on(t.ruleId, t.evaluatedAt),
@@ -226,3 +236,72 @@ export const complianceSnapshots = pgTable(
 );
 
 export type ComplianceSnapshot = typeof complianceSnapshots.$inferSelect;
+
+// ─── Attestations ─────────────────────────────────────────────────────────────
+
+/**
+ * A manual attestation: a human confirms that a compliance requirement was met.
+ * Used when evidence type is 'manual' (human review required) or as a supplement
+ * to other evidence types.
+ */
+export const complianceAttestations = pgTable(
+  'compliance_attestations',
+  {
+    id: text('id').primaryKey(),
+    ruleId: text('rule_id')
+      .notNull()
+      .references(() => complianceRules.id, { onDelete: 'cascade' }),
+    tenantId: text('tenant_id')
+      .notNull()
+      .references(() => tenants.id),
+    /** The user who made the attestation. */
+    attestedBy: text('attested_by')
+      .notNull()
+      .references(() => user.id),
+    /** The date the compliance was confirmed (not necessarily today). */
+    attestedAt: date('attested_at').notNull(),
+    /** Free-text notes / justification. */
+    notes: text('notes').notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('compliance_attestations_rule_idx').on(t.ruleId),
+    index('compliance_attestations_tenant_idx').on(t.tenantId),
+  ],
+);
+
+export type ComplianceAttestation = typeof complianceAttestations.$inferSelect;
+
+// ─── Certifications ───────────────────────────────────────────────────────────
+
+/**
+ * Records a formal third-party certification for a compliance framework
+ * (e.g. ISO 45001 certificate issued by BSI, expiring 2027-03-01).
+ * One row per framework (upsert semantics).
+ */
+export const complianceCertifications = pgTable(
+  'compliance_certifications',
+  {
+    id: text('id').primaryKey(),
+    frameworkId: text('framework_id')
+      .notNull()
+      .references(() => complianceFrameworks.id, { onDelete: 'cascade' }),
+    tenantId: text('tenant_id')
+      .notNull()
+      .references(() => tenants.id),
+    certifyingBody: text('certifying_body').notNull().default(''),
+    certificationNumber: text('certification_number').notNull().default(''),
+    certifiedAt: date('certified_at'),
+    expiresAt: date('expires_at'),
+    nextAuditAt: date('next_audit_at'),
+    notes: text('notes').notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('compliance_certifications_framework_idx').on(t.frameworkId),
+    index('compliance_certifications_tenant_idx').on(t.tenantId),
+  ],
+);
+
+export type ComplianceCertification = typeof complianceCertifications.$inferSelect;
