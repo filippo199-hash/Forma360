@@ -6,7 +6,6 @@ import {
   Calendar,
   CheckSquare,
   ClipboardCheck,
-  FileText,
   FolderOpen,
   ListChecks,
   Settings,
@@ -25,7 +24,6 @@ interface SiteSidebarProps {
 
 interface NavItem {
   key:
-    | 'templates'
     | 'inspections'
     | 'approvals'
     | 'schedules'
@@ -56,7 +54,6 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
   const pathname = usePathname();
 
   const primary: NavItem[] = [
-    { key: 'templates', href: `/${locale}/templates`, icon: FileText },
     { key: 'inspections', href: `/${locale}/inspections`, icon: ClipboardCheck },
     { key: 'approvals', href: `/${locale}/approvals`, icon: CheckSquare },
     { key: 'schedules', href: `/${locale}/schedules`, icon: Calendar },
