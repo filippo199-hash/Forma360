@@ -30,9 +30,10 @@ import { approvalsRouter } from './routers/approvals';
 import { assetTypesRouter } from './routers/assetTypes';
 import { assetsRouter } from './routers/assets';
 import { documentFoldersRouter } from './routers/documentFolders';
+import { documentLabelsRouter } from './routers/documentLabels';
 import { documentsRouter } from './routers/documents';
 import { createExportsRouter, type ExportsRouterDeps } from './routers/exports';
-import { headsUpsRouter } from './routers/headsUps';
+import { createHeadsUpsRouter, type HeadsUpsRouterDeps } from './routers/headsUps';
 import { createInspectionsRouter, type InspectionsRouterDeps } from './routers/inspections';
 import {
   createInspectionsExportRouter,
@@ -60,6 +61,7 @@ export function buildAppRouter(deps: {
   inspections: InspectionsRouterDeps;
   issues: IssuesRouterDeps;
   compliance: ComplianceRouterDeps;
+  headsUps: HeadsUpsRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -83,11 +85,12 @@ export function buildAppRouter(deps: {
     schedules: schedulesRouter,
     exports: createExportsRouter(deps.exports),
     issues: createIssuesRouter(deps.issues),
-    headsUps: headsUpsRouter,
+    headsUps: createHeadsUpsRouter(deps.headsUps),
     assetTypes: assetTypesRouter,
     assets: assetsRouter,
     maintenancePlans: maintenancePlansRouter,
     documentFolders: documentFoldersRouter,
+    documentLabels: documentLabelsRouter,
     documents: documentsRouter,
     compliance: createComplianceRouter(deps.compliance),
   });
@@ -203,6 +206,21 @@ export const stubComplianceDeps: ComplianceRouterDeps = {
   },
 };
 
+/**
+ * Default headsUps-router deps. Shares the `__authStubMailbox` so tests
+ * that trigger reminder emails have one place to read what would have been sent.
+ */
+export const stubHeadsUpsDeps: HeadsUpsRouterDeps = {
+  sendEmail: async (mail): Promise<DeliveryResult> => {
+    __authStubMailbox.push({
+      to: mail.to,
+      templateKey: mail.templateKey,
+      variables: mail.variables,
+    });
+    return { delivery: 'console' };
+  },
+};
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
@@ -210,6 +228,7 @@ export const appRouter = buildAppRouter({
   inspections: stubInspectionsDeps,
   issues: stubIssuesDeps,
   compliance: stubComplianceDeps,
+  headsUps: stubHeadsUpsDeps,
 });
 
 export type AppRouter = typeof appRouter;

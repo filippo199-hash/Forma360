@@ -1,5 +1,5 @@
 /**
- * Heads Up router — Phase 5A.
+ * Heads Up router — Phase 5A + redesign (PR after Phase 8).
  *
  * Broadcast messages with engagement tracking. Features:
  *   - CRUD: create (draft), update, publish (immediately or scheduled),
@@ -10,27 +10,40 @@
  *     must acknowledge before signing.
  *   - Engagement dashboard: summary counts + recipient list.
  *   - Comments: create / list.
+ *   - Attachments: add / remove (media files stored in R2).
+ *   - Share link: createShareLink / disableShareLink (external public URL).
+ *   - Reactions: add / remove / list emoji reactions.
  *   - Edit after publish: H-E03: editing body content after publishing
  *     invalidates all existing signatures.
+ *   - sendReminder: send reminder emails to pending recipients.
  */
 import {
   headsUpAttachments,
   headsUpComments,
+  headsUpReactions,
   headsUpRecipients,
   headsUps,
   type HeadsUp,
 } from '@forma360/db/schema';
 import { user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
+import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
+export type HeadsUpsRouterDeps = {
+  sendEmail: SendTemplatedEmail;
+};
+
 const headsUpIdInput = z.object({ headsUpId: z.string().length(26) });
 
 const LIST_LIMIT = 100;
+
+const ALLOWED_EMOJIS = ['celebrate', 'clap', 'smile'] as const;
+type AllowedEmoji = (typeof ALLOWED_EMOJIS)[number];
 
 async function loadHeadsUpOrThrow(
   db: Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'],
@@ -49,14 +62,36 @@ async function loadHeadsUpOrThrow(
   return row;
 }
 
+/** Pending attachment shape — uploaded to R2 before the heads-up is saved. */
+const attachmentInput = z.object({
+  storageKey: z.string().min(1).max(1000),
+  filename: z.string().min(1).max(500),
+  mimeType: z.string().min(1).max(200),
+  sizeBytes: z.number().int().min(0),
+});
+
+const recipientSpecSchema = z
+  .object({
+    groupIds: z.array(z.string()),
+    siteIds: z.array(z.string()),
+    userIds: z.array(z.string()),
+  })
+  .optional();
+
 const createInput = z.object({
   title: z.string().min(1).max(500),
   description: z.string().max(50_000).default(''),
   engagementLevel: z.enum(['view', 'acknowledge', 'sign']).default('view'),
   requireAcknowledgement: z.boolean().default(false),
   requireSignature: z.boolean().default(false),
+  allowComments: z.boolean().default(true),
+  allowReactions: z.boolean().default(true),
   publishAt: z.string().datetime().optional(),
   expiresAt: z.string().datetime().optional(),
+  /** Attachments already uploaded to R2; will be recorded in the DB atomically. */
+  attachments: z.array(attachmentInput).max(6).default([]),
+  /** JSON-encoded recipient spec for pre-selecting groups/sites/users at publish time. */
+  recipientSpec: z.string().optional(),
 });
 
 const updateInput = z.object({
@@ -66,8 +101,12 @@ const updateInput = z.object({
   engagementLevel: z.enum(['view', 'acknowledge', 'sign']).optional(),
   requireAcknowledgement: z.boolean().optional(),
   requireSignature: z.boolean().optional(),
+  allowComments: z.boolean().optional(),
+  allowReactions: z.boolean().optional(),
   publishAt: z.string().datetime().nullable().optional(),
   expiresAt: z.string().datetime().nullable().optional(),
+  /** JSON-encoded recipient spec. */
+  recipientSpec: z.string().optional(),
 });
 
 const publishInput = z.object({
@@ -109,446 +148,766 @@ const createCommentInput = z.object({
 
 const listCommentsInput = z.object({ headsUpId: z.string().length(26) });
 
-export const headsUpsRouter = router({
-  list: tenantProcedure
-    .use(requirePermission('headsUp.view'))
-    .input(listInput)
-    .query(async ({ ctx, input }) => {
-      const where = [eq(headsUps.tenantId, ctx.tenantId)];
-      if (input.status !== undefined) where.push(eq(headsUps.status, input.status));
+const addAttachmentInput = z.object({
+  headsUpId: z.string().length(26),
+  storageKey: z.string().min(1).max(1000),
+  filename: z.string().min(1).max(500),
+  mimeType: z.string().min(1).max(200),
+  sizeBytes: z.number().int().min(0),
+});
 
-      const rows = await ctx.db
-        .select({
-          id: headsUps.id,
-          title: headsUps.title,
-          status: headsUps.status,
-          engagementLevel: headsUps.engagementLevel,
-          requireAcknowledgement: headsUps.requireAcknowledgement,
-          requireSignature: headsUps.requireSignature,
-          publishAt: headsUps.publishAt,
-          expiresAt: headsUps.expiresAt,
-          createdByUserId: headsUps.createdByUserId,
-          createdAt: headsUps.createdAt,
-          updatedAt: headsUps.updatedAt,
-          creatorName: user.name,
-        })
-        .from(headsUps)
-        .leftJoin(user, eq(user.id, headsUps.createdByUserId))
-        .where(and(...where))
-        .orderBy(desc(headsUps.createdAt))
-        .limit(input.limit);
-      return rows;
-    }),
+const removeAttachmentInput = z.object({
+  headsUpId: z.string().length(26),
+  attachmentId: z.string().length(26),
+});
 
-  get: tenantProcedure
-    .use(requirePermission('headsUp.view'))
-    .input(headsUpIdInput)
-    .query(async ({ ctx, input }) => {
-      const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+const reactionInput = z.object({
+  headsUpId: z.string().length(26),
+  emoji: z.enum(ALLOWED_EMOJIS),
+});
 
-      const [recipientCountRows, creatorRows, attachmentRows] = await Promise.all([
-        ctx.db
-          .select({ total: count() })
-          .from(headsUpRecipients)
-          .where(eq(headsUpRecipients.headsUpId, headsUp.id)),
-        ctx.db
-          .select({ name: user.name })
-          .from(user)
-          .where(eq(user.id, headsUp.createdByUserId))
-          .limit(1),
-        ctx.db
-          .select()
-          .from(headsUpAttachments)
-          .where(eq(headsUpAttachments.headsUpId, headsUp.id)),
-      ]);
+/** Generate a cryptographically random share token. */
+function generateShareToken(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
-      return {
-        headsUp,
-        creatorName: creatorRows[0]?.name ?? null,
-        recipientCount: Number(recipientCountRows[0]?.total ?? 0),
-        attachments: attachmentRows,
-      };
-    }),
-
-  create: tenantProcedure
-    .use(requirePermission('headsUp.publish'))
-    .input(createInput)
-    .mutation(async ({ ctx, input }) => {
-      const id = newId();
-      const now = new Date();
-      await ctx.db.insert(headsUps).values({
-        id,
-        tenantId: ctx.tenantId,
-        title: input.title,
-        description: input.description,
-        status: 'draft',
-        engagementLevel: input.engagementLevel,
-        requireAcknowledgement: input.requireAcknowledgement,
-        requireSignature: input.requireSignature,
-        publishAt: input.publishAt !== undefined ? new Date(input.publishAt) : null,
-        expiresAt: input.expiresAt !== undefined ? new Date(input.expiresAt) : null,
-        createdByUserId: ctx.auth.userId,
-        createdAt: now,
-        updatedAt: now,
-      });
-      return { headsUpId: id };
-    }),
-
-  update: tenantProcedure
-    .use(requirePermission('headsUp.manage'))
-    .input(updateInput)
-    .mutation(async ({ ctx, input }) => {
-      const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
-      if (headsUp.status === 'archived') {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'heads-up-archived' });
-      }
-
-      const now = new Date();
-      const updates: Partial<typeof headsUps.$inferInsert> = { updatedAt: now };
-
-      if (input.title !== undefined && input.title !== headsUp.title) {
-        updates.title = input.title;
-      }
-      if (input.description !== undefined && input.description !== headsUp.description) {
-        updates.description = input.description;
-        // H-E03: editing body content after publish invalidates all signatures.
-        if (headsUp.status === 'published') {
-          await ctx.db
-            .update(headsUpRecipients)
-            .set({ signedAt: null, signatureData: null })
-            .where(eq(headsUpRecipients.headsUpId, headsUp.id));
-        }
-      }
-      if (input.engagementLevel !== undefined) updates.engagementLevel = input.engagementLevel;
-      if (input.requireAcknowledgement !== undefined)
-        updates.requireAcknowledgement = input.requireAcknowledgement;
-      if (input.requireSignature !== undefined) updates.requireSignature = input.requireSignature;
-      if (input.publishAt !== undefined)
-        updates.publishAt = input.publishAt === null ? null : new Date(input.publishAt);
-      if (input.expiresAt !== undefined)
-        updates.expiresAt = input.expiresAt === null ? null : new Date(input.expiresAt);
-
-      await ctx.db.update(headsUps).set(updates).where(eq(headsUps.id, headsUp.id));
-      return { ok: true as const };
-    }),
-
-  /**
-   * Publish: resolves all recipients from users/groups/sites and inserts
-   * recipient rows. H-E01: assignees are locked at this point.
-   */
-  publish: tenantProcedure
-    .use(requirePermission('headsUp.publish'))
-    .input(publishInput)
-    .mutation(async ({ ctx, input }) => {
-      const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
-      if (headsUp.status === 'archived') {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'heads-up-archived' });
-      }
-
-      // Collect all user IDs to add as recipients.
-      const recipientUserIds = new Set<string>(input.userIds);
-
-      // Expand groups (group_members is materialised by Phase 1).
-      if (input.groupIds.length > 0) {
-        const { groupMembers } = await import('@forma360/db/schema');
-        const { inArray } = await import('drizzle-orm');
-        const memberRows = await ctx.db
-          .select({ userId: groupMembers.userId })
-          .from(groupMembers)
-          .where(
-            and(
-              eq(groupMembers.tenantId, ctx.tenantId),
-              inArray(groupMembers.groupId, input.groupIds),
-            ),
-          );
-        for (const r of memberRows) recipientUserIds.add(r.userId);
-      }
-
-      // Expand sites: look up users via the site_members materialised table.
-      if (input.siteIds.length > 0) {
-        const { siteMembers } = await import('@forma360/db/schema');
-        const { inArray } = await import('drizzle-orm');
-        const siteUserRows = await ctx.db
-          .select({ userId: siteMembers.userId })
-          .from(siteMembers)
-          .where(
-            and(
-              eq(siteMembers.tenantId, ctx.tenantId),
-              inArray(siteMembers.siteId, input.siteIds),
-            ),
-          );
-        for (const r of siteUserRows) recipientUserIds.add(r.userId);
-      }
-
-      const now = new Date();
-
-      // Upsert: ignore duplicates (idempotent re-publish edge case).
-      const values = [...recipientUserIds].map((userId) => ({
-        id: newId(),
-        tenantId: ctx.tenantId,
-        headsUpId: headsUp.id,
-        userId,
-        createdAt: now,
-      }));
-
-      if (values.length > 0) {
-        await ctx.db.insert(headsUpRecipients).values(values).onConflictDoNothing();
-      }
-
-      await ctx.db
-        .update(headsUps)
-        .set({ status: 'published', updatedAt: now })
-        .where(eq(headsUps.id, headsUp.id));
-
-      return { ok: true as const, recipientCount: values.length };
-    }),
-
-  archive: tenantProcedure
-    .use(requirePermission('headsUp.manage'))
-    .input(headsUpIdInput)
-    .mutation(async ({ ctx, input }) => {
-      const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
-      if (headsUp.status === 'archived') return { ok: true as const };
-      await ctx.db
-        .update(headsUps)
-        .set({ status: 'archived', updatedAt: new Date() })
-        .where(eq(headsUps.id, headsUp.id));
-      return { ok: true as const };
-    }),
-
-  /** Engagement dashboard — summary counts. */
-  engagementSummary: tenantProcedure
-    .use(requirePermission('headsUp.analytics.view'))
-    .input(headsUpIdInput)
-    .query(async ({ ctx, input }) => {
-      await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
-
-      const rows = await ctx.db
-        .select({
-          total: count(),
-          // Aggregate via SQL count with filter condition
-        })
-        .from(headsUpRecipients)
-        .where(eq(headsUpRecipients.headsUpId, input.headsUpId));
-
-      const totalCount = Number(rows[0]?.total ?? 0);
-
-      // Individual counts for each engagement state.
-      const [viewedRows, acknowledgedRows, signedRows] = await Promise.all([
-        ctx.db
-          .select({ c: count() })
-          .from(headsUpRecipients)
-          .where(
-            and(
-              eq(headsUpRecipients.headsUpId, input.headsUpId),
-              isNull(headsUpRecipients.viewedAt),
-            ),
-          ),
-        ctx.db
-          .select({ c: count() })
-          .from(headsUpRecipients)
-          .where(
-            and(
-              eq(headsUpRecipients.headsUpId, input.headsUpId),
-              isNull(headsUpRecipients.acknowledgedAt),
-            ),
-          ),
-        ctx.db
-          .select({ c: count() })
-          .from(headsUpRecipients)
-          .where(
-            and(
-              eq(headsUpRecipients.headsUpId, input.headsUpId),
-              isNull(headsUpRecipients.signedAt),
-            ),
-          ),
-      ]);
-
-      const notViewedCount = Number(viewedRows[0]?.c ?? 0);
-      const notAcknowledgedCount = Number(acknowledgedRows[0]?.c ?? 0);
-      const notSignedCount = Number(signedRows[0]?.c ?? 0);
-
-      return {
-        total: totalCount,
-        viewed: totalCount - notViewedCount,
-        notViewed: notViewedCount,
-        acknowledged: totalCount - notAcknowledgedCount,
-        notAcknowledged: notAcknowledgedCount,
-        signed: totalCount - notSignedCount,
-        notSigned: notSignedCount,
-      };
-    }),
-
-  /** Recipient list with engagement state + optional filter. H-E07: paginated. */
-  listRecipients: tenantProcedure
-    .use(requirePermission('headsUp.analytics.view'))
-    .input(listRecipientsInput)
-    .query(async ({ ctx, input }) => {
-      await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
-
-      const { isNotNull } = await import('drizzle-orm');
-      const where = [eq(headsUpRecipients.headsUpId, input.headsUpId)];
-      if (input.filter === 'viewed') where.push(isNotNull(headsUpRecipients.viewedAt));
-      if (input.filter === 'not_viewed') where.push(isNull(headsUpRecipients.viewedAt));
-      if (input.filter === 'acknowledged') where.push(isNotNull(headsUpRecipients.acknowledgedAt));
-      if (input.filter === 'signed') where.push(isNotNull(headsUpRecipients.signedAt));
-
-      const rows = await ctx.db
-        .select({
-          id: headsUpRecipients.id,
-          userId: headsUpRecipients.userId,
-          userName: user.name,
-          userEmail: user.email,
-          viewedAt: headsUpRecipients.viewedAt,
-          acknowledgedAt: headsUpRecipients.acknowledgedAt,
-          signedAt: headsUpRecipients.signedAt,
-        })
-        .from(headsUpRecipients)
-        .leftJoin(user, eq(user.id, headsUpRecipients.userId))
-        .where(and(...where))
-        .orderBy(desc(headsUpRecipients.createdAt))
-        .limit(input.limit);
-
-      return rows;
-    }),
-
-  /** Track that the current user has viewed a Heads Up. */
-  markViewed: tenantProcedure
-    .use(requirePermission('headsUp.view'))
-    .input(markViewedInput)
-    .mutation(async ({ ctx, input }) => {
-      const recipientRows = await ctx.db
-        .select()
-        .from(headsUpRecipients)
-        .where(
-          and(
-            eq(headsUpRecipients.headsUpId, input.headsUpId),
-            eq(headsUpRecipients.userId, ctx.auth.userId),
-          ),
-        )
-        .limit(1);
-      const recipient = recipientRows[0];
-      if (recipient === undefined) return { ok: true as const }; // not a recipient
-      if (recipient.viewedAt !== null) return { ok: true as const }; // already viewed
-
-      await ctx.db
-        .update(headsUpRecipients)
-        .set({ viewedAt: new Date() })
-        .where(eq(headsUpRecipients.id, recipient.id));
-      return { ok: true as const };
-    }),
-
-  /** Acknowledge a Heads Up. Must have viewed first (implicit — no hard guard). */
-  markAcknowledged: tenantProcedure
-    .use(requirePermission('headsUp.view'))
-    .input(markAcknowledgedInput)
-    .mutation(async ({ ctx, input }) => {
-      const recipientRows = await ctx.db
-        .select()
-        .from(headsUpRecipients)
-        .where(
-          and(
-            eq(headsUpRecipients.headsUpId, input.headsUpId),
-            eq(headsUpRecipients.userId, ctx.auth.userId),
-          ),
-        )
-        .limit(1);
-      const recipient = recipientRows[0];
-      if (recipient === undefined) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'not-a-recipient' });
-      }
-      if (recipient.acknowledgedAt !== null) return { ok: true as const };
-
-      await ctx.db
-        .update(headsUpRecipients)
-        .set({ viewedAt: recipient.viewedAt ?? new Date(), acknowledgedAt: new Date() })
-        .where(eq(headsUpRecipients.id, recipient.id));
-      return { ok: true as const };
-    }),
-
-  /**
-   * Sign a Heads Up. H-E09: must have acknowledged first when
-   * requireAcknowledgement is true.
-   */
-  sign: tenantProcedure
-    .use(requirePermission('headsUp.view'))
-    .input(signInput)
-    .mutation(async ({ ctx, input }) => {
-      const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
-      if (!headsUp.requireSignature) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'signature-not-required' });
-      }
-
-      const recipientRows = await ctx.db
-        .select()
-        .from(headsUpRecipients)
-        .where(
-          and(
-            eq(headsUpRecipients.headsUpId, input.headsUpId),
-            eq(headsUpRecipients.userId, ctx.auth.userId),
-          ),
-        )
-        .limit(1);
-      const recipient = recipientRows[0];
-      if (recipient === undefined) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'not-a-recipient' });
-      }
-
-      // H-E09: must acknowledge before signing when acknowledgement is required.
-      if (headsUp.requireAcknowledgement && recipient.acknowledgedAt === null) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'must-acknowledge-before-sign' });
-      }
-
-      if (recipient.signedAt !== null) return { ok: true as const };
-
-      const now = new Date();
-      await ctx.db
-        .update(headsUpRecipients)
-        .set({
-          viewedAt: recipient.viewedAt ?? now,
-          acknowledgedAt: recipient.acknowledgedAt ?? (headsUp.requireAcknowledgement ? now : null),
-          signedAt: now,
-          signatureData: input.signatureData,
-        })
-        .where(eq(headsUpRecipients.id, recipient.id));
-      return { ok: true as const };
-    }),
-
-  comments: router({
+export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
+  return router({
     list: tenantProcedure
       .use(requirePermission('headsUp.view'))
-      .input(listCommentsInput)
+      .input(listInput)
       .query(async ({ ctx, input }) => {
-        await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+        const where = [eq(headsUps.tenantId, ctx.tenantId)];
+        if (input.status !== undefined) where.push(eq(headsUps.status, input.status));
+
         const rows = await ctx.db
           .select({
-            id: headsUpComments.id,
-            body: headsUpComments.body,
-            authorUserId: headsUpComments.authorUserId,
-            authorName: user.name,
-            createdAt: headsUpComments.createdAt,
+            id: headsUps.id,
+            title: headsUps.title,
+            status: headsUps.status,
+            engagementLevel: headsUps.engagementLevel,
+            requireAcknowledgement: headsUps.requireAcknowledgement,
+            requireSignature: headsUps.requireSignature,
+            allowComments: headsUps.allowComments,
+            allowReactions: headsUps.allowReactions,
+            publishAt: headsUps.publishAt,
+            expiresAt: headsUps.expiresAt,
+            createdByUserId: headsUps.createdByUserId,
+            createdAt: headsUps.createdAt,
+            updatedAt: headsUps.updatedAt,
+            creatorName: user.name,
           })
-          .from(headsUpComments)
-          .leftJoin(user, eq(user.id, headsUpComments.authorUserId))
-          .where(eq(headsUpComments.headsUpId, input.headsUpId))
-          .orderBy(headsUpComments.createdAt);
+          .from(headsUps)
+          .leftJoin(user, eq(user.id, headsUps.createdByUserId))
+          .where(and(...where))
+          .orderBy(desc(headsUps.createdAt))
+          .limit(input.limit);
         return rows;
       }),
 
-    create: tenantProcedure
+    get: tenantProcedure
       .use(requirePermission('headsUp.view'))
-      .input(createCommentInput)
+      .input(headsUpIdInput)
+      .query(async ({ ctx, input }) => {
+        const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+
+        const [recipientCountRows, creatorRows, attachmentRows] = await Promise.all([
+          ctx.db
+            .select({ total: count() })
+            .from(headsUpRecipients)
+            .where(eq(headsUpRecipients.headsUpId, headsUp.id)),
+          ctx.db
+            .select({ name: user.name })
+            .from(user)
+            .where(eq(user.id, headsUp.createdByUserId))
+            .limit(1),
+          ctx.db
+            .select()
+            .from(headsUpAttachments)
+            .where(eq(headsUpAttachments.headsUpId, headsUp.id)),
+        ]);
+
+        return {
+          headsUp,
+          creatorName: creatorRows[0]?.name ?? null,
+          recipientCount: Number(recipientCountRows[0]?.total ?? 0),
+          attachments: attachmentRows,
+        };
+      }),
+
+    create: tenantProcedure
+      .use(requirePermission('headsUp.publish'))
+      .input(createInput)
       .mutation(async ({ ctx, input }) => {
-        await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
         const id = newId();
-        await ctx.db.insert(headsUpComments).values({
+        const now = new Date();
+        await ctx.db.insert(headsUps).values({
           id,
           tenantId: ctx.tenantId,
-          headsUpId: input.headsUpId,
-          authorUserId: ctx.auth.userId,
-          body: input.body,
+          title: input.title,
+          description: input.description,
+          status: 'draft',
+          engagementLevel: input.engagementLevel,
+          requireAcknowledgement: input.requireAcknowledgement,
+          requireSignature: input.requireSignature,
+          allowComments: input.allowComments,
+          allowReactions: input.allowReactions,
+          publishAt: input.publishAt !== undefined ? new Date(input.publishAt) : null,
+          expiresAt: input.expiresAt !== undefined ? new Date(input.expiresAt) : null,
+          recipientSpec: input.recipientSpec ?? null,
+          createdByUserId: ctx.auth.userId,
+          createdAt: now,
+          updatedAt: now,
         });
-        return { commentId: id };
+
+        // Insert any attachments that were pre-uploaded to R2.
+        if (input.attachments.length > 0) {
+          await ctx.db.insert(headsUpAttachments).values(
+            input.attachments.map((a) => ({
+              id: newId(),
+              tenantId: ctx.tenantId,
+              headsUpId: id,
+              storageKey: a.storageKey,
+              filename: a.filename,
+              mimeType: a.mimeType,
+              sizeBytes: a.sizeBytes,
+              uploadedByUserId: ctx.auth.userId,
+              createdAt: now,
+            })),
+          );
+        }
+
+        return { headsUpId: id };
       }),
-  }),
+
+    update: tenantProcedure
+      .use(requirePermission('headsUp.manage'))
+      .input(updateInput)
+      .mutation(async ({ ctx, input }) => {
+        const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+        if (headsUp.status === 'archived') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'heads-up-archived' });
+        }
+
+        const now = new Date();
+        const updates: Partial<typeof headsUps.$inferInsert> = { updatedAt: now };
+
+        if (input.title !== undefined && input.title !== headsUp.title) {
+          updates.title = input.title;
+        }
+        if (input.description !== undefined && input.description !== headsUp.description) {
+          updates.description = input.description;
+          // H-E03: editing body content after publish invalidates all signatures.
+          if (headsUp.status === 'published') {
+            await ctx.db
+              .update(headsUpRecipients)
+              .set({ signedAt: null, signatureData: null })
+              .where(eq(headsUpRecipients.headsUpId, headsUp.id));
+          }
+        }
+        if (input.engagementLevel !== undefined) updates.engagementLevel = input.engagementLevel;
+        if (input.requireAcknowledgement !== undefined)
+          updates.requireAcknowledgement = input.requireAcknowledgement;
+        if (input.requireSignature !== undefined) updates.requireSignature = input.requireSignature;
+        if (input.allowComments !== undefined) updates.allowComments = input.allowComments;
+        if (input.allowReactions !== undefined) updates.allowReactions = input.allowReactions;
+        if (input.publishAt !== undefined)
+          updates.publishAt = input.publishAt === null ? null : new Date(input.publishAt);
+        if (input.expiresAt !== undefined)
+          updates.expiresAt = input.expiresAt === null ? null : new Date(input.expiresAt);
+        if (input.recipientSpec !== undefined) updates.recipientSpec = input.recipientSpec;
+
+        await ctx.db.update(headsUps).set(updates).where(eq(headsUps.id, headsUp.id));
+        return { ok: true as const };
+      }),
+
+    /**
+     * Publish: resolves all recipients from users/groups/sites and inserts
+     * recipient rows. H-E01: assignees are locked at this point.
+     * If no explicit userIds/groupIds/siteIds are passed, falls back to
+     * the recipientSpec stored on the headsUp row.
+     */
+    publish: tenantProcedure
+      .use(requirePermission('headsUp.publish'))
+      .input(publishInput)
+      .mutation(async ({ ctx, input }) => {
+        const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+        if (headsUp.status === 'archived') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'heads-up-archived' });
+        }
+
+        // Merge explicit input with stored recipientSpec (if no explicit IDs provided).
+        let effectiveUserIds = [...input.userIds];
+        let effectiveGroupIds = [...input.groupIds];
+        let effectiveSiteIds = [...input.siteIds];
+
+        const hasExplicit =
+          input.userIds.length > 0 || input.groupIds.length > 0 || input.siteIds.length > 0;
+
+        if (!hasExplicit && headsUp.recipientSpec !== null) {
+          const parsed = recipientSpecSchema.safeParse(
+            (() => {
+              try {
+                return JSON.parse(headsUp.recipientSpec ?? '{}') as unknown;
+              } catch {
+                return {};
+              }
+            })(),
+          );
+          if (parsed.success && parsed.data !== undefined) {
+            effectiveUserIds = parsed.data.userIds;
+            effectiveGroupIds = parsed.data.groupIds;
+            effectiveSiteIds = parsed.data.siteIds;
+          }
+        }
+
+        // Collect all user IDs to add as recipients.
+        const recipientUserIds = new Set<string>(effectiveUserIds);
+
+        // Expand groups (group_members is materialised by Phase 1).
+        if (effectiveGroupIds.length > 0) {
+          const { groupMembers } = await import('@forma360/db/schema');
+          const { inArray } = await import('drizzle-orm');
+          const memberRows = await ctx.db
+            .select({ userId: groupMembers.userId })
+            .from(groupMembers)
+            .where(
+              and(
+                eq(groupMembers.tenantId, ctx.tenantId),
+                inArray(groupMembers.groupId, effectiveGroupIds),
+              ),
+            );
+          for (const r of memberRows) recipientUserIds.add(r.userId);
+        }
+
+        // Expand sites: look up users via the site_members materialised table.
+        if (effectiveSiteIds.length > 0) {
+          const { siteMembers } = await import('@forma360/db/schema');
+          const { inArray } = await import('drizzle-orm');
+          const siteUserRows = await ctx.db
+            .select({ userId: siteMembers.userId })
+            .from(siteMembers)
+            .where(
+              and(
+                eq(siteMembers.tenantId, ctx.tenantId),
+                inArray(siteMembers.siteId, effectiveSiteIds),
+              ),
+            );
+          for (const r of siteUserRows) recipientUserIds.add(r.userId);
+        }
+
+        const now = new Date();
+
+        // Upsert: ignore duplicates (idempotent re-publish edge case).
+        const values = [...recipientUserIds].map((userId) => ({
+          id: newId(),
+          tenantId: ctx.tenantId,
+          headsUpId: headsUp.id,
+          userId,
+          createdAt: now,
+        }));
+
+        if (values.length > 0) {
+          await ctx.db.insert(headsUpRecipients).values(values).onConflictDoNothing();
+        }
+
+        await ctx.db
+          .update(headsUps)
+          .set({ status: 'published', updatedAt: now })
+          .where(eq(headsUps.id, headsUp.id));
+
+        return { ok: true as const, recipientCount: values.length };
+      }),
+
+    archive: tenantProcedure
+      .use(requirePermission('headsUp.manage'))
+      .input(headsUpIdInput)
+      .mutation(async ({ ctx, input }) => {
+        const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+        if (headsUp.status === 'archived') return { ok: true as const };
+        await ctx.db
+          .update(headsUps)
+          .set({ status: 'archived', updatedAt: new Date() })
+          .where(eq(headsUps.id, headsUp.id));
+        return { ok: true as const };
+      }),
+
+    /**
+     * Create an opaque external share link for the Heads Up.
+     * Returns the full share URL. Idempotent — calling again returns the
+     * same token unless disableShareLink was called first.
+     */
+    createShareLink: tenantProcedure
+      .use(requirePermission('headsUp.manage'))
+      .input(headsUpIdInput)
+      .mutation(async ({ ctx, input }) => {
+        const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+        if (headsUp.shareToken !== null) {
+          // Already exists — return the existing token.
+          return { shareToken: headsUp.shareToken };
+        }
+        const token = generateShareToken();
+        await ctx.db
+          .update(headsUps)
+          .set({ shareToken: token, updatedAt: new Date() })
+          .where(eq(headsUps.id, headsUp.id));
+        return { shareToken: token };
+      }),
+
+    /** Revoke the external share link. */
+    disableShareLink: tenantProcedure
+      .use(requirePermission('headsUp.manage'))
+      .input(headsUpIdInput)
+      .mutation(async ({ ctx, input }) => {
+        await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+        await ctx.db
+          .update(headsUps)
+          .set({ shareToken: null, updatedAt: new Date() })
+          .where(eq(headsUps.id, input.headsUpId));
+        return { ok: true as const };
+      }),
+
+    /** Engagement dashboard — summary counts. */
+    engagementSummary: tenantProcedure
+      .use(requirePermission('headsUp.analytics.view'))
+      .input(headsUpIdInput)
+      .query(async ({ ctx, input }) => {
+        await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+
+        const rows = await ctx.db
+          .select({
+            total: count(),
+          })
+          .from(headsUpRecipients)
+          .where(eq(headsUpRecipients.headsUpId, input.headsUpId));
+
+        const totalCount = Number(rows[0]?.total ?? 0);
+
+        // Individual counts for each engagement state.
+        const [viewedRows, acknowledgedRows, signedRows] = await Promise.all([
+          ctx.db
+            .select({ c: count() })
+            .from(headsUpRecipients)
+            .where(
+              and(
+                eq(headsUpRecipients.headsUpId, input.headsUpId),
+                isNull(headsUpRecipients.viewedAt),
+              ),
+            ),
+          ctx.db
+            .select({ c: count() })
+            .from(headsUpRecipients)
+            .where(
+              and(
+                eq(headsUpRecipients.headsUpId, input.headsUpId),
+                isNull(headsUpRecipients.acknowledgedAt),
+              ),
+            ),
+          ctx.db
+            .select({ c: count() })
+            .from(headsUpRecipients)
+            .where(
+              and(
+                eq(headsUpRecipients.headsUpId, input.headsUpId),
+                isNull(headsUpRecipients.signedAt),
+              ),
+            ),
+        ]);
+
+        const notViewedCount = Number(viewedRows[0]?.c ?? 0);
+        const notAcknowledgedCount = Number(acknowledgedRows[0]?.c ?? 0);
+        const notSignedCount = Number(signedRows[0]?.c ?? 0);
+
+        return {
+          total: totalCount,
+          viewed: totalCount - notViewedCount,
+          notViewed: notViewedCount,
+          acknowledged: totalCount - notAcknowledgedCount,
+          notAcknowledged: notAcknowledgedCount,
+          signed: totalCount - notSignedCount,
+          notSigned: notSignedCount,
+        };
+      }),
+
+    /** Recipient list with engagement state + optional filter. H-E07: paginated. */
+    listRecipients: tenantProcedure
+      .use(requirePermission('headsUp.analytics.view'))
+      .input(listRecipientsInput)
+      .query(async ({ ctx, input }) => {
+        await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+
+        const { isNotNull } = await import('drizzle-orm');
+        const where = [eq(headsUpRecipients.headsUpId, input.headsUpId)];
+        if (input.filter === 'viewed') where.push(isNotNull(headsUpRecipients.viewedAt));
+        if (input.filter === 'not_viewed') where.push(isNull(headsUpRecipients.viewedAt));
+        if (input.filter === 'acknowledged') where.push(isNotNull(headsUpRecipients.acknowledgedAt));
+        if (input.filter === 'signed') where.push(isNotNull(headsUpRecipients.signedAt));
+
+        const rows = await ctx.db
+          .select({
+            id: headsUpRecipients.id,
+            userId: headsUpRecipients.userId,
+            userName: user.name,
+            userEmail: user.email,
+            viewedAt: headsUpRecipients.viewedAt,
+            acknowledgedAt: headsUpRecipients.acknowledgedAt,
+            signedAt: headsUpRecipients.signedAt,
+            reminderLastSentAt: headsUpRecipients.reminderLastSentAt,
+          })
+          .from(headsUpRecipients)
+          .leftJoin(user, eq(user.id, headsUpRecipients.userId))
+          .where(and(...where))
+          .orderBy(desc(headsUpRecipients.createdAt))
+          .limit(input.limit);
+
+        return rows;
+      }),
+
+    /**
+     * Send reminder emails to pending recipients.
+     * If userId is provided, only reminds that specific user.
+     * Otherwise, reminds all users who haven't completed the required engagement action.
+     */
+    sendReminder: tenantProcedure
+      .use(requirePermission('headsUp.manage'))
+      .input(
+        z.object({
+          headsUpId: z.string().length(26),
+          userId: z.string().length(26).optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+        if (headsUp.status !== 'published') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'heads-up-not-published' });
+        }
+
+        // Determine what "pending" means for this engagement level.
+        const pendingCondition =
+          headsUp.engagementLevel === 'sign'
+            ? isNull(headsUpRecipients.signedAt)
+            : headsUp.engagementLevel === 'acknowledge'
+              ? isNull(headsUpRecipients.acknowledgedAt)
+              : isNull(headsUpRecipients.viewedAt);
+
+        const where = [
+          eq(headsUpRecipients.headsUpId, input.headsUpId),
+          pendingCondition,
+        ];
+        if (input.userId !== undefined) {
+          where.push(eq(headsUpRecipients.userId, input.userId));
+        }
+
+        // Load pending recipients with their user email.
+        const pending = await ctx.db
+          .select({
+            id: headsUpRecipients.id,
+            userId: headsUpRecipients.userId,
+            userEmail: user.email,
+            userName: user.name,
+          })
+          .from(headsUpRecipients)
+          .leftJoin(user, eq(user.id, headsUpRecipients.userId))
+          .where(and(...where));
+
+        const now = new Date();
+        for (const r of pending) {
+          if (r.userEmail !== null) {
+            const actionRequired =
+              headsUp.engagementLevel === 'sign'
+                ? 'sign'
+                : headsUp.engagementLevel === 'acknowledge'
+                  ? 'acknowledge'
+                  : 'view';
+            await deps.sendEmail({
+              to: r.userEmail,
+              templateKey: 'heads-up-reminder',
+              variables: {
+                recipientName: r.userName ?? r.userEmail,
+                headsUpTitle: headsUp.title,
+                actionRequired,
+              },
+            });
+          }
+          await ctx.db
+            .update(headsUpRecipients)
+            .set({ reminderLastSentAt: now })
+            .where(eq(headsUpRecipients.id, r.id));
+        }
+
+        return { ok: true as const, count: pending.length };
+      }),
+
+    /** Track that the current user has viewed a Heads Up. */
+    markViewed: tenantProcedure
+      .use(requirePermission('headsUp.view'))
+      .input(markViewedInput)
+      .mutation(async ({ ctx, input }) => {
+        const recipientRows = await ctx.db
+          .select()
+          .from(headsUpRecipients)
+          .where(
+            and(
+              eq(headsUpRecipients.headsUpId, input.headsUpId),
+              eq(headsUpRecipients.userId, ctx.auth.userId),
+            ),
+          )
+          .limit(1);
+        const recipient = recipientRows[0];
+        if (recipient === undefined) return { ok: true as const }; // not a recipient
+        if (recipient.viewedAt !== null) return { ok: true as const }; // already viewed
+
+        await ctx.db
+          .update(headsUpRecipients)
+          .set({ viewedAt: new Date() })
+          .where(eq(headsUpRecipients.id, recipient.id));
+        return { ok: true as const };
+      }),
+
+    /** Acknowledge a Heads Up. Must have viewed first (implicit — no hard guard). */
+    markAcknowledged: tenantProcedure
+      .use(requirePermission('headsUp.view'))
+      .input(markAcknowledgedInput)
+      .mutation(async ({ ctx, input }) => {
+        const recipientRows = await ctx.db
+          .select()
+          .from(headsUpRecipients)
+          .where(
+            and(
+              eq(headsUpRecipients.headsUpId, input.headsUpId),
+              eq(headsUpRecipients.userId, ctx.auth.userId),
+            ),
+          )
+          .limit(1);
+        const recipient = recipientRows[0];
+        if (recipient === undefined) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'not-a-recipient' });
+        }
+        if (recipient.acknowledgedAt !== null) return { ok: true as const };
+
+        await ctx.db
+          .update(headsUpRecipients)
+          .set({ viewedAt: recipient.viewedAt ?? new Date(), acknowledgedAt: new Date() })
+          .where(eq(headsUpRecipients.id, recipient.id));
+        return { ok: true as const };
+      }),
+
+    /**
+     * Sign a Heads Up. H-E09: must have acknowledged first when
+     * requireAcknowledgement is true.
+     */
+    sign: tenantProcedure
+      .use(requirePermission('headsUp.view'))
+      .input(signInput)
+      .mutation(async ({ ctx, input }) => {
+        const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+        if (!headsUp.requireSignature) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'signature-not-required' });
+        }
+
+        const recipientRows = await ctx.db
+          .select()
+          .from(headsUpRecipients)
+          .where(
+            and(
+              eq(headsUpRecipients.headsUpId, input.headsUpId),
+              eq(headsUpRecipients.userId, ctx.auth.userId),
+            ),
+          )
+          .limit(1);
+        const recipient = recipientRows[0];
+        if (recipient === undefined) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'not-a-recipient' });
+        }
+
+        // H-E09: must acknowledge before signing when acknowledgement is required.
+        if (headsUp.requireAcknowledgement && recipient.acknowledgedAt === null) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'must-acknowledge-before-sign' });
+        }
+
+        if (recipient.signedAt !== null) return { ok: true as const };
+
+        const now = new Date();
+        await ctx.db
+          .update(headsUpRecipients)
+          .set({
+            viewedAt: recipient.viewedAt ?? now,
+            acknowledgedAt: recipient.acknowledgedAt ?? (headsUp.requireAcknowledgement ? now : null),
+            signedAt: now,
+            signatureData: input.signatureData,
+          })
+          .where(eq(headsUpRecipients.id, recipient.id));
+        return { ok: true as const };
+      }),
+
+    attachments: router({
+      /** Record an attachment that has already been uploaded to R2. */
+      add: tenantProcedure
+        .use(requirePermission('headsUp.manage'))
+        .input(addAttachmentInput)
+        .mutation(async ({ ctx, input }) => {
+          await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+          // Count existing attachments to enforce 6-file limit.
+          const existingRows = await ctx.db
+            .select({ c: count() })
+            .from(headsUpAttachments)
+            .where(eq(headsUpAttachments.headsUpId, input.headsUpId));
+          const existing = Number(existingRows[0]?.c ?? 0);
+          if (existing >= 6) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'max-attachments-reached' });
+          }
+          const id = newId();
+          await ctx.db.insert(headsUpAttachments).values({
+            id,
+            tenantId: ctx.tenantId,
+            headsUpId: input.headsUpId,
+            storageKey: input.storageKey,
+            filename: input.filename,
+            mimeType: input.mimeType,
+            sizeBytes: input.sizeBytes,
+            uploadedByUserId: ctx.auth.userId,
+          });
+          return { attachmentId: id };
+        }),
+
+      /** Remove an attachment record. Caller is responsible for R2 cleanup. */
+      remove: tenantProcedure
+        .use(requirePermission('headsUp.manage'))
+        .input(removeAttachmentInput)
+        .mutation(async ({ ctx, input }) => {
+          await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+          const { eq: eqOp } = await import('drizzle-orm');
+          await ctx.db
+            .delete(headsUpAttachments)
+            .where(
+              and(
+                eqOp(headsUpAttachments.headsUpId, input.headsUpId),
+                eqOp(headsUpAttachments.id, input.attachmentId),
+              ),
+            );
+          return { ok: true as const };
+        }),
+    }),
+
+    reactions: router({
+      /** List emoji reaction counts for a Heads Up. */
+      list: tenantProcedure
+        .use(requirePermission('headsUp.view'))
+        .input(z.object({ headsUpId: z.string().length(26) }))
+        .query(async ({ ctx, input }) => {
+          await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+          const rows = await ctx.db
+            .select({
+              emoji: headsUpReactions.emoji,
+              userId: headsUpReactions.userId,
+            })
+            .from(headsUpReactions)
+            .where(eq(headsUpReactions.headsUpId, input.headsUpId));
+
+          // Group by emoji.
+          const counts: Record<AllowedEmoji, { count: number; reacted: boolean }> = {
+            celebrate: { count: 0, reacted: false },
+            clap: { count: 0, reacted: false },
+            smile: { count: 0, reacted: false },
+          };
+          for (const r of rows) {
+            const key = r.emoji as AllowedEmoji;
+            if (key in counts) {
+              counts[key]!.count += 1;
+              if (r.userId === ctx.auth.userId) counts[key]!.reacted = true;
+            }
+          }
+          return counts;
+        }),
+
+      /** Toggle (add or remove) a reaction for the current user. */
+      toggle: tenantProcedure
+        .use(requirePermission('headsUp.view'))
+        .input(reactionInput)
+        .mutation(async ({ ctx, input }) => {
+          await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+
+          // Check if the reaction already exists.
+          const existing = await ctx.db
+            .select({ id: headsUpReactions.id })
+            .from(headsUpReactions)
+            .where(
+              and(
+                eq(headsUpReactions.headsUpId, input.headsUpId),
+                eq(headsUpReactions.userId, ctx.auth.userId),
+                eq(headsUpReactions.emoji, input.emoji),
+              ),
+            )
+            .limit(1);
+
+          if (existing.length > 0) {
+            // Remove existing reaction.
+            await ctx.db
+              .delete(headsUpReactions)
+              .where(eq(headsUpReactions.id, existing[0]!.id));
+            return { action: 'removed' as const };
+          }
+
+          await ctx.db.insert(headsUpReactions).values({
+            id: newId(),
+            tenantId: ctx.tenantId,
+            headsUpId: input.headsUpId,
+            userId: ctx.auth.userId,
+            emoji: input.emoji,
+          });
+          return { action: 'added' as const };
+        }),
+    }),
+
+    comments: router({
+      list: tenantProcedure
+        .use(requirePermission('headsUp.view'))
+        .input(listCommentsInput)
+        .query(async ({ ctx, input }) => {
+          await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+          const rows = await ctx.db
+            .select({
+              id: headsUpComments.id,
+              body: headsUpComments.body,
+              authorUserId: headsUpComments.authorUserId,
+              authorName: user.name,
+              createdAt: headsUpComments.createdAt,
+            })
+            .from(headsUpComments)
+            .leftJoin(user, eq(user.id, headsUpComments.authorUserId))
+            .where(eq(headsUpComments.headsUpId, input.headsUpId))
+            .orderBy(headsUpComments.createdAt);
+          return rows;
+        }),
+
+      create: tenantProcedure
+        .use(requirePermission('headsUp.view'))
+        .input(createCommentInput)
+        .mutation(async ({ ctx, input }) => {
+          await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+          const id = newId();
+          await ctx.db.insert(headsUpComments).values({
+            id,
+            tenantId: ctx.tenantId,
+            headsUpId: input.headsUpId,
+            authorUserId: ctx.auth.userId,
+            body: input.body,
+          });
+          return { commentId: id };
+        }),
+    }),
+  });
+}
+
+/**
+ * Static export for backward compatibility. Tests and the stub `appRouter`
+ * in router.ts use this; production wiring uses `buildAppRouter` which
+ * calls `createHeadsUpsRouter` with real deps.
+ */
+export const headsUpsRouter = createHeadsUpsRouter({
+  sendEmail: async () => ({ delivery: 'console' as const }),
 });

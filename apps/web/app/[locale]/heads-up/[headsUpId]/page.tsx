@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
+import { Copy, Link2, Link2Off } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
+import { Separator } from '../../../../src/components/ui/separator';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { cn } from '../../../../src/lib/cn';
@@ -16,6 +17,12 @@ import { trpc } from '../../../../src/lib/trpc/client';
 
 type Tab = 'overview' | 'engagement' | 'comments';
 type RecipientFilter = 'all' | 'viewed' | 'acknowledged' | 'signed' | 'not_viewed';
+
+const EMOJI_MAP: Record<string, string> = {
+  celebrate: '🎉',
+  clap: '👏',
+  smile: '😄',
+};
 
 export default function HeadsUpDetailPage() {
   const t = useTranslations('headsUp.detail');
@@ -46,6 +53,10 @@ export default function HeadsUpDetailPage() {
     { headsUpId },
     { enabled: tab === 'comments' },
   );
+  const { data: reactionsData, refetch: refetchReactions } = trpc.headsUps.reactions.list.useQuery(
+    { headsUpId },
+    { enabled: tab === 'overview' },
+  );
 
   const publish = trpc.headsUps.publish.useMutation({
     onSuccess: () => {
@@ -72,12 +83,56 @@ export default function HeadsUpDetailPage() {
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
+  const createShareLink = trpc.headsUps.createShareLink.useMutation({
+    onSuccess: () => {
+      toast.success(t('shareLink.created'));
+      void utils.headsUps.get.invalidate({ headsUpId });
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  const disableShareLink = trpc.headsUps.disableShareLink.useMutation({
+    onSuccess: () => {
+      void utils.headsUps.get.invalidate({ headsUpId });
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  const toggleReaction = trpc.headsUps.reactions.toggle.useMutation({
+    onSuccess: () => void refetchReactions(),
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  const sendReminder = trpc.headsUps.sendReminder.useMutation({
+    onSuccess: (result) => {
+      const msg =
+        result.count > 1
+          ? t('remindAllSentToast', { count: String(result.count) })
+          : t('reminderSentToast');
+      toast.success(msg);
+      void utils.headsUps.listRecipients.invalidate({ headsUpId });
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
   if (isLoading || data === undefined) {
     return <Skeleton className="m-6 h-96 w-full" />;
   }
 
-  const { headsUp, creatorName, recipientCount } = data;
+  const { headsUp, creatorName, recipientCount, attachments } = data;
   const isArchived = headsUp.status === 'archived';
+  const engagementLevel = headsUp.engagementLevel as 'view' | 'acknowledge' | 'sign';
+
+  /** Determine if a recipient row is "pending" based on the engagement level. */
+  function isPending(r: {
+    viewedAt: Date | string | null;
+    acknowledgedAt: Date | string | null;
+    signedAt: Date | string | null;
+  }): boolean {
+    if (engagementLevel === 'sign') return r.signedAt === null;
+    if (engagementLevel === 'acknowledge') return r.acknowledgedAt === null;
+    return r.viewedAt === null;
+  }
 
   const RECIPIENT_FILTERS: ReadonlyArray<RecipientFilter> = [
     'all',
@@ -87,6 +142,13 @@ export default function HeadsUpDetailPage() {
     'signed',
   ];
 
+  function copyShareLink(token: string) {
+    const url = `${window.location.origin}/s/${token}`;
+    void navigator.clipboard.writeText(url).then(() => {
+      toast.success(t('shareLink.copied'));
+    });
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -94,8 +156,7 @@ export default function HeadsUpDetailPage() {
           href={`/${locale}/heads-up`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" />
-          {t('backLink')}
+          ← {t('backLink')}
         </Link>
       </div>
 
@@ -105,11 +166,6 @@ export default function HeadsUpDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-semibold tracking-tight">{headsUp.title}</h1>
               <StatusBadge status={headsUp.status} t={t} />
-              {isArchived ? (
-                <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  {t('archivedBadge')}
-                </span>
-              ) : null}
             </div>
             <p className="text-sm text-muted-foreground">
               {t('createdBy', { name: creatorName ?? '—' })}
@@ -151,18 +207,134 @@ export default function HeadsUpDetailPage() {
       </header>
 
       {tab === 'overview' ? (
-        <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="mb-3 text-base font-semibold">{t('descriptionHeading')}</h2>
-              {headsUp.description.length > 0 ? (
-                <p className="whitespace-pre-wrap text-sm">{headsUp.description}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">{t('noDescription')}</p>
-              )}
-            </CardContent>
-          </Card>
+        <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
+          {/* Main content */}
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="mb-3 text-base font-semibold">{t('descriptionHeading')}</h2>
+                {headsUp.description.length > 0 ? (
+                  <p className="whitespace-pre-wrap text-sm">{headsUp.description}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t('noDescription')}</p>
+                )}
 
+                {/* Attachments */}
+                {attachments.length > 0 ? (
+                  <div className="mt-4 space-y-2 border-t pt-4">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      {t('attachmentsHeading')}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {attachments.map((att) => (
+                        <div
+                          key={att.id}
+                          className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-xs"
+                        >
+                          <span>{att.filename}</span>
+                          <span className="text-muted-foreground">
+                            {(att.sizeBytes / 1024).toFixed(0)} KB
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Reactions */}
+                {headsUp.allowReactions && reactionsData !== undefined ? (
+                  <div className="mt-4 border-t pt-4">
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(EMOJI_MAP).map(([key, emoji]) => {
+                        const entry = reactionsData[key as keyof typeof reactionsData];
+                        const count = entry?.count ?? 0;
+                        const reacted = entry?.reacted ?? false;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() =>
+                              toggleReaction.mutate({
+                                headsUpId,
+                                emoji: key as 'celebrate' | 'clap' | 'smile',
+                              })
+                            }
+                            className={cn(
+                              'flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors',
+                              reacted
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-border hover:bg-muted',
+                            )}
+                          >
+                            {emoji}
+                            {count > 0 ? (
+                              <span className="text-xs text-muted-foreground">{count}</span>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+
+            {/* Share externally — full-width card */}
+            {canManage ? (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="mb-0.5 text-sm font-semibold">{t('shareLink.section')}</h2>
+                      <p className="text-xs text-muted-foreground">{t('shareLink.hint')}</p>
+                    </div>
+                    {headsUp.shareToken === null ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={createShareLink.isPending}
+                        onClick={() => createShareLink.mutate({ headsUpId })}
+                      >
+                        <Link2 className="mr-1.5 h-3.5 w-3.5" />
+                        {t('shareLink.createButton')}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={disableShareLink.isPending}
+                        onClick={() => disableShareLink.mutate({ headsUpId })}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Link2Off className="mr-1.5 h-3.5 w-3.5" />
+                        {t('shareLink.disableButton')}
+                      </Button>
+                    )}
+                  </div>
+
+                  {headsUp.shareToken !== null ? (
+                    <div className="mt-4 flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
+                      <code className="flex-1 truncate text-xs">
+                        {typeof window !== 'undefined'
+                          ? `${window.location.origin}/s/${headsUp.shareToken}`
+                          : `/s/${headsUp.shareToken}`}
+                      </code>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyShareLink(headsUp.shareToken!)}
+                      >
+                        <Copy className="mr-1 h-3.5 w-3.5" />
+                        {t('shareLink.copyButton')}
+                      </Button>
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+            ) : null}
+          </div>
+
+          {/* Sidebar */}
           <Card>
             <CardContent className="space-y-3 p-6 text-sm">
               <h2 className="text-base font-semibold">{t('detailsHeading')}</h2>
@@ -182,6 +354,13 @@ export default function HeadsUpDetailPage() {
                   {new Date(headsUp.expiresAt).toLocaleString()}
                 </DetailRow>
               ) : null}
+              <Separator />
+              <DetailRow label={t('fields.comments')}>
+                {headsUp.allowComments ? tCommon('enabled') : tCommon('disabled')}
+              </DetailRow>
+              <DetailRow label={t('fields.reactions')}>
+                {headsUp.allowReactions ? tCommon('enabled') : tCommon('disabled')}
+              </DetailRow>
             </CardContent>
           </Card>
         </div>
@@ -191,14 +370,60 @@ export default function HeadsUpDetailPage() {
         <div className="space-y-4">
           {summary !== undefined ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <StatCard label={t('stats.total')} value={summary.total} />
-              <StatCard label={t('stats.viewed')} value={summary.viewed} />
-              {headsUp.requireAcknowledgement ? (
-                <StatCard label={t('stats.acknowledged')} value={summary.acknowledged} />
+              <StatCard
+                label={t('stats.total')}
+                value={summary.total}
+                subLabel={null}
+                total={summary.total}
+              />
+              <StatCard
+                label={t('stats.viewed')}
+                value={summary.viewed}
+                subLabel={
+                  summary.notViewed > 0
+                    ? `${String(summary.notViewed)} ${t('stats.notViewed')}`
+                    : null
+                }
+                total={summary.total}
+              />
+              {engagementLevel === 'acknowledge' || engagementLevel === 'sign' ? (
+                <StatCard
+                  label={t('stats.acknowledged')}
+                  value={summary.acknowledged}
+                  subLabel={
+                    summary.notAcknowledged > 0
+                      ? `${String(summary.notAcknowledged)} ${t('stats.notAcknowledged')}`
+                      : null
+                  }
+                  total={summary.total}
+                />
               ) : null}
-              {headsUp.requireSignature ? (
-                <StatCard label={t('stats.signed')} value={summary.signed} />
+              {engagementLevel === 'sign' ? (
+                <StatCard
+                  label={t('stats.signed')}
+                  value={summary.signed}
+                  subLabel={
+                    summary.notSigned > 0
+                      ? `${String(summary.notSigned)} ${t('stats.notSigned')}`
+                      : null
+                  }
+                  total={summary.total}
+                />
               ) : null}
+            </div>
+          ) : null}
+
+          {/* Remind all button */}
+          {canManage && headsUp.status === 'published' ? (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={sendReminder.isPending}
+                onClick={() => sendReminder.mutate({ headsUpId })}
+              >
+                {t('remindAllButton')}
+              </Button>
             </div>
           ) : null}
 
@@ -227,13 +452,17 @@ export default function HeadsUpDetailPage() {
                     <th className="px-3 py-2 font-medium">{t('recipientColumns.name')}</th>
                     <th className="px-3 py-2 font-medium">{t('recipientColumns.email')}</th>
                     <th className="px-3 py-2 font-medium">{t('recipientColumns.viewed')}</th>
-                    {headsUp.requireAcknowledgement ? (
+                    {engagementLevel === 'acknowledge' || engagementLevel === 'sign' ? (
                       <th className="px-3 py-2 font-medium">
                         {t('recipientColumns.acknowledged')}
                       </th>
                     ) : null}
-                    {headsUp.requireSignature ? (
+                    {engagementLevel === 'sign' ? (
                       <th className="px-3 py-2 font-medium">{t('recipientColumns.signed')}</th>
+                    ) : null}
+                    <th className="px-3 py-2 font-medium">{t('recipientColumns.lastReminder')}</th>
+                    {canManage && headsUp.status === 'published' ? (
+                      <th className="px-3 py-2 font-medium">{t('recipientColumns.actions')}</th>
                     ) : null}
                   </tr>
                 </thead>
@@ -251,7 +480,7 @@ export default function HeadsUpDetailPage() {
                           <span className="text-muted-foreground">{t('notYet')}</span>
                         )}
                       </td>
-                      {headsUp.requireAcknowledgement ? (
+                      {engagementLevel === 'acknowledge' || engagementLevel === 'sign' ? (
                         <td className="px-3 py-2">
                           {r.acknowledgedAt !== null ? (
                             <span className="text-emerald-600">
@@ -262,7 +491,7 @@ export default function HeadsUpDetailPage() {
                           )}
                         </td>
                       ) : null}
-                      {headsUp.requireSignature ? (
+                      {engagementLevel === 'sign' ? (
                         <td className="px-3 py-2">
                           {r.signedAt !== null ? (
                             <span className="text-emerald-600">
@@ -273,11 +502,35 @@ export default function HeadsUpDetailPage() {
                           )}
                         </td>
                       ) : null}
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {r.reminderLastSentAt !== null && r.reminderLastSentAt !== undefined
+                          ? new Date(r.reminderLastSentAt).toLocaleDateString()
+                          : '—'}
+                      </td>
+                      {canManage && headsUp.status === 'published' ? (
+                        <td className="px-3 py-2">
+                          {isPending(r) ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={sendReminder.isPending}
+                              onClick={() =>
+                                sendReminder.mutate({ headsUpId, userId: r.userId })
+                              }
+                            >
+                              {t('remindButton')}
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-emerald-600">✓ Done</span>
+                          )}
+                        </td>
+                      ) : null}
                     </tr>
                   ))}
                   {(recipientsData ?? []).length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={8} className="p-8 text-center text-muted-foreground">
                         {t('noRecipients')}
                       </td>
                     </tr>
@@ -291,7 +544,7 @@ export default function HeadsUpDetailPage() {
 
       {tab === 'comments' ? (
         <div className="space-y-4">
-          {!isArchived ? (
+          {!isArchived && headsUp.allowComments ? (
             <Card>
               <CardContent className="space-y-3 p-6">
                 <Textarea
@@ -368,7 +621,7 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'border-b-2 -mb-px px-3 py-2 text-sm font-medium transition-colors',
+        '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
         active
           ? 'border-foreground text-foreground'
           : 'border-transparent text-muted-foreground hover:text-foreground',
@@ -388,12 +641,35 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({
+  label,
+  value,
+  subLabel,
+  total,
+}: {
+  label: string;
+  value: number;
+  subLabel: string | null;
+  total: number;
+}) {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
     <Card>
-      <CardContent className="p-4 text-center">
+      <CardContent className="p-4">
         <p className="text-2xl font-bold">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-xs text-muted-foreground">
+          {label}
+          {total > 0 ? <span className="ml-1 opacity-60">/ {total}</span> : null}
+        </p>
+        {subLabel !== null ? (
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{subLabel}</p>
+        ) : null}
+        <div className="mt-2 h-1.5 w-full rounded-full bg-muted">
+          <div
+            className="h-1.5 rounded-full bg-primary transition-all"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
       </CardContent>
     </Card>
   );

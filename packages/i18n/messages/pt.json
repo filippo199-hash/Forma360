@@ -1736,10 +1736,39 @@
       }
     },
     "new": {
-      "title": "New Heads Up",
+      "pageTitle": "New Heads Up",
       "backLink": "Back to Heads Up",
-      "createdToast": "Heads up created",
-      "submitButton": "Save as draft",
+      "savedToast": "Saved as draft",
+      "titleRequired": "Title is required",
+      "waitForUploads": "Please wait for uploads to finish",
+      "maxFilesError": "Maximum 6 files allowed",
+      "addMedia": "Add media",
+      "dragFiles": "Drag your files here",
+      "browseUpload": "Browse to link or upload",
+      "mediaHint": "Up to 6 files, 50 MB each. Supports pdf, jpg and mov",
+      "shareExternally": "Share externally",
+      "shareExternallyHint": "Anyone with this link can view",
+      "shareLinkAfterSave": "Save first to generate a shareable link",
+      "settings": {
+        "requestAcknowledgement": "Request Acknowledgement",
+        "allowComments": "Comments enabled",
+        "allowReactions": "Reactions enabled"
+      },
+      "publish": "Publish",
+      "saveDraft": "Save as draft",
+      "publishMenu": "Publish",
+      "publishTomorrow": "Tomorrow",
+      "publishNextWeek": "Next week",
+      "scheduledFor": "Scheduled for",
+      "preview": "Preview",
+      "previewDevice": {
+        "tablet": "Tablet",
+        "mobile": "Mobile"
+      },
+      "previewUntitled": "Untitled",
+      "previewJustNow": "just now",
+      "previewAcknowledge": "Acknowledge",
+      "previewCommentPrompt": "Add a comment to start a conversation...",
       "fields": {
         "title": "Title",
         "titlePlaceholder": "Enter a title",
@@ -1749,6 +1778,9 @@
         "requireAcknowledgement": "Require acknowledgement",
         "requireSignature": "Require signature"
       },
+      "title": "New Heads Up",
+      "createdToast": "Heads up created",
+      "submitButton": "Save as draft",
       "engagement": {
         "view": "View only",
         "acknowledge": "Acknowledgement required",
@@ -1811,6 +1843,20 @@
         "viewed": "Viewed",
         "acknowledged": "Acknowledged",
         "signed": "Signed"
+      },
+      "shareLink": {
+        "section": "Share externally",
+        "hint": "Anyone with this link can view",
+        "createButton": "Create link",
+        "copyButton": "Copy link",
+        "disableButton": "Disable link",
+        "copied": "Link copied!",
+        "created": "Share link created"
+      },
+      "reactions": {
+        "celebrate": "🎉",
+        "clap": "👏",
+        "smile": "😄"
       }
     }
   },

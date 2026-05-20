@@ -1,18 +1,21 @@
 /**
- * Heads Up subgraph — Phase 5A.
+ * Heads Up subgraph — Phase 5A + redesign (PR after Phase 8).
  *
- * Four tenant-scoped tables:
+ * Five tenant-scoped tables:
  *
  *   - heads_ups          — the broadcast message row. Status lifecycle:
  *                          draft → published (immediately or scheduled)
  *                          → archived. Three engagement levels: view,
- *                          acknowledge, sign.
+ *                          acknowledge, sign. New columns: share_token
+ *                          (opaque external share link), allow_comments,
+ *                          allow_reactions.
  *   - heads_up_recipients — one row per resolved recipient (users
  *                           expanded from groups/sites at publish time,
  *                           H-E01). Tracks viewed_at / acknowledged_at /
  *                           signed_at per-user.
  *   - heads_up_attachments — media/file attachments on the message.
  *   - heads_up_comments   — collaboration thread; append-only.
+ *   - heads_up_reactions  — emoji reactions per user per message.
  *
  * See ADR 0002 (tenant scope + RESTRICT FKs).
  */
@@ -50,6 +53,14 @@ export const headsUps = pgTable(
     publishAt: timestamp('publish_at', { withTimezone: true }),
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     linkedDocumentId: text('linked_document_id'),
+    /** Opaque token for the external share link. NULL = no link created yet. */
+    shareToken: text('share_token').unique(),
+    /** Whether the public/recipient comment thread is open. */
+    allowComments: boolean('allow_comments').notNull().default(true),
+    /** Whether emoji reactions are enabled. */
+    allowReactions: boolean('allow_reactions').notNull().default(true),
+    /** JSON-encoded recipient spec: {groupIds: string[], siteIds: string[], userIds: string[]} */
+    recipientSpec: text('recipient_spec'),
     createdByUserId: text('created_by_user_id')
       .notNull()
       .references(() => user.id),
@@ -82,6 +93,7 @@ export const headsUpRecipients = pgTable(
     acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
     signedAt: timestamp('signed_at', { withTimezone: true }),
     signatureData: text('signature_data'),
+    reminderLastSentAt: timestamp('reminder_last_sent_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -138,3 +150,33 @@ export const headsUpComments = pgTable(
 );
 
 export type HeadsUpComment = typeof headsUpComments.$inferSelect;
+
+/**
+ * Emoji reactions on a Heads Up message. One row per (headsUp, user, emoji)
+ * triple — the unique index prevents duplicate reactions of the same type
+ * from the same user.
+ */
+export const headsUpReactions = pgTable(
+  'heads_up_reactions',
+  {
+    id: text('id').primaryKey(),
+    tenantId: text('tenant_id')
+      .notNull()
+      .references(() => tenants.id),
+    headsUpId: text('heads_up_id')
+      .notNull()
+      .references(() => headsUps.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id),
+    /** One of the allowed emoji slugs: 'celebrate' | 'clap' | 'smile'. */
+    emoji: text('emoji').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('heads_up_reactions_unique_idx').on(t.headsUpId, t.userId, t.emoji),
+    index('heads_up_reactions_heads_up_idx').on(t.headsUpId),
+  ],
+);
+
+export type HeadsUpReaction = typeof headsUpReactions.$inferSelect;

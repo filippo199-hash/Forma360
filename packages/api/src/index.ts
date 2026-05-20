@@ -15,3 +15,4 @@ export type { InspectionsRouterDeps } from './routers/inspections';
 export type { IssuesRouterDeps } from './routers/issues';
 export { setUsersRouterDeps, type UsersRouterDeps } from './routers/users';
 export type { ComplianceRouterDeps } from './routers/compliance';
+export type { HeadsUpsRouterDeps } from './routers/headsUps';
