@@ -9,8 +9,8 @@ import { backupObjectKey, PG_DUMP_CRON } from './workers/pg-dump-nightly';
 
 describe('queue registry', () => {
   it('exposes the two Phase 0 queues', () => {
-    expect(QUEUE_NAMES.TEST).toBe('forma360:test');
-    expect(QUEUE_NAMES.BACKUPS).toBe('forma360:backups');
+    expect(QUEUE_NAMES.TEST).toBe('forma360-test');
+    expect(QUEUE_NAMES.BACKUPS).toBe('forma360-backups');
   });
 
   it('has a payload schema for every queue name', () => {

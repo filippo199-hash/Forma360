@@ -29,6 +29,15 @@ const MIGRATION_FILES = [
   '0009_signature_workflow.sql',
   '0010_issues.sql',
   '0011_observations_richer.sql',
+  '0012_actions_phase4.sql',
+  '0013_actions_phase4b.sql',
+  '0014_phase5.sql',
+  '0015_phase8_compliance.sql',
+  '0016_headsup_share_reactions.sql',
+  '0017_heads_up_enhancements.sql',
+  '0018_documents_v2.sql',
+  '0019_schedule_enhancements.sql',
+  '0020_compliance_scope.sql',
 ];
 
 async function bootDb() {
