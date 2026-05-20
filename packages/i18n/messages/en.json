@@ -2150,7 +2150,8 @@
       "newVersionSuccessToast": "New version uploaded",
       "errorToast": "Upload failed",
       "fileSizeError": "File exceeds the 50 MB limit.",
-      "changesSaved": "Changes saved"
+      "changesSaved": "Changes saved",
+      "reminderDayOption": "{days}d"
     },
     "labels": {
       "manageTitle": "Manage labels",

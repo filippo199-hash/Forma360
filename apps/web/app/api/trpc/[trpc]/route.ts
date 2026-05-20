@@ -15,6 +15,7 @@ import { isId } from '@forma360/shared/id';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { authDeps } from '../../../../src/server/auth-deps';
 import { exportsDeps } from '../../../../src/server/exports-deps';
+import { headsUpsDeps } from '../../../../src/server/heads-up-deps';
 import { inspectionsDeps } from '../../../../src/server/inspections-deps';
 import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { issuesDeps } from '../../../../src/server/issues-deps';
@@ -32,6 +33,7 @@ const appRouter = buildAppRouter({
   inspections: inspectionsDeps,
   issues: issuesDeps,
   compliance: complianceDeps,
+  headsUps: headsUpsDeps,
 });
 
 async function handler(req: Request): Promise<Response> {

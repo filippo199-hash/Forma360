@@ -1,7 +1,7 @@
 /**
- * Document Folders router — Phase 5C.
+ * Document Folders router — Phase 5D.
  *
- * Self-referencing folder hierarchy.
+ * Self-referencing folder hierarchy with optional group / site visibility.
  * D-E06: can't delete a folder that still contains documents or sub-folders.
  */
 import { documentFolders, documents } from '@forma360/db/schema';
@@ -15,15 +15,25 @@ import { router } from '../trpc';
 
 const folderIdInput = z.object({ folderId: z.string().length(26) });
 
+const visibilityFields = {
+  /** ULID array — when non-empty only members of these groups can see the folder. */
+  visibleToGroupIds: z.array(z.string().length(26)).default([]),
+  /** ULID array — when non-empty only users assigned to these sites can see the folder. */
+  visibleToSiteIds: z.array(z.string().length(26)).default([]),
+};
+
 const createInput = z.object({
   name: z.string().min(1).max(500),
   parentId: z.string().length(26).optional(),
+  ...visibilityFields,
 });
 
 const updateInput = z.object({
   folderId: z.string().length(26),
   name: z.string().min(1).max(500).optional(),
   parentId: z.string().length(26).nullable().optional(),
+  visibleToGroupIds: z.array(z.string().length(26)).optional(),
+  visibleToSiteIds: z.array(z.string().length(26)).optional(),
 });
 
 const listInput = z
@@ -48,6 +58,8 @@ export const documentFoldersRouter = router({
           id: documentFolders.id,
           name: documentFolders.name,
           parentId: documentFolders.parentId,
+          visibleToGroupIds: documentFolders.visibleToGroupIds,
+          visibleToSiteIds: documentFolders.visibleToSiteIds,
           createdByUserId: documentFolders.createdByUserId,
           createdAt: documentFolders.createdAt,
           creatorName: user.name,
@@ -71,6 +83,8 @@ export const documentFoldersRouter = router({
         tenantId: ctx.tenantId,
         name: input.name,
         parentId: input.parentId ?? null,
+        visibleToGroupIds: input.visibleToGroupIds,
+        visibleToSiteIds: input.visibleToSiteIds,
         createdByUserId: ctx.auth.userId,
         createdAt: now,
         updatedAt: now,
@@ -100,6 +114,8 @@ export const documentFoldersRouter = router({
       const updates: Partial<typeof documentFolders.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) updates.name = input.name;
       if (input.parentId !== undefined) updates.parentId = input.parentId;
+      if (input.visibleToGroupIds !== undefined) updates.visibleToGroupIds = input.visibleToGroupIds;
+      if (input.visibleToSiteIds !== undefined) updates.visibleToSiteIds = input.visibleToSiteIds;
 
       await ctx.db.update(documentFolders).set(updates).where(eq(documentFolders.id, folder.id));
       return { ok: true as const };
@@ -128,7 +144,6 @@ export const documentFoldersRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'folder-not-found' });
       }
 
-      // Check for sub-folders.
       const subFolderCount = await ctx.db
         .select({ c: count() })
         .from(documentFolders)
@@ -137,7 +152,6 @@ export const documentFoldersRouter = router({
         throw new TRPCError({ code: 'CONFLICT', message: 'folder-has-subfolders' });
       }
 
-      // Check for documents in this folder (non-archived).
       const docCount = await ctx.db
         .select({ c: count() })
         .from(documents)

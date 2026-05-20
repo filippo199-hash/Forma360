@@ -13,6 +13,7 @@ import { buildAppRouter } from '@forma360/api';
 import { NextResponse } from 'next/server';
 import { authDeps } from '../../../../src/server/auth-deps';
 import { exportsDeps } from '../../../../src/server/exports-deps';
+import { headsUpsDeps } from '../../../../src/server/heads-up-deps';
 import { inspectionsDeps } from '../../../../src/server/inspections-deps';
 import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { issuesDeps } from '../../../../src/server/issues-deps';
@@ -27,6 +28,7 @@ const appRouter = buildAppRouter({
   inspections: inspectionsDeps,
   issues: issuesDeps,
   compliance: complianceDeps,
+  headsUps: headsUpsDeps,
 });
 
 export async function GET(req: Request): Promise<Response> {

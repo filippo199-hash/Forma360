@@ -1,17 +1,16 @@
 /**
- * Documents router — Phase 5C.
+ * Documents & Policies router — Phase 5D.
  *
- * File uploads organised in folder hierarchy, per-file/folder access
- * control, site assignment, version history, and document freshness.
+ * Lifecycle fields added: start_date, expires_at, responsible_user_id,
+ * responsible_group_id, reminder_days, label_ids.
  *
  * Key edge cases:
- *   - D-E03: 50 MB file size limit enforced at the router boundary.
- *   - D-E05: site_id is nullable; when a site is deleted the app layer
- *     sets site_id to null (no FK constraint so deletes don't cascade).
- *   - Version history: each upload appends a document_versions row and
- *     bumps documents.current_version.
- *   - Access: document_access rows grant user/group view|edit|manage
- *     permissions on a document or folder.
+ *   D-E03: 50 MB file size limit at the router boundary.
+ *   D-E05: site_id is nullable; cleared at app layer when a site is deleted.
+ *   Version history: each upload appends a document_versions row and bumps
+ *     documents.current_version.
+ *   Access: document_access rows grant user/group view|edit|manage on a
+ *     document or folder.
  */
 import {
   documentAccess,
@@ -51,6 +50,25 @@ async function loadDocumentOrThrow(
   return row;
 }
 
+/** Shared lifecycle / label fields used by create + update. */
+const lifecycleFields = {
+  /** ISO date string or null. */
+  startDate: z.string().datetime({ offset: true }).optional().nullable(),
+  /** ISO date string or null. When set, reminder jobs fire reminder_days before. */
+  expiresAt: z.string().datetime({ offset: true }).optional().nullable(),
+  /** Responsible user ULID. */
+  responsibleUserId: z.string().length(26).optional().nullable(),
+  /** Responsible group ULID. */
+  responsibleGroupId: z.string().length(26).optional().nullable(),
+  /**
+   * Days before expiresAt to send a reminder. E.g. [30, 7].
+   * Ignored when expiresAt is null.
+   */
+  reminderDays: z.array(z.number().int().min(1).max(365)).default([]),
+  /** Array of document_labels ULIDs. */
+  labelIds: z.array(z.string().length(26)).default([]),
+};
+
 const createInput = z.object({
   name: z.string().min(1).max(500),
   description: z.string().max(5000).default(''),
@@ -63,6 +81,7 @@ const createInput = z.object({
   siteId: z.string().length(26).optional(),
   labels: z.array(z.string().max(100)).default([]),
   freshnessDays: z.number().int().min(1).optional(),
+  ...lifecycleFields,
 });
 
 const updateInput = z.object({
@@ -73,6 +92,12 @@ const updateInput = z.object({
   siteId: z.string().length(26).nullable().optional(),
   labels: z.array(z.string().max(100)).optional(),
   freshnessDays: z.number().int().min(1).nullable().optional(),
+  startDate: z.string().datetime({ offset: true }).optional().nullable(),
+  expiresAt: z.string().datetime({ offset: true }).optional().nullable(),
+  responsibleUserId: z.string().length(26).optional().nullable(),
+  responsibleGroupId: z.string().length(26).optional().nullable(),
+  reminderDays: z.array(z.number().int().min(1).max(365)).optional(),
+  labelIds: z.array(z.string().length(26)).optional(),
 });
 
 const uploadNewVersionInput = z.object({
@@ -137,7 +162,12 @@ export const documentsRouter = router({
           sizeBytes: documents.sizeBytes,
           siteId: documents.siteId,
           labels: documents.labels,
+          labelIds: documents.labelIds,
           freshnessDays: documents.freshnessDays,
+          startDate: documents.startDate,
+          expiresAt: documents.expiresAt,
+          responsibleUserId: documents.responsibleUserId,
+          responsibleGroupId: documents.responsibleGroupId,
           currentVersion: documents.currentVersion,
           uploadedByUserId: documents.uploadedByUserId,
           uploaderName: user.name,
@@ -161,7 +191,7 @@ export const documentsRouter = router({
     .query(async ({ ctx, input }) => {
       const doc = await loadDocumentOrThrow(ctx.db, ctx.tenantId, input.documentId);
 
-      const [uploaderRows, folderRows, versionRows] = await Promise.all([
+      const [uploaderRows, folderRows, versionRows, responsibleUserRows] = await Promise.all([
         ctx.db
           .select({ name: user.name, email: user.email })
           .from(user)
@@ -190,10 +220,15 @@ export const documentsRouter = router({
           .leftJoin(user, eq(user.id, documentVersions.uploadedByUserId))
           .where(eq(documentVersions.documentId, doc.id))
           .orderBy(desc(documentVersions.version)),
+        doc.responsibleUserId !== null
+          ? ctx.db
+              .select({ name: user.name, email: user.email })
+              .from(user)
+              .where(eq(user.id, doc.responsibleUserId))
+              .limit(1)
+          : Promise.resolve([]),
       ]);
 
-      // Freshness: a document is stale when it hasn't been updated within
-      // its freshness_days window.
       let isStale = false;
       if (doc.freshnessDays !== null) {
         const msPerDay = 86_400_000;
@@ -202,12 +237,24 @@ export const documentsRouter = router({
         isStale = daysSinceUpdate > doc.freshnessDays;
       }
 
+      const isExpired =
+        doc.expiresAt !== null && new Date(doc.expiresAt) < new Date();
+      const daysUntilExpiry =
+        doc.expiresAt !== null
+          ? Math.ceil(
+              (new Date(doc.expiresAt).getTime() - Date.now()) / 86_400_000,
+            )
+          : null;
+
       return {
         document: doc,
         uploader: uploaderRows[0] ?? null,
+        responsibleUser: responsibleUserRows[0] ?? null,
         folderName: folderRows[0]?.name ?? null,
         versions: versionRows,
         isStale,
+        isExpired,
+        daysUntilExpiry,
       };
     }),
 
@@ -215,7 +262,6 @@ export const documentsRouter = router({
     .use(requirePermission('documents.manage'))
     .input(createInput)
     .mutation(async ({ ctx, input }) => {
-      // D-E03: 50 MB enforced by Zod schema above, but double-check here.
       if (input.sizeBytes > MAX_FILE_SIZE_BYTES) {
         throw new TRPCError({ code: 'PAYLOAD_TOO_LARGE', message: 'file-too-large' });
       }
@@ -237,7 +283,13 @@ export const documentsRouter = router({
           sizeBytes: input.sizeBytes,
           siteId: input.siteId ?? null,
           labels: input.labels,
+          labelIds: input.labelIds,
           freshnessDays: input.freshnessDays ?? null,
+          startDate: input.startDate != null ? new Date(input.startDate) : null,
+          expiresAt: input.expiresAt != null ? new Date(input.expiresAt) : null,
+          responsibleUserId: input.responsibleUserId ?? null,
+          responsibleGroupId: input.responsibleGroupId ?? null,
+          reminderDays: input.reminderDays,
           currentVersion: 1,
           uploadedByUserId: ctx.auth.userId,
           createdAt: now,
@@ -276,7 +328,15 @@ export const documentsRouter = router({
       if (input.folderId !== undefined) updates.folderId = input.folderId;
       if (input.siteId !== undefined) updates.siteId = input.siteId;
       if (input.labels !== undefined) updates.labels = input.labels;
+      if (input.labelIds !== undefined) updates.labelIds = input.labelIds;
       if (input.freshnessDays !== undefined) updates.freshnessDays = input.freshnessDays;
+      if (input.startDate !== undefined)
+        updates.startDate = input.startDate != null ? new Date(input.startDate) : null;
+      if (input.expiresAt !== undefined)
+        updates.expiresAt = input.expiresAt != null ? new Date(input.expiresAt) : null;
+      if (input.responsibleUserId !== undefined) updates.responsibleUserId = input.responsibleUserId;
+      if (input.responsibleGroupId !== undefined) updates.responsibleGroupId = input.responsibleGroupId;
+      if (input.reminderDays !== undefined) updates.reminderDays = input.reminderDays;
 
       await ctx.db.update(documents).set(updates).where(eq(documents.id, doc.id));
       return { ok: true as const };
