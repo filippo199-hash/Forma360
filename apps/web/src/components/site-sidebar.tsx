@@ -33,7 +33,6 @@ interface NavItem {
     | 'actions'
     | 'headsUp'
     | 'assets'
-    | 'maintenance'
     | 'documents'
     | 'compliance'
     | 'settings';
@@ -65,7 +64,6 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
     { key: 'actions', href: `/${locale}/actions`, icon: ListChecks },
     { key: 'headsUp', href: `/${locale}/heads-up`, icon: Bell },
     { key: 'assets', href: `/${locale}/assets`, icon: Wrench },
-    { key: 'maintenance', href: `/${locale}/maintenance`, icon: Calendar },
     { key: 'documents', href: `/${locale}/documents`, icon: FolderOpen },
     { key: 'compliance', href: `/${locale}/compliance`, icon: ShieldCheck },
   ];

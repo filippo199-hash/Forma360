@@ -318,6 +318,75 @@ export const maintenancePlansRouter = router({
       return { ok: true as const };
     }),
 
+  /**
+   * All maintenance plans linked to a specific asset, with computed status.
+   * Used by the asset-detail Maintenance tab.
+   */
+  listForAsset: tenantProcedure
+    .use(requirePermission('assets.view'))
+    .input(z.object({ assetId: z.string().length(26) }))
+    .query(async ({ ctx, input }) => {
+      const links = await ctx.db
+        .select({
+          planId: maintenancePlanAssets.planId,
+          assetId: maintenancePlanAssets.assetId,
+          lastServiceDate: maintenancePlanAssets.lastServiceDate,
+          lastServiceValue: maintenancePlanAssets.lastServiceValue,
+          planName: maintenancePlans.name,
+          planDescription: maintenancePlans.description,
+          planType: maintenancePlans.planType,
+          intervalDays: maintenancePlans.intervalDays,
+          intervalUsage: maintenancePlans.intervalUsage,
+          usageField: maintenancePlans.usageField,
+          usageUnit: maintenancePlans.usageUnit,
+          notificationDaysBefore: maintenancePlans.notificationDaysBefore,
+        })
+        .from(maintenancePlanAssets)
+        .leftJoin(maintenancePlans, eq(maintenancePlans.id, maintenancePlanAssets.planId))
+        .where(
+          and(
+            eq(maintenancePlanAssets.assetId, input.assetId),
+            eq(maintenancePlans.tenantId, ctx.tenantId),
+            isNull(maintenancePlans.archivedAt),
+          ),
+        );
+
+      const result = await Promise.all(
+        links.map(async (link) => {
+          let latestReadingValue: string | null = null;
+          if (link.planType === 'usage' && link.usageField !== null) {
+            const readingRows = await ctx.db
+              .select({ value: assetReadings.value })
+              .from(assetReadings)
+              .where(
+                and(
+                  eq(assetReadings.assetId, input.assetId),
+                  eq(assetReadings.fieldName, link.usageField ?? ''),
+                ),
+              )
+              .orderBy(desc(assetReadings.capturedAt))
+              .limit(1);
+            latestReadingValue = readingRows[0]?.value ?? null;
+          }
+
+          const status = computeMaintenanceStatus({
+            planType: link.planType ?? 'time',
+            intervalDays: link.intervalDays,
+            intervalUsage: link.intervalUsage,
+            usageField: link.usageField,
+            lastServiceDate: link.lastServiceDate,
+            lastServiceValue: link.lastServiceValue,
+            latestReadingValue,
+            notificationDaysBefore: link.notificationDaysBefore,
+          });
+
+          return { ...link, latestReadingValue, status };
+        }),
+      );
+
+      return result;
+    }),
+
   /** Link assets to a plan. Idempotent on duplicates. */
   linkAssets: tenantProcedure
     .use(requirePermission('assets.maintenance.manage'))

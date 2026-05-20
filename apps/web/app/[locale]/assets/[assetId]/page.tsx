@@ -14,10 +14,20 @@ import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
+type MaintenanceStatus = 'awaiting_first_reading' | 'on_schedule' | 'approaching' | 'overdue';
+
+const MAINTENANCE_STATUS_COLORS: Record<MaintenanceStatus, string> = {
+  awaiting_first_reading: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
+  on_schedule: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
+  approaching: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
+  overdue: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100',
+};
+
 type Tab = 'overview' | 'readings' | 'maintenance';
 
 export default function AssetDetailPage() {
   const t = useTranslations('assets.detail');
+  const tMaint = useTranslations('maintenancePlans.table');
   const tCommon = useTranslations('common');
   const params = useParams<{ locale: string; assetId: string }>();
   const locale = params.locale ?? 'en';
@@ -37,6 +47,12 @@ export default function AssetDetailPage() {
     { assetId },
     { enabled: tab === 'readings' },
   );
+
+  const { data: maintenanceData, isLoading: maintenanceLoading } =
+    trpc.maintenancePlans.listForAsset.useQuery(
+      { assetId },
+      { enabled: tab === 'maintenance' },
+    );
 
   const addReading = trpc.assets.readings.add.useMutation({
     onSuccess: () => {
@@ -276,17 +292,55 @@ export default function AssetDetailPage() {
       ) : null}
 
       {tab === 'maintenance' ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            <p>{t('maintenancePlansHint')}</p>
-            <Link
-              href={`/${locale}/maintenance`}
-              className="mt-2 inline-block text-foreground underline-offset-4 hover:underline"
-            >
-              {t('maintenancePlansLink')}
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          {maintenanceLoading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : (maintenanceData ?? []).length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <p>{t('maintenancePlans.empty')}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/40">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">{t('maintenancePlans.columns.plan')}</th>
+                      <th className="px-3 py-2 font-medium">{t('maintenancePlans.columns.type')}</th>
+                      <th className="px-3 py-2 font-medium">{t('maintenancePlans.columns.lastService')}</th>
+                      <th className="px-3 py-2 font-medium">{t('maintenancePlans.columns.status')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(maintenanceData ?? []).map((row) => {
+                      const status = row.status as MaintenanceStatus;
+                      return (
+                        <tr key={row.planId ?? row.lastServiceDate} className="border-b last:border-0 hover:bg-muted/30">
+                          <td className="px-3 py-2 font-medium">{row.planName ?? '—'}</td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {tMaint(`planType.${row.planType ?? 'time'}`)}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {row.lastServiceDate ?? '—'}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${MAINTENANCE_STATUS_COLORS[status] ?? MAINTENANCE_STATUS_COLORS.on_schedule}`}
+                            >
+                              {tMaint(`status.${status}`)}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       ) : null}
     </div>
   );
