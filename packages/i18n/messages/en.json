@@ -1776,6 +1776,7 @@
     "detail": {
       "backLink": "Back to Heads Up",
       "publishButton": "Publish",
+      "publishToast": "Published",
       "archiveToast": "Archived",
       "archivedBadge": "Archived",
       "createdBy": "Created by {name}",

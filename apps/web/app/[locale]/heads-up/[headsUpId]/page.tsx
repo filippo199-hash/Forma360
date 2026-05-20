@@ -47,6 +47,14 @@ export default function HeadsUpDetailPage() {
     { enabled: tab === 'comments' },
   );
 
+  const publish = trpc.headsUps.publish.useMutation({
+    onSuccess: () => {
+      toast.success(t('publishToast'));
+      void utils.headsUps.get.invalidate({ headsUpId });
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
   const archive = trpc.headsUps.archive.useMutation({
     onSuccess: () => {
       toast.success(t('archiveToast'));
@@ -109,8 +117,12 @@ export default function HeadsUpDetailPage() {
           </div>
           <div className="flex items-center gap-2">
             {canPublish && headsUp.status === 'draft' ? (
-              <Button asChild type="button">
-                <Link href={`/${locale}/heads-up/${headsUpId}/publish`}>{t('publishButton')}</Link>
+              <Button
+                type="button"
+                onClick={() => publish.mutate({ headsUpId })}
+                disabled={publish.isPending}
+              >
+                {t('publishButton')}
               </Button>
             ) : null}
             {canManage && !isArchived ? (
