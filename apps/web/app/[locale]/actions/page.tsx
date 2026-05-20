@@ -1,10 +1,19 @@
 'use client';
 
-import { Columns3, List as ListIcon, Plus, Search as SearchIcon } from 'lucide-react';
+import {
+  ChevronDown,
+  Columns3,
+  Filter,
+  List as ListIcon,
+  Plus,
+  Search as SearchIcon,
+  Settings2,
+  X,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Input } from '../../../src/components/ui/input';
@@ -18,14 +27,20 @@ type SourceFilter = 'all' | 'standalone' | 'inspection' | 'issue';
 type PriorityFilter = 'all' | 'low' | 'medium' | 'high' | 'critical';
 type SortBy = 'created' | 'due' | 'priority' | 'updated';
 type ViewMode = 'list' | 'board';
+type FilterKey = 'status' | 'source' | 'priority' | 'assignedToMe' | 'overdue' | 'hideClosed' | 'archived' | 'sort';
 
-const STATUSES: ReadonlyArray<StatusFilter> = [
-  'all',
-  'open',
-  'in_progress',
-  'completed',
-  'cancelled',
+const FILTER_KEYS: ReadonlyArray<FilterKey> = [
+  'status',
+  'source',
+  'priority',
+  'assignedToMe',
+  'overdue',
+  'hideClosed',
+  'archived',
+  'sort',
 ];
+
+const STATUSES: ReadonlyArray<StatusFilter> = ['all', 'open', 'in_progress', 'completed', 'cancelled'];
 const SOURCES: ReadonlyArray<SourceFilter> = ['all', 'standalone', 'inspection', 'issue'];
 const PRIORITIES: ReadonlyArray<PriorityFilter> = ['all', 'critical', 'high', 'medium', 'low'];
 const SORT_OPTIONS: ReadonlyArray<SortBy> = ['created', 'due', 'priority', 'updated'];
@@ -36,17 +51,20 @@ const BOARD_COLUMNS: ReadonlyArray<Exclude<StatusFilter, 'all'>> = [
   'cancelled',
 ];
 
+const STATUS_COLUMN_COLORS: Record<Exclude<StatusFilter, 'all'>, string> = {
+  open: 'border-l-blue-400',
+  in_progress: 'border-l-amber-400',
+  completed: 'border-l-emerald-400',
+  cancelled: 'border-l-slate-400',
+};
+
 /**
- * Actions list page (Phase 4 build, expanded with SafetyCulture parity).
+ * Actions page — board-first with composable "Add filter" chip system.
  *
- * Toolbar: search + status / source / priority / assigned-to-me /
- * overdue / hide-closed / show-archived chips + sort selector + List /
- * Board view toggle. Standalone, inspection-raised and observation-
- * raised actions all share the same list — the `Source` column
- * distinguishes them.
- *
- * Routes: `/actions` (this page) → `/actions/new` (standalone create)
- * → `/actions/[actionId]` (detail).
+ * The filter bar is collapsed into an "Add filter" button; active filters
+ * render as dismissible chips so the toolbar stays uncluttered. The view
+ * defaults to Board. A "Categories" shortcut in the header takes admins
+ * to the action-type management page without navigating to Settings.
  */
 export default function ActionsListPage() {
   const t = useTranslations('actions.list');
@@ -55,17 +73,84 @@ export default function ActionsListPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canCreate = useHasPermission('actions.create');
+  const canSettings = useHasPermission('actions.settings');
 
-  const [view, setView] = useState<ViewMode>('list');
+  // View state — defaults to board
+  const [view, setView] = useState<ViewMode>('board');
+
+  // Filter values
   const [status, setStatus] = useState<StatusFilter>('all');
   const [source, setSource] = useState<SourceFilter>('all');
   const [priority, setPriority] = useState<PriorityFilter>('all');
   const [assignedToMe, setAssignedToMe] = useState(false);
   const [overdueOnly, setOverdueOnly] = useState(false);
-  const [hideClosed, setHideClosed] = useState(true);
+  const [hideClosed, setHideClosed] = useState(false);
   const [includeArchived, setIncludeArchived] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>('created');
   const [query, setQuery] = useState('');
+
+  // Which filter chips are currently visible (sort is always shown)
+  const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set(['sort']));
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const filterMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close filter menu on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) {
+        setFilterMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  function addFilter(key: FilterKey) {
+    setActiveFilters((prev) => new Set([...prev, key]));
+    setFilterMenuOpen(false);
+  }
+
+  function removeFilter(key: FilterKey) {
+    if (key === 'sort') return; // sort chip is permanent
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    switch (key) {
+      case 'status': setStatus('all'); break;
+      case 'source': setSource('all'); break;
+      case 'priority': setPriority('all'); break;
+      case 'assignedToMe': setAssignedToMe(false); break;
+      case 'overdue': setOverdueOnly(false); break;
+      case 'hideClosed': setHideClosed(false); break;
+      case 'archived': setIncludeArchived(false); break;
+    }
+  }
+
+  function clearAllFilters() {
+    setActiveFilters(new Set(['sort']));
+    setStatus('all');
+    setSource('all');
+    setPriority('all');
+    setAssignedToMe(false);
+    setOverdueOnly(false);
+    setHideClosed(false);
+    setIncludeArchived(false);
+    setSortBy('created');
+    setQuery('');
+  }
+
+  const availableFilterKeys = FILTER_KEYS.filter((k) => !activeFilters.has(k) && k !== 'sort');
+  const nonDefaultFiltersCount =
+    (status !== 'all' ? 1 : 0) +
+    (source !== 'all' ? 1 : 0) +
+    (priority !== 'all' ? 1 : 0) +
+    (assignedToMe ? 1 : 0) +
+    (overdueOnly ? 1 : 0) +
+    (hideClosed ? 1 : 0) +
+    (includeArchived ? 1 : 0) +
+    (query.trim().length > 0 ? 1 : 0);
 
   const listInput: {
     status?: Exclude<StatusFilter, 'all'>;
@@ -106,14 +191,38 @@ export default function ActionsListPage() {
     return acc;
   }, [list]);
 
+  // Label for a filter chip header
+  function filterLabel(key: FilterKey): string {
+    const labels: Record<FilterKey, string> = {
+      status: t('filterStatus'),
+      source: t('filterSource'),
+      priority: t('filterPriority'),
+      assignedToMe: t('filterAssigneeMe'),
+      overdue: t('overdueChip'),
+      hideClosed: t('hideClosed'),
+      archived: t('showArchived'),
+      sort: t('sortLabel'),
+    };
+    return labels[key];
+  }
+
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* Header */}
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
+          {canSettings ? (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/${locale}/actions/categories`}>
+                <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+                {t('categoriesButton')}
+              </Link>
+            </Button>
+          ) : null}
           <ViewToggle view={view} onChange={setView} t={t} />
           {canCreate ? (
             <Button asChild>
@@ -126,94 +235,182 @@ export default function ActionsListPage() {
         </div>
       </header>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="action-search" className="text-xs font-medium text-muted-foreground">
-            {t('searchLabel')}
-          </label>
-          <div className="relative">
-            <SearchIcon
-              className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              id="action-search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('searchPlaceholder')}
-              className="pl-8"
-            />
-          </div>
+      {/* Search + filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Search */}
+        <div className="relative min-w-[200px]">
+          <SearchIcon
+            className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            className="pl-8"
+            aria-label={t('searchLabel')}
+          />
         </div>
 
-        {view === 'list' ? (
-          <Select
-            id="filter-status"
-            label={t('filterStatus')}
-            value={status}
-            onChange={(v) => setStatus(v as StatusFilter)}
+        {/* Add filter button */}
+        <div className="relative" ref={filterMenuRef}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setFilterMenuOpen((v) => !v)}
+            className="gap-1.5"
           >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s === 'all' ? t('filterStatusAll') : tStatus(s)}
-              </option>
-            ))}
-          </Select>
+            <Filter className="h-3.5 w-3.5" />
+            {t('addFilter')}
+            {nonDefaultFiltersCount > 0 ? (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                {nonDefaultFiltersCount}
+              </span>
+            ) : (
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            )}
+          </Button>
+
+          {filterMenuOpen && availableFilterKeys.length > 0 ? (
+            <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-md border bg-popover py-1 shadow-lg">
+              {availableFilterKeys.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => addFilter(key)}
+                  className="flex w-full items-center px-3 py-2 text-sm hover:bg-accent"
+                >
+                  {filterLabel(key)}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Active filter chips */}
+        {activeFilters.has('sort') ? (
+          <FilterChip label={t('sortLabel')} removable={false} onRemove={() => removeFilter('sort')}>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              className="border-0 bg-transparent text-xs outline-none"
+            >
+              {SORT_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {t(`sortBy.${s}`)}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
         ) : null}
 
-        <Select
-          id="filter-source"
-          label={t('filterSource')}
-          value={source}
-          onChange={(v) => setSource(v as SourceFilter)}
-        >
-          {SOURCES.map((s) => (
-            <option key={s} value={s}>
-              {s === 'all'
-                ? t('filterSourceAll')
-                : s === 'standalone'
-                  ? t('filterSourceStandalone')
-                  : s === 'inspection'
-                    ? t('filterSourceInspection')
-                    : t('filterSourceIssue')}
-            </option>
-          ))}
-        </Select>
-
-        <Select
-          id="filter-priority"
-          label={t('filterPriority')}
-          value={priority}
-          onChange={(v) => setPriority(v as PriorityFilter)}
-        >
-          {PRIORITIES.map((p) => (
-            <option key={p} value={p}>
-              {p === 'all' ? t('filterPriorityAll') : tPriority(p)}
-            </option>
-          ))}
-        </Select>
-
-        <Select
-          id="sort-by"
-          label={t('sortLabel')}
-          value={sortBy}
-          onChange={(v) => setSortBy(v as SortBy)}
-        >
-          {SORT_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {t(`sortBy.${s}`)}
-            </option>
-          ))}
-        </Select>
-
-        <Toggle checked={assignedToMe} onChange={setAssignedToMe} label={t('filterAssigneeMe')} />
-        <Toggle checked={overdueOnly} onChange={setOverdueOnly} label={t('overdueChip')} />
-        {view === 'list' ? (
-          <Toggle checked={hideClosed} onChange={setHideClosed} label={t('hideClosed')} />
+        {activeFilters.has('status') && view === 'list' ? (
+          <FilterChip label={t('filterStatus')} removable onRemove={() => removeFilter('status')}>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as StatusFilter)}
+              className="border-0 bg-transparent text-xs outline-none"
+            >
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s === 'all' ? t('filterStatusAll') : tStatus(s)}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
         ) : null}
-        <Toggle checked={includeArchived} onChange={setIncludeArchived} label={t('showArchived')} />
+
+        {activeFilters.has('source') ? (
+          <FilterChip label={t('filterSource')} removable onRemove={() => removeFilter('source')}>
+            <select
+              value={source}
+              onChange={(e) => setSource(e.target.value as SourceFilter)}
+              className="border-0 bg-transparent text-xs outline-none"
+            >
+              {SOURCES.map((s) => (
+                <option key={s} value={s}>
+                  {s === 'all'
+                    ? t('filterSourceAll')
+                    : s === 'standalone'
+                      ? t('filterSourceStandalone')
+                      : s === 'inspection'
+                        ? t('filterSourceInspection')
+                        : t('filterSourceIssue')}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
+        ) : null}
+
+        {activeFilters.has('priority') ? (
+          <FilterChip label={t('filterPriority')} removable onRemove={() => removeFilter('priority')}>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as PriorityFilter)}
+              className="border-0 bg-transparent text-xs outline-none"
+            >
+              {PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {p === 'all' ? t('filterPriorityAll') : tPriority(p)}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
+        ) : null}
+
+        {activeFilters.has('assignedToMe') ? (
+          <FilterChip
+            label={t('filterAssigneeMe')}
+            removable
+            onRemove={() => removeFilter('assignedToMe')}
+            active={assignedToMe}
+            onToggle={() => setAssignedToMe((v) => !v)}
+          />
+        ) : null}
+
+        {activeFilters.has('overdue') ? (
+          <FilterChip
+            label={t('overdueChip')}
+            removable
+            onRemove={() => removeFilter('overdue')}
+            active={overdueOnly}
+            onToggle={() => setOverdueOnly((v) => !v)}
+          />
+        ) : null}
+
+        {activeFilters.has('hideClosed') && view === 'list' ? (
+          <FilterChip
+            label={t('hideClosed')}
+            removable
+            onRemove={() => removeFilter('hideClosed')}
+            active={hideClosed}
+            onToggle={() => setHideClosed((v) => !v)}
+          />
+        ) : null}
+
+        {activeFilters.has('archived') ? (
+          <FilterChip
+            label={t('showArchived')}
+            removable
+            onRemove={() => removeFilter('archived')}
+            active={includeArchived}
+            onToggle={() => setIncludeArchived((v) => !v)}
+          />
+        ) : null}
+
+        {nonDefaultFiltersCount > 0 ? (
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+          >
+            {t('clearFilters')}
+          </button>
+        ) : null}
       </div>
 
+      {/* Content */}
       {view === 'list' ? (
         <ListView
           rows={list}
@@ -234,6 +431,60 @@ export default function ActionsListPage() {
           t={t}
         />
       )}
+    </div>
+  );
+}
+
+/** A filter chip — either a select wrapper or a toggleable boolean pill. */
+function FilterChip({
+  label,
+  removable,
+  onRemove,
+  active,
+  onToggle,
+  children,
+}: {
+  label: string;
+  removable: boolean;
+  onRemove: () => void;
+  active?: boolean;
+  onToggle?: () => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors',
+        active === true
+          ? 'border-primary/40 bg-primary/10 text-primary'
+          : 'border-input bg-background text-foreground',
+      )}
+    >
+      <span className="font-medium text-muted-foreground">{label}:</span>
+      {children !== undefined ? (
+        children
+      ) : (
+        <button
+          type="button"
+          onClick={onToggle}
+          className={cn(
+            'font-medium',
+            active === true ? 'text-primary' : 'text-muted-foreground',
+          )}
+        >
+          {active === true ? 'On' : 'Off'}
+        </button>
+      )}
+      {removable ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="ml-0.5 rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label={`Remove ${label} filter`}
+        >
+          <X className="h-3 w-3" />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -284,58 +535,6 @@ function ViewToggle({
         {t('viewBoard')}
       </button>
     </div>
-  );
-}
-
-function Select({
-  id,
-  label,
-  value,
-  onChange,
-  children,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1 text-sm">
-      <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-      >
-        {children}
-      </select>
-    </div>
-  );
-}
-
-function Toggle({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center gap-2 text-sm">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4"
-      />
-      <span>{label}</span>
-    </label>
   );
 }
 
@@ -483,13 +682,6 @@ function ListView({
     </Card>
   );
 }
-
-const STATUS_COLUMN_COLORS: Record<Exclude<StatusFilter, 'all'>, string> = {
-  open: 'border-l-blue-400',
-  in_progress: 'border-l-amber-400',
-  completed: 'border-l-emerald-400',
-  cancelled: 'border-l-slate-400',
-};
 
 function BoardView({
   grouped,

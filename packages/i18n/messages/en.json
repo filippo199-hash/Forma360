@@ -1440,7 +1440,11 @@
       "viewList": "List",
       "viewBoard": "Board",
       "boardColumnEmpty": "Nothing here",
-      "boardCountAria": "Cards in column"
+      "boardCountAria": "Cards in column",
+      "addFilter": "Add filter",
+      "clearFilters": "Clear filters",
+      "categoriesButton": "Categories",
+      "backToActions": "Back to Actions"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -1631,6 +1635,8 @@
     "archiveToast": "Action type archived.",
     "restoreToast": "Action type restored.",
     "restoreButton": "Restore",
+    "categoriesNote": "Action categories are now managed directly from the Actions module.",
+    "manageCategories": "Manage categories",
     "visibility": {
       "all_users": "All users",
       "site_members": "Site members",
