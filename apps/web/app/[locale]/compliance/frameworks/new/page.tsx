@@ -1,9 +1,9 @@
 'use client';
 
-import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { FocusedPageShell } from '../../../../../src/components/focused-page-shell';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../../src/components/ui/button';
@@ -123,23 +123,8 @@ export default function NewFrameworkPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Sticky top bar */}
-      <div className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-3">
-          <Link
-            href={`/${locale}/compliance`}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t('backLink')}
-          </Link>
-          <span className="text-muted-foreground">/</span>
-          <h1 className="text-sm font-medium">{t('title')}</h1>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-3xl px-4 py-10">
+    <FocusedPageShell title={t('title')} backHref={`/${locale}/compliance`} width="form">
+      <div className="space-y-6">
 
         {/* ── Step 1: Choose type ─────────────────────────────────────────────── */}
         {step.id === 'type' ? (
@@ -434,6 +419,6 @@ export default function NewFrameworkPage() {
           </div>
         ) : null}
       </div>
-    </div>
+    </FocusedPageShell>
   );
 }

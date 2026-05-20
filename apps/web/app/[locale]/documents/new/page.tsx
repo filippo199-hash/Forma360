@@ -1,9 +1,10 @@
 'use client';
 
-import { ArrowLeft, FileUp, X } from 'lucide-react';
+import { FileUp, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
@@ -166,19 +167,7 @@ export default function DocumentNewPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link
-          href={`/${locale}/documents`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {tCommon('back')}
-        </Link>
-      </div>
-
-      <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-
+    <FocusedPageShell title={t('title')} backHref={`/${locale}/documents`} width="form">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* File drop zone */}
         <Card>
@@ -473,6 +462,6 @@ export default function DocumentNewPage() {
           </Button>
         </div>
       </form>
-    </div>
+    </FocusedPageShell>
   );
 }

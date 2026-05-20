@@ -27,7 +27,7 @@ export default async function InspectionsLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      <div className="mx-auto min-h-screen w-full max-w-5xl">{children}</div>
+      <div className="mx-auto min-h-screen w-full max-w-[1200px]">{children}</div>
     </PermissionsProvider>
   );
 }

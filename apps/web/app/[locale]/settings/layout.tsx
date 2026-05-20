@@ -36,9 +36,15 @@ export default async function SettingsLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      <div className="mx-auto flex max-w-6xl gap-6 px-4 py-8">
+      {/*
+       * fixed inset-0 z-40 overlays the global SiteSidebar so settings
+       * pages render without the module nav — same technique as EditorShell.
+       */}
+      <div className="fixed inset-0 z-40 flex overflow-hidden bg-background">
         <SettingsNav locale={locale} isAdmin={isAdmin} />
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-[1200px] px-6 py-8">{children}</div>
+        </main>
       </div>
     </PermissionsProvider>
   );

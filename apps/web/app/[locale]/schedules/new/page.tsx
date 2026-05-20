@@ -1,9 +1,9 @@
 'use client';
 
-import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -214,21 +214,8 @@ export default function NewSchedulePage() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40">
-      <div className="mx-auto my-8 w-full max-w-2xl rounded-xl border bg-background shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <h1 className="text-xl font-semibold tracking-tight">{t('create')}</h1>
-          <Link
-            href={`/${locale}/schedules`}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label={tCommon('close')}
-          >
-            <X className="h-5 w-5" />
-          </Link>
-        </div>
-
-        <div className="space-y-6 px-6 py-6">
+    <FocusedPageShell title={t('create')} backHref={`/${locale}/schedules`} width="form">
+      <div className="space-y-6">
           {/* 1. Template selector */}
           <div className="space-y-2">
             <Label htmlFor="tpl">{t('table.template')}</Label>
@@ -365,21 +352,20 @@ export default function NewSchedulePage() {
               {summary}
             </div>
           </section>
-        </div>
-
-        {/* Footer — sticky */}
-        <div className="flex justify-end gap-2 border-t px-6 py-4">
-          <Button variant="outline" asChild>
-            <Link href={`/${locale}/schedules`}>{tCommon('cancel')}</Link>
-          </Button>
-          <Button
-            onClick={onSubmit}
-            disabled={createMutation.isPending || templateId === '' || name === '' || noAssignees}
-          >
-            {t('form.save')}
-          </Button>
-        </div>
       </div>
-    </div>
+
+      {/* Footer */}
+      <div className="flex justify-end gap-2 border-t pt-4">
+        <Button variant="outline" asChild>
+          <Link href={`/${locale}/schedules`}>{tCommon('cancel')}</Link>
+        </Button>
+        <Button
+          onClick={onSubmit}
+          disabled={createMutation.isPending || templateId === '' || name === '' || noAssignees}
+        >
+          {t('form.save')}
+        </Button>
+      </div>
+    </FocusedPageShell>
   );
 }

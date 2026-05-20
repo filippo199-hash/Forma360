@@ -32,7 +32,7 @@ export default async function ObservationsLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      <div className="mx-auto min-h-screen w-full max-w-6xl px-4 py-8">
+      <div className="mx-auto min-h-screen w-full max-w-[1200px] px-4 py-8">
         <ObservationsTabs locale={locale} />
         {children}
       </div>

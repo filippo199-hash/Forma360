@@ -6,8 +6,8 @@ import type {
 } from '@forma360/shared/issues-schema';
 import { Image as ImageIcon, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
@@ -212,17 +212,8 @@ export default function NewObservationPage() {
   const customQuestions: ReadonlyArray<IssueCustomQuestion> = category?.customQuestions ?? [];
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
-      <header className="flex items-center justify-between gap-3">
-        <Button asChild variant="ghost" type="button">
-          <Link href={`/${locale}/observations`}>{t('cancelButton')}</Link>
-        </Button>
-        <h1 className="text-xl font-semibold tracking-tight">{t('title')}</h1>
-        <Button type="submit" disabled={!canSubmit}>
-          {t('submitButton')}
-        </Button>
-      </header>
-
+    <FocusedPageShell title={t('title')} backHref={`/${locale}/observations`} width="wide">
+      <form onSubmit={onSubmit} className="space-y-6">
       <Card className="mx-auto max-w-2xl">
         <CardContent className="space-y-5 p-6">
           <div className="space-y-1.5">
@@ -414,9 +405,6 @@ export default function NewObservationPage() {
               ) : null}
 
               <div className="flex items-center justify-end gap-2 border-t pt-5">
-                <Button asChild variant="ghost" type="button">
-                  <Link href={`/${locale}/observations`}>{t('cancelButton')}</Link>
-                </Button>
                 <Button type="submit" disabled={!canSubmit}>
                   {t('submitButton')}
                 </Button>
@@ -425,7 +413,8 @@ export default function NewObservationPage() {
           ) : null}
         </CardContent>
       </Card>
-    </form>
+      </form>
+    </FocusedPageShell>
   );
 }
 

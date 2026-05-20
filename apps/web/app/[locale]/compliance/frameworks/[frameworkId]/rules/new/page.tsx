@@ -1,9 +1,9 @@
 'use client';
 
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { FocusedPageShell } from '../../../../../../../src/components/focused-page-shell';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../../../../src/components/ui/button';
@@ -140,19 +140,7 @@ export default function NewRulePage() {
   const isSubmitting = createRule.isPending;
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <Link
-          href={`/${locale}/compliance/frameworks/${frameworkId}`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('backLink')}
-        </Link>
-      </div>
-
-      <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-
+    <FocusedPageShell title={t('title')} backHref={`/${locale}/compliance/frameworks/${frameworkId}`} width="form">
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="max-w-2xl">
           <CardHeader>
@@ -365,16 +353,11 @@ export default function NewRulePage() {
         </Card>
 
         <div className="flex justify-end gap-2 max-w-2xl">
-          <Button type="button" variant="ghost" asChild>
-            <Link href={`/${locale}/compliance/frameworks/${frameworkId}`}>
-              {tCommon('cancel')}
-            </Link>
-          </Button>
           <Button type="submit" disabled={isSubmitting || name.trim().length === 0}>
             {isSubmitting ? t('creating') : tCommon('create')}
           </Button>
         </div>
       </form>
-    </div>
+    </FocusedPageShell>
   );
 }

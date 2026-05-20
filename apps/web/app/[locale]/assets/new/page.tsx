@@ -1,9 +1,10 @@
 'use client';
 
-import { ArrowLeft, ImagePlus, Loader2, X } from 'lucide-react';
+import { ImagePlus, Loader2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
@@ -124,24 +125,8 @@ export default function NewAssetPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Sticky top bar */}
-      <div className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-2xl items-center gap-4 px-4 py-3">
-          <Link
-            href={`/${locale}/assets`}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t('backLink')}
-          </Link>
-          <span className="text-muted-foreground">/</span>
-          <h1 className="text-sm font-medium">{t('title')}</h1>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-2xl px-4 py-10">
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <FocusedPageShell title={t('title')} backHref={`/${locale}/assets`} width="form">
+      <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* Photo + name row */}
           <div className="flex gap-6">
@@ -337,8 +322,7 @@ export default function NewAssetPage() {
             ) : null}
             {t('submitButton')}
           </Button>
-        </form>
-      </div>
-    </div>
+      </form>
+    </FocusedPageShell>
   );
 }

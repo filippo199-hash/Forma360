@@ -11,7 +11,6 @@
  * Custom field builder supports: text, number, date, select (with options).
  */
 import {
-  ArrowLeft,
   ChevronDown,
   ChevronRight,
   GripVertical,
@@ -20,8 +19,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
@@ -457,18 +456,11 @@ export default function AssetCategoriesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <FocusedPageShell title={t('title')} backHref={`/${locale}/assets`} width="wide">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link
-            href={`/${locale}/assets`}
-            className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            {t('backLink')}
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
         {canManage ? (
@@ -614,6 +606,7 @@ export default function AssetCategoriesPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </FocusedPageShell>
   );
 }

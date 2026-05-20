@@ -17,6 +17,7 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
@@ -266,22 +267,8 @@ export default function NewHeadsUpPage() {
   const previewTitle = title.trim().length > 0 ? title : t('previewUntitled');
 
   return (
-    /* Full-screen overlay — same pattern as template editor */
-    <div className="fixed inset-0 z-50 flex bg-background">
-      {/* ── Left: editor ── */}
+    <FocusedPageShell title={t('pageTitle')} backHref={`/${locale}/heads-up`} width="wide">
       <div className="flex h-full w-full flex-col overflow-y-auto border-r md:w-[480px] md:shrink-0">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b px-5 py-4">
-          <Link
-            href={`/${locale}/heads-up`}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <span className="text-base">←</span> {t('backLink')}
-          </Link>
-          <h1 className="text-sm font-semibold">{t('pageTitle')}</h1>
-          <div className="w-24" /> {/* spacer */}
-        </div>
-
         {/* Body */}
         <div className="flex-1 space-y-6 px-5 py-6">
           {/* ── Media upload ── */}
@@ -738,7 +725,7 @@ export default function NewHeadsUpPage() {
           </div>
         </div>
       </div>
-    </div>
+    </FocusedPageShell>
   );
 }
 

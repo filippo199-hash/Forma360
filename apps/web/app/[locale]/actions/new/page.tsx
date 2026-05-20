@@ -1,10 +1,9 @@
 'use client';
 
 import type { ActionCustomQuestion } from '@forma360/shared/actions-schema';
-import { ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
@@ -145,19 +144,7 @@ export default function NewActionPage() {
   }
 
   return (
-    <div className="space-y-6 px-4 py-6">
-      <header>
-        <Link
-          href={`/${locale}/actions`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('backLink')}
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t('title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
-      </header>
-
+    <FocusedPageShell title={t('title')} backHref={`/${locale}/actions`} width="form">
       <Card className="max-w-2xl">
         <CardContent className="space-y-4 py-6">
           <form onSubmit={onSubmit} className="space-y-4">
@@ -306,9 +293,6 @@ export default function NewActionPage() {
             ) : null}
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" asChild>
-                <Link href={`/${locale}/actions`}>{t('cancelButton')}</Link>
-              </Button>
               <Button type="submit" disabled={!canSubmit}>
                 {t('saveButton')}
               </Button>
@@ -316,7 +300,7 @@ export default function NewActionPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </FocusedPageShell>
   );
 }
 
