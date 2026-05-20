@@ -25,6 +25,12 @@ import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
+import {
+  FRAMEWORK_CATALOGUE,
+  getCatalogueByType,
+  getCatalogueEntry,
+  type CatalogueFrameworkType,
+} from '../framework-catalogue';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
@@ -46,6 +52,8 @@ const createFrameworkInput = z.object({
   ownerUserId: z.string().length(26).optional(),
   applicableSites: z.array(z.string().length(26)).default([]),
   targetScore: z.number().min(0).max(100).optional(),
+  /** When provided, auto-seed rules from the pre-built catalogue entry. */
+  catalogueId: z.string().optional(),
 });
 
 const updateFrameworkInput = z.object({
@@ -196,19 +204,50 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
         .mutation(async ({ ctx, input }) => {
           const id = newId();
           const now = new Date();
-          await ctx.db.insert(complianceFrameworks).values({
-            id,
-            tenantId: ctx.tenantId,
-            name: input.name,
-            description: input.description,
-            type: input.type,
-            ownerUserId: input.ownerUserId ?? null,
-            applicableSites: input.applicableSites,
-            targetScore: input.targetScore !== undefined ? String(input.targetScore) : null,
-            createdByUserId: ctx.auth.userId,
-            createdAt: now,
-            updatedAt: now,
+
+          // Validate catalogue entry if provided.
+          const catalogueEntry =
+            input.catalogueId !== undefined ? getCatalogueEntry(input.catalogueId) : undefined;
+          if (input.catalogueId !== undefined && catalogueEntry === undefined) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'catalogue-entry-not-found' });
+          }
+
+          await ctx.db.transaction(async (tx) => {
+            await tx.insert(complianceFrameworks).values({
+              id,
+              tenantId: ctx.tenantId,
+              name: input.name,
+              description: input.description,
+              type: input.type,
+              ownerUserId: input.ownerUserId ?? null,
+              applicableSites: input.applicableSites,
+              targetScore: input.targetScore !== undefined ? String(input.targetScore) : null,
+              createdByUserId: ctx.auth.userId,
+              createdAt: now,
+              updatedAt: now,
+            });
+
+            // Auto-seed rules from the catalogue when a known framework is selected.
+            if (catalogueEntry !== undefined && catalogueEntry.rules.length > 0) {
+              const ruleRows = catalogueEntry.rules.map((rule) => ({
+                id: newId(),
+                tenantId: ctx.tenantId,
+                frameworkId: id,
+                name: rule.name,
+                description: rule.description,
+                clauseRef: rule.clauseRef,
+                frequency: rule.frequency,
+                frequencyDays: null,
+                applicableSites: [] as string[],
+                responsibleUserId: null,
+                dueSoonDays: 7,
+                createdAt: now,
+                updatedAt: now,
+              }));
+              await tx.insert(complianceRules).values(ruleRows);
+            }
           });
+
           return { frameworkId: id };
         }),
 
@@ -248,6 +287,47 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
             .set({ archivedAt: new Date(), updatedAt: new Date() })
             .where(eq(complianceFrameworks.id, fw.id));
           return { ok: true as const };
+        }),
+    }),
+
+    // ── catalogue (static, no DB) ────────────────────────────────────────────
+    catalogue: router({
+      /**
+       * List pre-built framework templates, optionally filtered by type.
+       * Returns summary metadata only (no rules payload) to keep the response small.
+       */
+      list: tenantProcedure
+        .use(requirePermission('compliance.frameworks.manage'))
+        .input(
+          z
+            .object({ type: z.enum(frameworkTypes).optional() })
+            .default({}),
+        )
+        .query(({ input }) => {
+          const entries =
+            input.type !== undefined
+              ? getCatalogueByType(input.type as CatalogueFrameworkType)
+              : FRAMEWORK_CATALOGUE;
+          return entries.map(({ id, name, shortName, description, type, rules }) => ({
+            id,
+            name,
+            shortName,
+            description,
+            type,
+            ruleCount: rules.length,
+          }));
+        }),
+
+      /** Return a single catalogue entry including all its rules for the preview step. */
+      get: tenantProcedure
+        .use(requirePermission('compliance.frameworks.manage'))
+        .input(z.object({ catalogueId: z.string() }))
+        .query(({ input }) => {
+          const entry = getCatalogueEntry(input.catalogueId);
+          if (entry === undefined) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'catalogue-entry-not-found' });
+          }
+          return entry;
         }),
     }),
 

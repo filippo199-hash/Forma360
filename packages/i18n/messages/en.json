@@ -2259,20 +2259,37 @@
       "new": {
         "title": "New compliance framework",
         "backLink": "Back to compliance",
+        "step1Title": "Choose a framework type",
+        "step2Title": "Select a standard",
+        "step2Custom": "Custom framework",
+        "step2CustomDescription": "Define your own rules from scratch.",
+        "step3Title": "Confirm details",
+        "step3TitleCustom": "Define your framework",
+        "rulesPreviewHeading": "Requirements included ({count})",
+        "rulesPreviewToggle": "Preview all requirements",
+        "rulesPreviewCollapse": "Hide requirements",
         "namePlaceholder": "e.g. ISO 45001 Health & Safety",
         "descriptionPlaceholder": "Describe the purpose of this framework…",
         "typeLabel": "Framework type",
-        "targetScoreLabel": "Target score (%)",
-        "targetScoreHint": "(optional)",
-        "targetScoreInvalid": "Target score must be between 0 and 100.",
+        "selectStandard": "Select a standard to use its built-in requirements, or choose Custom to define your own.",
+        "autoPopulatedNote": "These {count} requirements will be added automatically. You can edit or remove them afterwards.",
         "creating": "Creating…",
         "createdToast": "Framework created.",
+        "backToTypes": "← Back",
+        "backToStandards": "← Back",
         "types": {
           "health_safety": "Health & Safety",
           "quality": "Quality",
           "environmental": "Environmental",
           "regulatory": "Regulatory",
           "custom": "Custom"
+        },
+        "typeDescriptions": {
+          "health_safety": "OH&S management, workplace safety, accident prevention",
+          "quality": "Quality management systems, product and service standards",
+          "environmental": "Environmental management, sustainability, emissions",
+          "regulatory": "Data protection, information security, legal requirements",
+          "custom": "Build a framework with your own rules and controls"
         }
       },
       "detail": {
