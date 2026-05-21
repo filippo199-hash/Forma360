@@ -2050,6 +2050,15 @@
         "permission": "Permission",
         "grantedAt": "Granted"
       }
+    },
+    "upload": {
+      "labelsCreate": "Nouveau libellé",
+      "labelsCreateFirst": "Créez votre premier libellé",
+      "labelsNamePlaceholder": "Nom du libellé",
+      "labelsCreateButton": "Créer",
+      "responsibleNoneLabel": "Personne",
+      "responsibleSelectUser": "Sélectionner un utilisateur…",
+      "responsibleSelectGroup": "Sélectionner un groupe…"
     }
   },
   "compliance": {

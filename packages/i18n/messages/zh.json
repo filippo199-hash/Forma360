@@ -2050,6 +2050,15 @@
         "permission": "Permission",
         "grantedAt": "Granted"
       }
+    },
+    "upload": {
+      "labelsCreate": "新建标签",
+      "labelsCreateFirst": "创建第一个标签",
+      "labelsNamePlaceholder": "标签名称",
+      "labelsCreateButton": "创建",
+      "responsibleNoneLabel": "无",
+      "responsibleSelectUser": "选择用户…",
+      "responsibleSelectGroup": "选择组…"
     }
   },
   "compliance": {

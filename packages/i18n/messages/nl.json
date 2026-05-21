@@ -2050,6 +2050,15 @@
         "permission": "Permission",
         "grantedAt": "Granted"
       }
+    },
+    "upload": {
+      "labelsCreate": "Nieuw label",
+      "labelsCreateFirst": "Maak je eerste label",
+      "labelsNamePlaceholder": "Naam van label",
+      "labelsCreateButton": "Maken",
+      "responsibleNoneLabel": "Niemand",
+      "responsibleSelectUser": "Selecteer een gebruiker…",
+      "responsibleSelectGroup": "Selecteer een groep…"
     }
   },
   "compliance": {

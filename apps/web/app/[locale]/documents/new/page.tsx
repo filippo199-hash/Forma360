@@ -1,6 +1,6 @@
 'use client';
 
-import { FileUp, X } from 'lucide-react';
+import { FileUp, Plus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -8,16 +8,32 @@ import { FocusedPageShell } from '../../../../src/components/focused-page-shell'
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
-import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 const MAX_BYTES = 50 * 1024 * 1024;
 
 const REMINDER_OPTIONS = [1, 7, 14, 30, 60, 90] as const;
+
+/** Curated palette for the inline label creator — same spectrum the
+ *  default seed picks from, but presented as click-to-pick swatches. */
+const LABEL_COLORS = [
+  '#6366f1', // indigo
+  '#3b82f6', // blue
+  '#06b6d4', // cyan
+  '#10b981', // emerald
+  '#84cc16', // lime
+  '#eab308', // yellow
+  '#f97316', // orange
+  '#ef4444', // red
+  '#ec4899', // pink
+  '#a855f7', // purple
+  '#64748b', // slate
+] as const;
 
 type UploadedFile = {
   storageKey: string;
@@ -54,7 +70,13 @@ export default function DocumentNewPage() {
   const [reminderDays, setReminderDays] = useState<number[]>([]);
   const [freshnessDays, setFreshnessDays] = useState('');
 
+  // Inline label-creator state
+  const [labelCreatorOpen, setLabelCreatorOpen] = useState(false);
+  const [newLabelName, setNewLabelName] = useState('');
+  const [newLabelColor, setNewLabelColor] = useState<string>(LABEL_COLORS[0]);
+
   // Data queries
+  const utils = trpc.useUtils();
   const { data: folders = [], isLoading: foldersLoading } =
     trpc.documentFolders.list.useQuery({});
   const { data: labels = [], isLoading: labelsLoading } =
@@ -62,6 +84,18 @@ export default function DocumentNewPage() {
   const { data: usersData, isLoading: usersLoading } = trpc.users.list.useQuery({});
   const users = usersData?.users ?? [];
   const { data: groups = [], isLoading: groupsLoading } = trpc.groups.list.useQuery();
+
+  const createLabel = trpc.documentLabels.create.useMutation({
+    onSuccess: ({ labelId }) => {
+      // Auto-select the newly created label so the user doesn't have to
+      // click twice.
+      setSelectedLabelIds((prev) => [...prev, labelId]);
+      setNewLabelName('');
+      setLabelCreatorOpen(false);
+      void utils.documentLabels.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('errorToast')),
+  });
 
   const createDocument = trpc.documents.create.useMutation({
     onSuccess: ({ documentId }) => {
@@ -71,6 +105,12 @@ export default function DocumentNewPage() {
     onError: (err) =>
       toast.error(err.message.length > 0 ? err.message : t('errorToast')),
   });
+
+  function submitNewLabel() {
+    const name = newLabelName.trim();
+    if (name.length === 0 || createLabel.isPending) return;
+    createLabel.mutate({ name, color: newLabelColor });
+  }
 
   const isSubmitting = createDocument.isPending;
 
@@ -169,72 +209,70 @@ export default function DocumentNewPage() {
   return (
     <FocusedPageShell title={t('title')} backHref={`/${locale}/documents`} width="form">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* File drop zone */}
-        <Card>
-          <CardContent className="p-4">
-            <Label className="mb-2 block">{t('fileLabel')}</Label>
-
-            {uploadedFile === null ? (
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors ${
-                  isDragging
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/60 hover:bg-muted/40'
-                }`}
-              >
-                {isUploading ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                    <span className="text-sm text-muted-foreground">
-                      {t('uploadingText')}
-                    </span>
-                  </div>
-                ) : (
-                  <>
-                    <FileUp className="mb-3 h-10 w-10 text-muted-foreground/40" />
-                    <p className="text-sm text-muted-foreground">{t('filePlaceholder')}</p>
-                  </>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileChange}
-                  disabled={isUploading}
-                />
-              </div>
-            ) : (
-              <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <FileUp className="h-5 w-5 shrink-0 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{uploadedFile.filename}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatBytes(uploadedFile.sizeBytes)}
-                    </p>
-                  </div>
+        {/* File drop zone (single box — no outer Card wrapper) */}
+        <div className="space-y-2">
+          <Label>{t('fileLabel')}</Label>
+          {uploadedFile === null ? (
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed bg-background px-6 py-10 text-center transition-colors',
+                isDragging
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/60 hover:bg-muted/40',
+              )}
+            >
+              {isUploading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <span className="text-sm text-muted-foreground">
+                    {t('uploadingText')}
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUploadedFile(null);
-                    if (fileInputRef.current !== null) fileInputRef.current.value = '';
-                  }}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+              ) : (
+                <>
+                  <FileUp className="mb-3 h-10 w-10 text-muted-foreground/40" />
+                  <p className="text-sm text-muted-foreground">{t('filePlaceholder')}</p>
+                </>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
+              <div className="flex items-center gap-3">
+                <FileUp className="h-5 w-5 shrink-0 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">{uploadedFile.filename}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatBytes(uploadedFile.sizeBytes)}
+                  </p>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <button
+                type="button"
+                onClick={() => {
+                  setUploadedFile(null);
+                  if (fileInputRef.current !== null) fileInputRef.current.value = '';
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Metadata — shown after file is chosen */}
         <div className="grid gap-6 md:grid-cols-[1fr_320px]">
@@ -284,37 +322,104 @@ export default function DocumentNewPage() {
             </div>
 
             {/* Labels */}
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label>{t('labelsLabel')}</Label>
               {labelsLoading ? (
                 <Skeleton className="h-10 w-full" />
-              ) : labels.length === 0 ? (
-                <p className="text-xs text-muted-foreground">{t('labelsPlaceholder')}</p>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {labels.map((lbl) => {
-                    const selected = selectedLabelIds.includes(lbl.id);
-                    return (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {labels.map((lbl) => {
+                      const selected = selectedLabelIds.includes(lbl.id);
+                      return (
+                        <button
+                          key={lbl.id}
+                          type="button"
+                          onClick={() => toggleLabel(lbl.id)}
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-all',
+                            selected
+                              ? 'border-transparent text-white shadow-sm'
+                              : 'border-border bg-background text-foreground hover:bg-muted',
+                          )}
+                          style={selected ? { backgroundColor: lbl.color } : undefined}
+                        >
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: lbl.color }}
+                          />
+                          {lbl.name}
+                        </button>
+                      );
+                    })}
+                    {!labelCreatorOpen ? (
                       <button
-                        key={lbl.id}
                         type="button"
-                        onClick={() => toggleLabel(lbl.id)}
-                        className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
-                          selected
-                            ? 'border-transparent text-white shadow-sm'
-                            : 'border-border bg-background text-foreground hover:bg-muted'
-                        }`}
-                        style={selected ? { backgroundColor: lbl.color } : {}}
+                        onClick={() => setLabelCreatorOpen(true)}
+                        className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
                       >
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: lbl.color }}
-                        />
-                        {lbl.name}
+                        <Plus className="h-3 w-3" />
+                        {labels.length === 0 ? t('labelsCreateFirst') : t('labelsCreate')}
                       </button>
-                    );
-                  })}
-                </div>
+                    ) : null}
+                  </div>
+
+                  {labelCreatorOpen ? (
+                    <div className="space-y-2 rounded-lg border bg-background p-3">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          autoFocus
+                          value={newLabelName}
+                          onChange={(e) => setNewLabelName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              submitNewLabel();
+                            }
+                            if (e.key === 'Escape') setLabelCreatorOpen(false);
+                          }}
+                          placeholder={t('labelsNamePlaceholder')}
+                          maxLength={60}
+                          className="h-8 text-sm"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={submitNewLabel}
+                          disabled={
+                            newLabelName.trim().length === 0 || createLabel.isPending
+                          }
+                        >
+                          {t('labelsCreateButton')}
+                        </Button>
+                        <button
+                          type="button"
+                          onClick={() => setLabelCreatorOpen(false)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {LABEL_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setNewLabelColor(c)}
+                            aria-label={c}
+                            className={cn(
+                              'h-6 w-6 rounded-full border-2 transition-all',
+                              newLabelColor === c
+                                ? 'border-foreground scale-110'
+                                : 'border-transparent hover:scale-105',
+                            )}
+                            style={{ backgroundColor: c }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </>
               )}
             </div>
           </div>
@@ -341,26 +446,30 @@ export default function DocumentNewPage() {
               />
             </div>
 
-            {/* Responsible party */}
+            {/* Responsible party — segmented control + conditional select */}
             <div className="space-y-2">
               <Label>{t('responsibleLabel')}</Label>
-              <div className="flex gap-3 text-sm">
-                {(['none', 'user', 'group'] as const).map((rt) => (
-                  <label key={rt} className="flex cursor-pointer items-center gap-1.5">
-                    <input
-                      type="radio"
-                      name="responsible-type"
-                      value={rt}
-                      checked={responsibleType === rt}
-                      onChange={() => setResponsibleType(rt)}
-                      className="h-4 w-4"
-                    />
-                    {rt === 'none'
-                      ? '—'
-                      : rt === 'user'
-                        ? t('responsibleUserLabel')
-                        : t('responsibleGroupLabel')}
-                  </label>
+              <div className="flex w-full rounded-md border bg-muted/30 p-0.5 text-sm">
+                {(
+                  [
+                    { value: 'none', label: t('responsibleNoneLabel') },
+                    { value: 'user', label: t('responsibleUserLabel') },
+                    { value: 'group', label: t('responsibleGroupLabel') },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setResponsibleType(opt.value)}
+                    className={cn(
+                      'flex-1 rounded px-3 py-1.5 text-center transition-colors',
+                      responsibleType === opt.value
+                        ? 'bg-background font-medium text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {opt.label}
+                  </button>
                 ))}
               </div>
 
@@ -373,7 +482,7 @@ export default function DocumentNewPage() {
                     onChange={(e) => setResponsibleUserId(e.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    <option value="">—</option>
+                    <option value="">{t('responsibleSelectUser')}</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.name ?? u.email}
@@ -392,7 +501,7 @@ export default function DocumentNewPage() {
                     onChange={(e) => setResponsibleGroupId(e.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    <option value="">—</option>
+                    <option value="">{t('responsibleSelectGroup')}</option>
                     {groups.map((g) => (
                       <option key={g.id} value={g.id}>
                         {g.name}

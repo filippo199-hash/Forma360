@@ -2050,6 +2050,15 @@
         "permission": "Permission",
         "grantedAt": "Granted"
       }
+    },
+    "upload": {
+      "labelsCreate": "新しいラベル",
+      "labelsCreateFirst": "最初のラベルを作成",
+      "labelsNamePlaceholder": "ラベル名",
+      "labelsCreateButton": "作成",
+      "responsibleNoneLabel": "なし",
+      "responsibleSelectUser": "ユーザーを選択…",
+      "responsibleSelectGroup": "グループを選択…"
     }
   },
   "compliance": {

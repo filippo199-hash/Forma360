@@ -2050,6 +2050,15 @@
         "permission": "Permission",
         "grantedAt": "Granted"
       }
+    },
+    "upload": {
+      "labelsCreate": "Neue Bezeichnung",
+      "labelsCreateFirst": "Erste Bezeichnung erstellen",
+      "labelsNamePlaceholder": "Name der Bezeichnung",
+      "labelsCreateButton": "Erstellen",
+      "responsibleNoneLabel": "Niemand",
+      "responsibleSelectUser": "Benutzer auswählen…",
+      "responsibleSelectGroup": "Gruppe auswählen…"
     }
   },
   "compliance": {

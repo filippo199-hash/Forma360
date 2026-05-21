@@ -2050,6 +2050,15 @@
         "permission": "Permission",
         "grantedAt": "Granted"
       }
+    },
+    "upload": {
+      "labelsCreate": "Nowa etykieta",
+      "labelsCreateFirst": "Utwórz pierwszą etykietę",
+      "labelsNamePlaceholder": "Nazwa etykiety",
+      "labelsCreateButton": "Utwórz",
+      "responsibleNoneLabel": "Nikt",
+      "responsibleSelectUser": "Wybierz użytkownika…",
+      "responsibleSelectGroup": "Wybierz grupę…"
     }
   },
   "compliance": {

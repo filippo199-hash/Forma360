@@ -2198,7 +2198,14 @@
       "errorToast": "Upload failed",
       "fileSizeError": "File exceeds the 50 MB limit.",
       "changesSaved": "Changes saved",
-      "reminderDayOption": "{days}d"
+      "reminderDayOption": "{days}d",
+      "labelsCreate": "New label",
+      "labelsCreateFirst": "Create your first label",
+      "labelsNamePlaceholder": "Label name",
+      "labelsCreateButton": "Create",
+      "responsibleNoneLabel": "No one",
+      "responsibleSelectUser": "Select a user…",
+      "responsibleSelectGroup": "Select a group…"
     },
     "labels": {
       "manageTitle": "Manage labels",
