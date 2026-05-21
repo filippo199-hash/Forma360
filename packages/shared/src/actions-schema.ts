@@ -114,6 +114,15 @@ export const DEFAULT_TRANSITION_RULES: TransitionRules = {
 };
 
 /**
+ * Preset label options per action type. Admins configure these in the
+ * action type detail page; the create-action form renders them as a
+ * dropdown so reporters pick a structured label instead of free-typing.
+ * Max 50 labels per type, each up to 80 chars.
+ */
+export const actionLabelsSchema = z.array(z.string().min(1).max(80)).max(50);
+export type ActionLabels = z.infer<typeof actionLabelsSchema>;
+
+/**
  * Recurrence configuration shape. We keep it small — a single
  * RRULE-RFC5545 string (e.g. `FREQ=WEEKLY;BYDAY=MO`) plus an `endDate`
  * fallback for "stop after". The worker that materialises the next

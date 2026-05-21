@@ -42,6 +42,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import type {
   ActionCustomQuestion,
+  ActionLabels,
   ActionRequiredField,
   ActionVisibilityRule,
   PriorityDueDateDays,
@@ -140,6 +141,16 @@ export const actionTypes = pgTable(
       .default(
         sql`'{"completed":{"allowedGroupIds":[]},"cancelled":{"allowedGroupIds":[]}}'::jsonb`,
       ),
+
+    /**
+     * Preset label options for this type. When non-empty, the create-action
+     * form renders a dropdown so reporters pick a structured label instead
+     * of free-typing. Admin manages these on the type detail page.
+     */
+    labels: jsonb('labels')
+      .notNull()
+      .$type<ActionLabels>()
+      .default(sql`'[]'::jsonb`),
 
     /** Whether this type is the tenant's default for standalone creates. */
     isDefault: boolean('is_default').notNull().default(false),

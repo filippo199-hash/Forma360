@@ -17,6 +17,7 @@ import {
   ACTION_REQUIRED_FIELDS,
   ACTION_VISIBILITY_RULES,
   actionCustomQuestionsSchema,
+  actionLabelsSchema,
   actionRequiredFieldsSchema,
   actionVisibilityRuleSchema,
   priorityDueDateDaysSchema,
@@ -43,6 +44,7 @@ const createInput = z.object({
   requiredFields: actionRequiredFieldsSchema.default([]),
   visibility: actionVisibilityRuleSchema.default('all_users'),
   transitionRules: transitionRulesSchema.optional(),
+  labels: actionLabelsSchema.default([]),
 });
 
 const updateInput = z.object({
@@ -59,6 +61,7 @@ const updateInput = z.object({
   requiredFields: actionRequiredFieldsSchema.optional(),
   visibility: actionVisibilityRuleSchema.optional(),
   transitionRules: transitionRulesSchema.optional(),
+  labels: actionLabelsSchema.optional(),
 });
 
 const settingsUpdateInput = z.object({
@@ -141,6 +144,7 @@ export const actionTypesRouter = router({
             completed: { allowedGroupIds: [] },
             cancelled: { allowedGroupIds: [] },
           },
+          labels: input.labels,
           isDefault: false,
           createdBy: ctx.auth.userId,
           createdAt: now,
@@ -175,6 +179,7 @@ export const actionTypesRouter = router({
       if (input.requiredFields !== undefined) updates.requiredFields = input.requiredFields;
       if (input.visibility !== undefined) updates.visibility = input.visibility;
       if (input.transitionRules !== undefined) updates.transitionRules = input.transitionRules;
+      if (input.labels !== undefined) updates.labels = input.labels;
 
       try {
         const result = await ctx.db

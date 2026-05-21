@@ -2,6 +2,7 @@
 
 import type {
   ActionCustomQuestion,
+  ActionLabels,
   ActionRequiredField,
   ActionVisibilityRule,
   TransitionRules,
@@ -26,6 +27,8 @@ import { trpc } from '../../../../../src/lib/trpc/client';
 
 const MAX_QUESTIONS = 20;
 const MAX_OPTIONS = 20;
+const MAX_LABELS = 50;
+const MAX_LABEL_TEXT = 80;
 const MAX_PROMPT = 500;
 const MAX_OPTION_TEXT = 200;
 
@@ -74,6 +77,7 @@ export default function ActionTypeDetailPage() {
   const [color, setColor] = useState('#2563eb');
   const [questions, setQuestions] = useState<ActionCustomQuestion[]>([]);
   const [requiredFields, setRequiredFields] = useState<ActionRequiredField[]>([]);
+  const [labels, setLabels] = useState<ActionLabels>([]);
   const [visibility, setVisibility] = useState<ActionVisibilityRule>('all_users');
   const [transitionRules, setTransitionRules] = useState<TransitionRules>({
     completed: { allowedGroupIds: [] },
@@ -89,6 +93,7 @@ export default function ActionTypeDetailPage() {
     // Spread to drop readonly modifiers from the inferred query result.
     setQuestions([...type.customQuestions]);
     setRequiredFields([...type.requiredFields]);
+    setLabels([...type.labels]);
     setVisibility(type.visibility);
     setTransitionRules({
       completed: { allowedGroupIds: [...type.transitionRules.completed.allowedGroupIds] },
@@ -109,10 +114,11 @@ export default function ActionTypeDetailPage() {
       JSON.stringify(type.requiredFields.slice().sort())
     )
       return true;
+    if (JSON.stringify(labels) !== JSON.stringify(type.labels)) return true;
     if (visibility !== type.visibility) return true;
     if (JSON.stringify(transitionRules) !== JSON.stringify(type.transitionRules)) return true;
     return false;
-  }, [type, name, description, color, questions, requiredFields, visibility, transitionRules]);
+  }, [type, name, description, color, questions, requiredFields, labels, visibility, transitionRules]);
 
   const questionsValid = useMemo(() => customQuestionsAreValid(questions), [questions]);
   const canSave =
@@ -127,6 +133,7 @@ export default function ActionTypeDetailPage() {
       color: color === '' ? null : color,
       customQuestions: normaliseCustomQuestions(questions),
       requiredFields,
+      labels,
       visibility,
       transitionRules,
     });
@@ -337,6 +344,75 @@ export default function ActionTypeDetailPage() {
               );
             })}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Labels */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle>{t('labels.title')}</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">{t('labels.subtitle')}</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (labels.length >= MAX_LABELS) return;
+                setLabels((prev) => [...prev, '']);
+              }}
+              disabled={!canSettings || labels.length >= MAX_LABELS}
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              {t('labels.addButton')}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {labels.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('labels.empty')}</p>
+          ) : (
+            <div className="space-y-2">
+              {labels.map((lbl, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    value={lbl}
+                    onChange={(e) =>
+                      setLabels((prev) => {
+                        const next = prev.slice();
+                        next[i] = e.target.value;
+                        return next;
+                      })
+                    }
+                    placeholder={t('labels.placeholder')}
+                    maxLength={MAX_LABEL_TEXT}
+                    disabled={!canSettings}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      setLabels((prev) => {
+                        const next = prev.slice();
+                        next.splice(i, 1);
+                        return next;
+                      })
+                    }
+                    disabled={!canSettings}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground">
+                {t('labels.counter', { count: labels.length, max: MAX_LABELS })}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
