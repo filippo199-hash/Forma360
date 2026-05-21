@@ -267,8 +267,9 @@ export default function NewHeadsUpPage() {
   const previewTitle = title.trim().length > 0 ? title : t('previewUntitled');
 
   return (
-    <FocusedPageShell title={t('pageTitle')} backHref={`/${locale}/heads-up`} width="wide">
-      <div className="flex h-full w-full flex-col overflow-y-auto border-r md:w-[480px] md:shrink-0">
+    <FocusedPageShell title={t('pageTitle')} backHref={`/${locale}/heads-up`} width="split">
+      {/* ── Left: form (480px on desktop, full width on mobile) ── */}
+      <div className="flex h-full w-full flex-col overflow-y-auto border-r bg-background md:w-[480px] md:shrink-0">
         {/* Body */}
         <div className="flex-1 space-y-6 px-5 py-6">
           {/* ── Media upload ── */}

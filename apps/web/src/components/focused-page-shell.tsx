@@ -32,11 +32,15 @@ interface FocusedPageShellProps {
    * - `'form'`  → max-w-2xl  (672 px) — single-column forms
    * - `'wide'`  → max-w-4xl  (896 px) — two-column or management pages
    * - `'full'`  → max-w-[1200px]       — tables / category grids
+   * - `'split'` → no container         — caller provides its own full-width
+   *                                      split layout (e.g. editor + live
+   *                                      preview); content area becomes a
+   *                                      flex row that fills the viewport.
    */
-  width?: 'form' | 'wide' | 'full';
+  width?: 'form' | 'wide' | 'full' | 'split';
 }
 
-const widthClass: Record<NonNullable<FocusedPageShellProps['width']>, string> = {
+const widthClass: Record<Exclude<NonNullable<FocusedPageShellProps['width']>, 'split'>, string> = {
   form: 'max-w-2xl',
   wide: 'max-w-4xl',
   full: 'max-w-[1200px]',
@@ -65,9 +69,16 @@ export function FocusedPageShell({
       </div>
 
       {/* ── Scrollable content ───────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
-        <div className={`mx-auto px-4 py-8 ${widthClass[width]}`}>{children}</div>
-      </div>
+      {width === 'split' ? (
+        // Full-width split layout: caller renders its own columns (e.g. form
+        // + preview). The parent must NOT scroll — each column manages its
+        // own overflow so the columns can scroll independently.
+        <div className="flex flex-1 overflow-hidden">{children}</div>
+      ) : (
+        <div className="flex-1 overflow-y-auto">
+          <div className={`mx-auto px-4 py-8 ${widthClass[width]}`}>{children}</div>
+        </div>
+      )}
     </div>
   );
 }
