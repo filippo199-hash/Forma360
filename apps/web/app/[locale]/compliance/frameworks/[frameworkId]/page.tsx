@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Plus, Archive, RefreshCw, Download, FileCheck, AlertTriangle, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Plus, Archive, ArchiveRestore, RefreshCw, Download, FileCheck, AlertTriangle, Pencil, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -313,7 +313,22 @@ export default function FrameworkDetailPage() {
   const archive = trpc.compliance.frameworks.archive.useMutation({
     onSuccess: () => {
       toast.success(t('archivedToast'));
+      // Invalidate everything that lists frameworks — the dashboard's
+      // active-framework cards, the catalogue list, and this detail page
+      // all need to refetch.
       void utils.compliance.frameworks.get.invalidate({ frameworkId });
+      void utils.compliance.frameworks.list.invalidate();
+      void utils.compliance.dashboard.overview.invalidate();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  const restore = trpc.compliance.frameworks.restore.useMutation({
+    onSuccess: () => {
+      toast.success(t('restoredToast'));
+      void utils.compliance.frameworks.get.invalidate({ frameworkId });
+      void utils.compliance.frameworks.list.invalidate();
+      void utils.compliance.dashboard.overview.invalidate();
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -411,6 +426,17 @@ export default function FrameworkDetailPage() {
             >
               <Archive className="mr-1 h-4 w-4" />
               {tCommon('archive')}
+            </Button>
+          ) : null}
+          {canManageFrameworks && isArchived ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => restore.mutate({ frameworkId })}
+              disabled={restore.isPending}
+            >
+              <ArchiveRestore className="mr-1 h-4 w-4" />
+              {t('restoreButton')}
             </Button>
           ) : null}
         </div>

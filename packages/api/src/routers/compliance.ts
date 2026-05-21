@@ -328,6 +328,20 @@ export function createComplianceRouter(deps: ComplianceRouterDeps) {
           return { ok: true as const };
         }),
 
+      /** Un-archive a framework so it appears in the active list again. */
+      restore: tenantProcedure
+        .use(requirePermission('compliance.frameworks.manage'))
+        .input(frameworkIdInput)
+        .mutation(async ({ ctx, input }) => {
+          const fw = await loadFrameworkOrThrow(ctx.db, ctx.tenantId, input.frameworkId);
+          if (fw.archivedAt === null) return { ok: true as const };
+          await ctx.db
+            .update(complianceFrameworks)
+            .set({ archivedAt: null, updatedAt: new Date() })
+            .where(eq(complianceFrameworks.id, fw.id));
+          return { ok: true as const };
+        }),
+
       /**
        * Export an audit-ready CSV covering all rules in the framework:
        * clause ref, rule name, frequency, status, last evaluated, next due,

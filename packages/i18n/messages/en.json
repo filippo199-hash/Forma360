@@ -2283,7 +2283,11 @@
       "targetLabel": "Target:",
       "scoreBarCompliant": "{count} compliant",
       "scoreBarDueSoon": "{count} due soon",
-      "scoreBarNonCompliant": "{count} non-compliant"
+      "scoreBarNonCompliant": "{count} non-compliant",
+      "tabActive": "Active ({count})",
+      "tabArchived": "Archived ({count})",
+      "noArchivedFrameworks": "No archived frameworks.",
+      "archivedOn": "Archived {date}"
     },
     "frameworks": {
       "new": {
@@ -2452,6 +2456,10 @@
           "manualValidityDays": "Attestation validity (days)"
         }
       }
+    },
+    "detail": {
+      "restoreButton": "Restore",
+      "restoredToast": "Framework restored"
     }
   }
 }

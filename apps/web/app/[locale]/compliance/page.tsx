@@ -1,14 +1,18 @@
 'use client';
 
-import { Plus, ShieldCheck, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
+import { Plus, ShieldCheck, AlertCircle, Clock, CheckCircle2, Archive } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useState } from 'react';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
+
+type View = 'active' | 'archived';
 
 function ScoreBar({
   score,
@@ -69,7 +73,17 @@ export default function ComplianceDashboardPage() {
   const locale = params.locale ?? 'en';
   const canManageFrameworks = useHasPermission('compliance.frameworks.manage');
 
+  const [view, setView] = useState<View>('active');
+
   const { data, isLoading } = trpc.compliance.dashboard.overview.useQuery();
+  // Archived-tab fetches the full list (active + archived) so we can pick
+  // out the archived rows; only enabled when the tab is in view.
+  const { data: allFrameworks, isLoading: archivedLoading } =
+    trpc.compliance.frameworks.list.useQuery(
+      { includeArchived: true },
+      { enabled: view === 'archived' },
+    );
+  const archivedFrameworks = (allFrameworks ?? []).filter((fw) => fw.archivedAt !== null);
 
   if (isLoading || data === undefined) {
     return (
@@ -142,23 +156,104 @@ export default function ComplianceDashboardPage() {
         </Card>
       </div>
 
+      {/* Active / Archived tabs */}
+      <div className="flex gap-1 rounded-lg border bg-muted/40 p-1 w-fit">
+        <button
+          type="button"
+          onClick={() => setView('active')}
+          className={cn(
+            'rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
+            view === 'active'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {t('tabActive', { count: data.frameworks.length })}
+        </button>
+        <button
+          type="button"
+          onClick={() => setView('archived')}
+          className={cn(
+            'rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
+            view === 'archived'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {t('tabArchived', { count: archivedFrameworks.length })}
+        </button>
+      </div>
+
       {/* Framework cards */}
-      {data.frameworks.length === 0 ? (
+      {view === 'active' ? (
+        data.frameworks.length === 0 ? (
+          <Card>
+            <CardContent className="py-16 text-center text-muted-foreground">
+              <ShieldCheck className="mx-auto mb-3 h-10 w-10 opacity-30" />
+              <p>{t('noFrameworks')}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {data.frameworks.map((fw) => (
+              <Link
+                key={fw.id}
+                href={`/${locale}/compliance/frameworks/${fw.id}`}
+                className="group block"
+              >
+                <Card className="h-full transition-shadow group-hover:shadow-md">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base leading-tight">{fw.name}</CardTitle>
+                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs capitalize text-muted-foreground">
+                        {fw.type.replace('_', ' ')}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <ScoreBar score={fw.score} target={fw.targetScore} targetLabel={t('targetLabel')} />
+                    <div className="flex gap-3 text-xs text-muted-foreground">
+                      <span className="text-green-600 dark:text-green-400">
+                        {t('scoreBarCompliant', { count: fw.compliantCount })}
+                      </span>
+                      {fw.dueSoonCount > 0 ? (
+                        <span className="text-amber-600 dark:text-amber-400">
+                          {t('scoreBarDueSoon', { count: fw.dueSoonCount })}
+                        </span>
+                      ) : null}
+                      {fw.nonCompliantCount > 0 ? (
+                        <span className="text-destructive">
+                          {t('scoreBarNonCompliant', { count: fw.nonCompliantCount })}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('totalRules', { count: fw.totalRules })}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )
+      ) : archivedLoading ? (
+        <Skeleton className="h-32 w-full" />
+      ) : archivedFrameworks.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
-            <ShieldCheck className="mx-auto mb-3 h-10 w-10 opacity-30" />
-            <p>{t('noFrameworks')}</p>
+            <Archive className="mx-auto mb-3 h-10 w-10 opacity-30" />
+            <p>{t('noArchivedFrameworks')}</p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {data.frameworks.map((fw) => (
+          {archivedFrameworks.map((fw) => (
             <Link
               key={fw.id}
               href={`/${locale}/compliance/frameworks/${fw.id}`}
               className="group block"
             >
-              <Card className="h-full transition-shadow group-hover:shadow-md">
+              <Card className="h-full opacity-75 transition-shadow group-hover:shadow-md group-hover:opacity-100">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-base leading-tight">{fw.name}</CardTitle>
@@ -167,26 +262,19 @@ export default function ComplianceDashboardPage() {
                     </span>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <ScoreBar score={fw.score} target={fw.targetScore} targetLabel={t('targetLabel')} />
-                  <div className="flex gap-3 text-xs text-muted-foreground">
-                    <span className="text-green-600 dark:text-green-400">
-                      {t('scoreBarCompliant', { count: fw.compliantCount })}
-                    </span>
-                    {fw.dueSoonCount > 0 ? (
-                      <span className="text-amber-600 dark:text-amber-400">
-                        {t('scoreBarDueSoon', { count: fw.dueSoonCount })}
-                      </span>
-                    ) : null}
-                    {fw.nonCompliantCount > 0 ? (
-                      <span className="text-destructive">
-                        {t('scoreBarNonCompliant', { count: fw.nonCompliantCount })}
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t('totalRules', { count: fw.totalRules })}
-                  </p>
+                <CardContent className="space-y-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    <Archive className="h-3 w-3" />
+                    {t('archivedOn', {
+                      date:
+                        fw.archivedAt !== null
+                          ? new Date(fw.archivedAt).toLocaleDateString(locale)
+                          : '',
+                    })}
+                  </span>
+                  {fw.description.length > 0 ? (
+                    <p className="line-clamp-2 text-xs text-muted-foreground">{fw.description}</p>
+                  ) : null}
                 </CardContent>
               </Card>
             </Link>

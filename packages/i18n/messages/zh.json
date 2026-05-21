@@ -2067,7 +2067,11 @@
       "targetLabel": "Target:",
       "scoreBarCompliant": "{count} compliant",
       "scoreBarDueSoon": "{count} due soon",
-      "scoreBarNonCompliant": "{count} non-compliant"
+      "scoreBarNonCompliant": "{count} non-compliant",
+      "tabActive": "活跃 ({count})",
+      "tabArchived": "已归档 ({count})",
+      "noArchivedFrameworks": "没有已归档的框架。",
+      "archivedOn": "于 {date} 归档"
     },
     "frameworks": {
       "new": {
@@ -2152,6 +2156,10 @@
         },
         "clauseRefPlaceholder": "e.g. ISO 45001 §6.1.2"
       }
+    },
+    "detail": {
+      "restoreButton": "恢复",
+      "restoredToast": "框架已恢复"
     }
   }
 }
