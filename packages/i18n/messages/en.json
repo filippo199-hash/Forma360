@@ -1605,7 +1605,8 @@
       "questions": {
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
-      }
+      },
+      "labelNoneOption": "— No label —"
     },
     "status": {
       "open": "Open",
@@ -1754,6 +1755,14 @@
       "anyoneHelp": "Anyone with permission to manage actions.",
       "groupsHelp": "Restricted to {count} group(s).",
       "noGroups": "No groups exist yet. Create one in Settings → Groups to use this rule."
+    },
+    "labels": {
+      "title": "Labels",
+      "subtitle": "Preset label options that reporters choose from when creating an action of this type.",
+      "empty": "No labels yet. Add one to enable the label dropdown on the create form.",
+      "addButton": "Add label",
+      "placeholder": "e.g. Maintenance, Safety, Corrective",
+      "counter": "{count} of {max}"
     }
   },
   "headsUp": {
@@ -2402,7 +2411,9 @@
           "saveButton": "Save",
           "saving": "Saving…",
           "successToast": "Certification saved."
-        }
+        },
+        "restoreButton": "Restore",
+        "restoredToast": "Framework restored"
       }
     },
     "rules": {
@@ -2463,10 +2474,6 @@
           "manualValidityDays": "Attestation validity (days)"
         }
       }
-    },
-    "detail": {
-      "restoreButton": "Restore",
-      "restoredToast": "Framework restored"
     }
   }
 }

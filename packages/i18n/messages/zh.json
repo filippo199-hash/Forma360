@@ -1582,7 +1582,8 @@
       "questions": {
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
-      }
+      },
+      "labelNoneOption": "— 无标签 —"
     },
     "status": {
       "open": "Open",
@@ -1729,6 +1730,14 @@
       "anyoneHelp": "Anyone with permission to manage actions.",
       "groupsHelp": "Restricted to {count} group(s).",
       "noGroups": "No groups exist yet. Create one in Settings → Groups to use this rule."
+    },
+    "labels": {
+      "title": "标签",
+      "subtitle": "创建此类型的操作时，报告者可从中选择的预设标签选项。",
+      "empty": "暂无标签。添加一个以启用标签下拉菜单。",
+      "addButton": "添加标签",
+      "placeholder": "例如：维护、安全、纠正",
+      "counter": "{count} / {max}"
     }
   },
   "headsUp": {
@@ -2119,7 +2128,9 @@
           "status": "Status",
           "actions": "Actions"
         },
-        "neverEvaluated": "Never evaluated"
+        "neverEvaluated": "Never evaluated",
+        "restoreButton": "恢复",
+        "restoredToast": "框架已恢复"
       }
     },
     "rules": {
@@ -2165,10 +2176,6 @@
         },
         "clauseRefPlaceholder": "e.g. ISO 45001 §6.1.2"
       }
-    },
-    "detail": {
-      "restoreButton": "恢复",
-      "restoredToast": "框架已恢复"
     }
   }
 }

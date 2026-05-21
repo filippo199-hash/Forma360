@@ -1582,7 +1582,8 @@
       "questions": {
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
-      }
+      },
+      "labelNoneOption": "— Keine Bezeichnung —"
     },
     "status": {
       "open": "Open",
@@ -1729,6 +1730,14 @@
       "anyoneHelp": "Anyone with permission to manage actions.",
       "groupsHelp": "Restricted to {count} group(s).",
       "noGroups": "No groups exist yet. Create one in Settings → Groups to use this rule."
+    },
+    "labels": {
+      "title": "Bezeichnungen",
+      "subtitle": "Vordefinierte Bezeichnungsoptionen, aus denen Reporter beim Erstellen einer Aktion dieses Typs auswählen.",
+      "empty": "Noch keine Bezeichnungen. Fügen Sie eine hinzu, um das Bezeichnungs-Dropdown zu aktivieren.",
+      "addButton": "Bezeichnung hinzufügen",
+      "placeholder": "z.B. Wartung, Sicherheit, Korrektur",
+      "counter": "{count} von {max}"
     }
   },
   "headsUp": {
@@ -2119,7 +2128,9 @@
           "status": "Status",
           "actions": "Actions"
         },
-        "neverEvaluated": "Never evaluated"
+        "neverEvaluated": "Never evaluated",
+        "restoreButton": "Wiederherstellen",
+        "restoredToast": "Rahmen wiederhergestellt"
       }
     },
     "rules": {
@@ -2165,10 +2176,6 @@
         },
         "clauseRefPlaceholder": "e.g. ISO 45001 §6.1.2"
       }
-    },
-    "detail": {
-      "restoreButton": "Wiederherstellen",
-      "restoredToast": "Rahmen wiederhergestellt"
     }
   }
 }
