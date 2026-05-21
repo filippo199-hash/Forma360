@@ -709,25 +709,32 @@ function BoardView({
           <div
             key={col}
             className={cn(
-              'flex min-h-[300px] flex-col gap-2 rounded-md border-l-4 bg-muted/30 p-3',
+              // Full-height kanban column: fills the viewport below the
+              // header/filters chrome, with internal scroll so a column
+              // with many cards doesn't push the whole page down.
+              'flex h-[calc(100vh-15rem)] min-h-[400px] flex-col gap-2 overflow-hidden rounded-md border-l-4 bg-muted/30 p-3',
               STATUS_COLUMN_COLORS[col],
             )}
           >
-            <div className="flex items-center justify-between px-1">
+            {/* Column header — stays pinned at the top of the column */}
+            <div className="flex shrink-0 items-center justify-between px-1">
               <h2 className="text-sm font-semibold">{tStatus(col)}</h2>
               <span className="text-xs text-muted-foreground" aria-label={t('boardCountAria')}>
                 {rows.length}
               </span>
             </div>
-            {rows.length === 0 ? (
-              <p className="px-1 py-4 text-center text-xs text-muted-foreground">
-                {t('boardColumnEmpty')}
-              </p>
-            ) : (
-              rows.map((row) => (
-                <BoardCard key={row.id} row={row} locale={locale} tPriority={tPriority} t={t} />
-              ))
-            )}
+            {/* Cards — scroll internally when the column overflows */}
+            <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+              {rows.length === 0 ? (
+                <p className="px-1 py-4 text-center text-xs text-muted-foreground">
+                  {t('boardColumnEmpty')}
+                </p>
+              ) : (
+                rows.map((row) => (
+                  <BoardCard key={row.id} row={row} locale={locale} tPriority={tPriority} t={t} />
+                ))
+              )}
+            </div>
           </div>
         );
       })}
