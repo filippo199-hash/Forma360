@@ -116,7 +116,8 @@ const publishInput = z.object({
    * resolves group/site members and inserts individual recipient rows.
    * H-E01: once published, assignees are locked (the list is frozen).
    */
-  userIds: z.array(z.string().length(26)).default([]),
+  // better-auth user IDs are not plain ULIDs (carry a "usr_" prefix).
+  userIds: z.array(z.string().min(1).max(100)).default([]),
   groupIds: z.array(z.string().length(26)).default([]),
   siteIds: z.array(z.string().length(26)).default([]),
 });
@@ -577,7 +578,8 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
       .input(
         z.object({
           headsUpId: z.string().length(26),
-          userId: z.string().length(26).optional(),
+          // better-auth user IDs carry a "usr_" prefix → longer than 26.
+          userId: z.string().min(1).max(100).optional(),
         }),
       )
       .mutation(async ({ ctx, input }) => {

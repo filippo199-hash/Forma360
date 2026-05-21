@@ -56,8 +56,12 @@ const lifecycleFields = {
   startDate: z.string().datetime({ offset: true }).optional().nullable(),
   /** ISO date string or null. When set, reminder jobs fire reminder_days before. */
   expiresAt: z.string().datetime({ offset: true }).optional().nullable(),
-  /** Responsible user ULID. */
-  responsibleUserId: z.string().length(26).optional().nullable(),
+  /**
+   * Responsible user ID. Better-auth user IDs are NOT plain ULIDs —
+   * they carry a "usr_" prefix making them ~30 chars, so we validate
+   * by min length only (same pattern as users/groups routers).
+   */
+  responsibleUserId: z.string().min(1).max(100).optional().nullable(),
   /** Responsible group ULID. */
   responsibleGroupId: z.string().length(26).optional().nullable(),
   /**
@@ -94,7 +98,8 @@ const updateInput = z.object({
   freshnessDays: z.number().int().min(1).nullable().optional(),
   startDate: z.string().datetime({ offset: true }).optional().nullable(),
   expiresAt: z.string().datetime({ offset: true }).optional().nullable(),
-  responsibleUserId: z.string().length(26).optional().nullable(),
+  // Better-auth user IDs are not plain ULIDs (have a "usr_" prefix).
+  responsibleUserId: z.string().min(1).max(100).optional().nullable(),
   responsibleGroupId: z.string().length(26).optional().nullable(),
   reminderDays: z.array(z.number().int().min(1).max(365)).optional(),
   labelIds: z.array(z.string().length(26)).optional(),
