@@ -1467,7 +1467,18 @@
       "addFilter": "Add filter",
       "clearFilters": "Clear filters",
       "categoriesButton": "Categories",
-      "backToActions": "Back to Actions"
+      "backToActions": "Back to Actions",
+      "dragHandleLabel": "Drag to move",
+      "dragMovedToast": "Moved to {status}",
+      "dragStatusError": "Could not update status",
+      "savedViews": {
+        "allActions": "All",
+        "saveButton": "Save view",
+        "namePlaceholder": "View name…",
+        "saveConfirm": "Save",
+        "deleteView": "Remove",
+        "savedToast": "View \"{name}\" saved"
+      }
     },
     "detail": {
       "backLink": "Back to actions",

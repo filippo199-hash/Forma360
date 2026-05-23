@@ -1444,7 +1444,18 @@
       "viewBoard": "Board",
       "boardColumnEmpty": "Nothing here",
       "boardCountAria": "Cards in column",
-      "recurringBadge": "Recurring"
+      "recurringBadge": "Recurring",
+      "dragHandleLabel": "Drag to move",
+      "dragMovedToast": "Moved to {status}",
+      "dragStatusError": "Could not update status",
+      "savedViews": {
+        "allActions": "All",
+        "saveButton": "Save view",
+        "namePlaceholder": "View name…",
+        "saveConfirm": "Save",
+        "deleteView": "Remove",
+        "savedToast": "View \"{name}\" saved"
+      }
     },
     "detail": {
       "backLink": "Back to actions",

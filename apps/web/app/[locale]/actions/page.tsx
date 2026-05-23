@@ -1,9 +1,22 @@
 'use client';
 
 import {
+  DndContext,
+  type DragEndEvent,
+  type DragStartEvent,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  useDraggable,
+} from '@dnd-kit/core';
+import {
+  Bookmark,
   ChevronDown,
   Columns3,
   Filter,
+  GripVertical,
   List as ListIcon,
   Plus,
   Search as SearchIcon,
@@ -14,6 +27,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Input } from '../../../src/components/ui/input';
@@ -22,12 +36,62 @@ import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
+// ── Types ────────────────────────────────────────────────────────────────────
+
 type StatusFilter = 'all' | 'open' | 'in_progress' | 'completed' | 'cancelled';
 type SourceFilter = 'all' | 'standalone' | 'inspection' | 'issue';
 type PriorityFilter = 'all' | 'low' | 'medium' | 'high' | 'critical';
 type SortBy = 'created' | 'due' | 'priority' | 'updated';
 type ViewMode = 'list' | 'board';
-type FilterKey = 'status' | 'source' | 'priority' | 'assignedToMe' | 'overdue' | 'hideClosed' | 'archived' | 'sort';
+type FilterKey =
+  | 'status'
+  | 'source'
+  | 'priority'
+  | 'assignedToMe'
+  | 'overdue'
+  | 'hideClosed'
+  | 'archived'
+  | 'sort';
+
+interface ActionRow {
+  id: string;
+  referenceNumber: string | null;
+  title: string;
+  status: string;
+  priority: string | null;
+  label: string | null;
+  assigneeUserId: string | null;
+  dueAt: Date | null;
+  siteId: string | null;
+  sourceType: string;
+  sourceId: string | null;
+  actionTypeId: string | null;
+  actionTypeName: string | null;
+  actionTypeColor: string | null;
+  recurrence: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+  archivedAt: Date | null;
+  assigneeName: string | null;
+}
+
+interface SavedView {
+  id: string;
+  name: string;
+  viewMode: ViewMode;
+  status: StatusFilter;
+  source: SourceFilter;
+  priority: PriorityFilter;
+  assignedToMe: boolean;
+  overdueOnly: boolean;
+  hideClosed: boolean;
+  includeArchived: boolean;
+  sortBy: SortBy;
+  query: string;
+  activeFilters: FilterKey[];
+}
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const FILTER_KEYS: ReadonlyArray<FilterKey> = [
   'status',
@@ -39,7 +103,6 @@ const FILTER_KEYS: ReadonlyArray<FilterKey> = [
   'archived',
   'sort',
 ];
-
 const STATUSES: ReadonlyArray<StatusFilter> = ['all', 'open', 'in_progress', 'completed', 'cancelled'];
 const SOURCES: ReadonlyArray<SourceFilter> = ['all', 'standalone', 'inspection', 'issue'];
 const PRIORITIES: ReadonlyArray<PriorityFilter> = ['all', 'critical', 'high', 'medium', 'low'];
@@ -50,22 +113,59 @@ const BOARD_COLUMNS: ReadonlyArray<Exclude<StatusFilter, 'all'>> = [
   'completed',
   'cancelled',
 ];
-
 const STATUS_COLUMN_COLORS: Record<Exclude<StatusFilter, 'all'>, string> = {
   open: 'border-l-blue-400',
   in_progress: 'border-l-amber-400',
   completed: 'border-l-emerald-400',
   cancelled: 'border-l-slate-400',
 };
+const VIEWS_STORAGE_KEY = 'forma360:action_views';
 
-/**
- * Actions page — board-first with composable "Add filter" chip system.
- *
- * The filter bar is collapsed into an "Add filter" button; active filters
- * render as dismissible chips so the toolbar stays uncluttered. The view
- * defaults to Board. A "Categories" shortcut in the header takes admins
- * to the action-type management page without navigating to Settings.
- */
+// ── Saved views (localStorage) ────────────────────────────────────────────────
+
+function useSavedViews() {
+  const [views, setViews] = useState<SavedView[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem(VIEWS_STORAGE_KEY);
+      return raw !== null ? (JSON.parse(raw) as SavedView[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  function persist(updated: SavedView[]) {
+    try {
+      localStorage.setItem(VIEWS_STORAGE_KEY, JSON.stringify(updated));
+    } catch {
+      /* storage quota exceeded — ignore */
+    }
+  }
+
+  function saveView(view: Omit<SavedView, 'id'>): string {
+    const id = crypto.randomUUID();
+    const next: SavedView = { ...view, id };
+    setViews((prev) => {
+      const updated = [...prev, next];
+      persist(updated);
+      return updated;
+    });
+    return id;
+  }
+
+  function deleteView(id: string) {
+    setViews((prev) => {
+      const updated = prev.filter((v) => v.id !== id);
+      persist(updated);
+      return updated;
+    });
+  }
+
+  return { views, saveView, deleteView };
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function ActionsListPage() {
   const t = useTranslations('actions.list');
   const tStatus = useTranslations('actions.status');
@@ -73,12 +173,13 @@ export default function ActionsListPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canCreate = useHasPermission('actions.create');
+  const canManage = useHasPermission('actions.manage');
   const canSettings = useHasPermission('actions.settings');
 
-  // View state — defaults to board
+  // ── View state
   const [view, setView] = useState<ViewMode>('board');
 
-  // Filter values
+  // ── Filter state
   const [status, setStatus] = useState<StatusFilter>('all');
   const [source, setSource] = useState<SourceFilter>('all');
   const [priority, setPriority] = useState<PriorityFilter>('all');
@@ -88,11 +189,41 @@ export default function ActionsListPage() {
   const [includeArchived, setIncludeArchived] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>('created');
   const [query, setQuery] = useState('');
-
-  // Which filter chips are currently visible (sort is always shown)
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set(['sort']));
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement>(null);
+
+  // ── Saved views
+  const { views, saveView, deleteView } = useSavedViews();
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
+  const [saveViewOpen, setSaveViewOpen] = useState(false);
+  const [saveViewName, setSaveViewName] = useState('');
+  const saveViewInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Optimistic status overrides (for DnD)
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  const utils = trpc.useUtils();
+
+  const setStatusMutation = trpc.actions.setStatus.useMutation({
+    onError: (_err, { actionId }) => {
+      setOptimisticStatuses((prev) => {
+        const next = { ...prev };
+        delete next[actionId];
+        return next;
+      });
+      toast.error(t('dragStatusError'));
+    },
+    onSettled: (_data, _err, { actionId }) => {
+      setOptimisticStatuses((prev) => {
+        const next = { ...prev };
+        delete next[actionId];
+        return next;
+      });
+      void utils.actions.list.invalidate();
+    },
+  });
 
   // Close filter menu on outside click
   useEffect(() => {
@@ -105,13 +236,21 @@ export default function ActionsListPage() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Focus save-view input when it opens
+  useEffect(() => {
+    if (saveViewOpen) {
+      setTimeout(() => saveViewInputRef.current?.focus(), 0);
+    }
+  }, [saveViewOpen]);
+
+  // ── Filter helpers
   function addFilter(key: FilterKey) {
     setActiveFilters((prev) => new Set([...prev, key]));
     setFilterMenuOpen(false);
   }
 
   function removeFilter(key: FilterKey) {
-    if (key === 'sort') return; // sort chip is permanent
+    if (key === 'sort') return;
     setActiveFilters((prev) => {
       const next = new Set(prev);
       next.delete(key);
@@ -128,8 +267,9 @@ export default function ActionsListPage() {
     }
   }
 
-  function clearAllFilters() {
-    setActiveFilters(new Set(['sort']));
+  function applyDefaultView() {
+    setActiveViewId(null);
+    setView('board');
     setStatus('all');
     setSource('all');
     setPriority('all');
@@ -139,19 +279,82 @@ export default function ActionsListPage() {
     setIncludeArchived(false);
     setSortBy('created');
     setQuery('');
+    setActiveFilters(new Set(['sort']));
   }
 
-  const availableFilterKeys = FILTER_KEYS.filter((k) => !activeFilters.has(k) && k !== 'sort');
-  const nonDefaultFiltersCount =
-    (status !== 'all' ? 1 : 0) +
-    (source !== 'all' ? 1 : 0) +
-    (priority !== 'all' ? 1 : 0) +
-    (assignedToMe ? 1 : 0) +
-    (overdueOnly ? 1 : 0) +
-    (hideClosed ? 1 : 0) +
-    (includeArchived ? 1 : 0) +
-    (query.trim().length > 0 ? 1 : 0);
+  function applySavedView(sv: SavedView) {
+    setActiveViewId(sv.id);
+    setView(sv.viewMode);
+    setStatus(sv.status);
+    setSource(sv.source);
+    setPriority(sv.priority);
+    setAssignedToMe(sv.assignedToMe);
+    setOverdueOnly(sv.overdueOnly);
+    setHideClosed(sv.hideClosed);
+    setIncludeArchived(sv.includeArchived);
+    setSortBy(sv.sortBy);
+    setQuery(sv.query);
+    setActiveFilters(new Set(sv.activeFilters));
+  }
 
+  function handleSaveView() {
+    const name = saveViewName.trim();
+    if (name.length === 0) return;
+    saveView({
+      name,
+      viewMode: view,
+      status,
+      source,
+      priority,
+      assignedToMe,
+      overdueOnly,
+      hideClosed,
+      includeArchived,
+      sortBy,
+      query,
+      activeFilters: [...activeFilters],
+    });
+    setSaveViewName('');
+    setSaveViewOpen(false);
+    toast.success(t('savedViews.savedToast', { name }));
+  }
+
+  function handleDeleteView(id: string) {
+    deleteView(id);
+    if (activeViewId === id) setActiveViewId(null);
+  }
+
+  // ── DnD sensors (8px distance before activation keeps clicks working)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
+
+  function handleDragStart(event: DragStartEvent) {
+    setDraggingId(event.active.id as string);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setDraggingId(null);
+    if (over === null) return;
+
+    const actionId = active.id as string;
+    const newStatus = over.id as Exclude<StatusFilter, 'all'>;
+
+    const row = list.find((r) => r.id === actionId);
+    if (row === undefined) return;
+
+    const currentStatus = (optimisticStatuses[actionId] ?? row.status) as string;
+    if (currentStatus === newStatus) return;
+
+    setOptimisticStatuses((prev) => ({ ...prev, [actionId]: newStatus }));
+    setStatusMutation.mutate({ actionId, status: newStatus });
+    toast.success(
+      t('dragMovedToast', { status: tStatus(newStatus as 'open' | 'in_progress' | 'completed' | 'cancelled') }),
+    );
+  }
+
+  // ── Data
   const listInput: {
     status?: Exclude<StatusFilter, 'all'>;
     sourceType?: Exclude<SourceFilter, 'all'>;
@@ -177,21 +380,37 @@ export default function ActionsListPage() {
   const { data: rows, isLoading } = trpc.actions.list.useQuery(listInput);
   const list = useMemo(() => rows ?? [], [rows]);
 
+  // Apply optimistic overrides to grouped data
   const grouped = useMemo(() => {
-    const acc: Record<Exclude<StatusFilter, 'all'>, typeof list> = {
+    const acc: Record<Exclude<StatusFilter, 'all'>, ActionRow[]> = {
       open: [],
       in_progress: [],
       completed: [],
       cancelled: [],
     };
     for (const row of list) {
-      const key = row.status as Exclude<StatusFilter, 'all'>;
-      if (key in acc) acc[key].push(row);
+      const effectiveStatus = (optimisticStatuses[row.id] ?? row.status) as Exclude<StatusFilter, 'all'>;
+      if (effectiveStatus in acc) {
+        acc[effectiveStatus].push({ ...row, status: effectiveStatus });
+      }
     }
     return acc;
-  }, [list]);
+  }, [list, optimisticStatuses]);
 
-  // Label for a filter chip header
+  const draggingCard = draggingId !== null ? list.find((r) => r.id === draggingId) ?? null : null;
+
+  // ── UI derived state
+  const availableFilterKeys = FILTER_KEYS.filter((k) => !activeFilters.has(k) && k !== 'sort');
+  const nonDefaultFiltersCount =
+    (status !== 'all' ? 1 : 0) +
+    (source !== 'all' ? 1 : 0) +
+    (priority !== 'all' ? 1 : 0) +
+    (assignedToMe ? 1 : 0) +
+    (overdueOnly ? 1 : 0) +
+    (hideClosed ? 1 : 0) +
+    (includeArchived ? 1 : 0) +
+    (query.trim().length > 0 ? 1 : 0);
+
   function filterLabel(key: FilterKey): string {
     const labels: Record<FilterKey, string> = {
       status: t('filterStatus'),
@@ -234,6 +453,50 @@ export default function ActionsListPage() {
           ) : null}
         </div>
       </header>
+
+      {/* Saved views bar */}
+      {views.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={applyDefaultView}
+            className={cn(
+              'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+              activeViewId === null
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-input bg-background text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t('savedViews.allActions')}
+          </button>
+          {views.map((sv) => (
+            <div
+              key={sv.id}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                activeViewId === sv.id
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-input bg-background text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <button type="button" onClick={() => applySavedView(sv)}>
+                {sv.name}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteView(sv.id)}
+                aria-label={t('savedViews.deleteView')}
+                className={cn(
+                  'ml-0.5 rounded-full p-0.5 hover:bg-black/10 dark:hover:bg-white/10',
+                  activeViewId === sv.id ? 'text-primary-foreground/70' : 'text-muted-foreground',
+                )}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {/* Search + filter bar */}
       <div className="flex flex-wrap items-center gap-2">
@@ -402,12 +665,70 @@ export default function ActionsListPage() {
         {nonDefaultFiltersCount > 0 ? (
           <button
             type="button"
-            onClick={clearAllFilters}
+            onClick={() => {
+              setActiveViewId(null);
+              setStatus('all');
+              setSource('all');
+              setPriority('all');
+              setAssignedToMe(false);
+              setOverdueOnly(false);
+              setHideClosed(false);
+              setIncludeArchived(false);
+              setSortBy('created');
+              setQuery('');
+              setActiveFilters(new Set(['sort']));
+            }}
             className="text-xs text-muted-foreground hover:text-foreground hover:underline"
           >
             {t('clearFilters')}
           </button>
         ) : null}
+
+        {/* Save view button */}
+        <div className="relative ml-auto">
+          {saveViewOpen ? (
+            <div className="flex items-center gap-1.5 rounded-md border bg-popover px-2 py-1 shadow-md">
+              <Bookmark className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <input
+                ref={saveViewInputRef}
+                value={saveViewName}
+                onChange={(e) => setSaveViewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveView();
+                  if (e.key === 'Escape') { setSaveViewOpen(false); setSaveViewName(''); }
+                }}
+                placeholder={t('savedViews.namePlaceholder')}
+                className="w-36 border-0 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+              />
+              <button
+                type="button"
+                onClick={handleSaveView}
+                disabled={saveViewName.trim().length === 0}
+                className="rounded px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-40"
+              >
+                {t('savedViews.saveConfirm')}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSaveViewOpen(false); setSaveViewName(''); }}
+                className="rounded p-0.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setSaveViewOpen(true)}
+              className="gap-1.5 text-muted-foreground"
+            >
+              <Bookmark className="h-3.5 w-3.5" />
+              {t('savedViews.saveButton')}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -422,20 +743,41 @@ export default function ActionsListPage() {
           t={t}
         />
       ) : (
-        <BoardView
-          grouped={grouped}
-          isLoading={isLoading}
-          locale={locale}
-          tStatus={(k) => tStatus(k)}
-          tPriority={(k) => tPriority(k)}
-          t={t}
-        />
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => setDraggingId(null)}
+        >
+          <BoardView
+            grouped={grouped}
+            isLoading={isLoading}
+            locale={locale}
+            canManage={canManage}
+            tStatus={(k) => tStatus(k)}
+            tPriority={(k) => tPriority(k)}
+            t={t}
+          />
+          {/* Ghost card shown while dragging */}
+          <DragOverlay dropAnimation={null}>
+            {draggingCard !== null ? (
+              <BoardCardContent
+                row={draggingCard}
+                locale={locale}
+                tPriority={(k) => tPriority(k)}
+                t={t}
+                isDragOverlay
+              />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
     </div>
   );
 }
 
-/** A filter chip — either a select wrapper or a toggleable boolean pill. */
+// ── FilterChip ────────────────────────────────────────────────────────────────
+
 function FilterChip({
   label,
   removable,
@@ -467,10 +809,7 @@ function FilterChip({
         <button
           type="button"
           onClick={onToggle}
-          className={cn(
-            'font-medium',
-            active === true ? 'text-primary' : 'text-muted-foreground',
-          )}
+          className={cn('font-medium', active === true ? 'text-primary' : 'text-muted-foreground')}
         >
           {active === true ? 'On' : 'Off'}
         </button>
@@ -489,13 +828,15 @@ function FilterChip({
   );
 }
 
+// ── ViewToggle ────────────────────────────────────────────────────────────────
+
 function ViewToggle({
   view,
   onChange,
   t,
 }: {
-  view: 'list' | 'board';
-  onChange: (v: 'list' | 'board') => void;
+  view: ViewMode;
+  onChange: (v: ViewMode) => void;
   t: (k: string) => string;
 }) {
   return (
@@ -511,9 +852,7 @@ function ViewToggle({
         onClick={() => onChange('list')}
         className={cn(
           'inline-flex items-center gap-1 rounded px-2 py-1 text-sm',
-          view === 'list'
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground hover:text-foreground',
+          view === 'list' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground',
         )}
       >
         <ListIcon className="h-3.5 w-3.5" />
@@ -526,9 +865,7 @@ function ViewToggle({
         onClick={() => onChange('board')}
         className={cn(
           'inline-flex items-center gap-1 rounded px-2 py-1 text-sm',
-          view === 'board'
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground hover:text-foreground',
+          view === 'board' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground',
         )}
       >
         <Columns3 className="h-3.5 w-3.5" />
@@ -537,6 +874,8 @@ function ViewToggle({
     </div>
   );
 }
+
+// ── ListView ──────────────────────────────────────────────────────────────────
 
 function ListView({
   rows,
@@ -683,10 +1022,13 @@ function ListView({
   );
 }
 
+// ── BoardView ─────────────────────────────────────────────────────────────────
+
 function BoardView({
   grouped,
   isLoading,
   locale,
+  canManage,
   tStatus,
   tPriority,
   t,
@@ -694,6 +1036,7 @@ function BoardView({
   grouped: Record<Exclude<StatusFilter, 'all'>, ReadonlyArray<ActionRow>>;
   isLoading: boolean;
   locale: string;
+  canManage: boolean;
   tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
@@ -703,55 +1046,146 @@ function BoardView({
   }
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {BOARD_COLUMNS.map((col) => {
-        const rows = grouped[col];
-        return (
-          <div
-            key={col}
-            className={cn(
-              // Full-height kanban column: fills the viewport below the
-              // header/filters chrome, with internal scroll so a column
-              // with many cards doesn't push the whole page down.
-              'flex h-[calc(100vh-15rem)] min-h-[400px] flex-col gap-2 overflow-hidden rounded-md border-l-4 bg-muted/30 p-3',
-              STATUS_COLUMN_COLORS[col],
-            )}
-          >
-            {/* Column header — stays pinned at the top of the column */}
-            <div className="flex shrink-0 items-center justify-between px-1">
-              <h2 className="text-sm font-semibold">{tStatus(col)}</h2>
-              <span className="text-xs text-muted-foreground" aria-label={t('boardCountAria')}>
-                {rows.length}
-              </span>
-            </div>
-            {/* Cards — scroll internally when the column overflows */}
-            <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
-              {rows.length === 0 ? (
-                <p className="px-1 py-4 text-center text-xs text-muted-foreground">
-                  {t('boardColumnEmpty')}
-                </p>
-              ) : (
-                rows.map((row) => (
-                  <BoardCard key={row.id} row={row} locale={locale} tPriority={tPriority} t={t} />
-                ))
-              )}
-            </div>
-          </div>
-        );
-      })}
+      {BOARD_COLUMNS.map((col) => (
+        <BoardColumn
+          key={col}
+          status={col}
+          rows={grouped[col]}
+          locale={locale}
+          canManage={canManage}
+          tStatus={tStatus}
+          tPriority={tPriority}
+          t={t}
+        />
+      ))}
     </div>
   );
 }
 
-function BoardCard({
+// ── BoardColumn (droppable) ───────────────────────────────────────────────────
+
+function BoardColumn({
+  status,
+  rows,
+  locale,
+  canManage,
+  tStatus,
+  tPriority,
+  t,
+}: {
+  status: Exclude<StatusFilter, 'all'>;
+  rows: ReadonlyArray<ActionRow>;
+  locale: string;
+  canManage: boolean;
+  tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
+  tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
+  t: (k: string) => string;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: status });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex h-[calc(100vh-15rem)] min-h-[400px] flex-col gap-2 overflow-hidden rounded-md border-l-4 bg-muted/30 p-3 transition-colors',
+        STATUS_COLUMN_COLORS[status],
+        isOver && canManage && 'bg-primary/5 ring-2 ring-primary/20',
+      )}
+    >
+      {/* Column header */}
+      <div className="flex shrink-0 items-center justify-between px-1">
+        <h2 className="text-sm font-semibold">{tStatus(status)}</h2>
+        <span className="text-xs text-muted-foreground" aria-label={t('boardCountAria')}>
+          {rows.length}
+        </span>
+      </div>
+      {/* Cards — scroll internally */}
+      <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+        {rows.length === 0 ? (
+          <p className="px-1 py-4 text-center text-xs text-muted-foreground">
+            {t('boardColumnEmpty')}
+          </p>
+        ) : (
+          rows.map((row) => (
+            <DraggableCard
+              key={row.id}
+              row={row}
+              locale={locale}
+              canManage={canManage}
+              tPriority={tPriority}
+              t={t}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── DraggableCard (draggable wrapper) ─────────────────────────────────────────
+
+function DraggableCard({
   row,
   locale,
+  canManage,
   tPriority,
   t,
 }: {
   row: ActionRow;
   locale: string;
+  canManage: boolean;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: row.id,
+    disabled: !canManage,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      className={cn('relative', isDragging && 'opacity-30')}
+    >
+      {/* Drag handle — only visible to managers */}
+      {canManage ? (
+        <button
+          type="button"
+          {...listeners}
+          aria-label={t('dragHandleLabel')}
+          className="absolute left-1.5 top-3 z-10 cursor-grab touch-none text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+      ) : null}
+      <BoardCardContent
+        row={row}
+        locale={locale}
+        tPriority={tPriority}
+        t={t}
+        withDragHandle={canManage}
+      />
+    </div>
+  );
+}
+
+// ── BoardCardContent (visual card, shared between draggable and overlay) ──────
+
+function BoardCardContent({
+  row,
+  locale,
+  tPriority,
+  t,
+  withDragHandle = false,
+  isDragOverlay = false,
+}: {
+  row: ActionRow;
+  locale: string;
+  tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
+  t: (k: string) => string;
+  withDragHandle?: boolean;
+  isDragOverlay?: boolean;
 }) {
   const overdue =
     row.dueAt !== null &&
@@ -773,7 +1207,11 @@ function BoardCard({
   return (
     <Link
       href={`/${locale}/actions/${row.id}`}
-      className="block rounded-md bg-card p-3 text-sm shadow-sm transition-shadow hover:shadow-md"
+      className={cn(
+        'block rounded-md bg-card p-3 text-sm shadow-sm transition-shadow hover:shadow-md',
+        withDragHandle && 'pl-7',
+        isDragOverlay && 'rotate-1 shadow-lg ring-2 ring-primary/20',
+      )}
     >
       <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
         <span className="rounded bg-muted px-1.5 py-0.5">
@@ -825,26 +1263,4 @@ function BoardCard({
       </div>
     </Link>
   );
-}
-
-interface ActionRow {
-  id: string;
-  referenceNumber: string | null;
-  title: string;
-  status: string;
-  priority: string | null;
-  label: string | null;
-  assigneeUserId: string | null;
-  dueAt: Date | null;
-  siteId: string | null;
-  sourceType: string;
-  sourceId: string | null;
-  actionTypeId: string | null;
-  actionTypeName: string | null;
-  actionTypeColor: string | null;
-  recurrence: unknown;
-  createdAt: Date;
-  updatedAt: Date;
-  archivedAt: Date | null;
-  assigneeName: string | null;
 }
