@@ -1556,14 +1556,20 @@
           "DAILY": "Daily",
           "WEEKLY": "Weekly",
           "MONTHLY": "Monthly",
-          "YEARLY": "Yearly"
+          "YEARLY": "Yearly",
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "monthly": "Monthly",
+          "yearly": "Yearly"
         },
         "intervalLabel": "Every",
         "endDateLabel": "End date (optional)",
         "summary": "Repeats {freq} every {interval} interval(s).",
         "endsOn": "Ends on {date}.",
         "noEnd": "No end date.",
-        "savedToast": "Recurrence saved."
+        "savedToast": "Recurrence saved.",
+        "noRecurrence": "This action does not recur.",
+        "everyLabel": "Every"
       }
     },
     "create": {

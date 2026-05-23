@@ -26,7 +26,7 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { ActionDetailPanel } from '../../../src/components/actions/action-detail-panel';
 import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { toast } from 'sonner';
@@ -174,19 +174,26 @@ export default function ActionsListPage() {
   const tPriority = useTranslations('actions.priority');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedActionId = searchParams.get('action');
   const canCreate = useHasPermission('actions.create');
   const canManage = useHasPermission('actions.manage');
   const canSettings = useHasPermission('actions.settings');
 
+  // Selected action for the sidebar — initialise from ?action= param on first load,
+  // then keep in sync via window.history so the URL stays shareable without needing
+  // useSearchParams (which requires Suspense in App Router for reactive updates).
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('action');
+  });
+
   function handleSelectAction(id: string) {
-    router.push(`/${locale}/actions?action=${id}`, { scroll: false });
+    setSelectedActionId(id);
+    window.history.pushState(null, '', `/${locale}/actions?action=${id}`);
   }
 
   function handleClosePanel() {
-    router.push(`/${locale}/actions`, { scroll: false });
+    setSelectedActionId(null);
+    window.history.pushState(null, '', `/${locale}/actions`);
   }
 
   // ── View state
