@@ -26,7 +26,9 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { ActionDetailPanel } from '../../../src/components/actions/action-detail-panel';
+import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { toast } from 'sonner';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -172,9 +174,20 @@ export default function ActionsListPage() {
   const tPriority = useTranslations('actions.priority');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedActionId = searchParams.get('action');
   const canCreate = useHasPermission('actions.create');
   const canManage = useHasPermission('actions.manage');
   const canSettings = useHasPermission('actions.settings');
+
+  function handleSelectAction(id: string) {
+    router.push(`/${locale}/actions?action=${id}`, { scroll: false });
+  }
+
+  function handleClosePanel() {
+    router.push(`/${locale}/actions`, { scroll: false });
+  }
 
   // ── View state
   const [view, setView] = useState<ViewMode>('board');
@@ -738,6 +751,7 @@ export default function ActionsListPage() {
           isLoading={isLoading}
           locale={locale}
           canCreate={canCreate}
+          onSelect={handleSelectAction}
           tStatus={(k) => tStatus(k)}
           tPriority={(k) => tPriority(k)}
           t={t}
@@ -754,6 +768,7 @@ export default function ActionsListPage() {
             isLoading={isLoading}
             locale={locale}
             canManage={canManage}
+            onSelect={handleSelectAction}
             tStatus={(k) => tStatus(k)}
             tPriority={(k) => tPriority(k)}
             t={t}
@@ -772,6 +787,18 @@ export default function ActionsListPage() {
           </DragOverlay>
         </DndContext>
       )}
+
+      {/* Action detail sidebar */}
+      <Sheet
+        open={selectedActionId !== null}
+        onOpenChange={(open) => { if (!open) handleClosePanel(); }}
+      >
+        <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
+          {selectedActionId !== null ? (
+            <ActionDetailPanel actionId={selectedActionId} locale={locale} />
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -882,6 +909,7 @@ function ListView({
   isLoading,
   locale,
   canCreate,
+  onSelect,
   tStatus,
   tPriority,
   t,
@@ -890,6 +918,7 @@ function ListView({
   isLoading: boolean;
   locale: string;
   canCreate: boolean;
+  onSelect: (id: string) => void;
   tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
@@ -939,16 +968,27 @@ function ListView({
                   row.status !== 'cancelled' &&
                   new Date(row.dueAt).getTime() < Date.now();
                 return (
-                  <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
+                  <tr
+                    key={row.id}
+                    className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
+                    onClick={() => onSelect(row.id)}
+                  >
                     <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
-                      <Link href={`/${locale}/actions/${row.id}`}>
+                      <a
+                        href={`/${locale}/actions/${row.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {row.referenceNumber ?? row.id.slice(-6)}
-                      </Link>
+                      </a>
                     </td>
                     <td className="px-3 py-2 font-medium">
-                      <Link href={`/${locale}/actions/${row.id}`} className="hover:underline">
+                      <a
+                        href={`/${locale}/actions/${row.id}`}
+                        className="hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {row.title}
-                      </Link>
+                      </a>
                       {row.recurrence !== null && row.recurrence !== undefined ? (
                         <span
                           className="ml-2 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-200"
@@ -1029,6 +1069,7 @@ function BoardView({
   isLoading,
   locale,
   canManage,
+  onSelect,
   tStatus,
   tPriority,
   t,
@@ -1037,6 +1078,7 @@ function BoardView({
   isLoading: boolean;
   locale: string;
   canManage: boolean;
+  onSelect: (id: string) => void;
   tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
@@ -1053,6 +1095,7 @@ function BoardView({
           rows={grouped[col]}
           locale={locale}
           canManage={canManage}
+          onSelect={onSelect}
           tStatus={tStatus}
           tPriority={tPriority}
           t={t}
@@ -1069,6 +1112,7 @@ function BoardColumn({
   rows,
   locale,
   canManage,
+  onSelect,
   tStatus,
   tPriority,
   t,
@@ -1077,6 +1121,7 @@ function BoardColumn({
   rows: ReadonlyArray<ActionRow>;
   locale: string;
   canManage: boolean;
+  onSelect: (id: string) => void;
   tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
@@ -1112,6 +1157,7 @@ function BoardColumn({
               row={row}
               locale={locale}
               canManage={canManage}
+              onSelect={onSelect}
               tPriority={tPriority}
               t={t}
             />
@@ -1128,12 +1174,14 @@ function DraggableCard({
   row,
   locale,
   canManage,
+  onSelect,
   tPriority,
   t,
 }: {
   row: ActionRow;
   locale: string;
   canManage: boolean;
+  onSelect: (id: string) => void;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
 }) {
@@ -1162,6 +1210,7 @@ function DraggableCard({
       <BoardCardContent
         row={row}
         locale={locale}
+        onSelect={onSelect}
         tPriority={tPriority}
         t={t}
         withDragHandle={canManage}
@@ -1175,6 +1224,7 @@ function DraggableCard({
 function BoardCardContent({
   row,
   locale,
+  onSelect,
   tPriority,
   t,
   withDragHandle = false,
@@ -1182,6 +1232,7 @@ function BoardCardContent({
 }: {
   row: ActionRow;
   locale: string;
+  onSelect?: (id: string) => void;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
   withDragHandle?: boolean;
@@ -1205,8 +1256,14 @@ function BoardCardContent({
             : '';
 
   return (
-    <Link
+    <a
       href={`/${locale}/actions/${row.id}`}
+      onClick={(e) => {
+        if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0 && onSelect !== undefined) {
+          e.preventDefault();
+          onSelect(row.id);
+        }
+      }}
       className={cn(
         'block rounded-md bg-card p-3 text-sm shadow-sm transition-shadow hover:shadow-md',
         withDragHandle && 'pl-7',
@@ -1261,6 +1318,6 @@ function BoardCardContent({
         ) : null}
         <span className="text-muted-foreground">{row.assigneeName ?? t('noAssignee')}</span>
       </div>
-    </Link>
+    </a>
   );
 }
