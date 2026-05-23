@@ -983,6 +983,7 @@ function ListView({
                     <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
                       <a
                         href={`/${locale}/actions/${row.id}`}
+                        draggable="false"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {row.referenceNumber ?? row.id.slice(-6)}
@@ -991,6 +992,7 @@ function ListView({
                     <td className="px-3 py-2 font-medium">
                       <a
                         href={`/${locale}/actions/${row.id}`}
+                        draggable="false"
                         className="hover:underline"
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -1265,6 +1267,8 @@ function BoardCardContent({
   return (
     <a
       href={`/${locale}/actions/${row.id}`}
+      draggable="false"
+      onDragStart={(e) => e.preventDefault()}
       onClick={(e) => {
         if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0 && onSelect !== undefined) {
           e.preventDefault();
