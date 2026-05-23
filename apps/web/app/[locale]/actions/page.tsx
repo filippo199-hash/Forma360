@@ -1203,18 +1203,20 @@ function DraggableCard({
     <div
       ref={setNodeRef}
       {...attributes}
-      className={cn('relative', isDragging && 'opacity-30')}
+      {...(canManage ? listeners : {})}
+      className={cn(
+        'relative touch-none',
+        canManage && (isDragging ? 'cursor-grabbing opacity-30' : 'cursor-grab'),
+      )}
     >
-      {/* Drag handle — only visible to managers */}
+      {/* Grip icon — visual affordance only; listeners are on the wrapper */}
       {canManage ? (
-        <button
-          type="button"
-          {...listeners}
-          aria-label={t('dragHandleLabel')}
-          className="absolute left-1.5 top-3 z-10 cursor-grab touch-none text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
+        <div
+          aria-hidden="true"
+          className="absolute left-1.5 top-3 z-10 text-muted-foreground/40"
         >
           <GripVertical className="h-3.5 w-3.5" />
-        </button>
+        </div>
       ) : null}
       <BoardCardContent
         row={row}
