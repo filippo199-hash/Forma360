@@ -456,9 +456,9 @@ export default function ActionsListPage() {
         <div className="flex items-center gap-2">
           {canSettings ? (
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/${locale}/actions/categories`}>
+              <Link href={`/${locale}/actions/settings`}>
                 <Settings2 className="mr-1.5 h-3.5 w-3.5" />
-                {t('categoriesButton')}
+                {t('settingsButton')}
               </Link>
             </Button>
           ) : null}

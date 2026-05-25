@@ -1168,7 +1168,7 @@
         "actionTitlePlaceholder": "What needs to happen?",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Optional details, references, links",
-                "actionTypeLabel": "Actietype",
+        "actionTypeLabel": "Actietype",
         "noActionType": "Geen type",
         "priorityLabel": "Priority",
         "noPriority": "No priority",
@@ -1483,7 +1483,8 @@
         "saveConfirm": "Save",
         "deleteView": "Remove",
         "savedToast": "View \"{name}\" saved"
-      }
+      },
+      "settingsButton": "Instellingen"
     },
     "detail": {
       "backLink": "Back to actions",

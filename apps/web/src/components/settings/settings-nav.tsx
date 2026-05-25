@@ -19,8 +19,7 @@ interface AdminItem {
     | 'groups'
     | 'sites'
     | 'customFields'
-    | 'templates'
-    | 'actions';
+    | 'templates';
   href: string;
 }
 
@@ -45,7 +44,6 @@ export function SettingsNav({ locale, isAdmin }: SettingsNavProps) {
     { key: 'groups', href: `/${locale}/settings/groups` },
     { key: 'sites', href: `/${locale}/settings/sites` },
     { key: 'customFields', href: `/${locale}/settings/custom-fields` },
-    { key: 'actions', href: `/${locale}/settings/actions` },
   ];
 
   const placeholderSections = [

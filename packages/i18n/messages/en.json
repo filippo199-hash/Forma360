@@ -1515,6 +1515,7 @@
       "addFilter": "Add filter",
       "clearFilters": "Clear filters",
       "categoriesButton": "Categories",
+      "settingsButton": "Settings",
       "backToActions": "Back to Actions",
       "dragHandleLabel": "Drag to move",
       "dragMovedToast": "Moved to {status}",

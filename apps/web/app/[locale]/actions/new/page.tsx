@@ -60,6 +60,12 @@ export default function NewActionPage() {
   const { data: usersData } = trpc.users.list.useQuery({});
   const users = usersData?.users ?? [];
   const { data: types } = trpc.actionTypes.list.useQuery({ includeArchived: false });
+  const { data: actionSettings } = trpc.actionTypes.settings.get.useQuery();
+
+  // Track whether the current dueAt value was auto-computed from the priority
+  // so we can update it transparently when the user changes priority, but
+  // respect any date the user typed themselves.
+  const [dueAtAutoSet, setDueAtAutoSet] = useState(false);
 
   const selectedType = useMemo(
     () => (types ?? []).find((tp) => tp.id === actionTypeId) ?? null,
@@ -214,7 +220,25 @@ export default function NewActionPage() {
                 <select
                   id="priority"
                   value={priority}
-                  onChange={(e) => setPriority(e.target.value as '' | Priority)}
+                  onChange={(e) => {
+                    const next = e.target.value as '' | Priority;
+                    setPriority(next);
+                    // Auto-compute due date from priority unless the user has set one manually.
+                    if (dueAtAutoSet || dueAt === '') {
+                      if (next === '') {
+                        setDueAt('');
+                        setDueAtAutoSet(false);
+                      } else {
+                        const days = actionSettings?.priorityDueDateDays[next] ?? { low: 30, medium: 7, high: 1, critical: 1 }[next];
+                        if (days !== null && days !== undefined && days > 0) {
+                          const d = new Date(Date.now() + days * 86_400_000);
+                          const pad = (n: number) => String(n).padStart(2, '0');
+                          setDueAt(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+                          setDueAtAutoSet(true);
+                        }
+                      }
+                    }
+                  }}
                   className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   <option value="">{t('noPriority')}</option>
@@ -234,7 +258,10 @@ export default function NewActionPage() {
                   id="dueAt"
                   type="datetime-local"
                   value={dueAt}
-                  onChange={(e) => setDueAt(e.target.value)}
+                  onChange={(e) => {
+                    setDueAt(e.target.value);
+                    setDueAtAutoSet(false);
+                  }}
                 />
               </div>
               <div className="space-y-1.5">
