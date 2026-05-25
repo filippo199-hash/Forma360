@@ -143,6 +143,10 @@ export const inspections = pgTable(
      */
     archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'date' }),
 
+    /** Optional back-link to the entity that triggered this inspection (e.g. an observation). */
+    sourceType: text('source_type'),
+    sourceId: varchar('source_id', { length: 26 }),
+
     createdBy: text('created_by').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
       .notNull()
@@ -158,6 +162,7 @@ export const inspections = pgTable(
     index('inspections_tenant_createdby_idx').on(table.tenantId, table.createdBy),
     index('inspections_tenant_site_idx').on(table.tenantId, table.siteId),
     index('inspections_tenant_archived_idx').on(table.tenantId, table.archivedAt),
+    index('inspections_source_idx').on(table.tenantId, table.sourceType, table.sourceId),
   ],
 );
 

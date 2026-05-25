@@ -1168,11 +1168,21 @@
         "actionTitlePlaceholder": "What needs to happen?",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Optional details, references, links",
+                "actionTypeLabel": "Actietype",
+        "noActionType": "Geen type",
         "priorityLabel": "Priority",
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
         "toast": "Action created."
+      },
+      "attachInspectionDialog": {
+        "title": "Inspectie starten",
+        "description": "Kies een gepubliceerd sjabloon om een inspectie te starten die aan deze observatie is gekoppeld.",
+        "empty": "Geen gepubliceerde sjablonen beschikbaar.",
+        "submit": "Inspectie starten",
+        "toast": "Inspectie gestart.",
+        "loadError": "Sjablonen konden niet worden geladen."
       },
       "linkedActions": {
         "title": "Title",

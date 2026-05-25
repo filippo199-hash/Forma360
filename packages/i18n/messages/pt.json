@@ -1168,11 +1168,21 @@
         "actionTitlePlaceholder": "What needs to happen?",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Optional details, references, links",
+                "actionTypeLabel": "Tipo de ação",
+        "noActionType": "Sem tipo",
         "priorityLabel": "Priority",
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
         "toast": "Action created."
+      },
+      "attachInspectionDialog": {
+        "title": "Iniciar uma inspeção",
+        "description": "Escolha um modelo publicado para iniciar uma inspeção vinculada a esta observação.",
+        "empty": "Nenhum modelo publicado disponível.",
+        "submit": "Iniciar inspeção",
+        "toast": "Inspeção iniciada.",
+        "loadError": "Não foi possível carregar os modelos."
       },
       "linkedActions": {
         "title": "Title",

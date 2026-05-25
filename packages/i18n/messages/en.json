@@ -1189,11 +1189,21 @@
         "actionTitlePlaceholder": "What needs to happen?",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Optional details, references, links",
+        "actionTypeLabel": "Action type",
+        "noActionType": "No type",
         "priorityLabel": "Priority",
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
         "toast": "Action created."
+      },
+      "attachInspectionDialog": {
+        "title": "Start an inspection",
+        "description": "Choose a published template to start an inspection linked to this observation.",
+        "empty": "No published templates are available.",
+        "submit": "Start inspection",
+        "toast": "Inspection started.",
+        "loadError": "Could not load templates."
       },
       "linkedActions": {
         "title": "Title",

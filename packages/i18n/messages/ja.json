@@ -1168,11 +1168,21 @@
         "actionTitlePlaceholder": "What needs to happen?",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Optional details, references, links",
+                "actionTypeLabel": "アクションタイプ",
+        "noActionType": "タイプなし",
         "priorityLabel": "Priority",
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
         "toast": "Action created."
+      },
+      "attachInspectionDialog": {
+        "title": "点検を開始",
+        "description": "この観察に関連した点検を開始するための公開済みテンプレートを選択してください。",
+        "empty": "公開済みテンプレートがありません。",
+        "submit": "点検を開始",
+        "toast": "点検を開始しました。",
+        "loadError": "テンプレートを読み込めませんでした。"
       },
       "linkedActions": {
         "title": "Title",

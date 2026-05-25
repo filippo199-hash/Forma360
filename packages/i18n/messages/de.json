@@ -1168,11 +1168,21 @@
         "actionTitlePlaceholder": "What needs to happen?",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Optional details, references, links",
+                "actionTypeLabel": "Aktionstyp",
+        "noActionType": "Kein Typ",
         "priorityLabel": "Priority",
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
         "toast": "Action created."
+      },
+      "attachInspectionDialog": {
+        "title": "Inspektion starten",
+        "description": "Wählen Sie eine veröffentlichte Vorlage, um eine Inspektion zu starten.",
+        "empty": "Keine veröffentlichten Vorlagen verfügbar.",
+        "submit": "Inspektion starten",
+        "toast": "Inspektion gestartet.",
+        "loadError": "Vorlagen konnten nicht geladen werden."
       },
       "linkedActions": {
         "title": "Title",

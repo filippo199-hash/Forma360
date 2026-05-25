@@ -1168,11 +1168,21 @@
         "actionTitlePlaceholder": "What needs to happen?",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Optional details, references, links",
+                "actionTypeLabel": "行动类型",
+        "noActionType": "无类型",
         "priorityLabel": "Priority",
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
         "toast": "Action created."
+      },
+      "attachInspectionDialog": {
+        "title": "开始检查",
+        "description": "选择已发布的模板，开始与此观察关联的检查。",
+        "empty": "没有可用的已发布模板。",
+        "submit": "开始检查",
+        "toast": "检查已开始。",
+        "loadError": "无法加载模板。"
       },
       "linkedActions": {
         "title": "Title",

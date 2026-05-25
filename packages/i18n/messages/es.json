@@ -1168,11 +1168,21 @@
         "actionTitlePlaceholder": "What needs to happen?",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Optional details, references, links",
+                "actionTypeLabel": "Tipo de acción",
+        "noActionType": "Sin tipo",
         "priorityLabel": "Priority",
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
         "toast": "Action created."
+      },
+      "attachInspectionDialog": {
+        "title": "Iniciar una inspección",
+        "description": "Elige una plantilla publicada para iniciar una inspección vinculada a esta observación.",
+        "empty": "No hay plantillas publicadas disponibles.",
+        "submit": "Iniciar inspección",
+        "toast": "Inspección iniciada.",
+        "loadError": "No se pudieron cargar las plantillas."
       },
       "linkedActions": {
         "title": "Title",

@@ -1,10 +1,11 @@
 'use client';
 
 import type { IssueStatusValue } from '@forma360/shared/issues-schema';
-import { Archive, ExternalLink, Paperclip, Pencil, Plus, Upload, X, ImageIcon } from 'lucide-react';
+import { Archive, CheckCircle2, Clock, ExternalLink, Paperclip, Pencil, Plus, Upload, X, ImageIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -32,7 +33,7 @@ import { trpc } from '../../lib/trpc/client';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Tab = 'overview' | 'activity' | 'files' | 'actions';
+type Tab = 'overview' | 'activity' | 'files' | 'actions' | 'inspections';
 type Priority = 'low' | 'medium' | 'high' | 'critical';
 
 const PRIORITIES: ReadonlyArray<Priority> = ['low', 'medium', 'high', 'critical'];
@@ -73,6 +74,7 @@ export function ObservationDetailPanel({
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [closeOpen, setCloseOpen] = useState(false);
   const [addActionOpen, setAddActionOpen] = useState(false);
+  const [attachInspectionOpen, setAttachInspectionOpen] = useState(false);
 
   const issueId = observationId;
 
@@ -245,7 +247,7 @@ export function ObservationDetailPanel({
         </div>
 
         <nav className="mt-3 flex gap-1 border-b">
-          {(['overview', 'activity', 'files', 'actions'] as const).map((key) => (
+          {(['overview', 'activity', 'files', 'actions', 'inspections'] as const).map((key) => (
             <button
               key={key}
               type="button"
@@ -461,7 +463,32 @@ export function ObservationDetailPanel({
             />
           </div>
         ) : null}
+
+        {tab === 'inspections' ? (
+          <div className="p-6">
+            <LinkedInspectionsCard
+              issueId={issueId}
+              canManage={canManage}
+              onOpenAttach={() => setAttachInspectionOpen(true)}
+              locale={locale}
+            />
+          </div>
+        ) : null}
       </div>
+
+      {/* ── Bottom action bar ── */}
+      {canManage ? (
+        <div className="shrink-0 border-t bg-background px-6 py-3 flex items-center gap-2">
+          <Button size="sm" onClick={() => setAddActionOpen(true)}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            {t('actions.addAction')}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setAttachInspectionOpen(true)}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            {t('actions.addInspection')}
+          </Button>
+        </div>
+      ) : null}
 
       {/* ── Dialogs ── */}
       <Dialog open={closeOpen} onOpenChange={setCloseOpen}>
@@ -493,6 +520,19 @@ export function ObservationDetailPanel({
           onCreated={() => {
             void utils.issues.activity.list.invalidate({ issueId });
           }}
+        />
+      ) : null}
+
+      {attachInspectionOpen ? (
+        <AttachInspectionDialog
+          open={attachInspectionOpen}
+          onOpenChange={setAttachInspectionOpen}
+          issueId={issueId}
+          onCreated={(_inspectionId) => {
+            void utils.inspections.list.invalidate();
+            void utils.issues.activity.list.invalidate({ issueId });
+          }}
+          locale={locale}
         />
       ) : null}
     </div>
@@ -804,6 +844,20 @@ function AttachmentThumb({ mimeType, signedUrl }: { mimeType: string; signedUrl:
   );
 }
 
+const ACTION_STATUS_BADGE: Record<string, string> = {
+  open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
+  in_progress: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
+  completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
+  cancelled: 'bg-muted text-muted-foreground',
+};
+
+const PRIORITY_BADGE: Record<string, string> = {
+  critical: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100',
+  high: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-100',
+  medium: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
+  low: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
+};
+
 function LinkedActionsCard({
   issueId,
   canManage,
@@ -820,57 +874,85 @@ function LinkedActionsCard({
   const tActionStatus = useTranslations('actions.status');
   const { data, isLoading } = trpc.actions.list.useQuery({ sourceType: 'issue', sourceId: issueId });
   const rows = data ?? [];
+
   return (
-    <Card>
-      <CardContent className="space-y-4 p-6 text-sm">
-        {isLoading ? (
-          <Skeleton className="h-12 w-full" />
-        ) : rows.length === 0 ? (
-          <p className="text-muted-foreground">{t('linkedActionsEmpty')}</p>
-        ) : (
-          <ul className="space-y-2">
-            {rows.map((row) => {
-              const statusLabel =
-                row.status === 'open' ||
-                row.status === 'in_progress' ||
-                row.status === 'completed' ||
-                row.status === 'cancelled'
-                  ? tActionStatus(row.status)
-                  : row.status;
-              return (
-                <li key={row.id} className="rounded-md border p-3 hover:bg-muted/30">
-                  <Link
-                    href={`/${locale}/actions/${row.id}`}
-                    className="block font-medium hover:underline"
-                  >
-                    {row.title}
-                  </Link>
-                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    <span>{statusLabel}</span>
-                    {row.priority !== null &&
-                    (row.priority === 'low' ||
-                      row.priority === 'medium' ||
-                      row.priority === 'high' ||
-                      row.priority === 'critical') ? (
-                      <span>{tPriority(row.priority)}</span>
-                    ) : null}
-                    {row.dueAt !== null ? (
-                      <span>{new Date(row.dueAt).toLocaleString()}</span>
-                    ) : null}
+    <div className="space-y-3">
+      {isLoading ? (
+        <Skeleton className="h-20 w-full" />
+      ) : rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t('linkedActionsEmpty')}</p>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((row) => {
+            const overdue =
+              row.dueAt !== null &&
+              row.status !== 'completed' &&
+              row.status !== 'cancelled' &&
+              new Date(row.dueAt).getTime() < Date.now();
+            return (
+              <Link
+                key={row.id}
+                href={`/${locale}/actions/${row.id}`}
+                className="block rounded-lg border bg-card p-3 text-sm shadow-sm transition-shadow hover:shadow-md"
+              >
+                {/* Reference + source badge */}
+                <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="rounded bg-muted px-1.5 py-0.5">Observation</span>
+                  <span className="font-mono">{row.referenceNumber ?? row.id.slice(-6)}</span>
+                </div>
+                {/* Title */}
+                <p className="line-clamp-2 font-medium">{row.title}</p>
+                {/* Type badge */}
+                {row.actionTypeName !== null ? (
+                  <div className="mt-1 flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 rounded-full border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      {row.actionTypeColor !== null && row.actionTypeColor.length > 0 ? (
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: row.actionTypeColor }}
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      {row.actionTypeName}
+                    </span>
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {canManage ? (
-          <Button type="button" size="sm" onClick={onOpenAdd}>
-            <Plus className="mr-1 h-4 w-4" />
-            {t('actions.addAction')}
-          </Button>
-        ) : null}
-      </CardContent>
-    </Card>
+                ) : null}
+                {/* Status + priority + due */}
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                  <span className={cn('rounded px-1.5 py-0.5 font-medium', ACTION_STATUS_BADGE[row.status] ?? 'bg-muted text-muted-foreground')}>
+                    {row.status === 'open' || row.status === 'in_progress' || row.status === 'completed' || row.status === 'cancelled'
+                      ? tActionStatus(row.status)
+                      : row.status}
+                  </span>
+                  {row.priority !== null && row.priority in PRIORITY_BADGE ? (
+                    <span className={cn('rounded px-1.5 py-0.5 font-medium', PRIORITY_BADGE[row.priority] ?? '')}>
+                      {(row.priority === 'low' || row.priority === 'medium' || row.priority === 'high' || row.priority === 'critical')
+                        ? tPriority(row.priority)
+                        : row.priority}
+                    </span>
+                  ) : null}
+                  {row.dueAt !== null ? (
+                    <span className={cn('flex items-center gap-0.5', overdue ? 'font-medium text-destructive' : 'text-muted-foreground')}>
+                      <Clock className="h-3 w-3" />
+                      {new Date(row.dueAt).toLocaleDateString()}
+                    </span>
+                  ) : null}
+                  {row.assigneeName !== null ? (
+                    <span className="text-muted-foreground">{row.assigneeName}</span>
+                  ) : null}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+      {canManage ? (
+        <Button type="button" variant="outline" size="sm" onClick={onOpenAdd}>
+          <Plus className="mr-1 h-3.5 w-3.5" />
+          {t('actions.addAction')}
+        </Button>
+      ) : null}
+    </div>
   );
 }
 
@@ -893,6 +975,9 @@ function AddActionDialog({
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'' | Priority>('');
   const [dueAt, setDueAt] = useState('');
+  const [actionTypeId, setActionTypeId] = useState('');
+
+  const { data: actionTypes } = trpc.actionTypes.list.useQuery({}, { enabled: open });
 
   const create = trpc.actions.createFromIssue.useMutation({
     onSuccess: () => {
@@ -904,6 +989,7 @@ function AddActionDialog({
       setDescription('');
       setPriority('');
       setDueAt('');
+      setActionTypeId('');
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -946,6 +1032,22 @@ function AddActionDialog({
               autoFocus
               maxLength={500}
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="act-type">{t('actionTypeLabel')}</Label>
+            <select
+              id="act-type"
+              value={actionTypeId}
+              onChange={(e) => setActionTypeId(e.target.value)}
+              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">{t('noActionType')}</option>
+              {(actionTypes ?? []).map((at) => (
+                <option key={at.id} value={at.id}>
+                  {at.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="act-desc">{t('descriptionLabel')}</Label>
@@ -994,6 +1096,174 @@ function AddActionDialog({
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const INSPECTION_STATUS_BADGE: Record<string, string> = {
+  in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
+  awaiting_signatures: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-100',
+  awaiting_approval: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
+  completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
+  rejected: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100',
+};
+
+function LinkedInspectionsCard({
+  issueId,
+  canManage,
+  onOpenAttach,
+  locale,
+}: {
+  issueId: string;
+  canManage: boolean;
+  onOpenAttach: () => void;
+  locale: string;
+}) {
+  const t = useTranslations('issues.detail');
+  const tInspStatus = useTranslations('inspections.status');
+  const { data, isLoading } = trpc.inspections.list.useQuery({ sourceIssueId: issueId });
+  const rows = data ?? [];
+
+  return (
+    <div className="space-y-3">
+      {isLoading ? (
+        <Skeleton className="h-20 w-full" />
+      ) : rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t('inspectionsEmpty')}</p>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((row) => (
+            <Link
+              key={row.id}
+              href={`/${locale}/inspections/${row.id}`}
+              className="block rounded-lg border bg-card p-3 text-sm shadow-sm transition-shadow hover:shadow-md"
+            >
+              <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                <span className="font-mono">{row.documentNumber ?? row.id.slice(-6)}</span>
+                <span className={cn('rounded px-1.5 py-0.5 font-medium text-xs', INSPECTION_STATUS_BADGE[row.status] ?? 'bg-muted text-muted-foreground')}>
+                  {tInspStatus(row.status as 'in_progress' | 'awaiting_signatures' | 'awaiting_approval' | 'completed' | 'rejected')}
+                </span>
+              </div>
+              <p className="line-clamp-2 font-medium">{row.title}</p>
+              {row.templateName !== null ? (
+                <p className="mt-0.5 text-xs text-muted-foreground">{row.templateName}</p>
+              ) : null}
+              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                {row.completedAt !== null ? (
+                  <span className="flex items-center gap-0.5">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                    {new Date(row.completedAt).toLocaleDateString()}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-0.5">
+                    <Clock className="h-3 w-3" />
+                    {new Date(row.startedAt).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+      {canManage ? (
+        <Button type="button" variant="outline" size="sm" onClick={onOpenAttach}>
+          <Plus className="mr-1 h-3.5 w-3.5" />
+          {t('actions.addInspection')}
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+function AttachInspectionDialog({
+  open,
+  onOpenChange,
+  issueId,
+  onCreated,
+  locale,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  issueId: string;
+  onCreated: (inspectionId: string) => void;
+  locale: string;
+}) {
+  const t = useTranslations('issues.detail.attachInspectionDialog');
+  const tCommon = useTranslations('common');
+  const router = useRouter();
+  const [selected, setSelected] = useState('');
+
+  const { data: templates, isLoading } = trpc.templates.list.useQuery(
+    { status: 'published' },
+    { enabled: open },
+  );
+
+  const published = useMemo(
+    () => (templates ?? []).filter((r) => r.currentVersionId !== null && r.archivedAt === null),
+    [templates],
+  );
+
+  const create = trpc.inspections.create.useMutation({
+    onSuccess: (res) => {
+      toast.success(t('toast'));
+      onCreated(res.inspectionId);
+      onOpenChange(false);
+      router.push(`/${locale}/inspections/${res.inspectionId}`);
+    },
+    onError: () => toast.error(t('loadError')),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[40vh] overflow-y-auto">
+          {isLoading ? (
+            <Skeleton className="h-24 w-full" />
+          ) : published.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">{t('empty')}</p>
+          ) : (
+            <ul className="space-y-1">
+              {published.map((tpl) => (
+                <li key={tpl.id}>
+                  <label className="flex cursor-pointer items-center gap-3 rounded-md border bg-background px-3 py-2 text-sm">
+                    <input
+                      type="radio"
+                      name="insp-template"
+                      checked={selected === tpl.id}
+                      onChange={() => setSelected(tpl.id)}
+                      className="h-4 w-4"
+                    />
+                    <span className="flex-1">
+                      <span className="font-medium">{tpl.name}</span>
+                      {tpl.description !== null ? (
+                        <span className="ml-2 text-xs text-muted-foreground">{tpl.description}</span>
+                      ) : null}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            {tCommon('cancel')}
+          </Button>
+          <Button
+            onClick={() => {
+              if (selected.length !== 26 || create.isPending) return;
+              create.mutate({ templateId: selected, sourceIssueId: issueId });
+            }}
+            disabled={selected.length !== 26 || create.isPending}
+          >
+            {t('submit')}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

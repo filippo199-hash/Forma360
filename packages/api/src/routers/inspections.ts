@@ -144,6 +144,8 @@ const listInput = z
       ])
       .optional(),
     templateId: z.string().length(26).optional(),
+    /** Filter to inspections linked to a specific issue (observation). */
+    sourceIssueId: z.string().length(26).optional(),
     includeArchived: z.boolean().default(false),
   })
   .default({});
@@ -153,6 +155,8 @@ const getInput = z.object({ inspectionId: z.string().length(26) });
 const createInput = z.object({
   templateId: z.string().length(26),
   siteId: z.string().length(26).optional(),
+  /** Observation/issue that triggered this inspection. Sets sourceType='issue'. */
+  sourceIssueId: z.string().length(26).optional(),
 });
 
 const saveProgressInput = z.object({
@@ -324,6 +328,10 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         if (input.status !== undefined) where.push(eq(inspections.status, input.status));
         if (input.templateId !== undefined)
           where.push(eq(inspections.templateId, input.templateId));
+        if (input.sourceIssueId !== undefined) {
+          where.push(eq(inspections.sourceType, 'issue'));
+          where.push(eq(inspections.sourceId, input.sourceIssueId));
+        }
         if (!input.includeArchived) where.push(isNull(inspections.archivedAt));
         return ctx.db
           .select({
@@ -341,6 +349,8 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             archivedAt: inspections.archivedAt,
             createdBy: inspections.createdBy,
             updatedAt: inspections.updatedAt,
+            sourceType: inspections.sourceType,
+            sourceId: inspections.sourceId,
             templateName: templates.name,
             openActionsCount: sql<number>`(
               SELECT COUNT(*)::int FROM actions a
@@ -551,6 +561,8 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             documentNumber,
             conductedBy: ctx.auth.userId,
             siteId: input.siteId ?? null,
+            sourceType: input.sourceIssueId !== undefined ? 'issue' : null,
+            sourceId: input.sourceIssueId ?? null,
             responses: {},
             score: null,
             accessSnapshot,

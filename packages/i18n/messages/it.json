@@ -1168,11 +1168,21 @@
         "actionTitlePlaceholder": "What needs to happen?",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Optional details, references, links",
+                "actionTypeLabel": "Tipo di azione",
+        "noActionType": "Nessun tipo",
         "priorityLabel": "Priority",
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
         "toast": "Action created."
+      },
+      "attachInspectionDialog": {
+        "title": "Avvia un'ispezione",
+        "description": "Scegli un template pubblicato per avviare un'ispezione collegata a questa osservazione.",
+        "empty": "Nessun template pubblicato disponibile.",
+        "submit": "Avvia ispezione",
+        "toast": "Ispezione avviata.",
+        "loadError": "Impossibile caricare i template."
       },
       "linkedActions": {
         "title": "Title",
