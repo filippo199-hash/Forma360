@@ -327,18 +327,38 @@
     "unarchiveButton": "Unarchive",
     "showArchived": "Show archived",
     "empty": "No templates yet. Create your first template to get started.",
+    "emptySearch": "No templates match your search.",
+    "searchPlaceholder": "Search all templates",
+    "addFilter": "Add filter",
+    "allUsers": "All users",
+    "restricted": "Restricted",
+    "of": "of",
     "table": {
-      "name": "Name",
+      "name": "Template",
       "status": "Status",
       "updated": "Updated",
-      "actions": "Actions"
+      "actions": "Actions",
+      "lastPublished": "Last published",
+      "access": "Access",
+      "selectRow": "Select row",
+      "selectAll": "Select all"
+    },
+    "filter": {
+      "status": "Status",
+      "access": "Access",
+      "any": "Any",
+      "allUsers": "All users",
+      "restricted": "Restricted"
     },
     "status": {
       "draft": "Draft",
-      "published": "Published",
+      "published": "Active",
       "archived": "Archived"
     },
     "list": {
+      "startInspection": "Start inspection",
+      "startingInspection": "Starting…",
+      "startInspectionError": "Could not start inspection. Try again.",
       "actionEdit": "Edit",
       "actionPublish": "Publish",
       "actionUnpublish": "Move to draft",
@@ -731,7 +751,22 @@
       "documentNumber": "Document #",
       "status": "Status",
       "startedAt": "Started",
-      "conductedBy": "Conducted by"
+      "conductedBy": "Conducted by",
+      "inspection": "Inspection",
+      "actions": "Actions",
+      "conducted": "Conducted",
+      "completed": "Completed"
+    },
+    "continueButton": "Continue",
+    "viewReportButton": "View report",
+    "searchPlaceholder": "Search",
+    "addFilter": "+ Add filter",
+    "resultsCount": "{count} results",
+    "openActionsCount": "{count} Open",
+    "rowMenu": {
+      "editInspection": "Edit inspection",
+      "viewReport": "View report",
+      "archive": "Archive"
     },
     "status": {
       "in_progress": "In progress",

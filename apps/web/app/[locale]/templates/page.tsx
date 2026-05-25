@@ -3,17 +3,23 @@
 import {
   Archive,
   ArchiveRestore,
+  Building2,
   Copy,
   FileEdit,
+  Filter,
+  LayoutGrid,
   MoreHorizontal,
   Pencil,
   QrCode,
+  Search,
   Send,
+  Users,
+  X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ArchiveDialog } from '../../../src/components/archive-dialog';
 import { QrCodeDialog } from '../../../src/components/templates/qr-code-dialog';
@@ -40,33 +46,40 @@ import { Skeleton } from '../../../src/components/ui/skeleton';
 import { Textarea } from '../../../src/components/ui/textarea';
 import { trpc } from '../../../src/lib/trpc/client';
 
-/**
- * Templates list. Admin-only (see layout). Shows every non-archived
- * template, surfaces draft/published status, and exposes a kebab
- * "row actions" dropdown (modelled on SafetyCulture / iAuditor's list
- * pattern) with status-contextual options:
- *
- *   - Draft     → Edit · Publish · Duplicate · QR · Copy link · Archive
- *   - Published → Edit · Move to draft · Duplicate · QR · Copy link · Archive
- *   - Archived  → Restore · Duplicate · QR · Copy link
- *
- * Plus a "show archived" toggle, a new-template modal, and a CSV export
- * dialog (PR 33). All mutations invalidate `templates.list` so the table
- * stays in sync.
- */
+type FilterKey = 'status' | 'access';
+type NormalisedStatus = 'draft' | 'published' | 'archived';
+type StatusFilterValue = 'all' | NormalisedStatus;
+type AccessFilterValue = 'all' | 'allUsers' | 'restricted';
+
 export default function TemplatesListPage() {
   const t = useTranslations('templates');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
+  const router = useRouter();
   const utils = trpc.useUtils();
 
-  const [includeArchived, setIncludeArchived] = useState(false);
+  const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('all');
+  const [accessFilter, setAccessFilter] = useState<AccessFilterValue>('all');
   const [showCreate, setShowCreate] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
   const [qrTarget, setQrTarget] = useState<{ id: string; name: string } | null>(null);
+  const [startingFor, setStartingFor] = useState<string | null>(null);
 
-  const { data: rows, isLoading } = trpc.templates.list.useQuery({ includeArchived });
+  const { data: rows, isLoading } = trpc.templates.list.useQuery({ includeArchived: true });
+
+  const startInspection = trpc.inspections.create.useMutation({
+    onSuccess: (res) => {
+      setStartingFor(null);
+      router.push(`/${locale}/inspections/${res.inspectionId}`);
+    },
+    onError: () => {
+      setStartingFor(null);
+      toast.error(t('list.startInspectionError'));
+    },
+  });
 
   const archive = trpc.templates.archive.useMutation({
     onSuccess: () => {
@@ -75,89 +88,289 @@ export default function TemplatesListPage() {
     },
   });
 
+  const filtered = useMemo(() => {
+    if (!rows) return [];
+    return rows.filter((r) => {
+      const status = normaliseStatus(r.status);
+
+      // Default: hide archived unless explicitly requested via status filter
+      if (!activeFilters.has('status') && status === 'archived') return false;
+
+      // Status filter
+      if (activeFilters.has('status') && statusFilter !== 'all' && status !== statusFilter)
+        return false;
+
+      // Access filter
+      if (activeFilters.has('access') && accessFilter !== 'all') {
+        const hasRule = r.accessRuleId !== null;
+        if (accessFilter === 'allUsers' && hasRule) return false;
+        if (accessFilter === 'restricted' && !hasRule) return false;
+      }
+
+      // Text search
+      if (search.trim().length > 0) {
+        const q = search.toLowerCase();
+        const inName = r.name.toLowerCase().includes(q);
+        const inDesc = r.description?.toLowerCase().includes(q) ?? false;
+        if (!inName && !inDesc) return false;
+      }
+
+      return true;
+    });
+  }, [rows, search, statusFilter, accessFilter, activeFilters]);
+
+  function addFilter(key: FilterKey) {
+    setActiveFilters((prev) => new Set([...prev, key]));
+  }
+
+  function removeFilter(key: FilterKey) {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setStatusFilter('all');
+    if (key === 'access') setAccessFilter('all');
+  }
+
+  const hasActiveFilters = activeFilters.size > 0 || search.trim().length > 0;
+  const totalCount = rows?.filter((r) => normaliseStatus(r.status) !== 'archived').length ?? 0;
+
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
-        </div>
+    <div className="space-y-4">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold">
+          {t('title')}
+          {rows !== undefined ? (
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              ({filtered.length} {t('of')} {totalCount})
+            </span>
+          ) : null}
+        </h1>
         <div className="flex items-center gap-2">
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={includeArchived}
-              onChange={(e) => setIncludeArchived(e.target.checked)}
-              className="h-4 w-4"
-              aria-label={t('showArchived')}
-            />
-            <span>{t('showArchived')}</span>
-          </label>
-          <Button
-            variant="outline"
-            onClick={() => setShowExport(true)}
-            aria-label={t('export.button')}
-          >
+          <Button variant="outline" onClick={() => setShowExport(true)}>
             {t('export.button')}
           </Button>
-          <Button onClick={() => setShowCreate(true)} aria-label={t('newButton')}>
-            {t('newButton')}
-          </Button>
+          <Button onClick={() => setShowCreate(true)}>{t('newButton')}</Button>
         </div>
       </header>
+
+      {/* Search + filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-48 flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder={t('searchPlaceholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        {activeFilters.has('status') && (
+          <FilterChip label={t('filter.status')}>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="font-medium outline-none hover:text-foreground">
+                {statusFilter === 'all' ? t('filter.any') : t(`status.${statusFilter}`)}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onSelect={() => setStatusFilter('all')}>
+                  {t('filter.any')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setStatusFilter('draft')}>
+                  {t('status.draft')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setStatusFilter('published')}>
+                  {t('status.published')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setStatusFilter('archived')}>
+                  {t('status.archived')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <button
+              className="ml-1 text-muted-foreground hover:text-foreground"
+              onClick={() => removeFilter('status')}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </FilterChip>
+        )}
+
+        {activeFilters.has('access') && (
+          <FilterChip label={t('filter.access')}>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="font-medium outline-none hover:text-foreground">
+                {accessFilter === 'all' ? t('filter.any') : t(`filter.${accessFilter}`)}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onSelect={() => setAccessFilter('all')}>
+                  {t('filter.any')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setAccessFilter('allUsers')}>
+                  {t('filter.allUsers')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setAccessFilter('restricted')}>
+                  {t('filter.restricted')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <button
+              className="ml-1 text-muted-foreground hover:text-foreground"
+              onClick={() => removeFilter('access')}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </FilterChip>
+        )}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <Filter className="h-3.5 w-3.5" />
+              {t('addFilter')}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              onSelect={() => addFilter('status')}
+              disabled={activeFilters.has('status')}
+            >
+              {t('filter.status')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => addFilter('access')}
+              disabled={activeFilters.has('access')}
+            >
+              {t('filter.access')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <Card>
         <CardContent className="p-0">
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/40">
               <tr className="text-left">
-                <th className="px-3 py-2 font-medium">{t('table.name')}</th>
-                <th className="px-3 py-2 font-medium">{t('table.status')}</th>
-                <th className="px-3 py-2 font-medium">{t('table.updated')}</th>
-                <th className="px-3 py-2 text-right font-medium">{t('table.actions')}</th>
+                <th className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-input accent-primary"
+                    aria-label={t('table.selectAll')}
+                  />
+                </th>
+                <th className="px-3 py-3 font-medium">{t('table.name')}</th>
+                <th className="hidden px-3 py-3 font-medium md:table-cell">
+                  {t('table.lastPublished')}
+                </th>
+                <th className="hidden px-3 py-3 font-medium lg:table-cell">
+                  {t('table.access')}
+                </th>
+                <th className="px-3 py-3 font-medium">{t('table.status')}</th>
+                <th className="px-3 py-3" />
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr>
-                  <td colSpan={4} className="p-4">
-                    <Skeleton className="h-4 w-full" />
-                  </td>
-                </tr>
-              ) : (rows ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="p-8 text-center text-muted-foreground">
-                    {t('empty')}
-                  </td>
-                </tr>
-              ) : (
-                (rows ?? []).map((r) => (
-                  <tr key={r.id} className="border-b last:border-0">
-                    <td className="px-3 py-2">
-                      <Link
-                        href={`/${locale}/templates/${r.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {r.name}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2">
-                      <StatusBadge status={r.status} />
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {formatRelative(r.updatedAt)}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <RowActionsMenu
-                        templateId={r.id}
-                        status={normaliseStatus(r.status)}
-                        locale={locale}
-                        onArchive={() => setArchiveTarget(r.id)}
-                        onQrCode={() => setQrTarget({ id: r.id, name: r.name })}
-                      />
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i} className="border-b last:border-0">
+                    <td colSpan={6} className="px-4 py-4">
+                      <Skeleton className="h-8 w-full" />
                     </td>
                   </tr>
                 ))
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                    {hasActiveFilters ? t('emptySearch') : t('empty')}
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((r) => {
+                  const status = normaliseStatus(r.status);
+                  const isPublished = status === 'published' && r.archivedAt === null;
+                  const isStarting = startingFor === r.id && startInspection.isPending;
+                  return (
+                    <tr key={r.id} className="border-b last:border-0 hover:bg-muted/20">
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-input accent-primary"
+                          aria-label={t('table.selectRow')}
+                        />
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300">
+                            <LayoutGrid className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <Link
+                              href={`/${locale}/templates/${r.id}`}
+                              className="font-medium hover:underline"
+                            >
+                              {r.name}
+                            </Link>
+                            {r.description !== null && r.description.length > 0 ? (
+                              <p className="mt-0.5 max-w-xs truncate text-xs text-muted-foreground">
+                                {r.description}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="hidden px-3 py-3 text-muted-foreground md:table-cell">
+                        {r.lastPublishedAt !== null ? formatRelative(r.lastPublishedAt) : '—'}
+                      </td>
+                      <td className="hidden px-3 py-3 lg:table-cell">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          {r.accessRuleId === null ? (
+                            <>
+                              <Users className="h-3.5 w-3.5 shrink-0" />
+                              <span className="text-xs">{t('allUsers')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Building2 className="h-3.5 w-3.5 shrink-0" />
+                              <span className="text-xs">{r.accessRuleName ?? t('restricted')}</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <StatusBadge status={r.status} />
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center justify-end gap-2">
+                          {isPublished ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="hidden sm:flex"
+                              disabled={isStarting}
+                              onClick={() => {
+                                setStartingFor(r.id);
+                                startInspection.mutate({ templateId: r.id });
+                              }}
+                            >
+                              {isStarting
+                                ? t('list.startingInspection')
+                                : t('list.startInspection')}
+                            </Button>
+                          ) : null}
+                          <RowActionsMenu
+                            templateId={r.id}
+                            status={status}
+                            locale={locale}
+                            onArchive={() => setArchiveTarget(r.id)}
+                            onQrCode={() => setQrTarget({ id: r.id, name: r.name })}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -192,7 +405,24 @@ export default function TemplatesListPage() {
   );
 }
 
-type NormalisedStatus = 'draft' | 'published' | 'archived';
+// ─── Filter chip ───────────────────────────────────────────────────────────────
+
+function FilterChip({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-1 rounded-md border bg-muted/40 px-2.5 py-1 text-sm">
+      <span className="text-muted-foreground">{label}:</span>
+      {children}
+    </div>
+  );
+}
+
+// ─── Row actions menu ──────────────────────────────────────────────────────────
 
 function normaliseStatus(status: string): NormalisedStatus {
   return status === 'published' || status === 'archived' ? status : 'draft';
@@ -358,6 +588,8 @@ function RowActionsMenu({ templateId, status, locale, onArchive, onQrCode }: Row
   );
 }
 
+// ─── Export dialog ─────────────────────────────────────────────────────────────
+
 function TemplatesExportDialog({
   open,
   onOpenChange,
@@ -408,6 +640,8 @@ function TemplatesExportDialog({
   );
 }
 
+// ─── Status badge ──────────────────────────────────────────────────────────────
+
 function StatusBadge({ status }: { status: string }) {
   const t = useTranslations('templates.status');
   const normalised: 'draft' | 'published' | 'archived' =
@@ -424,17 +658,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function formatRelative(d: Date): string {
-  const ms = Date.now() - new Date(d).getTime();
-  const s = Math.floor(ms / 1000);
-  if (s < 60) return `${s}s ago`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const days = Math.floor(h / 24);
-  return `${days}d ago`;
-}
+// ─── Create template dialog ────────────────────────────────────────────────────
 
 function CreateTemplateDialog({
   open,
@@ -451,9 +675,6 @@ function CreateTemplateDialog({
     onSuccess: (result) => {
       void utils.templates.list.invalidate();
       onOpenChange(false);
-      // Next.js router would be nicer but we're in a client component
-      // without access to useRouter here — a hard navigation keeps this
-      // simple and reliable.
       window.location.href = `/${locale}/templates/${result.templateId}`;
     },
   });
@@ -497,4 +718,18 @@ function CreateTemplateDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatRelative(d: Date): string {
+  const ms = Date.now() - new Date(d).getTime();
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const days = Math.floor(h / 24);
+  return `${days}d ago`;
 }

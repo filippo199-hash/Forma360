@@ -54,7 +54,7 @@ import { newId } from '@forma360/shared/id';
 import type { Logger } from '@forma360/shared/logger';
 import type { SignatureWorkflow } from '@forma360/shared/template-schema';
 import { TRPCError } from '@trpc/server';
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -341,8 +341,18 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             archivedAt: inspections.archivedAt,
             createdBy: inspections.createdBy,
             updatedAt: inspections.updatedAt,
+            templateName: templates.name,
+            openActionsCount: sql<number>`(
+              SELECT COUNT(*)::int FROM actions a
+              WHERE a.tenant_id = ${ctx.tenantId}
+                AND a.source_type = 'inspection'
+                AND a.source_id = ${inspections.id}
+                AND a.status IN ('open', 'in_progress')
+                AND a.archived_at IS NULL
+            )`,
           })
           .from(inspections)
+          .leftJoin(templates, eq(templates.id, inspections.templateId))
           .where(and(...where))
           .orderBy(desc(inspections.startedAt));
       }),

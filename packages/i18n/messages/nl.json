@@ -668,7 +668,11 @@
       "documentNumber": "Document #",
       "status": "Status",
       "startedAt": "Started",
-      "conductedBy": "Conducted by"
+      "conductedBy": "Conducted by",
+      "inspection": "Inspectie",
+      "actions": "Acties",
+      "conducted": "Uitgevoerd",
+      "completed": "Voltooid"
     },
     "status": {
       "in_progress": "In progress",
@@ -840,7 +844,18 @@
       "archiveSuccess": "Inspections archived"
     },
     "showArchived": "Show archived",
-    "archivedBadge": "Archived"
+    "archivedBadge": "Archived",
+    "continueButton": "Doorgaan",
+    "viewReportButton": "Rapport bekijken",
+    "searchPlaceholder": "Zoeken",
+    "addFilter": "+ Filter toevoegen",
+    "resultsCount": "{count} resultaten",
+    "openActionsCount": "{count} Open",
+    "rowMenu": {
+      "editInspection": "Inspectie bewerken",
+      "viewReport": "Rapport bekijken",
+      "archive": "Archiveren"
+    }
   },
   "nav": {
     "primaryLabel": "Primary navigation",

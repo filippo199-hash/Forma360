@@ -54,7 +54,7 @@ import {
   type TemplateContent,
 } from '@forma360/shared/template-schema';
 import { TRPCError } from '@trpc/server';
-import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -214,11 +214,57 @@ export const templatesRouter = router({
         .where(and(...where))
         .orderBy(desc(templates.updatedAt));
 
+      if (rows.length === 0) return [];
+
+      // Batch-fetch most recent publishedAt per template
+      const templateIds = rows.map((r) => r.id);
+      const pubVersions = await ctx.db
+        .select({
+          templateId: templateVersions.templateId,
+          publishedAt: templateVersions.publishedAt,
+        })
+        .from(templateVersions)
+        .where(
+          and(
+            eq(templateVersions.tenantId, ctx.tenantId),
+            inArray(templateVersions.templateId, templateIds),
+            isNotNull(templateVersions.publishedAt),
+          ),
+        )
+        .orderBy(desc(templateVersions.publishedAt));
+
+      const lastPublishedMap = new Map<string, Date>();
+      for (const v of pubVersions) {
+        if (!lastPublishedMap.has(v.templateId) && v.publishedAt !== null) {
+          lastPublishedMap.set(v.templateId, v.publishedAt);
+        }
+      }
+
+      // Fetch access rules (used for name display and non-manager visibility filtering)
+      const ruleIds = Array.from(
+        new Set(rows.map((r) => r.accessRuleId).filter((id): id is string => id !== null)),
+      );
+      const ruleRows =
+        ruleIds.length === 0
+          ? []
+          : await ctx.db
+              .select()
+              .from(accessRules)
+              .where(and(eq(accessRules.tenantId, ctx.tenantId), inArray(accessRules.id, ruleIds)));
+      const ruleMap = new Map(ruleRows.map((r) => [r.id, r]));
+
+      const enriched = rows.map((r) => ({
+        ...r,
+        lastPublishedAt: lastPublishedMap.get(r.id) ?? null,
+        accessRuleName:
+          r.accessRuleId !== null ? (ruleMap.get(r.accessRuleId)?.name ?? null) : null,
+      }));
+
       // Admin / template-manager users see every template regardless of
       // access rule. For everyone else we gate by the rule: null = visible
       // to all, non-null = caller's group/site memberships must satisfy it.
       const isManager = ctx.permissions.includes('templates.manage');
-      if (isManager) return rows;
+      if (isManager) return enriched;
 
       const userGroupRows = await ctx.db
         .select({ groupId: groupMembers.groupId })
@@ -237,19 +283,7 @@ export const templatesRouter = router({
         siteIds: userSiteRows.map((r) => r.siteId),
       };
 
-      const ruleIds = Array.from(
-        new Set(rows.map((r) => r.accessRuleId).filter((id): id is string => id !== null)),
-      );
-      const ruleRows =
-        ruleIds.length === 0
-          ? []
-          : await ctx.db
-              .select()
-              .from(accessRules)
-              .where(and(eq(accessRules.tenantId, ctx.tenantId), inArray(accessRules.id, ruleIds)));
-      const ruleMap = new Map(ruleRows.map((r) => [r.id, r]));
-
-      return rows.filter((tpl) => {
+      return enriched.filter((tpl) => {
         if (tpl.accessRuleId === null) return true;
         const rule = ruleMap.get(tpl.accessRuleId);
         if (rule === undefined) return false;

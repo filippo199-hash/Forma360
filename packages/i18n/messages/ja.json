@@ -668,7 +668,11 @@
       "documentNumber": "Document #",
       "status": "Status",
       "startedAt": "Started",
-      "conductedBy": "Conducted by"
+      "conductedBy": "Conducted by",
+      "inspection": "点検",
+      "actions": "アクション",
+      "conducted": "実施日",
+      "completed": "完了日"
     },
     "status": {
       "in_progress": "In progress",
@@ -840,7 +844,18 @@
       "archiveSuccess": "Inspections archived"
     },
     "showArchived": "Show archived",
-    "archivedBadge": "Archived"
+    "archivedBadge": "Archived",
+    "continueButton": "続ける",
+    "viewReportButton": "レポートを見る",
+    "searchPlaceholder": "検索",
+    "addFilter": "+ フィルター追加",
+    "resultsCount": "{count}件",
+    "openActionsCount": "{count}件未処理",
+    "rowMenu": {
+      "editInspection": "点検を編集",
+      "viewReport": "レポートを見る",
+      "archive": "アーカイブ"
+    }
   },
   "nav": {
     "primaryLabel": "Primary navigation",

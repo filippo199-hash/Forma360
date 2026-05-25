@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { ObservationDetailPanel } from '../../../src/components/observations/observation-detail-panel';
+import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -30,6 +32,21 @@ export default function ObservationsListPage() {
 
   const canReport = useHasPermission('issues.report');
   const canManageSettings = useHasPermission('issues.settings');
+
+  const [selectedObservationId, setSelectedObservationId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('observation');
+  });
+
+  function handleSelectObservation(id: string) {
+    setSelectedObservationId(id);
+    window.history.pushState(null, '', `/${locale}/observations?observation=${id}`);
+  }
+
+  function handleClosePanel() {
+    setSelectedObservationId(null);
+    window.history.pushState(null, '', `/${locale}/observations`);
+  }
 
   const [status, setStatus] = useState<StatusFilter>('all');
   const [categoryId, setCategoryId] = useState<string>('');
@@ -193,17 +210,16 @@ export default function ObservationsListPage() {
                 </tr>
               ) : (
                 (data?.items ?? []).map((row) => (
-                  <tr key={row.id} className="border-b last:border-0">
+                  <tr
+                    key={row.id}
+                    className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
+                    onClick={() => handleSelectObservation(row.id)}
+                  >
                     <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
                       {row.referenceNumber}
                     </td>
                     <td className="px-3 py-2">
-                      <Link
-                        href={`/${locale}/observations/${row.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {row.title}
-                      </Link>
+                      <span className="font-medium">{row.title}</span>
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">{row.categorySnapshot.name}</td>
                     <td className="px-3 py-2 text-muted-foreground">
@@ -242,6 +258,18 @@ export default function ObservationsListPage() {
           />
         ) : null}
       </div>
+
+      {/* Observation detail sidebar */}
+      <Sheet
+        open={selectedObservationId !== null}
+        onOpenChange={(open) => { if (!open) handleClosePanel(); }}
+      >
+        <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
+          {selectedObservationId !== null ? (
+            <ObservationDetailPanel observationId={selectedObservationId} locale={locale} />
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

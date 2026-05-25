@@ -5,15 +5,18 @@ import {
   ArchiveRestore,
   Copy,
   FileEdit,
+  Filter,
   MoreHorizontal,
   Pencil,
   QrCode,
+  Search,
   Send,
+  X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ArchiveDialog } from '../../../src/components/archive-dialog';
 import { QrCodeDialog } from '../../../src/components/templates/qr-code-dialog';
@@ -125,19 +128,60 @@ export default function InspectionsListPage() {
 
 // ─── Inspections tab ──────────────────────────────────────────────────────────
 
+const AVATAR_COLORS = [
+  'bg-blue-500',
+  'bg-purple-500',
+  'bg-green-500',
+  'bg-orange-500',
+  'bg-pink-500',
+  'bg-teal-500',
+  'bg-red-500',
+  'bg-indigo-500',
+];
+
+function getAvatarColor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = ((h * 31) + id.charCodeAt(i)) | 0;
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length] ?? 'bg-blue-500';
+}
+
+function getInitials(name: string | null | undefined): string {
+  if (!name) return '?';
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return (words[0] ?? '').slice(0, 2).toUpperCase();
+  return ((words[0]?.[0] ?? '') + (words[1]?.[0] ?? '')).toUpperCase();
+}
+
+function formatDisplayDate(d: Date | null | undefined, locale: string): string {
+  if (d == null) return '—';
+  return new Intl.DateTimeFormat(locale.replace('_', '-'), {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(d));
+}
+
+function toDateGroupKey(d: Date): string {
+  const dt = new Date(d);
+  return `${dt.getFullYear()}-${String(dt.getMonth()).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
 function InspectionsTab({ locale }: { locale: string }) {
   const t = useTranslations('inspections');
   const tFilter = useTranslations('inspections.filter');
   const tCommon = useTranslations('common');
-  const tStatus = useTranslations('inspections.status');
   const tExport = useTranslations('inspections.export');
   const tBulk = useTranslations('inspections.bulk');
+  const router = useRouter();
   const utils = trpc.useUtils();
+
   const [activeFilter, setActiveFilter] = useState<(typeof STATUS_FILTERS)[number]['key']>('all');
   const [showPicker, setShowPicker] = useState(false);
   const [includeArchived, setIncludeArchived] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkArchiveOpen, setBulkArchiveOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
 
   const filter = STATUS_FILTERS.find((f) => f.key === activeFilter) ?? STATUS_FILTERS[0];
   const listInput = {
@@ -153,9 +197,7 @@ function InspectionsTab({ locale }: { locale: string }) {
       void utils.inspections.list.invalidate();
       toast.success(tBulk('archiveSuccess'));
     },
-    onError: () => {
-      toast.error(tCommon('error'));
-    },
+    onError: () => toast.error(tCommon('error')),
   });
 
   async function exportCurrentFilter() {
@@ -193,7 +235,7 @@ function InspectionsTab({ locale }: { locale: string }) {
   }
 
   function toggleAll() {
-    const visible = rows ?? [];
+    const visible = filteredRows;
     if (selectedIds.size === visible.length && visible.length > 0) {
       setSelectedIds(new Set());
     } else {
@@ -201,12 +243,46 @@ function InspectionsTab({ locale }: { locale: string }) {
     }
   }
 
-  const visibleRows = rows ?? [];
-  const allSelected = visibleRows.length > 0 && selectedIds.size === visibleRows.length;
+  const filteredRows = useMemo(() => {
+    const all = rows ?? [];
+    if (!searchQuery.trim()) return all;
+    const q = searchQuery.toLowerCase();
+    return all.filter(
+      (r) =>
+        r.title.toLowerCase().includes(q) ||
+        (r.templateName ?? '').toLowerCase().includes(q),
+    );
+  }, [rows, searchQuery]);
+
+  const groupedRows = useMemo(() => {
+    const groups: { dateKey: string; label: string; rows: typeof filteredRows }[] = [];
+    const seen = new Map<string, number>();
+    for (const row of filteredRows) {
+      const key = toDateGroupKey(row.startedAt);
+      const idx = seen.get(key);
+      if (idx === undefined) {
+        seen.set(key, groups.length);
+        groups.push({
+          dateKey: key,
+          label: formatDisplayDate(row.startedAt, locale),
+          rows: [row],
+        });
+      } else {
+        const group = groups[idx];
+        if (group !== undefined) group.rows.push(row);
+      }
+    }
+    return groups;
+  }, [filteredRows, locale]);
+
+  const allSelected =
+    filteredRows.length > 0 && selectedIds.size === filteredRows.length;
   const selectionCount = selectedIds.size;
+  const totalCount = rows?.length ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Header */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
@@ -223,31 +299,35 @@ function InspectionsTab({ locale }: { locale: string }) {
             />
             <span>{t('showArchived')}</span>
           </label>
-          <Button variant="outline" onClick={exportCurrentFilter} aria-label={tExport('button')}>
+          <Button variant="outline" onClick={exportCurrentFilter}>
             {tExport('button')}
           </Button>
           <Button onClick={() => setShowPicker(true)}>{t('startButton')}</Button>
         </div>
       </header>
 
-      {selectionCount > 0 ? (
-        <div
-          role="region"
-          aria-label={tBulk('toolbarLabel')}
-          className="flex flex-wrap items-center gap-2 rounded-md border bg-accent/40 px-3 py-2 text-sm"
-        >
-          <span className="font-medium">{tBulk('selected', { count: selectionCount })}</span>
-          <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={exportSelected}>
-              {tBulk('exportSelected')}
-            </Button>
-            <Button size="sm" variant="destructive" onClick={() => setBulkArchiveOpen(true)}>
-              {tBulk('archiveSelected')}
-            </Button>
-          </div>
+      {/* Search + filter row */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            className="pl-8"
+          />
         </div>
-      ) : null}
+        <Button variant="outline" size="sm" className="gap-1.5 text-sm">
+          <Filter className="h-3.5 w-3.5" />
+          {t('addFilter')}
+        </Button>
+        <span className="ml-auto text-sm text-muted-foreground">
+          {t('resultsCount', { count: filteredRows.length })}
+          {filteredRows.length !== totalCount ? ` / ${totalCount}` : ''}
+        </span>
+      </div>
 
+      {/* Status filter pills */}
       <nav className="flex flex-wrap gap-1 overflow-x-auto" aria-label={tCommon('search')}>
         {STATUS_FILTERS.map((f) => {
           const active = f.key === activeFilter;
@@ -278,6 +358,7 @@ function InspectionsTab({ locale }: { locale: string }) {
         })}
       </nav>
 
+      {/* Table */}
       <Card>
         <CardContent className="p-0">
           <table className="w-full text-sm">
@@ -292,60 +373,127 @@ function InspectionsTab({ locale }: { locale: string }) {
                     className="h-4 w-4"
                   />
                 </th>
-                <th className="px-3 py-2 font-medium">{t('table.title')}</th>
-                <th className="px-3 py-2 font-medium">{t('table.documentNumber')}</th>
-                <th className="px-3 py-2 font-medium">{t('table.status')}</th>
-                <th className="px-3 py-2 font-medium">{t('table.startedAt')}</th>
+                <th className="px-3 py-2 font-medium">{t('table.inspection')}</th>
+                <th className="w-28 px-3 py-2 font-medium">{t('table.actions')}</th>
+                <th className="w-36 px-3 py-2 font-medium">{t('table.conducted')}</th>
+                <th className="w-36 px-3 py-2 font-medium">{t('table.completed')}</th>
+                <th className="w-32 px-3 py-2" />
+                <th className="w-10 px-3 py-2" />
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i} className="border-b">
+                    <td colSpan={7} className="px-3 py-3">
+                      <Skeleton className="h-4 w-full" />
+                    </td>
+                  </tr>
+                ))
+              ) : filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-4">
-                    <Skeleton className="h-4 w-full" />
-                  </td>
-                </tr>
-              ) : visibleRows.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
                     {t('empty')}
                   </td>
                 </tr>
               ) : (
-                visibleRows.map((r) => (
-                  <tr key={r.id} className="border-b last:border-0">
-                    <td className="px-3 py-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(r.id)}
-                        onChange={() => toggleRow(r.id)}
-                        aria-label={tBulk('selectRow')}
-                        className="h-4 w-4"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <Link
-                        href={`/${locale}/inspections/${r.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {r.title}
-                      </Link>
-                      {r.archivedAt !== null ? (
-                        <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                          {t('archivedBadge')}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
-                      {r.documentNumber ?? '—'}
-                    </td>
-                    <td className="px-3 py-2">
-                      <InspectionStatusPill status={r.status} tStatus={tStatus} />
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {formatRelative(r.startedAt)}
-                    </td>
-                  </tr>
+                groupedRows.map((group) => (
+                  <Fragment key={group.dateKey}>
+                    <tr className="bg-muted/20">
+                      <td colSpan={7} className="px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                        {group.label}
+                      </td>
+                    </tr>
+                    {group.rows.map((r) => {
+                      const isTerminal = r.status === 'completed' || r.status === 'rejected';
+                      const conductUrl = `/${locale}/inspections/${r.id}`;
+                      const reportUrl = `/${locale}/inspections/${r.id}/status`;
+                      const openCount = r.openActionsCount ?? 0;
+                      return (
+                        <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10">
+                          <td className="px-3 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(r.id)}
+                              onChange={() => toggleRow(r.id)}
+                              aria-label={tBulk('selectRow')}
+                              className="h-4 w-4"
+                            />
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div
+                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${getAvatarColor(r.templateId)}`}
+                              >
+                                {getInitials(r.templateName)}
+                              </div>
+                              <div className="min-w-0">
+                                <Link
+                                  href={conductUrl}
+                                  className="block truncate font-medium hover:underline"
+                                >
+                                  {r.title}
+                                  {r.archivedAt !== null ? (
+                                    <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                                      {t('archivedBadge')}
+                                    </span>
+                                  ) : null}
+                                </Link>
+                                {r.templateName !== null ? (
+                                  <span className="block truncate text-xs text-muted-foreground">
+                                    {r.templateName}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">
+                            {openCount > 0 ? (
+                              <span className="text-foreground">
+                                {t('openActionsCount', { count: openCount })}
+                              </span>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">
+                            {formatDisplayDate(r.startedAt, locale)}
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">
+                            {formatDisplayDate(r.completedAt, locale)}
+                          </td>
+                          <td className="px-3 py-3 text-right">
+                            {isTerminal ? (
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="h-auto p-0 text-primary"
+                                onClick={() => router.push(reportUrl)}
+                              >
+                                {t('viewReportButton')}
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="h-auto p-0 text-primary"
+                                onClick={() => router.push(conductUrl)}
+                              >
+                                {t('continueButton')}
+                              </Button>
+                            )}
+                          </td>
+                          <td className="px-3 py-3">
+                            <InspectionRowMenu
+                              conductUrl={conductUrl}
+                              reportUrl={reportUrl}
+                              onArchive={() => setArchiveTarget(r.id)}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
                 ))
               )}
             </tbody>
@@ -353,8 +501,69 @@ function InspectionsTab({ locale }: { locale: string }) {
         </CardContent>
       </Card>
 
+      {/* Bulk action bar */}
+      {selectionCount > 0 ? (
+        <div
+          role="region"
+          aria-label={tBulk('toolbarLabel')}
+          className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-foreground px-5 py-3 text-background shadow-lg"
+        >
+          <span className="text-sm font-medium">
+            {tBulk('selected', { count: selectionCount })}
+          </span>
+          <button
+            type="button"
+            className="text-sm text-background/70 underline underline-offset-2 hover:text-background"
+            onClick={toggleAll}
+          >
+            {tBulk('selectAll')}
+          </button>
+          <div className="mx-1 h-4 w-px bg-background/30" />
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-full border-background/30 bg-transparent text-background hover:bg-background/10"
+            onClick={exportSelected}
+          >
+            {tBulk('exportSelected')}
+          </Button>
+          <Button
+            size="sm"
+            className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => setBulkArchiveOpen(true)}
+          >
+            <Archive className="mr-1.5 h-3.5 w-3.5" />
+            {tBulk('archiveSelected')}
+          </Button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="ml-1 text-background/70 hover:text-background"
+            aria-label={tCommon('close')}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
+
       <TemplatePickerDialog open={showPicker} onOpenChange={setShowPicker} locale={locale} />
 
+      {/* Single row archive */}
+      <ArchiveDialog
+        entity="inspection"
+        id={archiveTarget ?? ''}
+        open={archiveTarget !== null}
+        onOpenChange={(v) => { if (!v) setArchiveTarget(null); }}
+        onConfirm={() => {
+          if (archiveTarget !== null) {
+            archiveMany.mutate({ ids: [archiveTarget] });
+            setArchiveTarget(null);
+          }
+        }}
+        pending={archiveMany.isPending}
+      />
+
+      {/* Bulk archive */}
       <Dialog open={bulkArchiveOpen} onOpenChange={setBulkArchiveOpen}>
         <DialogContent>
           <DialogHeader>
@@ -387,35 +596,49 @@ function InspectionsTab({ locale }: { locale: string }) {
   );
 }
 
-function InspectionStatusPill({
-  status,
-  tStatus,
+function InspectionRowMenu({
+  conductUrl,
+  reportUrl,
+  onArchive,
 }: {
-  status: string;
-  tStatus: ReturnType<typeof useTranslations<'inspections.status'>>;
+  conductUrl: string;
+  reportUrl: string;
+  onArchive: () => void;
 }) {
-  const key = [
-    'in_progress',
-    'awaiting_signatures',
-    'awaiting_approval',
-    'completed',
-    'rejected',
-  ].includes(status)
-    ? (status as 'in_progress')
-    : 'in_progress';
-  const colors: Record<string, string> = {
-    in_progress: 'bg-blue-100 text-blue-900 dark:bg-blue-900/40 dark:text-blue-100',
-    awaiting_signatures: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
-    awaiting_approval: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
-    completed: 'bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100',
-    rejected: 'bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100',
-  };
+  const t = useTranslations('inspections');
+  const router = useRouter();
+
   return (
-    <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${colors[key]}`}>
-      {tStatus(key)}
-    </span>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          aria-label={t('rowMenu.editInspection')}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => router.push(conductUrl)}>
+          <Pencil className="mr-2 h-4 w-4" />
+          {t('rowMenu.editInspection')}
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => router.push(reportUrl)}>
+          <FileEdit className="mr-2 h-4 w-4" />
+          {t('rowMenu.viewReport')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-destructive" onSelect={onArchive}>
+          <Archive className="mr-2 h-4 w-4" />
+          {t('rowMenu.archive')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
+
 
 function TemplatePickerDialog({
   open,

@@ -668,7 +668,11 @@
       "documentNumber": "Document #",
       "status": "Status",
       "startedAt": "Started",
-      "conductedBy": "Conducted by"
+      "conductedBy": "Conducted by",
+      "inspection": "Inspektion",
+      "actions": "Maßnahmen",
+      "conducted": "Durchgeführt",
+      "completed": "Abgeschlossen"
     },
     "status": {
       "in_progress": "In progress",
@@ -840,7 +844,18 @@
       "archiveSuccess": "Inspections archived"
     },
     "showArchived": "Show archived",
-    "archivedBadge": "Archived"
+    "archivedBadge": "Archived",
+    "continueButton": "Fortfahren",
+    "viewReportButton": "Bericht anzeigen",
+    "searchPlaceholder": "Suchen",
+    "addFilter": "+ Filter hinzufügen",
+    "resultsCount": "{count} Ergebnisse",
+    "openActionsCount": "{count} Offen",
+    "rowMenu": {
+      "editInspection": "Inspektion bearbeiten",
+      "viewReport": "Bericht anzeigen",
+      "archive": "Archivieren"
+    }
   },
   "nav": {
     "primaryLabel": "Primary navigation",

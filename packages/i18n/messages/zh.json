@@ -668,7 +668,11 @@
       "documentNumber": "Document #",
       "status": "Status",
       "startedAt": "Started",
-      "conductedBy": "Conducted by"
+      "conductedBy": "Conducted by",
+      "inspection": "检查",
+      "actions": "行动",
+      "conducted": "执行日期",
+      "completed": "完成日期"
     },
     "status": {
       "in_progress": "In progress",
@@ -840,7 +844,18 @@
       "archiveSuccess": "Inspections archived"
     },
     "showArchived": "Show archived",
-    "archivedBadge": "Archived"
+    "archivedBadge": "Archived",
+    "continueButton": "继续",
+    "viewReportButton": "查看报告",
+    "searchPlaceholder": "搜索",
+    "addFilter": "+ 添加筛选",
+    "resultsCount": "共{count}条",
+    "openActionsCount": "{count}条待处理",
+    "rowMenu": {
+      "editInspection": "编辑检查",
+      "viewReport": "查看报告",
+      "archive": "归档"
+    }
   },
   "nav": {
     "primaryLabel": "Primary navigation",
