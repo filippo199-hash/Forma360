@@ -1203,7 +1203,8 @@
         "empty": "No published templates are available.",
         "submit": "Start inspection",
         "toast": "Inspection started.",
-        "loadError": "Could not load templates."
+        "loadError": "Could not load templates.",
+        "createError": "Could not start inspection."
       },
       "linkedActions": {
         "title": "Title",

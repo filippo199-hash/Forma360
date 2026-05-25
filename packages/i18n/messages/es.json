@@ -1182,7 +1182,8 @@
         "empty": "No hay plantillas publicadas disponibles.",
         "submit": "Iniciar inspección",
         "toast": "Inspección iniciada.",
-        "loadError": "No se pudieron cargar las plantillas."
+        "loadError": "No se pudieron cargar las plantillas.",
+        "createError": "No se pudo iniciar la inspección."
       },
       "linkedActions": {
         "title": "Title",

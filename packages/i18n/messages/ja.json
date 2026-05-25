@@ -1182,7 +1182,8 @@
         "empty": "公開済みテンプレートがありません。",
         "submit": "点検を開始",
         "toast": "点検を開始しました。",
-        "loadError": "テンプレートを読み込めませんでした。"
+        "loadError": "テンプレートを読み込めませんでした。",
+        "createError": "点検を開始できませんでした。"
       },
       "linkedActions": {
         "title": "Title",

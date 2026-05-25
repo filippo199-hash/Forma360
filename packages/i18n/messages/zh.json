@@ -1182,7 +1182,8 @@
         "empty": "没有可用的已发布模板。",
         "submit": "开始检查",
         "toast": "检查已开始。",
-        "loadError": "无法加载模板。"
+        "loadError": "无法加载模板。",
+        "createError": "无法开始检查。"
       },
       "linkedActions": {
         "title": "Title",

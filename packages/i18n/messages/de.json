@@ -1182,7 +1182,8 @@
         "empty": "Keine veröffentlichten Vorlagen verfügbar.",
         "submit": "Inspektion starten",
         "toast": "Inspektion gestartet.",
-        "loadError": "Vorlagen konnten nicht geladen werden."
+        "loadError": "Vorlagen konnten nicht geladen werden.",
+        "createError": "Inspektion konnte nicht gestartet werden."
       },
       "linkedActions": {
         "title": "Title",

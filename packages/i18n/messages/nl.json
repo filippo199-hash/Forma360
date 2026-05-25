@@ -1182,7 +1182,8 @@
         "empty": "Geen gepubliceerde sjablonen beschikbaar.",
         "submit": "Inspectie starten",
         "toast": "Inspectie gestart.",
-        "loadError": "Sjablonen konden niet worden geladen."
+        "loadError": "Sjablonen konden niet worden geladen.",
+        "createError": "Inspectie kon niet worden gestart."
       },
       "linkedActions": {
         "title": "Title",

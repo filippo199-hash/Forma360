@@ -1182,7 +1182,8 @@
         "empty": "Nenhum modelo publicado disponível.",
         "submit": "Iniciar inspeção",
         "toast": "Inspeção iniciada.",
-        "loadError": "Não foi possível carregar os modelos."
+        "loadError": "Não foi possível carregar os modelos.",
+        "createError": "Não foi possível iniciar a inspeção."
       },
       "linkedActions": {
         "title": "Title",
