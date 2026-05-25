@@ -3,6 +3,7 @@
 import {
   Archive,
   ArchiveRestore,
+  ChevronDown,
   Copy,
   FileEdit,
   Filter,
@@ -16,7 +17,7 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ArchiveDialog } from '../../../src/components/archive-dialog';
 import { QrCodeDialog } from '../../../src/components/templates/qr-code-dialog';
@@ -70,27 +71,21 @@ function formatRelative(d: Date): string {
 
 // ─── Inspection status filter config ──────────────────────────────────────────
 
-const STATUS_FILTERS = [
-  { key: 'all', status: undefined as undefined | 'in_progress' },
-  { key: 'in_progress', status: 'in_progress' as const },
-  { key: 'awaiting_signatures', status: 'awaiting_signatures' as const },
-  { key: 'awaiting_approval', status: 'awaiting_approval' as const },
-  { key: 'completed', status: 'completed' as const },
-  { key: 'rejected', status: 'rejected' as const },
+type StatusFilterValue = 'all' | 'in_progress' | 'awaiting_signatures' | 'awaiting_approval' | 'completed' | 'rejected';
+
+const INSPECTION_STATUSES: ReadonlyArray<StatusFilterValue> = [
+  'all',
+  'in_progress',
+  'awaiting_signatures',
+  'awaiting_approval',
+  'completed',
+  'rejected',
 ];
 
 // ─── Root page — tab switcher ─────────────────────────────────────────────────
 
-type ActiveTab = 'inspections' | 'templates';
+type ActiveTab = 'inspections' | 'templates' | 'approvals' | 'schedules';
 
-/**
- * Unified Inspections + Templates page.
- *
- * Two tabs at the top mirror SafetyCulture's approach where templates are
- * the authoring surface and inspections are the execution surface — both
- * live under the same nav entry. The Templates sidebar entry is removed;
- * deep links to the template editor (/templates/[id]) are unchanged.
- */
 export default function InspectionsListPage() {
   const tNav = useTranslations('nav');
   const params = useParams<{ locale: string }>();
@@ -101,7 +96,7 @@ export default function InspectionsListPage() {
     <div className="px-4 py-6">
       {/* Tab bar */}
       <div className="mb-6 flex border-b">
-        {(['inspections', 'templates'] as const).map((tab) => (
+        {(['inspections', 'templates', 'approvals', 'schedules'] as const).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -119,6 +114,10 @@ export default function InspectionsListPage() {
 
       {activeTab === 'inspections' ? (
         <InspectionsTab locale={locale} />
+      ) : activeTab === 'approvals' ? (
+        <ApprovalsTab locale={locale} />
+      ) : activeTab === 'schedules' ? (
+        <SchedulesTab locale={locale} />
       ) : (
         <TemplatesTab locale={locale} />
       )}
@@ -175,19 +174,31 @@ function InspectionsTab({ locale }: { locale: string }) {
   const router = useRouter();
   const utils = trpc.useUtils();
 
-  const [activeFilter, setActiveFilter] = useState<(typeof STATUS_FILTERS)[number]['key']>('all');
   const [showPicker, setShowPicker] = useState(false);
   const [includeArchived, setIncludeArchived] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkArchiveOpen, setBulkArchiveOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('all');
+  const [activeFilters, setActiveFilters] = useState<Set<'status'>>(new Set());
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const filterMenuRef = useRef<HTMLDivElement>(null);
 
-  const filter = STATUS_FILTERS.find((f) => f.key === activeFilter) ?? STATUS_FILTERS[0];
   const listInput = {
-    ...(filter?.status !== undefined ? { status: filter.status } : {}),
+    ...(activeFilters.has('status') && statusFilter !== 'all' ? { status: statusFilter } : {}),
     includeArchived,
   };
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) {
+        setFilterMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
   const { data: rows, isLoading } = trpc.inspections.list.useQuery(listInput);
 
   const archiveMany = trpc.inspectionsExport.archiveMany.useMutation({
@@ -307,7 +318,7 @@ function InspectionsTab({ locale }: { locale: string }) {
       </header>
 
       {/* Search + filter row */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -317,46 +328,75 @@ function InspectionsTab({ locale }: { locale: string }) {
             className="pl-8"
           />
         </div>
-        <Button variant="outline" size="sm" className="gap-1.5 text-sm">
-          <Filter className="h-3.5 w-3.5" />
-          {t('addFilter')}
-        </Button>
+
+        {/* Add filter button + dropdown */}
+        <div className="relative" ref={filterMenuRef}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setFilterMenuOpen((v) => !v)}
+            className="gap-1.5"
+          >
+            <Filter className="h-3.5 w-3.5" />
+            {t('addFilter')}
+            {activeFilters.size > 0 ? (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                {activeFilters.size}
+              </span>
+            ) : (
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            )}
+          </Button>
+          {filterMenuOpen && !activeFilters.has('status') ? (
+            <div className="absolute left-0 top-full z-50 mt-1 w-40 rounded-md border bg-popover py-1 shadow-lg">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveFilters(new Set(['status']));
+                  setFilterMenuOpen(false);
+                }}
+                className="flex w-full items-center px-3 py-2 text-sm hover:bg-accent"
+              >
+                {t('filterStatus')}
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Status filter chip */}
+        {activeFilters.has('status') ? (
+          <FilterChip
+            label={t('filterStatus')}
+            onRemove={() => {
+              setActiveFilters(new Set());
+              setStatusFilter('all');
+            }}
+          >
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilterValue)}
+              className="border-0 bg-transparent text-xs outline-none"
+            >
+              {INSPECTION_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s === 'all' ? t('filterStatusAll') : tFilter(
+                    s === 'in_progress' ? 'inProgress' :
+                    s === 'awaiting_signatures' ? 'awaitingSignatures' :
+                    s === 'awaiting_approval' ? 'awaitingApproval' :
+                    s === 'completed' ? 'completed' : 'rejected'
+                  )}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
+        ) : null}
+
         <span className="ml-auto text-sm text-muted-foreground">
           {t('resultsCount', { count: filteredRows.length })}
           {filteredRows.length !== totalCount ? ` / ${totalCount}` : ''}
         </span>
       </div>
-
-      {/* Status filter pills */}
-      <nav className="flex flex-wrap gap-1 overflow-x-auto" aria-label={tCommon('search')}>
-        {STATUS_FILTERS.map((f) => {
-          const active = f.key === activeFilter;
-          const label =
-            f.key === 'all'
-              ? tCommon('search')
-              : f.key === 'in_progress'
-                ? tFilter('inProgress')
-                : f.key === 'awaiting_signatures'
-                  ? tFilter('awaitingSignatures')
-                  : f.key === 'awaiting_approval'
-                    ? tFilter('awaitingApproval')
-                    : f.key === 'completed'
-                      ? tFilter('completed')
-                      : tFilter('rejected');
-          return (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setActiveFilter(f.key)}
-              className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                active ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60'
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </nav>
 
       {/* Table */}
       <Card>
@@ -596,6 +636,33 @@ function InspectionsTab({ locale }: { locale: string }) {
   );
 }
 
+// ── FilterChip ────────────────────────────────────────────────────────────────
+
+function FilterChip({
+  label,
+  onRemove,
+  children,
+}: {
+  label: string;
+  onRemove: () => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="inline-flex items-center gap-1 rounded-full border border-input bg-background px-2.5 py-1 text-xs">
+      <span className="font-medium text-muted-foreground">{label}:</span>
+      {children}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="ml-0.5 rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+        aria-label={`Remove ${label} filter`}
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
 function InspectionRowMenu({
   conductUrl,
   reportUrl,
@@ -723,6 +790,174 @@ function TemplatePickerDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── Approvals tab ────────────────────────────────────────────────────────────
+
+function ApprovalsTab({ locale }: { locale: string }) {
+  const t = useTranslations('approvals');
+  const tInsp = useTranslations('inspections');
+  const { data, isLoading } = trpc.inspections.list.useQuery({ status: 'awaiting_approval' });
+
+  return (
+    <div className="space-y-4">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">{t('queueTitle')}</h1>
+        <p className="text-sm text-muted-foreground">{t('queueSubtitle')}</p>
+      </header>
+
+      <Card>
+        <CardContent className="p-0">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-muted/40 text-left">
+              <tr>
+                <th className="px-3 py-2 font-medium">{tInsp('table.title')}</th>
+                <th className="px-3 py-2 font-medium">{tInsp('table.documentNumber')}</th>
+                <th className="px-3 py-2 font-medium">{t('submittedAt')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={3} className="p-4">
+                    <Skeleton className="h-4 w-full" />
+                  </td>
+                </tr>
+              ) : (data ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="p-8 text-center text-muted-foreground">
+                    {t('empty')}
+                  </td>
+                </tr>
+              ) : (
+                (data ?? []).map((r) => (
+                  <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10">
+                    <td className="px-3 py-2">
+                      <Link
+                        href={`/${locale}/approvals/${r.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {r.title}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                      {r.documentNumber ?? '—'}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {r.submittedAt !== null ? formatRelative(r.submittedAt) : '—'}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Schedules tab ────────────────────────────────────────────────────────────
+
+type PausedFilter = 'all' | 'active' | 'paused';
+
+function SchedulesTab({ locale }: { locale: string }) {
+  const t = useTranslations('schedules');
+  const tCommon = useTranslations('common');
+  const [pausedFilter, setPausedFilter] = useState<PausedFilter>('all');
+  const [templateId, setTemplateId] = useState<string | undefined>(undefined);
+
+  const query = useMemo(() => {
+    const out: { templateId?: string; paused?: boolean } = {};
+    if (templateId !== undefined) out.templateId = templateId;
+    if (pausedFilter === 'active') out.paused = false;
+    if (pausedFilter === 'paused') out.paused = true;
+    return out;
+  }, [pausedFilter, templateId]);
+
+  const { data: rows, isLoading } = trpc.schedules.list.useQuery(query);
+  const { data: templates } = trpc.templates.list.useQuery({});
+
+  return (
+    <div className="space-y-4">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+        </div>
+        <Button asChild>
+          <Link href={`/${locale}/schedules/new`}>{t('create')}</Link>
+        </Button>
+      </header>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {(['all', 'active', 'paused'] as PausedFilter[]).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setPausedFilter(key)}
+            className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+              pausedFilter === key ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60'
+            }`}
+          >
+            {key === 'all'
+              ? tCommon('search')
+              : key === 'active'
+                ? t('filterActive')
+                : t('filterPaused')}
+          </button>
+        ))}
+        <select
+          className="ml-auto rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+          value={templateId ?? ''}
+          onChange={(e) => setTemplateId(e.target.value === '' ? undefined : e.target.value)}
+          aria-label={t('filterTemplate')}
+        >
+          <option value="">{t('filterTemplate')}</option>
+          {templates?.map((tpl) => (
+            <option key={tpl.id} value={tpl.id}>
+              {tpl.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      ) : rows === undefined || rows.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            {t('empty')}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((row) => (
+            <Link
+              key={row.id}
+              href={`/${locale}/schedules/${row.id}`}
+              className="block rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-accent/40"
+            >
+              <div className="flex items-baseline justify-between">
+                <span className="font-medium">{row.name}</span>
+                <span
+                  className={`text-xs ${row.paused ? 'text-muted-foreground' : 'text-emerald-600 dark:text-emerald-400'}`}
+                >
+                  {row.paused ? t('statusPaused') : t('statusActive')}
+                </span>
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {row.timezone} / {row.rrule}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

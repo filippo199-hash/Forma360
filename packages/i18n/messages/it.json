@@ -849,6 +849,8 @@
     "viewReportButton": "Visualizza report",
     "searchPlaceholder": "Cerca",
     "addFilter": "+ Aggiungi filtro",
+    "filterStatus": "Stato",
+    "filterStatusAll": "Tutti gli stati",
     "resultsCount": "{count} risultati",
     "openActionsCount": "{count} Aperte",
     "rowMenu": {

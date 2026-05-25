@@ -849,6 +849,8 @@
     "viewReportButton": "查看报告",
     "searchPlaceholder": "搜索",
     "addFilter": "+ 添加筛选",
+    "filterStatus": "状态",
+    "filterStatusAll": "所有状态",
     "resultsCount": "共{count}条",
     "openActionsCount": "{count}条待处理",
     "rowMenu": {

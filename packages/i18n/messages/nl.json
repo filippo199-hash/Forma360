@@ -849,6 +849,8 @@
     "viewReportButton": "Rapport bekijken",
     "searchPlaceholder": "Zoeken",
     "addFilter": "+ Filter toevoegen",
+    "filterStatus": "Status",
+    "filterStatusAll": "Alle statussen",
     "resultsCount": "{count} resultaten",
     "openActionsCount": "{count} Open",
     "rowMenu": {

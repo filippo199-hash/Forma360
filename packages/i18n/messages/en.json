@@ -761,6 +761,8 @@
     "viewReportButton": "View report",
     "searchPlaceholder": "Search",
     "addFilter": "+ Add filter",
+    "filterStatus": "Status",
+    "filterStatusAll": "All statuses",
     "resultsCount": "{count} results",
     "openActionsCount": "{count} Open",
     "rowMenu": {

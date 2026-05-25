@@ -3,8 +3,6 @@
 import {
   AlertTriangle,
   Bell,
-  Calendar,
-  CheckSquare,
   ClipboardCheck,
   FolderOpen,
   ListChecks,
@@ -25,8 +23,6 @@ interface SiteSidebarProps {
 interface NavItem {
   key:
     | 'inspections'
-    | 'approvals'
-    | 'schedules'
     | 'issues'
     | 'actions'
     | 'headsUp'
@@ -55,8 +51,6 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
 
   const primary: NavItem[] = [
     { key: 'inspections', href: `/${locale}/inspections`, icon: ClipboardCheck },
-    { key: 'approvals', href: `/${locale}/approvals`, icon: CheckSquare },
-    { key: 'schedules', href: `/${locale}/schedules`, icon: Calendar },
     { key: 'issues', href: `/${locale}/observations`, icon: AlertTriangle },
     { key: 'actions', href: `/${locale}/actions`, icon: ListChecks },
     { key: 'headsUp', href: `/${locale}/heads-up`, icon: Bell },
@@ -71,13 +65,21 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
     icon: Settings,
   };
 
-  function isActive(href: string): boolean {
-    return pathname === href || pathname.startsWith(`${href}/`);
+  function isActive(item: NavItem): boolean {
+    const { href } = item;
+    if (pathname === href || pathname.startsWith(`${href}/`)) return true;
+    if (item.key === 'inspections') {
+      return (
+        pathname.startsWith(`/${locale}/approvals`) ||
+        pathname.startsWith(`/${locale}/schedules`)
+      );
+    }
+    return false;
   }
 
   function renderItem(item: NavItem) {
     const Icon = item.icon;
-    const active = isActive(item.href);
+    const active = isActive(item);
     return (
       <Link
         key={item.key}

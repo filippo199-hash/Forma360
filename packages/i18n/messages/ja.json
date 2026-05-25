@@ -849,6 +849,8 @@
     "viewReportButton": "レポートを見る",
     "searchPlaceholder": "検索",
     "addFilter": "+ フィルター追加",
+    "filterStatus": "ステータス",
+    "filterStatusAll": "すべてのステータス",
     "resultsCount": "{count}件",
     "openActionsCount": "{count}件未処理",
     "rowMenu": {
