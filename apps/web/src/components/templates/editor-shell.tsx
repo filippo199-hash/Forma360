@@ -28,7 +28,16 @@ type ActiveTab = 'build' | 'settings' | 'visibility';
  * container. Top bar holds the back link, inline title, status badge, tab
  * switcher (centre), and action buttons.
  */
-export function EditorShell({ templateId }: { templateId: string }) {
+export function EditorShell({
+  templateId,
+  templateStatus,
+}: {
+  templateId: string;
+  /** Persisted status from the server. Drives the status badge independently of
+   *  the local isDirty flag so that "Save draft" never incorrectly shows
+   *  "Published". */
+  templateStatus: 'draft' | 'published' | 'archived';
+}) {
   const t = useTranslations('templates.editor');
   const tStatus = useTranslations('templates.status');
   const params = useParams<{ locale: string }>();
@@ -119,14 +128,20 @@ export function EditorShell({ templateId }: { templateId: string }) {
             className="min-w-0 flex-1 truncate bg-transparent text-sm font-medium text-foreground outline-none"
             aria-label={t('settingsTab.templateTitleLabel')}
           />
-          {/* Status badge */}
-          {state.isDirty ? (
+          {/* Status badge — reflects the server-persisted status.
+              When isDirty the user has unsaved changes which would become a
+              draft on save, so we always show Draft in that case. */}
+          {state.isDirty || templateStatus === 'draft' ? (
             <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
               {tStatus('draft')}
             </span>
-          ) : (
+          ) : templateStatus === 'published' ? (
             <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
               {tStatus('published')}
+            </span>
+          ) : (
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              {tStatus('archived')}
             </span>
           )}
         </div>

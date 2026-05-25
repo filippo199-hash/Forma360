@@ -1,6 +1,7 @@
 'use client';
 
 import type { TemplateContent } from '@forma360/shared/template-schema';
+import type { TemplateStatus } from '@forma360/db/schema';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
@@ -69,7 +70,7 @@ export default function TemplateEditorPage() {
       initialDescription={data.template.description}
       initialUpdatedAt={latest.updatedAt.toISOString()}
     >
-      <EditorShell templateId={templateId} />
+      <EditorShell templateId={templateId} templateStatus={data.template.status as TemplateStatus} />
     </EditorProvider>
   );
 }
