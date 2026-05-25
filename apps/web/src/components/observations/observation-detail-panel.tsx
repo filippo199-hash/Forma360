@@ -1211,7 +1211,7 @@ function AttachInspectionDialog({
       onOpenChange(false);
       router.push(`/${locale}/inspections/${res.inspectionId}`);
     },
-    onError: () => toast.error(t('loadError')),
+    onError: () => toast.error(t('createError')),
   });
 
   return (

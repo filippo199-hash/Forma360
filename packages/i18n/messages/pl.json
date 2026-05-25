@@ -1182,7 +1182,8 @@
         "empty": "Brak dostępnych opublikowanych szablonów.",
         "submit": "Rozpocznij inspekcję",
         "toast": "Inspekcja rozpoczęta.",
-        "loadError": "Nie można załadować szablonów."
+        "loadError": "Nie można załadować szablonów.",
+        "createError": "Nie można rozpocząć inspekcji."
       },
       "linkedActions": {
         "title": "Title",

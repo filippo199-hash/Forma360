@@ -1182,7 +1182,8 @@
         "empty": "Nessun template pubblicato disponibile.",
         "submit": "Avvia ispezione",
         "toast": "Ispezione avviata.",
-        "loadError": "Impossibile caricare i template."
+        "loadError": "Impossibile caricare i template.",
+        "createError": "Impossibile avviare l'ispezione."
       },
       "linkedActions": {
         "title": "Title",
