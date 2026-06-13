@@ -787,7 +787,8 @@
       "approvedBy": "Approved by {user}",
       "signSlotCta": "Sign",
       "signedBadge": "Signed",
-      "docxButton": "Download Word"
+      "docxButton": "Download Word",
+      "viewReportButton": "查看报告"
     },
     "signatures": {
       "title": "Sign inspection",
@@ -859,6 +860,15 @@
       "editInspection": "编辑检查",
       "viewReport": "查看报告",
       "archive": "归档"
+    },
+    "reportPage": {
+      "title": "检查报告",
+      "back": "返回检查列表",
+      "completedAt": "完成于 {time}",
+      "approvedBy": "{user} 已批准",
+      "downloadPdf": "下载 PDF",
+      "downloadWord": "下载 Word",
+      "previewTitle": "报告预览"
     }
   },
   "nav": {

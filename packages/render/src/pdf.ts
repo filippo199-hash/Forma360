@@ -127,27 +127,32 @@ async function renderPdfBytes(
 }
 
 /**
- * Launch chromium via `puppeteer-core` + `@sparticuz/chromium` if both
- * are available. Both are optionalDependencies so installs on machines
- * without the chromium toolchain don't fail — we throw a descriptive
- * Error and the caller falls back to the stub path.
+ * Launch chromium via `puppeteer-core`. Two executable paths are tried
+ * in order:
+ *
+ *   1. `@sparticuz/chromium` (optional dep) — pre-compiled binary for
+ *      AWS Lambda / Amazon Linux 2. Works on serverless; NOT usable on
+ *      nixpkgs-based Railway containers (wrong glibc).
+ *   2. System chromium — path from `CHROMIUM_PATH` env var (if set) or
+ *      `chromium` in PATH. Railway nixpacks installs `chromium` from
+ *      nixpkgs so it is available as `chromium` in PATH on those nodes.
+ *
+ * `puppeteer-core` is a regular dependency so it is always present. If
+ * even system chromium is missing the function throws and the caller
+ * falls back to the stub path.
  */
 async function renderWithChromium(
   deps: RenderDeps,
   snap: InspectionRenderSnapshot,
 ): Promise<Uint8Array> {
   // Dynamic import keeps the render package importable on platforms
-  // where these can't install (e.g. pglite test runs).
-  // `String(...)` on the specifier stops bundlers from trying to resolve
-  // it at build time — we really do mean a runtime require.
+  // where the binary can't run (e.g. pglite unit-test runs).
   const puppeteerMod = await dynImport('puppeteer-core').catch(() => null);
-  const chromiumMod = await dynImport('@sparticuz/chromium').catch(() => null);
-  if (puppeteerMod === null || chromiumMod === null) {
-    throw new Error('puppeteer-core or @sparticuz/chromium not installed');
+  if (puppeteerMod === null) {
+    throw new Error('puppeteer-core not installed');
   }
 
   const puppeteer = (puppeteerMod as { default?: unknown }).default ?? puppeteerMod;
-  const chromium = (chromiumMod as { default?: unknown }).default ?? chromiumMod;
 
   // We only use a narrow slice of each module's surface; `as`-cast to
   // the local types here is the proven-boundary exception CLAUDE.md
@@ -161,16 +166,47 @@ async function renderWithChromium(
       close: () => Promise<void>;
     }>;
   }
-  interface ChromiumSlice {
-    args: string[];
-    executablePath: () => Promise<string>;
-  }
   const p = puppeteer as PuppeteerSlice;
-  const c = chromium as ChromiumSlice;
+
+  // --- Resolve executable path and args ---
+
+  // Try @sparticuz/chromium first (for Lambda / serverless deploys).
+  let executablePath: string;
+  let browserArgs: string[];
+
+  const chromiumMod = await dynImport('@sparticuz/chromium').catch(() => null);
+  if (chromiumMod !== null) {
+    interface ChromiumSlice {
+      args: string[];
+      executablePath: () => Promise<string>;
+    }
+    const c = ((chromiumMod as { default?: unknown }).default ?? chromiumMod) as ChromiumSlice;
+    executablePath = await c.executablePath();
+    browserArgs = c.args;
+  } else {
+    // Fall back to system chromium (Railway nixpacks / Docker / local dev).
+    // CHROMIUM_PATH lets ops override the binary if the PATH doesn't contain
+    // `chromium` (e.g. some distros name it `chromium-browser`).
+    executablePath = process.env['CHROMIUM_PATH'] ?? 'chromium';
+    // --no-sandbox + --disable-setuid-sandbox are required in every
+    // container environment (kernel user-namespaces are disabled).
+    // --disable-dev-shm-usage avoids OOM when /dev/shm is small (< 64 MB),
+    // which is the default on many Railway/Fly.io instances.
+    browserArgs = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+    ];
+    deps.onLog?.({
+      level: 'info',
+      msg: `@sparticuz/chromium not available — using system chromium at ${executablePath}`,
+    });
+  }
 
   const browser = await p.launch({
-    args: c.args,
-    executablePath: await c.executablePath(),
+    args: browserArgs,
+    executablePath,
     headless: true,
   });
   try {

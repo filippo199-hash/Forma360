@@ -787,7 +787,8 @@
       "approvedBy": "Approved by {user}",
       "signSlotCta": "Sign",
       "signedBadge": "Signed",
-      "docxButton": "Download Word"
+      "docxButton": "Download Word",
+      "viewReportButton": "Voir le rapport"
     },
     "signatures": {
       "title": "Sign inspection",
@@ -859,6 +860,15 @@
       "editInspection": "Modifier l'inspection",
       "viewReport": "Voir le rapport",
       "archive": "Archiver"
+    },
+    "reportPage": {
+      "title": "Rapport d'inspection",
+      "back": "Retour aux inspections",
+      "completedAt": "Complété le {time}",
+      "approvedBy": "Approuvé par {user}",
+      "downloadPdf": "Télécharger le PDF",
+      "downloadWord": "Télécharger Word",
+      "previewTitle": "Aperçu du rapport"
     }
   },
   "nav": {

@@ -162,6 +162,11 @@ export default function InspectionStatusPage() {
               ) : null}
               <div className="flex flex-wrap gap-2">
                 <Button asChild>
+                  <Link href={`/${locale}/inspections/${inspection.id}/report`}>
+                    {t('viewReportButton')}
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
                   <a href={`/api/exports/pdf?inspectionId=${inspection.id}`}>{t('pdfButton')}</a>
                 </Button>
                 <Button variant="outline" asChild>

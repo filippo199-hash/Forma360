@@ -883,7 +883,8 @@
       "pdfComingSoon": "PDF export coming soon",
       "signSlot": "Sign slot {index}",
       "signSlotCta": "Sign",
-      "signedBadge": "Signed"
+      "signedBadge": "Signed",
+      "viewReportButton": "View report"
     },
     "exports": {
       "shareButton": "Share link",
@@ -942,7 +943,16 @@
       "archiveSuccess": "Inspections archived"
     },
     "showArchived": "Show archived",
-    "archivedBadge": "Archived"
+    "archivedBadge": "Archived",
+    "reportPage": {
+      "title": "Inspection report",
+      "back": "Back to inspections",
+      "completedAt": "Completed {time}",
+      "approvedBy": "Approved by {user}",
+      "downloadPdf": "Download PDF",
+      "downloadWord": "Download Word",
+      "previewTitle": "Report preview"
+    }
   },
   "schedules": {
     "title": "Schedules",

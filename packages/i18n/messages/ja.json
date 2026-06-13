@@ -787,7 +787,8 @@
       "approvedBy": "Approved by {user}",
       "signSlotCta": "Sign",
       "signedBadge": "Signed",
-      "docxButton": "Download Word"
+      "docxButton": "Download Word",
+      "viewReportButton": "レポートを見る"
     },
     "signatures": {
       "title": "Sign inspection",
@@ -859,6 +860,15 @@
       "editInspection": "点検を編集",
       "viewReport": "レポートを見る",
       "archive": "アーカイブ"
+    },
+    "reportPage": {
+      "title": "点検レポート",
+      "back": "点検一覧へ戻る",
+      "completedAt": "{time}に完了",
+      "approvedBy": "{user}が承認",
+      "downloadPdf": "PDFをダウンロード",
+      "downloadWord": "Wordをダウンロード",
+      "previewTitle": "レポートプレビュー"
     }
   },
   "nav": {

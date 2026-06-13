@@ -11,4 +11,8 @@
 # file drive the setup phase instead. See docs/deployment.md.
 
 [phases.setup]
-nixPkgs = ['nodejs_22', 'pnpm-9_x']
+# chromium: needed by the PDF renderer (puppeteer-core uses it as a headless
+# browser). @sparticuz/chromium is compiled for AWS Lambda (Amazon Linux 2) and
+# doesn't run on nixpkgs-based Railway containers; we fall back to the
+# system-installed chromium instead (see packages/render/src/pdf.ts).
+nixPkgs = ['nodejs_22', 'pnpm-9_x', 'chromium']

@@ -447,7 +447,13 @@ function InspectionsTab({ locale }: { locale: string }) {
                     {group.rows.map((r) => {
                       const isTerminal = r.status === 'completed' || r.status === 'rejected';
                       const conductUrl = `/${locale}/inspections/${r.id}`;
-                      const reportUrl = `/${locale}/inspections/${r.id}/status`;
+                      // Completed inspections go to the report page (shows inline
+                      // preview + download buttons); all other statuses go to the
+                      // status page (shows signing / approval / continue flow).
+                      const reportUrl =
+                        r.status === 'completed'
+                          ? `/${locale}/inspections/${r.id}/report`
+                          : `/${locale}/inspections/${r.id}/status`;
                       const openCount = r.openActionsCount ?? 0;
                       return (
                         <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10">

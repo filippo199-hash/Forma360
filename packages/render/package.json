@@ -40,11 +40,11 @@
     "@forma360/shared": "workspace:^",
     "docx": "^9.0.0",
     "drizzle-orm": "^0.45.2",
+    "puppeteer-core": "^24.0.0",
     "zod": "^3.24.0"
   },
   "optionalDependencies": {
-    "@sparticuz/chromium": "^131.0.0",
-    "puppeteer-core": "^24.0.0"
+    "@sparticuz/chromium": "^131.0.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.0",
