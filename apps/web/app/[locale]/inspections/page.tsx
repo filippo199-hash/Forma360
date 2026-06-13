@@ -734,7 +734,7 @@ function TemplatePickerDialog({
       onOpenChange(false);
       router.push(`/${locale}/inspections/${res.inspectionId}`);
     },
-    onError: () => toast.error(t('loadError')),
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('createError')),
   });
 
   function onSubmit() {

@@ -686,7 +686,8 @@
       "description": "Choose a published template to start an inspection from.",
       "empty": "No published templates are available yet.",
       "submit": "Start",
-      "loadError": "Could not load templates."
+      "loadError": "Could not load templates.",
+      "createError": "Kon de inspectie niet starten. Probeer het opnieuw."
     },
     "conduct": {
       "back": "Back",
