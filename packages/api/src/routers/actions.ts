@@ -366,6 +366,10 @@ const createFromInspectionQuestionInput = z.object({
   dueAt: z.string().datetime().optional(),
   siteId: z.string().length(26).optional(),
   label: z.string().max(80).optional(),
+  /** Optional action type. NULL = no type (legacy / quick-create). */
+  actionTypeId: z.string().length(26).optional(),
+  /** Map of `{ questionId: response }`. Validated against the type. */
+  customQuestionResponses: z.record(z.string(), z.unknown()).optional(),
 });
 
 const createFromIssueInput = z.object({
@@ -692,9 +696,27 @@ export const actionsRouter = router({
         return { actionId: existing[0].id, created: false as const };
       }
 
+      // Resolve the (optional) action type and validate custom responses.
+      let type: ActionType | null = null;
+      if (input.actionTypeId !== undefined) {
+        type = await loadActiveActionType(ctx.db, ctx.tenantId, input.actionTypeId);
+        if (type === null) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'action-type-not-found-or-archived',
+          });
+        }
+      }
+      const cleanedResponses =
+        type !== null
+          ? validateCustomResponses(type.customQuestions, input.customQuestionResponses ?? {})
+          : {};
+
+      const daysByPriority = await loadPriorityDueDateDays(ctx.db, ctx.tenantId);
       const id = newId();
       const referenceNumber = await nextActionReferenceNumber(ctx.db, ctx.tenantId);
       const now = new Date();
+      const dueAt = computeAutoDueAt(now, input.priority ?? null, daysByPriority, input.dueAt);
       try {
         await ctx.db.insert(actions).values({
           id,
@@ -709,8 +731,10 @@ export const actionsRouter = router({
           priority: input.priority ?? null,
           label: input.label ?? null,
           assigneeUserId: input.assigneeUserId ?? null,
-          dueAt: input.dueAt !== undefined ? new Date(input.dueAt) : null,
+          dueAt,
           siteId: input.siteId ?? null,
+          actionTypeId: type?.id ?? null,
+          customQuestionResponses: cleanedResponses,
           createdBy: ctx.auth.userId,
           createdAt: now,
           updatedAt: now,

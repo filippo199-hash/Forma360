@@ -1,5 +1,6 @@
 'use client';
 
+import type { ActionCustomQuestion } from '@forma360/shared/actions-schema';
 import type { Item, Page, Section } from '@forma360/shared/template-schema';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
@@ -15,6 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
 import { trpc } from '../../lib/trpc/client';
 import { useConduct } from './conduct-context';
 import { findUnansweredRequired, isItemVisible, type Responses } from './conduct-state';
@@ -562,16 +566,17 @@ function clearPending(inspectionId: string) {
   }
 }
 
+type Priority = 'low' | 'medium' | 'high' | 'critical';
+const PRIORITIES: ReadonlyArray<Priority> = ['low', 'medium', 'high', 'critical'];
+
 /**
- * Per-question "Raise action" affordance. Opens a small inline dialog;
- * on submit fires `actions.createFromInspectionQuestion` (idempotent on
- * the {inspectionId, questionId} pair — re-raising surfaces the existing
+ * Per-question "Raise action" affordance. Opens the full action-creation
+ * dialog (matching the standalone /actions/new page) so users can pick an
+ * action type, fill custom questions, assign, set site, label, etc.
+ * On submit fires `actions.createFromInspectionQuestion` (idempotent on
+ * the {inspectionId, questionId} pair — re-raising returns the existing
  * action). After a successful raise, shows a green "Action raised" badge
  * alongside a re-raise link so users have a clear indicator.
- *
- * The hook lives inline rather than as its own file so we don't fan out a
- * tiny component across the codebase; if it grows past a few hundred lines,
- * lift it out.
  */
 function RaiseActionTrigger({
   inspectionId,
@@ -587,41 +592,141 @@ function RaiseActionTrigger({
   onActionRaised: (questionId: string) => void;
 }) {
   const t = useTranslations('actions.raiseFromInspection');
+  const tCreate = useTranslations('actions.create');
+  const tCreateType = useTranslations('actions.create.type');
   const tPriority = useTranslations('actions.priority');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
+
   const [open, setOpen] = useState(false);
+
+  // Form state — mirrors NewActionPage
+  const [actionTypeId, setActionTypeId] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<'' | 'low' | 'medium' | 'high' | 'critical'>('');
+  const [priority, setPriority] = useState<'' | Priority>('');
   const [dueAt, setDueAt] = useState('');
+  const [dueAtAutoSet, setDueAtAutoSet] = useState(false);
+  const [siteId, setSiteId] = useState('');
+  const [assigneeUserId, setAssigneeUserId] = useState('');
+  const [label, setLabel] = useState('');
+  const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});
 
-  // Pre-seed the title with the question prompt so the assignee has
-  // context without the reporter having to retype it.
+  const { data: sites } = trpc.sites.list.useQuery(undefined, { enabled: open });
+  const { data: usersData } = trpc.users.list.useQuery({}, { enabled: open });
+  const users = usersData?.users ?? [];
+  const { data: types } = trpc.actionTypes.list.useQuery(
+    { includeArchived: false },
+    { enabled: open },
+  );
+  const { data: actionSettings } = trpc.actionTypes.settings.get.useQuery(undefined, {
+    enabled: open,
+  });
+
+  const selectedType = useMemo(
+    () => (types ?? []).find((tp) => tp.id === actionTypeId) ?? null,
+    [types, actionTypeId],
+  );
+
+  // Default to the tenant's default action type on first open.
+  useEffect(() => {
+    if (!open) return;
+    if (actionTypeId !== '') return;
+    if (!types || types.length === 0) return;
+    const fallback = types.find((tp) => tp.isDefault) ?? null;
+    if (fallback !== null) setActionTypeId(fallback.id);
+  }, [open, types, actionTypeId]);
+
+  // Reset custom responses + label when type changes.
+  useEffect(() => {
+    setCustomResponses({});
+    setLabel('');
+  }, [actionTypeId]);
+
+  // Pre-seed the title with the question prompt on open.
   useEffect(() => {
     if (open && title === '' && questionPrompt !== null) {
       setTitle(questionPrompt);
     }
   }, [open, title, questionPrompt]);
 
+  const required = selectedType?.requiredFields ?? [];
+  const isRequired = (
+    field: 'description' | 'assignee' | 'priority' | 'dueDate' | 'site',
+  ): boolean => required.includes(field);
+
+  const customResponsesValid = useMemo(() => {
+    if (selectedType === null) return true;
+    for (const q of selectedType.customQuestions) {
+      if (!q.required) continue;
+      const v = customResponses[q.id];
+      if (v === undefined || v === null) return false;
+      if (typeof v === 'string' && v.trim() === '') return false;
+    }
+    return true;
+  }, [selectedType, customResponses]);
+
+  const requiredFieldsValid =
+    (!isRequired('description') || description.trim() !== '') &&
+    (!isRequired('priority') || priority !== '') &&
+    (!isRequired('dueDate') || dueAt !== '') &&
+    (!isRequired('site') || siteId !== '') &&
+    (!isRequired('assignee') || assigneeUserId !== '');
+
+  function resetForm(): void {
+    setActionTypeId('');
+    setTitle('');
+    setDescription('');
+    setPriority('');
+    setDueAt('');
+    setDueAtAutoSet(false);
+    setSiteId('');
+    setAssigneeUserId('');
+    setLabel('');
+    setCustomResponses({});
+  }
+
   const create = trpc.actions.createFromInspectionQuestion.useMutation({
     onSuccess: () => {
       toast.success(t('createdToast'));
       setOpen(false);
-      setTitle('');
-      setDescription('');
-      setPriority('');
-      setDueAt('');
+      resetForm();
       void utils.actions.list.invalidate();
       onActionRaised(questionId);
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
+  const canSubmit =
+    title.trim().length > 0 && !create.isPending && customResponsesValid && requiredFieldsValid;
+
+  function onSubmit(e: React.FormEvent): void {
+    e.preventDefault();
+    if (!canSubmit) return;
+    const payload: Parameters<typeof create.mutate>[0] = {
+      inspectionId,
+      sourceItemId: questionId,
+      title: title.trim(),
+    };
+    if (description.trim().length > 0) payload.description = description.trim();
+    if (priority !== '') payload.priority = priority;
+    if (dueAt !== '') payload.dueAt = new Date(dueAt).toISOString();
+    if (siteId !== '') payload.siteId = siteId;
+    if (assigneeUserId !== '') payload.assigneeUserId = assigneeUserId;
+    if (label.trim().length > 0) payload.label = label.trim();
+    if (actionTypeId !== '') {
+      payload.actionTypeId = actionTypeId;
+      if (selectedType !== null && selectedType.customQuestions.length > 0) {
+        payload.customQuestionResponses = customResponses;
+      }
+    }
+    create.mutate(payload);
+  }
+
   return (
     <>
+      {/* ── Trigger ─────────────────────────────────────────────────────── */}
       {hasAction ? (
-        /* Action already raised — show a green badge + a subtle re-raise link */
         <div className="flex shrink-0 items-center gap-2">
           <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
             ✓ {t('actionRaisedLabel')}
@@ -644,121 +749,327 @@ function RaiseActionTrigger({
         </button>
       )}
 
-      {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg space-y-4 rounded-md bg-background p-6 shadow-lg">
-            <div>
-              <h3 className="text-base font-semibold">{t('dialogTitle')}</h3>
-              <p className="text-sm text-muted-foreground">{t('dialogSubtitle')}</p>
-            </div>
+      {/* ── Full action-creation dialog ──────────────────────────────────── */}
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) resetForm();
+          setOpen(next);
+        }}
+      >
+        <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-lg">
+          <DialogHeader className="shrink-0">
+            <DialogTitle>{t('dialogTitle')}</DialogTitle>
+            <DialogDescription>{t('dialogSubtitle')}</DialogDescription>
+          </DialogHeader>
+
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto px-1 py-2">
+            {/* Source question context strip */}
             {questionPrompt !== null ? (
-              <p className="rounded-md bg-muted px-3 py-2 text-xs">
+              <p className="mb-4 rounded-md bg-muted px-3 py-2 text-xs">
                 <span className="font-medium">{t('questionLabel')}: </span>
                 {questionPrompt}
               </p>
             ) : null}
-            <form
-              className="space-y-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (title.trim().length === 0) return;
-                const payload: {
-                  inspectionId: string;
-                  sourceItemId: string;
-                  title: string;
-                  description?: string;
-                  priority?: 'low' | 'medium' | 'high' | 'critical';
-                  dueAt?: string;
-                } = {
-                  inspectionId,
-                  sourceItemId: questionId,
-                  title: title.trim(),
-                };
-                if (description.trim().length > 0) payload.description = description.trim();
-                if (priority !== '') payload.priority = priority;
-                if (dueAt !== '') payload.dueAt = new Date(dueAt).toISOString();
-                create.mutate(payload);
-              }}
-            >
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground" htmlFor="ra-title">
-                  {t('titleLabel')}
-                </label>
-                <input
+
+            <form id="raise-action-form" onSubmit={onSubmit} className="space-y-4">
+              {/* Action type */}
+              {types !== undefined && types.length > 0 ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="ra-type">{tCreateType('label')}</Label>
+                  <select
+                    id="ra-type"
+                    value={actionTypeId}
+                    onChange={(e) => setActionTypeId(e.target.value)}
+                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">{tCreateType('none')}</option>
+                    {types.map((tp) => (
+                      <option key={tp.id} value={tp.id}>
+                        {tp.name}
+                        {tp.isDefault ? ` (${tCreateType('defaultSuffix')})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedType !== null && selectedType.description !== null ? (
+                    <p className="text-xs text-muted-foreground">{selectedType.description}</p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {/* Title */}
+              <div className="space-y-1.5">
+                <Label htmlFor="ra-title">
+                  {tCreate('titleLabel')}
+                  <span className="ml-1 text-destructive">*</span>
+                </Label>
+                <Input
                   id="ra-title"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder={t('titlePlaceholder')}
+                  placeholder={tCreate('titlePlaceholder')}
                   maxLength={500}
                   required
+                  autoFocus
                 />
               </div>
-              <div className="space-y-1">
-                <label
-                  className="text-xs font-medium text-muted-foreground"
-                  htmlFor="ra-description"
-                >
-                  {t('descriptionLabel')}
-                </label>
-                <textarea
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <Label htmlFor="ra-description">
+                  {tCreate('descriptionLabel')}
+                  {isRequired('description') ? (
+                    <span className="ml-1 text-destructive">*</span>
+                  ) : null}
+                </Label>
+                <Textarea
                   id="ra-description"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder={t('descriptionPlaceholder')}
+                  placeholder={tCreate('descriptionPlaceholder')}
                   rows={3}
                   maxLength={20_000}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label
-                    className="text-xs font-medium text-muted-foreground"
-                    htmlFor="ra-priority"
-                  >
-                    {t('priorityLabel')}
-                  </label>
+
+              {/* Priority + Due date */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ra-priority">
+                    {tCreate('priorityLabel')}
+                    {isRequired('priority') ? (
+                      <span className="ml-1 text-destructive">*</span>
+                    ) : null}
+                  </Label>
                   <select
                     id="ra-priority"
                     value={priority}
-                    onChange={(e) =>
-                      setPriority(e.target.value as '' | 'low' | 'medium' | 'high' | 'critical')
-                    }
+                    onChange={(e) => {
+                      const next = e.target.value as '' | Priority;
+                      setPriority(next);
+                      if (dueAtAutoSet || dueAt === '') {
+                        if (next === '') {
+                          setDueAt('');
+                          setDueAtAutoSet(false);
+                        } else {
+                          const days =
+                            actionSettings?.priorityDueDateDays[next] ??
+                            { low: 30, medium: 7, high: 1, critical: 1 }[next];
+                          if (days !== null && days !== undefined && days > 0) {
+                            const d = new Date(Date.now() + days * 86_400_000);
+                            const pad = (n: number) => String(n).padStart(2, '0');
+                            setDueAt(
+                              `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`,
+                            );
+                            setDueAtAutoSet(true);
+                          }
+                        }
+                      }
+                    }}
                     className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
-                    <option value="">—</option>
-                    <option value="low">{tPriority('low')}</option>
-                    <option value="medium">{tPriority('medium')}</option>
-                    <option value="high">{tPriority('high')}</option>
-                    <option value="critical">{tPriority('critical')}</option>
+                    <option value="">{tCreate('noPriority')}</option>
+                    {PRIORITIES.map((p) => (
+                      <option key={p} value={p}>
+                        {tPriority(p)}
+                      </option>
+                    ))}
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground" htmlFor="ra-due">
-                    {t('dueDateLabel')}
-                  </label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label htmlFor="ra-due">
+                    {tCreate('dueDateLabel')}
+                    {isRequired('dueDate') ? (
+                      <span className="ml-1 text-destructive">*</span>
+                    ) : null}
+                  </Label>
+                  <Input
                     id="ra-due"
                     type="datetime-local"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={dueAt}
-                    onChange={(e) => setDueAt(e.target.value)}
+                    onChange={(e) => {
+                      setDueAt(e.target.value);
+                      setDueAtAutoSet(false);
+                    }}
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-                  {t('cancelButton')}
-                </Button>
-                <Button type="submit" disabled={title.trim().length === 0 || create.isPending}>
-                  {t('saveButton')}
-                </Button>
+
+              {/* Site + Assignee */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ra-site">
+                    {tCreate('siteLabel')}
+                    {isRequired('site') ? (
+                      <span className="ml-1 text-destructive">*</span>
+                    ) : null}
+                  </Label>
+                  <select
+                    id="ra-site"
+                    value={siteId}
+                    onChange={(e) => setSiteId(e.target.value)}
+                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">{tCreate('siteNoneOption')}</option>
+                    {(sites ?? []).map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ra-assignee">
+                    {tCreate('assigneeLabel')}
+                    {isRequired('assignee') ? (
+                      <span className="ml-1 text-destructive">*</span>
+                    ) : null}
+                  </Label>
+                  <select
+                    id="ra-assignee"
+                    value={assigneeUserId}
+                    onChange={(e) => setAssigneeUserId(e.target.value)}
+                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">—</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
+              {/* Label */}
+              <div className="space-y-1.5">
+                <Label htmlFor="ra-label">{tCreate('labelLabel')}</Label>
+                {selectedType !== null && selectedType.labels.length > 0 ? (
+                  <select
+                    id="ra-label"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">{tCreate('labelNoneOption')}</option>
+                    {selectedType.labels.map((lbl) => (
+                      <option key={lbl} value={lbl}>
+                        {lbl}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    id="ra-label"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    placeholder={tCreate('labelPlaceholder')}
+                    maxLength={80}
+                  />
+                )}
+              </div>
+
+              {/* Custom questions from the selected action type */}
+              {selectedType !== null && selectedType.customQuestions.length > 0 ? (
+                <RaiseActionCustomQuestions
+                  questions={[...selectedType.customQuestions]}
+                  responses={customResponses}
+                  onChange={setCustomResponses}
+                />
+              ) : null}
             </form>
           </div>
-        </div>
-      ) : null}
+
+          <DialogFooter className="shrink-0">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                resetForm();
+                setOpen(false);
+              }}
+            >
+              {t('cancelButton')}
+            </Button>
+            <Button form="raise-action-form" type="submit" disabled={!canSubmit}>
+              {t('saveButton')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
+  );
+}
+
+/**
+ * Custom questions sub-form for the raise-action dialog.
+ * Mirrors `CustomQuestionsForm` in /actions/new/page.tsx.
+ */
+function RaiseActionCustomQuestions({
+  questions,
+  responses,
+  onChange,
+}: {
+  questions: ActionCustomQuestion[];
+  responses: Record<string, unknown>;
+  onChange: (next: Record<string, unknown>) => void;
+}) {
+  const t = useTranslations('actions.create.questions');
+
+  function update(id: string, value: unknown): void {
+    onChange({ ...responses, [id]: value });
+  }
+
+  return (
+    <div className="space-y-3 rounded-md border bg-muted/30 p-4">
+      <h3 className="text-sm font-medium">{t('heading')}</h3>
+      {questions.map((q) => (
+        <div key={q.id} className="space-y-1.5">
+          <Label htmlFor={`raq-${q.id}`}>
+            {q.prompt}
+            {q.required ? <span className="ml-1 text-destructive">*</span> : null}
+          </Label>
+          {q.type === 'text' ? (
+            <Textarea
+              id={`raq-${q.id}`}
+              value={typeof responses[q.id] === 'string' ? (responses[q.id] as string) : ''}
+              onChange={(e) => update(q.id, e.target.value)}
+              rows={2}
+              maxLength={2000}
+            />
+          ) : q.type === 'number' ? (
+            <Input
+              id={`raq-${q.id}`}
+              type="number"
+              value={
+                typeof responses[q.id] === 'number'
+                  ? String(responses[q.id])
+                  : typeof responses[q.id] === 'string'
+                    ? (responses[q.id] as string)
+                    : ''
+              }
+              onChange={(e) =>
+                update(q.id, e.target.value === '' ? '' : Number(e.target.value))
+              }
+            />
+          ) : (
+            <select
+              id={`raq-${q.id}`}
+              value={typeof responses[q.id] === 'string' ? (responses[q.id] as string) : ''}
+              onChange={(e) => update(q.id, e.target.value)}
+              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">{t('selectPlaceholder')}</option>
+              {(q.options ?? []).map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
