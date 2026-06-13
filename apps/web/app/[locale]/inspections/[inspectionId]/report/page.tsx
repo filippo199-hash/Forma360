@@ -13,12 +13,10 @@ import { trpc } from '../../../../../src/lib/trpc/client';
 /**
  * Inspection report page.
  *
- * Renders the full inspection content inline — pages, sections, items
- * with responses, signatures, and approvals — together with download
- * and share actions. Data comes entirely from `inspections.get` so
- * there is no HMAC dance, no iframe, and no Chromium dependency on this
- * path. The PDF / Word downloads still go through the existing
- * `/api/exports/…` endpoints.
+ * Renders the full inspection inline — pages, sections, items with
+ * their responses, any actions raised from each question, signatures,
+ * and approvals. Data comes entirely from tRPC so there is no iframe,
+ * no HMAC dance, and no Chromium dependency on this path.
  */
 export default function InspectionReportPage() {
   const params = useParams<{ locale: string; inspectionId: string }>();
@@ -31,6 +29,13 @@ export default function InspectionReportPage() {
 
   const insp = trpc.inspections.get.useQuery(
     { inspectionId },
+    { enabled: inspectionId.length === 26 },
+  );
+
+  // Fetch all actions linked to this inspection so we can group them
+  // by sourceItemId and display them under their source question.
+  const actionsQuery = trpc.actions.list.useQuery(
+    { sourceType: 'inspection', sourceId: inspectionId },
     { enabled: inspectionId.length === 26 },
   );
 
@@ -53,8 +58,19 @@ export default function InspectionReportPage() {
 
   const { inspection, version, signatures, approvals } = insp.data;
   const approvedRow = approvals.find((a) => a.decision === 'approved');
-  // version.content is typed as TemplateContent from the DB schema
   const content = version.content as TemplateContent;
+
+  // Build a map from sourceItemId → actions so ReportItem can look up
+  // its linked actions in O(1).
+  type ActionRow = NonNullable<typeof actionsQuery.data>[number];
+  const actionsByItemId = new Map<string, ActionRow[]>();
+  for (const action of actionsQuery.data ?? []) {
+    if (action.sourceItemId !== null) {
+      const list = actionsByItemId.get(action.sourceItemId) ?? [];
+      list.push(action);
+      actionsByItemId.set(action.sourceItemId, list);
+    }
+  }
 
   return (
     <div className="space-y-6 px-4 py-6">
@@ -106,6 +122,7 @@ export default function InspectionReportPage() {
         <ReportBody
           content={content}
           responses={inspection.responses as Record<string, unknown>}
+          actionsByItemId={actionsByItemId}
           signatures={signatures}
           approvals={approvals}
           t={t}
@@ -115,7 +132,7 @@ export default function InspectionReportPage() {
   );
 }
 
-// ─── Report body ─────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type TFunc = ReturnType<typeof useTranslations<'inspections.reportPage'>>;
 
@@ -136,26 +153,46 @@ interface ApprovalRow {
   decidedAt: Date | string | null;
 }
 
+// Subset of what actions.list returns that we display in the report.
+interface ActionSummary {
+  id: string;
+  referenceNumber: string | null;
+  title: string;
+  status: string;
+  priority: string | null;
+  assigneeName: string | null;
+  dueAt: Date | string | null;
+}
+
+// ─── Report body ─────────────────────────────────────────────────────────────
+
 function ReportBody({
   content,
   responses,
+  actionsByItemId,
   signatures,
   approvals,
   t,
 }: {
   content: TemplateContent;
   responses: Record<string, unknown>;
+  actionsByItemId: Map<string, ActionSummary[]>;
   signatures: SigRow[];
   approvals: ApprovalRow[];
   t: TFunc;
 }) {
-  // Filter to inspection pages only (skip title pages and approval page)
   const inspectionPages = content.pages.filter((p) => p.type === 'inspection');
 
   return (
     <div className="space-y-8 rounded-lg border bg-card p-6 shadow-sm">
       {inspectionPages.map((page) => (
-        <ReportPage key={page.id} page={page} responses={responses} />
+        <ReportPage
+          key={page.id}
+          page={page}
+          responses={responses}
+          actionsByItemId={actionsByItemId}
+          t={t}
+        />
       ))}
 
       {signatures.length > 0 ? (
@@ -178,9 +215,6 @@ function ReportBody({
                   </p>
                 ) : null}
                 {sig.signatureData.startsWith('data:') ? (
-                  // Render the base64 signature via CSS background-image so
-                  // we avoid next/image (which can't optimise a data URL) and
-                  // the no-img-element lint rule.
                   <div
                     className="mt-2 h-16 w-48 rounded border bg-white"
                     style={{
@@ -230,15 +264,25 @@ function ReportBody({
 function ReportPage({
   page,
   responses,
+  actionsByItemId,
+  t,
 }: {
   page: Page;
   responses: Record<string, unknown>;
+  actionsByItemId: Map<string, ActionSummary[]>;
+  t: TFunc;
 }) {
   return (
     <section className="space-y-4">
       <h2 className="border-b pb-2 text-lg font-semibold">{page.title}</h2>
       {page.sections.map((section) => (
-        <ReportSection key={section.id} section={section} responses={responses} />
+        <ReportSection
+          key={section.id}
+          section={section}
+          responses={responses}
+          actionsByItemId={actionsByItemId}
+          t={t}
+        />
       ))}
     </section>
   );
@@ -247,51 +291,159 @@ function ReportPage({
 function ReportSection({
   section,
   responses,
+  actionsByItemId,
+  t,
 }: {
   section: Section;
   responses: Record<string, unknown>;
+  actionsByItemId: Map<string, ActionSummary[]>;
+  t: TFunc;
 }) {
-  const visibleItems = section.items.filter(
-    (item) => 'prompt' in item || 'type' in item,
-  ) as Item[];
+  const visibleItems = section.items.filter((item) => 'prompt' in item) as Item[];
   if (visibleItems.length === 0) return null;
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         {section.title}
       </h3>
       <div className="space-y-2">
         {visibleItems.map((item) => (
-          <ReportItem key={item.id} item={item} response={responses[item.id]} />
+          <ReportItem
+            key={item.id}
+            item={item}
+            response={responses[item.id]}
+            actions={actionsByItemId.get(item.id) ?? []}
+            t={t}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function ReportItem({ item, response }: { item: Item; response: unknown }) {
+function ReportItem({
+  item,
+  response,
+  actions,
+  t,
+}: {
+  item: Item;
+  response: unknown;
+  actions: ActionSummary[];
+  t: TFunc;
+}) {
   const prompt = 'prompt' in item ? item.prompt : null;
   if (prompt === null) return null;
 
   const answered = response !== undefined && response !== null && response !== '';
   const displayValue = stringifyResponse(response);
+  const hasActions = actions.length > 0;
 
   return (
-    <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 rounded-md border bg-background px-3 py-2.5 text-sm">
-      <span className="font-medium leading-snug">{prompt}</span>
-      <span
-        className={
-          answered
-            ? 'text-right font-medium'
-            : 'text-right text-muted-foreground italic'
-        }
-      >
-        {answered ? displayValue : '—'}
-      </span>
+    <div className="rounded-md border bg-background text-sm">
+      {/* Question + response */}
+      <div className="grid grid-cols-[1fr_auto] items-start gap-x-4 px-3 py-2.5">
+        <span className="font-medium leading-snug">{prompt}</span>
+        <span
+          className={
+            answered ? 'text-right font-medium' : 'text-right italic text-muted-foreground'
+          }
+        >
+          {answered ? displayValue : '—'}
+        </span>
+      </div>
+
+      {/* Inline actions raised from this question */}
+      {hasActions ? (
+        <div className="border-t bg-amber-50/60 px-3 py-2 dark:bg-amber-950/20">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+            {t('actionsRaised', { count: actions.length })}
+          </p>
+          <div className="space-y-1.5">
+            {actions.map((action) => (
+              <div
+                key={action.id}
+                className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs"
+              >
+                {/* Reference + title */}
+                <span className="font-medium">
+                  {action.referenceNumber !== null ? (
+                    <span className="mr-1 text-muted-foreground">#{action.referenceNumber}</span>
+                  ) : null}
+                  {action.title}
+                </span>
+
+                {/* Status chip */}
+                <ActionStatusChip status={action.status} t={t} />
+
+                {/* Priority chip */}
+                {action.priority !== null ? (
+                  <ActionPriorityChip priority={action.priority} t={t} />
+                ) : null}
+
+                {/* Assignee */}
+                {action.assigneeName !== null ? (
+                  <span className="text-muted-foreground">→ {action.assigneeName}</span>
+                ) : null}
+
+                {/* Due date */}
+                {action.dueAt !== null ? (
+                  <span className="text-muted-foreground">
+                    {t('actionDue', {
+                      date: new Date(action.dueAt).toLocaleDateString(),
+                    })}
+                  </span>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
+
+function ActionStatusChip({
+  status,
+  t,
+}: {
+  status: string;
+  t: TFunc;
+}) {
+  const colorMap: Record<string, string> = {
+    open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
+    in_progress: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+    completed: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200',
+    cancelled: 'bg-muted text-muted-foreground',
+  };
+  const cls = colorMap[status] ?? colorMap['open'];
+  const label = t(`actionStatus.${status as 'open'}`);
+  return (
+    <span className={`rounded-full px-1.5 py-0.5 font-medium ${cls}`}>{label}</span>
+  );
+}
+
+function ActionPriorityChip({
+  priority,
+  t,
+}: {
+  priority: string;
+  t: TFunc;
+}) {
+  const colorMap: Record<string, string> = {
+    low: 'text-slate-500',
+    medium: 'text-amber-600',
+    high: 'text-orange-600 font-semibold',
+    critical: 'text-red-600 font-semibold',
+  };
+  const cls = colorMap[priority] ?? colorMap['low'];
+  return (
+    <span className={cls}>{t(`actionPriority.${priority as 'low'}`)}</span>
+  );
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function stringifyResponse(v: unknown): string {
   if (v === null || v === undefined) return '';

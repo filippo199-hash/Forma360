@@ -872,7 +872,21 @@
       "signaturesHeading": "签名",
       "approvalsHeading": "审批",
       "signSlot": "槽 {index}",
-      "signedAt": "签署于 {time}"
+      "signedAt": "签署于 {time}",
+      "actionsRaised": "已创建 {count} 个行动",
+      "actionDue": "截止日期：{date}",
+      "actionStatus": {
+        "open": "待处理",
+        "in_progress": "处理中",
+        "completed": "已完成",
+        "cancelled": "已取消"
+      },
+      "actionPriority": {
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "critical": "严重"
+      }
     }
   },
   "nav": {

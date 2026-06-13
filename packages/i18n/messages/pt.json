@@ -872,7 +872,21 @@
       "signaturesHeading": "Assinaturas",
       "approvalsHeading": "Aprovações",
       "signSlot": "Vaga {index}",
-      "signedAt": "Assinado {time}"
+      "signedAt": "Assinado {time}",
+      "actionsRaised": "{count, plural, one {# ação criada} other {# ações criadas}}",
+      "actionDue": "Prazo {date}",
+      "actionStatus": {
+        "open": "Aberta",
+        "in_progress": "Em andamento",
+        "completed": "Concluída",
+        "cancelled": "Cancelada"
+      },
+      "actionPriority": {
+        "low": "Baixa",
+        "medium": "Média",
+        "high": "Alta",
+        "critical": "Crítica"
+      }
     }
   },
   "nav": {

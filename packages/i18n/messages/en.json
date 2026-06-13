@@ -955,7 +955,21 @@
       "signaturesHeading": "Signatures",
       "approvalsHeading": "Approvals",
       "signSlot": "Slot {index}",
-      "signedAt": "Signed {time}"
+      "signedAt": "Signed {time}",
+      "actionsRaised": "{count, plural, one {# action raised} other {# actions raised}}",
+      "actionDue": "Due {date}",
+      "actionStatus": {
+        "open": "Open",
+        "in_progress": "In progress",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "actionPriority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      }
     }
   },
   "schedules": {

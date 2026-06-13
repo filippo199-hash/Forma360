@@ -872,7 +872,21 @@
       "signaturesHeading": "Unterschriften",
       "approvalsHeading": "Genehmigungen",
       "signSlot": "Slot {index}",
-      "signedAt": "Unterschrieben {time}"
+      "signedAt": "Unterschrieben {time}",
+      "actionsRaised": "{count, plural, one {# Maßnahme erstellt} other {# Maßnahmen erstellt}}",
+      "actionDue": "Fällig {date}",
+      "actionStatus": {
+        "open": "Offen",
+        "in_progress": "In Bearbeitung",
+        "completed": "Abgeschlossen",
+        "cancelled": "Abgebrochen"
+      },
+      "actionPriority": {
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch",
+        "critical": "Kritisch"
+      }
     }
   },
   "nav": {

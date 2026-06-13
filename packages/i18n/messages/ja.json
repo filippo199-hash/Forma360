@@ -872,7 +872,21 @@
       "signaturesHeading": "署名",
       "approvalsHeading": "承認",
       "signSlot": "スロット {index}",
-      "signedAt": "{time}に署名"
+      "signedAt": "{time}に署名",
+      "actionsRaised": "{count}件のアクションが作成されました",
+      "actionDue": "期限：{date}",
+      "actionStatus": {
+        "open": "未対応",
+        "in_progress": "対応中",
+        "completed": "完了",
+        "cancelled": "キャンセル"
+      },
+      "actionPriority": {
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "critical": "重大"
+      }
     }
   },
   "nav": {

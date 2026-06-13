@@ -499,6 +499,7 @@ export const actionsRouter = router({
           siteId: actions.siteId,
           sourceType: actions.sourceType,
           sourceId: actions.sourceId,
+          sourceItemId: actions.sourceItemId,
           actionTypeId: actions.actionTypeId,
           actionTypeName: actionTypes.name,
           actionTypeColor: actionTypes.color,

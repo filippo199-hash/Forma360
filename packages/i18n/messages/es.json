@@ -872,7 +872,21 @@
       "signaturesHeading": "Firmas",
       "approvalsHeading": "Aprobaciones",
       "signSlot": "Espacio {index}",
-      "signedAt": "Firmado {time}"
+      "signedAt": "Firmado {time}",
+      "actionsRaised": "{count, plural, one {# acción creada} other {# acciones creadas}}",
+      "actionDue": "Vence {date}",
+      "actionStatus": {
+        "open": "Abierta",
+        "in_progress": "En progreso",
+        "completed": "Completada",
+        "cancelled": "Cancelada"
+      },
+      "actionPriority": {
+        "low": "Baja",
+        "medium": "Media",
+        "high": "Alta",
+        "critical": "Crítica"
+      }
     }
   },
   "nav": {

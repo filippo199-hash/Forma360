@@ -872,7 +872,21 @@
       "signaturesHeading": "Handtekeningen",
       "approvalsHeading": "Goedkeuringen",
       "signSlot": "Slot {index}",
-      "signedAt": "Ondertekend {time}"
+      "signedAt": "Ondertekend {time}",
+      "actionsRaised": "{count, plural, one {# actie aangemaakt} other {# acties aangemaakt}}",
+      "actionDue": "Deadline {date}",
+      "actionStatus": {
+        "open": "Open",
+        "in_progress": "In behandeling",
+        "completed": "Voltooid",
+        "cancelled": "Geannuleerd"
+      },
+      "actionPriority": {
+        "low": "Laag",
+        "medium": "Gemiddeld",
+        "high": "Hoog",
+        "critical": "Kritiek"
+      }
     }
   },
   "nav": {
