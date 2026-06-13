@@ -39,6 +39,7 @@ import {
   templateSchedules,
   templates,
   templateVersions,
+  user,
 } from '@forma360/db/schema';
 import { resolveAccessRule } from '@forma360/permissions/access';
 import {
@@ -209,8 +210,10 @@ export const templatesRouter = router({
           accessRuleId: templates.accessRuleId,
           archivedAt: templates.archivedAt,
           updatedAt: templates.updatedAt,
+          createdByName: user.name,
         })
         .from(templates)
+        .leftJoin(user, eq(user.id, templates.createdBy))
         .where(and(...where))
         .orderBy(desc(templates.updatedAt));
 

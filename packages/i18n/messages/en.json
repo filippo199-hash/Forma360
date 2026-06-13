@@ -341,7 +341,8 @@
       "lastPublished": "Last published",
       "access": "Access",
       "selectRow": "Select row",
-      "selectAll": "Select all"
+      "selectAll": "Select all",
+      "createdBy": "Created by"
     },
     "filter": {
       "status": "Status",

@@ -288,7 +288,8 @@
       "name": "Name",
       "status": "Status",
       "updated": "Updated",
-      "actions": "Actions"
+      "actions": "Actions",
+      "createdBy": "Aangemaakt door"
     },
     "status": {
       "draft": "Draft",

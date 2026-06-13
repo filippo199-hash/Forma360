@@ -288,7 +288,8 @@
       "name": "Name",
       "status": "Status",
       "updated": "Updated",
-      "actions": "Actions"
+      "actions": "Actions",
+      "createdBy": "Creato da"
     },
     "status": {
       "draft": "Draft",

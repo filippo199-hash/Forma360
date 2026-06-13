@@ -414,6 +414,7 @@ function InspectionsTab({ locale }: { locale: string }) {
                   />
                 </th>
                 <th className="px-3 py-2 font-medium">{t('table.inspection')}</th>
+                <th className="w-36 px-3 py-2 font-medium">{t('table.conductedBy')}</th>
                 <th className="w-28 px-3 py-2 font-medium">{t('table.actions')}</th>
                 <th className="w-36 px-3 py-2 font-medium">{t('table.conducted')}</th>
                 <th className="w-36 px-3 py-2 font-medium">{t('table.completed')}</th>
@@ -425,14 +426,14 @@ function InspectionsTab({ locale }: { locale: string }) {
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i} className="border-b">
-                    <td colSpan={7} className="px-3 py-3">
+                    <td colSpan={8} className="px-3 py-3">
                       <Skeleton className="h-4 w-full" />
                     </td>
                   </tr>
                 ))
               ) : filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
                     {t('empty')}
                   </td>
                 </tr>
@@ -492,6 +493,9 @@ function InspectionsTab({ locale }: { locale: string }) {
                                 ) : null}
                               </div>
                             </div>
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">
+                            {r.conductedByName ?? '—'}
                           </td>
                           <td className="px-3 py-3 text-muted-foreground">
                             {openCount > 0 ? (
@@ -1031,6 +1035,7 @@ function TemplatesTab({ locale }: { locale: string }) {
             <thead className="border-b bg-muted/40">
               <tr className="text-left">
                 <th className="px-3 py-2 font-medium">{t('table.name')}</th>
+                <th className="w-36 px-3 py-2 font-medium">{t('table.createdBy')}</th>
                 <th className="px-3 py-2 font-medium">{t('table.status')}</th>
                 <th className="px-3 py-2 font-medium">{t('table.updated')}</th>
                 <th className="px-3 py-2 text-right font-medium">{t('table.actions')}</th>
@@ -1039,13 +1044,13 @@ function TemplatesTab({ locale }: { locale: string }) {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="p-4">
+                  <td colSpan={5} className="p-4">
                     <Skeleton className="h-4 w-full" />
                   </td>
                 </tr>
               ) : (rows ?? []).length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={5} className="p-8 text-center text-muted-foreground">
                     {t('empty')}
                   </td>
                 </tr>
@@ -1059,6 +1064,9 @@ function TemplatesTab({ locale }: { locale: string }) {
                       >
                         {r.name}
                       </Link>
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {r.createdByName ?? '—'}
                     </td>
                     <td className="px-3 py-2">
                       <TemplateStatusBadge status={r.status} />

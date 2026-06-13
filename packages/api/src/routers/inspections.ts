@@ -352,6 +352,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             sourceType: inspections.sourceType,
             sourceId: inspections.sourceId,
             templateName: templates.name,
+            conductedByName: user.name,
             openActionsCount: sql<number>`(
               SELECT COUNT(*)::int FROM actions a
               WHERE a.tenant_id = ${ctx.tenantId}
@@ -363,6 +364,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           })
           .from(inspections)
           .leftJoin(templates, eq(templates.id, inspections.templateId))
+          .leftJoin(user, eq(user.id, inspections.createdBy))
           .where(and(...where))
           .orderBy(desc(inspections.startedAt));
       }),
