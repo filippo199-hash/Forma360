@@ -222,8 +222,11 @@ export function ConductShell() {
   const safeStatus = toKnownStatus(state.inspectionStatus);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
+    // fixed inset-0 overlays the global sidebar (same technique as the
+    // template EditorShell at z-50 and FocusedPageShell at z-40).
+    <div className="fixed inset-0 z-40 flex flex-col bg-background">
+      {/* ── Top bar ──────────────────────────────────────────────────── */}
+      <header className="shrink-0 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
@@ -244,81 +247,85 @@ export function ConductShell() {
         <PageTabs />
       </header>
 
-      {/* Readonly notice — shown once the inspection has been submitted */}
-      {readonly ? (
-        <div className="border-b bg-amber-50 dark:bg-amber-950/30">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-2.5">
-            <p className="text-sm text-amber-800 dark:text-amber-300">
-              {t('readonly', { status: tStatus(safeStatus) })}
-            </p>
-            <Button variant="outline" size="sm" asChild>
-              <a href={`/${locale}/inspections/${state.inspectionId}/status`}>
-                {t('goToStatus')}
-              </a>
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      <main className="flex-1">
-        <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-          {currentPage === null ? null : (
-            <PageBody
-              page={currentPage}
-              readonly={readonly}
-              actionRaisedItems={actionRaisedItems}
-              onActionRaised={handleActionRaised}
-            />
-          )}
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const prev = state.content.pages[pageIndex - 1];
-                if (prev !== undefined) dispatch({ type: 'SET_PAGE', pageId: prev.id });
-              }}
-              disabled={pageIndex <= 0}
-            >
-              {t('prevPage')}
-            </Button>
-
-            {!isLastPage ? (
-              <Button
-                size="sm"
-                onClick={() => {
-                  const next = state.content.pages[pageIndex + 1];
-                  if (next !== undefined) dispatch({ type: 'SET_PAGE', pageId: next.id });
-                }}
-              >
-                {t('nextPage')}
-              </Button>
-            ) : readonly ? (
-              /* Inspection already submitted — guide user to the status/signing page */
-              <Button size="sm" variant="outline" asChild>
+      {/* ── Scrollable content ───────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Readonly notice — shown once the inspection has been submitted */}
+        {readonly ? (
+          <div className="border-b bg-amber-50 dark:bg-amber-950/30">
+            <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-2.5">
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                {t('readonly', { status: tStatus(safeStatus) })}
+              </p>
+              <Button variant="outline" size="sm" asChild>
                 <a href={`/${locale}/inspections/${state.inspectionId}/status`}>
                   {t('goToStatus')}
                 </a>
               </Button>
-            ) : (
-              <Button
-                size="sm"
-                onClick={() => setShowSubmitConfirm(true)}
-                disabled={!canSubmit || submit.isPending}
-                title={canSubmit ? undefined : t('missingRequired')}
-              >
-                {t('submitButton')}
-              </Button>
-            )}
+            </div>
           </div>
+        ) : null}
 
-          {!canSubmit && !readonly ? (
-            <p className="text-xs text-muted-foreground">{t('missingRequired')}</p>
-          ) : null}
-        </div>
-      </main>
+        <main>
+          <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
+            {currentPage === null ? null : (
+              <PageBody
+                page={currentPage}
+                readonly={readonly}
+                actionRaisedItems={actionRaisedItems}
+                onActionRaised={handleActionRaised}
+              />
+            )}
 
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const prev = state.content.pages[pageIndex - 1];
+                  if (prev !== undefined) dispatch({ type: 'SET_PAGE', pageId: prev.id });
+                }}
+                disabled={pageIndex <= 0}
+              >
+                {t('prevPage')}
+              </Button>
+
+              {!isLastPage ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const next = state.content.pages[pageIndex + 1];
+                    if (next !== undefined) dispatch({ type: 'SET_PAGE', pageId: next.id });
+                  }}
+                >
+                  {t('nextPage')}
+                </Button>
+              ) : readonly ? (
+                /* Inspection already submitted — guide user to the status/signing page */
+                <Button size="sm" variant="outline" asChild>
+                  <a href={`/${locale}/inspections/${state.inspectionId}/status`}>
+                    {t('goToStatus')}
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => setShowSubmitConfirm(true)}
+                  disabled={!canSubmit || submit.isPending}
+                  title={canSubmit ? undefined : t('missingRequired')}
+                >
+                  {t('submitButton')}
+                </Button>
+              )}
+            </div>
+
+            {!canSubmit && !readonly ? (
+              <p className="text-xs text-muted-foreground">{t('missingRequired')}</p>
+            ) : null}
+          </div>
+        </main>
+      </div>
+
+      {/* ── Dialogs (portals — position in tree is irrelevant) ────────── */}
       <Dialog open={showConflict} onOpenChange={setShowConflict}>
         <DialogContent>
           <DialogHeader>
