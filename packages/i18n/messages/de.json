@@ -407,7 +407,9 @@
           "noSignatoriesBody": "Add people who need to review and sign this form",
           "additionalSettings": "Additional Settings",
           "notifyOnCompletion": "Notify on completion (Send notification when all signatures are collected)"
-        }
+        },
+        "continueToVisibility": "Weiter zur Sichtbarkeit →",
+        "savingForWizard": "Wird gespeichert…"
       },
       "questionType": {
         "text": "Text",
@@ -587,7 +589,9 @@
         "saving": "Saving…",
         "backToBuild": "Back to build",
         "saveSuccess": "Visibility updated",
-        "saveError": "Could not update visibility"
+        "saveError": "Could not update visibility",
+        "publishButton": "Veröffentlichen",
+        "publishing": "Wird veröffentlicht…"
       },
       "inlineActions": {
         "addLogic": "Logic",
@@ -641,7 +645,9 @@
       "clickToUploadLogo": "Click to upload logo",
       "uploadingLogo": "Uploading…",
       "sectionsNavTitle": "Sections",
-      "sectionsNavUntitled": "Untitled section"
+      "sectionsNavUntitled": "Untitled section",
+      "publishWizardStep": "Schritt {step} von 3",
+      "publishWizardSaving": "Wird gespeichert…"
     },
     "export": {
       "button": "Export CSV",

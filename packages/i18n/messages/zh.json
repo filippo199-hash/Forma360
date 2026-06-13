@@ -407,7 +407,9 @@
           "noSignatoriesBody": "Add people who need to review and sign this form",
           "additionalSettings": "Additional Settings",
           "notifyOnCompletion": "Notify on completion (Send notification when all signatures are collected)"
-        }
+        },
+        "continueToVisibility": "继续到可见性 →",
+        "savingForWizard": "保存中…"
       },
       "questionType": {
         "text": "Text",
@@ -587,7 +589,9 @@
         "saving": "Saving…",
         "backToBuild": "Back to build",
         "saveSuccess": "Visibility updated",
-        "saveError": "Could not update visibility"
+        "saveError": "Could not update visibility",
+        "publishButton": "发布",
+        "publishing": "发布中…"
       },
       "inlineActions": {
         "addLogic": "Logic",
@@ -641,7 +645,9 @@
       "clickToUploadLogo": "Click to upload logo",
       "uploadingLogo": "Uploading…",
       "sectionsNavTitle": "Sections",
-      "sectionsNavUntitled": "Untitled section"
+      "sectionsNavUntitled": "Untitled section",
+      "publishWizardStep": "第 {step} 步，共 3 步",
+      "publishWizardSaving": "保存中…"
     },
     "export": {
       "button": "Export CSV",

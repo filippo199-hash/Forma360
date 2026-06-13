@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
@@ -44,9 +44,11 @@ export function EditorShell({
   const locale = params.locale ?? 'en';
   const { state, dispatch } = useEditor();
   const utils = trpc.useUtils();
+  const router = useRouter();
   const [showConflict, setShowConflict] = useState(false);
-  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('build');
+  /** True while the user is stepping through the publish wizard (Build → Settings → Visibility). */
+  const [publishMode, setPublishMode] = useState(false);
 
   const saveDraft = trpc.templates.saveDraft.useMutation({
     onSuccess: () => {
@@ -66,15 +68,15 @@ export function EditorShell({
 
   const publish = trpc.templates.publish.useMutation({
     onSuccess: () => {
-      setShowPublishConfirm(false);
       toast.success(t('publishSuccess'));
       void utils.templates.get.invalidate({ templateId });
       void utils.templates.list.invalidate();
+      // Redirect to the templates list after the wizard completes.
+      router.push(`/${locale}/templates`);
     },
     onError: (err) => {
       const message = err.message ?? '';
       if (err.data?.code === 'BAD_REQUEST' && /no draft to publish/i.test(message)) {
-        setShowPublishConfirm(false);
         toast.error(t('nothingToPublish'));
         return;
       }
@@ -91,9 +93,58 @@ export function EditorShell({
     saveDraft.mutate(payload);
   }
 
-  function handlePublishConfirm() {
-    // No `access` field — publish is purely about creating a new immutable
-    // version. Visibility is changed independently via the Visibility tab.
+  /**
+   * Step 1 → 2: Publish button clicked on Build tab.
+   * If there are unsaved changes we save the draft first so no work is lost
+   * even if the user abandons the wizard mid-flow. Only then do we enter
+   * wizard mode and navigate to Settings.
+   */
+  function handlePublishClick() {
+    if (state.isDirty) {
+      const payload: Parameters<typeof saveDraft.mutate>[0] = {
+        templateId,
+        content: state.content,
+        ...(state.loadedUpdatedAt !== null ? { expectedUpdatedAt: state.loadedUpdatedAt } : {}),
+      };
+      saveDraft.mutate(payload, {
+        onSuccess: () => {
+          setPublishMode(true);
+          setActiveTab('settings');
+        },
+      });
+    } else {
+      setPublishMode(true);
+      setActiveTab('settings');
+    }
+  }
+
+  /**
+   * Step 2 → 3: "Continue to Visibility" clicked from Settings tab.
+   * Auto-saves the draft when there are unsaved changes before proceeding so
+   * that the published version reflects the latest settings.
+   */
+  function handleSettingsNext() {
+    if (state.isDirty) {
+      const payload: Parameters<typeof saveDraft.mutate>[0] = {
+        templateId,
+        content: state.content,
+        ...(state.loadedUpdatedAt !== null ? { expectedUpdatedAt: state.loadedUpdatedAt } : {}),
+      };
+      saveDraft.mutate(payload, {
+        onSuccess: () => {
+          setActiveTab('visibility');
+        },
+      });
+    } else {
+      setActiveTab('visibility');
+    }
+  }
+
+  /**
+   * Step 3 finish: called by VisibilityTab after it has persisted the access
+   * settings. We now publish the current draft and redirect to the list.
+   */
+  function handleVisibilityPublish() {
     publish.mutate({ templateId });
   }
 
@@ -166,6 +217,13 @@ export function EditorShell({
 
         {/* Right group — actions */}
         <div className="flex shrink-0 items-center gap-2">
+          {publishMode ? (
+            <span className="text-xs text-muted-foreground">
+              {t('publishWizardStep', {
+                step: activeTab === 'settings' ? 2 : activeTab === 'visibility' ? 3 : 1,
+              })}
+            </span>
+          ) : null}
           <Button
             variant="outline"
             size="sm"
@@ -175,23 +233,37 @@ export function EditorShell({
           >
             {t('saveButton')}
           </Button>
-          <Button
-            size="sm"
-            onClick={() => setShowPublishConfirm(true)}
-            disabled={publish.isPending}
-            aria-label={t('publishButton')}
-          >
-            {t('publishButton')}
-          </Button>
+          {!publishMode ? (
+            <Button
+              size="sm"
+              onClick={handlePublishClick}
+              disabled={publish.isPending || saveDraft.isPending}
+              aria-label={t('publishButton')}
+            >
+              {saveDraft.isPending ? t('publishWizardSaving') : t('publishButton')}
+            </Button>
+          ) : null}
         </div>
       </header>
 
       {/* ─── Content area ────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
         {activeTab === 'build' && <ContentTab templateId={templateId} />}
-        {activeTab === 'settings' && <SettingsTab templateId={templateId} />}
+        {activeTab === 'settings' && (
+          <SettingsTab
+            templateId={templateId}
+            {...(publishMode ? { onContinue: handleSettingsNext } : {})}
+            isSaving={saveDraft.isPending}
+          />
+        )}
         {activeTab === 'visibility' && (
-          <VisibilityTab templateId={templateId} onBackToBuild={() => setActiveTab('build')} />
+          <VisibilityTab
+            templateId={templateId}
+            onBackToBuild={() => setActiveTab('build')}
+            publishMode={publishMode}
+            onPublished={handleVisibilityPublish}
+            isPublishing={publish.isPending}
+          />
         )}
       </div>
 
@@ -210,30 +282,6 @@ export function EditorShell({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showPublishConfirm} onOpenChange={setShowPublishConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('publishConfirmTitle')}</DialogTitle>
-            <DialogDescription>{t('publishConfirmBody')}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowPublishConfirm(false)}
-              disabled={publish.isPending}
-            >
-              {t('publishConfirmCancel')}
-            </Button>
-            <Button
-              onClick={handlePublishConfirm}
-              disabled={publish.isPending}
-              aria-label={t('publishConfirmCta')}
-            >
-              {t('publishConfirmCta')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

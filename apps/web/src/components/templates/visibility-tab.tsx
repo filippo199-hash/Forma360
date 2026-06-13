@@ -20,13 +20,27 @@ type AccessMode = 'everyone' | 'specific';
  * Audience scoping is fronted as "Everyone" vs "Specific groups & sites".
  * Behind the scenes the server creates / updates a single `[auto] …`
  * access_rule keyed to the template. Users never see the rule.
+ *
+ * In publish wizard mode (`publishMode = true`) the primary action
+ * becomes "Publish" instead of "Save changes". After persisting the
+ * access settings it calls `onPublished()` — the shell then calls
+ * `templates.publish` and redirects to the template list.
  */
 export function VisibilityTab({
   templateId,
   onBackToBuild,
+  publishMode = false,
+  onPublished,
+  isPublishing = false,
 }: {
   templateId: string;
   onBackToBuild: () => void;
+  /** True when called from the publish wizard (Build → Settings → Visibility). */
+  publishMode?: boolean;
+  /** Called after access settings are saved so the shell can fire `templates.publish`. */
+  onPublished?: () => void;
+  /** True while the publish mutation in the shell is in flight. */
+  isPublishing?: boolean;
 }) {
   const t = useTranslations('templates.editor.visibilityTab');
   const utils = trpc.useUtils();
@@ -47,10 +61,16 @@ export function VisibilityTab({
 
   const updateAccess = trpc.templates.updateAccess.useMutation({
     onSuccess: () => {
-      toast.success(t('saveSuccess'));
       void utils.templates.get.invalidate({ templateId });
       void utils.templates.list.invalidate();
       void utils.templates.getAccess.invalidate({ templateId });
+      if (publishMode && onPublished !== undefined) {
+        // Wizard mode: don't show a "saved" toast — the shell will show
+        // "Template published" after the publish mutation completes.
+        onPublished();
+      } else {
+        toast.success(t('saveSuccess'));
+      }
     },
     onError: () => {
       toast.error(t('saveError'));
@@ -124,9 +144,27 @@ export function VisibilityTab({
           <Button variant="outline" onClick={onBackToBuild}>
             {t('backToBuild')}
           </Button>
-          <Button onClick={handleSave} disabled={updateAccess.isPending} className="min-w-[140px]">
-            {updateAccess.isPending ? t('saving') : t('saveButton')}
-          </Button>
+          {publishMode ? (
+            <Button
+              onClick={handleSave}
+              disabled={updateAccess.isPending || isPublishing}
+              className="min-w-[140px]"
+            >
+              {updateAccess.isPending
+                ? t('saving')
+                : isPublishing
+                  ? t('publishing')
+                  : t('publishButton')}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSave}
+              disabled={updateAccess.isPending}
+              className="min-w-[140px]"
+            >
+              {updateAccess.isPending ? t('saving') : t('saveButton')}
+            </Button>
+          )}
         </div>
       </div>
     </div>

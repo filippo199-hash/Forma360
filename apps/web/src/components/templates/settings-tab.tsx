@@ -13,8 +13,22 @@ import { useEditor } from './editor-context';
  * Template-level settings: title, description, inspection-title format,
  * document-number format + counter start. Access rule picker lands in a
  * later PR.
+ *
+ * When `onContinue` is provided (publish wizard mode) a "Continue to
+ * Visibility →" button is shown at the bottom of the form. Clicking it
+ * auto-saves the draft (via the shell) and navigates to the Visibility step.
  */
-export function SettingsTab({ templateId }: { templateId: string }) {
+export function SettingsTab({
+  templateId,
+  onContinue,
+  isSaving = false,
+}: {
+  templateId: string;
+  /** Wizard mode: callback invoked when the user clicks "Continue to Visibility". */
+  onContinue?: () => void;
+  /** True while the auto-save triggered by "Continue" is in flight. */
+  isSaving?: boolean;
+}) {
   const t = useTranslations('templates.editor.settingsTab');
   const { state, dispatch } = useEditor();
   const branding = state.content.settings.branding ?? {};
@@ -140,6 +154,15 @@ export function SettingsTab({ templateId }: { templateId: string }) {
             </CardContent>
           </Card>
         </div>
+
+        {/* Publish wizard: "Continue to Visibility" CTA */}
+        {onContinue !== undefined ? (
+          <div className="mt-6 flex justify-end">
+            <Button onClick={onContinue} disabled={isSaving} className="min-w-[200px]">
+              {isSaving ? t('savingForWizard') : t('continueToVisibility')}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
