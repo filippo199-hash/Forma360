@@ -887,6 +887,15 @@
         "medium": "Mittel",
         "high": "Hoch",
         "critical": "Kritisch"
+      },
+      "allActionsHeading": "Erstellte Maßnahmen",
+      "filesHeading": "{count, plural, one {# Datei hochgeladen} other {# Dateien hochgeladen}}",
+      "actionCol": {
+        "title": "Maßnahme",
+        "status": "Status",
+        "priority": "Priorität",
+        "assignee": "Zugewiesen an",
+        "due": "Fällig"
       }
     }
   },

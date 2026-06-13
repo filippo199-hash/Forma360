@@ -887,6 +887,15 @@
         "medium": "中",
         "high": "高",
         "critical": "重大"
+      },
+      "allActionsHeading": "作成されたアクション",
+      "filesHeading": "{count}件のファイルがアップロードされました",
+      "actionCol": {
+        "title": "アクション",
+        "status": "ステータス",
+        "priority": "優先度",
+        "assignee": "担当者",
+        "due": "期限"
       }
     }
   },

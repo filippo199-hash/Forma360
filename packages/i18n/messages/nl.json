@@ -887,6 +887,15 @@
         "medium": "Gemiddeld",
         "high": "Hoog",
         "critical": "Kritiek"
+      },
+      "allActionsHeading": "Aangemaakte acties",
+      "filesHeading": "{count, plural, one {# bestand geüpload} other {# bestanden geüpload}}",
+      "actionCol": {
+        "title": "Actie",
+        "status": "Status",
+        "priority": "Prioriteit",
+        "assignee": "Toegewezen aan",
+        "due": "Deadline"
       }
     }
   },

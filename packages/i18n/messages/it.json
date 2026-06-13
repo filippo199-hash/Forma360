@@ -887,6 +887,15 @@
         "medium": "Media",
         "high": "Alta",
         "critical": "Critica"
+      },
+      "allActionsHeading": "Azioni create",
+      "filesHeading": "{count, plural, one {# file caricato} other {# file caricati}}",
+      "actionCol": {
+        "title": "Azione",
+        "status": "Stato",
+        "priority": "Priorità",
+        "assignee": "Assegnato a",
+        "due": "Scadenza"
       }
     }
   },

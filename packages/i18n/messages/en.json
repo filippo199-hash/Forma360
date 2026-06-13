@@ -970,6 +970,15 @@
         "medium": "Medium",
         "high": "High",
         "critical": "Critical"
+      },
+      "allActionsHeading": "Actions raised",
+      "filesHeading": "{count, plural, one {# file uploaded} other {# files uploaded}}",
+      "actionCol": {
+        "title": "Action",
+        "status": "Status",
+        "priority": "Priority",
+        "assignee": "Assignee",
+        "due": "Due"
       }
     }
   },

@@ -20,10 +20,15 @@ import type { ReactNode } from 'react';
 import { Button } from './ui/button';
 
 interface FocusedPageShellProps {
-  /** Page title shown next to the Cancel button. */
+  /** Page title shown next to the back button. */
   title: string;
-  /** Where the Cancel button navigates to. */
+  /** Where the back button navigates to. */
   backHref: string;
+  /**
+   * Label for the back button. Defaults to the `common.cancel` translation.
+   * Pass a string to override (e.g. `t('back')` for read-only pages).
+   */
+  backLabel?: string;
   /** Optional right-aligned action buttons (e.g. Save, Publish). */
   actions?: ReactNode;
   children: ReactNode;
@@ -49,6 +54,7 @@ const widthClass: Record<Exclude<NonNullable<FocusedPageShellProps['width']>, 's
 export function FocusedPageShell({
   title,
   backHref,
+  backLabel,
   actions,
   children,
   width = 'form',
@@ -60,7 +66,7 @@ export function FocusedPageShell({
       {/* ── Top bar ──────────────────────────────────────────────────── */}
       <div className="flex shrink-0 items-center gap-3 border-b bg-background px-4 py-3">
         <Button variant="outline" size="sm" asChild>
-          <Link href={backHref}>{t('cancel')}</Link>
+          <Link href={backHref}>{backLabel ?? t('cancel')}</Link>
         </Button>
         <span className="text-sm font-medium">{title}</span>
         {actions !== undefined ? (

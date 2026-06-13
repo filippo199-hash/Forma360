@@ -887,6 +887,15 @@
         "medium": "中",
         "high": "高",
         "critical": "严重"
+      },
+      "allActionsHeading": "已创建的行动",
+      "filesHeading": "已上传 {count} 个文件",
+      "actionCol": {
+        "title": "行动",
+        "status": "状态",
+        "priority": "优先级",
+        "assignee": "负责人",
+        "due": "截止日期"
       }
     }
   },

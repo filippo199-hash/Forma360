@@ -887,6 +887,15 @@
         "medium": "Moyenne",
         "high": "Élevée",
         "critical": "Critique"
+      },
+      "allActionsHeading": "Actions créées",
+      "filesHeading": "{count, plural, one {# fichier téléchargé} other {# fichiers téléchargés}}",
+      "actionCol": {
+        "title": "Action",
+        "status": "Statut",
+        "priority": "Priorité",
+        "assignee": "Assigné",
+        "due": "Échéance"
       }
     }
   },

@@ -887,6 +887,15 @@
         "medium": "Średni",
         "high": "Wysoki",
         "critical": "Krytyczny"
+      },
+      "allActionsHeading": "Utworzone działania",
+      "filesHeading": "{count, plural, one {# plik przesłany} few {# pliki przesłane} other {# plików przesłanych}}",
+      "actionCol": {
+        "title": "Działanie",
+        "status": "Status",
+        "priority": "Priorytet",
+        "assignee": "Przypisany do",
+        "due": "Termin"
       }
     }
   },
