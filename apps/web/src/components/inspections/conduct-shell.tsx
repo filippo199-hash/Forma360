@@ -35,6 +35,21 @@ interface PendingPayload {
   editedAt: number;
 }
 
+const KNOWN_STATUSES = [
+  'in_progress',
+  'awaiting_signatures',
+  'awaiting_approval',
+  'completed',
+  'rejected',
+] as const;
+type KnownStatus = (typeof KNOWN_STATUSES)[number];
+
+function toKnownStatus(status: string): KnownStatus {
+  return (KNOWN_STATUSES as readonly string[]).includes(status)
+    ? (status as KnownStatus)
+    : 'in_progress';
+}
+
 /**
  * Drives the conduct UI: renders pages, manages autosave + submit.
  *
@@ -56,6 +71,17 @@ export function ConductShell() {
 
   const [showConflict, setShowConflict] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+
+  /**
+   * Tracks which question IDs have had actions raised in the current session.
+   * Lifted here so the indicator survives page-tab switches within the same
+   * inspection (ItemRows unmount when the user moves to a different page tab).
+   */
+  const [actionRaisedItems, setActionRaisedItems] = useState<Set<string>>(() => new Set());
+
+  const handleActionRaised = useCallback((questionId: string) => {
+    setActionRaisedItems((prev) => new Set([...prev, questionId]));
+  }, []);
 
   const saveProgress = trpc.inspections.saveProgress.useMutation({
     onSuccess: (res) => {
@@ -177,6 +203,7 @@ export function ConductShell() {
 
   const currentPage = state.content.pages.find((p) => p.id === state.selectedPageId) ?? null;
   const pageIndex = state.content.pages.findIndex((p) => p.id === state.selectedPageId);
+  const isLastPage = pageIndex === state.content.pages.length - 1;
   const missing = useMemo(
     () => findUnansweredRequired(state.content, state.responses),
     [state.content, state.responses],
@@ -187,6 +214,8 @@ export function ConductShell() {
     submit.mutate({ inspectionId: state.inspectionId });
     setShowSubmitConfirm(false);
   }
+
+  const safeStatus = toKnownStatus(state.inspectionStatus);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -211,9 +240,32 @@ export function ConductShell() {
         <PageTabs />
       </header>
 
+      {/* Readonly notice — shown once the inspection has been submitted */}
+      {readonly ? (
+        <div className="border-b bg-amber-50 dark:bg-amber-950/30">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-2.5">
+            <p className="text-sm text-amber-800 dark:text-amber-300">
+              {t('readonly', { status: tStatus(safeStatus) })}
+            </p>
+            <Button variant="outline" size="sm" asChild>
+              <a href={`/${locale}/inspections/${state.inspectionId}/status`}>
+                {t('goToStatus')}
+              </a>
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <main className="flex-1">
         <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
-          {currentPage === null ? null : <PageBody page={currentPage} readonly={readonly} />}
+          {currentPage === null ? null : (
+            <PageBody
+              page={currentPage}
+              readonly={readonly}
+              actionRaisedItems={actionRaisedItems}
+              onActionRaised={handleActionRaised}
+            />
+          )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
             <Button
@@ -227,7 +279,8 @@ export function ConductShell() {
             >
               {t('prevPage')}
             </Button>
-            {pageIndex < state.content.pages.length - 1 ? (
+
+            {!isLastPage ? (
               <Button
                 size="sm"
                 onClick={() => {
@@ -236,6 +289,13 @@ export function ConductShell() {
                 }}
               >
                 {t('nextPage')}
+              </Button>
+            ) : readonly ? (
+              /* Inspection already submitted — guide user to the status/signing page */
+              <Button size="sm" variant="outline" asChild>
+                <a href={`/${locale}/inspections/${state.inspectionId}/status`}>
+                  {t('goToStatus')}
+                </a>
               </Button>
             ) : (
               <Button
@@ -294,15 +354,8 @@ function StatusPill({
   status: string;
   tStatus: ReturnType<typeof useTranslations<'inspections.status'>>;
 }) {
-  const known = [
-    'in_progress',
-    'awaiting_signatures',
-    'awaiting_approval',
-    'completed',
-    'rejected',
-  ];
-  const key = known.includes(status) ? (status as 'in_progress') : 'in_progress';
-  const colors: Record<string, string> = {
+  const key = toKnownStatus(status);
+  const colors: Record<KnownStatus, string> = {
     in_progress: 'bg-blue-100 text-blue-900 dark:bg-blue-900/40 dark:text-blue-100',
     awaiting_signatures: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
     awaiting_approval: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
@@ -358,51 +411,92 @@ function PageTabs() {
   );
 }
 
-function PageBody({ page, readonly }: { page: Page; readonly: boolean }) {
+function PageBody({
+  page,
+  readonly,
+  actionRaisedItems,
+  onActionRaised,
+}: {
+  page: Page;
+  readonly: boolean;
+  actionRaisedItems: Set<string>;
+  onActionRaised: (questionId: string) => void;
+}) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {page.description !== undefined ? (
         <p className="text-sm text-muted-foreground">{page.description}</p>
       ) : null}
       {page.sections.map((section) => (
-        <SectionBody key={section.id} section={section} readonly={readonly} />
+        <SectionBody
+          key={section.id}
+          section={section}
+          readonly={readonly}
+          actionRaisedItems={actionRaisedItems}
+          onActionRaised={onActionRaised}
+        />
       ))}
     </div>
   );
 }
 
-function SectionBody({ section, readonly }: { section: Section; readonly: boolean }) {
+/**
+ * Renders a section heading + one card per question item.
+ * Each item gets its own Card so users can clearly distinguish
+ * individual questions (SafetyCulture parity).
+ */
+function SectionBody({
+  section,
+  readonly,
+  actionRaisedItems,
+  onActionRaised,
+}: {
+  section: Section;
+  readonly: boolean;
+  actionRaisedItems: Set<string>;
+  onActionRaised: (questionId: string) => void;
+}) {
   const { state } = useConduct();
   return (
-    <Card className="space-y-3 p-4">
+    <div className="space-y-3">
       <div className="space-y-1">
         <h2 className="text-base font-semibold">{section.title}</h2>
         {section.description !== undefined ? (
           <p className="text-sm text-muted-foreground">{section.description}</p>
         ) : null}
       </div>
-      <ul className="space-y-4">
+      <div className="space-y-3">
         {section.items.map((item) => (
           <ItemRow
             key={item.id}
             item={item}
             readonly={readonly}
             customResponseSets={state.content.customResponseSets}
+            hasAction={actionRaisedItems.has(item.id)}
+            onActionRaised={onActionRaised}
           />
         ))}
-      </ul>
-    </Card>
+      </div>
+    </div>
   );
 }
 
+/**
+ * One Card per question item. The card gives each question a clear visual
+ * boundary matching SafetyCulture's per-question-card layout.
+ */
 function ItemRow({
   item,
   readonly,
   customResponseSets,
+  hasAction,
+  onActionRaised,
 }: {
   item: Item;
   readonly: boolean;
   customResponseSets: Parameters<typeof ResponseInput>[0]['responseSets'];
+  hasAction: boolean;
+  onActionRaised: (questionId: string) => void;
 }) {
   const { state } = useConduct();
   const visible = isItemVisible(item, state.responses);
@@ -410,10 +504,10 @@ function ItemRow({
   const prompt = 'prompt' in item ? item.prompt : null;
   const required = 'required' in item && item.required === true;
   return (
-    <li className="space-y-2">
+    <Card className="space-y-3 p-4">
       <div className="flex items-start justify-between gap-2">
         {prompt !== null ? (
-          <label className="text-sm font-medium" htmlFor={`item-${item.id}`}>
+          <label className="text-sm font-medium leading-snug" htmlFor={`item-${item.id}`}>
             {prompt}
             {required ? <span className="ml-1 text-destructive">*</span> : null}
           </label>
@@ -424,6 +518,8 @@ function ItemRow({
           inspectionId={state.inspectionId}
           questionId={item.id}
           questionPrompt={prompt}
+          hasAction={hasAction}
+          onActionRaised={onActionRaised}
         />
       </div>
       <div id={`item-${item.id}`}>
@@ -432,7 +528,7 @@ function ItemRow({
       {'note' in item && item.note !== undefined ? (
         <p className="text-xs text-muted-foreground">{item.note}</p>
       ) : null}
-    </li>
+    </Card>
   );
 }
 
@@ -470,18 +566,25 @@ function clearPending(inspectionId: string) {
  * Per-question "Raise action" affordance. Opens a small inline dialog;
  * on submit fires `actions.createFromInspectionQuestion` (idempotent on
  * the {inspectionId, questionId} pair — re-raising surfaces the existing
- * action). The hook lives inline rather than as its own file so we don't
- * fan out a tiny component across the codebase; if it grows past a few
- * hundred lines, lift it out.
+ * action). After a successful raise, shows a green "Action raised" badge
+ * alongside a re-raise link so users have a clear indicator.
+ *
+ * The hook lives inline rather than as its own file so we don't fan out a
+ * tiny component across the codebase; if it grows past a few hundred lines,
+ * lift it out.
  */
 function RaiseActionTrigger({
   inspectionId,
   questionId,
   questionPrompt,
+  hasAction,
+  onActionRaised,
 }: {
   inspectionId: string;
   questionId: string;
   questionPrompt: string | null;
+  hasAction: boolean;
+  onActionRaised: (questionId: string) => void;
 }) {
   const t = useTranslations('actions.raiseFromInspection');
   const tPriority = useTranslations('actions.priority');
@@ -510,19 +613,37 @@ function RaiseActionTrigger({
       setPriority('');
       setDueAt('');
       void utils.actions.list.invalidate();
+      onActionRaised(questionId);
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-      >
-        {t('triggerLabel')}
-      </button>
+      {hasAction ? (
+        /* Action already raised — show a green badge + a subtle re-raise link */
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+            ✓ {t('actionRaisedLabel')}
+          </span>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+          >
+            {t('triggerLabel')}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="shrink-0 text-xs text-muted-foreground hover:text-foreground hover:underline"
+        >
+          {t('triggerLabel')}
+        </button>
+      )}
+
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg space-y-4 rounded-md bg-background p-6 shadow-lg">

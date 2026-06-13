@@ -760,7 +760,8 @@
         "datetime": {
           "placeholder": "Select date & time"
         }
-      }
+      },
+      "goToStatus": "Ver estado e assinar"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1657,7 +1658,8 @@
       "dueDateLabel": "Due date",
       "saveButton": "Create action",
       "cancelButton": "Cancel",
-      "createdToast": "Action raised."
+      "createdToast": "Action raised.",
+      "actionRaisedLabel": "Ação criada"
     }
   },
   "actionsSettings": {
