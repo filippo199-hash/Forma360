@@ -868,7 +868,11 @@
       "approvedBy": "Aprovado por {user}",
       "downloadPdf": "Baixar PDF",
       "downloadWord": "Baixar Word",
-      "previewTitle": "Pré-visualização do relatório"
+      "previewTitle": "Pré-visualização do relatório",
+      "signaturesHeading": "Assinaturas",
+      "approvalsHeading": "Aprovações",
+      "signSlot": "Vaga {index}",
+      "signedAt": "Assinado {time}"
     }
   },
   "nav": {

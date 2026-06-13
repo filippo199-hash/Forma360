@@ -868,7 +868,11 @@
       "approvedBy": "{user} 已批准",
       "downloadPdf": "下载 PDF",
       "downloadWord": "下载 Word",
-      "previewTitle": "报告预览"
+      "previewTitle": "报告预览",
+      "signaturesHeading": "签名",
+      "approvalsHeading": "审批",
+      "signSlot": "槽 {index}",
+      "signedAt": "签署于 {time}"
     }
   },
   "nav": {

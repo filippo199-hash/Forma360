@@ -868,7 +868,11 @@
       "approvedBy": "Aprobado por {user}",
       "downloadPdf": "Descargar PDF",
       "downloadWord": "Descargar Word",
-      "previewTitle": "Vista previa del informe"
+      "previewTitle": "Vista previa del informe",
+      "signaturesHeading": "Firmas",
+      "approvalsHeading": "Aprobaciones",
+      "signSlot": "Espacio {index}",
+      "signedAt": "Firmado {time}"
     }
   },
   "nav": {

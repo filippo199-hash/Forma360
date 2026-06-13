@@ -868,7 +868,11 @@
       "approvedBy": "Zatwierdzone przez {user}",
       "downloadPdf": "Pobierz PDF",
       "downloadWord": "Pobierz Word",
-      "previewTitle": "Podgląd raportu"
+      "previewTitle": "Podgląd raportu",
+      "signaturesHeading": "Podpisy",
+      "approvalsHeading": "Zatwierdzenia",
+      "signSlot": "Slot {index}",
+      "signedAt": "Podpisano {time}"
     }
   },
   "nav": {

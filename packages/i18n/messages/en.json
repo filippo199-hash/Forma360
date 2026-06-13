@@ -951,7 +951,11 @@
       "approvedBy": "Approved by {user}",
       "downloadPdf": "Download PDF",
       "downloadWord": "Download Word",
-      "previewTitle": "Report preview"
+      "previewTitle": "Report preview",
+      "signaturesHeading": "Signatures",
+      "approvalsHeading": "Approvals",
+      "signSlot": "Slot {index}",
+      "signedAt": "Signed {time}"
     }
   },
   "schedules": {
