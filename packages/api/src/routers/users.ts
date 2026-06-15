@@ -258,8 +258,18 @@ export const usersRouter = router({
         .limit(1);
 
       let invitationId: string;
+      // Only include optional columns in SQL when they carry a value.
+      // This keeps the INSERT/UPDATE compatible with DBs that haven't run
+      // migrations 0024/0025 yet (columns added by those migrations are
+      // nullable with no default, so omitting them is safe — they land as
+      // NULL via the DB default path).
       const groupIds = input.groupIds.length > 0 ? input.groupIds : null;
       const siteIds = input.siteIds.length > 0 ? input.siteIds : null;
+      const optionalCols = {
+        ...(groupIds !== null ? { groupIds } : {}),
+        ...(siteIds !== null ? { siteIds } : {}),
+        ...(phone !== null ? { phone } : {}),
+      } as const;
 
       if (existingInvite[0] !== undefined) {
         invitationId = existingInvite[0].id;
@@ -268,13 +278,11 @@ export const usersRouter = router({
           .set({
             email: emailLower,
             name,
-            phone,
             permissionSetId: input.permissionSetId,
             token,
             invitedByUserId: ctx.auth.userId,
             expiresAt,
-            groupIds,
-            siteIds,
+            ...optionalCols,
           })
           .where(eq(invitations.id, invitationId));
       } else {
@@ -284,13 +292,11 @@ export const usersRouter = router({
           tenantId: ctx.tenantId,
           email: emailLower,
           name,
-          phone,
           permissionSetId: input.permissionSetId,
           token,
           invitedByUserId: ctx.auth.userId,
           expiresAt,
-          groupIds,
-          siteIds,
+          ...optionalCols,
         });
       }
 
