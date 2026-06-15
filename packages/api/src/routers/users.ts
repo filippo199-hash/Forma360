@@ -196,6 +196,8 @@ export const usersRouter = router({
       z.object({
         email: z.string().email(),
         name: z.string().min(1).max(120).optional(),
+        /** E.164-ish phone, e.g. "+15551234567". Optional. */
+        phone: z.string().max(30).optional(),
         permissionSetId: z.string().length(26),
         /** Group IDs to add the new user to automatically on acceptance. */
         groupIds: z.array(z.string().length(26)).max(50).default([]),
@@ -238,6 +240,7 @@ export const usersRouter = router({
       const token = newInviteToken();
       const expiresAt = new Date(Date.now() + INVITATION_TTL_MS);
       const name = input.name ?? null;
+      const phone = input.phone?.trim() || null;
 
       // Look up any active invitation for (tenant, email) — the partial
       // unique index makes this at-most-one. If found, update in place;
@@ -265,6 +268,7 @@ export const usersRouter = router({
           .set({
             email: emailLower,
             name,
+            phone,
             permissionSetId: input.permissionSetId,
             token,
             invitedByUserId: ctx.auth.userId,
@@ -280,6 +284,7 @@ export const usersRouter = router({
           tenantId: ctx.tenantId,
           email: emailLower,
           name,
+          phone,
           permissionSetId: input.permissionSetId,
           token,
           invitedByUserId: ctx.auth.userId,
@@ -292,28 +297,37 @@ export const usersRouter = router({
       // Send the invite email if a dispatcher is wired. In tests with
       // no dispatcher (most existing tests), this is a no-op — the row
       // is created and the test reads it directly.
+      // Email failure is non-fatal: the invite row is already persisted and
+      // the admin can use "Resend" to re-issue the email.
       if (usersDeps.sendEmail !== null) {
-        const [tenantRow] = await ctx.db
-          .select({ name: tenants.name })
-          .from(tenants)
-          .where(eq(tenants.id, ctx.tenantId))
-          .limit(1);
-        const [inviterRow] = await ctx.db
-          .select({ name: user.name })
-          .from(user)
-          .where(eq(user.id, ctx.auth.userId))
-          .limit(1);
-        const inviteUrl = `${usersDeps.appUrl.replace(/\/$/, '')}/en/invite/${token}`;
-        await usersDeps.sendEmail({
-          to: emailLower,
-          templateKey: 'invite',
-          variables: {
-            inviterName: inviterRow?.name ?? 'A Forma360 administrator',
-            tenantName: tenantRow?.name ?? 'Forma360',
-            inviteUrl,
-            expiresIn: '7 days',
-          },
-        });
+        try {
+          const [tenantRow] = await ctx.db
+            .select({ name: tenants.name })
+            .from(tenants)
+            .where(eq(tenants.id, ctx.tenantId))
+            .limit(1);
+          const [inviterRow] = await ctx.db
+            .select({ name: user.name })
+            .from(user)
+            .where(eq(user.id, ctx.auth.userId))
+            .limit(1);
+          const inviteUrl = `${usersDeps.appUrl.replace(/\/$/, '')}/en/invite/${token}`;
+          await usersDeps.sendEmail({
+            to: emailLower,
+            templateKey: 'invite',
+            variables: {
+              inviterName: inviterRow?.name ?? 'A Forma360 administrator',
+              tenantName: tenantRow?.name ?? 'Forma360',
+              inviteUrl,
+              expiresIn: '7 days',
+            },
+          });
+        } catch (err) {
+          ctx.logger.error(
+            { err, invitationId, email: emailLower },
+            '[users] invite email failed — invite row is still active; admin can resend',
+          );
+        }
       }
 
       ctx.logger.info({ invitationId, email: emailLower }, '[users] invitation issued');

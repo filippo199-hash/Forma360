@@ -171,7 +171,12 @@
         "lastNameLabel": "Achternaam",
         "groupsLabel": "Toevoegen aan groepen (optioneel)",
         "sitesLabel": "Toevoegen aan locaties (optioneel)",
-        "cancel": "Annuleren"
+        "cancel": "Annuleren",
+        "phoneLabel": "Telefoonnummer",
+        "phoneCountryLabel": "Landcode",
+        "phonePlaceholder": "06 55 000 000",
+        "noGroups": "Nog geen groepen. Maak groepen aan in Instellingen → Groepen.",
+        "noSites": "Nog geen locaties. Maak locaties aan in Instellingen → Locaties."
       },
       "table": {
         "name": "Name",

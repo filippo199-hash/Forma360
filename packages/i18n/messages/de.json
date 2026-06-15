@@ -171,7 +171,12 @@
         "lastNameLabel": "Nachname",
         "groupsLabel": "Zu Gruppen hinzufügen (optional)",
         "sitesLabel": "Zu Standorten hinzufügen (optional)",
-        "cancel": "Abbrechen"
+        "cancel": "Abbrechen",
+        "phoneLabel": "Telefonnummer",
+        "phoneCountryLabel": "Ländervorwahl",
+        "phonePlaceholder": "555 000 0000",
+        "noGroups": "Noch keine Gruppen. Erstellen Sie Gruppen unter Einstellungen → Gruppen.",
+        "noSites": "Noch keine Standorte. Erstellen Sie Standorte unter Einstellungen → Standorte."
       },
       "table": {
         "name": "Name",

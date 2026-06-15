@@ -302,6 +302,8 @@ export function createAuthRouter(deps: AuthRouterDeps) {
           emailVerified: true,
           tenantId: invite.tenantId,
           permissionSetId: invite.permissionSetId,
+          // Apply the phone number pre-filled by the admin at invite time.
+          ...(invite.phone !== null && invite.phone !== undefined ? { phone: invite.phone } : {}),
         });
         await tx
           .update(invitations)

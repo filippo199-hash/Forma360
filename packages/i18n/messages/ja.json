@@ -171,7 +171,12 @@
         "lastNameLabel": "苗字",
         "groupsLabel": "グループに追加（任意）",
         "sitesLabel": "サイトに追加（任意）",
-        "cancel": "キャンセル"
+        "cancel": "キャンセル",
+        "phoneLabel": "電話番号",
+        "phoneCountryLabel": "国コード",
+        "phonePlaceholder": "090 0000 0000",
+        "noGroups": "グループがありません。設定 → グループでグループを作成してください。",
+        "noSites": "サイトがありません。設定 → サイトでサイトを作成してください。"
       },
       "table": {
         "name": "Name",

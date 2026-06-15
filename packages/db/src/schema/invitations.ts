@@ -78,6 +78,12 @@ export const invitations = pgTable(
      */
     siteIds: jsonb('site_ids').$type<string[]>(),
 
+    /**
+     * Optional phone number pre-filled by the admin at invite time.
+     * Applied to the user row when the invitee accepts.
+     */
+    phone: text('phone'),
+
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   },
   (t) => ({

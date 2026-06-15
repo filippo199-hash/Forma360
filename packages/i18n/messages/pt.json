@@ -171,7 +171,12 @@
         "lastNameLabel": "Apelido",
         "groupsLabel": "Adicionar a grupos (opcional)",
         "sitesLabel": "Adicionar a locais (opcional)",
-        "cancel": "Cancelar"
+        "cancel": "Cancelar",
+        "phoneLabel": "Número de telefone",
+        "phoneCountryLabel": "Código do país",
+        "phonePlaceholder": "912 000 000",
+        "noGroups": "Ainda sem grupos. Crie grupos em Definições → Grupos.",
+        "noSites": "Ainda sem locais. Crie locais em Definições → Locais."
       },
       "table": {
         "name": "Name",

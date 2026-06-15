@@ -171,7 +171,12 @@
         "lastNameLabel": "Cognome",
         "groupsLabel": "Aggiungi a gruppi (opzionale)",
         "sitesLabel": "Aggiungi a siti (opzionale)",
-        "cancel": "Annulla"
+        "cancel": "Annulla",
+        "phoneLabel": "Numero di telefono",
+        "phoneCountryLabel": "Prefisso paese",
+        "phonePlaceholder": "345 000 0000",
+        "noGroups": "Nessun gruppo ancora. Crea gruppi in Impostazioni → Gruppi.",
+        "noSites": "Nessun sito ancora. Crea siti in Impostazioni → Siti."
       },
       "table": {
         "name": "Name",

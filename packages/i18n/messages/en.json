@@ -214,7 +214,12 @@
         "lastNameLabel": "Last name",
         "groupsLabel": "Add to groups (optional)",
         "sitesLabel": "Add to sites (optional)",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "phoneLabel": "Phone number",
+        "phoneCountryLabel": "Country code",
+        "phonePlaceholder": "555 000 0000",
+        "noGroups": "No groups yet. Create groups in Settings → Groups.",
+        "noSites": "No sites yet. Create sites in Settings → Sites."
       },
       "table": {
         "name": "Name",

@@ -66,6 +66,12 @@ export const user = pgTable('user', {
 
   /** Added by the two-factor plugin. Null/false for users without 2FA. */
   twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
+
+  /**
+   * Optional phone number in E.164-ish format (e.g. "+15551234567").
+   * Collected at invite time and applied when the user accepts.
+   */
+  phone: text('phone'),
 });
 
 export type User = typeof user.$inferSelect;

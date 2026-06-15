@@ -171,7 +171,12 @@
         "lastNameLabel": "Nazwisko",
         "groupsLabel": "Dodaj do grup (opcjonalnie)",
         "sitesLabel": "Dodaj do lokalizacji (opcjonalnie)",
-        "cancel": "Anuluj"
+        "cancel": "Anuluj",
+        "phoneLabel": "Numer telefonu",
+        "phoneCountryLabel": "Kod kraju",
+        "phonePlaceholder": "555 000 000",
+        "noGroups": "Brak grup. Utwórz grupy w Ustawienia → Grupy.",
+        "noSites": "Brak lokalizacji. Utwórz lokalizacje w Ustawienia → Lokalizacje."
       },
       "table": {
         "name": "Name",

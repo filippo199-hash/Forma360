@@ -171,7 +171,12 @@
         "lastNameLabel": "姓氏",
         "groupsLabel": "添加到群组（可选）",
         "sitesLabel": "添加到站点（可选）",
-        "cancel": "取消"
+        "cancel": "取消",
+        "phoneLabel": "电话号码",
+        "phoneCountryLabel": "国家代码",
+        "phonePlaceholder": "138 0000 0000",
+        "noGroups": "暂无群组。请在设置 → 群组中创建群组。",
+        "noSites": "暂无站点。请在设置 → 站点中创建站点。"
       },
       "table": {
         "name": "Name",

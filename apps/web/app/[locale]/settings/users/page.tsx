@@ -256,9 +256,34 @@ export default function UsersPage() {
   );
 }
 
+/** Country codes shown in the phone prefix selector. */
+const COUNTRY_CODES = [
+  { code: '+1', label: '+1 (US/CA)' },
+  { code: '+44', label: '+44 (UK)' },
+  { code: '+33', label: '+33 (FR)' },
+  { code: '+49', label: '+49 (DE)' },
+  { code: '+39', label: '+39 (IT)' },
+  { code: '+34', label: '+34 (ES)' },
+  { code: '+81', label: '+81 (JP)' },
+  { code: '+31', label: '+31 (NL)' },
+  { code: '+48', label: '+48 (PL)' },
+  { code: '+351', label: '+351 (PT)' },
+  { code: '+86', label: '+86 (CN)' },
+  { code: '+55', label: '+55 (BR)' },
+  { code: '+61', label: '+61 (AU)' },
+  { code: '+91', label: '+91 (IN)' },
+  { code: '+52', label: '+52 (MX)' },
+  { code: '+27', label: '+27 (ZA)' },
+  { code: '+82', label: '+82 (KR)' },
+  { code: '+65', label: '+65 (SG)' },
+  { code: '+971', label: '+971 (AE)' },
+  { code: '+966', label: '+966 (SA)' },
+] as const;
+
 interface InvitePayload {
   email: string;
   name: string;
+  phone?: string;
   permissionSetId: string;
   groupIds: string[];
   siteIds: string[];
@@ -284,6 +309,8 @@ function InvitePanel({
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [countryCode, setCountryCode] = useState('+1');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [permissionSetId, setPermissionSetId] = useState(sets[0]?.id ?? '');
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const [selectedSiteIds, setSelectedSiteIds] = useState<Set<string>>(new Set());
@@ -310,9 +337,12 @@ function InvitePanel({
     e.preventDefault();
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
     if (!email.trim() || !fullName || !permissionSetId) return;
+    const digitsOnly = phoneNumber.trim().replace(/\D/g, '');
+    const phone = digitsOnly.length > 0 ? `${countryCode}${digitsOnly}` : undefined;
     onSubmit({
       email: email.trim(),
       name: fullName,
+      ...(phone !== undefined ? { phone } : {}),
       permissionSetId,
       groupIds: [...selectedGroupIds],
       siteIds: [...selectedSiteIds],
@@ -326,7 +356,7 @@ function InvitePanel({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Row 1: email + name */}
+          {/* Row 1: email + first + last */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="inv-email">{t('emailLabel')}</Label>
@@ -360,69 +390,112 @@ function InvitePanel({
             </div>
           </div>
 
-          {/* Row 2: permission set */}
-          <div className="max-w-xs space-y-1.5">
-            <Label htmlFor="inv-set">{t('permissionSetLabel')}</Label>
-            <select
-              id="inv-set"
-              value={permissionSetId}
-              onChange={(e) => setPermissionSetId(e.target.value)}
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              required
-            >
-              {sets.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+          {/* Row 2: phone + permission set */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="inv-phone">{t('phoneLabel')}</Label>
+              <div className="flex gap-2">
+                <select
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className="h-10 w-36 shrink-0 rounded-md border border-input bg-background px-2 text-sm"
+                  aria-label={t('phoneCountryLabel')}
+                >
+                  {COUNTRY_CODES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  id="inv-phone"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder={t('phonePlaceholder')}
+                  maxLength={20}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="inv-set">{t('permissionSetLabel')}</Label>
+              <select
+                id="inv-set"
+                value={permissionSetId}
+                onChange={(e) => setPermissionSetId(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                required
+              >
+                {sets.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Row 3: groups + sites */}
-          {(groups.length > 0 || sites.length > 0) ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Row 3: groups + sites — always visible */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>{t('groupsLabel')}</Label>
               {groups.length > 0 ? (
-                <div className="space-y-1.5">
-                  <Label>{t('groupsLabel')}</Label>
-                  <div className="max-h-36 overflow-y-auto rounded-md border p-2 space-y-1">
-                    {groups.map((g) => (
-                      <label key={g.id} className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/50 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selectedGroupIds.has(g.id)}
-                          onChange={() => toggleGroup(g.id)}
-                          className="h-4 w-4 rounded border-input accent-foreground"
-                        />
-                        {g.name}
-                      </label>
-                    ))}
-                  </div>
+                <div className="max-h-36 overflow-y-auto rounded-md border p-2 space-y-1">
+                  {groups.map((g) => (
+                    <label
+                      key={g.id}
+                      className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/50 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedGroupIds.has(g.id)}
+                        onChange={() => toggleGroup(g.id)}
+                        className="h-4 w-4 rounded border-input accent-foreground"
+                      />
+                      {g.name}
+                    </label>
+                  ))}
                 </div>
-              ) : null}
-
-              {sites.length > 0 ? (
-                <div className="space-y-1.5">
-                  <Label>{t('sitesLabel')}</Label>
-                  <div className="max-h-36 overflow-y-auto rounded-md border p-2 space-y-1">
-                    {sites.map((s) => (
-                      <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/50 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selectedSiteIds.has(s.id)}
-                          onChange={() => toggleSite(s.id)}
-                          className="h-4 w-4 rounded border-input accent-foreground"
-                        />
-                        <span style={{ paddingLeft: `${s.depth * 0.75}rem` }}>{s.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+              ) : (
+                <p className="rounded-md border border-dashed px-3 py-2.5 text-xs text-muted-foreground">
+                  {t('noGroups')}
+                </p>
+              )}
             </div>
-          ) : null}
+
+            <div className="space-y-1.5">
+              <Label>{t('sitesLabel')}</Label>
+              {sites.length > 0 ? (
+                <div className="max-h-36 overflow-y-auto rounded-md border p-2 space-y-1">
+                  {sites.map((s) => (
+                    <label
+                      key={s.id}
+                      className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/50 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSiteIds.has(s.id)}
+                        onChange={() => toggleSite(s.id)}
+                        className="h-4 w-4 rounded border-input accent-foreground"
+                      />
+                      <span style={{ paddingLeft: `${s.depth * 0.75}rem` }}>{s.name}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-md border border-dashed px-3 py-2.5 text-xs text-muted-foreground">
+                  {t('noSites')}
+                </p>
+              )}
+            </div>
+          </div>
 
           <div className="flex gap-2">
-            <Button type="submit" disabled={isPending || !email.trim() || !firstName.trim() || !permissionSetId}>
+            <Button
+              type="submit"
+              disabled={isPending || !email.trim() || !firstName.trim() || !permissionSetId}
+            >
               {t('submit')}
             </Button>
             <Button type="button" variant="outline" onClick={onCancel}>

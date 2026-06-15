@@ -171,7 +171,12 @@
         "lastNameLabel": "Nom de famille",
         "groupsLabel": "Ajouter aux groupes (facultatif)",
         "sitesLabel": "Ajouter aux sites (facultatif)",
-        "cancel": "Annuler"
+        "cancel": "Annuler",
+        "phoneLabel": "Numéro de téléphone",
+        "phoneCountryLabel": "Indicatif pays",
+        "phonePlaceholder": "06 55 00 00 00",
+        "noGroups": "Aucun groupe pour l'instant. Créez des groupes dans Paramètres → Groupes.",
+        "noSites": "Aucun site pour l'instant. Créez des sites dans Paramètres → Sites."
       },
       "table": {
         "name": "Name",
