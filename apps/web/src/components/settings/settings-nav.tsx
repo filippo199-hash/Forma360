@@ -2,10 +2,8 @@
 
 import {
   Building2,
-  ListChecks,
   MapPin,
   Shield,
-  SlidersHorizontal,
   User,
   UserCog,
   Users,
@@ -22,22 +20,15 @@ interface SettingsNavProps {
 }
 
 interface NavItem {
-  key:
-    | 'profile'
-    | 'company'
-    | 'users'
-    | 'permissions'
-    | 'groups'
-    | 'sites'
-    | 'customFields'
-    | 'actions';
+  key: 'profile' | 'company' | 'users' | 'permissions' | 'groups' | 'sites';
   href: string;
   icon: LucideIcon;
 }
 
 /**
- * Sidebar navigation for the settings shell. Matches the visual style of
- * `SiteSidebar` (icon + label, same active/inactive classes, same spacing).
+ * Sidebar navigation for the settings shell. Mirrors the visual style of
+ * `SiteSidebar` exactly — same aside shape, padding, gap, and active/hover
+ * classes — so the settings section feels like a natural part of the app.
  *
  * Admins see the full set; standard users see only "My profile".
  */
@@ -52,8 +43,6 @@ export function SettingsNav({ locale, isAdmin }: SettingsNavProps) {
     { key: 'permissions', href: `/${locale}/settings/permissions`, icon: Shield },
     { key: 'groups', href: `/${locale}/settings/groups`, icon: Users },
     { key: 'sites', href: `/${locale}/settings/sites`, icon: MapPin },
-    { key: 'customFields', href: `/${locale}/settings/custom-fields`, icon: SlidersHorizontal },
-    { key: 'actions', href: `/${locale}/settings/actions`, icon: ListChecks },
   ];
 
   const profileItem: NavItem = {
@@ -84,11 +73,8 @@ export function SettingsNav({ locale, isAdmin }: SettingsNavProps) {
   }
 
   return (
-    <aside className="w-56 shrink-0">
-      <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {t('title')}
-      </p>
-      <nav aria-label={t('title')} className="flex flex-col gap-0.5">
+    <aside className="flex h-full w-56 shrink-0 flex-col border-r bg-card">
+      <nav aria-label={t('title')} className="flex h-full flex-col gap-1 p-3">
         {isAdmin ? adminItems.map(renderItem) : renderItem(profileItem)}
       </nav>
     </aside>
