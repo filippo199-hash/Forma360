@@ -18,18 +18,20 @@
  *   - sendReminder: send reminder emails to pending recipients.
  */
 import {
+  groups,
   headsUpAttachments,
   headsUpComments,
   headsUpReactions,
   headsUpRecipients,
   headsUps,
+  sites,
   type HeadsUp,
 } from '@forma360/db/schema';
 import { user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, isNull } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -200,6 +202,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             createdByUserId: headsUps.createdByUserId,
             createdAt: headsUps.createdAt,
             updatedAt: headsUps.updatedAt,
+            recipientSpec: headsUps.recipientSpec,
             creatorName: user.name,
           })
           .from(headsUps)
@@ -207,7 +210,68 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
           .where(and(...where))
           .orderBy(desc(headsUps.createdAt))
           .limit(input.limit);
-        return rows;
+
+        // Resolve group/site names from recipientSpec so the list UI can
+        // display a human-readable audience column without additional requests.
+        const allGroupIds = new Set<string>();
+        const allSiteIds = new Set<string>();
+        for (const row of rows) {
+          if (row.recipientSpec !== null) {
+            try {
+              const parsed = recipientSpecSchema.safeParse(
+                JSON.parse(row.recipientSpec) as unknown,
+              );
+              if (parsed.success && parsed.data !== undefined) {
+                for (const id of parsed.data.groupIds) allGroupIds.add(id);
+                for (const id of parsed.data.siteIds) allSiteIds.add(id);
+              }
+            } catch { /* invalid JSON — skip */ }
+          }
+        }
+
+        const [groupNameRows, siteNameRows] = await Promise.all([
+          allGroupIds.size > 0
+            ? ctx.db
+                .select({ id: groups.id, name: groups.name })
+                .from(groups)
+                .where(and(eq(groups.tenantId, ctx.tenantId), inArray(groups.id, [...allGroupIds])))
+            : Promise.resolve([] as Array<{ id: string; name: string }>),
+          allSiteIds.size > 0
+            ? ctx.db
+                .select({ id: sites.id, name: sites.name })
+                .from(sites)
+                .where(and(eq(sites.tenantId, ctx.tenantId), inArray(sites.id, [...allSiteIds])))
+            : Promise.resolve([] as Array<{ id: string; name: string }>),
+        ]);
+
+        const groupNameMap = new Map(groupNameRows.map((g) => [g.id, g.name]));
+        const siteNameMap = new Map(siteNameRows.map((s) => [s.id, s.name]));
+
+        return rows.map((row) => {
+          const groupNames: string[] = [];
+          const siteNames: string[] = [];
+          let hasIndividualUsers = false;
+          if (row.recipientSpec !== null) {
+            try {
+              const parsed = recipientSpecSchema.safeParse(
+                JSON.parse(row.recipientSpec) as unknown,
+              );
+              if (parsed.success && parsed.data !== undefined) {
+                for (const id of parsed.data.groupIds) {
+                  const name = groupNameMap.get(id);
+                  if (name !== undefined) groupNames.push(name);
+                }
+                for (const id of parsed.data.siteIds) {
+                  const name = siteNameMap.get(id);
+                  if (name !== undefined) siteNames.push(name);
+                }
+                hasIndividualUsers = parsed.data.userIds.length > 0;
+              }
+            } catch { /* ignore */ }
+          }
+          const { recipientSpec: _spec, ...rest } = row;
+          return { ...rest, audience: { groupNames, siteNames, hasIndividualUsers } };
+        });
       }),
 
     get: tenantProcedure

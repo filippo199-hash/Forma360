@@ -87,6 +87,7 @@ export default function HeadsUpListPage() {
                 <tr className="text-left">
                   <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.audience')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.engagement')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.createdBy')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.createdAt')}</th>
@@ -106,6 +107,9 @@ export default function HeadsUpListPage() {
                     <td className="px-3 py-2">
                       <StatusBadge status={row.status} t={t} />
                     </td>
+                    <td className="px-3 py-2">
+                      <AudienceCell audience={row.audience} t={t} />
+                    </td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {t(`engagement.${row.engagementLevel}`)}
                     </td>
@@ -122,6 +126,43 @@ export default function HeadsUpListPage() {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+const MAX_AUDIENCE_CHIPS = 3;
+
+function AudienceCell({
+  audience,
+  t,
+}: {
+  audience: { groupNames: string[]; siteNames: string[]; hasIndividualUsers: boolean };
+  t: (k: string) => string;
+}) {
+  const allNames = [...audience.groupNames, ...audience.siteNames];
+  if (audience.hasIndividualUsers && allNames.length === 0) {
+    return <span className="text-xs text-muted-foreground">{t('audienceIndividual')}</span>;
+  }
+  if (allNames.length === 0) {
+    return <span className="text-xs text-muted-foreground">{t('audienceAll')}</span>;
+  }
+  const visible = allNames.slice(0, MAX_AUDIENCE_CHIPS);
+  const overflow = allNames.length - visible.length;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {visible.map((name) => (
+        <span
+          key={name}
+          className="inline-block rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground"
+        >
+          {name}
+        </span>
+      ))}
+      {overflow > 0 ? (
+        <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          +{overflow}
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -1858,8 +1858,11 @@
         "status": "Status",
         "engagement": "Engagement",
         "createdBy": "Created by",
-        "createdAt": "Created"
-      }
+        "createdAt": "Created",
+        "audience": "受众"
+      },
+      "audienceAll": "所有人",
+      "audienceIndividual": "个人用户"
     },
     "new": {
       "pageTitle": "New Heads Up",

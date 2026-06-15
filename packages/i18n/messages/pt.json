@@ -1858,8 +1858,11 @@
         "status": "Status",
         "engagement": "Engagement",
         "createdBy": "Created by",
-        "createdAt": "Created"
-      }
+        "createdAt": "Created",
+        "audience": "Audiência"
+      },
+      "audienceAll": "Todos",
+      "audienceIndividual": "Utilizadores individuais"
     },
     "new": {
       "pageTitle": "New Heads Up",

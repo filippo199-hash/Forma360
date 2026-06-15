@@ -1858,8 +1858,11 @@
         "status": "Status",
         "engagement": "Engagement",
         "createdBy": "Created by",
-        "createdAt": "Created"
-      }
+        "createdAt": "Created",
+        "audience": "対象者"
+      },
+      "audienceAll": "全員",
+      "audienceIndividual": "個別ユーザー"
     },
     "new": {
       "pageTitle": "New Heads Up",
