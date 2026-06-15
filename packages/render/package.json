@@ -43,9 +43,6 @@
     "puppeteer-core": "^24.0.0",
     "zod": "^3.24.0"
   },
-  "optionalDependencies": {
-    "@sparticuz/chromium": "^131.0.0"
-  },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.0",
     "vitest": "^2.1.0"

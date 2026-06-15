@@ -1,5 +1,5 @@
 # Nixpacks config for the Railway `web` service.
-# Node 22 + pnpm 9. No extra native packages needed.
+# Node 22 + pnpm 9 + Chromium (for Puppeteer-backed PDF rendering).
 
 [phases.setup]
-nixPkgs = ['nodejs_22', 'pnpm-9_x']
+nixPkgs = ['nodejs_22', 'pnpm-9_x', 'chromium']
