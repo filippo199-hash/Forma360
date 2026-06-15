@@ -84,50 +84,61 @@ export function ShareLinkDialog({ inspectionId }: Props) {
       <DialogTrigger asChild>
         <Button variant="outline">{t('shareButton')}</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[560px]">
+
+      <DialogContent className="w-full sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>{t('shareDialogTitle')}</DialogTitle>
-          <DialogDescription>{t('shareDialogDescription')}</DialogDescription>
+          <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+            {t('shareDialogDescription')}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Expiry + Generate */}
+        <div className="space-y-5">
+
+          {/* ── Expiry + Generate ─────────────────────────────────────── */}
           <div className="space-y-2">
             <Label htmlFor="share-expiration">{t('expirationLabel')}</Label>
-            <div className="flex gap-2">
-              <select
-                id="share-expiration"
-                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={expiration}
-                onChange={(e) => setExpiration(e.target.value as Expiration)}
-              >
-                <option value="never">{t('expirationNever')}</option>
-                <option value="1h">{t('expiration1h')}</option>
-                <option value="1d">{t('expiration1d')}</option>
-                <option value="1w">{t('expiration1w')}</option>
-                <option value="30d">{t('expiration30d')}</option>
-              </select>
-              <Button onClick={handleCreate} disabled={createMut.isPending} className="shrink-0">
-                {createMut.isPending ? t('generating') : t('generateLink')}
-              </Button>
-            </div>
+            <select
+              id="share-expiration"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              value={expiration}
+              onChange={(e) => setExpiration(e.target.value as Expiration)}
+            >
+              <option value="never">{t('expirationNever')}</option>
+              <option value="1h">{t('expiration1h')}</option>
+              <option value="1d">{t('expiration1d')}</option>
+              <option value="1w">{t('expiration1w')}</option>
+              <option value="30d">{t('expiration30d')}</option>
+            </select>
+            <Button
+              onClick={handleCreate}
+              disabled={createMut.isPending}
+              className="w-full"
+            >
+              {createMut.isPending ? t('generating') : t('generateLink')}
+            </Button>
           </div>
 
-          {/* Newly generated link */}
+          {/* ── Newly generated link ──────────────────────────────────── */}
           {createMut.data !== undefined
             ? (() => {
                 const newUrl = createMut.data.url;
                 return (
-                  <div className="space-y-2 rounded-md border p-3">
+                  <div className="space-y-2 rounded-md border bg-muted/20 p-3">
                     <Label htmlFor="share-url-new">{t('newLinkLabel')}</Label>
-                    <div className="flex min-w-0 gap-2">
+                    <div className="flex items-center gap-2">
                       <input
                         id="share-url-new"
                         readOnly
                         value={newUrl}
-                        className="min-w-0 flex-1 rounded-md border border-input bg-muted/40 px-3 py-2 font-mono text-xs"
+                        className="min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 font-mono text-xs"
                       />
-                      <Button size="sm" variant="outline" className="shrink-0" onClick={() => handleCopy(newUrl, 'new')}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        onClick={() => handleCopy(newUrl, 'new')}
+                      >
                         {justCopied === 'new' ? t('copied') : t('copy')}
                       </Button>
                     </div>
@@ -136,23 +147,43 @@ export function ShareLinkDialog({ inspectionId }: Props) {
               })()
             : null}
 
-          {/* Existing links */}
+          {/* ── Existing links ────────────────────────────────────────── */}
           <div className="space-y-2">
             <h3 className="text-sm font-semibold">{t('existingLinksHeading')}</h3>
+
             {list.isLoading ? (
               <p className="text-sm text-muted-foreground">{t('loading')}</p>
             ) : null}
+
             {list.data !== undefined && list.data.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t('noLinks')}</p>
             ) : null}
+
             {list.data?.map((link) => (
               <div
                 key={link.linkId}
-                className="flex min-w-0 items-start gap-2 rounded-md border px-3 py-2 text-xs"
+                className="overflow-hidden rounded-md border text-xs"
               >
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <div className="truncate font-mono text-foreground">{link.url}</div>
-                  <div className="text-muted-foreground">
+                {/* URL row */}
+                <div className="flex items-center gap-2 border-b px-3 py-2">
+                  <span className="min-w-0 flex-1 truncate font-mono text-foreground">
+                    {link.url}
+                  </span>
+                  {!link.revoked ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 shrink-0 px-2 text-xs"
+                      onClick={() => handleCopy(link.url, link.linkId)}
+                    >
+                      {justCopied === link.linkId ? t('copied') : t('copy')}
+                    </Button>
+                  ) : null}
+                </div>
+
+                {/* Meta + actions row */}
+                <div className="flex items-center justify-between gap-2 px-3 py-1.5">
+                  <span className="text-muted-foreground">
                     {link.revoked
                       ? t('revokedBadge')
                       : link.expired
@@ -160,30 +191,23 @@ export function ShareLinkDialog({ inspectionId }: Props) {
                         : link.expiresAt !== null
                           ? t('expiresAt', { time: new Date(link.expiresAt).toLocaleString() })
                           : t('neverExpires')}
-                  </div>
-                </div>
-                {!link.revoked ? (
-                  <div className="flex shrink-0 gap-1">
+                  </span>
+                  {!link.revoked ? (
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleCopy(link.url, link.linkId)}
-                    >
-                      {justCopied === link.linkId ? t('copied') : t('copy')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                      className="h-7 shrink-0 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => revokeMut.mutate({ linkId: link.linkId })}
                       disabled={revokeMut.isPending}
                     >
                       {t('revoke')}
                     </Button>
-                  </div>
-                ) : null}
+                  ) : null}
+                </div>
               </div>
             ))}
           </div>
+
         </div>
       </DialogContent>
     </Dialog>
