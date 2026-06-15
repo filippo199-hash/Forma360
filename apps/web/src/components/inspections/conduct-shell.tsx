@@ -80,46 +80,64 @@ export function ConductShell() {
   const [showConflict, setShowConflict] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
-  /**
-   * Maps question IDs → action IDs for all actions linked to this inspection.
-   * Seeded from the server on mount so previously-raised actions are visible
-   * even after the user navigates away and comes back. New raises during the
-   * session are merged in by handleActionRaised.
-   */
-  const [actionRaisedMap, setActionRaisedMap] = useState<Map<string, string>>(
-    () => new Map(),
-  );
   /** The action currently open in the detail sidebar. */
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
 
-  // Pre-load any actions already raised for this inspection so that
-  // LinkedActionCards appear correctly on re-entry (local state is lost on
-  // navigation, but the DB has the truth).
+  // For in-progress inspections we exclude archived actions so that a user
+  // who archives a mistakenly-raised action sees it disappear from the conduct
+  // view immediately. For any other status the inspection is effectively
+  // read-only/historic and we include archived actions to preserve the audit
+  // trail (a completed inspection must always show every action that was ever
+  // raised, even if those actions were later archived on the main board).
+  const inspectionIsInProgress = state.inspectionStatus === 'in_progress';
+
+  // Pre-load actions already raised for this inspection.
+  // When an action is archived via the detail sidebar, ActionDetailPanel
+  // calls utils.actions.list.invalidate() which causes this query to refetch.
+  // For in-progress inspections the re-fetch excludes the archived action, so
+  // it naturally disappears from actionRaisedMap below.
   const { data: existingActions } = trpc.actions.list.useQuery({
     sourceType: 'inspection',
     sourceId: state.inspectionId,
     assignedToMe: false,
     overdueOnly: false,
-    includeArchived: true,
+    includeArchived: !inspectionIsInProgress,
     hideClosed: false,
     sortBy: 'created',
   });
 
-  useEffect(() => {
-    if (existingActions === undefined || existingActions.length === 0) return;
-    setActionRaisedMap((prev) => {
-      const next = new Map(prev);
-      for (const action of existingActions) {
-        if (action.sourceItemId !== null && !next.has(action.sourceItemId)) {
-          next.set(action.sourceItemId, action.id);
-        }
+  /**
+   * Optimistic additions: question IDs raised in this session before the DB
+   * query has had a chance to refetch and include the new action. Kept small
+   * and separate so that DB truth (below) can override / remove entries.
+   */
+  const [sessionRaisedMap, setSessionRaisedMap] = useState<Map<string, string>>(
+    () => new Map(),
+  );
+
+  /**
+   * The authoritative map used for rendering: DB truth takes precedence.
+   * When existingActions has loaded, entries absent from it (e.g. archived
+   * actions on an in-progress inspection) simply won't appear. Session
+   * additions fill the brief window between a create mutation and the next
+   * refetch.
+   */
+  const actionRaisedMap = useMemo(() => {
+    const m = new Map<string, string>();
+    if (existingActions !== undefined) {
+      for (const a of existingActions) {
+        if (a.sourceItemId !== null) m.set(a.sourceItemId, a.id);
       }
-      return next;
-    });
-  }, [existingActions]);
+    }
+    // Session-raised entries only appear if not yet reflected in the DB data.
+    for (const [k, v] of sessionRaisedMap) {
+      if (!m.has(k)) m.set(k, v);
+    }
+    return m;
+  }, [existingActions, sessionRaisedMap]);
 
   const handleActionRaised = useCallback((questionId: string, actionId: string) => {
-    setActionRaisedMap((prev) => new Map([...prev, [questionId, actionId]]));
+    setSessionRaisedMap((prev) => new Map([...prev, [questionId, actionId]]));
   }, []);
 
   const saveProgress = trpc.inspections.saveProgress.useMutation({
