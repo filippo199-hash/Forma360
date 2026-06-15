@@ -2240,7 +2240,10 @@
         "subject": "Subject",
         "permission": "Permission",
         "grantedAt": "Granted"
-      }
+      },
+      "previewUnavailable": "Vista previa no disponible",
+      "downloadFile": "Descargar",
+      "currentVersionBadge": "actual"
     },
     "upload": {
       "labelsCreate": "Nueva etiqueta",

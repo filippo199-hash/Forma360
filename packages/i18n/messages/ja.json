@@ -2233,7 +2233,10 @@
         "subject": "Subject",
         "permission": "Permission",
         "grantedAt": "Granted"
-      }
+      },
+      "previewUnavailable": "プレビューを表示できません",
+      "downloadFile": "ダウンロード",
+      "currentVersionBadge": "現在"
     },
     "upload": {
       "labelsCreate": "新しいラベル",

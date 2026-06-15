@@ -2479,7 +2479,10 @@
         "subject": "Subject",
         "permission": "Permission",
         "grantedAt": "Granted"
-      }
+      },
+      "previewUnavailable": "Preview not available",
+      "downloadFile": "Download",
+      "currentVersionBadge": "current"
     }
   },
   "entitySelect": {

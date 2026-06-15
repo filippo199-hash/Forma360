@@ -2233,7 +2233,10 @@
         "subject": "Subject",
         "permission": "Permission",
         "grantedAt": "Granted"
-      }
+      },
+      "previewUnavailable": "Voorbeeld niet beschikbaar",
+      "downloadFile": "Downloaden",
+      "currentVersionBadge": "huidig"
     },
     "upload": {
       "labelsCreate": "Nieuw label",

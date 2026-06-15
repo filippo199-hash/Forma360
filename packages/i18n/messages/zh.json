@@ -2233,7 +2233,10 @@
         "subject": "Subject",
         "permission": "Permission",
         "grantedAt": "Granted"
-      }
+      },
+      "previewUnavailable": "无法预览",
+      "downloadFile": "下载",
+      "currentVersionBadge": "当前"
     },
     "upload": {
       "labelsCreate": "新建标签",
