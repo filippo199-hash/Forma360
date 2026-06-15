@@ -166,7 +166,12 @@
         "emailLabel": "Email",
         "nameLabel": "Full name",
         "permissionSetLabel": "Permission set",
-        "submit": "Send invitation"
+        "submit": "Send invitation",
+        "firstNameLabel": "名前",
+        "lastNameLabel": "苗字",
+        "groupsLabel": "グループに追加（任意）",
+        "sitesLabel": "サイトに追加（任意）",
+        "cancel": "キャンセル"
       },
       "table": {
         "name": "Name",
@@ -233,13 +238,46 @@
       "subtitle": "Organise users by role, department, or team — manually or via rules.",
       "createButton": "New group",
       "table": {
-        "name": "Name",
-        "mode": "Mode",
-        "members": "Members"
+        "name": "名前",
+        "mode": "モード",
+        "description": "説明",
+        "actions": "アクション"
       },
       "mode": {
         "manual": "Manual",
         "rule_based": "Rule-based"
+      },
+      "createTitle": "新しいグループ",
+      "editTitle": "グループを編集",
+      "createSubmit": "グループを作成",
+      "editSubmit": "変更を保存",
+      "archiveConfirm": "このグループをアーカイブしますか？",
+      "nameLabel": "名前",
+      "descriptionLabel": "説明（任意）",
+      "modeLabel": "メンバーシップモード",
+      "membersButton": "メンバー",
+      "editButton": "編集",
+      "archiveButton": "アーカイブ",
+      "createSuccess": "グループを作成しました。",
+      "createError": "作成に失敗しました。",
+      "editSuccess": "グループを更新しました。",
+      "editError": "更新に失敗しました。",
+      "archiveSuccess": "グループをアーカイブしました。",
+      "archiveError": "アーカイブに失敗しました。",
+      "cancel": "キャンセル",
+      "empty": "グループがありません。",
+      "members": {
+        "title": "{name}のメンバー",
+        "empty": "メンバーがいません。",
+        "addButton": "追加",
+        "addPlaceholder": "ユーザーを選択…",
+        "removeButton": "削除",
+        "addedViaRule": "ルールで追加",
+        "ruleBasedNote": "自動的に管理されます。"
+      },
+      "modeHint": {
+        "manual": "メンバーは手動で追加されます。",
+        "rule_based": "メンバーはルールに基づいて自動的に同期されます。"
       }
     },
     "sites": {
@@ -247,9 +285,39 @@
       "subtitle": "Organise your operational data by location or branch.",
       "createButton": "New site",
       "table": {
-        "name": "Name",
-        "depth": "Level",
-        "mode": "Mode"
+        "name": "名前",
+        "mode": "モード",
+        "actions": "アクション"
+      },
+      "createTitle": "新しいサイト",
+      "editTitle": "サイトを編集",
+      "createSubmit": "サイトを作成",
+      "editSubmit": "変更を保存",
+      "archiveConfirm": "このサイトをアーカイブしますか？",
+      "nameLabel": "名前",
+      "parentLabel": "親サイト",
+      "modeLabel": "メンバーシップモード",
+      "noParent": "ルート（親なし）",
+      "membersButton": "メンバー",
+      "editButton": "編集",
+      "archiveButton": "アーカイブ",
+      "addChildButton": "サブサイトを追加",
+      "createSuccess": "サイトを作成しました。",
+      "createError": "エラー。",
+      "editSuccess": "サイトを更新しました。",
+      "editError": "エラー。",
+      "archiveSuccess": "アーカイブしました。",
+      "archiveError": "エラー。",
+      "cancel": "キャンセル",
+      "empty": "サイトがありません。",
+      "members": {
+        "title": "{name}のメンバー",
+        "empty": "メンバーがいません。",
+        "addButton": "追加",
+        "addPlaceholder": "ユーザーを選択…",
+        "removeButton": "削除",
+        "addedViaRule": "ルールで追加",
+        "ruleBasedNote": "自動的に管理されます。"
       }
     },
     "profile": {

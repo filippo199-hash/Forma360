@@ -166,7 +166,12 @@
         "emailLabel": "Email",
         "nameLabel": "Full name",
         "permissionSetLabel": "Permission set",
-        "submit": "Send invitation"
+        "submit": "Send invitation",
+        "firstNameLabel": "Imię",
+        "lastNameLabel": "Nazwisko",
+        "groupsLabel": "Dodaj do grup (opcjonalnie)",
+        "sitesLabel": "Dodaj do lokalizacji (opcjonalnie)",
+        "cancel": "Anuluj"
       },
       "table": {
         "name": "Name",
@@ -233,13 +238,46 @@
       "subtitle": "Organise users by role, department, or team — manually or via rules.",
       "createButton": "New group",
       "table": {
-        "name": "Name",
-        "mode": "Mode",
-        "members": "Members"
+        "name": "Nazwa",
+        "mode": "Tryb",
+        "description": "Opis",
+        "actions": "Akcje"
       },
       "mode": {
         "manual": "Manual",
         "rule_based": "Rule-based"
+      },
+      "createTitle": "Nowa grupa",
+      "editTitle": "Edytuj grupę",
+      "createSubmit": "Utwórz grupę",
+      "editSubmit": "Zapisz zmiany",
+      "archiveConfirm": "Zarchiwizować tę grupę?",
+      "nameLabel": "Nazwa",
+      "descriptionLabel": "Opis (opcjonalny)",
+      "modeLabel": "Tryb członkostwa",
+      "membersButton": "Członkowie",
+      "editButton": "Edytuj",
+      "archiveButton": "Archiwizuj",
+      "createSuccess": "Grupa utworzona.",
+      "createError": "Błąd.",
+      "editSuccess": "Grupa zaktualizowana.",
+      "editError": "Błąd.",
+      "archiveSuccess": "Zarchiwizowano.",
+      "archiveError": "Błąd.",
+      "cancel": "Anuluj",
+      "empty": "Brak grup.",
+      "members": {
+        "title": "Członkowie grupy {name}",
+        "empty": "Brak członków.",
+        "addButton": "Dodaj",
+        "addPlaceholder": "Wybierz użytkownika…",
+        "removeButton": "Usuń",
+        "addedViaRule": "Dodany przez regułę",
+        "ruleBasedNote": "Zarządzani automatycznie."
+      },
+      "modeHint": {
+        "manual": "Członkowie dodawani ręcznie.",
+        "rule_based": "Członkowie synchronizowani automatycznie."
       }
     },
     "sites": {
@@ -247,9 +285,39 @@
       "subtitle": "Organise your operational data by location or branch.",
       "createButton": "New site",
       "table": {
-        "name": "Name",
-        "depth": "Level",
-        "mode": "Mode"
+        "name": "Nazwa",
+        "mode": "Tryb",
+        "actions": "Akcje"
+      },
+      "createTitle": "Nowa lokalizacja",
+      "editTitle": "Edytuj lokalizację",
+      "createSubmit": "Utwórz",
+      "editSubmit": "Zapisz",
+      "archiveConfirm": "Zarchiwizować tę lokalizację?",
+      "nameLabel": "Nazwa",
+      "parentLabel": "Lokalizacja nadrzędna",
+      "modeLabel": "Tryb",
+      "noParent": "Korzeń (bez nadrzędnej)",
+      "membersButton": "Członkowie",
+      "editButton": "Edytuj",
+      "archiveButton": "Archiwizuj",
+      "addChildButton": "Dodaj podlokalizację",
+      "createSuccess": "Lokalizacja utworzona.",
+      "createError": "Błąd.",
+      "editSuccess": "Zaktualizowano.",
+      "editError": "Błąd.",
+      "archiveSuccess": "Zarchiwizowano.",
+      "archiveError": "Błąd.",
+      "cancel": "Anuluj",
+      "empty": "Brak lokalizacji.",
+      "members": {
+        "title": "Członkowie {name}",
+        "empty": "Brak.",
+        "addButton": "Dodaj",
+        "addPlaceholder": "Wybierz użytkownika…",
+        "removeButton": "Usuń",
+        "addedViaRule": "Przez regułę",
+        "ruleBasedNote": "Automatycznie."
       }
     },
     "profile": {

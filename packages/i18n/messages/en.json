@@ -209,7 +209,12 @@
         "emailLabel": "Email",
         "nameLabel": "Full name",
         "permissionSetLabel": "Permission set",
-        "submit": "Send invitation"
+        "submit": "Send invitation",
+        "firstNameLabel": "First name",
+        "lastNameLabel": "Last name",
+        "groupsLabel": "Add to groups (optional)",
+        "sitesLabel": "Add to sites (optional)",
+        "cancel": "Cancel"
       },
       "table": {
         "name": "Name",
@@ -278,11 +283,44 @@
       "table": {
         "name": "Name",
         "mode": "Mode",
-        "members": "Members"
+        "description": "Description",
+        "actions": "Actions"
       },
       "mode": {
         "manual": "Manual",
         "rule_based": "Rule-based"
+      },
+      "createTitle": "New group",
+      "editTitle": "Edit group",
+      "createSubmit": "Create group",
+      "editSubmit": "Save changes",
+      "archiveConfirm": "Archive this group? Rule-based members will be removed.",
+      "nameLabel": "Name",
+      "descriptionLabel": "Description (optional)",
+      "modeLabel": "Membership mode",
+      "membersButton": "Members",
+      "editButton": "Edit",
+      "archiveButton": "Archive",
+      "createSuccess": "Group created.",
+      "createError": "Failed to create group.",
+      "editSuccess": "Group updated.",
+      "editError": "Failed to update group.",
+      "archiveSuccess": "Group archived.",
+      "archiveError": "Failed to archive group.",
+      "cancel": "Cancel",
+      "empty": "No groups yet. Create one to get started.",
+      "members": {
+        "title": "Members of {name}",
+        "empty": "No members yet.",
+        "addButton": "Add",
+        "addPlaceholder": "Select a user…",
+        "removeButton": "Remove",
+        "addedViaRule": "Added via rule",
+        "ruleBasedNote": "Members are managed automatically via rules."
+      },
+      "modeHint": {
+        "manual": "Members are added and removed manually.",
+        "rule_based": "Members are automatically synced based on rules you define."
       }
     },
     "sites": {
@@ -291,8 +329,38 @@
       "createButton": "New site",
       "table": {
         "name": "Name",
-        "depth": "Level",
-        "mode": "Mode"
+        "mode": "Mode",
+        "actions": "Actions"
+      },
+      "createTitle": "New site",
+      "editTitle": "Edit site",
+      "createSubmit": "Create site",
+      "editSubmit": "Save changes",
+      "archiveConfirm": "Archive this site? This will also archive all sub-sites.",
+      "nameLabel": "Name",
+      "parentLabel": "Parent site",
+      "modeLabel": "Membership mode",
+      "noParent": "Root (no parent)",
+      "membersButton": "Members",
+      "editButton": "Edit",
+      "archiveButton": "Archive",
+      "addChildButton": "Add sub-site",
+      "createSuccess": "Site created.",
+      "createError": "Failed to create site.",
+      "editSuccess": "Site updated.",
+      "editError": "Failed to update site.",
+      "archiveSuccess": "Site archived.",
+      "archiveError": "Failed to archive site.",
+      "cancel": "Cancel",
+      "empty": "No sites yet. Create one to get started.",
+      "members": {
+        "title": "Members of {name}",
+        "empty": "No members at this site.",
+        "addButton": "Add",
+        "addPlaceholder": "Select a user…",
+        "removeButton": "Remove",
+        "addedViaRule": "Added via rule",
+        "ruleBasedNote": "Members are managed automatically via rules."
       }
     },
     "profile": {

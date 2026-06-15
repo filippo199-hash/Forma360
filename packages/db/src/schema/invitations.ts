@@ -18,7 +18,15 @@
  *   - `invited_by_user_id` is `text` to match `user.id`
  */
 import { sql } from 'drizzle-orm';
-import { index, pgTable, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import {
+  index,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from 'drizzle-orm/pg-core';
 import { user } from './auth';
 import { permissionSets } from './permissions';
 import { tenants } from './tenants';
@@ -56,6 +64,19 @@ export const invitations = pgTable(
 
     /** Null until the invitee successfully accepts; set in the accept tx. */
     acceptedAt: timestamp('accepted_at', { withTimezone: true, mode: 'date' }),
+
+    /**
+     * Group IDs (ULIDs) the new user should be added to when they accept.
+     * Stored as a JSON array so no additional foreign-key coupling is
+     * introduced — groups may be archived between invite and acceptance.
+     */
+    groupIds: jsonb('group_ids').$type<string[]>(),
+
+    /**
+     * Site IDs (ULIDs) the new user should be added to on acceptance.
+     * Same rationale as groupIds above.
+     */
+    siteIds: jsonb('site_ids').$type<string[]>(),
 
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   },

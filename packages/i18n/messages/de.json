@@ -166,7 +166,12 @@
         "emailLabel": "Email",
         "nameLabel": "Full name",
         "permissionSetLabel": "Permission set",
-        "submit": "Send invitation"
+        "submit": "Send invitation",
+        "firstNameLabel": "Vorname",
+        "lastNameLabel": "Nachname",
+        "groupsLabel": "Zu Gruppen hinzufügen (optional)",
+        "sitesLabel": "Zu Standorten hinzufügen (optional)",
+        "cancel": "Abbrechen"
       },
       "table": {
         "name": "Name",
@@ -234,12 +239,45 @@
       "createButton": "New group",
       "table": {
         "name": "Name",
-        "mode": "Mode",
-        "members": "Members"
+        "mode": "Modus",
+        "description": "Beschreibung",
+        "actions": "Aktionen"
       },
       "mode": {
         "manual": "Manual",
         "rule_based": "Rule-based"
+      },
+      "createTitle": "Neue Gruppe",
+      "editTitle": "Gruppe bearbeiten",
+      "createSubmit": "Gruppe erstellen",
+      "editSubmit": "Änderungen speichern",
+      "archiveConfirm": "Diese Gruppe archivieren?",
+      "nameLabel": "Name",
+      "descriptionLabel": "Beschreibung (optional)",
+      "modeLabel": "Mitgliedschaftsmodus",
+      "membersButton": "Mitglieder",
+      "editButton": "Bearbeiten",
+      "archiveButton": "Archivieren",
+      "createSuccess": "Gruppe erstellt.",
+      "createError": "Fehler beim Erstellen.",
+      "editSuccess": "Gruppe aktualisiert.",
+      "editError": "Fehler beim Aktualisieren.",
+      "archiveSuccess": "Gruppe archiviert.",
+      "archiveError": "Fehler beim Archivieren.",
+      "cancel": "Abbrechen",
+      "empty": "Noch keine Gruppen.",
+      "members": {
+        "title": "Mitglieder von {name}",
+        "empty": "Noch keine Mitglieder.",
+        "addButton": "Hinzufügen",
+        "addPlaceholder": "Benutzer auswählen…",
+        "removeButton": "Entfernen",
+        "addedViaRule": "Über Regel hinzugefügt",
+        "ruleBasedNote": "Mitglieder werden automatisch verwaltet."
+      },
+      "modeHint": {
+        "manual": "Mitglieder werden manuell hinzugefügt.",
+        "rule_based": "Mitglieder werden automatisch anhand von Regeln synchronisiert."
       }
     },
     "sites": {
@@ -248,8 +286,38 @@
       "createButton": "New site",
       "table": {
         "name": "Name",
-        "depth": "Level",
-        "mode": "Mode"
+        "mode": "Modus",
+        "actions": "Aktionen"
+      },
+      "createTitle": "Neuer Standort",
+      "editTitle": "Standort bearbeiten",
+      "createSubmit": "Standort erstellen",
+      "editSubmit": "Änderungen speichern",
+      "archiveConfirm": "Diesen Standort archivieren?",
+      "nameLabel": "Name",
+      "parentLabel": "Übergeordneter Standort",
+      "modeLabel": "Mitgliedschaftsmodus",
+      "noParent": "Wurzel (kein übergeordneter)",
+      "membersButton": "Mitglieder",
+      "editButton": "Bearbeiten",
+      "archiveButton": "Archivieren",
+      "addChildButton": "Unterstandort hinzufügen",
+      "createSuccess": "Standort erstellt.",
+      "createError": "Fehler.",
+      "editSuccess": "Standort aktualisiert.",
+      "editError": "Fehler.",
+      "archiveSuccess": "Standort archiviert.",
+      "archiveError": "Fehler.",
+      "cancel": "Abbrechen",
+      "empty": "Noch keine Standorte.",
+      "members": {
+        "title": "Mitglieder von {name}",
+        "empty": "Keine Mitglieder.",
+        "addButton": "Hinzufügen",
+        "addPlaceholder": "Benutzer auswählen…",
+        "removeButton": "Entfernen",
+        "addedViaRule": "Über Regel",
+        "ruleBasedNote": "Automatisch verwaltet."
       }
     },
     "profile": {

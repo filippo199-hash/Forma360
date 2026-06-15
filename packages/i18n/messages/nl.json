@@ -166,7 +166,12 @@
         "emailLabel": "Email",
         "nameLabel": "Full name",
         "permissionSetLabel": "Permission set",
-        "submit": "Send invitation"
+        "submit": "Send invitation",
+        "firstNameLabel": "Voornaam",
+        "lastNameLabel": "Achternaam",
+        "groupsLabel": "Toevoegen aan groepen (optioneel)",
+        "sitesLabel": "Toevoegen aan locaties (optioneel)",
+        "cancel": "Annuleren"
       },
       "table": {
         "name": "Name",
@@ -233,13 +238,46 @@
       "subtitle": "Organise users by role, department, or team — manually or via rules.",
       "createButton": "New group",
       "table": {
-        "name": "Name",
-        "mode": "Mode",
-        "members": "Members"
+        "name": "Naam",
+        "mode": "Modus",
+        "description": "Beschrijving",
+        "actions": "Acties"
       },
       "mode": {
         "manual": "Manual",
         "rule_based": "Rule-based"
+      },
+      "createTitle": "Nieuwe groep",
+      "editTitle": "Groep bewerken",
+      "createSubmit": "Groep aanmaken",
+      "editSubmit": "Wijzigingen opslaan",
+      "archiveConfirm": "Deze groep archiveren?",
+      "nameLabel": "Naam",
+      "descriptionLabel": "Beschrijving (optioneel)",
+      "modeLabel": "Lidmaatschapsmodus",
+      "membersButton": "Leden",
+      "editButton": "Bewerken",
+      "archiveButton": "Archiveren",
+      "createSuccess": "Groep aangemaakt.",
+      "createError": "Fout.",
+      "editSuccess": "Groep bijgewerkt.",
+      "editError": "Fout.",
+      "archiveSuccess": "Groep gearchiveerd.",
+      "archiveError": "Fout.",
+      "cancel": "Annuleren",
+      "empty": "Nog geen groepen.",
+      "members": {
+        "title": "Leden van {name}",
+        "empty": "Geen leden.",
+        "addButton": "Toevoegen",
+        "addPlaceholder": "Gebruiker selecteren…",
+        "removeButton": "Verwijderen",
+        "addedViaRule": "Via regel toegevoegd",
+        "ruleBasedNote": "Automatisch beheerd."
+      },
+      "modeHint": {
+        "manual": "Leden worden handmatig toegevoegd.",
+        "rule_based": "Leden worden automatisch gesynchroniseerd."
       }
     },
     "sites": {
@@ -247,9 +285,39 @@
       "subtitle": "Organise your operational data by location or branch.",
       "createButton": "New site",
       "table": {
-        "name": "Name",
-        "depth": "Level",
-        "mode": "Mode"
+        "name": "Naam",
+        "mode": "Modus",
+        "actions": "Acties"
+      },
+      "createTitle": "Nieuwe locatie",
+      "editTitle": "Locatie bewerken",
+      "createSubmit": "Locatie aanmaken",
+      "editSubmit": "Opslaan",
+      "archiveConfirm": "Deze locatie archiveren?",
+      "nameLabel": "Naam",
+      "parentLabel": "Bovenliggende locatie",
+      "modeLabel": "Lidmaatschapsmodus",
+      "noParent": "Hoofd (geen ouder)",
+      "membersButton": "Leden",
+      "editButton": "Bewerken",
+      "archiveButton": "Archiveren",
+      "addChildButton": "Sublocatie toevoegen",
+      "createSuccess": "Locatie aangemaakt.",
+      "createError": "Fout.",
+      "editSuccess": "Locatie bijgewerkt.",
+      "editError": "Fout.",
+      "archiveSuccess": "Gearchiveerd.",
+      "archiveError": "Fout.",
+      "cancel": "Annuleren",
+      "empty": "Nog geen locaties.",
+      "members": {
+        "title": "Leden van {name}",
+        "empty": "Geen leden.",
+        "addButton": "Toevoegen",
+        "addPlaceholder": "Gebruiker selecteren…",
+        "removeButton": "Verwijderen",
+        "addedViaRule": "Via regel",
+        "ruleBasedNote": "Automatisch beheerd."
       }
     },
     "profile": {

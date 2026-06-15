@@ -28,6 +28,8 @@ export default function UsersPage() {
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.users.list.useQuery({});
   const { data: sets } = trpc.permissions.list.useQuery();
+  const { data: groupsData } = trpc.groups.list.useQuery();
+  const { data: sitesData } = trpc.sites.list.useQuery();
   const invitationsQuery = trpc.users.listInvitations.useQuery();
 
   const invite = trpc.users.invite.useMutation({
@@ -70,9 +72,6 @@ export default function UsersPage() {
     URL.revokeObjectURL(url);
   }
 
-  // We need a permission set id to resend. Pick the same set the
-  // invitation row was issued with; the backend already validates it
-  // belongs to the tenant.
   function onResend(payload: { email: string; name: string | null; permissionSetId: string }) {
     resendInvite.mutate({
       email: payload.email,
@@ -101,7 +100,16 @@ export default function UsersPage() {
         </div>
       </header>
 
-      {showInvite ? <InvitePanel sets={sets ?? []} onSubmit={invite.mutate} /> : null}
+      {showInvite ? (
+        <InvitePanel
+          sets={sets ?? []}
+          groups={groupsData ?? []}
+          sites={sitesData ?? []}
+          isPending={invite.isPending}
+          onSubmit={(payload) => invite.mutate(payload)}
+          onCancel={() => setShowInvite(false)}
+        />
+      ) : null}
 
       <Card>
         <CardContent className="p-0">
@@ -252,49 +260,113 @@ interface InvitePayload {
   email: string;
   name: string;
   permissionSetId: string;
+  groupIds: string[];
+  siteIds: string[];
 }
 
 function InvitePanel({
   sets,
+  groups,
+  sites,
+  isPending,
   onSubmit,
+  onCancel,
 }: {
   sets: ReadonlyArray<{ id: string; name: string }>;
+  groups: ReadonlyArray<{ id: string; name: string }>;
+  sites: ReadonlyArray<{ id: string; name: string; depth: number }>;
+  isPending: boolean;
   onSubmit: (payload: InvitePayload) => void;
+  onCancel: () => void;
 }) {
   const t = useTranslations('settings.users.invite');
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [permissionSetId, setPermissionSetId] = useState(sets[0]?.id ?? '');
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
+  const [selectedSiteIds, setSelectedSiteIds] = useState<Set<string>>(new Set());
+
+  function toggleGroup(id: string) {
+    setSelectedGroupIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSite(id: string) {
+    setSelectedSiteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+    if (!email.trim() || !fullName || !permissionSetId) return;
+    onSubmit({
+      email: email.trim(),
+      name: fullName,
+      permissionSetId,
+      groupIds: [...selectedGroupIds],
+      siteIds: [...selectedSiteIds],
+    });
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            const data = new FormData(form);
-            onSubmit({
-              email: String(data.get('email')),
-              name: String(data.get('name')),
-              permissionSetId: String(data.get('permissionSetId')),
-            });
-            form.reset();
-          }}
-          className="grid grid-cols-1 gap-4 md:grid-cols-4"
-        >
-          <div className="space-y-1.5">
-            <Label htmlFor="invite-email">{t('emailLabel')}</Label>
-            <Input id="invite-email" name="email" type="email" required />
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Row 1: email + name */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="inv-email">{t('emailLabel')}</Label>
+              <Input
+                id="inv-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="inv-first">{t('firstNameLabel')}</Label>
+              <Input
+                id="inv-first"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                maxLength={60}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="inv-last">{t('lastNameLabel')}</Label>
+              <Input
+                id="inv-last"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                maxLength={60}
+              />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="invite-name">{t('nameLabel')}</Label>
-            <Input id="invite-name" name="name" required />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="invite-set">{t('permissionSetLabel')}</Label>
+
+          {/* Row 2: permission set */}
+          <div className="max-w-xs space-y-1.5">
+            <Label htmlFor="inv-set">{t('permissionSetLabel')}</Label>
             <select
-              id="invite-set"
-              name="permissionSetId"
+              id="inv-set"
+              value={permissionSetId}
+              onChange={(e) => setPermissionSetId(e.target.value)}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               required
             >
@@ -305,9 +377,56 @@ function InvitePanel({
               ))}
             </select>
           </div>
-          <div className="flex items-end">
-            <Button type="submit" className="w-full">
+
+          {/* Row 3: groups + sites */}
+          {(groups.length > 0 || sites.length > 0) ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {groups.length > 0 ? (
+                <div className="space-y-1.5">
+                  <Label>{t('groupsLabel')}</Label>
+                  <div className="max-h-36 overflow-y-auto rounded-md border p-2 space-y-1">
+                    {groups.map((g) => (
+                      <label key={g.id} className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/50 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedGroupIds.has(g.id)}
+                          onChange={() => toggleGroup(g.id)}
+                          className="h-4 w-4 rounded border-input accent-foreground"
+                        />
+                        {g.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {sites.length > 0 ? (
+                <div className="space-y-1.5">
+                  <Label>{t('sitesLabel')}</Label>
+                  <div className="max-h-36 overflow-y-auto rounded-md border p-2 space-y-1">
+                    {sites.map((s) => (
+                      <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/50 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedSiteIds.has(s.id)}
+                          onChange={() => toggleSite(s.id)}
+                          className="h-4 w-4 rounded border-input accent-foreground"
+                        />
+                        <span style={{ paddingLeft: `${s.depth * 0.75}rem` }}>{s.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isPending || !email.trim() || !firstName.trim() || !permissionSetId}>
               {t('submit')}
+            </Button>
+            <Button type="button" variant="outline" onClick={onCancel}>
+              {t('cancel')}
             </Button>
           </div>
         </form>

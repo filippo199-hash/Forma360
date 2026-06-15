@@ -166,7 +166,12 @@
         "emailLabel": "Email",
         "nameLabel": "Full name",
         "permissionSetLabel": "Permission set",
-        "submit": "Send invitation"
+        "submit": "Send invitation",
+        "firstNameLabel": "Nome",
+        "lastNameLabel": "Cognome",
+        "groupsLabel": "Aggiungi a gruppi (opzionale)",
+        "sitesLabel": "Aggiungi a siti (opzionale)",
+        "cancel": "Annulla"
       },
       "table": {
         "name": "Name",
@@ -233,13 +238,46 @@
       "subtitle": "Organise users by role, department, or team — manually or via rules.",
       "createButton": "New group",
       "table": {
-        "name": "Name",
-        "mode": "Mode",
-        "members": "Members"
+        "name": "Nome",
+        "mode": "Modalità",
+        "description": "Descrizione",
+        "actions": "Azioni"
       },
       "mode": {
         "manual": "Manual",
         "rule_based": "Rule-based"
+      },
+      "createTitle": "Nuovo gruppo",
+      "editTitle": "Modifica gruppo",
+      "createSubmit": "Crea gruppo",
+      "editSubmit": "Salva modifiche",
+      "archiveConfirm": "Archiviare questo gruppo?",
+      "nameLabel": "Nome",
+      "descriptionLabel": "Descrizione (opzionale)",
+      "modeLabel": "Modalità di iscrizione",
+      "membersButton": "Membri",
+      "editButton": "Modifica",
+      "archiveButton": "Archivia",
+      "createSuccess": "Gruppo creato.",
+      "createError": "Errore.",
+      "editSuccess": "Gruppo aggiornato.",
+      "editError": "Errore.",
+      "archiveSuccess": "Gruppo archiviato.",
+      "archiveError": "Errore.",
+      "cancel": "Annulla",
+      "empty": "Nessun gruppo ancora.",
+      "members": {
+        "title": "Membri di {name}",
+        "empty": "Nessun membro.",
+        "addButton": "Aggiungi",
+        "addPlaceholder": "Seleziona utente…",
+        "removeButton": "Rimuovi",
+        "addedViaRule": "Aggiunto da regola",
+        "ruleBasedNote": "Gestito automaticamente."
+      },
+      "modeHint": {
+        "manual": "I membri vengono aggiunti manualmente.",
+        "rule_based": "I membri vengono sincronizzati automaticamente."
       }
     },
     "sites": {
@@ -247,9 +285,39 @@
       "subtitle": "Organise your operational data by location or branch.",
       "createButton": "New site",
       "table": {
-        "name": "Name",
-        "depth": "Level",
-        "mode": "Mode"
+        "name": "Nome",
+        "mode": "Modalità",
+        "actions": "Azioni"
+      },
+      "createTitle": "Nuovo sito",
+      "editTitle": "Modifica sito",
+      "createSubmit": "Crea sito",
+      "editSubmit": "Salva modifiche",
+      "archiveConfirm": "Archiviare questo sito?",
+      "nameLabel": "Nome",
+      "parentLabel": "Sito padre",
+      "modeLabel": "Modalità",
+      "noParent": "Radice (senza padre)",
+      "membersButton": "Membri",
+      "editButton": "Modifica",
+      "archiveButton": "Archivia",
+      "addChildButton": "Aggiungi sotto-sito",
+      "createSuccess": "Sito creato.",
+      "createError": "Errore.",
+      "editSuccess": "Sito aggiornato.",
+      "editError": "Errore.",
+      "archiveSuccess": "Sito archiviato.",
+      "archiveError": "Errore.",
+      "cancel": "Annulla",
+      "empty": "Nessun sito ancora.",
+      "members": {
+        "title": "Membri di {name}",
+        "empty": "Nessun membro.",
+        "addButton": "Aggiungi",
+        "addPlaceholder": "Seleziona utente…",
+        "removeButton": "Rimuovi",
+        "addedViaRule": "Aggiunto da regola",
+        "ruleBasedNote": "Gestito automaticamente."
       }
     },
     "profile": {

@@ -166,7 +166,12 @@
         "emailLabel": "Email",
         "nameLabel": "Full name",
         "permissionSetLabel": "Permission set",
-        "submit": "Send invitation"
+        "submit": "Send invitation",
+        "firstNameLabel": "名字",
+        "lastNameLabel": "姓氏",
+        "groupsLabel": "添加到群组（可选）",
+        "sitesLabel": "添加到站点（可选）",
+        "cancel": "取消"
       },
       "table": {
         "name": "Name",
@@ -233,13 +238,46 @@
       "subtitle": "Organise users by role, department, or team — manually or via rules.",
       "createButton": "New group",
       "table": {
-        "name": "Name",
-        "mode": "Mode",
-        "members": "Members"
+        "name": "名称",
+        "mode": "模式",
+        "description": "描述",
+        "actions": "操作"
       },
       "mode": {
         "manual": "Manual",
         "rule_based": "Rule-based"
+      },
+      "createTitle": "新建群组",
+      "editTitle": "编辑群组",
+      "createSubmit": "创建群组",
+      "editSubmit": "保存更改",
+      "archiveConfirm": "归档此群组？",
+      "nameLabel": "名称",
+      "descriptionLabel": "描述（可选）",
+      "modeLabel": "成员模式",
+      "membersButton": "成员",
+      "editButton": "编辑",
+      "archiveButton": "归档",
+      "createSuccess": "群组已创建。",
+      "createError": "创建失败。",
+      "editSuccess": "群组已更新。",
+      "editError": "更新失败。",
+      "archiveSuccess": "已归档。",
+      "archiveError": "归档失败。",
+      "cancel": "取消",
+      "empty": "暂无群组。",
+      "members": {
+        "title": "{name}的成员",
+        "empty": "暂无成员。",
+        "addButton": "添加",
+        "addPlaceholder": "选择用户…",
+        "removeButton": "移除",
+        "addedViaRule": "通过规则添加",
+        "ruleBasedNote": "自动管理成员。"
+      },
+      "modeHint": {
+        "manual": "手动添加成员。",
+        "rule_based": "根据规则自动同步成员。"
       }
     },
     "sites": {
@@ -247,9 +285,39 @@
       "subtitle": "Organise your operational data by location or branch.",
       "createButton": "New site",
       "table": {
-        "name": "Name",
-        "depth": "Level",
-        "mode": "Mode"
+        "name": "名称",
+        "mode": "模式",
+        "actions": "操作"
+      },
+      "createTitle": "新建站点",
+      "editTitle": "编辑站点",
+      "createSubmit": "创建站点",
+      "editSubmit": "保存更改",
+      "archiveConfirm": "归档此站点？",
+      "nameLabel": "名称",
+      "parentLabel": "父级站点",
+      "modeLabel": "成员模式",
+      "noParent": "根节点（无父级）",
+      "membersButton": "成员",
+      "editButton": "编辑",
+      "archiveButton": "归档",
+      "addChildButton": "添加子站点",
+      "createSuccess": "站点已创建。",
+      "createError": "错误。",
+      "editSuccess": "站点已更新。",
+      "editError": "错误。",
+      "archiveSuccess": "已归档。",
+      "archiveError": "错误。",
+      "cancel": "取消",
+      "empty": "暂无站点。",
+      "members": {
+        "title": "{name}的成员",
+        "empty": "暂无成员。",
+        "addButton": "添加",
+        "addPlaceholder": "选择用户…",
+        "removeButton": "移除",
+        "addedViaRule": "通过规则",
+        "ruleBasedNote": "自动管理。"
       }
     },
     "profile": {

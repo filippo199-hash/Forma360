@@ -197,6 +197,10 @@ export const usersRouter = router({
         email: z.string().email(),
         name: z.string().min(1).max(120).optional(),
         permissionSetId: z.string().length(26),
+        /** Group IDs to add the new user to automatically on acceptance. */
+        groupIds: z.array(z.string().length(26)).max(50).default([]),
+        /** Site IDs to add the new user to automatically on acceptance. */
+        siteIds: z.array(z.string().length(26)).max(50).default([]),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -251,6 +255,9 @@ export const usersRouter = router({
         .limit(1);
 
       let invitationId: string;
+      const groupIds = input.groupIds.length > 0 ? input.groupIds : null;
+      const siteIds = input.siteIds.length > 0 ? input.siteIds : null;
+
       if (existingInvite[0] !== undefined) {
         invitationId = existingInvite[0].id;
         await ctx.db
@@ -262,6 +269,8 @@ export const usersRouter = router({
             token,
             invitedByUserId: ctx.auth.userId,
             expiresAt,
+            groupIds,
+            siteIds,
           })
           .where(eq(invitations.id, invitationId));
       } else {
@@ -275,6 +284,8 @@ export const usersRouter = router({
           token,
           invitedByUserId: ctx.auth.userId,
           expiresAt,
+          groupIds,
+          siteIds,
         });
       }
 

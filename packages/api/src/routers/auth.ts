@@ -23,7 +23,7 @@
  *   - getInviteDetails   — read-only; used by the accept page to render
  *     the tenant name and inviter context.
  */
-import { invitations, permissionSets, tenants, user } from '@forma360/db/schema';
+import { groupMembers, invitations, permissionSets, siteMembers, tenants, user } from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { getEmailDomain, isFreeEmailDomain } from '@forma360/shared/email-domains';
 import { newId } from '@forma360/shared/id';
@@ -307,6 +307,32 @@ export function createAuthRouter(deps: AuthRouterDeps) {
           .update(invitations)
           .set({ acceptedAt: new Date() })
           .where(eq(invitations.id, invite.id));
+
+        // Auto-apply group and site memberships that were chosen at invite time.
+        const now = new Date();
+        if (invite.groupIds !== null && invite.groupIds !== undefined && invite.groupIds.length > 0) {
+          await tx.insert(groupMembers).values(
+            invite.groupIds.map((groupId) => ({
+              tenantId: invite.tenantId,
+              groupId,
+              userId,
+              addedVia: 'invite' as const,
+              addedAt: now,
+            })),
+          ).onConflictDoNothing();
+        }
+        if (invite.siteIds !== null && invite.siteIds !== undefined && invite.siteIds.length > 0) {
+          await tx.insert(siteMembers).values(
+            invite.siteIds.map((siteId) => ({
+              tenantId: invite.tenantId,
+              siteId,
+              userId,
+              addedVia: 'invite' as const,
+              addedAt: now,
+            })),
+          ).onConflictDoNothing();
+        }
+
         return { userId, tenantId: invite.tenantId };
       });
 
