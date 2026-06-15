@@ -13,6 +13,7 @@
  * trpc.headsUps.attachments.add (or embedding it in the create payload)
  * after the upload succeeds.
  */
+import { newId } from '@forma360/shared/id';
 import { createStorage, objectKey } from '@forma360/shared/storage';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -78,10 +79,14 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const safeName = sanitizeFilename(file.name);
+  // Each draft upload gets a fresh ULID as its entity-id segment so the
+  // key is valid (<tenantId>/heads-up/<uploadId>/<filename>). The upload
+  // is stored as a draft and the caller embeds the returned key in the
+  // create-heads-up payload; no entity record is needed at this point.
   const key = objectKey({
-    tenantId: ctx.auth.tenantId as never,
+    tenantId: ctx.auth.tenantId,
     module: 'heads-up',
-    entityId: 'drafts' as never,
+    entityId: newId(),
     filename: safeName,
   });
 

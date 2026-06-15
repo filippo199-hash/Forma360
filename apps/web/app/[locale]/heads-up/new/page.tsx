@@ -147,8 +147,9 @@ export default function NewHeadsUpPage() {
     try {
       const res = await fetch('/api/upload/heads-up', { method: 'POST', body: form });
       if (!res.ok) {
-        const body = (await res.json()) as { error?: string };
-        throw new Error(body.error ?? 'Upload failed');
+        // Parse JSON cautiously — a proxy/framework error might return HTML.
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Upload failed (${res.status})`);
       }
       const { key } = (await res.json()) as { key: string };
       setPendingFiles((prev) =>
