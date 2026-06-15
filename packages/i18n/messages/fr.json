@@ -1985,7 +1985,10 @@
         "descriptionPlaceholder": "Write your message here…",
         "engagementLevel": "Engagement level",
         "requireAcknowledgement": "Require acknowledgement",
-        "requireSignature": "Require signature"
+        "requireSignature": "Require signature",
+        "audienceLabel": "Envoyer à",
+        "audienceEveryone": "Tout le monde dans l'organisation",
+        "audienceGroups": "Groupes spécifiques"
       },
       "title": "New Heads Up",
       "createdToast": "Heads up created",
@@ -2066,7 +2069,9 @@
         "celebrate": "🎉",
         "clap": "👏",
         "smile": "😄"
-      }
+      },
+      "publishToastWithCount": "Publié pour {count} destinataires",
+      "syncAllRecipientsButton": "Synchroniser tous les utilisateurs comme destinataires"
     }
   },
   "assets": {

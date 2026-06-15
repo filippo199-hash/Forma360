@@ -74,6 +74,7 @@ const attachmentInput = z.object({
 
 const recipientSpecSchema = z
   .object({
+    broadcastToAll: z.boolean().default(false),
     groupIds: z.array(z.string()),
     siteIds: z.array(z.string()),
     userIds: z.array(z.string()),
@@ -413,6 +414,8 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
         const hasExplicit =
           input.userIds.length > 0 || input.groupIds.length > 0 || input.siteIds.length > 0;
 
+        let broadcastToAll = false;
+
         if (!hasExplicit && headsUp.recipientSpec !== null) {
           const parsed = recipientSpecSchema.safeParse(
             (() => {
@@ -424,6 +427,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             })(),
           );
           if (parsed.success && parsed.data !== undefined) {
+            broadcastToAll = parsed.data.broadcastToAll;
             effectiveUserIds = parsed.data.userIds;
             effectiveGroupIds = parsed.data.groupIds;
             effectiveSiteIds = parsed.data.siteIds;
@@ -432,6 +436,22 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
 
         // Collect all user IDs to add as recipients.
         const recipientUserIds = new Set<string>(effectiveUserIds);
+
+        // broadcastToAll: fan out to every active (non-deactivated) user in the tenant.
+        // Also applies when the stored spec has no recipients at all (backwards-compat
+        // for heads-ups created before the audience toggle was added).
+        const resolvedEmpty =
+          !broadcastToAll &&
+          recipientUserIds.size === 0 &&
+          effectiveGroupIds.length === 0 &&
+          effectiveSiteIds.length === 0;
+        if (broadcastToAll || resolvedEmpty) {
+          const allUsers = await ctx.db
+            .select({ id: user.id })
+            .from(user)
+            .where(and(eq(user.tenantId, ctx.tenantId), isNull(user.deactivatedAt)));
+          for (const u of allUsers) recipientUserIds.add(u.id);
+        }
 
         // Expand groups (group_members is materialised by Phase 1).
         if (effectiveGroupIds.length > 0) {

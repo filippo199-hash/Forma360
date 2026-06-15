@@ -59,9 +59,15 @@ export default function HeadsUpDetailPage() {
   );
 
   const publish = trpc.headsUps.publish.useMutation({
-    onSuccess: () => {
-      toast.success(t('publishToast'));
+    onSuccess: (result) => {
+      toast.success(
+        result.recipientCount > 0
+          ? t('publishToastWithCount', { count: String(result.recipientCount) })
+          : t('publishToast'),
+      );
       void utils.headsUps.get.invalidate({ headsUpId });
+      void utils.headsUps.listRecipients.invalidate({ headsUpId });
+      void utils.headsUps.engagementSummary.invalidate({ headsUpId });
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -413,9 +419,19 @@ export default function HeadsUpDetailPage() {
             </div>
           ) : null}
 
-          {/* Remind all button */}
+          {/* Sync recipients / Remind all */}
           {canManage && headsUp.status === 'published' ? (
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              {recipientCount === 0 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={publish.isPending}
+                  onClick={() => publish.mutate({ headsUpId })}
+                >
+                  {t('syncAllRecipientsButton')}
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 variant="outline"

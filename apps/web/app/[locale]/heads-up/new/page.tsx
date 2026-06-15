@@ -110,6 +110,7 @@ export default function NewHeadsUpPage() {
   const [allowComments, setAllowComments] = useState(true);
   const [allowReactions, setAllowReactions] = useState(true);
   const [engagementLevel, setEngagementLevel] = useState<EngagementLevel>('view');
+  const [audienceMode, setAudienceMode] = useState<'everyone' | 'groups'>('everyone');
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [groupsOpen, setGroupsOpen] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('tablet');
@@ -243,7 +244,8 @@ export default function NewHeadsUpPage() {
       }));
 
     const recipientSpec = JSON.stringify({
-      groupIds: selectedGroupIds,
+      broadcastToAll: audienceMode === 'everyone',
+      groupIds: audienceMode === 'groups' ? selectedGroupIds : [],
       siteIds: [] as string[],
       userIds: [] as string[],
     });
@@ -434,56 +436,84 @@ export default function NewHeadsUpPage() {
             </div>
           </section>
 
-          {/* ── Groups selector ── */}
+          {/* ── Audience ── */}
           <section>
-            <h2 className="mb-2 text-sm font-semibold">{t('fields.groups')}</h2>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setGroupsOpen((o) => !o)}
-                className="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted/40"
-              >
-                <span className={selectedGroupIds.length === 0 ? 'text-muted-foreground' : ''}>
-                  {selectedGroupIds.length === 0
-                    ? t('fields.assignToPlaceholder')
-                    : selectedGroupNames.join(', ')}
-                </span>
-                <span className="ml-2 text-muted-foreground">▾</span>
-              </button>
-              {groupsOpen ? (
-                <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
-                  {groups.length === 0 ? (
-                    <p className="p-3 text-sm text-muted-foreground">{t('fields.noGroups')}</p>
-                  ) : (
-                    <ul className="max-h-48 overflow-y-auto py-1">
-                      {groups.map((g) => (
-                        <li key={g.id}>
-                          <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted/40">
-                            <input
-                              type="checkbox"
-                              checked={selectedGroupIds.includes(g.id)}
-                              onChange={() => toggleGroup(g.id)}
-                              className="h-4 w-4"
-                            />
-                            {g.name}
-                          </label>
-                        </li>
-                      ))}
-                    </ul>
+            <h2 className="mb-2 text-sm font-semibold">{t('fields.audienceLabel')}</h2>
+
+            {/* Mode toggle */}
+            <div className="grid grid-cols-2 gap-2">
+              {(['everyone', 'groups'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => {
+                    setAudienceMode(mode);
+                    if (mode === 'everyone') setGroupsOpen(false);
+                  }}
+                  className={cn(
+                    'rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors',
+                    audienceMode === mode
+                      ? 'border-foreground bg-foreground/5 text-foreground'
+                      : 'border-input text-muted-foreground hover:border-foreground/40',
                   )}
-                </div>
-              ) : null}
+                >
+                  {mode === 'everyone' ? t('fields.audienceEveryone') : t('fields.audienceGroups')}
+                </button>
+              ))}
             </div>
-            {selectedGroupNames.length > 0 ? (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {selectedGroupNames.map((name) => (
-                  <span
-                    key={name}
-                    className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
+
+            {/* Groups picker — shown only in "groups" mode */}
+            {audienceMode === 'groups' ? (
+              <div className="mt-3">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setGroupsOpen((o) => !o)}
+                    className="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted/40"
                   >
-                    {name}
-                  </span>
-                ))}
+                    <span className={selectedGroupIds.length === 0 ? 'text-muted-foreground' : ''}>
+                      {selectedGroupIds.length === 0
+                        ? t('fields.assignToPlaceholder')
+                        : selectedGroupNames.join(', ')}
+                    </span>
+                    <span className="ml-2 text-muted-foreground">▾</span>
+                  </button>
+                  {groupsOpen ? (
+                    <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
+                      {groups.length === 0 ? (
+                        <p className="p-3 text-sm text-muted-foreground">{t('fields.noGroups')}</p>
+                      ) : (
+                        <ul className="max-h-48 overflow-y-auto py-1">
+                          {groups.map((g) => (
+                            <li key={g.id}>
+                              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted/40">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedGroupIds.includes(g.id)}
+                                  onChange={() => toggleGroup(g.id)}
+                                  className="h-4 w-4"
+                                />
+                                {g.name}
+                              </label>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+                {selectedGroupNames.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {selectedGroupNames.map((name) => (
+                      <span
+                        key={name}
+                        className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
+                      >
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </section>

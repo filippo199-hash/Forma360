@@ -2036,7 +2036,10 @@
         "publishNow": "Publish immediately",
         "publishTomorrow": "Tomorrow at 9:00 am",
         "publishNextWeek": "Next week",
-        "publishCustom": "Choose date & time"
+        "publishCustom": "Choose date & time",
+        "audienceLabel": "Send to",
+        "audienceEveryone": "Everyone in the organization",
+        "audienceGroups": "Specific groups"
       },
       "engagementLevel": "Engagement level",
       "engagementHint": {
@@ -2146,7 +2149,9 @@
         "celebrate": "🎉",
         "clap": "👏",
         "smile": "😄"
-      }
+      },
+      "publishToastWithCount": "Published to {count} recipients",
+      "syncAllRecipientsButton": "Sync all users as recipients"
     }
   },
   "assets": {
