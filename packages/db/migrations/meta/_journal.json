@@ -169,6 +169,20 @@
       "when": 1748600000000,
       "tag": "0023_inspections_source_link",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1748700000000,
+      "tag": "0024_invite_group_site",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1748800000000,
+      "tag": "0025_user_phone",
+      "breakpoints": true
     }
   ]
 }
