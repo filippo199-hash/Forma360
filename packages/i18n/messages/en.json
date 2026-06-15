@@ -864,7 +864,8 @@
           "placeholder": "Select date & time"
         }
       },
-      "goToStatus": "View status & sign"
+      "goToStatus": "View status & sign",
+      "openLinkedAction": "Open action: {title}"
     },
     "statusPage": {
       "title": "Inspection status",

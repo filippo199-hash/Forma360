@@ -768,7 +768,8 @@
           "placeholder": "Select date & time"
         }
       },
-      "goToStatus": "Status bekijken en ondertekenen"
+      "goToStatus": "Status bekijken en ondertekenen",
+      "openLinkedAction": "Actie openen: {title}"
     },
     "statusPage": {
       "title": "Inspection status",

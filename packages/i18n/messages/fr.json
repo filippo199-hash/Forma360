@@ -768,7 +768,8 @@
           "placeholder": "Select date & time"
         }
       },
-      "goToStatus": "Voir le statut et signer"
+      "goToStatus": "Voir le statut et signer",
+      "openLinkedAction": "Ouvrir l'action: {title}"
     },
     "statusPage": {
       "title": "Inspection status",

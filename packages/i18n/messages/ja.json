@@ -768,7 +768,8 @@
           "placeholder": "Select date & time"
         }
       },
-      "goToStatus": "ステータス確認・署名"
+      "goToStatus": "ステータス確認・署名",
+      "openLinkedAction": "アクションを開く: {title}"
     },
     "statusPage": {
       "title": "Inspection status",

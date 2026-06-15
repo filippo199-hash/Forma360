@@ -768,7 +768,8 @@
           "placeholder": "Select date & time"
         }
       },
-      "goToStatus": "Vedi stato e firma"
+      "goToStatus": "Vedi stato e firma",
+      "openLinkedAction": "Apri azione: {title}"
     },
     "statusPage": {
       "title": "Inspection status",

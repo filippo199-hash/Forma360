@@ -768,7 +768,8 @@
           "placeholder": "Select date & time"
         }
       },
-      "goToStatus": "查看状态与签名"
+      "goToStatus": "查看状态与签名",
+      "openLinkedAction": "打开操作：{title}"
     },
     "statusPage": {
       "title": "Inspection status",

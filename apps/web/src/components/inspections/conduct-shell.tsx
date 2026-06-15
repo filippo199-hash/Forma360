@@ -18,8 +18,12 @@ import {
 } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Sheet, SheetContent } from '../ui/sheet';
+import { Skeleton } from '../ui/skeleton';
 import { Textarea } from '../ui/textarea';
+import { cn } from '../../lib/cn';
 import { trpc } from '../../lib/trpc/client';
+import { ActionDetailPanel } from '../actions/action-detail-panel';
 import { useConduct } from './conduct-context';
 import { findUnansweredRequired, isItemVisible, type Responses } from './conduct-state';
 import { ResponseInput } from './response-input';
@@ -77,14 +81,18 @@ export function ConductShell() {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   /**
-   * Tracks which question IDs have had actions raised in the current session.
-   * Lifted here so the indicator survives page-tab switches within the same
-   * inspection (ItemRows unmount when the user moves to a different page tab).
+   * Maps question IDs → action IDs for actions raised in the current session.
+   * Lifted here so the cards survive page-tab switches (ItemRows unmount when
+   * the user moves to a different page tab).
    */
-  const [actionRaisedItems, setActionRaisedItems] = useState<Set<string>>(() => new Set());
+  const [actionRaisedMap, setActionRaisedMap] = useState<Map<string, string>>(
+    () => new Map(),
+  );
+  /** The action currently open in the detail sidebar. */
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
 
-  const handleActionRaised = useCallback((questionId: string) => {
-    setActionRaisedItems((prev) => new Set([...prev, questionId]));
+  const handleActionRaised = useCallback((questionId: string, actionId: string) => {
+    setActionRaisedMap((prev) => new Map([...prev, [questionId, actionId]]));
   }, []);
 
   const saveProgress = trpc.inspections.saveProgress.useMutation({
@@ -271,8 +279,9 @@ export function ConductShell() {
               <PageBody
                 page={currentPage}
                 readonly={readonly}
-                actionRaisedItems={actionRaisedItems}
+                actionRaisedMap={actionRaisedMap}
                 onActionRaised={handleActionRaised}
+                onOpenAction={setSelectedActionId}
               />
             )}
 
@@ -324,6 +333,20 @@ export function ConductShell() {
           </div>
         </main>
       </div>
+
+      {/* ── Action detail sidebar ────────────────────────────────────── */}
+      <Sheet
+        open={selectedActionId !== null}
+        onOpenChange={(o) => {
+          if (!o) setSelectedActionId(null);
+        }}
+      >
+        <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
+          {selectedActionId !== null ? (
+            <ActionDetailPanel actionId={selectedActionId} locale={locale} />
+          ) : null}
+        </SheetContent>
+      </Sheet>
 
       {/* ── Dialogs (portals — position in tree is irrelevant) ────────── */}
       <Dialog open={showConflict} onOpenChange={setShowConflict}>
@@ -425,13 +448,15 @@ function PageTabs() {
 function PageBody({
   page,
   readonly,
-  actionRaisedItems,
+  actionRaisedMap,
   onActionRaised,
+  onOpenAction,
 }: {
   page: Page;
   readonly: boolean;
-  actionRaisedItems: Set<string>;
-  onActionRaised: (questionId: string) => void;
+  actionRaisedMap: Map<string, string>;
+  onActionRaised: (questionId: string, actionId: string) => void;
+  onOpenAction: (actionId: string) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -443,8 +468,9 @@ function PageBody({
           key={section.id}
           section={section}
           readonly={readonly}
-          actionRaisedItems={actionRaisedItems}
+          actionRaisedMap={actionRaisedMap}
           onActionRaised={onActionRaised}
+          onOpenAction={onOpenAction}
         />
       ))}
     </div>
@@ -459,13 +485,15 @@ function PageBody({
 function SectionBody({
   section,
   readonly,
-  actionRaisedItems,
+  actionRaisedMap,
   onActionRaised,
+  onOpenAction,
 }: {
   section: Section;
   readonly: boolean;
-  actionRaisedItems: Set<string>;
-  onActionRaised: (questionId: string) => void;
+  actionRaisedMap: Map<string, string>;
+  onActionRaised: (questionId: string, actionId: string) => void;
+  onOpenAction: (actionId: string) => void;
 }) {
   const { state } = useConduct();
   return (
@@ -483,8 +511,9 @@ function SectionBody({
             item={item}
             readonly={readonly}
             customResponseSets={state.content.customResponseSets}
-            hasAction={actionRaisedItems.has(item.id)}
+            raisedActionId={actionRaisedMap.get(item.id) ?? null}
             onActionRaised={onActionRaised}
+            onOpenAction={onOpenAction}
           />
         ))}
       </div>
@@ -500,14 +529,17 @@ function ItemRow({
   item,
   readonly,
   customResponseSets,
-  hasAction,
+  raisedActionId,
   onActionRaised,
+  onOpenAction,
 }: {
   item: Item;
   readonly: boolean;
   customResponseSets: Parameters<typeof ResponseInput>[0]['responseSets'];
-  hasAction: boolean;
-  onActionRaised: (questionId: string) => void;
+  /** Action ID if one has been raised for this question, null otherwise. */
+  raisedActionId: string | null;
+  onActionRaised: (questionId: string, actionId: string) => void;
+  onOpenAction: (actionId: string) => void;
 }) {
   const { state } = useConduct();
   const visible = isItemVisible(item, state.responses);
@@ -529,17 +561,87 @@ function ItemRow({
           inspectionId={state.inspectionId}
           questionId={item.id}
           questionPrompt={prompt}
-          hasAction={hasAction}
+          hasAction={raisedActionId !== null}
           onActionRaised={onActionRaised}
         />
       </div>
       <div id={`item-${item.id}`}>
         <ResponseInput item={item} readonly={readonly} responseSets={customResponseSets} />
       </div>
+      {raisedActionId !== null ? (
+        <LinkedActionCard
+          actionId={raisedActionId}
+          onOpen={() => onOpenAction(raisedActionId)}
+        />
+      ) : null}
       {'note' in item && item.note !== undefined ? (
         <p className="text-xs text-muted-foreground">{item.note}</p>
       ) : null}
     </Card>
+  );
+}
+
+// Status colours shared between the card and the sidebar panel.
+const ACTION_STATUS_COLORS: Record<string, string> = {
+  open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
+  in_progress: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
+  completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
+  cancelled: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
+};
+
+/**
+ * Compact card shown below a question when an action has been raised.
+ * Fetches the action title + status and opens the full detail sidebar on click.
+ */
+function LinkedActionCard({ actionId, onOpen }: { actionId: string; onOpen: () => void }) {
+  const t = useTranslations('inspections.conduct');
+  const { data, isLoading } = trpc.actions.get.useQuery({ actionId });
+  const action = data?.action;
+
+  if (isLoading) {
+    return <Skeleton className="h-10 w-full rounded-md" />;
+  }
+  if (action === undefined) return null;
+
+  const statusColor =
+    ACTION_STATUS_COLORS[action.status] ?? ACTION_STATUS_COLORS['open'];
+  const statusLabel = action.status.replace(/_/g, ' ');
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full items-center gap-2.5 rounded-md border bg-muted/40 px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+      aria-label={t('openLinkedAction', { title: action.title })}
+    >
+      <span
+        className={cn(
+          'shrink-0 rounded px-1.5 py-0.5 text-xs font-medium capitalize',
+          statusColor,
+        )}
+      >
+        {statusLabel}
+      </span>
+      <span className="min-w-0 flex-1 truncate font-medium">{action.title}</span>
+      <span className="shrink-0 text-xs text-muted-foreground">{action.referenceNumber}</span>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="13"
+        height="13"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="shrink-0 text-muted-foreground"
+        aria-hidden="true"
+      >
+        <path d="M15 3h6v6" />
+        <path d="M10 14 21 3" />
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      </svg>
+    </button>
   );
 }
 
@@ -596,7 +698,7 @@ function RaiseActionTrigger({
   questionId: string;
   questionPrompt: string | null;
   hasAction: boolean;
-  onActionRaised: (questionId: string) => void;
+  onActionRaised: (questionId: string, actionId: string) => void;
 }) {
   const t = useTranslations('actions.raiseFromInspection');
   const tCreate = useTranslations('actions.create');
@@ -694,12 +796,13 @@ function RaiseActionTrigger({
   }
 
   const create = trpc.actions.createFromInspectionQuestion.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success(t('createdToast'));
       setOpen(false);
       resetForm();
       void utils.actions.list.invalidate();
-      onActionRaised(questionId);
+      void utils.actions.get.invalidate({ actionId: data.actionId });
+      onActionRaised(questionId, data.actionId);
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
