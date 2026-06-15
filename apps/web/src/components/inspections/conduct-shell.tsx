@@ -81,15 +81,42 @@ export function ConductShell() {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   /**
-   * Maps question IDs → action IDs for actions raised in the current session.
-   * Lifted here so the cards survive page-tab switches (ItemRows unmount when
-   * the user moves to a different page tab).
+   * Maps question IDs → action IDs for all actions linked to this inspection.
+   * Seeded from the server on mount so previously-raised actions are visible
+   * even after the user navigates away and comes back. New raises during the
+   * session are merged in by handleActionRaised.
    */
   const [actionRaisedMap, setActionRaisedMap] = useState<Map<string, string>>(
     () => new Map(),
   );
   /** The action currently open in the detail sidebar. */
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
+
+  // Pre-load any actions already raised for this inspection so that
+  // LinkedActionCards appear correctly on re-entry (local state is lost on
+  // navigation, but the DB has the truth).
+  const { data: existingActions } = trpc.actions.list.useQuery({
+    sourceType: 'inspection',
+    sourceId: state.inspectionId,
+    assignedToMe: false,
+    overdueOnly: false,
+    includeArchived: true,
+    hideClosed: false,
+    sortBy: 'created',
+  });
+
+  useEffect(() => {
+    if (existingActions === undefined || existingActions.length === 0) return;
+    setActionRaisedMap((prev) => {
+      const next = new Map(prev);
+      for (const action of existingActions) {
+        if (action.sourceItemId !== null && !next.has(action.sourceItemId)) {
+          next.set(action.sourceItemId, action.id);
+        }
+      }
+      return next;
+    });
+  }, [existingActions]);
 
   const handleActionRaised = useCallback((questionId: string, actionId: string) => {
     setActionRaisedMap((prev) => new Map([...prev, [questionId, actionId]]));
