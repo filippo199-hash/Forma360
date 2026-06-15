@@ -434,14 +434,14 @@ export type SupportedItemType =
   | 'instruction'
   | 'conductedBy'
   | 'inspectionDate'
-  | 'documentNumber';
+  | 'documentNumber'
+  | 'site';
 
 /** Exotic types that are stubbed in the UI — creatable but not fully editable. */
-export type StubItemType = 'site' | 'location' | 'asset' | 'company' | 'annotation';
+export type StubItemType = 'location' | 'asset' | 'company' | 'annotation';
 
 /** Types allowed on the title page only. */
 export const TITLE_PAGE_ONLY = new Set<string>([
-  'site',
   'conductedBy',
   'inspectionDate',
   'documentNumber',

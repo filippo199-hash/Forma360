@@ -111,6 +111,7 @@ const OTHER_TYPES: ReadonlyArray<{
   { type: 'slider', icon: <SlidersHorizontal className="h-4 w-4 text-purple-500" /> },
   { type: 'annotation', icon: <Pencil className="h-4 w-4 text-yellow-500" /> },
   { type: 'signature', icon: <PenLine className="h-4 w-4 text-teal-500" /> },
+  { type: 'site', icon: <MapPin className="h-4 w-4 text-rose-500" /> },
   { type: 'location', icon: <MapPin className="h-4 w-4 text-orange-500" /> },
   { type: 'instruction', icon: <Info className="h-4 w-4 text-blue-400" /> },
 ] as const;

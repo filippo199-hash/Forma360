@@ -935,6 +935,13 @@
         },
         "datetime": {
           "placeholder": "Select date & time"
+        },
+        "site": {
+          "placeholder": "Select a site",
+          "search": "Search sites…",
+          "noSites": "No sites available",
+          "noResults": "No sites match your search",
+          "loading": "Loading sites…"
         }
       },
       "goToStatus": "View status & sign",

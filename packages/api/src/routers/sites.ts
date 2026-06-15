@@ -91,6 +91,27 @@ export const sitesRouter = router({
     return rows;
   }),
 
+  /**
+   * Lightweight site list for use inside inspection conduct.
+   * Does NOT require `sites.view` — any authenticated tenant member conducting
+   * an inspection can fetch the tenant's site tree so they can answer a
+   * site-picker question. Returns only the fields needed to render the picker.
+   */
+  listForConductor: tenantProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.db
+      .select({
+        id: sites.id,
+        name: sites.name,
+        parentId: sites.parentId,
+        depth: sites.depth,
+        path: sites.path,
+      })
+      .from(sites)
+      .where(and(eq(sites.tenantId, ctx.tenantId), isNull(sites.archivedAt)))
+      .orderBy(sites.path, sites.name);
+    return rows;
+  }),
+
   create: tenantProcedure
     .use(requirePermission('sites.manage'))
     .input(

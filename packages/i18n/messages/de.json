@@ -839,6 +839,13 @@
         },
         "datetime": {
           "placeholder": "Select date & time"
+        },
+        "site": {
+          "placeholder": "Standort auswählen",
+          "search": "Standorte suchen…",
+          "noSites": "Keine Standorte verfügbar",
+          "noResults": "Keine Standorte entsprechen Ihrer Suche",
+          "loading": "Standorte werden geladen…"
         }
       },
       "goToStatus": "Status & Unterschrift ansehen",

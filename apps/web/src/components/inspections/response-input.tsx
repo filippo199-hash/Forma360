@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { trpc } from '../../lib/trpc/client';
 import { useConduct } from './conduct-context';
@@ -57,6 +58,7 @@ export function ResponseInput({
     case 'documentNumber':
       return <ReadonlyField kind="documentNumber" />;
     case 'site':
+      return <SitePickerInput item={item} readonly={readonly} />;
     case 'asset':
     case 'company':
     case 'location':
@@ -71,6 +73,84 @@ export function ResponseInput({
 function StubNotice() {
   const t = useTranslations('inspections.conduct');
   return <p className="text-sm italic text-muted-foreground">{t('stubNotice')}</p>;
+}
+
+function SitePickerInput({
+  item,
+  readonly,
+}: {
+  item: Extract<Item, { type: 'site' }>;
+  readonly: boolean;
+}) {
+  const t = useTranslations('inspections.conduct.response.site');
+  const { state, dispatch } = useConduct();
+  const sitesQuery = trpc.sites.listForConductor.useQuery();
+  const [search, setSearch] = useState('');
+
+  const allSites = sitesQuery.data ?? [];
+
+  const filtered = useMemo(
+    () =>
+      search.trim() === ''
+        ? allSites
+        : allSites.filter((s) => s.name.toLowerCase().includes(search.toLowerCase())),
+    [allSites, search],
+  );
+
+  const raw = state.responses[item.id];
+  const value = typeof raw === 'string' ? raw : '';
+  const selectedSite = allSites.find((s) => s.id === value);
+
+  function handleSelect(siteId: string) {
+    dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: siteId });
+  }
+
+  if (sitesQuery.isPending) {
+    return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
+  }
+
+  if (allSites.length === 0) {
+    return <p className="text-sm italic text-muted-foreground">{t('noSites')}</p>;
+  }
+
+  return (
+    <div className="max-w-sm space-y-1">
+      <Select value={value} onValueChange={handleSelect} disabled={readonly}>
+        <SelectTrigger aria-label={item.prompt}>
+          <SelectValue placeholder={t('placeholder')}>
+            {selectedSite !== undefined ? selectedSite.name : undefined}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {/* Search box inside the dropdown */}
+          <div className="px-2 pb-1 pt-2">
+            <Input
+              placeholder={t('search')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 text-sm"
+              onKeyDown={(e) => e.stopPropagation()}
+            />
+          </div>
+          {filtered.length === 0 ? (
+            <p className="px-3 py-2 text-xs text-muted-foreground">{t('noResults')}</p>
+          ) : (
+            filtered.map((site) => (
+              <SelectItem key={site.id} value={site.id}>
+                {/* Indent child sites to show hierarchy */}
+                <span
+                  style={site.depth > 0 ? { paddingLeft: `${site.depth * 12}px` } : undefined}
+                  className="block"
+                >
+                  {site.name}
+                </span>
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 }
 
 function TextInput({

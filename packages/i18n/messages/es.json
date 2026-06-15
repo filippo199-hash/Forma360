@@ -839,6 +839,13 @@
         },
         "datetime": {
           "placeholder": "Select date & time"
+        },
+        "site": {
+          "placeholder": "Seleccionar un sitio",
+          "search": "Buscar sitios…",
+          "noSites": "No hay sitios disponibles",
+          "noResults": "Ningún sitio coincide con su búsqueda",
+          "loading": "Cargando sitios…"
         }
       },
       "goToStatus": "Ver estado y firmar",

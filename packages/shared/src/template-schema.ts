@@ -480,8 +480,10 @@ const rootSchema = z
     }
 
     // ── Title-page-only kinds live only on the title page ──
+    // Note: 'site' is intentionally excluded here — it is allowed both on
+    // the title page (auto-populated from the inspection) AND on regular
+    // inspection sections as a user-selectable site-picker question.
     const titlePageOnly = new Set([
-      'site',
       'conductedBy',
       'inspectionDate',
       'documentNumber',
