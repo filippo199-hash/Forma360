@@ -44,6 +44,7 @@ import { Input } from '../../../src/components/ui/input';
 import { Label } from '../../../src/components/ui/label';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { Textarea } from '../../../src/components/ui/textarea';
+import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { trpc } from '../../../src/lib/trpc/client';
 
 type FilterKey = 'status' | 'access';
@@ -137,7 +138,9 @@ export default function TemplatesListPage() {
   const totalCount = rows?.filter((r) => normaliseStatus(r.status) !== 'archived').length ?? 0;
 
   return (
-    <div className="space-y-4">
+    <div className="px-4 py-6">
+      <SectionTabBar activeTab="templates" locale={locale} />
+      <div className="space-y-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">
           {t('title')}
@@ -401,6 +404,7 @@ export default function TemplatesListPage() {
           templateName={qrTarget.name}
         />
       ) : null}
+      </div>
     </div>
   );
 }
