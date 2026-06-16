@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, FolderCog, ImageIcon, Plus, QrCode } from 'l
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -20,9 +20,8 @@ type AssetRow = {
   typeName: string | null;
   siteId: string | null;
   qrToken: string | null;
-  updatedAt: string;
-  childrenCount: number;
-  archivedAt: string | null;
+  updatedAt: Date;
+  archivedAt: Date | null;
 };
 
 export default function AssetsListPage() {
@@ -64,9 +63,9 @@ export default function AssetsListPage() {
     });
   }
 
-  function renderRow(row: AssetRow, isChild: boolean) {
+  function renderRow(row: AssetRow, isChild: boolean): ReactNode {
     const children = childMap.get(row.id) ?? [];
-    const hasChildren = children.length > 0 || row.childrenCount > 0;
+    const hasChildren = children.length > 0;
     const isExpanded = expandedIds.has(row.id);
 
     return (
@@ -119,7 +118,7 @@ export default function AssetsListPage() {
 
               {!isChild && hasChildren && (
                 <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                  {row.childrenCount}
+                  {children.length}
                 </span>
               )}
             </div>
@@ -138,7 +137,7 @@ export default function AssetsListPage() {
             )}
           </td>
           <td className="px-3 py-2 text-muted-foreground">
-            {new Date(row.updatedAt).toLocaleDateString()}
+            {row.updatedAt.toLocaleDateString()}
           </td>
         </tr>
 
