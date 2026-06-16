@@ -24,9 +24,14 @@ import { createScheduleTickHandler, SCHEDULE_TICK_CRON } from './workers/schedul
 import { createSiteReconcileHandler } from './workers/site-membership-reconcile';
 import { createTestQueueHandler } from './workers/test-queue';
 import { createUserAnonymisationHandler } from './workers/user-anonymisation';
-import { createSendEmail } from '@forma360/shared/email';
+import { createSendEmail, createSendTemplatedEmail } from '@forma360/shared/email';
 import { createComplianceEvaluateHandler } from './workers/compliance-evaluate';
 import { createComplianceSnapshotHandler } from './workers/compliance-snapshot';
+import {
+  createMaintenanceTickHandler,
+  MAINTENANCE_TICK_CRON,
+} from './workers/maintenance-tick';
+import { createMaintenanceNotifyHandler } from './workers/maintenance-notify';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -146,6 +151,44 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     workerOptions,
   );
 
+  // ─── Phase 5B — Maintenance notifications ──────────────────────────────
+  const maintenanceTickWorker = new Worker(
+    QUEUE_NAMES.MAINTENANCE_TICK,
+    createMaintenanceTickHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'maintenance-tick' }),
+      connection,
+    }),
+    workerOptions,
+  );
+
+  const sendTemplatedEmail = createSendTemplatedEmail({
+    delivery: env.EMAIL_DELIVERY,
+    resendApiKey: env.RESEND_API_KEY,
+    resendFrom: env.RESEND_FROM,
+    logger: logger.child({ component: 'email-templated' }),
+  });
+
+  const maintenanceNotifyWorker = new Worker(
+    QUEUE_NAMES.MAINTENANCE_NOTIFY,
+    createMaintenanceNotifyHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'maintenance-notify' }),
+      sendTemplatedEmail,
+      appUrl: env.APP_URL,
+    }),
+    workerOptions,
+  );
+
+  // Register maintenance-tick as a daily repeatable job.
+  const maintenanceTickQueue = getQueue(QUEUE_NAMES.MAINTENANCE_TICK, connection);
+  await maintenanceTickQueue.upsertJobScheduler(
+    'maintenance-tick',
+    { pattern: MAINTENANCE_TICK_CRON, tz: 'UTC' },
+    { name: 'maintenance-tick', data: {} },
+  );
+  logger.info({ cron: MAINTENANCE_TICK_CRON }, '[worker] registered maintenance-tick repeatable');
+
   // ─── Phase 8 — Compliance ───────────────────────────────────────────────
   const complianceSnapshotQueue = getQueue(QUEUE_NAMES.COMPLIANCE_SNAPSHOT, connection);
   async function enqueueComplianceSnapshot(frameworkId: string, tenantId: string): Promise<void> {
@@ -203,6 +246,8 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     scheduleTickWorker,
     scheduleMaterialiseWorker,
     scheduleReminderWorker,
+    maintenanceTickWorker,
+    maintenanceNotifyWorker,
     complianceEvaluateWorker,
     complianceSnapshotWorker,
   ];

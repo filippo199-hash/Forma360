@@ -2195,6 +2195,75 @@
         "approaching": "Approaching due",
         "overdue": "Overdue"
       }
+    },
+    "list": {
+      "newButton": "New plan",
+      "overdueBadge": "{count} overdue",
+      "approachingBadge": "{count} approaching",
+      "assetsLinked": "assets",
+      "scheduleTableHeading": "Service schedule"
+    },
+    "new": {
+      "title": "New Maintenance Plan",
+      "backLink": "Back to Maintenance",
+      "createdToast": "Maintenance plan created",
+      "submitButton": "Create plan",
+      "basicHeading": "Basic info",
+      "scheduleHeading": "Schedule",
+      "notificationsHeading": "Notifications",
+      "notificationsHint": "Get email alerts before service is due.",
+      "notifDayChip": "{days} days before",
+      "addNotifDay": "Add",
+      "removeNotifDay": "Remove",
+      "fields": {
+        "name": "Plan name",
+        "namePlaceholder": "e.g. Annual vehicle service",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional details",
+        "planType": "Plan type",
+        "planTypes": {
+          "time": "Time-based (every N days)",
+          "usage": "Usage-based (every N km/hours)"
+        },
+        "intervalDays": "Service every",
+        "intervalUsage": "Service every",
+        "usageUnit": "Unit",
+        "usageField": "Reading field",
+        "lastServiceDate": "Last service date",
+        "days": "days"
+      }
+    },
+    "detail": {
+      "backLink": "Back to Maintenance",
+      "updatedToast": "Plan updated",
+      "archivedToast": "Plan archived",
+      "archivedBadge": "Archived",
+      "detailsHeading": "Details",
+      "linkAssetHeading": "Link an asset",
+      "selectAssetPlaceholder": "Select an asset…",
+      "linkAssetButton": "Link",
+      "noLinkedAssets": "No assets linked to this plan yet.",
+      "assetLinkedToast": "Asset linked",
+      "assetUnlinkedToast": "Asset unlinked",
+      "serviceRecordedToast": "Service recorded",
+      "recordServiceButton": "Record",
+      "unlinkAsset": "Unlink asset",
+      "tabs": {
+        "overview": "Overview",
+        "assets": "Assets"
+      },
+      "fields": {
+        "planType": "Type",
+        "interval": "Service interval",
+        "usageField": "Reading field",
+        "notifications": "Notifications",
+        "linkedAssets": "Linked assets"
+      },
+      "assetColumns": {
+        "asset": "Asset",
+        "lastService": "Last service",
+        "recordService": "Record service"
+      }
     }
   },
   "documents": {

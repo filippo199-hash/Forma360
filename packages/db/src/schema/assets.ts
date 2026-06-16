@@ -152,6 +152,8 @@ export const maintenancePlanAssets = pgTable(
       .references(() => assets.id, { onDelete: 'cascade' }),
     lastServiceDate: date('last_service_date'),
     lastServiceValue: numeric('last_service_value'),
+    /** { [dueDateISO]: number[] } — notificationDaysBefore values already dispatched. */
+    notificationsLog: jsonb('notifications_log').notNull().default({}),
   },
   (t) => [
     uniqueIndex('maintenance_plan_assets_unique_idx').on(t.planId, t.assetId),

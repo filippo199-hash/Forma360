@@ -51,6 +51,15 @@ export const QUEUE_NAMES = {
    */
   SCHEDULE_REMINDER: 'forma360-schedule-reminder',
   /**
+   * Phase 5B — daily tick that scans maintenance plans for upcoming or
+   * overdue service windows and fans out to MAINTENANCE_NOTIFY.
+   */
+  MAINTENANCE_TICK: 'forma360-maintenance-tick',
+  /**
+   * Phase 5B — send a maintenance reminder email for one plan-asset link.
+   */
+  MAINTENANCE_NOTIFY: 'forma360-maintenance-notify',
+  /**
    * Phase 8 — evaluate one compliance rule and write a new
    * compliance_evaluations row. Enqueued by the router on demand or by a
    * periodic tick.
@@ -131,6 +140,25 @@ export const scheduleReminderPayloadSchema = z.object({
 });
 export type ScheduleReminderPayload = z.infer<typeof scheduleReminderPayloadSchema>;
 
+/** Phase 5B — maintenance tick: no payload needed. */
+export const maintenanceTickPayloadSchema = z.object({
+  /** ISO timestamp for the tick (defaults to now). */
+  tickAt: z.string().datetime().optional(),
+});
+export type MaintenanceTickPayload = z.infer<typeof maintenanceTickPayloadSchema>;
+
+/** Phase 5B — send a maintenance reminder for one plan-asset link. */
+export const maintenanceNotifyPayloadSchema = z.object({
+  tenantId: z.string().length(26),
+  planId: z.string().length(26),
+  assetId: z.string().length(26),
+  /** The computed due date for this service (YYYY-MM-DD). */
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /** How many days before due this notification is for. */
+  daysBefore: z.number().int().min(0),
+});
+export type MaintenanceNotifyPayload = z.infer<typeof maintenanceNotifyPayloadSchema>;
+
 /** Phase 8 — evaluate one compliance rule. */
 export const complianceEvaluatePayloadSchema = z.object({
   tenantId: z.string().length(26),
@@ -158,6 +186,8 @@ export interface QueuePayloads {
   [QUEUE_NAMES.SCHEDULE_TICK]: ScheduleTickPayload;
   [QUEUE_NAMES.SCHEDULE_MATERIALISE]: ScheduleMaterialisePayload;
   [QUEUE_NAMES.SCHEDULE_REMINDER]: ScheduleReminderPayload;
+  [QUEUE_NAMES.MAINTENANCE_TICK]: MaintenanceTickPayload;
+  [QUEUE_NAMES.MAINTENANCE_NOTIFY]: MaintenanceNotifyPayload;
   [QUEUE_NAMES.COMPLIANCE_EVALUATE]: ComplianceEvaluatePayload;
   [QUEUE_NAMES.COMPLIANCE_SNAPSHOT]: ComplianceSnapshotPayload;
 }
@@ -172,6 +202,8 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.SCHEDULE_TICK]: scheduleTickPayloadSchema,
   [QUEUE_NAMES.SCHEDULE_MATERIALISE]: scheduleMaterialisePayloadSchema,
   [QUEUE_NAMES.SCHEDULE_REMINDER]: scheduleReminderPayloadSchema,
+  [QUEUE_NAMES.MAINTENANCE_TICK]: maintenanceTickPayloadSchema,
+  [QUEUE_NAMES.MAINTENANCE_NOTIFY]: maintenanceNotifyPayloadSchema,
   [QUEUE_NAMES.COMPLIANCE_EVALUATE]: complianceEvaluatePayloadSchema,
   [QUEUE_NAMES.COMPLIANCE_SNAPSHOT]: complianceSnapshotPayloadSchema,
 } as const;
