@@ -38,6 +38,8 @@ import { router } from '../trpc';
 
 export type HeadsUpsRouterDeps = {
   sendEmail: SendTemplatedEmail;
+  /** Base app URL (e.g. https://forma360.io) used to build the CTA link. */
+  appUrl?: string;
 };
 
 const headsUpIdInput = z.object({ headsUpId: z.string().length(26) });
@@ -709,6 +711,9 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
                 : headsUp.engagementLevel === 'acknowledge'
                   ? 'acknowledge'
                   : 'view';
+            const viewUrl = deps.appUrl !== undefined
+              ? `${deps.appUrl}/heads-up/${input.headsUpId}`
+              : undefined;
             await deps.sendEmail({
               to: r.userEmail,
               templateKey: 'heads-up-reminder',
@@ -716,6 +721,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
                 recipientName: r.userName ?? r.userEmail,
                 headsUpTitle: headsUp.title,
                 actionRequired,
+                ...(viewUrl !== undefined ? { viewUrl } : {}),
               },
             });
           }
