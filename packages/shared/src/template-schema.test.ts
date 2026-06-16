@@ -216,7 +216,7 @@ describe('templateContentSchema — question types', () => {
             {
               id: newId(),
               title: 's',
-              items: [{ id: newId(), type: 'site', prompt: 'Site', required: false }],
+              items: [{ id: newId(), type: 'conductedBy', prompt: 'Conducted by', required: false }],
             },
           ],
         },

@@ -33,8 +33,8 @@ describe('PERMISSION_KEYS', () => {
     );
   });
 
-  it('has at least 60 keys (Phase 1 prompt mandates ~80; floor check)', () => {
-    expect(PERMISSION_KEYS.length).toBeGreaterThanOrEqual(60);
+  it('has at least 55 keys (floor check — compliance module removed in PR 53257ca)', () => {
+    expect(PERMISSION_KEYS.length).toBeGreaterThanOrEqual(55);
   });
 
   it('has no duplicate keys', () => {

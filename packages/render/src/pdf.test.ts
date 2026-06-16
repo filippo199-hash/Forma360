@@ -38,6 +38,17 @@ const MIGRATION_FILES = [
   '0018_documents_v2.sql',
   '0019_schedule_enhancements.sql',
   '0020_compliance_scope.sql',
+  '0021_compliance_features.sql',
+  '0022_action_type_labels.sql',
+  '0023_inspections_source_link.sql',
+  '0024_invite_group_site.sql',
+  '0025_user_phone.sql',
+  '0026_asset_description.sql',
+  '0027_maintenance_notifications.sql',
+  '0028_observation_notification_recipients.sql',
+  '0029_asset_links.sql',
+  '0030_drop_compliance.sql',
+  '0031_ai_assistant.sql',
 ];
 
 async function bootDb() {
