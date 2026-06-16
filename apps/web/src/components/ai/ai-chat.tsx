@@ -32,6 +32,9 @@ export function AiChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Only load convMessages into state when navigating to a historical conversation,
+  // not after a live stream ends (stale convMessages would wipe accumulated text).
+  const loadingHistoryRef = useRef(false);
 
   const utils = trpc.useUtils();
   const { data: conversations = [] } = trpc.aiAssistant.listConversations.useQuery();
@@ -55,6 +58,7 @@ export function AiChat() {
   async function loadConversation(convId: string) {
     if (convId === activeConvId) return;
     abortRef.current?.abort();
+    loadingHistoryRef.current = true;
     setActiveConvId(convId);
     setStreaming(false);
     setToolsActive([]);
@@ -67,7 +71,8 @@ export function AiChat() {
   );
 
   useEffect(() => {
-    if (convMessages && activeConvId && !streaming) {
+    if (convMessages && activeConvId && !streaming && loadingHistoryRef.current) {
+      loadingHistoryRef.current = false;
       setMessages(
         convMessages.map((m) => ({
           id: m.id,
