@@ -41,7 +41,6 @@ import {
 } from './routers/inspectionsExport';
 import { createIssuesRouter, type IssuesRouterDeps } from './routers/issues';
 import { maintenancePlansRouter } from './routers/maintenancePlans';
-import { createComplianceRouter, type ComplianceRouterDeps } from './routers/compliance';
 import { searchRouter } from './routers/search';
 import { schedulesRouter } from './routers/schedules';
 import { signaturesRouter } from './routers/signatures';
@@ -61,7 +60,6 @@ export function buildAppRouter(deps: {
   auth: AuthRouterDeps;
   inspections: InspectionsRouterDeps;
   issues: IssuesRouterDeps;
-  compliance: ComplianceRouterDeps;
   headsUps: HeadsUpsRouterDeps;
 }) {
   return router({
@@ -93,7 +91,6 @@ export function buildAppRouter(deps: {
     documentFolders: documentFoldersRouter,
     documentLabels: documentLabelsRouter,
     documents: documentsRouter,
-    compliance: createComplianceRouter(deps.compliance),
     search: searchRouter,
   });
 }
@@ -202,12 +199,6 @@ export const stubIssuesDeps: IssuesRouterDeps = {
   },
 };
 
-export const stubComplianceDeps: ComplianceRouterDeps = {
-  enqueueEvaluate: async () => {
-    // no-op stub — real wiring via buildAppRouter
-  },
-};
-
 /**
  * Default headsUps-router deps. Shares the `__authStubMailbox` so tests
  * that trigger reminder emails have one place to read what would have been sent.
@@ -229,7 +220,6 @@ export const appRouter = buildAppRouter({
   auth: stubAuthDeps,
   inspections: stubInspectionsDeps,
   issues: stubIssuesDeps,
-  compliance: stubComplianceDeps,
   headsUps: stubHeadsUpsDeps,
 });
 

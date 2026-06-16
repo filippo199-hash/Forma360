@@ -58,7 +58,6 @@ export type DependentModule =
   | 'assets'
   | 'documents'
   | 'analytics'
-  | 'compliance'
   | 'training'
   | 'notifications';
 
@@ -104,7 +103,6 @@ const ALL_MODULES: readonly DependentModule[] = [
   'assets',
   'documents',
   'analytics',
-  'compliance',
   'training',
   'notifications',
 ];
@@ -151,7 +149,6 @@ export async function getDependents(
     assets: 0,
     documents: 0,
     analytics: 0,
-    compliance: 0,
     training: 0,
     notifications: 0,
   };

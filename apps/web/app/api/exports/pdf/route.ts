@@ -17,7 +17,6 @@ import { headsUpsDeps } from '../../../../src/server/heads-up-deps';
 import { inspectionsDeps } from '../../../../src/server/inspections-deps';
 import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { issuesDeps } from '../../../../src/server/issues-deps';
-import { complianceDeps } from '../../../../src/server/compliance-deps';
 import { storage } from '../../../../src/server/storage';
 import { createContext } from '../../../../src/server/trpc';
 
@@ -27,7 +26,6 @@ const appRouter = buildAppRouter({
   auth: authDeps,
   inspections: inspectionsDeps,
   issues: issuesDeps,
-  compliance: complianceDeps,
   headsUps: headsUpsDeps,
 });
 

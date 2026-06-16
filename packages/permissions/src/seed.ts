@@ -43,7 +43,6 @@ const STANDARD_KEYS: ReadonlyArray<PermissionKey> = [
   'assets.readings.record',
   'documents.view',
   'analytics.view',
-  'compliance.view',
   'training.view',
   'training.take',
 ];

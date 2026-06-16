@@ -7,7 +7,6 @@ import {
   FolderOpen,
   ListChecks,
   Settings,
-  ShieldCheck,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
@@ -28,7 +27,6 @@ interface NavItem {
     | 'headsUp'
     | 'assets'
     | 'documents'
-    | 'compliance'
     | 'settings';
   href: string;
   icon: LucideIcon;
@@ -56,7 +54,6 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
     { key: 'headsUp', href: `/${locale}/heads-up`, icon: Bell },
     { key: 'assets', href: `/${locale}/assets`, icon: Wrench },
     { key: 'documents', href: `/${locale}/documents`, icon: FolderOpen },
-    { key: 'compliance', href: `/${locale}/compliance`, icon: ShieldCheck },
   ];
 
   const settingsItem: NavItem = {

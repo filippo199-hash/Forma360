@@ -18,7 +18,7 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
-import { buildAppRouter, stubAuthDeps, stubComplianceDeps, stubHeadsUpsDeps, stubInspectionsDeps, stubIssuesDeps } from '../router';
+import { buildAppRouter, stubAuthDeps, stubHeadsUpsDeps, stubInspectionsDeps, stubIssuesDeps } from '../router';
 import { createCallerFactory } from '../trpc';
 import type { ExportsRouterDeps } from './exports';
 import type { InspectionsExportDeps } from './inspectionsExport';
@@ -163,7 +163,7 @@ describe('exports router (Phase 2 PR 31)', () => {
       auth: stubAuthDeps,
       inspections: stubInspectionsDeps,
       issues: stubIssuesDeps,
-      compliance: stubComplianceDeps,
+
       headsUps: stubHeadsUpsDeps,
     });
     const factory = createCallerFactory(router);
@@ -263,7 +263,7 @@ describe('exports router (Phase 2 PR 31)', () => {
         auth: stubAuthDeps,
         inspections: stubInspectionsDeps,
         issues: stubIssuesDeps,
-        compliance: stubComplianceDeps,
+  
         headsUps: stubHeadsUpsDeps,
       });
       const caller = createCallerFactory(router)(ctxFor(adminUserId));
@@ -302,7 +302,7 @@ describe('exports router (Phase 2 PR 31)', () => {
         auth: stubAuthDeps,
         inspections: stubInspectionsDeps,
         issues: stubIssuesDeps,
-        compliance: stubComplianceDeps,
+  
         headsUps: stubHeadsUpsDeps,
       });
       const caller = createCallerFactory(router)(ctxFor(standardUserId));

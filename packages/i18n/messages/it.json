@@ -52,7 +52,6 @@
         "assets": "Assets",
         "documents": "Documents",
         "analytics": "Analytics",
-        "compliance": "Compliance",
         "training": "Training",
         "notifications": "Notifications"
       }
@@ -150,7 +149,6 @@
       "assets": "Assets",
       "headsUp": "Heads Up",
       "documents": "Documents",
-      "compliance": "Compliance",
       "training": "Training",
       "integrations": "Integrations",
       "billing": "Billing",
@@ -1007,8 +1005,7 @@
     "headsUp": "Heads Up",
     "assets": "Assets",
     "maintenance": "Maintenance",
-    "documents": "Documents",
-    "compliance": "Compliance"
+    "documents": "Documents"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2417,114 +2414,6 @@
       "responsibleSelectGroup": "Seleziona un gruppo…"
     }
   },
-  "compliance": {
-    "dashboard": {
-      "title": "Compliance",
-      "subtitle": "Monitor your compliance posture across all frameworks.",
-      "newFrameworkButton": "New framework",
-      "overallScore": "Overall score",
-      "compliant": "Compliant",
-      "dueSoon": "Due soon",
-      "nonCompliant": "Non-compliant",
-      "noFrameworks": "No compliance frameworks yet. Create your first to get started.",
-      "totalRules": "{count} rule(s)",
-      "nonCompliantRulesTitle": "Non-compliant rules",
-      "targetLabel": "Target:",
-      "scoreBarCompliant": "{count} compliant",
-      "scoreBarDueSoon": "{count} due soon",
-      "scoreBarNonCompliant": "{count} non-compliant",
-      "tabActive": "Attivi ({count})",
-      "tabArchived": "Archiviati ({count})",
-      "noArchivedFrameworks": "Nessun framework archiviato.",
-      "archivedOn": "Archiviato il {date}"
-    },
-    "frameworks": {
-      "new": {
-        "title": "New compliance framework",
-        "backLink": "Back to compliance",
-        "namePlaceholder": "e.g. ISO 45001 Health & Safety",
-        "descriptionPlaceholder": "Describe the purpose of this framework…",
-        "typeLabel": "Framework type",
-        "targetScoreLabel": "Target score (%)",
-        "targetScoreHint": "(optional)",
-        "targetScoreInvalid": "Target score must be between 0 and 100.",
-        "creating": "Creating…",
-        "createdToast": "Framework created.",
-        "types": {
-          "health_safety": "Health & Safety",
-          "quality": "Quality",
-          "environmental": "Environmental",
-          "regulatory": "Regulatory",
-          "custom": "Custom"
-        }
-      },
-      "detail": {
-        "backLink": "Back to compliance",
-        "archived": "Archived",
-        "targetScore": "Target score",
-        "rulesTitle": "Rules",
-        "addRuleButton": "Add rule",
-        "noRules": "No rules in this framework yet. Add your first rule.",
-        "archivedToast": "Framework archived.",
-        "evaluateEnqueued": "Evaluation job enqueued.",
-        "evaluateRuleButton": "Evaluate now",
-        "table": {
-          "name": "Rule",
-          "clauseRef": "Clause ref.",
-          "frequency": "Frequency",
-          "status": "Status",
-          "actions": "Actions"
-        },
-        "neverEvaluated": "Never evaluated",
-        "restoreButton": "Ripristina",
-        "restoredToast": "Framework ripristinato"
-      }
-    },
-    "rules": {
-      "new": {
-        "title": "New compliance rule",
-        "backLink": "Back to framework",
-        "namePlaceholder": "e.g. Monthly fire-extinguisher inspection",
-        "clauseRefLabel": "Clause reference",
-        "frequencyLabel": "Evaluation frequency",
-        "dueSoonDaysLabel": "Due-soon threshold (days)",
-        "ruleDetails": "Rule details",
-        "evidenceTitle": "Evidence requirements",
-        "addEvidenceButton": "Add evidence",
-        "noEvidenceYet": "No evidence requirements yet. Add at least one to enable automatic evaluation.",
-        "evidenceTypeLabel": "Evidence type",
-        "creating": "Creating…",
-        "createdToast": "Rule created.",
-        "frequencies": {
-          "daily": "Daily",
-          "weekly": "Weekly",
-          "monthly": "Monthly",
-          "quarterly": "Quarterly",
-          "yearly": "Yearly",
-          "once": "Once"
-        },
-        "evidenceTypes": {
-          "inspection": "Inspection completed",
-          "action": "Action completed",
-          "document": "Document freshness",
-          "heads_up": "Heads-up acknowledgement",
-          "maintenance": "Maintenance up to date"
-        },
-        "evidence": {
-          "templateId": "Template ID",
-          "templateIdPlaceholder": "Paste a template ULID",
-          "frequencyDays": "Check window (days)",
-          "freshnessDays": "Max age (days)",
-          "headsUpId": "Heads-up ID",
-          "headsUpIdPlaceholder": "Paste a heads-up ULID",
-          "requireSignature": "Require signature",
-          "assetTypeId": "Asset type ID (optional)",
-          "assetTypeIdPlaceholder": "Paste an asset type ULID"
-        },
-        "clauseRefPlaceholder": "e.g. ISO 45001 §6.1.2"
-      }
-    }
-  },
   "search": {
     "openLabel": "Apri ricerca",
     "dialogLabel": "Ricerca globale",
@@ -2546,8 +2435,7 @@
       "observations": "Osservazioni",
       "actions": "Azioni",
       "headsUp": "Avvisi",
-      "documents": "Documenti",
-      "compliance": "Conformita"
+      "documents": "Documenti"
     }
   }
 }

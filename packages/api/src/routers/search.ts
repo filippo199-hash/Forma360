@@ -11,7 +11,6 @@ import { z } from 'zod';
 import {
   actions,
   assets,
-  complianceFrameworks,
   documents,
   headsUps,
   inspections,
@@ -36,7 +35,6 @@ export const searchRouter = router({
         actionRows,
         headsUpRows,
         documentRows,
-        complianceRows,
       ] = await Promise.all([
         // Assets — search name
         ctx.db
@@ -163,26 +161,6 @@ export const searchRouter = router({
           )
           .orderBy(desc(documents.updatedAt))
           .limit(MAX_PER_CATEGORY),
-
-        // Compliance frameworks — search name and description
-        ctx.db
-          .select({
-            id: complianceFrameworks.id,
-            name: complianceFrameworks.name,
-            description: complianceFrameworks.description,
-          })
-          .from(complianceFrameworks)
-          .where(
-            and(
-              eq(complianceFrameworks.tenantId, tid),
-              isNull(complianceFrameworks.archivedAt),
-              or(
-                ilike(complianceFrameworks.name, q),
-                ilike(complianceFrameworks.description, q),
-              ),
-            ),
-          )
-          .limit(MAX_PER_CATEGORY),
       ]);
 
       return {
@@ -215,11 +193,6 @@ export const searchRouter = router({
           id: r.id,
           title: r.name,
           subtitle: r.filename,
-        })),
-        compliance: complianceRows.map((r) => ({
-          id: r.id,
-          title: r.name,
-          subtitle: r.description !== '' ? r.description : null,
         })),
       };
     }),

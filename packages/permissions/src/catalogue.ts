@@ -34,7 +34,6 @@ export const PERMISSION_MODULES = [
   'assets',
   'documents',
   'analytics',
-  'compliance',
   'training',
   'integrations',
   'billing',
@@ -120,12 +119,6 @@ export const PERMISSION_KEYS = [
   'analytics.create',
   'analytics.manage',
   'analytics.schedules.manage',
-
-  // ─── Compliance (Phase 8) ────────────────────────────────────────────────
-  'compliance.view',
-  'compliance.manage',
-  'compliance.frameworks.manage',
-  'compliance.evidence.view',
 
   // ─── Training (Phase 10) ─────────────────────────────────────────────────
   'training.view',

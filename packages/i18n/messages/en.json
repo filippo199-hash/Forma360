@@ -52,7 +52,6 @@
         "assets": "Assets",
         "documents": "Documents",
         "analytics": "Analytics",
-        "compliance": "Compliance",
         "training": "Training",
         "notifications": "Notifications"
       }
@@ -77,7 +76,6 @@
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Documents & Policies",
-    "compliance": "Compliance",
     "settings": "Settings"
   },
   "approvals": {
@@ -193,7 +191,6 @@
       "assets": "Assets",
       "headsUp": "Heads Up",
       "documents": "Documents",
-      "compliance": "Compliance",
       "training": "Training",
       "integrations": "Integrations",
       "billing": "Billing",
@@ -2616,198 +2613,6 @@
     "loading": "Loading…",
     "noResults": "No results."
   },
-  "compliance": {
-    "dashboard": {
-      "title": "Compliance",
-      "subtitle": "Monitor your compliance posture across all frameworks.",
-      "newFrameworkButton": "New framework",
-      "overallScore": "Overall score",
-      "compliant": "Compliant",
-      "dueSoon": "Due soon",
-      "nonCompliant": "Non-compliant",
-      "noFrameworks": "No compliance frameworks yet. Create your first to get started.",
-      "totalRules": "{count} rule(s)",
-      "nonCompliantRulesTitle": "Non-compliant rules",
-      "targetLabel": "Target:",
-      "scoreBarCompliant": "{count} compliant",
-      "scoreBarDueSoon": "{count} due soon",
-      "scoreBarNonCompliant": "{count} non-compliant",
-      "tabActive": "Active ({count})",
-      "tabArchived": "Archived ({count})",
-      "noArchivedFrameworks": "No archived frameworks.",
-      "archivedOn": "Archived {date}"
-    },
-    "frameworks": {
-      "new": {
-        "title": "New compliance framework",
-        "backLink": "Back to compliance",
-        "step1Title": "Choose a framework type",
-        "step2Title": "Select a standard",
-        "step2Custom": "Custom framework",
-        "step2CustomDescription": "Define your own rules from scratch.",
-        "step3Title": "Confirm details",
-        "step3TitleCustom": "Define your framework",
-        "rulesPreviewHeading": "Requirements included ({count})",
-        "rulesPreviewToggle": "Preview all requirements",
-        "rulesPreviewCollapse": "Hide requirements",
-        "namePlaceholder": "e.g. ISO 45001 Health & Safety",
-        "descriptionPlaceholder": "Describe the purpose of this framework…",
-        "typeLabel": "Framework type",
-        "selectStandard": "Select a standard to use its built-in requirements, or choose Custom to define your own.",
-        "autoPopulatedNote": "These {count} requirements will be added automatically. You can edit or remove them afterwards.",
-        "scopeLabel": "Who does this framework apply to?",
-        "scopeCompanyWide": "Entire company",
-        "scopeCompanyWideHint": "Applies to all sites and locations",
-        "scopeSpecificSites": "Specific sites",
-        "scopeSpecificSitesHint": "Select the sites this framework covers",
-        "scopeSitesPlaceholder": "Select sites…",
-        "jurisdictionLabel": "Jurisdiction / country (optional)",
-        "jurisdictionHint": "e.g. European Union, United Kingdom, California",
-        "jurisdictionPlaceholder": "e.g. European Union",
-        "creating": "Creating…",
-        "createdToast": "Framework created.",
-        "backToTypes": "← Back",
-        "backToStandards": "← Back",
-        "types": {
-          "health_safety": "Health & Safety",
-          "quality": "Quality",
-          "environmental": "Environmental",
-          "regulatory": "Regulatory",
-          "custom": "Custom"
-        },
-        "typeDescriptions": {
-          "health_safety": "OH&S management, workplace safety, accident prevention",
-          "quality": "Quality management systems, product and service standards",
-          "environmental": "Environmental management, sustainability, emissions",
-          "regulatory": "Data protection, information security, legal requirements",
-          "custom": "Build a framework with your own rules and controls"
-        }
-      },
-      "detail": {
-        "backLink": "Back to compliance",
-        "archived": "Archived",
-        "targetScore": "Target score",
-        "scopeCompanyWide": "Company-wide",
-        "scopeSites": "{count, plural, one {# site} other {# sites}}",
-        "jurisdictionLabel": "Jurisdiction",
-        "ownerLabel": "Owner",
-        "rulesTitle": "Rules",
-        "addRuleButton": "Add rule",
-        "noRules": "No rules in this framework yet. Add your first rule.",
-        "archivedToast": "Framework archived.",
-        "evaluateEnqueued": "Evaluation job enqueued.",
-        "evaluateRuleButton": "Evaluate now",
-        "neverEvaluated": "Never evaluated",
-        "exportButton": "Export report",
-        "exportToast": "Report downloaded.",
-        "table": {
-          "name": "Rule",
-          "clauseRef": "Clause ref.",
-          "frequency": "Frequency",
-          "status": "Status",
-          "nextDue": "Next due",
-          "responsible": "Responsible",
-          "actions": "Actions"
-        },
-        "attestation": {
-          "buttonLabel": "Attest",
-          "dialogTitle": "Record manual attestation",
-          "dialogDescription": "Confirm that this compliance requirement was met.",
-          "attestedAtLabel": "Date of compliance",
-          "notesLabel": "Notes / justification",
-          "notesPlaceholder": "Describe how compliance was achieved…",
-          "submitButton": "Save attestation",
-          "submitting": "Saving…",
-          "successToast": "Attestation recorded.",
-          "historyTitle": "Attestation history",
-          "noHistory": "No attestations recorded yet.",
-          "byLabel": "by"
-        },
-        "remediate": {
-          "buttonLabel": "Remediate",
-          "actionTitle": "Remediate: {ruleName}",
-          "actionDescription": "Non-compliant: {frameworkName} — {clauseRef}",
-          "successToast": "Remediation action created."
-        },
-        "certification": {
-          "sectionTitle": "Certification",
-          "editButton": "Edit certification",
-          "noCertification": "No certification recorded yet.",
-          "certifyingBodyLabel": "Certifying body",
-          "certificationNumberLabel": "Certificate number",
-          "certifiedAtLabel": "Certified on",
-          "expiresAtLabel": "Expires",
-          "nextAuditAtLabel": "Next audit",
-          "notesLabel": "Notes",
-          "dialogTitle": "Certification details",
-          "saveButton": "Save",
-          "saving": "Saving…",
-          "successToast": "Certification saved."
-        },
-        "restoreButton": "Restore",
-        "restoredToast": "Framework restored"
-      }
-    },
-    "rules": {
-      "new": {
-        "title": "New compliance rule",
-        "backLink": "Back to framework",
-        "namePlaceholder": "e.g. Monthly fire-extinguisher inspection",
-        "clauseRefLabel": "Clause reference",
-        "clauseRefPlaceholder": "e.g. ISO 45001 §6.1.2",
-        "frequencyLabel": "Evaluation frequency",
-        "dueSoonDaysLabel": "Due-soon threshold (days)",
-        "ruleDetails": "Rule details",
-        "evidenceTitle": "Evidence requirements",
-        "addEvidenceButton": "Add evidence",
-        "noEvidenceYet": "No evidence requirements yet. Add at least one to enable automatic evaluation.",
-        "evidenceTypeLabel": "Evidence type",
-        "creating": "Creating…",
-        "createdToast": "Rule created.",
-        "frequencies": {
-          "daily": "Daily",
-          "weekly": "Weekly",
-          "monthly": "Monthly",
-          "quarterly": "Quarterly",
-          "yearly": "Yearly",
-          "once": "Once"
-        },
-        "evidenceTypes": {
-          "inspection": "Inspection completed",
-          "action": "Action completed",
-          "document": "Document freshness",
-          "heads_up": "Heads-up acknowledgement",
-          "maintenance": "Maintenance up to date",
-          "issue_sla": "Issue SLA compliance",
-          "training": "Training completion",
-          "manual": "Manual attestation"
-        },
-        "evidence": {
-          "templateLabel": "Inspection template",
-          "templatePlaceholder": "Select a template…",
-          "templateSearchPlaceholder": "Search templates…",
-          "frequencyDays": "Check window (days)",
-          "documentLabel": "Document (optional)",
-          "documentPlaceholder": "Select a document…",
-          "documentSearchPlaceholder": "Search documents…",
-          "freshnessDays": "Max age (days)",
-          "headsUpLabel": "Heads-up",
-          "headsUpPlaceholder": "Select a heads-up…",
-          "headsUpSearchPlaceholder": "Search heads-up…",
-          "requireSignature": "Require signature",
-          "assetTypeLabel": "Asset type (optional)",
-          "assetTypePlaceholder": "Select an asset type…",
-          "assetTypeSearchPlaceholder": "Search asset types…",
-          "slaMaxDays": "Max days to resolve",
-          "issueCategoryLabel": "Issue category (optional)",
-          "issueCategoryPlaceholder": "All categories",
-          "manualDescription": "Description of what to attest",
-          "manualDescriptionPlaceholder": "e.g. Monthly fire-extinguisher check completed",
-          "manualValidityDays": "Attestation validity (days)"
-        }
-      }
-    }
-  },
   "search": {
     "openLabel": "Open search",
     "dialogLabel": "Global search",
@@ -2829,8 +2634,7 @@
       "observations": "Observations",
       "actions": "Actions",
       "headsUp": "Heads Up",
-      "documents": "Documents",
-      "compliance": "Compliance"
+      "documents": "Documents"
     }
   }
 }

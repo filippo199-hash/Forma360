@@ -22,7 +22,6 @@ import {
   FileText,
   Loader2,
   Search,
-  Shield,
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -63,7 +62,6 @@ const QUICK_LINKS = [
   { key: 'actions', icon: <CheckSquare className="h-4 w-4" />, path: '/actions' },
   { key: 'headsUp', icon: <Bell className="h-4 w-4" />, path: '/heads-up' },
   { key: 'documents', icon: <FileText className="h-4 w-4" />, path: '/documents' },
-  { key: 'compliance', icon: <Shield className="h-4 w-4" />, path: '/compliance' },
 ] as const;
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -167,12 +165,6 @@ export function GlobalSearch() {
         labelKey: 'categories.documents',
         icon: <FileText className="h-4 w-4" />,
         basePath: 'documents',
-      },
-      {
-        key: 'compliance',
-        labelKey: 'categories.compliance',
-        icon: <Shield className="h-4 w-4" />,
-        basePath: 'compliance',
       },
     ];
 

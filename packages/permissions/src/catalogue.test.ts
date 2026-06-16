@@ -25,7 +25,6 @@ describe('PERMISSION_KEYS', () => {
         'assets',
         'documents',
         'analytics',
-        'compliance',
         'training',
         'integrations',
         'billing',

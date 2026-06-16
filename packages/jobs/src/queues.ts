@@ -66,18 +66,6 @@ export const QUEUE_NAMES = {
    * settings.
    */
   OBSERVATION_NOTIFY: 'forma360-observation-notify',
-  /**
-   * Phase 8 — evaluate one compliance rule and write a new
-   * compliance_evaluations row. Enqueued by the router on demand or by a
-   * periodic tick.
-   */
-  COMPLIANCE_EVALUATE: 'forma360-compliance-evaluate',
-  /**
-   * Phase 8 — compute today's daily roll-up for one framework and upsert
-   * a compliance_snapshots row. Enqueued after every evaluate job
-   * completes.
-   */
-  COMPLIANCE_SNAPSHOT: 'forma360-compliance-snapshot',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -175,20 +163,6 @@ export const observationNotifyPayloadSchema = z.object({
 });
 export type ObservationNotifyPayload = z.infer<typeof observationNotifyPayloadSchema>;
 
-/** Phase 8 — evaluate one compliance rule. */
-export const complianceEvaluatePayloadSchema = z.object({
-  tenantId: z.string().length(26),
-  ruleId: z.string().length(26),
-});
-export type ComplianceEvaluatePayload = z.infer<typeof complianceEvaluatePayloadSchema>;
-
-/** Phase 8 — take a daily snapshot of one framework's score. */
-export const complianceSnapshotPayloadSchema = z.object({
-  tenantId: z.string().length(26),
-  frameworkId: z.string().length(26),
-});
-export type ComplianceSnapshotPayload = z.infer<typeof complianceSnapshotPayloadSchema>;
-
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -205,8 +179,6 @@ export interface QueuePayloads {
   [QUEUE_NAMES.MAINTENANCE_TICK]: MaintenanceTickPayload;
   [QUEUE_NAMES.MAINTENANCE_NOTIFY]: MaintenanceNotifyPayload;
   [QUEUE_NAMES.OBSERVATION_NOTIFY]: ObservationNotifyPayload;
-  [QUEUE_NAMES.COMPLIANCE_EVALUATE]: ComplianceEvaluatePayload;
-  [QUEUE_NAMES.COMPLIANCE_SNAPSHOT]: ComplianceSnapshotPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -222,8 +194,6 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.MAINTENANCE_TICK]: maintenanceTickPayloadSchema,
   [QUEUE_NAMES.MAINTENANCE_NOTIFY]: maintenanceNotifyPayloadSchema,
   [QUEUE_NAMES.OBSERVATION_NOTIFY]: observationNotifyPayloadSchema,
-  [QUEUE_NAMES.COMPLIANCE_EVALUATE]: complianceEvaluatePayloadSchema,
-  [QUEUE_NAMES.COMPLIANCE_SNAPSHOT]: complianceSnapshotPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────
