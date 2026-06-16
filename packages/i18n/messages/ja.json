@@ -841,6 +841,13 @@
         },
         "datetime": {
           "placeholder": "Select date & time"
+        },
+        "asset": {
+          "loading": "資産を読み込み中…",
+          "error": "資産を読み込めませんでした。",
+          "empty": "資産がまだ定義されていません。",
+          "expand": "サブ資産を表示",
+          "collapse": "サブ資産を非表示"
         }
       },
       "goToStatus": "ステータス確認・署名",
@@ -1179,7 +1186,8 @@
       "cancelButton": "Cancel",
       "submitButton": "Submit",
       "successToast": "Observation {ref} reported.",
-      "errorToast": "Could not report the observation. Please try again."
+      "errorToast": "Could not report the observation. Please try again.",
+      "assetsLabel": "資産"
     },
     "detail": {
       "backLink": "Back to observations",
@@ -1754,7 +1762,8 @@
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
       },
-      "labelNoneOption": "— ラベルなし —"
+      "labelNoneOption": "— ラベルなし —",
+      "assetsLabel": "資産"
     },
     "status": {
       "open": "Open",
@@ -2166,6 +2175,20 @@
         "actions": "No actions linked to this asset yet.",
         "inspections": "No inspections linked to this asset yet.",
         "observations": "No observations linked to this asset yet."
+      },
+      "empty": {
+        "actions": "この資産にリンクされたアクションはまだありません。",
+        "inspections": "この資産にリンクされた点検はまだありません。",
+        "observations": "この資産にリンクされた観察はまだありません。"
+      },
+      "cols": {
+        "title": "タイトル",
+        "status": "ステータス",
+        "priority": "優先度",
+        "dueAt": "期限",
+        "docNumber": "文書番号",
+        "startedAt": "開始日",
+        "createdAt": "作成日"
       }
     }
   },

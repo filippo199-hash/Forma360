@@ -9,6 +9,7 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { trpc } from '../../lib/trpc/client';
+import { AssetPickerInput } from './asset-picker-input';
 import { useConduct } from './conduct-context';
 import { InstructionBody } from './instruction-render';
 import { SignaturePad } from './signature-pad';
@@ -60,6 +61,7 @@ export function ResponseInput({
     case 'site':
       return <SitePickerInput item={item} readonly={readonly} />;
     case 'asset':
+      return <AssetPickerInput item={item} readonly={readonly} />;
     case 'company':
     case 'location':
     case 'annotation':

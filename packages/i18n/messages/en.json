@@ -944,6 +944,13 @@
           "noSites": "No sites available",
           "noResults": "No sites match your search",
           "loading": "Loading sites…"
+        },
+        "asset": {
+          "loading": "Loading assets…",
+          "error": "Could not load assets.",
+          "empty": "No assets defined yet.",
+          "expand": "Show sub-assets",
+          "collapse": "Hide sub-assets"
         }
       },
       "goToStatus": "View status & sign",
@@ -1225,7 +1232,8 @@
       "cancelButton": "Cancel",
       "submitButton": "Submit",
       "successToast": "Observation {ref} reported.",
-      "errorToast": "Could not report the observation. Please try again."
+      "errorToast": "Could not report the observation. Please try again.",
+      "assetsLabel": "Assets"
     },
     "detail": {
       "backLink": "Back to observations",
@@ -1804,7 +1812,8 @@
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
       },
-      "labelNoneOption": "— No label —"
+      "labelNoneOption": "— No label —",
+      "assetsLabel": "Assets"
     },
     "status": {
       "open": "Open",
@@ -2334,6 +2343,20 @@
         "actions": "No actions linked to this asset yet.",
         "inspections": "No inspections linked to this asset yet.",
         "observations": "No observations linked to this asset yet."
+      },
+      "empty": {
+        "actions": "No actions linked to this asset yet.",
+        "inspections": "No inspections linked to this asset yet.",
+        "observations": "No observations linked to this asset yet."
+      },
+      "cols": {
+        "title": "Title",
+        "status": "Status",
+        "priority": "Priority",
+        "dueAt": "Due",
+        "docNumber": "Doc #",
+        "startedAt": "Started",
+        "createdAt": "Created"
       }
     }
   },

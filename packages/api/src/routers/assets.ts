@@ -7,7 +7,18 @@
  *   - AS-E11: parentId must not itself have a parent (one-level depth only).
  *   - QR token: generated on create, unique across the tenant.
  */
-import { assetReadings, assetTypes, assets, type Asset } from '@forma360/db/schema';
+import {
+  actionAssets,
+  actions,
+  assetReadings,
+  assetTypes,
+  assets,
+  inspectionAssetSelections,
+  inspections,
+  issueAssets,
+  issues,
+  type Asset,
+} from '@forma360/db/schema';
 import { user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
@@ -282,6 +293,117 @@ export const assetsRouter = router({
         .set({ archivedAt: null, updatedAt: new Date() })
         .where(eq(assets.id, asset.id));
       return { ok: true as const };
+    }),
+
+  listWithChildren: tenantProcedure
+    .use(requirePermission('assets.view'))
+    .query(async ({ ctx }) => {
+      const rows = await ctx.db
+        .select({
+          id: assets.id,
+          name: assets.name,
+          parentId: assets.parentId,
+          typeId: assets.typeId,
+          typeName: assetTypes.name,
+        })
+        .from(assets)
+        .leftJoin(assetTypes, eq(assetTypes.id, assets.typeId))
+        .where(and(eq(assets.tenantId, ctx.tenantId), isNull(assets.archivedAt)))
+        .orderBy(assets.name);
+
+      const parents = rows.filter((r) => r.parentId === null);
+      const childMap = new Map<string, typeof rows>();
+      for (const r of rows) {
+        if (r.parentId !== null) {
+          const bucket = childMap.get(r.parentId) ?? [];
+          bucket.push(r);
+          childMap.set(r.parentId, bucket);
+        }
+      }
+      return parents.map((p) => ({ ...p, children: childMap.get(p.id) ?? [] }));
+    }),
+
+  listLinkedInspections: tenantProcedure
+    .use(requirePermission('assets.view'))
+    .input(assetIdInput)
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({
+          id: inspections.id,
+          title: inspections.title,
+          status: inspections.status,
+          documentNumber: inspections.documentNumber,
+          startedAt: inspections.startedAt,
+          completedAt: inspections.completedAt,
+          questionId: inspectionAssetSelections.questionId,
+        })
+        .from(inspectionAssetSelections)
+        .innerJoin(inspections, eq(inspections.id, inspectionAssetSelections.inspectionId))
+        .where(
+          and(
+            eq(inspectionAssetSelections.tenantId, ctx.tenantId),
+            eq(inspectionAssetSelections.assetId, input.assetId),
+            isNull(inspections.archivedAt),
+          ),
+        )
+        .orderBy(desc(inspections.startedAt))
+        .limit(100);
+      return rows;
+    }),
+
+  listLinkedActions: tenantProcedure
+    .use(requirePermission('assets.view'))
+    .input(assetIdInput)
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({
+          id: actions.id,
+          title: actions.title,
+          status: actions.status,
+          priority: actions.priority,
+          dueAt: actions.dueAt,
+          createdAt: actions.createdAt,
+          referenceNumber: actions.referenceNumber,
+        })
+        .from(actionAssets)
+        .innerJoin(actions, eq(actions.id, actionAssets.actionId))
+        .where(
+          and(
+            eq(actionAssets.tenantId, ctx.tenantId),
+            eq(actionAssets.assetId, input.assetId),
+            isNull(actions.archivedAt),
+          ),
+        )
+        .orderBy(desc(actions.createdAt))
+        .limit(100);
+      return rows;
+    }),
+
+  listLinkedObservations: tenantProcedure
+    .use(requirePermission('assets.view'))
+    .input(assetIdInput)
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({
+          id: issues.id,
+          title: issues.title,
+          status: issues.status,
+          priority: issues.priority,
+          createdAt: issues.createdAt,
+          referenceNumber: issues.referenceNumber,
+        })
+        .from(issueAssets)
+        .innerJoin(issues, eq(issues.id, issueAssets.issueId))
+        .where(
+          and(
+            eq(issueAssets.tenantId, ctx.tenantId),
+            eq(issueAssets.assetId, input.assetId),
+            isNull(issues.archivedAt),
+          ),
+        )
+        .orderBy(desc(issues.createdAt))
+        .limit(100);
+      return rows;
     }),
 
   readings: router({

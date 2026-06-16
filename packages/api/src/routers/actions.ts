@@ -15,6 +15,7 @@
 import { inspections, issues, user } from '@forma360/db/schema';
 import {
   actionActivity,
+  actionAssets,
   actionComments,
   actionPriority,
   actionStatus,
@@ -354,6 +355,8 @@ const createStandaloneInput = z.object({
   customQuestionResponses: z.record(z.string(), z.unknown()).optional(),
   /** Optional recurrence config (rrule + endDate). */
   recurrence: recurrenceConfigSchema.nullable().optional(),
+  /** Asset IDs to link to this action. */
+  assetIds: z.array(z.string()).optional(),
 });
 
 const createFromInspectionQuestionInput = z.object({
@@ -399,6 +402,8 @@ const updateInput = z.object({
    */
   customQuestionResponses: z.record(z.string(), z.unknown()).optional(),
   recurrence: recurrenceConfigSchema.nullable().optional(),
+  /** Asset IDs to link to this action. Replaces existing links when provided. */
+  assetIds: z.array(z.string()).optional(),
 });
 
 const setStatusInput = z.object({
@@ -668,6 +673,16 @@ export const actionsRouter = router({
         kind: 'created',
         payload: { sourceType: 'standalone', actionTypeId: type?.id ?? null },
       });
+      if (input.assetIds !== undefined && input.assetIds.length > 0) {
+        await ctx.db.insert(actionAssets).values(
+          input.assetIds.map((assetId) => ({
+            id: newId(),
+            tenantId: ctx.tenantId,
+            actionId: id,
+            assetId,
+          })),
+        ).onConflictDoNothing();
+      }
       return { actionId: id, referenceNumber };
     }),
 
@@ -962,6 +977,19 @@ export const actionsRouter = router({
           kind: ev.kind,
           payload: ev.payload,
         });
+      }
+      if (input.assetIds !== undefined) {
+        await ctx.db.delete(actionAssets).where(eq(actionAssets.actionId, action.id));
+        if (input.assetIds.length > 0) {
+          await ctx.db.insert(actionAssets).values(
+            input.assetIds.map((assetId) => ({
+              id: newId(),
+              tenantId: ctx.tenantId,
+              actionId: action.id,
+              assetId,
+            })),
+          ).onConflictDoNothing();
+        }
       }
       return { ok: true as const };
     }),

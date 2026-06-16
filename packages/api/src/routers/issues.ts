@@ -23,6 +23,7 @@ import {
   accessRules,
   groupMembers,
   issueActivity,
+  issueAssets,
   issueAttachments,
   issueCategories,
   issueComments,
@@ -163,6 +164,8 @@ const createIssueInput = z.object({
   dateOccurred: z.string().datetime().optional(),
   customFieldValues: z.record(z.unknown()).optional(),
   customQuestionResponses: z.record(z.unknown()).optional(),
+  /** Asset IDs to link to this observation. */
+  assetIds: z.array(z.string()).optional(),
 });
 
 const updateIssueInput = z.object({
@@ -176,6 +179,8 @@ const updateIssueInput = z.object({
   priority: issuePrioritySchema.nullable().optional(),
   dueAt: z.string().datetime().nullable().optional(),
   assigneeUserId: z.string().nullable().optional(),
+  /** Asset IDs to link to this observation. Replaces existing links when provided. */
+  assetIds: z.array(z.string()).optional(),
 });
 
 const closeIssueInput = z.object({
@@ -868,6 +873,17 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           });
         }
 
+        if (input.assetIds !== undefined && input.assetIds.length > 0) {
+          await ctx.db.insert(issueAssets).values(
+            input.assetIds.map((assetId) => ({
+              id: newId(),
+              tenantId: ctx.tenantId,
+              issueId: id,
+              assetId,
+            })),
+          ).onConflictDoNothing();
+        }
+
         ctx.logger.info({ issueId: id, categoryId: category.id }, '[issues] created');
         return { issueId: id, referenceNumber };
       }),
@@ -959,6 +975,19 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
             kind: event.kind,
             payload: event.payload,
           });
+        }
+        if (input.assetIds !== undefined) {
+          await ctx.db.delete(issueAssets).where(eq(issueAssets.issueId, issue.id));
+          if (input.assetIds.length > 0) {
+            await ctx.db.insert(issueAssets).values(
+              input.assetIds.map((assetId) => ({
+                id: newId(),
+                tenantId: ctx.tenantId,
+                issueId: issue.id,
+                assetId,
+              })),
+            ).onConflictDoNothing();
+          }
         }
         return { ok: true as const };
       }),

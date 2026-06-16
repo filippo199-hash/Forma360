@@ -841,6 +841,13 @@
         },
         "datetime": {
           "placeholder": "Select date & time"
+        },
+        "asset": {
+          "loading": "A carregar ativos…",
+          "error": "Não foi possível carregar os ativos.",
+          "empty": "Nenhum ativo definido ainda.",
+          "expand": "Mostrar sub-ativos",
+          "collapse": "Ocultar sub-ativos"
         }
       },
       "goToStatus": "Ver estado e assinar",
@@ -1179,7 +1186,8 @@
       "cancelButton": "Cancel",
       "submitButton": "Submit",
       "successToast": "Observation {ref} reported.",
-      "errorToast": "Could not report the observation. Please try again."
+      "errorToast": "Could not report the observation. Please try again.",
+      "assetsLabel": "Ativos"
     },
     "detail": {
       "backLink": "Back to observations",
@@ -1754,7 +1762,8 @@
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
       },
-      "labelNoneOption": "— Sem etiqueta —"
+      "labelNoneOption": "— Sem etiqueta —",
+      "assetsLabel": "Ativos"
     },
     "status": {
       "open": "Open",
@@ -2166,6 +2175,20 @@
         "actions": "No actions linked to this asset yet.",
         "inspections": "No inspections linked to this asset yet.",
         "observations": "No observations linked to this asset yet."
+      },
+      "empty": {
+        "actions": "Nenhuma ação vinculada a este ativo ainda.",
+        "inspections": "Nenhuma inspeção vinculada a este ativo ainda.",
+        "observations": "Nenhuma observação vinculada a este ativo ainda."
+      },
+      "cols": {
+        "title": "Título",
+        "status": "Estado",
+        "priority": "Prioridade",
+        "dueAt": "Prazo",
+        "docNumber": "N.º doc",
+        "startedAt": "Iniciado",
+        "createdAt": "Criado"
       }
     }
   },

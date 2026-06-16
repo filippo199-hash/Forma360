@@ -841,6 +841,13 @@
         },
         "datetime": {
           "placeholder": "Select date & time"
+        },
+        "asset": {
+          "loading": "Middelen laden…",
+          "error": "Kon middelen niet laden.",
+          "empty": "Nog geen middelen gedefinieerd.",
+          "expand": "Subitems tonen",
+          "collapse": "Subitems verbergen"
         }
       },
       "goToStatus": "Status bekijken en ondertekenen",
@@ -1179,7 +1186,8 @@
       "cancelButton": "Cancel",
       "submitButton": "Submit",
       "successToast": "Observation {ref} reported.",
-      "errorToast": "Could not report the observation. Please try again."
+      "errorToast": "Could not report the observation. Please try again.",
+      "assetsLabel": "Middelen"
     },
     "detail": {
       "backLink": "Back to observations",
@@ -1754,7 +1762,8 @@
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
       },
-      "labelNoneOption": "— Geen label —"
+      "labelNoneOption": "— Geen label —",
+      "assetsLabel": "Middelen"
     },
     "status": {
       "open": "Open",
@@ -2166,6 +2175,20 @@
         "actions": "No actions linked to this asset yet.",
         "inspections": "No inspections linked to this asset yet.",
         "observations": "No observations linked to this asset yet."
+      },
+      "empty": {
+        "actions": "Nog geen acties gekoppeld aan dit middel.",
+        "inspections": "Nog geen inspecties gekoppeld aan dit middel.",
+        "observations": "Nog geen observaties gekoppeld aan dit middel."
+      },
+      "cols": {
+        "title": "Titel",
+        "status": "Status",
+        "priority": "Prioriteit",
+        "dueAt": "Vervaldatum",
+        "docNumber": "Doc nr",
+        "startedAt": "Gestart",
+        "createdAt": "Aangemaakt"
       }
     }
   },

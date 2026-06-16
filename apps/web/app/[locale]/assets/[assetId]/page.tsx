@@ -70,6 +70,21 @@ export default function AssetDetailPage() {
       { assetId },
       { enabled: tab === 'maintenance' },
     );
+  const { data: linkedInspections, isLoading: inspectionsLoading } =
+    trpc.assets.listLinkedInspections.useQuery(
+      { assetId },
+      { enabled: tab === 'inspections' },
+    );
+  const { data: linkedActions, isLoading: actionsLoading } =
+    trpc.assets.listLinkedActions.useQuery(
+      { assetId },
+      { enabled: tab === 'actions' },
+    );
+  const { data: linkedObservations, isLoading: observationsLoading } =
+    trpc.assets.listLinkedObservations.useQuery(
+      { assetId },
+      { enabled: tab === 'observations' },
+    );
 
   const update = trpc.assets.update.useMutation({
     onSuccess: () => {
@@ -591,29 +606,136 @@ export default function AssetDetailPage() {
         </div>
       ) : null}
 
-      {/* ── ACTIONS (stub) ── */}
+      {/* ── ACTIONS ── */}
       {tab === 'actions' ? (
         <Card>
-          <CardContent className="py-16 text-center text-muted-foreground">
-            <p className="text-sm">{t('stubs.actions')}</p>
+          <CardContent className="p-0">
+            {actionsLoading ? (
+              <div className="space-y-2 p-4">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+              </div>
+            ) : !linkedActions || linkedActions.length === 0 ? (
+              <div className="py-16 text-center text-muted-foreground">
+                <p className="text-sm">{t('empty.actions')}</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.priority')}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.dueAt')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {linkedActions.map((a) => (
+                    <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="px-4 py-2">
+                        <Link href={`/${locale}/actions/${a.id}`} className="hover:underline">
+                          {a.referenceNumber ? <span className="mr-1 text-xs text-muted-foreground">{a.referenceNumber}</span> : null}
+                          {a.title}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-2 capitalize">{a.status}</td>
+                      <td className="px-4 py-2 capitalize">{a.priority ?? '—'}</td>
+                      <td className="px-4 py-2">
+                        {a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </CardContent>
         </Card>
       ) : null}
 
-      {/* ── INSPECTIONS (stub) ── */}
+      {/* ── INSPECTIONS ── */}
       {tab === 'inspections' ? (
         <Card>
-          <CardContent className="py-16 text-center text-muted-foreground">
-            <p className="text-sm">{t('stubs.inspections')}</p>
+          <CardContent className="p-0">
+            {inspectionsLoading ? (
+              <div className="space-y-2 p-4">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+              </div>
+            ) : !linkedInspections || linkedInspections.length === 0 ? (
+              <div className="py-16 text-center text-muted-foreground">
+                <p className="text-sm">{t('empty.inspections')}</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.docNumber')}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.startedAt')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {linkedInspections.map((ins) => (
+                    <tr key={`${ins.id}-${ins.questionId}`} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="px-4 py-2">
+                        <Link href={`/${locale}/inspections/${ins.id}`} className="hover:underline">
+                          {ins.title}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-2 capitalize">{ins.status.replace(/_/g, ' ')}</td>
+                      <td className="px-4 py-2">{ins.documentNumber ?? '—'}</td>
+                      <td className="px-4 py-2">
+                        {ins.startedAt ? new Date(ins.startedAt).toLocaleDateString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </CardContent>
         </Card>
       ) : null}
 
-      {/* ── OBSERVATIONS (stub) ── */}
+      {/* ── OBSERVATIONS ── */}
       {tab === 'observations' ? (
         <Card>
-          <CardContent className="py-16 text-center text-muted-foreground">
-            <p className="text-sm">{t('stubs.observations')}</p>
+          <CardContent className="p-0">
+            {observationsLoading ? (
+              <div className="space-y-2 p-4">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+              </div>
+            ) : !linkedObservations || linkedObservations.length === 0 ? (
+              <div className="py-16 text-center text-muted-foreground">
+                <p className="text-sm">{t('empty.observations')}</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.priority')}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t('cols.createdAt')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {linkedObservations.map((obs) => (
+                    <tr key={obs.id} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="px-4 py-2">
+                        <Link href={`/${locale}/observations/${obs.id}`} className="hover:underline">
+                          {obs.referenceNumber ? <span className="mr-1 text-xs text-muted-foreground">{obs.referenceNumber}</span> : null}
+                          {obs.title}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-2 capitalize">{obs.status}</td>
+                      <td className="px-4 py-2 capitalize">{obs.priority ?? '—'}</td>
+                      <td className="px-4 py-2">
+                        {obs.createdAt ? new Date(obs.createdAt).toLocaleDateString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </CardContent>
         </Card>
       ) : null}

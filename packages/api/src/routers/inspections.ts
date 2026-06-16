@@ -33,6 +33,7 @@ import {
   accessRules,
   groupMembers,
   inspectionApprovals,
+  inspectionAssetSelections,
   inspectionSignatures,
   inspectionWorkflowSigners,
   inspections,
@@ -52,6 +53,7 @@ import {
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
 import type { Logger } from '@forma360/shared/logger';
+import { parseTemplateContent } from '@forma360/shared/template-schema';
 import type { SignatureWorkflow } from '@forma360/shared/template-schema';
 import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
@@ -220,6 +222,61 @@ export interface InspectionsRouterDeps {
   appUrl: string;
   /** Pino logger. Per-request child loggers also flow through ctx.logger. */
   logger: Logger;
+}
+
+type Db = Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'];
+
+/** Delete + re-insert inspection_asset_selections for every 'asset' question. */
+async function syncAssetSelections(
+  db: Db,
+  tenantId: string,
+  inspectionId: string,
+  templateVersionId: string,
+  responses: Record<string, unknown>,
+): Promise<void> {
+  const versionRows = await db
+    .select({ content: templateVersions.content })
+    .from(templateVersions)
+    .where(eq(templateVersions.id, templateVersionId))
+    .limit(1);
+  const version = versionRows[0];
+  if (version === undefined) return;
+
+  const content = parseTemplateContent(version.content);
+
+  // Collect all asset question IDs from the template content.
+  const assetQuestionIds = new Set<string>();
+  for (const page of content.pages)
+    for (const section of page.sections)
+      for (const item of section.items)
+        if (item.type === 'asset') assetQuestionIds.add(item.id);
+
+  if (assetQuestionIds.size === 0) return;
+
+  // Wipe existing link rows for this inspection so we can replace them cleanly.
+  await db
+    .delete(inspectionAssetSelections)
+    .where(eq(inspectionAssetSelections.inspectionId, inspectionId));
+
+  const toInsert: { id: string; tenantId: string; inspectionId: string; questionId: string; assetId: string }[] = [];
+  for (const questionId of assetQuestionIds) {
+    const raw = responses[questionId];
+    if (raw === null || raw === undefined) continue;
+    const assetIds =
+      typeof raw === 'object' &&
+      !Array.isArray(raw) &&
+      'assetIds' in raw &&
+      Array.isArray((raw as { assetIds: unknown }).assetIds)
+        ? ((raw as { assetIds: unknown[] }).assetIds.filter((id) => typeof id === 'string') as string[])
+        : [];
+    for (const assetId of assetIds) {
+      toInsert.push({ id: newId(), tenantId, inspectionId, questionId, assetId });
+    }
+  }
+
+  if (toInsert.length > 0) {
+    await db.insert(inspectionAssetSelections).values(toInsert).onConflictDoNothing();
+  }
 }
 
 export function createInspectionsRouter(deps: InspectionsRouterDeps) {
@@ -621,6 +678,16 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           .update(inspections)
           .set({ responses: input.responses, updatedAt: now })
           .where(eq(inspections.id, insp.id));
+
+        // Sync asset-selection link rows for 'asset'-type questions.
+        await syncAssetSelections(
+          ctx.db,
+          ctx.tenantId,
+          insp.id,
+          insp.templateVersionId,
+          input.responses,
+        );
+
         return { updatedAt: now.toISOString() };
       }),
 

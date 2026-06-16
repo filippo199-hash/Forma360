@@ -4,7 +4,7 @@ import type {
   IssueCustomQuestion,
   IssueToggleableBuiltInField,
 } from '@forma360/shared/issues-schema';
-import { Image as ImageIcon, X } from 'lucide-react';
+import { ChevronRight, Image as ImageIcon, Package, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
+import { Checkbox } from '../../../../src/components/ui/checkbox';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
@@ -64,12 +65,14 @@ export default function NewObservationPage() {
   );
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: categories, isLoading: loadingCategories } = trpc.issues.categories.list.useQuery({
     includeArchived: false,
   });
   const { data: sites } = trpc.sites.list.useQuery();
+  const { data: assetsList } = trpc.assets.listWithChildren.useQuery();
   const { data: category } = trpc.issues.categories.get.useQuery(
     { categoryId },
     { enabled: categoryId !== '' },
@@ -182,6 +185,9 @@ export default function NewObservationPage() {
     );
     if (Object.keys(trimmedQuestionResponses).length > 0) {
       input.customQuestionResponses = trimmedQuestionResponses;
+    }
+    if (selectedAssetIds.size > 0) {
+      (input as Record<string, unknown>).assetIds = [...selectedAssetIds];
     }
     try {
       const result = await createIssue.mutateAsync(input);
@@ -417,6 +423,17 @@ export default function NewObservationPage() {
                 </div>
               ) : null}
 
+              {assetsList !== undefined && assetsList.length > 0 ? (
+                <div className="space-y-1.5">
+                  <Label>{t('assetsLabel')}</Label>
+                  <ObsAssetPicker
+                    parents={assetsList}
+                    selectedIds={selectedAssetIds}
+                    onChange={setSelectedAssetIds}
+                  />
+                </div>
+              ) : null}
+
               <div className="flex items-center justify-end gap-2 border-t pt-5">
                 <Button type="submit" disabled={!canSubmit}>
                   {t('submitButton')}
@@ -451,4 +468,112 @@ function generateStagingId(): string {
     out += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
   }
   return out;
+}
+
+type ParentAsset = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  typeId: string | null;
+  typeName: string | null;
+  children: Array<{ id: string; name: string; parentId: string | null; typeId: string | null; typeName: string | null }>;
+};
+
+function ObsAssetPicker({
+  parents,
+  selectedIds,
+  onChange,
+}: {
+  parents: ParentAsset[];
+  selectedIds: Set<string>;
+  onChange: (next: Set<string>) => void;
+}) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggleExpand(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleParent(parent: ParentAsset) {
+    const next = new Set(selectedIds);
+    const allChildIds = parent.children.map((c) => c.id);
+    const allSelected = selectedIds.has(parent.id) && allChildIds.every((cid) => selectedIds.has(cid));
+    if (allSelected) {
+      next.delete(parent.id);
+      for (const cid of allChildIds) next.delete(cid);
+    } else {
+      next.add(parent.id);
+      for (const cid of allChildIds) next.add(cid);
+    }
+    onChange(next);
+  }
+
+  function toggleChild(childId: string) {
+    const next = new Set(selectedIds);
+    if (next.has(childId)) next.delete(childId);
+    else next.add(childId);
+    onChange(next);
+  }
+
+  function parentCheckState(parent: ParentAsset): boolean | 'indeterminate' {
+    const allChildIds = parent.children.map((c) => c.id);
+    const parentChecked = selectedIds.has(parent.id);
+    if (allChildIds.length === 0) return parentChecked;
+    const checkedCount = allChildIds.filter((cid) => selectedIds.has(cid)).length;
+    if (!parentChecked && checkedCount === 0) return false;
+    if (parentChecked && checkedCount === allChildIds.length) return true;
+    return 'indeterminate';
+  }
+
+  return (
+    <div className="space-y-1 rounded-md border bg-background p-2">
+      {parents.map((parent) => {
+        const isExpanded = expanded.has(parent.id);
+        const cs = parentCheckState(parent);
+        return (
+          <div key={parent.id}>
+            <div className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50">
+              <Checkbox
+                checked={cs === true}
+                data-state={cs === 'indeterminate' ? 'indeterminate' : undefined}
+                onCheckedChange={() => toggleParent(parent)}
+                aria-label={parent.name}
+              />
+              <Package className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="flex-1 text-sm font-medium">{parent.name}</span>
+              {parent.children.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(parent.id)}
+                  className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                  <span>{parent.children.length}</span>
+                </button>
+              )}
+            </div>
+            {isExpanded && parent.children.length > 0 && (
+              <div className="ml-6 space-y-0.5 border-l pl-3 pt-0.5">
+                {parent.children.map((child) => (
+                  <div key={child.id} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50">
+                    <Checkbox
+                      checked={selectedIds.has(child.id)}
+                      onCheckedChange={() => toggleChild(child.id)}
+                      aria-label={child.name}
+                    />
+                    <span className="text-sm">{child.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }

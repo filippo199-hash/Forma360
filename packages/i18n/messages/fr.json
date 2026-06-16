@@ -848,6 +848,13 @@
           "noSites": "Aucun site disponible",
           "noResults": "Aucun site ne correspond à votre recherche",
           "loading": "Chargement des sites…"
+        },
+        "asset": {
+          "loading": "Chargement des actifs…",
+          "error": "Impossible de charger les actifs.",
+          "empty": "Aucun actif défini.",
+          "expand": "Afficher les sous-actifs",
+          "collapse": "Masquer les sous-actifs"
         }
       },
       "goToStatus": "Voir le statut et signer",
@@ -1186,7 +1193,8 @@
       "cancelButton": "Cancel",
       "submitButton": "Submit",
       "successToast": "Observation {ref} reported.",
-      "errorToast": "Could not report the observation. Please try again."
+      "errorToast": "Could not report the observation. Please try again.",
+      "assetsLabel": "Actifs"
     },
     "detail": {
       "backLink": "Back to observations",
@@ -1761,7 +1769,8 @@
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
       },
-      "labelNoneOption": "— Aucune étiquette —"
+      "labelNoneOption": "— Aucune étiquette —",
+      "assetsLabel": "Actifs"
     },
     "status": {
       "open": "Open",
@@ -2173,6 +2182,20 @@
         "actions": "No actions linked to this asset yet.",
         "inspections": "No inspections linked to this asset yet.",
         "observations": "No observations linked to this asset yet."
+      },
+      "empty": {
+        "actions": "Aucune action liée à cet actif.",
+        "inspections": "Aucune inspection liée à cet actif.",
+        "observations": "Aucune observation liée à cet actif."
+      },
+      "cols": {
+        "title": "Titre",
+        "status": "Statut",
+        "priority": "Priorité",
+        "dueAt": "Échéance",
+        "docNumber": "N° doc",
+        "startedAt": "Démarré",
+        "createdAt": "Créé"
       }
     }
   },

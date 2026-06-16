@@ -848,6 +848,13 @@
           "noSites": "Keine Standorte verfügbar",
           "noResults": "Keine Standorte entsprechen Ihrer Suche",
           "loading": "Standorte werden geladen…"
+        },
+        "asset": {
+          "loading": "Anlagen werden geladen…",
+          "error": "Anlagen konnten nicht geladen werden.",
+          "empty": "Noch keine Anlagen definiert.",
+          "expand": "Unteranlagen anzeigen",
+          "collapse": "Unteranlagen ausblenden"
         }
       },
       "goToStatus": "Status & Unterschrift ansehen",
@@ -1186,7 +1193,8 @@
       "cancelButton": "Cancel",
       "submitButton": "Submit",
       "successToast": "Observation {ref} reported.",
-      "errorToast": "Could not report the observation. Please try again."
+      "errorToast": "Could not report the observation. Please try again.",
+      "assetsLabel": "Anlagen"
     },
     "detail": {
       "backLink": "Back to observations",
@@ -1761,7 +1769,8 @@
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
       },
-      "labelNoneOption": "— Keine Bezeichnung —"
+      "labelNoneOption": "— Keine Bezeichnung —",
+      "assetsLabel": "Anlagen"
     },
     "status": {
       "open": "Open",
@@ -2173,6 +2182,20 @@
         "actions": "No actions linked to this asset yet.",
         "inspections": "No inspections linked to this asset yet.",
         "observations": "No observations linked to this asset yet."
+      },
+      "empty": {
+        "actions": "Noch keine Maßnahmen mit diesem Asset verknüpft.",
+        "inspections": "Noch keine Inspektionen mit diesem Asset verknüpft.",
+        "observations": "Noch keine Beobachtungen mit diesem Asset verknüpft."
+      },
+      "cols": {
+        "title": "Titel",
+        "status": "Status",
+        "priority": "Priorität",
+        "dueAt": "Fällig",
+        "docNumber": "Dok.-Nr.",
+        "startedAt": "Gestartet",
+        "createdAt": "Erstellt"
       }
     }
   },

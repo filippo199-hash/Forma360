@@ -841,6 +841,13 @@
         },
         "datetime": {
           "placeholder": "Select date & time"
+        },
+        "asset": {
+          "loading": "正在加载资产…",
+          "error": "无法加载资产。",
+          "empty": "尚未定义任何资产。",
+          "expand": "显示子资产",
+          "collapse": "隐藏子资产"
         }
       },
       "goToStatus": "查看状态与签名",
@@ -1179,7 +1186,8 @@
       "cancelButton": "Cancel",
       "submitButton": "Submit",
       "successToast": "Observation {ref} reported.",
-      "errorToast": "Could not report the observation. Please try again."
+      "errorToast": "Could not report the observation. Please try again.",
+      "assetsLabel": "资产"
     },
     "detail": {
       "backLink": "Back to observations",
@@ -1754,7 +1762,8 @@
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
       },
-      "labelNoneOption": "— 无标签 —"
+      "labelNoneOption": "— 无标签 —",
+      "assetsLabel": "资产"
     },
     "status": {
       "open": "Open",
@@ -2166,6 +2175,20 @@
         "actions": "No actions linked to this asset yet.",
         "inspections": "No inspections linked to this asset yet.",
         "observations": "No observations linked to this asset yet."
+      },
+      "empty": {
+        "actions": "尚无与此资产关联的操作。",
+        "inspections": "尚无与此资产关联的检查。",
+        "observations": "尚无与此资产关联的观察。"
+      },
+      "cols": {
+        "title": "标题",
+        "status": "状态",
+        "priority": "优先级",
+        "dueAt": "截止日期",
+        "docNumber": "文件编号",
+        "startedAt": "开始时间",
+        "createdAt": "创建时间"
       }
     }
   },

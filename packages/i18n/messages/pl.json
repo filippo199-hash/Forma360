@@ -841,6 +841,13 @@
         },
         "datetime": {
           "placeholder": "Select date & time"
+        },
+        "asset": {
+          "loading": "Ładowanie zasobów…",
+          "error": "Nie można załadować zasobów.",
+          "empty": "Brak zdefiniowanych zasobów.",
+          "expand": "Pokaż podzasoby",
+          "collapse": "Ukryj podzasoby"
         }
       },
       "goToStatus": "Zobacz status i podpisz",
@@ -1179,7 +1186,8 @@
       "cancelButton": "Cancel",
       "submitButton": "Submit",
       "successToast": "Observation {ref} reported.",
-      "errorToast": "Could not report the observation. Please try again."
+      "errorToast": "Could not report the observation. Please try again.",
+      "assetsLabel": "Zasoby"
     },
     "detail": {
       "backLink": "Back to observations",
@@ -1754,7 +1762,8 @@
         "heading": "Type-specific questions",
         "selectPlaceholder": "— Choose an option —"
       },
-      "labelNoneOption": "— Brak etykiety —"
+      "labelNoneOption": "— Brak etykiety —",
+      "assetsLabel": "Zasoby"
     },
     "status": {
       "open": "Open",
@@ -2166,6 +2175,20 @@
         "actions": "No actions linked to this asset yet.",
         "inspections": "No inspections linked to this asset yet.",
         "observations": "No observations linked to this asset yet."
+      },
+      "empty": {
+        "actions": "Brak akcji powiązanych z tym zasobem.",
+        "inspections": "Brak inspekcji powiązanych z tym zasobem.",
+        "observations": "Brak obserwacji powiązanych z tym zasobem."
+      },
+      "cols": {
+        "title": "Tytuł",
+        "status": "Status",
+        "priority": "Priorytet",
+        "dueAt": "Termin",
+        "docNumber": "Nr dok.",
+        "startedAt": "Rozpoczęto",
+        "createdAt": "Utworzono"
       }
     }
   },

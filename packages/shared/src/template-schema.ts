@@ -480,15 +480,15 @@ const rootSchema = z
     }
 
     // ── Title-page-only kinds live only on the title page ──
-    // Note: 'site' is intentionally excluded here — it is allowed both on
-    // the title page (auto-populated from the inspection) AND on regular
-    // inspection sections as a user-selectable site-picker question.
+    // Note: 'site' and 'asset' are intentionally excluded here — both are
+    // allowed on the title page AND as regular question response types.
+    // 'site' auto-populates the inspection's site; 'asset' lets inspectors
+    // multi-select assets they inspected.
     const titlePageOnly = new Set([
       'conductedBy',
       'inspectionDate',
       'documentNumber',
       'location',
-      'asset',
       'company',
     ]);
     for (const page of content.pages) {

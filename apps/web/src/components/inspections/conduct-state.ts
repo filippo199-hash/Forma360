@@ -207,6 +207,7 @@ function isResponseRequirable(item: Item): boolean {
     case 'checkbox':
     case 'slider':
     case 'media':
+    case 'asset':
       return true;
     // Signatures are enforced by the signatures router; autopopulated
     // fields (conductedBy/inspectionDate/documentNumber) don't need a
@@ -220,6 +221,14 @@ function isResponseRequirable(item: Item): boolean {
 function hasValue(v: unknown): boolean {
   if (v === undefined || v === null || v === '') return false;
   if (Array.isArray(v) && v.length === 0) return false;
+  if (
+    typeof v === 'object' &&
+    !Array.isArray(v) &&
+    'assetIds' in v &&
+    Array.isArray((v as { assetIds: unknown }).assetIds) &&
+    (v as { assetIds: unknown[] }).assetIds.length === 0
+  )
+    return false;
   return true;
 }
 

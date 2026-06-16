@@ -31,6 +31,7 @@ import {
   uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { assets } from './assets';
 import { sites } from './sites';
 import { templates, templateVersions } from './templates';
 import { tenants } from './tenants';
@@ -338,3 +339,36 @@ export const inspectionWorkflowSigners = pgTable(
 
 export type InspectionWorkflowSigner = typeof inspectionWorkflowSigners.$inferSelect;
 export type NewInspectionWorkflowSigner = typeof inspectionWorkflowSigners.$inferInsert;
+
+/**
+ * Denormalised asset-selection index for "asset" question responses.
+ *
+ * One row per (inspection, question, asset). Written by
+ * `inspections.saveProgress` whenever the response map contains an
+ * answer to a question of type `'asset'`. Lets the asset detail page
+ * efficiently list every inspection that tagged a specific asset without
+ * scanning the JSONB `responses` column.
+ */
+export const inspectionAssetSelections = pgTable(
+  'inspection_asset_selections',
+  {
+    id: text('id').primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    inspectionId: varchar('inspection_id', { length: 26 })
+      .notNull()
+      .references(() => inspections.id, { onDelete: 'cascade' }),
+    questionId: text('question_id').notNull(),
+    assetId: text('asset_id')
+      .notNull()
+      .references(() => assets.id, { onDelete: 'cascade' }),
+  },
+  (t) => [
+    uniqueIndex('ias_insp_q_asset_uniq').on(t.inspectionId, t.questionId, t.assetId),
+    index('ias_asset_tenant_idx').on(t.tenantId, t.assetId),
+    index('ias_inspection_idx').on(t.inspectionId),
+  ],
+);
+
+export type InspectionAssetSelection = typeof inspectionAssetSelections.$inferSelect;

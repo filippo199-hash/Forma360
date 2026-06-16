@@ -34,6 +34,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { accessRules } from './accessRules';
+import { assets } from './assets';
 import { user } from './auth';
 import { sites } from './sites';
 import { tenants } from './tenants';
@@ -376,3 +377,26 @@ export const issueActivity = pgTable(
 
 export type IssueActivity = typeof issueActivity.$inferSelect;
 export type NewIssueActivity = typeof issueActivity.$inferInsert;
+
+/** Assets explicitly linked to an observation/issue. */
+export const issueAssets = pgTable(
+  'issue_assets',
+  {
+    id: text('id').primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    issueId: varchar('issue_id', { length: 26 })
+      .notNull()
+      .references(() => issues.id, { onDelete: 'cascade' }),
+    assetId: text('asset_id')
+      .notNull()
+      .references(() => assets.id, { onDelete: 'cascade' }),
+  },
+  (t) => [
+    uniqueIndex('ia_issue_asset_uniq').on(t.issueId, t.assetId),
+    index('ia_asset_tenant_idx').on(t.tenantId, t.assetId),
+  ],
+);
+
+export type IssueAsset = typeof issueAssets.$inferSelect;

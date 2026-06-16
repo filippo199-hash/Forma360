@@ -49,6 +49,7 @@ import type {
   RecurrenceConfig,
   TransitionRules,
 } from '@forma360/shared/actions-schema';
+import { assets } from './assets';
 import { sites } from './sites';
 import { tenants } from './tenants';
 import { user } from './auth';
@@ -374,3 +375,26 @@ export const actionComments = pgTable(
 
 export type ActionComment = typeof actionComments.$inferSelect;
 export type NewActionComment = typeof actionComments.$inferInsert;
+
+/** Assets explicitly linked to an action. */
+export const actionAssets = pgTable(
+  'action_assets',
+  {
+    id: text('id').primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    actionId: varchar('action_id', { length: 26 })
+      .notNull()
+      .references(() => actions.id, { onDelete: 'cascade' }),
+    assetId: text('asset_id')
+      .notNull()
+      .references(() => assets.id, { onDelete: 'cascade' }),
+  },
+  (t) => [
+    uniqueIndex('aa_action_asset_uniq').on(t.actionId, t.assetId),
+    index('aa_asset_tenant_idx').on(t.tenantId, t.assetId),
+  ],
+);
+
+export type ActionAsset = typeof actionAssets.$inferSelect;
