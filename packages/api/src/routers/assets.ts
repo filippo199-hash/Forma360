@@ -109,6 +109,7 @@ export const assetsRouter = router({
           parentId: assets.parentId,
           qrToken: assets.qrToken,
           customFieldValues: assets.customFieldValues,
+          photoKey: assets.photoKey,
           createdAt: assets.createdAt,
           updatedAt: assets.updatedAt,
           archivedAt: assets.archivedAt,

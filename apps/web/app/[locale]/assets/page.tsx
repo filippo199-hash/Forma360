@@ -1,6 +1,6 @@
 'use client';
 
-import { FolderCog, Plus, QrCode } from 'lucide-react';
+import { FolderCog, ImageIcon, Plus, QrCode } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -109,6 +109,7 @@ export default function AssetsListPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
+                  <th className="w-12 px-3 py-2" />
                   <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
@@ -122,6 +123,20 @@ export default function AssetsListPage() {
                     key={row.id}
                     className={`border-b last:border-0 hover:bg-muted/30 ${row.archivedAt !== null ? 'opacity-60' : ''}`}
                   >
+                    <td className="px-3 py-2">
+                      {row.photoKey !== null ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={`/api/files?key=${encodeURIComponent(row.photoKey)}`}
+                          alt=""
+                          className="h-9 w-9 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted">
+                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </td>
                     <td className="px-3 py-2 font-medium">
                       <Link
                         href={`/${locale}/assets/${row.id}`}
