@@ -67,7 +67,7 @@ export function AiChat() {
   );
 
   useEffect(() => {
-    if (convMessages && activeConvId) {
+    if (convMessages && activeConvId && !streaming) {
       setMessages(
         convMessages.map((m) => ({
           id: m.id,
@@ -76,7 +76,7 @@ export function AiChat() {
         })),
       );
     }
-  }, [convMessages, activeConvId]);
+  }, [convMessages, activeConvId, streaming]);
 
   const send = useCallback(async () => {
     const text = input.trim();
