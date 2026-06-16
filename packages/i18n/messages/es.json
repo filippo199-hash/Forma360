@@ -17,7 +17,9 @@
     "back": "Back",
     "search": "Search",
     "theme": {
-      "toggle": "Toggle theme"
+      "toggle": "Cambiar tema",
+      "switchDark": "Modo oscuro",
+      "switchLight": "Modo claro"
     },
     "locale": {
       "switch": "Change language"
@@ -2463,6 +2465,31 @@
         },
         "clauseRefPlaceholder": "e.g. ISO 45001 §6.1.2"
       }
+    }
+  },
+  "search": {
+    "openLabel": "Abrir busqueda",
+    "dialogLabel": "Busqueda global",
+    "placeholder": "Buscar...",
+    "inputPlaceholder": "Buscar activos, inspecciones, acciones...",
+    "clearLabel": "Borrar busqueda",
+    "closeLabel": "Cerrar busqueda",
+    "quickAccess": "Acceso rapido",
+    "typeMore": "Escribe al menos 2 caracteres para buscar",
+    "searching": "Buscando...",
+    "noResults": "No se encontraron resultados",
+    "noResultsHint": "Prueba con otras palabras para \"{query}\"",
+    "hintNavigate": "para navegar",
+    "hintOpen": "para abrir",
+    "hintClose": "para cerrar",
+    "categories": {
+      "assets": "Activos",
+      "inspections": "Inspecciones",
+      "observations": "Observaciones",
+      "actions": "Acciones",
+      "headsUp": "Avisos",
+      "documents": "Documentos",
+      "compliance": "Cumplimiento"
     }
   }
 }

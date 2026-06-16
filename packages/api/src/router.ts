@@ -42,6 +42,7 @@ import {
 import { createIssuesRouter, type IssuesRouterDeps } from './routers/issues';
 import { maintenancePlansRouter } from './routers/maintenancePlans';
 import { createComplianceRouter, type ComplianceRouterDeps } from './routers/compliance';
+import { searchRouter } from './routers/search';
 import { schedulesRouter } from './routers/schedules';
 import { signaturesRouter } from './routers/signatures';
 import { router } from './trpc';
@@ -93,6 +94,7 @@ export function buildAppRouter(deps: {
     documentLabels: documentLabelsRouter,
     documents: documentsRouter,
     compliance: createComplianceRouter(deps.compliance),
+    search: searchRouter,
   });
 }
 

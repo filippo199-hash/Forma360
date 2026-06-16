@@ -17,7 +17,9 @@
     "back": "Back",
     "search": "Search",
     "theme": {
-      "toggle": "Toggle theme"
+      "toggle": "Alternar tema",
+      "switchDark": "Modo escuro",
+      "switchLight": "Modo claro"
     },
     "locale": {
       "switch": "Change language"
@@ -2456,6 +2458,31 @@
         },
         "clauseRefPlaceholder": "e.g. ISO 45001 §6.1.2"
       }
+    }
+  },
+  "search": {
+    "openLabel": "Abrir pesquisa",
+    "dialogLabel": "Pesquisa global",
+    "placeholder": "Pesquisar...",
+    "inputPlaceholder": "Pesquisar ativos, inspecoes, acoes...",
+    "clearLabel": "Limpar",
+    "closeLabel": "Fechar",
+    "quickAccess": "Acesso rapido",
+    "typeMore": "Digite pelo menos 2 caracteres",
+    "searching": "Pesquisando...",
+    "noResults": "Nenhum resultado",
+    "noResultsHint": "Tente outras palavras para \"{query}\"",
+    "hintNavigate": "para navegar",
+    "hintOpen": "para abrir",
+    "hintClose": "para fechar",
+    "categories": {
+      "assets": "Ativos",
+      "inspections": "Inspecoes",
+      "observations": "Observacoes",
+      "actions": "Acoes",
+      "headsUp": "Avisos",
+      "documents": "Documentos",
+      "compliance": "Conformidade"
     }
   }
 }

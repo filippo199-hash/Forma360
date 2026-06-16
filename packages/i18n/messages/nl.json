@@ -17,7 +17,9 @@
     "back": "Back",
     "search": "Search",
     "theme": {
-      "toggle": "Toggle theme"
+      "toggle": "Thema wisselen",
+      "switchDark": "Donkere modus",
+      "switchLight": "Lichte modus"
     },
     "locale": {
       "switch": "Change language"
@@ -2456,6 +2458,31 @@
         },
         "clauseRefPlaceholder": "e.g. ISO 45001 §6.1.2"
       }
+    }
+  },
+  "search": {
+    "openLabel": "Zoeken openen",
+    "dialogLabel": "Globaal zoeken",
+    "placeholder": "Zoeken...",
+    "inputPlaceholder": "Zoek assets, inspecties, acties...",
+    "clearLabel": "Wissen",
+    "closeLabel": "Sluiten",
+    "quickAccess": "Snelle toegang",
+    "typeMore": "Typ minimaal 2 tekens om te zoeken",
+    "searching": "Zoeken...",
+    "noResults": "Geen resultaten",
+    "noResultsHint": "Probeer andere zoektermen voor \"{query}\"",
+    "hintNavigate": "om te navigeren",
+    "hintOpen": "om te openen",
+    "hintClose": "om te sluiten",
+    "categories": {
+      "assets": "Assets",
+      "inspections": "Inspecties",
+      "observations": "Observaties",
+      "actions": "Acties",
+      "headsUp": "Berichten",
+      "documents": "Documenten",
+      "compliance": "Naleving"
     }
   }
 }

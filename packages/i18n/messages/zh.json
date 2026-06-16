@@ -17,7 +17,9 @@
     "back": "Back",
     "search": "Search",
     "theme": {
-      "toggle": "Toggle theme"
+      "toggle": "切换主题",
+      "switchDark": "深色模式",
+      "switchLight": "浅色模式"
     },
     "locale": {
       "switch": "Change language"
@@ -2456,6 +2458,31 @@
         },
         "clauseRefPlaceholder": "e.g. ISO 45001 §6.1.2"
       }
+    }
+  },
+  "search": {
+    "openLabel": "打开搜索",
+    "dialogLabel": "全局搜索",
+    "placeholder": "搜索...",
+    "inputPlaceholder": "搜索资产、检查、行动...",
+    "clearLabel": "清除",
+    "closeLabel": "关闭",
+    "quickAccess": "快速访问",
+    "typeMore": "请输入至少2个字符",
+    "searching": "搜索中...",
+    "noResults": "未找到结果",
+    "noResultsHint": "请尝试其他关键词",
+    "hintNavigate": "导航",
+    "hintOpen": "打开",
+    "hintClose": "关闭",
+    "categories": {
+      "assets": "资产",
+      "inspections": "检查",
+      "observations": "观察",
+      "actions": "行动",
+      "headsUp": "通知",
+      "documents": "文件",
+      "compliance": "合规"
     }
   }
 }

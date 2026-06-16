@@ -17,7 +17,9 @@
     "back": "Back",
     "search": "Search",
     "theme": {
-      "toggle": "Toggle theme"
+      "toggle": "テーマ切替",
+      "switchDark": "ダークモード",
+      "switchLight": "ライトモード"
     },
     "locale": {
       "switch": "Change language"
@@ -2456,6 +2458,31 @@
         },
         "clauseRefPlaceholder": "e.g. ISO 45001 §6.1.2"
       }
+    }
+  },
+  "search": {
+    "openLabel": "検索を開く",
+    "dialogLabel": "グローバル検索",
+    "placeholder": "検索...",
+    "inputPlaceholder": "資産、検査、アクションを検索...",
+    "clearLabel": "クリア",
+    "closeLabel": "閉じる",
+    "quickAccess": "クイックアクセス",
+    "typeMore": "2文字以上入力してください",
+    "searching": "検索中...",
+    "noResults": "結果なし",
+    "noResultsHint": "別のキーワードを試してください",
+    "hintNavigate": "ナビゲート",
+    "hintOpen": "開く",
+    "hintClose": "閉じる",
+    "categories": {
+      "assets": "資産",
+      "inspections": "検査",
+      "observations": "観察",
+      "actions": "アクション",
+      "headsUp": "お知らせ",
+      "documents": "文書",
+      "compliance": "コンプライアンス"
     }
   }
 }

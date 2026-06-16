@@ -17,7 +17,9 @@
     "back": "Back",
     "search": "Search",
     "theme": {
-      "toggle": "Toggle theme"
+      "toggle": "Toggle theme",
+      "switchDark": "Switch to dark mode",
+      "switchLight": "Switch to light mode"
     },
     "locale": {
       "switch": "Change language"
@@ -2781,6 +2783,31 @@
           "manualValidityDays": "Attestation validity (days)"
         }
       }
+    }
+  },
+  "search": {
+    "openLabel": "Open search",
+    "dialogLabel": "Global search",
+    "placeholder": "Search...",
+    "inputPlaceholder": "Search assets, inspections, actions...",
+    "clearLabel": "Clear search",
+    "closeLabel": "Close search",
+    "quickAccess": "Quick access",
+    "typeMore": "Type at least 2 characters to search",
+    "searching": "Searching...",
+    "noResults": "No results found",
+    "noResultsHint": "Try different keywords for \"{query}\"",
+    "hintNavigate": "to navigate",
+    "hintOpen": "to open",
+    "hintClose": "to close",
+    "categories": {
+      "assets": "Assets",
+      "inspections": "Inspections",
+      "observations": "Observations",
+      "actions": "Actions",
+      "headsUp": "Heads Up",
+      "documents": "Documents",
+      "compliance": "Compliance"
     }
   }
 }
