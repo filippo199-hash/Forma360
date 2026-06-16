@@ -998,7 +998,8 @@
     "headsUp": "Heads Up",
     "assets": "Assets",
     "maintenance": "Maintenance",
-    "documents": "Documents"
+    "documents": "Documents",
+    "ai": "AI助手"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2395,5 +2396,19 @@
       "headsUp": "通知",
       "documents": "文件"
     }
+  },
+  "ai": {
+    "emptyTitle": "我能帮您什么？",
+    "emptySubtitle": "请向我询问有关检查、问题、行动、资产或文档的任何问题。",
+    "inputPlaceholder": "询问有关公司数据的问题…",
+    "send": "发送消息",
+    "thinking": "思考中…",
+    "lookingUp": "查找 {tool}…",
+    "streamError": "出现错误，请重试。",
+    "disclaimer": "AI 回答可能并不总是准确的。请核实重要信息。",
+    "historyTitle": "对话",
+    "newChat": "新建",
+    "noHistory": "没有历史对话。",
+    "deleteConversation": "删除对话"
   }
 }

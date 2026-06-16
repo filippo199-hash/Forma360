@@ -17,6 +17,7 @@ const validServerEnv = {
   RESEND_FROM: 'Forma360 <noreply@forma360.dev>',
   EMAIL_DELIVERY: 'console',
   RENDER_SHARED_SECRET: 'r'.repeat(32),
+  ANTHROPIC_API_KEY: 'sk-ant-test-key',
   LOG_LEVEL: 'info',
 } as const;
 

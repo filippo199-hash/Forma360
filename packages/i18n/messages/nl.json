@@ -998,7 +998,8 @@
     "headsUp": "Heads Up",
     "assets": "Assets",
     "maintenance": "Maintenance",
-    "documents": "Documents"
+    "documents": "Documents",
+    "ai": "AI-assistent"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2395,5 +2396,19 @@
       "headsUp": "Berichten",
       "documents": "Documenten"
     }
+  },
+  "ai": {
+    "emptyTitle": "Hoe kan ik helpen?",
+    "emptySubtitle": "Vraag me alles over uw inspecties, problemen, acties, activa of documenten.",
+    "inputPlaceholder": "Stel een vraag over uw bedrijfsgegevens…",
+    "send": "Bericht versturen",
+    "thinking": "Nadenken…",
+    "lookingUp": "{tool} opzoeken…",
+    "streamError": "Er ging iets fout. Probeer het opnieuw.",
+    "disclaimer": "AI-antwoorden zijn mogelijk niet altijd nauwkeurig. Verifieer belangrijke informatie.",
+    "historyTitle": "Gesprekken",
+    "newChat": "Nieuw",
+    "noHistory": "Geen eerdere gesprekken.",
+    "deleteConversation": "Gesprek verwijderen"
   }
 }

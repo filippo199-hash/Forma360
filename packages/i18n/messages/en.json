@@ -76,7 +76,22 @@
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Documents & Policies",
+    "ai": "AI Assistant",
     "settings": "Settings"
+  },
+  "ai": {
+    "emptyTitle": "How can I help?",
+    "emptySubtitle": "Ask me anything about your inspections, issues, actions, assets, or documents.",
+    "inputPlaceholder": "Ask a question about your company data…",
+    "send": "Send message",
+    "thinking": "Thinking…",
+    "lookingUp": "Looking up {tool}…",
+    "streamError": "Something went wrong. Please try again.",
+    "disclaimer": "AI responses may not always be accurate. Verify important information.",
+    "historyTitle": "Conversations",
+    "newChat": "New",
+    "noHistory": "No previous conversations.",
+    "deleteConversation": "Delete conversation"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

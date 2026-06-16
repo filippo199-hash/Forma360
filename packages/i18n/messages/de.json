@@ -1005,7 +1005,8 @@
     "headsUp": "Heads Up",
     "assets": "Assets",
     "maintenance": "Maintenance",
-    "documents": "Documents"
+    "documents": "Documents",
+    "ai": "KI-Assistent"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2402,5 +2403,19 @@
       "headsUp": "Hinweise",
       "documents": "Dokumente"
     }
+  },
+  "ai": {
+    "emptyTitle": "Wie kann ich helfen?",
+    "emptySubtitle": "Fragen Sie mich alles über Ihre Inspektionen, Probleme, Maßnahmen, Anlagen oder Dokumente.",
+    "inputPlaceholder": "Fragen Sie etwas über Ihre Unternehmensdaten…",
+    "send": "Nachricht senden",
+    "thinking": "Denke nach…",
+    "lookingUp": "Suche nach {tool}…",
+    "streamError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "disclaimer": "KI-Antworten sind möglicherweise nicht immer korrekt. Überprüfen Sie wichtige Informationen.",
+    "historyTitle": "Gespräche",
+    "newChat": "Neu",
+    "noHistory": "Keine früheren Gespräche.",
+    "deleteConversation": "Gespräch löschen"
   }
 }

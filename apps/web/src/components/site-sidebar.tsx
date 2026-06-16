@@ -3,6 +3,7 @@
 import {
   AlertTriangle,
   Bell,
+  Bot,
   ClipboardCheck,
   FolderOpen,
   ListChecks,
@@ -21,6 +22,7 @@ interface SiteSidebarProps {
 
 interface NavItem {
   key:
+    | 'ai'
     | 'inspections'
     | 'issues'
     | 'actions'
@@ -48,6 +50,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
   const pathname = usePathname();
 
   const primary: NavItem[] = [
+    { key: 'ai', href: `/${locale}/ai`, icon: Bot },
     { key: 'inspections', href: `/${locale}/inspections`, icon: ClipboardCheck },
     { key: 'issues', href: `/${locale}/observations`, icon: AlertTriangle },
     { key: 'actions', href: `/${locale}/actions`, icon: ListChecks },

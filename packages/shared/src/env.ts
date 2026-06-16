@@ -60,6 +60,12 @@ const serverSchemaBase = z.object({
       'RENDER_SHARED_SECRET must be at least 32 characters (generate with `openssl rand -hex 32`)',
     ),
 
+  /**
+   * Anthropic API key for the AI assistant feature.
+   * Generate at https://console.anthropic.com/
+   */
+  ANTHROPIC_API_KEY: z.string().min(1),
+
   SENTRY_DSN: z.string().url().optional(),
 
   LOG_LEVEL: logLevelSchema.default('info'),

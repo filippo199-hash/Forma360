@@ -21,3 +21,4 @@ export * from './issues';
 export * from './heads-ups';
 export * from './assets';
 export * from './documents';
+export * from './ai';

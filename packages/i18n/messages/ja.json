@@ -998,7 +998,8 @@
     "headsUp": "Heads Up",
     "assets": "Assets",
     "maintenance": "Maintenance",
-    "documents": "Documents"
+    "documents": "Documents",
+    "ai": "AIアシスタント"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2395,5 +2396,19 @@
       "headsUp": "お知らせ",
       "documents": "文書"
     }
+  },
+  "ai": {
+    "emptyTitle": "何かお手伝いできますか？",
+    "emptySubtitle": "検査、問題、アクション、資産、または文書について何でも質問してください。",
+    "inputPlaceholder": "会社のデータについて質問してください…",
+    "send": "メッセージを送信",
+    "thinking": "考え中…",
+    "lookingUp": "{tool}を検索中…",
+    "streamError": "エラーが発生しました。もう一度お試しください。",
+    "disclaimer": "AIの回答は常に正確とは限りません。重要な情報は確認してください。",
+    "historyTitle": "会話",
+    "newChat": "新規",
+    "noHistory": "以前の会話はありません。",
+    "deleteConversation": "会話を削除"
   }
 }

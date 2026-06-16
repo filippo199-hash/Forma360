@@ -998,7 +998,8 @@
     "headsUp": "Heads Up",
     "assets": "Assets",
     "maintenance": "Maintenance",
-    "documents": "Documents"
+    "documents": "Documents",
+    "ai": "Asystent AI"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2395,5 +2396,19 @@
       "headsUp": "Powiadomienia",
       "documents": "Dokumenty"
     }
+  },
+  "ai": {
+    "emptyTitle": "W czym mogę pomóc?",
+    "emptySubtitle": "Zapytaj mnie o swoje inspekcje, problemy, działania, zasoby lub dokumenty.",
+    "inputPlaceholder": "Zadaj pytanie dotyczące danych firmy…",
+    "send": "Wyślij wiadomość",
+    "thinking": "Myślę…",
+    "lookingUp": "Szukam {tool}…",
+    "streamError": "Coś poszło nie tak. Spróbuj ponownie.",
+    "disclaimer": "Odpowiedzi AI mogą nie zawsze być dokładne. Weryfikuj ważne informacje.",
+    "historyTitle": "Rozmowy",
+    "newChat": "Nowa",
+    "noHistory": "Brak poprzednich rozmów.",
+    "deleteConversation": "Usuń rozmowę"
   }
 }

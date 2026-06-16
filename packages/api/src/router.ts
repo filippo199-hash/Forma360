@@ -41,6 +41,7 @@ import {
 } from './routers/inspectionsExport';
 import { createIssuesRouter, type IssuesRouterDeps } from './routers/issues';
 import { maintenancePlansRouter } from './routers/maintenancePlans';
+import { aiAssistantRouter } from './routers/aiAssistant';
 import { searchRouter } from './routers/search';
 import { schedulesRouter } from './routers/schedules';
 import { signaturesRouter } from './routers/signatures';
@@ -92,6 +93,7 @@ export function buildAppRouter(deps: {
     documentLabels: documentLabelsRouter,
     documents: documentsRouter,
     search: searchRouter,
+    aiAssistant: aiAssistantRouter,
   });
 }
 
