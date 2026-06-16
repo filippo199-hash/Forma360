@@ -2287,13 +2287,22 @@
       "tabs": {
         "overview": "Overview",
         "readings": "Readings",
-        "maintenance": "Maintenance"
+        "maintenance": "Maintenance",
+        "media": "Media",
+        "actions": "Actions",
+        "inspections": "Inspections",
+        "observations": "Observations"
       },
       "fields": {
         "type": "Type",
         "site": "Site",
         "parent": "Parent",
-        "children": "Sub-assets"
+        "children": "Sub-assets",
+        "name": "Name",
+        "description": "Description",
+        "descriptionPlaceholder": "Add a description…",
+        "noType": "No type",
+        "noSite": "No site"
       },
       "readingColumns": {
         "field": "Field",
@@ -2301,6 +2310,22 @@
         "source": "Source",
         "capturedAt": "Captured",
         "capturedBy": "By"
+      },
+      "updateToast": "Asset updated",
+      "editHeading": "Edit asset",
+      "photoTooLarge": "Photo must be under 5 MB",
+      "photoUploadError": "Photo upload failed",
+      "media": {
+        "heading": "Photos",
+        "uploadPhoto": "Upload photo",
+        "changePhoto": "Change photo",
+        "removePhoto": "Remove photo",
+        "noPhoto": "No photos yet."
+      },
+      "stubs": {
+        "actions": "No actions linked to this asset yet.",
+        "inspections": "No inspections linked to this asset yet.",
+        "observations": "No observations linked to this asset yet."
       }
     }
   },

@@ -43,6 +43,7 @@ function generateQrToken(): string {
 
 const createInput = z.object({
   name: z.string().min(1).max(500),
+  description: z.string().max(2000).default(''),
   typeId: z.string().length(26).optional(),
   siteId: z.string().length(26).optional(),
   parentId: z.string().length(26).optional(),
@@ -53,6 +54,7 @@ const createInput = z.object({
 const updateInput = z.object({
   assetId: z.string().length(26),
   name: z.string().min(1).max(500).optional(),
+  description: z.string().max(2000).optional(),
   typeId: z.string().length(26).nullable().optional(),
   siteId: z.string().length(26).nullable().optional(),
   parentId: z.string().length(26).nullable().optional(),
@@ -190,6 +192,7 @@ export const assetsRouter = router({
         id,
         tenantId: ctx.tenantId,
         name: input.name,
+        description: input.description,
         typeId: input.typeId ?? null,
         siteId: input.siteId ?? null,
         parentId: input.parentId ?? null,
@@ -224,6 +227,7 @@ export const assetsRouter = router({
 
       const updates: Partial<typeof assets.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) updates.name = input.name;
+      if (input.description !== undefined) updates.description = input.description;
       if (input.typeId !== undefined) updates.typeId = input.typeId;
       if (input.siteId !== undefined) updates.siteId = input.siteId;
       if (input.parentId !== undefined) updates.parentId = input.parentId;

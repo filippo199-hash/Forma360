@@ -1,15 +1,24 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
+import {
+  ArrowLeft,
+  Camera,
+  ImageIcon,
+  Loader2,
+  Pencil,
+  X,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
+import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { Textarea } from '../../../../src/components/ui/textarea';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -23,7 +32,7 @@ const MAINTENANCE_STATUS_COLORS: Record<MaintenanceStatus, string> = {
   overdue: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100',
 };
 
-type Tab = 'overview' | 'readings' | 'maintenance';
+type Tab = 'overview' | 'readings' | 'maintenance' | 'media' | 'actions' | 'inspections' | 'observations';
 
 export default function AssetDetailPage() {
   const t = useTranslations('assets.detail');
@@ -38,21 +47,39 @@ export default function AssetDetailPage() {
   const canRecord = useHasPermission('assets.readings.record');
 
   const [tab, setTab] = useState<Tab>('overview');
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editTypeId, setEditTypeId] = useState<string>('');
+  const [editSiteId, setEditSiteId] = useState<string>('');
   const [readingFieldName, setReadingFieldName] = useState('');
   const [readingValue, setReadingValue] = useState('');
   const [readingUnit, setReadingUnit] = useState('');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = trpc.assets.get.useQuery({ assetId });
+  const { data: assetTypesList } = trpc.assetTypes.list.useQuery(undefined, { enabled: editing });
+  const { data: sitesList } = trpc.sites.list.useQuery(undefined, { enabled: editing });
   const { data: readingsData } = trpc.assets.readings.list.useQuery(
     { assetId },
     { enabled: tab === 'readings' },
   );
-
   const { data: maintenanceData, isLoading: maintenanceLoading } =
     trpc.maintenancePlans.listForAsset.useQuery(
       { assetId },
       { enabled: tab === 'maintenance' },
     );
+
+  const update = trpc.assets.update.useMutation({
+    onSuccess: () => {
+      toast.success(t('updateToast'));
+      setEditing(false);
+      void utils.assets.get.invalidate({ assetId });
+      void utils.assets.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
 
   const addReading = trpc.assets.readings.add.useMutation({
     onSuccess: () => {
@@ -82,12 +109,60 @@ export default function AssetDetailPage() {
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
+  function startEditing() {
+    if (data === undefined) return;
+    const { asset } = data;
+    setEditName(asset.name);
+    setEditDescription(asset.description ?? '');
+    setEditTypeId(asset.typeId ?? '');
+    setEditSiteId(asset.siteId ?? '');
+    setEditing(true);
+  }
+
+  function cancelEditing() {
+    setEditing(false);
+  }
+
+  function saveEditing() {
+    update.mutate({
+      assetId,
+      name: editName.trim(),
+      description: editDescription,
+      typeId: editTypeId === '' ? null : editTypeId,
+      siteId: editSiteId === '' ? null : editSiteId,
+    });
+  }
+
+  async function handlePhotoUpload(file: File) {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t('photoTooLarge'));
+      return;
+    }
+    setPhotoUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/documents/upload', { method: 'POST', body: form });
+      if (!res.ok) throw new Error('upload-failed');
+      const json = (await res.json()) as { storageKey: string };
+      update.mutate({ assetId, photoKey: json.storageKey });
+      void utils.assets.get.invalidate({ assetId });
+      void utils.assets.list.invalidate();
+    } catch {
+      toast.error(t('photoUploadError'));
+    } finally {
+      setPhotoUploading(false);
+    }
+  }
+
   if (isLoading || data === undefined) {
     return <Skeleton className="m-6 h-96 w-full" />;
   }
 
   const { asset, assetType, childrenCount, latestReadings } = data;
   const isArchived = asset.archivedAt !== null;
+
+  const TABS: Tab[] = ['overview', 'readings', 'maintenance', 'media', 'actions', 'inspections', 'observations'];
 
   return (
     <div className="space-y-6">
@@ -103,31 +178,56 @@ export default function AssetDetailPage() {
 
       <header className="space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">{asset.name}</h1>
-              {isArchived ? (
-                <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  {t('archivedBadge')}
-                </span>
+          <div className="flex items-start gap-3">
+            {/* Asset photo thumbnail in header */}
+            {asset.photoKey !== null ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`/api/files?key=${encodeURIComponent(asset.photoKey)}`}
+                alt=""
+                className="h-14 w-14 shrink-0 rounded-lg object-cover shadow-sm"
+              />
+            ) : (
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted shadow-sm">
+                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+              </div>
+            )}
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight">{asset.name}</h1>
+                {isArchived ? (
+                  <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    {t('archivedBadge')}
+                  </span>
+                ) : null}
+                {assetType !== null ? (
+                  <span className="rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
+                    {assetType.name}
+                  </span>
+                ) : null}
+              </div>
+              {asset.description !== '' ? (
+                <p className="mt-0.5 text-sm text-muted-foreground">{asset.description}</p>
               ) : null}
-              {assetType !== null ? (
-                <span className="rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
-                  {assetType.name}
-                </span>
+              {asset.qrToken !== null ? (
+                <p className="mt-1 font-mono text-xs text-muted-foreground">
+                  {t('qrLabel')}: {asset.qrToken}
+                </p>
               ) : null}
             </div>
-            {asset.qrToken !== null ? (
-              <p className="mt-1 font-mono text-xs text-muted-foreground">
-                {t('qrLabel')}: {asset.qrToken}
-              </p>
-            ) : null}
           </div>
           <div className="flex items-center gap-2">
+            {canManage && !editing ? (
+              <Button type="button" variant="outline" size="sm" onClick={startEditing}>
+                <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                {tCommon('edit')}
+              </Button>
+            ) : null}
             {canManage ? (
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={() => {
                   if (isArchived) restore.mutate({ assetId });
                   else archive.mutate({ assetId });
@@ -140,62 +240,141 @@ export default function AssetDetailPage() {
           </div>
         </div>
 
-        <nav className="flex gap-1 border-b">
-          {(['overview', 'readings', 'maintenance'] as const).map((t_) => (
+        <nav className="flex flex-wrap gap-1 border-b">
+          {TABS.map((t_) => (
             <TabButton
               key={t_}
               active={tab === t_}
-              onClick={() => setTab(t_)}
+              onClick={() => { setEditing(false); setTab(t_); }}
               label={t(`tabs.${t_}`)}
             />
           ))}
         </nav>
       </header>
 
+      {/* ── OVERVIEW ── */}
       {tab === 'overview' ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        editing ? (
           <Card>
-            <CardContent className="space-y-3 p-6 text-sm">
-              <h2 className="text-base font-semibold">{t('detailsHeading')}</h2>
-              <DetailRow label={t('fields.type')}>{assetType?.name ?? '—'}</DetailRow>
-              <DetailRow label={t('fields.site')}>{asset.siteId ?? '—'}</DetailRow>
-              {asset.parentId !== null ? (
-                <DetailRow label={t('fields.parent')}>
-                  <Link
-                    href={`/${locale}/assets/${asset.parentId}`}
-                    className="hover:underline"
+            <CardContent className="space-y-4 p-6">
+              <h2 className="text-base font-semibold">{t('editHeading')}</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="edit-name">{t('fields.name')}</Label>
+                  <Input
+                    id="edit-name"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    maxLength={500}
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="edit-description">{t('fields.description')}</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    maxLength={2000}
+                    rows={3}
+                    placeholder={t('fields.descriptionPlaceholder')}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-type">{t('fields.type')}</Label>
+                  <select
+                    id="edit-type"
+                    value={editTypeId}
+                    onChange={(e) => setEditTypeId(e.target.value)}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    {asset.parentId.slice(-8)}
-                  </Link>
-                </DetailRow>
-              ) : null}
-              <DetailRow label={t('fields.children')}>{String(childrenCount)}</DetailRow>
+                    <option value="">{t('fields.noType')}</option>
+                    {(assetTypesList ?? []).map((at) => (
+                      <option key={at.id} value={at.id}>{at.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-site">{t('fields.site')}</Label>
+                  <select
+                    id="edit-site"
+                    value={editSiteId}
+                    onChange={(e) => setEditSiteId(e.target.value)}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">{t('fields.noSite')}</option>
+                    {(sitesList ?? []).map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="button"
+                  disabled={update.isPending || editName.trim().length === 0}
+                  onClick={saveEditing}
+                >
+                  {update.isPending ? (
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  ) : null}
+                  {tCommon('save')}
+                </Button>
+                <Button type="button" variant="ghost" onClick={cancelEditing}>
+                  <X className="mr-1.5 h-4 w-4" />
+                  {tCommon('cancel')}
+                </Button>
+              </div>
             </CardContent>
           </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardContent className="space-y-3 p-6 text-sm">
+                <h2 className="text-base font-semibold">{t('detailsHeading')}</h2>
+                {asset.description !== '' ? (
+                  <p className="text-muted-foreground">{asset.description}</p>
+                ) : null}
+                <DetailRow label={t('fields.type')}>{assetType?.name ?? '—'}</DetailRow>
+                <DetailRow label={t('fields.site')}>{asset.siteId ?? '—'}</DetailRow>
+                {asset.parentId !== null ? (
+                  <DetailRow label={t('fields.parent')}>
+                    <Link
+                      href={`/${locale}/assets/${asset.parentId}`}
+                      className="hover:underline"
+                    >
+                      {asset.parentId.slice(-8)}
+                    </Link>
+                  </DetailRow>
+                ) : null}
+                <DetailRow label={t('fields.children')}>{String(childrenCount)}</DetailRow>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="space-y-3 p-6 text-sm">
-              <h2 className="text-base font-semibold">{t('latestReadingsHeading')}</h2>
-              {latestReadings.length === 0 ? (
-                <p className="text-muted-foreground">{t('noReadings')}</p>
-              ) : (
-                latestReadings.map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
-                  >
-                    <span className="font-medium">{r.fieldName}</span>
-                    <span>
-                      {r.value} {r.unit}
-                    </span>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
+            <Card>
+              <CardContent className="space-y-3 p-6 text-sm">
+                <h2 className="text-base font-semibold">{t('latestReadingsHeading')}</h2>
+                {latestReadings.length === 0 ? (
+                  <p className="text-muted-foreground">{t('noReadings')}</p>
+                ) : (
+                  latestReadings.map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
+                    >
+                      <span className="font-medium">{r.fieldName}</span>
+                      <span>
+                        {r.value} {r.unit}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )
       ) : null}
 
+      {/* ── READINGS ── */}
       {tab === 'readings' ? (
         <div className="space-y-4">
           {canRecord && !isArchived ? (
@@ -291,6 +470,7 @@ export default function AssetDetailPage() {
         </div>
       ) : null}
 
+      {/* ── MAINTENANCE ── */}
       {tab === 'maintenance' ? (
         <div className="space-y-4">
           {maintenanceLoading ? (
@@ -341,6 +521,101 @@ export default function AssetDetailPage() {
             </Card>
           )}
         </div>
+      ) : null}
+
+      {/* ── MEDIA ── */}
+      {tab === 'media' ? (
+        <div className="space-y-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-base font-semibold">{t('media.heading')}</h2>
+                {canManage && !isArchived ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={photoUploading || update.isPending}
+                    onClick={() => photoInputRef.current?.click()}
+                  >
+                    {photoUploading ? (
+                      <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="mr-1.5 h-4 w-4" />
+                    )}
+                    {asset.photoKey !== null ? t('media.changePhoto') : t('media.uploadPhoto')}
+                  </Button>
+                ) : null}
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file !== undefined) void handlePhotoUpload(file);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+
+              {asset.photoKey !== null ? (
+                <div className="flex flex-wrap gap-4">
+                  <div className="group relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/api/files?key=${encodeURIComponent(asset.photoKey)}`}
+                      alt={asset.name}
+                      className="h-48 w-48 rounded-lg object-cover shadow-sm"
+                    />
+                    {canManage && !isArchived ? (
+                      <button
+                        type="button"
+                        aria-label={t('media.removePhoto')}
+                        onClick={() => update.mutate({ assetId, photoKey: null })}
+                        className="absolute right-1.5 top-1.5 hidden rounded-full bg-background/80 p-1 shadow group-hover:flex"
+                      >
+                        <X className="h-3.5 w-3.5 text-destructive" />
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-lg border border-dashed text-muted-foreground">
+                  <ImageIcon className="h-8 w-8" />
+                  <p className="text-sm">{t('media.noPhoto')}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
+      {/* ── ACTIONS (stub) ── */}
+      {tab === 'actions' ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <p className="text-sm">{t('stubs.actions')}</p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* ── INSPECTIONS (stub) ── */}
+      {tab === 'inspections' ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <p className="text-sm">{t('stubs.inspections')}</p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* ── OBSERVATIONS (stub) ── */}
+      {tab === 'observations' ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <p className="text-sm">{t('stubs.observations')}</p>
+          </CardContent>
+        </Card>
       ) : null}
     </div>
   );

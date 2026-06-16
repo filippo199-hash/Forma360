@@ -65,6 +65,7 @@ export const assets = pgTable(
       .notNull()
       .references(() => tenants.id),
     name: text('name').notNull(),
+    description: text('description').notNull().default(''),
     typeId: text('type_id').references(() => assetTypes.id),
     siteId: text('site_id'),
     parentId: text('parent_id'),
