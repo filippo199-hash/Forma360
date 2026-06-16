@@ -114,6 +114,7 @@ const OTHER_TYPES: ReadonlyArray<{
   { type: 'site', icon: <MapPin className="h-4 w-4 text-rose-500" /> },
   { type: 'location', icon: <MapPin className="h-4 w-4 text-orange-500" /> },
   { type: 'instruction', icon: <Info className="h-4 w-4 text-blue-400" /> },
+  { type: 'asset', icon: <Box className="h-4 w-4 text-yellow-600" /> },
 ] as const;
 
 // ─── Type-chip catalogue (colored squares on each question row) ──────────────
