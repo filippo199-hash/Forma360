@@ -232,16 +232,6 @@ export default function ObservationDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href={`/${locale}/observations`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('backLink')}
-        </Link>
-      </div>
-
       <header className="space-y-3">
         {breadcrumb}
         <div className="flex flex-wrap items-start justify-between gap-3">

@@ -124,6 +124,28 @@ export const issueCategories = pgTable(
     notificationRule: varchar('notification_rule', { length: 20 }).notNull().default('summary'),
     criticalAlerts: boolean('critical_alerts').notNull().default(false),
 
+    /**
+     * Recipient spec for regular notifications (matching `recipientSpec` on
+     * heads-ups): `{ broadcastToAll, groupIds, siteIds, userIds }`. Null
+     * means fall back to broadcasting to all tenant admins.
+     */
+    notificationRecipientSpec: jsonb('notification_recipient_spec').$type<{
+      broadcastToAll: boolean;
+      groupIds: string[];
+      siteIds: string[];
+      userIds: string[];
+    } | null>(),
+    /**
+     * Same shape — recipient spec for critical alerts (if `criticalAlerts`
+     * is true). Null = all admins.
+     */
+    criticalAlertRecipientSpec: jsonb('critical_alert_recipient_spec').$type<{
+      broadcastToAll: boolean;
+      groupIds: string[];
+      siteIds: string[];
+      userIds: string[];
+    } | null>(),
+
     /** Template ids that may pull this category's metadata in (Phase 3+). */
     linkedTemplateIds: jsonb('linked_template_ids')
       .notNull()

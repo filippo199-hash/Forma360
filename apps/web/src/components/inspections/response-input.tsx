@@ -1,10 +1,10 @@
 'use client';
 
 import type { CustomResponseSet, Item } from '@forma360/shared/template-schema';
+import { Image as ImageIcon, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
@@ -398,6 +398,37 @@ function SliderInput({
   );
 }
 
+/**
+ * Thumbnail for a single uploaded media item. Attempts to render the key
+ * as an image via the files proxy; falls back to a generic icon if the
+ * response is not an image (videos, PDFs, etc.).
+ */
+function MediaThumb({ storageKey }: { storageKey: string }) {
+  const [imgError, setImgError] = useState(false);
+  const src = `/api/files?key=${encodeURIComponent(storageKey)}`;
+  const filename = storageKey.split('/').at(-1) ?? storageKey;
+
+  if (!imgError) {
+    return (
+      <div className="aspect-square overflow-hidden rounded-md border bg-muted">
+        <img
+          src={src}
+          alt={filename}
+          className="h-full w-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex aspect-square flex-col items-center justify-center gap-1 overflow-hidden rounded-md border bg-muted text-muted-foreground">
+      <ImageIcon className="h-6 w-6" />
+      <span className="max-w-full truncate px-1 text-xs">{filename}</span>
+    </div>
+  );
+}
+
 function MediaInput({
   item,
   readonly,
@@ -466,28 +497,23 @@ function MediaInput({
         <span>{uploading ? t('uploading') : t('upload')}</span>
       </label>
       {keys.length > 0 ? (
-        <>
-          <p className="text-xs text-muted-foreground">{t('uploaded', { count: keys.length })}</p>
-          <ul className="space-y-1">
-            {keys.map((k) => (
-              <li
-                key={k}
-                className="flex items-center justify-between gap-2 rounded-md border bg-muted/30 px-2 py-1 text-xs"
-              >
-                <span className="truncate font-mono">{k}</span>
-                <Button
+        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {keys.map((k) => (
+            <li key={k} className="group relative">
+              <MediaThumb storageKey={k} />
+              {!readonly ? (
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
+                  aria-label={t('remove')}
                   onClick={() => remove(k)}
-                  disabled={readonly}
+                  className="absolute right-1 top-1 rounded-full bg-background/80 p-0.5 text-muted-foreground opacity-0 shadow transition-opacity hover:text-destructive group-hover:opacity-100"
                 >
-                  {t('remove')}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </>
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
       ) : null}
     </div>
   );

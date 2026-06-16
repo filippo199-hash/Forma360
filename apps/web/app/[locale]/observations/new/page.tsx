@@ -318,17 +318,27 @@ export default function NewObservationPage() {
                     </Button>
                   </div>
                   {pendingFiles.length > 0 ? (
-                    <ul className="mt-2 space-y-1">
+                    <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {pendingFiles.map((f) => (
-                        <li
-                          key={f.storageKey}
-                          className="flex items-center justify-between rounded-md border px-2 py-1 text-xs"
-                        >
-                          <span className="truncate">{f.filename}</span>
+                        <li key={f.storageKey} className="group relative">
+                          <div className="relative aspect-square overflow-hidden rounded-md border bg-muted">
+                            {f.mimeType.startsWith('image/') ? (
+                              <img
+                                src={`/api/files?key=${encodeURIComponent(f.storageKey)}`}
+                                alt={f.filename}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+                                <ImageIcon className="h-6 w-6" />
+                                <span className="max-w-full truncate px-1 text-xs">{f.filename}</span>
+                              </div>
+                            )}
+                          </div>
                           <button
                             type="button"
                             aria-label={tAttachments('deleteAction')}
-                            className="rounded p-1 text-muted-foreground hover:text-destructive"
+                            className="absolute right-1 top-1 rounded-full bg-background/80 p-0.5 text-muted-foreground opacity-0 shadow transition-opacity hover:text-destructive group-hover:opacity-100"
                             onClick={() =>
                               setPendingFiles((prev) =>
                                 prev.filter((x) => x.storageKey !== f.storageKey),
@@ -337,6 +347,9 @@ export default function NewObservationPage() {
                           >
                             <X className="h-3.5 w-3.5" />
                           </button>
+                          {f.mimeType.startsWith('image/') ? (
+                            <p className="mt-0.5 truncate text-xs text-muted-foreground">{f.filename}</p>
+                          ) : null}
                         </li>
                       ))}
                     </ul>

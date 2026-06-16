@@ -179,7 +179,7 @@ export default function NewMaintenancePlanPage() {
                     id="usage-unit"
                     value={usageUnit}
                     onChange={(e) => setUsageUnit(e.target.value)}
-                    placeholder="km"
+                    placeholder={t('fields.usageUnitPlaceholder')}
                     maxLength={50}
                   />
                 </div>
@@ -189,7 +189,7 @@ export default function NewMaintenancePlanPage() {
                     id="usage-field"
                     value={usageField}
                     onChange={(e) => setUsageField(e.target.value)}
-                    placeholder="odometer"
+                    placeholder={t('fields.usageFieldPlaceholder')}
                     maxLength={200}
                   />
                 </div>

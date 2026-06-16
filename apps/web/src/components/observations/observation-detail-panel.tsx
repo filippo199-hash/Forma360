@@ -226,9 +226,9 @@ export function ObservationDetailPanel({
 
           <div className="flex shrink-0 items-center gap-1">
             <Button variant="ghost" size="sm" asChild>
-              <Link href={`/${locale}/observations/${observationId}`} target="_blank">
+              <Link href={`/${locale}/observations/${observationId}`}>
                 <ExternalLink className="h-3.5 w-3.5" />
-                <span className="sr-only">{t('backLink')}</span>
+                <span className="sr-only">{t('openFullPage')}</span>
               </Link>
             </Button>
             {canManage ? (

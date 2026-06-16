@@ -16,7 +16,11 @@ import {
   customQuestionsAreValid,
   normaliseCustomQuestions,
 } from '../../../../../src/components/observations/custom-questions-editor';
-import { GroupPicker, SitePicker } from '../../../../../src/components/templates/audience-pickers';
+import {
+  GroupPicker,
+  SitePicker,
+  UserPicker,
+} from '../../../../../src/components/templates/audience-pickers';
 import { Button } from '../../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../../src/components/ui/card';
 import {
@@ -34,6 +38,20 @@ import { Switch } from '../../../../../src/components/ui/switch';
 import { Textarea } from '../../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
+
+type RecipientSpec = {
+  broadcastToAll: boolean;
+  groupIds: string[];
+  siteIds: string[];
+  userIds: string[];
+};
+
+const EMPTY_SPEC: RecipientSpec = {
+  broadcastToAll: true,
+  groupIds: [],
+  siteIds: [],
+  userIds: [],
+};
 
 const MAX_NAME = 200;
 const MAX_DESCRIPTION = 2000;
@@ -163,11 +181,27 @@ export default function CategoryDetailPage() {
           <NotificationsCard
             categoryId={categoryId}
             notificationRule={category.notificationRule as IssueNotificationRule}
+            notificationRecipientSpec={
+              (category.notificationRecipientSpec as {
+                broadcastToAll: boolean;
+                groupIds: string[];
+                siteIds: string[];
+                userIds: string[];
+              } | null) ?? null
+            }
             onSaved={invalidateCategory}
           />
           <CriticalAlertsCard
             categoryId={categoryId}
             criticalAlerts={category.criticalAlerts}
+            criticalAlertRecipientSpec={
+              (category.criticalAlertRecipientSpec as {
+                broadcastToAll: boolean;
+                groupIds: string[];
+                siteIds: string[];
+                userIds: string[];
+              } | null) ?? null
+            }
             onSaved={invalidateCategory}
           />
           <IssueFieldsCard
@@ -417,10 +451,12 @@ function CategoryDetailsCard({
 function NotificationsCard({
   categoryId,
   notificationRule,
+  notificationRecipientSpec,
   onSaved,
 }: {
   categoryId: string;
   notificationRule: IssueNotificationRule;
+  notificationRecipientSpec: RecipientSpec | null;
   onSaved: () => void;
 }) {
   const tDetail = useTranslations('issues.categories.detail');
@@ -428,8 +464,14 @@ function NotificationsCard({
   const tCommon = useTranslations('common');
 
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<IssueNotificationRule>(notificationRule);
-  useEffect(() => setDraft(notificationRule), [notificationRule]);
+  const [draftRule, setDraftRule] = useState<IssueNotificationRule>(notificationRule);
+  const [draftSpec, setDraftSpec] = useState<RecipientSpec>(
+    notificationRecipientSpec ?? EMPTY_SPEC,
+  );
+  useEffect(() => {
+    setDraftRule(notificationRule);
+    setDraftSpec(notificationRecipientSpec ?? EMPTY_SPEC);
+  }, [notificationRule, notificationRecipientSpec]);
 
   const update = trpc.issues.categories.update.useMutation({
     onSuccess: () => {
@@ -440,6 +482,23 @@ function NotificationsCard({
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
+  const effectiveSpec = notificationRecipientSpec ?? EMPTY_SPEC;
+  const recipientSummary = effectiveSpec.broadcastToAll
+    ? tDetail('notificationsCard.recipientsAll')
+    : [
+        effectiveSpec.groupIds.length > 0
+          ? `${effectiveSpec.groupIds.length} group${effectiveSpec.groupIds.length !== 1 ? 's' : ''}`
+          : null,
+        effectiveSpec.siteIds.length > 0
+          ? `${effectiveSpec.siteIds.length} site${effectiveSpec.siteIds.length !== 1 ? 's' : ''}`
+          : null,
+        effectiveSpec.userIds.length > 0
+          ? `${effectiveSpec.userIds.length} user${effectiveSpec.userIds.length !== 1 ? 's' : ''}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(', ') || tDetail('notificationsCard.recipientsNone');
+
   return (
     <CardShell
       title={tDetail('notificationsCard.title')}
@@ -447,19 +506,56 @@ function NotificationsCard({
       editing={editing}
       onEdit={() => setEditing(true)}
       onCancel={() => {
-        setDraft(notificationRule);
+        setDraftRule(notificationRule);
+        setDraftSpec(notificationRecipientSpec ?? EMPTY_SPEC);
         setEditing(false);
       }}
-      onSave={() => update.mutate({ categoryId, notificationRule: draft })}
-      saveDisabled={draft === notificationRule}
+      onSave={() =>
+        update.mutate({
+          categoryId,
+          notificationRule: draftRule,
+          notificationRecipientSpec: draftSpec,
+        })
+      }
+      saveDisabled={draftRule === notificationRule && draftSpec === (notificationRecipientSpec ?? EMPTY_SPEC)}
       saving={update.isPending}
     >
       <div className="space-y-4">
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label>{tDetail('notificationsCard.recipientsLabel')}</Label>
-          <p className="text-sm text-muted-foreground">
-            {tDetail('notificationsCard.recipientsPlaceholder')}
-          </p>
+          {editing ? (
+            <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={draftSpec.broadcastToAll}
+                  onChange={(e) =>
+                    setDraftSpec((prev) => ({ ...prev, broadcastToAll: e.target.checked }))
+                  }
+                  className="h-4 w-4 accent-primary"
+                />
+                {tDetail('notificationsCard.broadcastAll')}
+              </label>
+              {!draftSpec.broadcastToAll ? (
+                <div className="space-y-3 pl-2">
+                  <GroupPicker
+                    selected={draftSpec.groupIds}
+                    onChange={(ids) => setDraftSpec((prev) => ({ ...prev, groupIds: ids }))}
+                  />
+                  <SitePicker
+                    selected={draftSpec.siteIds}
+                    onChange={(ids) => setDraftSpec((prev) => ({ ...prev, siteIds: ids }))}
+                  />
+                  <UserPicker
+                    selected={draftSpec.userIds}
+                    onChange={(ids) => setDraftSpec((prev) => ({ ...prev, userIds: ids }))}
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">{recipientSummary}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -475,8 +571,8 @@ function NotificationsCard({
                     type="radio"
                     name="notif-rule"
                     value={rule}
-                    checked={draft === rule}
-                    onChange={() => setDraft(rule)}
+                    checked={draftRule === rule}
+                    onChange={() => setDraftRule(rule)}
                     className="mt-1 h-4 w-4 cursor-pointer accent-primary"
                   />
                   <div>
@@ -505,10 +601,12 @@ function NotificationsCard({
 function CriticalAlertsCard({
   categoryId,
   criticalAlerts,
+  criticalAlertRecipientSpec,
   onSaved,
 }: {
   categoryId: string;
   criticalAlerts: boolean;
+  criticalAlertRecipientSpec: RecipientSpec | null;
   onSaved: () => void;
 }) {
   const tDetail = useTranslations('issues.categories.detail');
@@ -516,8 +614,14 @@ function CriticalAlertsCard({
   const tCommon = useTranslations('common');
 
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(criticalAlerts);
-  useEffect(() => setDraft(criticalAlerts), [criticalAlerts]);
+  const [draftEnabled, setDraftEnabled] = useState(criticalAlerts);
+  const [draftSpec, setDraftSpec] = useState<RecipientSpec>(
+    criticalAlertRecipientSpec ?? EMPTY_SPEC,
+  );
+  useEffect(() => {
+    setDraftEnabled(criticalAlerts);
+    setDraftSpec(criticalAlertRecipientSpec ?? EMPTY_SPEC);
+  }, [criticalAlerts, criticalAlertRecipientSpec]);
 
   const update = trpc.issues.categories.update.useMutation({
     onSuccess: () => {
@@ -528,6 +632,23 @@ function CriticalAlertsCard({
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
+  const effectiveSpec = criticalAlertRecipientSpec ?? EMPTY_SPEC;
+  const recipientSummary = effectiveSpec.broadcastToAll
+    ? tDetail('notificationsCard.recipientsAll')
+    : [
+        effectiveSpec.groupIds.length > 0
+          ? `${effectiveSpec.groupIds.length} group${effectiveSpec.groupIds.length !== 1 ? 's' : ''}`
+          : null,
+        effectiveSpec.siteIds.length > 0
+          ? `${effectiveSpec.siteIds.length} site${effectiveSpec.siteIds.length !== 1 ? 's' : ''}`
+          : null,
+        effectiveSpec.userIds.length > 0
+          ? `${effectiveSpec.userIds.length} user${effectiveSpec.userIds.length !== 1 ? 's' : ''}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(', ') || tDetail('notificationsCard.recipientsNone');
+
   return (
     <CardShell
       title={tDetail('criticalCard.title')}
@@ -535,21 +656,72 @@ function CriticalAlertsCard({
       editing={editing}
       onEdit={() => setEditing(true)}
       onCancel={() => {
-        setDraft(criticalAlerts);
+        setDraftEnabled(criticalAlerts);
+        setDraftSpec(criticalAlertRecipientSpec ?? EMPTY_SPEC);
         setEditing(false);
       }}
-      onSave={() => update.mutate({ categoryId, criticalAlerts: draft })}
-      saveDisabled={draft === criticalAlerts}
+      onSave={() =>
+        update.mutate({
+          categoryId,
+          criticalAlerts: draftEnabled,
+          criticalAlertRecipientSpec: draftSpec,
+        })
+      }
+      saveDisabled={
+        draftEnabled === criticalAlerts &&
+        draftSpec === (criticalAlertRecipientSpec ?? EMPTY_SPEC)
+      }
       saving={update.isPending}
     >
-      <div className="flex items-center gap-3">
-        <Switch
-          id="cat-critical"
-          checked={editing ? draft : criticalAlerts}
-          onCheckedChange={(v) => setDraft(v)}
-          disabled={!editing}
-        />
-        <Label htmlFor="cat-critical">{tDetail('criticalCard.sendLabel')}</Label>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Switch
+            id="cat-critical"
+            checked={editing ? draftEnabled : criticalAlerts}
+            onCheckedChange={(v) => setDraftEnabled(v)}
+            disabled={!editing}
+          />
+          <Label htmlFor="cat-critical">{tDetail('criticalCard.sendLabel')}</Label>
+        </div>
+
+        {(editing ? draftEnabled : criticalAlerts) ? (
+          <div className="space-y-2">
+            <Label>{tDetail('notificationsCard.recipientsLabel')}</Label>
+            {editing ? (
+              <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+                <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={draftSpec.broadcastToAll}
+                    onChange={(e) =>
+                      setDraftSpec((prev) => ({ ...prev, broadcastToAll: e.target.checked }))
+                    }
+                    className="h-4 w-4 accent-primary"
+                  />
+                  {tDetail('notificationsCard.broadcastAll')}
+                </label>
+                {!draftSpec.broadcastToAll ? (
+                  <div className="space-y-3 pl-2">
+                    <GroupPicker
+                      selected={draftSpec.groupIds}
+                      onChange={(ids) => setDraftSpec((prev) => ({ ...prev, groupIds: ids }))}
+                    />
+                    <SitePicker
+                      selected={draftSpec.siteIds}
+                      onChange={(ids) => setDraftSpec((prev) => ({ ...prev, siteIds: ids }))}
+                    />
+                    <UserPicker
+                      selected={draftSpec.userIds}
+                      onChange={(ids) => setDraftSpec((prev) => ({ ...prev, userIds: ids }))}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">{recipientSummary}</p>
+            )}
+          </div>
+        ) : null}
       </div>
     </CardShell>
   );

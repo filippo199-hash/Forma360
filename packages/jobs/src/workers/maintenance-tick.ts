@@ -96,7 +96,8 @@ export function createMaintenanceTickHandler(deps: {
 
       // Build the dedup log for this due date.
       const rawLog = link.notificationsLog as Record<string, number[]> | null;
-      const sentForDue: number[] = Array.isArray(rawLog?.[dueDate]) ? (rawLog![dueDate] as number[]) : [];
+      const sentForDueRaw = rawLog !== null ? rawLog[dueDate] : undefined;
+      const sentForDue: number[] = Array.isArray(sentForDueRaw) ? (sentForDueRaw as number[]) : [];
 
       for (const daysBefore of notifDays) {
         // Notify on the exact day or on overdue (remaining <= 0) for the 0-day entry.

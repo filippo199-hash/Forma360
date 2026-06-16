@@ -103,6 +103,17 @@ const issueIdInput = z.object({ issueId: z.string().length(26) });
 
 const listCategoriesInput = z.object({ includeArchived: z.boolean().default(false) }).default({});
 
+/** Shared recipient-spec sub-schema (mirrors the heads-ups shape). */
+const notifRecipientSpecSchema = z
+  .object({
+    broadcastToAll: z.boolean().default(false),
+    groupIds: z.array(z.string().length(26)).default([]),
+    siteIds: z.array(z.string().length(26)).default([]),
+    userIds: z.array(z.string()).default([]),
+  })
+  .nullable()
+  .optional();
+
 const createCategoryInput = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(2000).optional(),
@@ -112,6 +123,8 @@ const createCategoryInput = z.object({
   notificationRule: z.enum(NOTIFICATION_RULES).optional(),
   criticalAlerts: z.boolean().optional(),
   linkedTemplateIds: z.array(z.string().length(26)).max(25).optional(),
+  notificationRecipientSpec: notifRecipientSpecSchema,
+  criticalAlertRecipientSpec: notifRecipientSpecSchema,
 });
 
 const updateCategoryInput = z.object({
@@ -125,6 +138,8 @@ const updateCategoryInput = z.object({
   criticalAlerts: z.boolean().optional(),
   linkedTemplateIds: z.array(z.string().length(26)).max(25).optional(),
   enabledBuiltInFields: issueEnabledBuiltInFieldsSchema.optional(),
+  notificationRecipientSpec: notifRecipientSpecSchema,
+  criticalAlertRecipientSpec: notifRecipientSpecSchema,
 });
 
 const listIssuesInput = z
@@ -439,6 +454,17 @@ export interface IssuesRouterDeps {
    * web app wires the real R2 storage; tests pass a stub.
    */
   storage: Pick<Storage, 'getSignedDownloadUrl'>;
+  /**
+   * Optional BullMQ enqueue hook for the observation-notify job. When
+   * provided, the recipient-spec fan-out is handled asynchronously by the
+   * worker; the old inline email path is skipped for created issues. If
+   * omitted (tests), the old `notifyManagersOfNewIssue` inline path runs.
+   */
+  enqueueObservationNotify?: (payload: {
+    tenantId: string;
+    issueId: string;
+    isCritical: boolean;
+  }) => Promise<void>;
 }
 
 export function createIssuesRouter(deps: IssuesRouterDeps) {
@@ -486,6 +512,8 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           notificationRule: input.notificationRule ?? 'summary',
           criticalAlerts: input.criticalAlerts ?? false,
           linkedTemplateIds: input.linkedTemplateIds ?? [],
+          notificationRecipientSpec: input.notificationRecipientSpec ?? null,
+          criticalAlertRecipientSpec: input.criticalAlertRecipientSpec ?? null,
           createdBy: ctx.auth.userId,
           createdAt: now,
           updatedAt: now,
@@ -515,6 +543,10 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           patch.linkedTemplateIds = input.linkedTemplateIds;
         if (input.enabledBuiltInFields !== undefined)
           patch.enabledBuiltInFields = input.enabledBuiltInFields;
+        if (input.notificationRecipientSpec !== undefined)
+          patch.notificationRecipientSpec = input.notificationRecipientSpec;
+        if (input.criticalAlertRecipientSpec !== undefined)
+          patch.criticalAlertRecipientSpec = input.criticalAlertRecipientSpec;
         await ctx.db.update(issueCategories).set(patch).where(eq(issueCategories.id, cat.id));
         return { ok: true as const };
       }),
@@ -812,13 +844,29 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           actorUserId: ctx.auth.userId,
           kind: 'created',
         });
-        // Email fan-out (best-effort).
-        await notifyManagersOfNewIssue({
-          db: ctx.db,
-          tenantId: ctx.tenantId,
-          issue,
-          category,
-        });
+        // Notification fan-out (best-effort).
+        if (deps.enqueueObservationNotify !== undefined) {
+          // New path: enqueue a BullMQ job so the worker resolves recipients
+          // from the category's recipient spec.
+          try {
+            await deps.enqueueObservationNotify({
+              tenantId: ctx.tenantId,
+              issueId: id,
+              isCritical: category.criticalAlerts,
+            });
+          } catch (err) {
+            ctx.logger.error({ err, issueId: id }, '[issues] failed to enqueue observation-notify');
+          }
+        } else {
+          // Legacy path (tests / environments without the queue): inline email
+          // to all users with issues.manage permission.
+          await notifyManagersOfNewIssue({
+            db: ctx.db,
+            tenantId: ctx.tenantId,
+            issue,
+            category,
+          });
+        }
 
         ctx.logger.info({ issueId: id, categoryId: category.id }, '[issues] created');
         return { issueId: id, referenceNumber };

@@ -1,0 +1,8 @@
+{
+  "subject": "⚠️ Critical alert: {referenceNumber} – {issueTitle}",
+  "preheader": "A critical observation has been reported and requires immediate attention.",
+  "greeting": "Critical observation reported — immediate attention required.",
+  "body": "Reference: {referenceNumber}\n\nTitle: {issueTitle}\n\nThis observation has been flagged as critical. Please open Forma360 immediately to review and respond.",
+  "cta": "View critical observation",
+  "footer": "You are receiving this critical alert because you are a recipient for this observation category."
+}

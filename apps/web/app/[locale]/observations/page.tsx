@@ -212,14 +212,26 @@ export default function ObservationsListPage() {
                 (data?.items ?? []).map((row) => (
                   <tr
                     key={row.id}
-                    className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
+                    className="border-b last:border-0 hover:bg-muted/30"
                     onClick={() => handleSelectObservation(row.id)}
                   >
                     <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
-                      {row.referenceNumber}
+                      <Link
+                        href={`/${locale}/observations/${row.id}`}
+                        className="hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {row.referenceNumber}
+                      </Link>
                     </td>
                     <td className="px-3 py-2">
-                      <span className="font-medium">{row.title}</span>
+                      <Link
+                        href={`/${locale}/observations/${row.id}`}
+                        className="font-medium hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {row.title}
+                      </Link>
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">{row.categorySnapshot.name}</td>
                     <td className="px-3 py-2 text-muted-foreground">

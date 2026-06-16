@@ -49,7 +49,7 @@ export default function NewActionPage() {
   const [actionTypeId, setActionTypeId] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<'' | Priority>('');
+  const [priority, setPriority] = useState<Priority>('low');
   const [dueAt, setDueAt] = useState('');
   const [siteId, setSiteId] = useState('');
   const [assigneeUserId, setAssigneeUserId] = useState('');
@@ -66,6 +66,19 @@ export default function NewActionPage() {
   // so we can update it transparently when the user changes priority, but
   // respect any date the user typed themselves.
   const [dueAtAutoSet, setDueAtAutoSet] = useState(false);
+
+  // When actionSettings first loads, auto-set the due date for the default
+  // priority ('low') so the field isn't left blank on page load.
+  useEffect(() => {
+    if (dueAt !== '' || actionSettings === undefined) return;
+    const days = actionSettings.priorityDueDateDays['low'] ?? 30;
+    if (days > 0) {
+      const d = new Date(Date.now() + days * 86_400_000);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      setDueAt(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+      setDueAtAutoSet(true);
+    }
+  }, [actionSettings]);
 
   const selectedType = useMemo(
     () => (types ?? []).find((tp) => tp.id === actionTypeId) ?? null,
@@ -107,7 +120,6 @@ export default function NewActionPage() {
 
   const requiredFieldsValid =
     (!isRequired('description') || description.trim() !== '') &&
-    (!isRequired('priority') || priority !== '') &&
     (!isRequired('dueDate') || dueAt !== '') &&
     (!isRequired('site') || siteId !== '') &&
     (!isRequired('assignee') || assigneeUserId !== '');
@@ -138,7 +150,7 @@ export default function NewActionPage() {
       customQuestionResponses?: Record<string, unknown>;
     } = { title: title.trim() };
     if (description.trim().length > 0) input.description = description.trim();
-    if (priority !== '') input.priority = priority;
+    input.priority = priority;
     if (dueAt !== '') input.dueAt = new Date(dueAt).toISOString();
     if (assigneeUserId !== '') input.assigneeUserId = assigneeUserId;
     if (siteId !== '') input.siteId = siteId;
@@ -221,27 +233,21 @@ export default function NewActionPage() {
                   id="priority"
                   value={priority}
                   onChange={(e) => {
-                    const next = e.target.value as '' | Priority;
+                    const next = e.target.value as Priority;
                     setPriority(next);
                     // Auto-compute due date from priority unless the user has set one manually.
                     if (dueAtAutoSet || dueAt === '') {
-                      if (next === '') {
-                        setDueAt('');
-                        setDueAtAutoSet(false);
-                      } else {
-                        const days = actionSettings?.priorityDueDateDays[next] ?? { low: 30, medium: 7, high: 1, critical: 1 }[next];
-                        if (days !== null && days !== undefined && days > 0) {
-                          const d = new Date(Date.now() + days * 86_400_000);
-                          const pad = (n: number) => String(n).padStart(2, '0');
-                          setDueAt(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
-                          setDueAtAutoSet(true);
-                        }
+                      const days = actionSettings?.priorityDueDateDays[next] ?? { low: 30, medium: 7, high: 1, critical: 1 }[next];
+                      if (days !== null && days !== undefined && days > 0) {
+                        const d = new Date(Date.now() + days * 86_400_000);
+                        const pad = (n: number) => String(n).padStart(2, '0');
+                        setDueAt(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+                        setDueAtAutoSet(true);
                       }
                     }
                   }}
                   className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="">{t('noPriority')}</option>
                   {PRIORITIES.map((p) => (
                     <option key={p} value={p}>
                       {tPriority(p)}
@@ -303,32 +309,34 @@ export default function NewActionPage() {
                 </select>
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="label">{t('labelLabel')}</Label>
-              {selectedType !== null && selectedType.labels.length > 0 ? (
-                <select
-                  id="label"
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">{t('labelNoneOption')}</option>
-                  {selectedType.labels.map((lbl) => (
-                    <option key={lbl} value={lbl}>
-                      {lbl}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <Input
-                  id="label"
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  placeholder={t('labelPlaceholder')}
-                  maxLength={80}
-                />
-              )}
-            </div>
+            {(selectedType === null || selectedType.labels.length > 0) && (
+              <div className="space-y-1.5">
+                <Label htmlFor="label">{t('labelLabel')}</Label>
+                {selectedType !== null && selectedType.labels.length > 0 ? (
+                  <select
+                    id="label"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">{t('labelNoneOption')}</option>
+                    {selectedType.labels.map((lbl) => (
+                      <option key={lbl} value={lbl}>
+                        {lbl}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    id="label"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    placeholder={t('labelPlaceholder')}
+                    maxLength={80}
+                  />
+                )}
+              </div>
+            )}
 
             {selectedType !== null && selectedType.customQuestions.length > 0 ? (
               <CustomQuestionsForm

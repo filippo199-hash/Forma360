@@ -1357,7 +1357,8 @@
         }
       },
       "inspectionsEmpty": "Linked inspections will appear here.",
-      "linkedActionsEmpty": "Linked actions will appear here."
+      "linkedActionsEmpty": "Linked actions will appear here.",
+      "openFullPage": "Open full page"
     },
     "priority": {
       "low": "Low",
@@ -1445,8 +1446,10 @@
           "title": "Notifications",
           "subtitle": "Notify selected people when an observation is reported in this category.",
           "recipientsLabel": "Send notification to",
-          "recipientsPlaceholder": "Recipient list coming soon",
-          "emailTypeLabel": "Email notification type"
+          "emailTypeLabel": "Email notification type",
+          "recipientsAll": "All administrators",
+          "recipientsNone": "No recipients selected",
+          "broadcastAll": "Send to all administrators"
         },
         "criticalCard": {
           "title": "Critical Alerts notifications",
@@ -2402,7 +2405,9 @@
         "usageUnit": "Unit",
         "usageField": "Reading field",
         "lastServiceDate": "Last service date",
-        "days": "days"
+        "days": "days",
+        "usageUnitPlaceholder": "e.g. km",
+        "usageFieldPlaceholder": "e.g. odometer"
       }
     },
     "detail": {

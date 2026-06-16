@@ -32,6 +32,7 @@ import {
   MAINTENANCE_TICK_CRON,
 } from './workers/maintenance-tick';
 import { createMaintenanceNotifyHandler } from './workers/maintenance-notify';
+import { createObservationNotifyHandler } from './workers/observation-notify';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -189,6 +190,18 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   );
   logger.info({ cron: MAINTENANCE_TICK_CRON }, '[worker] registered maintenance-tick repeatable');
 
+  // ─── Phase 3 — Observation notifications ───────────────────────────────
+  const observationNotifyWorker = new Worker(
+    QUEUE_NAMES.OBSERVATION_NOTIFY,
+    createObservationNotifyHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'observation-notify' }),
+      sendTemplatedEmail,
+      appUrl: env.APP_URL,
+    }),
+    workerOptions,
+  );
+
   // ─── Phase 8 — Compliance ───────────────────────────────────────────────
   const complianceSnapshotQueue = getQueue(QUEUE_NAMES.COMPLIANCE_SNAPSHOT, connection);
   async function enqueueComplianceSnapshot(frameworkId: string, tenantId: string): Promise<void> {
@@ -248,6 +261,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     scheduleReminderWorker,
     maintenanceTickWorker,
     maintenanceNotifyWorker,
+    observationNotifyWorker,
     complianceEvaluateWorker,
     complianceSnapshotWorker,
   ];

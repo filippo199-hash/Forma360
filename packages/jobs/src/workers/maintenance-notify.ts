@@ -66,9 +66,8 @@ export function createMaintenanceNotifyHandler(deps: MaintenanceNotifyDeps) {
 
     // Dedup check.
     const rawLog = link.notificationsLog as Record<string, number[]> | null;
-    const sentForDue: number[] = Array.isArray(rawLog?.[dueDate])
-      ? (rawLog![dueDate] as number[])
-      : [];
+    const sentForDueRaw = rawLog !== null ? rawLog[dueDate] : undefined;
+    const sentForDue: number[] = Array.isArray(sentForDueRaw) ? (sentForDueRaw as number[]) : [];
     if (sentForDue.includes(daysBefore)) {
       log.info('[maintenance-notify] already sent — skipping');
       return { sent: false };

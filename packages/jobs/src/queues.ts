@@ -60,6 +60,13 @@ export const QUEUE_NAMES = {
    */
   MAINTENANCE_NOTIFY: 'forma360-maintenance-notify',
   /**
+   * Phase 3 — send notification emails for a newly-created observation.
+   * Fans out to each resolved recipient (group members, site members, named
+   * users) and respects the category's `notificationRule` + `criticalAlerts`
+   * settings.
+   */
+  OBSERVATION_NOTIFY: 'forma360-observation-notify',
+  /**
    * Phase 8 — evaluate one compliance rule and write a new
    * compliance_evaluations row. Enqueued by the router on demand or by a
    * periodic tick.
@@ -159,6 +166,15 @@ export const maintenanceNotifyPayloadSchema = z.object({
 });
 export type MaintenanceNotifyPayload = z.infer<typeof maintenanceNotifyPayloadSchema>;
 
+/** Phase 3 — send observation-created notification emails. */
+export const observationNotifyPayloadSchema = z.object({
+  tenantId: z.string().length(26),
+  issueId: z.string().length(26),
+  /** Whether this issue's category has criticalAlerts enabled. */
+  isCritical: z.boolean(),
+});
+export type ObservationNotifyPayload = z.infer<typeof observationNotifyPayloadSchema>;
+
 /** Phase 8 — evaluate one compliance rule. */
 export const complianceEvaluatePayloadSchema = z.object({
   tenantId: z.string().length(26),
@@ -188,6 +204,7 @@ export interface QueuePayloads {
   [QUEUE_NAMES.SCHEDULE_REMINDER]: ScheduleReminderPayload;
   [QUEUE_NAMES.MAINTENANCE_TICK]: MaintenanceTickPayload;
   [QUEUE_NAMES.MAINTENANCE_NOTIFY]: MaintenanceNotifyPayload;
+  [QUEUE_NAMES.OBSERVATION_NOTIFY]: ObservationNotifyPayload;
   [QUEUE_NAMES.COMPLIANCE_EVALUATE]: ComplianceEvaluatePayload;
   [QUEUE_NAMES.COMPLIANCE_SNAPSHOT]: ComplianceSnapshotPayload;
 }
@@ -204,6 +221,7 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.SCHEDULE_REMINDER]: scheduleReminderPayloadSchema,
   [QUEUE_NAMES.MAINTENANCE_TICK]: maintenanceTickPayloadSchema,
   [QUEUE_NAMES.MAINTENANCE_NOTIFY]: maintenanceNotifyPayloadSchema,
+  [QUEUE_NAMES.OBSERVATION_NOTIFY]: observationNotifyPayloadSchema,
   [QUEUE_NAMES.COMPLIANCE_EVALUATE]: complianceEvaluatePayloadSchema,
   [QUEUE_NAMES.COMPLIANCE_SNAPSHOT]: complianceSnapshotPayloadSchema,
 } as const;

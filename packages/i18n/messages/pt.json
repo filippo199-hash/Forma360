@@ -1311,7 +1311,8 @@
         "priority": "Priority",
         "due": "Due",
         "noDue": "—"
-      }
+      },
+      "openFullPage": "Abrir página completa"
     },
     "categories": {
       "title": "Manage observation categories",
@@ -1379,8 +1380,10 @@
           "title": "Notifications",
           "subtitle": "Notify selected people when an observation is reported in this category.",
           "recipientsLabel": "Send notification to",
-          "recipientsPlaceholder": "Recipient list coming soon",
-          "emailTypeLabel": "Email notification type"
+          "emailTypeLabel": "Email notification type",
+          "recipientsAll": "Todos os administradores",
+          "recipientsNone": "Nenhum destinatário selecionado",
+          "broadcastAll": "Enviar para todos os administradores"
         },
         "criticalCard": {
           "title": "Critical Alerts notifications",
@@ -2233,7 +2236,9 @@
         "usageUnit": "Unit",
         "usageField": "Reading field",
         "lastServiceDate": "Last service date",
-        "days": "days"
+        "days": "days",
+        "usageUnitPlaceholder": "ex. km",
+        "usageFieldPlaceholder": "ex. odômetro"
       }
     },
     "detail": {
