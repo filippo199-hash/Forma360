@@ -110,9 +110,11 @@ export default function NewHeadsUpPage() {
   const [allowComments, setAllowComments] = useState(true);
   const [allowReactions, setAllowReactions] = useState(true);
   const [engagementLevel, setEngagementLevel] = useState<EngagementLevel>('view');
-  const [audienceMode, setAudienceMode] = useState<'everyone' | 'groups'>('everyone');
+  const [audienceMode, setAudienceMode] = useState<'everyone' | 'groups' | 'sites'>('everyone');
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
   const [groupsOpen, setGroupsOpen] = useState(false);
+  const [sitesOpen, setSitesOpen] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('tablet');
   const [publishAt, setPublishAt] = useState<Date | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -125,8 +127,23 @@ export default function NewHeadsUpPage() {
     .filter((g) => selectedGroupIds.includes(g.id))
     .map((g) => g.name);
 
+  const { data: sitesData } = trpc.sites.list.useQuery(undefined, {
+    staleTime: 60_000,
+    enabled: audienceMode === 'sites',
+  });
+  const sites = sitesData ?? [];
+  const selectedSiteNames = sites
+    .filter((s) => selectedSiteIds.includes(s.id))
+    .map((s) => s.name);
+
   function toggleGroup(id: string) {
     setSelectedGroupIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function toggleSite(id: string) {
+    setSelectedSiteIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
@@ -246,7 +263,7 @@ export default function NewHeadsUpPage() {
     const recipientSpec = JSON.stringify({
       broadcastToAll: audienceMode === 'everyone',
       groupIds: audienceMode === 'groups' ? selectedGroupIds : [],
-      siteIds: [] as string[],
+      siteIds: audienceMode === 'sites' ? selectedSiteIds : [],
       userIds: [] as string[],
     });
 
@@ -440,29 +457,34 @@ export default function NewHeadsUpPage() {
           <section>
             <h2 className="mb-2 text-sm font-semibold">{t('fields.audienceLabel')}</h2>
 
-            {/* Mode toggle */}
-            <div className="grid grid-cols-2 gap-2">
-              {(['everyone', 'groups'] as const).map((mode) => (
+            {/* Mode toggle — 3 options */}
+            <div className="grid grid-cols-3 gap-2">
+              {(['everyone', 'groups', 'sites'] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => {
                     setAudienceMode(mode);
-                    if (mode === 'everyone') setGroupsOpen(false);
+                    if (mode !== 'groups') setGroupsOpen(false);
+                    if (mode !== 'sites') setSitesOpen(false);
                   }}
                   className={cn(
-                    'rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors',
+                    'rounded-lg border px-2 py-2 text-center text-xs font-medium transition-colors',
                     audienceMode === mode
                       ? 'border-foreground bg-foreground/5 text-foreground'
                       : 'border-input text-muted-foreground hover:border-foreground/40',
                   )}
                 >
-                  {mode === 'everyone' ? t('fields.audienceEveryone') : t('fields.audienceGroups')}
+                  {mode === 'everyone'
+                    ? t('fields.audienceEveryone')
+                    : mode === 'groups'
+                      ? t('fields.audienceGroups')
+                      : t('fields.audienceSites')}
                 </button>
               ))}
             </div>
 
-            {/* Groups picker — shown only in "groups" mode */}
+            {/* Groups picker */}
             {audienceMode === 'groups' ? (
               <div className="mt-3">
                 <div className="relative">
@@ -505,6 +527,61 @@ export default function NewHeadsUpPage() {
                 {selectedGroupNames.length > 0 ? (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {selectedGroupNames.map((name) => (
+                      <span
+                        key={name}
+                        className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
+                      >
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* Sites picker */}
+            {audienceMode === 'sites' ? (
+              <div className="mt-3">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setSitesOpen((o) => !o)}
+                    className="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted/40"
+                  >
+                    <span className={selectedSiteIds.length === 0 ? 'text-muted-foreground' : ''}>
+                      {selectedSiteIds.length === 0
+                        ? t('fields.selectSitesPlaceholder')
+                        : selectedSiteNames.join(', ')}
+                    </span>
+                    <span className="ml-2 text-muted-foreground">▾</span>
+                  </button>
+                  {sitesOpen ? (
+                    <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
+                      {sites.length === 0 ? (
+                        <p className="p-3 text-sm text-muted-foreground">{t('fields.noSites')}</p>
+                      ) : (
+                        <ul className="max-h-48 overflow-y-auto py-1">
+                          {sites.map((s) => (
+                            <li key={s.id}>
+                              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted/40">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSiteIds.includes(s.id)}
+                                  onChange={() => toggleSite(s.id)}
+                                  className="h-4 w-4"
+                                />
+                                {s.name}
+                              </label>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+                {selectedSiteNames.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {selectedSiteNames.map((name) => (
                       <span
                         key={name}
                         className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium"

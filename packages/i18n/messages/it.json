@@ -1994,7 +1994,10 @@
         "publishCustom": "Scegli data e ora",
         "audienceLabel": "Invia a",
         "audienceEveryone": "Tutti nell'organizzazione",
-        "audienceGroups": "Gruppi specifici"
+        "audienceGroups": "Gruppi specifici",
+        "audienceSites": "Siti specifici",
+        "selectSitesPlaceholder": "Seleziona siti…",
+        "noSites": "Nessun sito ancora"
       },
       "engagementLevel": "Livello di coinvolgimento",
       "engagementHint": {

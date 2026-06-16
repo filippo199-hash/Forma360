@@ -1988,7 +1988,10 @@
         "requireSignature": "Require signature",
         "audienceLabel": "Envoyer à",
         "audienceEveryone": "Tout le monde dans l'organisation",
-        "audienceGroups": "Groupes spécifiques"
+        "audienceGroups": "Groupes spécifiques",
+        "audienceSites": "Specific sites",
+        "selectSitesPlaceholder": "Select sites…",
+        "noSites": "No sites yet"
       },
       "title": "New Heads Up",
       "createdToast": "Heads up created",

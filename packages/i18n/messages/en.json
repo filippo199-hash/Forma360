@@ -2039,7 +2039,10 @@
         "publishCustom": "Choose date & time",
         "audienceLabel": "Send to",
         "audienceEveryone": "Everyone in the organization",
-        "audienceGroups": "Specific groups"
+        "audienceGroups": "Specific groups",
+        "audienceSites": "Specific sites",
+        "selectSitesPlaceholder": "Select sites…",
+        "noSites": "No sites yet"
       },
       "engagementLevel": "Engagement level",
       "engagementHint": {
