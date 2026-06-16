@@ -1,6 +1,6 @@
 'use client';
 
-import { FolderCog, ImageIcon, Plus, QrCode } from 'lucide-react';
+import { ChevronDown, ChevronRight, FolderCog, ImageIcon, Plus, QrCode } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -11,6 +11,20 @@ import { Skeleton } from '../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
+type AssetRow = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  photoKey: string | null;
+  typeId: string | null;
+  typeName: string | null;
+  siteId: string | null;
+  qrToken: string | null;
+  updatedAt: string;
+  childrenCount: number;
+  archivedAt: string | null;
+};
+
 export default function AssetsListPage() {
   const t = useTranslations('assets.list');
   const params = useParams<{ locale: string }>();
@@ -19,6 +33,7 @@ export default function AssetsListPage() {
 
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [includeArchived, setIncludeArchived] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const { data: typesData } = trpc.assetTypes.list.useQuery({});
   const types = typesData ?? [];
@@ -27,7 +42,111 @@ export default function AssetsListPage() {
     typeId: typeFilter === 'all' ? undefined : typeFilter,
     includeArchived,
   });
-  const rows = data ?? [];
+  const allRows = (data ?? []) as AssetRow[];
+
+  // Split into top-level parents and children
+  const parentRows = allRows.filter((r) => r.parentId === null);
+  const childMap = new Map<string, AssetRow[]>();
+  for (const r of allRows) {
+    if (r.parentId !== null) {
+      const bucket = childMap.get(r.parentId) ?? [];
+      bucket.push(r);
+      childMap.set(r.parentId, bucket);
+    }
+  }
+
+  function toggleExpand(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function renderRow(row: AssetRow, isChild: boolean) {
+    const children = childMap.get(row.id) ?? [];
+    const hasChildren = children.length > 0 || row.childrenCount > 0;
+    const isExpanded = expandedIds.has(row.id);
+
+    return (
+      <>
+        <tr
+          key={row.id}
+          className={`border-b last:border-0 hover:bg-muted/30 ${row.archivedAt !== null ? 'opacity-60' : ''}`}
+        >
+          {/* Thumbnail */}
+          <td className="px-3 py-2">
+            <div className={isChild ? 'ml-8' : undefined}>
+              {row.photoKey !== null ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`/api/files?key=${encodeURIComponent(row.photoKey)}`}
+                  alt=""
+                  className="h-9 w-9 rounded-md object-cover"
+                />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted">
+                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+          </td>
+
+          {/* Name with expand toggle */}
+          <td className="px-3 py-2 font-medium">
+            <div className={`flex items-center gap-1 ${isChild ? 'ml-8' : ''}`}>
+              {!isChild && hasChildren ? (
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(row.id)}
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                  aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </button>
+              ) : (
+                !isChild && <span className="w-5 shrink-0" />
+              )}
+
+              <Link href={`/${locale}/assets/${row.id}`} className="hover:underline">
+                {row.name}
+              </Link>
+
+              {!isChild && hasChildren && (
+                <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                  {row.childrenCount}
+                </span>
+              )}
+            </div>
+          </td>
+
+          <td className="px-3 py-2 text-muted-foreground">{row.typeName ?? '—'}</td>
+          <td className="px-3 py-2 text-muted-foreground">{row.siteId ?? '—'}</td>
+          <td className="px-3 py-2">
+            {row.qrToken !== null ? (
+              <span className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground">
+                <QrCode className="h-3 w-3" />
+                {row.qrToken}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
+          </td>
+          <td className="px-3 py-2 text-muted-foreground">
+            {new Date(row.updatedAt).toLocaleDateString()}
+          </td>
+        </tr>
+
+        {/* Children — rendered inline when expanded */}
+        {!isChild && isExpanded && children.map((child) => renderRow(child, true))}
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -89,7 +208,7 @@ export default function AssetsListPage() {
 
       {isLoading ? (
         <Skeleton className="h-64 w-full" />
-      ) : rows.length === 0 ? (
+      ) : parentRows.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <p>{t('empty')}</p>
@@ -117,52 +236,7 @@ export default function AssetsListPage() {
                   <th className="px-3 py-2 font-medium">{t('columns.updatedAt')}</th>
                 </tr>
               </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className={`border-b last:border-0 hover:bg-muted/30 ${row.archivedAt !== null ? 'opacity-60' : ''}`}
-                  >
-                    <td className="px-3 py-2">
-                      {row.photoKey !== null ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={`/api/files?key=${encodeURIComponent(row.photoKey)}`}
-                          alt=""
-                          className="h-9 w-9 rounded-md object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted">
-                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 font-medium">
-                      <Link
-                        href={`/${locale}/assets/${row.id}`}
-                        className="hover:underline"
-                      >
-                        {row.name}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">{row.typeName ?? '—'}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{row.siteId ?? '—'}</td>
-                    <td className="px-3 py-2">
-                      {row.qrToken !== null ? (
-                        <span className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground">
-                          <QrCode className="h-3 w-3" />
-                          {row.qrToken}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {new Date(row.updatedAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+              <tbody>{parentRows.map((row) => renderRow(row, false))}</tbody>
             </table>
           </CardContent>
         </Card>
