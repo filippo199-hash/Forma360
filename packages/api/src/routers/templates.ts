@@ -149,6 +149,8 @@ function emptyContent(title: string): TemplateContent {
       documentNumberFormat: '{counter:6}',
       documentNumberStart: 1,
     },
+    // Built-in response-set library, available in every new template. Red
+    // options are flagged. The Page 1 question uses the Yes / No / N/A set.
     customResponseSets: [
       {
         id: yesNoSetId,
@@ -158,6 +160,51 @@ function emptyContent(title: string): TemplateContent {
         options: [
           { id: newId(), label: 'Yes', color: 'green', flagged: false },
           { id: newId(), label: 'No', color: 'red', flagged: true },
+          { id: newId(), label: 'N/A', color: 'grey', flagged: false },
+        ],
+      },
+      {
+        id: newId(),
+        name: 'Good / Fair / Poor',
+        sourceGlobalId: null,
+        multiSelect: false,
+        options: [
+          { id: newId(), label: 'Good', color: 'green', flagged: false },
+          { id: newId(), label: 'Fair', color: 'amber', flagged: false },
+          { id: newId(), label: 'Poor', color: 'red', flagged: true },
+          { id: newId(), label: 'N/A', color: 'grey', flagged: false },
+        ],
+      },
+      {
+        id: newId(),
+        name: 'Safe / At Risk',
+        sourceGlobalId: null,
+        multiSelect: false,
+        options: [
+          { id: newId(), label: 'Safe', color: 'green', flagged: false },
+          { id: newId(), label: 'At Risk', color: 'red', flagged: true },
+          { id: newId(), label: 'N/A', color: 'grey', flagged: false },
+        ],
+      },
+      {
+        id: newId(),
+        name: 'Pass / Fail',
+        sourceGlobalId: null,
+        multiSelect: false,
+        options: [
+          { id: newId(), label: 'Pass', color: 'green', flagged: false },
+          { id: newId(), label: 'Fail', color: 'red', flagged: true },
+          { id: newId(), label: 'N/A', color: 'grey', flagged: false },
+        ],
+      },
+      {
+        id: newId(),
+        name: 'Compliant / Non-Compliant',
+        sourceGlobalId: null,
+        multiSelect: false,
+        options: [
+          { id: newId(), label: 'Compliant', color: 'green', flagged: false },
+          { id: newId(), label: 'Non-Compliant', color: 'red', flagged: true },
           { id: newId(), label: 'N/A', color: 'grey', flagged: false },
         ],
       },
