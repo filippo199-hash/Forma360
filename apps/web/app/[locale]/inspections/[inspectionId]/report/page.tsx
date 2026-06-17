@@ -37,6 +37,10 @@ export default function InspectionReportPage() {
     { enabled: inspectionId.length === 26 },
   );
 
+  // Asset names, to resolve `asset`-question answers ({ assetIds: [...] }).
+  // Best-effort: if the viewer lacks `assets.view` the ids simply aren't named.
+  const assetsQuery = trpc.assets.list.useQuery({});
+
   // ── Loading / error states ─────────────────────────────────────────────────
 
   if (insp.isLoading || insp.data === undefined) {
@@ -278,6 +282,7 @@ export default function InspectionReportPage() {
             actionsByItemId={actionsByItemId}
             signatures={signatures}
             approvals={approvals}
+            assets={assetsQuery.data ?? []}
             t={t}
           />
         </section>
@@ -325,6 +330,7 @@ function ReportBody({
   actionsByItemId,
   signatures,
   approvals,
+  assets,
   t,
 }: {
   content: TemplateContent;
@@ -332,16 +338,19 @@ function ReportBody({
   actionsByItemId: Map<string, ActionSummary[]>;
   signatures: SigRow[];
   approvals: ApprovalRow[];
+  assets: ReadonlyArray<{ id: string; name: string }>;
   t: TFunc;
 }) {
   const inspectionPages = content.pages.filter((p) => p.type === 'inspection');
 
-  // Resolve multiple-choice answers (stored as response-option IDs) to their
-  // human-readable labels. Without this the report shows raw ULIDs / JSON.
+  // Resolve answers stored as IDs (multiple-choice option IDs, and asset IDs
+  // from `asset` questions) to their human-readable labels. Without this the
+  // report shows raw ULIDs / JSON like {"assetIds":["01KV…"]}.
   const optionLabels = new Map<string, string>();
   for (const set of content.customResponseSets ?? []) {
     for (const opt of set.options) optionLabels.set(opt.id, opt.label);
   }
+  for (const a of assets) optionLabels.set(a.id, a.name);
 
   return (
     <div className="space-y-8 rounded-lg border bg-card p-6 shadow-sm">
@@ -681,6 +690,11 @@ function formatResponse(v: unknown, optionLabels: Map<string, string>): string {
   if (typeof v === 'object') {
     const obj = v as Record<string, unknown>;
     if (typeof obj['label'] === 'string') return obj['label'];
+    // Asset / site / user / group multi-select answers wrap an id array,
+    // e.g. { assetIds: ["01KV…", …] }. Unwrap and resolve to labels.
+    for (const key of ['assetIds', 'siteIds', 'userIds', 'groupIds'] as const) {
+      if (Array.isArray(obj[key])) return formatResponse(obj[key], optionLabels);
+    }
     if ('value' in obj) return String(obj['value']);
   }
 
