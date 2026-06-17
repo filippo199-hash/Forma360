@@ -963,6 +963,13 @@
           "empty": "No assets defined yet.",
           "expand": "Show sub-assets",
           "collapse": "Hide sub-assets"
+        },
+        "location": {
+          "placeholder": "Enter a location or address",
+          "capture": "Use current location",
+          "capturing": "Getting location…",
+          "error": "Couldn't get your location",
+          "unsupported": "Location is not available on this device"
         }
       },
       "goToStatus": "View status & sign",

@@ -846,6 +846,13 @@
           "empty": "Brak zdefiniowanych zasobów.",
           "expand": "Pokaż podzasoby",
           "collapse": "Ukryj podzasoby"
+        },
+        "location": {
+          "placeholder": "Wpisz lokalizację lub adres",
+          "capture": "Użyj bieżącej lokalizacji",
+          "capturing": "Pobieranie lokalizacji…",
+          "error": "Nie udało się pobrać lokalizacji",
+          "unsupported": "Lokalizacja jest niedostępna na tym urządzeniu"
         }
       },
       "goToStatus": "Zobacz status i podpisz",

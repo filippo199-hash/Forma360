@@ -846,6 +846,13 @@
           "empty": "資産がまだ定義されていません。",
           "expand": "サブ資産を表示",
           "collapse": "サブ資産を非表示"
+        },
+        "location": {
+          "placeholder": "場所または住所を入力",
+          "capture": "現在地を使用",
+          "capturing": "位置情報を取得中…",
+          "error": "位置情報を取得できませんでした",
+          "unsupported": "この端末では位置情報を利用できません"
         }
       },
       "goToStatus": "ステータス確認・署名",

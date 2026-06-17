@@ -846,6 +846,13 @@
           "empty": "Nenhum ativo definido ainda.",
           "expand": "Mostrar sub-ativos",
           "collapse": "Ocultar sub-ativos"
+        },
+        "location": {
+          "placeholder": "Insira um local ou endereço",
+          "capture": "Usar localização atual",
+          "capturing": "A obter localização…",
+          "error": "Não foi possível obter a sua localização",
+          "unsupported": "A localização não está disponível neste dispositivo"
         }
       },
       "goToStatus": "Ver estado e assinar",

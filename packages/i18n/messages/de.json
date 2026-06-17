@@ -853,6 +853,13 @@
           "empty": "Noch keine Anlagen definiert.",
           "expand": "Unteranlagen anzeigen",
           "collapse": "Unteranlagen ausblenden"
+        },
+        "location": {
+          "placeholder": "Standort oder Adresse eingeben",
+          "capture": "Aktuellen Standort verwenden",
+          "capturing": "Standort wird ermittelt…",
+          "error": "Standort konnte nicht ermittelt werden",
+          "unsupported": "Standort ist auf diesem Gerät nicht verfügbar"
         }
       },
       "goToStatus": "Status & Unterschrift ansehen",

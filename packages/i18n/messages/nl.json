@@ -846,6 +846,13 @@
           "empty": "Nog geen middelen gedefinieerd.",
           "expand": "Subitems tonen",
           "collapse": "Subitems verbergen"
+        },
+        "location": {
+          "placeholder": "Voer een locatie of adres in",
+          "capture": "Huidige locatie gebruiken",
+          "capturing": "Locatie ophalen…",
+          "error": "Kan je locatie niet ophalen",
+          "unsupported": "Locatie is niet beschikbaar op dit apparaat"
         }
       },
       "goToStatus": "Status bekijken en ondertekenen",

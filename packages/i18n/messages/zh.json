@@ -846,6 +846,13 @@
           "empty": "尚未定义任何资产。",
           "expand": "显示子资产",
           "collapse": "隐藏子资产"
+        },
+        "location": {
+          "placeholder": "输入位置或地址",
+          "capture": "使用当前位置",
+          "capturing": "正在获取位置…",
+          "error": "无法获取您的位置",
+          "unsupported": "此设备不支持定位"
         }
       },
       "goToStatus": "查看状态与签名",

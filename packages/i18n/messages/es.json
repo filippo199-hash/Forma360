@@ -853,6 +853,13 @@
           "empty": "No hay activos definidos aún.",
           "expand": "Mostrar sub-activos",
           "collapse": "Ocultar sub-activos"
+        },
+        "location": {
+          "placeholder": "Introduce una ubicación o dirección",
+          "capture": "Usar ubicación actual",
+          "capturing": "Obteniendo ubicación…",
+          "error": "No se pudo obtener tu ubicación",
+          "unsupported": "La ubicación no está disponible en este dispositivo"
         }
       },
       "goToStatus": "Ver estado y firmar",

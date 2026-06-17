@@ -853,6 +853,13 @@
           "empty": "Aucun actif défini.",
           "expand": "Afficher les sous-actifs",
           "collapse": "Masquer les sous-actifs"
+        },
+        "location": {
+          "placeholder": "Saisir un lieu ou une adresse",
+          "capture": "Utiliser ma position actuelle",
+          "capturing": "Localisation en cours…",
+          "error": "Impossible d'obtenir votre position",
+          "unsupported": "La localisation n'est pas disponible sur cet appareil"
         }
       },
       "goToStatus": "Voir le statut et signer",

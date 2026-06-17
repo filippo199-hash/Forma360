@@ -853,6 +853,13 @@
           "empty": "Nessuna risorsa definita.",
           "expand": "Mostra sotto-risorse",
           "collapse": "Nascondi sotto-risorse"
+        },
+        "location": {
+          "placeholder": "Inserisci una posizione o un indirizzo",
+          "capture": "Usa posizione attuale",
+          "capturing": "Rilevamento posizione…",
+          "error": "Impossibile ottenere la tua posizione",
+          "unsupported": "La posizione non è disponibile su questo dispositivo"
         }
       },
       "goToStatus": "Vedi stato e firma",

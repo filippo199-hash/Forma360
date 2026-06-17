@@ -1,7 +1,7 @@
 'use client';
 
 import type { CustomResponseSet, Item } from '@forma360/shared/template-schema';
-import { Image as ImageIcon, X } from 'lucide-react';
+import { Image as ImageIcon, MapPin, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -88,8 +88,9 @@ export function ResponseInput({
       return <SitePickerInput item={item} readonly={readonly} />;
     case 'asset':
       return <AssetPickerInput item={item} readonly={readonly} />;
-    case 'company':
     case 'location':
+      return <LocationInput item={item} readonly={readonly} />;
+    case 'company':
     case 'annotation':
     case 'table':
       return <StubNotice />;
@@ -177,6 +178,68 @@ function SitePickerInput({
           )}
         </SelectContent>
       </Select>
+    </div>
+  );
+}
+
+/**
+ * Location field. Stores a free-text value (address or "lat, lng") so it
+ * works without a maps provider, and offers a one-tap "Use current
+ * location" button that fills the device's GPS coordinates via the
+ * browser geolocation API — the "default current location" behaviour.
+ */
+function LocationInput({
+  item,
+  readonly,
+}: {
+  item: Extract<Item, { type: 'location' }>;
+  readonly: boolean;
+}) {
+  const t = useTranslations('inspections.conduct.response.location');
+  const { state, dispatch } = useConduct();
+  const [locating, setLocating] = useState(false);
+  const raw = state.responses[item.id];
+  const value = typeof raw === 'string' ? raw : '';
+
+  function capture() {
+    if (typeof navigator === 'undefined' || navigator.geolocation === undefined) {
+      toast.error(t('unsupported'));
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+        dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: coords });
+        setLocating(false);
+      },
+      () => {
+        toast.error(t('error'));
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  return (
+    <div className="flex max-w-md items-center gap-2">
+      <Input
+        type="text"
+        value={value}
+        onChange={(e) => dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: e.target.value })}
+        disabled={readonly}
+        placeholder={t('placeholder')}
+        aria-label={item.prompt}
+      />
+      <button
+        type="button"
+        onClick={capture}
+        disabled={readonly || locating}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-2 text-sm hover:bg-accent disabled:opacity-50"
+      >
+        <MapPin className="h-4 w-4" />
+        <span>{locating ? t('capturing') : t('capture')}</span>
+      </button>
     </div>
   );
 }
@@ -617,7 +680,8 @@ function SignatureInput({
 
 function ReadonlyField({ kind }: { kind: 'inspectionDate' | 'documentNumber' }) {
   const { state } = useConduct();
-  const value = kind === 'inspectionDate' ? state.startedAt.slice(0, 10) : (state.documentNumber ?? '');
+  const value =
+    kind === 'inspectionDate' ? state.startedAt.slice(0, 10) : (state.documentNumber ?? '');
   return <Input type="text" value={value} readOnly className="max-w-[24rem] bg-muted/30" />;
 }
 
