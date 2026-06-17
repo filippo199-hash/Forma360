@@ -97,6 +97,11 @@ function csvQuoteRow(values: readonly unknown[]): string {
 
 /** Build a minimum valid content blob for a new template. */
 function emptyContent(title: string): TemplateContent {
+  // Every new template starts with a Title Page (site, date, person, location —
+  // auto-populated at inspection start) and a first inspection page with one
+  // Yes / No / N/A question. The Yes/No/N/A set is baked into the template's
+  // customResponseSets with colours + a flagged "No" so it is self-contained.
+  const yesNoSetId = newId();
   return {
     schemaVersion: TEMPLATE_SCHEMA_VERSION,
     title,
@@ -110,8 +115,10 @@ function emptyContent(title: string): TemplateContent {
             id: newId(),
             title: 'Details',
             items: [
-              { id: newId(), type: 'conductedBy', prompt: 'Conducted by', required: false },
-              { id: newId(), type: 'inspectionDate', prompt: 'Inspection date', required: false },
+              { id: newId(), type: 'site', prompt: 'Site conducted', required: true },
+              { id: newId(), type: 'inspectionDate', prompt: 'Conducted on', required: false },
+              { id: newId(), type: 'conductedBy', prompt: 'Prepared by', required: false },
+              { id: newId(), type: 'location', prompt: 'Location', required: false },
             ],
           },
         ],
@@ -119,8 +126,22 @@ function emptyContent(title: string): TemplateContent {
       {
         id: newId(),
         type: 'inspection',
-        title: 'Inspection',
-        sections: [{ id: newId(), title: 'Section 1', items: [] }],
+        title: 'Page 1',
+        sections: [
+          {
+            id: newId(),
+            title: 'Section 1',
+            items: [
+              {
+                id: newId(),
+                type: 'multipleChoice',
+                prompt: 'Type question',
+                required: false,
+                responseSetId: yesNoSetId,
+              },
+            ],
+          },
+        ],
       },
     ],
     settings: {
@@ -128,7 +149,19 @@ function emptyContent(title: string): TemplateContent {
       documentNumberFormat: '{counter:6}',
       documentNumberStart: 1,
     },
-    customResponseSets: [],
+    customResponseSets: [
+      {
+        id: yesNoSetId,
+        name: 'Yes / No / N/A',
+        sourceGlobalId: null,
+        multiSelect: false,
+        options: [
+          { id: newId(), label: 'Yes', color: 'green', flagged: false },
+          { id: newId(), label: 'No', color: 'red', flagged: true },
+          { id: newId(), label: 'N/A', color: 'grey', flagged: false },
+        ],
+      },
+    ],
   };
 }
 

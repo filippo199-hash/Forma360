@@ -15,6 +15,32 @@ import { InstructionBody } from './instruction-render';
 import { SignaturePad } from './signature-pad';
 
 /**
+ * Tailwind classes for a multiple-choice option chip, tinted by the option's
+ * `color` (green / amber / red / grey) and intensified when selected. Unknown
+ * or absent colours fall back to the neutral primary-accent treatment.
+ */
+function optionColorClass(color: string | undefined, selected: boolean): string {
+  const map: Record<string, { base: string; sel: string }> = {
+    green: {
+      base: 'border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-950/20',
+      sel: 'border-green-500 bg-green-100 dark:border-green-600 dark:bg-green-900/40',
+    },
+    amber: {
+      base: 'border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20',
+      sel: 'border-amber-500 bg-amber-100 dark:border-amber-600 dark:bg-amber-900/40',
+    },
+    red: {
+      base: 'border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20',
+      sel: 'border-red-500 bg-red-100 dark:border-red-600 dark:bg-red-900/40',
+    },
+    grey: { base: 'border-border bg-muted/30', sel: 'border-foreground/40 bg-muted' },
+  };
+  const c = color !== undefined ? map[color] : undefined;
+  if (c === undefined) return selected ? 'border-primary bg-accent' : 'border-border bg-background';
+  return selected ? c.sel : c.base;
+}
+
+/**
  * Renders the right editor control for an item. The conduct reducer owns
  * the response map — this component is a controlled-input leaf.
  *
@@ -318,7 +344,12 @@ function MultipleChoiceInput({
           : selectedSingle === option.id;
         return (
           <li key={option.id}>
-            <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-md border bg-background px-3 py-2 text-sm">
+            <label
+              className={`flex min-h-[44px] cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-sm transition-colors ${optionColorClass(
+                option.color,
+                isSelected,
+              )}`}
+            >
               <input
                 type={set.multiSelect ? 'checkbox' : 'radio'}
                 name={item.id}
@@ -329,9 +360,9 @@ function MultipleChoiceInput({
                 disabled={readonly}
                 className="h-5 w-5"
               />
-              <span>{option.label}</span>
+              <span className="font-medium">{option.label}</span>
               {option.flagged ? (
-                <span className="ml-auto rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+                <span className="ml-auto rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-200">
                   {'!'}
                 </span>
               ) : null}
