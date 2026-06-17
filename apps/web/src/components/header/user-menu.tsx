@@ -77,7 +77,14 @@ export function UserMenu({ name, email, locale }: UserMenuProps) {
   async function onSignOut() {
     setSigningOut(true);
     try {
-      await fetch('/api/auth/sign-out', { method: 'POST' });
+      // better-auth's sign-out handler parses the request body as JSON, so an
+      // empty body throws "Unexpected end of JSON input" (HTTP 500). Always
+      // send a valid JSON body so the session is actually cleared.
+      await fetch('/api/auth/sign-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
     } catch {
       // Even if sign-out fails, reload to hit the auth layer
     }

@@ -55,8 +55,16 @@ export default async function LocaleLayout({
   }
   setRequestLocale(locale);
 
-  const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
+  const requestHeaders = await headers();
+  const session = await auth.api.getSession({ headers: requestHeaders }).catch(() => null);
   const isSignedIn = session !== null;
+
+  // The public homepage (just `/<locale>`) renders as a clean landing page
+  // without the app sidebar, even for signed-in users. The middleware sets
+  // `x-pathname`; if it is ever absent we fall back to showing the sidebar.
+  const pathname = requestHeaders.get('x-pathname') ?? '';
+  const isHomePage = /^\/[a-z]{2}\/?$/.test(pathname);
+  const showSidebar = isSignedIn && !isHomePage;
 
   return (
     <html
@@ -70,7 +78,7 @@ export default async function LocaleLayout({
             <TRPCProvider>
               <div className="flex min-h-screen flex-col">
                 <SiteHeader />
-                {isSignedIn ? (
+                {showSidebar ? (
                   <div className="flex flex-1">
                     <SiteSidebar locale={locale} />
                     <main className="min-w-0 flex-1">{children}</main>

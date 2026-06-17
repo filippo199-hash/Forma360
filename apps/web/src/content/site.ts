@@ -36,6 +36,8 @@ export const HERO = {
     'Forma360 is a multi-tenant operational-excellence platform for inspections, issues, corrective actions, assets, documents and analytics. Its built-in AI assistant answers questions about your operations in plain language — on the web and over WhatsApp.',
   primaryCta: 'Get started',
   secondaryCta: 'Contact us',
+  /** Shown instead of the primary CTA when the visitor is already signed in. */
+  appCta: 'Open the app',
 } as const;
 
 /** Homepage feature grid. */

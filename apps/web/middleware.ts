@@ -25,6 +25,9 @@ export default function middleware(request: NextRequest): NextResponse {
   // Propagate x-request-id down to the handler via a request-header rewrite
   // so RSC and the route layer see the same id.
   request.headers.set('x-request-id', requestId);
+  // Expose the pathname to server components (the layout uses it to render the
+  // public homepage without the app sidebar).
+  request.headers.set('x-pathname', request.nextUrl.pathname);
 
   const response = intlMiddleware(request) ?? NextResponse.next();
   response.headers.set('x-request-id', requestId);

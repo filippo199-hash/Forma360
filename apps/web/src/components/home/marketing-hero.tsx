@@ -7,7 +7,13 @@ import { FEATURES, HERO } from '../../content/site';
  * WhatsApp AI assistant — required context for Meta App Review and useful for
  * anyone landing on the site. All copy comes from the `site` content module.
  */
-export function MarketingHero({ locale }: { locale: string }) {
+export function MarketingHero({
+  locale,
+  isSignedIn = false,
+}: {
+  locale: string;
+  isSignedIn?: boolean;
+}) {
   return (
     <section className="mx-auto max-w-5xl px-4 pt-12 text-center sm:pt-20">
       <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
@@ -21,10 +27,10 @@ export function MarketingHero({ locale }: { locale: string }) {
       </p>
       <div className="mt-8 flex items-center justify-center gap-3">
         <Link
-          href={`/${locale}/sign-up`}
+          href={isSignedIn ? `/${locale}/ai` : `/${locale}/sign-up`}
           className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
         >
-          {HERO.primaryCta}
+          {isSignedIn ? HERO.appCta : HERO.primaryCta}
         </Link>
         <Link
           href={`/${locale}/contact`}

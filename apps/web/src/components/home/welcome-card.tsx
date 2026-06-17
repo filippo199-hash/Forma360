@@ -16,7 +16,12 @@ export function WelcomeCard() {
   const { data, isLoading, isError } = trpc.health.me.useQuery();
 
   async function signOut() {
-    await fetch('/api/auth/sign-out', { method: 'POST' });
+    // Empty body would make better-auth's handler throw on JSON.parse (500).
+    await fetch('/api/auth/sign-out', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
     window.location.reload();
   }
 
