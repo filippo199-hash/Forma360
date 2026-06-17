@@ -47,8 +47,10 @@ export function GET(request: Request): Response {
   const challenge = url.searchParams.get('hub.challenge');
 
   if (mode === 'subscribe' && token && token === env.WHATSAPP_VERIFY_TOKEN && challenge) {
+    log.info('Webhook GET verification succeeded');
     return new Response(challenge, { status: 200, headers: { 'Content-Type': 'text/plain' } });
   }
+  log.warn({ mode, tokenMatches: token === env.WHATSAPP_VERIFY_TOKEN }, 'Webhook GET verification failed');
   return new Response('Forbidden', { status: 403 });
 }
 
@@ -172,7 +174,11 @@ export async function POST(request: Request): Promise<Response> {
 
   const rawBody = await request.text();
   const signature = request.headers.get('x-hub-signature-256');
-  if (!verifyWhatsAppSignature(rawBody, signature)) {
+  const sigValid = verifyWhatsAppSignature(rawBody, signature);
+  // Ground-truth observability: every inbound POST is logged with its shape so
+  // we can see whether Meta is delivering and whether our parser accepts it.
+  log.info({ bodyLen: rawBody.length, hasSig: !!signature, sigValid }, 'Webhook POST received');
+  if (!sigValid) {
     log.warn('Rejected webhook with invalid signature');
     return new Response('Invalid signature', { status: 403 });
   }
@@ -181,12 +187,16 @@ export async function POST(request: Request): Promise<Response> {
   try {
     payload = JSON.parse(rawBody);
   } catch {
+    log.warn('Webhook body was not valid JSON');
     return new Response('Bad JSON', { status: 400 });
   }
 
   const parsed = webhookSchema.safeParse(payload);
   if (!parsed.success) {
     // Not a shape we handle (e.g. status receipts) — ack so Meta stops retrying.
+    const topKeys =
+      payload && typeof payload === 'object' ? Object.keys(payload as Record<string, unknown>) : [];
+    log.info({ topKeys }, 'Webhook payload did not match message schema (ignored)');
     return new Response('OK', { status: 200 });
   }
 
@@ -194,6 +204,7 @@ export async function POST(request: Request): Promise<Response> {
     ?.flatMap((e) => e.changes ?? [])
     .flatMap((c) => c.value.messages ?? [])
     .filter((m) => m.type === 'text' && m.text && !alreadyProcessed(m.id));
+  log.info({ messageCount: messages?.length ?? 0 }, 'Webhook payload parsed');
 
   // Process in a detached task so we ack within Meta's timeout window.
   if (messages && messages.length > 0) {
