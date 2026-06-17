@@ -1,44 +1,18 @@
 'use client';
 
-import { LOCALES, type Locale } from '@forma360/i18n/config';
-import {
-  Check,
-  Languages,
-  LogOut,
-  Moon,
-  Settings,
-  Sun,
-  UserCircle,
-  UserRound,
-} from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { LogOut, Moon, Settings, Sun, UserCircle, UserRound } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-
-// ─── Locale labels (native language names) ────────────────────────────────────
-const LOCALE_LABELS: Record<Locale, string> = {
-  en: 'English',
-  es: 'Español',
-  fr: 'Français',
-  de: 'Deutsch',
-  pt: 'Português',
-  it: 'Italiano',
-  nl: 'Nederlands',
-  pl: 'Polski',
-  ja: '日本語',
-  zh: '中文',
-};
 
 interface UserMenuProps {
   name: string;
@@ -50,29 +24,19 @@ interface UserMenuProps {
  * Header user dropdown. Contains:
  * - User identity header (name + email)
  * - Profile + Settings links
- * - Language switcher (all 10 locales)
  * - Dark / light mode toggle
  * - Sign out
+ *
+ * Language is chosen on the profile page, not here.
  */
 export function UserMenu({ name, email, locale }: UserMenuProps) {
   const t = useTranslations('common');
-  const currentLocale = useLocale() as Locale;
-  const router = useRouter();
-  const pathname = usePathname();
-  const [, startLocaleTransition] = useTransition();
   const [signingOut, setSigningOut] = useState(false);
 
   // Theme handling (next-themes needs mounted guard to avoid hydration flash)
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-
-  function switchLocale(next: Locale) {
-    const segments = pathname.split('/');
-    if (segments.length > 1) segments[1] = next;
-    const nextPath = segments.join('/') || `/${next}`;
-    startLocaleTransition(() => router.push(nextPath));
-  }
 
   async function onSignOut() {
     setSigningOut(true);
@@ -124,28 +88,6 @@ export function UserMenu({ name, email, locale }: UserMenuProps) {
             {t('settingsLink')}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-
-        {/* ── Language ─────────────────────────────────────────────────────── */}
-        <DropdownMenuLabel className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-          <Languages className="h-3.5 w-3.5" aria-hidden />
-          {t('locale.switch')}
-        </DropdownMenuLabel>
-        {LOCALES.map((loc) => (
-          <DropdownMenuItem
-            key={loc}
-            onSelect={() => switchLocale(loc)}
-            className="flex items-center gap-2"
-          >
-            <span className="w-4 shrink-0 text-center text-[10px] uppercase tracking-wide text-muted-foreground">
-              {loc}
-            </span>
-            <span className="flex-1">{LOCALE_LABELS[loc]}</span>
-            {loc === currentLocale ? (
-              <Check className="h-3.5 w-3.5 text-primary" aria-hidden />
-            ) : null}
-          </DropdownMenuItem>
-        ))}
         <DropdownMenuSeparator />
 
         {/* ── Theme ────────────────────────────────────────────────────────── */}

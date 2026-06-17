@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { trpc } from '../../lib/trpc/client';
 import { cn } from '../../lib/cn';
+import { MarkdownMessage } from './markdown-message';
 
 interface Message {
   id: string;
@@ -224,6 +225,8 @@ export function AiChat() {
                   >
                     {msg.content === '' && msg.role === 'assistant' ? (
                       <span className="animate-pulse text-muted-foreground">{t('thinking')}</span>
+                    ) : msg.role === 'assistant' ? (
+                      <MarkdownMessage content={msg.content} />
                     ) : (
                       <div className="whitespace-pre-wrap break-words">{msg.content}</div>
                     )}

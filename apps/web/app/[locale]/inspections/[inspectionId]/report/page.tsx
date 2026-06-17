@@ -336,6 +336,13 @@ function ReportBody({
 }) {
   const inspectionPages = content.pages.filter((p) => p.type === 'inspection');
 
+  // Resolve multiple-choice answers (stored as response-option IDs) to their
+  // human-readable labels. Without this the report shows raw ULIDs / JSON.
+  const optionLabels = new Map<string, string>();
+  for (const set of content.customResponseSets ?? []) {
+    for (const opt of set.options) optionLabels.set(opt.id, opt.label);
+  }
+
   return (
     <div className="space-y-8 rounded-lg border bg-card p-6 shadow-sm">
       {inspectionPages.map((page) => (
@@ -344,6 +351,7 @@ function ReportBody({
           page={page}
           responses={responses}
           actionsByItemId={actionsByItemId}
+          optionLabels={optionLabels}
           t={t}
         />
       ))}
@@ -418,11 +426,13 @@ function ReportPage({
   page,
   responses,
   actionsByItemId,
+  optionLabels,
   t,
 }: {
   page: Page;
   responses: Record<string, unknown>;
   actionsByItemId: Map<string, ActionSummary[]>;
+  optionLabels: Map<string, string>;
   t: TFunc;
 }) {
   return (
@@ -434,6 +444,7 @@ function ReportPage({
           section={section}
           responses={responses}
           actionsByItemId={actionsByItemId}
+          optionLabels={optionLabels}
           t={t}
         />
       ))}
@@ -445,11 +456,13 @@ function ReportSection({
   section,
   responses,
   actionsByItemId,
+  optionLabels,
   t,
 }: {
   section: Section;
   responses: Record<string, unknown>;
   actionsByItemId: Map<string, ActionSummary[]>;
+  optionLabels: Map<string, string>;
   t: TFunc;
 }) {
   const visibleItems = section.items.filter((item) => 'prompt' in item) as Item[];
@@ -467,6 +480,7 @@ function ReportSection({
             item={item}
             response={responses[item.id]}
             actions={actionsByItemId.get(item.id) ?? []}
+            optionLabels={optionLabels}
             t={t}
           />
         ))}
@@ -479,11 +493,13 @@ function ReportItem({
   item,
   response,
   actions,
+  optionLabels,
   t,
 }: {
   item: Item;
   response: unknown;
   actions: ActionSummary[];
+  optionLabels: Map<string, string>;
   t: TFunc;
 }) {
   const prompt = 'prompt' in item ? item.prompt : null;
@@ -534,7 +550,7 @@ function ReportItem({
                 answered ? 'text-right font-medium' : 'text-right italic text-muted-foreground'
               }
             >
-              {answered ? stringifyResponse(response) : '—'}
+              {answered ? formatResponse(response, optionLabels) : '—'}
             </span>
           </div>
         )}
@@ -622,18 +638,52 @@ function ActionPriorityChip({
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function stringifyResponse(v: unknown): string {
+/**
+ * Render a stored response as readable text. Multiple-choice answers are
+ * stored as response-option IDs (sometimes as a JSON-encoded array string);
+ * resolve those to their labels via {@link optionLabels} so the report shows
+ * "Pass, Fail" rather than `["01KV…","01KV…"]`.
+ */
+function formatResponse(v: unknown, optionLabels: Map<string, string>): string {
   if (v === null || v === undefined) return '';
-  if (typeof v === 'string') return v;
+
+  // A value stored as a JSON-encoded array string, e.g. '["id1","id2"]'.
+  if (typeof v === 'string') {
+    const trimmed = v.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed: unknown = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return formatResponse(parsed, optionLabels);
+      } catch {
+        // not JSON — fall through and treat as a plain string
+      }
+    }
+    return optionLabels.get(v) ?? v;
+  }
+
   if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+
   if (Array.isArray(v)) {
     return (v as unknown[])
-      .map((item) => (typeof item === 'string' ? item : JSON.stringify(item)))
+      .map((item) => {
+        if (typeof item === 'string') return optionLabels.get(item) ?? item;
+        if (item !== null && typeof item === 'object') {
+          const obj = item as Record<string, unknown>;
+          if (typeof obj['label'] === 'string') return obj['label'];
+          if (typeof obj['value'] === 'string') return obj['value'];
+        }
+        return String(item);
+      })
+      .filter((s) => s.length > 0)
       .join(', ');
   }
-  if (typeof v === 'object' && 'value' in (v as object)) {
-    return String((v as { value: unknown }).value);
+
+  if (typeof v === 'object') {
+    const obj = v as Record<string, unknown>;
+    if (typeof obj['label'] === 'string') return obj['label'];
+    if ('value' in obj) return String(obj['value']);
   }
+
   try {
     return JSON.stringify(v);
   } catch {

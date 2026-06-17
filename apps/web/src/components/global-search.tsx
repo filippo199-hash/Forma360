@@ -244,12 +244,12 @@ export function GlobalSearch() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:w-80"
         aria-label={t('openLabel')}
       >
         <Search className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">{t('placeholder')}</span>
-        <kbd className="hidden rounded border bg-background px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground sm:inline">
+        <kbd className="hidden rounded border bg-background px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground sm:ml-auto sm:inline">
           ⌘K
         </kbd>
       </button>

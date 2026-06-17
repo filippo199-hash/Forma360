@@ -3,7 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { PermissionsProvider } from '../../../src/lib/permissions-context';
-import { SettingsNav } from '../../../src/components/settings/settings-nav';
+import { SettingsTabs } from '../../../src/components/settings/settings-tabs';
 import { loadCurrentUserPermissions } from '../../../src/server/load-permissions';
 
 /**
@@ -34,17 +34,14 @@ export default async function SettingsLayout({
 
   const isAdmin = grantsAdminAccess(permissions);
 
+  // Render inside the normal app layout (global header + platform sidebar).
+  // Settings sections are switched via a horizontal tab bar rather than a
+  // separate settings-only sidebar.
   return (
     <PermissionsProvider permissions={permissions}>
-      {/*
-       * fixed inset-0 z-40 overlays the global SiteSidebar so settings
-       * pages render without the module nav — same technique as EditorShell.
-       */}
-      <div className="fixed inset-0 z-40 flex overflow-hidden bg-background">
-        <SettingsNav locale={locale} isAdmin={isAdmin} />
-        <main className="min-w-0 flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-[1200px] px-6 py-8">{children}</div>
-        </main>
+      <div className="mx-auto max-w-[1200px] px-6 py-8">
+        <SettingsTabs locale={locale} isAdmin={isAdmin} />
+        <div className="mt-6">{children}</div>
       </div>
     </PermissionsProvider>
   );

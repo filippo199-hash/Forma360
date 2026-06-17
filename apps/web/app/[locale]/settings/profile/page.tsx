@@ -6,6 +6,7 @@ import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
+import { LanguageSelect } from '../../../../src/components/settings/language-select';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 /**
@@ -88,6 +89,7 @@ export default function ProfilePage() {
           </form>
         </CardContent>
       </Card>
+      <LanguageSelect />
     </div>
   );
 }
