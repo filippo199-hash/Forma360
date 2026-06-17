@@ -79,7 +79,7 @@ export function ResponseInput({
     case 'instruction':
       return <InstructionBody body={item.body} />;
     case 'conductedBy':
-      return <ReadonlyField kind="conductedBy" />;
+      return <ConductedByField />;
     case 'inspectionDate':
       return <ReadonlyField kind="inspectionDate" />;
     case 'documentNumber':
@@ -615,11 +615,22 @@ function SignatureInput({
   );
 }
 
-function ReadonlyField({ kind }: { kind: 'conductedBy' | 'inspectionDate' | 'documentNumber' }) {
+function ReadonlyField({ kind }: { kind: 'inspectionDate' | 'documentNumber' }) {
   const { state } = useConduct();
-  let value: string;
-  if (kind === 'conductedBy') value = state.conductedByUserId;
-  else if (kind === 'inspectionDate') value = state.startedAt.slice(0, 10);
-  else value = state.documentNumber ?? '';
+  const value = kind === 'inspectionDate' ? state.startedAt.slice(0, 10) : (state.documentNumber ?? '');
   return <Input type="text" value={value} readOnly className="max-w-[24rem] bg-muted/30" />;
+}
+
+/**
+ * "Prepared by" / conducted-by field. The conduct state only carries the
+ * user id, so we resolve it to a human name via the users list and fall
+ * back to the id while loading or if the user is no longer listed.
+ */
+function ConductedByField() {
+  const { state } = useConduct();
+  const usersQuery = trpc.users.list.useQuery({ limit: 200 });
+  const user = usersQuery.data?.users.find((u) => u.id === state.conductedByUserId);
+  const display =
+    user !== undefined ? (user.name !== '' ? user.name : user.email) : state.conductedByUserId;
+  return <Input type="text" value={display} readOnly className="max-w-[24rem] bg-muted/30" />;
 }
