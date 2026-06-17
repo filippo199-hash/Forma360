@@ -26,7 +26,20 @@ import { tenants } from './tenants';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
+  /**
+   * Canonical display name. better-auth requires this single field, so it
+   * remains the source of truth (always kept as "First Last" when the
+   * first/last fields below are set). Existing rows may hold a single word.
+   */
   name: text('name').notNull(),
+  /**
+   * First and last name (added in migration 0032). Nullable so historical
+   * users keep working; the profile + invite flows populate both and write
+   * `name = "First Last"`. Display logic prefers these when present so
+   * "Prepared by" always shows a full name.
+   */
+  firstName: text('first_name'),
+  lastName: text('last_name'),
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),

@@ -23,7 +23,14 @@
  *   - getInviteDetails   — read-only; used by the accept page to render
  *     the tenant name and inviter context.
  */
-import { groupMembers, invitations, permissionSets, siteMembers, tenants, user } from '@forma360/db/schema';
+import {
+  groupMembers,
+  invitations,
+  permissionSets,
+  siteMembers,
+  tenants,
+  user,
+} from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { getEmailDomain, isFreeEmailDomain } from '@forma360/shared/email-domains';
 import { newId } from '@forma360/shared/id';
@@ -61,6 +68,9 @@ const requestToJoinInput = z.object({
 
 const acceptInviteInput = z.object({
   token: z.string().length(64),
+  firstName: z.string().min(1).max(60).optional(),
+  lastName: z.string().min(1).max(60).optional(),
+  /** Legacy single-field fallback; first/last take precedence when given. */
   name: z.string().min(1).max(100).optional(),
 });
 
@@ -178,9 +188,16 @@ export function createAuthRouter(deps: AuthRouterDeps) {
         const sets = await seedDefaultPermissionSets(tx, tenantId);
 
         // 3. User row. `emailVerified=false`; the OTP exchange flips it.
+        // Derive first/last from the supplied name so "Prepared by" shows
+        // a full name for the founding admin too (To-Do #4).
+        const nameParts = input.name.trim().split(/\s+/);
+        const adminFirst = nameParts[0];
+        const adminLast = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined;
         await tx.insert(user).values({
           id: userId,
           name: input.name,
+          ...(adminFirst !== undefined ? { firstName: adminFirst } : {}),
+          ...(adminLast !== undefined ? { lastName: adminLast } : {}),
           email,
           emailVerified: false,
           tenantId,
@@ -292,10 +309,27 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       const userId = `usr_${newId()}`;
 
       const result = await ctx.db.transaction(async (tx) => {
-        const displayName = input.name ?? invite.name ?? inviteEmail.split('@')[0] ?? 'New user';
+        // Prefer structured first/last (To-Do #4); fall back to a single
+        // name, the admin-supplied invite name, or the email local-part.
+        let first = input.firstName?.trim();
+        let last = input.lastName?.trim();
+        const structuredName =
+          first !== undefined && last !== undefined ? `${first} ${last}`.trim() : undefined;
+        const displayName =
+          structuredName ?? input.name ?? invite.name ?? inviteEmail.split('@')[0] ?? 'New user';
+        // When first/last weren't supplied explicitly, derive them from the
+        // display name (admin invites already pass "First Last") so the
+        // structured columns are populated from day one.
+        if (first === undefined || last === undefined) {
+          const parts = displayName.trim().split(/\s+/);
+          first = first ?? parts[0];
+          last = last ?? (parts.length > 1 ? parts.slice(1).join(' ') : undefined);
+        }
         await tx.insert(user).values({
           id: userId,
           name: displayName,
+          ...(first !== undefined ? { firstName: first } : {}),
+          ...(last !== undefined ? { lastName: last } : {}),
           email: inviteEmail,
           // Invite acceptance proves they own the inbox (they clicked
           // the link in their email), so flip verified to true.
@@ -312,27 +346,37 @@ export function createAuthRouter(deps: AuthRouterDeps) {
 
         // Auto-apply group and site memberships that were chosen at invite time.
         const now = new Date();
-        if (invite.groupIds !== null && invite.groupIds !== undefined && invite.groupIds.length > 0) {
-          await tx.insert(groupMembers).values(
-            invite.groupIds.map((groupId) => ({
-              tenantId: invite.tenantId,
-              groupId,
-              userId,
-              addedVia: 'invite' as const,
-              addedAt: now,
-            })),
-          ).onConflictDoNothing();
+        if (
+          invite.groupIds !== null &&
+          invite.groupIds !== undefined &&
+          invite.groupIds.length > 0
+        ) {
+          await tx
+            .insert(groupMembers)
+            .values(
+              invite.groupIds.map((groupId) => ({
+                tenantId: invite.tenantId,
+                groupId,
+                userId,
+                addedVia: 'invite' as const,
+                addedAt: now,
+              })),
+            )
+            .onConflictDoNothing();
         }
         if (invite.siteIds !== null && invite.siteIds !== undefined && invite.siteIds.length > 0) {
-          await tx.insert(siteMembers).values(
-            invite.siteIds.map((siteId) => ({
-              tenantId: invite.tenantId,
-              siteId,
-              userId,
-              addedVia: 'invite' as const,
-              addedAt: now,
-            })),
-          ).onConflictDoNothing();
+          await tx
+            .insert(siteMembers)
+            .values(
+              invite.siteIds.map((siteId) => ({
+                tenantId: invite.tenantId,
+                siteId,
+                userId,
+                addedVia: 'invite' as const,
+                addedAt: now,
+              })),
+            )
+            .onConflictDoNothing();
         }
 
         return { userId, tenantId: invite.tenantId };

@@ -330,7 +330,9 @@
       "nameLabel": "Name",
       "emailLabel": "Email",
       "permissionSetLabel": "Your permission set",
-      "readOnlyNote": "Only administrators can change your permission set."
+      "readOnlyNote": "Only administrators can change your permission set.",
+      "firstNameLabel": "Voornaam",
+      "lastNameLabel": "Achternaam"
     },
     "company": {
       "title": "Company",

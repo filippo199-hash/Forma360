@@ -29,6 +29,9 @@ try {
     ALTER TABLE "invitations" ADD COLUMN IF NOT EXISTS "site_ids" jsonb;
     ALTER TABLE "invitations" ADD COLUMN IF NOT EXISTS "phone" text;
     ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "phone" text;
+    -- 0032: first/last name on user (To-Do #4)
+    ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "first_name" text;
+    ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "last_name" text;
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

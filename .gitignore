@@ -41,3 +41,7 @@ Thumbs.db
 *.pid
 *.seed
 *.pid.lock
+
+# local prod-db helper scripts (not for commit)
+packages/db/apply-prod.mjs
+packages/db/verify-prod.mjs

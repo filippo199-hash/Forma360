@@ -100,6 +100,8 @@ export const usersRouter = router({
         .select({
           id: user.id,
           name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
           emailVerified: user.emailVerified,
           permissionSetId: user.permissionSetId,
@@ -144,6 +146,8 @@ export const usersRouter = router({
       .select({
         id: user.id,
         name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         emailVerified: user.emailVerified,
         permissionSetId: user.permissionSetId,
@@ -170,12 +174,25 @@ export const usersRouter = router({
     return { user: row[0], fieldValues };
   }),
 
+  /**
+   * Self-service profile update. Collects first + last name and keeps the
+   * canonical `name` in sync as "First Last" so every display surface
+   * (notably "Prepared by") shows a full name (To-Do #4).
+   */
   updateProfile: tenantProcedure
-    .input(z.object({ name: z.string().min(1).max(120) }))
+    .input(
+      z.object({
+        firstName: z.string().min(1).max(60),
+        lastName: z.string().min(1).max(60),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
+      const firstName = input.firstName.trim();
+      const lastName = input.lastName.trim();
+      const name = `${firstName} ${lastName}`.trim();
       await ctx.db
         .update(user)
-        .set({ name: input.name, updatedAt: new Date() })
+        .set({ name, firstName, lastName, updatedAt: new Date() })
         .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)));
       return { ok: true as const };
     }),

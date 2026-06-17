@@ -4,6 +4,7 @@ import { Check, Search, Users, UserRound, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { trpc } from '../../lib/trpc/client';
 import { cn } from '../../lib/cn';
+import { displayUserName } from '../../lib/user-name';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 type Mode = 'groups' | 'users' | 'both';
@@ -57,8 +58,8 @@ export function GroupUserSelector({
     () =>
       (usersQuery.data?.users ?? []).map((u) => ({
         id: u.id,
-        name: u.name !== '' ? u.name : u.email,
-        sub: u.name !== '' ? u.email : null,
+        name: displayUserName(u),
+        sub: u.email,
       })),
     [usersQuery.data],
   );

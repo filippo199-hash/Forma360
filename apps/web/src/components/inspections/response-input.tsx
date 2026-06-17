@@ -9,6 +9,7 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { trpc } from '../../lib/trpc/client';
+import { displayUserName } from '../../lib/user-name';
 import { AssetPickerInput } from './asset-picker-input';
 import { useConduct } from './conduct-context';
 import { InstructionBody } from './instruction-render';
@@ -694,7 +695,6 @@ function ConductedByField() {
   const { state } = useConduct();
   const usersQuery = trpc.users.list.useQuery({ limit: 200 });
   const user = usersQuery.data?.users.find((u) => u.id === state.conductedByUserId);
-  const display =
-    user !== undefined ? (user.name !== '' ? user.name : user.email) : state.conductedByUserId;
+  const display = user !== undefined ? displayUserName(user) : state.conductedByUserId;
   return <Input type="text" value={display} readOnly className="max-w-[24rem] bg-muted/30" />;
 }

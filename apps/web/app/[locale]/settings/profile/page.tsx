@@ -31,10 +31,22 @@ export default function ProfilePage() {
     },
   });
 
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   useEffect(() => {
     if (userGet.data !== undefined) {
-      setName(userGet.data.user.name);
+      const u = userGet.data.user;
+      // Seed from structured fields when present; otherwise split the
+      // single name on the first space so existing users get a sensible
+      // starting point.
+      if (u.firstName !== null && u.firstName !== undefined) {
+        setFirstName(u.firstName);
+        setLastName(u.lastName ?? '');
+      } else {
+        const parts = u.name.trim().split(/\s+/);
+        setFirstName(parts[0] ?? '');
+        setLastName(parts.slice(1).join(' '));
+      }
     }
   }, [userGet.data]);
 
@@ -51,18 +63,29 @@ export default function ProfilePage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              updateProfile.mutate({ name });
+              updateProfile.mutate({ firstName, lastName });
             }}
             className="space-y-4"
           >
-            <div className="space-y-1.5">
-              <Label htmlFor="profile-name">{t('nameLabel')}</Label>
-              <Input
-                id="profile-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-first">{t('firstNameLabel')}</Label>
+                <Input
+                  id="profile-first"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-last">{t('lastNameLabel')}</Label>
+                <Input
+                  id="profile-last"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="profile-email">{t('emailLabel')}</Label>
