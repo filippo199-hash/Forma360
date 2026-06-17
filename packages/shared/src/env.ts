@@ -66,6 +66,30 @@ const serverSchemaBase = z.object({
    */
   ANTHROPIC_API_KEY: z.string().min(1),
 
+  // ─── WhatsApp Cloud API (AI assistant over WhatsApp) ──────────────────────
+  // All four are optional: when unset the WhatsApp webhook is disabled and the
+  // app boots normally (tests + local dev don't need them). Production sets all
+  // four in Railway to enable the WhatsApp agent.
+  /**
+   * Arbitrary shared string used only during Meta's webhook verification GET
+   * handshake (`hub.verify_token`). We pick this value; it must match what is
+   * entered in the Meta App webhook config. Generate with `openssl rand -hex 16`.
+   */
+  WHATSAPP_VERIFY_TOKEN: z.string().min(1).optional(),
+  /**
+   * Bearer token for the WhatsApp Cloud API (Graph API). A temporary token
+   * lasts 24h; for production use a System User permanent token.
+   */
+  WHATSAPP_ACCESS_TOKEN: z.string().min(1).optional(),
+  /** The Cloud API phone-number ID that sends messages (from API Setup). */
+  WHATSAPP_PHONE_NUMBER_ID: z.string().min(1).optional(),
+  /**
+   * Meta App secret (App Settings → Basic). Used to verify the
+   * `X-Hub-Signature-256` HMAC on inbound webhook payloads so we only act on
+   * requests genuinely from Meta.
+   */
+  WHATSAPP_APP_SECRET: z.string().min(1).optional(),
+
   SENTRY_DSN: z.string().url().optional(),
 
   LOG_LEVEL: logLevelSchema.default('info'),
