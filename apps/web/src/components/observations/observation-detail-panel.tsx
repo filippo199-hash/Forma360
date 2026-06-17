@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { SiteSelector } from '../selectors/site-selector';
+import { GroupUserSelector } from '../selectors/group-user-selector';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import {
@@ -317,20 +319,12 @@ export function ObservationDetailPanel({
                   </DetailRow>
                   <DetailRow label={tFields('site')}>
                     {canManage ? (
-                      <select
-                        value={issue.siteId ?? ''}
-                        onChange={(e) =>
-                          update.mutate({ issueId, siteId: e.target.value === '' ? null : e.target.value })
-                        }
-                        className="block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
-                      >
-                        <option value="">—</option>
-                        {(sites ?? []).map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </select>
+                      <SiteSelector
+                        value={issue.siteId !== null && issue.siteId !== undefined ? [issue.siteId] : []}
+                        onChange={(next) => update.mutate({ issueId, siteId: next[0] ?? null })}
+                        multiple={false}
+                        placeholder="—"
+                      />
                     ) : (
                       <span className="text-sm">{siteName}</span>
                     )}
@@ -563,18 +557,6 @@ function AssigneePicker({
   onChange: (next: string | null) => void;
   tFields: (k: string) => string;
 }) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const { data: users } = trpc.users.list.useQuery({}, { enabled: open });
-  const list = users?.users ?? [];
-  const needle = search.trim().toLowerCase();
-  const filtered =
-    needle === ''
-      ? list
-      : list.filter(
-          (u) => u.name.toLowerCase().includes(needle) || u.email.toLowerCase().includes(needle),
-        );
-
   if (!canManage) {
     return (
       <span className="text-sm">
@@ -584,58 +566,13 @@ function AssigneePicker({
   }
 
   return (
-    <>
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setOpen(true)}
-          className="justify-start"
-        >
-          {currentName !== null && currentName.length > 0 ? currentName : tFields('pickUser')}
-        </Button>
-        {currentId !== null ? (
-          <button
-            type="button"
-            className="text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => onChange(null)}
-          >
-            {tFields('clearAssignee')}
-          </button>
-        ) : null}
-      </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{tFields('pickUser')}</DialogTitle>
-          </DialogHeader>
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={tFields('searchUsers')}
-            aria-label={tFields('searchUsers')}
-          />
-          <ul className="max-h-72 space-y-1 overflow-y-auto rounded-md border p-2">
-            {filtered.map((u) => (
-              <li key={u.id}>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent/40"
-                  onClick={() => {
-                    onChange(u.id);
-                    setOpen(false);
-                  }}
-                >
-                  <span className="font-medium">{u.name}</span>
-                  <span className="text-xs text-muted-foreground">{u.email}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </DialogContent>
-      </Dialog>
-    </>
+    <GroupUserSelector
+      mode="users"
+      multiple={false}
+      value={currentId !== null ? [currentId] : []}
+      onChange={(next) => onChange(next[0] ?? null)}
+      placeholder={tFields('pickUser')}
+    />
   );
 }
 

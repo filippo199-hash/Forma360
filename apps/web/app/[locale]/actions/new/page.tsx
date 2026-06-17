@@ -13,6 +13,8 @@ import { Checkbox } from '../../../../src/components/ui/checkbox';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -59,9 +61,6 @@ export default function NewActionPage() {
   const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});
   const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(new Set());
 
-  const { data: sites } = trpc.sites.list.useQuery();
-  const { data: usersData } = trpc.users.list.useQuery({});
-  const users = usersData?.users ?? [];
   const { data: types } = trpc.actionTypes.list.useQuery({ includeArchived: false });
   const { data: assetsList } = trpc.assets.listWithChildren.useQuery();
   const { data: actionSettings } = trpc.actionTypes.settings.get.useQuery();
@@ -281,38 +280,23 @@ export default function NewActionPage() {
                   {t('siteLabel')}
                   {isRequired('site') ? <span className="ml-1 text-destructive">*</span> : null}
                 </Label>
-                <select
-                  id="site"
-                  value={siteId}
-                  onChange={(e) => setSiteId(e.target.value)}
-                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">{t('siteNoneOption')}</option>
-                  {(sites ?? []).map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                <SiteSelector
+                  value={siteId !== '' ? [siteId] : []}
+                  onChange={(next) => setSiteId(next[0] ?? '')}
+                  multiple={false}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="assignee">
                   {t('assigneeLabel')}
                   {isRequired('assignee') ? <span className="ml-1 text-destructive">*</span> : null}
                 </Label>
-                <select
-                  id="assignee"
-                  value={assigneeUserId}
-                  onChange={(e) => setAssigneeUserId(e.target.value)}
-                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">—</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
+                <GroupUserSelector
+                  mode="users"
+                  multiple={false}
+                  value={assigneeUserId !== '' ? [assigneeUserId] : []}
+                  onChange={(next) => setAssigneeUserId(next[0] ?? '')}
+                />
               </div>
             </div>
             {(selectedType === null || selectedType.labels.length > 0) && (

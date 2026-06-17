@@ -17,6 +17,8 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { SiteSelector } from '../selectors/site-selector';
+import { GroupUserSelector } from '../selectors/group-user-selector';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import {
@@ -494,23 +496,14 @@ export function ActionDetailPanel({
 
                 <DetailRow label={tFields('site')}>
                   {canEdit ? (
-                    <select
-                      value={action.siteId ?? ''}
-                      onChange={(e) =>
-                        update.mutate({
-                          actionId,
-                          siteId: e.target.value === '' ? null : e.target.value,
-                        })
+                    <SiteSelector
+                      value={action.siteId !== null ? [action.siteId] : []}
+                      onChange={(next) =>
+                        update.mutate({ actionId, siteId: next[0] ?? null })
                       }
-                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
-                    >
-                      <option value="">{tFields('noSite')}</option>
-                      {(sites ?? []).map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
+                      multiple={false}
+                      placeholder={tFields('noSite')}
+                    />
                   ) : action.siteId !== null ? (
                     ((sites ?? []).find((s) => s.id === action.siteId)?.name ?? '—')
                   ) : (
@@ -627,8 +620,6 @@ function AssigneePicker({
   onChange: (next: string | null) => void;
   tFields: (k: string) => string;
 }) {
-  const { data: usersData } = trpc.users.list.useQuery({});
-  const users = usersData?.users ?? [];
   if (!canManage) {
     return (
       <span>
@@ -637,18 +628,13 @@ function AssigneePicker({
     );
   }
   return (
-    <select
-      value={currentId ?? ''}
-      onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
-      className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
-    >
-      <option value="">{tFields('noAssignee')}</option>
-      {users.map((u) => (
-        <option key={u.id} value={u.id}>
-          {u.name}
-        </option>
-      ))}
-    </select>
+    <GroupUserSelector
+      mode="users"
+      multiple={false}
+      value={currentId !== null ? [currentId] : []}
+      onChange={(next) => onChange(next[0] ?? null)}
+      placeholder={tFields('noAssignee')}
+    />
   );
 }
 

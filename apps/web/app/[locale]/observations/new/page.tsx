@@ -16,6 +16,7 @@ import { Checkbox } from '../../../../src/components/ui/checkbox';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -71,7 +72,6 @@ export default function NewObservationPage() {
   const { data: categories, isLoading: loadingCategories } = trpc.issues.categories.list.useQuery({
     includeArchived: false,
   });
-  const { data: sites } = trpc.sites.list.useQuery();
   const { data: assetsList } = trpc.assets.listWithChildren.useQuery();
   const { data: category } = trpc.issues.categories.get.useQuery(
     { categoryId },
@@ -283,19 +283,11 @@ export default function NewObservationPage() {
               {showSite ? (
                 <div className="space-y-1.5">
                   <Label htmlFor="site">{t('siteLabel')}</Label>
-                  <select
-                    id="site"
-                    value={siteId}
-                    onChange={(e) => setSiteId(e.target.value)}
-                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="">{t('sitePlaceholder')}</option>
-                    {(sites ?? []).map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                  <SiteSelector
+                    value={siteId !== '' ? [siteId] : []}
+                    onChange={(next) => setSiteId(next[0] ?? '')}
+                    multiple={false}
+                  />
                 </div>
               ) : null}
 
