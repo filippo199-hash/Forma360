@@ -1,11 +1,10 @@
 import Link from 'next/link';
-import { FEATURES, HERO } from '../../content/site';
+import { HERO } from '../../content/site';
 
 /**
- * Public marketing hero shown to signed-out visitors on the homepage. Gives a
- * clear, reviewable description of what Forma360 is and that it offers a
- * WhatsApp AI assistant — required context for Meta App Review and useful for
- * anyone landing on the site. All copy comes from the `site` content module.
+ * Public marketing hero. Clean, confident, centred — a large display
+ * headline over an atmospheric teal gradient + faint grid, with staggered
+ * load-in. Renders an "Open the app" CTA for signed-in visitors.
  */
 export function MarketingHero({
   locale,
@@ -15,40 +14,70 @@ export function MarketingHero({
   isSignedIn?: boolean;
 }) {
   return (
-    <section className="mx-auto max-w-5xl px-4 pt-12 text-center sm:pt-20">
-      <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-        {HERO.eyebrow}
-      </p>
-      <h1 className="mx-auto mt-4 max-w-3xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-        {HERO.title}
-      </h1>
-      <p className="mx-auto mt-5 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
-        {HERO.subtitle}
-      </p>
-      <div className="mt-8 flex items-center justify-center gap-3">
-        <Link
-          href={isSignedIn ? `/${locale}/ai` : `/${locale}/sign-up`}
-          className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          {isSignedIn ? HERO.appCta : HERO.primaryCta}
-        </Link>
-        <Link
-          href={`/${locale}/contact`}
-          className="inline-flex h-10 items-center rounded-md border px-5 text-sm font-medium transition-colors hover:bg-accent"
-        >
-          {HERO.secondaryCta}
-        </Link>
-      </div>
+    <section className="relative overflow-hidden border-b">
+      {/* Atmosphere: faint grid + two soft brand glows. Decorative only. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, color-mix(in oklab, var(--color-foreground) 6%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in oklab, var(--color-foreground) 6%, transparent) 1px, transparent 1px)',
+          backgroundSize: '56px 56px',
+          maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent 75%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent 75%)',
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-[420px] w-[820px] -translate-x-1/2 rounded-full opacity-60 blur-3xl"
+        style={{
+          background:
+            'radial-gradient(closest-side, color-mix(in oklab, var(--color-brand) 30%, transparent), transparent)',
+        }}
+      />
 
-      <div className="mt-16 grid gap-6 text-left sm:grid-cols-2 lg:grid-cols-3">
-        {FEATURES.map((feature) => (
-          <div key={feature.title} className="rounded-lg border bg-card p-5">
-            <h2 className="text-base font-semibold tracking-tight">{feature.title}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {feature.description}
-            </p>
-          </div>
-        ))}
+      <div className="mx-auto max-w-4xl px-4 pb-20 pt-20 text-center sm:pt-28">
+        <p
+          className="animate-fade-up text-sm font-semibold uppercase tracking-[0.14em] text-brand"
+          style={{ animationDelay: '0ms' }}
+        >
+          {HERO.eyebrow}
+        </p>
+        <h1
+          className="animate-fade-up mx-auto mt-5 max-w-3xl text-balance font-display text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl"
+          style={{ animationDelay: '80ms' }}
+        >
+          {HERO.title}
+        </h1>
+        <p
+          className="animate-fade-up mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground"
+          style={{ animationDelay: '160ms' }}
+        >
+          {HERO.subtitle}
+        </p>
+        <div
+          className="animate-fade-up mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+          style={{ animationDelay: '240ms' }}
+        >
+          <Link
+            href={isSignedIn ? `/${locale}/ai` : `/${locale}/sign-up`}
+            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand px-6 text-sm font-semibold text-brand-foreground shadow-sm transition-transform hover:-translate-y-0.5 sm:w-auto"
+          >
+            {isSignedIn ? HERO.appCta : HERO.primaryCta}
+          </Link>
+          <Link
+            href={`/${locale}/contact`}
+            className="inline-flex h-11 w-full items-center justify-center rounded-lg border bg-background px-6 text-sm font-semibold transition-colors hover:bg-accent sm:w-auto"
+          >
+            {HERO.secondaryCta}
+          </Link>
+        </div>
+        <p
+          className="animate-fade-up mt-5 text-xs text-muted-foreground"
+          style={{ animationDelay: '320ms' }}
+        >
+          {HERO.note}
+        </p>
       </div>
     </section>
   );

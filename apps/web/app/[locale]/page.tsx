@@ -1,14 +1,19 @@
 import { setRequestLocale } from 'next-intl/server';
 import { headers } from 'next/headers';
 import { MarketingHero } from '../../src/components/home/marketing-hero';
-import { SignInCard } from '../../src/components/home/sign-in-card';
+import {
+  CtaBand,
+  IndustriesStrip,
+  Modules,
+  Stats,
+  WhatsAppSpotlight,
+} from '../../src/components/home/marketing-sections';
 import { auth } from '../../src/server/auth';
 
 /**
- * Public home page — the marketing landing page for everyone. It does NOT
- * redirect signed-in users into the app; instead the hero offers an
- * "Open the app" call to action. Signed-out visitors additionally see the
- * passwordless sign-in card below the hero.
+ * Public home page — the marketing landing page for everyone. It never
+ * redirects signed-in users into the app; the hero offers an "Open the app"
+ * CTA instead. Sign-in lives at /[locale]/sign-in (linked from the header).
  */
 export default async function LocaleHome({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -18,13 +23,13 @@ export default async function LocaleHome({ params }: { params: Promise<{ locale:
   const isSignedIn = session !== null;
 
   return (
-    <div className="pb-20">
+    <>
       <MarketingHero locale={locale} isSignedIn={isSignedIn} />
-      {isSignedIn ? null : (
-        <section className="mx-auto mt-16 flex max-w-6xl items-center justify-center px-4">
-          <SignInCard />
-        </section>
-      )}
-    </div>
+      <IndustriesStrip />
+      <Modules />
+      <WhatsAppSpotlight />
+      <Stats />
+      <CtaBand locale={locale} />
+    </>
   );
 }

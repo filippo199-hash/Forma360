@@ -41,6 +41,14 @@
 
   --font-sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+  /* Distinctive display face used on marketing headlines (not the app UI). */
+  --font-display: var(--font-hanken), var(--font-inter), system-ui, sans-serif;
+
+  /* Brand accent — a confident teal/emerald used on the public marketing
+   * site (eyebrows, the WhatsApp spotlight, the final CTA band). Distinct
+   * from the neutral app palette; ties to the WhatsApp green differentiator. */
+  --color-brand: oklch(0.62 0.114 187);
+  --color-brand-foreground: oklch(0.985 0 0);
 }
 
 @variant dark (&:where(.dark, .dark *));
@@ -73,6 +81,10 @@
   --color-border: oklch(1 0 0 / 10%);
   --color-input: oklch(1 0 0 / 15%);
   --color-ring: oklch(0.552 0.016 285.938);
+
+  /* Brighter teal on dark surfaces for adequate contrast. */
+  --color-brand: oklch(0.78 0.13 184);
+  --color-brand-foreground: oklch(0.18 0.02 200);
 }
 
 body {
@@ -85,4 +97,29 @@ body {
 
 * {
   border-color: var(--color-border);
+}
+
+/* Staggered page-load reveal for the marketing homepage. Respects
+ * reduced-motion preferences. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  opacity: 0;
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up {
+    opacity: 1;
+    animation: none;
+  }
 }

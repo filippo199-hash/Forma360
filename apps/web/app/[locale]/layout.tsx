@@ -2,7 +2,7 @@ import '../globals.css';
 
 import { LOCALES } from '@forma360/i18n/config';
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Hanken_Grotesk, Inter, JetBrains_Mono } from 'next/font/google';
 import { headers } from 'next/headers';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
@@ -26,6 +26,15 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-jetbrains-mono',
   display: 'swap',
+});
+
+// Display face for marketing headlines (exposed as --font-hanken; applied
+// only by the public marketing components, not the app UI).
+const hanken = Hanken_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-hanken',
+  display: 'swap',
+  weight: ['500', '600', '700', '800'],
 });
 
 export const metadata: Metadata = {
@@ -70,7 +79,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${hanken.variable}`}
     >
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         <NextIntlClientProvider>
