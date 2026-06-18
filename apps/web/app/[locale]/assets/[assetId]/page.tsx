@@ -169,7 +169,7 @@ export default function AssetDetailPage() {
     return <Skeleton className="m-6 h-96 w-full" />;
   }
 
-  const { asset, assetType, childrenCount, latestReadings } = data;
+  const { asset, assetType, siteName, childrenCount, latestReadings } = data;
   const isArchived = asset.archivedAt !== null;
 
   const TABS: Tab[] = [
@@ -358,7 +358,7 @@ export default function AssetDetailPage() {
                   <p className="text-muted-foreground">{asset.description}</p>
                 ) : null}
                 <DetailRow label={t('fields.type')}>{assetType?.name ?? '—'}</DetailRow>
-                <DetailRow label={t('fields.site')}>{asset.siteId ?? '—'}</DetailRow>
+                <DetailRow label={t('fields.site')}>{siteName ?? '—'}</DetailRow>
                 {asset.parentId !== null ? (
                   <DetailRow label={t('fields.parent')}>
                     <Link href={`/${locale}/assets/${asset.parentId}`} className="hover:underline">

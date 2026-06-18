@@ -287,13 +287,13 @@ describe('issues router (Phase 3 PR 1)', () => {
       return categoryId;
     }
 
-    it('create returns ISS-000001 and increments per tenant', async () => {
+    it('create returns OBS-000001 and increments per tenant', async () => {
       const caller = createCaller(ctxFor(adminUserId));
       const categoryId = await bootCategory();
       const first = await caller.issues.issues.create({ categoryId, title: 'First' });
       const second = await caller.issues.issues.create({ categoryId, title: 'Second' });
-      expect(first.referenceNumber).toBe('ISS-000001');
-      expect(second.referenceNumber).toBe('ISS-000002');
+      expect(first.referenceNumber).toBe('OBS-000001');
+      expect(second.referenceNumber).toBe('OBS-000002');
     });
 
     it('I-E11: create rejected when category is archived', async () => {
@@ -486,7 +486,7 @@ describe('issues router (Phase 3 PR 1)', () => {
         tenantId,
         title: 'Spill',
       });
-      expect(result.referenceNumber).toMatch(/^ISS-\d{6}$/);
+      expect(result.referenceNumber).toMatch(/^OBS-\d{6}$/);
       const row = (
         await db.select().from(schema.issues).where(eq(schema.issues.id, result.issueId))
       )[0];

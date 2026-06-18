@@ -26,7 +26,6 @@ const STATUSES: readonly StatusFilter[] = ['all', 'open', 'investigation', 'clos
 export default function ObservationsListPage() {
   const t = useTranslations('issues.list');
   const tStatus = useTranslations('issues.status');
-  const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
 
@@ -260,7 +259,7 @@ export default function ObservationsListPage() {
           disabled={pages.length === 0}
           onClick={() => setPages((p) => p.slice(0, -1))}
         >
-          {tCommon('back')}
+          {t('previousPage')}
         </Button>
         {data !== undefined && data.nextCursor !== null && data.nextCursor !== undefined ? (
           <LoadMoreButton
@@ -274,7 +273,9 @@ export default function ObservationsListPage() {
       {/* Observation detail sidebar */}
       <Sheet
         open={selectedObservationId !== null}
-        onOpenChange={(open) => { if (!open) handleClosePanel(); }}
+        onOpenChange={(open) => {
+          if (!open) handleClosePanel();
+        }}
       >
         <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
           {selectedObservationId !== null ? (

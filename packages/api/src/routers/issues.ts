@@ -298,9 +298,11 @@ function buildCategorySnapshot(cat: IssueCategory): IssueCategorySnapshot {
 }
 
 /**
- * Render a "ISS-000042"-style reference number. Counts every issue ever
- * created in the tenant and adds one. Per the spec we accept gaps — this
- * is a display value, not a uniqueness contract.
+ * Render an "OBS-000042"-style reference number for an observation. Counts
+ * every observation ever created in the tenant and adds one. Per the spec we
+ * accept gaps — this is a display value, not a uniqueness contract. ("OBS"
+ * matches the user-facing "Observations" module name; the table is still
+ * internally named `issues`.)
  */
 async function nextReferenceNumber(db: Db, tenantId: string): Promise<string> {
   const totalRows = await db
@@ -308,7 +310,7 @@ async function nextReferenceNumber(db: Db, tenantId: string): Promise<string> {
     .from(issues)
     .where(eq(issues.tenantId, tenantId));
   const next = (totalRows[0]?.c ?? 0) + 1;
-  return `ISS-${next.toString().padStart(6, '0')}`;
+  return `OBS-${next.toString().padStart(6, '0')}`;
 }
 
 async function loadCategoryOrThrow(
@@ -807,13 +809,20 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         await assertCallerSatisfiesCategoryAccess(ctx.db, ctx.tenantId, ctx.auth.userId, category);
 
         const accessSnapshot = await loadAccessSnapshot(ctx.db, ctx.tenantId, ctx.auth.userId);
-        // Snapshot the reporter's display name at submission time.
+        // Snapshot the reporter's display name at submission time, preferring
+        // the structured first + last name so it reads as a full name.
         const reporterRows = await ctx.db
-          .select({ name: user.name })
+          .select({ name: user.name, firstName: user.firstName, lastName: user.lastName })
           .from(user)
           .where(eq(user.id, ctx.auth.userId))
           .limit(1);
-        const reportedByName = reporterRows[0]?.name ?? null;
+        const reporter = reporterRows[0];
+        const reportedByName =
+          reporter !== undefined
+            ? reporter.firstName && reporter.lastName
+              ? `${reporter.firstName} ${reporter.lastName}`
+              : reporter.name
+            : null;
 
         const referenceNumber = await nextReferenceNumber(ctx.db, ctx.tenantId);
         const id = newId();
@@ -874,14 +883,17 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         }
 
         if (input.assetIds !== undefined && input.assetIds.length > 0) {
-          await ctx.db.insert(issueAssets).values(
-            input.assetIds.map((assetId) => ({
-              id: newId(),
-              tenantId: ctx.tenantId,
-              issueId: id,
-              assetId,
-            })),
-          ).onConflictDoNothing();
+          await ctx.db
+            .insert(issueAssets)
+            .values(
+              input.assetIds.map((assetId) => ({
+                id: newId(),
+                tenantId: ctx.tenantId,
+                issueId: id,
+                assetId,
+              })),
+            )
+            .onConflictDoNothing();
         }
 
         ctx.logger.info({ issueId: id, categoryId: category.id }, '[issues] created');
@@ -979,14 +991,17 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         if (input.assetIds !== undefined) {
           await ctx.db.delete(issueAssets).where(eq(issueAssets.issueId, issue.id));
           if (input.assetIds.length > 0) {
-            await ctx.db.insert(issueAssets).values(
-              input.assetIds.map((assetId) => ({
-                id: newId(),
-                tenantId: ctx.tenantId,
-                issueId: issue.id,
-                assetId,
-              })),
-            ).onConflictDoNothing();
+            await ctx.db
+              .insert(issueAssets)
+              .values(
+                input.assetIds.map((assetId) => ({
+                  id: newId(),
+                  tenantId: ctx.tenantId,
+                  issueId: issue.id,
+                  assetId,
+                })),
+              )
+              .onConflictDoNothing();
           }
         }
         return { ok: true as const };

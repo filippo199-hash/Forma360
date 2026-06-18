@@ -26,7 +26,7 @@ import {
 } from '@forma360/permissions/dependents';
 import { wouldDropBelowMinAdmins } from '@forma360/permissions/admins';
 import { newId } from '@forma360/shared/id';
-import { and, count, eq, sql } from 'drizzle-orm';
+import { and, count, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router, TRPCError } from '../trpc';
@@ -79,26 +79,30 @@ export const permissionsRouter = router({
    * The count is what S-E01 blocks deletion on.
    */
   list: tenantProcedure.use(requirePermission('permissions.view')).query(async ({ ctx }) => {
-    const rows = await ctx.db
-      .select({
-        id: permissionSets.id,
-        name: permissionSets.name,
-        description: permissionSets.description,
-        permissions: permissionSets.permissions,
-        isSystem: permissionSets.isSystem,
-        createdAt: permissionSets.createdAt,
-        updatedAt: permissionSets.updatedAt,
-        userCount: sql<number>`(
-          SELECT count(*)::int FROM ${user}
-          WHERE ${user.permissionSetId} = ${permissionSets.id}
-          AND ${user.tenantId} = ${ctx.tenantId}
-          AND ${user.deactivatedAt} IS NULL
-        )`,
-      })
-      .from(permissionSets)
-      .where(eq(permissionSets.tenantId, ctx.tenantId))
-      .orderBy(permissionSets.name);
-    return rows;
+    const [rows, counts] = await Promise.all([
+      ctx.db
+        .select({
+          id: permissionSets.id,
+          name: permissionSets.name,
+          description: permissionSets.description,
+          permissions: permissionSets.permissions,
+          isSystem: permissionSets.isSystem,
+          createdAt: permissionSets.createdAt,
+          updatedAt: permissionSets.updatedAt,
+        })
+        .from(permissionSets)
+        .where(eq(permissionSets.tenantId, ctx.tenantId))
+        .orderBy(permissionSets.name),
+      // Active users grouped by permission set — robust vs a correlated
+      // subquery, which mis-rendered as 0 (usability audit).
+      ctx.db
+        .select({ permissionSetId: user.permissionSetId, c: count() })
+        .from(user)
+        .where(and(eq(user.tenantId, ctx.tenantId), isNull(user.deactivatedAt)))
+        .groupBy(user.permissionSetId),
+    ]);
+    const countBySet = new Map(counts.map((r) => [r.permissionSetId, Number(r.c)]));
+    return rows.map((r) => ({ ...r, userCount: countBySet.get(r.id) ?? 0 }));
   }),
 
   create: tenantProcedure

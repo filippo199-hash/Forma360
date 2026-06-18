@@ -19,6 +19,7 @@ type AssetRow = {
   typeId: string | null;
   typeName: string | null;
   siteId: string | null;
+  siteName: string | null;
   qrToken: string | null;
   updatedAt: Date;
   archivedAt: Date | null;
@@ -125,7 +126,7 @@ export default function AssetsListPage() {
           </td>
 
           <td className="px-3 py-2 text-muted-foreground">{row.typeName ?? '—'}</td>
-          <td className="px-3 py-2 text-muted-foreground">{row.siteId ?? '—'}</td>
+          <td className="px-3 py-2 text-muted-foreground">{row.siteName ?? '—'}</td>
           <td className="px-3 py-2">
             {row.qrToken !== null ? (
               <span className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground">
@@ -136,9 +137,7 @@ export default function AssetsListPage() {
               <span className="text-muted-foreground">—</span>
             )}
           </td>
-          <td className="px-3 py-2 text-muted-foreground">
-            {row.updatedAt.toLocaleDateString()}
-          </td>
+          <td className="px-3 py-2 text-muted-foreground">{row.updatedAt.toLocaleDateString()}</td>
         </tr>
 
         {/* Children — rendered inline when expanded */}

@@ -236,7 +236,8 @@
         "nameLabel": "Name",
         "descriptionLabel": "Description",
         "permissionsLabel": "Permissions"
-      }
+      },
+      "permissionsCount": "{count} machtigingen"
     },
     "groups": {
       "title": "Groups",
@@ -1171,7 +1172,8 @@
         "status": "Status",
         "created": "Created"
       },
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "previousPage": "Vorige"
     },
     "status": {
       "open": "Open",
@@ -1634,7 +1636,8 @@
         "deleteView": "Remove",
         "savedToast": "View \"{name}\" saved"
       },
-      "settingsButton": "Instellingen"
+      "settingsButton": "Instellingen",
+      "sourceMaintenance": "Onderhoud"
     },
     "detail": {
       "backLink": "Back to actions",

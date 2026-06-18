@@ -105,7 +105,13 @@ const FILTER_KEYS: ReadonlyArray<FilterKey> = [
   'archived',
   'sort',
 ];
-const STATUSES: ReadonlyArray<StatusFilter> = ['all', 'open', 'in_progress', 'completed', 'cancelled'];
+const STATUSES: ReadonlyArray<StatusFilter> = [
+  'all',
+  'open',
+  'in_progress',
+  'completed',
+  'cancelled',
+];
 const SOURCES: ReadonlyArray<SourceFilter> = ['all', 'standalone', 'inspection', 'issue'];
 const PRIORITIES: ReadonlyArray<PriorityFilter> = ['all', 'critical', 'high', 'medium', 'low'];
 const SORT_OPTIONS: ReadonlyArray<SortBy> = ['created', 'due', 'priority', 'updated'];
@@ -277,13 +283,27 @@ export default function ActionsListPage() {
       return next;
     });
     switch (key) {
-      case 'status': setStatus('all'); break;
-      case 'source': setSource('all'); break;
-      case 'priority': setPriority('all'); break;
-      case 'assignedToMe': setAssignedToMe(false); break;
-      case 'overdue': setOverdueOnly(false); break;
-      case 'hideClosed': setHideClosed(false); break;
-      case 'archived': setIncludeArchived(false); break;
+      case 'status':
+        setStatus('all');
+        break;
+      case 'source':
+        setSource('all');
+        break;
+      case 'priority':
+        setPriority('all');
+        break;
+      case 'assignedToMe':
+        setAssignedToMe(false);
+        break;
+      case 'overdue':
+        setOverdueOnly(false);
+        break;
+      case 'hideClosed':
+        setHideClosed(false);
+        break;
+      case 'archived':
+        setIncludeArchived(false);
+        break;
     }
   }
 
@@ -345,9 +365,7 @@ export default function ActionsListPage() {
   }
 
   // ── DnD sensors (8px distance before activation keeps clicks working)
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   function handleDragStart(event: DragStartEvent) {
     setDraggingId(event.active.id as string);
@@ -370,7 +388,9 @@ export default function ActionsListPage() {
     setOptimisticStatuses((prev) => ({ ...prev, [actionId]: newStatus }));
     setStatusMutation.mutate({ actionId, status: newStatus });
     toast.success(
-      t('dragMovedToast', { status: tStatus(newStatus as 'open' | 'in_progress' | 'completed' | 'cancelled') }),
+      t('dragMovedToast', {
+        status: tStatus(newStatus as 'open' | 'in_progress' | 'completed' | 'cancelled'),
+      }),
     );
   }
 
@@ -409,7 +429,10 @@ export default function ActionsListPage() {
       cancelled: [],
     };
     for (const row of list) {
-      const effectiveStatus = (optimisticStatuses[row.id] ?? row.status) as Exclude<StatusFilter, 'all'>;
+      const effectiveStatus = (optimisticStatuses[row.id] ?? row.status) as Exclude<
+        StatusFilter,
+        'all'
+      >;
       if (effectiveStatus in acc) {
         acc[effectiveStatus].push({ ...row, status: effectiveStatus });
       }
@@ -417,7 +440,7 @@ export default function ActionsListPage() {
     return acc;
   }, [list, optimisticStatuses]);
 
-  const draggingCard = draggingId !== null ? list.find((r) => r.id === draggingId) ?? null : null;
+  const draggingCard = draggingId !== null ? (list.find((r) => r.id === draggingId) ?? null) : null;
 
   // ── UI derived state
   const availableFilterKeys = FILTER_KEYS.filter((k) => !activeFilters.has(k) && k !== 'sort');
@@ -573,7 +596,11 @@ export default function ActionsListPage() {
 
         {/* Active filter chips */}
         {activeFilters.has('sort') ? (
-          <FilterChip label={t('sortLabel')} removable={false} onRemove={() => removeFilter('sort')}>
+          <FilterChip
+            label={t('sortLabel')}
+            removable={false}
+            onRemove={() => removeFilter('sort')}
+          >
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortBy)}
@@ -627,7 +654,11 @@ export default function ActionsListPage() {
         ) : null}
 
         {activeFilters.has('priority') ? (
-          <FilterChip label={t('filterPriority')} removable onRemove={() => removeFilter('priority')}>
+          <FilterChip
+            label={t('filterPriority')}
+            removable
+            onRemove={() => removeFilter('priority')}
+          >
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as PriorityFilter)}
@@ -715,7 +746,10 @@ export default function ActionsListPage() {
                 onChange={(e) => setSaveViewName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSaveView();
-                  if (e.key === 'Escape') { setSaveViewOpen(false); setSaveViewName(''); }
+                  if (e.key === 'Escape') {
+                    setSaveViewOpen(false);
+                    setSaveViewName('');
+                  }
                 }}
                 placeholder={t('savedViews.namePlaceholder')}
                 className="w-36 border-0 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
@@ -730,7 +764,10 @@ export default function ActionsListPage() {
               </button>
               <button
                 type="button"
-                onClick={() => { setSaveViewOpen(false); setSaveViewName(''); }}
+                onClick={() => {
+                  setSaveViewOpen(false);
+                  setSaveViewName('');
+                }}
                 className="rounded p-0.5 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3.5 w-3.5" />
@@ -798,7 +835,9 @@ export default function ActionsListPage() {
       {/* Action detail sidebar */}
       <Sheet
         open={selectedActionId !== null}
-        onOpenChange={(open) => { if (!open) handleClosePanel(); }}
+        onOpenChange={(open) => {
+          if (!open) handleClosePanel();
+        }}
       >
         <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
           {selectedActionId !== null ? (
@@ -886,7 +925,9 @@ function ViewToggle({
         onClick={() => onChange('list')}
         className={cn(
           'inline-flex items-center gap-1 rounded px-2 py-1 text-sm',
-          view === 'list' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground',
+          view === 'list'
+            ? 'bg-accent text-accent-foreground'
+            : 'text-muted-foreground hover:text-foreground',
         )}
       >
         <ListIcon className="h-3.5 w-3.5" />
@@ -899,7 +940,9 @@ function ViewToggle({
         onClick={() => onChange('board')}
         className={cn(
           'inline-flex items-center gap-1 rounded px-2 py-1 text-sm',
-          view === 'board' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground',
+          view === 'board'
+            ? 'bg-accent text-accent-foreground'
+            : 'text-muted-foreground hover:text-foreground',
         )}
       >
         <Columns3 className="h-3.5 w-3.5" />
@@ -1058,7 +1101,9 @@ function ListView({
                         ? t('sourceInspection')
                         : row.sourceType === 'issue'
                           ? t('sourceIssue')
-                          : t('sourceStandalone')}
+                          : row.sourceType === 'maintenance'
+                            ? t('sourceMaintenance')
+                            : t('sourceStandalone')}
                     </td>
                   </tr>
                 );
@@ -1211,10 +1256,7 @@ function DraggableCard({
     >
       {/* Grip icon — visual affordance only; listeners are on the wrapper */}
       {canManage ? (
-        <div
-          aria-hidden="true"
-          className="absolute left-1.5 top-3 z-10 text-muted-foreground/40"
-        >
+        <div aria-hidden="true" className="absolute left-1.5 top-3 z-10 text-muted-foreground/40">
           <GripVertical className="h-3.5 w-3.5" />
         </div>
       ) : null}
@@ -1289,7 +1331,9 @@ function BoardCardContent({
             ? t('sourceInspection')
             : row.sourceType === 'issue'
               ? t('sourceIssue')
-              : t('sourceStandalone')}
+              : row.sourceType === 'maintenance'
+                ? t('sourceMaintenance')
+                : t('sourceStandalone')}
         </span>
         <span className="font-mono">{row.referenceNumber ?? row.id.slice(-6)}</span>
       </div>

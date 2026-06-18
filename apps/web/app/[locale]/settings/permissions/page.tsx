@@ -13,7 +13,6 @@ import { trpc } from '../../../../src/lib/trpc/client';
  */
 export default function PermissionsPage() {
   const t = useTranslations('settings.permissions');
-  const tCommon = useTranslations('common');
   const { data, isLoading } = trpc.permissions.list.useQuery();
 
   return (
@@ -44,9 +43,7 @@ export default function PermissionsPage() {
                   <p className="text-muted-foreground">{set.description}</p>
                 ) : null}
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    {set.permissions.length} {tCommon('name').toLowerCase()}
-                  </span>
+                  <span>{t('permissionsCount', { count: set.permissions.length })}</span>
                   <span>{t('usersBadge', { count: set.userCount })}</span>
                 </div>
               </CardContent>

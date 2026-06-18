@@ -236,7 +236,8 @@
         "nameLabel": "Name",
         "descriptionLabel": "Description",
         "permissionsLabel": "Permissions"
-      }
+      },
+      "permissionsCount": "{count} autorisations"
     },
     "groups": {
       "title": "Groups",
@@ -1178,7 +1179,8 @@
         "status": "Status",
         "created": "Created"
       },
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "previousPage": "Précédent"
     },
     "status": {
       "open": "Open",
@@ -1641,7 +1643,8 @@
         "deleteView": "Remove",
         "savedToast": "View \"{name}\" saved"
       },
-      "settingsButton": "Paramètres"
+      "settingsButton": "Paramètres",
+      "sourceMaintenance": "Maintenance"
     },
     "detail": {
       "backLink": "Back to actions",

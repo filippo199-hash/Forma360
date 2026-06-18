@@ -17,6 +17,7 @@ import {
   inspections,
   issueAssets,
   issues,
+  sites,
   type Asset,
 } from '@forma360/db/schema';
 import { user } from '@forma360/db/schema';
@@ -119,6 +120,7 @@ export const assetsRouter = router({
           typeId: assets.typeId,
           typeName: assetTypes.name,
           siteId: assets.siteId,
+          siteName: sites.name,
           parentId: assets.parentId,
           qrToken: assets.qrToken,
           customFieldValues: assets.customFieldValues,
@@ -129,6 +131,7 @@ export const assetsRouter = router({
         })
         .from(assets)
         .leftJoin(assetTypes, eq(assetTypes.id, assets.typeId))
+        .leftJoin(sites, eq(sites.id, assets.siteId))
         .where(and(...where))
         .orderBy(assets.name)
         .limit(input.limit);
@@ -142,29 +145,39 @@ export const assetsRouter = router({
     .query(async ({ ctx, input }) => {
       const asset = await loadAssetOrThrow(ctx.db, ctx.tenantId, input.assetId);
 
-      const [typeRows, childrenCountRows, latestReadingsRows] = await Promise.all([
+      const [typeRows, childrenCountRows, latestReadingsRows, siteRows] = await Promise.all([
         asset.typeId !== null
-          ? ctx.db
-              .select()
-              .from(assetTypes)
-              .where(eq(assetTypes.id, asset.typeId))
-              .limit(1)
+          ? ctx.db.select().from(assetTypes).where(eq(assetTypes.id, asset.typeId)).limit(1)
           : Promise.resolve([]),
         ctx.db
           .select({ c: count() })
           .from(assets)
-          .where(and(eq(assets.tenantId, ctx.tenantId), eq(assets.parentId, asset.id), isNull(assets.archivedAt))),
+          .where(
+            and(
+              eq(assets.tenantId, ctx.tenantId),
+              eq(assets.parentId, asset.id),
+              isNull(assets.archivedAt),
+            ),
+          ),
         ctx.db
           .select()
           .from(assetReadings)
           .where(eq(assetReadings.assetId, asset.id))
           .orderBy(desc(assetReadings.capturedAt))
           .limit(5),
+        asset.siteId !== null
+          ? ctx.db
+              .select({ name: sites.name })
+              .from(sites)
+              .where(eq(sites.id, asset.siteId))
+              .limit(1)
+          : Promise.resolve([]),
       ]);
 
       return {
         asset,
         assetType: typeRows[0] ?? null,
+        siteName: siteRows[0]?.name ?? null,
         childrenCount: Number(childrenCountRows[0]?.c ?? 0),
         latestReadings: latestReadingsRows,
       };
@@ -243,7 +256,8 @@ export const assetsRouter = router({
       if (input.siteId !== undefined) updates.siteId = input.siteId;
       if (input.parentId !== undefined) updates.parentId = input.parentId;
       if (input.photoKey !== undefined) updates.photoKey = input.photoKey;
-      if (input.customFieldValues !== undefined) updates.customFieldValues = input.customFieldValues;
+      if (input.customFieldValues !== undefined)
+        updates.customFieldValues = input.customFieldValues;
 
       await ctx.db.update(assets).set(updates).where(eq(assets.id, asset.id));
       return { ok: true as const };
@@ -295,33 +309,31 @@ export const assetsRouter = router({
       return { ok: true as const };
     }),
 
-  listWithChildren: tenantProcedure
-    .use(requirePermission('assets.view'))
-    .query(async ({ ctx }) => {
-      const rows = await ctx.db
-        .select({
-          id: assets.id,
-          name: assets.name,
-          parentId: assets.parentId,
-          typeId: assets.typeId,
-          typeName: assetTypes.name,
-        })
-        .from(assets)
-        .leftJoin(assetTypes, eq(assetTypes.id, assets.typeId))
-        .where(and(eq(assets.tenantId, ctx.tenantId), isNull(assets.archivedAt)))
-        .orderBy(assets.name);
+  listWithChildren: tenantProcedure.use(requirePermission('assets.view')).query(async ({ ctx }) => {
+    const rows = await ctx.db
+      .select({
+        id: assets.id,
+        name: assets.name,
+        parentId: assets.parentId,
+        typeId: assets.typeId,
+        typeName: assetTypes.name,
+      })
+      .from(assets)
+      .leftJoin(assetTypes, eq(assetTypes.id, assets.typeId))
+      .where(and(eq(assets.tenantId, ctx.tenantId), isNull(assets.archivedAt)))
+      .orderBy(assets.name);
 
-      const parents = rows.filter((r) => r.parentId === null);
-      const childMap = new Map<string, typeof rows>();
-      for (const r of rows) {
-        if (r.parentId !== null) {
-          const bucket = childMap.get(r.parentId) ?? [];
-          bucket.push(r);
-          childMap.set(r.parentId, bucket);
-        }
+    const parents = rows.filter((r) => r.parentId === null);
+    const childMap = new Map<string, typeof rows>();
+    for (const r of rows) {
+      if (r.parentId !== null) {
+        const bucket = childMap.get(r.parentId) ?? [];
+        bucket.push(r);
+        childMap.set(r.parentId, bucket);
       }
-      return parents.map((p) => ({ ...p, children: childMap.get(p.id) ?? [] }));
-    }),
+    }
+    return parents.map((p) => ({ ...p, children: childMap.get(p.id) ?? [] }));
+  }),
 
   listLinkedInspections: tenantProcedure
     .use(requirePermission('assets.view'))
