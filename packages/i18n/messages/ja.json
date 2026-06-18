@@ -2334,7 +2334,10 @@
         "version": "Version",
         "uploadedBy": "Uploaded by",
         "updatedAt": "Updated"
-      }
+      },
+      "folderAccessButton": "フォルダーアクセス",
+      "folderAccessTitle": "「{name}」を閲覧できるユーザー",
+      "folderAccessSavedToast": "フォルダーアクセスを更新しました"
     },
     "detail": {
       "backLink": "Back to Documents",
@@ -2380,7 +2383,19 @@
       },
       "previewUnavailable": "プレビューを表示できません",
       "downloadFile": "ダウンロード",
-      "currentVersionBadge": "現在"
+      "currentVersionBadge": "現在",
+      "visibilityHeading": "このファイルを閲覧できるユーザー",
+      "visibilityHelp": "両方を空にすると全員に表示されます。それ以外の場合は選択したグループまたはサイトのメンバーのみが閲覧できます。",
+      "visibleToEveryone": "全員に表示",
+      "visGroupsLabel": "グループ",
+      "visSitesLabel": "サイト",
+      "saveVisibility": "アクセスを保存",
+      "savedToast": "アクセスを更新しました",
+      "moveButton": "移動",
+      "moveTitle": "フォルダーに移動",
+      "moveNoFolder": "フォルダーなし（最上位）",
+      "moveSave": "移動",
+      "movedToast": "ドキュメントを移動しました"
     },
     "upload": {
       "labelsCreate": "新しいラベル",

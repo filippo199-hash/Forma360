@@ -1,20 +1,13 @@
 'use client';
 
-import {
-  AlertCircle,
-  ArrowLeft,
-  Download,
-  FileText,
-  FileUp,
-  Film,
-  Image as ImageIcon,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, Download, FileText, FileUp, Film, Image as ImageIcon, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
 import {
   Dialog,
@@ -83,20 +76,17 @@ function DocumentPreview({
     return (
       <div className="flex h-full w-full items-center justify-center p-6">
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-        <video
-          src={url}
-          controls
-          className="max-h-full max-w-full rounded-md shadow-sm"
-        />
+        <video src={url} controls className="max-h-full max-w-full rounded-md shadow-sm" />
       </div>
     );
   }
 
   // Unsupported — show a fallback card with a download link.
-  const Icon =
-    mimeType.startsWith('image/') ? ImageIcon
-    : mimeType.startsWith('video/') ? Film
-    : FileText;
+  const Icon = mimeType.startsWith('image/')
+    ? ImageIcon
+    : mimeType.startsWith('video/')
+      ? Film
+      : FileText;
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-4 text-center">
@@ -136,14 +126,16 @@ export default function DocumentDetailPage() {
   const [showVersionDialog, setShowVersionDialog] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Access-tab visibility editor + move dialog (To-Do #5).
+  const [visGroupIds, setVisGroupIds] = useState<string[]>([]);
+  const [visSiteIds, setVisSiteIds] = useState<string[]>([]);
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [moveFolderId, setMoveFolderId] = useState<string>('');
+
   const { data, isLoading } = trpc.documents.get.useQuery({ documentId });
   const { data: versionsData } = trpc.documents.versions.list.useQuery(
     { documentId },
     { enabled: tab === 'versions' },
-  );
-  const { data: accessData } = trpc.documents.access.list.useQuery(
-    { documentId },
-    { enabled: canManage && tab === 'access' },
   );
   const { data: allLabels = [] } = trpc.documentLabels.list.useQuery();
   const { data: allGroups = [] } = trpc.groups.list.useQuery();
@@ -175,6 +167,28 @@ export default function DocumentDetailPage() {
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tUpload('errorToast')),
   });
+
+  // All folders for the Move dialog (parentId omitted → whole tenant tree).
+  const { data: allFolders = [] } = trpc.documentFolders.list.useQuery({});
+
+  const updateDoc = trpc.documents.update.useMutation({
+    onSuccess: () => {
+      void utils.documents.get.invalidate({ documentId });
+      void utils.documents.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  // Seed the visibility editor from the loaded document.
+  useEffect(() => {
+    if (data?.document !== undefined) {
+      const g = data.document.visibleToGroupIds;
+      const s = data.document.visibleToSiteIds;
+      setVisGroupIds(Array.isArray(g) ? (g as string[]) : []);
+      setVisSiteIds(Array.isArray(s) ? (s as string[]) : []);
+      setMoveFolderId(data.document.folderId ?? '');
+    }
+  }, [data]);
 
   async function handleVersionFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -242,7 +256,6 @@ export default function DocumentDetailPage() {
   return (
     // Break out of page padding to go edge-to-edge
     <div className="-mx-4 -mb-6 -mt-6 flex flex-col" style={{ height: 'calc(100vh - 0px)' }}>
-
       {/* ── Top bar ─────────────────────────────────────────────── */}
       <div className="flex shrink-0 items-center gap-3 border-b bg-background px-4 py-2.5">
         <Link
@@ -256,7 +269,6 @@ export default function DocumentDetailPage() {
 
       {/* ── Split view ─────────────────────────────────────────── */}
       <div className="flex min-h-0 flex-1">
-
         {/* Left — document preview ───────────────────────────── */}
         <div className="min-h-0 flex-1 overflow-hidden border-r bg-muted/20">
           <DocumentPreview
@@ -268,14 +280,11 @@ export default function DocumentDetailPage() {
 
         {/* Right — details panel ─────────────────────────────── */}
         <div className="flex w-[380px] shrink-0 flex-col overflow-y-auto">
-
           {/* Header */}
           <div className="shrink-0 space-y-3 border-b p-5">
             <div>
               <div className="flex flex-wrap items-start gap-2">
-                <h1 className="text-lg font-semibold leading-snug tracking-tight">
-                  {doc.name}
-                </h1>
+                <h1 className="text-lg font-semibold leading-snug tracking-tight">{doc.name}</h1>
               </div>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {isArchived ? (
@@ -347,7 +356,6 @@ export default function DocumentDetailPage() {
 
           {/* Tab content */}
           <div className="flex-1 p-5">
-
             {/* ── Overview tab ── */}
             {tab === 'overview' ? (
               <div className="space-y-5">
@@ -361,7 +369,20 @@ export default function DocumentDetailPage() {
                 ) : null}
 
                 <div className="space-y-3 text-sm">
-                  <DetailRow label={t('fields.folder')}>{folderName ?? t('noFolder')}</DetailRow>
+                  <DetailRow label={t('fields.folder')}>
+                    <span className="flex items-center gap-2">
+                      <span>{folderName ?? t('noFolder')}</span>
+                      {canManage ? (
+                        <button
+                          type="button"
+                          onClick={() => setMoveOpen(true)}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          {t('moveButton')}
+                        </button>
+                      ) : null}
+                    </span>
+                  </DetailRow>
                   <DetailRow label={t('fields.filename')}>
                     <span className="truncate font-mono text-xs">{doc.filename}</span>
                   </DetailRow>
@@ -407,11 +428,13 @@ export default function DocumentDetailPage() {
                   {docReminderDays.length > 0 ? (
                     <DetailRow label={t('fields.reminderDays')}>
                       <div className="flex flex-wrap gap-1">
-                        {docReminderDays.sort((a, b) => a - b).map((days) => (
-                          <span key={days} className="rounded-md bg-muted px-1.5 py-0.5 text-xs">
-                            {t('fields.reminderDaysValue', { days: String(days) })}
-                          </span>
-                        ))}
+                        {docReminderDays
+                          .sort((a, b) => a - b)
+                          .map((days) => (
+                            <span key={days} className="rounded-md bg-muted px-1.5 py-0.5 text-xs">
+                              {t('fields.reminderDaysValue', { days: String(days) })}
+                            </span>
+                          ))}
                       </div>
                     </DetailRow>
                   ) : null}
@@ -478,33 +501,55 @@ export default function DocumentDetailPage() {
 
             {/* ── Access tab ── */}
             {tab === 'access' ? (
-              <div>
-                {(accessData ?? []).length === 0 ? (
-                  <div className="flex flex-col items-center gap-3 py-8 text-center">
-                    <AlertCircle className="h-8 w-8 text-muted-foreground/40" />
-                    <p className="text-sm text-muted-foreground">{t('noAccessRules')}</p>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold">{t('visibilityHeading')}</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('visibilityHelp')}</p>
+                </div>
+                {visGroupIds.length === 0 && visSiteIds.length === 0 ? (
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {t('visibleToEveryone')}
+                  </p>
+                ) : null}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <GroupUserSelector
+                      value={visGroupIds}
+                      onChange={setVisGroupIds}
+                      mode="groups"
+                      label={t('visGroupsLabel')}
+                      disabled={!canManage}
+                    />
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    {(accessData ?? []).map((a) => (
-                      <div key={a.id} className="rounded-md border p-3 text-xs">
-                        <div className="flex items-center gap-1.5">
-                          <span className="rounded-full border bg-background px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
-                            {a.subjectType}
-                          </span>
-                          <span className="font-medium">{a.subjectId}</span>
-                        </div>
-                        <div className="mt-1 flex items-center justify-between text-muted-foreground">
-                          <span>{a.permission}</span>
-                          <span>{new Date(a.grantedAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    ))}
+                  <div>
+                    <SiteSelector
+                      value={visSiteIds}
+                      onChange={setVisSiteIds}
+                      label={t('visSitesLabel')}
+                      disabled={!canManage}
+                    />
                   </div>
-                )}
+                </div>
+                {canManage ? (
+                  <Button
+                    size="sm"
+                    disabled={updateDoc.isPending}
+                    onClick={() => {
+                      updateDoc.mutate(
+                        {
+                          documentId,
+                          visibleToGroupIds: visGroupIds,
+                          visibleToSiteIds: visSiteIds,
+                        },
+                        { onSuccess: () => toast.success(t('savedToast')) },
+                      );
+                    }}
+                  >
+                    {t('saveVisibility')}
+                  </Button>
+                ) : null}
               </div>
             ) : null}
-
           </div>
         </div>
       </div>
@@ -542,6 +587,46 @@ export default function DocumentDetailPage() {
                 {tCommon('cancel')}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Move-to-folder dialog (To-Do #5) ─────────────────────── */}
+      <Dialog open={moveOpen} onOpenChange={setMoveOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('moveTitle')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <select
+              value={moveFolderId}
+              onChange={(e) => setMoveFolderId(e.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+            >
+              <option value="">{t('moveNoFolder')}</option>
+              {allFolders.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              className="w-full"
+              disabled={updateDoc.isPending}
+              onClick={() => {
+                updateDoc.mutate(
+                  { documentId, folderId: moveFolderId === '' ? null : moveFolderId },
+                  {
+                    onSuccess: () => {
+                      toast.success(t('movedToast'));
+                      setMoveOpen(false);
+                    },
+                  },
+                );
+              }}
+            >
+              {t('moveSave')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

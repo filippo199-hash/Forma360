@@ -18,15 +18,7 @@
  *
  * See ADR 0002 (tenant scope + RESTRICT FKs).
  */
-import {
-  index,
-  integer,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 import { tenants } from './tenants';
 
@@ -108,6 +100,14 @@ export const documents = pgTable(
     folderId: text('folder_id').references(() => documentFolders.id),
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
+    /**
+     * Optional group-level visibility (To-Do #5). When non-empty, only
+     * users in at least one of these groups can see the document. Empty =
+     * visible to everyone (subject to ancestor folder visibility).
+     */
+    visibleToGroupIds: jsonb('visible_to_group_ids').notNull().default([]),
+    /** Optional site-level visibility. Same semantics as visibleToGroupIds. */
+    visibleToSiteIds: jsonb('visible_to_site_ids').notNull().default([]),
     storageKey: text('storage_key').notNull(),
     filename: text('filename').notNull(),
     mimeType: text('mime_type').notNull(),

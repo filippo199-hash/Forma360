@@ -12,6 +12,7 @@ import { and, count, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
+import { loadViewerMemberships, makeFolderVisibilityChecker } from './document-visibility';
 
 const folderIdInput = z.object({ folderId: z.string().length(26) });
 
@@ -69,7 +70,29 @@ export const documentFoldersRouter = router({
         .where(and(...where))
         .orderBy(documentFolders.name);
 
-      return rows;
+      // Managers see every folder; everyone else only sees folders whose
+      // own AND ancestor visibility passes (parent overrides child — #6).
+      if (
+        ctx.permissions.includes('documents.manage') ||
+        ctx.permissions.includes('documents.folders.manage')
+      ) {
+        return rows;
+      }
+
+      const [viewer, allFolders] = await Promise.all([
+        loadViewerMemberships(ctx.db, ctx.tenantId, ctx.auth.userId),
+        ctx.db
+          .select({
+            id: documentFolders.id,
+            parentId: documentFolders.parentId,
+            visibleToGroupIds: documentFolders.visibleToGroupIds,
+            visibleToSiteIds: documentFolders.visibleToSiteIds,
+          })
+          .from(documentFolders)
+          .where(eq(documentFolders.tenantId, ctx.tenantId)),
+      ]);
+      const folderVisible = makeFolderVisibilityChecker(allFolders, viewer);
+      return rows.filter((r) => folderVisible(r.id));
     }),
 
   create: tenantProcedure
@@ -100,10 +123,7 @@ export const documentFoldersRouter = router({
         .select()
         .from(documentFolders)
         .where(
-          and(
-            eq(documentFolders.tenantId, ctx.tenantId),
-            eq(documentFolders.id, input.folderId),
-          ),
+          and(eq(documentFolders.tenantId, ctx.tenantId), eq(documentFolders.id, input.folderId)),
         )
         .limit(1);
       const folder = rows[0];
@@ -114,7 +134,8 @@ export const documentFoldersRouter = router({
       const updates: Partial<typeof documentFolders.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) updates.name = input.name;
       if (input.parentId !== undefined) updates.parentId = input.parentId;
-      if (input.visibleToGroupIds !== undefined) updates.visibleToGroupIds = input.visibleToGroupIds;
+      if (input.visibleToGroupIds !== undefined)
+        updates.visibleToGroupIds = input.visibleToGroupIds;
       if (input.visibleToSiteIds !== undefined) updates.visibleToSiteIds = input.visibleToSiteIds;
 
       await ctx.db.update(documentFolders).set(updates).where(eq(documentFolders.id, folder.id));
@@ -133,10 +154,7 @@ export const documentFoldersRouter = router({
         .select()
         .from(documentFolders)
         .where(
-          and(
-            eq(documentFolders.tenantId, ctx.tenantId),
-            eq(documentFolders.id, input.folderId),
-          ),
+          and(eq(documentFolders.tenantId, ctx.tenantId), eq(documentFolders.id, input.folderId)),
         )
         .limit(1);
       const folder = rows[0];

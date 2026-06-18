@@ -2334,7 +2334,10 @@
         "version": "Version",
         "uploadedBy": "Uploaded by",
         "updatedAt": "Updated"
-      }
+      },
+      "folderAccessButton": "Acesso à pasta",
+      "folderAccessTitle": "Quem pode ver «{name}»",
+      "folderAccessSavedToast": "Acesso à pasta atualizado"
     },
     "detail": {
       "backLink": "Back to Documents",
@@ -2380,7 +2383,19 @@
       },
       "previewUnavailable": "Pré-visualização não disponível",
       "downloadFile": "Descarregar",
-      "currentVersionBadge": "atual"
+      "currentVersionBadge": "atual",
+      "visibilityHeading": "Quem pode ver este ficheiro",
+      "visibilityHelp": "Deixe ambos vazios para tornar o ficheiro visível para todos. Caso contrário, apenas os membros dos grupos ou locais selecionados poderão vê-lo.",
+      "visibleToEveryone": "Visível para todos",
+      "visGroupsLabel": "Grupos",
+      "visSitesLabel": "Locais",
+      "saveVisibility": "Guardar acesso",
+      "savedToast": "Acesso atualizado",
+      "moveButton": "Mover",
+      "moveTitle": "Mover para pasta",
+      "moveNoFolder": "Sem pasta (nível superior)",
+      "moveSave": "Mover",
+      "movedToast": "Documento movido"
     },
     "upload": {
       "labelsCreate": "Nova etiqueta",

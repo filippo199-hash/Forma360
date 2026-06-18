@@ -2334,7 +2334,10 @@
         "version": "Version",
         "uploadedBy": "Uploaded by",
         "updatedAt": "Updated"
-      }
+      },
+      "folderAccessButton": "Maptoegang",
+      "folderAccessTitle": "Wie „{name}” kan zien",
+      "folderAccessSavedToast": "Maptoegang bijgewerkt"
     },
     "detail": {
       "backLink": "Back to Documents",
@@ -2380,7 +2383,19 @@
       },
       "previewUnavailable": "Voorbeeld niet beschikbaar",
       "downloadFile": "Downloaden",
-      "currentVersionBadge": "huidig"
+      "currentVersionBadge": "huidig",
+      "visibilityHeading": "Wie dit bestand kan zien",
+      "visibilityHelp": "Laat beide leeg om het bestand voor iedereen zichtbaar te maken. Anders kunnen alleen leden van de geselecteerde groepen of locaties het zien.",
+      "visibleToEveryone": "Zichtbaar voor iedereen",
+      "visGroupsLabel": "Groepen",
+      "visSitesLabel": "Locaties",
+      "saveVisibility": "Toegang opslaan",
+      "savedToast": "Toegang bijgewerkt",
+      "moveButton": "Verplaatsen",
+      "moveTitle": "Naar map verplaatsen",
+      "moveNoFolder": "Geen map (bovenste niveau)",
+      "moveSave": "Verplaatsen",
+      "movedToast": "Document verplaatst"
     },
     "upload": {
       "labelsCreate": "Nieuw label",

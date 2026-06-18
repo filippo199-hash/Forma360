@@ -2376,7 +2376,10 @@
         "version": "Version",
         "uploadedBy": "Uploaded by",
         "updatedAt": "Updated"
-      }
+      },
+      "folderAccessButton": "Accesso alla cartella",
+      "folderAccessTitle": "Chi può vedere «{name}»",
+      "folderAccessSavedToast": "Accesso alla cartella aggiornato"
     },
     "detail": {
       "backLink": "Back to Documents",
@@ -2422,7 +2425,19 @@
       },
       "previewUnavailable": "Anteprima non disponibile",
       "downloadFile": "Scarica",
-      "currentVersionBadge": "corrente"
+      "currentVersionBadge": "corrente",
+      "visibilityHeading": "Chi può vedere questo file",
+      "visibilityHelp": "Lascia entrambi vuoti per rendere il file visibile a tutti. Altrimenti solo i membri dei gruppi o siti selezionati potranno vederlo.",
+      "visibleToEveryone": "Visibile a tutti",
+      "visGroupsLabel": "Gruppi",
+      "visSitesLabel": "Siti",
+      "saveVisibility": "Salva accesso",
+      "savedToast": "Accesso aggiornato",
+      "moveButton": "Sposta",
+      "moveTitle": "Sposta nella cartella",
+      "moveNoFolder": "Nessuna cartella (livello superiore)",
+      "moveSave": "Sposta",
+      "movedToast": "Documento spostato"
     },
     "upload": {
       "labelsCreate": "Nuova etichetta",

@@ -26,6 +26,11 @@ import { and, asc, desc, eq, ilike, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
+import {
+  loadViewerMemberships,
+  makeFolderVisibilityChecker,
+  ownVisibilityPasses,
+} from './document-visibility';
 
 type Db = Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'];
 
@@ -103,6 +108,9 @@ const updateInput = z.object({
   responsibleGroupId: z.string().length(26).optional().nullable(),
   reminderDays: z.array(z.number().int().min(1).max(365)).optional(),
   labelIds: z.array(z.string().length(26)).optional(),
+  /** File visibility (To-Do #5): empty arrays = visible to everyone. */
+  visibleToGroupIds: z.array(z.string().length(26)).optional(),
+  visibleToSiteIds: z.array(z.string().length(26)).optional(),
 });
 
 const uploadNewVersionInput = z.object({
@@ -173,6 +181,8 @@ export const documentsRouter = router({
           expiresAt: documents.expiresAt,
           responsibleUserId: documents.responsibleUserId,
           responsibleGroupId: documents.responsibleGroupId,
+          visibleToGroupIds: documents.visibleToGroupIds,
+          visibleToSiteIds: documents.visibleToSiteIds,
           currentVersion: documents.currentVersion,
           uploadedByUserId: documents.uploadedByUserId,
           uploaderName: user.name,
@@ -187,7 +197,29 @@ export const documentsRouter = router({
         .orderBy(asc(documents.name))
         .limit(input.limit);
 
-      return rows;
+      // Managers see everything; everyone else is filtered by file + ancestor
+      // folder visibility (To-Do #5/#6).
+      if (ctx.permissions.includes('documents.manage')) return rows;
+
+      const [viewer, allFolders] = await Promise.all([
+        loadViewerMemberships(ctx.db, ctx.tenantId, ctx.auth.userId),
+        ctx.db
+          .select({
+            id: documentFolders.id,
+            parentId: documentFolders.parentId,
+            visibleToGroupIds: documentFolders.visibleToGroupIds,
+            visibleToSiteIds: documentFolders.visibleToSiteIds,
+          })
+          .from(documentFolders)
+          .where(eq(documentFolders.tenantId, ctx.tenantId)),
+      ]);
+      const folderVisible = makeFolderVisibilityChecker(allFolders, viewer);
+
+      return rows.filter(
+        (r) =>
+          ownVisibilityPasses(r.visibleToGroupIds, r.visibleToSiteIds, viewer) &&
+          folderVisible(r.folderId),
+      );
     }),
 
   get: tenantProcedure
@@ -237,18 +269,14 @@ export const documentsRouter = router({
       let isStale = false;
       if (doc.freshnessDays !== null) {
         const msPerDay = 86_400_000;
-        const daysSinceUpdate =
-          (Date.now() - new Date(doc.updatedAt).getTime()) / msPerDay;
+        const daysSinceUpdate = (Date.now() - new Date(doc.updatedAt).getTime()) / msPerDay;
         isStale = daysSinceUpdate > doc.freshnessDays;
       }
 
-      const isExpired =
-        doc.expiresAt !== null && new Date(doc.expiresAt) < new Date();
+      const isExpired = doc.expiresAt !== null && new Date(doc.expiresAt) < new Date();
       const daysUntilExpiry =
         doc.expiresAt !== null
-          ? Math.ceil(
-              (new Date(doc.expiresAt).getTime() - Date.now()) / 86_400_000,
-            )
+          ? Math.ceil((new Date(doc.expiresAt).getTime() - Date.now()) / 86_400_000)
           : null;
 
       return {
@@ -339,9 +367,14 @@ export const documentsRouter = router({
         updates.startDate = input.startDate != null ? new Date(input.startDate) : null;
       if (input.expiresAt !== undefined)
         updates.expiresAt = input.expiresAt != null ? new Date(input.expiresAt) : null;
-      if (input.responsibleUserId !== undefined) updates.responsibleUserId = input.responsibleUserId;
-      if (input.responsibleGroupId !== undefined) updates.responsibleGroupId = input.responsibleGroupId;
+      if (input.responsibleUserId !== undefined)
+        updates.responsibleUserId = input.responsibleUserId;
+      if (input.responsibleGroupId !== undefined)
+        updates.responsibleGroupId = input.responsibleGroupId;
       if (input.reminderDays !== undefined) updates.reminderDays = input.reminderDays;
+      if (input.visibleToGroupIds !== undefined)
+        updates.visibleToGroupIds = input.visibleToGroupIds;
+      if (input.visibleToSiteIds !== undefined) updates.visibleToSiteIds = input.visibleToSiteIds;
 
       await ctx.db.update(documents).set(updates).where(eq(documents.id, doc.id));
       return { ok: true as const };
@@ -438,7 +471,10 @@ export const documentsRouter = router({
         if (input.folderId !== undefined) {
           where.push(eq(documentAccess.folderId, input.folderId));
         }
-        return ctx.db.select().from(documentAccess).where(and(...where));
+        return ctx.db
+          .select()
+          .from(documentAccess)
+          .where(and(...where));
       }),
 
     grant: tenantProcedure
@@ -473,10 +509,7 @@ export const documentsRouter = router({
         await ctx.db
           .delete(documentAccess)
           .where(
-            and(
-              eq(documentAccess.tenantId, ctx.tenantId),
-              eq(documentAccess.id, input.accessId),
-            ),
+            and(eq(documentAccess.tenantId, ctx.tenantId), eq(documentAccess.id, input.accessId)),
           );
         return { ok: true as const };
       }),

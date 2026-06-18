@@ -32,6 +32,9 @@ try {
     -- 0032: first/last name on user (To-Do #4)
     ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "first_name" text;
     ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "last_name" text;
+    -- 0033: document-level visibility by group / site (To-Do #5)
+    ALTER TABLE "documents" ADD COLUMN IF NOT EXISTS "visible_to_group_ids" jsonb NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE "documents" ADD COLUMN IF NOT EXISTS "visible_to_site_ids" jsonb NOT NULL DEFAULT '[]'::jsonb;
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

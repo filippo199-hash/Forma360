@@ -2334,7 +2334,10 @@
         "version": "Version",
         "uploadedBy": "Uploaded by",
         "updatedAt": "Updated"
-      }
+      },
+      "folderAccessButton": "文件夹访问权限",
+      "folderAccessTitle": "谁可以查看“{name}”",
+      "folderAccessSavedToast": "文件夹访问权限已更新"
     },
     "detail": {
       "backLink": "Back to Documents",
@@ -2380,7 +2383,19 @@
       },
       "previewUnavailable": "无法预览",
       "downloadFile": "下载",
-      "currentVersionBadge": "当前"
+      "currentVersionBadge": "当前",
+      "visibilityHeading": "谁可以查看此文件",
+      "visibilityHelp": "两者均留空可让所有人查看。否则只有所选群组或场所的成员才能查看。",
+      "visibleToEveryone": "所有人可见",
+      "visGroupsLabel": "群组",
+      "visSitesLabel": "场所",
+      "saveVisibility": "保存访问权限",
+      "savedToast": "访问权限已更新",
+      "moveButton": "移动",
+      "moveTitle": "移动到文件夹",
+      "moveNoFolder": "无文件夹（顶层）",
+      "moveSave": "移动",
+      "movedToast": "文档已移动"
     },
     "upload": {
       "labelsCreate": "新建标签",

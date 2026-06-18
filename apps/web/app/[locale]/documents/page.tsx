@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  ChevronRight,
-  File,
-  FolderOpen,
-  FolderPlus,
-  Plus,
-  Upload,
-} from 'lucide-react';
+import { ChevronRight, File, FolderOpen, FolderPlus, Plus, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -27,7 +20,12 @@ import { Skeleton } from '../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
-type FolderCrumb = { id: string; name: string };
+type FolderCrumb = {
+  id: string;
+  name: string;
+  visibleToGroupIds?: string[];
+  visibleToSiteIds?: string[];
+};
 
 export default function DocumentsPage() {
   const t = useTranslations('documents.list');
@@ -52,15 +50,15 @@ export default function DocumentsPage() {
   const [newFolderSiteIds, setNewFolderSiteIds] = useState<string[]>([]);
 
   // Top-level folders for the sidebar
-  const { data: rootFolders = [], isLoading: rootLoading } =
-    trpc.documentFolders.list.useQuery({ parentId: null });
+  const { data: rootFolders = [], isLoading: rootLoading } = trpc.documentFolders.list.useQuery({
+    parentId: null,
+  });
 
   // Sub-folders of the current selected folder
-  const { data: subFolders = [], isLoading: subLoading } =
-    trpc.documentFolders.list.useQuery(
-      { parentId: currentFolderId },
-      { enabled: currentFolderId !== null },
-    );
+  const { data: subFolders = [], isLoading: subLoading } = trpc.documentFolders.list.useQuery(
+    { parentId: currentFolderId },
+    { enabled: currentFolderId !== null },
+  );
 
   // Documents — undefined folderId = all docs; string = scoped to folder
   const { data: docs = [], isLoading: docsLoading } = trpc.documents.list.useQuery({
@@ -72,12 +70,17 @@ export default function DocumentsPage() {
   const { data: allLabels = [] } = trpc.documentLabels.list.useQuery();
   const labelMap = new Map(allLabels.map((l) => [l.id, l]));
 
-  // Groups + sites loaded lazily for the folder dialog
+  // Edit the CURRENT folder's visibility (To-Do #6).
+  const [folderAccessOpen, setFolderAccessOpen] = useState(false);
+  const [editFolderGroupIds, setEditFolderGroupIds] = useState<string[]>([]);
+  const [editFolderSiteIds, setEditFolderSiteIds] = useState<string[]>([]);
+
+  // Groups + sites loaded lazily for the folder create / access dialogs
   const { data: groups = [] } = trpc.groups.list.useQuery(undefined, {
-    enabled: showFolderDialog,
+    enabled: showFolderDialog || folderAccessOpen,
   });
   const { data: sites = [] } = trpc.sites.list.useQuery(undefined, {
-    enabled: showFolderDialog,
+    enabled: showFolderDialog || folderAccessOpen,
   });
 
   const createFolder = trpc.documentFolders.create.useMutation({
@@ -89,9 +92,33 @@ export default function DocumentsPage() {
       setShowFolderDialog(false);
       void utils.documentFolders.list.invalidate();
     },
-    onError: (err) =>
-      toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
+
+  const updateFolder = trpc.documentFolders.update.useMutation({
+    onSuccess: () => {
+      toast.success(t('folderAccessSavedToast'));
+      setFolderAccessOpen(false);
+      void utils.documentFolders.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  function openFolderAccess() {
+    setEditFolderGroupIds(currentFolder?.visibleToGroupIds ?? []);
+    setEditFolderSiteIds(currentFolder?.visibleToSiteIds ?? []);
+    setFolderAccessOpen(true);
+  }
+  function toggleEditGroupId(id: string) {
+    setEditFolderGroupIds((prev) =>
+      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id],
+    );
+  }
+  function toggleEditSiteId(id: string) {
+    setEditFolderSiteIds((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+    );
+  }
 
   function openFolderInSidebar(folder: FolderCrumb) {
     setFolderPath([folder]);
@@ -133,12 +160,13 @@ export default function DocumentsPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
+          {canFolderManage && currentFolderId !== null ? (
+            <Button type="button" variant="outline" onClick={openFolderAccess}>
+              {t('folderAccessButton')}
+            </Button>
+          ) : null}
           {canFolderManage ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowFolderDialog(true)}
-            >
+            <Button type="button" variant="outline" onClick={() => setShowFolderDialog(true)}>
               <FolderPlus className="mr-1 h-4 w-4" />
               {t('newFolderButton')}
             </Button>
@@ -188,10 +216,7 @@ export default function DocumentsPage() {
                 <p className="text-xs text-muted-foreground">{tFolder('visibilityHint')}</p>
                 <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border p-2">
                   {groups.map((g) => (
-                    <label
-                      key={g.id}
-                      className="flex cursor-pointer items-center gap-2 text-sm"
-                    >
+                    <label key={g.id} className="flex cursor-pointer items-center gap-2 text-sm">
                       <input
                         type="checkbox"
                         checked={newFolderGroupIds.includes(g.id)}
@@ -210,10 +235,7 @@ export default function DocumentsPage() {
                 <Label>{tFolder('sitesLabel')}</Label>
                 <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border p-2">
                   {sites.map((s) => (
-                    <label
-                      key={s.id}
-                      className="flex cursor-pointer items-center gap-2 text-sm"
-                    >
+                    <label key={s.id} className="flex cursor-pointer items-center gap-2 text-sm">
                       <input
                         type="checkbox"
                         checked={newFolderSiteIds.includes(s.id)}
@@ -228,11 +250,7 @@ export default function DocumentsPage() {
             ) : null}
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowFolderDialog(false)}
-              >
+              <Button type="button" variant="ghost" onClick={() => setShowFolderDialog(false)}>
                 {tCommon('cancel')}
               </Button>
               <Button
@@ -246,6 +264,73 @@ export default function DocumentsPage() {
                     visibleToSiteIds: newFolderSiteIds,
                   })
                 }
+              >
+                {tFolder('saveButton')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Folder access (current folder visibility) dialog — To-Do #6 */}
+      <Dialog open={folderAccessOpen} onOpenChange={setFolderAccessOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('folderAccessTitle', { name: currentFolder?.name ?? '' })}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-xs text-muted-foreground">{tFolder('visibilityHint')}</p>
+            {groups.length > 0 ? (
+              <div className="space-y-1.5">
+                <Label>{tFolder('groupsLabel')}</Label>
+                <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border p-2">
+                  {groups.map((g) => (
+                    <label key={g.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={editFolderGroupIds.includes(g.id)}
+                        onChange={() => toggleEditGroupId(g.id)}
+                        className="h-4 w-4 rounded border"
+                      />
+                      {g.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {sites.length > 0 ? (
+              <div className="space-y-1.5">
+                <Label>{tFolder('sitesLabel')}</Label>
+                <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border p-2">
+                  {sites.map((s) => (
+                    <label key={s.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={editFolderSiteIds.includes(s.id)}
+                        onChange={() => toggleEditSiteId(s.id)}
+                        className="h-4 w-4 rounded border"
+                      />
+                      {s.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="ghost" onClick={() => setFolderAccessOpen(false)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button
+                type="button"
+                disabled={updateFolder.isPending || currentFolderId === null}
+                onClick={() => {
+                  if (currentFolderId === null) return;
+                  updateFolder.mutate({
+                    folderId: currentFolderId,
+                    visibleToGroupIds: editFolderGroupIds,
+                    visibleToSiteIds: editFolderSiteIds,
+                  });
+                }}
               >
                 {tFolder('saveButton')}
               </Button>
@@ -278,7 +363,18 @@ export default function DocumentsPage() {
               <button
                 key={folder.id}
                 type="button"
-                onClick={() => openFolderInSidebar({ id: folder.id, name: folder.name })}
+                onClick={() =>
+                  openFolderInSidebar({
+                    id: folder.id,
+                    name: folder.name,
+                    visibleToGroupIds: Array.isArray(folder.visibleToGroupIds)
+                      ? (folder.visibleToGroupIds as string[])
+                      : [],
+                    visibleToSiteIds: Array.isArray(folder.visibleToSiteIds)
+                      ? (folder.visibleToSiteIds as string[])
+                      : [],
+                  })
+                }
                 className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                   folderPath[0]?.id === folder.id
                     ? 'bg-accent text-accent-foreground'
@@ -333,7 +429,18 @@ export default function DocumentsPage() {
                   <button
                     key={sf.id}
                     type="button"
-                    onClick={() => navigateIntoSubfolder({ id: sf.id, name: sf.name })}
+                    onClick={() =>
+                      navigateIntoSubfolder({
+                        id: sf.id,
+                        name: sf.name,
+                        visibleToGroupIds: Array.isArray(sf.visibleToGroupIds)
+                          ? (sf.visibleToGroupIds as string[])
+                          : [],
+                        visibleToSiteIds: Array.isArray(sf.visibleToSiteIds)
+                          ? (sf.visibleToSiteIds as string[])
+                          : [],
+                      })
+                    }
                     className="flex items-center gap-2 rounded-md border bg-card px-3 py-2.5 text-sm transition-colors hover:bg-accent text-left"
                   >
                     <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -387,14 +494,10 @@ export default function DocumentsPage() {
                       {docs.map((doc) => {
                         const now = Date.now();
                         const isExpired =
-                          doc.expiresAt !== null &&
-                          new Date(doc.expiresAt).getTime() < now;
+                          doc.expiresAt !== null && new Date(doc.expiresAt).getTime() < now;
                         const daysUntilExpiry =
                           doc.expiresAt !== null
-                            ? Math.ceil(
-                                (new Date(doc.expiresAt).getTime() - now) /
-                                  86_400_000,
-                              )
+                            ? Math.ceil((new Date(doc.expiresAt).getTime() - now) / 86_400_000)
                             : null;
                         const isStale =
                           doc.freshnessDays !== null &&
@@ -408,10 +511,7 @@ export default function DocumentsPage() {
                           .filter((l): l is NonNullable<typeof l> => l !== undefined);
 
                         return (
-                          <tr
-                            key={doc.id}
-                            className="border-b last:border-0 hover:bg-muted/30"
-                          >
+                          <tr key={doc.id} className="border-b last:border-0 hover:bg-muted/30">
                             <td className="max-w-xs px-3 py-2.5">
                               <div className="flex flex-col gap-1">
                                 <Link
@@ -426,8 +526,7 @@ export default function DocumentsPage() {
                                     <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-800 dark:bg-red-900/40 dark:text-red-200">
                                       {t('expiredTag')}
                                     </span>
-                                  ) : daysUntilExpiry !== null &&
-                                    daysUntilExpiry <= 30 ? (
+                                  ) : daysUntilExpiry !== null && daysUntilExpiry <= 30 ? (
                                     <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
                                       {t('expiresInTag', {
                                         days: String(daysUntilExpiry),

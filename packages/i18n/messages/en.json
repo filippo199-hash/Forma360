@@ -2524,7 +2524,10 @@
         "updatedAt": "Updated",
         "expiresAt": "Expires",
         "responsible": "Responsible"
-      }
+      },
+      "folderAccessButton": "Folder access",
+      "folderAccessTitle": "Who can see “{name}”",
+      "folderAccessSavedToast": "Folder access updated"
     },
     "folder": {
       "createTitle": "New folder",
@@ -2640,7 +2643,19 @@
       },
       "previewUnavailable": "Preview not available",
       "downloadFile": "Download",
-      "currentVersionBadge": "current"
+      "currentVersionBadge": "current",
+      "visibilityHeading": "Who can see this file",
+      "visibilityHelp": "Leave both empty to make this file visible to everyone. Otherwise only members of the selected groups or sites can see it.",
+      "visibleToEveryone": "Visible to everyone",
+      "visGroupsLabel": "Groups",
+      "visSitesLabel": "Sites",
+      "saveVisibility": "Save access",
+      "savedToast": "Access updated",
+      "moveButton": "Move",
+      "moveTitle": "Move to folder",
+      "moveNoFolder": "No folder (top level)",
+      "moveSave": "Move",
+      "movedToast": "Document moved"
     }
   },
   "entitySelect": {
