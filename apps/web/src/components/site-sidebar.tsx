@@ -85,13 +85,20 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
         key={item.key}
         href={item.href}
         className={cn(
-          'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+          'relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
           active
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
+            ? 'bg-primary/10 font-medium text-primary'
+            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
         )}
         aria-current={active ? 'page' : undefined}
       >
+        {/* Green accent bar on the active item. */}
+        {active ? (
+          <span
+            aria-hidden="true"
+            className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary"
+          />
+        ) : null}
         <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span>{t(item.key)}</span>
       </Link>

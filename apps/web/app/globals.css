@@ -15,7 +15,10 @@
   --color-popover: oklch(1 0 0);
   --color-popover-foreground: oklch(0.141 0.005 285.823);
 
-  --color-primary: oklch(0.21 0.006 285.885);
+  /* Primary is the brand teal-green (was near-black). Drives primary
+   * buttons, links, focus rings, active states, and selected tints across
+   * the whole app, so the platform shares the homepage's green accent. */
+  --color-primary: oklch(0.58 0.12 187);
   --color-primary-foreground: oklch(0.985 0 0);
 
   --color-secondary: oklch(0.967 0.001 286.375);
@@ -32,7 +35,7 @@
 
   --color-border: oklch(0.92 0.004 286.32);
   --color-input: oklch(0.92 0.004 286.32);
-  --color-ring: oklch(0.21 0.006 285.885);
+  --color-ring: oklch(0.58 0.12 187);
 
   --radius: 0.5rem;
   --radius-sm: calc(var(--radius) - 4px);
@@ -63,8 +66,9 @@
   --color-popover: oklch(0.21 0.006 285.885);
   --color-popover-foreground: oklch(0.985 0 0);
 
-  --color-primary: oklch(0.92 0.004 286.32);
-  --color-primary-foreground: oklch(0.21 0.006 285.885);
+  /* Brighter teal-green on dark surfaces for adequate contrast. */
+  --color-primary: oklch(0.78 0.13 184);
+  --color-primary-foreground: oklch(0.18 0.02 200);
 
   --color-secondary: oklch(0.274 0.006 286.033);
   --color-secondary-foreground: oklch(0.985 0 0);
@@ -80,7 +84,7 @@
 
   --color-border: oklch(1 0 0 / 10%);
   --color-input: oklch(1 0 0 / 15%);
-  --color-ring: oklch(0.552 0.016 285.938);
+  --color-ring: oklch(0.78 0.13 184);
 
   /* Brighter teal on dark surfaces for adequate contrast. */
   --color-brand: oklch(0.78 0.13 184);
