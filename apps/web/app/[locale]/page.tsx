@@ -1,5 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { MarketingHero } from '../../src/components/home/marketing-hero';
 import {
   CtaBand,
@@ -11,20 +12,22 @@ import {
 import { auth } from '../../src/server/auth';
 
 /**
- * Public home page — the marketing landing page for everyone. It never
- * redirects signed-in users into the app; the hero offers an "Open the app"
- * CTA instead. Sign-in lives at /[locale]/sign-in (linked from the header).
+ * Home page. Anonymous visitors get the marketing landing page; signed-in
+ * users are sent straight into the app — the AI Assistant is the default
+ * landing surface. Sign-in lives at /[locale]/sign-in.
  */
 export default async function LocaleHome({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
 
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
-  const isSignedIn = session !== null;
+  if (session !== null) {
+    redirect(`/${locale}/ai`);
+  }
 
   return (
     <>
-      <MarketingHero locale={locale} isSignedIn={isSignedIn} />
+      <MarketingHero locale={locale} isSignedIn={false} />
       <IndustriesStrip />
       <Modules />
       <WhatsAppSpotlight />
