@@ -95,7 +95,9 @@ export default async function LocaleLayout({
                 ) : (
                   <main className="flex-1">{children}</main>
                 )}
-                <SiteFooter />
+                {/* The marketing/legal footer belongs on public pages only —
+                 * hide it inside the signed-in app shell. */}
+                {showSidebar ? null : <SiteFooter />}
               </div>
               <Toaster />
             </TRPCProvider>
