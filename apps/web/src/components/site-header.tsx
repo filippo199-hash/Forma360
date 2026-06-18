@@ -9,7 +9,7 @@ import { NAV } from '../content/site';
 import { GlobalSearch } from './global-search';
 import { UserMenu } from './header/user-menu';
 
-export async function SiteHeader() {
+export async function SiteHeader({ showBrand = true }: { showBrand?: boolean }) {
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
 
   // The better-auth session caches the name from sign-in time, so a profile
@@ -29,25 +29,33 @@ export async function SiteHeader() {
     }
   }
 
-  return <SiteHeaderInner session={session} displayName={displayName} />;
+  return <SiteHeaderInner session={session} displayName={displayName} showBrand={showBrand} />;
 }
 
 function SiteHeaderInner({
   session,
   displayName,
+  showBrand,
 }: {
   session: Awaited<ReturnType<typeof auth.api.getSession>> | null;
   displayName: string;
+  showBrand: boolean;
 }) {
   const t = useTranslations('common');
   const locale = useLocale();
 
   return (
-    <header className="border-b">
+    <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="flex items-center justify-between px-4 py-2.5">
-        <Link href="/" className="font-semibold tracking-tight">
-          Forma360
-        </Link>
+        {/* In the app shell the wordmark lives in the sidebar, so the header
+         * brand is hidden there (an empty spacer keeps the nav right-aligned). */}
+        {showBrand ? (
+          <Link href="/" className="font-semibold tracking-tight">
+            Forma360
+          </Link>
+        ) : (
+          <span aria-hidden="true" />
+        )}
         <nav aria-label={t('navigation.primary')} className="flex items-center gap-2 sm:gap-3">
           {session !== null ? <GlobalSearch /> : null}
           {session !== null ? (

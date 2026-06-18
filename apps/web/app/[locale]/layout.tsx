@@ -85,20 +85,24 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <TRPCProvider>
-              <div className="flex min-h-screen flex-col">
-                <SiteHeader />
-                {showSidebar ? (
-                  <div className="flex flex-1">
-                    <SiteSidebar locale={locale} />
-                    <main className="min-w-0 flex-1">{children}</main>
+              {showSidebar ? (
+                /* Signed-in app shell — full-height dark sidebar on the left,
+                 * header + content in the column to its right (Cantiere360). */
+                <div className="flex min-h-screen">
+                  <SiteSidebar locale={locale} />
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <SiteHeader showBrand={false} />
+                    <main className="flex-1">{children}</main>
                   </div>
-                ) : (
+                </div>
+              ) : (
+                /* Public pages — header on top, marketing/legal footer below. */
+                <div className="flex min-h-screen flex-col">
+                  <SiteHeader />
                   <main className="flex-1">{children}</main>
-                )}
-                {/* The marketing/legal footer belongs on public pages only —
-                 * hide it inside the signed-in app shell. */}
-                {showSidebar ? null : <SiteFooter />}
-              </div>
+                  <SiteFooter />
+                </div>
+              )}
               <Toaster />
             </TRPCProvider>
           </ThemeProvider>

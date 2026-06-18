@@ -70,8 +70,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
     if (pathname === href || pathname.startsWith(`${href}/`)) return true;
     if (item.key === 'inspections') {
       return (
-        pathname.startsWith(`/${locale}/approvals`) ||
-        pathname.startsWith(`/${locale}/schedules`)
+        pathname.startsWith(`/${locale}/approvals`) || pathname.startsWith(`/${locale}/schedules`)
       );
     }
     return false;
@@ -85,20 +84,13 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
         key={item.key}
         href={item.href}
         className={cn(
-          'relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+          'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
           active
-            ? 'bg-primary/10 font-medium text-primary'
-            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+            ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
+            : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
         )}
         aria-current={active ? 'page' : undefined}
       >
-        {/* Green accent bar on the active item. */}
-        {active ? (
-          <span
-            aria-hidden="true"
-            className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary"
-          />
-        ) : null}
         <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span>{t(item.key)}</span>
       </Link>
@@ -106,10 +98,19 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
   }
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-56 shrink-0 border-r bg-card md:flex md:flex-col">
-      <nav aria-label={t('primaryLabel')} className="flex h-full flex-col gap-1 p-3">
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
+      {/* Brand wordmark at the top of the sidebar. */}
+      <Link
+        href={`/${locale}/ai`}
+        className="flex h-14 shrink-0 items-center gap-2 border-b border-sidebar-border px-4 font-semibold tracking-tight text-sidebar-foreground"
+      >
+        Forma360
+      </Link>
+      <nav aria-label={t('primaryLabel')} className="flex flex-1 flex-col gap-0.5 p-3">
         {primary.map(renderItem)}
-        <div className="mt-auto border-t pt-3">{renderItem(settingsItem)}</div>
+        <div className="mt-auto border-t border-sidebar-border pt-3">
+          {renderItem(settingsItem)}
+        </div>
       </nav>
     </aside>
   );
