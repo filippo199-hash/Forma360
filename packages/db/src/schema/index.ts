@@ -20,5 +20,6 @@ export * from './invitations';
 export * from './issues';
 export * from './heads-ups';
 export * from './assets';
+export * from './maintenancePrograms';
 export * from './documents';
 export * from './ai';

@@ -41,6 +41,7 @@ import { and, count, desc, eq, ilike, isNotNull, isNull, lt, ne, sql } from 'dri
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
+import { rollForwardMaintenanceAction } from './maintenance-actions';
 
 type Db = DependentResolverDeps['db'];
 
@@ -674,14 +675,17 @@ export const actionsRouter = router({
         payload: { sourceType: 'standalone', actionTypeId: type?.id ?? null },
       });
       if (input.assetIds !== undefined && input.assetIds.length > 0) {
-        await ctx.db.insert(actionAssets).values(
-          input.assetIds.map((assetId) => ({
-            id: newId(),
-            tenantId: ctx.tenantId,
-            actionId: id,
-            assetId,
-          })),
-        ).onConflictDoNothing();
+        await ctx.db
+          .insert(actionAssets)
+          .values(
+            input.assetIds.map((assetId) => ({
+              id: newId(),
+              tenantId: ctx.tenantId,
+              actionId: id,
+              assetId,
+            })),
+          )
+          .onConflictDoNothing();
       }
       return { actionId: id, referenceNumber };
     }),
@@ -981,14 +985,17 @@ export const actionsRouter = router({
       if (input.assetIds !== undefined) {
         await ctx.db.delete(actionAssets).where(eq(actionAssets.actionId, action.id));
         if (input.assetIds.length > 0) {
-          await ctx.db.insert(actionAssets).values(
-            input.assetIds.map((assetId) => ({
-              id: newId(),
-              tenantId: ctx.tenantId,
-              actionId: action.id,
-              assetId,
-            })),
-          ).onConflictDoNothing();
+          await ctx.db
+            .insert(actionAssets)
+            .values(
+              input.assetIds.map((assetId) => ({
+                id: newId(),
+                tenantId: ctx.tenantId,
+                actionId: action.id,
+                assetId,
+              })),
+            )
+            .onConflictDoNothing();
         }
       }
       return { ok: true as const };
@@ -1100,6 +1107,21 @@ export const actionsRouter = router({
             payload: { parentId: action.id, parentReference: action.referenceNumber },
           });
         }
+      }
+
+      // Maintenance roll-forward (To-Do #3): completing a maintenance action
+      // materialises the next occurrence so the program keeps scheduling work.
+      if (input.status === 'completed' && action.sourceType === 'maintenance') {
+        await rollForwardMaintenanceAction(ctx.db, {
+          tenantId: ctx.tenantId,
+          userId: ctx.auth.userId,
+          action: {
+            id: action.id,
+            sourceType: action.sourceType,
+            sourceId: action.sourceId,
+            dueAt: action.dueAt,
+          },
+        });
       }
 
       return { ok: true as const };

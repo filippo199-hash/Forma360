@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  ArrowLeft,
-  Camera,
-  ImageIcon,
-  Loader2,
-  Pencil,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, Camera, ImageIcon, Loader2, Pencil, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -23,20 +16,18 @@ import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
-type MaintenanceStatus = 'awaiting_first_reading' | 'on_schedule' | 'approaching' | 'overdue';
-
-const MAINTENANCE_STATUS_COLORS: Record<MaintenanceStatus, string> = {
-  awaiting_first_reading: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
-  on_schedule: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
-  approaching: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
-  overdue: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100',
-};
-
-type Tab = 'overview' | 'readings' | 'maintenance' | 'media' | 'actions' | 'inspections' | 'observations';
+type Tab =
+  | 'overview'
+  | 'readings'
+  | 'maintenance'
+  | 'media'
+  | 'actions'
+  | 'inspections'
+  | 'observations';
 
 export default function AssetDetailPage() {
   const t = useTranslations('assets.detail');
-  const tMaint = useTranslations('maintenancePlans.table');
+  const tMaintPrograms = useTranslations('maintenancePrograms');
   const tCommon = useTranslations('common');
   const params = useParams<{ locale: string; assetId: string }>();
   const locale = params.locale ?? 'en';
@@ -45,6 +36,7 @@ export default function AssetDetailPage() {
 
   const canManage = useHasPermission('assets.manage');
   const canRecord = useHasPermission('assets.readings.record');
+  const canManageMaintenance = useHasPermission('assets.maintenance.manage');
 
   const [tab, setTab] = useState<Tab>('overview');
   const [editing, setEditing] = useState(false);
@@ -57,6 +49,7 @@ export default function AssetDetailPage() {
   const [readingUnit, setReadingUnit] = useState('');
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [attachProgramId, setAttachProgramId] = useState('');
 
   const { data, isLoading } = trpc.assets.get.useQuery({ assetId });
   const { data: assetTypesList } = trpc.assetTypes.list.useQuery(undefined, { enabled: editing });
@@ -66,25 +59,18 @@ export default function AssetDetailPage() {
     { enabled: tab === 'readings' },
   );
   const { data: maintenanceData, isLoading: maintenanceLoading } =
-    trpc.maintenancePlans.listForAsset.useQuery(
-      { assetId },
-      { enabled: tab === 'maintenance' },
-    );
+    trpc.maintenancePrograms.listForAsset.useQuery({ assetId }, { enabled: tab === 'maintenance' });
+  const { data: programsListData } = trpc.maintenancePrograms.list.useQuery(undefined, {
+    enabled: tab === 'maintenance' && canManageMaintenance,
+  });
   const { data: linkedInspections, isLoading: inspectionsLoading } =
-    trpc.assets.listLinkedInspections.useQuery(
-      { assetId },
-      { enabled: tab === 'inspections' },
-    );
-  const { data: linkedActions, isLoading: actionsLoading } =
-    trpc.assets.listLinkedActions.useQuery(
-      { assetId },
-      { enabled: tab === 'actions' },
-    );
+    trpc.assets.listLinkedInspections.useQuery({ assetId }, { enabled: tab === 'inspections' });
+  const { data: linkedActions, isLoading: actionsLoading } = trpc.assets.listLinkedActions.useQuery(
+    { assetId },
+    { enabled: tab === 'actions' },
+  );
   const { data: linkedObservations, isLoading: observationsLoading } =
-    trpc.assets.listLinkedObservations.useQuery(
-      { assetId },
-      { enabled: tab === 'observations' },
-    );
+    trpc.assets.listLinkedObservations.useQuery({ assetId }, { enabled: tab === 'observations' });
 
   const update = trpc.assets.update.useMutation({
     onSuccess: () => {
@@ -120,6 +106,15 @@ export default function AssetDetailPage() {
     onSuccess: () => {
       toast.success(t('restoreToast'));
       void utils.assets.get.invalidate({ assetId });
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  const attachProgram = trpc.maintenancePrograms.attachAsset.useMutation({
+    onSuccess: (res) => {
+      toast.success(tMaintPrograms('assetAttachedToast', { count: res.actionsCreated }));
+      setAttachProgramId('');
+      void utils.maintenancePrograms.listForAsset.invalidate({ assetId });
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -177,7 +172,15 @@ export default function AssetDetailPage() {
   const { asset, assetType, childrenCount, latestReadings } = data;
   const isArchived = asset.archivedAt !== null;
 
-  const TABS: Tab[] = ['overview', 'readings', 'maintenance', 'media', 'actions', 'inspections', 'observations'];
+  const TABS: Tab[] = [
+    'overview',
+    'readings',
+    'maintenance',
+    'media',
+    'actions',
+    'inspections',
+    'observations',
+  ];
 
   return (
     <div className="space-y-6">
@@ -260,7 +263,10 @@ export default function AssetDetailPage() {
             <TabButton
               key={t_}
               active={tab === t_}
-              onClick={() => { setEditing(false); setTab(t_); }}
+              onClick={() => {
+                setEditing(false);
+                setTab(t_);
+              }}
               label={t(`tabs.${t_}`)}
             />
           ))}
@@ -304,7 +310,9 @@ export default function AssetDetailPage() {
                   >
                     <option value="">{t('fields.noType')}</option>
                     {(assetTypesList ?? []).map((at) => (
-                      <option key={at.id} value={at.id}>{at.name}</option>
+                      <option key={at.id} value={at.id}>
+                        {at.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -318,7 +326,9 @@ export default function AssetDetailPage() {
                   >
                     <option value="">{t('fields.noSite')}</option>
                     {(sitesList ?? []).map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -329,9 +339,7 @@ export default function AssetDetailPage() {
                   disabled={update.isPending || editName.trim().length === 0}
                   onClick={saveEditing}
                 >
-                  {update.isPending ? (
-                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                  ) : null}
+                  {update.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
                   {tCommon('save')}
                 </Button>
                 <Button type="button" variant="ghost" onClick={cancelEditing}>
@@ -353,10 +361,7 @@ export default function AssetDetailPage() {
                 <DetailRow label={t('fields.site')}>{asset.siteId ?? '—'}</DetailRow>
                 {asset.parentId !== null ? (
                   <DetailRow label={t('fields.parent')}>
-                    <Link
-                      href={`/${locale}/assets/${asset.parentId}`}
-                      className="hover:underline"
-                    >
+                    <Link href={`/${locale}/assets/${asset.parentId}`} className="hover:underline">
                       {asset.parentId.slice(-8)}
                     </Link>
                   </DetailRow>
@@ -488,52 +493,138 @@ export default function AssetDetailPage() {
       {/* ── MAINTENANCE ── */}
       {tab === 'maintenance' ? (
         <div className="space-y-4">
+          {/* Attach a maintenance program */}
+          {canManageMaintenance ? (
+            <Card>
+              <CardContent className="flex flex-wrap items-end gap-2 p-6">
+                <div className="flex-1 space-y-1.5">
+                  <Label htmlFor="attach-program">{tMaintPrograms('attachProgramLabel')}</Label>
+                  <select
+                    id="attach-program"
+                    value={attachProgramId}
+                    onChange={(e) => setAttachProgramId(e.target.value)}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">{tMaintPrograms('selectProgram')}</option>
+                    {(programsListData?.programs ?? [])
+                      .filter(
+                        (p) =>
+                          !(maintenanceData?.programs ?? []).some((ap) => ap.programId === p.id),
+                      )
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <Button
+                  type="button"
+                  disabled={attachProgram.isPending || attachProgramId === ''}
+                  onClick={() => attachProgram.mutate({ programId: attachProgramId, assetId })}
+                >
+                  {tMaintPrograms('attachProgramButton')}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : null}
+
           {maintenanceLoading ? (
             <Skeleton className="h-48 w-full" />
-          ) : (maintenanceData ?? []).length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <p>{t('maintenancePlans.empty')}</p>
-              </CardContent>
-            </Card>
           ) : (
-            <Card>
-              <CardContent className="p-0">
-                <table className="w-full text-sm">
-                  <thead className="border-b bg-muted/40">
-                    <tr className="text-left">
-                      <th className="px-3 py-2 font-medium">{t('maintenancePlans.columns.plan')}</th>
-                      <th className="px-3 py-2 font-medium">{t('maintenancePlans.columns.type')}</th>
-                      <th className="px-3 py-2 font-medium">{t('maintenancePlans.columns.lastService')}</th>
-                      <th className="px-3 py-2 font-medium">{t('maintenancePlans.columns.status')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(maintenanceData ?? []).map((row) => {
-                      const status = row.status as MaintenanceStatus;
-                      return (
-                        <tr key={row.planId ?? row.lastServiceDate} className="border-b last:border-0 hover:bg-muted/30">
-                          <td className="px-3 py-2 font-medium">{row.planName ?? '—'}</td>
-                          <td className="px-3 py-2 text-muted-foreground">
-                            {tMaint(`planType.${row.planType ?? 'time'}`)}
-                          </td>
-                          <td className="px-3 py-2 text-muted-foreground">
-                            {row.lastServiceDate ?? '—'}
-                          </td>
-                          <td className="px-3 py-2">
-                            <span
-                              className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${MAINTENANCE_STATUS_COLORS[status] ?? MAINTENANCE_STATUS_COLORS.on_schedule}`}
-                            >
-                              {tMaint(`status.${status}`)}
-                            </span>
-                          </td>
+            <>
+              {/* Attached programs */}
+              <Card>
+                <CardContent className="space-y-2 p-6">
+                  <h2 className="text-base font-semibold">
+                    {tMaintPrograms('attachedProgramsHeading')}
+                  </h2>
+                  {(maintenanceData?.programs ?? []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {tMaintPrograms('noProgramsForAsset')}
+                    </p>
+                  ) : (
+                    <ul className="divide-y rounded-md border">
+                      {(maintenanceData?.programs ?? []).map((p) => (
+                        <li key={p.programId} className="px-3 py-2.5">
+                          <Link
+                            href={`/${locale}/maintenance/program/${p.programId}`}
+                            className="font-medium hover:underline"
+                          >
+                            {p.programName}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Maintenance actions */}
+              <Card>
+                <CardContent className="p-0">
+                  <div className="border-b px-6 py-3">
+                    <h2 className="text-base font-semibold">
+                      {tMaintPrograms('maintenanceActionsHeading')}
+                    </h2>
+                  </div>
+                  {(maintenanceData?.actions ?? []).length === 0 ? (
+                    <div className="py-12 text-center text-muted-foreground">
+                      <p className="text-sm">{tMaintPrograms('noMaintenanceActions')}</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-sm">
+                      <thead className="border-b bg-muted/40">
+                        <tr className="text-left">
+                          <th className="px-3 py-2 font-medium">
+                            {tMaintPrograms('actionColumns.title')}
+                          </th>
+                          <th className="px-3 py-2 font-medium">
+                            {tMaintPrograms('actionColumns.detail')}
+                          </th>
+                          <th className="px-3 py-2 font-medium">
+                            {tMaintPrograms('actionColumns.status')}
+                          </th>
+                          <th className="px-3 py-2 font-medium">
+                            {tMaintPrograms('actionColumns.dueAt')}
+                          </th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
+                      </thead>
+                      <tbody>
+                        {(maintenanceData?.actions ?? []).map((action) => (
+                          <tr key={action.id} className="border-b last:border-0 hover:bg-muted/30">
+                            <td className="px-3 py-2 font-medium">
+                              <Link
+                                href={`/${locale}/actions/${action.id}`}
+                                className="hover:underline"
+                              >
+                                {action.referenceNumber !== null ? (
+                                  <span className="mr-1 text-xs text-muted-foreground">
+                                    {action.referenceNumber}
+                                  </span>
+                                ) : null}
+                                {action.title}
+                              </Link>
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {action.description !== '' ? action.description : '—'}
+                            </td>
+                            <td className="px-3 py-2 capitalize text-muted-foreground">
+                              {action.status.replace(/_/g, ' ')}
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {action.dueAt !== null
+                                ? new Date(action.dueAt).toLocaleDateString()
+                                : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </CardContent>
+              </Card>
+            </>
           )}
         </div>
       ) : null}
@@ -612,7 +703,9 @@ export default function AssetDetailPage() {
           <CardContent className="p-0">
             {actionsLoading ? (
               <div className="space-y-2 p-4">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
               </div>
             ) : !linkedActions || linkedActions.length === 0 ? (
               <div className="py-16 text-center text-muted-foreground">
@@ -633,7 +726,11 @@ export default function AssetDetailPage() {
                     <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30">
                       <td className="px-4 py-2">
                         <Link href={`/${locale}/actions/${a.id}`} className="hover:underline">
-                          {a.referenceNumber ? <span className="mr-1 text-xs text-muted-foreground">{a.referenceNumber}</span> : null}
+                          {a.referenceNumber ? (
+                            <span className="mr-1 text-xs text-muted-foreground">
+                              {a.referenceNumber}
+                            </span>
+                          ) : null}
                           {a.title}
                         </Link>
                       </td>
@@ -657,7 +754,9 @@ export default function AssetDetailPage() {
           <CardContent className="p-0">
             {inspectionsLoading ? (
               <div className="space-y-2 p-4">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
               </div>
             ) : !linkedInspections || linkedInspections.length === 0 ? (
               <div className="py-16 text-center text-muted-foreground">
@@ -675,7 +774,10 @@ export default function AssetDetailPage() {
                 </thead>
                 <tbody>
                   {linkedInspections.map((ins) => (
-                    <tr key={`${ins.id}-${ins.questionId}`} className="border-b last:border-0 hover:bg-muted/30">
+                    <tr
+                      key={`${ins.id}-${ins.questionId}`}
+                      className="border-b last:border-0 hover:bg-muted/30"
+                    >
                       <td className="px-4 py-2">
                         <Link href={`/${locale}/inspections/${ins.id}`} className="hover:underline">
                           {ins.title}
@@ -701,7 +803,9 @@ export default function AssetDetailPage() {
           <CardContent className="p-0">
             {observationsLoading ? (
               <div className="space-y-2 p-4">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
               </div>
             ) : !linkedObservations || linkedObservations.length === 0 ? (
               <div className="py-16 text-center text-muted-foreground">
@@ -721,8 +825,15 @@ export default function AssetDetailPage() {
                   {linkedObservations.map((obs) => (
                     <tr key={obs.id} className="border-b last:border-0 hover:bg-muted/30">
                       <td className="px-4 py-2">
-                        <Link href={`/${locale}/observations/${obs.id}`} className="hover:underline">
-                          {obs.referenceNumber ? <span className="mr-1 text-xs text-muted-foreground">{obs.referenceNumber}</span> : null}
+                        <Link
+                          href={`/${locale}/observations/${obs.id}`}
+                          className="hover:underline"
+                        >
+                          {obs.referenceNumber ? (
+                            <span className="mr-1 text-xs text-muted-foreground">
+                              {obs.referenceNumber}
+                            </span>
+                          ) : null}
                           {obs.title}
                         </Link>
                       </td>
