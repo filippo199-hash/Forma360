@@ -16,6 +16,10 @@
       "types": "./src/id.ts",
       "default": "./src/id.ts"
     },
+    "./timezone": {
+      "types": "./src/timezone.ts",
+      "default": "./src/timezone.ts"
+    },
     "./storage": {
       "types": "./src/storage.ts",
       "default": "./src/storage.ts"

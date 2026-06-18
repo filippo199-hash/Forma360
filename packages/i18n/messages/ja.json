@@ -1121,7 +1121,17 @@
       "title": "Schedule calendar",
       "subtitle": "Occurrences across the next 30 days.",
       "day": "Day",
-      "count": "{count} occurrences"
+      "count": "{count} occurrences",
+      "filterSite": "サイト",
+      "filterGroup": "グループ",
+      "filterUser": "ユーザー",
+      "prevMonth": "前の月",
+      "nextMonth": "次の月",
+      "today": "今日",
+      "none": "今月の予定された点検はありません",
+      "more": "他{count}件",
+      "clearFilters": "フィルターをクリア",
+      "filtersHeading": "フィルター"
     },
     "toast": {
       "created": "Schedule created",

@@ -23,6 +23,7 @@ import {
   templateSchedules,
 } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
+import { floatingToZonedUtc } from '@forma360/shared/timezone';
 import type { Logger } from '@forma360/shared/logger';
 import type { ConnectionOptions, Job } from 'bullmq';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -100,13 +101,18 @@ export function createScheduleMaterialiseHandler(deps: ScheduleMaterialiseDeps) 
     const now = clock();
     const windowEnd = new Date(now.getTime() + MATERIALISE_WINDOW_MS);
 
+    // rrule yields floating wall-clock times (UTC fields hold the intended
+    // local time). Reinterpret each in the schedule's timezone so the stored
+    // occurrence — and the reminder fired from it — lands at the true instant
+    // the user set (To-Do #1). A 09:00 Europe/London recurrence fires at
+    // 08:00Z in summer, not 09:00Z.
     const fireTimes = occurrencesBetween({
       rrule: sched.rrule,
       startAt: sched.startAt,
       from: now,
       until: windowEnd,
       endAt: sched.endAt,
-    });
+    }).map((d) => floatingToZonedUtc(d, sched.timezone));
     if (fireTimes.length === 0) {
       await deps.db
         .update(templateSchedules)

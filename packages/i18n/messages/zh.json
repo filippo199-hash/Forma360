@@ -1121,7 +1121,17 @@
       "title": "Schedule calendar",
       "subtitle": "Occurrences across the next 30 days.",
       "day": "Day",
-      "count": "{count} occurrences"
+      "count": "{count} occurrences",
+      "filterSite": "场所",
+      "filterGroup": "群组",
+      "filterUser": "用户",
+      "prevMonth": "上个月",
+      "nextMonth": "下个月",
+      "today": "今天",
+      "none": "本月没有计划的检查",
+      "more": "还有{count}个",
+      "clearFilters": "清除筛选",
+      "filtersHeading": "筛选"
     },
     "toast": {
       "created": "Schedule created",

@@ -174,6 +174,75 @@ describe('schedules router (Phase 2 PR 32)', () => {
     });
   });
 
+  describe('calendarOccurrences (To-Do #2)', () => {
+    it('computes occurrences in a month range and reinterprets in the schedule timezone', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const templateId = await createTemplate(caller, 'Cal');
+
+      await caller.schedules.create({
+        templateId,
+        name: 'Weekly Mon 9am London',
+        timezone: 'Europe/London',
+        rrule: 'FREQ=WEEKLY;BYDAY=MO;BYHOUR=9;BYMINUTE=0',
+        startAt: new Date('2026-06-01T00:00:00Z').toISOString(),
+        endAt: null,
+        assigneeUserIds: [adminUserId],
+        assigneeGroupIds: [],
+        siteIds: [],
+        reminderMinutesBefore: 60,
+      });
+
+      const res = await caller.schedules.calendarOccurrences({
+        from: new Date('2026-06-01T00:00:00Z').toISOString(),
+        to: new Date('2026-07-01T00:00:00Z').toISOString(),
+        siteIds: [],
+        groupIds: [],
+        userIds: [],
+      });
+
+      // Mondays in June 2026: 1, 8, 15, 22, 29.
+      expect(res.occurrences.length).toBe(5);
+      // 09:00 Europe/London in summer (BST) is 08:00Z.
+      expect(res.occurrences[0]?.occurrenceAt).toContain('T08:00:00');
+      expect(res.occurrences[0]?.timezone).toBe('Europe/London');
+    });
+
+    it('filters by assigned user', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const templateId = await createTemplate(caller, 'CalFilter');
+      await caller.schedules.create({
+        templateId,
+        name: 'Mine',
+        timezone: 'UTC',
+        rrule: 'FREQ=DAILY;BYHOUR=9',
+        startAt: new Date('2026-06-01T00:00:00Z').toISOString(),
+        endAt: null,
+        assigneeUserIds: [adminUserId],
+        assigneeGroupIds: [],
+        siteIds: [],
+        reminderMinutesBefore: null,
+      });
+
+      const mine = await caller.schedules.calendarOccurrences({
+        from: new Date('2026-06-01T00:00:00Z').toISOString(),
+        to: new Date('2026-06-04T00:00:00Z').toISOString(),
+        siteIds: [],
+        groupIds: [],
+        userIds: [adminUserId],
+      });
+      expect(mine.occurrences.length).toBeGreaterThan(0);
+
+      const other = await caller.schedules.calendarOccurrences({
+        from: new Date('2026-06-01T00:00:00Z').toISOString(),
+        to: new Date('2026-06-04T00:00:00Z').toISOString(),
+        siteIds: [],
+        groupIds: [],
+        userIds: ['usr_nonexistent'],
+      });
+      expect(other.occurrences.length).toBe(0);
+    });
+  });
+
   describe('validation', () => {
     it('rejects an invalid rrule', async () => {
       const caller = createCaller(ctxFor(adminUserId));

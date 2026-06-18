@@ -22,7 +22,12 @@
  * Also registers a `schedules` dependents resolver used by the
  * template-archive cascade preview.
  */
-import { inspections, scheduledInspectionOccurrences, templateSchedules, templates } from '@forma360/db/schema';
+import {
+  inspections,
+  scheduledInspectionOccurrences,
+  templateSchedules,
+  templates,
+} from '@forma360/db/schema';
 import {
   registerDependentResolver,
   type DependentResolver,
@@ -35,6 +40,7 @@ import { TRPCError } from '@trpc/server';
 // packages/jobs/src/workers/schedule-rrule.ts for the default-import
 // dance needed there.
 import { RRule, rrulestr } from 'rrule';
+import { floatingToZonedUtc } from '@forma360/shared/timezone';
 import { and, count, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
@@ -76,6 +82,27 @@ function validateRrule(rrule: string): string | null {
     return null;
   } catch (err) {
     return err instanceof Error ? err.message : 'Invalid RRULE';
+  }
+}
+
+/**
+ * Every occurrence of an RRULE in `[from, to]` (floating wall-clock Dates;
+ * callers reinterpret in the schedule timezone). Used by the month calendar
+ * (To-Do #2) so the grid can show occurrences beyond the materialised window.
+ */
+function occurrencesInRange(
+  rrule: string,
+  startAt: Date,
+  from: Date,
+  to: Date,
+  endAt: Date | null,
+): Date[] {
+  try {
+    const rule = rrulestr(rrule, { dtstart: startAt });
+    const upper = endAt !== null && endAt < to ? endAt : to;
+    return rule.between(from, upper, true);
+  } catch {
+    return [];
   }
 }
 
@@ -237,7 +264,11 @@ export const schedulesRouter = router({
       return {
         schedule: sched,
         pendingOccurrenceCount: Number(pendingRows[0]?.c ?? 0),
-        upcomingPreview: upcoming.map((d) => d.toISOString()),
+        // rrule yields floating wall-clock times; reinterpret each in the
+        // schedule's timezone so the true instant — and the time the client
+        // shows when formatting in that timezone — matches what was set
+        // (To-Do #1). The client formats these in `schedule.timezone`.
+        upcomingPreview: upcoming.map((d) => floatingToZonedUtc(d, sched.timezone).toISOString()),
       };
     }),
 
@@ -472,6 +503,88 @@ export const schedulesRouter = router({
           ),
         )
         .orderBy(scheduledInspectionOccurrences.occurrenceAt);
+    }),
+
+  /**
+   * Org-wide occurrences in a date range, computed live from each active
+   * schedule's RRULE (so the month calendar can show times beyond the
+   * 14-day materialised window). Optional filters by site / group / user
+   * match at the schedule-config level — a schedule is included when it
+   * targets the selected site(s), group(s), or direct user(s). When several
+   * filters are set, a schedule must match every provided dimension.
+   * Powers the calendar view (To-Do #2).
+   */
+  calendarOccurrences: tenantProcedure
+    .use(requirePermission('inspections.view'))
+    .input(
+      z.object({
+        from: z.string().datetime(),
+        to: z.string().datetime(),
+        siteIds: z.array(idSchema).max(200).default([]),
+        groupIds: z.array(idSchema).max(200).default([]),
+        userIds: z.array(z.string()).max(200).default([]),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const from = new Date(input.from);
+      const to = new Date(input.to);
+
+      const scheds = await ctx.db
+        .select({
+          id: templateSchedules.id,
+          name: templateSchedules.name,
+          rrule: templateSchedules.rrule,
+          startAt: templateSchedules.startAt,
+          endAt: templateSchedules.endAt,
+          timezone: templateSchedules.timezone,
+          templateId: templateSchedules.templateId,
+          templateName: templates.name,
+          assigneeUserIds: templateSchedules.assigneeUserIds,
+          assigneeGroupIds: templateSchedules.assigneeGroupIds,
+          siteIds: templateSchedules.siteIds,
+        })
+        .from(templateSchedules)
+        .leftJoin(templates, eq(templateSchedules.templateId, templates.id))
+        .where(
+          and(eq(templateSchedules.tenantId, ctx.tenantId), eq(templateSchedules.paused, false)),
+        );
+
+      const hasSite = input.siteIds.length > 0;
+      const hasGroup = input.groupIds.length > 0;
+      const hasUser = input.userIds.length > 0;
+
+      const CAP = 3000;
+      const occurrences: {
+        scheduleId: string;
+        scheduleName: string;
+        templateName: string | null;
+        timezone: string;
+        occurrenceAt: string;
+      }[] = [];
+
+      for (const s of scheds) {
+        const sSites = s.siteIds ?? [];
+        const sGroups = s.assigneeGroupIds ?? [];
+        const sUsers = s.assigneeUserIds ?? [];
+        if (hasSite && !sSites.some((id) => input.siteIds.includes(id))) continue;
+        if (hasGroup && !sGroups.some((id) => input.groupIds.includes(id))) continue;
+        if (hasUser && !sUsers.some((id) => input.userIds.includes(id))) continue;
+
+        const times = occurrencesInRange(s.rrule, s.startAt, from, to, s.endAt);
+        for (const t of times) {
+          occurrences.push({
+            scheduleId: s.id,
+            scheduleName: s.name,
+            templateName: s.templateName,
+            timezone: s.timezone,
+            occurrenceAt: floatingToZonedUtc(t, s.timezone).toISOString(),
+          });
+          if (occurrences.length >= CAP) break;
+        }
+        if (occurrences.length >= CAP) break;
+      }
+
+      return { occurrences, capped: occurrences.length >= CAP };
     }),
 });
 

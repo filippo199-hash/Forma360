@@ -1121,7 +1121,17 @@
       "title": "Schedule calendar",
       "subtitle": "Occurrences across the next 30 days.",
       "day": "Day",
-      "count": "{count} occurrences"
+      "count": "{count} occurrences",
+      "filterSite": "Lokalizacja",
+      "filterGroup": "Grupa",
+      "filterUser": "Użytkownik",
+      "prevMonth": "Poprzedni miesiąc",
+      "nextMonth": "Następny miesiąc",
+      "today": "Dziś",
+      "none": "Brak zaplanowanych inspekcji w tym miesiącu",
+      "more": "+{count} więcej",
+      "clearFilters": "Wyczyść filtry",
+      "filtersHeading": "Filtry"
     },
     "toast": {
       "created": "Schedule created",

@@ -17,6 +17,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Switch } from '../../../../src/components/ui/switch';
+import { formatInTimeZone } from '@forma360/shared/timezone';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 // ─── Timezone helpers ────────────────────────────────────────────────────────
@@ -187,8 +188,7 @@ export default function ScheduleEditPage() {
   async function onSave(): Promise<void> {
     try {
       const startAt = new Date(`${startDate}T00:00:00.000Z`).toISOString();
-      const endAt =
-        endDate === '' ? null : new Date(`${endDate}T00:00:00.000Z`).toISOString();
+      const endAt = endDate === '' ? null : new Date(`${endDate}T00:00:00.000Z`).toISOString();
 
       await updateMutation.mutateAsync({
         scheduleId,
@@ -421,7 +421,7 @@ export default function ScheduleEditPage() {
             <ul className="space-y-1 text-sm">
               {data.upcomingPreview.map((iso) => (
                 <li key={iso} className="font-mono text-xs">
-                  {new Date(iso).toLocaleString(locale)}
+                  {formatInTimeZone(new Date(iso), data.schedule.timezone, locale)}
                 </li>
               ))}
             </ul>
@@ -451,7 +451,11 @@ export default function ScheduleEditPage() {
                   {occurrencesQuery.data.map((row) => (
                     <tr key={row.id} className="py-2">
                       <td className="py-2 pr-4 font-mono text-xs">
-                        {new Date(row.occurrenceAt).toLocaleString(locale)}
+                        {formatInTimeZone(
+                          new Date(row.occurrenceAt),
+                          data.schedule.timezone,
+                          locale,
+                        )}
                       </td>
                       <td className="py-2 pr-4">
                         {row.inspectionId !== null && row.inspectionTitle !== null ? (
