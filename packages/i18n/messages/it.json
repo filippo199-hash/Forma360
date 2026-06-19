@@ -1002,7 +1002,9 @@
         "priority": "Priorità",
         "assignee": "Assegnato a",
         "due": "Scadenza"
-      }
+      },
+      "flaggedHeading": "Elementi contrassegnati ({count})",
+      "flaggedBadge": "Contrassegnato"
     }
   },
   "nav": {

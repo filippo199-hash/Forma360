@@ -995,7 +995,9 @@
         "priority": "Prioridade",
         "assignee": "Responsável",
         "due": "Prazo"
-      }
+      },
+      "flaggedHeading": "Itens sinalizados ({count})",
+      "flaggedBadge": "Sinalizado"
     }
   },
   "nav": {

@@ -1,6 +1,7 @@
 'use client';
 
 import type { Page, Section, Item, TemplateContent } from '@forma360/shared/template-schema';
+import { collectFlaggedAnswers } from '@forma360/shared/inspection-eval';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -209,9 +210,7 @@ export default function InspectionReportPage() {
                         {action.assigneeName ?? '—'}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
-                        {action.dueAt !== null
-                          ? new Date(action.dueAt).toLocaleDateString()
-                          : '—'}
+                        {action.dueAt !== null ? new Date(action.dueAt).toLocaleDateString() : '—'}
                       </td>
                     </tr>
                   ))}
@@ -352,8 +351,35 @@ function ReportBody({
   }
   for (const a of assets) optionLabels.set(a.id, a.name);
 
+  // Flagged answers float to the top of the report so an auditor sees the
+  // at-risk responses first. Same pure helper the PDF/share report uses.
+  const flaggedAnswers = collectFlaggedAnswers(content, responses);
+  const flaggedItemIds = new Set(flaggedAnswers.map((f) => f.itemId));
+
   return (
     <div className="space-y-8 rounded-lg border bg-card p-6 shadow-sm">
+      {flaggedAnswers.length > 0 ? (
+        <section className="space-y-2 rounded-md border border-destructive/30 bg-destructive/5 p-4">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-destructive">
+            {t('flaggedHeading', { count: flaggedAnswers.length })}
+          </h2>
+          <ul className="space-y-1.5">
+            {flaggedAnswers.map((f) => (
+              <li key={f.itemId} className="text-sm">
+                <span className="font-medium">{f.prompt}</span>
+                {' — '}
+                <span className="font-semibold text-destructive">
+                  {f.options.map((o) => o.label).join(', ')}
+                </span>
+                <span className="ml-1 text-xs text-muted-foreground">
+                  · {f.pageTitle} › {f.sectionTitle}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {inspectionPages.map((page) => (
         <ReportPage
           key={page.id}
@@ -361,6 +387,7 @@ function ReportBody({
           responses={responses}
           actionsByItemId={actionsByItemId}
           optionLabels={optionLabels}
+          flaggedItemIds={flaggedItemIds}
           t={t}
         />
       ))}
@@ -436,12 +463,14 @@ function ReportPage({
   responses,
   actionsByItemId,
   optionLabels,
+  flaggedItemIds,
   t,
 }: {
   page: Page;
   responses: Record<string, unknown>;
   actionsByItemId: Map<string, ActionSummary[]>;
   optionLabels: Map<string, string>;
+  flaggedItemIds: Set<string>;
   t: TFunc;
 }) {
   return (
@@ -454,6 +483,7 @@ function ReportPage({
           responses={responses}
           actionsByItemId={actionsByItemId}
           optionLabels={optionLabels}
+          flaggedItemIds={flaggedItemIds}
           t={t}
         />
       ))}
@@ -466,12 +496,14 @@ function ReportSection({
   responses,
   actionsByItemId,
   optionLabels,
+  flaggedItemIds,
   t,
 }: {
   section: Section;
   responses: Record<string, unknown>;
   actionsByItemId: Map<string, ActionSummary[]>;
   optionLabels: Map<string, string>;
+  flaggedItemIds: Set<string>;
   t: TFunc;
 }) {
   const visibleItems = section.items.filter((item) => 'prompt' in item) as Item[];
@@ -490,6 +522,7 @@ function ReportSection({
             response={responses[item.id]}
             actions={actionsByItemId.get(item.id) ?? []}
             optionLabels={optionLabels}
+            flagged={flaggedItemIds.has(item.id)}
             t={t}
           />
         ))}
@@ -503,12 +536,14 @@ function ReportItem({
   response,
   actions,
   optionLabels,
+  flagged,
   t,
 }: {
   item: Item;
   response: unknown;
   actions: ActionSummary[];
   optionLabels: Map<string, string>;
+  flagged: boolean;
   t: TFunc;
 }) {
   const prompt = 'prompt' in item ? item.prompt : null;
@@ -518,14 +553,29 @@ function ReportItem({
   const answered = response !== undefined && response !== null && response !== '';
   const hasActions = actions.length > 0;
 
+  const flagBadge = flagged ? (
+    <span className="ml-2 inline-flex items-center rounded bg-destructive px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wide text-destructive-foreground">
+      {t('flaggedBadge')}
+    </span>
+  ) : null;
+
   return (
-    <div className="rounded-md border bg-background text-sm">
+    <div
+      className={
+        flagged
+          ? 'rounded-md border border-l-4 border-destructive/40 border-l-destructive bg-destructive/5 text-sm'
+          : 'rounded-md border bg-background text-sm'
+      }
+    >
       {/* Question + response */}
       <div className="px-3 py-2.5">
         {isMedia ? (
           // Media items: show question prompt then file links below
           <div className="space-y-2">
-            <span className="font-medium leading-snug">{prompt}</span>
+            <span className="font-medium leading-snug">
+              {prompt}
+              {flagBadge}
+            </span>
             {Array.isArray(response) && (response as string[]).length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {(response as string[]).map((key, i) => {
@@ -553,7 +603,10 @@ function ReportItem({
         ) : (
           // Non-media: two-column prompt / value layout
           <div className="grid grid-cols-[1fr_auto] items-start gap-x-4">
-            <span className="font-medium leading-snug">{prompt}</span>
+            <span className="font-medium leading-snug">
+              {prompt}
+              {flagBadge}
+            </span>
             <span
               className={
                 answered ? 'text-right font-medium' : 'text-right italic text-muted-foreground'
@@ -606,13 +659,7 @@ function ReportItem({
   );
 }
 
-function ActionStatusChip({
-  status,
-  t,
-}: {
-  status: string;
-  t: TFunc;
-}) {
+function ActionStatusChip({ status, t }: { status: string; t: TFunc }) {
   const colorMap: Record<string, string> = {
     open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
     in_progress: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
@@ -621,18 +668,10 @@ function ActionStatusChip({
   };
   const cls = colorMap[status] ?? colorMap['open'];
   const label = t(`actionStatus.${status as 'open'}`);
-  return (
-    <span className={`rounded-full px-1.5 py-0.5 font-medium ${cls}`}>{label}</span>
-  );
+  return <span className={`rounded-full px-1.5 py-0.5 font-medium ${cls}`}>{label}</span>;
 }
 
-function ActionPriorityChip({
-  priority,
-  t,
-}: {
-  priority: string;
-  t: TFunc;
-}) {
+function ActionPriorityChip({ priority, t }: { priority: string; t: TFunc }) {
   const colorMap: Record<string, string> = {
     low: 'text-slate-500',
     medium: 'text-amber-600',
@@ -640,9 +679,7 @@ function ActionPriorityChip({
     critical: 'text-red-600 font-semibold',
   };
   const cls = colorMap[priority] ?? colorMap['low'];
-  return (
-    <span className={cls}>{t(`actionPriority.${priority as 'low'}`)}</span>
-  );
+  return <span className={cls}>{t(`actionPriority.${priority as 'low'}`)}</span>;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

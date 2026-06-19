@@ -995,7 +995,9 @@
         "priority": "優先度",
         "assignee": "担当者",
         "due": "期限"
-      }
+      },
+      "flaggedHeading": "フラグ付き項目 ({count})",
+      "flaggedBadge": "フラグ"
     }
   },
   "nav": {

@@ -1002,7 +1002,9 @@
         "priority": "Priorität",
         "assignee": "Zugewiesen an",
         "due": "Fällig"
-      }
+      },
+      "flaggedHeading": "Markierte Punkte ({count})",
+      "flaggedBadge": "Markiert"
     }
   },
   "nav": {

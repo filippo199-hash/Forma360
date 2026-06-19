@@ -1002,7 +1002,9 @@
         "priority": "Priorité",
         "assignee": "Assigné",
         "due": "Échéance"
-      }
+      },
+      "flaggedHeading": "Éléments signalés ({count})",
+      "flaggedBadge": "Signalé"
     }
   },
   "nav": {

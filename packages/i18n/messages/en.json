@@ -1108,7 +1108,9 @@
         "priority": "Priority",
         "assignee": "Assignee",
         "due": "Due"
-      }
+      },
+      "flaggedHeading": "Flagged items ({count})",
+      "flaggedBadge": "Flagged"
     }
   },
   "schedules": {

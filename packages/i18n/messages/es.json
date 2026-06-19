@@ -1002,7 +1002,9 @@
         "priority": "Prioridad",
         "assignee": "Responsable",
         "due": "Vence"
-      }
+      },
+      "flaggedHeading": "Elementos marcados ({count})",
+      "flaggedBadge": "Marcado"
     }
   },
   "nav": {

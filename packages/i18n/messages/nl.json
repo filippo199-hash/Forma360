@@ -995,7 +995,9 @@
         "priority": "Prioriteit",
         "assignee": "Toegewezen aan",
         "due": "Deadline"
-      }
+      },
+      "flaggedHeading": "Gemarkeerde items ({count})",
+      "flaggedBadge": "Gemarkeerd"
     }
   },
   "nav": {
