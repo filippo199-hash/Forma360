@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   collectActiveTriggers,
   collectFlaggedAnswers,
+  evidenceKey,
   followUpTargetMap,
+  getEvidenceKeys,
   isAnswerFlagged,
   isFollowUpRevealed,
+  missingEvidence,
   multipleChoiceLabels,
   selectedOptionIds,
 } from './inspection-eval';
@@ -212,6 +215,38 @@ describe('collectActiveTriggers', () => {
 
   it('returns nothing when unanswered', () => {
     expect(collectActiveTriggers(c, {})).toHaveLength(0);
+  });
+});
+
+// ─── requireEvidence ───────────────────────────────────────────────────────────
+
+describe('missingEvidence', () => {
+  const reqEvidence2: Trigger = { kind: 'requireEvidence', mediaKind: 'any', minCount: 2 };
+  const s = set('s1', [
+    { id: 'ok', label: 'OK' },
+    { id: 'bad', label: 'Bad', triggers: [reqEvidence2] },
+  ]);
+  const c = content([mc('q1', 's1', { prompt: 'Condition?' })], [s]);
+
+  it('is empty until a requiring option is selected', () => {
+    expect(missingEvidence(c, {})).toEqual([]);
+    expect(missingEvidence(c, { q1: 'ok' })).toEqual([]);
+  });
+
+  it('reports the shortfall (have vs need) when evidence is missing', () => {
+    const m = missingEvidence(c, { q1: 'bad' });
+    expect(m).toEqual([{ itemId: 'q1', prompt: 'Condition?', have: 0, need: 2 }]);
+  });
+
+  it('clears once enough evidence is attached at the reserved key', () => {
+    const responses = { q1: 'bad', [evidenceKey('q1')]: ['k1', 'k2'] };
+    expect(getEvidenceKeys(responses, 'q1')).toEqual(['k1', 'k2']);
+    expect(missingEvidence(c, responses)).toEqual([]);
+  });
+
+  it('still short when under the required count', () => {
+    const responses = { q1: 'bad', [evidenceKey('q1')]: ['k1'] };
+    expect(missingEvidence(c, responses)[0]).toMatchObject({ have: 1, need: 2 });
   });
 });
 

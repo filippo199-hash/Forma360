@@ -431,10 +431,10 @@ describe('visibility + triggers', () => {
     );
   });
 
-  it('notify trigger rejects an empty recipient set', () => {
+  it('notify trigger accepts an email and rejects a malformed one', () => {
     const setId = newId();
     const mcqId = newId();
-    const content: TemplateContent = {
+    const build = (email: string): TemplateContent => ({
       ...minimalContent(),
       customResponseSets: [
         {
@@ -445,16 +445,9 @@ describe('visibility + triggers', () => {
             {
               id: newId(),
               label: 'Yes',
-              flagged: false,
-              triggers: [
-                {
-                  kind: 'notify',
-                  timing: 'onCompletion',
-                  recipients: { userIds: [], groupIds: [], siteIds: [] },
-                },
-              ],
+              triggers: [{ kind: 'notify', timing: 'onCompletion', email }],
             },
-            { id: newId(), label: 'No', flagged: false },
+            { id: newId(), label: 'No' },
           ],
           multiSelect: false,
         },
@@ -487,8 +480,9 @@ describe('visibility + triggers', () => {
           ],
         },
       ],
-    };
-    expect(templateContentSchema.safeParse(content).success).toBe(false);
+    });
+    expect(templateContentSchema.safeParse(build('safety@example.com')).success).toBe(true);
+    expect(templateContentSchema.safeParse(build('not-an-email')).success).toBe(false);
   });
 });
 

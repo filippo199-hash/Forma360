@@ -62,13 +62,7 @@ export function OptionTriggerEditor({
           ? { kind, actionTitle: 'Follow up' }
           : kind === 'requireEvidence'
             ? { kind, mediaKind: 'any', minCount: 1 }
-            : kind === 'requireNote'
-              ? { kind }
-              : {
-                  kind: 'notify',
-                  recipients: { userIds: [], groupIds: [], siteIds: [] },
-                  timing: 'onCompletion',
-                };
+            : { kind: 'notify', timing: 'onCompletion' };
     updateTriggers([...triggers, stub]);
   }
 
@@ -132,13 +126,7 @@ function AddTriggerButton({ onAdd }: { onAdd: (k: Trigger['kind']) => void }) {
   const t = useTranslations('templates.editor.logicTab');
   const tKind = useTranslations('templates.editor.logicTab.kind');
   const tInline = useTranslations('templates.editor.inlineActions');
-  const kinds: Trigger['kind'][] = [
-    'askFollowUp',
-    'requireAction',
-    'requireEvidence',
-    'requireNote',
-    'notify',
-  ];
+  const kinds: Trigger['kind'][] = ['askFollowUp', 'requireAction', 'requireEvidence', 'notify'];
   return (
     <Select value="" onValueChange={(v) => onAdd(v as Trigger['kind'])}>
       <SelectTrigger className="h-8 w-44">
@@ -259,21 +247,15 @@ function TriggerEditor({
       ) : null}
       {trigger.kind === 'notify' ? (
         <div className="space-y-1.5">
-          <Label>{t('notify.timing')}</Label>
-          <Select
-            value={trigger.timing}
-            onValueChange={(v) =>
-              onChange({ ...trigger, timing: v as 'immediate' | 'onCompletion' })
+          <Label>{t('notify.email')}</Label>
+          <Input
+            type="email"
+            value={trigger.email ?? ''}
+            placeholder={t('notify.emailPlaceholder')}
+            onChange={(e) =>
+              onChange({ kind: 'notify', email: e.target.value, timing: 'onCompletion' })
             }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="immediate">{t('notify.timingImmediate')}</SelectItem>
-              <SelectItem value="onCompletion">{t('notify.timingOnCompletion')}</SelectItem>
-            </SelectContent>
-          </Select>
+          />
         </div>
       ) : null}
     </li>

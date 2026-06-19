@@ -602,7 +602,9 @@
         "notify": {
           "timing": "Timing",
           "timingImmediate": "Immediate",
-          "timingOnCompletion": "On completion"
+          "timingOnCompletion": "On completion",
+          "email": "通知先メール",
+          "emailPlaceholder": "name@example.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
         "flagLabel": "フラグ"
@@ -861,7 +863,13 @@
         }
       },
       "goToStatus": "ステータス確認・署名",
-      "openLinkedAction": "アクションを開く: {title}"
+      "openLinkedAction": "アクションを開く: {title}",
+      "evidence": {
+        "label": "証拠が必要 ({have}/{need})",
+        "add": "ファイルを添付",
+        "remove": "削除"
+      },
+      "missingEvidence": "{count} 件の質問に証拠が必要です"
     },
     "statusPage": {
       "title": "Inspection status",

@@ -133,6 +133,8 @@ export function isAnswerFlagged(
 export interface ActiveTrigger {
   /** The multiple-choice question whose selected option carries the trigger. */
   itemId: string;
+  /** The question prompt (for notification copy / audit). */
+  prompt: string;
   /** The selected option id that activated it. */
   optionId: string;
   optionLabel: string;
@@ -164,11 +166,97 @@ export function collectActiveTriggers(
         for (const option of set.options) {
           if (!selected.has(option.id)) continue;
           for (const trigger of optionTriggers(option)) {
-            out.push({ itemId: item.id, optionId: option.id, optionLabel: option.label, trigger });
+            out.push({
+              itemId: item.id,
+              prompt: item.prompt,
+              optionId: option.id,
+              optionLabel: option.label,
+              trigger,
+            });
           }
         }
       }
     }
+  }
+  return out;
+}
+
+// ─── requireEvidence ────────────────────────────────────────────────────────
+
+/**
+ * Reserved response-map key holding the evidence (R2 object keys) uploaded to
+ * satisfy a question's `requireEvidence` trigger. Distinct from the question's
+ * own answer key; never collides with a real item id (ULID).
+ */
+export function evidenceKey(itemId: string): string {
+  return `evidence:${itemId}`;
+}
+
+/** Evidence object keys captured for a question (empty when none). */
+export function getEvidenceKeys(responses: Record<string, unknown>, itemId: string): string[] {
+  const v = responses[evidenceKey(itemId)];
+  return Array.isArray(v) ? v.filter((k): k is string => typeof k === 'string') : [];
+}
+
+/**
+ * Minimum evidence count an item currently requires given the selected
+ * option(s). 0 when no selected option carries a requireEvidence trigger.
+ * Drives whether the conduct UI shows an evidence uploader for the item.
+ */
+export function requiredEvidenceCount(
+  content: TemplateContent,
+  itemId: string,
+  responses: Record<string, unknown>,
+): number {
+  let need = 0;
+  for (const active of collectActiveTriggers(content, responses)) {
+    if (active.itemId === itemId && active.trigger.kind === 'requireEvidence') {
+      need = Math.max(need, active.trigger.minCount);
+    }
+  }
+  return need;
+}
+
+/**
+ * Questions whose selected option requires evidence but which don't yet have
+ * enough uploaded. Each entry carries the minimum required count so the UI can
+ * show "1 of 2". Used to gate submit on both the client and the server.
+ */
+export interface MissingEvidence {
+  itemId: string;
+  prompt: string;
+  have: number;
+  need: number;
+}
+
+export function missingEvidence(
+  content: TemplateContent,
+  responses: Record<string, unknown>,
+): MissingEvidence[] {
+  const byItem = new Map<string, { prompt: string; need: number }>();
+  // Build a prompt lookup for the multiple-choice items.
+  const prompts = new Map<string, string>();
+  for (const page of content.pages) {
+    for (const section of page.sections) {
+      for (const item of section.items) {
+        if (isMcItem(item)) prompts.set(item.id, item.prompt);
+      }
+    }
+  }
+  for (const active of collectActiveTriggers(content, responses)) {
+    if (active.trigger.kind !== 'requireEvidence') continue;
+    const need = active.trigger.minCount;
+    const prev = byItem.get(active.itemId);
+    // If multiple selected options require evidence, take the strictest count.
+    byItem.set(active.itemId, {
+      prompt: prompts.get(active.itemId) ?? active.itemId,
+      need: prev ? Math.max(prev.need, need) : need,
+    });
+  }
+  const out: MissingEvidence[] = [];
+  for (const [itemId, { prompt, need }] of byItem) {
+    const have = getEvidenceKeys(responses, itemId).length;
+    if (have < need) out.push({ itemId, prompt, have, need });
   }
   return out;
 }

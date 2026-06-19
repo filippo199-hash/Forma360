@@ -602,7 +602,9 @@
         "notify": {
           "timing": "Timing",
           "timingImmediate": "Immediate",
-          "timingOnCompletion": "On completion"
+          "timingOnCompletion": "On completion",
+          "email": "通知此邮箱",
+          "emailPlaceholder": "name@example.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
         "flagLabel": "标记"
@@ -861,7 +863,13 @@
         }
       },
       "goToStatus": "查看状态与签名",
-      "openLinkedAction": "打开操作：{title}"
+      "openLinkedAction": "打开操作：{title}",
+      "evidence": {
+        "label": "需要证据（{have}/{need}）",
+        "add": "附加文件",
+        "remove": "移除"
+      },
+      "missingEvidence": "{count} 个问题仍需证据"
     },
     "statusPage": {
       "title": "Inspection status",

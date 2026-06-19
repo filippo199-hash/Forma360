@@ -1,0 +1,8 @@
+{
+  "subject": "Notification: {inspectionTitle}",
+  "preheader": "A flagged response was recorded on an inspection",
+  "greeting": "Hello,",
+  "body": "An inspection response triggered a notification. On '{inspectionTitle}', the question \"{questionPrompt}\" was answered \"{response}\". Open the report for the full details.",
+  "cta": "View the report",
+  "footer": "You are receiving this because this address was set to be notified for this inspection response in the template."
+}

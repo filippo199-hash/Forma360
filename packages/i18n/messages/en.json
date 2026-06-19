@@ -725,7 +725,9 @@
         "notify": {
           "timing": "Timing",
           "timingImmediate": "Immediate",
-          "timingOnCompletion": "On completion"
+          "timingOnCompletion": "On completion",
+          "email": "Notify this email",
+          "emailPlaceholder": "name@example.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
         "mcQuestionsHeader": "MC Questions",
@@ -987,7 +989,13 @@
         }
       },
       "goToStatus": "View status & sign",
-      "openLinkedAction": "Open action: {title}"
+      "openLinkedAction": "Open action: {title}",
+      "evidence": {
+        "label": "Evidence required ({have} of {need})",
+        "add": "Attach file",
+        "remove": "Remove"
+      },
+      "missingEvidence": "{count} question(s) still need evidence"
     },
     "statusPage": {
       "title": "Inspection status",

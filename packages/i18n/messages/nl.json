@@ -602,7 +602,9 @@
         "notify": {
           "timing": "Timing",
           "timingImmediate": "Immediate",
-          "timingOnCompletion": "On completion"
+          "timingOnCompletion": "On completion",
+          "email": "Stuur melding naar e-mail",
+          "emailPlaceholder": "naam@voorbeeld.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
         "flagLabel": "Markeren"
@@ -861,7 +863,13 @@
         }
       },
       "goToStatus": "Status bekijken en ondertekenen",
-      "openLinkedAction": "Actie openen: {title}"
+      "openLinkedAction": "Actie openen: {title}",
+      "evidence": {
+        "label": "Bewijs vereist ({have} van {need})",
+        "add": "Bestand toevoegen",
+        "remove": "Verwijderen"
+      },
+      "missingEvidence": "{count} vraag/vragen hebben nog bewijs nodig"
     },
     "statusPage": {
       "title": "Inspection status",

@@ -25,7 +25,9 @@ import { cn } from '../../lib/cn';
 import { trpc } from '../../lib/trpc/client';
 import { ActionDetailPanel } from '../actions/action-detail-panel';
 import { useConduct } from './conduct-context';
+import { missingEvidence, requiredEvidenceCount } from '@forma360/shared/inspection-eval';
 import { findUnansweredRequired, isItemRevealed, type Responses } from './conduct-state';
+import { EvidenceUploader } from './evidence-uploader';
 import { ResponseInput } from './response-input';
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;
@@ -263,7 +265,11 @@ export function ConductShell() {
     () => findUnansweredRequired(state.content, state.responses),
     [state.content, state.responses],
   );
-  const canSubmit = missing.length === 0 && !readonly;
+  const evidenceMissing = useMemo(
+    () => missingEvidence(state.content, state.responses),
+    [state.content, state.responses],
+  );
+  const canSubmit = missing.length === 0 && evidenceMissing.length === 0 && !readonly;
 
   function handleSubmit() {
     submit.mutate({ inspectionId: state.inspectionId });
@@ -371,7 +377,11 @@ export function ConductShell() {
             </div>
 
             {!canSubmit && !readonly ? (
-              <p className="text-xs text-muted-foreground">{t('missingRequired')}</p>
+              <p className="text-xs text-muted-foreground">
+                {evidenceMissing.length > 0 && missing.length === 0
+                  ? t('missingEvidence', { count: evidenceMissing.length })
+                  : t('missingRequired')}
+              </p>
             ) : null}
           </div>
         </main>
@@ -589,6 +599,7 @@ function ItemRow({
   if (!visible) return null;
   const prompt = 'prompt' in item ? item.prompt : null;
   const required = 'required' in item && item.required === true;
+  const evidenceNeed = requiredEvidenceCount(state.content, item.id, state.responses);
   return (
     <Card className="space-y-3 p-4">
       <div className="flex items-start justify-between gap-2">
@@ -611,6 +622,9 @@ function ItemRow({
       <div id={`item-${item.id}`}>
         <ResponseInput item={item} readonly={readonly} responseSets={customResponseSets} />
       </div>
+      {evidenceNeed > 0 ? (
+        <EvidenceUploader itemId={item.id} need={evidenceNeed} readonly={readonly} />
+      ) : null}
       {raisedActionId !== null ? (
         <LinkedActionCard actionId={raisedActionId} onOpen={() => onOpenAction(raisedActionId)} />
       ) : null}

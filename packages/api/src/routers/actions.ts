@@ -294,6 +294,72 @@ function isUniqueViolation(err: unknown): boolean {
   return visit(err);
 }
 
+/**
+ * Idempotently create an action for an inspection question. Shared by the
+ * conduct "raise action" flow and by `requireAction` triggers fired on submit.
+ * The unique `(sourceType, sourceId, sourceItemId)` index guarantees one
+ * action per question — a conflicting insert resolves to the existing row.
+ */
+export async function createInspectionActionIfAbsent(
+  db: Db,
+  args: {
+    tenantId: string;
+    inspectionId: string;
+    sourceItemId: string;
+    title: string;
+    siteId: string | null;
+    createdBy: string;
+  },
+): Promise<{ actionId: string; created: boolean }> {
+  const match = and(
+    eq(actions.tenantId, args.tenantId),
+    eq(actions.sourceType, 'inspection'),
+    eq(actions.sourceId, args.inspectionId),
+    eq(actions.sourceItemId, args.sourceItemId),
+  );
+  const existing = await db.select({ id: actions.id }).from(actions).where(match).limit(1);
+  if (existing[0] !== undefined) return { actionId: existing[0].id, created: false };
+
+  const id = newId();
+  const referenceNumber = await nextActionReferenceNumber(db, args.tenantId);
+  const now = new Date();
+  try {
+    await db.insert(actions).values({
+      id,
+      tenantId: args.tenantId,
+      sourceType: 'inspection',
+      sourceId: args.inspectionId,
+      sourceItemId: args.sourceItemId,
+      referenceNumber,
+      title: args.title,
+      description: null,
+      status: 'open',
+      priority: null,
+      label: null,
+      assigneeUserId: null,
+      dueAt: null,
+      siteId: args.siteId,
+      actionTypeId: null,
+      customQuestionResponses: {},
+      createdBy: args.createdBy,
+      createdAt: now,
+      updatedAt: now,
+    });
+  } catch (err) {
+    if (!isUniqueViolation(err)) throw err;
+    const race = await db.select({ id: actions.id }).from(actions).where(match).limit(1);
+    if (race[0] === undefined) throw err;
+    return { actionId: race[0].id, created: false };
+  }
+  await writeActivity(db, {
+    tenantId: args.tenantId,
+    actionId: id,
+    actorUserId: args.createdBy,
+    kind: 'created',
+  });
+  return { actionId: id, created: true };
+}
+
 const priorityEnum = z.enum(actionPriority);
 const statusEnum = z.enum(actionStatus);
 

@@ -383,6 +383,146 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
     });
   });
 
+  describe('response-option triggers on submit', () => {
+    /** Content with one MC question whose "Bad" option fires all three triggers. */
+    function triggerContent(): {
+      content: TemplateContent;
+      itemId: string;
+      setId: string;
+      badId: string;
+    } {
+      const itemId = newId();
+      const setId = newId();
+      const badId = newId();
+      const goodId = newId();
+      const content: TemplateContent = {
+        schemaVersion: TEMPLATE_SCHEMA_VERSION,
+        title: 'Triggers',
+        pages: [
+          {
+            id: newId(),
+            type: 'title',
+            title: 'Title',
+            sections: [{ id: newId(), title: 's', items: [] }],
+          },
+          {
+            id: newId(),
+            type: 'inspection',
+            title: 'Inspection',
+            sections: [
+              {
+                id: newId(),
+                title: 's',
+                items: [
+                  {
+                    id: itemId,
+                    type: 'multipleChoice',
+                    prompt: 'Condition?',
+                    required: false,
+                    responseSetId: setId,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        settings: {
+          titleFormat: '{date}',
+          documentNumberFormat: 'AUDIT{counter:6}',
+          documentNumberStart: 1,
+        },
+        customResponseSets: [
+          {
+            id: setId,
+            name: 'Good / Bad',
+            sourceGlobalId: null,
+            multiSelect: false,
+            options: [
+              { id: goodId, label: 'Good', color: 'green' },
+              {
+                id: badId,
+                label: 'Bad',
+                color: 'red',
+                triggers: [
+                  { kind: 'requireAction', actionTitle: 'Fix the issue' },
+                  { kind: 'requireEvidence', mediaKind: 'any', minCount: 1 },
+                  { kind: 'notify', email: 'safety@example.com', timing: 'onCompletion' },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+      return { content, itemId, setId, badId };
+    }
+
+    it('blocks submit until requireEvidence is satisfied, then creates the action', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { content, itemId, badId } = triggerContent();
+      const { templateId } = await createPublishedTemplate(caller, 'Triggers', content);
+      const { inspectionId } = await caller.inspections.create({ templateId });
+
+      // Select the flagged "Bad" option, no evidence yet.
+      await caller.inspections.saveProgress({ inspectionId, responses: { [itemId]: badId } });
+
+      // requireEvidence gate blocks submit.
+      await expect(caller.inspections.submit({ inspectionId })).rejects.toThrow(/evidence/i);
+
+      // Attach evidence under the reserved key, then submit succeeds.
+      await caller.inspections.saveProgress({
+        inspectionId,
+        responses: { [itemId]: badId, [`evidence:${itemId}`]: ['tenant/insp/file.jpg'] },
+      });
+      const res = await caller.inspections.submit({ inspectionId });
+      expect(res.status).toBe('completed');
+
+      // requireAction created exactly one action for this question.
+      const actions = await caller.actions.list({
+        sourceType: 'inspection',
+        sourceId: inspectionId,
+      });
+      const created = actions.filter((a) => a.sourceItemId === itemId);
+      expect(created).toHaveLength(1);
+      expect(created[0]?.title).toBe('Fix the issue');
+    });
+
+    it('does not create an action or block submit when the non-triggering option is chosen', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { content, itemId } = triggerContent();
+      const goodId = content.customResponseSets[0]?.options[0]?.id;
+      if (goodId === undefined) throw new Error('fixture');
+      const { templateId } = await createPublishedTemplate(caller, 'TriggersGood', content);
+      const { inspectionId } = await caller.inspections.create({ templateId });
+
+      await caller.inspections.saveProgress({ inspectionId, responses: { [itemId]: goodId } });
+      const res = await caller.inspections.submit({ inspectionId });
+      expect(res.status).toBe('completed');
+
+      const actions = await caller.actions.list({
+        sourceType: 'inspection',
+        sourceId: inspectionId,
+      });
+      expect(actions.filter((a) => a.sourceItemId === itemId)).toHaveLength(0);
+    });
+
+    it('is idempotent — re-evaluating does not duplicate the action', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { content, itemId, badId } = triggerContent();
+      const { templateId } = await createPublishedTemplate(caller, 'TriggersIdem', content);
+      const { inspectionId } = await caller.inspections.create({ templateId });
+      await caller.inspections.saveProgress({
+        inspectionId,
+        responses: { [itemId]: badId, [`evidence:${itemId}`]: ['k1'] },
+      });
+      await caller.inspections.submit({ inspectionId });
+      const actions = await caller.actions.list({
+        sourceType: 'inspection',
+        sourceId: inspectionId,
+      });
+      expect(actions.filter((a) => a.sourceItemId === itemId)).toHaveLength(1);
+    });
+  });
+
   describe('signatures + approval flow', () => {
     it('submits to awaiting_signatures; signing the last slot advances to awaiting_approval; approve completes', async () => {
       const caller = createCaller(ctxFor(adminUserId));

@@ -96,24 +96,20 @@ const requireNoteTrigger = z.object({
 
 const notifyTrigger = z.object({
   kind: z.literal('notify'),
-  /** User ids, group ids, or site ids — routing is resolved at enqueue time. */
+  /** Email address notified when a triggering option is selected (sent on submit). */
+  email: z.string().email().max(320).optional(),
+  /**
+   * Legacy user/group/site routing. Retained optional for back-compat with
+   * templates authored before the simple email field; the editor now uses
+   * `email`.
+   */
   recipients: z
     .object({
       userIds: z.array(ulid).default([]),
       groupIds: z.array(ulid).default([]),
       siteIds: z.array(ulid).default([]),
     })
-    .refine((r) => r.userIds.length + r.groupIds.length + r.siteIds.length > 0, {
-      message: 'At least one recipient required',
-    })
-    .refine(
-      (r) =>
-        r.userIds.length + r.groupIds.length + r.siteIds.length <=
-        TEMPLATE_LIMITS.MAX_NOTIFICATION_RECIPIENTS,
-      {
-        message: `Max ${TEMPLATE_LIMITS.MAX_NOTIFICATION_RECIPIENTS} total recipients`,
-      },
-    ),
+    .optional(),
   /** `immediate` fires when the option is selected; `onCompletion` when the inspection submits. */
   timing: z.enum(['immediate', 'onCompletion']).default('onCompletion'),
 });

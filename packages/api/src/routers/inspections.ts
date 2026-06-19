@@ -55,6 +55,8 @@ import { newId } from '@forma360/shared/id';
 import type { Logger } from '@forma360/shared/logger';
 import { parseTemplateContent } from '@forma360/shared/template-schema';
 import type { SignatureWorkflow } from '@forma360/shared/template-schema';
+import { collectActiveTriggers, missingEvidence } from '@forma360/shared/inspection-eval';
+import { createInspectionActionIfAbsent } from './actions';
 import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -248,8 +250,7 @@ async function syncAssetSelections(
   const assetQuestionIds = new Set<string>();
   for (const page of content.pages)
     for (const section of page.sections)
-      for (const item of section.items)
-        if (item.type === 'asset') assetQuestionIds.add(item.id);
+      for (const item of section.items) if (item.type === 'asset') assetQuestionIds.add(item.id);
 
   if (assetQuestionIds.size === 0) return;
 
@@ -258,7 +259,13 @@ async function syncAssetSelections(
     .delete(inspectionAssetSelections)
     .where(eq(inspectionAssetSelections.inspectionId, inspectionId));
 
-  const toInsert: { id: string; tenantId: string; inspectionId: string; questionId: string; assetId: string }[] = [];
+  const toInsert: {
+    id: string;
+    tenantId: string;
+    inspectionId: string;
+    questionId: string;
+    assetId: string;
+  }[] = [];
   for (const questionId of assetQuestionIds) {
     const raw = responses[questionId];
     if (raw === null || raw === undefined) continue;
@@ -267,7 +274,9 @@ async function syncAssetSelections(
       !Array.isArray(raw) &&
       'assetIds' in raw &&
       Array.isArray((raw as { assetIds: unknown }).assetIds)
-        ? ((raw as { assetIds: unknown[] }).assetIds.filter((id) => typeof id === 'string') as string[])
+        ? ((raw as { assetIds: unknown[] }).assetIds.filter(
+            (id) => typeof id === 'string',
+          ) as string[])
         : [];
     for (const assetId of assetIds) {
       toInsert.push({ id: newId(), tenantId, inspectionId, questionId, assetId });
@@ -721,6 +730,47 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         if (version === undefined) {
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Pinned version missing' });
         }
+
+        // ── Response-option triggers (requireEvidence / requireAction / notify) ──
+        const responseMap = insp.responses as Record<string, unknown>;
+        // requireEvidence is a hard gate on every submit path (defence in depth;
+        // the conduct UI also disables submit until evidence is attached).
+        const evMissing = missingEvidence(version.content, responseMap);
+        if (evMissing.length > 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'evidence-required' });
+        }
+        // Side-effects fire once on submit (responses are final after this).
+        for (const active of collectActiveTriggers(version.content, responseMap)) {
+          if (active.trigger.kind === 'requireAction') {
+            await createInspectionActionIfAbsent(ctx.db, {
+              tenantId: ctx.tenantId,
+              inspectionId: insp.id,
+              sourceItemId: active.itemId,
+              title: active.trigger.actionTitle,
+              siteId: insp.siteId,
+              createdBy: ctx.auth.userId,
+            });
+          } else if (active.trigger.kind === 'notify' && active.trigger.email !== undefined) {
+            try {
+              await deps.sendEmail({
+                to: active.trigger.email,
+                templateKey: 'inspection-notify',
+                variables: {
+                  inspectionTitle: insp.title,
+                  questionPrompt: active.prompt,
+                  response: active.optionLabel,
+                  viewUrl: `${appUrl}/en/inspections/${insp.id}/report`,
+                },
+              });
+            } catch (err) {
+              deps.logger.error(
+                { err, inspectionId: insp.id, itemId: active.itemId },
+                '[inspections] notify email failed',
+              );
+            }
+          }
+        }
+
         const workflow: SignatureWorkflow | undefined = version.content.settings.signatureWorkflow;
         const workflowEnabled =
           workflow !== undefined && workflow.enabled && workflow.signatoryUserIds.length > 0;

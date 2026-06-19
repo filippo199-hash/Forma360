@@ -602,7 +602,9 @@
         "notify": {
           "timing": "Timing",
           "timingImmediate": "Immediate",
-          "timingOnCompletion": "On completion"
+          "timingOnCompletion": "On completion",
+          "email": "Diese E-Mail benachrichtigen",
+          "emailPlaceholder": "name@beispiel.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
         "flagLabel": "Markieren"
@@ -868,7 +870,13 @@
         }
       },
       "goToStatus": "Status & Unterschrift ansehen",
-      "openLinkedAction": "Aktion öffnen: {title}"
+      "openLinkedAction": "Aktion öffnen: {title}",
+      "evidence": {
+        "label": "Nachweis erforderlich ({have} von {need})",
+        "add": "Datei anhängen",
+        "remove": "Entfernen"
+      },
+      "missingEvidence": "{count} Frage(n) benötigen noch einen Nachweis"
     },
     "statusPage": {
       "title": "Inspection status",

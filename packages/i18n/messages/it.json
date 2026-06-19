@@ -602,7 +602,9 @@
         "notify": {
           "timing": "Timing",
           "timingImmediate": "Immediate",
-          "timingOnCompletion": "On completion"
+          "timingOnCompletion": "On completion",
+          "email": "Notifica questa email",
+          "emailPlaceholder": "nome@esempio.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
         "flagLabel": "Contrassegna"
@@ -868,7 +870,13 @@
         }
       },
       "goToStatus": "Vedi stato e firma",
-      "openLinkedAction": "Apri azione: {title}"
+      "openLinkedAction": "Apri azione: {title}",
+      "evidence": {
+        "label": "Prova richiesta ({have} di {need})",
+        "add": "Allega file",
+        "remove": "Rimuovi"
+      },
+      "missingEvidence": "{count} domanda/e richiedono ancora una prova"
     },
     "statusPage": {
       "title": "Inspection status",
