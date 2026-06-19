@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { buildTemplateContentFromSpec } from './template-builder';
 import { collectActiveTriggers, computeSkippedItemIds } from './inspection-eval';
 import { effectiveFlaggedOptionIds, templateContentSchema } from './template-schema';
-import { parseTemplateSpec, type TemplateSpec } from './template-spec';
+import { parseTemplateSpec, templateSpecSchema, type TemplateSpec } from './template-spec';
+import type { z } from 'zod';
 
-function spec(partial: Partial<TemplateSpec>): TemplateSpec {
+function spec(partial: Partial<z.input<typeof templateSpecSchema>>): TemplateSpec {
   return parseTemplateSpec({
     title: 'Test template',
     pages: [{ title: 'Page 1', sections: [{ title: 'Section 1', questions: [] }] }],
