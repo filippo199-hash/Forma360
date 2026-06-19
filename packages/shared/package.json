@@ -48,6 +48,14 @@
       "types": "./src/inspection-eval.ts",
       "default": "./src/inspection-eval.ts"
     },
+    "./template-spec": {
+      "types": "./src/template-spec.ts",
+      "default": "./src/template-spec.ts"
+    },
+    "./template-builder": {
+      "types": "./src/template-builder.ts",
+      "default": "./src/template-builder.ts"
+    },
     "./issues-schema": {
       "types": "./src/issues-schema.ts",
       "default": "./src/issues-schema.ts"
