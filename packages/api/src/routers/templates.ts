@@ -47,6 +47,8 @@ import {
   type DependentResolver,
 } from '@forma360/permissions/dependents';
 import { newId } from '@forma360/shared/id';
+import { buildTemplateContentFromSpec } from '@forma360/shared/template-builder';
+import { templateSpecSchema } from '@forma360/shared/template-spec';
 import {
   parseTemplateContent,
   templateContentSchema,
@@ -1136,6 +1138,47 @@ export const templatesRouter = router({
       }
       const csv = lines.join('');
       return { csv, rowCount: rows.length };
+    }),
+
+  /**
+   * Create a draft template from an AI-generated {@link templateSpecSchema}.
+   * The spec is the small, forgiving contract the generation agent (AI chat /
+   * PDF / Excel import) emits; the deterministic builder expands it into a
+   * schema-valid `TemplateContent` (ids, response-set snapshots, forward-only
+   * jumps, triggers, title page, settings). Never auto-publishes — like every
+   * other create path, it lands a draft the user reviews in the editor.
+   */
+  createFromSpec: tenantProcedure
+    .use(requirePermission('templates.create'))
+    .input(z.object({ spec: templateSpecSchema }))
+    .mutation(async ({ ctx, input }) => {
+      // The builder always ends in templateContentSchema.parse(); a throw here
+      // is a builder bug, not bad AI output (invalid logic is dropped, not fatal).
+      const content = buildTemplateContentFromSpec(input.spec);
+      const templateId = newId();
+      const versionId = newId();
+      await ctx.db.transaction(async (tx) => {
+        await tx.insert(templates).values({
+          id: templateId,
+          tenantId: ctx.tenantId,
+          name: content.title,
+          description: content.description ?? null,
+          status: 'draft',
+          currentVersionId: null,
+          titleFormat: content.settings.titleFormat,
+          createdBy: ctx.auth.userId,
+        });
+        await tx.insert(templateVersions).values({
+          id: versionId,
+          tenantId: ctx.tenantId,
+          templateId,
+          versionNumber: 1,
+          content,
+          isCurrent: false,
+        });
+      });
+      ctx.logger.info({ templateId }, '[templates] created from spec');
+      return { templateId, draftVersionId: versionId };
     }),
 
   importJson: tenantProcedure

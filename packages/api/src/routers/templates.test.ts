@@ -823,4 +823,80 @@ describe('templates router (Phase 2)', () => {
       expect(ids).not.toContain(autoRuleId);
     });
   });
+
+  // The AI generation / import paths emit a small TemplateSpec; createFromSpec
+  // expands it deterministically and lands a draft. (The agents themselves are
+  // exercised end-to-end against the live model, not here.)
+  describe('createFromSpec (AI generation seam)', () => {
+    it('expands a spec into a schema-valid draft template with one version', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId, draftVersionId } = await caller.templates.createFromSpec({
+        spec: {
+          title: 'Forklift Pre-Use Inspection',
+          description: 'Daily forklift checks',
+          pages: [
+            {
+              title: 'Pre-use',
+              sections: [
+                {
+                  title: 'Visual',
+                  questions: [
+                    {
+                      key: 'q_tyres',
+                      prompt: 'Tyres in good condition?',
+                      type: 'multipleChoice',
+                      options: [
+                        { label: 'Pass', color: 'green' },
+                        {
+                          label: 'Fail',
+                          color: 'red',
+                          flag: true,
+                          requireEvidence: true,
+                          jumpTo: 'finish',
+                        },
+                      ],
+                    },
+                    { key: 'q_hours', prompt: 'Engine hours', type: 'number', unit: 'h' },
+                    { prompt: 'Sign off', type: 'signature' },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      });
+      expect(templateId).toHaveLength(26);
+      expect(draftVersionId).toHaveLength(26);
+
+      const { template, versions } = await caller.templates.get({ templateId });
+      expect(template.status).toBe('draft');
+      expect(template.name).toBe('Forklift Pre-Use Inspection');
+      expect(template.currentVersionId).toBeNull();
+      expect(versions).toHaveLength(1);
+
+      const content = versions[0]?.content as TemplateContent;
+      // Title page is prepended; one inspection page added.
+      expect(content.pages[0]?.type).toBe('title');
+      expect(content.pages.filter((p) => p.type === 'inspection')).toHaveLength(1);
+      // The MC question carries the snapshotted response set + a flag + a forward jump.
+      const items = content.pages
+        .flatMap((p) => p.sections)
+        .flatMap((s) => s.items)
+        .filter((i) => 'prompt' in i && i.prompt === 'Tyres in good condition?');
+      const mc = items[0];
+      expect(mc?.type).toBe('multipleChoice');
+      if (mc?.type === 'multipleChoice') {
+        expect(mc.flaggedOptionIds?.length).toBe(1);
+        expect(mc.jumps?.[0]?.target).toEqual({ type: 'end' });
+        expect(content.customResponseSets.some((s) => s.id === mc.responseSetId)).toBe(true);
+      }
+    });
+
+    it('rejects an empty spec (no pages)', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      await expect(
+        caller.templates.createFromSpec({ spec: { title: 'X', pages: [] } }),
+      ).rejects.toThrow();
+    });
+  });
 });
