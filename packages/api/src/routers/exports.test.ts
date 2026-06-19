@@ -18,7 +18,13 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
-import { buildAppRouter, stubAuthDeps, stubHeadsUpsDeps, stubInspectionsDeps, stubIssuesDeps } from '../router';
+import {
+  buildAppRouter,
+  stubAuthDeps,
+  stubHeadsUpsDeps,
+  stubInspectionsDeps,
+  stubIssuesDeps,
+} from '../router';
 import { createCallerFactory } from '../trpc';
 import type { ExportsRouterDeps } from './exports';
 import type { InspectionsExportDeps } from './inspectionsExport';
@@ -66,6 +72,7 @@ const MIGRATION_FILES = [
   '0032_user_first_last_name.sql',
   '0033_document_visibility.sql',
   '0034_maintenance_programs.sql',
+  '0035_asset_owner.sql',
 ];
 
 async function bootDb() {
@@ -277,7 +284,7 @@ describe('exports router (Phase 2 PR 31)', () => {
         auth: stubAuthDeps,
         inspections: stubInspectionsDeps,
         issues: stubIssuesDeps,
-  
+
         headsUps: stubHeadsUpsDeps,
       });
       const caller = createCallerFactory(router)(ctxFor(adminUserId));
@@ -316,7 +323,7 @@ describe('exports router (Phase 2 PR 31)', () => {
         auth: stubAuthDeps,
         inspections: stubInspectionsDeps,
         issues: stubIssuesDeps,
-  
+
         headsUps: stubHeadsUpsDeps,
       });
       const caller = createCallerFactory(router)(ctxFor(standardUserId));

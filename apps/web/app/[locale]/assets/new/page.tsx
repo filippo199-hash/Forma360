@@ -11,6 +11,7 @@ import { Button } from '../../../../src/components/ui/button';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 interface CustomField {
@@ -33,6 +34,7 @@ export default function NewAssetPage() {
   const [typeId, setTypeId] = useState('');
   const [siteId, setSiteId] = useState('');
   const [parentId, setParentId] = useState('');
+  const [ownerUserId, setOwnerUserId] = useState('');
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
   const [photoKey, setPhotoKey] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -117,6 +119,7 @@ export default function NewAssetPage() {
       typeId: typeId !== '' ? typeId : undefined,
       siteId: siteId !== '' ? siteId : undefined,
       parentId: parentId !== '' ? parentId : undefined,
+      ownerUserId: ownerUserId !== '' ? ownerUserId : undefined,
       photoKey: photoKey ?? undefined,
       customFieldValues,
     });
@@ -125,194 +128,209 @@ export default function NewAssetPage() {
   return (
     <FocusedPageShell title={t('title')} backHref={`/${locale}/assets`} width="form">
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Photo + name row */}
+        <div className="flex gap-6">
+          {/* Photo dropzone */}
+          <div className="shrink-0">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handlePhotoChange}
+              aria-label={t('photoSection')}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              className="relative flex h-28 w-28 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-background transition-colors hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed"
+            >
+              {uploadingPhoto ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : photoPreview !== null ? (
+                <>
+                  {/* Preview is a local blob URL — Image component not suitable for object URLs */}
+                  <img
+                    src={photoPreview}
+                    alt=""
+                    className="h-full w-full rounded-xl object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removePhoto();
+                    }}
+                    className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow"
+                    aria-label={t('photoSection')}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <ImagePlus className="h-7 w-7 text-muted-foreground" />
+                  <span className="mt-1.5 text-center text-[10px] leading-tight text-muted-foreground px-2">
+                    {t('photoHint')}
+                  </span>
+                </>
+              )}
+            </button>
+          </div>
 
-          {/* Photo + name row */}
-          <div className="flex gap-6">
-            {/* Photo dropzone */}
-            <div className="shrink-0">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={handlePhotoChange}
-                aria-label={t('photoSection')}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingPhoto}
-                className="relative flex h-28 w-28 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-background transition-colors hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed"
+          {/* Name */}
+          <div className="flex flex-1 flex-col justify-center space-y-1.5">
+            <Label htmlFor="asset-name">
+              {t('fields.name')} <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="asset-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('fields.namePlaceholder')}
+              maxLength={500}
+              required
+              autoFocus
+              className="text-base"
+            />
+          </div>
+        </div>
+
+        {/* Category */}
+        <div className="rounded-xl border bg-background p-5 space-y-5">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="asset-type">{t('fields.type')}</Label>
+              <Link
+                href={`/${locale}/assets/categories`}
+                className="text-xs text-primary hover:underline"
+                tabIndex={-1}
               >
-                {uploadingPhoto ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                ) : photoPreview !== null ? (
-                  <>
-                    {/* Preview is a local blob URL — Image component not suitable for object URLs */}
-                    <img
-                      src={photoPreview}
-                      alt=""
-                      className="h-full w-full rounded-xl object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removePhoto();
-                      }}
-                      className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow"
-                      aria-label={t('photoSection')}
+                {t('newCategoryLink')}
+              </Link>
+            </div>
+            <select
+              id="asset-type"
+              value={typeId}
+              onChange={(e) => {
+                setTypeId(e.target.value);
+                setCustomFieldValues({});
+              }}
+              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">{t('fields.noType')}</option>
+              {types.map((tp) => (
+                <option key={tp.id} value={tp.id}>
+                  {tp.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Dynamic custom fields for selected category */}
+          {customFields.length > 0 ? (
+            <div className="space-y-4 border-t pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t('fields.customFieldsHeading')}
+              </p>
+              {customFields.map((field) => (
+                <div key={field.id} className="space-y-1.5">
+                  <Label htmlFor={`cf-${field.id}`}>
+                    {field.name}
+                    {field.required === true ? (
+                      <span className="ml-1 text-destructive">*</span>
+                    ) : null}
+                  </Label>
+                  {field.fieldType === 'select' ? (
+                    <select
+                      id={`cf-${field.id}`}
+                      value={customFieldValues[field.id] ?? ''}
+                      onChange={(e) => setFieldValue(field.id, e.target.value)}
+                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <ImagePlus className="h-7 w-7 text-muted-foreground" />
-                    <span className="mt-1.5 text-center text-[10px] leading-tight text-muted-foreground px-2">
-                      {t('photoHint')}
-                    </span>
-                  </>
-                )}
-              </button>
+                      <option value="">—</option>
+                      {(field.options ?? []).map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      id={`cf-${field.id}`}
+                      type={
+                        field.fieldType === 'number'
+                          ? 'number'
+                          : field.fieldType === 'date'
+                            ? 'date'
+                            : 'text'
+                      }
+                      value={customFieldValues[field.id] ?? ''}
+                      onChange={(e) => setFieldValue(field.id, e.target.value)}
+                      placeholder={field.name}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
+          ) : null}
+        </div>
 
-            {/* Name */}
-            <div className="flex flex-1 flex-col justify-center space-y-1.5">
-              <Label htmlFor="asset-name">
-                {t('fields.name')} <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="asset-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t('fields.namePlaceholder')}
-                maxLength={500}
-                required
-                autoFocus
-                className="text-base"
-              />
-            </div>
+        {/* Location & hierarchy */}
+        <div className="rounded-xl border bg-background p-5 space-y-4">
+          {/* Site */}
+          <div className="space-y-1.5">
+            <Label>{t('fields.site')}</Label>
+            <SiteSelector
+              value={siteId !== '' ? [siteId] : []}
+              onChange={(next) => setSiteId(next[0] ?? '')}
+              multiple={false}
+              placeholder={t('fields.noSite')}
+            />
           </div>
 
-          {/* Category */}
-          <div className="rounded-xl border bg-background p-5 space-y-5">
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="asset-type">{t('fields.type')}</Label>
-                <Link
-                  href={`/${locale}/assets/categories`}
-                  className="text-xs text-primary hover:underline"
-                  tabIndex={-1}
-                >
-                  {t('newCategoryLink')}
-                </Link>
-              </div>
-              <select
-                id="asset-type"
-                value={typeId}
-                onChange={(e) => {
-                  setTypeId(e.target.value);
-                  setCustomFieldValues({});
-                }}
-                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">{t('fields.noType')}</option>
-                {types.map((tp) => (
-                  <option key={tp.id} value={tp.id}>
-                    {tp.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Dynamic custom fields for selected category */}
-            {customFields.length > 0 ? (
-              <div className="space-y-4 border-t pt-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t('fields.customFieldsHeading')}
-                </p>
-                {customFields.map((field) => (
-                  <div key={field.id} className="space-y-1.5">
-                    <Label htmlFor={`cf-${field.id}`}>
-                      {field.name}
-                      {field.required === true ? (
-                        <span className="ml-1 text-destructive">*</span>
-                      ) : null}
-                    </Label>
-                    {field.fieldType === 'select' ? (
-                      <select
-                        id={`cf-${field.id}`}
-                        value={customFieldValues[field.id] ?? ''}
-                        onChange={(e) => setFieldValue(field.id, e.target.value)}
-                        className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      >
-                        <option value="">—</option>
-                        {(field.options ?? []).map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <Input
-                        id={`cf-${field.id}`}
-                        type={field.fieldType === 'number' ? 'number' : field.fieldType === 'date' ? 'date' : 'text'}
-                        value={customFieldValues[field.id] ?? ''}
-                        onChange={(e) => setFieldValue(field.id, e.target.value)}
-                        placeholder={field.name}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : null}
+          {/* Owner */}
+          <div className="space-y-1.5">
+            <Label>{t('fields.owner')}</Label>
+            <GroupUserSelector
+              mode="users"
+              multiple={false}
+              value={ownerUserId !== '' ? [ownerUserId] : []}
+              onChange={(next) => setOwnerUserId(next[0] ?? '')}
+              placeholder={t('fields.ownerPlaceholder')}
+            />
           </div>
 
-          {/* Location & hierarchy */}
-          <div className="rounded-xl border bg-background p-5 space-y-4">
-            {/* Site */}
-            <div className="space-y-1.5">
-              <Label>{t('fields.site')}</Label>
-              <SiteSelector
-                value={siteId !== '' ? [siteId] : []}
-                onChange={(next) => setSiteId(next[0] ?? '')}
-                multiple={false}
-                placeholder={t('fields.noSite')}
-              />
-            </div>
-
-            {/* Parent asset */}
-            <div className="space-y-1.5">
-              <Label htmlFor="asset-parent">{t('fields.parent')}</Label>
-              <select
-                id="asset-parent"
-                value={parentId}
-                onChange={(e) => setParentId(e.target.value)}
-                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">{t('fields.noParent')}</option>
-                {parentOptions.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Parent asset */}
+          <div className="space-y-1.5">
+            <Label htmlFor="asset-parent">{t('fields.parent')}</Label>
+            <select
+              id="asset-parent"
+              value={parentId}
+              onChange={(e) => setParentId(e.target.value)}
+              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">{t('fields.noParent')}</option>
+              {parentOptions.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
           </div>
+        </div>
 
-          {/* Submit */}
-          <Button
-            type="submit"
-            className="w-full"
-            size="lg"
-            disabled={create.isPending || uploadingPhoto || name.trim().length === 0}
-          >
-            {create.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            {t('submitButton')}
-          </Button>
+        {/* Submit */}
+        <Button
+          type="submit"
+          className="w-full"
+          size="lg"
+          disabled={create.isPending || uploadingPhoto || name.trim().length === 0}
+        >
+          {create.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {t('submitButton')}
+        </Button>
       </form>
     </FocusedPageShell>
   );

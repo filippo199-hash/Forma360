@@ -2254,7 +2254,10 @@
         "noParent": "No parent",
         "site": "Site",
         "noSite": "No site",
-        "customFieldsHeading": "Category fields"
+        "customFieldsHeading": "Category fields",
+        "owner": "Owner",
+        "noOwner": "No owner",
+        "ownerPlaceholder": "Select owner"
       }
     },
     "categories": {
@@ -2362,7 +2365,10 @@
         "description": "Description",
         "descriptionPlaceholder": "Add a description…",
         "noType": "No type",
-        "noSite": "No site"
+        "noSite": "No site",
+        "owner": "Owner",
+        "noOwner": "No owner",
+        "ownerPlaceholder": "Select owner"
       },
       "readingColumns": {
         "field": "Field",

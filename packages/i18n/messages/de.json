@@ -2140,7 +2140,10 @@
         "type": "Asset type",
         "noType": "No type",
         "parent": "Parent asset",
-        "noParent": "No parent"
+        "noParent": "No parent",
+        "owner": "Eigentümer",
+        "noOwner": "Kein Eigentümer",
+        "ownerPlaceholder": "Eigentümer auswählen"
       }
     },
     "detail": {
@@ -2178,7 +2181,10 @@
         "description": "Description",
         "descriptionPlaceholder": "Add a description…",
         "noType": "No type",
-        "noSite": "No site"
+        "noSite": "No site",
+        "owner": "Eigentümer",
+        "noOwner": "Kein Eigentümer",
+        "ownerPlaceholder": "Eigentümer auswählen"
       },
       "readingColumns": {
         "field": "Field",

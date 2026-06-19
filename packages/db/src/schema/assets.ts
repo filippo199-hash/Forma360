@@ -22,7 +22,17 @@
  *
  * See ADR 0002 (tenant scope + RESTRICT FKs).
  */
-import { date, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  date,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { user } from './auth';
 import { tenants } from './tenants';
 
@@ -69,6 +79,8 @@ export const assets = pgTable(
     typeId: text('type_id').references(() => assetTypes.id),
     siteId: text('site_id'),
     parentId: text('parent_id'),
+    /** Single responsible user for this asset. Cleared if the user is removed. */
+    ownerUserId: text('owner_user_id').references(() => user.id, { onDelete: 'set null' }),
     photoKey: text('photo_key'),
     /** Map of { fieldId: value } matching the type's customFields def. */
     customFieldValues: jsonb('custom_field_values').notNull().default({}),
@@ -82,6 +94,7 @@ export const assets = pgTable(
     index('assets_tenant_type_idx').on(t.tenantId, t.typeId),
     index('assets_tenant_site_idx').on(t.tenantId, t.siteId),
     index('assets_parent_idx').on(t.parentId),
+    index('assets_owner_idx').on(t.ownerUserId),
   ],
 );
 

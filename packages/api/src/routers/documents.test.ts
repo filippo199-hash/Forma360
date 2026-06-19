@@ -55,6 +55,7 @@ const MIGRATION_FILES = [
   '0032_user_first_last_name.sql',
   '0033_document_visibility.sql',
   '0034_maintenance_programs.sql',
+  '0035_asset_owner.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -187,7 +188,9 @@ describe('Documents router (Phase 5C)', () => {
       sizeBytes: 100,
     });
 
-    await expect(caller.documentFolders.delete({ folderId })).rejects.toThrow('folder-has-documents');
+    await expect(caller.documentFolders.delete({ folderId })).rejects.toThrow(
+      'folder-has-documents',
+    );
   });
 
   it('D-E06: prevents deleting a folder with sub-folders', async () => {

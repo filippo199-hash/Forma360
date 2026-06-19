@@ -13,6 +13,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -45,6 +46,7 @@ export default function AssetDetailPage() {
   const [editDescription, setEditDescription] = useState('');
   const [editTypeId, setEditTypeId] = useState<string>('');
   const [editSiteId, setEditSiteId] = useState<string>('');
+  const [editOwnerUserId, setEditOwnerUserId] = useState<string>('');
   const [readingFieldName, setReadingFieldName] = useState('');
   const [readingValue, setReadingValue] = useState('');
   const [readingUnit, setReadingUnit] = useState('');
@@ -126,6 +128,7 @@ export default function AssetDetailPage() {
     setEditDescription(asset.description ?? '');
     setEditTypeId(asset.typeId ?? '');
     setEditSiteId(asset.siteId ?? '');
+    setEditOwnerUserId(asset.ownerUserId ?? '');
     setEditing(true);
   }
 
@@ -140,6 +143,7 @@ export default function AssetDetailPage() {
       description: editDescription,
       typeId: editTypeId === '' ? null : editTypeId,
       siteId: editSiteId === '' ? null : editSiteId,
+      ownerUserId: editOwnerUserId === '' ? null : editOwnerUserId,
     });
   }
 
@@ -169,7 +173,7 @@ export default function AssetDetailPage() {
     return <Skeleton className="m-6 h-96 w-full" />;
   }
 
-  const { asset, assetType, siteName, childrenCount, latestReadings } = data;
+  const { asset, assetType, siteName, ownerName, childrenCount, latestReadings } = data;
   const isArchived = asset.archivedAt !== null;
 
   const TABS: Tab[] = [
@@ -325,6 +329,16 @@ export default function AssetDetailPage() {
                     placeholder={t('fields.noSite')}
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <Label>{t('fields.owner')}</Label>
+                  <GroupUserSelector
+                    mode="users"
+                    multiple={false}
+                    value={editOwnerUserId !== '' ? [editOwnerUserId] : []}
+                    onChange={(next) => setEditOwnerUserId(next[0] ?? '')}
+                    placeholder={t('fields.ownerPlaceholder')}
+                  />
+                </div>
               </div>
               <div className="flex gap-2 pt-2">
                 <Button
@@ -352,6 +366,7 @@ export default function AssetDetailPage() {
                 ) : null}
                 <DetailRow label={t('fields.type')}>{assetType?.name ?? '—'}</DetailRow>
                 <DetailRow label={t('fields.site')}>{siteName ?? '—'}</DetailRow>
+                <DetailRow label={t('fields.owner')}>{ownerName ?? '—'}</DetailRow>
                 {asset.parentId !== null ? (
                   <DetailRow label={t('fields.parent')}>
                     <Link href={`/${locale}/assets/${asset.parentId}`} className="hover:underline">

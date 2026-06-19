@@ -59,6 +59,7 @@ const createInput = z.object({
   typeId: z.string().length(26).optional(),
   siteId: z.string().length(26).optional(),
   parentId: z.string().length(26).optional(),
+  ownerUserId: z.string().length(26).optional(),
   photoKey: z.string().optional(),
   customFieldValues: z.record(z.string(), z.unknown()).default({}),
 });
@@ -70,6 +71,7 @@ const updateInput = z.object({
   typeId: z.string().length(26).nullable().optional(),
   siteId: z.string().length(26).nullable().optional(),
   parentId: z.string().length(26).nullable().optional(),
+  ownerUserId: z.string().length(26).nullable().optional(),
   photoKey: z.string().nullable().optional(),
   customFieldValues: z.record(z.string(), z.unknown()).optional(),
 });
@@ -145,39 +147,48 @@ export const assetsRouter = router({
     .query(async ({ ctx, input }) => {
       const asset = await loadAssetOrThrow(ctx.db, ctx.tenantId, input.assetId);
 
-      const [typeRows, childrenCountRows, latestReadingsRows, siteRows] = await Promise.all([
-        asset.typeId !== null
-          ? ctx.db.select().from(assetTypes).where(eq(assetTypes.id, asset.typeId)).limit(1)
-          : Promise.resolve([]),
-        ctx.db
-          .select({ c: count() })
-          .from(assets)
-          .where(
-            and(
-              eq(assets.tenantId, ctx.tenantId),
-              eq(assets.parentId, asset.id),
-              isNull(assets.archivedAt),
+      const [typeRows, childrenCountRows, latestReadingsRows, siteRows, ownerRows] =
+        await Promise.all([
+          asset.typeId !== null
+            ? ctx.db.select().from(assetTypes).where(eq(assetTypes.id, asset.typeId)).limit(1)
+            : Promise.resolve([]),
+          ctx.db
+            .select({ c: count() })
+            .from(assets)
+            .where(
+              and(
+                eq(assets.tenantId, ctx.tenantId),
+                eq(assets.parentId, asset.id),
+                isNull(assets.archivedAt),
+              ),
             ),
-          ),
-        ctx.db
-          .select()
-          .from(assetReadings)
-          .where(eq(assetReadings.assetId, asset.id))
-          .orderBy(desc(assetReadings.capturedAt))
-          .limit(5),
-        asset.siteId !== null
-          ? ctx.db
-              .select({ name: sites.name })
-              .from(sites)
-              .where(eq(sites.id, asset.siteId))
-              .limit(1)
-          : Promise.resolve([]),
-      ]);
+          ctx.db
+            .select()
+            .from(assetReadings)
+            .where(eq(assetReadings.assetId, asset.id))
+            .orderBy(desc(assetReadings.capturedAt))
+            .limit(5),
+          asset.siteId !== null
+            ? ctx.db
+                .select({ name: sites.name })
+                .from(sites)
+                .where(eq(sites.id, asset.siteId))
+                .limit(1)
+            : Promise.resolve([]),
+          asset.ownerUserId !== null
+            ? ctx.db
+                .select({ name: user.name })
+                .from(user)
+                .where(eq(user.id, asset.ownerUserId))
+                .limit(1)
+            : Promise.resolve([]),
+        ]);
 
       return {
         asset,
         assetType: typeRows[0] ?? null,
         siteName: siteRows[0]?.name ?? null,
+        ownerName: ownerRows[0]?.name ?? null,
         childrenCount: Number(childrenCountRows[0]?.c ?? 0),
         latestReadings: latestReadingsRows,
       };
@@ -220,6 +231,7 @@ export const assetsRouter = router({
         typeId: input.typeId ?? null,
         siteId: input.siteId ?? null,
         parentId: input.parentId ?? null,
+        ownerUserId: input.ownerUserId ?? null,
         photoKey: input.photoKey ?? null,
         customFieldValues: input.customFieldValues,
         qrToken,
@@ -255,6 +267,7 @@ export const assetsRouter = router({
       if (input.typeId !== undefined) updates.typeId = input.typeId;
       if (input.siteId !== undefined) updates.siteId = input.siteId;
       if (input.parentId !== undefined) updates.parentId = input.parentId;
+      if (input.ownerUserId !== undefined) updates.ownerUserId = input.ownerUserId;
       if (input.photoKey !== undefined) updates.photoKey = input.photoKey;
       if (input.customFieldValues !== undefined)
         updates.customFieldValues = input.customFieldValues;

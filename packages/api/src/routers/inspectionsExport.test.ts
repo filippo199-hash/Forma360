@@ -25,7 +25,13 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
-import { buildAppRouter, stubAuthDeps, stubHeadsUpsDeps, stubInspectionsDeps, stubIssuesDeps } from '../router';
+import {
+  buildAppRouter,
+  stubAuthDeps,
+  stubHeadsUpsDeps,
+  stubInspectionsDeps,
+  stubIssuesDeps,
+} from '../router';
 import { createCallerFactory } from '../trpc';
 import type { ExportsRouterDeps } from './exports';
 import {
@@ -74,6 +80,7 @@ const MIGRATION_FILES = [
   '0032_user_first_last_name.sql',
   '0033_document_visibility.sql',
   '0034_maintenance_programs.sql',
+  '0035_asset_owner.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {

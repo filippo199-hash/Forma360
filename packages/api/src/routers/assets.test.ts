@@ -55,6 +55,7 @@ const MIGRATION_FILES = [
   '0032_user_first_last_name.sql',
   '0033_document_visibility.sql',
   '0034_maintenance_programs.sql',
+  '0035_asset_owner.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -127,6 +128,25 @@ describe('Assets router (Phase 5B)', () => {
     expect(asset.qrToken).toBeDefined();
   });
 
+  it('stores an owner on create and returns the owner name on get', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+
+    const { assetId } = await caller.assets.create({
+      name: 'Forklift #3',
+      ownerUserId: adminUserId,
+    });
+
+    const { asset, ownerName } = await caller.assets.get({ assetId });
+    expect(asset.ownerUserId).toBe(adminUserId);
+    expect(ownerName).toBe('Admin');
+
+    // Clearing the owner via update nulls it out.
+    await caller.assets.update({ assetId, ownerUserId: null });
+    const after = await caller.assets.get({ assetId });
+    expect(after.asset.ownerUserId).toBeNull();
+    expect(after.ownerName).toBeNull();
+  });
+
   it('AS-E11: prevents creating an asset with a parent that itself has a parent', async () => {
     const caller = createCaller(ctxFor(adminUserId));
 
@@ -136,9 +156,9 @@ describe('Assets router (Phase 5B)', () => {
       parentId: grandparentId,
     });
 
-    await expect(
-      caller.assets.create({ name: 'Sub-zone', parentId }),
-    ).rejects.toThrow('asset-parent-depth-exceeded');
+    await expect(caller.assets.create({ name: 'Sub-zone', parentId })).rejects.toThrow(
+      'asset-parent-depth-exceeded',
+    );
   });
 
   it('AS-E01: prevents archiving a parent with active sub-assets', async () => {
