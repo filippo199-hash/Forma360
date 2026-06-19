@@ -347,9 +347,7 @@ export default function HeadsUpDetailPage() {
               <DetailRow label={t('fields.engagement')}>
                 {t(`engagement.${headsUp.engagementLevel}`)}
               </DetailRow>
-              <DetailRow label={t('fields.recipients')}>
-                {String(recipientCount)}
-              </DetailRow>
+              <DetailRow label={t('fields.recipients')}>{String(recipientCount)}</DetailRow>
               {headsUp.publishAt !== null ? (
                 <DetailRow label={t('fields.publishAt')}>
                   {new Date(headsUp.publishAt).toLocaleString()}
@@ -531,9 +529,7 @@ export default function HeadsUpDetailPage() {
                               size="sm"
                               variant="outline"
                               disabled={sendReminder.isPending}
-                              onClick={() =>
-                                sendReminder.mutate({ headsUpId, userId: r.userId })
-                              }
+                              onClick={() => sendReminder.mutate({ headsUpId, userId: r.userId })}
                             >
                               {t('remindButton')}
                             </Button>
@@ -574,9 +570,7 @@ export default function HeadsUpDetailPage() {
                   <Button
                     type="button"
                     disabled={commentBody.trim().length === 0 || createComment.isPending}
-                    onClick={() =>
-                      createComment.mutate({ headsUpId, body: commentBody.trim() })
-                    }
+                    onClick={() => createComment.mutate({ headsUpId, body: commentBody.trim() })}
                   >
                     {t('commentSubmit')}
                   </Button>
@@ -639,7 +633,7 @@ function TabButton({
       className={cn(
         '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
         active
-          ? 'border-primary text-foreground font-semibold'
+          ? 'border-foreground text-foreground font-semibold'
           : 'border-transparent text-muted-foreground hover:text-foreground',
       )}
     >

@@ -12,13 +12,7 @@ const TAB_PATHS: Record<SectionTab, string> = {
   schedules: '/schedules',
 };
 
-export function SectionTabBar({
-  activeTab,
-  locale,
-}: {
-  activeTab: SectionTab;
-  locale: string;
-}) {
+export function SectionTabBar({ activeTab, locale }: { activeTab: SectionTab; locale: string }) {
   const tNav = useTranslations('nav');
   const tabs: SectionTab[] = ['inspections', 'templates', 'approvals', 'schedules'];
 
@@ -31,7 +25,7 @@ export function SectionTabBar({
           aria-current={activeTab === tab ? 'page' : undefined}
           className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
             activeTab === tab
-              ? 'border-primary font-semibold text-primary'
+              ? 'border-foreground font-semibold text-foreground'
               : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
           }`}
         >

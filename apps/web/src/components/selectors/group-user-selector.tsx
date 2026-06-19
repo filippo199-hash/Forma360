@@ -96,11 +96,15 @@ export function GroupUserSelector({
   }
 
   const showTabs = mode === 'both';
-  const activeList = mode === 'groups' ? groups : mode === 'users' ? users : tab === 'groups' ? groups : users;
+  const activeList =
+    mode === 'groups' ? groups : mode === 'users' ? users : tab === 'groups' ? groups : users;
   const needle = search.trim().toLowerCase();
   const filtered =
     needle.length > 0
-      ? activeList.filter((e) => e.name.toLowerCase().includes(needle) || (e.sub ?? '').toLowerCase().includes(needle))
+      ? activeList.filter(
+          (e) =>
+            e.name.toLowerCase().includes(needle) || (e.sub ?? '').toLowerCase().includes(needle),
+        )
       : activeList;
 
   const selected = value.map((id) => byId.get(id)).filter((e): e is Entity => e !== undefined);
@@ -143,7 +147,7 @@ export function GroupUserSelector({
                   className={cn(
                     'flex-1 border-b-2 px-3 py-2 text-sm font-medium capitalize transition-colors',
                     tab === tk
-                      ? 'border-primary text-foreground'
+                      ? 'border-foreground text-foreground'
                       : 'border-transparent text-muted-foreground hover:text-foreground',
                   )}
                 >
@@ -183,10 +187,14 @@ export function GroupUserSelector({
                     <span className="min-w-0 flex-1">
                       <span className="block truncate">{e.name}</span>
                       {e.sub !== null ? (
-                        <span className="block truncate text-xs text-muted-foreground">{e.sub}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {e.sub}
+                        </span>
                       ) : null}
                     </span>
-                    {checked ? <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden /> : null}
+                    {checked ? (
+                      <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    ) : null}
                   </button>
                 );
               })

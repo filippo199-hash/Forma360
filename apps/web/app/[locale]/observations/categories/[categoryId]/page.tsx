@@ -277,7 +277,7 @@ function TabButton({
       className={
         '-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors ' +
         (active
-          ? 'border-primary text-foreground font-semibold'
+          ? 'border-foreground text-foreground font-semibold'
           : 'border-transparent text-muted-foreground hover:text-foreground')
       }
       aria-current={active ? 'page' : undefined}
@@ -517,7 +517,9 @@ function NotificationsCard({
           notificationRecipientSpec: draftSpec,
         })
       }
-      saveDisabled={draftRule === notificationRule && draftSpec === (notificationRecipientSpec ?? EMPTY_SPEC)}
+      saveDisabled={
+        draftRule === notificationRule && draftSpec === (notificationRecipientSpec ?? EMPTY_SPEC)
+      }
       saving={update.isPending}
     >
       <div className="space-y-4">
@@ -668,8 +670,7 @@ function CriticalAlertsCard({
         })
       }
       saveDisabled={
-        draftEnabled === criticalAlerts &&
-        draftSpec === (criticalAlertRecipientSpec ?? EMPTY_SPEC)
+        draftEnabled === criticalAlerts && draftSpec === (criticalAlertRecipientSpec ?? EMPTY_SPEC)
       }
       saving={update.isPending}
     >

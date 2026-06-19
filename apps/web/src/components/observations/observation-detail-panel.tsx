@@ -1,7 +1,18 @@
 'use client';
 
 import type { IssueStatusValue } from '@forma360/shared/issues-schema';
-import { Archive, CheckCircle2, Clock, ExternalLink, Paperclip, Pencil, Plus, Upload, X, ImageIcon } from 'lucide-react';
+import {
+  Archive,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  Paperclip,
+  Pencil,
+  Plus,
+  Upload,
+  X,
+  ImageIcon,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -187,14 +198,21 @@ export function ObservationDetailPanel({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button type="button" className="inline-flex items-center gap-1">
-                  <span className={cn('rounded-md px-2 py-0.5 text-xs font-medium', STATUS_COLORS[normalStatus])}>
+                  <span
+                    className={cn(
+                      'rounded-md px-2 py-0.5 text-xs font-medium',
+                      STATUS_COLORS[normalStatus],
+                    )}
+                  >
                     {tStatus(normalStatus)}
                   </span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
                 {normalStatus === 'open' ? (
-                  <DropdownMenuItem onSelect={() => setStatus.mutate({ issueId, status: 'investigation' })}>
+                  <DropdownMenuItem
+                    onSelect={() => setStatus.mutate({ issueId, status: 'investigation' })}
+                  >
                     {tStatus('investigation')}
                   </DropdownMenuItem>
                 ) : null}
@@ -215,7 +233,12 @@ export function ObservationDetailPanel({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <span className={cn('rounded-md px-2 py-0.5 text-xs font-medium', STATUS_COLORS[normalStatus])}>
+            <span
+              className={cn(
+                'rounded-md px-2 py-0.5 text-xs font-medium',
+                STATUS_COLORS[normalStatus],
+              )}
+            >
               {tStatus(normalStatus)}
             </span>
           )}
@@ -257,7 +280,7 @@ export function ObservationDetailPanel({
               className={cn(
                 '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
                 tab === key
-                  ? 'border-primary text-foreground font-semibold'
+                  ? 'border-foreground text-foreground font-semibold'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
@@ -292,7 +315,12 @@ export function ObservationDetailPanel({
                       autoFocus
                     />
                     <div className="flex justify-end gap-2">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setEditingDescription(false)}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingDescription(false)}
+                      >
                         {tCommon('cancel')}
                       </Button>
                       <Button type="button" size="sm" onClick={saveDescription}>
@@ -320,7 +348,9 @@ export function ObservationDetailPanel({
                   <DetailRow label={tFields('site')}>
                     {canManage ? (
                       <SiteSelector
-                        value={issue.siteId !== null && issue.siteId !== undefined ? [issue.siteId] : []}
+                        value={
+                          issue.siteId !== null && issue.siteId !== undefined ? [issue.siteId] : []
+                        }
                         onChange={(next) => update.mutate({ issueId, siteId: next[0] ?? null })}
                         multiple={false}
                         placeholder="—"
@@ -359,11 +389,15 @@ export function ObservationDetailPanel({
                       </select>
                     ) : priority !== null ? (
                       <span className="inline-flex items-center gap-2 text-sm">
-                        <span className={cn('h-2 w-2 rounded-full', PRIORITY_DOT_CLASS[priority])} />
+                        <span
+                          className={cn('h-2 w-2 rounded-full', PRIORITY_DOT_CLASS[priority])}
+                        />
                         {tPriority(priority)}
                       </span>
                     ) : (
-                      <span className="text-sm text-muted-foreground">{t('fields.noPriority')}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {t('fields.noPriority')}
+                      </span>
                     )}
                   </DetailRow>
                   <DetailRow label={tFields('dueDate')}>
@@ -372,7 +406,8 @@ export function ObservationDetailPanel({
                         type="datetime-local"
                         value={toLocalDatetime(issue.dueAt ?? null)}
                         onChange={(e) => {
-                          const iso = e.target.value === '' ? null : new Date(e.target.value).toISOString();
+                          const iso =
+                            e.target.value === '' ? null : new Date(e.target.value).toISOString();
                           update.mutate({ issueId, dueAt: iso });
                         }}
                         className="h-8 text-sm"
@@ -390,7 +425,10 @@ export function ObservationDetailPanel({
                         value={toLocalDatetime(issue.dateOccurred)}
                         onChange={(e) => {
                           if (e.target.value === '') return;
-                          update.mutate({ issueId, dateOccurred: new Date(e.target.value).toISOString() });
+                          update.mutate({
+                            issueId,
+                            dateOccurred: new Date(e.target.value).toISOString(),
+                          });
                         }}
                         className="h-8 text-sm"
                       />
@@ -399,7 +437,9 @@ export function ObservationDetailPanel({
                     )}
                   </DetailRow>
                   <DetailRow label={tFields('reportedVia')}>
-                    <span className="text-sm">{tReportedVia(issue.reportedVia as 'app' | 'qr')}</span>
+                    <span className="text-sm">
+                      {tReportedVia(issue.reportedVia as 'app' | 'qr')}
+                    </span>
                   </DetailRow>
                 </dl>
               </CardContent>
@@ -415,7 +455,9 @@ export function ObservationDetailPanel({
                         <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                           {q.prompt}
                         </dt>
-                        <dd className="text-sm">{formatValue(issue.customQuestionResponses[q.id])}</dd>
+                        <dd className="text-sm">
+                          {formatValue(issue.customQuestionResponses[q.id])}
+                        </dd>
                       </div>
                     ))}
                   </dl>
@@ -697,9 +739,16 @@ function AttachmentsCard({ issueId, canManage }: { issueId: string; canManage: b
         <h3 className="text-sm font-semibold">{t('filesTitle')}</h3>
         {canManage ? (
           <div
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={(e) => { e.preventDefault(); setDragOver(false); void handleFiles(e.dataTransfer.files); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              void handleFiles(e.dataTransfer.files);
+            }}
             className={cn(
               'flex items-center justify-center rounded-md border border-dashed p-4 text-sm transition-colors',
               dragOver ? 'border-primary bg-accent/50' : 'border-muted bg-muted/30',
@@ -809,7 +858,10 @@ function LinkedActionsCard({
   const t = useTranslations('issues.detail');
   const tPriority = useTranslations('issues.priority');
   const tActionStatus = useTranslations('actions.status');
-  const { data, isLoading } = trpc.actions.list.useQuery({ sourceType: 'issue', sourceId: issueId });
+  const { data, isLoading } = trpc.actions.list.useQuery({
+    sourceType: 'issue',
+    sourceId: issueId,
+  });
   const rows = data ?? [];
 
   return (
@@ -856,20 +908,41 @@ function LinkedActionsCard({
                 ) : null}
                 {/* Status + priority + due */}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
-                  <span className={cn('rounded px-1.5 py-0.5 font-medium', ACTION_STATUS_BADGE[row.status] ?? 'bg-muted text-muted-foreground')}>
-                    {row.status === 'open' || row.status === 'in_progress' || row.status === 'completed' || row.status === 'cancelled'
+                  <span
+                    className={cn(
+                      'rounded px-1.5 py-0.5 font-medium',
+                      ACTION_STATUS_BADGE[row.status] ?? 'bg-muted text-muted-foreground',
+                    )}
+                  >
+                    {row.status === 'open' ||
+                    row.status === 'in_progress' ||
+                    row.status === 'completed' ||
+                    row.status === 'cancelled'
                       ? tActionStatus(row.status)
                       : row.status}
                   </span>
                   {row.priority !== null && row.priority in PRIORITY_BADGE ? (
-                    <span className={cn('rounded px-1.5 py-0.5 font-medium', PRIORITY_BADGE[row.priority] ?? '')}>
-                      {(row.priority === 'low' || row.priority === 'medium' || row.priority === 'high' || row.priority === 'critical')
+                    <span
+                      className={cn(
+                        'rounded px-1.5 py-0.5 font-medium',
+                        PRIORITY_BADGE[row.priority] ?? '',
+                      )}
+                    >
+                      {row.priority === 'low' ||
+                      row.priority === 'medium' ||
+                      row.priority === 'high' ||
+                      row.priority === 'critical'
                         ? tPriority(row.priority)
                         : row.priority}
                     </span>
                   ) : null}
                   {row.dueAt !== null ? (
-                    <span className={cn('flex items-center gap-0.5', overdue ? 'font-medium text-destructive' : 'text-muted-foreground')}>
+                    <span
+                      className={cn(
+                        'flex items-center gap-0.5',
+                        overdue ? 'font-medium text-destructive' : 'text-muted-foreground',
+                      )}
+                    >
                       <Clock className="h-3 w-3" />
                       {new Date(row.dueAt).toLocaleDateString()}
                     </span>
@@ -1078,8 +1151,20 @@ function LinkedInspectionsCard({
             >
               <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
                 <span className="font-mono">{row.documentNumber ?? row.id.slice(-6)}</span>
-                <span className={cn('rounded px-1.5 py-0.5 font-medium text-xs', INSPECTION_STATUS_BADGE[row.status] ?? 'bg-muted text-muted-foreground')}>
-                  {tInspStatus(row.status as 'in_progress' | 'awaiting_signatures' | 'awaiting_approval' | 'completed' | 'rejected')}
+                <span
+                  className={cn(
+                    'rounded px-1.5 py-0.5 font-medium text-xs',
+                    INSPECTION_STATUS_BADGE[row.status] ?? 'bg-muted text-muted-foreground',
+                  )}
+                >
+                  {tInspStatus(
+                    row.status as
+                      | 'in_progress'
+                      | 'awaiting_signatures'
+                      | 'awaiting_approval'
+                      | 'completed'
+                      | 'rejected',
+                  )}
                 </span>
               </div>
               <p className="line-clamp-2 font-medium">{row.title}</p>
@@ -1178,7 +1263,9 @@ function AttachInspectionDialog({
                     <span className="flex-1">
                       <span className="font-medium">{tpl.name}</span>
                       {tpl.description !== null ? (
-                        <span className="ml-2 text-xs text-muted-foreground">{tpl.description}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {tpl.description}
+                        </span>
                       ) : null}
                     </span>
                   </label>
@@ -1264,7 +1351,10 @@ function describeActivity(
     case 'created':
       return tEvents('created');
     case 'status_changed':
-      return tEvents('statusChanged', { from: String(payload.from ?? ''), to: String(payload.to ?? '') });
+      return tEvents('statusChanged', {
+        from: String(payload.from ?? ''),
+        to: String(payload.to ?? ''),
+      });
     case 'priority_changed': {
       const to = payload.to as string | null;
       if (to === null || to === undefined) return tEvents('priorityChanged', { to: '—' });

@@ -57,13 +57,7 @@ const STATUS_COLORS: Record<Status, string> = {
 
 // ── Main panel ────────────────────────────────────────────────────────────────
 
-export function ActionDetailPanel({
-  actionId,
-  locale,
-}: {
-  actionId: string;
-  locale: string;
-}) {
+export function ActionDetailPanel({ actionId, locale }: { actionId: string; locale: string }) {
   const t = useTranslations('actions.detail');
   const tFields = useTranslations('actions.detail.fields');
   const tStatus = useTranslations('actions.status');
@@ -305,7 +299,7 @@ export function ActionDetailPanel({
               className={cn(
                 '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
                 tab === key
-                  ? 'border-primary text-foreground font-semibold'
+                  ? 'border-foreground text-foreground font-semibold'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
@@ -365,9 +359,7 @@ export function ActionDetailPanel({
                           update.mutate({
                             actionId,
                             description:
-                              descriptionDraft.trim().length === 0
-                                ? null
-                                : descriptionDraft.trim(),
+                              descriptionDraft.trim().length === 0 ? null : descriptionDraft.trim(),
                           });
                           setEditingDescription(false);
                         }}
@@ -498,9 +490,7 @@ export function ActionDetailPanel({
                   {canEdit ? (
                     <SiteSelector
                       value={action.siteId !== null ? [action.siteId] : []}
-                      onChange={(next) =>
-                        update.mutate({ actionId, siteId: next[0] ?? null })
-                      }
+                      onChange={(next) => update.mutate({ actionId, siteId: next[0] ?? null })}
                       multiple={false}
                       placeholder={tFields('noSite')}
                     />
@@ -768,7 +758,9 @@ function ActivityTimeline({
                 <span className="font-medium">{row.actorName ?? '—'}</span>{' '}
                 <span className="text-muted-foreground">{text}</span>
               </p>
-              <p className="text-xs text-muted-foreground">{new Date(row.createdAt).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(row.createdAt).toLocaleString()}
+              </p>
             </div>
           </div>
         );
@@ -876,7 +868,9 @@ function toLocalDatetime(d: Date | string | null | undefined): string {
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
 }
 
-function parseFreq(rrule: string | null | undefined): 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | null {
+function parseFreq(
+  rrule: string | null | undefined,
+): 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | null {
   if (rrule === null || rrule === undefined) return null;
   const m = /FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)/.exec(rrule);
   if (m === null) return null;
@@ -914,7 +908,9 @@ function CustomQuestionsCard({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, unknown>>(responses);
 
-  useEffect(() => { setDraft(responses); }, [responses]);
+  useEffect(() => {
+    setDraft(responses);
+  }, [responses]);
 
   const update = trpc.actions.update.useMutation({
     onSuccess: () => {
@@ -978,14 +974,24 @@ function CustomQuestionsCard({
                   >
                     <option value="" />
                     {q.options?.map((o) => (
-                      <option key={o} value={o}>{o}</option>
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
                     ))}
                   </select>
                 )}
               </div>
             ))}
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={() => { setEditing(false); setDraft(responses); }}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditing(false);
+                  setDraft(responses);
+                }}
+              >
                 {tCommon('cancel')}
               </Button>
               <Button
@@ -1098,7 +1104,9 @@ function RecurrenceCard({
                     className="rounded-md border border-input bg-background px-2 py-1"
                   >
                     {(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const).map((f) => (
-                      <option key={f} value={f}>{t(`freq.${f.toLowerCase()}`)}</option>
+                      <option key={f} value={f}>
+                        {t(`freq.${f.toLowerCase()}`)}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -1131,7 +1139,8 @@ function RecurrenceCard({
                     actionId,
                     recurrence: {
                       rrule,
-                      endDate: endDate === '' ? null : new Date(`${endDate}T23:59:59Z`).toISOString(),
+                      endDate:
+                        endDate === '' ? null : new Date(`${endDate}T23:59:59Z`).toISOString(),
                     },
                   });
                 }}

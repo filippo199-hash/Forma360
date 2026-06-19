@@ -201,11 +201,14 @@ export default function MaintenancePlanDetailPage() {
             <button
               key={t_}
               type="button"
-              onClick={() => { setEditing(false); setTab(t_); }}
+              onClick={() => {
+                setEditing(false);
+                setTab(t_);
+              }}
               className={cn(
                 'border-b-2 -mb-px px-3 py-2 text-sm font-medium transition-colors',
                 tab === t_
-                  ? 'border-primary text-foreground font-semibold'
+                  ? 'border-foreground text-foreground font-semibold'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
@@ -279,7 +282,10 @@ export default function MaintenancePlanDetailPage() {
                       className="inline-flex items-center gap-1 rounded-full border bg-muted px-3 py-1 text-sm"
                     >
                       {tNew('notifDayChip', { days: n })}
-                      <button type="button" onClick={() => setEditNotifDays((prev) => prev.filter((d) => d !== n))}>
+                      <button
+                        type="button"
+                        onClick={() => setEditNotifDays((prev) => prev.filter((d) => d !== n))}
+                      >
                         <X className="h-3 w-3 text-muted-foreground" />
                       </button>
                     </span>
@@ -301,7 +307,11 @@ export default function MaintenancePlanDetailPage() {
               </div>
 
               <div className="flex gap-2">
-                <Button type="button" disabled={update.isPending || editName.trim().length === 0} onClick={saveEdit}>
+                <Button
+                  type="button"
+                  disabled={update.isPending || editName.trim().length === 0}
+                  onClick={saveEdit}
+                >
                   {update.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
                   {tCommon('save')}
                 </Button>
@@ -315,19 +325,17 @@ export default function MaintenancePlanDetailPage() {
           <Card>
             <CardContent className="space-y-3 p-6 text-sm">
               <h2 className="text-base font-semibold">{t('detailsHeading')}</h2>
-              <DetailRow label={t('fields.planType')}>{tTable(`planType.${plan.planType}`)}</DetailRow>
+              <DetailRow label={t('fields.planType')}>
+                {tTable(`planType.${plan.planType}`)}
+              </DetailRow>
               {plan.planType === 'time' ? (
                 <DetailRow label={t('fields.interval')}>
-                  {plan.intervalDays !== null
-                    ? `${plan.intervalDays} ${tNew('fields.days')}`
-                    : '—'}
+                  {plan.intervalDays !== null ? `${plan.intervalDays} ${tNew('fields.days')}` : '—'}
                 </DetailRow>
               ) : (
                 <>
                   <DetailRow label={t('fields.interval')}>
-                    {plan.intervalUsage !== null
-                      ? `${plan.intervalUsage} ${plan.usageUnit}`
-                      : '—'}
+                    {plan.intervalUsage !== null ? `${plan.intervalUsage} ${plan.usageUnit}` : '—'}
                   </DetailRow>
                   <DetailRow label={t('fields.usageField')}>{plan.usageField ?? '—'}</DetailRow>
                 </>
@@ -359,7 +367,9 @@ export default function MaintenancePlanDetailPage() {
                   >
                     <option value="">{t('selectAssetPlaceholder')}</option>
                     {unlinkedAssets.map((a) => (
-                      <option key={a.id} value={a.id}>{a.name}</option>
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
                     ))}
                   </select>
                   <Button
@@ -405,7 +415,9 @@ export default function MaintenancePlanDetailPage() {
                             >
                               {link.assetName ?? link.assetId}
                             </Link>
-                          ) : '—'}
+                          ) : (
+                            '—'
+                          )}
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">
                           {link.lastServiceDate ?? '—'}
