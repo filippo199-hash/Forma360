@@ -2446,7 +2446,16 @@
     "historyTitle": "会話",
     "newChat": "新規",
     "noHistory": "以前の会話はありません。",
-    "deleteConversation": "会話を削除"
+    "deleteConversation": "会話を削除",
+    "suggestions": [
+      "点検はいくつありますか？",
+      "未対応のアクションを一覧表示",
+      "まもなく整備が必要な資産は？",
+      "まもなく期限切れの文書はありますか？"
+    ],
+    "bubbleTitle": "アシスタント",
+    "bubbleLabel": "アシスタントに質問",
+    "close": "閉じる"
   },
   "maintenancePrograms": {
     "title": "Maintenance Programs",

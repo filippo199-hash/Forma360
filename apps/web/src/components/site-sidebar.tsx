@@ -108,9 +108,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
       </Link>
       <nav aria-label={t('primaryLabel')} className="flex flex-1 flex-col gap-0.5 p-3">
         {primary.map(renderItem)}
-        <div className="mt-auto border-t border-sidebar-border pt-3">
-          {renderItem(settingsItem)}
-        </div>
+        <div className="mt-auto pt-2">{renderItem(settingsItem)}</div>
       </nav>
     </aside>
   );

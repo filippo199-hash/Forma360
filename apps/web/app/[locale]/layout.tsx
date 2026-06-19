@@ -8,6 +8,7 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { ChatBubble } from '../../src/components/ai/chat-bubble';
 import { SiteFooter } from '../../src/components/site-footer';
 import { SiteHeader } from '../../src/components/site-header';
 import { SiteSidebar } from '../../src/components/site-sidebar';
@@ -94,6 +95,8 @@ export default async function LocaleLayout({
                     <SiteHeader showBrand={false} />
                     <main className="flex-1">{children}</main>
                   </div>
+                  {/* Floating assistant launcher on every signed-in page. */}
+                  <ChatBubble />
                 </div>
               ) : (
                 /* Public pages — header on top, marketing/legal footer below. */

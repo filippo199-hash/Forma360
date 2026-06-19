@@ -2446,7 +2446,16 @@
     "historyTitle": "Gesprekken",
     "newChat": "Nieuw",
     "noHistory": "Geen eerdere gesprekken.",
-    "deleteConversation": "Gesprek verwijderen"
+    "deleteConversation": "Gesprek verwijderen",
+    "suggestions": [
+      "Hoeveel inspecties hebben we?",
+      "Toon mijn openstaande acties",
+      "Welke middelen hebben binnenkort onderhoud nodig?",
+      "Verlopen er binnenkort documenten?"
+    ],
+    "bubbleTitle": "Assistent",
+    "bubbleLabel": "Vraag de assistent",
+    "close": "Sluiten"
   },
   "maintenancePrograms": {
     "title": "Maintenance Programs",

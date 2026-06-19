@@ -2446,7 +2446,16 @@
     "historyTitle": "Conversas",
     "newChat": "Nova",
     "noHistory": "Sem conversas anteriores.",
-    "deleteConversation": "Eliminar conversa"
+    "deleteConversation": "Eliminar conversa",
+    "suggestions": [
+      "Quantas inspeções temos?",
+      "Listar as minhas ações abertas",
+      "Que ativos precisam de manutenção em breve?",
+      "Há documentos a expirar em breve?"
+    ],
+    "bubbleTitle": "Assistente",
+    "bubbleLabel": "Perguntar ao assistente",
+    "close": "Fechar"
   },
   "maintenancePrograms": {
     "title": "Maintenance Programs",

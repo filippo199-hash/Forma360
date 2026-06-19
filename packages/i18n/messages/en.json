@@ -91,7 +91,16 @@
     "historyTitle": "Conversations",
     "newChat": "New",
     "noHistory": "No previous conversations.",
-    "deleteConversation": "Delete conversation"
+    "deleteConversation": "Delete conversation",
+    "suggestions": [
+      "How many inspections do we have?",
+      "List my open actions",
+      "Which assets need maintenance soon?",
+      "Any documents expiring soon?"
+    ],
+    "bubbleTitle": "Assistant",
+    "bubbleLabel": "Ask the assistant",
+    "close": "Close"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

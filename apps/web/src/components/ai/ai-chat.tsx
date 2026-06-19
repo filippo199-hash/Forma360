@@ -13,7 +13,6 @@ interface Message {
   content: string;
 }
 
-
 type StreamEvent =
   | { type: 'conversation'; conversationId: string; isNew: boolean }
   | { type: 'text'; delta: string }
@@ -84,96 +83,91 @@ export function AiChat() {
     }
   }, [convMessages, activeConvId, streaming]);
 
-  const send = useCallback(async () => {
-    const text = input.trim();
-    if (!text || streaming) return;
+  const send = useCallback(
+    async (textArg?: string) => {
+      const text = (textArg ?? input).trim();
+      if (!text || streaming) return;
 
-    const userMsg: Message = { id: `local-${Date.now()}`, role: 'user', content: text };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput('');
-    setStreaming(true);
-    setToolsActive([]);
+      const userMsg: Message = { id: `local-${Date.now()}`, role: 'user', content: text };
+      setMessages((prev) => [...prev, userMsg]);
+      setInput('');
+      setStreaming(true);
+      setToolsActive([]);
 
-    const ac = new AbortController();
-    abortRef.current = ac;
+      const ac = new AbortController();
+      abortRef.current = ac;
 
-    const assistantId = `stream-${Date.now()}`;
-    let assistantContent = '';
+      const assistantId = `stream-${Date.now()}`;
+      let assistantContent = '';
 
-    setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '' }]);
+      setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '' }]);
 
-    try {
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: activeConvId, message: text }),
-        signal: ac.signal,
-      });
+      try {
+        const res = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conversationId: activeConvId, message: text }),
+          signal: ac.signal,
+        });
 
-      if (!res.ok || !res.body) throw new Error('Stream failed');
+        if (!res.ok || !res.body) throw new Error('Stream failed');
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split('\n\n');
-        buffer = parts.pop() ?? '';
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop() ?? '';
 
-        for (const part of parts) {
-          const line = part.startsWith('data: ') ? part.slice(6) : null;
-          if (!line) continue;
-          try {
-            const event: StreamEvent = JSON.parse(line) as StreamEvent;
-            if (event.type === 'conversation') {
-              setActiveConvId(event.conversationId);
-              void utils.aiAssistant.listConversations.invalidate();
-            } else if (event.type === 'text') {
-              assistantContent += event.delta;
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId ? { ...m, content: assistantContent } : m,
-                ),
-              );
-            } else if (event.type === 'tool_call') {
-              setToolsActive((prev) =>
-                prev.includes(event.toolName) ? prev : [...prev, event.toolName],
-              );
-            } else if (event.type === 'done') {
-              setToolsActive([]);
-              void utils.aiAssistant.listConversations.invalidate();
-            } else if (event.type === 'error') {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, content: `Error: ${event.message}` }
-                    : m,
-                ),
-              );
+          for (const part of parts) {
+            const line = part.startsWith('data: ') ? part.slice(6) : null;
+            if (!line) continue;
+            try {
+              const event: StreamEvent = JSON.parse(line) as StreamEvent;
+              if (event.type === 'conversation') {
+                setActiveConvId(event.conversationId);
+                void utils.aiAssistant.listConversations.invalidate();
+              } else if (event.type === 'text') {
+                assistantContent += event.delta;
+                setMessages((prev) =>
+                  prev.map((m) => (m.id === assistantId ? { ...m, content: assistantContent } : m)),
+                );
+              } else if (event.type === 'tool_call') {
+                setToolsActive((prev) =>
+                  prev.includes(event.toolName) ? prev : [...prev, event.toolName],
+                );
+              } else if (event.type === 'done') {
+                setToolsActive([]);
+                void utils.aiAssistant.listConversations.invalidate();
+              } else if (event.type === 'error') {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId ? { ...m, content: `Error: ${event.message}` } : m,
+                  ),
+                );
+              }
+            } catch {
+              // ignore parse errors
             }
-          } catch {
-            // ignore parse errors
           }
         }
+      } catch (err) {
+        if ((err as { name?: string }).name !== 'AbortError') {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantId ? { ...m, content: t('streamError') } : m)),
+          );
+        }
+      } finally {
+        setStreaming(false);
       }
-    } catch (err) {
-      if ((err as { name?: string }).name !== 'AbortError') {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId
-              ? { ...m, content: t('streamError') }
-              : m,
-          ),
-        );
-      }
-    } finally {
-      setStreaming(false);
-    }
-  }, [input, streaming, activeConvId, utils, t]);
+    },
+    [input, streaming, activeConvId, utils, t],
+  );
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -189,94 +183,130 @@ export function AiChat() {
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }
 
+  // Example prompts shown on the empty state to hint at what can be asked.
+  const suggestions = (t.raw('suggestions') as string[] | undefined) ?? [];
+
+  // Shared input control — reused in the centered welcome and the
+  // pinned-to-bottom conversation layouts.
+  const inputBox = (
+    <div className="flex items-end gap-2 rounded-2xl border bg-muted/30 px-4 py-3 focus-within:border-primary">
+      <textarea
+        ref={textareaRef}
+        value={input}
+        onChange={autoResize}
+        onKeyDown={onKeyDown}
+        placeholder={t('inputPlaceholder')}
+        rows={1}
+        disabled={streaming}
+        className="max-h-40 min-h-[1.5rem] flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
+      />
+      <button
+        type="button"
+        onClick={() => void send()}
+        disabled={!input.trim() || streaming}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-40"
+        aria-label={t('send')}
+      >
+        <Send className="h-4 w-4" />
+      </button>
+    </div>
+  );
+
   return (
     <div className="flex h-[calc(100svh-4rem)] overflow-hidden">
       {/* ── Center: chat ─────────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto">
-          {messages.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
-              <Bot className="h-12 w-12 text-muted-foreground/40" />
-              <div>
-                <p className="text-lg font-semibold">{t('emptyTitle')}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{t('emptySubtitle')}</p>
-              </div>
+        {messages.length === 0 ? (
+          /* Centered welcome: greeting + input + suggested prompts. */
+          <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 py-10">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Bot className="h-7 w-7" />
             </div>
-          ) : (
-            <div className="mx-auto max-w-3xl space-y-6 p-6">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={cn('flex gap-3', msg.role === 'user' ? 'justify-end' : 'justify-start')}
+            <div className="text-center">
+              <p className="text-xl font-semibold">{t('emptyTitle')}</p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                {t('emptySubtitle')}
+              </p>
+            </div>
+            <div className="w-full max-w-2xl">{inputBox}</div>
+            <div className="flex max-w-2xl flex-wrap justify-center gap-2">
+              {suggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => void send(s)}
+                  disabled={streaming}
+                  className="rounded-full border bg-background px-3.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-50"
                 >
-                  {msg.role === 'assistant' && (
+                  {s}
+                </button>
+              ))}
+            </div>
+            <p className="text-center text-[11px] text-muted-foreground">{t('disclaimer')}</p>
+          </div>
+        ) : (
+          <>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="mx-auto max-w-3xl space-y-6 p-6">
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      'flex gap-3',
+                      msg.role === 'user' ? 'justify-end' : 'justify-start',
+                    )}
+                  >
+                    {msg.role === 'assistant' && (
+                      <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Bot className="h-4 w-4" />
+                      </div>
+                    )}
+                    <div
+                      className={cn(
+                        'max-w-[75%] rounded-2xl px-4 py-2.5 text-sm',
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-foreground',
+                      )}
+                    >
+                      {msg.content === '' && msg.role === 'assistant' ? (
+                        <span className="animate-pulse text-muted-foreground">{t('thinking')}</span>
+                      ) : msg.role === 'assistant' ? (
+                        <MarkdownMessage content={msg.content} />
+                      ) : (
+                        <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {toolsActive.length > 0 && (
+                  <div className="flex justify-start gap-3">
                     <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Bot className="h-4 w-4" />
                     </div>
-                  )}
-                  <div
-                    className={cn(
-                      'max-w-[75%] rounded-2xl px-4 py-2.5 text-sm',
-                      msg.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-foreground',
-                    )}
-                  >
-                    {msg.content === '' && msg.role === 'assistant' ? (
-                      <span className="animate-pulse text-muted-foreground">{t('thinking')}</span>
-                    ) : msg.role === 'assistant' ? (
-                      <MarkdownMessage content={msg.content} />
-                    ) : (
-                      <div className="whitespace-pre-wrap break-words">{msg.content}</div>
-                    )}
+                    <div className="rounded-2xl bg-muted px-4 py-2.5 text-sm text-muted-foreground">
+                      <span className="animate-pulse">
+                        {t('lookingUp', { tool: toolsActive[toolsActive.length - 1] ?? '' })}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-              {toolsActive.length > 0 && (
-                <div className="flex justify-start gap-3">
-                  <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <Bot className="h-4 w-4" />
-                  </div>
-                  <div className="rounded-2xl bg-muted px-4 py-2.5 text-sm text-muted-foreground">
-                    <span className="animate-pulse">
-                      {t('lookingUp', { tool: toolsActive[toolsActive.length - 1] ?? '' })}
-                    </span>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* Input area */}
-        <div className="border-t bg-background p-4">
-          <div className="mx-auto max-w-3xl">
-            <div className="flex items-end gap-2 rounded-2xl border bg-muted/30 px-4 py-3 focus-within:border-primary">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={autoResize}
-                onKeyDown={onKeyDown}
-                placeholder={t('inputPlaceholder')}
-                rows={1}
-                disabled={streaming}
-                className="max-h-40 min-h-[1.5rem] flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
-              />
-              <button
-                type="button"
-                onClick={() => void send()}
-                disabled={!input.trim() || streaming}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-40"
-                aria-label={t('send')}
-              >
-                <Send className="h-4 w-4" />
-              </button>
+            {/* Input area pinned to the bottom during a conversation. */}
+            <div className="border-t bg-background p-4">
+              <div className="mx-auto max-w-3xl">
+                {inputBox}
+                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                  {t('disclaimer')}
+                </p>
+              </div>
             </div>
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">{t('disclaimer')}</p>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       {/* ── Right: conversation history ─────────────────────────────────── */}
