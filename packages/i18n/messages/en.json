@@ -517,7 +517,17 @@
       "importHint": "PDF, XLSX or XLS, up to 20 MB.",
       "importBusy": "Reading your file and drafting a template…",
       "importTooLarge": "That file is too large (max 20 MB).",
-      "importFailed": "We couldn't convert that file. Try another, or build with AI instead."
+      "importFailed": "We couldn't convert that file. Try another, or build with AI instead.",
+      "aiBuildingTitle": "Creating your template",
+      "aiBuildingSubtitle": "This usually takes 20–40 seconds. Hang tight.",
+      "aiBuildSteps": [
+        "Reviewing your requirements",
+        "Designing pages & sections",
+        "Writing the questions",
+        "Adding response sets, colours & flags",
+        "Wiring up logic & actions",
+        "Finalising your template"
+      ]
     },
     "editor": {
       "saveButton": "Save draft",

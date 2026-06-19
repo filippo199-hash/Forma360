@@ -26,7 +26,7 @@ const SYSTEM_PROMPT = `You are an expert inspection-template designer for Forma3
 How you work:
 1. The user tells you what they want to inspect. Ask AT MOST 2–3 short, high-value follow-up questions — never a long questionnaire. Good things to clarify: the kind of asset/site/activity being inspected, how often it runs, and who fills it in. Ask them together in one message, not one at a time.
 2. If the inspection is the kind governed by regulations (fire safety, food hygiene, electrical, working at height, vehicles, healthcare, childcare, etc.), ask whether it should follow a specific region's or country's regulations (e.g. "UK", "California", "EU"). If the user opts in to a region, use the web_search tool to ground the current legal requirements for that domain and jurisdiction BEFORE proposing — search for the specific standard/regulation and reflect its real checklist points in the structure. Only search when the user has asked for regional regulations; otherwise rely on your own knowledge. Phrase everything generated as a practical draft to verify, never as legal advice.
-3. As soon as you have enough to draft something useful, call the proposeTemplate tool. Do NOT keep asking questions once you can produce a solid first draft — the user can refine everything in the editor afterwards. Lean toward proposing early.
+3. As soon as you have enough to draft something useful, call the proposeTemplate tool. Do NOT keep asking questions once you can produce a solid first draft — the user can refine everything in the editor afterwards. Lean toward proposing early. CRITICAL: when you decide to build, call proposeTemplate in the SAME turn. You may write one short sentence first (e.g. "Building that now…"), but you MUST then call the tool in that same message — never end your turn promising to build and then stop, or the user is left waiting with nothing to do.
 
 When you build the template (the proposeTemplate call):
 - Organise it into logical pages and sections. A realistic inspection has 10–30 questions.
@@ -207,6 +207,12 @@ export type TemplateAgentEvent =
   | { type: 'text'; delta: string }
   /** The assistant finished a turn by asking follow-up question(s); await the user's reply. */
   | { type: 'assistant_done'; text: string }
+  /**
+   * The model has STARTED writing the template (the proposeTemplate tool call
+   * began streaming). Fired well before `proposal` so the UI can show a "building"
+   * animation during the long tool-call stream instead of looking stalled.
+   */
+  | { type: 'building_started' }
   /** The assistant produced a finished, validated spec; the client creates the template. */
   | { type: 'proposal'; spec: TemplateSpec; note: string };
 
@@ -235,6 +241,9 @@ export async function runTemplateAgentTurn(input: {
 
   let assistantText = '';
   let corrections = 0;
+  // The proposeTemplate tool call can stream for tens of seconds; signal the UI
+  // the instant it begins so it can animate progress rather than appear stuck.
+  let signalledBuilding = false;
 
   while (true) {
     assistantText = '';
@@ -252,6 +261,18 @@ export async function runTemplateAgentTurn(input: {
     stream.on('text', (text) => {
       assistantText += text;
       onEvent({ type: 'text', delta: text });
+    });
+
+    stream.on('streamEvent', (event) => {
+      if (
+        !signalledBuilding &&
+        event.type === 'content_block_start' &&
+        event.content_block.type === 'tool_use' &&
+        event.content_block.name === 'proposeTemplate'
+      ) {
+        signalledBuilding = true;
+        onEvent({ type: 'building_started' });
+      }
     });
 
     const finalMsg = await stream.finalMessage();

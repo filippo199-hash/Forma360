@@ -12,7 +12,22 @@
  * (which expands the spec server-side) and drop the user straight into the
  * editor.
  */
-import { ArrowLeft, Bot, FileUp, PencilLine, Send, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft,
+  Bot,
+  Check,
+  ClipboardList,
+  FileUp,
+  GitBranch,
+  LayoutList,
+  Loader2,
+  MessageSquareText,
+  Palette,
+  PencilLine,
+  Send,
+  Sparkles,
+  Wand2,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TemplateSpec } from '@forma360/shared/template-spec';
@@ -44,6 +59,7 @@ interface ChatMessage {
 type StreamEvent =
   | { type: 'text'; delta: string }
   | { type: 'assistant_done'; text: string }
+  | { type: 'building_started' }
   | { type: 'proposal'; spec: TemplateSpec; note: string }
   | { type: 'done' }
   | { type: 'error'; message: string };
@@ -270,15 +286,15 @@ function AiMode({ locale, onOpenChange }: { locale: string; onOpenChange: (v: bo
               setMessages((prev) =>
                 prev.map((m) => (m.id === assistantId ? { ...m, content: assistantContent } : m)),
               );
+            } else if (event.type === 'building_started') {
+              // The model began writing the template — show the build animation
+              // immediately (the tool call streams for tens of seconds).
+              setBuilding(true);
             } else if (event.type === 'proposal') {
-              // Replace the (possibly empty) streaming bubble with the note, then build.
-              const note = event.note.trim().length > 0 ? event.note.trim() : t('aiBuilding');
-              setMessages((prev) =>
-                prev.map((m) => (m.id === assistantId ? { ...m, content: note } : m)),
-              );
               setBuilding(true);
               createFromSpec.mutate({ spec: event.spec });
             } else if (event.type === 'error') {
+              setBuilding(false);
               setMessages((prev) =>
                 prev.map((m) => (m.id === assistantId ? { ...m, content: `${t('aiError')}` } : m)),
               );
@@ -297,6 +313,16 @@ function AiMode({ locale, onOpenChange }: { locale: string; onOpenChange: (v: bo
   );
 
   const suggestions = (t.raw('aiSuggestions') as string[] | undefined) ?? [];
+
+  // While the model writes (and we then save) the template, take over the whole
+  // panel with a specific, narrated progress animation — no input, no chat.
+  if (building) {
+    return (
+      <div className="flex h-[60vh] flex-col">
+        <BuildingTemplate />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[60vh] flex-col">
@@ -350,12 +376,6 @@ function AiMode({ locale, onOpenChange }: { locale: string; onOpenChange: (v: bo
                 </div>
               </div>
             ))}
-            {building && (
-              <div className="flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground">
-                <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-                {t('aiBuilding')}
-              </div>
-            )}
             <div ref={endRef} />
           </div>
         )}
@@ -389,6 +409,83 @@ function AiMode({ locale, onOpenChange }: { locale: string; onOpenChange: (v: bo
         </div>
         <p className="mt-2 text-center text-[11px] text-muted-foreground">{t('aiDisclaimer')}</p>
       </div>
+    </div>
+  );
+}
+
+// ─── Building animation ───────────────────────────────────────────────────────
+
+/**
+ * Narrated build progress shown while the model writes the spec and we expand +
+ * save it. The steps are illustrative (we don't get real sub-progress from the
+ * model), so the current step advances on a timer and parks on the last one
+ * until navigation. Earlier steps tick off with a check; the active one spins.
+ */
+const BUILD_STEP_ICONS = [ClipboardList, LayoutList, MessageSquareText, Palette, GitBranch, Wand2];
+
+function BuildingTemplate() {
+  const t = useTranslations('templates.create');
+  const steps = (t.raw('aiBuildSteps') as string[] | undefined) ?? [];
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    if (steps.length === 0) return;
+    const id = setInterval(() => {
+      // Advance but hold on the final step until the page navigates away.
+      setActive((i) => (i < steps.length - 1 ? i + 1 : i));
+    }, 2200);
+    return () => clearInterval(id);
+  }, [steps.length]);
+
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-6 px-6">
+      <div className="relative flex h-16 w-16 items-center justify-center">
+        <span className="absolute inset-0 animate-ping rounded-2xl bg-primary/20" />
+        <span className="absolute inset-0 rounded-2xl bg-primary/10" />
+        <Sparkles className="relative h-7 w-7 animate-pulse text-primary" />
+      </div>
+
+      <div className="text-center">
+        <p className="text-base font-semibold">{t('aiBuildingTitle')}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t('aiBuildingSubtitle')}</p>
+      </div>
+
+      <ol className="w-full max-w-xs space-y-2.5">
+        {steps.map((label, i) => {
+          const Icon = BUILD_STEP_ICONS[i % BUILD_STEP_ICONS.length] ?? Wand2;
+          const done = i < active;
+          const current = i === active;
+          return (
+            <li
+              key={label}
+              className={cn(
+                'flex items-center gap-3 text-sm transition-opacity duration-300',
+                current ? 'opacity-100' : done ? 'opacity-90' : 'opacity-40',
+              )}
+            >
+              <span
+                className={cn(
+                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors',
+                  done
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : current
+                      ? 'border-primary text-primary'
+                      : 'border-muted text-muted-foreground',
+                )}
+              >
+                {done ? (
+                  <Check className="h-4 w-4" />
+                ) : current ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Icon className="h-4 w-4" />
+                )}
+              </span>
+              <span className={cn(current && 'font-medium')}>{label}</span>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
