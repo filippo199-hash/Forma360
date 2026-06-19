@@ -26,8 +26,8 @@ export function SettingsTabs({ locale, isAdmin }: SettingsTabsProps) {
   const tabs: TabKey[] = isAdmin ? allTabs : ['profile'];
 
   return (
-    <div className="border-b">
-      <nav aria-label={t('title')} className="-mb-px flex gap-1 overflow-x-auto">
+    <div>
+      <nav aria-label={t('title')} className="flex gap-1 overflow-x-auto">
         {tabs.map((key) => {
           const href = `/${locale}/settings/${key}`;
           const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -40,7 +40,7 @@ export function SettingsTabs({ locale, isAdmin }: SettingsTabsProps) {
                 'whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors',
                 active
                   ? 'border-foreground font-medium text-foreground'
-                  : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
               {t(`nav.${key}`)}

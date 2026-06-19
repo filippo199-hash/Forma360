@@ -258,7 +258,7 @@ export default function AssetDetailPage() {
           </div>
         </div>
 
-        <nav className="flex flex-wrap gap-1 border-b">
+        <nav className="flex flex-wrap gap-1">
           {TABS.map((t_) => (
             <TabButton
               key={t_}
@@ -868,10 +868,10 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'border-b-2 -mb-px px-3 py-2 text-sm font-medium transition-colors',
+        'border-b-2 px-3 py-2 text-sm font-medium transition-colors',
         active
           ? 'border-foreground text-foreground font-semibold'
-          : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
+          : 'border-transparent text-muted-foreground hover:text-foreground',
       )}
     >
       {label}

@@ -313,7 +313,7 @@ export default function ObservationDetailPage() {
         </div>
       </header>
 
-      <nav className="border-b" aria-label={t('tabs.overview')}>
+      <nav className="flex gap-1" aria-label={t('tabs.overview')}>
         <div className="flex gap-6">
           <TabButton
             active={tab === 'overview'}
@@ -632,7 +632,7 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        '-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors',
+        'border-b-2 px-1 py-3 text-sm font-medium transition-colors',
         active
           ? 'border-foreground text-foreground font-semibold'
           : 'border-transparent text-muted-foreground hover:text-foreground',

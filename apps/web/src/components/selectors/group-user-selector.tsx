@@ -135,7 +135,7 @@ export function GroupUserSelector({
 
         <PopoverContent className="w-80 p-0" align="start">
           {showTabs ? (
-            <div className="flex border-b">
+            <div className="flex">
               {(['groups', 'users'] as const).map((tk) => (
                 <button
                   key={tk}
