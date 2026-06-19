@@ -12,6 +12,8 @@
  *     width without scaling artefacts.
  */
 import type { InspectionRenderSnapshot } from '@forma360/render';
+import type { TemplateContent } from '@forma360/shared/template-schema';
+import { collectFlaggedAnswers, multipleChoiceLabels } from '@forma360/shared/inspection-eval';
 
 /**
  * Narrow shape of the page-walk we do. Matches what @forma360/shared
@@ -30,6 +32,7 @@ interface TemplateContentLike {
         id?: string;
         type?: string;
         prompt?: string;
+        responseSetId?: string;
       }>;
     }>;
   }>;
@@ -54,6 +57,15 @@ export function PrintLayout({
   const branding = content?.settings?.branding;
   const primary = branding?.primaryColor;
   const accent = branding?.accentColor;
+
+  // Flagged-answer summary (shown at the very top of the report). Computed
+  // from the same pure helper the conduct UI uses, so the two never disagree.
+  const evalContent = snapshot.template.content as TemplateContent | undefined;
+  const responses = snapshot.inspection.responses;
+  const flaggedAnswers =
+    evalContent !== undefined ? collectFlaggedAnswers(evalContent, responses) : [];
+  const flaggedItemIds = new Set(flaggedAnswers.map((f) => f.itemId));
+
   return (
     <>
       {/*
@@ -80,6 +92,13 @@ export function PrintLayout({
             .print-body .print-response { margin: 0.2cm 0 0.3cm 0; }
             .print-body .print-response .prompt { font-weight: 600; }
             .print-body .print-response .answer { margin-top: 0.1cm; white-space: pre-wrap; }
+            .print-body .print-response.flagged { border-left: 3px solid #dc2626; padding-left: 0.2cm; }
+            .print-body .print-response .flag-badge { display: inline-block; margin-left: 0.2cm; padding: 0 0.15cm; font-size: 8pt; font-weight: 700; color: #fff; background: #dc2626; border-radius: 0.1cm; vertical-align: middle; }
+            .print-body .print-flagged { border: 1px solid #fca5a5; background: #fef2f2; border-radius: 0.15cm; padding: 0.3cm 0.4cm; margin: 0 0 0.5cm 0; }
+            .print-body .print-flagged h2 { margin: 0 0 0.2cm 0; color: #b91c1c; border: 0; font-size: 13pt; }
+            .print-body .print-flagged ul { margin: 0; padding-left: 0.5cm; }
+            .print-body .print-flagged li { margin: 0.1cm 0; }
+            .print-body .print-flagged .loc { color: #6b7280; font-size: 9pt; }
             .print-body .print-signatures { margin-top: 0.6cm; }
             .print-body .print-signature { border: 1px solid #ccc; padding: 0.3cm; margin-bottom: 0.3cm; }
             .print-body .print-signature img { width: 180px; height: 60px; object-fit: contain; }
@@ -111,6 +130,25 @@ export function PrintLayout({
           </div>
         </div>
 
+        {flaggedAnswers.length > 0 ? (
+          <div className="print-flagged">
+            <h2>Flagged items ({flaggedAnswers.length})</h2>
+            <ul>
+              {flaggedAnswers.map((f) => (
+                <li key={f.itemId}>
+                  <strong>{f.prompt}</strong>
+                  {' — '}
+                  {f.options.map((o) => o.label).join(', ')}
+                  <span className="loc">
+                    {' · '}
+                    {f.pageTitle} › {f.sectionTitle}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
         {(content?.pages ?? []).map((page, i) => {
           if (page.type === 'title') return null;
           return (
@@ -123,10 +161,25 @@ export function PrintLayout({
                   <h3>{section.title}</h3>
                   {(section.items ?? []).map((item, ii) => {
                     const response = snapshot.inspection.responses[item.id ?? ''];
+                    // Multiple-choice answers render as their option labels, not
+                    // the raw ULID(s) stored in the response map.
+                    const mcLabels =
+                      evalContent !== undefined
+                        ? multipleChoiceLabels(evalContent, item, response)
+                        : null;
+                    const answerText =
+                      mcLabels !== null ? mcLabels.join(', ') : stringifyResponse(response);
+                    const flagged = item.id !== undefined && flaggedItemIds.has(item.id);
                     return (
-                      <div key={item.id ?? ii} className="print-response">
-                        <div className="prompt">{item.prompt ?? item.id}</div>
-                        <div className="answer">{stringifyResponse(response)}</div>
+                      <div
+                        key={item.id ?? ii}
+                        className={flagged ? 'print-response flagged' : 'print-response'}
+                      >
+                        <div className="prompt">
+                          {item.prompt ?? item.id}
+                          {flagged ? <span className="flag-badge">FLAGGED</span> : null}
+                        </div>
+                        <div className="answer">{answerText}</div>
                       </div>
                     );
                   })}

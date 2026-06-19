@@ -8,6 +8,7 @@
  * so both the render layer and the submit-gate can compute them cheaply.
  */
 import type { Item, Section, TemplateContent, Visibility } from '@forma360/shared/template-schema';
+import { followUpTargetMap, isFollowUpRevealed } from '@forma360/shared/inspection-eval';
 
 // ─── Response value shapes ──────────────────────────────────────────────────
 
@@ -167,6 +168,33 @@ export function isItemVisible(item: Item, responses: Responses): boolean {
   return evaluateVisibility(visibility, responses);
 }
 
+// The follow-up target map only depends on the (immutable) template content,
+// so cache it by content reference to avoid rebuilding it on every item render.
+const followUpCache = new WeakMap<TemplateContent, ReturnType<typeof followUpTargetMap>>();
+function getFollowUps(content: TemplateContent): ReturnType<typeof followUpTargetMap> {
+  let map = followUpCache.get(content);
+  if (map === undefined) {
+    map = followUpTargetMap(content);
+    followUpCache.set(content, map);
+  }
+  return map;
+}
+
+/**
+ * True when an item should be shown during conduct: its own `visibility`
+ * block passes AND, if it is the target of an `askFollowUp` trigger, one of
+ * the options that reveal it is currently selected. This is the function the
+ * render layer and the required-check both use.
+ */
+export function isItemRevealed(
+  item: Item,
+  content: TemplateContent,
+  responses: Responses,
+): boolean {
+  if (!isItemVisible(item, responses)) return false;
+  return isFollowUpRevealed(item.id, getFollowUps(content), responses);
+}
+
 // ─── Required-completeness ──────────────────────────────────────────────────
 
 /**
@@ -185,7 +213,7 @@ export function findUnansweredRequired(content: TemplateContent, responses: Resp
   for (const page of content.pages) {
     for (const section of page.sections) {
       for (const item of section.items) {
-        if (!isItemVisible(item, responses)) continue;
+        if (!isItemRevealed(item, content, responses)) continue;
         if (!('required' in item) || !item.required) continue;
         if (!isResponseRequirable(item)) continue;
         const v = responses[item.id];

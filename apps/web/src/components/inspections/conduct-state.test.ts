@@ -6,6 +6,7 @@ import {
   evaluateVisibility,
   findUnansweredRequired,
   initialConductState,
+  isItemRevealed,
   isItemVisible,
   type ConductState,
 } from './conduct-state';
@@ -247,5 +248,99 @@ describe('isItemVisible + required completeness', () => {
     const c = content();
     const missing = findUnansweredRequired(c, { [ITEM_TEXT]: '' });
     expect(missing).toContain(ITEM_TEXT);
+  });
+});
+
+// ─── Required toggle + multiple-selection behaviour on MC questions ───────────
+
+const FOLLOWUP = 'm'.repeat(26);
+
+/**
+ * Fixture variant: the MC question is REQUIRED, its set is multi-select, and
+ * selecting "No" fires an askFollowUp that reveals a required follow-up.
+ */
+function contentWithTriggers(opts: { mcRequired: boolean; multiSelect: boolean }): TemplateContent {
+  const c = content();
+  const section = c.pages[1]?.sections[0];
+  if (section === undefined) throw new Error('fixture');
+  // Drop the visibility-gated child; replace with an askFollowUp target.
+  section.items = [
+    {
+      id: ITEM_MC,
+      type: 'multipleChoice',
+      prompt: 'Is it OK?',
+      required: opts.mcRequired,
+      responseSetId: RS,
+    },
+    {
+      id: FOLLOWUP,
+      type: 'text',
+      prompt: 'Explain the risk',
+      required: true,
+      multiline: false,
+      maxLength: 100,
+    },
+  ];
+  const set = c.customResponseSets[0];
+  if (set === undefined) throw new Error('fixture');
+  set.multiSelect = opts.multiSelect;
+  // "No" reveals the follow-up question.
+  set.options = [
+    { id: OPT_YES, label: 'Yes' },
+    { id: OPT_NO, label: 'No', triggers: [{ kind: 'askFollowUp', questionIds: [FOLLOWUP] }] },
+  ];
+  return c;
+}
+
+describe('required toggle on a multiple-choice question', () => {
+  it('blocks submit when required and unanswered; passes once answered', () => {
+    const c = contentWithTriggers({ mcRequired: true, multiSelect: false });
+    expect(findUnansweredRequired(c, {})).toContain(ITEM_MC);
+    expect(findUnansweredRequired(c, { [ITEM_MC]: OPT_YES })).not.toContain(ITEM_MC);
+  });
+
+  it('does NOT block when the required toggle is off', () => {
+    const c = contentWithTriggers({ mcRequired: false, multiSelect: false });
+    expect(findUnansweredRequired(c, {})).not.toContain(ITEM_MC);
+  });
+});
+
+describe('multiple-selection behaviour', () => {
+  it('an empty multi-select array counts as unanswered; a non-empty one is answered', () => {
+    const c = contentWithTriggers({ mcRequired: true, multiSelect: true });
+    expect(findUnansweredRequired(c, { [ITEM_MC]: [] })).toContain(ITEM_MC);
+    expect(findUnansweredRequired(c, { [ITEM_MC]: [OPT_YES] })).not.toContain(ITEM_MC);
+    expect(findUnansweredRequired(c, { [ITEM_MC]: [OPT_YES, OPT_NO] })).not.toContain(ITEM_MC);
+  });
+});
+
+describe('askFollowUp reveal during conduct', () => {
+  it('hides the follow-up until the triggering option is selected', () => {
+    const c = contentWithTriggers({ mcRequired: false, multiSelect: false });
+    const followUp = c.pages[1]?.sections[0]?.items[1];
+    if (followUp === undefined) throw new Error('fixture');
+    expect(isItemRevealed(followUp, c, {})).toBe(false);
+    expect(isItemRevealed(followUp, c, { [ITEM_MC]: OPT_YES })).toBe(false);
+    expect(isItemRevealed(followUp, c, { [ITEM_MC]: OPT_NO })).toBe(true);
+  });
+
+  it('reveals the follow-up when "No" is among multi-select picks', () => {
+    const c = contentWithTriggers({ mcRequired: false, multiSelect: true });
+    const followUp = c.pages[1]?.sections[0]?.items[1];
+    if (followUp === undefined) throw new Error('fixture');
+    expect(isItemRevealed(followUp, c, { [ITEM_MC]: [OPT_YES] })).toBe(false);
+    expect(isItemRevealed(followUp, c, { [ITEM_MC]: [OPT_YES, OPT_NO] })).toBe(true);
+  });
+
+  it('a required follow-up does not block submit while hidden, but does once revealed', () => {
+    const c = contentWithTriggers({ mcRequired: false, multiSelect: false });
+    // Hidden (Yes selected) → follow-up not required yet.
+    expect(findUnansweredRequired(c, { [ITEM_MC]: OPT_YES })).not.toContain(FOLLOWUP);
+    // Revealed (No selected) and unanswered → blocks.
+    expect(findUnansweredRequired(c, { [ITEM_MC]: OPT_NO })).toContain(FOLLOWUP);
+    // Revealed and answered → clears.
+    expect(
+      findUnansweredRequired(c, { [ITEM_MC]: OPT_NO, [FOLLOWUP]: 'sharp edge' }),
+    ).not.toContain(FOLLOWUP);
   });
 });

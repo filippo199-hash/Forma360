@@ -25,7 +25,7 @@ import { cn } from '../../lib/cn';
 import { trpc } from '../../lib/trpc/client';
 import { ActionDetailPanel } from '../actions/action-detail-panel';
 import { useConduct } from './conduct-context';
-import { findUnansweredRequired, isItemVisible, type Responses } from './conduct-state';
+import { findUnansweredRequired, isItemRevealed, type Responses } from './conduct-state';
 import { ResponseInput } from './response-input';
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;
@@ -111,9 +111,7 @@ export function ConductShell() {
    * query has had a chance to refetch and include the new action. Kept small
    * and separate so that DB truth (below) can override / remove entries.
    */
-  const [sessionRaisedMap, setSessionRaisedMap] = useState<Map<string, string>>(
-    () => new Map(),
-  );
+  const [sessionRaisedMap, setSessionRaisedMap] = useState<Map<string, string>>(() => new Map());
 
   /**
    * The authoritative map used for rendering: DB truth takes precedence.
@@ -587,7 +585,7 @@ function ItemRow({
   onOpenAction: (actionId: string) => void;
 }) {
   const { state } = useConduct();
-  const visible = isItemVisible(item, state.responses);
+  const visible = isItemRevealed(item, state.content, state.responses);
   if (!visible) return null;
   const prompt = 'prompt' in item ? item.prompt : null;
   const required = 'required' in item && item.required === true;
@@ -614,10 +612,7 @@ function ItemRow({
         <ResponseInput item={item} readonly={readonly} responseSets={customResponseSets} />
       </div>
       {raisedActionId !== null ? (
-        <LinkedActionCard
-          actionId={raisedActionId}
-          onOpen={() => onOpenAction(raisedActionId)}
-        />
+        <LinkedActionCard actionId={raisedActionId} onOpen={() => onOpenAction(raisedActionId)} />
       ) : null}
       {'note' in item && item.note !== undefined ? (
         <p className="text-xs text-muted-foreground">{item.note}</p>
@@ -648,8 +643,7 @@ function LinkedActionCard({ actionId, onOpen }: { actionId: string; onOpen: () =
   }
   if (action === undefined) return null;
 
-  const statusColor =
-    ACTION_STATUS_COLORS[action.status] ?? ACTION_STATUS_COLORS['open'];
+  const statusColor = ACTION_STATUS_COLORS[action.status] ?? ACTION_STATUS_COLORS['open'];
   const statusLabel = action.status.replace(/_/g, ' ');
 
   return (
@@ -660,10 +654,7 @@ function LinkedActionCard({ actionId, onOpen }: { actionId: string; onOpen: () =
       aria-label={t('openLinkedAction', { title: action.title })}
     >
       <span
-        className={cn(
-          'shrink-0 rounded px-1.5 py-0.5 text-xs font-medium capitalize',
-          statusColor,
-        )}
+        className={cn('shrink-0 rounded px-1.5 py-0.5 text-xs font-medium capitalize', statusColor)}
       >
         {statusLabel}
       </span>
@@ -1056,9 +1047,7 @@ function RaiseActionTrigger({
                 <div className="space-y-1.5">
                   <Label htmlFor="ra-site">
                     {tCreate('siteLabel')}
-                    {isRequired('site') ? (
-                      <span className="ml-1 text-destructive">*</span>
-                    ) : null}
+                    {isRequired('site') ? <span className="ml-1 text-destructive">*</span> : null}
                   </Label>
                   <select
                     id="ra-site"
@@ -1204,9 +1193,7 @@ function RaiseActionCustomQuestions({
                     ? (responses[q.id] as string)
                     : ''
               }
-              onChange={(e) =>
-                update(q.id, e.target.value === '' ? '' : Number(e.target.value))
-              }
+              onChange={(e) => update(q.id, e.target.value === '' ? '' : Number(e.target.value))}
             />
           ) : (
             <select

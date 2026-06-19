@@ -44,6 +44,10 @@
       "types": "./src/template-schema.ts",
       "default": "./src/template-schema.ts"
     },
+    "./inspection-eval": {
+      "types": "./src/inspection-eval.ts",
+      "default": "./src/inspection-eval.ts"
+    },
     "./issues-schema": {
       "types": "./src/issues-schema.ts",
       "default": "./src/issues-schema.ts"
