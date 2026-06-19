@@ -110,8 +110,13 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-* {
-  border-color: var(--color-border);
+/* Default border colour. MUST live in @layer base — an unlayered `*` rule
+ * outranks every `border-*` utility in Tailwind v4's cascade, which would
+ * force all borders grey (e.g. active tab underlines never turned dark). */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
 }
 
 /* Staggered page-load reveal for the marketing homepage. Respects
