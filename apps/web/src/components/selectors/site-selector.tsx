@@ -25,6 +25,12 @@ export interface SiteSelectorProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /**
+   * Optional predicate to restrict which sites are selectable/visible
+   * (e.g. exclude the site being edited, or enforce a max parent depth).
+   * A site filtered out here is removed from the tree entirely.
+   */
+  filterSite?: (site: SiteLite) => boolean;
 }
 
 /**
@@ -41,12 +47,18 @@ export function SiteSelector({
   placeholder = 'Select site',
   disabled = false,
   className,
+  filterSite,
 }: SiteSelectorProps) {
   const { data } = trpc.sites.list.useQuery();
-  const sites = useMemo<SiteLite[]>(
-    () => (data ?? []).map((s) => ({ id: s.id, name: s.name, parentId: s.parentId, depth: s.depth })),
-    [data],
-  );
+  const sites = useMemo<SiteLite[]>(() => {
+    const mapped = (data ?? []).map((s) => ({
+      id: s.id,
+      name: s.name,
+      parentId: s.parentId,
+      depth: s.depth,
+    }));
+    return filterSite ? mapped.filter(filterSite) : mapped;
+  }, [data, filterSite]);
 
   const byId = useMemo(() => {
     const m = new Map<string, SiteLite>();

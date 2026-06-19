@@ -12,6 +12,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -53,7 +54,6 @@ export default function AssetDetailPage() {
 
   const { data, isLoading } = trpc.assets.get.useQuery({ assetId });
   const { data: assetTypesList } = trpc.assetTypes.list.useQuery(undefined, { enabled: editing });
-  const { data: sitesList } = trpc.sites.list.useQuery(undefined, { enabled: editing });
   const { data: readingsData } = trpc.assets.readings.list.useQuery(
     { assetId },
     { enabled: tab === 'readings' },
@@ -317,20 +317,13 @@ export default function AssetDetailPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-site">{t('fields.site')}</Label>
-                  <select
-                    id="edit-site"
-                    value={editSiteId}
-                    onChange={(e) => setEditSiteId(e.target.value)}
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="">{t('fields.noSite')}</option>
-                    {(sitesList ?? []).map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                  <Label>{t('fields.site')}</Label>
+                  <SiteSelector
+                    value={editSiteId !== '' ? [editSiteId] : []}
+                    onChange={(next) => setEditSiteId(next[0] ?? '')}
+                    multiple={false}
+                    placeholder={t('fields.noSite')}
+                  />
                 </div>
               </div>
               <div className="flex gap-2 pt-2">

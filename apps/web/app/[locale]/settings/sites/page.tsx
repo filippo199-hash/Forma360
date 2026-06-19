@@ -15,6 +15,7 @@ import {
 } from '../../../../src/components/ui/dialog';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import {
   Sheet,
   SheetContent,
@@ -123,9 +124,6 @@ export default function SitesPage() {
     setEditingSiteId(site.id);
     setEditName(site.name);
   }
-
-  // Only allow selecting sites that won't exceed depth limit (≤4 depth parent = ≤5 child)
-  const selectableSites = (sites ?? []).filter((s) => s.depth < 4);
 
   const effectiveParentId = createPresetParentId ?? createParentId;
 
@@ -267,21 +265,14 @@ export default function SitesPage() {
             </div>
             {createPresetParentId === null ? (
               <div className="space-y-1.5">
-                <Label htmlFor="s-parent">{t('parentLabel')}</Label>
-                <select
-                  id="s-parent"
-                  value={createParentId}
-                  onChange={(e) => setCreateParentId(e.target.value)}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                >
-                  <option value="">{t('noParent')}</option>
-                  {selectableSites.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {'— '.repeat(s.depth)}
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                <Label>{t('parentLabel')}</Label>
+                <SiteSelector
+                  value={createParentId !== '' ? [createParentId] : []}
+                  onChange={(next) => setCreateParentId(next[0] ?? '')}
+                  multiple={false}
+                  placeholder={t('noParent')}
+                  filterSite={(s) => s.depth < 4}
+                />
               </div>
             ) : (
               <div className="rounded-md bg-muted px-3 py-2 text-sm">

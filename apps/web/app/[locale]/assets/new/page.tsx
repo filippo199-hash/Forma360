@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 interface CustomField {
@@ -39,9 +40,6 @@ export default function NewAssetPage() {
 
   const { data: typesData } = trpc.assetTypes.list.useQuery({});
   const types = typesData ?? [];
-
-  const { data: sitesData } = trpc.sites.list.useQuery();
-  const sites = sitesData ?? [];
 
   const { data: topLevelAssets } = trpc.assets.list.useQuery({ parentId: null });
   const parentOptions = topLevelAssets ?? [];
@@ -275,20 +273,13 @@ export default function NewAssetPage() {
           <div className="rounded-xl border bg-background p-5 space-y-4">
             {/* Site */}
             <div className="space-y-1.5">
-              <Label htmlFor="asset-site">{t('fields.site')}</Label>
-              <select
-                id="asset-site"
-                value={siteId}
-                onChange={(e) => setSiteId(e.target.value)}
-                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">{t('fields.noSite')}</option>
-                {sites.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+              <Label>{t('fields.site')}</Label>
+              <SiteSelector
+                value={siteId !== '' ? [siteId] : []}
+                onChange={(next) => setSiteId(next[0] ?? '')}
+                multiple={false}
+                placeholder={t('fields.noSite')}
+              />
             </div>
 
             {/* Parent asset */}

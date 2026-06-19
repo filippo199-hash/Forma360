@@ -39,6 +39,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -398,18 +399,11 @@ export default function ObservationDetailPage() {
                   </Field>
                   <Field label={t('fields.site')}>
                     {canManage ? (
-                      <select
-                        value={issue.siteId ?? ''}
-                        onChange={(e) => updateSite(e.target.value)}
-                        className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      >
-                        <option value="">—</option>
-                        {(sites ?? []).map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </select>
+                      <SiteSelector
+                        value={issue.siteId !== null ? [issue.siteId] : []}
+                        onChange={(next) => updateSite(next[0] ?? '')}
+                        multiple={false}
+                      />
                     ) : (
                       <span>{siteName}</span>
                     )}

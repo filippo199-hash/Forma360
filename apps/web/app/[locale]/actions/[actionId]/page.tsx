@@ -18,6 +18,7 @@ import {
 import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -468,23 +469,14 @@ export default function ActionDetailPage() {
               </DetailRow>
               <DetailRow label={tFields('site')}>
                 {canEdit ? (
-                  <select
-                    value={action.siteId ?? ''}
-                    onChange={(e) =>
-                      update.mutate({
-                        actionId,
-                        siteId: e.target.value === '' ? null : e.target.value,
-                      })
+                  <SiteSelector
+                    value={action.siteId !== null ? [action.siteId] : []}
+                    onChange={(next) =>
+                      update.mutate({ actionId, siteId: next[0] ?? null })
                     }
-                    className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
-                  >
-                    <option value="">{tFields('noSite')}</option>
-                    {(sites ?? []).map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                    multiple={false}
+                    placeholder={tFields('noSite')}
+                  />
                 ) : action.siteId !== null ? (
                   ((sites ?? []).find((s) => s.id === action.siteId)?.name ?? '—')
                 ) : (
