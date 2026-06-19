@@ -485,7 +485,8 @@
           "notifyOnCompletion": "Notify on completion (Send notification when all signatures are collected)"
         },
         "continueToVisibility": "Doorgaan naar Zichtbaarheid →",
-        "savingForWizard": "Opslaan…"
+        "savingForWizard": "Opslaan…",
+        "previewTitle": "Rapportvoorbeeld"
       },
       "questionType": {
         "text": "Text",

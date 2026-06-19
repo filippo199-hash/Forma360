@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 import { trpc } from '../../lib/trpc/client';
+import { ChevronRight } from 'lucide-react';
 import { ContentTab } from './content-tab';
 import { useEditor } from './editor-context';
 import { SettingsTab } from './settings-tab';
@@ -197,22 +198,39 @@ export function EditorShell({
           )}
         </div>
 
-        {/* Centre group — tabs */}
-        <nav className="mx-auto flex items-center gap-1 px-4" aria-label="Editor tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Centre group — numbered 1·2·3 stepper so the flow is clear. */}
+        <nav className="mx-auto flex items-center px-4" aria-label="Editor steps">
+          {tabs.map((tab, i) => {
+            const active = activeTab === tab.id;
+            return (
+              <div key={tab.id} className="flex items-center">
+                {i > 0 ? (
+                  <ChevronRight className="mx-1 h-4 w-4 shrink-0 text-muted-foreground/40" />
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  aria-current={active ? 'step' : undefined}
+                  className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
+                    active
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+                  }`}
+                >
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+                      active
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                  {tab.label}
+                </button>
+              </div>
+            );
+          })}
         </nav>
 
         {/* Right group — actions */}
@@ -281,7 +299,6 @@ export function EditorShell({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

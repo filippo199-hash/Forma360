@@ -1,7 +1,9 @@
 'use client';
 
+import type { TemplateContent } from '@forma360/shared/template-schema';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
+import { responseChipClasses } from '../../lib/response-colors';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
@@ -112,15 +114,6 @@ export function SettingsTab({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('accessRuleLabel')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">{t('accessRuleHelp')}</p>
-            </CardContent>
-          </Card>
-
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>{t('branding.title')}</CardTitle>
@@ -151,6 +144,15 @@ export function SettingsTab({
                   dispatch({ type: 'updateSettings', patch: { branding: brandingPatch } });
                 }}
               />
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>{t('previewTitle')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ReportPreview content={state.content} />
             </CardContent>
           </Card>
         </div>
@@ -202,7 +204,7 @@ function BrandingForm({
     async function load(): Promise<void> {
       try {
         const res = await fetch(
-          `/api/upload/template-logo/signed-url?key=${encodeURIComponent(logoStorageKey ?? '')}`,
+          `/api/upload/template-logo?key=${encodeURIComponent(logoStorageKey ?? '')}`,
         );
         if (!res.ok) {
           if (!cancelled) setPreviewUrl(null);
@@ -216,7 +218,7 @@ function BrandingForm({
           // Dev fallback streams bytes directly.
           if (!cancelled) {
             setPreviewUrl(
-              `/api/upload/template-logo/signed-url?key=${encodeURIComponent(logoStorageKey ?? '')}`,
+              `/api/upload/template-logo?key=${encodeURIComponent(logoStorageKey ?? '')}`,
             );
           }
         }
@@ -323,6 +325,119 @@ function BrandingForm({
           </div>
           <div className="h-2 w-full" style={{ backgroundColor: accentColor ?? '#38bdf8' }} />
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Live in-browser preview of how the inspection report will look — branding
+ * cover + the template's pages/sections/questions with placeholder answers.
+ * Template-only (no inspection), so multiple-choice questions show their
+ * option chips and other types show a muted placeholder. Updates as you edit.
+ */
+function ReportPreview({ content }: { content: TemplateContent }) {
+  const t = useTranslations('templates.editor.settingsTab');
+  const branding = content.settings.branding;
+  const primary = branding?.primaryColor;
+  const accent = branding?.accentColor;
+  const logoKey = branding?.logoStorageKey;
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (logoKey === undefined || logoKey === '') {
+      setLogoUrl(null);
+      return;
+    }
+    void (async () => {
+      try {
+        const res = await fetch(`/api/upload/template-logo?key=${encodeURIComponent(logoKey)}`);
+        if (!res.ok) return;
+        const ct = res.headers.get('content-type') ?? '';
+        if (ct.startsWith('application/json')) {
+          const data = (await res.json()) as { url?: string };
+          if (!cancelled) setLogoUrl(data.url ?? null);
+        } else if (!cancelled) {
+          setLogoUrl(`/api/upload/template-logo?key=${encodeURIComponent(logoKey)}`);
+        }
+      } catch {
+        /* best-effort */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [logoKey]);
+
+  const setsById = new Map(content.customResponseSets.map((s) => [s.id, s]));
+  const inspectionPages = content.pages; // title + inspection, in order
+
+  return (
+    <div className="mx-auto max-w-2xl overflow-hidden rounded-lg border bg-card shadow-sm">
+      {/* Cover */}
+      <div
+        className="flex items-center gap-3 px-5 py-4 text-white"
+        style={{ backgroundColor: primary ?? '#0f172a' }}
+      >
+        {logoUrl !== null ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt="logo" className="h-9 w-auto object-contain" />
+        ) : (
+          <div className="h-9 w-12 rounded bg-white/25" aria-hidden />
+        )}
+        <span className="text-lg font-semibold">{content.title || t('templateTitleLabel')}</span>
+      </div>
+
+      <div className="space-y-6 p-5">
+        {inspectionPages.map((page) => (
+          <section key={page.id} className="space-y-3">
+            <h3
+              className="border-b pb-1.5 text-base font-semibold"
+              style={accent !== undefined ? { borderBottomColor: accent } : undefined}
+            >
+              {page.title}
+            </h3>
+            {page.sections.map((section) => (
+              <div key={section.id} className="space-y-2">
+                {section.title ? (
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {section.title}
+                  </p>
+                ) : null}
+                {section.items
+                  .filter((item) => 'prompt' in item)
+                  .map((item) => {
+                    const prompt = 'prompt' in item ? item.prompt : '';
+                    const set =
+                      item.type === 'multipleChoice' ? setsById.get(item.responseSetId) : undefined;
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-start justify-between gap-3 rounded-md border bg-background px-3 py-2 text-sm"
+                      >
+                        <span className="font-medium leading-snug">{prompt}</span>
+                        {set !== undefined ? (
+                          <span className="flex flex-wrap justify-end gap-1">
+                            {set.options.slice(0, 4).map((opt) => (
+                              <span
+                                key={opt.id}
+                                className={`rounded-full px-1.5 py-0.5 text-[11px] ${responseChipClasses(opt.color)}`}
+                              >
+                                {opt.label}
+                              </span>
+                            ))}
+                          </span>
+                        ) : (
+                          <span className="italic text-muted-foreground">—</span>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            ))}
+          </section>
+        ))}
       </div>
     </div>
   );

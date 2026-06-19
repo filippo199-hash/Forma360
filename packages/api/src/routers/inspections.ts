@@ -39,6 +39,7 @@ import {
   inspections,
   permissionSets,
   siteMembers,
+  sites,
   templateVersions,
   templates,
   user,
@@ -492,8 +493,30 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           )
           .orderBy(asc(inspectionWorkflowSigners.position));
 
+        // Resolve names for the report's title page (site, conducted-by).
+        const [siteRow] =
+          insp.siteId !== null
+            ? await ctx.db
+                .select({ name: sites.name })
+                .from(sites)
+                .where(eq(sites.id, insp.siteId))
+                .limit(1)
+            : [];
+        const [conductedByRow] =
+          insp.conductedBy !== null
+            ? await ctx.db
+                .select({ name: user.name })
+                .from(user)
+                .where(eq(user.id, insp.conductedBy))
+                .limit(1)
+            : [];
+
         return {
-          inspection: insp,
+          inspection: {
+            ...insp,
+            siteName: siteRow?.name ?? null,
+            conductedByName: conductedByRow?.name ?? null,
+          },
           version,
           signatures: sigs,
           approvals: approvalRows,

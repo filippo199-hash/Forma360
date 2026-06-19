@@ -12,8 +12,10 @@ import {
   inspectionApprovals,
   inspectionSignatures,
   inspections,
+  sites,
   templateVersions,
   templates,
+  user,
 } from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
 import { and, eq } from 'drizzle-orm';
@@ -27,7 +29,9 @@ export interface InspectionRenderSnapshot {
     documentNumber: string | null;
     status: string;
     conductedBy: string | null;
+    conductedByName: string | null;
     siteId: string | null;
+    siteName: string | null;
     responses: Record<string, unknown>;
     score: { total: number; max: number; percentage: number } | null;
     startedAt: string;
@@ -119,6 +123,14 @@ export async function loadInspectionSnapshot(
     )
     .orderBy(inspectionApprovals.decidedAt);
 
+  // Resolve names for the report's title page.
+  const [siteRow] = insp.siteId
+    ? await db.select({ name: sites.name }).from(sites).where(eq(sites.id, insp.siteId)).limit(1)
+    : [];
+  const [conductedByRow] = insp.conductedBy
+    ? await db.select({ name: user.name }).from(user).where(eq(user.id, insp.conductedBy)).limit(1)
+    : [];
+
   return {
     inspection: {
       id: insp.id,
@@ -127,7 +139,9 @@ export async function loadInspectionSnapshot(
       documentNumber: insp.documentNumber,
       status: insp.status,
       conductedBy: insp.conductedBy,
+      conductedByName: conductedByRow?.name ?? null,
       siteId: insp.siteId,
+      siteName: siteRow?.name ?? null,
       responses: insp.responses,
       score: insp.score,
       startedAt: insp.startedAt.toISOString(),

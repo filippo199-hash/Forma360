@@ -587,7 +587,8 @@
           "notifyOnCompletion": "Notify on completion (Send notification when all signatures are collected)"
         },
         "continueToVisibility": "Continue to Visibility →",
-        "savingForWizard": "Saving…"
+        "savingForWizard": "Saving…",
+        "previewTitle": "Report preview"
       },
       "visibilityControl": {
         "toggle": "Show only when…",

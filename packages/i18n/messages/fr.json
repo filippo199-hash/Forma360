@@ -485,7 +485,8 @@
           "notifyOnCompletion": "Notify on completion (Send notification when all signatures are collected)"
         },
         "continueToVisibility": "Continuer vers Visibilité →",
-        "savingForWizard": "Enregistrement…"
+        "savingForWizard": "Enregistrement…",
+        "previewTitle": "Aperçu du rapport"
       },
       "questionType": {
         "text": "Text",

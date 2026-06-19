@@ -166,11 +166,17 @@ export function ConductShell() {
   });
 
   const submit = trpc.inspections.submit.useMutation({
-    onSuccess: () => {
+    onSuccess: (res) => {
       toast.success(t('submitSuccess'));
       void utils.inspections.get.invalidate({ inspectionId: state.inspectionId });
       void utils.inspections.list.invalidate();
-      router.push(`/${locale}/inspections/${state.inspectionId}/status`);
+      // When the inspection is fully completed, land straight on the full
+      // report. Otherwise (awaiting signatures/approval) show the status page.
+      const dest =
+        res.status === 'completed'
+          ? `/${locale}/inspections/${state.inspectionId}/report`
+          : `/${locale}/inspections/${state.inspectionId}/status`;
+      router.push(dest);
     },
     onError: () => toast.error(t('submitError')),
   });

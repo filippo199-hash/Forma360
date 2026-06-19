@@ -73,6 +73,26 @@ export function PrintLayout({
   const skippedItemIds =
     evalContent !== undefined ? computeSkippedItemIds(evalContent, responses) : new Set<string>();
 
+  // Title-page items are auto-populated — resolve their values from the
+  // inspection so the title page renders real text, not blanks/ids.
+  const insp = snapshot.inspection;
+  const fmtDate = (d: string | null): string =>
+    d === null ? '' : new Date(d).toLocaleDateString();
+  const titleValues: Record<string, string> = {};
+  for (const page of content?.pages ?? []) {
+    if (page.type !== 'title') continue;
+    for (const section of page.sections ?? []) {
+      for (const item of section.items ?? []) {
+        if (item.id === undefined) continue;
+        if (item.type === 'site') titleValues[item.id] = insp.siteName ?? '';
+        else if (item.type === 'conductedBy') titleValues[item.id] = insp.conductedByName ?? '';
+        else if (item.type === 'inspectionDate')
+          titleValues[item.id] = fmtDate(insp.completedAt ?? insp.startedAt);
+        else if (item.type === 'documentNumber') titleValues[item.id] = insp.documentNumber ?? '';
+      }
+    }
+  }
+
   return (
     <>
       {/*
@@ -160,7 +180,6 @@ export function PrintLayout({
         ) : null}
 
         {(content?.pages ?? []).map((page, i) => {
-          if (page.type === 'title') return null;
           return (
             <section key={page.id ?? i} className="print-section">
               <h2 style={accent !== undefined ? { borderBottomColor: accent } : undefined}>
@@ -178,8 +197,13 @@ export function PrintLayout({
                       evalContent !== undefined
                         ? multipleChoiceLabels(evalContent, item, response)
                         : null;
+                    const titleVal = item.id !== undefined ? titleValues[item.id] : undefined;
                     const answerText =
-                      mcLabels !== null ? mcLabels.join(', ') : stringifyResponse(response);
+                      titleVal !== undefined
+                        ? titleVal
+                        : mcLabels !== null
+                          ? mcLabels.join(', ')
+                          : stringifyResponse(response);
                     const flagged =
                       !skipped && item.id !== undefined && flaggedItemIds.has(item.id);
                     return (

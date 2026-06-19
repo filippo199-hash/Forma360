@@ -5,6 +5,7 @@ import { collectFlaggedAnswers, computeSkippedItemIds } from '@forma360/shared/i
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 import { Button } from '../../../../../src/components/ui/button';
 import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { ShareLinkDialog } from '../../../../../src/components/share-link-dialog';
@@ -41,6 +42,40 @@ export default function InspectionReportPage() {
   // Asset names, to resolve `asset`-question answers ({ assetIds: [...] }).
   // Best-effort: if the viewer lacks `assets.view` the ids simply aren't named.
   const assetsQuery = trpc.assets.list.useQuery({});
+
+  // Branding logo (signed URL) for the report cover. Fetched client-side from
+  // the template's branding key so the on-screen report matches the PDF.
+  const brandingKey = (
+    insp.data?.version.content as
+      | { settings?: { branding?: { logoStorageKey?: string } } }
+      | undefined
+  )?.settings?.branding?.logoStorageKey;
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (brandingKey === undefined || brandingKey === '') {
+      setLogoUrl(null);
+      return;
+    }
+    void (async () => {
+      try {
+        const res = await fetch(`/api/upload/template-logo?key=${encodeURIComponent(brandingKey)}`);
+        if (!res.ok) return;
+        const ct = res.headers.get('content-type') ?? '';
+        if (ct.startsWith('application/json')) {
+          const data = (await res.json()) as { url?: string };
+          if (!cancelled) setLogoUrl(data.url ?? null);
+        } else if (!cancelled) {
+          setLogoUrl(`/api/upload/template-logo?key=${encodeURIComponent(brandingKey)}`);
+        }
+      } catch {
+        /* best-effort */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [brandingKey]);
 
   // ── Loading / error states ─────────────────────────────────────────────────
 
@@ -282,6 +317,14 @@ export default function InspectionReportPage() {
             signatures={signatures}
             approvals={approvals}
             assets={assetsQuery.data ?? []}
+            logoUrl={logoUrl}
+            inspectionMeta={{
+              documentNumber: inspection.documentNumber,
+              startedAt: inspection.startedAt,
+              completedAt: inspection.completedAt,
+              conductedByName: inspection.conductedByName,
+              siteName: inspection.siteName,
+            }}
             t={t}
           />
         </section>
@@ -330,6 +373,8 @@ function ReportBody({
   signatures,
   approvals,
   assets,
+  logoUrl,
+  inspectionMeta,
   t,
 }: {
   content: TemplateContent;
@@ -338,9 +383,21 @@ function ReportBody({
   signatures: SigRow[];
   approvals: ApprovalRow[];
   assets: ReadonlyArray<{ id: string; name: string }>;
+  logoUrl: string | null;
+  inspectionMeta: {
+    documentNumber: string | null;
+    startedAt: Date | string | null;
+    completedAt: Date | string | null;
+    conductedByName: string | null;
+    siteName: string | null;
+  };
   t: TFunc;
 }) {
+  const titlePages = content.pages.filter((p) => p.type === 'title');
   const inspectionPages = content.pages.filter((p) => p.type === 'inspection');
+  const branding = content.settings.branding;
+  const primary = branding?.primaryColor;
+  const accent = branding?.accentColor;
 
   // Resolve answers stored as IDs (multiple-choice option IDs, and asset IDs
   // from `asset` questions) to their human-readable labels. Without this the
@@ -351,14 +408,65 @@ function ReportBody({
   }
   for (const a of assets) optionLabels.set(a.id, a.name);
 
+  // Title-page items are auto-populated, not answered — resolve their values
+  // from the inspection (site name, conducted-by name, date, document number).
+  const fmtDate = (d: Date | string | null): string =>
+    d === null ? '' : new Date(d).toLocaleDateString();
+  const titleResponses: Record<string, unknown> = { ...responses };
+  for (const page of titlePages) {
+    for (const section of page.sections) {
+      for (const item of section.items) {
+        if (item.type === 'site') titleResponses[item.id] = inspectionMeta.siteName ?? '';
+        else if (item.type === 'conductedBy')
+          titleResponses[item.id] = inspectionMeta.conductedByName ?? '';
+        else if (item.type === 'inspectionDate')
+          titleResponses[item.id] = fmtDate(inspectionMeta.completedAt ?? inspectionMeta.startedAt);
+        else if (item.type === 'documentNumber')
+          titleResponses[item.id] = inspectionMeta.documentNumber ?? '';
+      }
+    }
+  }
+
   // Flagged answers float to the top of the report so an auditor sees the
   // at-risk responses first. Same pure helper the PDF/share report uses.
   const flaggedAnswers = collectFlaggedAnswers(content, responses);
   const flaggedItemIds = new Set(flaggedAnswers.map((f) => f.itemId));
   const skippedItemIds = computeSkippedItemIds(content, responses);
+  const noop = new Set<string>();
 
   return (
     <div className="space-y-8 rounded-lg border bg-card p-6 shadow-sm">
+      {/* Branding cover — logo + colours from the template's branding. */}
+      {logoUrl !== null || primary !== undefined ? (
+        <div
+          className="-m-6 mb-2 flex items-center gap-3 rounded-t-lg px-6 py-4 text-white"
+          style={
+            primary !== undefined ? { backgroundColor: primary } : { backgroundColor: '#0f172a' }
+          }
+        >
+          {logoUrl !== null ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" className="h-9 w-auto object-contain" />
+          ) : null}
+          <span className="text-lg font-semibold">{content.title}</span>
+        </div>
+      ) : null}
+
+      {/* Title page(s) — site, date, conducted-by, location, etc. */}
+      {titlePages.map((page) => (
+        <ReportPage
+          key={page.id}
+          page={page}
+          responses={titleResponses}
+          actionsByItemId={actionsByItemId}
+          optionLabels={optionLabels}
+          flaggedItemIds={noop}
+          skippedItemIds={noop}
+          accentColor={accent}
+          t={t}
+        />
+      ))}
+
       {flaggedAnswers.length > 0 ? (
         <section className="space-y-2 rounded-md border border-destructive/30 bg-destructive/5 p-4">
           <h2 className="flex items-center gap-2 text-base font-semibold text-destructive">
@@ -390,6 +498,7 @@ function ReportBody({
           optionLabels={optionLabels}
           flaggedItemIds={flaggedItemIds}
           skippedItemIds={skippedItemIds}
+          accentColor={accent}
           t={t}
         />
       ))}
@@ -467,6 +576,7 @@ function ReportPage({
   optionLabels,
   flaggedItemIds,
   skippedItemIds,
+  accentColor,
   t,
 }: {
   page: Page;
@@ -475,11 +585,17 @@ function ReportPage({
   optionLabels: Map<string, string>;
   flaggedItemIds: Set<string>;
   skippedItemIds: Set<string>;
+  accentColor?: string | undefined;
   t: TFunc;
 }) {
   return (
     <section className="space-y-4">
-      <h2 className="border-b pb-2 text-lg font-semibold">{page.title}</h2>
+      <h2
+        className="border-b pb-2 text-lg font-semibold"
+        style={accentColor !== undefined ? { borderBottomColor: accentColor } : undefined}
+      >
+        {page.title}
+      </h2>
       {page.sections.map((section) => (
         <ReportSection
           key={section.id}

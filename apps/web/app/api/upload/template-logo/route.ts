@@ -130,7 +130,7 @@ export async function POST(req: Request): Promise<Response> {
   } else {
     // The local-storage fallback has no HTTP serve; clients refetch via
     // GET /signed-url which handles the dev branch identically.
-    url = `/api/upload/template-logo/signed-url?key=${encodeURIComponent(key)}`;
+    url = `/api/upload/template-logo?key=${encodeURIComponent(key)}`;
   }
 
   return NextResponse.json({ key, url });
