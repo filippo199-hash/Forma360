@@ -38,6 +38,23 @@ You have access to this company's data via tools. Always use tools to look up re
 Be concise and helpful. Format lists clearly. Always scope your responses to the data you retrieve — never invent data.
 Today's date context is provided when you call tools. Times are UTC.`;
 
+/**
+ * Appended for the in-app (web) channel only: tells the agent to make entity
+ * names clickable Markdown links to their detail pages (rendered as in-app
+ * links by MarkdownMessage). Omitted on WhatsApp, where Markdown links would
+ * show as raw, untappable text.
+ */
+const WEB_LINK_INSTRUCTIONS = `
+
+When you list or reference an entity (inspection, observation, action, asset, document, heads-up item), make its name/title a clickable Markdown link to its detail page so the user can open it directly — this includes the first column of any table. Build the link target from the entity's "id" returned by the tools, using these URL patterns:
+- inspection: /inspections/{id}
+- observation (issue): /observations/{id}
+- action: /actions/{id}
+- asset: /assets/{id}
+- document: /documents/{id}
+- heads-up: /heads-up/{id}
+Do not print raw ids in the text — put the id only inside the link target. Example table row: | [Full service — car 1](/actions/01ABCDEF...) | Medium | 18 Jun 2027 |`;
+
 const TOOLS: Anthropic.Tool[] = [
   {
     name: 'list_inspections',
@@ -188,7 +205,10 @@ async function executeTool(
         })
         .from(issues)
         .where(
-          and(eq(issues.tenantId, tenantId), statusFilter ? eq(issues.status, statusFilter) : undefined),
+          and(
+            eq(issues.tenantId, tenantId),
+            statusFilter ? eq(issues.status, statusFilter) : undefined,
+          ),
         )
         .orderBy(desc(issues.createdAt))
         .limit(limit);
@@ -296,6 +316,8 @@ export interface RunAgentInput {
   conversationId?: string | null | undefined;
   /** Optional sink for streaming events (web SSE). WhatsApp omits this. */
   onEvent?: (event: AgentEvent) => void;
+  /** Delivery channel. 'web' enables clickable entity links; defaults to 'web'. */
+  channel?: 'web' | 'whatsapp';
 }
 
 export interface RunAgentResult {
@@ -312,6 +334,8 @@ export interface RunAgentResult {
  */
 export async function runAiAgentTurn(input: RunAgentInput): Promise<RunAgentResult> {
   const { tenantId, userId, message, conversationId: incomingConvId, onEvent } = input;
+  const systemPrompt =
+    (input.channel ?? 'web') === 'web' ? SYSTEM_PROMPT + WEB_LINK_INSTRUCTIONS : SYSTEM_PROMPT;
 
   let conversationId: string;
   let isNew = false;
@@ -373,7 +397,7 @@ export async function runAiAgentTurn(input: RunAgentInput): Promise<RunAgentResu
       model: 'claude-opus-4-8',
       max_tokens: 4096,
       thinking: { type: 'adaptive' },
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       tools: TOOLS,
       messages,
     });

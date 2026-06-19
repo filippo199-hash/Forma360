@@ -50,7 +50,10 @@ export function GET(request: Request): Response {
     log.info('Webhook GET verification succeeded');
     return new Response(challenge, { status: 200, headers: { 'Content-Type': 'text/plain' } });
   }
-  log.warn({ mode, tokenMatches: token === env.WHATSAPP_VERIFY_TOKEN }, 'Webhook GET verification failed');
+  log.warn(
+    { mode, tokenMatches: token === env.WHATSAPP_VERIFY_TOKEN },
+    'Webhook GET verification failed',
+  );
   return new Response('Forbidden', { status: 403 });
 }
 
@@ -110,10 +113,7 @@ async function findUserByPhone(
     .select({ userId: user.id, tenantId: user.tenantId })
     .from(user)
     .where(
-      and(
-        or(eq(user.phone, withPlus), eq(user.phone, fromDigits)),
-        isNull(user.deactivatedAt),
-      ),
+      and(or(eq(user.phone, withPlus), eq(user.phone, fromDigits)), isNull(user.deactivatedAt)),
     )
     .orderBy(user.createdAt)
     .limit(2);
@@ -158,6 +158,7 @@ async function handleMessage(fromDigits: string, text: string): Promise<void> {
     userId: match.userId,
     message: text,
     conversationId,
+    channel: 'whatsapp',
   });
 
   const reply =

@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -8,32 +10,45 @@ import remarkGfm from 'remark-gfm';
  * and task lists work), with Tailwind-styled elements so tables, lists and
  * code blocks read cleanly inside a chat bubble instead of showing raw
  * pipes and dashes.
+ *
+ * Internal links the agent emits (e.g. `/actions/{id}`) render as
+ * locale-aware in-app links, so a row in a result table opens the entity
+ * directly; external links open in a new tab.
  */
 export function MarkdownMessage({ content }: { content: string }) {
+  const params = useParams<{ locale: string }>();
+  const locale = params?.locale ?? 'en';
+  const linkClass =
+    'font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/80';
+
   return (
     <div className="text-sm leading-relaxed break-words">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           p: ({ children }) => <p className="my-1.5 first:mt-0 last:mb-0">{children}</p>,
-          ul: ({ children }) => (
-            <ul className="my-1.5 list-disc space-y-1 pl-5">{children}</ul>
-          ),
-          ol: ({ children }) => (
-            <ol className="my-1.5 list-decimal space-y-1 pl-5">{children}</ol>
-          ),
+          ul: ({ children }) => <ul className="my-1.5 list-disc space-y-1 pl-5">{children}</ul>,
+          ol: ({ children }) => <ol className="my-1.5 list-decimal space-y-1 pl-5">{children}</ol>,
           li: ({ children }) => <li className="leading-relaxed">{children}</li>,
           strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-          a: ({ children, href }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium underline underline-offset-2"
-            >
-              {children}
-            </a>
-          ),
+          a: ({ children, href }) => {
+            const h = typeof href === 'string' ? href : '';
+            // Internal app link → locale-aware in-app navigation.
+            if (h.startsWith('/') && !h.startsWith('//')) {
+              const target =
+                h === `/${locale}` || h.startsWith(`/${locale}/`) ? h : `/${locale}${h}`;
+              return (
+                <Link href={target} className={linkClass}>
+                  {children}
+                </Link>
+              );
+            }
+            return (
+              <a href={h} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                {children}
+              </a>
+            );
+          },
           h1: ({ children }) => <h1 className="mb-1 mt-2 text-base font-semibold">{children}</h1>,
           h2: ({ children }) => <h2 className="mb-1 mt-2 text-sm font-semibold">{children}</h2>,
           h3: ({ children }) => <h3 className="mb-1 mt-2 text-sm font-semibold">{children}</h3>,
