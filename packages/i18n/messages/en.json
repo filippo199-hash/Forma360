@@ -693,7 +693,8 @@
         "addOption": "Add option",
         "removeOption": "Remove option",
         "flaggedLabel": "Flagged",
-        "optionLabel": "Label"
+        "optionLabel": "Label",
+        "colorLabel": "Color"
       },
       "logicTab": {
         "empty": "Select a multiple-choice question to edit its logic triggers.",
@@ -730,7 +731,8 @@
         "mcQuestionsHeader": "MC Questions",
         "noResponseSetAssigned": "This question has no response set assigned. Go to Response Sets to create one.",
         "triggerCountSingular": "action",
-        "triggerCountPlural": "actions"
+        "triggerCountPlural": "actions",
+        "flagLabel": "Flag"
       },
       "validation": {
         "title": "Validation errors",

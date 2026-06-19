@@ -36,14 +36,21 @@ const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Must be a 6-digit hex co
 
 /**
  * One option in a multiple-choice / custom response set. Triggers on this
- * option fire when the option is selected during an inspection. Flagging
- * is per-option per T-12.
+ * option fire when the option is selected during an inspection.
+ *
+ * `color` is the option's styling and belongs to the (reusable) set.
+ * `flagged` is DEPRECATED here: flagging is now a property of the individual
+ * question (`multipleChoiceQuestion.flaggedOptionIds`), because a response
+ * set is shared across many questions/templates. The field is kept optional
+ * so existing content still parses and legacy consumers can fall back to it
+ * until a question's flags are first edited.
  */
 const responseOptionSchema = z.object({
   id: ulid,
   label: nonEmptyString,
   color: z.string().optional(),
-  flagged: z.boolean().default(false),
+  /** @deprecated set per-question via `flaggedOptionIds` instead. */
+  flagged: z.boolean().optional(),
   triggers: z
     .array(z.lazy(() => triggerSchema))
     .max(20)
@@ -151,6 +158,13 @@ const multipleChoiceQuestion = z.object({
   type: z.literal('multipleChoice'),
   /** Refers to a CustomResponseSet id in the template's `customResponseSets` array. */
   responseSetId: ulid,
+  /**
+   * Option ids (within the referenced set) flagged for THIS question. Flagging
+   * lives on the question, not the set, since a set is reused across questions.
+   * Optional: when absent (legacy content), consumers fall back to the set
+   * options' deprecated `flagged` flag until the question is first edited.
+   */
+  flaggedOptionIds: z.array(ulid).optional(),
 });
 
 const textQuestion = z.object({
@@ -607,6 +621,22 @@ export type TemplateContent = z.infer<typeof templateContentSchema>;
  */
 export function parseTemplateContent(input: unknown): TemplateContent {
   return templateContentSchema.parse(input);
+}
+
+/**
+ * Effective set of flagged option ids for a multipleChoice question.
+ *
+ * Flagging lives on the question (`flaggedOptionIds`). When that's absent
+ * (legacy content authored before per-question flagging), fall back to the
+ * set options' deprecated per-option `flagged` flag so old templates and
+ * in-flight inspections keep highlighting the same responses.
+ */
+export function effectiveFlaggedOptionIds(
+  item: { flaggedOptionIds?: readonly string[] | undefined },
+  set: { options: ReadonlyArray<{ id: string; flagged?: boolean | undefined }> } | undefined,
+): string[] {
+  if (item.flaggedOptionIds !== undefined) return [...item.flaggedOptionIds];
+  return (set?.options ?? []).filter((o) => o.flagged === true).map((o) => o.id);
 }
 
 /**

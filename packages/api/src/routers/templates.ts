@@ -100,8 +100,10 @@ function emptyContent(title: string): TemplateContent {
   // Every new template starts with a Title Page (site, date, person, location —
   // auto-populated at inspection start) and a first inspection page with one
   // Yes / No / N/A question. The Yes/No/N/A set is baked into the template's
-  // customResponseSets with colours + a flagged "No" so it is self-contained.
+  // customResponseSets with per-option colours; the "No" response is flagged on
+  // the question itself (flaggedOptionIds), not on the shared set.
   const yesNoSetId = newId();
+  const yesNoNoOptionId = newId();
   return {
     schemaVersion: TEMPLATE_SCHEMA_VERSION,
     title,
@@ -138,6 +140,7 @@ function emptyContent(title: string): TemplateContent {
                 prompt: 'Type question',
                 required: false,
                 responseSetId: yesNoSetId,
+                flaggedOptionIds: [yesNoNoOptionId],
               },
             ],
           },
@@ -149,8 +152,9 @@ function emptyContent(title: string): TemplateContent {
       documentNumberFormat: '{counter:6}',
       documentNumberStart: 1,
     },
-    // Built-in response-set library, available in every new template. Red
-    // options are flagged. The Page 1 question uses the Yes / No / N/A set.
+    // Built-in response-set library, available in every new template. Sets
+    // carry per-option colours only; flagging is set per question. The Page 1
+    // question uses the Yes / No / N/A set and flags its "No" response.
     customResponseSets: [
       {
         id: yesNoSetId,
@@ -158,9 +162,9 @@ function emptyContent(title: string): TemplateContent {
         sourceGlobalId: null,
         multiSelect: false,
         options: [
-          { id: newId(), label: 'Yes', color: 'green', flagged: false },
-          { id: newId(), label: 'No', color: 'red', flagged: true },
-          { id: newId(), label: 'N/A', color: 'grey', flagged: false },
+          { id: newId(), label: 'Yes', color: 'green' },
+          { id: yesNoNoOptionId, label: 'No', color: 'red' },
+          { id: newId(), label: 'N/A', color: 'grey' },
         ],
       },
       {
@@ -169,10 +173,10 @@ function emptyContent(title: string): TemplateContent {
         sourceGlobalId: null,
         multiSelect: false,
         options: [
-          { id: newId(), label: 'Good', color: 'green', flagged: false },
-          { id: newId(), label: 'Fair', color: 'amber', flagged: false },
-          { id: newId(), label: 'Poor', color: 'red', flagged: true },
-          { id: newId(), label: 'N/A', color: 'grey', flagged: false },
+          { id: newId(), label: 'Good', color: 'green' },
+          { id: newId(), label: 'Fair', color: 'amber' },
+          { id: newId(), label: 'Poor', color: 'red' },
+          { id: newId(), label: 'N/A', color: 'grey' },
         ],
       },
       {
@@ -181,9 +185,9 @@ function emptyContent(title: string): TemplateContent {
         sourceGlobalId: null,
         multiSelect: false,
         options: [
-          { id: newId(), label: 'Safe', color: 'green', flagged: false },
-          { id: newId(), label: 'At Risk', color: 'red', flagged: true },
-          { id: newId(), label: 'N/A', color: 'grey', flagged: false },
+          { id: newId(), label: 'Safe', color: 'green' },
+          { id: newId(), label: 'At Risk', color: 'red' },
+          { id: newId(), label: 'N/A', color: 'grey' },
         ],
       },
       {
@@ -192,9 +196,9 @@ function emptyContent(title: string): TemplateContent {
         sourceGlobalId: null,
         multiSelect: false,
         options: [
-          { id: newId(), label: 'Pass', color: 'green', flagged: false },
-          { id: newId(), label: 'Fail', color: 'red', flagged: true },
-          { id: newId(), label: 'N/A', color: 'grey', flagged: false },
+          { id: newId(), label: 'Pass', color: 'green' },
+          { id: newId(), label: 'Fail', color: 'red' },
+          { id: newId(), label: 'N/A', color: 'grey' },
         ],
       },
       {
@@ -203,9 +207,9 @@ function emptyContent(title: string): TemplateContent {
         sourceGlobalId: null,
         multiSelect: false,
         options: [
-          { id: newId(), label: 'Compliant', color: 'green', flagged: false },
-          { id: newId(), label: 'Non-Compliant', color: 'red', flagged: true },
-          { id: newId(), label: 'N/A', color: 'grey', flagged: false },
+          { id: newId(), label: 'Compliant', color: 'green' },
+          { id: newId(), label: 'Non-Compliant', color: 'red' },
+          { id: newId(), label: 'N/A', color: 'grey' },
         ],
       },
     ],

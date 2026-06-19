@@ -570,7 +570,8 @@
         "addOption": "Add option",
         "removeOption": "Remove option",
         "flaggedLabel": "Flagged",
-        "optionLabel": "Label"
+        "optionLabel": "Label",
+        "colorLabel": "Color"
       },
       "logicTab": {
         "empty": "Select a multiple-choice question to edit its logic triggers.",
@@ -603,7 +604,8 @@
           "timingImmediate": "Immediate",
           "timingOnCompletion": "On completion"
         },
-        "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit."
+        "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
+        "flagLabel": "Marcar"
       },
       "validation": {
         "title": "Validation errors",

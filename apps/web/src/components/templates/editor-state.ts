@@ -394,7 +394,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
             rs.id === action.setId
               ? {
                   ...rs,
-                  options: [...rs.options, { id: newId(), label: 'New option', flagged: false }],
+                  options: [...rs.options, { id: newId(), label: 'New option', color: 'grey' }],
                 }
               : rs,
           ),

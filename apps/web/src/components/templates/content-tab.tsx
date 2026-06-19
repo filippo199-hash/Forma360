@@ -20,6 +20,8 @@
  */
 
 import type { CustomResponseSet, Item, Page, Section } from '@forma360/shared/template-schema';
+import { effectiveFlaggedOptionIds } from '@forma360/shared/template-schema';
+import { responseChipClasses } from '../../lib/response-colors';
 import {
   DndContext,
   KeyboardSensor,
@@ -85,6 +87,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../ui/sheet';
 import { Switch } from '../ui/switch';
 import { Textarea } from '../ui/textarea';
+import { ColorSwatchPicker } from './color-swatch-picker';
 import { useEditor } from './editor-context';
 import { makeItem, type StubItemType, type SupportedItemType } from './editor-state';
 import { OptionTriggerEditor } from './option-trigger-editor';
@@ -879,12 +882,13 @@ function SortableQuestionRow({
   const required = 'required' in item ? item.required : false;
   const supportsLogic = 'visibility' in item || item.type === 'multipleChoice';
 
-  // Compute flagged-option count for multipleChoice items (used in chip-row).
-  const flaggedCount = useMemo(() => {
-    if (item.type !== 'multipleChoice') return 0;
+  // Per-question flagged-option ids (legacy fallback to the set's flags).
+  const flaggedOptionIds = useMemo(() => {
+    if (item.type !== 'multipleChoice') return [];
     const rs = state.content.customResponseSets.find((s) => s.id === item.responseSetId);
-    return rs?.options.filter((o) => o.flagged).length ?? 0;
+    return effectiveFlaggedOptionIds(item, rs);
   }, [item, state.content.customResponseSets]);
+  const flaggedCount = flaggedOptionIds.length;
 
   const responseSetForLogic = useMemo<CustomResponseSet | null>(() => {
     if (item.type !== 'multipleChoice') return null;
@@ -1069,6 +1073,17 @@ function SortableQuestionRow({
                         key={opt.id}
                         setId={responseSetForLogic.id}
                         option={opt}
+                        flagged={flaggedOptionIds.includes(opt.id)}
+                        onToggleFlag={() => {
+                          const next = flaggedOptionIds.includes(opt.id)
+                            ? flaggedOptionIds.filter((id) => id !== opt.id)
+                            : [...flaggedOptionIds, opt.id];
+                          dispatch({
+                            type: 'updateItem',
+                            itemId: item.id,
+                            patch: { flaggedOptionIds: next } as Partial<Item>,
+                          });
+                        }}
                       />
                     ))}
                   </div>
@@ -1190,7 +1205,7 @@ function TypeOfResponsePicker({
         name: '',
         sourceGlobalId: null,
         multiSelect: false,
-        options: [{ id: newId(), label: 'Option 1', flagged: false }],
+        options: [{ id: newId(), label: 'Option 1', color: 'green' }],
       },
     });
     // Attach (or swap) the set onto the current item.
@@ -1286,11 +1301,7 @@ function TypeOfResponsePicker({
                       {rs.options.slice(0, 4).map((opt) => (
                         <span
                           key={opt.id}
-                          className={`rounded-full px-1.5 py-0.5 text-[11px] ${
-                            opt.flagged
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'bg-green-100 text-green-700'
-                          }`}
+                          className={`rounded-full px-1.5 py-0.5 text-[11px] ${responseChipClasses(opt.color)}`}
                         >
                           {opt.label}
                         </span>
@@ -1455,24 +1466,17 @@ function ResponseSetManageSheet({
                         })
                       }
                     />
-                    <div className="flex items-center gap-1.5 whitespace-nowrap">
-                      <Switch
-                        id={`flag-${opt.id}`}
-                        checked={opt.flagged}
-                        onCheckedChange={(v) =>
-                          dispatch({
-                            type: 'updateResponseOption',
-                            setId: set.id,
-                            optionId: opt.id,
-                            patch: { flagged: v },
-                          })
-                        }
-                        aria-label={tPicker('flaggedLabel')}
-                      />
-                      <Label htmlFor={`flag-${opt.id}`} className="text-xs text-muted-foreground">
-                        {tPicker('flaggedLabel')}
-                      </Label>
-                    </div>
+                    <ColorSwatchPicker
+                      value={opt.color}
+                      onChange={(color) =>
+                        dispatch({
+                          type: 'updateResponseOption',
+                          setId: set.id,
+                          optionId: opt.id,
+                          patch: { color },
+                        })
+                      }
+                    />
                     {set.options.length > 1 ? (
                       <Button
                         type="button"
@@ -1548,9 +1552,7 @@ function ResponseTypeTrigger({
         {rs.options.slice(0, 3).map((opt) => (
           <span
             key={opt.id}
-            className={`rounded-full px-1.5 py-0.5 text-[11px] ${
-              opt.flagged ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
-            }`}
+            className={`rounded-full px-1.5 py-0.5 text-[11px] ${responseChipClasses(opt.color)}`}
           >
             {opt.label}
           </span>

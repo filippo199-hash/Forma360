@@ -1,6 +1,7 @@
 'use client';
 
 import type { CustomResponseSet, Item } from '@forma360/shared/template-schema';
+import { effectiveFlaggedOptionIds } from '@forma360/shared/template-schema';
 import { Image as ImageIcon, MapPin, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
@@ -382,6 +383,9 @@ function MultipleChoiceInput({
     [responseSets, item.responseSetId],
   );
 
+  // Flagging is per-question (legacy fallback to the set's option flags).
+  const flaggedIds = useMemo(() => new Set(effectiveFlaggedOptionIds(item, set)), [item, set]);
+
   if (set === undefined) {
     return <p className="text-xs text-muted-foreground">{t('select')}</p>;
   }
@@ -425,7 +429,7 @@ function MultipleChoiceInput({
                 className="h-5 w-5"
               />
               <span className="font-medium">{option.label}</span>
-              {option.flagged ? (
+              {flaggedIds.has(option.id) ? (
                 <span className="ml-auto rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-200">
                   {'!'}
                 </span>

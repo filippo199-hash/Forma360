@@ -15,7 +15,10 @@
  */
 
 import type { ResponseOption, Trigger } from '@forma360/shared/template-schema';
+import { Flag } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { cn } from '../../lib/cn';
+import { responseChipClasses } from '../../lib/response-colors';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -25,10 +28,19 @@ import { useEditor } from './editor-context';
 interface OptionTriggerEditorProps {
   setId: string;
   option: ResponseOption;
+  /** Whether this response is flagged for the current question. */
+  flagged?: boolean;
+  /** Toggle the per-question flag. When omitted, no flag control is shown. */
+  onToggleFlag?: () => void;
 }
 
 /** Renders a card with the option header, every trigger, and an "Add action" picker. */
-export function OptionTriggerEditor({ setId, option }: OptionTriggerEditorProps) {
+export function OptionTriggerEditor({
+  setId,
+  option,
+  flagged = false,
+  onToggleFlag,
+}: OptionTriggerEditorProps) {
   const t = useTranslations('templates.editor.logicTab');
   const { dispatch } = useEditor();
   const triggers: ReadonlyArray<Trigger> = option.triggers ?? [];
@@ -65,12 +77,26 @@ export function OptionTriggerEditor({ setId, option }: OptionTriggerEditorProps)
       <div className="flex items-center justify-between gap-2 border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
           <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-              option.flagged ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'
-            }`}
+            className={`rounded-full px-2 py-0.5 text-xs font-medium ${responseChipClasses(option.color)}`}
           >
             {option.label}
           </span>
+          {onToggleFlag !== undefined ? (
+            <button
+              type="button"
+              onClick={onToggleFlag}
+              aria-pressed={flagged}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
+                flagged
+                  ? 'border-orange-200 bg-orange-100 text-orange-700'
+                  : 'border-transparent text-muted-foreground hover:bg-accent hover:text-foreground',
+              )}
+            >
+              <Flag className={cn('h-3 w-3', flagged && 'fill-orange-500 text-orange-500')} />
+              {t('flagLabel')}
+            </button>
+          ) : null}
           {triggers.length > 0 ? (
             <span className="text-xs text-muted-foreground">
               {`→ ${String(triggers.length)} ${triggers.length === 1 ? t('triggerCountSingular') : t('triggerCountPlural')}`}

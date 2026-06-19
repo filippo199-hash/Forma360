@@ -8,6 +8,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
+import { ColorSwatchPicker } from './color-swatch-picker';
 import { useEditor } from './editor-context';
 
 /**
@@ -32,7 +33,7 @@ export function ResponseSetsTab() {
         name: 'New response set',
         sourceGlobalId: null,
         multiSelect: false,
-        options: [{ id: newId(), label: 'Yes', flagged: false }],
+        options: [{ id: newId(), label: 'Yes', color: 'green' }],
       },
     });
     setSelectedSetId(id);
@@ -168,23 +169,17 @@ export function ResponseSetsTab() {
                         })
                       }
                     />
-                    <div className="flex items-center gap-1 whitespace-nowrap">
-                      <Switch
-                        id={`flag-${opt.id}`}
-                        checked={opt.flagged}
-                        onCheckedChange={(v) =>
-                          dispatch({
-                            type: 'updateResponseOption',
-                            setId: selectedSet.id,
-                            optionId: opt.id,
-                            patch: { flagged: v },
-                          })
-                        }
-                      />
-                      <Label htmlFor={`flag-${opt.id}`} className="text-xs text-muted-foreground">
-                        {t('flaggedLabel')}
-                      </Label>
-                    </div>
+                    <ColorSwatchPicker
+                      value={opt.color}
+                      onChange={(color) =>
+                        dispatch({
+                          type: 'updateResponseOption',
+                          setId: selectedSet.id,
+                          optionId: opt.id,
+                          patch: { color },
+                        })
+                      }
+                    />
                     {selectedSet.options.length > 1 ? (
                       <Button
                         variant="ghost"

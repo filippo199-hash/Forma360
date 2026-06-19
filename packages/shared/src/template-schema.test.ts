@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { newId } from './id';
 import {
+  effectiveFlaggedOptionIds,
   maxLogicDepth,
   parseTemplateContent,
   TEMPLATE_LIMITS,
@@ -156,6 +157,30 @@ describe('templateContentSchema — root invariants', () => {
   });
 });
 
+// ─── Per-question flagging ──────────────────────────────────────────────────
+
+describe('effectiveFlaggedOptionIds', () => {
+  const set = {
+    options: [{ id: 'a', flagged: false }, { id: 'b', flagged: true }, { id: 'c' }],
+  };
+
+  it('uses the question flaggedOptionIds when present', () => {
+    expect(effectiveFlaggedOptionIds({ flaggedOptionIds: ['a', 'c'] }, set)).toEqual(['a', 'c']);
+  });
+
+  it('treats an explicit empty list as "no flags" (not a fallback)', () => {
+    expect(effectiveFlaggedOptionIds({ flaggedOptionIds: [] }, set)).toEqual([]);
+  });
+
+  it('falls back to the set option flags for legacy questions (no field)', () => {
+    expect(effectiveFlaggedOptionIds({}, set)).toEqual(['b']);
+  });
+
+  it('returns [] when neither the question nor the set carries flags', () => {
+    expect(effectiveFlaggedOptionIds({}, undefined)).toEqual([]);
+  });
+});
+
 // ─── Question types ─────────────────────────────────────────────────────────
 
 describe('templateContentSchema — question types', () => {
@@ -216,7 +241,9 @@ describe('templateContentSchema — question types', () => {
             {
               id: newId(),
               title: 's',
-              items: [{ id: newId(), type: 'conductedBy', prompt: 'Conducted by', required: false }],
+              items: [
+                { id: newId(), type: 'conductedBy', prompt: 'Conducted by', required: false },
+              ],
             },
           ],
         },
