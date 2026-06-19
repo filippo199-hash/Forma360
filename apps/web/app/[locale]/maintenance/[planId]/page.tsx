@@ -196,7 +196,7 @@ export default function MaintenancePlanDetailPage() {
           </div>
         </div>
 
-        <nav className="flex gap-1">
+        <nav className="flex gap-1 border-b">
           {(['overview', 'assets'] as const).map((t_) => (
             <button
               key={t_}
@@ -206,7 +206,7 @@ export default function MaintenancePlanDetailPage() {
                 setTab(t_);
               }}
               className={cn(
-                'border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
                 tab === t_
                   ? 'border-foreground text-foreground font-semibold'
                   : 'border-transparent text-muted-foreground hover:text-foreground',

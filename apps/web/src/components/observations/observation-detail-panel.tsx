@@ -271,14 +271,14 @@ export function ObservationDetailPanel({
           </div>
         </div>
 
-        <nav className="mt-3 flex gap-1">
+        <nav className="mt-3 flex gap-1 border-b">
           {(['overview', 'activity', 'files', 'actions', 'inspections'] as const).map((key) => (
             <button
               key={key}
               type="button"
               onClick={() => setTab(key)}
               className={cn(
-                'border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
                 tab === key
                   ? 'border-foreground text-foreground font-semibold'
                   : 'border-transparent text-muted-foreground hover:text-foreground',

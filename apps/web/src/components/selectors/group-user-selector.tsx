@@ -135,7 +135,7 @@ export function GroupUserSelector({
 
         <PopoverContent className="w-80 p-0" align="start">
           {showTabs ? (
-            <div className="flex">
+            <div className="flex border-b">
               {(['groups', 'users'] as const).map((tk) => (
                 <button
                   key={tk}
@@ -145,7 +145,7 @@ export function GroupUserSelector({
                     setSearch('');
                   }}
                   className={cn(
-                    'flex-1 border-b-2 px-3 py-2 text-sm font-medium capitalize transition-colors',
+                    'flex-1 -mb-px border-b-2 px-3 py-2 text-sm font-medium capitalize transition-colors',
                     tab === tk
                       ? 'border-foreground text-foreground'
                       : 'border-transparent text-muted-foreground hover:text-foreground',
