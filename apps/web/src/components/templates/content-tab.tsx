@@ -21,6 +21,7 @@
 
 import type { CustomResponseSet, Item, Page, Section } from '@forma360/shared/template-schema';
 import { effectiveFlaggedOptionIds } from '@forma360/shared/template-schema';
+import { forwardJumpTargets } from '@forma360/shared/inspection-eval';
 import { responseChipClasses } from '../../lib/response-colors';
 import {
   DndContext,
@@ -895,6 +896,17 @@ function SortableQuestionRow({
     return state.content.customResponseSets.find((s) => s.id === item.responseSetId) ?? null;
   }, [item, state.content.customResponseSets]);
 
+  // Forward jump targets (questions + pages below this question). Single-select only.
+  const jumpTargets = useMemo(
+    () =>
+      item.type === 'multipleChoice'
+        ? forwardJumpTargets(state.content, item.id)
+        : { questions: [], pages: [] },
+    [item, state.content],
+  );
+  const itemJumps = item.type === 'multipleChoice' ? (item.jumps ?? []) : [];
+  const allowJump = responseSetForLogic !== null && !responseSetForLogic.multiSelect;
+
   return (
     <div ref={setNodeRef} style={style} className="group">
       {/* ── Main row ── */}
@@ -1082,6 +1094,19 @@ function SortableQuestionRow({
                             type: 'updateItem',
                             itemId: item.id,
                             patch: { flaggedOptionIds: next } as Partial<Item>,
+                          });
+                        }}
+                        allowJump={allowJump}
+                        jumpTargets={jumpTargets}
+                        jumpTarget={itemJumps.find((j) => j.optionId === opt.id)?.target ?? null}
+                        onSetJump={(target) => {
+                          const others = itemJumps.filter((j) => j.optionId !== opt.id);
+                          const next =
+                            target === null ? others : [...others, { optionId: opt.id, target }];
+                          dispatch({
+                            type: 'updateItem',
+                            itemId: item.id,
+                            patch: { jumps: next } as Partial<Item>,
                           });
                         }}
                       />

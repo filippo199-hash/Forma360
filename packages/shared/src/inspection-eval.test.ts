@@ -2,16 +2,19 @@ import { describe, expect, it } from 'vitest';
 import {
   collectActiveTriggers,
   collectFlaggedAnswers,
+  computeSkippedItemIds,
   evidenceKey,
   followUpTargetMap,
+  forwardJumpTargets,
   getEvidenceKeys,
   isAnswerFlagged,
   isFollowUpRevealed,
   missingEvidence,
   multipleChoiceLabels,
   selectedOptionIds,
+  skippedInspectionPageIds,
 } from './inspection-eval';
-import type { CustomResponseSet, TemplateContent, Trigger } from './template-schema';
+import type { CustomResponseSet, JumpTarget, TemplateContent, Trigger } from './template-schema';
 
 // ─── Builders ────────────────────────────────────────────────────────────────
 
@@ -215,6 +218,115 @@ describe('collectActiveTriggers', () => {
 
   it('returns nothing when unanswered', () => {
     expect(collectActiveTriggers(c, {})).toHaveLength(0);
+  });
+});
+
+// ─── Jump-to (forward skip logic) ──────────────────────────────────────────────
+
+describe('computeSkippedItemIds + jump helpers', () => {
+  // Two inspection pages: A[q1,q2,q3]  B[q4,q5]. q1 uses a single-select set.
+  const s = set('s1', [
+    { id: 'yes', label: 'Yes' },
+    { id: 'no', label: 'No' },
+  ]);
+  function build(
+    jumps: Array<{ on: string; optionId: string; target: JumpTarget }>,
+  ): TemplateContent {
+    const q = (id: string) => {
+      const j = jumps
+        .filter((x) => x.on === id)
+        .map((x) => ({ optionId: x.optionId, target: x.target }));
+      return {
+        id,
+        type: 'multipleChoice' as const,
+        prompt: id.toUpperCase(),
+        required: false,
+        responseSetId: 's1',
+        ...(j.length ? { jumps: j } : {}),
+      };
+    };
+    return {
+      schemaVersion: '1',
+      title: 'T',
+      pages: [
+        {
+          id: 'title',
+          type: 'title',
+          title: 'Title',
+          sections: [{ id: 'ts', title: 'H', items: [] }],
+        },
+        {
+          id: 'pageA',
+          type: 'inspection',
+          title: 'Page A',
+          sections: [{ id: 'secA', title: 'A', items: [q('q1'), q('q2'), q('q3')] as never }],
+        },
+        {
+          id: 'pageB',
+          type: 'inspection',
+          title: 'Page B',
+          sections: [{ id: 'secB', title: 'B', items: [q('q4'), q('q5')] as never }],
+        },
+      ],
+      settings: { titleFormat: '{date}', documentNumberFormat: '{c}', documentNumberStart: 1 },
+      customResponseSets: [s],
+    } as TemplateContent;
+  }
+
+  it('skips nothing until the jumping option is selected', () => {
+    const c = build([{ on: 'q1', optionId: 'no', target: { type: 'question', questionId: 'q4' } }]);
+    expect([...computeSkippedItemIds(c, {})]).toEqual([]);
+    expect([...computeSkippedItemIds(c, { q1: 'yes' })]).toEqual([]);
+  });
+
+  it('jump to a question skips the items between', () => {
+    const c = build([{ on: 'q1', optionId: 'no', target: { type: 'question', questionId: 'q4' } }]);
+    expect([...computeSkippedItemIds(c, { q1: 'no' })].sort()).toEqual(['q2', 'q3']);
+  });
+
+  it('jump to a page skips everything before that page', () => {
+    const c = build([{ on: 'q1', optionId: 'no', target: { type: 'page', pageId: 'pageB' } }]);
+    expect([...computeSkippedItemIds(c, { q1: 'no' })].sort()).toEqual(['q2', 'q3']);
+  });
+
+  it('jump to end skips all remaining items', () => {
+    const c = build([{ on: 'q1', optionId: 'no', target: { type: 'end' } }]);
+    expect([...computeSkippedItemIds(c, { q1: 'no' })].sort()).toEqual(['q2', 'q3', 'q4', 'q5']);
+  });
+
+  it('chains jumps and never fires a skipped question’s own jump', () => {
+    const c = build([
+      { on: 'q1', optionId: 'no', target: { type: 'question', questionId: 'q3' } },
+      { on: 'q3', optionId: 'no', target: { type: 'question', questionId: 'q5' } },
+    ]);
+    // q1=No skips q2; q3 visible and =No skips q4.
+    expect([...computeSkippedItemIds(c, { q1: 'no', q3: 'no' })].sort()).toEqual(['q2', 'q4']);
+    // If q1 jumps PAST q3 (to q5 via end-like), q3's jump must not fire.
+    const c2 = build([
+      { on: 'q1', optionId: 'no', target: { type: 'question', questionId: 'q5' } },
+      { on: 'q3', optionId: 'no', target: { type: 'question', questionId: 'q4' } },
+    ]);
+    expect([...computeSkippedItemIds(c2, { q1: 'no', q3: 'no' })].sort()).toEqual([
+      'q2',
+      'q3',
+      'q4',
+    ]);
+  });
+
+  it('flags a fully-skipped page', () => {
+    const c = build([{ on: 'q1', optionId: 'no', target: { type: 'end' } }]);
+    expect([...skippedInspectionPageIds(c, { q1: 'no' })]).toEqual(['pageB']);
+  });
+
+  it('forwardJumpTargets lists only items/pages below the question', () => {
+    const c = build([]);
+    const t1 = forwardJumpTargets(c, 'q1');
+    expect(t1.questions.map((q) => q.id)).toEqual(['q2', 'q3', 'q4', 'q5']);
+    expect(t1.pages.map((p) => p.id)).toEqual(['pageB']);
+    // q4 is on page B; only q5 is below it, and no page is below page B.
+    const t4 = forwardJumpTargets(c, 'q4');
+    expect(t4.questions.map((q) => q.id)).toEqual(['q5']);
+    expect(t4.pages).toEqual([]);
   });
 });
 

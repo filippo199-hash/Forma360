@@ -26,7 +26,12 @@ import { trpc } from '../../lib/trpc/client';
 import { ActionDetailPanel } from '../actions/action-detail-panel';
 import { useConduct } from './conduct-context';
 import { missingEvidence, requiredEvidenceCount } from '@forma360/shared/inspection-eval';
-import { findUnansweredRequired, isItemRevealed, type Responses } from './conduct-state';
+import {
+  findUnansweredRequired,
+  isItemRevealed,
+  skippedPages,
+  type Responses,
+} from './conduct-state';
 import { EvidenceUploader } from './evidence-uploader';
 import { ResponseInput } from './response-input';
 
@@ -260,7 +265,26 @@ export function ConductShell() {
 
   const currentPage = state.content.pages.find((p) => p.id === state.selectedPageId) ?? null;
   const pageIndex = state.content.pages.findIndex((p) => p.id === state.selectedPageId);
-  const isLastPage = pageIndex === state.content.pages.length - 1;
+  // Pages fully skipped by an active forward jump are stepped over in nav.
+  const skippedPageIds = useMemo(
+    () => skippedPages(state.content, state.responses),
+    [state.content, state.responses],
+  );
+  const nextPageId = ((): string | null => {
+    for (let i = pageIndex + 1; i < state.content.pages.length; i++) {
+      const p = state.content.pages[i];
+      if (p !== undefined && !skippedPageIds.has(p.id)) return p.id;
+    }
+    return null;
+  })();
+  const prevPageId = ((): string | null => {
+    for (let i = pageIndex - 1; i >= 0; i--) {
+      const p = state.content.pages[i];
+      if (p !== undefined && !skippedPageIds.has(p.id)) return p.id;
+    }
+    return null;
+  })();
+  const isLastPage = nextPageId === null;
   const missing = useMemo(
     () => findUnansweredRequired(state.content, state.responses),
     [state.content, state.responses],
@@ -339,10 +363,9 @@ export function ConductShell() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const prev = state.content.pages[pageIndex - 1];
-                  if (prev !== undefined) dispatch({ type: 'SET_PAGE', pageId: prev.id });
+                  if (prevPageId !== null) dispatch({ type: 'SET_PAGE', pageId: prevPageId });
                 }}
-                disabled={pageIndex <= 0}
+                disabled={prevPageId === null}
               >
                 {t('prevPage')}
               </Button>
@@ -351,8 +374,7 @@ export function ConductShell() {
                 <Button
                   size="sm"
                   onClick={() => {
-                    const next = state.content.pages[pageIndex + 1];
-                    if (next !== undefined) dispatch({ type: 'SET_PAGE', pageId: next.id });
+                    if (nextPageId !== null) dispatch({ type: 'SET_PAGE', pageId: nextPageId });
                   }}
                 >
                   {t('nextPage')}
@@ -475,19 +497,27 @@ function SaveIndicator() {
 
 function PageTabs() {
   const { state, dispatch } = useConduct();
+  const skipped = skippedPages(state.content, state.responses);
   return (
     <nav className="mx-auto flex max-w-3xl gap-1 overflow-x-auto px-4 pb-2" aria-label="pages">
       {state.content.pages.map((p, i) => {
         const active = p.id === state.selectedPageId;
+        const isSkipped = skipped.has(p.id);
         return (
           <button
             key={p.id}
             type="button"
-            onClick={() => dispatch({ type: 'SET_PAGE', pageId: p.id })}
+            onClick={() => {
+              if (!isSkipped) dispatch({ type: 'SET_PAGE', pageId: p.id });
+            }}
+            disabled={isSkipped}
+            title={isSkipped ? 'Skipped by an answer above' : undefined}
             className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs transition-colors ${
               active
                 ? 'bg-accent text-accent-foreground'
-                : 'text-muted-foreground hover:bg-accent/60'
+                : isSkipped
+                  ? 'text-muted-foreground/40 line-through'
+                  : 'text-muted-foreground hover:bg-accent/60'
             }`}
           >
             {i + 1}. {p.title}

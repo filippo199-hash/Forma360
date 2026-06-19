@@ -707,7 +707,8 @@
           "requireAction": "Require action",
           "requireEvidence": "Require evidence",
           "requireNote": "Require note",
-          "notify": "Notify"
+          "notify": "Notify",
+          "jumpTo": "Jump to"
         },
         "askFollowUp": {
           "questionIds": "Follow-up question IDs (comma-separated)"
@@ -734,7 +735,14 @@
         "noResponseSetAssigned": "This question has no response set assigned. Go to Response Sets to create one.",
         "triggerCountSingular": "action",
         "triggerCountPlural": "actions",
-        "flagLabel": "Flag"
+        "flagLabel": "Flag",
+        "jump": {
+          "label": "Jump to",
+          "question": "Question: {prompt}",
+          "page": "Page: {title}",
+          "end": "Finish inspection",
+          "remove": "Remove jump"
+        }
       },
       "validation": {
         "title": "Validation errors",
@@ -1118,7 +1126,8 @@
         "due": "Due"
       },
       "flaggedHeading": "Flagged items ({count})",
-      "flaggedBadge": "Flagged"
+      "flaggedBadge": "Flagged",
+      "skippedBadge": "Skipped"
     }
   },
   "schedules": {

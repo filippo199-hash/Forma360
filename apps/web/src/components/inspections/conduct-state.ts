@@ -8,7 +8,12 @@
  * so both the render layer and the submit-gate can compute them cheaply.
  */
 import type { Item, Section, TemplateContent, Visibility } from '@forma360/shared/template-schema';
-import { followUpTargetMap, isFollowUpRevealed } from '@forma360/shared/inspection-eval';
+import {
+  computeSkippedItemIds,
+  followUpTargetMap,
+  isFollowUpRevealed,
+  skippedInspectionPageIds,
+} from '@forma360/shared/inspection-eval';
 
 // ─── Response value shapes ──────────────────────────────────────────────────
 
@@ -180,17 +185,41 @@ function getFollowUps(content: TemplateContent): ReturnType<typeof followUpTarge
   return map;
 }
 
+// Skip sets depend on responses; cache by the (immutable-per-edit) responses
+// object so the many per-item calls in one render share a single pass.
+const skipCache = new WeakMap<Responses, Set<string>>();
+function getSkipped(content: TemplateContent, responses: Responses): Set<string> {
+  let s = skipCache.get(responses);
+  if (s === undefined) {
+    s = computeSkippedItemIds(content, responses);
+    skipCache.set(responses, s);
+  }
+  return s;
+}
+
+const skipPageCache = new WeakMap<Responses, Set<string>>();
+/** Inspection page ids that are fully skipped by active forward jumps. */
+export function skippedPages(content: TemplateContent, responses: Responses): Set<string> {
+  let s = skipPageCache.get(responses);
+  if (s === undefined) {
+    s = skippedInspectionPageIds(content, responses);
+    skipPageCache.set(responses, s);
+  }
+  return s;
+}
+
 /**
- * True when an item should be shown during conduct: its own `visibility`
- * block passes AND, if it is the target of an `askFollowUp` trigger, one of
- * the options that reveal it is currently selected. This is the function the
- * render layer and the required-check both use.
+ * True when an item should be shown during conduct: it is not skipped by a
+ * forward jump, its own `visibility` block passes, AND (if it is an
+ * `askFollowUp` target) one of the options that reveal it is selected. The
+ * render layer and the required-check both use this.
  */
 export function isItemRevealed(
   item: Item,
   content: TemplateContent,
   responses: Responses,
 ): boolean {
+  if (getSkipped(content, responses).has(item.id)) return false;
   if (!isItemVisible(item, responses)) return false;
   return isFollowUpRevealed(item.id, getFollowUps(content), responses);
 }

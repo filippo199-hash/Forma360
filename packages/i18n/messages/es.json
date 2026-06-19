@@ -584,7 +584,8 @@
           "requireAction": "Require action",
           "requireEvidence": "Require evidence",
           "requireNote": "Require note",
-          "notify": "Notify"
+          "notify": "Notify",
+          "jumpTo": "Saltar a"
         },
         "askFollowUp": {
           "questionIds": "Follow-up question IDs (comma-separated)"
@@ -607,7 +608,14 @@
           "emailPlaceholder": "nombre@ejemplo.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
-        "flagLabel": "Marcar"
+        "flagLabel": "Marcar",
+        "jump": {
+          "label": "Saltar a",
+          "question": "Pregunta: {prompt}",
+          "page": "Página: {title}",
+          "end": "Finalizar inspección",
+          "remove": "Quitar salto"
+        }
       },
       "validation": {
         "title": "Validation errors",
@@ -1012,7 +1020,8 @@
         "due": "Vence"
       },
       "flaggedHeading": "Elementos marcados ({count})",
-      "flaggedBadge": "Marcado"
+      "flaggedBadge": "Marcado",
+      "skippedBadge": "Omitido"
     }
   },
   "nav": {

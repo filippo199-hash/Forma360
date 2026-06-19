@@ -584,7 +584,8 @@
           "requireAction": "Require action",
           "requireEvidence": "Require evidence",
           "requireNote": "Require note",
-          "notify": "Notify"
+          "notify": "Notify",
+          "jumpTo": "ジャンプ先"
         },
         "askFollowUp": {
           "questionIds": "Follow-up question IDs (comma-separated)"
@@ -607,7 +608,14 @@
           "emailPlaceholder": "name@example.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
-        "flagLabel": "フラグ"
+        "flagLabel": "フラグ",
+        "jump": {
+          "label": "ジャンプ先",
+          "question": "質問: {prompt}",
+          "page": "ページ: {title}",
+          "end": "点検を終了",
+          "remove": "ジャンプを削除"
+        }
       },
       "validation": {
         "title": "Validation errors",
@@ -1005,7 +1013,8 @@
         "due": "期限"
       },
       "flaggedHeading": "フラグ付き項目 ({count})",
-      "flaggedBadge": "フラグ"
+      "flaggedBadge": "フラグ",
+      "skippedBadge": "スキップ"
     }
   },
   "nav": {

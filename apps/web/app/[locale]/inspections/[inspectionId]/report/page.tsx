@@ -1,7 +1,7 @@
 'use client';
 
 import type { Page, Section, Item, TemplateContent } from '@forma360/shared/template-schema';
-import { collectFlaggedAnswers } from '@forma360/shared/inspection-eval';
+import { collectFlaggedAnswers, computeSkippedItemIds } from '@forma360/shared/inspection-eval';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -355,6 +355,7 @@ function ReportBody({
   // at-risk responses first. Same pure helper the PDF/share report uses.
   const flaggedAnswers = collectFlaggedAnswers(content, responses);
   const flaggedItemIds = new Set(flaggedAnswers.map((f) => f.itemId));
+  const skippedItemIds = computeSkippedItemIds(content, responses);
 
   return (
     <div className="space-y-8 rounded-lg border bg-card p-6 shadow-sm">
@@ -388,6 +389,7 @@ function ReportBody({
           actionsByItemId={actionsByItemId}
           optionLabels={optionLabels}
           flaggedItemIds={flaggedItemIds}
+          skippedItemIds={skippedItemIds}
           t={t}
         />
       ))}
@@ -464,6 +466,7 @@ function ReportPage({
   actionsByItemId,
   optionLabels,
   flaggedItemIds,
+  skippedItemIds,
   t,
 }: {
   page: Page;
@@ -471,6 +474,7 @@ function ReportPage({
   actionsByItemId: Map<string, ActionSummary[]>;
   optionLabels: Map<string, string>;
   flaggedItemIds: Set<string>;
+  skippedItemIds: Set<string>;
   t: TFunc;
 }) {
   return (
@@ -484,6 +488,7 @@ function ReportPage({
           actionsByItemId={actionsByItemId}
           optionLabels={optionLabels}
           flaggedItemIds={flaggedItemIds}
+          skippedItemIds={skippedItemIds}
           t={t}
         />
       ))}
@@ -497,6 +502,7 @@ function ReportSection({
   actionsByItemId,
   optionLabels,
   flaggedItemIds,
+  skippedItemIds,
   t,
 }: {
   section: Section;
@@ -504,6 +510,7 @@ function ReportSection({
   actionsByItemId: Map<string, ActionSummary[]>;
   optionLabels: Map<string, string>;
   flaggedItemIds: Set<string>;
+  skippedItemIds: Set<string>;
   t: TFunc;
 }) {
   const visibleItems = section.items.filter((item) => 'prompt' in item) as Item[];
@@ -523,6 +530,7 @@ function ReportSection({
             actions={actionsByItemId.get(item.id) ?? []}
             optionLabels={optionLabels}
             flagged={flaggedItemIds.has(item.id)}
+            skipped={skippedItemIds.has(item.id)}
             t={t}
           />
         ))}
@@ -537,6 +545,7 @@ function ReportItem({
   actions,
   optionLabels,
   flagged,
+  skipped,
   t,
 }: {
   item: Item;
@@ -544,10 +553,25 @@ function ReportItem({
   actions: ActionSummary[];
   optionLabels: Map<string, string>;
   flagged: boolean;
+  skipped: boolean;
   t: TFunc;
 }) {
   const prompt = 'prompt' in item ? item.prompt : null;
   if (prompt === null) return null;
+
+  // Skipped questions render greyed with a tag and no answer.
+  if (skipped) {
+    return (
+      <div className="rounded-md border border-dashed bg-muted/20 px-3 py-2.5 text-sm opacity-60">
+        <span className="font-medium leading-snug text-muted-foreground line-through">
+          {prompt}
+        </span>
+        <span className="ml-2 inline-flex items-center rounded bg-muted px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          {t('skippedBadge')}
+        </span>
+      </div>
+    );
+  }
 
   const isMedia = 'type' in item && item.type === 'media';
   const answered = response !== undefined && response !== null && response !== '';

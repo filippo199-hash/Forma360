@@ -147,6 +147,27 @@ const baseItemFields = {
   visibility: visibilitySchema.optional(),
 };
 
+// ─── Jump-to (forward skip logic) ───────────────────────────────────────────
+
+/**
+ * Target of a per-option jump. Selecting the option skips every item between
+ * the question and the target. Forward-only — `superRefine` rejects a target
+ * that is not strictly below the question in document order.
+ */
+const jumpTargetSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('question'), questionId: ulid }),
+  z.object({ type: z.literal('page'), pageId: ulid }),
+  z.object({ type: z.literal('end') }),
+]);
+export type JumpTarget = z.infer<typeof jumpTargetSchema>;
+
+const questionJumpSchema = z.object({
+  /** Option (within the question's set) that triggers the jump when selected. */
+  optionId: ulid,
+  target: jumpTargetSchema,
+});
+export type QuestionJump = z.infer<typeof questionJumpSchema>;
+
 // ─── Question kinds ─────────────────────────────────────────────────────────
 
 const multipleChoiceQuestion = z.object({
@@ -161,6 +182,11 @@ const multipleChoiceQuestion = z.object({
    * options' deprecated `flagged` flag until the question is first edited.
    */
   flaggedOptionIds: z.array(ulid).optional(),
+  /**
+   * Per-option forward skip logic. Stored on the question (not the shared set)
+   * because targets are position-relative. Single-select questions only.
+   */
+  jumps: z.array(questionJumpSchema).optional(),
 });
 
 const textQuestion = z.object({
@@ -474,6 +500,68 @@ const rootSchema = z
           message: `Unknown responseSetId: ${item.responseSetId}`,
           path: ['pages'],
         });
+      }
+    }
+
+    // ── Jump-to (forward skip logic) must point strictly below the question ──
+    const setById = new Map(content.customResponseSets.map((s) => [s.id, s]));
+    const pageOrder = new Map<string, number>();
+    const itemPageOrder = new Map<string, number>(); // itemId → its page's order
+    const itemGlobalIndex = new Map<string, number>();
+    let order = 0;
+    let gidx = 0;
+    for (const page of content.pages) {
+      if (page.type !== 'inspection') continue;
+      pageOrder.set(page.id, order);
+      for (const section of page.sections) {
+        for (const item of section.items) {
+          itemPageOrder.set(item.id, order);
+          itemGlobalIndex.set(item.id, gidx++);
+        }
+      }
+      order++;
+    }
+    for (const item of allItems.values()) {
+      if (item.type !== 'multipleChoice' || item.jumps === undefined) continue;
+      const set = setById.get(item.responseSetId);
+      if (set !== undefined && set.multiSelect && item.jumps.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Jump-to is only allowed on single-select questions',
+          path: ['pages'],
+        });
+      }
+      const optionIds = new Set(set?.options.map((o) => o.id) ?? []);
+      const fromIndex = itemGlobalIndex.get(item.id) ?? -1;
+      const fromPage = itemPageOrder.get(item.id) ?? -1;
+      for (const jump of item.jumps) {
+        if (set !== undefined && !optionIds.has(jump.optionId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Jump references an option not in the question's set: ${jump.optionId}`,
+            path: ['pages'],
+          });
+        }
+        if (jump.target.type === 'question') {
+          const toIndex = itemGlobalIndex.get(jump.target.questionId);
+          if (toIndex === undefined || toIndex <= fromIndex) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Jump target question must be below the question',
+              path: ['pages'],
+            });
+          }
+        } else if (jump.target.type === 'page') {
+          const toPage = pageOrder.get(jump.target.pageId);
+          if (toPage === undefined || toPage <= fromPage) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Jump target page must be below the question',
+              path: ['pages'],
+            });
+          }
+        }
+        // type 'end' is always a valid forward target.
       }
     }
 

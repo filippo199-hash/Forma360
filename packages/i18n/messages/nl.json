@@ -584,7 +584,8 @@
           "requireAction": "Require action",
           "requireEvidence": "Require evidence",
           "requireNote": "Require note",
-          "notify": "Notify"
+          "notify": "Notify",
+          "jumpTo": "Ga naar"
         },
         "askFollowUp": {
           "questionIds": "Follow-up question IDs (comma-separated)"
@@ -607,7 +608,14 @@
           "emailPlaceholder": "naam@voorbeeld.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
-        "flagLabel": "Markeren"
+        "flagLabel": "Markeren",
+        "jump": {
+          "label": "Ga naar",
+          "question": "Vraag: {prompt}",
+          "page": "Pagina: {title}",
+          "end": "Inspectie voltooien",
+          "remove": "Sprong verwijderen"
+        }
       },
       "validation": {
         "title": "Validation errors",
@@ -1005,7 +1013,8 @@
         "due": "Deadline"
       },
       "flaggedHeading": "Gemarkeerde items ({count})",
-      "flaggedBadge": "Gemarkeerd"
+      "flaggedBadge": "Gemarkeerd",
+      "skippedBadge": "Overgeslagen"
     }
   },
   "nav": {

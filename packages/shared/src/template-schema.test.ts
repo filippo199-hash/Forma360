@@ -7,6 +7,7 @@ import {
   TEMPLATE_LIMITS,
   TEMPLATE_SCHEMA_VERSION,
   templateContentSchema,
+  type JumpTarget,
   type TemplateContent,
 } from './template-schema';
 
@@ -743,5 +744,112 @@ describe('templateContentSchema — branding', () => {
     const content = minimalContent();
     content.settings.branding = { primaryColor: '#123456' };
     expect(templateContentSchema.safeParse(content).success).toBe(true);
+  });
+});
+
+// ─── Jump-to forward-only validation ────────────────────────────────────────
+
+describe('jump-to (forward skip) validation', () => {
+  function withJump(opts: {
+    fromId: string;
+    target: { type: 'question'; questionId: string } | { type: 'page'; pageId: string };
+    multiSelect?: boolean;
+  }): TemplateContent {
+    const setId = newId();
+    const q1 = 'q'.repeat(26);
+    const q2 = 'r'.repeat(26);
+    const pageB = 'p'.repeat(26);
+    const optYes = newId();
+    const mkQ = (id: string, jumps?: Array<{ optionId: string; target: JumpTarget }>) => ({
+      id,
+      type: 'multipleChoice' as const,
+      prompt: id,
+      required: false,
+      responseSetId: setId,
+      ...(jumps ? { jumps } : {}),
+    });
+    const jumps =
+      opts.fromId === q1
+        ? [{ optionId: optYes, target: opts.target }]
+        : [{ optionId: optYes, target: opts.target }];
+    return {
+      schemaVersion: TEMPLATE_SCHEMA_VERSION,
+      title: 'J',
+      pages: [
+        {
+          id: newId(),
+          type: 'title',
+          title: 'T',
+          sections: [{ id: newId(), title: 's', items: [] }],
+        },
+        {
+          id: newId(),
+          type: 'inspection',
+          title: 'Page A',
+          sections: [
+            {
+              id: newId(),
+              title: 's',
+              items: [
+                opts.fromId === q1 ? mkQ(q1, jumps) : mkQ(q1),
+                opts.fromId === q2 ? mkQ(q2, jumps) : mkQ(q2),
+              ],
+            },
+          ],
+        },
+        {
+          id: pageB,
+          type: 'inspection',
+          title: 'Page B',
+          sections: [{ id: newId(), title: 's', items: [mkQ('s'.repeat(26))] }],
+        },
+      ],
+      settings: { titleFormat: '{date}', documentNumberFormat: '{c}', documentNumberStart: 1 },
+      customResponseSets: [
+        {
+          id: setId,
+          name: 'YN',
+          sourceGlobalId: null,
+          multiSelect: opts.multiSelect ?? false,
+          options: [
+            { id: optYes, label: 'Yes' },
+            { id: newId(), label: 'No' },
+          ],
+        },
+      ],
+    };
+  }
+
+  it('accepts a jump to a question below', () => {
+    const c = withJump({
+      fromId: 'q'.repeat(26),
+      target: { type: 'question', questionId: 'r'.repeat(26) },
+    });
+    expect(templateContentSchema.safeParse(c).success).toBe(true);
+  });
+
+  it('rejects a jump to a question above (backward)', () => {
+    const c = withJump({
+      fromId: 'r'.repeat(26),
+      target: { type: 'question', questionId: 'q'.repeat(26) },
+    });
+    expect(templateContentSchema.safeParse(c).success).toBe(false);
+  });
+
+  it('accepts a jump to a later page', () => {
+    const c = withJump({
+      fromId: 'q'.repeat(26),
+      target: { type: 'page', pageId: 'p'.repeat(26) },
+    });
+    expect(templateContentSchema.safeParse(c).success).toBe(true);
+  });
+
+  it('rejects jumps on a multi-select question', () => {
+    const c = withJump({
+      fromId: 'q'.repeat(26),
+      target: { type: 'question', questionId: 'r'.repeat(26) },
+      multiSelect: true,
+    });
+    expect(templateContentSchema.safeParse(c).success).toBe(false);
   });
 });

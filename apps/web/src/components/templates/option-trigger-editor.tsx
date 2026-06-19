@@ -14,8 +14,8 @@
  * so dirty-tracking + persistence are unchanged.
  */
 
-import type { ResponseOption, Trigger } from '@forma360/shared/template-schema';
-import { Flag } from 'lucide-react';
+import type { JumpTarget, ResponseOption, Trigger } from '@forma360/shared/template-schema';
+import { CornerDownRight, Flag, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '../../lib/cn';
 import { responseChipClasses } from '../../lib/response-colors';
@@ -25,6 +25,12 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useEditor } from './editor-context';
 
+/** Valid forward jump targets for the question this option belongs to. */
+export interface JumpTargetOptions {
+  questions: Array<{ id: string; prompt: string }>;
+  pages: Array<{ id: string; title: string }>;
+}
+
 interface OptionTriggerEditorProps {
   setId: string;
   option: ResponseOption;
@@ -32,6 +38,11 @@ interface OptionTriggerEditorProps {
   flagged?: boolean;
   /** Toggle the per-question flag. When omitted, no flag control is shown. */
   onToggleFlag?: () => void;
+  /** Forward skip logic — only offered on single-select questions. */
+  allowJump?: boolean;
+  jumpTarget?: JumpTarget | null;
+  jumpTargets?: JumpTargetOptions;
+  onSetJump?: (target: JumpTarget | null) => void;
 }
 
 /** Renders a card with the option header, every trigger, and an "Add action" picker. */
@@ -40,6 +51,10 @@ export function OptionTriggerEditor({
   option,
   flagged = false,
   onToggleFlag,
+  allowJump = false,
+  jumpTarget = null,
+  jumpTargets = { questions: [], pages: [] },
+  onSetJump,
 }: OptionTriggerEditorProps) {
   const t = useTranslations('templates.editor.logicTab');
   const { dispatch } = useEditor();
@@ -65,6 +80,17 @@ export function OptionTriggerEditor({
             : { kind: 'notify', timing: 'onCompletion' };
     updateTriggers([...triggers, stub]);
   }
+
+  /** Default target when the user first adds a jump: nearest question, else page, else finish. */
+  function defaultJump(): JumpTarget {
+    if (jumpTargets.questions[0] !== undefined)
+      return { type: 'question', questionId: jumpTargets.questions[0].id };
+    if (jumpTargets.pages[0] !== undefined)
+      return { type: 'page', pageId: jumpTargets.pages[0].id };
+    return { type: 'end' };
+  }
+
+  const canOfferJump = allowJump && onSetJump !== undefined && jumpTarget === null;
 
   return (
     <div className="rounded-md border bg-card">
@@ -97,8 +123,21 @@ export function OptionTriggerEditor({
             </span>
           ) : null}
         </div>
-        <AddTriggerButton onAdd={addTrigger} />
+        <AddTriggerButton
+          onAdd={addTrigger}
+          canJump={canOfferJump}
+          onAddJump={() => onSetJump?.(defaultJump())}
+        />
       </div>
+
+      {jumpTarget !== null && onSetJump !== undefined ? (
+        <JumpEditor
+          target={jumpTarget}
+          targets={jumpTargets}
+          onChange={(next) => onSetJump(next)}
+          onRemove={() => onSetJump(null)}
+        />
+      ) : null}
 
       {triggers.length > 0 ? (
         <ul className="divide-y">
@@ -122,17 +161,35 @@ export function OptionTriggerEditor({
   );
 }
 
-function AddTriggerButton({ onAdd }: { onAdd: (k: Trigger['kind']) => void }) {
+const JUMP_VALUE = '__jump__';
+
+function AddTriggerButton({
+  onAdd,
+  canJump = false,
+  onAddJump,
+}: {
+  onAdd: (k: Trigger['kind']) => void;
+  canJump?: boolean;
+  onAddJump?: () => void;
+}) {
   const t = useTranslations('templates.editor.logicTab');
   const tKind = useTranslations('templates.editor.logicTab.kind');
   const tInline = useTranslations('templates.editor.inlineActions');
-  const kinds: Trigger['kind'][] = ['askFollowUp', 'requireAction', 'requireEvidence', 'notify'];
+  // askFollowUp + requireNote intentionally dropped from the picker.
+  const kinds: Trigger['kind'][] = ['requireAction', 'requireEvidence', 'notify'];
   return (
-    <Select value="" onValueChange={(v) => onAdd(v as Trigger['kind'])}>
+    <Select
+      value=""
+      onValueChange={(v) => {
+        if (v === JUMP_VALUE) onAddJump?.();
+        else onAdd(v as Trigger['kind']);
+      }}
+    >
       <SelectTrigger className="h-8 w-44">
         <SelectValue placeholder={tInline('addAction')} />
       </SelectTrigger>
       <SelectContent>
+        {canJump ? <SelectItem value={JUMP_VALUE}>{t('kind.jumpTo')}</SelectItem> : null}
         {kinds.map((k) => (
           <SelectItem key={k} value={k}>
             {tKind(k)}
@@ -142,6 +199,67 @@ function AddTriggerButton({ onAdd }: { onAdd: (k: Trigger['kind']) => void }) {
       {/* keep `t` referenced for tests/inheritance */}
       <span className="hidden">{t('addTrigger')}</span>
     </Select>
+  );
+}
+
+// ─── Jump-to editor (forward skip logic) ─────────────────────────────────────
+
+function targetToValue(target: JumpTarget): string {
+  if (target.type === 'end') return 'end';
+  if (target.type === 'question') return `q:${target.questionId}`;
+  return `p:${target.pageId}`;
+}
+function valueToTarget(v: string): JumpTarget {
+  if (v === 'end') return { type: 'end' };
+  if (v.startsWith('q:')) return { type: 'question', questionId: v.slice(2) };
+  return { type: 'page', pageId: v.slice(2) };
+}
+
+function JumpEditor({
+  target,
+  targets,
+  onChange,
+  onRemove,
+}: {
+  target: JumpTarget;
+  targets: JumpTargetOptions;
+  onChange: (t: JumpTarget) => void;
+  onRemove: () => void;
+}) {
+  const t = useTranslations('templates.editor.logicTab');
+  return (
+    <div className="flex items-center gap-2 border-t bg-accent/30 px-4 py-2.5">
+      <CornerDownRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <span className="shrink-0 text-xs font-medium">{t('jump.label')}</span>
+      <Select value={targetToValue(target)} onValueChange={(v) => onChange(valueToTarget(v))}>
+        <SelectTrigger className="h-8 flex-1">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {targets.questions.map((q) => (
+            <SelectItem key={`q:${q.id}`} value={`q:${q.id}`}>
+              {t('jump.question', { prompt: q.prompt })}
+            </SelectItem>
+          ))}
+          {targets.pages.map((p) => (
+            <SelectItem key={`p:${p.id}`} value={`p:${p.id}`}>
+              {t('jump.page', { title: p.title })}
+            </SelectItem>
+          ))}
+          <SelectItem value="end">{t('jump.end')}</SelectItem>
+        </SelectContent>
+      </Select>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-7 w-7 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+        onClick={onRemove}
+        aria-label={t('jump.remove')}
+      >
+        <X className="h-3.5 w-3.5" />
+      </Button>
+    </div>
   );
 }
 

@@ -13,7 +13,11 @@
  */
 import type { InspectionRenderSnapshot } from '@forma360/render';
 import type { TemplateContent } from '@forma360/shared/template-schema';
-import { collectFlaggedAnswers, multipleChoiceLabels } from '@forma360/shared/inspection-eval';
+import {
+  collectFlaggedAnswers,
+  computeSkippedItemIds,
+  multipleChoiceLabels,
+} from '@forma360/shared/inspection-eval';
 
 /**
  * Narrow shape of the page-walk we do. Matches what @forma360/shared
@@ -65,6 +69,9 @@ export function PrintLayout({
   const flaggedAnswers =
     evalContent !== undefined ? collectFlaggedAnswers(evalContent, responses) : [];
   const flaggedItemIds = new Set(flaggedAnswers.map((f) => f.itemId));
+  // Questions skipped by a forward jump render as "Skipped" rather than blank.
+  const skippedItemIds =
+    evalContent !== undefined ? computeSkippedItemIds(evalContent, responses) : new Set<string>();
 
   return (
     <>
@@ -94,6 +101,9 @@ export function PrintLayout({
             .print-body .print-response .answer { margin-top: 0.1cm; white-space: pre-wrap; }
             .print-body .print-response.flagged { border-left: 3px solid #dc2626; padding-left: 0.2cm; }
             .print-body .print-response .flag-badge { display: inline-block; margin-left: 0.2cm; padding: 0 0.15cm; font-size: 8pt; font-weight: 700; color: #fff; background: #dc2626; border-radius: 0.1cm; vertical-align: middle; }
+            .print-body .print-response.skipped { opacity: 0.5; }
+            .print-body .print-response.skipped .prompt { font-weight: 400; color: #6b7280; }
+            .print-body .print-response .skip-badge { display: inline-block; margin-left: 0.2cm; padding: 0 0.15cm; font-size: 8pt; font-weight: 700; color: #374151; background: #e5e7eb; border-radius: 0.1cm; vertical-align: middle; }
             .print-body .print-flagged { border: 1px solid #fca5a5; background: #fef2f2; border-radius: 0.15cm; padding: 0.3cm 0.4cm; margin: 0 0 0.5cm 0; }
             .print-body .print-flagged h2 { margin: 0 0 0.2cm 0; color: #b91c1c; border: 0; font-size: 13pt; }
             .print-body .print-flagged ul { margin: 0; padding-left: 0.5cm; }
@@ -161,6 +171,7 @@ export function PrintLayout({
                   <h3>{section.title}</h3>
                   {(section.items ?? []).map((item, ii) => {
                     const response = snapshot.inspection.responses[item.id ?? ''];
+                    const skipped = item.id !== undefined && skippedItemIds.has(item.id);
                     // Multiple-choice answers render as their option labels, not
                     // the raw ULID(s) stored in the response map.
                     const mcLabels =
@@ -169,17 +180,25 @@ export function PrintLayout({
                         : null;
                     const answerText =
                       mcLabels !== null ? mcLabels.join(', ') : stringifyResponse(response);
-                    const flagged = item.id !== undefined && flaggedItemIds.has(item.id);
+                    const flagged =
+                      !skipped && item.id !== undefined && flaggedItemIds.has(item.id);
                     return (
                       <div
                         key={item.id ?? ii}
-                        className={flagged ? 'print-response flagged' : 'print-response'}
+                        className={
+                          skipped
+                            ? 'print-response skipped'
+                            : flagged
+                              ? 'print-response flagged'
+                              : 'print-response'
+                        }
                       >
                         <div className="prompt">
                           {item.prompt ?? item.id}
                           {flagged ? <span className="flag-badge">FLAGGED</span> : null}
+                          {skipped ? <span className="skip-badge">SKIPPED</span> : null}
                         </div>
-                        <div className="answer">{answerText}</div>
+                        {!skipped ? <div className="answer">{answerText}</div> : null}
                       </div>
                     );
                   })}

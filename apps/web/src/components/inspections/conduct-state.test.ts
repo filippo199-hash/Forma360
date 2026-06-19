@@ -314,6 +314,59 @@ describe('multiple-selection behaviour', () => {
   });
 });
 
+describe('jump-to (forward skip) during conduct', () => {
+  const Q_JUMP = 'n'.repeat(26);
+  const Q_MID = 'o'.repeat(26);
+  const Q_END = 'p'.repeat(26);
+
+  /** q-jump (MC) → "No" jumps to q-end, skipping the required q-mid. */
+  function jumpContent(): TemplateContent {
+    const c = content();
+    const section = c.pages[1]?.sections[0];
+    if (section === undefined) throw new Error('fixture');
+    section.items = [
+      {
+        id: Q_JUMP,
+        type: 'multipleChoice',
+        prompt: 'Skip ahead?',
+        required: false,
+        responseSetId: RS,
+        jumps: [{ optionId: OPT_NO, target: { type: 'question', questionId: Q_END } }],
+      },
+      {
+        id: Q_MID,
+        type: 'text',
+        prompt: 'Middle (required)',
+        required: true,
+        multiline: false,
+        maxLength: 100,
+      },
+      { id: Q_END, type: 'text', prompt: 'End', required: false, multiline: false, maxLength: 100 },
+    ];
+    const set = c.customResponseSets[0];
+    if (set === undefined) throw new Error('fixture');
+    set.options = [
+      { id: OPT_YES, label: 'Yes' },
+      { id: OPT_NO, label: 'No' },
+    ];
+    return c;
+  }
+
+  it('hides skipped items and drops them from the required gate', () => {
+    const c = jumpContent();
+    const mid = c.pages[1]?.sections[0]?.items[1];
+    if (mid === undefined) throw new Error('fixture');
+    // No selection yet → mid is visible and required → blocks.
+    expect(isItemRevealed(mid, c, {})).toBe(true);
+    expect(findUnansweredRequired(c, {})).toContain(Q_MID);
+    // "No" jumps past mid → hidden + not required.
+    expect(isItemRevealed(mid, c, { [Q_JUMP]: OPT_NO })).toBe(false);
+    expect(findUnansweredRequired(c, { [Q_JUMP]: OPT_NO })).not.toContain(Q_MID);
+    // "Yes" does not jump → mid still required.
+    expect(findUnansweredRequired(c, { [Q_JUMP]: OPT_YES })).toContain(Q_MID);
+  });
+});
+
 describe('askFollowUp reveal during conduct', () => {
   it('hides the follow-up until the triggering option is selected', () => {
     const c = contentWithTriggers({ mcRequired: false, multiSelect: false });

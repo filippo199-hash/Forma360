@@ -584,7 +584,8 @@
           "requireAction": "Require action",
           "requireEvidence": "Require evidence",
           "requireNote": "Require note",
-          "notify": "Notify"
+          "notify": "Notify",
+          "jumpTo": "Przejdź do"
         },
         "askFollowUp": {
           "questionIds": "Follow-up question IDs (comma-separated)"
@@ -607,7 +608,14 @@
           "emailPlaceholder": "imie@przyklad.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
-        "flagLabel": "Oznacz"
+        "flagLabel": "Oznacz",
+        "jump": {
+          "label": "Przejdź do",
+          "question": "Pytanie: {prompt}",
+          "page": "Strona: {title}",
+          "end": "Zakończ inspekcję",
+          "remove": "Usuń skok"
+        }
       },
       "validation": {
         "title": "Validation errors",
@@ -1005,7 +1013,8 @@
         "due": "Termin"
       },
       "flaggedHeading": "Oznaczone pozycje ({count})",
-      "flaggedBadge": "Oznaczone"
+      "flaggedBadge": "Oznaczone",
+      "skippedBadge": "Pominięto"
     }
   },
   "nav": {

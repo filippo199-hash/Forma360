@@ -584,7 +584,8 @@
           "requireAction": "Require action",
           "requireEvidence": "Require evidence",
           "requireNote": "Require note",
-          "notify": "Notify"
+          "notify": "Notify",
+          "jumpTo": "跳转到"
         },
         "askFollowUp": {
           "questionIds": "Follow-up question IDs (comma-separated)"
@@ -607,7 +608,14 @@
           "emailPlaceholder": "name@example.com"
         },
         "depthWarning": "Logic depth {depth}/{max} — nearing the nesting limit.",
-        "flagLabel": "标记"
+        "flagLabel": "标记",
+        "jump": {
+          "label": "跳转到",
+          "question": "问题：{prompt}",
+          "page": "页面：{title}",
+          "end": "完成检查",
+          "remove": "移除跳转"
+        }
       },
       "validation": {
         "title": "Validation errors",
@@ -1005,7 +1013,8 @@
         "due": "截止日期"
       },
       "flaggedHeading": "已标记项 ({count})",
-      "flaggedBadge": "已标记"
+      "flaggedBadge": "已标记",
+      "skippedBadge": "已跳过"
     }
   },
   "nav": {
