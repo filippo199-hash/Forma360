@@ -31,6 +31,8 @@ How you work:
 When you build the template (the proposeTemplate call):
 - Organise it into logical pages and sections. A realistic inspection has 10–30 questions.
 - Default question type is multipleChoice. Use response options that fit the question; give risky/unsafe options a "flag" and an appropriate colour (red/amber for bad, green for good). Use a mix of types where it helps: text for notes, number for readings, media for "take a photo", signature to sign off, instruction for guidance, date/checkbox/slider where natural.
+- Pick the RIGHT response type, not just text. A question asking for a person who is a system user (operator, driver, inspector, technician, supervisor) → type "user" (searchable user picker). A question asking for a tracked asset/vehicle/machine/equipment, e.g. by ID, serial or fleet number → type "asset". A site/branch/depot → "site"; an area/location → "location". Only use "text" for genuinely free-form text that isn't a user, asset, site or location.
+- Keep response sets to a MINIMUM and reuse them. Every pass/fail-style question that shares the same scale MUST use the EXACT same options (identical labels, colours and order — e.g. always "OK" / "Defect"), so they collapse into one shared response set. Do not invent slightly different wordings for the same idea ("OK/Defect" vs "Good/Fault" vs "Pass/Fail") — pick one and reuse it everywhere. Only create a different option set when the answers genuinely differ.
 - Add smart logic where it clearly helps:
   - On an option, set requireEvidence:true when a photo/proof should be mandatory (e.g. a defect found).
   - On an option, set requireAction with a short corrective-action title when a failure should raise a follow-up task.
@@ -97,8 +99,13 @@ export const PROPOSE_TEMPLATE_TOOL: Anthropic.Tool = {
                             'media',
                             'instruction',
                             'signature',
+                            'user',
+                            'asset',
+                            'site',
+                            'location',
                           ],
-                          description: 'Question type. Defaults to multipleChoice.',
+                          description:
+                            'Question type (default multipleChoice). Use "user" for a person who is a Forma360 user (operator, inspector, driver) — a searchable user picker, NOT text. Use "asset" for a tracked piece of equipment/vehicle (by ID, serial or fleet number). Use "site" for a site/branch/depot and "location" for an area/location.',
                         },
                         required: {
                           type: 'boolean',

@@ -1290,9 +1290,9 @@ function TypeOfResponsePicker({
           </button>
         </PopoverTrigger>
 
-        <PopoverContent className="flex w-[520px] p-0" align="start" side="bottom">
+        <PopoverContent className="flex h-96 w-[520px] p-0" align="start" side="bottom">
           {/* Left column — response sets */}
-          <div className="flex w-[240px] shrink-0 flex-col border-r">
+          <div className="flex min-h-0 w-[240px] shrink-0 flex-col border-r">
             <div className="px-3 pb-2 pt-3">
               <p className="mb-2 text-xs font-semibold text-muted-foreground">
                 {t('multipleChoiceResponsesLabel')}
@@ -1308,7 +1308,7 @@ function TypeOfResponsePicker({
               </div>
             </div>
 
-            <div className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
+            <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
               {filteredSets.map((rs) => {
                 const isActive = item.type === 'multipleChoice' && item.responseSetId === rs.id;
                 return (
@@ -1372,11 +1372,11 @@ function TypeOfResponsePicker({
           </div>
 
           {/* Right column — other types */}
-          <div className="flex-1 p-3">
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">
+          <div className="flex min-h-0 flex-1 flex-col p-3">
+            <p className="mb-2 shrink-0 text-xs font-semibold text-muted-foreground">
               {t('otherResponsesLabel')}
             </p>
-            <div className="space-y-0.5">
+            <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">
               {OTHER_TYPES.map(({ type, icon }) => {
                 const isActive = item.type === type;
                 return (

@@ -23,6 +23,11 @@ export const SPEC_QUESTION_TYPES = [
   'media',
   'instruction',
   'signature',
+  // Smart pickers — prefer these over free text where they fit.
+  'user', // searchable user picker (operator, inspector, driver, …) → conductedBy item
+  'asset', // searchable asset picker (vehicle, machine, equipment by ID/serial)
+  'site', // site / branch / depot picker
+  'location', // location / area picker
 ] as const;
 export type SpecQuestionType = (typeof SPEC_QUESTION_TYPES)[number];
 

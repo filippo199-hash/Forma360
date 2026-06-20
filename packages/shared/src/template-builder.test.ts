@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildTemplateContentFromSpec } from './template-builder';
 import { collectActiveTriggers, computeSkippedItemIds } from './inspection-eval';
 import { effectiveFlaggedOptionIds, templateContentSchema } from './template-schema';
-import { parseTemplateSpec, templateSpecSchema, type TemplateSpec } from './template-spec';
+import { parseTemplateSpec, type templateSpecSchema, type TemplateSpec } from './template-spec';
 import type { z } from 'zod';
 
 function spec(partial: Partial<z.input<typeof templateSpecSchema>>): TemplateSpec {
@@ -221,6 +221,82 @@ describe('buildTemplateContentFromSpec', () => {
       'requireAction',
       'requireEvidence',
     ]);
+  });
+
+  it('deduplicates identical response sets across questions', () => {
+    const okDefect = [
+      { label: 'OK', color: 'green' as const },
+      { label: 'Defect', color: 'red' as const, flag: true },
+    ];
+    const content = buildTemplateContentFromSpec(
+      spec({
+        pages: [
+          {
+            title: 'Walk-around',
+            sections: [
+              {
+                title: 'Checks',
+                questions: [
+                  { prompt: 'Tyres OK?', type: 'multipleChoice', options: okDefect },
+                  { prompt: 'Forks OK?', type: 'multipleChoice', options: okDefect },
+                  { prompt: 'Mast OK?', type: 'multipleChoice', options: okDefect },
+                  {
+                    prompt: 'Fluid leaks?',
+                    type: 'multipleChoice',
+                    options: [
+                      { label: 'No leaks', color: 'green' as const },
+                      { label: 'Leak found', color: 'red' as const, flag: true },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    // Three identical OK/Defect questions share ONE set; the leak question adds one more.
+    expect(content.customResponseSets).toHaveLength(2);
+    const tyres = itemByPrompt(content, 'Tyres OK?');
+    const forks = itemByPrompt(content, 'Forks OK?');
+    if (tyres?.type === 'multipleChoice' && forks?.type === 'multipleChoice') {
+      expect(tyres.responseSetId).toBe(forks.responseSetId);
+      // Per-question flags still reference the shared set's option ids.
+      const set = content.customResponseSets.find((s) => s.id === tyres.responseSetId);
+      const defectId = set?.options.find((o) => o.label === 'Defect')?.id;
+      expect(tyres.flaggedOptionIds).toEqual([defectId]);
+      expect(forks.flaggedOptionIds).toEqual([defectId]);
+    } else {
+      throw new Error('expected MC items');
+    }
+  });
+
+  it('maps user / asset / site / location questions to picker item types', () => {
+    const content = buildTemplateContentFromSpec(
+      spec({
+        pages: [
+          {
+            title: 'Details',
+            sections: [
+              {
+                title: 'S',
+                questions: [
+                  { prompt: 'Operator name', type: 'user', required: true },
+                  { prompt: 'Forklift ID', type: 'asset', required: true },
+                  { prompt: 'Depot', type: 'site' },
+                  { prompt: 'Bay', type: 'location' },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(templateContentSchema.safeParse(content).success).toBe(true);
+    expect(itemByPrompt(content, 'Operator name')?.type).toBe('conductedBy');
+    expect(itemByPrompt(content, 'Forklift ID')?.type).toBe('asset');
+    expect(itemByPrompt(content, 'Depot')?.type).toBe('site');
+    expect(itemByPrompt(content, 'Bay')?.type).toBe('location');
   });
 
   it('builds every non-MC question type as valid content', () => {

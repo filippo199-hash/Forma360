@@ -22,12 +22,80 @@ import {
 } from './template-schema';
 import type { SpecOption, SpecQuestion, TemplateSpec } from './template-spec';
 
+/**
+ * Item types the schema only permits on the title page. If the AI emits one of
+ * these as a normal question, the builder relocates it onto the title page.
+ * Mirrors the `titlePageOnly` set in template-schema.ts.
+ */
+const TITLE_PAGE_ONLY = new Set<Item['type']>([
+  'conductedBy',
+  'inspectionDate',
+  'documentNumber',
+  'location',
+  'company',
+]);
+
 interface BuildCtx {
   customResponseSets: CustomResponseSet[];
   /** question key → assigned item id (for jump targets). */
   keyToId: Map<string, string>;
   /** question key → global document index (for forward-only validation). */
   keyToGlobal: Map<string, number>;
+  /**
+   * Dedup index: a canonical signature of a response set's options
+   * (labels + colours + triggers + multiSelect) → the set id and its option
+   * ids. Identical option lists across questions share ONE set so the client
+   * isn't flooded with duplicate "OK / Defect" sets — see the user feedback.
+   */
+  setBySignature: Map<string, { id: string; optionIds: string[] }>;
+}
+
+/** The shared part of an option (lives on the response set, so it dedupes). */
+interface SetOption {
+  label: string;
+  color: ResponseOption['color'];
+  triggers?: Trigger[];
+}
+
+function optionTriggers(opt: SpecOption): Trigger[] {
+  const triggers: Trigger[] = [];
+  if (opt.requireEvidence === true)
+    triggers.push({ kind: 'requireEvidence', mediaKind: 'any', minCount: 1 });
+  if (opt.requireAction !== undefined && opt.requireAction.trim().length > 0)
+    triggers.push({ kind: 'requireAction', actionTitle: opt.requireAction.trim() });
+  if (opt.notifyEmail !== undefined)
+    triggers.push({ kind: 'notify', email: opt.notifyEmail, timing: 'onCompletion' });
+  return triggers;
+}
+
+/** Get or create a deduplicated response set, returning its id + option ids. */
+function resolveResponseSet(
+  setOptions: SetOption[],
+  multiSelect: boolean,
+  ctx: BuildCtx,
+): { id: string; optionIds: string[] } {
+  const signature = JSON.stringify({ multiSelect, options: setOptions });
+  const existing = ctx.setBySignature.get(signature);
+  if (existing !== undefined) return existing;
+
+  const optionIds = setOptions.map(() => newId());
+  const options: ResponseOption[] = setOptions.map((o, i) => ({
+    id: optionIds[i] ?? newId(),
+    label: o.label,
+    color: o.color,
+    ...(o.triggers !== undefined && o.triggers.length > 0 ? { triggers: o.triggers } : {}),
+  }));
+  const name =
+    options
+      .slice(0, 3)
+      .map((o) => o.label)
+      .join(' / ')
+      .slice(0, 60) || 'Responses';
+  const id = newId();
+  ctx.customResponseSets.push({ id, name, sourceGlobalId: null, multiSelect, options });
+  const resolved = { id, optionIds };
+  ctx.setBySignature.set(signature, resolved);
+  return resolved;
 }
 
 /** Build response options + the flag/jump/trigger projections for an MC question. */
@@ -47,29 +115,25 @@ function buildMultipleChoice(
           { label: 'N/A', color: 'grey' },
         ];
 
-  const options: ResponseOption[] = [];
-  const flaggedOptionIds: string[] = [];
-  const jumps: QuestionJump[] = [];
-
-  for (const opt of rawOptions) {
-    const optionId = newId();
-    const triggers: Trigger[] = [];
-    if (opt.requireEvidence === true)
-      triggers.push({ kind: 'requireEvidence', mediaKind: 'any', minCount: 1 });
-    if (opt.requireAction !== undefined && opt.requireAction.trim().length > 0)
-      triggers.push({ kind: 'requireAction', actionTitle: opt.requireAction.trim() });
-    if (opt.notifyEmail !== undefined)
-      triggers.push({ kind: 'notify', email: opt.notifyEmail, timing: 'onCompletion' });
-
-    options.push({
-      id: optionId,
+  // Set-level content (shared / dedup key) excludes per-question flag + jump.
+  const setOptions: SetOption[] = rawOptions.map((opt) => {
+    const triggers = optionTriggers(opt);
+    return {
       label: opt.label,
       color: opt.color ?? (opt.flag === true ? 'red' : 'grey'),
       ...(triggers.length > 0 ? { triggers } : {}),
-    });
-    if (opt.flag === true) flaggedOptionIds.push(optionId);
+    };
+  });
 
-    // Forward-only jumps, single-select only.
+  const { id: responseSetId, optionIds } = resolveResponseSet(setOptions, multiSelect, ctx);
+
+  // Per-question flags + forward-only jumps, mapped onto the (shared) option ids.
+  const flaggedOptionIds: string[] = [];
+  const jumps: QuestionJump[] = [];
+  rawOptions.forEach((opt, i) => {
+    const optionId = optionIds[i];
+    if (optionId === undefined) return;
+    if (opt.flag === true) flaggedOptionIds.push(optionId);
     if (!multiSelect && opt.jumpTo !== undefined) {
       if (opt.jumpTo === 'finish') {
         jumps.push({ optionId, target: { type: 'end' } });
@@ -82,20 +146,6 @@ function buildMultipleChoice(
         // backward / unknown target → dropped
       }
     }
-  }
-
-  const setName = options
-    .slice(0, 3)
-    .map((o) => o.label)
-    .join(' / ')
-    .slice(0, 60);
-  const responseSetId = newId();
-  ctx.customResponseSets.push({
-    id: responseSetId,
-    name: setName.length > 0 ? setName : 'Responses',
-    sourceGlobalId: null,
-    multiSelect,
-    options,
   });
 
   return {
@@ -158,6 +208,16 @@ function buildItem(q: SpecQuestion, itemId: string, globalIndex: number, ctx: Bu
         body: (q.body ?? q.prompt).slice(0, 5000),
         mediaKeys: [],
       };
+    // Smart pickers: a person who is a system user, a tracked asset, a site or a
+    // location. The AI should reach for these instead of free text.
+    case 'user':
+      return { ...base, type: 'conductedBy' };
+    case 'asset':
+      return { ...base, type: 'asset' };
+    case 'site':
+      return { ...base, type: 'site' };
+    case 'location':
+      return { ...base, type: 'location' };
   }
 }
 
@@ -206,7 +266,12 @@ export function buildTemplateContentFromSpec(spec: TemplateSpec): TemplateConten
     }
   }
 
-  const ctx: BuildCtx = { customResponseSets: [], keyToId, keyToGlobal };
+  const ctx: BuildCtx = {
+    customResponseSets: [],
+    keyToId,
+    keyToGlobal,
+    setBySignature: new Map(),
+  };
 
   // Pass 2: build items in the same order, assembling the page tree.
   let idx = 0;
@@ -226,11 +291,28 @@ export function buildTemplateContentFromSpec(spec: TemplateSpec): TemplateConten
     })),
   }));
 
+  // A few item types (conductedBy/user, location, …) are only valid on the title
+  // page. If the AI placed them on an inspection page, relocate them onto the
+  // title page rather than failing validation — they become proper pickers.
+  const titlePage = buildTitlePage();
+  const relocated: Item[] = [];
+  for (const page of inspectionPages) {
+    for (const section of page.sections) {
+      const keep: Item[] = [];
+      for (const item of section.items) {
+        if (TITLE_PAGE_ONLY.has(item.type)) relocated.push(item);
+        else keep.push(item);
+      }
+      section.items = keep;
+    }
+  }
+  if (relocated.length > 0) titlePage.sections[0]?.items.push(...relocated);
+
   const content = {
     schemaVersion: TEMPLATE_SCHEMA_VERSION,
     title: spec.title,
     ...(spec.description !== undefined ? { description: spec.description } : {}),
-    pages: [buildTitlePage(), ...inspectionPages],
+    pages: [titlePage, ...inspectionPages],
     settings: {
       titleFormat: '{date}',
       documentNumberFormat: '{counter:6}',
