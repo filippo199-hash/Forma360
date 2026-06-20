@@ -344,228 +344,235 @@ export default function ObservationDetailPage() {
         </div>
       </nav>
 
-      {tab === 'overview' ? (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="space-y-3 p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <h2 className="text-base font-semibold">{t('descriptionTitle')}</h2>
-                  {canManage && !editingDescription ? (
-                    <Button type="button" variant="ghost" size="sm" onClick={startEditDescription}>
-                      <Pencil className="mr-1 h-4 w-4" />
-                      {t('editButton')}
-                    </Button>
-                  ) : null}
-                </div>
-                {editingDescription ? (
-                  <div className="space-y-2">
-                    <Textarea
-                      value={descriptionDraft}
-                      onChange={(e) => setDescriptionDraft(e.target.value)}
-                      rows={5}
-                      maxLength={20_000}
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingDescription(false)}
-                      >
-                        {tCommon('cancel')}
-                      </Button>
-                      <Button type="button" size="sm" onClick={saveDescription}>
-                        {tCommon('save')}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                    {issueDescription.length > 0 ? issueDescription : '—'}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="space-y-4 p-6">
-                <h2 className="text-base font-semibold">{t('detailsTitle')}</h2>
-                <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Field label={t('fields.category')}>
-                    <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium">
-                      {issue.categorySnapshot.name}
-                    </span>
-                  </Field>
-                  <Field label={t('fields.site')}>
-                    {canManage ? (
-                      <SiteSelector
-                        value={issue.siteId !== null ? [issue.siteId] : []}
-                        onChange={(next) => updateSite(next[0] ?? '')}
-                        multiple={false}
-                      />
-                    ) : (
-                      <span>{siteName}</span>
-                    )}
-                  </Field>
-                  <Field label={t('fields.assignee')}>
-                    <AssigneePicker
-                      currentId={issue.assigneeUserId ?? null}
-                      currentName={assignee?.name ?? null}
-                      canManage={canManage}
-                      onChange={updateAssignee}
-                      tFields={tFields}
-                    />
-                  </Field>
-                  <Field label={t('fields.priority')}>
-                    {canManage ? (
-                      <select
-                        value={priority ?? ''}
-                        onChange={(e) =>
-                          updatePriority(
-                            e.target.value === '' ? null : (e.target.value as Priority),
-                          )
-                        }
-                        className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      >
-                        <option value="">{t('fields.noPriority')}</option>
-                        {PRIORITIES.map((p) => (
-                          <option key={p} value={p}>
-                            {tPriority(p)}
-                          </option>
-                        ))}
-                      </select>
-                    ) : priority !== null ? (
-                      <span className="inline-flex items-center gap-2">
-                        <span
-                          className={cn('h-2 w-2 rounded-full', PRIORITY_DOT_CLASS[priority])}
-                        />
-                        {tPriority(priority)}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">{t('fields.noPriority')}</span>
-                    )}
-                  </Field>
-                  <Field label={t('fields.dueDate')}>
-                    {canManage ? (
-                      <Input
-                        type="datetime-local"
-                        value={toLocalDatetime(issue.dueAt ?? null)}
-                        onChange={(e) => updateDueAt(e.target.value)}
-                      />
-                    ) : issue.dueAt !== null && issue.dueAt !== undefined ? (
-                      <span>{formatDate(issue.dueAt)}</span>
-                    ) : (
-                      <span className="text-muted-foreground">{t('fields.noDueDate')}</span>
-                    )}
-                  </Field>
-                  <Field label={t('fields.dateOccurred')}>
-                    {canManage ? (
-                      <Input
-                        type="datetime-local"
-                        value={toLocalDatetime(issue.dateOccurred)}
-                        onChange={(e) => updateDateOccurred(e.target.value)}
-                      />
-                    ) : (
-                      <span>{formatDate(issue.dateOccurred)}</span>
-                    )}
-                  </Field>
-                  <Field label={t('fields.reference')}>
-                    <span className="font-mono text-xs">{issue.referenceNumber}</span>
-                  </Field>
-                  <Field label={t('fields.reportedVia')}>
-                    <span>{tReportedVia(issue.reportedVia as 'app' | 'qr')}</span>
-                  </Field>
-                </dl>
-              </CardContent>
-            </Card>
-
-            {data.categorySnapshot.customQuestions.length > 0 ? (
+      {/* Tinted canvas below the tabs — white cards float on a light-blue field. */}
+      <div className="-mx-4 -mb-8 min-h-[60vh] bg-[#eef4fb] px-4 py-6 dark:bg-slate-900/40 sm:px-6">
+        {tab === 'overview' ? (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+            <div className="space-y-4">
               <Card>
-                <CardContent className="space-y-3 p-6 text-sm">
-                  <h2 className="text-base font-semibold">{t('customQuestionsTitle')}</h2>
-                  <dl className="space-y-2">
-                    {data.categorySnapshot.customQuestions.map((q) => (
-                      <div key={q.id} className="grid grid-cols-1 gap-1 sm:grid-cols-[200px_1fr]">
-                        <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                          {q.prompt}
-                        </dt>
-                        <dd>{formatValue(issue.customQuestionResponses[q.id])}</dd>
+                <CardContent className="p-0">
+                  <section className="space-y-3 p-6">
+                    <div className="flex items-start justify-between gap-3">
+                      <h2 className="text-base font-semibold">{t('descriptionTitle')}</h2>
+                      {canManage && !editingDescription ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={startEditDescription}
+                        >
+                          <Pencil className="mr-1 h-4 w-4" />
+                          {t('editButton')}
+                        </Button>
+                      ) : null}
+                    </div>
+                    {editingDescription ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={descriptionDraft}
+                          onChange={(e) => setDescriptionDraft(e.target.value)}
+                          rows={5}
+                          maxLength={20_000}
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingDescription(false)}
+                          >
+                            {tCommon('cancel')}
+                          </Button>
+                          <Button type="button" size="sm" onClick={saveDescription}>
+                            {tCommon('save')}
+                          </Button>
+                        </div>
                       </div>
-                    ))}
-                  </dl>
+                    ) : (
+                      <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                        {issueDescription.length > 0 ? issueDescription : '—'}
+                      </p>
+                    )}
+                  </section>
+
+                  <section className="space-y-4 border-t p-6">
+                    <h2 className="text-base font-semibold">{t('detailsTitle')}</h2>
+                    <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <Field label={t('fields.category')}>
+                        <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium">
+                          {issue.categorySnapshot.name}
+                        </span>
+                      </Field>
+                      <Field label={t('fields.site')}>
+                        {canManage ? (
+                          <SiteSelector
+                            value={issue.siteId !== null ? [issue.siteId] : []}
+                            onChange={(next) => updateSite(next[0] ?? '')}
+                            multiple={false}
+                          />
+                        ) : (
+                          <span>{siteName}</span>
+                        )}
+                      </Field>
+                      <Field label={t('fields.assignee')}>
+                        <AssigneePicker
+                          currentId={issue.assigneeUserId ?? null}
+                          currentName={assignee?.name ?? null}
+                          canManage={canManage}
+                          onChange={updateAssignee}
+                          tFields={tFields}
+                        />
+                      </Field>
+                      <Field label={t('fields.priority')}>
+                        {canManage ? (
+                          <select
+                            value={priority ?? ''}
+                            onChange={(e) =>
+                              updatePriority(
+                                e.target.value === '' ? null : (e.target.value as Priority),
+                              )
+                            }
+                            className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          >
+                            <option value="">{t('fields.noPriority')}</option>
+                            {PRIORITIES.map((p) => (
+                              <option key={p} value={p}>
+                                {tPriority(p)}
+                              </option>
+                            ))}
+                          </select>
+                        ) : priority !== null ? (
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className={cn('h-2 w-2 rounded-full', PRIORITY_DOT_CLASS[priority])}
+                            />
+                            {tPriority(priority)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">{t('fields.noPriority')}</span>
+                        )}
+                      </Field>
+                      <Field label={t('fields.dueDate')}>
+                        {canManage ? (
+                          <Input
+                            type="datetime-local"
+                            value={toLocalDatetime(issue.dueAt ?? null)}
+                            onChange={(e) => updateDueAt(e.target.value)}
+                          />
+                        ) : issue.dueAt !== null && issue.dueAt !== undefined ? (
+                          <span>{formatDate(issue.dueAt)}</span>
+                        ) : (
+                          <span className="text-muted-foreground">{t('fields.noDueDate')}</span>
+                        )}
+                      </Field>
+                      <Field label={t('fields.dateOccurred')}>
+                        {canManage ? (
+                          <Input
+                            type="datetime-local"
+                            value={toLocalDatetime(issue.dateOccurred)}
+                            onChange={(e) => updateDateOccurred(e.target.value)}
+                          />
+                        ) : (
+                          <span>{formatDate(issue.dateOccurred)}</span>
+                        )}
+                      </Field>
+                      <Field label={t('fields.reference')}>
+                        <span className="font-mono text-xs">{issue.referenceNumber}</span>
+                      </Field>
+                      <Field label={t('fields.reportedVia')}>
+                        <span>{tReportedVia(issue.reportedVia as 'app' | 'qr')}</span>
+                      </Field>
+                    </dl>
+                  </section>
+
+                  {data.categorySnapshot.customQuestions.length > 0 ? (
+                    <section className="space-y-3 border-t p-6 text-sm">
+                      <h2 className="text-base font-semibold">{t('customQuestionsTitle')}</h2>
+                      <dl className="space-y-2">
+                        {data.categorySnapshot.customQuestions.map((q) => (
+                          <div
+                            key={q.id}
+                            className="grid grid-cols-1 gap-1 sm:grid-cols-[200px_1fr]"
+                          >
+                            <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                              {q.prompt}
+                            </dt>
+                            <dd>{formatValue(issue.customQuestionResponses[q.id])}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  ) : null}
+
+                  <section className="space-y-2 border-t p-6 text-sm">
+                    <h2 className="text-base font-semibold">{t('metaReportedBy')}</h2>
+                    <p className="text-muted-foreground">
+                      {issue.reportedByName ?? t('reportedAnonymous')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{formatDate(issue.createdAt)}</p>
+                  </section>
                 </CardContent>
               </Card>
-            ) : null}
+            </div>
 
-            <Card>
-              <CardContent className="space-y-2 p-6 text-sm">
-                <h2 className="text-base font-semibold">{t('metaReportedBy')}</h2>
-                <p className="text-muted-foreground">
-                  {issue.reportedByName ?? t('reportedAnonymous')}
-                </p>
-                <p className="text-xs text-muted-foreground">{formatDate(issue.createdAt)}</p>
-              </CardContent>
-            </Card>
+            <aside className="space-y-4">
+              <Card>
+                <CardContent className="space-y-2 p-6 text-sm">
+                  <h2 className="text-base font-semibold">{t('locationTitle')}</h2>
+                  {issue.locationAddress !== null && issue.locationAddress.length > 0 ? (
+                    <p>{issue.locationAddress}</p>
+                  ) : (
+                    <p className="text-muted-foreground">—</p>
+                  )}
+                  {issue.locationGps !== null && issue.locationGps !== undefined ? (
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {issue.locationGps.lat.toFixed(5)}, {issue.locationGps.lng.toFixed(5)}
+                    </p>
+                  ) : null}
+                </CardContent>
+              </Card>
+
+              <AttachmentsCard issueId={issueId} canManage={canManage} compact />
+
+              <Card>
+                <CardContent className="space-y-2 p-6 text-sm">
+                  <h2 className="text-base font-semibold">{t('inspectionsTitle')}</h2>
+                  <p className="text-muted-foreground">{t('inspectionsEmpty')}</p>
+                </CardContent>
+              </Card>
+            </aside>
           </div>
+        ) : null}
 
-          <aside className="space-y-4">
-            <Card>
-              <CardContent className="space-y-2 p-6 text-sm">
-                <h2 className="text-base font-semibold">{t('locationTitle')}</h2>
-                {issue.locationAddress !== null && issue.locationAddress.length > 0 ? (
-                  <p>{issue.locationAddress}</p>
-                ) : (
-                  <p className="text-muted-foreground">—</p>
-                )}
-                {issue.locationGps !== null && issue.locationGps !== undefined ? (
-                  <p className="font-mono text-xs text-muted-foreground">
-                    {issue.locationGps.lat.toFixed(5)}, {issue.locationGps.lng.toFixed(5)}
-                  </p>
-                ) : null}
-              </CardContent>
-            </Card>
+        {tab === 'activity' ? <ActivityTimeline issueId={issueId} /> : null}
 
-            <AttachmentsCard issueId={issueId} canManage={canManage} compact />
+        {tab === 'files' ? (
+          <AttachmentsCard issueId={issueId} canManage={canManage} compact={false} />
+        ) : null}
 
-            <Card>
-              <CardContent className="space-y-2 p-6 text-sm">
-                <h2 className="text-base font-semibold">{t('inspectionsTitle')}</h2>
-                <p className="text-muted-foreground">{t('inspectionsEmpty')}</p>
-              </CardContent>
-            </Card>
-          </aside>
-        </div>
-      ) : null}
+        {tab === 'inspections' ? (
+          <Card>
+            <CardContent className="space-y-4 p-6 text-sm">
+              <p className="text-muted-foreground">{t('inspectionsEmpty')}</p>
+              {canManage ? (
+                <Button type="button" onClick={() => setAddInspectionOpen(true)}>
+                  <Plus className="mr-1 h-4 w-4" />
+                  {t('actions.addInspection')}
+                </Button>
+              ) : null}
+            </CardContent>
+          </Card>
+        ) : null}
 
-      {tab === 'activity' ? <ActivityTimeline issueId={issueId} /> : null}
-
-      {tab === 'files' ? (
-        <AttachmentsCard issueId={issueId} canManage={canManage} compact={false} />
-      ) : null}
-
-      {tab === 'inspections' ? (
-        <Card>
-          <CardContent className="space-y-4 p-6 text-sm">
-            <p className="text-muted-foreground">{t('inspectionsEmpty')}</p>
-            {canManage ? (
-              <Button type="button" onClick={() => setAddInspectionOpen(true)}>
-                <Plus className="mr-1 h-4 w-4" />
-                {t('actions.addInspection')}
-              </Button>
-            ) : null}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {tab === 'actions' ? (
-        <LinkedActionsCard
-          issueId={issueId}
-          canManage={canManage}
-          onOpenAdd={() => setAddActionOpen(true)}
-          locale={locale}
-        />
-      ) : null}
+        {tab === 'actions' ? (
+          <LinkedActionsCard
+            issueId={issueId}
+            canManage={canManage}
+            onOpenAdd={() => setAddActionOpen(true)}
+            locale={locale}
+          />
+        ) : null}
+      </div>
 
       <Dialog open={closeOpen} onOpenChange={setCloseOpen}>
         <DialogContent>
