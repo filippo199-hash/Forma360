@@ -35,7 +35,7 @@ export default async function ObservationsLayout({
       {/* Full-width shell so a page (e.g. the observation detail) can bleed a
           tinted canvas to the content edges; the top tabs + non-detail pages
           re-constrain themselves to max-w-[1200px]. */}
-      <div className="min-h-screen w-full px-4 py-6 sm:px-6 lg:px-8">
+      <div className="flex min-h-screen w-full flex-col px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1200px]">
           <ObservationsTabs locale={locale} />
         </div>
