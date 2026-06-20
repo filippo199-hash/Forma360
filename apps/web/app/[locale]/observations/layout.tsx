@@ -32,8 +32,13 @@ export default async function ObservationsLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      <div className="mx-auto min-h-screen w-full max-w-[1200px] px-4 py-8">
-        <ObservationsTabs locale={locale} />
+      {/* Full-width shell so a page (e.g. the observation detail) can bleed a
+          tinted canvas to the content edges; the top tabs + non-detail pages
+          re-constrain themselves to max-w-[1200px]. */}
+      <div className="min-h-screen w-full px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[1200px]">
+          <ObservationsTabs locale={locale} />
+        </div>
         {children}
       </div>
     </PermissionsProvider>
