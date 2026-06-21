@@ -19,7 +19,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [],
   },
 
-  serverExternalPackages: ['pg', 'bullmq', 'ioredis', '@aws-sdk/client-s3'],
+  // puppeteer-core is dynamically imported by @forma360/render at runtime for
+  // PDF rendering; keep it external so Next resolves it from node_modules
+  // instead of bundling it (and its chromium glue) into the server build.
+  serverExternalPackages: ['pg', 'bullmq', 'ioredis', '@aws-sdk/client-s3', 'puppeteer-core'],
 
   webpack(config) {
     config.resolve = config.resolve ?? {};
