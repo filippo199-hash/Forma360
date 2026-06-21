@@ -1057,7 +1057,14 @@
       "flaggedHeading": "Gemarkeerde items ({count})",
       "flaggedBadge": "Gemarkeerd",
       "skippedBadge": "Overgeslagen"
-    }
+    },
+    "filter_status": "Status",
+    "filter_template": "Template",
+    "filter_conductedBy": "Conducted by",
+    "filter_conductedOn": "Conducted on",
+    "filterAny": "Any",
+    "filterFrom": "From",
+    "filterTo": "To"
   },
   "nav": {
     "primaryLabel": "Primary navigation",

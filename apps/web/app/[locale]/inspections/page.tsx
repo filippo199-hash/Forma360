@@ -52,10 +52,15 @@ function triggerCsvDownload(csv: string, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-
 // ─── Inspection status filter config ──────────────────────────────────────────
 
-type StatusFilterValue = 'all' | 'in_progress' | 'awaiting_signatures' | 'awaiting_approval' | 'completed' | 'rejected';
+type StatusFilterValue =
+  | 'all'
+  | 'in_progress'
+  | 'awaiting_signatures'
+  | 'awaiting_approval'
+  | 'completed'
+  | 'rejected';
 
 const INSPECTION_STATUSES: ReadonlyArray<StatusFilterValue> = [
   'all',
@@ -64,6 +69,14 @@ const INSPECTION_STATUSES: ReadonlyArray<StatusFilterValue> = [
   'awaiting_approval',
   'completed',
   'rejected',
+];
+
+type FilterKey = 'status' | 'template' | 'conductedBy' | 'conductedOn';
+const ALL_FILTER_KEYS: ReadonlyArray<FilterKey> = [
+  'status',
+  'template',
+  'conductedBy',
+  'conductedOn',
 ];
 
 // ─── Root page ────────────────────────────────────────────────────────────────
@@ -95,7 +108,7 @@ const AVATAR_COLORS = [
 
 function getAvatarColor(id: string): string {
   let h = 0;
-  for (let i = 0; i < id.length; i++) h = ((h * 31) + id.charCodeAt(i)) | 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length] ?? 'bg-blue-500';
 }
 
@@ -136,14 +149,48 @@ function InspectionsTab({ locale }: { locale: string }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('all');
-  const [activeFilters, setActiveFilters] = useState<Set<'status'>>(new Set());
+  const [templateFilter, setTemplateFilter] = useState('');
+  const [conductedByFilter, setConductedByFilter] = useState('');
+  const [conductedFrom, setConductedFrom] = useState('');
+  const [conductedTo, setConductedTo] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement>(null);
 
+  const { data: templateOptions } = trpc.templates.list.useQuery({ includeArchived: false });
+  const { data: usersData } = trpc.users.list.useQuery({});
+
   const listInput = {
     ...(activeFilters.has('status') && statusFilter !== 'all' ? { status: statusFilter } : {}),
+    ...(activeFilters.has('template') && templateFilter !== ''
+      ? { templateId: templateFilter }
+      : {}),
+    ...(activeFilters.has('conductedBy') && conductedByFilter !== ''
+      ? { conductedById: conductedByFilter }
+      : {}),
+    ...(activeFilters.has('conductedOn') && conductedFrom !== ''
+      ? { conductedFrom: new Date(`${conductedFrom}T00:00:00`).toISOString() }
+      : {}),
+    ...(activeFilters.has('conductedOn') && conductedTo !== ''
+      ? { conductedTo: new Date(`${conductedTo}T23:59:59`).toISOString() }
+      : {}),
     includeArchived,
   };
+
+  function removeFilter(key: FilterKey) {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setStatusFilter('all');
+    if (key === 'template') setTemplateFilter('');
+    if (key === 'conductedBy') setConductedByFilter('');
+    if (key === 'conductedOn') {
+      setConductedFrom('');
+      setConductedTo('');
+    }
+  }
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -214,9 +261,7 @@ function InspectionsTab({ locale }: { locale: string }) {
     if (!searchQuery.trim()) return all;
     const q = searchQuery.toLowerCase();
     return all.filter(
-      (r) =>
-        r.title.toLowerCase().includes(q) ||
-        (r.templateName ?? '').toLowerCase().includes(q),
+      (r) => r.title.toLowerCase().includes(q) || (r.templateName ?? '').toLowerCase().includes(q),
     );
   }, [rows, searchQuery]);
 
@@ -241,8 +286,7 @@ function InspectionsTab({ locale }: { locale: string }) {
     return groups;
   }, [filteredRows, locale]);
 
-  const allSelected =
-    filteredRows.length > 0 && selectedIds.size === filteredRows.length;
+  const allSelected = filteredRows.length > 0 && selectedIds.size === filteredRows.length;
   const selectionCount = selectedIds.size;
   const totalCount = rows?.length ?? 0;
 
@@ -303,31 +347,28 @@ function InspectionsTab({ locale }: { locale: string }) {
               <ChevronDown className="h-3 w-3 text-muted-foreground" />
             )}
           </Button>
-          {filterMenuOpen && !activeFilters.has('status') ? (
-            <div className="absolute left-0 top-full z-50 mt-1 w-40 rounded-md border bg-popover py-1 shadow-lg">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveFilters(new Set(['status']));
-                  setFilterMenuOpen(false);
-                }}
-                className="flex w-full items-center px-3 py-2 text-sm hover:bg-accent"
-              >
-                {t('filterStatus')}
-              </button>
+          {filterMenuOpen && ALL_FILTER_KEYS.some((k) => !activeFilters.has(k)) ? (
+            <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-md border bg-popover py-1 shadow-lg">
+              {ALL_FILTER_KEYS.filter((k) => !activeFilters.has(k)).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => {
+                    setActiveFilters((prev) => new Set(prev).add(k));
+                    setFilterMenuOpen(false);
+                  }}
+                  className="flex w-full items-center px-3 py-2 text-sm hover:bg-accent"
+                >
+                  {t(`filter_${k}`)}
+                </button>
+              ))}
             </div>
           ) : null}
         </div>
 
         {/* Status filter chip */}
         {activeFilters.has('status') ? (
-          <FilterChip
-            label={t('filterStatus')}
-            onRemove={() => {
-              setActiveFilters(new Set());
-              setStatusFilter('all');
-            }}
-          >
+          <FilterChip label={t('filter_status')} onRemove={() => removeFilter('status')}>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilterValue)}
@@ -335,15 +376,81 @@ function InspectionsTab({ locale }: { locale: string }) {
             >
               {INSPECTION_STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {s === 'all' ? t('filterStatusAll') : tFilter(
-                    s === 'in_progress' ? 'inProgress' :
-                    s === 'awaiting_signatures' ? 'awaitingSignatures' :
-                    s === 'awaiting_approval' ? 'awaitingApproval' :
-                    s === 'completed' ? 'completed' : 'rejected'
-                  )}
+                  {s === 'all'
+                    ? t('filterStatusAll')
+                    : tFilter(
+                        s === 'in_progress'
+                          ? 'inProgress'
+                          : s === 'awaiting_signatures'
+                            ? 'awaitingSignatures'
+                            : s === 'awaiting_approval'
+                              ? 'awaitingApproval'
+                              : s === 'completed'
+                                ? 'completed'
+                                : 'rejected',
+                      )}
                 </option>
               ))}
             </select>
+          </FilterChip>
+        ) : null}
+
+        {/* Template filter chip */}
+        {activeFilters.has('template') ? (
+          <FilterChip label={t('filter_template')} onRemove={() => removeFilter('template')}>
+            <select
+              value={templateFilter}
+              onChange={(e) => setTemplateFilter(e.target.value)}
+              className="max-w-[160px] border-0 bg-transparent text-xs outline-none"
+            >
+              <option value="">{t('filterAny')}</option>
+              {(templateOptions ?? []).map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {tpl.name}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
+        ) : null}
+
+        {/* Conducted by filter chip */}
+        {activeFilters.has('conductedBy') ? (
+          <FilterChip label={t('filter_conductedBy')} onRemove={() => removeFilter('conductedBy')}>
+            <select
+              value={conductedByFilter}
+              onChange={(e) => setConductedByFilter(e.target.value)}
+              className="max-w-[160px] border-0 bg-transparent text-xs outline-none"
+            >
+              <option value="">{t('filterAny')}</option>
+              {(usersData?.users ?? []).map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
+        ) : null}
+
+        {/* Conducted on (date range) filter chip */}
+        {activeFilters.has('conductedOn') ? (
+          <FilterChip label={t('filter_conductedOn')} onRemove={() => removeFilter('conductedOn')}>
+            <span className="flex items-center gap-1">
+              <input
+                type="date"
+                value={conductedFrom}
+                onChange={(e) => setConductedFrom(e.target.value)}
+                className="border-0 bg-transparent text-xs outline-none"
+                aria-label={t('filterFrom')}
+              />
+              <span className="text-muted-foreground">–</span>
+              <input
+                type="date"
+                value={conductedTo}
+                onChange={(e) => setConductedTo(e.target.value)}
+                className="border-0 bg-transparent text-xs outline-none"
+                aria-label={t('filterTo')}
+              />
+            </span>
           </FilterChip>
         ) : null}
 
@@ -396,7 +503,10 @@ function InspectionsTab({ locale }: { locale: string }) {
                 groupedRows.map((group) => (
                   <Fragment key={group.dateKey}>
                     <tr className="bg-muted/20">
-                      <td colSpan={7} className="px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                      <td
+                        colSpan={7}
+                        className="px-3 py-1.5 text-xs font-semibold text-muted-foreground"
+                      >
                         {group.label}
                       </td>
                     </tr>
@@ -558,7 +668,9 @@ function InspectionsTab({ locale }: { locale: string }) {
         entity="inspection"
         id={archiveTarget ?? ''}
         open={archiveTarget !== null}
-        onOpenChange={(v) => { if (!v) setArchiveTarget(null); }}
+        onOpenChange={(v) => {
+          if (!v) setArchiveTarget(null);
+        }}
         onConfirm={() => {
           if (archiveTarget !== null) {
             archiveMany.mutate({ ids: [archiveTarget] });
@@ -670,7 +782,6 @@ function InspectionRowMenu({
     </DropdownMenu>
   );
 }
-
 
 function TemplatePickerDialog({
   open,

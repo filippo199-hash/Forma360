@@ -59,7 +59,7 @@ import type { SignatureWorkflow } from '@forma360/shared/template-schema';
 import { collectActiveTriggers, missingEvidence } from '@forma360/shared/inspection-eval';
 import { createInspectionActionIfAbsent } from './actions';
 import { TRPCError } from '@trpc/server';
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -149,6 +149,11 @@ const listInput = z
       ])
       .optional(),
     templateId: z.string().length(26).optional(),
+    /** Filter by the user who conducted the inspection (inspections.createdBy). */
+    conductedById: z.string().min(1).max(64).optional(),
+    /** Conducted-on date range (inclusive), filtered on inspections.startedAt. */
+    conductedFrom: z.string().datetime().optional(),
+    conductedTo: z.string().datetime().optional(),
     /** Filter to inspections linked to a specific issue (observation). */
     sourceIssueId: z.string().length(26).optional(),
     includeArchived: z.boolean().default(false),
@@ -395,6 +400,12 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         if (input.status !== undefined) where.push(eq(inspections.status, input.status));
         if (input.templateId !== undefined)
           where.push(eq(inspections.templateId, input.templateId));
+        if (input.conductedById !== undefined)
+          where.push(eq(inspections.createdBy, input.conductedById));
+        if (input.conductedFrom !== undefined)
+          where.push(gte(inspections.startedAt, new Date(input.conductedFrom)));
+        if (input.conductedTo !== undefined)
+          where.push(lte(inspections.startedAt, new Date(input.conductedTo)));
         if (input.sourceIssueId !== undefined) {
           where.push(eq(inspections.sourceType, 'issue'));
           where.push(eq(inspections.sourceId, input.sourceIssueId));

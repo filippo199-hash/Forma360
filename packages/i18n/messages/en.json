@@ -1170,7 +1170,14 @@
       "flaggedHeading": "Flagged items ({count})",
       "flaggedBadge": "Flagged",
       "skippedBadge": "Skipped"
-    }
+    },
+    "filter_status": "Status",
+    "filter_template": "Template",
+    "filter_conductedBy": "Conducted by",
+    "filter_conductedOn": "Conducted on",
+    "filterAny": "Any",
+    "filterFrom": "From",
+    "filterTo": "To"
   },
   "schedules": {
     "title": "Schedules",

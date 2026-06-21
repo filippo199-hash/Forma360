@@ -1057,7 +1057,14 @@
       "flaggedHeading": "已标记项 ({count})",
       "flaggedBadge": "已标记",
       "skippedBadge": "已跳过"
-    }
+    },
+    "filter_status": "Status",
+    "filter_template": "Template",
+    "filter_conductedBy": "Conducted by",
+    "filter_conductedOn": "Conducted on",
+    "filterAny": "Any",
+    "filterFrom": "From",
+    "filterTo": "To"
   },
   "nav": {
     "primaryLabel": "Primary navigation",

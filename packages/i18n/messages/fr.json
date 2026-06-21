@@ -1064,7 +1064,14 @@
       "flaggedHeading": "Éléments signalés ({count})",
       "flaggedBadge": "Signalé",
       "skippedBadge": "Ignoré"
-    }
+    },
+    "filter_status": "Status",
+    "filter_template": "Template",
+    "filter_conductedBy": "Conducted by",
+    "filter_conductedOn": "Conducted on",
+    "filterAny": "Any",
+    "filterFrom": "From",
+    "filterTo": "To"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
