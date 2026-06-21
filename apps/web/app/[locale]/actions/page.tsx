@@ -1191,7 +1191,7 @@ function BoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex h-[calc(100vh-15rem)] min-h-[400px] flex-col gap-2 overflow-hidden rounded-md border-l-4 bg-muted/30 p-3 transition-colors',
+        'flex h-[calc(100vh-15rem)] min-h-[400px] flex-col gap-2 overflow-hidden rounded-lg border border-l-4 bg-card p-3 shadow-sm transition-colors',
         STATUS_COLUMN_COLORS[status],
         isOver && canManage && 'bg-primary/5 ring-2 ring-primary/20',
       )}
@@ -1325,7 +1325,7 @@ function BoardCardContent({
         }
       }}
       className={cn(
-        'block rounded-md bg-card p-3 text-sm shadow-sm transition-shadow hover:shadow-md',
+        'block rounded-md border border-border/70 bg-card p-3 text-sm shadow-sm transition-shadow hover:shadow-md',
         withDragHandle && 'pl-7',
         isDragOverlay && 'rotate-1 shadow-lg ring-2 ring-primary/20',
       )}
