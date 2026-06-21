@@ -127,46 +127,38 @@ const STATUS_COLUMN_COLORS: Record<Exclude<StatusFilter, 'all'>, string> = {
   completed: 'border-l-emerald-400',
   cancelled: 'border-l-slate-400',
 };
-const VIEWS_STORAGE_KEY = 'forma360:action_views';
+// ── Saved views (server-side, per user) ───────────────────────────────────────
+//
+// Each user has their own set within a tenant (To-Do #3). The view config (every
+// SavedView field except id + name) is stored as an opaque JSON `config` blob;
+// the hook flattens it back to the SavedView shape so the rest of the page is
+// unchanged.
 
-// ── Saved views (localStorage) ────────────────────────────────────────────────
+type SavedViewConfig = Omit<SavedView, 'id' | 'name'>;
 
 function useSavedViews() {
-  const [views, setViews] = useState<SavedView[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const raw = localStorage.getItem(VIEWS_STORAGE_KEY);
-      return raw !== null ? (JSON.parse(raw) as SavedView[]) : [];
-    } catch {
-      return [];
-    }
+  const utils = trpc.useUtils();
+  const { data } = trpc.actions.savedViews.list.useQuery();
+  const create = trpc.actions.savedViews.create.useMutation({
+    onSuccess: () => void utils.actions.savedViews.list.invalidate(),
+  });
+  const del = trpc.actions.savedViews.delete.useMutation({
+    onSuccess: () => void utils.actions.savedViews.list.invalidate(),
   });
 
-  function persist(updated: SavedView[]) {
-    try {
-      localStorage.setItem(VIEWS_STORAGE_KEY, JSON.stringify(updated));
-    } catch {
-      /* storage quota exceeded — ignore */
-    }
-  }
+  const views: SavedView[] = (data ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    ...(r.config as SavedViewConfig),
+  }));
 
-  function saveView(view: Omit<SavedView, 'id'>): string {
-    const id = crypto.randomUUID();
-    const next: SavedView = { ...view, id };
-    setViews((prev) => {
-      const updated = [...prev, next];
-      persist(updated);
-      return updated;
-    });
-    return id;
+  function saveView(view: Omit<SavedView, 'id'>): void {
+    const { name, ...config } = view;
+    create.mutate({ name, config: config as Record<string, unknown> });
   }
 
   function deleteView(id: string) {
-    setViews((prev) => {
-      const updated = prev.filter((v) => v.id !== id);
-      persist(updated);
-      return updated;
-    });
+    del.mutate({ id });
   }
 
   return { views, saveView, deleteView };

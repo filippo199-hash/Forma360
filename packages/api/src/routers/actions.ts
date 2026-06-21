@@ -18,6 +18,7 @@ import {
   actionAssets,
   actionComments,
   actionPriority,
+  actionSavedViews,
   actionStatus,
   actionTypes,
   actions,
@@ -1387,4 +1388,60 @@ export const actionsRouter = router({
       }
       return map;
     }),
+
+  /**
+   * Per-user saved views for the board/list (To-Do #3). Scoped to the caller —
+   * two users in the same tenant keep independent view sets. `config` is the
+   * opaque filter/view snapshot the client serialises.
+   */
+  savedViews: router({
+    list: tenantProcedure.use(requirePermission('actions.view')).query(async ({ ctx }) => {
+      return ctx.db
+        .select({
+          id: actionSavedViews.id,
+          name: actionSavedViews.name,
+          config: actionSavedViews.config,
+          createdAt: actionSavedViews.createdAt,
+        })
+        .from(actionSavedViews)
+        .where(
+          and(
+            eq(actionSavedViews.tenantId, ctx.tenantId),
+            eq(actionSavedViews.userId, ctx.auth.userId),
+          ),
+        )
+        .orderBy(desc(actionSavedViews.createdAt));
+    }),
+
+    create: tenantProcedure
+      .use(requirePermission('actions.view'))
+      .input(z.object({ name: z.string().min(1).max(80), config: z.record(z.unknown()) }))
+      .mutation(async ({ ctx, input }) => {
+        const id = newId();
+        await ctx.db.insert(actionSavedViews).values({
+          id,
+          tenantId: ctx.tenantId,
+          userId: ctx.auth.userId,
+          name: input.name,
+          config: input.config,
+        });
+        return { id };
+      }),
+
+    delete: tenantProcedure
+      .use(requirePermission('actions.view'))
+      .input(z.object({ id: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        await ctx.db
+          .delete(actionSavedViews)
+          .where(
+            and(
+              eq(actionSavedViews.id, input.id),
+              eq(actionSavedViews.tenantId, ctx.tenantId),
+              eq(actionSavedViews.userId, ctx.auth.userId),
+            ),
+          );
+        return { ok: true as const };
+      }),
+  }),
 });

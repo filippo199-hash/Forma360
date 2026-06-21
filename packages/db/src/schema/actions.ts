@@ -398,3 +398,31 @@ export const actionAssets = pgTable(
 );
 
 export type ActionAsset = typeof actionAssets.$inferSelect;
+
+/**
+ * Per-user saved views for the Actions board/list (To-Do #3). Each user has
+ * their own set within a tenant — two users in the same company see different
+ * views. `config` is the opaque filter/view snapshot the client serialises
+ * (status/source/priority/sort/etc.). Cascade-deletes with the user.
+ */
+export const actionSavedViews = pgTable(
+  'action_saved_views',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    config: jsonb('config')
+      .notNull()
+      .$type<Record<string, unknown>>()
+      .default(sql`'{}'::jsonb`),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('action_saved_views_user_idx').on(t.tenantId, t.userId)],
+);
+
+export type ActionSavedView = typeof actionSavedViews.$inferSelect;

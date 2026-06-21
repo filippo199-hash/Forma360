@@ -67,6 +67,16 @@ try {
       "created_at" timestamptz NOT NULL DEFAULT now()
     );
     CREATE UNIQUE INDEX IF NOT EXISTS "maintenance_program_assets_unique" ON "maintenance_program_assets" ("program_id", "asset_id");
+    -- per-user saved views for the Actions board (To-Do #3)
+    CREATE TABLE IF NOT EXISTS "action_saved_views" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "user_id" text NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+      "name" text NOT NULL,
+      "config" jsonb NOT NULL DEFAULT '{}'::jsonb,
+      "created_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "action_saved_views_user_idx" ON "action_saved_views" ("tenant_id", "user_id");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {
