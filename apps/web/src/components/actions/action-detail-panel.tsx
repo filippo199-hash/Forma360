@@ -312,234 +312,236 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
       {/* ── Scrollable body ── */}
       <div className="flex-1 overflow-y-auto">
         {tab === 'overview' ? (
-          <div className="space-y-4 p-6">
-            {/* Description */}
+          <div className="p-6">
             <Card>
-              <CardContent className="space-y-3 p-5">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold">{t('descriptionTitle')}</h3>
-                  {canEdit && !editingDescription ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setDescriptionDraft(action.description ?? '');
-                        setEditingDescription(true);
-                      }}
-                    >
-                      <Pencil className="mr-1 h-3 w-3" />
-                      {t('actions.editDescription')}
-                    </Button>
-                  ) : null}
-                </div>
-                {editingDescription ? (
-                  <div className="space-y-2">
-                    <Textarea
-                      value={descriptionDraft}
-                      onChange={(e) => setDescriptionDraft(e.target.value)}
-                      rows={4}
-                      maxLength={20_000}
-                      autoFocus
-                    />
-                    <div className="flex justify-end gap-2">
+              <CardContent className="p-0">
+                {/* Description */}
+                <section className="space-y-3 p-5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold">{t('descriptionTitle')}</h3>
+                    {canEdit && !editingDescription ? (
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => setEditingDescription(false)}
-                      >
-                        {t('actions.cancelDescription')}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={update.isPending}
                         onClick={() => {
-                          update.mutate({
-                            actionId,
-                            description:
-                              descriptionDraft.trim().length === 0 ? null : descriptionDraft.trim(),
-                          });
-                          setEditingDescription(false);
+                          setDescriptionDraft(action.description ?? '');
+                          setEditingDescription(true);
                         }}
                       >
-                        {t('actions.saveDescription')}
+                        <Pencil className="mr-1 h-3 w-3" />
+                        {t('actions.editDescription')}
                       </Button>
-                    </div>
+                    ) : null}
                   </div>
-                ) : (
-                  <p
-                    className={
-                      action.description !== null && action.description.length > 0
-                        ? 'text-sm'
-                        : 'text-sm text-muted-foreground'
-                    }
-                  >
-                    {action.description ?? t('descriptionEmpty')}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                  {editingDescription ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={descriptionDraft}
+                        onChange={(e) => setDescriptionDraft(e.target.value)}
+                        rows={4}
+                        maxLength={20_000}
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingDescription(false)}
+                        >
+                          {t('actions.cancelDescription')}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={update.isPending}
+                          onClick={() => {
+                            update.mutate({
+                              actionId,
+                              description:
+                                descriptionDraft.trim().length === 0
+                                  ? null
+                                  : descriptionDraft.trim(),
+                            });
+                            setEditingDescription(false);
+                          }}
+                        >
+                          {t('actions.saveDescription')}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p
+                      className={
+                        action.description !== null && action.description.length > 0
+                          ? 'text-sm'
+                          : 'text-sm text-muted-foreground'
+                      }
+                    >
+                      {action.description ?? t('descriptionEmpty')}
+                    </p>
+                  )}
+                </section>
 
-            {/* Details */}
-            <Card>
-              <CardContent className="space-y-3 p-5 text-sm">
-                <h3 className="font-semibold">{t('detailsTitle')}</h3>
+                {/* Details */}
+                <section className="space-y-3 border-t p-5 text-sm">
+                  <h3 className="font-semibold">{t('detailsTitle')}</h3>
 
-                <DetailRow label={tFields('status')}>
-                  {canManage && !isArchived ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button type="button" className="w-full text-left">
-                          <span
-                            className={cn(
-                              'rounded-md px-2 py-0.5 text-xs font-medium',
-                              STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
-                            )}
-                          >
-                            {tStatus(action.status as Status)}
-                          </span>
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        {STATUSES.filter((s) => s !== action.status).map((s) => (
-                          <DropdownMenuItem
-                            key={s}
-                            onSelect={() => setStatus.mutate({ actionId, status: s })}
-                          >
-                            {tStatus(s)}
-                          </DropdownMenuItem>
+                  <DetailRow label={tFields('status')}>
+                    {canManage && !isArchived ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button type="button" className="w-full text-left">
+                            <span
+                              className={cn(
+                                'rounded-md px-2 py-0.5 text-xs font-medium',
+                                STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
+                              )}
+                            >
+                              {tStatus(action.status as Status)}
+                            </span>
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          {STATUSES.filter((s) => s !== action.status).map((s) => (
+                            <DropdownMenuItem
+                              key={s}
+                              onSelect={() => setStatus.mutate({ actionId, status: s })}
+                            >
+                              {tStatus(s)}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <span
+                        className={cn(
+                          'rounded-md px-2 py-0.5 text-xs font-medium',
+                          STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
+                        )}
+                      >
+                        {tStatus(action.status as Status)}
+                      </span>
+                    )}
+                  </DetailRow>
+
+                  <DetailRow label={tFields('priority')}>
+                    {canEdit ? (
+                      <select
+                        value={action.priority ?? ''}
+                        onChange={(e) =>
+                          update.mutate({
+                            actionId,
+                            priority: e.target.value === '' ? null : (e.target.value as Priority),
+                          })
+                        }
+                        className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                      >
+                        <option value="">{tFields('noPriority')}</option>
+                        {PRIORITIES.map((p) => (
+                          <option key={p} value={p}>
+                            {tPriority(p)}
+                          </option>
                         ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <span
-                      className={cn(
-                        'rounded-md px-2 py-0.5 text-xs font-medium',
-                        STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
-                      )}
-                    >
-                      {tStatus(action.status as Status)}
-                    </span>
-                  )}
-                </DetailRow>
+                      </select>
+                    ) : action.priority !== null &&
+                      (action.priority === 'low' ||
+                        action.priority === 'medium' ||
+                        action.priority === 'high' ||
+                        action.priority === 'critical') ? (
+                      tPriority(action.priority)
+                    ) : (
+                      tFields('noPriority')
+                    )}
+                  </DetailRow>
 
-                <DetailRow label={tFields('priority')}>
-                  {canEdit ? (
-                    <select
-                      value={action.priority ?? ''}
-                      onChange={(e) =>
-                        update.mutate({
-                          actionId,
-                          priority: e.target.value === '' ? null : (e.target.value as Priority),
-                        })
-                      }
-                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
-                    >
-                      <option value="">{tFields('noPriority')}</option>
-                      {PRIORITIES.map((p) => (
-                        <option key={p} value={p}>
-                          {tPriority(p)}
-                        </option>
-                      ))}
-                    </select>
-                  ) : action.priority !== null &&
-                    (action.priority === 'low' ||
-                      action.priority === 'medium' ||
-                      action.priority === 'high' ||
-                      action.priority === 'critical') ? (
-                    tPriority(action.priority)
-                  ) : (
-                    tFields('noPriority')
-                  )}
-                </DetailRow>
+                  <DetailRow label={tFields('assignee')}>
+                    <AssigneePicker
+                      currentId={action.assigneeUserId}
+                      currentName={assignee?.name ?? null}
+                      canManage={canEdit}
+                      onChange={(next) => update.mutate({ actionId, assigneeUserId: next })}
+                      tFields={tFields}
+                    />
+                  </DetailRow>
 
-                <DetailRow label={tFields('assignee')}>
-                  <AssigneePicker
-                    currentId={action.assigneeUserId}
-                    currentName={assignee?.name ?? null}
-                    canManage={canEdit}
-                    onChange={(next) => update.mutate({ actionId, assigneeUserId: next })}
-                    tFields={tFields}
+                  <DetailRow label={tFields('dueDate')}>
+                    {canEdit ? (
+                      <Input
+                        type="datetime-local"
+                        value={toLocalDatetime(action.dueAt)}
+                        onChange={(e) =>
+                          update.mutate({
+                            actionId,
+                            dueAt:
+                              e.target.value === '' ? null : new Date(e.target.value).toISOString(),
+                          })
+                        }
+                        className={overdue ? 'border-destructive text-destructive' : ''}
+                      />
+                    ) : action.dueAt !== null ? (
+                      new Date(action.dueAt).toLocaleString()
+                    ) : (
+                      tFields('noDueDate')
+                    )}
+                  </DetailRow>
+
+                  <DetailRow label={tFields('site')}>
+                    {canEdit ? (
+                      <SiteSelector
+                        value={action.siteId !== null ? [action.siteId] : []}
+                        onChange={(next) => update.mutate({ actionId, siteId: next[0] ?? null })}
+                        multiple={false}
+                        placeholder={tFields('noSite')}
+                      />
+                    ) : action.siteId !== null ? (
+                      ((sites ?? []).find((s) => s.id === action.siteId)?.name ?? '—')
+                    ) : (
+                      tFields('noSite')
+                    )}
+                  </DetailRow>
+
+                  <DetailRow label={tFields('label')}>
+                    {canEdit ? (
+                      <LabelInput
+                        initial={action.label ?? ''}
+                        onCommit={(next) =>
+                          update.mutate({
+                            actionId,
+                            label: next.length === 0 ? null : next,
+                          })
+                        }
+                      />
+                    ) : action.label !== null && action.label.length > 0 ? (
+                      action.label
+                    ) : (
+                      tFields('noLabel')
+                    )}
+                  </DetailRow>
+                </section>
+
+                {/* Source */}
+                <SourceCard source={source} sourceId={action.sourceId} locale={locale} />
+
+                {/* Custom questions */}
+                {actionType !== null ? (
+                  <CustomQuestionsCard
+                    actionId={actionId}
+                    actionType={actionType}
+                    responses={(action.customQuestionResponses ?? {}) as Record<string, unknown>}
+                    canEdit={canEdit}
                   />
-                </DetailRow>
+                ) : null}
 
-                <DetailRow label={tFields('dueDate')}>
-                  {canEdit ? (
-                    <Input
-                      type="datetime-local"
-                      value={toLocalDatetime(action.dueAt)}
-                      onChange={(e) =>
-                        update.mutate({
-                          actionId,
-                          dueAt:
-                            e.target.value === '' ? null : new Date(e.target.value).toISOString(),
-                        })
-                      }
-                      className={overdue ? 'border-destructive text-destructive' : ''}
-                    />
-                  ) : action.dueAt !== null ? (
-                    new Date(action.dueAt).toLocaleString()
-                  ) : (
-                    tFields('noDueDate')
-                  )}
-                </DetailRow>
-
-                <DetailRow label={tFields('site')}>
-                  {canEdit ? (
-                    <SiteSelector
-                      value={action.siteId !== null ? [action.siteId] : []}
-                      onChange={(next) => update.mutate({ actionId, siteId: next[0] ?? null })}
-                      multiple={false}
-                      placeholder={tFields('noSite')}
-                    />
-                  ) : action.siteId !== null ? (
-                    ((sites ?? []).find((s) => s.id === action.siteId)?.name ?? '—')
-                  ) : (
-                    tFields('noSite')
-                  )}
-                </DetailRow>
-
-                <DetailRow label={tFields('label')}>
-                  {canEdit ? (
-                    <LabelInput
-                      initial={action.label ?? ''}
-                      onCommit={(next) =>
-                        update.mutate({
-                          actionId,
-                          label: next.length === 0 ? null : next,
-                        })
-                      }
-                    />
-                  ) : action.label !== null && action.label.length > 0 ? (
-                    action.label
-                  ) : (
-                    tFields('noLabel')
-                  )}
-                </DetailRow>
+                {/* Recurrence */}
+                <RecurrenceCard
+                  actionId={actionId}
+                  recurrence={action.recurrence as RecurrenceCardValue}
+                  canEdit={canEdit}
+                />
               </CardContent>
             </Card>
-
-            {/* Source */}
-            <SourceCard source={source} sourceId={action.sourceId} locale={locale} />
-
-            {/* Custom questions */}
-            {actionType !== null ? (
-              <CustomQuestionsCard
-                actionId={actionId}
-                actionType={actionType}
-                responses={(action.customQuestionResponses ?? {}) as Record<string, unknown>}
-                canEdit={canEdit}
-              />
-            ) : null}
-
-            {/* Recurrence */}
-            <RecurrenceCard
-              actionId={actionId}
-              recurrence={action.recurrence as RecurrenceCardValue}
-              canEdit={canEdit}
-            />
           </div>
         ) : null}
 
@@ -649,20 +651,18 @@ function SourceCard({
       : `/${locale}/inspections/${sourceId}`;
   const reference = source.referenceNumber ?? sourceId.slice(-6);
   return (
-    <Card>
-      <CardContent className="flex items-start justify-between gap-2 p-5 text-sm">
-        <p>
-          {source.type === 'issue'
-            ? t('sourceLinkIssue', { referenceNumber: reference })
-            : t('sourceLinkInspection', { referenceNumber: reference })}
-        </p>
-        <Button asChild type="button" variant="outline" size="sm">
-          <Link href={href} target="_blank">
-            {t('sourceLinkOpen')}
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+    <section className="flex items-start justify-between gap-2 border-t p-5 text-sm">
+      <p>
+        {source.type === 'issue'
+          ? t('sourceLinkIssue', { referenceNumber: reference })
+          : t('sourceLinkInspection', { referenceNumber: reference })}
+      </p>
+      <Button asChild type="button" variant="outline" size="sm">
+        <Link href={href} target="_blank">
+          {t('sourceLinkOpen')}
+        </Link>
+      </Button>
+    </section>
   );
 }
 
@@ -924,98 +924,96 @@ function CustomQuestionsCard({
   if (actionType.customQuestions.length === 0) return null;
 
   return (
-    <Card>
-      <CardContent className="space-y-3 p-5 text-sm">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">{t('title')}</h3>
-          {canEdit && !editing ? (
-            <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
-              {tCommon('edit')}
-            </Button>
-          ) : null}
-        </div>
-        {editing ? (
-          <div className="space-y-3">
-            {actionType.customQuestions.map((q) => (
-              <div key={q.id} className="space-y-1.5">
-                <label className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {q.prompt}
-                  {q.required ? <span className="ml-1 text-destructive">*</span> : null}
-                </label>
-                {q.type === 'text' ? (
-                  <Textarea
-                    value={typeof draft[q.id] === 'string' ? (draft[q.id] as string) : ''}
-                    onChange={(e) => setDraft({ ...draft, [q.id]: e.target.value })}
-                    rows={2}
-                    maxLength={2000}
-                  />
-                ) : q.type === 'number' ? (
-                  <Input
-                    type="number"
-                    value={
-                      typeof draft[q.id] === 'number'
-                        ? String(draft[q.id])
-                        : typeof draft[q.id] === 'string'
-                          ? (draft[q.id] as string)
-                          : ''
-                    }
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        [q.id]: e.target.value === '' ? '' : Number(e.target.value),
-                      })
-                    }
-                  />
-                ) : (
-                  <select
-                    value={typeof draft[q.id] === 'string' ? (draft[q.id] as string) : ''}
-                    onChange={(e) => setDraft({ ...draft, [q.id]: e.target.value })}
-                    className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
-                  >
-                    <option value="" />
-                    {q.options?.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            ))}
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setEditing(false);
-                  setDraft(responses);
-                }}
-              >
-                {tCommon('cancel')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={update.isPending}
-                onClick={() => update.mutate({ actionId, customQuestionResponses: draft })}
-              >
-                {tCommon('save')}
-              </Button>
+    <section className="space-y-3 border-t p-5 text-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">{t('title')}</h3>
+        {canEdit && !editing ? (
+          <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
+            {tCommon('edit')}
+          </Button>
+        ) : null}
+      </div>
+      {editing ? (
+        <div className="space-y-3">
+          {actionType.customQuestions.map((q) => (
+            <div key={q.id} className="space-y-1.5">
+              <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                {q.prompt}
+                {q.required ? <span className="ml-1 text-destructive">*</span> : null}
+              </label>
+              {q.type === 'text' ? (
+                <Textarea
+                  value={typeof draft[q.id] === 'string' ? (draft[q.id] as string) : ''}
+                  onChange={(e) => setDraft({ ...draft, [q.id]: e.target.value })}
+                  rows={2}
+                  maxLength={2000}
+                />
+              ) : q.type === 'number' ? (
+                <Input
+                  type="number"
+                  value={
+                    typeof draft[q.id] === 'number'
+                      ? String(draft[q.id])
+                      : typeof draft[q.id] === 'string'
+                        ? (draft[q.id] as string)
+                        : ''
+                  }
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      [q.id]: e.target.value === '' ? '' : Number(e.target.value),
+                    })
+                  }
+                />
+              ) : (
+                <select
+                  value={typeof draft[q.id] === 'string' ? (draft[q.id] as string) : ''}
+                  onChange={(e) => setDraft({ ...draft, [q.id]: e.target.value })}
+                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                >
+                  <option value="" />
+                  {q.options?.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
+          ))}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEditing(false);
+                setDraft(responses);
+              }}
+            >
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={update.isPending}
+              onClick={() => update.mutate({ actionId, customQuestionResponses: draft })}
+            >
+              {tCommon('save')}
+            </Button>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {actionType.customQuestions.map((q) => (
-              <div key={q.id}>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">{q.prompt}</p>
-                <p className="mt-0.5">{String(responses[q.id] ?? '—')}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {actionType.customQuestions.map((q) => (
+            <div key={q.id}>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">{q.prompt}</p>
+              <p className="mt-0.5">{String(responses[q.id] ?? '—')}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1065,101 +1063,98 @@ function RecurrenceCard({
   if (!canEdit && initial === null) return null;
 
   return (
-    <Card>
-      <CardContent className="space-y-3 p-5 text-sm">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">{t('title')}</h3>
-          {canEdit && !editing ? (
-            <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
-              {tCommon('edit')}
-            </Button>
+    <section className="space-y-3 border-t p-5 text-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">{t('title')}</h3>
+        {canEdit && !editing ? (
+          <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
+            {tCommon('edit')}
+          </Button>
+        ) : null}
+      </div>
+      {editing ? (
+        <div className="space-y-3">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+              className="rounded"
+            />
+            <span>{t('enableLabel')}</span>
+          </label>
+          {enabled ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span>{t('everyLabel')}</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={interval}
+                  onChange={(e) => setInterval(parseInt(e.target.value, 10) || 1)}
+                  className="w-16"
+                />
+                <select
+                  value={freq}
+                  onChange={(e) => setFreq(e.target.value as typeof freq)}
+                  className="rounded-md border border-input bg-background px-2 py-1"
+                >
+                  {(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const).map((f) => (
+                    <option key={f} value={f}>
+                      {t(`freq.${f.toLowerCase()}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span>{t('endDateLabel')}</span>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-auto"
+                />
+              </div>
+            </>
           ) : null}
-        </div>
-        {editing ? (
-          <div className="space-y-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
-                className="rounded"
-              />
-              <span>{t('enableLabel')}</span>
-            </label>
-            {enabled ? (
-              <>
-                <div className="flex items-center gap-2">
-                  <span>{t('everyLabel')}</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={interval}
-                    onChange={(e) => setInterval(parseInt(e.target.value, 10) || 1)}
-                    className="w-16"
-                  />
-                  <select
-                    value={freq}
-                    onChange={(e) => setFreq(e.target.value as typeof freq)}
-                    className="rounded-md border border-input bg-background px-2 py-1"
-                  >
-                    {(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const).map((f) => (
-                      <option key={f} value={f}>
-                        {t(`freq.${f.toLowerCase()}`)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>{t('endDateLabel')}</span>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-auto"
-                  />
-                </div>
-              </>
-            ) : null}
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
-                {tCommon('cancel')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={update.isPending}
-                onClick={() => {
-                  if (!enabled) {
-                    update.mutate({ actionId, recurrence: null });
-                    return;
-                  }
-                  const rrule = `FREQ=${freq};INTERVAL=${Math.max(1, Math.min(99, interval))}`;
-                  update.mutate({
-                    actionId,
-                    recurrence: {
-                      rrule,
-                      endDate:
-                        endDate === '' ? null : new Date(`${endDate}T23:59:59Z`).toISOString(),
-                    },
-                  });
-                }}
-              >
-                {tCommon('save')}
-              </Button>
-            </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={update.isPending}
+              onClick={() => {
+                if (!enabled) {
+                  update.mutate({ actionId, recurrence: null });
+                  return;
+                }
+                const rrule = `FREQ=${freq};INTERVAL=${Math.max(1, Math.min(99, interval))}`;
+                update.mutate({
+                  actionId,
+                  recurrence: {
+                    rrule,
+                    endDate: endDate === '' ? null : new Date(`${endDate}T23:59:59Z`).toISOString(),
+                  },
+                });
+              }}
+            >
+              {tCommon('save')}
+            </Button>
           </div>
-        ) : initial !== null ? (
-          <p className="text-muted-foreground">
-            {t('summary', {
-              freq: t(`freq.${(parseFreq(initial.rrule) ?? 'weekly').toLowerCase()}`),
-              interval: String(parseInterval(initial.rrule) ?? 1),
-            })}
-          </p>
-        ) : (
-          <p className="text-muted-foreground">{t('noRecurrence')}</p>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      ) : initial !== null ? (
+        <p className="text-muted-foreground">
+          {t('summary', {
+            freq: t(`freq.${(parseFreq(initial.rrule) ?? 'weekly').toLowerCase()}`),
+            interval: String(parseInterval(initial.rrule) ?? 1),
+          })}
+        </p>
+      ) : (
+        <p className="text-muted-foreground">{t('noRecurrence')}</p>
+      )}
+    </section>
   );
 }
