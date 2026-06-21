@@ -2423,7 +2423,10 @@
       },
       "folderAccessButton": "Acceso a la carpeta",
       "folderAccessTitle": "Quién puede ver «{name}»",
-      "folderAccessSavedToast": "Acceso a la carpeta actualizado"
+      "folderAccessSavedToast": "Acceso a la carpeta actualizado",
+      "folderSettingsButton": "Folder settings",
+      "folderSettingsTitle": "Folder settings",
+      "folderNameLabel": "Folder name"
     },
     "detail": {
       "backLink": "Back to Documents",

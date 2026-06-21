@@ -2458,7 +2458,10 @@
       },
       "folderAccessButton": "Accesso alla cartella",
       "folderAccessTitle": "Chi può vedere «{name}»",
-      "folderAccessSavedToast": "Accesso alla cartella aggiornato"
+      "folderAccessSavedToast": "Accesso alla cartella aggiornato",
+      "folderSettingsButton": "Folder settings",
+      "folderSettingsTitle": "Folder settings",
+      "folderNameLabel": "Folder name"
     },
     "detail": {
       "backLink": "Back to Documents",

@@ -72,6 +72,7 @@ export default function DocumentsPage() {
 
   // Edit the CURRENT folder's visibility (To-Do #6).
   const [folderAccessOpen, setFolderAccessOpen] = useState(false);
+  const [editFolderName, setEditFolderName] = useState('');
   const [editFolderGroupIds, setEditFolderGroupIds] = useState<string[]>([]);
   const [editFolderSiteIds, setEditFolderSiteIds] = useState<string[]>([]);
 
@@ -105,6 +106,7 @@ export default function DocumentsPage() {
   });
 
   function openFolderAccess() {
+    setEditFolderName(currentFolder?.name ?? '');
     setEditFolderGroupIds(currentFolder?.visibleToGroupIds ?? []);
     setEditFolderSiteIds(currentFolder?.visibleToSiteIds ?? []);
     setFolderAccessOpen(true);
@@ -162,7 +164,7 @@ export default function DocumentsPage() {
         <div className="flex items-center gap-2">
           {canFolderManage && currentFolderId !== null ? (
             <Button type="button" variant="outline" onClick={openFolderAccess}>
-              {t('folderAccessButton')}
+              {t('folderSettingsButton')}
             </Button>
           ) : null}
           {canFolderManage ? (
@@ -276,9 +278,18 @@ export default function DocumentsPage() {
       <Dialog open={folderAccessOpen} onOpenChange={setFolderAccessOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{t('folderAccessTitle', { name: currentFolder?.name ?? '' })}</DialogTitle>
+            <DialogTitle>{t('folderSettingsTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="folder-name">{t('folderNameLabel')}</Label>
+              <Input
+                id="folder-name"
+                value={editFolderName}
+                onChange={(e) => setEditFolderName(e.target.value)}
+                maxLength={120}
+              />
+            </div>
             <p className="text-xs text-muted-foreground">{tFolder('visibilityHint')}</p>
             {groups.length > 0 ? (
               <div className="space-y-1.5">
@@ -322,14 +333,24 @@ export default function DocumentsPage() {
               </Button>
               <Button
                 type="button"
-                disabled={updateFolder.isPending || currentFolderId === null}
+                disabled={
+                  updateFolder.isPending ||
+                  currentFolderId === null ||
+                  editFolderName.trim().length === 0
+                }
                 onClick={() => {
                   if (currentFolderId === null) return;
+                  const name = editFolderName.trim();
                   updateFolder.mutate({
                     folderId: currentFolderId,
+                    name,
                     visibleToGroupIds: editFolderGroupIds,
                     visibleToSiteIds: editFolderSiteIds,
                   });
+                  // Reflect the rename in the local breadcrumb immediately.
+                  setFolderPath((prev) =>
+                    prev.map((c) => (c.id === currentFolderId ? { ...c, name } : c)),
+                  );
                 }}
               >
                 {tFolder('saveButton')}

@@ -2416,7 +2416,10 @@
       },
       "folderAccessButton": "Acesso à pasta",
       "folderAccessTitle": "Quem pode ver «{name}»",
-      "folderAccessSavedToast": "Acesso à pasta atualizado"
+      "folderAccessSavedToast": "Acesso à pasta atualizado",
+      "folderSettingsButton": "Folder settings",
+      "folderSettingsTitle": "Folder settings",
+      "folderNameLabel": "Folder name"
     },
     "detail": {
       "backLink": "Back to Documents",

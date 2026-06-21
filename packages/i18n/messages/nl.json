@@ -2416,7 +2416,10 @@
       },
       "folderAccessButton": "Maptoegang",
       "folderAccessTitle": "Wie „{name}” kan zien",
-      "folderAccessSavedToast": "Maptoegang bijgewerkt"
+      "folderAccessSavedToast": "Maptoegang bijgewerkt",
+      "folderSettingsButton": "Folder settings",
+      "folderSettingsTitle": "Folder settings",
+      "folderNameLabel": "Folder name"
     },
     "detail": {
       "backLink": "Back to Documents",

@@ -2416,7 +2416,10 @@
       },
       "folderAccessButton": "文件夹访问权限",
       "folderAccessTitle": "谁可以查看“{name}”",
-      "folderAccessSavedToast": "文件夹访问权限已更新"
+      "folderAccessSavedToast": "文件夹访问权限已更新",
+      "folderSettingsButton": "Folder settings",
+      "folderSettingsTitle": "Folder settings",
+      "folderNameLabel": "Folder name"
     },
     "detail": {
       "backLink": "Back to Documents",

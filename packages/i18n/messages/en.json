@@ -2615,7 +2615,10 @@
       },
       "folderAccessButton": "Folder access",
       "folderAccessTitle": "Who can see “{name}”",
-      "folderAccessSavedToast": "Folder access updated"
+      "folderAccessSavedToast": "Folder access updated",
+      "folderSettingsButton": "Folder settings",
+      "folderSettingsTitle": "Folder settings",
+      "folderNameLabel": "Folder name"
     },
     "folder": {
       "createTitle": "New folder",
