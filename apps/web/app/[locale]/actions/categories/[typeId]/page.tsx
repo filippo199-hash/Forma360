@@ -118,7 +118,17 @@ export default function ActionTypeDetailPage() {
     if (visibility !== type.visibility) return true;
     if (JSON.stringify(transitionRules) !== JSON.stringify(type.transitionRules)) return true;
     return false;
-  }, [type, name, description, color, questions, requiredFields, labels, visibility, transitionRules]);
+  }, [
+    type,
+    name,
+    description,
+    color,
+    questions,
+    requiredFields,
+    labels,
+    visibility,
+    transitionRules,
+  ]);
 
   const questionsValid = useMemo(() => customQuestionsAreValid(questions), [questions]);
   const canSave =
@@ -167,7 +177,7 @@ export default function ActionTypeDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1200px] space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <Link

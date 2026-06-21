@@ -132,7 +132,7 @@ export default function ActionDetailPage() {
   const refLabel = action.referenceNumber ?? action.id.slice(-6);
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1200px] space-y-6">
       <div>
         <Link
           href={`/${locale}/actions`}
@@ -471,9 +471,7 @@ export default function ActionDetailPage() {
                 {canEdit ? (
                   <SiteSelector
                     value={action.siteId !== null ? [action.siteId] : []}
-                    onChange={(next) =>
-                      update.mutate({ actionId, siteId: next[0] ?? null })
-                    }
+                    onChange={(next) => update.mutate({ actionId, siteId: next[0] ?? null })}
                     multiple={false}
                     placeholder={tFields('noSite')}
                   />

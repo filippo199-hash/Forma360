@@ -29,7 +29,9 @@ export default async function ActionsLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      <div className="mx-auto min-h-screen w-full max-w-[1200px] px-4 py-8">{children}</div>
+      {/* Full-width shell so the board page can bleed a tinted canvas to the
+          content edges; non-board pages re-constrain themselves to max-w-[1200px]. */}
+      <div className="flex min-h-screen w-full flex-col px-4 py-6 sm:px-6 lg:px-8">{children}</div>
     </PermissionsProvider>
   );
 }

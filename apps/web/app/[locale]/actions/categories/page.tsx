@@ -44,25 +44,36 @@ export default function ActionCategoriesPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
-  const { data: types, isLoading } = trpc.actionTypes.list.useQuery({ includeArchived: showArchived });
+  const { data: types, isLoading } = trpc.actionTypes.list.useQuery({
+    includeArchived: showArchived,
+  });
 
   const archive = trpc.actionTypes.archive.useMutation({
-    onSuccess: () => { toast.success(t('archiveToast')); void utils.actionTypes.list.invalidate(); },
+    onSuccess: () => {
+      toast.success(t('archiveToast'));
+      void utils.actionTypes.list.invalidate();
+    },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
   const restore = trpc.actionTypes.restore.useMutation({
-    onSuccess: () => { toast.success(t('restoreToast')); void utils.actionTypes.list.invalidate(); },
+    onSuccess: () => {
+      toast.success(t('restoreToast'));
+      void utils.actionTypes.list.invalidate();
+    },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
   const setDefault = trpc.actionTypes.setDefault.useMutation({
-    onSuccess: () => { toast.success(t('setDefaultToast')); void utils.actionTypes.list.invalidate(); },
+    onSuccess: () => {
+      toast.success(t('setDefaultToast'));
+      void utils.actionTypes.list.invalidate();
+    },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1200px] space-y-6">
       <div>
         <Link
           href={`/${locale}/actions`}
@@ -108,49 +119,93 @@ export default function ActionCategoriesPage() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} className="p-4"><Skeleton className="h-4 w-full" /></td></tr>
+                <tr>
+                  <td colSpan={6} className="p-4">
+                    <Skeleton className="h-4 w-full" />
+                  </td>
+                </tr>
               ) : (types ?? []).length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{t('empty')}</td></tr>
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                    {t('empty')}
+                  </td>
+                </tr>
               ) : (
                 (types ?? []).map((row) => (
                   <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
                     <td className="px-3 py-2 font-medium">
                       <div className="flex items-center gap-2">
                         {row.color !== null && row.color.length > 0 ? (
-                          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: row.color }} aria-hidden="true" />
+                          <span
+                            className="h-3 w-3 rounded-full"
+                            style={{ backgroundColor: row.color }}
+                            aria-hidden="true"
+                          />
                         ) : null}
-                        <Link href={`/${locale}/actions/categories/${row.id}`} className="hover:underline">
+                        <Link
+                          href={`/${locale}/actions/categories/${row.id}`}
+                          className="hover:underline"
+                        >
                           {row.name}
                         </Link>
                         {row.archivedAt !== null ? (
-                          <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{t('archivedBadge')}</span>
+                          <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                            {t('archivedBadge')}
+                          </span>
                         ) : null}
                       </div>
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">{row.activeActions}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{row.customQuestions.length}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{t(`visibility.${row.visibility}`)}</td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {row.customQuestions.length}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {t(`visibility.${row.visibility}`)}
+                    </td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {row.isDefault ? (
-                        <span className="rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground">{t('defaultBadge')}</span>
+                        <span className="rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground">
+                          {t('defaultBadge')}
+                        </span>
                       ) : canSettings && row.archivedAt === null ? (
-                        <button type="button" onClick={() => setDefault.mutate({ typeId: row.id })} className="text-xs text-muted-foreground hover:underline">
+                        <button
+                          type="button"
+                          onClick={() => setDefault.mutate({ typeId: row.id })}
+                          className="text-xs text-muted-foreground hover:underline"
+                        >
                           {t('setDefault')}
                         </button>
                       ) : null}
                     </td>
                     <td className="px-3 py-2 text-right">
                       <div className="flex justify-end gap-2">
-                        <Button type="button" variant="ghost" size="sm" onClick={() => router.push(`/${locale}/actions/categories/${row.id}`)}>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/${locale}/actions/categories/${row.id}`)}
+                        >
                           {tCommon('edit')}
                         </Button>
                         {canSettings ? (
                           row.archivedAt === null ? (
-                            <Button type="button" variant="ghost" size="sm" onClick={() => archive.mutate({ typeId: row.id })} disabled={archive.isPending}>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => archive.mutate({ typeId: row.id })}
+                              disabled={archive.isPending}
+                            >
                               {tCommon('archive')}
                             </Button>
                           ) : (
-                            <Button type="button" variant="ghost" size="sm" onClick={() => restore.mutate({ typeId: row.id })} disabled={restore.isPending}>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => restore.mutate({ typeId: row.id })}
+                              disabled={restore.isPending}
+                            >
                               {t('restoreButton')}
                             </Button>
                           )
@@ -221,19 +276,44 @@ function CreateCategoryDialog({
         <form className="space-y-4" onSubmit={onSubmit}>
           <div className="space-y-1.5">
             <Label htmlFor="cat-name">{t('nameLabel')}</Label>
-            <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} required autoFocus placeholder={t('namePlaceholder')} />
+            <Input
+              id="cat-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={200}
+              required
+              autoFocus
+              placeholder={t('namePlaceholder')}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cat-desc">{t('descriptionLabel')}</Label>
-            <Textarea id="cat-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} rows={3} placeholder={t('descriptionPlaceholder')} />
+            <Textarea
+              id="cat-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={2000}
+              rows={3}
+              placeholder={t('descriptionPlaceholder')}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cat-color">{t('colorLabel')}</Label>
-            <Input id="cat-color" type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 w-20 p-1" />
+            <Input
+              id="cat-color"
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="h-10 w-20 p-1"
+            />
           </div>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{tCommon('cancel')}</Button>
-            <Button type="submit" disabled={!canSubmit}>{t('createButton')}</Button>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button type="submit" disabled={!canSubmit}>
+              {t('createButton')}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
