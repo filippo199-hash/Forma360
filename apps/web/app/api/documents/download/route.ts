@@ -56,9 +56,7 @@ export async function GET(req: Request): Promise<Response> {
       sizeBytes: documents.sizeBytes,
     })
     .from(documents)
-    .where(
-      and(eq(documents.tenantId, ctx.auth.tenantId), eq(documents.id, documentId)),
-    )
+    .where(and(eq(documents.tenantId, ctx.auth.tenantId), eq(documents.id, documentId)))
     .limit(1);
 
   const doc = rows[0];
@@ -66,11 +64,20 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
 
+  // `?disposition=inline` (preview iframe) renders in-browser; anything else
+  // (or absent) downloads as an attachment. We always pin the content type so a
+  // PDF stored with a generic type still previews. RFC 5987-safe filename.
+  const inline = searchParams.get('disposition') === 'inline';
+  const safeName = doc.filename.replace(/["\\\r\n]/g, '_');
+  const contentDisposition = `${inline ? 'inline' : 'attachment'}; filename="${safeName}"`;
+
   if (env.NODE_ENV === 'production') {
     try {
       const signedUrl = await getStorage().getSignedDownloadUrl({
         key: doc.storageKey,
         expiresInSeconds: PREVIEW_TTL_SECONDS,
+        responseContentType: doc.mimeType,
+        responseContentDisposition: contentDisposition,
       });
       return NextResponse.redirect(signedUrl);
     } catch {
@@ -85,7 +92,7 @@ export async function GET(req: Request): Promise<Response> {
     return new Response(bytes, {
       headers: {
         'Content-Type': doc.mimeType,
-        'Content-Disposition': `inline; filename="${doc.filename}"`,
+        'Content-Disposition': contentDisposition,
         'Content-Length': String(doc.sizeBytes),
         'Cache-Control': 'private, no-store',
       },

@@ -109,8 +109,18 @@ export interface Storage {
     expiresInSeconds?: number;
   }) => Promise<string>;
 
-  /** Pre-signed URL for a `GET` download. */
-  getSignedDownloadUrl: (input: { key: string; expiresInSeconds?: number }) => Promise<string>;
+  /**
+   * Pre-signed URL for a `GET` download. `responseContentType` /
+   * `responseContentDisposition` override the headers R2 returns (e.g. force
+   * `inline` + `application/pdf` so a browser renders a PDF instead of
+   * downloading it, regardless of how the object was stored).
+   */
+  getSignedDownloadUrl: (input: {
+    key: string;
+    expiresInSeconds?: number;
+    responseContentType?: string;
+    responseContentDisposition?: string;
+  }) => Promise<string>;
 
   /** Delete an object. Idempotent — succeeds if the key is already absent. */
   deleteObject: (input: { key: string }) => Promise<void>;
@@ -146,8 +156,20 @@ export function createStorage(config: R2Config): Storage {
       return getSignedUrl(client, command, { expiresIn: expiresInSeconds });
     },
 
-    async getSignedDownloadUrl({ key, expiresInSeconds = DEFAULT_SIGNED_URL_EXPIRES_SECONDS }) {
-      const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+    async getSignedDownloadUrl({
+      key,
+      expiresInSeconds = DEFAULT_SIGNED_URL_EXPIRES_SECONDS,
+      responseContentType,
+      responseContentDisposition,
+    }) {
+      const command = new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        ...(responseContentType !== undefined ? { ResponseContentType: responseContentType } : {}),
+        ...(responseContentDisposition !== undefined
+          ? { ResponseContentDisposition: responseContentDisposition }
+          : {}),
+      });
       return getSignedUrl(client, command, { expiresIn: expiresInSeconds });
     },
 

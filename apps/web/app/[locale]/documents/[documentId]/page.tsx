@@ -46,12 +46,14 @@ function DocumentPreview({
 }) {
   const t = useTranslations('documents.detail');
   const kind = previewKind(mimeType);
-  const url = `/api/documents/download?documentId=${encodeURIComponent(documentId)}`;
+  const base = `/api/documents/download?documentId=${encodeURIComponent(documentId)}`;
+  const inlineUrl = `${base}&disposition=inline`;
+  const downloadUrl = `${base}&disposition=attachment`;
 
   if (kind === 'pdf' || kind === 'text') {
     return (
       <iframe
-        src={url}
+        src={inlineUrl}
         title={filename}
         className="h-full w-full border-0"
         sandbox="allow-scripts allow-same-origin"
@@ -64,7 +66,7 @@ function DocumentPreview({
       <div className="flex h-full w-full items-center justify-center p-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={url}
+          src={inlineUrl}
           alt={filename}
           className="max-h-full max-w-full rounded-md object-contain shadow-sm"
         />
@@ -76,7 +78,7 @@ function DocumentPreview({
     return (
       <div className="flex h-full w-full items-center justify-center p-6">
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-        <video src={url} controls className="max-h-full max-w-full rounded-md shadow-sm" />
+        <video src={inlineUrl} controls className="max-h-full max-w-full rounded-md shadow-sm" />
       </div>
     );
   }
@@ -97,7 +99,7 @@ function DocumentPreview({
         <p className="text-sm font-medium">{t('previewUnavailable')}</p>
         <p className="text-xs text-muted-foreground">{mimeType}</p>
       </div>
-      <a href={url} download={filename}>
+      <a href={downloadUrl} download={filename}>
         <Button variant="outline" size="sm">
           <Download className="mr-1.5 h-4 w-4" />
           {t('downloadFile')}
@@ -319,7 +321,10 @@ export default function DocumentDetailPage() {
                   {t('uploadNewVersion')}
                 </Button>
               ) : null}
-              <a href={`/api/documents/download?documentId=${documentId}`} download={doc.filename}>
+              <a
+                href={`/api/documents/download?documentId=${documentId}&disposition=attachment`}
+                download={doc.filename}
+              >
                 <Button type="button" variant="outline" size="sm">
                   <Download className="mr-1.5 h-3.5 w-3.5" />
                   {t('downloadFile')}
