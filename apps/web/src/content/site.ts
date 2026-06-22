@@ -10,9 +10,21 @@
 
 /** Company / contact details. Used across legal pages, contact, and footer. */
 export const COMPANY = {
+  /** Product / trading name. */
   name: 'Forma360',
-  /** Postal address on record (Meta App Settings → Basic). */
-  address: 'Milton Avenue 23, London, N6 5QF, United Kingdom',
+  /** Registered legal-entity name (Companies House). */
+  legalName: 'Forma360 Ltd',
+  /** Companies House registration number (England & Wales). */
+  companyNumber: '17292397',
+  /**
+   * Full legal-entity descriptor for the opening line of legal documents,
+   * e.g. "Forma360 Ltd, a company registered in England and Wales under
+   * company number 17292397".
+   */
+  legalEntity:
+    'Forma360 Ltd, a company registered in England and Wales under company number 17292397',
+  /** Registered office address (Companies House / Meta App Settings → Basic). */
+  address: '128 City Road, London, EC1V 2NX, United Kingdom',
   /** Country of establishment / governing law. */
   jurisdiction: 'England and Wales',
   /** Public-facing contact addresses. Must forward to a monitored inbox. */
@@ -20,7 +32,7 @@ export const COMPANY = {
   privacyEmail: 'privacy@forma360.io',
   website: 'https://forma360.io',
   /** Last review date shown on legal documents. */
-  lastUpdated: '17 June 2026',
+  lastUpdated: '22 June 2026',
 } as const;
 
 /** Header navigation labels (shown to signed-out visitors). */

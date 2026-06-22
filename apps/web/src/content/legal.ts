@@ -28,7 +28,7 @@ export const PRIVACY_POLICY: LegalDoc = {
   title: 'Privacy Policy',
   updated: COMPANY.lastUpdated,
   intro: [
-    `${COMPANY.name} (“we”, “us”, “our”) operates the Forma360 operational-excellence platform at ${COMPANY.website}, including its AI assistant on the web and over WhatsApp. This Privacy Policy explains what personal data we collect, how we use it, who we share it with, and the rights you have. We are the data controller for the personal data described below.`,
+    `${COMPANY.legalEntity}, with its registered office at ${COMPANY.address} (“we”, “us”, “our”), operates the Forma360 operational-excellence platform at ${COMPANY.website}, including its AI assistant on the web and over WhatsApp. This Privacy Policy explains what personal data we collect, how we use it, who we share it with, and the rights you have. We are the data controller for the personal data described below.`,
     `If you have any questions about this policy or how we handle your data, contact us at ${COMPANY.privacyEmail}.`,
   ],
   sections: [
@@ -134,7 +134,7 @@ export const PRIVACY_POLICY: LegalDoc = {
     {
       heading: '14. Contact us',
       body: [
-        `${COMPANY.name}, ${COMPANY.address}. Email: ${COMPANY.privacyEmail}.`,
+        `${COMPANY.legalName} (company number ${COMPANY.companyNumber}), ${COMPANY.address}. Email: ${COMPANY.privacyEmail}.`,
       ],
     },
   ],
@@ -144,7 +144,7 @@ export const TERMS_OF_SERVICE: LegalDoc = {
   title: 'Terms of Service',
   updated: COMPANY.lastUpdated,
   intro: [
-    `These Terms of Service (“Terms”) govern your access to and use of the Forma360 platform and its AI assistant (the “Service”) provided by ${COMPANY.name} (“we”, “us”, “our”). By creating an account or using the Service, you agree to these Terms.`,
+    `These Terms of Service (“Terms”) govern your access to and use of the Forma360 platform and its AI assistant (the “Service”) provided by ${COMPANY.legalEntity}, with its registered office at ${COMPANY.address} (“we”, “us”, “our”). By creating an account or using the Service, you agree to these Terms.`,
   ],
   sections: [
     {
@@ -281,7 +281,11 @@ export const CONTACT = {
   items: [
     { label: 'General & support', value: COMPANY.email },
     { label: 'Privacy & data requests', value: COMPANY.privacyEmail },
-    { label: 'Postal address', value: COMPANY.address },
+    { label: 'Registered office', value: COMPANY.address },
+    {
+      label: 'Registered company',
+      value: `${COMPANY.legalName} · Company No. ${COMPANY.companyNumber} · ${COMPANY.jurisdiction}`,
+    },
     { label: 'Website', value: COMPANY.website },
   ],
 };
