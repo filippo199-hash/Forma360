@@ -15,6 +15,7 @@
  * and tests stay deterministic. A misconfigured prod deploy logs a
  * warning on the stub path.
  */
+import { execSync } from 'node:child_process';
 import { signRenderToken } from './hmac';
 import {
   loadInspectionSnapshot,
@@ -185,9 +186,11 @@ async function renderWithChromium(
     browserArgs = c.args;
   } else {
     // Fall back to system chromium (Railway nixpacks / Docker / local dev).
-    // CHROMIUM_PATH lets ops override the binary if the PATH doesn't contain
-    // `chromium` (e.g. some distros name it `chromium-browser`).
-    executablePath = process.env['CHROMIUM_PATH'] ?? 'chromium';
+    // CHROMIUM_PATH lets ops override the binary outright. Otherwise we must
+    // hand Puppeteer an ABSOLUTE path — it does not resolve a bare command name
+    // against PATH — and nixpacks installs chromium under a hash-based nix-store
+    // path, so resolve it from PATH at runtime via `command -v`.
+    executablePath = resolveSystemChromium();
     // --no-sandbox + --disable-setuid-sandbox are required in every
     // container environment (kernel user-namespaces are disabled).
     // --disable-dev-shm-usage avoids OOM when /dev/shm is small (< 64 MB),
@@ -232,6 +235,29 @@ async function renderWithChromium(
  */
 async function dynImport(specifier: string): Promise<unknown> {
   return (await Function('s', 'return import(s)')(specifier)) as unknown;
+}
+
+/**
+ * Resolve an ABSOLUTE path to a system chromium binary. `CHROMIUM_PATH` wins;
+ * otherwise probe PATH with `command -v` for the common binary names (nixpacks
+ * installs `chromium` at a hash-based nix-store path, so a bare name won't do).
+ * Returns `'chromium'` as a last resort so the caller's launch error is clear.
+ */
+function resolveSystemChromium(): string {
+  const override = process.env['CHROMIUM_PATH'];
+  if (override !== undefined && override.length > 0) return override;
+  for (const name of ['chromium', 'chromium-browser', 'google-chrome-stable', 'google-chrome']) {
+    try {
+      const resolved = execSync(`command -v ${name}`, {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }).trim();
+      if (resolved.length > 0) return resolved;
+    } catch {
+      // not on PATH — try the next candidate
+    }
+  }
+  return 'chromium';
 }
 
 function buildRenderUrl(deps: RenderDeps, inspectionId: string): string {
