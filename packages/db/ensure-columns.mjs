@@ -77,6 +77,11 @@ try {
       "created_at" timestamptz NOT NULL DEFAULT now()
     );
     CREATE INDEX IF NOT EXISTS "action_saved_views_user_idx" ON "action_saved_views" ("tenant_id", "user_id");
+    -- WhatsApp opt-out registry (Business Messaging Policy: honour STOP/UNSUBSCRIBE)
+    CREATE TABLE IF NOT EXISTS "whatsapp_opt_outs" (
+      "phone" varchar(32) PRIMARY KEY NOT NULL,
+      "opted_out_at" timestamptz NOT NULL DEFAULT now()
+    );
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

@@ -15,7 +15,7 @@
  */
 import { and, desc, eq, gt, isNull, or } from 'drizzle-orm';
 import { z } from 'zod';
-import { aiConversations, user } from '@forma360/db/schema';
+import { aiConversations, user, whatsappOptOuts } from '@forma360/db/schema';
 import { runAiAgentTurn } from '../../../../src/server/ai-agent';
 import { db } from '../../../../src/server/db';
 import { env } from '../../../../src/server/env';
@@ -38,6 +38,70 @@ const UNLINKED_REPLY =
 const GENERIC_ERROR_REPLY =
   'Sorry — something went wrong handling your message. Please try again in a moment.';
 
+// ─── Opt-out / opt-in (WhatsApp Business Messaging Policy) ────────────────────
+
+/**
+ * Keywords that opt a sender OUT of the assistant. WhatsApp expects us to
+ * honour STOP-style requests. Matched on the first word of the message,
+ * case-insensitively, with surrounding punctuation stripped.
+ */
+const OPT_OUT_KEYWORDS = new Set(['stop', 'unsubscribe', 'cancel', 'quit', 'end', 'stopp']);
+/** Keywords that opt a previously-opted-out sender back IN. */
+const OPT_IN_KEYWORDS = new Set(['start', 'unstop', 'resume', 'subscribe']);
+
+const OPT_OUT_REPLY =
+  "You've been unsubscribed from the Forma360 WhatsApp assistant and won't receive further messages here. Reply START at any time to resume.";
+const OPT_IN_REPLY =
+  "You're resubscribed to the Forma360 WhatsApp assistant. How can I help?";
+
+/** Normalise to the first word, lowercased, letters only ("STOP." → "stop"). */
+function firstKeyword(text: string): string {
+  const firstWord = text.trim().split(/\s+/)[0] ?? '';
+  return firstWord.toLowerCase().replace(/[^a-z]/g, '');
+}
+
+async function isOptedOut(phone: string): Promise<boolean> {
+  const [row] = await db
+    .select({ phone: whatsappOptOuts.phone })
+    .from(whatsappOptOuts)
+    .where(eq(whatsappOptOuts.phone, phone))
+    .limit(1);
+  return !!row;
+}
+
+async function setOptOut(phone: string): Promise<void> {
+  await db.insert(whatsappOptOuts).values({ phone }).onConflictDoNothing();
+}
+
+async function clearOptOut(phone: string): Promise<void> {
+  await db.delete(whatsappOptOuts).where(eq(whatsappOptOuts.phone, phone));
+}
+
+// ─── Non-text media (interim) ────────────────────────────────────────────────
+
+/**
+ * Friendly noun for each non-text WhatsApp message type, used in the interim
+ * reply below. TEMPORARY: until the multimodal pipeline lands (download media
+ * from the Graph API → Claude vision → confirm-and-create), inbound photos /
+ * videos / voice notes can't be acted on, so we acknowledge them honestly
+ * instead of dropping them silently. Replace this whole branch when media
+ * understanding ships.
+ */
+const MEDIA_NOUNS: Record<string, string> = {
+  image: 'photo',
+  video: 'video',
+  audio: 'voice note',
+  document: 'file',
+  sticker: 'sticker',
+  location: 'location',
+  contacts: 'contact',
+};
+
+function mediaInterimReply(type: string): string {
+  const noun = MEDIA_NOUNS[type] ?? 'attachment';
+  return `Thanks — I've received your ${noun}, but I can't act on attachments just yet. Please send your question or describe what you need as a text message for now. (Photo and video support is coming very soon.)`;
+}
+
 // ─── GET: verification handshake ─────────────────────────────────────────────
 
 export function GET(request: Request): Response {
@@ -59,7 +123,17 @@ export function GET(request: Request): Response {
 
 // ─── POST: inbound messages ──────────────────────────────────────────────────
 
-// Minimal slice of the WhatsApp webhook payload we care about: text messages.
+// Minimal slice of the WhatsApp webhook payload. We capture every inbound
+// message (any `type`), not just text, so non-text messages get an honest
+// reply instead of being dropped. `text.body` is present only for text.
+const inboundMessageSchema = z.object({
+  from: z.string(),
+  id: z.string(),
+  type: z.string(),
+  text: z.object({ body: z.string() }).optional(),
+});
+type InboundMessage = z.infer<typeof inboundMessageSchema>;
+
 const webhookSchema = z.object({
   entry: z
     .array(
@@ -68,16 +142,7 @@ const webhookSchema = z.object({
           .array(
             z.object({
               value: z.object({
-                messages: z
-                  .array(
-                    z.object({
-                      from: z.string(),
-                      id: z.string(),
-                      type: z.string(),
-                      text: z.object({ body: z.string() }).optional(),
-                    }),
-                  )
-                  .optional(),
+                messages: z.array(inboundMessageSchema).optional(),
               }),
             }),
           )
@@ -168,6 +233,44 @@ async function handleMessage(fromDigits: string, text: string): Promise<void> {
   await sendWhatsAppText(fromDigits, reply);
 }
 
+/**
+ * Route one inbound message: opt-out / opt-in keywords first, then honour an
+ * existing opt-out (stay silent until START), then text → AI agent and
+ * non-text → interim media reply.
+ */
+async function routeMessage(m: InboundMessage): Promise<void> {
+  const from = m.from;
+
+  // Opt-out / opt-in keywords (text only).
+  if (m.type === 'text' && m.text) {
+    const kw = firstKeyword(m.text.body);
+    if (OPT_OUT_KEYWORDS.has(kw)) {
+      await setOptOut(from);
+      log.info({ from }, 'Sender opted out');
+      await sendWhatsAppText(from, OPT_OUT_REPLY);
+      return;
+    }
+    if (OPT_IN_KEYWORDS.has(kw)) {
+      await clearOptOut(from);
+      log.info({ from }, 'Sender opted back in');
+      await sendWhatsAppText(from, OPT_IN_REPLY);
+      return;
+    }
+  }
+
+  // Honour an existing opt-out: send nothing at all until they text START.
+  if (await isOptedOut(from)) {
+    log.info({ from, type: m.type }, 'Suppressed message from opted-out sender');
+    return;
+  }
+
+  if (m.type === 'text' && m.text) {
+    await handleMessage(from, m.text.body);
+  } else {
+    await sendWhatsAppText(from, mediaInterimReply(m.type));
+  }
+}
+
 export async function POST(request: Request): Promise<Response> {
   if (!isWhatsAppConfigured()) {
     return new Response('WhatsApp not configured', { status: 503 });
@@ -201,20 +304,19 @@ export async function POST(request: Request): Promise<Response> {
     return new Response('OK', { status: 200 });
   }
 
+  // Every inbound message (any type), deduped against Meta re-delivery.
   const messages = parsed.data.entry
     ?.flatMap((e) => e.changes ?? [])
     .flatMap((c) => c.value.messages ?? [])
-    .filter((m) => m.type === 'text' && m.text && !alreadyProcessed(m.id));
+    .filter((m) => !alreadyProcessed(m.id));
   log.info({ messageCount: messages?.length ?? 0 }, 'Webhook payload parsed');
 
   // Process in a detached task so we ack within Meta's timeout window.
   if (messages && messages.length > 0) {
     void (async () => {
       for (const m of messages) {
-        const body = m.text?.body;
-        if (body === undefined) continue;
         try {
-          await handleMessage(m.from, body);
+          await routeMessage(m);
         } catch (err) {
           log.error(
             { from: m.from, err: err instanceof Error ? err.message : String(err) },
