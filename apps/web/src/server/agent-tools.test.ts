@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildUserContent,
   CALLER_TOOL_NAMES,
+  SUPPORTED_IMAGE_MEDIA_TYPES,
   TOOLS,
   type ToolName,
   toToolError,
@@ -83,6 +85,36 @@ describe('tool routing sets', () => {
   it('routes the two permission-gated reads through the caller', () => {
     expect(CALLER_TOOL_NAMES.has('list_observation_categories')).toBe(true);
     expect(CALLER_TOOL_NAMES.has('list_users')).toBe(true);
+  });
+});
+
+describe('buildUserContent (image vision)', () => {
+  it('returns a plain string when there are no images', () => {
+    expect(buildUserContent('how many overdue?', [])).toBe('how many overdue?');
+  });
+
+  it('builds image blocks followed by the text', () => {
+    const content = buildUserContent('whats wrong here?', [
+      { base64: 'AAAA', mediaType: 'image/jpeg' },
+    ]);
+    expect(Array.isArray(content)).toBe(true);
+    const blocks = content as Array<{ type: string; source?: { data: string; media_type: string } }>;
+    expect(blocks[0]?.type).toBe('image');
+    expect(blocks[0]?.source).toEqual({ type: 'base64', media_type: 'image/jpeg', data: 'AAAA' });
+    expect(blocks[1]).toEqual({ type: 'text', text: 'whats wrong here?' });
+  });
+
+  it('omits the trailing text block when text is empty', () => {
+    const content = buildUserContent('', [{ base64: 'BBBB', mediaType: 'image/png' }]);
+    const blocks = content as Array<{ type: string }>;
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]?.type).toBe('image');
+  });
+
+  it('only treats jpeg/png/gif/webp as supported', () => {
+    expect(SUPPORTED_IMAGE_MEDIA_TYPES.has('image/jpeg')).toBe(true);
+    expect(SUPPORTED_IMAGE_MEDIA_TYPES.has('image/heic')).toBe(false);
+    expect(SUPPORTED_IMAGE_MEDIA_TYPES.has('video/mp4')).toBe(false);
   });
 });
 

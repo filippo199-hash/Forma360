@@ -71,6 +71,42 @@ Rules for write actions — follow these exactly:
 - You can only do what the user's permissions allow. If a tool returns a permission error, tell the user plainly that they don't have permission for that action — do not retry.
 - A drafted heads-up is created as a DRAFT only; it is not published or sent to anyone. Make that clear to the user.`;
 
+/** Image media types Claude's vision accepts. WhatsApp photos are jpeg. */
+export const SUPPORTED_IMAGE_MEDIA_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+]);
+
+export interface AgentImage {
+  /** Base64-encoded image bytes (no data: prefix). */
+  base64: string;
+  /** One of SUPPORTED_IMAGE_MEDIA_TYPES. */
+  mediaType: string;
+}
+
+type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+
+/**
+ * Build the content for a user turn that may carry images. With no images it's
+ * a plain string (the existing path). With images it's a content-block array:
+ * the image blocks followed by the text, so Claude sees the photo alongside
+ * the caption. Callers guarantee each mediaType is in SUPPORTED_IMAGE_MEDIA_TYPES.
+ */
+export function buildUserContent(
+  text: string,
+  images: ReadonlyArray<AgentImage>,
+): string | Anthropic.ContentBlockParam[] {
+  if (images.length === 0) return text;
+  const blocks: Anthropic.ContentBlockParam[] = images.map((img) => ({
+    type: 'image',
+    source: { type: 'base64', media_type: img.mediaType as ImageMediaType, data: img.base64 },
+  }));
+  if (text.length > 0) blocks.push({ type: 'text', text });
+  return blocks;
+}
+
 /** Map a thrown tRPC error into a structured tool result the model can relay. */
 export function toToolError(err: unknown): { error: string; message: string } {
   const e = err as { code?: unknown; message?: unknown };

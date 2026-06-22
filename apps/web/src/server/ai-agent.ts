@@ -33,6 +33,8 @@ import { newId } from '@forma360/shared/id';
 import { db } from './db';
 import { env } from './env';
 import {
+  type AgentImage,
+  buildUserContent,
   CALLER_TOOL_NAMES,
   TOOLS,
   type ToolName,
@@ -329,6 +331,8 @@ export interface RunAgentInput {
   onEvent?: (event: AgentEvent) => void;
   /** Delivery channel. 'web' enables clickable entity links; defaults to 'web'. */
   channel?: 'web' | 'whatsapp';
+  /** Images attached to this turn — shown to Claude's vision (not persisted). */
+  images?: ReadonlyArray<AgentImage>;
 }
 
 export interface RunAgentResult {
@@ -409,6 +413,17 @@ export async function runAiAgentTurn(input: RunAgentInput): Promise<RunAgentResu
     role: m.role as 'user' | 'assistant',
     content: m.content,
   }));
+
+  // Attach any images to the current (last) user turn so Claude's vision sees
+  // them alongside the caption. Images are not persisted to history, so they're
+  // not replayed on later turns — the agent acts on the photo when it arrives.
+  if (input.images && input.images.length > 0) {
+    const lastIdx = messages.length - 1;
+    const last = messages[lastIdx];
+    if (last && last.role === 'user' && typeof last.content === 'string') {
+      messages[lastIdx] = { role: 'user', content: buildUserContent(last.content, input.images) };
+    }
+  }
 
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   let fullAssistantText = '';

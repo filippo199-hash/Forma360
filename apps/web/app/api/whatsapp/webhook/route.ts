@@ -16,11 +16,13 @@
 import { and, desc, eq, gt, isNull, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { aiConversations, user, whatsappOptOuts } from '@forma360/db/schema';
+import { type AgentImage, SUPPORTED_IMAGE_MEDIA_TYPES } from '../../../../src/server/agent-tools';
 import { runAiAgentTurn } from '../../../../src/server/ai-agent';
 import { db } from '../../../../src/server/db';
 import { env } from '../../../../src/server/env';
 import { logger } from '../../../../src/server/logger';
 import {
+  fetchWhatsAppMedia,
   isWhatsAppConfigured,
   sendWhatsAppText,
   verifyWhatsAppSignature,
@@ -131,6 +133,13 @@ const inboundMessageSchema = z.object({
   id: z.string(),
   type: z.string(),
   text: z.object({ body: z.string() }).optional(),
+  image: z
+    .object({
+      id: z.string(),
+      mime_type: z.string().optional(),
+      caption: z.string().optional(),
+    })
+    .optional(),
 });
 type InboundMessage = z.infer<typeof inboundMessageSchema>;
 
@@ -208,7 +217,11 @@ async function resolveConversationId(tenantId: string, userId: string): Promise<
   return recent?.id ?? null;
 }
 
-async function handleMessage(fromDigits: string, text: string): Promise<void> {
+async function handleMessage(
+  fromDigits: string,
+  text: string,
+  images?: ReadonlyArray<AgentImage>,
+): Promise<void> {
   const match = await findUserByPhone(fromDigits);
   if (!match) {
     log.info({ fromDigits }, 'Inbound from unlinked number');
@@ -224,6 +237,7 @@ async function handleMessage(fromDigits: string, text: string): Promise<void> {
     message: text,
     conversationId,
     channel: 'whatsapp',
+    ...(images && images.length > 0 ? { images } : {}),
   });
 
   const reply =
@@ -266,9 +280,41 @@ async function routeMessage(m: InboundMessage): Promise<void> {
 
   if (m.type === 'text' && m.text) {
     await handleMessage(from, m.text.body);
-  } else {
-    await sendWhatsAppText(from, mediaInterimReply(m.type));
+    return;
   }
+
+  // Image → download + show to Claude's vision (Phase 2). Falls back to the
+  // interim reply if the download fails or the type isn't a supported image.
+  if (m.type === 'image' && m.image) {
+    if (await tryHandleImage(from, m.image)) return;
+  }
+
+  await sendWhatsAppText(from, mediaInterimReply(m.type));
+}
+
+/**
+ * Download an inbound image and run it through the agent's vision. The caption
+ * (if any) becomes the turn's text; with no caption we nudge the model that a
+ * photo arrived. Returns false (so the caller sends the interim reply) when the
+ * media can't be fetched or isn't a vision-supported image type.
+ */
+async function tryHandleImage(
+  from: string,
+  image: NonNullable<InboundMessage['image']>,
+): Promise<boolean> {
+  const media = await fetchWhatsAppMedia(image.id);
+  if (!media || !SUPPORTED_IMAGE_MEDIA_TYPES.has(media.mimeType)) {
+    log.info({ from, ok: !!media, mimeType: media?.mimeType }, 'image not usable for vision');
+    return false;
+  }
+  const caption = image.caption?.trim();
+  const text =
+    caption && caption.length > 0
+      ? caption
+      : 'The user sent this photo with no caption. Describe what you see and ask how you can help (e.g. raise an observation or action).';
+  const images: AgentImage[] = [{ base64: media.base64, mediaType: media.mimeType }];
+  await handleMessage(from, text, images);
+  return true;
 }
 
 export async function POST(request: Request): Promise<Response> {

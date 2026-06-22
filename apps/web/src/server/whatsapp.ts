@@ -19,6 +19,74 @@ const GRAPH_API_VERSION = 'v25.0';
 const MAX_CHUNK = 3800;
 
 /**
+ * Cap on inbound media we'll download + base64 for Claude vision. Claude's
+ * per-image limit is ~5MB; WhatsApp photos are well under this. Larger files
+ * are skipped (the caller falls back to a "couldn't read that" reply).
+ */
+const MAX_MEDIA_BYTES = 5 * 1024 * 1024;
+
+const mediaMetaSchema = z.object({
+  url: z.string().url(),
+  mime_type: z.string().optional(),
+  file_size: z.number().optional(),
+});
+
+/**
+ * Download an inbound WhatsApp media object (image, etc.) by its media id.
+ * Two hops, both bearer-authenticated: GET the media node for a short-lived
+ * URL, then GET the bytes. Returns base64 + mime type, or null on any failure
+ * or when the file exceeds {@link MAX_MEDIA_BYTES}.
+ */
+export async function fetchWhatsAppMedia(
+  mediaId: string,
+): Promise<{ base64: string; mimeType: string } | null> {
+  const token = env.WHATSAPP_ACCESS_TOKEN;
+  if (!token) return null;
+
+  try {
+    const metaRes = await fetch(
+      `https://graph.facebook.com/${GRAPH_API_VERSION}/${mediaId}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!metaRes.ok) {
+      log.warn({ mediaId, status: metaRes.status }, 'media metadata fetch failed');
+      return null;
+    }
+    const meta = mediaMetaSchema.safeParse(await metaRes.json().catch(() => ({})));
+    if (!meta.success) {
+      log.warn({ mediaId }, 'media metadata shape unexpected');
+      return null;
+    }
+    if (meta.data.file_size !== undefined && meta.data.file_size > MAX_MEDIA_BYTES) {
+      log.info({ mediaId, fileSize: meta.data.file_size }, 'media too large; skipping');
+      return null;
+    }
+
+    const binRes = await fetch(meta.data.url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!binRes.ok) {
+      log.warn({ mediaId, status: binRes.status }, 'media bytes fetch failed');
+      return null;
+    }
+    const buf = Buffer.from(await binRes.arrayBuffer());
+    if (buf.byteLength > MAX_MEDIA_BYTES) {
+      log.info({ mediaId, bytes: buf.byteLength }, 'media exceeded cap after download; skipping');
+      return null;
+    }
+    const mimeType =
+      meta.data.mime_type?.split(';')[0]?.trim() ??
+      binRes.headers.get('content-type')?.split(';')[0]?.trim() ??
+      'application/octet-stream';
+    return { base64: buf.toString('base64'), mimeType };
+  } catch (err) {
+    log.error(
+      { mediaId, err: err instanceof Error ? err.message : String(err) },
+      'media download threw',
+    );
+    return null;
+  }
+}
+
+/**
  * True when every WhatsApp env var is set. When false the webhook route is
  * effectively disabled (returns 503) and nothing is sent.
  */
