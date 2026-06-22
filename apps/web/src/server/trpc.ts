@@ -20,6 +20,13 @@ const enqueueImpl: Enqueue = (name, payload) => {
   );
 };
 
+/**
+ * The same fire-and-forget enqueue the tRPC context uses. Exported so the
+ * server-side caller (used by the AI agent) fans out async work — observation
+ * notifications, reconcile jobs — identically to a real HTTP request.
+ */
+export const enqueue = enqueueImpl;
+
 export const createContext = createContextFactory({
   db,
   auth,

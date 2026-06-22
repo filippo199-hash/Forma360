@@ -1,0 +1,292 @@
+/**
+ * AI assistant tool definitions + pure helpers.
+ *
+ * Kept free of side-effectful imports (no env, db, redis, or server-caller) so
+ * it can be unit-tested in isolation — `ai-agent.ts` wires these to the real
+ * runtime. Read tools (`list_*`) are served straight from the db; the
+ * caller-backed tools (writes + two permission-gated reads) go through the
+ * tRPC server caller. See WRITE_INSTRUCTIONS for the confirm-before-write
+ * contract the model must follow.
+ */
+import type Anthropic from '@anthropic-ai/sdk';
+
+export type ToolName =
+  | 'list_inspections'
+  | 'list_issues'
+  | 'list_actions'
+  | 'list_assets'
+  | 'list_headsup'
+  | 'list_documents'
+  | 'list_schedules'
+  | 'list_observation_categories'
+  | 'list_users'
+  | 'create_observation'
+  | 'create_action'
+  | 'comment_on_action'
+  | 'comment_on_observation'
+  | 'record_asset_reading'
+  | 'create_headsup';
+
+/**
+ * Tools that go through the tRPC caller (writes + the two reads backed by
+ * permission-gated procedures). The remaining `list_*` reads query the db
+ * directly, so they don't need a caller built.
+ */
+export const CALLER_TOOL_NAMES = new Set<ToolName>([
+  'list_observation_categories',
+  'list_users',
+  'create_observation',
+  'create_action',
+  'comment_on_action',
+  'comment_on_observation',
+  'record_asset_reading',
+  'create_headsup',
+]);
+
+/** The six write (mutation) tools — used by tests + the confirm-before-write gate. */
+export const WRITE_TOOL_NAMES = new Set<ToolName>([
+  'create_observation',
+  'create_action',
+  'comment_on_action',
+  'comment_on_observation',
+  'record_asset_reading',
+  'create_headsup',
+]);
+
+/**
+ * Appended to the system prompt on every channel. Governs the write tools.
+ * The confirm-before-write contract is enforced here at the prompt level; the
+ * tools themselves perform the commit when called, and the server still
+ * enforces permissions independently.
+ */
+export const WRITE_INSTRUCTIONS = `
+
+You can also take actions on the user's behalf using the write tools: create an observation, create a corrective action, comment on an action or observation, record an asset meter reading (which feeds maintenance scheduling), and draft a heads-up announcement.
+
+Rules for write actions — follow these exactly:
+- ALWAYS confirm with the user BEFORE calling any create / comment / record tool. First summarise what you're about to do (the type, the title, and the key fields), then ask the user to confirm. Only call the tool after they clearly say yes.
+- If the request is ambiguous — e.g. it's unclear whether they want an observation or an action, which asset they mean, or which item to comment on — ask one short clarifying question first.
+- To create an observation you must pick a category: call list_observation_categories and choose the best match (ask the user if it's unclear). To assign an action to someone, call list_users to resolve the person to their id.
+- After a successful write, confirm it's done and include the reference number returned (e.g. "Done — created action AC-000123").
+- You can only do what the user's permissions allow. If a tool returns a permission error, tell the user plainly that they don't have permission for that action — do not retry.
+- A drafted heads-up is created as a DRAFT only; it is not published or sent to anyone. Make that clear to the user.`;
+
+/** Map a thrown tRPC error into a structured tool result the model can relay. */
+export function toToolError(err: unknown): { error: string; message: string } {
+  const e = err as { code?: unknown; message?: unknown };
+  const code = typeof e.code === 'string' ? e.code : undefined;
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof e.message === 'string'
+        ? e.message
+        : String(err);
+  if (code === 'FORBIDDEN') return { error: 'permission_denied', message };
+  if (code === 'NOT_FOUND') return { error: 'not_found', message };
+  if (code === 'BAD_REQUEST') return { error: 'invalid_input', message };
+  return { error: 'failed', message };
+}
+
+export const TOOLS: Anthropic.Tool[] = [
+  {
+    name: 'list_inspections',
+    description:
+      'List recent inspections for this company. Use to answer questions about inspection status, history, or activity.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
+        status: {
+          type: 'string',
+          enum: ['in_progress', 'submitted', 'completed', 'rejected'],
+          description: 'Filter by status',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'list_issues',
+    description: 'List recent observations/issues for this company.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
+        status: {
+          type: 'string',
+          enum: ['open', 'investigation', 'closed'],
+          description: 'Filter by status',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'list_actions',
+    description: 'List actions/corrective tasks for this company.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
+        status: {
+          type: 'string',
+          enum: ['open', 'in_progress', 'completed', 'cancelled'],
+          description: 'Filter by status',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'list_assets',
+    description: 'List assets registered for this company.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'list_headsup',
+    description: 'List heads-up announcements/notices for this company.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'list_documents',
+    description: 'List documents and policies for this company.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'list_schedules',
+    description: 'List upcoming or recent inspection schedules for this company.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
+      },
+      required: [],
+    },
+  },
+  // ── Write tools (mutations) — see WRITE_INSTRUCTIONS. Confirm before use. ──
+  {
+    name: 'list_observation_categories',
+    description:
+      'List the observation/issue categories defined for this company. Call before create_observation to choose the right categoryId.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'list_users',
+    description:
+      'List users in this company (id + name + email). Use to resolve who to assign an action to.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'create_observation',
+    description:
+      'Create a new observation (a reported hazard, defect, or incident). Confirm details with the user first. Requires a categoryId from list_observation_categories.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        categoryId: { type: 'string', description: 'Category id from list_observation_categories' },
+        title: { type: 'string', description: 'Short title for the observation' },
+        description: { type: 'string', description: 'Optional fuller description' },
+        siteId: { type: 'string', description: 'Optional site id this observation relates to' },
+      },
+      required: ['categoryId', 'title'],
+    },
+  },
+  {
+    name: 'create_action',
+    description:
+      'Create a corrective action/task. Confirm details with the user first. Due date is auto-set from priority if omitted.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        title: { type: 'string', description: 'Short title for the action' },
+        description: { type: 'string', description: 'Optional fuller description' },
+        priority: {
+          type: 'string',
+          enum: ['low', 'medium', 'high', 'critical'],
+          description: 'Optional priority',
+        },
+        assigneeUserId: {
+          type: 'string',
+          description: 'Optional user id to assign (see list_users)',
+        },
+        dueAt: { type: 'string', description: 'Optional ISO 8601 due date/time' },
+        siteId: { type: 'string', description: 'Optional site id' },
+      },
+      required: ['title'],
+    },
+  },
+  {
+    name: 'comment_on_action',
+    description: 'Add a comment to an existing action. Get the actionId from list_actions.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        actionId: { type: 'string', description: 'The action id' },
+        body: { type: 'string', description: 'The comment text' },
+      },
+      required: ['actionId', 'body'],
+    },
+  },
+  {
+    name: 'comment_on_observation',
+    description:
+      'Add a comment to an existing observation. Get the observationId from list_issues.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        observationId: { type: 'string', description: 'The observation (issue) id' },
+        body: { type: 'string', description: 'The comment text' },
+      },
+      required: ['observationId', 'body'],
+    },
+  },
+  {
+    name: 'record_asset_reading',
+    description:
+      'Record a meter/usage reading for an asset (e.g. odometer km, engine hours). Feeds the asset maintenance schedule. Get the assetId from list_assets.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        assetId: { type: 'string', description: 'The asset id (see list_assets)' },
+        fieldName: {
+          type: 'string',
+          description: 'What is being measured, e.g. "odometer" or "hours"',
+        },
+        value: { type: 'number', description: 'The numeric reading' },
+        unit: { type: 'string', description: 'Optional unit, e.g. "km" or "hours"' },
+      },
+      required: ['assetId', 'fieldName', 'value'],
+    },
+  },
+  {
+    name: 'create_headsup',
+    description:
+      'Create a Heads-Up announcement as a DRAFT (not published or sent to anyone). Confirm details with the user first.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        title: { type: 'string', description: 'The announcement title' },
+        description: { type: 'string', description: 'The announcement body' },
+      },
+      required: ['title', 'description'],
+    },
+  },
+];

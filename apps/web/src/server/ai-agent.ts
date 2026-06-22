@@ -32,6 +32,14 @@ import {
 import { newId } from '@forma360/shared/id';
 import { db } from './db';
 import { env } from './env';
+import {
+  CALLER_TOOL_NAMES,
+  TOOLS,
+  type ToolName,
+  toToolError,
+  WRITE_INSTRUCTIONS,
+} from './agent-tools';
+import { createServerCaller, type ServerCaller } from './server-caller';
 
 const SYSTEM_PROMPT = `You are an AI assistant for Forma360, an operational-excellence platform.
 You have access to this company's data via tools. Always use tools to look up real data before answering questions about inspections, issues, actions, assets, documents, or heads-up items.
@@ -55,116 +63,20 @@ When you list or reference an entity (inspection, observation, action, asset, do
 - heads-up: /heads-up/{id}
 Do not print raw ids in the text — put the id only inside the link target. Example table row: | [Full service — car 1](/actions/01ABCDEF...) | Medium | 18 Jun 2027 |`;
 
-const TOOLS: Anthropic.Tool[] = [
-  {
-    name: 'list_inspections',
-    description:
-      'List recent inspections for this company. Use to answer questions about inspection status, history, or activity.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
-        status: {
-          type: 'string',
-          enum: ['in_progress', 'submitted', 'completed', 'rejected'],
-          description: 'Filter by status',
-        },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'list_issues',
-    description: 'List recent observations/issues for this company.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
-        status: {
-          type: 'string',
-          enum: ['open', 'investigation', 'closed'],
-          description: 'Filter by status',
-        },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'list_actions',
-    description: 'List actions/corrective tasks for this company.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
-        status: {
-          type: 'string',
-          enum: ['open', 'in_progress', 'completed', 'cancelled'],
-          description: 'Filter by status',
-        },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'list_assets',
-    description: 'List assets registered for this company.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'list_headsup',
-    description: 'List heads-up announcements/notices for this company.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'list_documents',
-    description: 'List documents and policies for this company.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'list_schedules',
-    description: 'List upcoming or recent inspection schedules for this company.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
-      },
-      required: [],
-    },
-  },
-];
 
-type ToolName =
-  | 'list_inspections'
-  | 'list_issues'
-  | 'list_actions'
-  | 'list_assets'
-  | 'list_headsup'
-  | 'list_documents'
-  | 'list_schedules';
+interface AgentToolCtx {
+  tenantId: string;
+  /** Authoritative tRPC caller — enforces permissions + reuses all real logic. */
+  caller: ServerCaller;
+}
+
 
 async function executeTool(
   name: ToolName,
   input: Record<string, unknown>,
-  tenantId: string,
+  ctx: AgentToolCtx,
 ): Promise<unknown> {
+  const { tenantId, caller } = ctx;
   const limit = Math.min(Number(input['limit'] ?? 10), 50);
 
   switch (name) {
@@ -299,6 +211,105 @@ async function executeTool(
         .limit(limit);
       return { total: rows.length, schedules: rows };
     }
+
+    // ── Write tools — delegate to the real procedures via the caller ──────────
+
+    case 'list_observation_categories': {
+      return caller.issues.categories.list();
+    }
+
+    case 'list_users': {
+      return caller.users.list({});
+    }
+
+    case 'create_observation': {
+      try {
+        const res = await caller.issues.issues.create({
+          categoryId: String(input['categoryId']),
+          title: String(input['title']),
+          ...(input['description'] !== undefined
+            ? { description: String(input['description']) }
+            : {}),
+          ...(input['siteId'] !== undefined ? { siteId: String(input['siteId']) } : {}),
+        });
+        return { ok: true, ...res };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'create_action': {
+      try {
+        const priority = input['priority'];
+        const res = await caller.actions.createStandalone({
+          title: String(input['title']),
+          ...(input['description'] !== undefined
+            ? { description: String(input['description']) }
+            : {}),
+          ...(typeof priority === 'string'
+            ? { priority: priority as 'low' | 'medium' | 'high' | 'critical' }
+            : {}),
+          ...(input['assigneeUserId'] !== undefined
+            ? { assigneeUserId: String(input['assigneeUserId']) }
+            : {}),
+          ...(input['dueAt'] !== undefined ? { dueAt: String(input['dueAt']) } : {}),
+          ...(input['siteId'] !== undefined ? { siteId: String(input['siteId']) } : {}),
+        });
+        return { ok: true, ...res };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'comment_on_action': {
+      try {
+        const res = await caller.actions.comments.create({
+          actionId: String(input['actionId']),
+          body: String(input['body']),
+        });
+        return { ok: true, ...res };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'comment_on_observation': {
+      try {
+        const res = await caller.issues.comments.create({
+          issueId: String(input['observationId']),
+          body: String(input['body']),
+        });
+        return { ok: true, ...res };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'record_asset_reading': {
+      try {
+        const res = await caller.assets.readings.add({
+          assetId: String(input['assetId']),
+          fieldName: String(input['fieldName']),
+          value: Number(input['value']),
+          ...(input['unit'] !== undefined ? { unit: String(input['unit']) } : {}),
+        });
+        return { ok: true, ...res };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'create_headsup': {
+      try {
+        const res = await caller.headsUps.create({
+          title: String(input['title']),
+          description: String(input['description']),
+        });
+        return { ok: true, ...res };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
   }
 }
 
@@ -334,8 +345,18 @@ export interface RunAgentResult {
  */
 export async function runAiAgentTurn(input: RunAgentInput): Promise<RunAgentResult> {
   const { tenantId, userId, message, conversationId: incomingConvId, onEvent } = input;
-  const systemPrompt =
-    (input.channel ?? 'web') === 'web' ? SYSTEM_PROMPT + WEB_LINK_INSTRUCTIONS : SYSTEM_PROMPT;
+  // Write tools apply on every channel; clickable entity links only make sense
+  // in the web app (WhatsApp shows Markdown links as raw text).
+  const base = SYSTEM_PROMPT + WRITE_INSTRUCTIONS;
+  const systemPrompt = (input.channel ?? 'web') === 'web' ? base + WEB_LINK_INSTRUCTIONS : base;
+
+  // Built lazily on first tool call (one email lookup) — turns that don't call
+  // a tool never pay for it.
+  let cachedCaller: ServerCaller | null = null;
+  const getCaller = async (): Promise<ServerCaller> => {
+    cachedCaller ??= await createServerCaller({ tenantId, userId });
+    return cachedCaller;
+  };
 
   let conversationId: string;
   let isNew = false;
@@ -419,10 +440,15 @@ export async function runAiAgentTurn(input: RunAgentInput): Promise<RunAgentResu
     for (const toolBlock of toolUseBlocks) {
       onEvent?.({ type: 'tool_call', toolName: toolBlock.name });
       try {
+        // Only the caller-backed tools build a caller; the plain db reads pass a
+        // placeholder they never touch (keeps one executeTool signature).
+        const caller = CALLER_TOOL_NAMES.has(toolBlock.name as ToolName)
+          ? await getCaller()
+          : (undefined as unknown as ServerCaller);
         const result = await executeTool(
           toolBlock.name as ToolName,
           toolBlock.input as Record<string, unknown>,
-          tenantId,
+          { tenantId, caller },
         );
         toolResults.push({
           type: 'tool_result',
