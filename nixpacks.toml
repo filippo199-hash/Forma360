@@ -15,4 +15,6 @@
 # browser). @sparticuz/chromium is compiled for AWS Lambda (Amazon Linux 2) and
 # doesn't run on nixpkgs-based Railway containers; we fall back to the
 # system-installed chromium instead (see packages/render/src/pdf.ts).
-nixPkgs = ['nodejs_22', 'pnpm-9_x', 'chromium']
+# ffmpeg: samples still frames from inbound WhatsApp videos so the AI
+# assistant's vision can "watch" them (apps/web/src/server/video-frames.ts).
+nixPkgs = ['nodejs_22', 'pnpm-9_x', 'chromium', 'ffmpeg']

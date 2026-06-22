@@ -19,11 +19,14 @@ const GRAPH_API_VERSION = 'v25.0';
 const MAX_CHUNK = 3800;
 
 /**
- * Cap on inbound media we'll download + base64 for Claude vision. Claude's
- * per-image limit is ~5MB; WhatsApp photos are well under this. Larger files
- * are skipped (the caller falls back to a "couldn't read that" reply).
+ * Default cap on inbound media we'll download + base64. Claude's per-image
+ * limit is ~5MB; WhatsApp photos sit well under this. Video passes a larger
+ * cap (it's frame-sampled, not sent whole). Over-cap files are skipped and the
+ * caller falls back to a "couldn't read that" reply.
  */
 const MAX_MEDIA_BYTES = 5 * 1024 * 1024;
+/** Larger cap for video, which we frame-sample rather than send whole. */
+export const MAX_VIDEO_BYTES = 16 * 1024 * 1024;
 
 const mediaMetaSchema = z.object({
   url: z.string().url(),
@@ -39,6 +42,7 @@ const mediaMetaSchema = z.object({
  */
 export async function fetchWhatsAppMedia(
   mediaId: string,
+  maxBytes: number = MAX_MEDIA_BYTES,
 ): Promise<{ base64: string; mimeType: string } | null> {
   const token = env.WHATSAPP_ACCESS_TOKEN;
   if (!token) return null;
@@ -57,7 +61,7 @@ export async function fetchWhatsAppMedia(
       log.warn({ mediaId }, 'media metadata shape unexpected');
       return null;
     }
-    if (meta.data.file_size !== undefined && meta.data.file_size > MAX_MEDIA_BYTES) {
+    if (meta.data.file_size !== undefined && meta.data.file_size > maxBytes) {
       log.info({ mediaId, fileSize: meta.data.file_size }, 'media too large; skipping');
       return null;
     }
@@ -68,7 +72,7 @@ export async function fetchWhatsAppMedia(
       return null;
     }
     const buf = Buffer.from(await binRes.arrayBuffer());
-    if (buf.byteLength > MAX_MEDIA_BYTES) {
+    if (buf.byteLength > maxBytes) {
       log.info({ mediaId, bytes: buf.byteLength }, 'media exceeded cap after download; skipping');
       return null;
     }

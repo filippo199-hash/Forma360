@@ -66,6 +66,13 @@ const serverSchemaBase = z.object({
    */
   ANTHROPIC_API_KEY: z.string().min(1),
 
+  /**
+   * OpenAI API key — used ONLY for Whisper speech-to-text (transcribing inbound
+   * WhatsApp voice notes). All AI reasoning stays on Claude. Optional: when
+   * unset, voice notes fall back to the "please send text" reply.
+   */
+  OPENAI_API_KEY: z.string().min(1).optional(),
+
   // ─── WhatsApp Cloud API (AI assistant over WhatsApp) ──────────────────────
   // All four are optional: when unset the WhatsApp webhook is disabled and the
   // app boots normally (tests + local dev don't need them). Production sets all

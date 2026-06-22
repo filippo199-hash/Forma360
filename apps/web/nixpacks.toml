@@ -1,5 +1,6 @@
 # Nixpacks config for the Railway `web` service.
-# Node 22 + pnpm 9 + Chromium (for Puppeteer-backed PDF rendering).
+# Node 22 + pnpm 9 + Chromium (Puppeteer PDF rendering) + ffmpeg (sampling
+# frames from inbound WhatsApp videos for the AI assistant's vision).
 
 [phases.setup]
-nixPkgs = ['nodejs_22', 'pnpm-9_x', 'chromium']
+nixPkgs = ['nodejs_22', 'pnpm-9_x', 'chromium', 'ffmpeg']

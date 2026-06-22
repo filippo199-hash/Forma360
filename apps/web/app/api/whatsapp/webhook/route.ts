@@ -21,9 +21,12 @@ import { runAiAgentTurn } from '../../../../src/server/ai-agent';
 import { db } from '../../../../src/server/db';
 import { env } from '../../../../src/server/env';
 import { logger } from '../../../../src/server/logger';
+import { isTranscriptionConfigured, transcribeAudio } from '../../../../src/server/transcribe';
+import { extractVideoFrames } from '../../../../src/server/video-frames';
 import {
   fetchWhatsAppMedia,
   isWhatsAppConfigured,
+  MAX_VIDEO_BYTES,
   sendWhatsAppText,
   verifyWhatsAppSignature,
 } from '../../../../src/server/whatsapp';
@@ -134,6 +137,20 @@ const inboundMessageSchema = z.object({
   type: z.string(),
   text: z.object({ body: z.string() }).optional(),
   image: z
+    .object({
+      id: z.string(),
+      mime_type: z.string().optional(),
+      caption: z.string().optional(),
+    })
+    .optional(),
+  audio: z
+    .object({
+      id: z.string(),
+      mime_type: z.string().optional(),
+      voice: z.boolean().optional(),
+    })
+    .optional(),
+  video: z
     .object({
       id: z.string(),
       mime_type: z.string().optional(),
@@ -283,10 +300,17 @@ async function routeMessage(m: InboundMessage): Promise<void> {
     return;
   }
 
-  // Image → download + show to Claude's vision (Phase 2). Falls back to the
-  // interim reply if the download fails or the type isn't a supported image.
+  // Image → Claude vision (Phase 2). Audio → transcribe → agent. Video →
+  // sample frames → vision (Phase 3). Each falls back to the interim reply if
+  // the media can't be fetched / processed.
   if (m.type === 'image' && m.image) {
     if (await tryHandleImage(from, m.image)) return;
+  }
+  if (m.type === 'audio' && m.audio) {
+    if (await tryHandleAudio(from, m.audio)) return;
+  }
+  if (m.type === 'video' && m.video) {
+    if (await tryHandleVideo(from, m.video)) return;
   }
 
   await sendWhatsAppText(from, mediaInterimReply(m.type));
@@ -314,6 +338,53 @@ async function tryHandleImage(
       : 'The user sent this photo with no caption. Describe what you see and ask how you can help (e.g. raise an observation or action).';
   const images: AgentImage[] = [{ base64: media.base64, mediaType: media.mimeType }];
   await handleMessage(from, text, images);
+  return true;
+}
+
+/**
+ * Download a voice note, transcribe it (OpenAI Whisper), and run the transcript
+ * through the agent as if the user had typed it. Returns false (→ interim
+ * reply) when transcription isn't configured or the audio can't be transcribed.
+ */
+async function tryHandleAudio(
+  from: string,
+  audio: NonNullable<InboundMessage['audio']>,
+): Promise<boolean> {
+  if (!isTranscriptionConfigured()) return false;
+  const media = await fetchWhatsAppMedia(audio.id);
+  if (!media) return false;
+  const transcript = await transcribeAudio(media.base64, media.mimeType);
+  if (!transcript) {
+    log.info({ from }, 'voice note could not be transcribed');
+    return false;
+  }
+  log.info({ from }, 'transcribed voice note');
+  await handleMessage(from, transcript);
+  return true;
+}
+
+/**
+ * Download a video, sample a few frames with ffmpeg, and show them to Claude's
+ * vision alongside the caption. Returns false (→ interim reply) when the video
+ * can't be fetched or no frames could be extracted.
+ */
+async function tryHandleVideo(
+  from: string,
+  video: NonNullable<InboundMessage['video']>,
+): Promise<boolean> {
+  const media = await fetchWhatsAppMedia(video.id, MAX_VIDEO_BYTES);
+  if (!media) return false;
+  const frames = await extractVideoFrames(media.base64, media.mimeType);
+  if (frames.length === 0) {
+    log.info({ from }, 'no frames extracted from video');
+    return false;
+  }
+  const caption = video.caption?.trim();
+  const text =
+    caption && caption.length > 0
+      ? caption
+      : 'The user sent this video (shown here as a few still frames). Describe what you see and ask how you can help (e.g. raise an observation or action).';
+  await handleMessage(from, text, frames);
   return true;
 }
 
