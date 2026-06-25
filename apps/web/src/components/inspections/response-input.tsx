@@ -79,7 +79,7 @@ export function ResponseInput({
     case 'signature':
       return <SignatureInput item={item} readonly={readonly} />;
     case 'instruction':
-      return <InstructionBody body={item.body} />;
+      return <InstructionBody item={item} />;
     case 'conductedBy':
       return <ConductedByField />;
     case 'inspectionDate':

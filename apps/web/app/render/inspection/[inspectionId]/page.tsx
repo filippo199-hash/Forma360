@@ -65,5 +65,35 @@ export default async function RenderInspectionPage({ params, searchParams }: Pro
   )?.settings?.branding?.logoStorageKey;
   const logoUrl = await fetchLogoUrl(brandingKey);
 
-  return <PrintLayout snapshot={snapshot} logoUrl={logoUrl} />;
+  // Pre-resolve signed URLs for instruction image attachments (the headless
+  // browser has no session, so it can't hit the /api/files proxy). Only
+  // instructions that show in the report, and only images, need a URL.
+  const mediaUrls: Record<string, string> = {};
+  const contentForMedia = snapshot.template.content as
+    | {
+        pages?: ReadonlyArray<{
+          sections?: ReadonlyArray<{
+            items?: ReadonlyArray<{
+              type?: string;
+              showInReport?: boolean;
+              attachments?: ReadonlyArray<{ key: string; mimeType: string }>;
+            }>;
+          }>;
+        }>;
+      }
+    | undefined;
+  for (const page of contentForMedia?.pages ?? []) {
+    for (const section of page.sections ?? []) {
+      for (const item of section.items ?? []) {
+        if (item.type !== 'instruction' || item.showInReport === false) continue;
+        for (const a of item.attachments ?? []) {
+          if (!a.mimeType.startsWith('image/')) continue;
+          const u = await fetchLogoUrl(a.key);
+          if (u !== null) mediaUrls[a.key] = u;
+        }
+      }
+    }
+  }
+
+  return <PrintLayout snapshot={snapshot} logoUrl={logoUrl} mediaUrls={mediaUrls} />;
 }

@@ -10,6 +10,7 @@ import type {
 import { useTranslations } from 'next-intl';
 import type { Responses } from './conduct-state';
 import { isItemVisible } from './conduct-state';
+import { InstructionBody } from './instruction-render';
 import { Card } from '../ui/card';
 
 /**
@@ -131,6 +132,8 @@ function ReviewItem({
 }) {
   const t = useTranslations('approvals.review');
   if (!isItemVisible(item, responses)) return null;
+  // Instructions only appear in the report when the admin opted in.
+  if (item.type === 'instruction' && !item.showInReport) return null;
   const prompt = 'prompt' in item ? item.prompt : null;
   const value = responses[item.id];
 
@@ -250,7 +253,7 @@ function ReviewValue({
       );
     }
     case 'instruction':
-      return null;
+      return <InstructionBody item={item} />;
     case 'site':
     case 'asset':
     case 'company':

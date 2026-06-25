@@ -49,13 +49,66 @@ interface TemplateContentLike {
   };
 }
 
+interface InstructionPrintItem {
+  id?: string;
+  type: 'instruction';
+  body?: string;
+  attachments?: ReadonlyArray<{ key: string; filename: string; mimeType: string }>;
+  videoUrl?: string;
+  showInReport?: boolean;
+}
+
+/**
+ * Render an instruction in the printed report. Honours `showInReport`. Images
+ * embed via pre-resolved signed URLs (`mediaUrls`); video shows as a link
+ * (a PDF can't play it) and other docs are listed by name.
+ */
+function InstructionPrint({
+  item,
+  mediaUrls,
+}: {
+  item: InstructionPrintItem;
+  mediaUrls: Record<string, string>;
+}) {
+  if (item.showInReport === false) return null;
+  const body = (item.body ?? '').trim();
+  const attachments = item.attachments ?? [];
+  const images = attachments.filter((a) => a.mimeType.startsWith('image/'));
+  const docs = attachments.filter((a) => !a.mimeType.startsWith('image/'));
+  if (body.length === 0 && attachments.length === 0 && item.videoUrl === undefined) return null;
+
+  return (
+    <div className="print-instruction">
+      <div className="ins-label">Instruction</div>
+      {body.length > 0 ? <div className="ins-body">{body}</div> : null}
+      {images.map((a) => {
+        const url = mediaUrls[a.key];
+        return url !== undefined ? <img key={a.key} src={url} alt={a.filename} /> : null;
+      })}
+      {docs.map((a) => (
+        <div key={a.key} className="ins-file">
+          Attachment: {a.filename}
+        </div>
+      ))}
+      {item.videoUrl !== undefined ? <div className="ins-file">Video: {item.videoUrl}</div> : null}
+    </div>
+  );
+}
+
 export function PrintLayout({
   snapshot,
   logoUrl = null,
+  mediaUrls = {},
 }: {
   snapshot: InspectionRenderSnapshot;
   /** Pre-resolved signed URL for `settings.branding.logoStorageKey`. Caller is responsible for fetching this. */
   logoUrl?: string | null;
+  /**
+   * Pre-resolved signed URLs for instruction image attachments, keyed by R2
+   * key. The headless browser has no session, so the caller must resolve these
+   * (same as `logoUrl`); unresolved keys simply don't render an image.
+   */
+  mediaUrls?: Record<string, string>;
 }) {
   const content = snapshot.template.content as TemplateContentLike | undefined;
   const branding = content?.settings?.branding;
@@ -123,6 +176,11 @@ export function PrintLayout({
             .print-body .print-response .flag-badge { display: inline-block; margin-left: 0.2cm; padding: 0 0.15cm; font-size: 8pt; font-weight: 700; color: #fff; background: #dc2626; border-radius: 0.1cm; vertical-align: middle; }
             .print-body .print-response.skipped { opacity: 0.5; }
             .print-body .print-response.skipped .prompt { font-weight: 400; color: #6b7280; }
+            .print-body .print-instruction { border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 0.15cm; padding: 0.3cm 0.4cm; margin: 0.2cm 0 0.4cm 0; }
+            .print-body .print-instruction .ins-label { font-size: 8pt; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #2563eb; margin-bottom: 0.15cm; }
+            .print-body .print-instruction .ins-body { white-space: pre-wrap; margin-bottom: 0.2cm; }
+            .print-body .print-instruction img { max-width: 100%; max-height: 9cm; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 0.1cm; margin: 0.15cm 0; display: block; }
+            .print-body .print-instruction .ins-file { font-size: 9pt; color: #374151; margin: 0.1cm 0; }
             .print-body .print-response .skip-badge { display: inline-block; margin-left: 0.2cm; padding: 0 0.15cm; font-size: 8pt; font-weight: 700; color: #374151; background: #e5e7eb; border-radius: 0.1cm; vertical-align: middle; }
             .print-body .print-flagged { border: 1px solid #fca5a5; background: #fef2f2; border-radius: 0.15cm; padding: 0.3cm 0.4cm; margin: 0 0 0.5cm 0; }
             .print-body .print-flagged h2 { margin: 0 0 0.2cm 0; color: #b91c1c; border: 0; font-size: 13pt; }
@@ -189,6 +247,17 @@ export function PrintLayout({
                 <div key={section.id ?? si}>
                   <h3>{section.title}</h3>
                   {(section.items ?? []).map((item, ii) => {
+                    // Instructions are guidance, not Q&A — render the body /
+                    // images / video, honouring the admin's report toggle.
+                    if (item.type === 'instruction') {
+                      return (
+                        <InstructionPrint
+                          key={item.id ?? ii}
+                          item={item as unknown as InstructionPrintItem}
+                          mediaUrls={mediaUrls}
+                        />
+                      );
+                    }
                     const response = snapshot.inspection.responses[item.id ?? ''];
                     const skipped = item.id !== undefined && skippedItemIds.has(item.id);
                     // Multiple-choice answers render as their option labels, not
