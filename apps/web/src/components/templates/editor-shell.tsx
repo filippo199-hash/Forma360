@@ -251,6 +251,18 @@ export function EditorShell({
           >
             {t('saveButton')}
           </Button>
+          {publishMode && activeTab === 'settings' ? (
+            <Button
+              size="sm"
+              onClick={handleSettingsNext}
+              disabled={saveDraft.isPending}
+              aria-label={t('settingsTab.continueToVisibility')}
+            >
+              {saveDraft.isPending
+                ? t('settingsTab.savingForWizard')
+                : t('settingsTab.continueToVisibility')}
+            </Button>
+          ) : null}
           {!publishMode ? (
             <Button
               size="sm"
