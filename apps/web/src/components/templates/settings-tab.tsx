@@ -4,6 +4,7 @@ import type { TemplateContent } from '@forma360/shared/template-schema';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { responseChipClasses } from '../../lib/response-colors';
+import { InstructionBody } from '../inspections/instruction-render';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
@@ -381,7 +382,6 @@ function ReportPreview({ content }: { content: TemplateContent }) {
         style={{ backgroundColor: primary ?? '#0f172a' }}
       >
         {logoUrl !== null ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={logoUrl} alt="logo" className="h-9 w-auto object-contain" />
         ) : (
           <div className="h-9 w-12 rounded bg-white/25" aria-hidden />
@@ -406,8 +406,21 @@ function ReportPreview({ content }: { content: TemplateContent }) {
                   </p>
                 ) : null}
                 {section.items
-                  .filter((item) => 'prompt' in item)
+                  .filter(
+                    (item) =>
+                      'prompt' in item ||
+                      (item.type === 'instruction' && item.showInReport),
+                  )
                   .map((item) => {
+                    // Instructions render their guidance (text/media/video),
+                    // honouring the report toggle handled by the filter above.
+                    if (item.type === 'instruction') {
+                      return (
+                        <div key={item.id}>
+                          <InstructionBody item={item} />
+                        </div>
+                      );
+                    }
                     const prompt = 'prompt' in item ? item.prompt : '';
                     const set =
                       item.type === 'multipleChoice' ? setsById.get(item.responseSetId) : undefined;
