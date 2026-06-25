@@ -206,7 +206,8 @@ function buildItem(q: SpecQuestion, itemId: string, globalIndex: number, ctx: Bu
         id: itemId,
         type: 'instruction',
         body: (q.body ?? q.prompt).slice(0, 5000),
-        mediaKeys: [],
+        attachments: [],
+        showInReport: true,
       };
     // Smart pickers: a person who is a system user, a tracked asset, a site or a
     // location. The AI should reach for these instead of free text.

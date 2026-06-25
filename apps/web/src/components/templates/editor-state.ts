@@ -486,7 +486,7 @@ export function makeItem(type: SupportedItemType | StubItemType): Item {
     case 'slider':
       return { ...base, type: 'slider', min: 0, max: 10, step: 1 };
     case 'instruction':
-      return { id, type: 'instruction', body: '', mediaKeys: [] };
+      return { id, type: 'instruction', body: '', attachments: [], showInReport: true };
     case 'conductedBy':
       return { ...base, type: 'conductedBy', prompt: 'Conducted by' };
     case 'inspectionDate':

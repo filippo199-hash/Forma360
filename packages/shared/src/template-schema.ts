@@ -8,6 +8,7 @@
  * rows.
  */
 import { z } from 'zod';
+import { parseVideoEmbed } from './video-embed';
 
 // ─── Constants (locked by the ADR) ──────────────────────────────────────────
 
@@ -271,13 +272,37 @@ const companyPickerQuestion = z.object({ ...baseItemFields, type: z.literal('com
 
 // ─── Non-question items ─────────────────────────────────────────────────────
 
+/** A file attached to an instruction (image / PDF / document). */
+const instructionAttachment = z.object({
+  /** R2 object key (`<tenantId>/templates/<id>/<file>`). */
+  key: z.string().min(1),
+  /** Original filename, shown for non-previewable docs. */
+  filename: z.string().min(1),
+  /** MIME type — drives how it renders (image / pdf / download card). */
+  mimeType: z.string().min(1),
+});
+export type InstructionAttachment = z.infer<typeof instructionAttachment>;
+
 const instructionItem = z.object({
   id: ulid,
   type: z.literal('instruction'),
-  /** Visible as-is to the inspector. Markdown. */
+  /** Visible as-is to the inspector. Markdown. May be empty if media-only. */
   body: markdown,
-  /** Optional media attached to the instruction (object keys). */
-  mediaKeys: z.array(z.string()).max(10).default([]),
+  /** Files (image / PDF / doc) the admin attached at build time. */
+  attachments: z.array(instructionAttachment).max(10).default([]),
+  /**
+   * Optional YouTube/Vimeo link, embedded as a player during conduct.
+   * Validated to be an embeddable URL — see `parseVideoEmbed`.
+   */
+  videoUrl: z
+    .string()
+    .url()
+    .refine((u) => parseVideoEmbed(u) !== null, {
+      message: 'Video link must be a YouTube or Vimeo URL',
+    })
+    .optional(),
+  /** Whether this instruction is included in the final report (admin choice). */
+  showInReport: z.boolean().default(true),
   visibility: visibilitySchema.optional(),
 });
 

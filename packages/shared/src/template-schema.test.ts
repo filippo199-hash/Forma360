@@ -853,3 +853,60 @@ describe('jump-to (forward skip) validation', () => {
     expect(templateContentSchema.safeParse(c).success).toBe(false);
   });
 });
+
+// ─── Instruction items (media + video + report toggle) ──────────────────────
+
+describe('instruction items', () => {
+  function contentWithInstruction(instr: unknown): unknown {
+    const content = JSON.parse(JSON.stringify(minimalContent())) as {
+      pages: Array<{ type: string; sections: Array<{ items: unknown[] }> }>;
+    };
+    const insp = content.pages.find((p) => p.type === 'inspection');
+    if (insp === undefined || insp.sections[0] === undefined) {
+      throw new Error('fixture missing inspection page');
+    }
+    insp.sections[0].items.push(instr);
+    return content;
+  }
+
+  it('parses an instruction with attachments, a video link and showInReport', () => {
+    const res = templateContentSchema.safeParse(
+      contentWithInstruction({
+        id: newId(),
+        type: 'instruction',
+        body: 'Read this before you start',
+        attachments: [
+          { key: 'tenant/templates/x/diagram.png', filename: 'diagram.png', mimeType: 'image/png' },
+        ],
+        videoUrl: 'https://youtu.be/dQw4w9WgXcQ',
+        showInReport: false,
+      }),
+    );
+    expect(res.success).toBe(true);
+  });
+
+  it('defaults attachments to [] and showInReport to true', () => {
+    const parsed = parseTemplateContent(
+      contentWithInstruction({ id: newId(), type: 'instruction', body: 'hello' }),
+    );
+    const insp = parsed.pages.find((p) => p.type === 'inspection');
+    const last = insp?.sections[0]?.items.at(-1);
+    expect(last?.type).toBe('instruction');
+    if (last?.type === 'instruction') {
+      expect(last.attachments).toEqual([]);
+      expect(last.showInReport).toBe(true);
+    }
+  });
+
+  it('rejects a non-YouTube/Vimeo video link', () => {
+    const res = templateContentSchema.safeParse(
+      contentWithInstruction({
+        id: newId(),
+        type: 'instruction',
+        body: 'x',
+        videoUrl: 'https://evil.example.com/v/1',
+      }),
+    );
+    expect(res.success).toBe(false);
+  });
+});

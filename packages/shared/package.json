@@ -63,6 +63,10 @@
     "./actions-schema": {
       "types": "./src/actions-schema.ts",
       "default": "./src/actions-schema.ts"
+    },
+    "./video-embed": {
+      "types": "./src/video-embed.ts",
+      "default": "./src/video-embed.ts"
     }
   },
   "scripts": {
