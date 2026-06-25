@@ -41,6 +41,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { newId } from '@forma360/shared/id';
+import { parseVideoEmbed } from '@forma360/shared/video-embed';
 import {
   Box,
   Building2,
@@ -49,6 +50,7 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  FileText,
   GitBranch,
   GripVertical,
   Hash,
@@ -61,6 +63,7 @@ import {
   MoreHorizontal,
   MoveDown,
   MoveUp,
+  Paperclip,
   Pencil,
   PenLine,
   Plus,
@@ -73,6 +76,7 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import {
@@ -755,6 +759,160 @@ function SectionBlock({
   );
 }
 
+// ─── Instruction media editor (attachments / video link / report toggle) ─────
+
+type InstructionItemT = Extract<Item, { type: 'instruction' }>;
+
+function InstructionMediaEditor({ item }: { item: InstructionItemT }) {
+  const t = useTranslations('templates.editor.detail.instruction');
+  const { dispatch } = useEditor();
+  const params = useParams();
+  const templateId = typeof params.templateId === 'string' ? params.templateId : '';
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(false);
+  const [videoInput, setVideoInput] = useState(item.videoUrl ?? '');
+  const [videoError, setVideoError] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const patch = (p: Partial<InstructionItemT>) =>
+    dispatch({ type: 'updateItem', itemId: item.id, patch: p as Partial<Item> });
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file === undefined || templateId === '') return;
+    setUploading(true);
+    setUploadError(false);
+    try {
+      const form = new FormData();
+      form.append('templateId', templateId);
+      form.append('file', file);
+      const res = await fetch('/api/upload/template-media', { method: 'POST', body: form });
+      if (!res.ok) throw new Error(String(res.status));
+      const body = (await res.json()) as { key: string; filename: string; mimeType: string };
+      patch({
+        attachments: [
+          ...item.attachments,
+          { key: body.key, filename: body.filename, mimeType: body.mimeType },
+        ].slice(0, 10),
+      });
+    } catch {
+      setUploadError(true);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function commitVideo() {
+    const v = videoInput.trim();
+    if (v === '') {
+      setVideoError(false);
+      // Clear the optional field (cast: exactOptionalPropertyTypes).
+      dispatch({ type: 'updateItem', itemId: item.id, patch: { videoUrl: undefined } as Partial<Item> });
+      return;
+    }
+    if (parseVideoEmbed(v) === null) {
+      setVideoError(true);
+      return;
+    }
+    setVideoError(false);
+    patch({ videoUrl: v });
+  }
+
+  return (
+    <div className="space-y-3 border-t border-dashed border-muted-foreground/20 px-4 py-3">
+      {/* Attachments */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">{t('attachments')}</Label>
+        {item.attachments.length > 0 ? (
+          <ul className="space-y-1">
+            {item.attachments.map((a) => (
+              <li
+                key={a.key}
+                className="flex items-center justify-between gap-2 rounded-md border bg-background px-2 py-1.5 text-sm"
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="truncate" title={a.filename}>
+                    {a.filename}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => patch({ attachments: item.attachments.filter((x) => x.key !== a.key) })}
+                  className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
+                  aria-label={t('removeFile')}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+          hidden
+          onChange={onFile}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5"
+          disabled={uploading || item.attachments.length >= 10}
+          onClick={() => fileRef.current?.click()}
+        >
+          <Paperclip className="h-3.5 w-3.5" />
+          {uploading ? t('uploading') : t('addFile')}
+        </Button>
+        {uploadError ? (
+          <p className="text-xs text-destructive">{t('uploadError')}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">{t('attachmentsHint')}</p>
+        )}
+      </div>
+
+      {/* Video link */}
+      <div className="space-y-1.5">
+        <Label htmlFor={`video-${item.id}`} className="text-xs font-medium">
+          {t('videoLink')}
+        </Label>
+        <Input
+          id={`video-${item.id}`}
+          value={videoInput}
+          onChange={(e) => {
+            setVideoInput(e.target.value);
+            setVideoError(false);
+          }}
+          onBlur={commitVideo}
+          placeholder="https://youtu.be/…"
+          className="bg-background"
+        />
+        {videoError ? (
+          <p className="text-xs text-destructive">{t('videoInvalid')}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">{t('videoHint')}</p>
+        )}
+      </div>
+
+      {/* Show in report */}
+      <label className="flex cursor-pointer items-center justify-between gap-3">
+        <span>
+          <span className="text-xs font-medium">{t('showInReport')}</span>
+          <span className="block text-xs text-muted-foreground">{t('showInReportHint')}</span>
+        </span>
+        <Switch
+          checked={item.showInReport}
+          onCheckedChange={(c) => patch({ showInReport: c })}
+          className="h-4 w-7 [&_[data-state=checked]]:translate-x-3"
+        />
+      </label>
+    </div>
+  );
+}
+
 // ─── Sortable question row ────────────────────────────────────────────────────
 
 function SortableQuestionRow({
@@ -1071,6 +1229,9 @@ function SortableQuestionRow({
               />
             </div>
           ) : null}
+
+          {/* Instruction media (attachments / video link / report toggle) */}
+          {item.type === 'instruction' ? <InstructionMediaEditor item={item} /> : null}
 
           {/* Logic editor */}
           {showLogic ? (
