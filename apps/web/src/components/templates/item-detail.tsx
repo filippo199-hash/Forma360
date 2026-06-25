@@ -2,9 +2,12 @@
 
 import type { Item } from '@forma360/shared/template-schema';
 import { maxLogicDepth, TEMPLATE_LIMITS } from '@forma360/shared/template-schema';
-import { FileQuestion } from 'lucide-react';
+import { parseVideoEmbed } from '@forma360/shared/video-embed';
+import { FileQuestion, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useMemo } from 'react';
+import { useParams } from 'next/navigation';
+import { useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -139,20 +142,7 @@ function CommonFields({ item }: { item: Item }) {
   const { dispatch } = useEditor();
 
   if (item.type === 'instruction') {
-    return (
-      <div className="space-y-2">
-        <Textarea
-          id={`body-${item.id}`}
-          value={item.body}
-          onChange={(e) =>
-            dispatch({ type: 'updateItem', itemId: item.id, patch: { body: e.target.value } })
-          }
-          placeholder={t('detail.instruction.body')}
-          rows={4}
-          aria-label={t('detail.instruction.body')}
-        />
-      </div>
-    );
+    return <InstructionEditor item={item} />;
   }
 
   return (
@@ -204,6 +194,162 @@ function CommonFields({ item }: { item: Item }) {
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t('detail.title')}
         </p>
+      </div>
+    </div>
+  );
+}
+
+type InstructionItem = Extract<Item, { type: 'instruction' }>;
+
+/**
+ * Instruction editor: Markdown body + file attachments (image/PDF/doc) +
+ * an optional YouTube/Vimeo link + a "show in final report" toggle.
+ */
+function InstructionEditor({ item }: { item: InstructionItem }) {
+  const t = useTranslations('templates.editor.detail.instruction');
+  const { dispatch } = useEditor();
+  const params = useParams();
+  const templateId = typeof params.templateId === 'string' ? params.templateId : '';
+  const [uploading, setUploading] = useState(false);
+  const [videoInput, setVideoInput] = useState(item.videoUrl ?? '');
+  const [videoError, setVideoError] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const patch = (p: Partial<InstructionItem>) =>
+    dispatch({ type: 'updateItem', itemId: item.id, patch: p });
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file === undefined || templateId === '') return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('templateId', templateId);
+      form.append('file', file);
+      const res = await fetch('/api/upload/template-media', { method: 'POST', body: form });
+      if (!res.ok) throw new Error(String(res.status));
+      const body = (await res.json()) as { key: string; filename: string; mimeType: string };
+      patch({
+        attachments: [
+          ...item.attachments,
+          { key: body.key, filename: body.filename, mimeType: body.mimeType },
+        ].slice(0, 10),
+      });
+    } catch {
+      toast.error(t('uploadError'));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function commitVideo() {
+    const v = videoInput.trim();
+    if (v === '') {
+      setVideoError(false);
+      // Clear the optional field. Cast: exactOptionalPropertyTypes forbids an
+      // explicit `undefined` in the Item literal, but the reducer/Zod treat a
+      // missing/undefined videoUrl identically.
+      dispatch({ type: 'updateItem', itemId: item.id, patch: { videoUrl: undefined } as Partial<Item> });
+      return;
+    }
+    if (parseVideoEmbed(v) === null) {
+      setVideoError(true);
+      return;
+    }
+    setVideoError(false);
+    patch({ videoUrl: v });
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Body (Markdown) */}
+      <div className="space-y-1.5">
+        <Label htmlFor={`body-${item.id}`}>{t('body')}</Label>
+        <Textarea
+          id={`body-${item.id}`}
+          value={item.body}
+          onChange={(e) => patch({ body: e.target.value })}
+          placeholder={t('body')}
+          rows={4}
+        />
+      </div>
+
+      {/* Attachments */}
+      <div className="space-y-2">
+        <Label>{t('attachments')}</Label>
+        {item.attachments.length > 0 && (
+          <ul className="space-y-1">
+            {item.attachments.map((a) => (
+              <li
+                key={a.key}
+                className="flex items-center justify-between gap-2 rounded-md border px-2 py-1.5 text-sm"
+              >
+                <span className="truncate" title={a.filename}>
+                  {a.filename}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => patch({ attachments: item.attachments.filter((x) => x.key !== a.key) })}
+                  className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
+                  aria-label={t('removeFile')}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+          hidden
+          onChange={onFile}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={uploading || item.attachments.length >= 10}
+          onClick={() => fileRef.current?.click()}
+        >
+          {uploading ? t('uploading') : t('addFile')}
+        </Button>
+        <p className="text-xs text-muted-foreground">{t('attachmentsHint')}</p>
+      </div>
+
+      {/* Video link */}
+      <div className="space-y-1.5">
+        <Label htmlFor={`video-${item.id}`}>{t('videoLink')}</Label>
+        <Input
+          id={`video-${item.id}`}
+          value={videoInput}
+          onChange={(e) => {
+            setVideoInput(e.target.value);
+            setVideoError(false);
+          }}
+          onBlur={commitVideo}
+          placeholder="https://youtu.be/…"
+        />
+        {videoError ? (
+          <p className="text-xs text-destructive">{t('videoInvalid')}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">{t('videoHint')}</p>
+        )}
+      </div>
+
+      {/* Show in report */}
+      <div className="flex items-start justify-between gap-3 border-t pt-3">
+        <div className="space-y-0.5">
+          <Label htmlFor={`report-${item.id}`}>{t('showInReport')}</Label>
+          <p className="text-xs text-muted-foreground">{t('showInReportHint')}</p>
+        </div>
+        <Switch
+          id={`report-${item.id}`}
+          checked={item.showInReport}
+          onCheckedChange={(c) => patch({ showInReport: c })}
+        />
       </div>
     </div>
   );
