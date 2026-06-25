@@ -821,6 +821,21 @@ function InstructionMediaEditor({ item }: { item: InstructionItemT }) {
 
   return (
     <div className="space-y-3 border-t border-dashed border-muted-foreground/20 px-4 py-3">
+      {/* Instruction text (the main body shown to inspectors) */}
+      <div className="space-y-1.5">
+        <Label htmlFor={`body-${item.id}`} className="text-xs font-medium">
+          {t('bodyLabel')}
+        </Label>
+        <Textarea
+          id={`body-${item.id}`}
+          value={item.body}
+          onChange={(e) => patch({ body: e.target.value })}
+          placeholder={t('bodyPlaceholder')}
+          rows={3}
+          className="bg-background text-sm"
+        />
+      </div>
+
       {/* Attachments */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">{t('attachments')}</Label>
@@ -929,6 +944,7 @@ function SortableQuestionRow({
   const t = useTranslations('templates.editor');
   const tInline = useTranslations('templates.editor.inlineActions');
   const tLogic = useTranslations('templates.editor.logicTab');
+  const tIns = useTranslations('templates.editor.detail.instruction');
   const { state, dispatch } = useEditor();
   const [showLogic, setShowLogic] = useState(false);
   const [showNote, setShowNote] = useState(false);
@@ -1094,19 +1110,34 @@ function SortableQuestionRow({
           {chip.icon}
         </div>
 
-        {/* Question text */}
+        {/* Question text — for instructions this is a non-editable preview;
+            the text is edited in the labelled "Instruction text" area below. */}
         <div className="flex items-center gap-1.5 py-4 pl-2 pr-3">
           {required ? (
             <span className="shrink-0 text-base font-bold text-destructive">*</span>
           ) : null}
-          <input
-            type="text"
-            value={prompt}
-            onChange={(e) => handlePromptChange(e.target.value)}
-            onClick={() => dispatch({ type: 'selectItem', itemId: item.id })}
-            placeholder={t('questionPlaceholder')}
-            className="flex-1 bg-transparent text-[15px] font-medium outline-none"
-          />
+          {item.type === 'instruction' ? (
+            <button
+              type="button"
+              onClick={() => dispatch({ type: 'selectItem', itemId: item.id })}
+              className="flex-1 truncate bg-transparent text-left text-[15px] font-medium text-foreground outline-none"
+            >
+              {item.body.trim().length > 0 ? (
+                item.body
+              ) : (
+                <span className="text-muted-foreground">{tIns('rowEmpty')}</span>
+              )}
+            </button>
+          ) : (
+            <input
+              type="text"
+              value={prompt}
+              onChange={(e) => handlePromptChange(e.target.value)}
+              onClick={() => dispatch({ type: 'selectItem', itemId: item.id })}
+              placeholder={t('questionPlaceholder')}
+              className="flex-1 bg-transparent text-[15px] font-medium outline-none"
+            />
+          )}
         </div>
 
         {/* Type picker */}

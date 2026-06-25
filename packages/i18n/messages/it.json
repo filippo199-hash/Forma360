@@ -608,7 +608,10 @@
           "videoHint": "Paste a YouTube or Vimeo link to embed a player.",
           "videoInvalid": "Enter a valid YouTube or Vimeo link.",
           "showInReport": "Show in final report",
-          "showInReportHint": "Include this instruction in the completed inspection report."
+          "showInReportHint": "Include this instruction in the completed inspection report.",
+          "bodyLabel": "Instruction text",
+          "bodyPlaceholder": "Write the text shown to inspectors during the inspection. Markdown supported.",
+          "rowEmpty": "Instruction — add text below"
         },
         "checkbox": {
           "label": "Checkbox label"
