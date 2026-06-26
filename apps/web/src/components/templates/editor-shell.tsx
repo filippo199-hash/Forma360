@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import {
@@ -50,6 +50,8 @@ export function EditorShell({
   const [activeTab, setActiveTab] = useState<ActiveTab>('build');
   /** True while the user is stepping through the publish wizard (Build → Settings → Visibility). */
   const [publishMode, setPublishMode] = useState(false);
+  // Lets the top-bar "Publish" button trigger VisibilityTab's save→publish chain.
+  const visibilitySubmitRef = useRef<(() => void) | null>(null);
 
   const saveDraft = trpc.templates.saveDraft.useMutation({
     onSuccess: () => {
@@ -263,6 +265,16 @@ export function EditorShell({
                 : t('settingsTab.continueToVisibility')}
             </Button>
           ) : null}
+          {publishMode && activeTab === 'visibility' ? (
+            <Button
+              size="sm"
+              onClick={() => visibilitySubmitRef.current?.()}
+              disabled={publish.isPending}
+              aria-label={t('publishButton')}
+            >
+              {publish.isPending ? t('publishWizardSaving') : t('publishButton')}
+            </Button>
+          ) : null}
           {!publishMode ? (
             <Button
               size="sm"
@@ -293,6 +305,7 @@ export function EditorShell({
             publishMode={publishMode}
             onPublished={handleVisibilityPublish}
             isPublishing={publish.isPending}
+            submitRef={visibilitySubmitRef}
           />
         )}
       </div>

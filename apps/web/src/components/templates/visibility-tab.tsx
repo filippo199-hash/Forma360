@@ -32,6 +32,7 @@ export function VisibilityTab({
   publishMode = false,
   onPublished,
   isPublishing = false,
+  submitRef,
 }: {
   templateId: string;
   onBackToBuild: () => void;
@@ -41,6 +42,11 @@ export function VisibilityTab({
   onPublished?: () => void;
   /** True while the publish mutation in the shell is in flight. */
   isPublishing?: boolean;
+  /**
+   * Populated with the save→publish handler so the shell's top-bar "Publish"
+   * button can trigger the same flow as the in-tab button.
+   */
+  submitRef?: React.MutableRefObject<(() => void) | null>;
 }) {
   const t = useTranslations('templates.editor.visibilityTab');
   const utils = trpc.useUtils();
@@ -83,6 +89,10 @@ export function VisibilityTab({
       access: { mode, groupIds, siteIds },
     });
   }
+
+  // Keep the shell's top-bar Publish button pointed at the latest handler
+  // (captures the current mode/groups/sites via closure).
+  if (submitRef !== undefined) submitRef.current = handleSave;
 
   return (
     <div className="flex-1 overflow-y-auto bg-muted/30">
