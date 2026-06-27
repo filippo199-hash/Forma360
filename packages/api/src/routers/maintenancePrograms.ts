@@ -21,10 +21,23 @@ import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 import {
+  cancelOpenMaintenanceActions,
   DEFAULT_MAINTENANCE_TEMPLATES,
   generateMaintenanceAction,
   hasOpenMaintenanceAction,
 } from './maintenance-actions';
+
+/** Trigger ids for a program (helper for cancel / resync flows). */
+async function triggerIdsForProgram(
+  db: Parameters<typeof cancelOpenMaintenanceActions>[0],
+  programId: string,
+): Promise<string[]> {
+  const rows = await db
+    .select({ id: maintenanceProgramTriggers.id })
+    .from(maintenanceProgramTriggers)
+    .where(eq(maintenanceProgramTriggers.programId, programId));
+  return rows.map((r: { id: string }) => r.id);
+}
 
 const idSchema = z.string().length(26);
 
@@ -203,20 +216,46 @@ export const maintenanceProgramsRouter = router({
       return { ok: true as const };
     }),
 
+  /**
+   * Delete (archive) a program. Always detaches it from every asset and stops
+   * future recurrence (the rollForward guard skips archived programs). The
+   * caller chooses what happens to outstanding work via `cancelOpenActions`:
+   *   - false (default): leave the open maintenance actions on the assets.
+   *   - true: cancel every open maintenance action this program generated.
+   */
   archive: tenantProcedure
     .use(requirePermission('assets.maintenance.manage'))
-    .input(z.object({ programId: idSchema }))
+    .input(z.object({ programId: idSchema, cancelOpenActions: z.boolean().default(false) }))
     .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      let actionsCancelled = 0;
+      if (input.cancelOpenActions) {
+        const triggerIds = await triggerIdsForProgram(ctx.db, input.programId);
+        actionsCancelled = await cancelOpenMaintenanceActions(ctx.db, {
+          tenantId: ctx.tenantId,
+          userId: ctx.auth.userId,
+          triggerIds,
+        });
+      }
       await ctx.db
         .update(maintenancePrograms)
-        .set({ archivedAt: new Date(), updatedAt: new Date() })
+        .set({ archivedAt: now, updatedAt: now })
         .where(
           and(
             eq(maintenancePrograms.tenantId, ctx.tenantId),
             eq(maintenancePrograms.id, input.programId),
           ),
         );
-      return { ok: true as const };
+      // Detach from all assets so it no longer shows on their Maintenance tab.
+      await ctx.db
+        .delete(maintenanceProgramAssets)
+        .where(
+          and(
+            eq(maintenanceProgramAssets.tenantId, ctx.tenantId),
+            eq(maintenanceProgramAssets.programId, input.programId),
+          ),
+        );
+      return { ok: true as const, actionsCancelled };
     }),
 
   addTrigger: tenantProcedure
@@ -336,10 +375,31 @@ export const maintenanceProgramsRouter = router({
       return { ok: true as const, actionsCreated: created };
     }),
 
+  /**
+   * Detach a program from a single asset. `cancelOpenActions`:
+   *   - false (default): leave the asset's open maintenance actions in place.
+   *   - true: cancel the asset's open maintenance actions for this program.
+   */
   detachAsset: tenantProcedure
     .use(requirePermission('assets.maintenance.manage'))
-    .input(z.object({ programId: idSchema, assetId: z.string().min(1).max(100) }))
+    .input(
+      z.object({
+        programId: idSchema,
+        assetId: z.string().min(1).max(100),
+        cancelOpenActions: z.boolean().default(false),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
+      let actionsCancelled = 0;
+      if (input.cancelOpenActions) {
+        const triggerIds = await triggerIdsForProgram(ctx.db, input.programId);
+        actionsCancelled = await cancelOpenMaintenanceActions(ctx.db, {
+          tenantId: ctx.tenantId,
+          userId: ctx.auth.userId,
+          triggerIds,
+          assetId: input.assetId,
+        });
+      }
       await ctx.db
         .delete(maintenanceProgramAssets)
         .where(
@@ -349,7 +409,57 @@ export const maintenanceProgramsRouter = router({
             eq(maintenanceProgramAssets.assetId, input.assetId),
           ),
         );
-      return { ok: true as const };
+      return { ok: true as const, actionsCancelled };
+    }),
+
+  /**
+   * Apply the program's CURRENT triggers to every asset already linked to it —
+   * used after editing a program's schedule when the user chooses "apply to
+   * existing assets too". For each attached asset: cancel its open maintenance
+   * actions for this program, then regenerate one per current trigger.
+   * Completed actions are never touched.
+   */
+  applyToAssets: tenantProcedure
+    .use(requirePermission('assets.maintenance.manage'))
+    .input(z.object({ programId: idSchema }))
+    .mutation(async ({ ctx, input }) => {
+      const triggers = await ctx.db
+        .select()
+        .from(maintenanceProgramTriggers)
+        .where(eq(maintenanceProgramTriggers.programId, input.programId));
+      const triggerIds = triggers.map((t) => t.id);
+
+      const attached = await ctx.db
+        .select({ assetId: maintenanceProgramAssets.assetId, assetName: assets.name })
+        .from(maintenanceProgramAssets)
+        .leftJoin(assets, eq(assets.id, maintenanceProgramAssets.assetId))
+        .where(
+          and(
+            eq(maintenanceProgramAssets.tenantId, ctx.tenantId),
+            eq(maintenanceProgramAssets.programId, input.programId),
+          ),
+        );
+
+      let actionsCreated = 0;
+      for (const a of attached) {
+        await cancelOpenMaintenanceActions(ctx.db, {
+          tenantId: ctx.tenantId,
+          userId: ctx.auth.userId,
+          triggerIds,
+          assetId: a.assetId,
+        });
+        for (const trigger of triggers) {
+          await generateMaintenanceAction(ctx.db, {
+            tenantId: ctx.tenantId,
+            userId: ctx.auth.userId,
+            trigger,
+            assetId: a.assetId,
+            assetName: a.assetName ?? 'Asset',
+          });
+          actionsCreated += 1;
+        }
+      }
+      return { ok: true as const, assetsUpdated: attached.length, actionsCreated };
     }),
 
   /** Programs attached to an asset + open maintenance actions for the asset. */

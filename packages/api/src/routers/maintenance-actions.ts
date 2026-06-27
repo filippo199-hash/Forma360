@@ -12,11 +12,12 @@ import {
   actionAssets,
   actions,
   assetReadings,
+  maintenancePrograms,
   maintenanceProgramTriggers,
   type MaintenanceProgramTrigger,
 } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
-import { and, count, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, inArray } from 'drizzle-orm';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = any;
@@ -233,6 +234,50 @@ export async function hasOpenMaintenanceAction(
 }
 
 /**
+ * Cancel every OPEN (open / in_progress) maintenance action for the given
+ * triggers, optionally scoped to a single asset. Completed and already-cancelled
+ * rows are left untouched. Returns how many were cancelled.
+ *
+ * Used when a program is detached from an asset or deleted and the user opts to
+ * clear the outstanding work rather than leave it.
+ */
+export async function cancelOpenMaintenanceActions(
+  db: Db,
+  args: { tenantId: string; userId: string; triggerIds: string[]; assetId?: string },
+): Promise<number> {
+  const { tenantId, userId, triggerIds, assetId } = args;
+  if (triggerIds.length === 0) return 0;
+
+  const base = [
+    eq(actions.tenantId, tenantId),
+    eq(actions.sourceType, 'maintenance'),
+    inArray(actions.sourceId, triggerIds),
+    inArray(actions.status, ['open', 'in_progress']),
+  ];
+  const rows =
+    assetId !== undefined
+      ? await db
+          .select({ id: actions.id })
+          .from(actions)
+          .innerJoin(actionAssets, eq(actionAssets.actionId, actions.id))
+          .where(and(...base, eq(actionAssets.assetId, assetId)))
+      : await db
+          .select({ id: actions.id })
+          .from(actions)
+          .where(and(...base));
+
+  const ids = rows.map((r: { id: string }) => r.id);
+  if (ids.length === 0) return 0;
+
+  const now = new Date();
+  await db
+    .update(actions)
+    .set({ status: 'cancelled', closedAt: now, closedByUserId: userId, updatedAt: now })
+    .where(and(eq(actions.tenantId, tenantId), inArray(actions.id, ids)));
+  return ids.length;
+}
+
+/**
  * Called from `actions.setStatus` when a maintenance action is completed:
  * materialise the next occurrence so the program keeps rolling forward.
  */
@@ -259,6 +304,21 @@ export async function rollForwardMaintenanceAction(
     .limit(1);
   const trigger = triggerRows[0] as MaintenanceProgramTrigger | undefined;
   if (trigger === undefined) return; // trigger removed — chain ends
+
+  // Stop the chain if the owning program has been archived/deleted, so a
+  // "left behind" open action that gets completed doesn't resurrect a
+  // recurrence the user deliberately removed.
+  const progRows = await db
+    .select({ archivedAt: maintenancePrograms.archivedAt })
+    .from(maintenancePrograms)
+    .where(
+      and(
+        eq(maintenancePrograms.tenantId, tenantId),
+        eq(maintenancePrograms.id, trigger.programId),
+      ),
+    )
+    .limit(1);
+  if (progRows[0]?.archivedAt != null) return; // program deleted — chain ends
 
   // Asset linked to the completed action.
   const assetRows = await db

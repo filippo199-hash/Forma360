@@ -177,6 +177,119 @@ describe('Maintenance Programs (To-Do #3)', () => {
     expect(action?.description ?? '').toContain('15000');
   });
 
+  it('detachAsset(cancelOpenActions:true) cancels the asset open actions', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { assetId } = await caller.assets.create({ name: 'Van D1' });
+    const { programId } = await caller.maintenancePrograms.create({ name: 'P' });
+    await caller.maintenancePrograms.addTrigger({
+      programId,
+      title: 'Service',
+      triggerType: 'time',
+      intervalDays: 30,
+    });
+    await caller.maintenancePrograms.attachAsset({ programId, assetId });
+
+    const res = await caller.maintenancePrograms.detachAsset({
+      programId,
+      assetId,
+      cancelOpenActions: true,
+    });
+    expect(res.actionsCancelled).toBe(1);
+    const after = await caller.maintenancePrograms.listForAsset({ assetId });
+    expect(after.programs).toHaveLength(0);
+    expect(after.actions.every((a) => a.status === 'cancelled')).toBe(true);
+  });
+
+  it('detachAsset without cancel leaves the open actions in place', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { assetId } = await caller.assets.create({ name: 'Van D2' });
+    const { programId } = await caller.maintenancePrograms.create({ name: 'P' });
+    await caller.maintenancePrograms.addTrigger({
+      programId,
+      title: 'Service',
+      triggerType: 'time',
+      intervalDays: 30,
+    });
+    await caller.maintenancePrograms.attachAsset({ programId, assetId });
+
+    const res = await caller.maintenancePrograms.detachAsset({ programId, assetId });
+    expect(res.actionsCancelled).toBe(0);
+    const after = await caller.maintenancePrograms.listForAsset({ assetId });
+    expect(after.programs).toHaveLength(0);
+    expect(after.actions.some((a) => a.status === 'open')).toBe(true);
+  });
+
+  it('archive(cancelOpenActions:true) cancels actions and detaches every asset', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { assetId } = await caller.assets.create({ name: 'Van A1' });
+    const { programId } = await caller.maintenancePrograms.create({ name: 'P' });
+    await caller.maintenancePrograms.addTrigger({
+      programId,
+      title: 'Service',
+      triggerType: 'time',
+      intervalDays: 30,
+    });
+    await caller.maintenancePrograms.attachAsset({ programId, assetId });
+
+    const res = await caller.maintenancePrograms.archive({ programId, cancelOpenActions: true });
+    expect(res.actionsCancelled).toBe(1);
+    const after = await caller.maintenancePrograms.listForAsset({ assetId });
+    expect(after.programs).toHaveLength(0);
+    expect(after.actions.every((a) => a.status === 'cancelled')).toBe(true);
+    const list = await caller.maintenancePrograms.list();
+    expect(list.programs.find((p) => p.id === programId)).toBeUndefined();
+  });
+
+  it('archived program does not roll forward a left-behind completed action', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { assetId } = await caller.assets.create({ name: 'Van A2' });
+    const { programId } = await caller.maintenancePrograms.create({ name: 'P' });
+    await caller.maintenancePrograms.addTrigger({
+      programId,
+      title: 'Service',
+      triggerType: 'time',
+      intervalDays: 30,
+    });
+    await caller.maintenancePrograms.attachAsset({ programId, assetId });
+    // Delete the program but LEAVE the actions.
+    await caller.maintenancePrograms.archive({ programId, cancelOpenActions: false });
+
+    const after = await caller.maintenancePrograms.listForAsset({ assetId });
+    const open = after.actions.find((a) => a.status === 'open');
+    expect(open).toBeDefined();
+    await caller.actions.setStatus({ actionId: open?.id as string, status: 'completed' });
+
+    const after2 = await caller.maintenancePrograms.listForAsset({ assetId });
+    expect(after2.actions.filter((a) => a.status === 'open')).toHaveLength(0);
+  });
+
+  it('applyToAssets regenerates open actions for linked assets from current triggers', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { assetId } = await caller.assets.create({ name: 'Van R1' });
+    const { programId } = await caller.maintenancePrograms.create({ name: 'P' });
+    await caller.maintenancePrograms.addTrigger({
+      programId,
+      title: 'A',
+      triggerType: 'time',
+      intervalDays: 30,
+    });
+    await caller.maintenancePrograms.attachAsset({ programId, assetId });
+    // Edit the program: add a second trigger after the asset is already linked.
+    await caller.maintenancePrograms.addTrigger({
+      programId,
+      title: 'B',
+      triggerType: 'time',
+      intervalDays: 60,
+    });
+
+    const res = await caller.maintenancePrograms.applyToAssets({ programId });
+    expect(res.assetsUpdated).toBe(1);
+    expect(res.actionsCreated).toBe(2);
+    const after = await caller.maintenancePrograms.listForAsset({ assetId });
+    expect(after.actions.filter((a) => a.status === 'open')).toHaveLength(2);
+    expect(after.actions.some((a) => a.status === 'cancelled')).toBe(true);
+  });
+
   // Keep referenced for the schema-completeness check.
   it('schema has maintenance program tables', async () => {
     const rows = await db
