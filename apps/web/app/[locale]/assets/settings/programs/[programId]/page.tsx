@@ -6,14 +6,22 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Button } from '../../../../../src/components/ui/button';
-import { Card, CardContent } from '../../../../../src/components/ui/card';
-import { Input } from '../../../../../src/components/ui/input';
-import { Label } from '../../../../../src/components/ui/label';
-import { Skeleton } from '../../../../../src/components/ui/skeleton';
-import { Textarea } from '../../../../../src/components/ui/textarea';
-import { useHasPermission } from '../../../../../src/lib/permissions-context';
-import { trpc } from '../../../../../src/lib/trpc/client';
+import { Button } from '../../../../../../src/components/ui/button';
+import { Card, CardContent } from '../../../../../../src/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../../../src/components/ui/dialog';
+import { Input } from '../../../../../../src/components/ui/input';
+import { Label } from '../../../../../../src/components/ui/label';
+import { Skeleton } from '../../../../../../src/components/ui/skeleton';
+import { Textarea } from '../../../../../../src/components/ui/textarea';
+import { useHasPermission } from '../../../../../../src/lib/permissions-context';
+import { trpc } from '../../../../../../src/lib/trpc/client';
 
 type TriggerType = 'time' | 'distance' | 'usage';
 
@@ -43,6 +51,9 @@ export default function MaintenanceProgramDetailPage() {
 
   // Attach-asset
   const [attachAssetId, setAttachAssetId] = useState('');
+  // Prompts: delete (cancel/leave actions) + apply-schedule-change to linked assets.
+  const [showDelete, setShowDelete] = useState(false);
+  const [showApply, setShowApply] = useState(false);
 
   useEffect(() => {
     if (data?.program !== undefined) {
@@ -63,6 +74,12 @@ export default function MaintenanceProgramDetailPage() {
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
+  // After a trigger change, if assets are already linked, ask whether the
+  // updated schedule should apply to them too.
+  function maybePromptApply() {
+    if ((data?.assets.length ?? 0) > 0) setShowApply(true);
+  }
+
   const addTrigger = trpc.maintenancePrograms.addTrigger.useMutation({
     onSuccess: () => {
       toast.success(t('triggerAddedToast'));
@@ -73,6 +90,7 @@ export default function MaintenanceProgramDetailPage() {
       setUsageField('');
       setTriggerType('time');
       void utils.maintenancePrograms.get.invalidate({ programId });
+      maybePromptApply();
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -80,6 +98,16 @@ export default function MaintenanceProgramDetailPage() {
   const removeTrigger = trpc.maintenancePrograms.removeTrigger.useMutation({
     onSuccess: () => {
       toast.success(t('triggerRemovedToast'));
+      void utils.maintenancePrograms.get.invalidate({ programId });
+      maybePromptApply();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  const applyToAssets = trpc.maintenancePrograms.applyToAssets.useMutation({
+    onSuccess: (res) => {
+      toast.success(t('appliedToast', { count: res.assetsUpdated }));
+      setShowApply(false);
       void utils.maintenancePrograms.get.invalidate({ programId });
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
@@ -106,8 +134,8 @@ export default function MaintenanceProgramDetailPage() {
 
   const archive = trpc.maintenancePrograms.archive.useMutation({
     onSuccess: () => {
-      toast.success(t('archivedToast'));
-      router.push(`/${locale}/maintenance`);
+      toast.success(t('deletedRedirectToast'));
+      router.push(`/${locale}/assets/settings?tab=programs`);
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -144,7 +172,7 @@ export default function MaintenanceProgramDetailPage() {
     <div className="space-y-6">
       <div>
         <Link
-          href={`/${locale}/maintenance`}
+          href={`/${locale}/assets/settings?tab=programs`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -194,9 +222,10 @@ export default function MaintenanceProgramDetailPage() {
                 type="button"
                 variant="outline"
                 disabled={archive.isPending}
-                onClick={() => archive.mutate({ programId })}
+                onClick={() => setShowDelete(true)}
               >
-                {tCommon('archive')}
+                <Trash2 className="mr-1.5 h-4 w-4" />
+                {t('deleteTitle')}
               </Button>
             </div>
           ) : null}
@@ -396,6 +425,55 @@ export default function MaintenanceProgramDetailPage() {
           ) : null}
         </CardContent>
       </Card>
+
+      {/* Delete program — cancel or leave its open actions. */}
+      <Dialog open={showDelete} onOpenChange={setShowDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('deleteTitle')}</DialogTitle>
+            <DialogDescription>{t('deleteBody')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              disabled={archive.isPending}
+              onClick={() => archive.mutate({ programId, cancelOpenActions: false })}
+            >
+              {t('deleteKeep')}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={archive.isPending}
+              onClick={() => archive.mutate({ programId, cancelOpenActions: true })}
+            >
+              {t('deleteCancel')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Apply schedule change to assets already linked, or only new ones. */}
+      <Dialog open={showApply} onOpenChange={setShowApply}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('applyTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('applyBody', { count: attachedAssets.length })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setShowApply(false)}>
+              {t('applyNew')}
+            </Button>
+            <Button
+              disabled={applyToAssets.isPending}
+              onClick={() => applyToAssets.mutate({ programId })}
+            >
+              {t('applyExisting')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

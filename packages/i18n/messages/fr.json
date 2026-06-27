@@ -2307,6 +2307,11 @@
         "startedAt": "Démarré",
         "createdAt": "Créé"
       }
+    },
+    "settings": {
+      "title": "Settings",
+      "categoriesTab": "Categories",
+      "programsTab": "Maintenance programs"
     }
   },
   "assetTypes": {
@@ -2631,6 +2636,16 @@
     "detachExplain": "Choose what happens to this asset’s open maintenance actions for this program.",
     "detachKeep": "Detach, keep actions",
     "detachCancel": "Detach & cancel actions",
-    "detachedToast": "Program detached"
+    "detachedToast": "Program detached",
+    "deleteTitle": "Delete program?",
+    "deleteBody": "This deletes the program and detaches it from all assets.",
+    "deleteKeep": "Delete, keep actions",
+    "deleteCancel": "Delete & cancel actions",
+    "deletedRedirectToast": "Program deleted",
+    "applyTitle": "Apply schedule change?",
+    "applyBody": "You changed this program. Apply the new schedule to the {count} asset(s) already linked, or only to assets linked from now on?",
+    "applyExisting": "Apply to existing assets",
+    "applyNew": "Only new assets",
+    "appliedToast": "Updated {count} asset(s)"
   }
 }

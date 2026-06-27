@@ -203,7 +203,7 @@ export default function NewAssetPage() {
             <div className="flex items-center justify-between">
               <Label htmlFor="asset-type">{t('fields.type')}</Label>
               <Link
-                href={`/${locale}/assets/categories`}
+                href={`/${locale}/assets/settings`}
                 className="text-xs text-primary hover:underline"
                 tabIndex={-1}
               >

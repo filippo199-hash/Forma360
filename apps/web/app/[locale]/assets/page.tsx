@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronRight, FolderCog, ImageIcon, Plus, QrCode } from 'lucide-react';
+import { ChevronDown, ChevronRight, ImageIcon, Plus, QrCode, Settings } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -27,6 +27,7 @@ type AssetRow = {
 
 export default function AssetsListPage() {
   const t = useTranslations('assets.list');
+  const tSettings = useTranslations('assets.settings');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canManage = useHasPermission('assets.manage');
@@ -79,7 +80,6 @@ export default function AssetsListPage() {
           <td className="px-3 py-2">
             <div className={isChild ? 'ml-8' : undefined}>
               {row.photoKey !== null ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={`/api/files?key=${encodeURIComponent(row.photoKey)}`}
                   alt=""
@@ -155,10 +155,9 @@ export default function AssetsListPage() {
         </div>
         <div className="flex items-center gap-2">
           {canManage ? (
-            <Button variant="outline" asChild>
-              <Link href={`/${locale}/assets/categories`}>
-                <FolderCog className="mr-1 h-4 w-4" />
-                {t('categoriesButton')}
+            <Button variant="outline" size="icon" asChild title={tSettings('title')}>
+              <Link href={`/${locale}/assets/settings`} aria-label={tSettings('title')}>
+                <Settings className="h-4 w-4" />
               </Link>
             </Button>
           ) : null}

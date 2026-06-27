@@ -583,7 +583,7 @@ export default function AssetDetailPage() {
                           className="flex items-center justify-between gap-2 px-3 py-2.5"
                         >
                           <Link
-                            href={`/${locale}/assets/settings?program=${p.programId}`}
+                            href={`/${locale}/assets/settings/programs/${p.programId}`}
                             className="font-medium hover:underline"
                           >
                             {p.programName}
