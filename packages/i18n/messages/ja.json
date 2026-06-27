@@ -2570,7 +2570,7 @@
     "triggerRemovedToast": "Trigger removed",
     "assetAttachedToast": "{count, plural, =0 {Asset attached, no new actions} one {Asset attached, # action created} other {Asset attached, # actions created}}",
     "assetDetachedToast": "Asset detached",
-    "backLink": "Back to maintenance",
+    "backLink": "Back to programs",
     "detailsHeading": "Details",
     "triggersHeading": "Triggers",
     "triggersAndAssets": "{triggers} triggers · {assets} assets",
