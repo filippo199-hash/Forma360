@@ -1,15 +1,25 @@
 'use client';
 
-import { ArrowLeft, Camera, ImageIcon, Loader2, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Camera, ImageIcon, Loader2, Pencil, Trash2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { ActionDetailPanel } from '../../../../src/components/actions/action-detail-panel';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../src/components/ui/dialog';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
+import { Sheet, SheetContent } from '../../../../src/components/ui/sheet';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
@@ -53,6 +63,12 @@ export default function AssetDetailPage() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [attachProgramId, setAttachProgramId] = useState('');
+  // Maintenance action detail (opens in a side sheet, like the Actions page).
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
+  // Program pending detach (drives the keep/cancel-actions dialog).
+  const [detachTarget, setDetachTarget] = useState<{ programId: string; name: string } | null>(
+    null,
+  );
 
   const { data, isLoading } = trpc.assets.get.useQuery({ assetId });
   const { data: assetTypesList } = trpc.assetTypes.list.useQuery(undefined, { enabled: editing });
@@ -116,6 +132,15 @@ export default function AssetDetailPage() {
     onSuccess: (res) => {
       toast.success(tMaintPrograms('assetAttachedToast', { count: res.actionsCreated }));
       setAttachProgramId('');
+      void utils.maintenancePrograms.listForAsset.invalidate({ assetId });
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  const detachProgram = trpc.maintenancePrograms.detachAsset.useMutation({
+    onSuccess: () => {
+      toast.success(tMaintPrograms('detachedToast'));
+      setDetachTarget(null);
       void utils.maintenancePrograms.listForAsset.invalidate({ assetId });
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
@@ -203,7 +228,6 @@ export default function AssetDetailPage() {
           <div className="flex items-start gap-3">
             {/* Asset photo thumbnail in header */}
             {asset.photoKey !== null ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={`/api/files?key=${encodeURIComponent(asset.photoKey)}`}
                 alt=""
@@ -554,13 +578,29 @@ export default function AssetDetailPage() {
                   ) : (
                     <ul className="divide-y rounded-md border">
                       {(maintenanceData?.programs ?? []).map((p) => (
-                        <li key={p.programId} className="px-3 py-2.5">
+                        <li
+                          key={p.programId}
+                          className="flex items-center justify-between gap-2 px-3 py-2.5"
+                        >
                           <Link
-                            href={`/${locale}/maintenance/program/${p.programId}`}
+                            href={`/${locale}/assets/settings?program=${p.programId}`}
                             className="font-medium hover:underline"
                           >
                             {p.programName}
                           </Link>
+                          {canManageMaintenance ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDetachTarget({ programId: p.programId, name: p.programName })
+                              }
+                              className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                              aria-label={tMaintPrograms('detach')}
+                              title={tMaintPrograms('detach')}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          ) : null}
                         </li>
                       ))}
                     </ul>
@@ -602,9 +642,10 @@ export default function AssetDetailPage() {
                         {(maintenanceData?.actions ?? []).map((action) => (
                           <tr key={action.id} className="border-b last:border-0 hover:bg-muted/30">
                             <td className="px-3 py-2 font-medium">
-                              <Link
-                                href={`/${locale}/actions/${action.id}`}
-                                className="hover:underline"
+                              <button
+                                type="button"
+                                onClick={() => setSelectedActionId(action.id)}
+                                className="text-left hover:underline"
                               >
                                 {action.referenceNumber !== null ? (
                                   <span className="mr-1 text-xs text-muted-foreground">
@@ -612,7 +653,7 @@ export default function AssetDetailPage() {
                                   </span>
                                 ) : null}
                                 {action.title}
-                              </Link>
+                              </button>
                             </td>
                             <td className="px-3 py-2 text-muted-foreground">
                               {action.description !== '' ? action.description : '—'}
@@ -676,7 +717,6 @@ export default function AssetDetailPage() {
               {asset.photoKey !== null ? (
                 <div className="flex flex-wrap gap-4">
                   <div className="group relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`/api/files?key=${encodeURIComponent(asset.photoKey)}`}
                       alt={asset.name}
@@ -858,6 +898,67 @@ export default function AssetDetailPage() {
           </CardContent>
         </Card>
       ) : null}
+
+      {/* Detach-program confirm — keep or cancel the asset's open actions. */}
+      <Dialog open={detachTarget !== null} onOpenChange={(o) => !o && setDetachTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{tMaintPrograms('detachTitle')}</DialogTitle>
+            <DialogDescription>
+              {tMaintPrograms('detachBody', { name: detachTarget?.name ?? '' })}{' '}
+              {tMaintPrograms('detachExplain')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              disabled={detachProgram.isPending}
+              onClick={() =>
+                detachTarget !== null &&
+                detachProgram.mutate({
+                  programId: detachTarget.programId,
+                  assetId,
+                  cancelOpenActions: false,
+                })
+              }
+            >
+              {tMaintPrograms('detachKeep')}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={detachProgram.isPending}
+              onClick={() =>
+                detachTarget !== null &&
+                detachProgram.mutate({
+                  programId: detachTarget.programId,
+                  assetId,
+                  cancelOpenActions: true,
+                })
+              }
+            >
+              {tMaintPrograms('detachCancel')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Maintenance action detail — opens in a side sheet, no page change. */}
+      <Sheet
+        open={selectedActionId !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSelectedActionId(null);
+            // Reflect any status change (complete → roll-forward, cancel, etc.).
+            void utils.maintenancePrograms.listForAsset.invalidate({ assetId });
+          }
+        }}
+      >
+        <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
+          {selectedActionId !== null ? (
+            <ActionDetailPanel actionId={selectedActionId} locale={locale} />
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
