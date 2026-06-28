@@ -27,7 +27,9 @@ export default async function ApprovalsLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      <div className="mx-auto min-h-screen w-full max-w-[1200px]">{children}</div>
+      <div className="min-h-screen w-full bg-[#eef4fb] dark:bg-slate-900/40">
+        <div className="mx-auto w-full max-w-[1200px]">{children}</div>
+      </div>
     </PermissionsProvider>
   );
 }

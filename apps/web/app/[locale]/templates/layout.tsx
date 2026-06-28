@@ -31,7 +31,9 @@ export default async function TemplatesLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      <div className="mx-auto max-w-[1200px] px-4 py-8">{children}</div>
+      <div className="min-h-screen w-full bg-[#eef4fb] dark:bg-slate-900/40">
+        <div className="mx-auto w-full max-w-[1200px] px-4 py-8">{children}</div>
+      </div>
     </PermissionsProvider>
   );
 }
