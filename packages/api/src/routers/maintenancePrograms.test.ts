@@ -94,6 +94,22 @@ describe('Maintenance Programs (To-Do #3)', () => {
     const action = forAsset.actions[0];
     expect(action?.title).toContain('Annual service');
     expect(action?.dueAt).not.toBeNull(); // time trigger → concrete due date
+
+    // The action exposes its maintenance origin + links the asset so the
+    // detail panel can show the auto-generated badge and the asset row.
+    const detail = await caller.actions.get({ actionId: action?.id as string });
+    expect(detail.source?.type).toBe('maintenance');
+    expect(detail.source?.title).toBe('Van program'); // program name resolved
+    expect(detail.assets.map((a) => a.id)).toContain(assetId);
+
+    // An auto-flagged `created` activity is recorded so the timeline shows
+    // the action was system-generated rather than raised by a person.
+    const activity = await caller.actions.activity.list({ actionId: action?.id as string });
+    const created = activity.find((r) => r.kind === 'created');
+    expect(created).toBeDefined();
+    const payload = (created?.payload ?? {}) as Record<string, unknown>;
+    expect(payload['auto']).toBe(true);
+    expect(payload['programName']).toBe('Van program');
   });
 
   it('rolls the next action forward when a maintenance action is completed', async () => {

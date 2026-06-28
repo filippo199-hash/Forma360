@@ -445,7 +445,6 @@ function ReportBody({
           }
         >
           {logoUrl !== null ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="" className="h-9 w-auto object-contain" />
           ) : null}
           <span className="text-lg font-semibold">{content.title}</span>

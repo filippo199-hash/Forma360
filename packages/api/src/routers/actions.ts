@@ -12,7 +12,14 @@
  * action-type → template linking are explicitly out of scope here —
  * they'll land in a Phase 4 follow-on once the MVP is on prod.
  */
-import { inspections, issues, user } from '@forma360/db/schema';
+import {
+  assets,
+  inspections,
+  issues,
+  maintenancePrograms,
+  maintenanceProgramTriggers,
+  user,
+} from '@forma360/db/schema';
 import {
   actionActivity,
   actionAssets,
@@ -622,11 +629,37 @@ export const actionsRouter = router({
       // of the previous "Linked to observation 76X52B" (raw slice of the
       // internal id). Lazy: only fires when sourceId is set.
       let source: {
-        type: 'issue' | 'inspection' | 'standalone';
+        type: 'issue' | 'inspection' | 'standalone' | 'maintenance';
         referenceNumber: string | null;
         title: string | null;
       } | null = null;
-      if (action.sourceType === 'standalone' || action.sourceId === null) {
+      if (action.sourceType === 'maintenance' && action.sourceId !== null) {
+        // Resolve the owning maintenance program name (via the trigger) so
+        // the detail panel can label the auto-generated source.
+        const trigRows = await ctx.db
+          .select({ programId: maintenanceProgramTriggers.programId })
+          .from(maintenanceProgramTriggers)
+          .where(
+            and(
+              eq(maintenanceProgramTriggers.tenantId, ctx.tenantId),
+              eq(maintenanceProgramTriggers.id, action.sourceId),
+            ),
+          )
+          .limit(1);
+        const programId = trigRows[0]?.programId ?? null;
+        let programName: string | null = null;
+        if (programId !== null) {
+          const pRows = await ctx.db
+            .select({ name: maintenancePrograms.name })
+            .from(maintenancePrograms)
+            .where(
+              and(eq(maintenancePrograms.tenantId, ctx.tenantId), eq(maintenancePrograms.id, programId)),
+            )
+            .limit(1);
+          programName = pRows[0]?.name ?? null;
+        }
+        source = { type: 'maintenance', referenceNumber: null, title: programName };
+      } else if (action.sourceType === 'standalone' || action.sourceId === null) {
         source = { type: 'standalone', referenceNumber: null, title: null };
       } else if (action.sourceType === 'issue') {
         const rows = await ctx.db
@@ -667,11 +700,22 @@ export const actionsRouter = router({
           .limit(1);
         actionType = tRows[0] ?? null;
       }
+      // Assets linked to this action (via `action_assets`). Surfaced on the
+      // detail panel so maintenance-generated actions show the asset they
+      // belong to and the user can jump straight to it.
+      const linkedAssets = await ctx.db
+        .select({ id: assets.id, name: assets.name })
+        .from(actionAssets)
+        .innerJoin(assets, eq(assets.id, actionAssets.assetId))
+        .where(
+          and(eq(actionAssets.tenantId, ctx.tenantId), eq(actionAssets.actionId, action.id)),
+        );
       return {
         action,
         actionType,
         assignee: assigneeRows[0] ?? null,
         source,
+        assets: linkedAssets,
         creatorName: creatorRows[0]?.name ?? null,
       };
     }),

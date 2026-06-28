@@ -64,7 +64,6 @@ function DocumentPreview({
   if (kind === 'image') {
     return (
       <div className="flex h-full w-full items-center justify-center p-6">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={inlineUrl}
           alt={filename}
@@ -77,7 +76,6 @@ function DocumentPreview({
   if (kind === 'video') {
     return (
       <div className="flex h-full w-full items-center justify-center p-6">
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <video src={inlineUrl} controls className="max-h-full max-w-full rounded-md shadow-sm" />
       </div>
     );
