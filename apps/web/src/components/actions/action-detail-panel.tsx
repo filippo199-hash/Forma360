@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { SiteSelector } from '../selectors/site-selector';
 import { GroupUserSelector } from '../selectors/group-user-selector';
+import { AssetField } from './asset-field';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import {
@@ -536,21 +537,14 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                     )}
                   </DetailRow>
 
-                  {linkedAssets.length > 0 ? (
-                    <DetailRow label={tFields('asset')}>
-                      <div className="flex flex-wrap gap-x-2 gap-y-1">
-                        {linkedAssets.map((a) => (
-                          <Link
-                            key={a.id}
-                            href={`/${locale}/assets/${a.id}`}
-                            className="text-primary hover:underline"
-                          >
-                            {a.name}
-                          </Link>
-                        ))}
-                      </div>
-                    </DetailRow>
-                  ) : null}
+                  <DetailRow label={tFields('asset')}>
+                    <AssetField
+                      linked={linkedAssets}
+                      canEdit={canEdit}
+                      locale={locale}
+                      onChange={(next) => update.mutate({ actionId, assetIds: next })}
+                    />
+                  </DetailRow>
                 </section>
 
                 {/* Source */}

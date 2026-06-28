@@ -1755,7 +1755,10 @@
         "pickUser": "Choose user",
         "clearAssignee": "Clear",
         "searchUsers": "Search users",
-        "asset": "資産"
+        "asset": "資産",
+        "noAsset": "資産なし",
+        "addAsset": "資産を追加…",
+        "removeAsset": "資産を削除"
       },
       "tabs": {
         "overview": "Overview",

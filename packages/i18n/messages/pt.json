@@ -1755,7 +1755,10 @@
         "pickUser": "Choose user",
         "clearAssignee": "Clear",
         "searchUsers": "Search users",
-        "asset": "Ativo"
+        "asset": "Ativo",
+        "noAsset": "Sem ativo",
+        "addAsset": "Adicionar ativo…",
+        "removeAsset": "Remover ativo"
       },
       "tabs": {
         "overview": "Overview",

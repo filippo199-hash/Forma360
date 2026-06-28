@@ -152,6 +152,26 @@ describe('Maintenance Programs (To-Do #3)', () => {
     expect(second.actionsCreated).toBe(0);
   });
 
+  it('actions.update can attach an asset to an action that had none', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { assetId } = await caller.assets.create({ name: 'Truck' });
+    const { actionId } = await caller.actions.createStandalone({ title: 'Inspect brakes' });
+
+    // No asset linked yet.
+    const before = await caller.actions.get({ actionId });
+    expect(before.assets).toHaveLength(0);
+
+    // Asset-only update — this must NOT be swallowed by the early-return.
+    await caller.actions.update({ actionId, assetIds: [assetId] });
+    const after = await caller.actions.get({ actionId });
+    expect(after.assets.map((a) => a.id)).toEqual([assetId]);
+
+    // Clearing it again also works.
+    await caller.actions.update({ actionId, assetIds: [] });
+    const cleared = await caller.actions.get({ actionId });
+    expect(cleared.assets).toHaveLength(0);
+  });
+
   it('creates a program from a built-in template with its triggers', async () => {
     const caller = createCaller(ctxFor(adminUserId));
     const { templates } = await caller.maintenancePrograms.templates();

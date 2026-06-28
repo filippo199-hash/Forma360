@@ -19,6 +19,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { AssetField } from '../../../../src/components/actions/asset-field';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -513,21 +514,14 @@ export default function ActionDetailPage() {
                   tFields('noLabel')
                 )}
               </DetailRow>
-              {linkedAssets.length > 0 ? (
-                <DetailRow label={tFields('asset')}>
-                  <div className="flex flex-wrap gap-x-2 gap-y-1">
-                    {linkedAssets.map((a) => (
-                      <Link
-                        key={a.id}
-                        href={`/${locale}/assets/${a.id}`}
-                        className="text-primary hover:underline"
-                      >
-                        {a.name}
-                      </Link>
-                    ))}
-                  </div>
-                </DetailRow>
-              ) : null}
+              <DetailRow label={tFields('asset')}>
+                <AssetField
+                  linked={linkedAssets}
+                  canEdit={canEdit}
+                  locale={locale}
+                  onChange={(next) => update.mutate({ actionId, assetIds: next })}
+                />
+              </DetailRow>
             </CardContent>
           </Card>
         </div>

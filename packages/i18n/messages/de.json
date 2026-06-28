@@ -1762,7 +1762,10 @@
         "pickUser": "Choose user",
         "clearAssignee": "Clear",
         "searchUsers": "Search users",
-        "asset": "Anlage"
+        "asset": "Anlage",
+        "noAsset": "Keine Anlage",
+        "addAsset": "Anlage hinzufügen…",
+        "removeAsset": "Anlage entfernen"
       },
       "tabs": {
         "overview": "Overview",

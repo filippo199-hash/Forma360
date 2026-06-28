@@ -1755,7 +1755,10 @@
         "pickUser": "Choose user",
         "clearAssignee": "Clear",
         "searchUsers": "Search users",
-        "asset": "Zasób"
+        "asset": "Zasób",
+        "noAsset": "Brak zasobu",
+        "addAsset": "Dodaj zasób…",
+        "removeAsset": "Usuń zasób"
       },
       "tabs": {
         "overview": "Overview",

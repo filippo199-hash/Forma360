@@ -1762,7 +1762,10 @@
         "pickUser": "Choose user",
         "clearAssignee": "Clear",
         "searchUsers": "Search users",
-        "asset": "Actif"
+        "asset": "Actif",
+        "noAsset": "Aucun actif",
+        "addAsset": "Ajouter un actif…",
+        "removeAsset": "Retirer l’actif"
       },
       "tabs": {
         "overview": "Overview",

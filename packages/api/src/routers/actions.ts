@@ -1079,7 +1079,11 @@ export const actionsRouter = router({
         }
       }
 
-      if (events.length === 0 && updates.customQuestionResponses === undefined) {
+      if (
+        events.length === 0 &&
+        updates.customQuestionResponses === undefined &&
+        input.assetIds === undefined
+      ) {
         return { ok: true as const };
       }
 

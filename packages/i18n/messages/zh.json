@@ -1755,7 +1755,10 @@
         "pickUser": "Choose user",
         "clearAssignee": "Clear",
         "searchUsers": "Search users",
-        "asset": "资产"
+        "asset": "资产",
+        "noAsset": "无资产",
+        "addAsset": "添加资产…",
+        "removeAsset": "移除资产"
       },
       "tabs": {
         "overview": "Overview",
