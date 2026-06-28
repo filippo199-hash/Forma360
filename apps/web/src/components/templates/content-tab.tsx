@@ -86,6 +86,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -499,12 +507,18 @@ function PageBlock({
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }) {
   const t = useTranslations('templates.editor');
+  const tCommon = useTranslations('common');
   const { state, dispatch } = useEditor();
   const [collapsed, setCollapsed] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [showDuplicate, setShowDuplicate] = useState(false);
 
   const inspectionPageCount = state.content.pages.filter((p) => p.type === 'inspection').length;
   const canDelete = page.type !== 'title' && inspectionPageCount > 1;
+  // Delete + duplicate are offered on inspection pages only (the title page is
+  // a structural singleton — duplicating or removing it would break the schema).
+  const showPageActions = page.type !== 'title';
 
   return (
     <div
@@ -567,21 +581,81 @@ function PageBlock({
           <Pencil className="h-3.5 w-3.5" />
         </button>
 
-        {/* Delete (inspection pages only, not last) */}
-        {canDelete ? (
+        {/* Duplicate page */}
+        {showPageActions ? (
           <button
             type="button"
-            onClick={() => {
-              if (window.confirm(t('confirmDeletePage'))) {
-                dispatch({ type: 'deletePage', pageId: page.id });
-              }
-            }}
-            className="text-muted-foreground hover:text-destructive"
-            aria-label={t('confirmDeletePage')}
+            onClick={() => setShowDuplicate(true)}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label={t('duplicatePageAria')}
+            title={t('duplicatePageAria')}
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+
+        {/* Delete page (disabled when it's the only inspection page) */}
+        {showPageActions ? (
+          <button
+            type="button"
+            onClick={() => setShowDelete(true)}
+            disabled={!canDelete}
+            className="text-muted-foreground transition-colors hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-muted-foreground"
+            aria-label={t('deletePageAria')}
+            title={canDelete ? t('deletePageAria') : t('deletePageLastTip')}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         ) : null}
+
+        {/* Duplicate-page confirm */}
+        <Dialog open={showDuplicate} onOpenChange={setShowDuplicate}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('duplicatePageTitle')}</DialogTitle>
+              <DialogDescription>
+                {t('duplicatePageBody', { title: page.title })}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDuplicate(false)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button
+                onClick={() => {
+                  dispatch({ type: 'duplicatePage', pageId: page.id });
+                  setShowDuplicate(false);
+                }}
+              >
+                {t('duplicatePageConfirm')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete-page confirm */}
+        <Dialog open={showDelete} onOpenChange={setShowDelete}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('deletePageTitle')}</DialogTitle>
+              <DialogDescription>{t('deletePageBody', { title: page.title })}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDelete(false)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  dispatch({ type: 'deletePage', pageId: page.id });
+                  setShowDelete(false);
+                }}
+              >
+                {t('deletePageConfirm')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Divider between header and body */}

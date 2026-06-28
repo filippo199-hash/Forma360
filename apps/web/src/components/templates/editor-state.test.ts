@@ -166,6 +166,68 @@ describe('editorReducer', () => {
     expect(deleted.isDirty).toBe(true);
   });
 
+  it('duplicatePage clones a page with fresh ids and a "(copy)" title', () => {
+    const s = initialState();
+    const withItem = editorReducer(s, {
+      type: 'addItem',
+      pageId: 'cccccccccccccccccccccccccc',
+      sectionId: 'dddddddddddddddddddddddddd',
+      item: makeItem('text'),
+    });
+    const dup = editorReducer(withItem, {
+      type: 'duplicatePage',
+      pageId: 'cccccccccccccccccccccccccc',
+    });
+    expect(dup.content.pages).toHaveLength(3);
+    const orig = dup.content.pages[1];
+    const copy = dup.content.pages[2];
+    expect(orig?.id).toBe('cccccccccccccccccccccccccc');
+    expect(copy?.title).toBe('Page 1 (copy)');
+    expect(copy?.id).not.toBe(orig?.id);
+    expect(copy?.sections[0]?.id).not.toBe(orig?.sections[0]?.id);
+    expect(copy?.sections[0]?.items[0]?.id).not.toBe(orig?.sections[0]?.items[0]?.id);
+    expect(dup.selectedPageId).toBe(copy?.id);
+    expect(dup.isDirty).toBe(true);
+  });
+
+  it('duplicatePage is a no-op on the title page', () => {
+    const s = initialState();
+    const next = editorReducer(s, {
+      type: 'duplicatePage',
+      pageId: 'aaaaaaaaaaaaaaaaaaaaaaaaaa',
+    });
+    expect(next.content.pages).toHaveLength(2);
+    expect(next.isDirty).toBe(false);
+  });
+
+  it('duplicatePage remaps in-page references (visibility dependsOn) to the cloned ids', () => {
+    const s = initialState();
+    const a = makeItem('text');
+    const b = { ...makeItem('text'), visibility: { dependsOn: a.id, operator: 'answered' as const } };
+    let st = editorReducer(s, {
+      type: 'addItem',
+      pageId: 'cccccccccccccccccccccccccc',
+      sectionId: 'dddddddddddddddddddddddddd',
+      item: a,
+    });
+    st = editorReducer(st, {
+      type: 'addItem',
+      pageId: 'cccccccccccccccccccccccccc',
+      sectionId: 'dddddddddddddddddddddddddd',
+      item: b,
+    });
+    const dup = editorReducer(st, {
+      type: 'duplicatePage',
+      pageId: 'cccccccccccccccccccccccccc',
+    });
+    const items = dup.content.pages[2]?.sections[0]?.items ?? [];
+    const copyA = items[0];
+    const copyB = items[1] as { visibility?: { dependsOn: string } } | undefined;
+    // The clone's B depends on the CLONE's A, not the original A.
+    expect(copyB?.visibility?.dependsOn).toBe(copyA?.id);
+    expect(copyB?.visibility?.dependsOn).not.toBe(a.id);
+  });
+
   it('reorderPages swaps two inspection pages', () => {
     const s = initialState();
     const a = editorReducer(s, { type: 'addInspectionPage' });

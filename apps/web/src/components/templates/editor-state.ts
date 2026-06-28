@@ -58,6 +58,7 @@ export type EditorAction =
   | { type: 'updateSettings'; patch: Partial<TemplateSettings> }
   | { type: 'addInspectionPage' }
   | { type: 'deletePage'; pageId: string }
+  | { type: 'duplicatePage'; pageId: string }
   | { type: 'reorderPages'; fromIndex: number; toIndex: number }
   | { type: 'updatePage'; pageId: string; patch: Partial<Pick<Page, 'title' | 'description'>> }
   | { type: 'addSection'; pageId: string }
@@ -104,6 +105,25 @@ export type EditorAction =
   | { type: 'deleteResponseOption'; setId: string; optionId: string };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Deep-clone a value, replacing any string that is a key in `idMap` with its
+ * mapped value. Used by `duplicatePage` to give the clone fresh ids while
+ * rewiring in-page references (visibility `dependsOn`, logic jump targets, …)
+ * to the new ids. ULIDs make accidental collisions with non-id strings
+ * (e.g. a userId or responseSetId) effectively impossible, so unmapped
+ * references are simply left untouched.
+ */
+function remapIds<T>(value: T, idMap: Map<string, string>): T {
+  if (typeof value === 'string') return (idMap.get(value) ?? value) as T;
+  if (Array.isArray(value)) return value.map((v) => remapIds(v, idMap)) as unknown as T;
+  if (value !== null && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) out[k] = remapIds(v, idMap);
+    return out as T;
+  }
+  return value;
+}
 
 function mapPages(state: EditorState, fn: (p: Page) => Page): EditorState {
   return {
@@ -218,6 +238,35 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         selectedPageId: nextSelected,
         selectedItemId: null,
         content: { ...state.content, pages: remaining },
+      };
+    }
+    case 'duplicatePage': {
+      const idx = state.content.pages.findIndex((p) => p.id === action.pageId);
+      const target = state.content.pages[idx];
+      // The title page is a singleton (exactly one allowed) — never duplicate it.
+      if (target === undefined || target.type === 'title') return state;
+
+      // Fresh ids for the page + every section + item, then deep-clone while
+      // remapping any in-page reference (visibility dependsOn, logic jumps, …)
+      // to its new id. Cross-page / external refs aren't in the map, so they're
+      // left pointing at the originals.
+      const idMap = new Map<string, string>();
+      idMap.set(target.id, newId());
+      for (const s of target.sections) {
+        idMap.set(s.id, newId());
+        for (const it of s.items) idMap.set(it.id, newId());
+      }
+      const clone = remapIds(target, idMap) as Page;
+      const duplicated: Page = { ...clone, title: `${target.title} (copy)` };
+
+      const pages = [...state.content.pages];
+      pages.splice(idx + 1, 0, duplicated);
+      return {
+        ...state,
+        isDirty: true,
+        selectedPageId: duplicated.id,
+        selectedItemId: null,
+        content: { ...state.content, pages },
       };
     }
     case 'reorderPages': {

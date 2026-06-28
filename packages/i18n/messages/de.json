@@ -791,7 +791,16 @@
       "sectionsNavTitle": "Sections",
       "sectionsNavUntitled": "Untitled section",
       "publishWizardStep": "Schritt {step} von 3",
-      "publishWizardSaving": "Wird gespeichert…"
+      "publishWizardSaving": "Wird gespeichert…",
+      "deletePageTitle": "Delete page?",
+      "deletePageBody": "This permanently removes “{title}” and all its questions from the template. This can’t be undone.",
+      "deletePageConfirm": "Delete page",
+      "deletePageAria": "Delete page",
+      "deletePageLastTip": "A template needs at least one inspection page.",
+      "duplicatePageTitle": "Duplicate page?",
+      "duplicatePageBody": "This creates a copy of “{title}” with all its questions, right after it.",
+      "duplicatePageConfirm": "Duplicate page",
+      "duplicatePageAria": "Duplicate page"
     },
     "export": {
       "button": "Export CSV",
