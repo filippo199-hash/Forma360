@@ -42,6 +42,8 @@ import {
   WRITE_INSTRUCTIONS,
 } from './agent-tools';
 import { createServerCaller, type ServerCaller } from './server-caller';
+import { loadUserPermissions } from '@forma360/permissions/requirePermission';
+import type { PermissionKey } from '@forma360/permissions/catalogue';
 
 const SYSTEM_PROMPT = `You are an AI assistant for Forma360, an operational-excellence platform.
 You have access to this company's data via tools. Always use tools to look up real data before answering questions about inspections, issues, actions, assets, documents, or heads-up items.
@@ -70,7 +72,27 @@ interface AgentToolCtx {
   tenantId: string;
   /** Authoritative tRPC caller — enforces permissions + reuses all real logic. */
   caller: ServerCaller;
+  /** The acting user's live permissions — gates the direct-db read tools. */
+  permissions: readonly PermissionKey[];
 }
+
+/**
+ * The module `.view` permission each direct-db read tool requires. The
+ * caller-backed tools (users, observation categories, all writes) enforce
+ * permissions through tRPC already; these plain reads bypass tRPC, so they are
+ * gated here against the same permission the equivalent tRPC list procedure
+ * uses. Without this a user with no `inspections.view` could ask the assistant
+ * to "list all inspections" and receive tenant data the UI hides from them.
+ */
+const READ_TOOL_PERMISSION: Partial<Record<ToolName, PermissionKey>> = {
+  list_inspections: 'inspections.view',
+  list_issues: 'issues.view',
+  list_actions: 'actions.view',
+  list_assets: 'assets.view',
+  list_headsup: 'headsUp.view',
+  list_documents: 'documents.view',
+  list_schedules: 'templates.schedules.manage',
+};
 
 
 async function executeTool(
@@ -80,6 +102,16 @@ async function executeTool(
 ): Promise<unknown> {
   const { tenantId, caller } = ctx;
   const limit = Math.min(Number(input['limit'] ?? 10), 50);
+
+  // Permission gate for the direct-db read tools (server is the source of
+  // truth for permissions — the UI hiding a module must not be bypassable via
+  // the assistant).
+  const requiredPerm = READ_TOOL_PERMISSION[name];
+  if (requiredPerm !== undefined && !ctx.permissions.includes(requiredPerm)) {
+    return {
+      error: `You do not have permission to view this data (${requiredPerm}). Ask an administrator for access.`,
+    };
+  }
 
   switch (name) {
     case 'list_inspections': {
@@ -356,6 +388,11 @@ export async function runAiAgentTurn(input: RunAgentInput): Promise<RunAgentResu
 
   // Built lazily on first tool call (one email lookup) — turns that don't call
   // a tool never pay for it.
+  // The acting user's live permissions — loaded once and used to gate the
+  // direct-db read tools (H1). Written and caller-backed tools re-check
+  // through tRPC regardless.
+  const permissions = await loadUserPermissions(db, tenantId, userId);
+
   let cachedCaller: ServerCaller | null = null;
   const getCaller = async (): Promise<ServerCaller> => {
     cachedCaller ??= await createServerCaller({ tenantId, userId });
@@ -463,7 +500,7 @@ export async function runAiAgentTurn(input: RunAgentInput): Promise<RunAgentResu
         const result = await executeTool(
           toolBlock.name as ToolName,
           toolBlock.input as Record<string, unknown>,
-          { tenantId, caller },
+          { tenantId, caller, permissions },
         );
         toolResults.push({
           type: 'tool_result',

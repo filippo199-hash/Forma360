@@ -42,6 +42,7 @@ import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertGroupsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
+import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { router } from '../trpc';
 
 const listInput = z
@@ -125,23 +126,13 @@ export const usersRouter = router({
    * row; others require `users.view`.
    */
   get: tenantProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    // Reading your OWN record is always allowed; reading anyone else's
+    // requires `users.view` (their email + custom-field values are PII).
     if (input.id !== ctx.auth.userId) {
-      // Not self; require permission.
-      const userPerms = await ctx.db
-        .select({
-          permissions: sql<readonly string[]>`array(SELECT jsonb_array_elements_text(permissions))`,
-        })
-        .from(user)
-        .innerJoin(
-          sql`${user}`,
-          sql`true`, // fallback — the middleware has already validated the caller.
-        )
-        .where(eq(user.id, ctx.auth.userId))
-        .limit(1);
-      void userPerms;
-      // Simpler: just defer to the requirePermission check by re-invoking.
-      // For Phase 1 the cost of a permission lookup inside get() isn't
-      // meaningful — skip for now and let the UI call list() instead.
+      const perms = await loadUserPermissions(ctx.db, ctx.tenantId, ctx.auth.userId);
+      if (!perms.includes('users.view')) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Missing permission: users.view' });
+      }
     }
     const row = await ctx.db
       .select({
