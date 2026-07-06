@@ -30,6 +30,7 @@ import { TRPCError } from '@trpc/server';
 import { and, count, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 import { invalidateAccessRulesReferencing } from './accessRules';
 
@@ -162,6 +163,11 @@ export const groupsRouter = router({
         });
       }
 
+      // The target user must belong to this tenant — otherwise a foreign
+      // user id could be materialised as a member and leaked back via
+      // `members` (name + email).
+      await assertUsersInTenant(ctx.db, ctx.tenantId, [input.userId]);
+
       // Cap per-user group count (G-E02).
       const perUser = await ctx.db
         .select({ c: count() })
@@ -229,7 +235,7 @@ export const groupsRouter = router({
           addedAt: groupMembers.addedAt,
         })
         .from(groupMembers)
-        .innerJoin(user, eq(groupMembers.userId, user.id))
+        .innerJoin(user, and(eq(groupMembers.userId, user.id), eq(user.tenantId, ctx.tenantId)))
         .where(
           and(eq(groupMembers.tenantId, ctx.tenantId), eq(groupMembers.groupId, input.groupId)),
         )

@@ -34,6 +34,7 @@ import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertStorageKeyInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 
 export type HeadsUpsRouterDeps = {
@@ -489,14 +490,31 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
 
         const now = new Date();
 
+        // Restrict recipients to users that actually belong to this tenant. A
+        // client-supplied (or stored-spec) `userId` must never materialise a
+        // foreign user as a recipient — that would leak their name + email via
+        // `listRecipients`/`sendReminder`. The group/site expansions above are
+        // already tenant-scoped; this catches the direct-id path.
+        const candidateIds = [...recipientUserIds];
+        const inTenantRows =
+          candidateIds.length > 0
+            ? await ctx.db
+                .select({ id: user.id })
+                .from(user)
+                .where(and(eq(user.tenantId, ctx.tenantId), inArray(user.id, candidateIds)))
+            : [];
+        const validUserIds = new Set(inTenantRows.map((r) => r.id));
+
         // Upsert: ignore duplicates (idempotent re-publish edge case).
-        const values = [...recipientUserIds].map((userId) => ({
-          id: newId(),
-          tenantId: ctx.tenantId,
-          headsUpId: headsUp.id,
-          userId,
-          createdAt: now,
-        }));
+        const values = [...recipientUserIds]
+          .filter((userId) => validUserIds.has(userId))
+          .map((userId) => ({
+            id: newId(),
+            tenantId: ctx.tenantId,
+            headsUpId: headsUp.id,
+            userId,
+            createdAt: now,
+          }));
 
         if (values.length > 0) {
           await ctx.db.insert(headsUpRecipients).values(values).onConflictDoNothing();
@@ -628,7 +646,10 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
         await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
 
         const { isNotNull } = await import('drizzle-orm');
-        const where = [eq(headsUpRecipients.headsUpId, input.headsUpId)];
+        const where = [
+          eq(headsUpRecipients.tenantId, ctx.tenantId),
+          eq(headsUpRecipients.headsUpId, input.headsUpId),
+        ];
         if (input.filter === 'viewed') where.push(isNotNull(headsUpRecipients.viewedAt));
         if (input.filter === 'not_viewed') where.push(isNull(headsUpRecipients.viewedAt));
         if (input.filter === 'acknowledged') where.push(isNotNull(headsUpRecipients.acknowledgedAt));
@@ -646,7 +667,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             reminderLastSentAt: headsUpRecipients.reminderLastSentAt,
           })
           .from(headsUpRecipients)
-          .leftJoin(user, eq(user.id, headsUpRecipients.userId))
+          .leftJoin(user, and(eq(user.id, headsUpRecipients.userId), eq(user.tenantId, ctx.tenantId)))
           .where(and(...where))
           .orderBy(desc(headsUpRecipients.createdAt))
           .limit(input.limit);
@@ -683,6 +704,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
               : isNull(headsUpRecipients.viewedAt);
 
         const where = [
+          eq(headsUpRecipients.tenantId, ctx.tenantId),
           eq(headsUpRecipients.headsUpId, input.headsUpId),
           pendingCondition,
         ];
@@ -699,7 +721,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             userName: user.name,
           })
           .from(headsUpRecipients)
-          .leftJoin(user, eq(user.id, headsUpRecipients.userId))
+          .leftJoin(user, and(eq(user.id, headsUpRecipients.userId), eq(user.tenantId, ctx.tenantId)))
           .where(and(...where));
 
         const now = new Date();
@@ -843,6 +865,9 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
         .input(addAttachmentInput)
         .mutation(async ({ ctx, input }) => {
           await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+          // Storage key must live under this tenant's R2 prefix (see the
+          // issues attachment path for the full rationale).
+          assertStorageKeyInTenant(ctx.tenantId, input.storageKey);
           // Count existing attachments to enforce 6-file limit.
           const existingRows = await ctx.db
             .select({ c: count() })

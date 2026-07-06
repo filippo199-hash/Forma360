@@ -44,6 +44,7 @@ import { floatingToZonedUtc } from '@forma360/shared/timezone';
 import { and, count, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertGroupsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 
 // ─── Dependents resolver ───────────────────────────────────────────────────
@@ -293,6 +294,10 @@ export const schedulesRouter = router({
           message: 'Cannot schedule an archived template.',
         });
       }
+      // Assignees + sites must belong to this tenant.
+      await assertUsersInTenant(ctx.db, ctx.tenantId, input.assigneeUserIds);
+      await assertGroupsInTenant(ctx.db, ctx.tenantId, input.assigneeGroupIds);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, input.siteIds);
 
       const id = newId();
       await ctx.db.insert(templateSchedules).values({
@@ -335,6 +340,10 @@ export const schedulesRouter = router({
         )
         .limit(1);
       if (rows[0] === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      // Assignees + sites must belong to this tenant.
+      await assertUsersInTenant(ctx.db, ctx.tenantId, input.assigneeUserIds);
+      await assertGroupsInTenant(ctx.db, ctx.tenantId, input.assigneeGroupIds);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, input.siteIds);
 
       await ctx.db
         .update(templateSchedules)

@@ -41,6 +41,7 @@ import { TRPCError } from '@trpc/server';
 import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertGroupsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 
 const listInput = z
@@ -253,6 +254,10 @@ export const usersRouter = router({
       if (ps[0] === undefined) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Permission set not found' });
       }
+      // Group / site pre-assignments must belong to this tenant, else the
+      // accept-invite flow could auto-join the new user to a foreign group/site.
+      await assertGroupsInTenant(ctx.db, ctx.tenantId, input.groupIds ?? []);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, input.siteIds ?? []);
 
       const token = newInviteToken();
       const expiresAt = new Date(Date.now() + INVITATION_TTL_MS);
@@ -546,6 +551,8 @@ export const usersRouter = router({
       if (field[0] === undefined) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Field not found' });
       }
+      // The target user must belong to this tenant.
+      await assertUsersInTenant(ctx.db, ctx.tenantId, [input.userId]);
       await ctx.db
         .insert(userCustomFieldValues)
         .values({

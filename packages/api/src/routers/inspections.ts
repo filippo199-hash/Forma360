@@ -62,6 +62,7 @@ import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertSitesInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 
 // ─── Title / documentNumber rendering ──────────────────────────────────────
@@ -305,12 +306,13 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
    */
   async function userLabel(
     db: Parameters<DependentResolver>[0]['db'],
+    tenantId: string,
     userId: string,
   ): Promise<{ name: string; email: string }> {
     const rows = await db
       .select({ name: user.name, email: user.email })
       .from(user)
-      .where(eq(user.id, userId))
+      .where(and(eq(user.tenantId, tenantId), eq(user.id, userId)))
       .limit(1);
     const row = rows[0];
     if (row === undefined) {
@@ -328,14 +330,15 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
    */
   async function sendSignatureRequestEmail(args: {
     db: Parameters<DependentResolver>[0]['db'];
+    tenantId: string;
     inspectionId: string;
     inspectionTitle: string;
     requesterUserId: string;
     signerUserId: string;
   }): Promise<void> {
     const [signer, requester] = await Promise.all([
-      userLabel(args.db, args.signerUserId),
-      userLabel(args.db, args.requesterUserId),
+      userLabel(args.db, args.tenantId, args.signerUserId),
+      userLabel(args.db, args.tenantId, args.requesterUserId),
     ]);
     if (signer.email.length === 0) {
       deps.logger.warn(
@@ -365,12 +368,13 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
 
   async function sendCompletionEmails(args: {
     db: Parameters<DependentResolver>[0]['db'];
+    tenantId: string;
     inspectionId: string;
     inspectionTitle: string;
     recipientUserIds: readonly string[];
   }): Promise<void> {
     for (const userId of args.recipientUserIds) {
-      const recipient = await userLabel(args.db, userId);
+      const recipient = await userLabel(args.db, args.tenantId, userId);
       if (recipient.email.length === 0) continue;
       try {
         await deps.sendEmail({
@@ -510,7 +514,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             ? await ctx.db
                 .select({ name: sites.name })
                 .from(sites)
-                .where(eq(sites.id, insp.siteId))
+                .where(and(eq(sites.tenantId, ctx.tenantId), eq(sites.id, insp.siteId)))
                 .limit(1)
             : [];
         const [conductedByRow] =
@@ -539,6 +543,9 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
       .use(requirePermission('inspections.conduct'))
       .input(createInput)
       .mutation(async ({ ctx, input }) => {
+        // A referenced site must belong to this tenant (else `get` would leak
+        // the foreign site's name on the report title page).
+        await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
         // 1. Look up template — must exist, not be archived, be in current tenant.
         const tplRows = await ctx.db
           .select()
@@ -844,6 +851,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           for (const signerUserId of recipients) {
             await sendSignatureRequestEmail({
               db: ctx.db,
+              tenantId: ctx.tenantId,
               inspectionId: insp.id,
               inspectionTitle: insp.title,
               requesterUserId: ctx.auth.userId,
@@ -985,6 +993,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         if (workflow.notifyOnCompletion) {
           await sendCompletionEmails({
             db: ctx.db,
+            tenantId: ctx.tenantId,
             inspectionId: insp.id,
             inspectionTitle: insp.title,
             recipientUserIds: workflow.signatoryUserIds,
@@ -1001,6 +1010,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         if (nextPending !== undefined) {
           await sendSignatureRequestEmail({
             db: ctx.db,
+            tenantId: ctx.tenantId,
             inspectionId: insp.id,
             inspectionTitle: insp.title,
             // Forward the original requester (inspection creator) so the
@@ -1081,7 +1091,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             continue;
           }
         }
-        const requester = await userLabel(ctx.db, row.createdBy);
+        const requester = await userLabel(ctx.db, ctx.tenantId, row.createdBy);
         out.push({
           inspectionId: row.inspectionId,
           title: row.title,

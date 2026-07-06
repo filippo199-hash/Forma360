@@ -25,6 +25,12 @@ import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, ilike, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import {
+  assertGroupsInTenant,
+  assertSitesInTenant,
+  assertStorageKeyInTenant,
+  assertUsersInTenant,
+} from '../tenant-guards';
 import { router } from '../trpc';
 import {
   loadViewerMemberships,
@@ -261,7 +267,7 @@ export const documentsRouter = router({
           ? ctx.db
               .select({ name: user.name, email: user.email })
               .from(user)
-              .where(eq(user.id, doc.responsibleUserId))
+              .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, doc.responsibleUserId)))
               .limit(1)
           : Promise.resolve([]),
       ]);
@@ -298,6 +304,11 @@ export const documentsRouter = router({
       if (input.sizeBytes > MAX_FILE_SIZE_BYTES) {
         throw new TRPCError({ code: 'PAYLOAD_TOO_LARGE', message: 'file-too-large' });
       }
+      // Storage key + referenced site/owner must belong to this tenant.
+      assertStorageKeyInTenant(ctx.tenantId, input.storageKey);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+      await assertUsersInTenant(ctx.db, ctx.tenantId, [input.responsibleUserId]);
+      await assertGroupsInTenant(ctx.db, ctx.tenantId, [input.responsibleGroupId]);
 
       const id = newId();
       const versionId = newId();
@@ -354,6 +365,13 @@ export const documentsRouter = router({
       if (doc.archivedAt !== null) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'document-archived' });
       }
+      // Referenced site / owner must belong to this tenant.
+      if (input.siteId !== undefined)
+        await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+      if (input.responsibleUserId !== undefined)
+        await assertUsersInTenant(ctx.db, ctx.tenantId, [input.responsibleUserId]);
+      if (input.responsibleGroupId !== undefined)
+        await assertGroupsInTenant(ctx.db, ctx.tenantId, [input.responsibleGroupId]);
 
       const updates: Partial<typeof documents.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) updates.name = input.name;
@@ -392,6 +410,7 @@ export const documentsRouter = router({
       if (doc.archivedAt !== null) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'document-archived' });
       }
+      assertStorageKeyInTenant(ctx.tenantId, input.storageKey);
 
       const nextVersion = doc.currentVersion + 1;
       const versionId = newId();

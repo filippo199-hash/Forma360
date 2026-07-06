@@ -67,6 +67,12 @@ import crypto from 'node:crypto';
 import { and, count, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
+import {
+  assertAssetsInTenant,
+  assertSitesInTenant,
+  assertStorageKeyInTenant,
+  assertUsersInTenant,
+} from '../tenant-guards';
 import { router } from '../trpc';
 
 // ─── Dependents resolvers ───────────────────────────────────────────────────
@@ -824,6 +830,10 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
               : reporter.name
             : null;
 
+        // Referenced site + assets must belong to this tenant.
+        await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+        await assertAssetsInTenant(ctx.db, ctx.tenantId, input.assetIds ?? []);
+
         const referenceNumber = await nextReferenceNumber(ctx.db, ctx.tenantId);
         const id = newId();
         const now = new Date();
@@ -905,6 +915,13 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .input(updateIssueInput)
       .mutation(async ({ ctx, input }) => {
         const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        // Referenced site / assignee / assets must belong to this tenant.
+        if (input.siteId !== undefined)
+          await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+        if (input.assigneeUserId !== undefined)
+          await assertUsersInTenant(ctx.db, ctx.tenantId, [input.assigneeUserId]);
+        if (input.assetIds !== undefined)
+          await assertAssetsInTenant(ctx.db, ctx.tenantId, input.assetIds);
         const patch: Partial<typeof issues.$inferInsert> = { updatedAt: new Date() };
         const activityEvents: Array<{
           kind: IssueActivityKind;
@@ -1190,6 +1207,10 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'category-archived' });
         }
 
+        // An anonymous reporter must not pin a foreign-tenant siteId onto the
+        // issue — validate it against the token's tenant.
+        await assertSitesInTenant(ctx.db, input.tenantId, [input.siteId]);
+
         const now = new Date();
         const accessSnapshot: IssueAccessSnapshot = {
           groupIds: [],
@@ -1395,6 +1416,11 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .input(createAttachmentInput)
       .mutation(async ({ ctx, input }) => {
         const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        // The storage key must live under this tenant's R2 prefix, else
+        // `attachments.list` would mint a signed URL for another tenant's
+        // object. The upload route already emits a tenant-scoped key; this
+        // guards the raw-key tRPC write path.
+        assertStorageKeyInTenant(ctx.tenantId, input.storageKey);
         const id = newId();
         const now = new Date();
         await ctx.db.insert(issueAttachments).values({

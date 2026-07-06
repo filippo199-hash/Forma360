@@ -122,7 +122,7 @@ describe('Documents router (Phase 5C)', () => {
     const { documentId } = await caller.documents.create({
       name: 'Risk Assessment 2024',
       folderId,
-      storageKey: 'tenant/docs/risk-2024.pdf',
+      storageKey: `${tenantId}/documents/risk-2024.pdf`,
       filename: 'risk-2024.pdf',
       mimeType: 'application/pdf',
       sizeBytes: 1024,
@@ -140,7 +140,7 @@ describe('Documents router (Phase 5C)', () => {
     await expect(
       caller.documents.create({
         name: 'Huge file',
-        storageKey: 'tenant/docs/huge.bin',
+        storageKey: `${tenantId}/documents/huge.bin`,
         filename: 'huge.bin',
         mimeType: 'application/octet-stream',
         sizeBytes: FIFTY_MB + 1,
@@ -153,7 +153,7 @@ describe('Documents router (Phase 5C)', () => {
 
     const { documentId } = await caller.documents.create({
       name: 'Policy v1',
-      storageKey: 'tenant/docs/policy-v1.pdf',
+      storageKey: `${tenantId}/documents/policy-v1.pdf`,
       filename: 'policy-v1.pdf',
       mimeType: 'application/pdf',
       sizeBytes: 2048,
@@ -161,7 +161,7 @@ describe('Documents router (Phase 5C)', () => {
 
     const { version } = await caller.documents.uploadVersion({
       documentId,
-      storageKey: 'tenant/docs/policy-v2.pdf',
+      storageKey: `${tenantId}/documents/policy-v2.pdf`,
       filename: 'policy-v2.pdf',
       mimeType: 'application/pdf',
       sizeBytes: 2200,
@@ -182,7 +182,7 @@ describe('Documents router (Phase 5C)', () => {
     await caller.documents.create({
       name: 'Some doc',
       folderId,
-      storageKey: 'k',
+      storageKey: `${tenantId}/documents/k`,
       filename: 'f.pdf',
       mimeType: 'application/pdf',
       sizeBytes: 100,
@@ -209,7 +209,7 @@ describe('Documents router (Phase 5C)', () => {
 
     const { documentId } = await caller.documents.create({
       name: 'Confidential',
-      storageKey: 'k',
+      storageKey: `${tenantId}/documents/k`,
       filename: 'conf.pdf',
       mimeType: 'application/pdf',
       sizeBytes: 1000,
@@ -236,7 +236,7 @@ describe('Documents router (Phase 5C)', () => {
 
     const { documentId } = await caller.documents.create({
       name: 'Archive me',
-      storageKey: 'k',
+      storageKey: `${tenantId}/documents/k`,
       filename: 'doc.pdf',
       mimeType: 'application/pdf',
       sizeBytes: 500,

@@ -30,6 +30,7 @@ import { TRPCError } from '@trpc/server';
 import { and, count, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 import { invalidateAccessRulesReferencing } from './accessRules';
 
@@ -336,6 +337,8 @@ export const sitesRouter = router({
           message: 'Site is rule_based; manual membership edits are disabled.',
         });
       }
+      // Target user must belong to this tenant.
+      await assertUsersInTenant(ctx.db, ctx.tenantId, [input.userId]);
       await ctx.db
         .insert(siteMembers)
         .values({

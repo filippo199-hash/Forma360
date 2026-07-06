@@ -14,7 +14,29 @@ import { TRPCError } from '@trpc/server';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertAssetsInTenant } from '../tenant-guards';
 import { router } from '../trpc';
+import type { Database } from '@forma360/db/client';
+
+/**
+ * Assert the plan belongs to the tenant. `maintenance_plan_assets` has no
+ * tenantId of its own, so any mutation matching a link row by (planId,assetId)
+ * must first prove the parent plan is in-tenant.
+ */
+async function assertPlanInTenant(
+  db: Database,
+  tenantId: string,
+  planId: string,
+): Promise<void> {
+  const rows = await db
+    .select({ id: maintenancePlans.id })
+    .from(maintenancePlans)
+    .where(and(eq(maintenancePlans.tenantId, tenantId), eq(maintenancePlans.id, planId)))
+    .limit(1);
+  if (rows[0] === undefined) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'maintenance-plan-not-found' });
+  }
+}
 
 const planIdInput = z.object({ planId: z.string().length(26) });
 
@@ -203,6 +225,7 @@ export const maintenancePlansRouter = router({
               .from(assetReadings)
               .where(
                 and(
+                  eq(assetReadings.tenantId, ctx.tenantId),
                   eq(assetReadings.assetId, link.assetId ?? ''),
                   eq(assetReadings.fieldName, link.usageField ?? ''),
                 ),
@@ -360,6 +383,7 @@ export const maintenancePlansRouter = router({
               .from(assetReadings)
               .where(
                 and(
+                  eq(assetReadings.tenantId, ctx.tenantId),
                   eq(assetReadings.assetId, input.assetId),
                   eq(assetReadings.fieldName, link.usageField ?? ''),
                 ),
@@ -402,6 +426,10 @@ export const maintenancePlansRouter = router({
       if (rows[0] === undefined) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'maintenance-plan-not-found' });
       }
+      // Assets must belong to this tenant. `maintenance_plan_assets` has no
+      // tenantId column, so a foreign asset would otherwise be silently
+      // attached and leak its name + readings back through the plan reads.
+      await assertAssetsInTenant(ctx.db, ctx.tenantId, input.assetIds);
 
       const values = input.assetIds.map((assetId) => ({
         id: newId(),
@@ -416,6 +444,9 @@ export const maintenancePlansRouter = router({
     .use(requirePermission('assets.maintenance.manage'))
     .input(unlinkAssetInput)
     .mutation(async ({ ctx, input }) => {
+      // The join table carries no tenantId — verify the plan is ours first,
+      // otherwise this deletes another tenant's plan/asset link by raw id.
+      await assertPlanInTenant(ctx.db, ctx.tenantId, input.planId);
       await ctx.db
         .delete(maintenancePlanAssets)
         .where(
@@ -431,6 +462,8 @@ export const maintenancePlansRouter = router({
     .use(requirePermission('assets.maintenance.manage'))
     .input(updateServiceInput)
     .mutation(async ({ ctx, input }) => {
+      // Same tenant guard as unlinkAsset — the link is matched by raw id.
+      await assertPlanInTenant(ctx.db, ctx.tenantId, input.planId);
       const links = await ctx.db
         .select({ id: maintenancePlanAssets.id })
         .from(maintenancePlanAssets)
