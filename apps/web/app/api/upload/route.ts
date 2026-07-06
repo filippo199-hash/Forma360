@@ -100,6 +100,19 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'ITEM_NOT_MEDIA' }, { status: 400 });
   }
 
+  // Restrict inspection media to inert image/pdf types. Notably excludes
+  // text/html and image/svg+xml, which would be stored XSS if served inline.
+  const ACCEPTED_MEDIA_MIME = new Set<string>([
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'image/gif',
+    'application/pdf',
+  ]);
+  if (!ACCEPTED_MEDIA_MIME.has(file.type)) {
+    return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
+  }
+
   const safeName = sanitizeFilename(file.name);
   const key = objectKey({
     tenantId: ctx.auth.tenantId as never,

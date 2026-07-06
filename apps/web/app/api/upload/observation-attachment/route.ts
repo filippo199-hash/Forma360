@@ -32,7 +32,8 @@ const ACCEPTED_MIME = new Set<string>([
   'image/jpeg',
   'image/webp',
   'image/gif',
-  'image/svg+xml',
+  // NB: image/svg+xml is deliberately excluded — SVG can carry <script> and
+  // would be stored XSS if ever served inline.
   'video/mp4',
   'video/quicktime',
   'video/webm',

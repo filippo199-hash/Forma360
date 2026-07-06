@@ -15,7 +15,8 @@
  */
 import { NextResponse } from 'next/server';
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
+import { isObjectKey } from '@forma360/shared/storage';
 import { auth } from '../../../src/server/auth';
 import { env } from '../../../src/server/env';
 import { storage } from '../../../src/server/storage';
@@ -32,6 +33,12 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
   }
 
+  // Key must be a well-formed `<tenantId>/<module>/<entityId>/<filename>`
+  // object key. This rejects path-traversal payloads (extra `../` segments
+  // fail the 4-segment shape) before the key ever reaches the filesystem.
+  if (!isObjectKey(key)) {
+    return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
+  }
   // Key must start with the caller's tenantId — cross-tenant access denied.
   if (!key.startsWith(`${session.user.tenantId}/`)) {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
@@ -39,13 +46,21 @@ export async function GET(req: Request): Promise<Response> {
 
   if (env.NODE_ENV !== 'production') {
     // Dev: serve directly from the local filesystem fallback.
-    const localPath = join(process.cwd(), '.local-storage', key);
+    const base = join(process.cwd(), '.local-storage');
+    const localPath = join(base, key);
+    // Belt-and-suspenders: never let a resolved path escape the storage root.
+    if (!resolve(localPath).startsWith(resolve(base) + sep)) {
+      return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
+    }
     try {
       const bytes = await readFile(localPath);
       const filename = key.split('/').at(-1) ?? 'file';
       return new Response(bytes, {
         headers: {
           'Content-Disposition': `inline; filename="${filename}"`,
+          // Prevent the browser from MIME-sniffing an uploaded file into
+          // active content (stored-XSS defense).
+          'X-Content-Type-Options': 'nosniff',
           'Cache-Control': 'private, max-age=300',
         },
       });

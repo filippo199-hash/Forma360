@@ -67,7 +67,10 @@ export async function GET(req: Request): Promise<Response> {
   // `?disposition=inline` (preview iframe) renders in-browser; anything else
   // (or absent) downloads as an attachment. We always pin the content type so a
   // PDF stored with a generic type still previews. RFC 5987-safe filename.
-  const inline = searchParams.get('disposition') === 'inline';
+  // Active-content types must never render inline (stored-XSS defense) —
+  // force them to download regardless of the requested disposition.
+  const dangerousInline = /html|svg|xml/i.test(doc.mimeType);
+  const inline = searchParams.get('disposition') === 'inline' && !dangerousInline;
   const safeName = doc.filename.replace(/["\\\r\n]/g, '_');
   const contentDisposition = `${inline ? 'inline' : 'attachment'}; filename="${safeName}"`;
 
@@ -94,6 +97,7 @@ export async function GET(req: Request): Promise<Response> {
         'Content-Type': doc.mimeType,
         'Content-Disposition': contentDisposition,
         'Content-Length': String(doc.sizeBytes),
+        'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'private, no-store',
       },
     });
