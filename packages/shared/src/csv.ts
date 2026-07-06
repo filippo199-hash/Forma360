@@ -24,6 +24,28 @@ import { parse } from 'csv-parse/sync';
 import { stringify } from 'csv-stringify/sync';
 import type { z } from 'zod';
 
+/**
+ * Neutralise CSV formula (spreadsheet) injection.
+ *
+ * A cell beginning with `= + - @` (or a leading TAB / CR that Excel and
+ * Google Sheets treat as a formula lead-in) is executed as a formula when
+ * the exported file is opened. RFC-4180 quoting does NOT prevent this — the
+ * spreadsheet strips the quotes on import and still evaluates the `=`. We
+ * prefix such a cell with a single quote so it is rendered as literal text.
+ *
+ * Apply to every user-controlled string cell before it is written to CSV.
+ */
+export function csvSafe(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
+/** Apply `csvSafe` to every string value of a record (non-strings pass through). */
+function sanitizeRow<T extends Record<string, unknown>>(row: T): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(row)) out[k] = typeof v === 'string' ? csvSafe(v) : v;
+  return out;
+}
+
 /** A parsed-and-valid row together with its 1-indexed line number. */
 export interface CsvOk<T> {
   line: number;
@@ -115,11 +137,13 @@ export function parseCsv<T>(
       // Preserve the raw columns + prepend a "error" column so users can
       // fix and re-upload.
       const columns = Object.keys(errors[0]?.raw ?? {});
-      const rows = errors.map((e) => ({
-        line: String(e.line),
-        error: e.message,
-        ...e.raw,
-      }));
+      const rows = errors.map((e) =>
+        sanitizeRow({
+          line: String(e.line),
+          error: e.message,
+          ...e.raw,
+        }),
+      );
       return stringify(rows, {
         header: true,
         columns: ['line', 'error', ...columns],
@@ -137,8 +161,9 @@ export function toCsv<T extends Record<string, unknown>>(
   columns: readonly string[],
 ): string {
   // csv-stringify's `Input` type is invariant over mutability; cast at the
-  // boundary so our public API can stay `readonly`. No runtime change.
-  return stringify(rows as Record<string, unknown>[], {
+  // boundary so our public API can stay `readonly`. Every string cell is run
+  // through `csvSafe` first to neutralise formula injection.
+  return stringify(rows.map(sanitizeRow), {
     header: true,
     columns: columns as string[],
   });

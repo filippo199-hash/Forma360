@@ -46,6 +46,7 @@ import {
   registerDependentResolver,
   type DependentResolver,
 } from '@forma360/permissions/dependents';
+import { csvSafe } from '@forma360/shared/csv';
 import { newId } from '@forma360/shared/id';
 import { buildTemplateContentFromSpec } from '@forma360/shared/template-builder';
 import { templateSpecSchema } from '@forma360/shared/template-spec';
@@ -83,15 +84,17 @@ function csvQuoteRow(values: readonly unknown[]): string {
     values
       .map((v) => {
         if (v === null || v === undefined) return '""';
-        const str =
-          typeof v === 'string'
-            ? v
-            : typeof v === 'number' || typeof v === 'boolean'
-              ? String(v)
-              : typeof v === 'object'
-                ? JSON.stringify(v)
-                : String(v);
-        return `"${str.replace(/"/g, '""')}"`;
+        const isString = typeof v === 'string';
+        const str = isString
+          ? v
+          : typeof v === 'number' || typeof v === 'boolean'
+            ? String(v)
+            : typeof v === 'object'
+              ? JSON.stringify(v)
+              : String(v);
+        // Neutralise formula injection on text cells only.
+        const safe = isString ? csvSafe(str) : str;
+        return `"${safe.replace(/"/g, '""')}"`;
       })
       .join(',') + '\r\n'
   );

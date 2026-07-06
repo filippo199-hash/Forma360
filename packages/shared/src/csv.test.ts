@@ -1,6 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { parseCsv, toCsv } from './csv';
+import { csvSafe, parseCsv, toCsv } from './csv';
+
+describe('csvSafe (formula-injection guard)', () => {
+  it('prefixes cells that begin with a formula trigger', () => {
+    expect(csvSafe('=HYPERLINK("http://evil","x")')).toBe("'=HYPERLINK(\"http://evil\",\"x\")");
+    expect(csvSafe('+1+1')).toBe("'+1+1");
+    expect(csvSafe('-cmd|calc')).toBe("'-cmd|calc");
+    expect(csvSafe('@SUM(A1)')).toBe("'@SUM(A1)");
+    expect(csvSafe('\tTAB')).toBe("'\tTAB");
+  });
+
+  it('leaves ordinary text untouched', () => {
+    expect(csvSafe('Alice')).toBe('Alice');
+    expect(csvSafe('risk-2024.pdf')).toBe('risk-2024.pdf');
+    expect(csvSafe('')).toBe('');
+  });
+
+  it('toCsv neutralises a formula in a string cell but keeps numbers intact', () => {
+    const out = toCsv([{ name: '=1+1', count: -5 }], ['name', 'count']);
+    // The string formula is quoted-out; the numeric -5 stays a real number.
+    expect(out).toContain("'=1+1");
+    expect(out).toMatch(/-5/);
+    expect(out).not.toContain("'-5");
+  });
+});
 
 const userRowSchema = z.object({
   email: z.string().email(),

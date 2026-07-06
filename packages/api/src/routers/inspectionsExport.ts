@@ -18,6 +18,7 @@
  */
 import type { Database } from '@forma360/db/client';
 import { inspections, sites, templateVersions, templates, user } from '@forma360/db/schema';
+import { csvSafe } from '@forma360/shared/csv';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, gte, inArray, isNull, lte } from 'drizzle-orm';
@@ -78,15 +79,18 @@ const archiveManyInput = z.object({
 export function csvCell(value: unknown): string {
   if (value === null || value === undefined) return '""';
   if (value instanceof Date) return `"${value.toISOString()}"`;
-  const str =
-    typeof value === 'string'
-      ? value
-      : typeof value === 'number' || typeof value === 'boolean'
-        ? String(value)
-        : typeof value === 'object'
-          ? JSON.stringify(value)
-          : String(value);
-  return `"${str.replace(/"/g, '""')}"`;
+  const isString = typeof value === 'string';
+  const str = isString
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : typeof value === 'object'
+        ? JSON.stringify(value)
+        : String(value);
+  // Neutralise formula injection on user-controlled text cells (not numbers,
+  // so a legitimate "-5" isn't corrupted).
+  const safe = isString ? csvSafe(str) : str;
+  return `"${safe.replace(/"/g, '""')}"`;
 }
 
 /** Render one CSV row from an ordered array of values. Newline-terminated. */
