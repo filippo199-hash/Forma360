@@ -34,6 +34,16 @@ export interface AuthedCtx {
  */
 export type Enqueue = (name: string, payload: unknown) => void;
 
+/**
+ * Fixed-window rate-limit check. Returns `ok: false` with a retry hint when
+ * the subject `key` has exceeded `limit` within `windowSec`. Wired to a
+ * Redis-backed limiter in the web app; a noop that always allows in tests.
+ */
+export type RateLimitFn = (
+  key: string,
+  opts: { limit: number; windowSec: number },
+) => Promise<{ ok: boolean; retryAfterSec: number }>;
+
 export interface Context {
   db: Database;
   logger: Logger;
@@ -42,6 +52,10 @@ export interface Context {
   auth: AuthedCtx | null;
   /** Enqueue helper for async work. Noop when not wired. */
   enqueue: Enqueue;
+  /** Best-effort client IP (first x-forwarded-for hop) for abuse throttling. */
+  clientIp: string;
+  /** Rate-limit check for public/abuse-prone procedures. */
+  rateLimit: RateLimitFn;
 }
 
 export interface ContextStaticDeps {
@@ -49,6 +63,7 @@ export interface ContextStaticDeps {
   auth: Auth;
   logger: Logger;
   enqueue?: Enqueue;
+  rateLimit?: RateLimitFn;
 }
 
 export interface ContextPerRequest {
@@ -59,6 +74,7 @@ export interface ContextPerRequest {
 }
 
 const noopEnqueue: Enqueue = () => undefined;
+const allowAllRateLimit: RateLimitFn = () => Promise.resolve({ ok: true, retryAfterSec: 0 });
 
 /**
  * Build a per-request context factory from static deps. Call once at app
@@ -66,6 +82,7 @@ const noopEnqueue: Enqueue = () => undefined;
  */
 export function createContextFactory(deps: ContextStaticDeps) {
   const enqueue = deps.enqueue ?? noopEnqueue;
+  const rateLimit = deps.rateLimit ?? allowAllRateLimit;
   return async function createContext(input: ContextPerRequest): Promise<Context> {
     const requestId = input.requestId ?? newId();
     const requestLogger = deps.logger.child({ request_id: requestId });
@@ -81,12 +98,19 @@ export function createContextFactory(deps: ContextStaticDeps) {
           }
         : null;
 
+    const clientIp =
+      input.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      input.headers.get('x-real-ip')?.trim() ??
+      'unknown';
+
     return {
       db: deps.db,
       logger: requestLogger,
       requestId,
       auth,
       enqueue,
+      clientIp,
+      rateLimit,
     };
   };
 }
@@ -102,6 +126,8 @@ export function createTestContext(
     requestId: overrides.requestId ?? newId(),
     auth: overrides.auth ?? null,
     enqueue: overrides.enqueue ?? noopEnqueue,
+    clientIp: overrides.clientIp ?? 'test',
+    rateLimit: overrides.rateLimit ?? allowAllRateLimit,
     ...overrides,
   };
 }

@@ -1,8 +1,9 @@
-import { createContextFactory, type Enqueue } from '@forma360/api/context';
+import { createContextFactory, type Enqueue, type RateLimitFn } from '@forma360/api/context';
 import { enqueue as bullEnqueue, type QueueName } from '@forma360/jobs';
 import { auth } from './auth';
 import { db } from './db';
 import { logger } from './logger';
+import { rateLimit as redisRateLimit } from './rate-limit';
 import { redis } from './redis';
 
 /**
@@ -27,9 +28,14 @@ const enqueueImpl: Enqueue = (name, payload) => {
  */
 export const enqueue = enqueueImpl;
 
+/** Redis-backed limiter for public/abuse-prone procedures. */
+const rateLimitImpl: RateLimitFn = (key, opts) =>
+  redisRateLimit(key, opts).then((r) => ({ ok: r.ok, retryAfterSec: r.retryAfterSec }));
+
 export const createContext = createContextFactory({
   db,
   auth,
   logger,
   enqueue: enqueueImpl,
+  rateLimit: rateLimitImpl,
 });

@@ -92,6 +92,14 @@ export function createAuthRouter(deps: AuthRouterDeps) {
      *                  user belongs to — `emailExists` is a boolean only.
      */
     lookupEmailDomain: publicProcedure.input(lookupInput).query(async ({ ctx, input }) => {
+      // Throttle unauthenticated account/tenant enumeration.
+      const lookupRl = await ctx.rateLimit(`auth:lookup:${ctx.clientIp}`, {
+        limit: 20,
+        windowSec: 60,
+      });
+      if (!lookupRl.ok) {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'rate-limited' });
+      }
       const email = input.email.toLowerCase().trim();
       const domain = getEmailDomain(email);
       if (domain === null) {
@@ -161,6 +169,14 @@ export function createAuthRouter(deps: AuthRouterDeps) {
      * the OTP endpoint and exchanging it for a session.
      */
     signUpWithTenant: publicProcedure.input(signUpInput).mutation(async ({ ctx, input }) => {
+      // Throttle anonymous tenant creation (resource-exhaustion guard).
+      const signUpRl = await ctx.rateLimit(`auth:signup:${ctx.clientIp}`, {
+        limit: 5,
+        windowSec: 3600,
+      });
+      if (!signUpRl.ok) {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'rate-limited' });
+      }
       const email = input.email.toLowerCase().trim();
 
       const existing = await ctx.db
@@ -222,6 +238,14 @@ export function createAuthRouter(deps: AuthRouterDeps) {
      * admin received the message.
      */
     requestToJoin: publicProcedure.input(requestToJoinInput).mutation(async ({ ctx, input }) => {
+      // Throttle the admin-inbox notification fan-out (spam/phishing guard):
+      // per source IP and per target tenant.
+      for (const key of [`auth:join:ip:${ctx.clientIp}`, `auth:join:tenant:${input.tenantId}`]) {
+        const joinRl = await ctx.rateLimit(key, { limit: 5, windowSec: 600 });
+        if (!joinRl.ok) {
+          throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'rate-limited' });
+        }
+      }
       const tenantRow = await ctx.db
         .select()
         .from(tenants)

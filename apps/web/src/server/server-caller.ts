@@ -72,6 +72,10 @@ export async function createServerCaller(authInput: {
       tenantId: authInput.tenantId as Id,
     },
     enqueue,
+    // The agent runs server-side (no HTTP client) — no IP, and its own
+    // routes are already rate-limited upstream, so allow all here.
+    clientIp: 'agent',
+    rateLimit: () => Promise.resolve({ ok: true, retryAfterSec: 0 }),
   };
 
   return appRouter.createCaller(ctx);

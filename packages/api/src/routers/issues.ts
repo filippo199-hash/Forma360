@@ -1178,6 +1178,13 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
     createFromShareToken: publicProcedure
       .input(createFromShareTokenInput)
       .mutation(async ({ ctx, input }) => {
+        // Throttle anonymous QR submissions (spam + manager-email flood).
+        for (const key of [`issue:qr:ip:${ctx.clientIp}`, `issue:qr:token:${input.token}`]) {
+          const qrRl = await ctx.rateLimit(key, { limit: 10, windowSec: 60 });
+          if (!qrRl.ok) {
+            throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'rate-limited' });
+          }
+        }
         // Verify the tenant exists (defensive — token uniqueness is global
         // but we still want a clean NOT_FOUND if the tenant doesn't match).
         const tenantRows = await ctx.db

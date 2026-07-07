@@ -21,6 +21,7 @@ import {
   type Asset,
 } from '@forma360/db/schema';
 import { user } from '@forma360/db/schema';
+import { randomBytes } from 'node:crypto';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
@@ -47,10 +48,21 @@ async function loadAssetOrThrow(db: Db, tenantId: string, assetId: string): Prom
 
 /** Generates a short random QR token (12 uppercase alphanumeric chars). */
 function generateQrToken(): string {
+  // CSPRNG, not Math.random — QR tokens are printed on physical assets and
+  // must stay unguessable if a public "resolve by QR" endpoint is ever added.
+  // Rejection sampling (bytes < 252 = 36*7) keeps the 36-char alphabet
+  // perfectly uniform (no modulo bias).
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  return Array.from({ length: 12 })
-    .map(() => chars[Math.floor(Math.random() * chars.length)] ?? 'A')
-    .join('');
+  const out: string[] = [];
+  while (out.length < 12) {
+    for (const b of randomBytes(16)) {
+      if (b < 252) {
+        out.push(chars[b % 36] ?? 'A');
+        if (out.length === 12) break;
+      }
+    }
+  }
+  return out.join('');
 }
 
 const createInput = z.object({
