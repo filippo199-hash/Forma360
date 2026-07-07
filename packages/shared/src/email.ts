@@ -16,6 +16,43 @@ import { Resend } from 'resend';
 import { z } from 'zod';
 import type { Logger } from './logger';
 
+// Email templates are statically imported into a map. A variable dynamic
+// import (`import(../../i18n/emails/en/${key}.json)`) cannot be analysed by
+// bundlers (Vite/Next) because the path escapes the package with `../../` —
+// which broke CI's vitest transform and would break the serverless bundle.
+// The template set is small + finite, so a static map is the robust choice.
+import headsUpReminder from '../../i18n/emails/en/heads-up-reminder.json';
+import inspectionNotify from '../../i18n/emails/en/inspection-notify.json';
+import invite from '../../i18n/emails/en/invite.json';
+import issueCreated from '../../i18n/emails/en/issue-created.json';
+import maintenanceReminder from '../../i18n/emails/en/maintenance-reminder.json';
+import observationCriticalAlert from '../../i18n/emails/en/observation-critical-alert.json';
+import observationNotification from '../../i18n/emails/en/observation-notification.json';
+import otp from '../../i18n/emails/en/otp.json';
+import passwordReset from '../../i18n/emails/en/password-reset.json';
+import requestToJoin from '../../i18n/emails/en/request-to-join.json';
+import scheduleReminder from '../../i18n/emails/en/schedule-reminder.json';
+import signatureWorkflowComplete from '../../i18n/emails/en/signature-workflow-complete.json';
+import signatureWorkflowRequest from '../../i18n/emails/en/signature-workflow-request.json';
+import verification from '../../i18n/emails/en/verification.json';
+
+const EMAIL_TEMPLATES: Record<string, unknown> = {
+  'heads-up-reminder': headsUpReminder,
+  'inspection-notify': inspectionNotify,
+  invite,
+  'issue-created': issueCreated,
+  'maintenance-reminder': maintenanceReminder,
+  'observation-critical-alert': observationCriticalAlert,
+  'observation-notification': observationNotification,
+  otp,
+  'password-reset': passwordReset,
+  'request-to-join': requestToJoin,
+  'schedule-reminder': scheduleReminder,
+  'signature-workflow-complete': signatureWorkflowComplete,
+  'signature-workflow-request': signatureWorkflowRequest,
+  verification,
+};
+
 // ─── Public types ───────────────────────────────────────────────────────────
 
 /**
@@ -67,11 +104,12 @@ const templateSchema = z.object({
  * Dynamic import so the JSON files are not pulled into every bundle that
  * imports @forma360/shared/email.
  */
-export const defaultTemplateLoader: TemplateLoader = async (kind) => {
-  const mod = await import(`../../i18n/emails/en/${kind}.json`, {
-    with: { type: 'json' },
-  });
-  return templateSchema.parse(mod.default);
+export const defaultTemplateLoader: TemplateLoader = (kind) => {
+  const tpl = EMAIL_TEMPLATES[kind];
+  if (tpl === undefined) {
+    return Promise.reject(new Error(`Unknown email template: ${kind}`));
+  }
+  return Promise.resolve(templateSchema.parse(tpl));
 };
 
 /** Render a template into the subject + plaintext body that we send. */
@@ -121,12 +159,12 @@ export type SendTemplatedEmail = (email: TemplatedEmail) => Promise<DeliveryResu
  */
 export type TemplatedTemplateLoader = (key: string) => Promise<EmailTemplate>;
 
-export const defaultTemplatedTemplateLoader: TemplatedTemplateLoader = async (key) => {
-  // Dynamic-import the JSON the same way the legacy loader does.
-  const mod = await import(`../../i18n/emails/en/${key}.json`, {
-    with: { type: 'json' },
-  });
-  return templateSchema.parse(mod.default);
+export const defaultTemplatedTemplateLoader: TemplatedTemplateLoader = (key) => {
+  const tpl = EMAIL_TEMPLATES[key];
+  if (tpl === undefined) {
+    return Promise.reject(new Error(`Unknown email template: ${key}`));
+  }
+  return Promise.resolve(templateSchema.parse(tpl));
 };
 
 /**
