@@ -142,41 +142,42 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forma360
 
+      - name: Prepare env
+        # Both `next build` (page-data eval) and `next start` (Playwright boot)
+        # load apps/web/.env; shell `env:` vars don't reach next build's eval.
+        # DB/Redis point at this job's service containers; the rest are fake.
+        run: |
+          cat > apps/web/.env <<'ENVEOF'
+          SKIP_ENV_VALIDATION=1
+          APP_URL=http://localhost:3000
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/forma360
+          REDIS_URL=redis://localhost:6379
+          BETTER_AUTH_SECRET=ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
+          BETTER_AUTH_URL=http://localhost:3000
+          R2_ACCOUNT_ID=ci
+          R2_ACCESS_KEY_ID=ci
+          R2_SECRET_ACCESS_KEY=ci
+          R2_BUCKET=ci
+          R2_PUBLIC_URL=https://r2.example.com
+          RESEND_API_KEY=ci
+          RESEND_FROM=noreply@example.com
+          EMAIL_DELIVERY=resend
+          RENDER_SHARED_SECRET=ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
+          ANTHROPIC_API_KEY=ci-fake-anthropic-key
+          ENVEOF
+
       - name: Build web app
         run: pnpm --filter @forma360/web build
         env:
           NODE_ENV: production
-          APP_URL: http://localhost:3000
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forma360
-          REDIS_URL: redis://localhost:6379
-          BETTER_AUTH_SECRET: ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
-          BETTER_AUTH_URL: http://localhost:3000
-          R2_ACCOUNT_ID: ci
-          R2_ACCESS_KEY_ID: ci
-          R2_SECRET_ACCESS_KEY: ci
-          R2_BUCKET: ci
-          R2_PUBLIC_URL: https://r2.example.com
-          RESEND_API_KEY: ci
-          RESEND_FROM: noreply@example.com
-          EMAIL_DELIVERY: resend
 
       - name: Run Playwright
+        # Env comes from apps/web/.env (written above), which `next start` loads.
+        # Note: EMAIL_DELIVERY=console is refused under NODE_ENV=production, so
+        # the .env uses resend (no mail is actually sent during the smoke).
         run: pnpm --filter @forma360/web test:e2e
         env:
           NODE_ENV: production
-          APP_URL: http://localhost:3000
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forma360
-          REDIS_URL: redis://localhost:6379
-          BETTER_AUTH_SECRET: ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
-          BETTER_AUTH_URL: http://localhost:3000
-          R2_ACCOUNT_ID: ci
-          R2_ACCESS_KEY_ID: ci
-          R2_SECRET_ACCESS_KEY: ci
-          R2_BUCKET: ci
-          R2_PUBLIC_URL: https://r2.example.com
-          RESEND_API_KEY: ci
-          RESEND_FROM: noreply@example.com
-          EMAIL_DELIVERY: console
 
       - name: Upload Playwright report
         if: always()
