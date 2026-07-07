@@ -19,8 +19,10 @@ test('editor route returns an OK response', async ({ page }) => {
   expect(response?.ok()).toBeTruthy();
 });
 
-test('sign-in page is reachable after visiting templates', async ({ page }) => {
-  await page.goto('/en/templates');
-  // Anonymous → redirected to a locale root that renders sign-in card.
-  await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
+test('anonymous visit to /en/templates is bounced by the auth gate', async ({ page }) => {
+  const response = await page.goto('/en/templates');
+  expect(response?.ok()).toBeTruthy();
+  // The layout redirects an anonymous caller to the locale landing — the key
+  // signal is that it does NOT stay on the protected /templates route.
+  await expect(page).toHaveURL(/\/en\/?$/);
 });
