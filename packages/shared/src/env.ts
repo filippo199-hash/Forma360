@@ -165,6 +165,13 @@ export class EnvValidationError extends Error {
 export function parseServerEnv(input: Record<string, string | undefined> = process.env): ServerEnv {
   const result = serverSchema.safeParse(input);
   if (!result.success) {
+    // `next build` collects page data by importing route modules, which forces
+    // this parse — but the build box (CI) has none of the runtime secrets.
+    // `SKIP_ENV_VALIDATION` lets the build compile without them; it is NEVER
+    // set on a real dev/prod boot, so runtime validation stays strict.
+    if (input['SKIP_ENV_VALIDATION']) {
+      return input as unknown as ServerEnv;
+    }
     throw new EnvValidationError('server', result.error);
   }
   return result.data;

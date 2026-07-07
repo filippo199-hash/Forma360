@@ -48,6 +48,15 @@ describe('parseServerEnv', () => {
     }
   });
 
+  it('SKIP_ENV_VALIDATION bypasses strict validation (for `next build`)', () => {
+    // A build box has no runtime secrets. With the flag set, an incomplete env
+    // must NOT throw — the build only needs the module to load.
+    const incomplete = { NODE_ENV: 'production', SKIP_ENV_VALIDATION: '1' };
+    expect(() => parseServerEnv(incomplete)).not.toThrow();
+    // Without the flag, the same incomplete env still throws.
+    expect(() => parseServerEnv({ NODE_ENV: 'production' })).toThrow(EnvValidationError);
+  });
+
   it('rejects an invalid URL', () => {
     expect(() => parseServerEnv({ ...validServerEnv, APP_URL: 'not-a-url' })).toThrow(/APP_URL/);
   });

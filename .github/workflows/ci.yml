@@ -56,8 +56,14 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          # Build needs every env var the app parses at boot. We use fake values
-          # so no real service is contacted during `next build`.
+          # `next build` collects page data by importing route modules, which
+          # forces the strict env parse. The build box has no real secrets, and
+          # no client is constructed at import time (Anthropic/R2/etc. are built
+          # lazily inside handlers), so SKIP_ENV_VALIDATION lets the build
+          # compile without them. Runtime (dev/prod) never sets this flag, so
+          # validation stays strict there. The fake values below remain for the
+          # handful of vars read at build time.
+          SKIP_ENV_VALIDATION: '1'
           NODE_ENV: production
           APP_URL: http://localhost:3000
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci
