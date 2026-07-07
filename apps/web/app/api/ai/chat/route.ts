@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '../../../../src/server/auth';
 import { type AgentEvent, runAiAgentTurn } from '../../../../src/server/ai-agent';
+import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
 
 const bodySchema = z.object({
   conversationId: z.string().length(26).nullable().optional(),
@@ -29,6 +30,10 @@ export async function POST(request: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  // Cap AI token spend per user (Anthropic cost DoS control).
+  const rl = await rateLimit(`ai:chat:${userId}`, { limit: 30, windowSec: 60 });
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
 
   const body = bodySchema.safeParse(await request.json());
   if (!body.success) {

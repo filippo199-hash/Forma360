@@ -126,6 +126,21 @@ export function createAuth(deps: AuthDeps) {
       },
     },
 
+    // Rate limiting for the auth endpoints, backed by the Redis secondary
+    // storage so it holds across instances. The global default caps brute
+    // force / enumeration; the custom rule throttles OTP *sending* so an
+    // attacker can't mail-bomb an address or churn sign-ups.
+    rateLimit: {
+      enabled: true,
+      window: 60,
+      max: 30,
+      storage: 'secondary-storage',
+      customRules: {
+        '/email-otp/send-verification-otp': { window: 300, max: 5 },
+        '/sign-up/email': { window: 3600, max: 10 },
+      },
+    },
+
     // Declare the Forma360 extension to the user table so the inferred
     // session type exposes `session.user.tenantId` without a manual cast.
     // Matches the column added in packages/db/src/schema/auth.ts.

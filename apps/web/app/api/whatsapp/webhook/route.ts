@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { aiConversations, user, whatsappOptOuts } from '@forma360/db/schema';
 import { type AgentImage, SUPPORTED_IMAGE_MEDIA_TYPES } from '../../../../src/server/agent-tools';
 import { runAiAgentTurn } from '../../../../src/server/ai-agent';
+import { rateLimit } from '../../../../src/server/rate-limit';
 import { db } from '../../../../src/server/db';
 import { env } from '../../../../src/server/env';
 import { logger } from '../../../../src/server/logger';
@@ -292,6 +293,14 @@ async function routeMessage(m: InboundMessage): Promise<void> {
   // Honour an existing opt-out: send nothing at all until they text START.
   if (await isOptedOut(from)) {
     log.info({ from, type: m.type }, 'Suppressed message from opted-out sender');
+    return;
+  }
+
+  // Per-sender flood cap — a looping sender must not be able to drive
+  // unbounded Anthropic/OpenAI spend. Drop silently past the limit.
+  const rl = await rateLimit(`wa:${from}`, { limit: 15, windowSec: 60 });
+  if (!rl.ok) {
+    log.warn({ from }, 'WhatsApp sender rate-limited; dropping message');
     return;
   }
 

@@ -5,6 +5,7 @@ import {
   type TemplateAgentEvent,
   runTemplateAgentTurn,
 } from '../../../../src/server/template-agent';
+import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
 
 const bodySchema = z.object({
   messages: z
@@ -38,6 +39,11 @@ export async function POST(request: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  // Template generation runs Opus 4.8 with web search — the most expensive
+  // AI path. Cap it tightly per user.
+  const rl = await rateLimit(`ai:template-chat:${session.user.id}`, { limit: 10, windowSec: 300 });
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
 
   const body = bodySchema.safeParse(await request.json());
   if (!body.success) {

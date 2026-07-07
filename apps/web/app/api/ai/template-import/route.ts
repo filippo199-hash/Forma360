@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { auth } from '../../../../src/server/auth';
 import { convertFileToSpec } from '../../../../src/server/template-import';
+import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
 
 const MAX_BYTES = 20 * 1024 * 1024; // 20 MB
 
@@ -13,6 +14,10 @@ export async function POST(request: Request) {
   if (typeof tenantId !== 'string') {
     return Response.json({ error: 'No tenant' }, { status: 403 });
   }
+
+  // A 20 MB file fed to Opus — cap per user.
+  const rl = await rateLimit(`ai:template-import:${session.user.id}`, { limit: 5, windowSec: 300 });
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
 
   let file: File | null = null;
   try {
