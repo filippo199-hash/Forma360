@@ -53,31 +53,38 @@ jobs:
       - name: Test (ESLint rules)
         run: pnpm test:eslint-rules
 
+      - name: Prepare build env
+        # `next build` collects page data by importing every route module, which
+        # forces the strict server-env parse. Next loads `.env` files into
+        # process.env for that eval, but shell `env:` vars are NOT visible to it
+        # — so the fake values must go in a .env file, not a step env block. No
+        # real service is contacted (Anthropic/R2 clients are built lazily inside
+        # handlers). Railway builds with the real vars; this file is CI-only and
+        # gitignored. SKIP_ENV_VALIDATION is a belt-and-braces bypass.
+        run: |
+          cat > apps/web/.env <<'ENVEOF'
+          SKIP_ENV_VALIDATION=1
+          APP_URL=http://localhost:3000
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ci
+          REDIS_URL=redis://localhost:6379
+          BETTER_AUTH_SECRET=ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
+          BETTER_AUTH_URL=http://localhost:3000
+          R2_ACCOUNT_ID=ci
+          R2_ACCESS_KEY_ID=ci
+          R2_SECRET_ACCESS_KEY=ci
+          R2_BUCKET=ci
+          R2_PUBLIC_URL=https://r2.example.com
+          RESEND_API_KEY=ci
+          RESEND_FROM=noreply@example.com
+          EMAIL_DELIVERY=resend
+          RENDER_SHARED_SECRET=ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
+          ANTHROPIC_API_KEY=ci-fake-anthropic-key
+          ENVEOF
+
       - name: Build
         run: pnpm build
         env:
-          # `next build` collects page data by importing route modules, which
-          # forces the strict env parse. The build box has no real secrets, and
-          # no client is constructed at import time (Anthropic/R2/etc. are built
-          # lazily inside handlers), so SKIP_ENV_VALIDATION lets the build
-          # compile without them. Runtime (dev/prod) never sets this flag, so
-          # validation stays strict there. The fake values below remain for the
-          # handful of vars read at build time.
-          SKIP_ENV_VALIDATION: '1'
           NODE_ENV: production
-          APP_URL: http://localhost:3000
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci
-          REDIS_URL: redis://localhost:6379
-          BETTER_AUTH_SECRET: ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
-          BETTER_AUTH_URL: http://localhost:3000
-          R2_ACCOUNT_ID: ci
-          R2_ACCESS_KEY_ID: ci
-          R2_SECRET_ACCESS_KEY: ci
-          R2_BUCKET: ci
-          R2_PUBLIC_URL: https://r2.example.com
-          RESEND_API_KEY: ci
-          RESEND_FROM: noreply@example.com
-          EMAIL_DELIVERY: resend
 
   e2e:
     name: E2E (Playwright)
