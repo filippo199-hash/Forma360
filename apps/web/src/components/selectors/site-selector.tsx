@@ -115,7 +115,9 @@ export function SiteSelector({
   const flat = needle.length > 0 || viewAll;
   const currentSite = level !== null ? byId.get(level) : undefined;
 
-  const selectedSites = value.map((id) => byId.get(id)).filter((s): s is SiteLite => s !== undefined);
+  const selectedSites = value
+    .map((id) => byId.get(id))
+    .filter((s): s is SiteLite => s !== undefined);
   const triggerText =
     selectedSites.length === 0
       ? placeholder

@@ -67,7 +67,6 @@ When you list or reference an entity (inspection, observation, action, asset, do
 - heads-up: /heads-up/{id}
 Do not print raw ids in the text — put the id only inside the link target. Example table row: | [Full service — car 1](/actions/01ABCDEF...) | Medium | 18 Jun 2027 |`;
 
-
 interface AgentToolCtx {
   tenantId: string;
   /** Authoritative tRPC caller — enforces permissions + reuses all real logic. */
@@ -93,7 +92,6 @@ const READ_TOOL_PERMISSION: Partial<Record<ToolName, PermissionKey>> = {
   list_documents: 'documents.view',
   list_schedules: 'templates.schedules.manage',
 };
-
 
 async function executeTool(
   name: ToolName,

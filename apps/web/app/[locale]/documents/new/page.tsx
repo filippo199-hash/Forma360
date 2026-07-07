@@ -77,10 +77,8 @@ export default function DocumentNewPage() {
 
   // Data queries
   const utils = trpc.useUtils();
-  const { data: folders = [], isLoading: foldersLoading } =
-    trpc.documentFolders.list.useQuery({});
-  const { data: labels = [], isLoading: labelsLoading } =
-    trpc.documentLabels.list.useQuery();
+  const { data: folders = [], isLoading: foldersLoading } = trpc.documentFolders.list.useQuery({});
+  const { data: labels = [], isLoading: labelsLoading } = trpc.documentLabels.list.useQuery();
   const { data: usersData, isLoading: usersLoading } = trpc.users.list.useQuery({});
   const users = usersData?.users ?? [];
   const { data: groups = [], isLoading: groupsLoading } = trpc.groups.list.useQuery();
@@ -102,8 +100,7 @@ export default function DocumentNewPage() {
       toast.success(t('successToast'));
       router.push(`/${locale}/documents/${documentId}`);
     },
-    onError: (err) =>
-      toast.error(err.message.length > 0 ? err.message : t('errorToast')),
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('errorToast')),
   });
 
   function submitNewLabel() {
@@ -188,13 +185,9 @@ export default function DocumentNewPage() {
       startDate: startDate.length > 0 ? new Date(startDate).toISOString() : null,
       expiresAt: expiresAt.length > 0 ? new Date(expiresAt).toISOString() : null,
       responsibleUserId:
-        responsibleType === 'user' && responsibleUserId.length > 0
-          ? responsibleUserId
-          : null,
+        responsibleType === 'user' && responsibleUserId.length > 0 ? responsibleUserId : null,
       responsibleGroupId:
-        responsibleType === 'group' && responsibleGroupId.length > 0
-          ? responsibleGroupId
-          : null,
+        responsibleType === 'group' && responsibleGroupId.length > 0 ? responsibleGroupId : null,
       reminderDays,
       freshnessDays: parsed !== undefined && !isNaN(parsed) ? parsed : undefined,
     });
@@ -231,9 +224,7 @@ export default function DocumentNewPage() {
               {isUploading ? (
                 <div className="flex flex-col items-center gap-2">
                   <Skeleton className="h-8 w-8 rounded-full" />
-                  <span className="text-sm text-muted-foreground">
-                    {t('uploadingText')}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{t('uploadingText')}</span>
                 </div>
               ) : (
                 <>
@@ -386,9 +377,7 @@ export default function DocumentNewPage() {
                           type="button"
                           size="sm"
                           onClick={submitNewLabel}
-                          disabled={
-                            newLabelName.trim().length === 0 || createLabel.isPending
-                          }
+                          disabled={newLabelName.trim().length === 0 || createLabel.isPending}
                         >
                           {t('labelsCreateButton')}
                         </Button>
@@ -519,10 +508,7 @@ export default function DocumentNewPage() {
                 <p className="text-xs text-muted-foreground">{t('reminderDaysHint')}</p>
                 <div className="flex flex-wrap gap-2">
                   {REMINDER_OPTIONS.map((days) => (
-                    <label
-                      key={days}
-                      className="flex cursor-pointer items-center gap-1.5 text-sm"
-                    >
+                    <label key={days} className="flex cursor-pointer items-center gap-1.5 text-sm">
                       <input
                         type="checkbox"
                         checked={reminderDays.includes(days)}
@@ -561,10 +547,7 @@ export default function DocumentNewPage() {
           <Button
             type="submit"
             disabled={
-              uploadedFile === null ||
-              name.trim().length === 0 ||
-              isUploading ||
-              isSubmitting
+              uploadedFile === null || name.trim().length === 0 || isUploading || isSubmitting
             }
           >
             {isSubmitting ? t('uploadingText') : t('uploadButton')}

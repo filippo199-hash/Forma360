@@ -18,15 +18,7 @@
  *   - `invited_by_user_id` is `text` to match `user.id`
  */
 import { sql } from 'drizzle-orm';
-import {
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-  varchar,
-} from 'drizzle-orm/pg-core';
+import { index, jsonb, pgTable, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 import { permissionSets } from './permissions';
 import { tenants } from './tenants';

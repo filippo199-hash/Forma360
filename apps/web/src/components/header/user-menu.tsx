@@ -103,11 +103,7 @@ export function UserMenu({ name, email, locale }: UserMenuProps) {
           ) : (
             <Moon className="h-4 w-4" aria-hidden />
           )}
-          {mounted
-            ? isDark
-              ? t('theme.switchLight')
-              : t('theme.switchDark')
-            : t('theme.toggle')}
+          {mounted ? (isDark ? t('theme.switchLight') : t('theme.switchDark')) : t('theme.toggle')}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
 

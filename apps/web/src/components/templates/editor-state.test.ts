@@ -203,7 +203,10 @@ describe('editorReducer', () => {
   it('duplicatePage remaps in-page references (visibility dependsOn) to the cloned ids', () => {
     const s = initialState();
     const a = makeItem('text');
-    const b = { ...makeItem('text'), visibility: { dependsOn: a.id, operator: 'answered' as const } };
+    const b = {
+      ...makeItem('text'),
+      visibility: { dependsOn: a.id, operator: 'answered' as const },
+    };
     let st = editorReducer(s, {
       type: 'addItem',
       pageId: 'cccccccccccccccccccccccccc',

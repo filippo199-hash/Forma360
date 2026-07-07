@@ -57,8 +57,7 @@ const OPT_IN_KEYWORDS = new Set(['start', 'unstop', 'resume', 'subscribe']);
 
 const OPT_OUT_REPLY =
   "You've been unsubscribed from the Forma360 WhatsApp assistant and won't receive further messages here. Reply START at any time to resume.";
-const OPT_IN_REPLY =
-  "You're resubscribed to the Forma360 WhatsApp assistant. How can I help?";
+const OPT_IN_REPLY = "You're resubscribed to the Forma360 WhatsApp assistant. How can I help?";
 
 /** Normalise to the first word, lowercased, letters only ("STOP." → "stop"). */
 function firstKeyword(text: string): string {

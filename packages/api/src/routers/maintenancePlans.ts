@@ -8,7 +8,12 @@
  *   - awaiting_first_reading: usage plan with no reading yet (AS-E07)
  *   - on_schedule | approaching | overdue — calculated at query time
  */
-import { assetReadings, assets, maintenancePlanAssets, maintenancePlans } from '@forma360/db/schema';
+import {
+  assetReadings,
+  assets,
+  maintenancePlanAssets,
+  maintenancePlans,
+} from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, isNull } from 'drizzle-orm';
@@ -23,11 +28,7 @@ import type { Database } from '@forma360/db/client';
  * tenantId of its own, so any mutation matching a link row by (planId,assetId)
  * must first prove the parent plan is in-tenant.
  */
-async function assertPlanInTenant(
-  db: Database,
-  tenantId: string,
-  planId: string,
-): Promise<void> {
+async function assertPlanInTenant(db: Database, tenantId: string, planId: string): Promise<void> {
   const rows = await db
     .select({ id: maintenancePlans.id })
     .from(maintenancePlans)
@@ -48,7 +49,10 @@ const createInput = z.object({
   intervalUsage: z.number().min(0).optional(),
   usageField: z.string().max(200).optional(),
   usageUnit: z.string().max(50).default(''),
-  lastServiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  lastServiceDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   lastServiceValue: z.number().optional(),
   notificationDaysBefore: z.array(z.number().int().min(0)).default([]),
 });
@@ -62,7 +66,11 @@ const updateInput = z.object({
   intervalUsage: z.number().min(0).nullable().optional(),
   usageField: z.string().max(200).nullable().optional(),
   usageUnit: z.string().max(50).optional(),
-  lastServiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  lastServiceDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
   lastServiceValue: z.number().nullable().optional(),
   notificationDaysBefore: z.array(z.number().int().min(0)).optional(),
 });
@@ -80,7 +88,10 @@ const unlinkAssetInput = z.object({
 const updateServiceInput = z.object({
   planId: z.string().length(26),
   assetId: z.string().length(26),
-  lastServiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  lastServiceDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   lastServiceValue: z.number().optional(),
 });
 
@@ -142,9 +153,7 @@ export const maintenancePlansRouter = router({
   list: tenantProcedure
     .use(requirePermission('assets.view'))
     .input(
-      z
-        .object({ includeArchived: z.boolean().default(false) })
-        .default({ includeArchived: false }),
+      z.object({ includeArchived: z.boolean().default(false) }).default({ includeArchived: false }),
     )
     .query(async ({ ctx, input }) => {
       const where = [eq(maintenancePlans.tenantId, ctx.tenantId)];
@@ -192,66 +201,64 @@ export const maintenancePlansRouter = router({
    * Flat maintenance table: all plan × asset combinations across all plans,
    * with computed status. Used by the /maintenance page.
    */
-  table: tenantProcedure
-    .use(requirePermission('assets.view'))
-    .query(async ({ ctx }) => {
-      const links = await ctx.db
-        .select({
-          planId: maintenancePlanAssets.planId,
-          assetId: maintenancePlanAssets.assetId,
-          assetName: assets.name,
-          lastServiceDate: maintenancePlanAssets.lastServiceDate,
-          lastServiceValue: maintenancePlanAssets.lastServiceValue,
-          planName: maintenancePlans.name,
-          planType: maintenancePlans.planType,
-          intervalDays: maintenancePlans.intervalDays,
-          intervalUsage: maintenancePlans.intervalUsage,
-          usageField: maintenancePlans.usageField,
-          usageUnit: maintenancePlans.usageUnit,
-          notificationDaysBefore: maintenancePlans.notificationDaysBefore,
-        })
-        .from(maintenancePlanAssets)
-        .leftJoin(maintenancePlans, eq(maintenancePlans.id, maintenancePlanAssets.planId))
-        .leftJoin(assets, eq(assets.id, maintenancePlanAssets.assetId))
-        .where(and(eq(maintenancePlans.tenantId, ctx.tenantId), isNull(maintenancePlans.archivedAt)));
+  table: tenantProcedure.use(requirePermission('assets.view')).query(async ({ ctx }) => {
+    const links = await ctx.db
+      .select({
+        planId: maintenancePlanAssets.planId,
+        assetId: maintenancePlanAssets.assetId,
+        assetName: assets.name,
+        lastServiceDate: maintenancePlanAssets.lastServiceDate,
+        lastServiceValue: maintenancePlanAssets.lastServiceValue,
+        planName: maintenancePlans.name,
+        planType: maintenancePlans.planType,
+        intervalDays: maintenancePlans.intervalDays,
+        intervalUsage: maintenancePlans.intervalUsage,
+        usageField: maintenancePlans.usageField,
+        usageUnit: maintenancePlans.usageUnit,
+        notificationDaysBefore: maintenancePlans.notificationDaysBefore,
+      })
+      .from(maintenancePlanAssets)
+      .leftJoin(maintenancePlans, eq(maintenancePlans.id, maintenancePlanAssets.planId))
+      .leftJoin(assets, eq(assets.id, maintenancePlanAssets.assetId))
+      .where(and(eq(maintenancePlans.tenantId, ctx.tenantId), isNull(maintenancePlans.archivedAt)));
 
-      // For each usage-type link, fetch the latest reading.
-      const result = await Promise.all(
-        links.map(async (link) => {
-          let latestReadingValue: string | null = null;
-          if (link.planType === 'usage' && link.usageField !== null) {
-            const readingRows = await ctx.db
-              .select({ value: assetReadings.value })
-              .from(assetReadings)
-              .where(
-                and(
-                  eq(assetReadings.tenantId, ctx.tenantId),
-                  eq(assetReadings.assetId, link.assetId ?? ''),
-                  eq(assetReadings.fieldName, link.usageField ?? ''),
-                ),
-              )
-              .orderBy(desc(assetReadings.capturedAt))
-              .limit(1);
-            latestReadingValue = readingRows[0]?.value ?? null;
-          }
+    // For each usage-type link, fetch the latest reading.
+    const result = await Promise.all(
+      links.map(async (link) => {
+        let latestReadingValue: string | null = null;
+        if (link.planType === 'usage' && link.usageField !== null) {
+          const readingRows = await ctx.db
+            .select({ value: assetReadings.value })
+            .from(assetReadings)
+            .where(
+              and(
+                eq(assetReadings.tenantId, ctx.tenantId),
+                eq(assetReadings.assetId, link.assetId ?? ''),
+                eq(assetReadings.fieldName, link.usageField ?? ''),
+              ),
+            )
+            .orderBy(desc(assetReadings.capturedAt))
+            .limit(1);
+          latestReadingValue = readingRows[0]?.value ?? null;
+        }
 
-          const status = computeMaintenanceStatus({
-            planType: link.planType ?? 'time',
-            intervalDays: link.intervalDays,
-            intervalUsage: link.intervalUsage,
-            usageField: link.usageField,
-            lastServiceDate: link.lastServiceDate,
-            lastServiceValue: link.lastServiceValue,
-            latestReadingValue,
-            notificationDaysBefore: link.notificationDaysBefore,
-          });
+        const status = computeMaintenanceStatus({
+          planType: link.planType ?? 'time',
+          intervalDays: link.intervalDays,
+          intervalUsage: link.intervalUsage,
+          usageField: link.usageField,
+          lastServiceDate: link.lastServiceDate,
+          lastServiceValue: link.lastServiceValue,
+          latestReadingValue,
+          notificationDaysBefore: link.notificationDaysBefore,
+        });
 
-          return { ...link, latestReadingValue, status };
-        }),
-      );
+        return { ...link, latestReadingValue, status };
+      }),
+    );
 
-      return result;
-    }),
+    return result;
+  }),
 
   create: tenantProcedure
     .use(requirePermission('assets.maintenance.manage'))

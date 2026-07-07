@@ -250,7 +250,11 @@ function InstructionEditor({ item }: { item: InstructionItem }) {
       // Clear the optional field. Cast: exactOptionalPropertyTypes forbids an
       // explicit `undefined` in the Item literal, but the reducer/Zod treat a
       // missing/undefined videoUrl identically.
-      dispatch({ type: 'updateItem', itemId: item.id, patch: { videoUrl: undefined } as Partial<Item> });
+      dispatch({
+        type: 'updateItem',
+        itemId: item.id,
+        patch: { videoUrl: undefined } as Partial<Item>,
+      });
       return;
     }
     if (parseVideoEmbed(v) === null) {
@@ -290,7 +294,9 @@ function InstructionEditor({ item }: { item: InstructionItem }) {
                 </span>
                 <button
                   type="button"
-                  onClick={() => patch({ attachments: item.attachments.filter((x) => x.key !== a.key) })}
+                  onClick={() =>
+                    patch({ attachments: item.attachments.filter((x) => x.key !== a.key) })
+                  }
                   className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
                   aria-label={t('removeFile')}
                 >

@@ -184,7 +184,8 @@ export const WHATSAPP_SPOTLIGHT = {
 /** Final call-to-action band. */
 export const CTA = {
   title: 'Bring your whole operation into focus',
-  subtitle: 'Set up your workspace in minutes and put inspections, issues and actions in one place.',
+  subtitle:
+    'Set up your workspace in minutes and put inspections, issues and actions in one place.',
   primary: 'Get started',
   secondary: 'Talk to us',
 } as const;

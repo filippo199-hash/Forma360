@@ -16,38 +16,30 @@ const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 
 const createInput = z.object({
   name: z.string().min(1).max(100),
-  color: z
-    .string()
-    .regex(HEX_COLOR, 'color must be a hex colour like #6366f1')
-    .default('#6366f1'),
+  color: z.string().regex(HEX_COLOR, 'color must be a hex colour like #6366f1').default('#6366f1'),
 });
 
 const updateInput = z.object({
   labelId: z.string().length(26),
   name: z.string().min(1).max(100).optional(),
-  color: z
-    .string()
-    .regex(HEX_COLOR, 'color must be a hex colour like #6366f1')
-    .optional(),
+  color: z.string().regex(HEX_COLOR, 'color must be a hex colour like #6366f1').optional(),
 });
 
 const labelIdInput = z.object({ labelId: z.string().length(26) });
 
 export const documentLabelsRouter = router({
-  list: tenantProcedure
-    .use(requirePermission('documents.view'))
-    .query(async ({ ctx }) => {
-      return ctx.db
-        .select({
-          id: documentLabels.id,
-          name: documentLabels.name,
-          color: documentLabels.color,
-          createdAt: documentLabels.createdAt,
-        })
-        .from(documentLabels)
-        .where(eq(documentLabels.tenantId, ctx.tenantId))
-        .orderBy(asc(documentLabels.name));
-    }),
+  list: tenantProcedure.use(requirePermission('documents.view')).query(async ({ ctx }) => {
+    return ctx.db
+      .select({
+        id: documentLabels.id,
+        name: documentLabels.name,
+        color: documentLabels.color,
+        createdAt: documentLabels.createdAt,
+      })
+      .from(documentLabels)
+      .where(eq(documentLabels.tenantId, ctx.tenantId))
+      .orderBy(asc(documentLabels.name));
+  }),
 
   create: tenantProcedure
     .use(requirePermission('documents.manage'))
@@ -76,12 +68,7 @@ export const documentLabelsRouter = router({
       const rows = await ctx.db
         .select()
         .from(documentLabels)
-        .where(
-          and(
-            eq(documentLabels.tenantId, ctx.tenantId),
-            eq(documentLabels.id, input.labelId),
-          ),
-        )
+        .where(and(eq(documentLabels.tenantId, ctx.tenantId), eq(documentLabels.id, input.labelId)))
         .limit(1);
       if (rows[0] === undefined) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'label-not-found' });
@@ -111,10 +98,7 @@ export const documentLabelsRouter = router({
       await ctx.db
         .delete(documentLabels)
         .where(
-          and(
-            eq(documentLabels.tenantId, ctx.tenantId),
-            eq(documentLabels.id, input.labelId),
-          ),
+          and(eq(documentLabels.tenantId, ctx.tenantId), eq(documentLabels.id, input.labelId)),
         );
       return { ok: true as const };
     }),

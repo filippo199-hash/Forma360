@@ -480,151 +480,153 @@ export default function AssetSettingsPage() {
       {activeTab === 'categories' ? (
         <div className="space-y-6">
           {/* Header */}
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+            </div>
+            {canManage ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowCreate(true);
+                  setNewName('');
+                  setNewDesc('');
+                  setNewFields([]);
+                }}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                {t('newButton')}
+              </Button>
+            ) : null}
           </div>
-          {canManage ? (
-            <Button
-              type="button"
-              onClick={() => {
-                setShowCreate(true);
-                setNewName('');
-                setNewDesc('');
-                setNewFields([]);
-              }}
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              {t('newButton')}
-            </Button>
-          ) : null}
-        </div>
 
-        {/* Create panel */}
-        {showCreate && canManage ? (
-          <Card>
-            <CardContent className="p-5 space-y-5">
-              <h2 className="text-base font-semibold">{t('create.title')}</h2>
+          {/* Create panel */}
+          {showCreate && canManage ? (
+            <Card>
+              <CardContent className="p-5 space-y-5">
+                <h2 className="text-base font-semibold">{t('create.title')}</h2>
 
-              {/* Name + description */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="new-cat-name">
-                    {t('nameLabel')} <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="new-cat-name"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    maxLength={200}
-                    placeholder={t('create.namePlaceholder')}
-                    autoFocus
-                  />
+                {/* Name + description */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="new-cat-name">
+                      {t('nameLabel')} <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="new-cat-name"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      maxLength={200}
+                      placeholder={t('create.namePlaceholder')}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="new-cat-desc">{t('descriptionLabel')}</Label>
+                    <Input
+                      id="new-cat-desc"
+                      value={newDesc}
+                      onChange={(e) => setNewDesc(e.target.value)}
+                      maxLength={5000}
+                      placeholder={t('optionalPlaceholder')}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="new-cat-desc">{t('descriptionLabel')}</Label>
-                  <Input
-                    id="new-cat-desc"
-                    value={newDesc}
-                    onChange={(e) => setNewDesc(e.target.value)}
-                    maxLength={5000}
-                    placeholder={t('optionalPlaceholder')}
-                  />
-                </div>
-              </div>
 
-              {/* Custom fields for new category */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">{t('customFieldsLabel')}</p>
-                  <Button type="button" variant="outline" size="sm" onClick={addNewField}>
-                    <Plus className="mr-1 h-3.5 w-3.5" />
-                    {t('addFieldBtn')}
+                {/* Custom fields for new category */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">{t('customFieldsLabel')}</p>
+                    <Button type="button" variant="outline" size="sm" onClick={addNewField}>
+                      <Plus className="mr-1 h-3.5 w-3.5" />
+                      {t('addFieldBtn')}
+                    </Button>
+                  </div>
+                  {newFields.length > 0 ? (
+                    <div className="space-y-2">
+                      {newFields.map((field, idx) => (
+                        <FieldRow
+                          key={field.id}
+                          field={field}
+                          onChange={(updated) =>
+                            setNewFields((prev) => prev.map((f, i) => (i === idx ? updated : f)))
+                          }
+                          onRemove={() => setNewFields((prev) => prev.filter((_, i) => i !== idx))}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="rounded-lg border border-dashed py-4 text-center text-xs text-muted-foreground">
+                      {t('noNewFieldsYet')}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 border-t pt-4">
+                  <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>
+                    {tCommon('cancel')}
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={create.isPending || newName.trim().length === 0}
+                    onClick={handleCreate}
+                  >
+                    {create.isPending ? (
+                      <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                    ) : null}
+                    {t('create.submitButton')}
                   </Button>
                 </div>
-                {newFields.length > 0 ? (
-                  <div className="space-y-2">
-                    {newFields.map((field, idx) => (
-                      <FieldRow
-                        key={field.id}
-                        field={field}
-                        onChange={(updated) =>
-                          setNewFields((prev) => prev.map((f, i) => (i === idx ? updated : f)))
-                        }
-                        onRemove={() => setNewFields((prev) => prev.filter((_, i) => i !== idx))}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="rounded-lg border border-dashed py-4 text-center text-xs text-muted-foreground">
-                    {t('noNewFieldsYet')}
-                  </p>
-                )}
-              </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
-              <div className="flex justify-end gap-2 border-t pt-4">
-                <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>
-                  {tCommon('cancel')}
-                </Button>
-                <Button
-                  type="button"
-                  disabled={create.isPending || newName.trim().length === 0}
-                  onClick={handleCreate}
-                >
-                  {create.isPending ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}
-                  {t('create.submitButton')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
+          {/* Search */}
+          {!isLoading && types.length > 3 ? (
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('searchPlaceholder')}
+              className="max-w-xs"
+            />
+          ) : null}
 
-        {/* Search */}
-        {!isLoading && types.length > 3 ? (
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('searchPlaceholder')}
-            className="max-w-xs"
-          />
-        ) : null}
-
-        {/* Category list */}
-        {isLoading ? (
-          <Skeleton className="h-40 w-full" />
-        ) : filtered.length === 0 ? (
-          <Card>
-            <CardContent className="py-14 text-center">
-              <p className="text-sm font-medium text-muted-foreground">{t('empty')}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{t('emptySubtitle')}</p>
-              {canManage ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => setShowCreate(true)}
-                >
-                  <Plus className="mr-1 h-4 w-4" />
-                  {t('newButton')}
-                </Button>
-              ) : null}
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="p-0">
-              {filtered.map((tp) => (
-                <CategoryRow
-                  key={tp.id}
-                  type={tp}
-                  canManage={canManage}
-                  onSaved={() => void utils.assetTypes.list.invalidate()}
-                  onArchived={() => void utils.assetTypes.list.invalidate()}
-                />
-              ))}
-            </CardContent>
-          </Card>
-        )}
+          {/* Category list */}
+          {isLoading ? (
+            <Skeleton className="h-40 w-full" />
+          ) : filtered.length === 0 ? (
+            <Card>
+              <CardContent className="py-14 text-center">
+                <p className="text-sm font-medium text-muted-foreground">{t('empty')}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t('emptySubtitle')}</p>
+                {canManage ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => setShowCreate(true)}
+                  >
+                    <Plus className="mr-1 h-4 w-4" />
+                    {t('newButton')}
+                  </Button>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                {filtered.map((tp) => (
+                  <CategoryRow
+                    key={tp.id}
+                    type={tp}
+                    canManage={canManage}
+                    onSaved={() => void utils.assetTypes.list.invalidate()}
+                    onArchived={() => void utils.assetTypes.list.invalidate()}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       ) : null}
     </FocusedPageShell>

@@ -15,12 +15,7 @@ import {
 } from '../../../../src/components/ui/dialog';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '../../../../src/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../../../src/components/ui/sheet';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -162,23 +157,13 @@ export default function GroupsPage() {
                         {t(`mode.${group.membershipMode}`)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {group.description ?? '—'}
-                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{group.description ?? '—'}</td>
                     <td className="flex items-center justify-end gap-1 px-4 py-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setMembersGroupId(group.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => setMembersGroupId(group.id)}>
                         <Users className="mr-1.5 h-3.5 w-3.5" />
                         {t('membersButton')}
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEdit(group)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(group)}>
                         {t('editButton')}
                       </Button>
                       <Button
@@ -266,7 +251,12 @@ export default function GroupsPage() {
       </Dialog>
 
       {/* ── Edit dialog ─────────────────────────────────────────────────── */}
-      <Dialog open={editingGroupId !== null} onOpenChange={(o) => { if (!o) setEditingGroupId(null); }}>
+      <Dialog
+        open={editingGroupId !== null}
+        onOpenChange={(o) => {
+          if (!o) setEditingGroupId(null);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('editTitle')}</DialogTitle>
@@ -315,7 +305,12 @@ export default function GroupsPage() {
       </Dialog>
 
       {/* ── Members sheet ───────────────────────────────────────────────── */}
-      <Sheet open={membersGroupId !== null} onOpenChange={(o) => { if (!o) setMembersGroupId(null); }}>
+      <Sheet
+        open={membersGroupId !== null}
+        onOpenChange={(o) => {
+          if (!o) setMembersGroupId(null);
+        }}
+      >
         <SheetContent className="w-full sm:max-w-lg" side="right">
           <SheetHeader>
             <SheetTitle>

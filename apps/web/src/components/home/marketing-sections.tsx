@@ -77,7 +77,10 @@ export function Modules() {
         {MODULES.map((module) => {
           const Icon = ICONS[module.icon];
           return (
-            <div key={module.title} className="group bg-card p-6 transition-colors hover:bg-accent/40">
+            <div
+              key={module.title}
+              className="group bg-card p-6 transition-colors hover:bg-accent/40"
+            >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
                 <Icon className="h-5 w-5" aria-hidden />
               </span>
@@ -111,10 +114,7 @@ function ChatMockup() {
       {/* Chat body */}
       <div className="space-y-2.5 bg-[#ece5dd] px-3 py-4 dark:bg-[#0b141a]">
         {WHATSAPP_SPOTLIGHT.chat.map((turn, i) => (
-          <div
-            key={i}
-            className={turn.role === 'user' ? 'flex justify-end' : 'flex justify-start'}
-          >
+          <div key={i} className={turn.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
             <p
               className={
                 turn.role === 'user'

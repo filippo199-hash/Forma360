@@ -220,221 +220,225 @@ export default function NewObservationPage() {
   return (
     <FocusedPageShell title={t('title')} backHref={`/${locale}/observations`} width="wide">
       <form onSubmit={onSubmit} className="space-y-6">
-      <Card className="mx-auto max-w-2xl">
-        <CardContent className="space-y-5 p-6">
-          <div className="space-y-1.5">
-            <Label htmlFor="dateOccurred">{t('dateLabel')}</Label>
-            <Input
-              id="dateOccurred"
-              type="datetime-local"
-              value={dateOccurred}
-              onChange={(e) => setDateOccurred(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="category">{t('categoryLabel')}</Label>
-            <select
-              id="category"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              required
-              disabled={loadingCategories}
-              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">{t('categoryPlaceholder')}</option>
-              {(categories ?? []).map((c) => (
-                <option key={c.id} value={c.id} disabled={c.archivedAt !== null}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {categorySelected ? (
-            <div className="space-y-5 border-t pt-5">
-              <div className="space-y-1.5">
-                <Label htmlFor="title">{t('titleLabel')}</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  maxLength={MAX_TITLE}
-                  required
-                />
-              </div>
-
-              {showDescription ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="description">{t('descriptionLabel')}</Label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={4}
-                    maxLength={MAX_DESCRIPTION}
-                  />
-                  <p className="text-right text-xs text-muted-foreground">
-                    {t('descriptionCounter', { count: description.length })}
-                  </p>
-                </div>
-              ) : null}
-
-              {showSite ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="site">{t('siteLabel')}</Label>
-                  <SiteSelector
-                    value={siteId !== '' ? [siteId] : []}
-                    onChange={(next) => setSiteId(next[0] ?? '')}
-                    multiple={false}
-                  />
-                </div>
-              ) : null}
-
-              {showMedia ? (
-                <div className="space-y-1.5">
-                  <Label>{t('mediaHeading')}</Label>
-                  <div className="rounded-md border border-dashed bg-muted/30 p-4 text-center">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept="image/*,video/*,application/pdf"
-                      className="hidden"
-                      onChange={(e) => void handleFiles(e.target.files)}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={uploading}
-                      className="mt-1"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <ImageIcon className="mr-1 h-4 w-4" />
-                      {uploading ? tAttachments('uploading') : t('mediaButton')}
-                    </Button>
-                  </div>
-                  {pendingFiles.length > 0 ? (
-                    <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {pendingFiles.map((f) => (
-                        <li key={f.storageKey} className="group relative">
-                          <div className="relative aspect-square overflow-hidden rounded-md border bg-muted">
-                            {f.mimeType.startsWith('image/') ? (
-                              <img
-                                src={`/api/files?key=${encodeURIComponent(f.storageKey)}`}
-                                alt={f.filename}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
-                                <ImageIcon className="h-6 w-6" />
-                                <span className="max-w-full truncate px-1 text-xs">{f.filename}</span>
-                              </div>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            aria-label={tAttachments('deleteAction')}
-                            className="absolute right-1 top-1 rounded-full bg-background/80 p-0.5 text-muted-foreground opacity-0 shadow transition-opacity hover:text-destructive group-hover:opacity-100"
-                            onClick={() =>
-                              setPendingFiles((prev) =>
-                                prev.filter((x) => x.storageKey !== f.storageKey),
-                              )
-                            }
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                          {f.mimeType.startsWith('image/') ? (
-                            <p className="mt-0.5 truncate text-xs text-muted-foreground">{f.filename}</p>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {showLocation ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="locationAddress">{t('locationLabel')}</Label>
-                  <Input
-                    id="locationAddress"
-                    value={locationAddress}
-                    onChange={(e) => setLocationAddress(e.target.value)}
-                    maxLength={MAX_LOCATION}
-                  />
-                </div>
-              ) : null}
-
-              {customQuestions.length > 0 ? (
-                <div className="space-y-3 border-t pt-5">
-                  <h2 className="text-sm font-medium">{t('customQuestionsHeading')}</h2>
-                  {customQuestions.map((q) => (
-                    <div key={q.id} className="space-y-1.5">
-                      <Label htmlFor={`cq-${q.id}`}>
-                        {q.prompt}
-                        {q.required ? ' *' : ''}
-                      </Label>
-                      {q.type === 'multipleChoice' && q.options !== undefined ? (
-                        <select
-                          id={`cq-${q.id}`}
-                          value={customQuestionResponses[q.id] ?? ''}
-                          onChange={(e) =>
-                            setCustomQuestionResponses((prev) => ({
-                              ...prev,
-                              [q.id]: e.target.value,
-                            }))
-                          }
-                          required={q.required}
-                          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                          <option value="">—</option>
-                          {q.options.map((o, i) => (
-                            <option key={i} value={o}>
-                              {o}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <Textarea
-                          id={`cq-${q.id}`}
-                          value={customQuestionResponses[q.id] ?? ''}
-                          onChange={(e) =>
-                            setCustomQuestionResponses((prev) => ({
-                              ...prev,
-                              [q.id]: e.target.value,
-                            }))
-                          }
-                          required={q.required}
-                          rows={3}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {assetsList !== undefined && assetsList.length > 0 ? (
-                <div className="space-y-1.5">
-                  <Label>{t('assetsLabel')}</Label>
-                  <ObsAssetPicker
-                    parents={assetsList}
-                    selectedIds={selectedAssetIds}
-                    onChange={setSelectedAssetIds}
-                  />
-                </div>
-              ) : null}
-
-              <div className="flex items-center justify-end gap-2 border-t pt-5">
-                <Button type="submit" disabled={!canSubmit}>
-                  {t('submitButton')}
-                </Button>
-              </div>
+        <Card className="mx-auto max-w-2xl">
+          <CardContent className="space-y-5 p-6">
+            <div className="space-y-1.5">
+              <Label htmlFor="dateOccurred">{t('dateLabel')}</Label>
+              <Input
+                id="dateOccurred"
+                type="datetime-local"
+                value={dateOccurred}
+                onChange={(e) => setDateOccurred(e.target.value)}
+              />
             </div>
-          ) : null}
-        </CardContent>
-      </Card>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="category">{t('categoryLabel')}</Label>
+              <select
+                id="category"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                required
+                disabled={loadingCategories}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t('categoryPlaceholder')}</option>
+                {(categories ?? []).map((c) => (
+                  <option key={c.id} value={c.id} disabled={c.archivedAt !== null}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {categorySelected ? (
+              <div className="space-y-5 border-t pt-5">
+                <div className="space-y-1.5">
+                  <Label htmlFor="title">{t('titleLabel')}</Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    maxLength={MAX_TITLE}
+                    required
+                  />
+                </div>
+
+                {showDescription ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="description">{t('descriptionLabel')}</Label>
+                    <Textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={4}
+                      maxLength={MAX_DESCRIPTION}
+                    />
+                    <p className="text-right text-xs text-muted-foreground">
+                      {t('descriptionCounter', { count: description.length })}
+                    </p>
+                  </div>
+                ) : null}
+
+                {showSite ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="site">{t('siteLabel')}</Label>
+                    <SiteSelector
+                      value={siteId !== '' ? [siteId] : []}
+                      onChange={(next) => setSiteId(next[0] ?? '')}
+                      multiple={false}
+                    />
+                  </div>
+                ) : null}
+
+                {showMedia ? (
+                  <div className="space-y-1.5">
+                    <Label>{t('mediaHeading')}</Label>
+                    <div className="rounded-md border border-dashed bg-muted/30 p-4 text-center">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*,video/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => void handleFiles(e.target.files)}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={uploading}
+                        className="mt-1"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImageIcon className="mr-1 h-4 w-4" />
+                        {uploading ? tAttachments('uploading') : t('mediaButton')}
+                      </Button>
+                    </div>
+                    {pendingFiles.length > 0 ? (
+                      <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {pendingFiles.map((f) => (
+                          <li key={f.storageKey} className="group relative">
+                            <div className="relative aspect-square overflow-hidden rounded-md border bg-muted">
+                              {f.mimeType.startsWith('image/') ? (
+                                <img
+                                  src={`/api/files?key=${encodeURIComponent(f.storageKey)}`}
+                                  alt={f.filename}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+                                  <ImageIcon className="h-6 w-6" />
+                                  <span className="max-w-full truncate px-1 text-xs">
+                                    {f.filename}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              aria-label={tAttachments('deleteAction')}
+                              className="absolute right-1 top-1 rounded-full bg-background/80 p-0.5 text-muted-foreground opacity-0 shadow transition-opacity hover:text-destructive group-hover:opacity-100"
+                              onClick={() =>
+                                setPendingFiles((prev) =>
+                                  prev.filter((x) => x.storageKey !== f.storageKey),
+                                )
+                              }
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                            {f.mimeType.startsWith('image/') ? (
+                              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                {f.filename}
+                              </p>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {showLocation ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="locationAddress">{t('locationLabel')}</Label>
+                    <Input
+                      id="locationAddress"
+                      value={locationAddress}
+                      onChange={(e) => setLocationAddress(e.target.value)}
+                      maxLength={MAX_LOCATION}
+                    />
+                  </div>
+                ) : null}
+
+                {customQuestions.length > 0 ? (
+                  <div className="space-y-3 border-t pt-5">
+                    <h2 className="text-sm font-medium">{t('customQuestionsHeading')}</h2>
+                    {customQuestions.map((q) => (
+                      <div key={q.id} className="space-y-1.5">
+                        <Label htmlFor={`cq-${q.id}`}>
+                          {q.prompt}
+                          {q.required ? ' *' : ''}
+                        </Label>
+                        {q.type === 'multipleChoice' && q.options !== undefined ? (
+                          <select
+                            id={`cq-${q.id}`}
+                            value={customQuestionResponses[q.id] ?? ''}
+                            onChange={(e) =>
+                              setCustomQuestionResponses((prev) => ({
+                                ...prev,
+                                [q.id]: e.target.value,
+                              }))
+                            }
+                            required={q.required}
+                            className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          >
+                            <option value="">—</option>
+                            {q.options.map((o, i) => (
+                              <option key={i} value={o}>
+                                {o}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Textarea
+                            id={`cq-${q.id}`}
+                            value={customQuestionResponses[q.id] ?? ''}
+                            onChange={(e) =>
+                              setCustomQuestionResponses((prev) => ({
+                                ...prev,
+                                [q.id]: e.target.value,
+                              }))
+                            }
+                            required={q.required}
+                            rows={3}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {assetsList !== undefined && assetsList.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <Label>{t('assetsLabel')}</Label>
+                    <ObsAssetPicker
+                      parents={assetsList}
+                      selectedIds={selectedAssetIds}
+                      onChange={setSelectedAssetIds}
+                    />
+                  </div>
+                ) : null}
+
+                <div className="flex items-center justify-end gap-2 border-t pt-5">
+                  <Button type="submit" disabled={!canSubmit}>
+                    {t('submitButton')}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
       </form>
     </FocusedPageShell>
   );
@@ -468,7 +472,13 @@ type ParentAsset = {
   parentId: string | null;
   typeId: string | null;
   typeName: string | null;
-  children: Array<{ id: string; name: string; parentId: string | null; typeId: string | null; typeName: string | null }>;
+  children: Array<{
+    id: string;
+    name: string;
+    parentId: string | null;
+    typeId: string | null;
+    typeName: string | null;
+  }>;
 };
 
 function ObsAssetPicker({
@@ -494,7 +504,8 @@ function ObsAssetPicker({
   function toggleParent(parent: ParentAsset) {
     const next = new Set(selectedIds);
     const allChildIds = parent.children.map((c) => c.id);
-    const allSelected = selectedIds.has(parent.id) && allChildIds.every((cid) => selectedIds.has(cid));
+    const allSelected =
+      selectedIds.has(parent.id) && allChildIds.every((cid) => selectedIds.has(cid));
     if (allSelected) {
       next.delete(parent.id);
       for (const cid of allChildIds) next.delete(cid);
@@ -544,7 +555,9 @@ function ObsAssetPicker({
                   onClick={() => toggleExpand(parent.id)}
                   className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                  <ChevronRight
+                    className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                  />
                   <span>{parent.children.length}</span>
                 </button>
               )}
@@ -552,7 +565,10 @@ function ObsAssetPicker({
             {isExpanded && parent.children.length > 0 && (
               <div className="ml-6 space-y-0.5 border-l pl-3 pt-0.5">
                 {parent.children.map((child) => (
-                  <div key={child.id} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50">
+                  <div
+                    key={child.id}
+                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50"
+                  >
                     <Checkbox
                       checked={selectedIds.has(child.id)}
                       onCheckedChange={() => toggleChild(child.id)}

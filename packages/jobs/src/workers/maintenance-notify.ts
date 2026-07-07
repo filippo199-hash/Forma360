@@ -51,10 +51,7 @@ export function createMaintenanceNotifyHandler(deps: MaintenanceNotifyDeps) {
       })
       .from(maintenancePlanAssets)
       .where(
-        and(
-          eq(maintenancePlanAssets.planId, planId),
-          eq(maintenancePlanAssets.assetId, assetId),
-        ),
+        and(eq(maintenancePlanAssets.planId, planId), eq(maintenancePlanAssets.assetId, assetId)),
       )
       .limit(1);
 
@@ -94,7 +91,8 @@ export function createMaintenanceNotifyHandler(deps: MaintenanceNotifyDeps) {
       .from(userTable)
       .where(and(eq(userTable.tenantId, tenantId)));
 
-    const status = daysBefore === 0 ? 'overdue' : `due in ${daysBefore} day${daysBefore !== 1 ? 's' : ''}`;
+    const status =
+      daysBefore === 0 ? 'overdue' : `due in ${daysBefore} day${daysBefore !== 1 ? 's' : ''}`;
     const viewUrl = `${deps.appUrl}/maintenance/${planId}`;
 
     // Send email to each admin (swallow per-recipient errors).

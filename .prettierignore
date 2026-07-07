@@ -9,3 +9,6 @@ pnpm-lock.yaml
 
 # Spec documents — preserve original formatting.
 docs/*.html
+
+# Next.js generated — regenerated on build, don't format
+**/next-env.d.ts

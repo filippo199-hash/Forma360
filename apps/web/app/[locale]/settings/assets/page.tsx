@@ -103,9 +103,7 @@ export default function SettingsAssetTypesPage() {
               <Button
                 type="button"
                 disabled={create.isPending || newName.trim().length === 0}
-                onClick={() =>
-                  create.mutate({ name: newName.trim(), description: newDesc.trim() })
-                }
+                onClick={() => create.mutate({ name: newName.trim(), description: newDesc.trim() })}
               >
                 {tCommon('create')}
               </Button>

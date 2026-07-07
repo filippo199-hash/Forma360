@@ -21,10 +21,7 @@ const log = logger.child({ module: 'video-frames' });
 /** Cap on sampled frames — keeps the vision payload + cost bounded. */
 const MAX_FRAMES = 3;
 
-export async function extractVideoFrames(
-  base64: string,
-  mimeType: string,
-): Promise<AgentImage[]> {
+export async function extractVideoFrames(base64: string, mimeType: string): Promise<AgentImage[]> {
   let dir: string | undefined;
   try {
     const buf = Buffer.from(base64, 'base64');
@@ -58,10 +55,7 @@ export async function extractVideoFrames(
     }
     return frames;
   } catch (err) {
-    log.error(
-      { err: err instanceof Error ? err.message : String(err) },
-      'frame extraction failed',
-    );
+    log.error({ err: err instanceof Error ? err.message : String(err) }, 'frame extraction failed');
     return [];
   } finally {
     if (dir !== undefined) await rm(dir, { recursive: true, force: true }).catch(() => undefined);

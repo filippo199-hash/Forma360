@@ -613,9 +613,7 @@ function PageBlock({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t('duplicatePageTitle')}</DialogTitle>
-              <DialogDescription>
-                {t('duplicatePageBody', { title: page.title })}
-              </DialogDescription>
+              <DialogDescription>{t('duplicatePageBody', { title: page.title })}</DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDuplicate(false)}>
@@ -882,7 +880,11 @@ function InstructionMediaEditor({ item }: { item: InstructionItemT }) {
     if (v === '') {
       setVideoError(false);
       // Clear the optional field (cast: exactOptionalPropertyTypes).
-      dispatch({ type: 'updateItem', itemId: item.id, patch: { videoUrl: undefined } as Partial<Item> });
+      dispatch({
+        type: 'updateItem',
+        itemId: item.id,
+        patch: { videoUrl: undefined } as Partial<Item>,
+      });
       return;
     }
     if (parseVideoEmbed(v) === null) {
@@ -928,7 +930,9 @@ function InstructionMediaEditor({ item }: { item: InstructionItemT }) {
                 </span>
                 <button
                   type="button"
-                  onClick={() => patch({ attachments: item.attachments.filter((x) => x.key !== a.key) })}
+                  onClick={() =>
+                    patch({ attachments: item.attachments.filter((x) => x.key !== a.key) })
+                  }
                   className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
                   aria-label={t('removeFile')}
                 >

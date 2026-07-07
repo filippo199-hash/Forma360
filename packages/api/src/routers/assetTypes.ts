@@ -39,9 +39,7 @@ export const assetTypesRouter = router({
   list: tenantProcedure
     .use(requirePermission('assets.view'))
     .input(
-      z
-        .object({ includeArchived: z.boolean().default(false) })
-        .default({ includeArchived: false }),
+      z.object({ includeArchived: z.boolean().default(false) }).default({ includeArchived: false }),
     )
     .query(async ({ ctx, input }) => {
       const where = [eq(assetTypes.tenantId, ctx.tenantId)];

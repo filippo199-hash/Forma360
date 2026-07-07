@@ -78,7 +78,9 @@ export default function NewActionPage() {
     if (days > 0) {
       const d = new Date(Date.now() + days * 86_400_000);
       const pad = (n: number) => String(n).padStart(2, '0');
-      setDueAt(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+      setDueAt(
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`,
+      );
       setDueAtAutoSet(true);
     }
   }, [actionSettings]);
@@ -242,11 +244,15 @@ export default function NewActionPage() {
                     setPriority(next);
                     // Auto-compute due date from priority unless the user has set one manually.
                     if (dueAtAutoSet || dueAt === '') {
-                      const days = actionSettings?.priorityDueDateDays[next] ?? { low: 30, medium: 7, high: 1, critical: 1 }[next];
+                      const days =
+                        actionSettings?.priorityDueDateDays[next] ??
+                        { low: 30, medium: 7, high: 1, critical: 1 }[next];
                       if (days !== null && days !== undefined && days > 0) {
                         const d = new Date(Date.now() + days * 86_400_000);
                         const pad = (n: number) => String(n).padStart(2, '0');
-                        setDueAt(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+                        setDueAt(
+                          `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`,
+                        );
                         setDueAtAutoSet(true);
                       }
                     }
@@ -438,7 +444,13 @@ type ParentAsset = {
   parentId: string | null;
   typeId: string | null;
   typeName: string | null;
-  children: Array<{ id: string; name: string; parentId: string | null; typeId: string | null; typeName: string | null }>;
+  children: Array<{
+    id: string;
+    name: string;
+    parentId: string | null;
+    typeId: string | null;
+    typeName: string | null;
+  }>;
 };
 
 function InlineAssetPicker({
@@ -464,7 +476,8 @@ function InlineAssetPicker({
   function toggleParent(parent: ParentAsset) {
     const next = new Set(selectedIds);
     const allChildIds = parent.children.map((c) => c.id);
-    const allSelected = selectedIds.has(parent.id) && allChildIds.every((cid) => selectedIds.has(cid));
+    const allSelected =
+      selectedIds.has(parent.id) && allChildIds.every((cid) => selectedIds.has(cid));
     if (allSelected) {
       next.delete(parent.id);
       for (const cid of allChildIds) next.delete(cid);
@@ -514,7 +527,9 @@ function InlineAssetPicker({
                   onClick={() => toggleExpand(parent.id)}
                   className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                  <ChevronRight
+                    className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                  />
                   <span>{parent.children.length}</span>
                 </button>
               )}
@@ -522,7 +537,10 @@ function InlineAssetPicker({
             {isExpanded && parent.children.length > 0 && (
               <div className="ml-6 space-y-0.5 border-l pl-3 pt-0.5">
                 {parent.children.map((child) => (
-                  <div key={child.id} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50">
+                  <div
+                    key={child.id}
+                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50"
+                  >
                     <Checkbox
                       checked={selectedIds.has(child.id)}
                       onCheckedChange={() => toggleChild(child.id)}

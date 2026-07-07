@@ -653,7 +653,10 @@ export const actionsRouter = router({
             .select({ name: maintenancePrograms.name })
             .from(maintenancePrograms)
             .where(
-              and(eq(maintenancePrograms.tenantId, ctx.tenantId), eq(maintenancePrograms.id, programId)),
+              and(
+                eq(maintenancePrograms.tenantId, ctx.tenantId),
+                eq(maintenancePrograms.id, programId),
+              ),
             )
             .limit(1);
           programName = pRows[0]?.name ?? null;
@@ -707,9 +710,7 @@ export const actionsRouter = router({
         .select({ id: assets.id, name: assets.name })
         .from(actionAssets)
         .innerJoin(assets, eq(assets.id, actionAssets.assetId))
-        .where(
-          and(eq(actionAssets.tenantId, ctx.tenantId), eq(actionAssets.actionId, action.id)),
-        );
+        .where(and(eq(actionAssets.tenantId, ctx.tenantId), eq(actionAssets.actionId, action.id)));
       return {
         action,
         actionType,

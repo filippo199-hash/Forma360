@@ -94,7 +94,6 @@ export function ShareLinkDialog({ inspectionId }: Props) {
         </DialogHeader>
 
         <div className="space-y-5">
-
           {/* ── Expiry + Generate ─────────────────────────────────────── */}
           <div className="space-y-2">
             <Label htmlFor="share-expiration">{t('expirationLabel')}</Label>
@@ -110,11 +109,7 @@ export function ShareLinkDialog({ inspectionId }: Props) {
               <option value="1w">{t('expiration1w')}</option>
               <option value="30d">{t('expiration30d')}</option>
             </select>
-            <Button
-              onClick={handleCreate}
-              disabled={createMut.isPending}
-              className="w-full"
-            >
+            <Button onClick={handleCreate} disabled={createMut.isPending} className="w-full">
               {createMut.isPending ? t('generating') : t('generateLink')}
             </Button>
           </div>
@@ -160,10 +155,7 @@ export function ShareLinkDialog({ inspectionId }: Props) {
             ) : null}
 
             {list.data?.map((link) => (
-              <div
-                key={link.linkId}
-                className="overflow-hidden rounded-md border text-xs"
-              >
+              <div key={link.linkId} className="overflow-hidden rounded-md border text-xs">
                 {/* URL row */}
                 <div className="flex items-center gap-2 border-b px-3 py-2">
                   <span className="min-w-0 flex-1 truncate font-mono text-foreground">
@@ -207,7 +199,6 @@ export function ShareLinkDialog({ inspectionId }: Props) {
               </div>
             ))}
           </div>
-
         </div>
       </DialogContent>
     </Dialog>

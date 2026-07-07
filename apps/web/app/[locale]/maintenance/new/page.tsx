@@ -56,8 +56,10 @@ export default function NewMaintenancePlanPage() {
       name: name.trim(),
       description,
       planType,
-      intervalDays: planType === 'time' && intervalDays !== '' ? parseInt(intervalDays, 10) : undefined,
-      intervalUsage: planType === 'usage' && intervalUsage !== '' ? parseFloat(intervalUsage) : undefined,
+      intervalDays:
+        planType === 'time' && intervalDays !== '' ? parseInt(intervalDays, 10) : undefined,
+      intervalUsage:
+        planType === 'usage' && intervalUsage !== '' ? parseFloat(intervalUsage) : undefined,
       usageField: planType === 'usage' ? usageField.trim() : undefined,
       usageUnit: planType === 'usage' ? usageUnit.trim() : '',
       lastServiceDate: lastServiceDate !== '' ? lastServiceDate : undefined,

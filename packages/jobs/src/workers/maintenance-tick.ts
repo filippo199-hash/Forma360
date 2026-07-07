@@ -13,11 +13,7 @@
  * values already sent. When the asset is serviced, the due date changes, so
  * the old log key is irrelevant.
  */
-import {
-  assets,
-  maintenancePlanAssets,
-  maintenancePlans,
-} from '@forma360/db/schema';
+import { assets, maintenancePlanAssets, maintenancePlans } from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job, ConnectionOptions } from 'bullmq';
@@ -27,7 +23,10 @@ import { getQueue, QUEUE_NAMES, type MaintenanceTickPayload } from '../queues';
 export const MAINTENANCE_TICK_CRON = '0 7 * * *'; // 07:00 UTC daily
 
 /** Compute the due date string (YYYY-MM-DD) for a time-based plan, or null. */
-function computeDueDate(lastServiceDate: string | null, intervalDays: number | null): string | null {
+function computeDueDate(
+  lastServiceDate: string | null,
+  intervalDays: number | null,
+): string | null {
   if (lastServiceDate === null || intervalDays === null || intervalDays <= 0) return null;
   const d = new Date(lastServiceDate);
   d.setUTCDate(d.getUTCDate() + intervalDays);

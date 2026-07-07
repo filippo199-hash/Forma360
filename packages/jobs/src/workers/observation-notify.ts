@@ -156,9 +156,7 @@ export function createObservationNotifyHandler(deps: ObservationNotifyDeps) {
         criticalAlertRecipientSpec: issueCategories.criticalAlertRecipientSpec,
       })
       .from(issueCategories)
-      .where(
-        and(eq(issueCategories.tenantId, tenantId), eq(issueCategories.id, issue.categoryId)),
-      )
+      .where(and(eq(issueCategories.tenantId, tenantId), eq(issueCategories.id, issue.categoryId)))
       .limit(1);
     const category = catRows[0];
     if (category === undefined) {
@@ -173,9 +171,10 @@ export function createObservationNotifyHandler(deps: ObservationNotifyDeps) {
     }
 
     // Pick the correct spec.
-    const spec = (isCritical
-      ? (category.criticalAlertRecipientSpec as RecipientSpec)
-      : (category.notificationRecipientSpec as RecipientSpec)) ?? null;
+    const spec =
+      (isCritical
+        ? (category.criticalAlertRecipientSpec as RecipientSpec)
+        : (category.notificationRecipientSpec as RecipientSpec)) ?? null;
 
     const emails = await resolveRecipients(deps.db, tenantId, spec);
     if (emails.size === 0) {

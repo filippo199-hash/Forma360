@@ -408,8 +408,7 @@ function ReportPreview({ content }: { content: TemplateContent }) {
                 {section.items
                   .filter(
                     (item) =>
-                      'prompt' in item ||
-                      (item.type === 'instruction' && item.showInReport),
+                      'prompt' in item || (item.type === 'instruction' && item.showInReport),
                   )
                   .map((item) => {
                     // Instructions render their guidance (text/media/video),

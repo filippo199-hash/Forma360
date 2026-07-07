@@ -229,7 +229,9 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
                 for (const id of parsed.data.groupIds) allGroupIds.add(id);
                 for (const id of parsed.data.siteIds) allSiteIds.add(id);
               }
-            } catch { /* invalid JSON — skip */ }
+            } catch {
+              /* invalid JSON — skip */
+            }
           }
         }
 
@@ -271,7 +273,9 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
                 }
                 hasIndividualUsers = parsed.data.userIds.length > 0;
               }
-            } catch { /* ignore */ }
+            } catch {
+              /* ignore */
+            }
           }
           const { recipientSpec: _spec, ...rest } = row;
           return { ...rest, audience: { groupNames, siteNames, hasIndividualUsers } };
@@ -652,7 +656,8 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
         ];
         if (input.filter === 'viewed') where.push(isNotNull(headsUpRecipients.viewedAt));
         if (input.filter === 'not_viewed') where.push(isNull(headsUpRecipients.viewedAt));
-        if (input.filter === 'acknowledged') where.push(isNotNull(headsUpRecipients.acknowledgedAt));
+        if (input.filter === 'acknowledged')
+          where.push(isNotNull(headsUpRecipients.acknowledgedAt));
         if (input.filter === 'signed') where.push(isNotNull(headsUpRecipients.signedAt));
 
         const rows = await ctx.db
@@ -667,7 +672,10 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             reminderLastSentAt: headsUpRecipients.reminderLastSentAt,
           })
           .from(headsUpRecipients)
-          .leftJoin(user, and(eq(user.id, headsUpRecipients.userId), eq(user.tenantId, ctx.tenantId)))
+          .leftJoin(
+            user,
+            and(eq(user.id, headsUpRecipients.userId), eq(user.tenantId, ctx.tenantId)),
+          )
           .where(and(...where))
           .orderBy(desc(headsUpRecipients.createdAt))
           .limit(input.limit);
@@ -721,7 +729,10 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             userName: user.name,
           })
           .from(headsUpRecipients)
-          .leftJoin(user, and(eq(user.id, headsUpRecipients.userId), eq(user.tenantId, ctx.tenantId)))
+          .leftJoin(
+            user,
+            and(eq(user.id, headsUpRecipients.userId), eq(user.tenantId, ctx.tenantId)),
+          )
           .where(and(...where));
 
         const now = new Date();
@@ -733,9 +744,8 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
                 : headsUp.engagementLevel === 'acknowledge'
                   ? 'acknowledge'
                   : 'view';
-            const viewUrl = deps.appUrl !== undefined
-              ? `${deps.appUrl}/heads-up/${input.headsUpId}`
-              : undefined;
+            const viewUrl =
+              deps.appUrl !== undefined ? `${deps.appUrl}/heads-up/${input.headsUpId}` : undefined;
             await deps.sendEmail({
               to: r.userEmail,
               templateKey: 'heads-up-reminder',
@@ -850,7 +860,8 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
           .update(headsUpRecipients)
           .set({
             viewedAt: recipient.viewedAt ?? now,
-            acknowledgedAt: recipient.acknowledgedAt ?? (headsUp.requireAcknowledgement ? now : null),
+            acknowledgedAt:
+              recipient.acknowledgedAt ?? (headsUp.requireAcknowledgement ? now : null),
             signedAt: now,
             signatureData: input.signatureData,
           })

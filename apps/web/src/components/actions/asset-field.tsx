@@ -85,9 +85,7 @@ export function AssetField({
         }}
         className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
       >
-        <option value="">
-          {linked.length === 0 ? tFields('noAsset') : tFields('addAsset')}
-        </option>
+        <option value="">{linked.length === 0 ? tFields('noAsset') : tFields('addAsset')}</option>
         {available.map((a) => (
           <option key={a.id} value={a.id}>
             {a.name}

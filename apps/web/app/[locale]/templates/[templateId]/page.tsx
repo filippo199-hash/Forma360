@@ -70,7 +70,10 @@ export default function TemplateEditorPage() {
       initialDescription={data.template.description}
       initialUpdatedAt={latest.updatedAt.toISOString()}
     >
-      <EditorShell templateId={templateId} templateStatus={data.template.status as TemplateStatus} />
+      <EditorShell
+        templateId={templateId}
+        templateStatus={data.template.status as TemplateStatus}
+      />
     </EditorProvider>
   );
 }

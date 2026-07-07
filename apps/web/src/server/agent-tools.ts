@@ -112,11 +112,7 @@ export function toToolError(err: unknown): { error: string; message: string } {
   const e = err as { code?: unknown; message?: unknown };
   const code = typeof e.code === 'string' ? e.code : undefined;
   const message =
-    err instanceof Error
-      ? err.message
-      : typeof e.message === 'string'
-        ? e.message
-        : String(err);
+    err instanceof Error ? err.message : typeof e.message === 'string' ? e.message : String(err);
   if (code === 'FORBIDDEN') return { error: 'permission_denied', message };
   if (code === 'NOT_FOUND') return { error: 'not_found', message };
   if (code === 'BAD_REQUEST') return { error: 'invalid_input', message };

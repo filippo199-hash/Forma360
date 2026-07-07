@@ -16,12 +16,7 @@ import {
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '../../../../src/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../../../src/components/ui/sheet';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -134,7 +129,13 @@ export default function SitesPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
-        <Button onClick={() => { setCreatePresetParentId(null); setCreateParentId(''); setShowCreate(true); }}>
+        <Button
+          onClick={() => {
+            setCreatePresetParentId(null);
+            setCreateParentId('');
+            setShowCreate(true);
+          }}
+        >
           <Plus className="mr-1.5 h-4 w-4" />
           {t('createButton')}
         </Button>
@@ -191,29 +192,17 @@ export default function SitesPage() {
                       </span>
                     </td>
                     <td className="flex items-center justify-end gap-1 px-4 py-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setMembersSiteId(site.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => setMembersSiteId(site.id)}>
                         <MapPin className="mr-1.5 h-3.5 w-3.5" />
                         {t('membersButton')}
                       </Button>
                       {site.depth < 4 ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openCreateChild(site.id)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => openCreateChild(site.id)}>
                           <Plus className="mr-1 h-3.5 w-3.5" />
                           {t('addChildButton')}
                         </Button>
                       ) : null}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEdit(site)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(site)}>
                         {t('editButton')}
                       </Button>
                       <Button

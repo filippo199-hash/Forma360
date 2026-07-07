@@ -4,7 +4,7 @@ import { csvSafe, parseCsv, toCsv } from './csv';
 
 describe('csvSafe (formula-injection guard)', () => {
   it('prefixes cells that begin with a formula trigger', () => {
-    expect(csvSafe('=HYPERLINK("http://evil","x")')).toBe("'=HYPERLINK(\"http://evil\",\"x\")");
+    expect(csvSafe('=HYPERLINK("http://evil","x")')).toBe('\'=HYPERLINK("http://evil","x")');
     expect(csvSafe('+1+1')).toBe("'+1+1");
     expect(csvSafe('-cmd|calc')).toBe("'-cmd|calc");
     expect(csvSafe('@SUM(A1)')).toBe("'@SUM(A1)");

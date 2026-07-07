@@ -115,9 +115,7 @@ describe('tenant reference guards', () => {
     // Tenant A must not be able to touch tenant B's plan (join table has no
     // tenantId, so the guard is the only thing standing between them).
     const a = createCaller(ctxFor(tenantA, adminA));
-    await expect(
-      a.maintenancePlans.unlinkAsset({ planId, assetId: newId() }),
-    ).rejects.toThrow();
+    await expect(a.maintenancePlans.unlinkAsset({ planId, assetId: newId() })).rejects.toThrow();
   });
 
   it('assertStorageKeyInTenant only accepts keys under the tenant prefix', () => {

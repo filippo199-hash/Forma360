@@ -97,10 +97,7 @@ export default function HeadsUpListPage() {
                 {rows.map((row) => (
                   <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
                     <td className="px-3 py-2 font-medium">
-                      <Link
-                        href={`/${locale}/heads-up/${row.id}`}
-                        className="hover:underline"
-                      >
+                      <Link href={`/${locale}/heads-up/${row.id}`} className="hover:underline">
                         {row.title}
                       </Link>
                     </td>
@@ -113,9 +110,7 @@ export default function HeadsUpListPage() {
                     <td className="px-3 py-2 text-muted-foreground">
                       {t(`engagement.${row.engagementLevel}`)}
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.creatorName ?? '—'}
-                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{row.creatorName ?? '—'}</td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {new Date(row.createdAt).toLocaleDateString()}
                     </td>

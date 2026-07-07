@@ -167,9 +167,7 @@ export function RRuleBuilder({ value, onChange }: RRuleBuilderProps) {
   function toggleWeekDay(day: WeekDay) {
     const current = state.weekDays;
     const already = current.includes(day);
-    const next = already
-      ? current.filter((d) => d !== day)
-      : [...current, day];
+    const next = already ? current.filter((d) => d !== day) : [...current, day];
     // Always keep at least one day selected
     const final = next.length === 0 ? [day] : next;
     update({ weekDays: final });

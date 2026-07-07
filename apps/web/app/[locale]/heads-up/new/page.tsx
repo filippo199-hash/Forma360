@@ -84,13 +84,19 @@ function scheduleLabel(type: 'now' | 'tomorrow' | 'nextweek'): string {
     const d = new Date(now);
     d.setDate(d.getDate() + 1);
     d.setHours(9, 0, 0, 0);
-    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ', 9:00 am';
+    return (
+      d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) +
+      ', 9:00 am'
+    );
   }
   if (type === 'nextweek') {
     const d = new Date(now);
-    d.setDate(d.getDate() + (7 - d.getDay() + 3) % 7 || 7); // next Wednesday
+    d.setDate(d.getDate() + ((7 - d.getDay() + 3) % 7) || 7); // next Wednesday
     d.setHours(9, 0, 0, 0);
-    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ', 9:00';
+    return (
+      d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) +
+      ', 9:00'
+    );
   }
   return '';
 }
@@ -132,9 +138,7 @@ export default function NewHeadsUpPage() {
     enabled: audienceMode === 'sites',
   });
   const sites = sitesData ?? [];
-  const selectedSiteNames = sites
-    .filter((s) => selectedSiteIds.includes(s.id))
-    .map((s) => s.name);
+  const selectedSiteNames = sites.filter((s) => selectedSiteIds.includes(s.id)).map((s) => s.name);
 
   function toggleGroup(id: string) {
     setSelectedGroupIds((prev) =>
@@ -166,7 +170,7 @@ export default function NewHeadsUpPage() {
       const res = await fetch('/api/upload/heads-up', { method: 'POST', body: form });
       if (!res.ok) {
         // Parse JSON cautiously — a proxy/framework error might return HTML.
-        const body = await res.json().catch(() => ({})) as { error?: string };
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? `Upload failed (${res.status})`);
       }
       const { key } = (await res.json()) as { key: string };
@@ -234,7 +238,7 @@ export default function NewHeadsUpPage() {
     if (type === 'tomorrow') {
       d.setDate(d.getDate() + 1);
     } else {
-      d.setDate(d.getDate() + (7 - d.getDay() + 3) % 7 || 7);
+      d.setDate(d.getDate() + ((7 - d.getDay() + 3) % 7) || 7);
     }
     d.setHours(9, 0, 0, 0);
     setPublishAt(d);
@@ -252,7 +256,9 @@ export default function NewHeadsUpPage() {
       return;
     }
     const readyAttachments = pendingFiles
-      .filter((f): f is typeof f & { storageKey: string } => f.storageKey !== null && f.error === null)
+      .filter(
+        (f): f is typeof f & { storageKey: string } => f.storageKey !== null && f.error === null,
+      )
       .map((f) => ({
         storageKey: f.storageKey,
         filename: f.file.name,
@@ -416,7 +422,9 @@ export default function NewHeadsUpPage() {
             <p className="mb-3 text-xs text-muted-foreground">{t('shareExternallyHint')}</p>
             <div className="flex items-center gap-2">
               <QrCode className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <p className="flex-1 text-xs text-muted-foreground italic">{t('shareLinkAfterSave')}</p>
+              <p className="flex-1 text-xs text-muted-foreground italic">
+                {t('shareLinkAfterSave')}
+              </p>
             </div>
           </section>
 
@@ -446,7 +454,9 @@ export default function NewHeadsUpPage() {
                   />
                   <div>
                     <p className="text-xs font-medium">{t(`engagement.${value}`)}</p>
-                    <p className="text-[11px] text-muted-foreground">{t(`engagementHint.${value}`)}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {t(`engagementHint.${value}`)}
+                    </p>
                   </div>
                 </button>
               ))}
@@ -644,24 +654,14 @@ export default function NewHeadsUpPage() {
           </Button>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              disabled={!canSave}
-              onClick={() => save(false)}
-            >
-              {createMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
+            <Button variant="outline" disabled={!canSave} onClick={() => save(false)}>
+              {createMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t('saveDraft')}
             </Button>
 
             {/* Publish with schedule dropdown */}
             <div className="flex">
-              <Button
-                className="rounded-r-none"
-                disabled={!canSave}
-                onClick={() => save(true)}
-              >
+              <Button className="rounded-r-none" disabled={!canSave} onClick={() => save(true)}>
                 {t('publish')}
               </Button>
               <DropdownMenu>
@@ -739,7 +739,10 @@ export default function NewHeadsUpPage() {
                   type="button"
                   className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground"
                 >
-                  ✓ {engagementLevel === 'acknowledge' ? t('previewAcknowledge') : t('engagement.sign')}
+                  ✓{' '}
+                  {engagementLevel === 'acknowledge'
+                    ? t('previewAcknowledge')
+                    : t('engagement.sign')}
                 </button>
               </div>
             ) : null}

@@ -60,9 +60,7 @@ export function LanguageSelect() {
                 aria-current={active ? 'true' : undefined}
                 className={cn(
                   'flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors disabled:opacity-60',
-                  active
-                    ? 'border-primary bg-accent font-medium'
-                    : 'hover:bg-accent/60',
+                  active ? 'border-primary bg-accent font-medium' : 'hover:bg-accent/60',
                 )}
               >
                 <span className="flex items-center gap-2">

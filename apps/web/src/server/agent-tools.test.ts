@@ -12,9 +12,9 @@ import {
 
 describe('toToolError', () => {
   it('maps a FORBIDDEN tRPC error to permission_denied', () => {
-    expect(toToolError({ code: 'FORBIDDEN', message: 'Missing permission: actions.create' })).toEqual(
-      { error: 'permission_denied', message: 'Missing permission: actions.create' },
-    );
+    expect(
+      toToolError({ code: 'FORBIDDEN', message: 'Missing permission: actions.create' }),
+    ).toEqual({ error: 'permission_denied', message: 'Missing permission: actions.create' });
   });
 
   it('maps NOT_FOUND and BAD_REQUEST', () => {
@@ -98,7 +98,10 @@ describe('buildUserContent (image vision)', () => {
       { base64: 'AAAA', mediaType: 'image/jpeg' },
     ]);
     expect(Array.isArray(content)).toBe(true);
-    const blocks = content as Array<{ type: string; source?: { data: string; media_type: string } }>;
+    const blocks = content as Array<{
+      type: string;
+      source?: { data: string; media_type: string };
+    }>;
     expect(blocks[0]?.type).toBe('image');
     expect(blocks[0]?.source).toEqual({ type: 'base64', media_type: 'image/jpeg', data: 'AAAA' });
     expect(blocks[1]).toEqual({ type: 'text', text: 'whats wrong here?' });

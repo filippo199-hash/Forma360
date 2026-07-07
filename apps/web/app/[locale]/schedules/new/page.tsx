@@ -123,8 +123,7 @@ function buildSummary(opts: {
     recurrenceDesc = 'on a recurring schedule';
   }
 
-  const tplPart =
-    opts.templateName !== '' ? `"${opts.templateName}"` : 'The selected template';
+  const tplPart = opts.templateName !== '' ? `"${opts.templateName}"` : 'The selected template';
 
   const assigneeParts: string[] = [];
   if (opts.groupNames.length > 0) {
@@ -190,8 +189,7 @@ export default function NewSchedulePage() {
     try {
       // Build ISO datetime strings from date-only inputs using UTC midnight
       const startAt = new Date(`${startDate}T00:00:00.000Z`).toISOString();
-      const endAt =
-        endDate === '' ? null : new Date(`${endDate}T00:00:00.000Z`).toISOString();
+      const endAt = endDate === '' ? null : new Date(`${endDate}T00:00:00.000Z`).toISOString();
 
       const result = await createMutation.mutateAsync({
         templateId,
@@ -216,142 +214,142 @@ export default function NewSchedulePage() {
   return (
     <FocusedPageShell title={t('create')} backHref={`/${locale}/schedules`} width="form">
       <div className="space-y-6">
-          {/* 1. Template selector */}
+        {/* 1. Template selector */}
+        <div className="space-y-2">
+          <Label htmlFor="tpl">{t('table.template')}</Label>
+          <select
+            id="tpl"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            value={templateId}
+            onChange={(e) => setTemplateId(e.target.value)}
+          >
+            <option value="">—</option>
+            {templates?.map((tpl) => (
+              <option key={tpl.id} value={tpl.id}>
+                {tpl.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 2. Schedule name */}
+        <div className="space-y-2">
+          <Label htmlFor="name">{t('form.name')}</Label>
+          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+
+        {/* 3. Recurrence (RRuleBuilder) */}
+        <div className="space-y-2">
+          <Label>{t('form.recurrenceLabel')}</Label>
+          <Card>
+            <CardContent className="py-4">
+              <RRuleBuilder value={rrule} onChange={setRrule} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 4. Timezone */}
+        <div className="space-y-2">
+          <Label htmlFor="tz">{t('form.timezoneLabel')}</Label>
+          <select
+            id="tz"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+          >
+            {TIMEZONES.map((tz) => (
+              <option key={tz} value={tz}>
+                {tz}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 5. Start / End dates */}
+        <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="tpl">{t('table.template')}</Label>
-            <select
-              id="tpl"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
-            >
-              <option value="">—</option>
-              {templates?.map((tpl) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {tpl.name}
-                </option>
-              ))}
-            </select>
+            <Label htmlFor="startDate">{t('form.startDate')}</Label>
+            <Input
+              id="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
           </div>
-
-          {/* 2. Schedule name */}
           <div className="space-y-2">
-            <Label htmlFor="name">{t('form.name')}</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Label htmlFor="endDate">{t('form.endDate')}</Label>
+            <Input
+              id="endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
           </div>
+        </div>
 
-          {/* 3. Recurrence (RRuleBuilder) */}
-          <div className="space-y-2">
-            <Label>{t('form.recurrenceLabel')}</Label>
-            <Card>
-              <CardContent className="py-4">
-                <RRuleBuilder value={rrule} onChange={setRrule} />
-              </CardContent>
-            </Card>
+        {/* 6. Assigned to */}
+        <section className="space-y-4 rounded-md border border-border bg-muted/30 p-4">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold">{t('form.assignedSectionHeading')}</h2>
+            <p className="text-xs text-muted-foreground">{t('form.assignedHint')}</p>
           </div>
-
-          {/* 4. Timezone */}
-          <div className="space-y-2">
-            <Label htmlFor="tz">{t('form.timezoneLabel')}</Label>
-            <select
-              id="tz"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-            >
-              {TIMEZONES.map((tz) => (
-                <option key={tz} value={tz}>
-                  {tz}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 5. Start / End dates */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">{t('form.startDate')}</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+          <div className="space-y-4">
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t('form.assignedUsersLabel')}
+              </p>
+              <UserPicker selected={assigneeUserIds} onChange={setAssigneeUserIds} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="endDate">{t('form.endDate')}</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t('form.assignedGroupsLabel')}
+              </p>
+              <GroupPicker selected={assigneeGroupIds} onChange={setAssigneeGroupIds} />
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t('form.assignedSitesLabel')}
+              </p>
+              <SitePicker selected={siteIds} onChange={setSiteIds} />
             </div>
           </div>
+          {noAssignees ? (
+            <p className="text-xs text-destructive">{t('form.noAssigneesError')}</p>
+          ) : null}
+        </section>
 
-          {/* 6. Assigned to */}
-          <section className="space-y-4 rounded-md border border-border bg-muted/30 p-4">
-            <div className="space-y-1">
-              <h2 className="text-sm font-semibold">{t('form.assignedSectionHeading')}</h2>
-              <p className="text-xs text-muted-foreground">{t('form.assignedHint')}</p>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t('form.assignedUsersLabel')}
-                </p>
-                <UserPicker selected={assigneeUserIds} onChange={setAssigneeUserIds} />
-              </div>
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t('form.assignedGroupsLabel')}
-                </p>
-                <GroupPicker selected={assigneeGroupIds} onChange={setAssigneeGroupIds} />
-              </div>
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t('form.assignedSitesLabel')}
-                </p>
-                <SitePicker selected={siteIds} onChange={setSiteIds} />
-              </div>
-            </div>
-            {noAssignees ? (
-              <p className="text-xs text-destructive">{t('form.noAssigneesError')}</p>
-            ) : null}
-          </section>
+        {/* 7. Settings */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold">{t('form.settingsHeading')}</h2>
+          <div className="flex items-center justify-between gap-4">
+            <Label htmlFor="reminder-toggle" className="cursor-pointer">
+              {t('form.reminderToggle')}
+            </Label>
+            <Switch
+              id="reminder-toggle"
+              checked={reminderEnabled}
+              onCheckedChange={setReminderEnabled}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <Label htmlFor="late-toggle" className="cursor-pointer">
+              {t('form.allowLateToggle')}
+            </Label>
+            <Switch
+              id="late-toggle"
+              checked={allowLateSubmissions}
+              onCheckedChange={setAllowLateSubmissions}
+            />
+          </div>
+        </section>
 
-          {/* 7. Settings */}
-          <section className="space-y-4">
-            <h2 className="text-sm font-semibold">{t('form.settingsHeading')}</h2>
-            <div className="flex items-center justify-between gap-4">
-              <Label htmlFor="reminder-toggle" className="cursor-pointer">
-                {t('form.reminderToggle')}
-              </Label>
-              <Switch
-                id="reminder-toggle"
-                checked={reminderEnabled}
-                onCheckedChange={setReminderEnabled}
-              />
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <Label htmlFor="late-toggle" className="cursor-pointer">
-                {t('form.allowLateToggle')}
-              </Label>
-              <Switch
-                id="late-toggle"
-                checked={allowLateSubmissions}
-                onCheckedChange={setAllowLateSubmissions}
-              />
-            </div>
-          </section>
-
-          {/* 8. Summary */}
-          <section className="space-y-2">
-            <h2 className="text-sm font-semibold">{t('form.summaryHeading')}</h2>
-            <div className="rounded-md border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground/90">
-              {summary}
-            </div>
-          </section>
+        {/* 8. Summary */}
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold">{t('form.summaryHeading')}</h2>
+          <div className="rounded-md border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground/90">
+            {summary}
+          </div>
+        </section>
       </div>
 
       {/* Footer */}

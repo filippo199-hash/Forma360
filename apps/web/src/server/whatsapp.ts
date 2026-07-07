@@ -48,10 +48,9 @@ export async function fetchWhatsAppMedia(
   if (!token) return null;
 
   try {
-    const metaRes = await fetch(
-      `https://graph.facebook.com/${GRAPH_API_VERSION}/${mediaId}`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
+    const metaRes = await fetch(`https://graph.facebook.com/${GRAPH_API_VERSION}/${mediaId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (!metaRes.ok) {
       log.warn({ mediaId, status: metaRes.status }, 'media metadata fetch failed');
       return null;

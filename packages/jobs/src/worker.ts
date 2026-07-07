@@ -25,10 +25,7 @@ import { createSiteReconcileHandler } from './workers/site-membership-reconcile'
 import { createTestQueueHandler } from './workers/test-queue';
 import { createUserAnonymisationHandler } from './workers/user-anonymisation';
 import { createSendEmail, createSendTemplatedEmail } from '@forma360/shared/email';
-import {
-  createMaintenanceTickHandler,
-  MAINTENANCE_TICK_CRON,
-} from './workers/maintenance-tick';
+import { createMaintenanceTickHandler, MAINTENANCE_TICK_CRON } from './workers/maintenance-tick';
 import { createMaintenanceNotifyHandler } from './workers/maintenance-notify';
 import { createObservationNotifyHandler } from './workers/observation-notify';
 
