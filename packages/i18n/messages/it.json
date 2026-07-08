@@ -2556,7 +2556,8 @@
       "moveTitle": "Sposta nella cartella",
       "moveNoFolder": "Nessuna cartella (livello superiore)",
       "moveSave": "Sposta",
-      "movedToast": "Documento spostato"
+      "movedToast": "Documento spostato",
+      "moveFolderLabel": "Folder"
     },
     "upload": {
       "labelsCreate": "Nuova etichetta",
@@ -2565,7 +2566,9 @@
       "labelsCreateButton": "Crea",
       "responsibleNoneLabel": "Nessuno",
       "responsibleSelectUser": "Seleziona un utente…",
-      "responsibleSelectGroup": "Seleziona un gruppo…"
+      "responsibleSelectGroup": "Seleziona un gruppo…",
+      "siteLabel": "Site / Project",
+      "noSite": "No site / project"
     }
   },
   "search": {

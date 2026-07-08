@@ -2514,7 +2514,8 @@
       "moveTitle": "フォルダーに移動",
       "moveNoFolder": "フォルダーなし（最上位）",
       "moveSave": "移動",
-      "movedToast": "ドキュメントを移動しました"
+      "movedToast": "ドキュメントを移動しました",
+      "moveFolderLabel": "Folder"
     },
     "upload": {
       "labelsCreate": "新しいラベル",
@@ -2523,7 +2524,9 @@
       "labelsCreateButton": "作成",
       "responsibleNoneLabel": "なし",
       "responsibleSelectUser": "ユーザーを選択…",
-      "responsibleSelectGroup": "グループを選択…"
+      "responsibleSelectGroup": "グループを選択…",
+      "siteLabel": "Site / Project",
+      "noSite": "No site / project"
     }
   },
   "search": {

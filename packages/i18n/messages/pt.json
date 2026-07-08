@@ -2514,7 +2514,8 @@
       "moveTitle": "Mover para pasta",
       "moveNoFolder": "Sem pasta (nível superior)",
       "moveSave": "Mover",
-      "movedToast": "Documento movido"
+      "movedToast": "Documento movido",
+      "moveFolderLabel": "Folder"
     },
     "upload": {
       "labelsCreate": "Nova etiqueta",
@@ -2523,7 +2524,9 @@
       "labelsCreateButton": "Criar",
       "responsibleNoneLabel": "Ninguém",
       "responsibleSelectUser": "Selecione um usuário…",
-      "responsibleSelectGroup": "Selecione um grupo…"
+      "responsibleSelectGroup": "Selecione um grupo…",
+      "siteLabel": "Site / Project",
+      "noSite": "No site / project"
     }
   },
   "search": {

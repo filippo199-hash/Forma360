@@ -131,6 +131,7 @@ export default function DocumentDetailPage() {
   const [visSiteIds, setVisSiteIds] = useState<string[]>([]);
   const [moveOpen, setMoveOpen] = useState(false);
   const [moveFolderId, setMoveFolderId] = useState<string>('');
+  const [moveSiteId, setMoveSiteId] = useState<string>('');
 
   const { data, isLoading } = trpc.documents.get.useQuery({ documentId });
   const { data: versionsData } = trpc.documents.versions.list.useQuery(
@@ -170,6 +171,7 @@ export default function DocumentDetailPage() {
 
   // All folders for the Move dialog (parentId omitted → whole tenant tree).
   const { data: allFolders = [] } = trpc.documentFolders.list.useQuery({});
+  const { data: allSites = [] } = trpc.sites.list.useQuery();
 
   const updateDoc = trpc.documents.update.useMutation({
     onSuccess: () => {
@@ -187,6 +189,7 @@ export default function DocumentDetailPage() {
       setVisGroupIds(Array.isArray(g) ? (g as string[]) : []);
       setVisSiteIds(Array.isArray(s) ? (s as string[]) : []);
       setMoveFolderId(data.document.folderId ?? '');
+      setMoveSiteId(data.document.siteId ?? '');
     }
   }, [data]);
 
@@ -601,24 +604,50 @@ export default function DocumentDetailPage() {
             <DialogTitle>{t('moveTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <select
-              value={moveFolderId}
-              onChange={(e) => setMoveFolderId(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-            >
-              <option value="">{t('moveNoFolder')}</option>
-              {allFolders.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
+            <div className="space-y-1.5">
+              <span className="text-xs font-medium text-muted-foreground">
+                {t('moveFolderLabel')}
+              </span>
+              <select
+                value={moveFolderId}
+                onChange={(e) => setMoveFolderId(e.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t('moveNoFolder')}</option>
+                {allFolders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-xs font-medium text-muted-foreground">
+                {tUpload('siteLabel')}
+              </span>
+              <select
+                value={moveSiteId}
+                onChange={(e) => setMoveSiteId(e.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{tUpload('noSite')}</option>
+                {allSites.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <Button
               className="w-full"
               disabled={updateDoc.isPending}
               onClick={() => {
                 updateDoc.mutate(
-                  { documentId, folderId: moveFolderId === '' ? null : moveFolderId },
+                  {
+                    documentId,
+                    folderId: moveFolderId === '' ? null : moveFolderId,
+                    siteId: moveSiteId === '' ? null : moveSiteId,
+                  },
                   {
                     onSuccess: () => {
                       toast.success(t('movedToast'));

@@ -2521,7 +2521,8 @@
       "moveTitle": "In Ordner verschieben",
       "moveNoFolder": "Kein Ordner (oberste Ebene)",
       "moveSave": "Verschieben",
-      "movedToast": "Dokument verschoben"
+      "movedToast": "Dokument verschoben",
+      "moveFolderLabel": "Folder"
     },
     "upload": {
       "labelsCreate": "Neue Bezeichnung",
@@ -2530,7 +2531,9 @@
       "labelsCreateButton": "Erstellen",
       "responsibleNoneLabel": "Niemand",
       "responsibleSelectUser": "Benutzer auswählen…",
-      "responsibleSelectGroup": "Gruppe auswählen…"
+      "responsibleSelectGroup": "Gruppe auswählen…",
+      "siteLabel": "Site / Project",
+      "noSite": "No site / project"
     }
   },
   "search": {

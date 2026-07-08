@@ -2514,7 +2514,8 @@
       "moveTitle": "Przenieś do folderu",
       "moveNoFolder": "Brak folderu (najwyższy poziom)",
       "moveSave": "Przenieś",
-      "movedToast": "Przeniesiono dokument"
+      "movedToast": "Przeniesiono dokument",
+      "moveFolderLabel": "Folder"
     },
     "upload": {
       "labelsCreate": "Nowa etykieta",
@@ -2523,7 +2524,9 @@
       "labelsCreateButton": "Utwórz",
       "responsibleNoneLabel": "Nikt",
       "responsibleSelectUser": "Wybierz użytkownika…",
-      "responsibleSelectGroup": "Wybierz grupę…"
+      "responsibleSelectGroup": "Wybierz grupę…",
+      "siteLabel": "Site / Project",
+      "noSite": "No site / project"
     }
   },
   "search": {

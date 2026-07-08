@@ -61,6 +61,10 @@ export default function DocumentNewPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [folderId, setFolderId] = useState<string>('');
+  const [siteId, setSiteId] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('site') ?? '';
+  });
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
@@ -78,6 +82,7 @@ export default function DocumentNewPage() {
   // Data queries
   const utils = trpc.useUtils();
   const { data: folders = [], isLoading: foldersLoading } = trpc.documentFolders.list.useQuery({});
+  const { data: sites = [] } = trpc.sites.list.useQuery();
   const { data: labels = [], isLoading: labelsLoading } = trpc.documentLabels.list.useQuery();
   const { data: usersData, isLoading: usersLoading } = trpc.users.list.useQuery({});
   const users = usersData?.users ?? [];
@@ -181,6 +186,7 @@ export default function DocumentNewPage() {
       name: name.trim(),
       description: description.trim(),
       folderId: folderId.length > 0 ? folderId : undefined,
+      siteId: siteId.length > 0 ? siteId : undefined,
       labelIds: selectedLabelIds,
       startDate: startDate.length > 0 ? new Date(startDate).toISOString() : null,
       expiresAt: expiresAt.length > 0 ? new Date(expiresAt).toISOString() : null,
@@ -310,6 +316,23 @@ export default function DocumentNewPage() {
                   ))}
                 </select>
               )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="doc-site">{t('siteLabel')}</Label>
+              <select
+                id="doc-site"
+                value={siteId}
+                onChange={(e) => setSiteId(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">{t('noSite')}</option>
+                {sites.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Labels */}

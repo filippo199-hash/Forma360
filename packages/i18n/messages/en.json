@@ -2705,7 +2705,9 @@
       "labelsCreateButton": "Create",
       "responsibleNoneLabel": "No one",
       "responsibleSelectUser": "Select a user…",
-      "responsibleSelectGroup": "Select a group…"
+      "responsibleSelectGroup": "Select a group…",
+      "siteLabel": "Site / Project",
+      "noSite": "No site / project"
     },
     "labels": {
       "manageTitle": "Manage labels",
@@ -2783,7 +2785,8 @@
       "moveTitle": "Move to folder",
       "moveNoFolder": "No folder (top level)",
       "moveSave": "Move",
-      "movedToast": "Document moved"
+      "movedToast": "Document moved",
+      "moveFolderLabel": "Folder"
     }
   },
   "entitySelect": {
