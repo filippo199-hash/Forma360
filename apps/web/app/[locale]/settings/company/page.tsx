@@ -8,7 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/compon
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
+
+type Terminology = 'both' | 'sites' | 'projects';
+const TERMINOLOGY_OPTIONS: readonly Terminology[] = ['both', 'sites', 'projects'];
 
 /**
  * Company-level settings. Admin-only — the parent layout already
@@ -33,12 +37,24 @@ export default function CompanyPage() {
     },
   });
 
+  const updateSettings = trpc.tenants.updateSettings.useMutation({
+    onSuccess: () => {
+      void utils.tenants.get.invalidate();
+      toast.success(t('terminologySaved'));
+    },
+    onError: () => {
+      toast.error(t('saveError'));
+    },
+  });
+
   const [name, setName] = useState('');
   useEffect(() => {
     if (tenantQuery.data !== undefined) {
       setName(tenantQuery.data.tenant.name);
     }
   }, [tenantQuery.data]);
+
+  const terminology: Terminology = tenantQuery.data?.tenant.settings?.terminology ?? 'both';
 
   async function onCopySlug() {
     if (tenantQuery.data === undefined) return;
@@ -132,6 +148,56 @@ export default function CompanyPage() {
                 {update.isPending ? t('saving') : t('saveButton')}
               </Button>
             </form>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('terminologyTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4 text-sm text-muted-foreground">{t('terminologyHelp')}</p>
+          {tenantQuery.isLoading ? (
+            <Skeleton className="h-24 w-full" />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {TERMINOLOGY_OPTIONS.map((opt) => {
+                const active = terminology === opt;
+                const titleKey =
+                  opt === 'both'
+                    ? 'terminologyBoth'
+                    : opt === 'sites'
+                      ? 'terminologySites'
+                      : 'terminologyProjects';
+                const helpKey =
+                  opt === 'both'
+                    ? 'terminologyBothHelp'
+                    : opt === 'sites'
+                      ? 'terminologySitesHelp'
+                      : 'terminologyProjectsHelp';
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    disabled={updateSettings.isPending}
+                    onClick={() => {
+                      if (!active) updateSettings.mutate({ terminology: opt });
+                    }}
+                    className={cn(
+                      'rounded-lg border p-3 text-left transition-colors',
+                      active
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                        : 'border-input hover:border-primary/50 hover:bg-muted/40',
+                    )}
+                    aria-pressed={active}
+                  >
+                    <div className="text-sm font-medium">{t(titleKey)}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{t(helpKey)}</div>
+                  </button>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>

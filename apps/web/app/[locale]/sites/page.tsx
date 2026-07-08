@@ -20,6 +20,7 @@ import { Label } from '../../../src/components/ui/label';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
+import { hubTitleKey, useTerminology } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
 
 type Kind = 'site' | 'project';
@@ -38,6 +39,8 @@ export default function SitesHubPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canManage = useHasPermission('sites.manage');
+  const terminology = useTerminology();
+  const defaultKind: Kind = terminology === 'sites' ? 'site' : 'project';
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.sites.hub.useQuery();
@@ -48,6 +51,11 @@ export default function SitesHubPage() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [kind, setKind] = useState<Kind>('project');
+
+  function openCreate() {
+    setKind(defaultKind);
+    setOpen(true);
+  }
   const [client, setClient] = useState('');
   const [status, setStatus] = useState<Status>('active');
   const [startDate, setStartDate] = useState('');
@@ -142,11 +150,11 @@ export default function SitesHubPage() {
     <div className="space-y-8">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t(hubTitleKey(terminology))}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
         {canManage ? (
-          <Button onClick={() => setOpen(true)}>
+          <Button onClick={openCreate}>
             <Plus className="mr-1 h-4 w-4" />
             {t('newButton')}
           </Button>
@@ -192,24 +200,26 @@ export default function SitesHubPage() {
             <DialogTitle>{t('dialogTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Kind toggle */}
-            <div className="grid grid-cols-2 gap-2">
-              {(['project', 'site'] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setKind(k)}
-                  className={cn(
-                    'rounded-md border px-3 py-2 text-sm font-medium transition-colors',
-                    kind === k
-                      ? 'border-primary bg-primary/5 text-foreground'
-                      : 'border-input text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {k === 'project' ? t('kindProject') : t('kindSite')}
-                </button>
-              ))}
-            </div>
+            {/* Kind toggle — only when the tenant uses both axes */}
+            {terminology === 'both' ? (
+              <div className="grid grid-cols-2 gap-2">
+                {(['project', 'site'] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setKind(k)}
+                    className={cn(
+                      'rounded-md border px-3 py-2 text-sm font-medium transition-colors',
+                      kind === k
+                        ? 'border-primary bg-primary/5 text-foreground'
+                        : 'border-input text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {k === 'project' ? t('kindProject') : t('kindSite')}
+                  </button>
+                ))}
+              </div>
+            ) : null}
 
             <div className="space-y-1.5">
               <Label htmlFor="site-name">{t('fieldName')}</Label>

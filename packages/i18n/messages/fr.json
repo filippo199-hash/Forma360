@@ -348,7 +348,16 @@
       "saveSuccess": "Company updated.",
       "saveError": "Could not save the company. Please try again.",
       "copySlug": "Copy slug",
-      "slugCopied": "Slug copied"
+      "slugCopied": "Slug copied",
+      "terminologyTitle": "Terminology",
+      "terminologyHelp": "Choose how your organisation refers to its places. This changes the menu label, the hub, and what you create by default.",
+      "terminologyBoth": "Sites & Projects",
+      "terminologyBothHelp": "Both permanent locations and time-bound jobs.",
+      "terminologySites": "Sites only",
+      "terminologySitesHelp": "Permanent locations — factories, branches, stores.",
+      "terminologyProjects": "Projects only",
+      "terminologyProjectsHelp": "Time-bound jobs — construction sites, rollouts.",
+      "terminologySaved": "Terminology updated."
     }
   },
   "templates": {
@@ -1110,7 +1119,9 @@
     "maintenance": "Maintenance",
     "documents": "Documents",
     "ai": "Assistant IA",
-    "sites": "Sites"
+    "sites": "Sites",
+    "projects": "Projects",
+    "sitesAndProjects": "Sites & Projects"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2703,6 +2714,8 @@
     "detailClient": "Client",
     "detailTimeline": "Timeline",
     "filteredBy": "Filtered by",
-    "clearFilter": "Clear filter"
+    "clearFilter": "Clear filter",
+    "titleSites": "Sites",
+    "titleProjects": "Projects"
   }
 }

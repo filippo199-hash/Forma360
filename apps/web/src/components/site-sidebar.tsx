@@ -16,6 +16,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '../lib/cn';
+import { navLabelKey, useTerminology } from '../lib/terminology';
 
 interface SiteSidebarProps {
   locale: string;
@@ -50,6 +51,7 @@ interface NavItem {
 export function SiteSidebar({ locale }: SiteSidebarProps) {
   const t = useTranslations('nav');
   const pathname = usePathname();
+  const terminology = useTerminology();
 
   const primary: NavItem[] = [
     { key: 'ai', href: `/${locale}/ai`, icon: Bot },
@@ -82,6 +84,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
   function renderItem(item: NavItem) {
     const Icon = item.icon;
     const active = isActive(item);
+    const label = item.key === 'sites' ? t(navLabelKey(terminology)) : t(item.key);
     return (
       <Link
         key={item.key}
@@ -95,7 +98,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
         aria-current={active ? 'page' : undefined}
       >
         <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>{t(item.key)}</span>
+        <span>{label}</span>
       </Link>
     );
   }

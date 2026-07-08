@@ -18,8 +18,18 @@ import { jsonb, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
  *   - `siteLabels`: array of level names (default `["Country","Region","Area","Site"]`).
  *     Used by Module 9 to customise breadcrumb copy.
  */
+/**
+ * How this tenant refers to its places. Drives the top-level nav label,
+ * the Sites/Projects hub, and the default kind in the create dialog.
+ *   - `sites`    → permanent locations only ("Sites")
+ *   - `projects` → time-bound jobs only ("Projects")
+ *   - `both`     → both axes ("Sites & Projects") — the default
+ */
+export type SiteTerminology = 'sites' | 'projects' | 'both';
+
 export interface TenantSettings {
   siteLabels?: readonly string[];
+  terminology?: SiteTerminology;
   [key: string]: unknown;
 }
 
