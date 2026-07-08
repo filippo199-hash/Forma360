@@ -28,6 +28,7 @@ import {
   siteMedia,
   siteMembers,
   siteMembershipRules,
+  sitePlanPins,
   sitePlans,
   sites,
 } from '@forma360/db/schema';
@@ -420,6 +421,134 @@ export const sitesRouter = router({
         '[sites] archived',
       );
       return { ok: true as const, invalidatedAccessRules: invalidated };
+    }),
+
+  /**
+   * Archive a site/project, choosing what happens to attached records:
+   *   - 'dissociate' — unlink cross-module records (observations, inspections,
+   *     actions, assets, documents lose their site link but stay active in
+   *     their own modules). Site-native content (media, plans, members) stays
+   *     with the archived project. Nothing is destroyed.
+   *   - 'delete' — also remove everything attached: cross-module records are
+   *     archived, the project's media / plans / pins are archived, and
+   *     memberships are dropped.
+   * The site itself is soft-archived either way (sites are never hard-deleted).
+   */
+  archiveWithMode: tenantProcedure
+    .use(requirePermission('sites.manage'))
+    .input(z.object({ id: z.string().length(26), mode: z.enum(['dissociate', 'delete']) }))
+    .mutation(async ({ ctx, input }) => {
+      const tid = ctx.tenantId;
+      const sid = input.id;
+      const now = new Date();
+      const exists = await ctx.db
+        .select({ id: sites.id })
+        .from(sites)
+        .where(and(eq(sites.tenantId, tid), eq(sites.id, sid)))
+        .limit(1);
+      if (exists[0] === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      if (input.mode === 'dissociate') {
+        await ctx.db
+          .update(issues)
+          .set({ siteId: null })
+          .where(and(eq(issues.tenantId, tid), eq(issues.siteId, sid)));
+        await ctx.db
+          .update(inspections)
+          .set({ siteId: null })
+          .where(and(eq(inspections.tenantId, tid), eq(inspections.siteId, sid)));
+        await ctx.db
+          .update(actions)
+          .set({ siteId: null })
+          .where(and(eq(actions.tenantId, tid), eq(actions.siteId, sid)));
+        await ctx.db
+          .update(assets)
+          .set({ siteId: null })
+          .where(and(eq(assets.tenantId, tid), eq(assets.siteId, sid)));
+        await ctx.db
+          .update(documents)
+          .set({ siteId: null })
+          .where(and(eq(documents.tenantId, tid), eq(documents.siteId, sid)));
+      } else {
+        await ctx.db
+          .update(issues)
+          .set({ archivedAt: now })
+          .where(and(eq(issues.tenantId, tid), eq(issues.siteId, sid), isNull(issues.archivedAt)));
+        await ctx.db
+          .update(inspections)
+          .set({ archivedAt: now })
+          .where(
+            and(
+              eq(inspections.tenantId, tid),
+              eq(inspections.siteId, sid),
+              isNull(inspections.archivedAt),
+            ),
+          );
+        await ctx.db
+          .update(actions)
+          .set({ archivedAt: now })
+          .where(
+            and(eq(actions.tenantId, tid), eq(actions.siteId, sid), isNull(actions.archivedAt)),
+          );
+        await ctx.db
+          .update(assets)
+          .set({ archivedAt: now })
+          .where(and(eq(assets.tenantId, tid), eq(assets.siteId, sid), isNull(assets.archivedAt)));
+        await ctx.db
+          .update(documents)
+          .set({ archivedAt: now })
+          .where(
+            and(
+              eq(documents.tenantId, tid),
+              eq(documents.siteId, sid),
+              isNull(documents.archivedAt),
+            ),
+          );
+        await ctx.db
+          .update(siteMedia)
+          .set({ archivedAt: now })
+          .where(
+            and(
+              eq(siteMedia.tenantId, tid),
+              eq(siteMedia.siteId, sid),
+              isNull(siteMedia.archivedAt),
+            ),
+          );
+        await ctx.db
+          .update(sitePlanPins)
+          .set({ archivedAt: now })
+          .where(
+            and(
+              eq(sitePlanPins.tenantId, tid),
+              eq(sitePlanPins.siteId, sid),
+              isNull(sitePlanPins.archivedAt),
+            ),
+          );
+        await ctx.db
+          .update(sitePlans)
+          .set({ archivedAt: now })
+          .where(
+            and(
+              eq(sitePlans.tenantId, tid),
+              eq(sitePlans.siteId, sid),
+              isNull(sitePlans.archivedAt),
+            ),
+          );
+        await ctx.db
+          .delete(siteMembers)
+          .where(and(eq(siteMembers.tenantId, tid), eq(siteMembers.siteId, sid)));
+      }
+
+      await ctx.db
+        .update(sites)
+        .set({ archivedAt: now, updatedAt: now })
+        .where(and(eq(sites.tenantId, tid), eq(sites.id, sid)));
+      const invalidated = await invalidateAccessRulesReferencing(ctx.db, tid, 'site', sid);
+      ctx.logger.info(
+        { siteId: sid, mode: input.mode, invalidatedAccessRules: invalidated },
+        '[sites] archived with mode',
+      );
+      return { ok: true as const, mode: input.mode };
     }),
 
   /**

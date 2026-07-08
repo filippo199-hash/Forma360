@@ -49,6 +49,7 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
 
   const [editOpen, setEditOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [archiveMode, setArchiveMode] = useState<'dissociate' | 'delete'>('dissociate');
 
   const [name, setName] = useState(site.name);
   const [kind, setKind] = useState<Kind>(site.kind === 'project' ? 'project' : 'site');
@@ -74,7 +75,7 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
     onError: () => toast.error(tCommon('error')),
   });
 
-  const archive = trpc.sites.archive.useMutation({
+  const archive = trpc.sites.archiveWithMode.useMutation({
     onSuccess: () => {
       void utils.sites.hub.invalidate();
       toast.success(t('archivedToast'));
@@ -242,9 +243,57 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
                     </li>
                   ))}
                 </ul>
-                <p className="text-xs text-emerald-700 dark:text-emerald-400">
-                  {t('archiveDepsKept')}
-                </p>
+              </div>
+            ) : null}
+
+            {depRows.length > 0 ? (
+              <div className="space-y-2">
+                <p className="font-medium">{t('archiveModeQuestion')}</p>
+                {(['dissociate', 'delete'] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setArchiveMode(m)}
+                    className={cn(
+                      'flex w-full items-start gap-2 rounded-md border p-3 text-left transition-colors',
+                      archiveMode === m
+                        ? m === 'delete'
+                          ? 'border-destructive bg-destructive/5'
+                          : 'border-primary bg-primary/5'
+                        : 'border-input hover:bg-muted/40',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
+                        archiveMode === m
+                          ? m === 'delete'
+                            ? 'border-destructive'
+                            : 'border-primary'
+                          : 'border-muted-foreground',
+                      )}
+                    >
+                      {archiveMode === m ? (
+                        <span
+                          className={cn(
+                            'h-2 w-2 rounded-full',
+                            m === 'delete' ? 'bg-destructive' : 'bg-primary',
+                          )}
+                        />
+                      ) : null}
+                    </span>
+                    <span>
+                      <span className="block font-medium">
+                        {m === 'dissociate' ? t('archiveModeDissociate') : t('archiveModeDelete')}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {m === 'dissociate'
+                          ? t('archiveModeDissociateHelp')
+                          : t('archiveModeDeleteHelp')}
+                      </span>
+                    </span>
+                  </button>
+                ))}
               </div>
             ) : (
               <p className="text-muted-foreground">{t('archiveNoDeps')}</p>
@@ -256,10 +305,10 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => archive.mutate({ id: site.id })}
+              onClick={() => archive.mutate({ id: site.id, mode: archiveMode })}
               disabled={archive.isPending}
             >
-              {t('archiveConfirm')}
+              {archiveMode === 'delete' ? t('archiveConfirmDelete') : t('archiveConfirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

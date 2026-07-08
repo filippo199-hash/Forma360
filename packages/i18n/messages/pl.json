@@ -2813,6 +2813,12 @@
     "mediaToday": "Today",
     "mediaYesterday": "Yesterday",
     "mediaTypePhoto": "Photo",
-    "mediaTypeVideo": "Video"
+    "mediaTypeVideo": "Video",
+    "archiveModeQuestion": "What should happen to the attached items?",
+    "archiveModeDissociate": "Keep them (dissociate)",
+    "archiveModeDissociateHelp": "Unlink observations, inspections, actions, assets and documents — they stay in their own modules. Photos and plans stay with the archived project.",
+    "archiveModeDelete": "Delete everything",
+    "archiveModeDeleteHelp": "Also remove all attached observations, inspections, actions, assets, documents, photos and plans.",
+    "archiveConfirmDelete": "Delete project & data"
   }
 }
