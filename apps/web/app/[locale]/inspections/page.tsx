@@ -16,6 +16,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ArchiveDialog } from '../../../src/components/archive-dialog';
+import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import {
@@ -160,7 +161,10 @@ function InspectionsTab({ locale }: { locale: string }) {
   const { data: templateOptions } = trpc.templates.list.useQuery({ includeArchived: false });
   const { data: usersData } = trpc.users.list.useQuery({});
 
+  const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
+
   const listInput = {
+    ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
     ...(activeFilters.has('status') && statusFilter !== 'all' ? { status: statusFilter } : {}),
     ...(activeFilters.has('template') && templateFilter !== ''
       ? { templateId: templateFilter }
@@ -315,6 +319,8 @@ function InspectionsTab({ locale }: { locale: string }) {
           <Button onClick={() => setShowPicker(true)}>{t('startButton')}</Button>
         </div>
       </header>
+
+      {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 
       {/* Search + filter row */}
       <div className="flex flex-wrap items-center gap-2">

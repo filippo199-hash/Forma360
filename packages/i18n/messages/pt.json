@@ -2691,6 +2691,8 @@
     "countDocuments": "Documents",
     "countMembers": "Members",
     "detailClient": "Client",
-    "detailTimeline": "Timeline"
+    "detailTimeline": "Timeline",
+    "filteredBy": "Filtered by",
+    "clearFilter": "Clear filter"
   }
 }

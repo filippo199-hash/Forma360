@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import {
@@ -35,6 +36,7 @@ export default function DocumentsPage() {
   const locale = params.locale ?? 'en';
   const canFolderManage = useHasPermission('documents.folders.manage');
   const utils = trpc.useUtils();
+  const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
 
   // Breadcrumb-based folder navigation
   const [folderPath, setFolderPath] = useState<FolderCrumb[]>([]);
@@ -60,10 +62,13 @@ export default function DocumentsPage() {
     { enabled: currentFolderId !== null },
   );
 
-  // Documents — undefined folderId = all docs; string = scoped to folder
+  // Documents — undefined folderId = all docs; string = scoped to folder.
+  // When a site/project filter is active, list that site's docs across all
+  // folders (folderId untethered) so the hub drill-in shows everything.
   const { data: docs = [], isLoading: docsLoading } = trpc.documents.list.useQuery({
-    folderId: currentFolderId ?? undefined,
+    folderId: siteFilter !== '' ? undefined : (currentFolderId ?? undefined),
     query: query.trim().length > 0 ? query.trim() : undefined,
+    ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
   });
 
   // Labels for color-pill resolution
@@ -181,6 +186,8 @@ export default function DocumentsPage() {
           </Button>
         </div>
       </header>
+
+      {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 
       {/* New Folder dialog */}
       <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>

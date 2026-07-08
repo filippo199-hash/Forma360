@@ -150,6 +150,8 @@ const listInput = z
       ])
       .optional(),
     templateId: z.string().length(26).optional(),
+    /** Filter to inspections conducted at a specific site/project. */
+    siteId: z.string().length(26).optional(),
     /** Filter by the user who conducted the inspection (inspections.createdBy). */
     conductedById: z.string().min(1).max(64).optional(),
     /** Conducted-on date range (inclusive), filtered on inspections.startedAt. */
@@ -404,6 +406,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         if (input.status !== undefined) where.push(eq(inspections.status, input.status));
         if (input.templateId !== undefined)
           where.push(eq(inspections.templateId, input.templateId));
+        if (input.siteId !== undefined) where.push(eq(inspections.siteId, input.siteId));
         if (input.conductedById !== undefined)
           where.push(eq(inspections.createdBy, input.conductedById));
         if (input.conductedFrom !== undefined)

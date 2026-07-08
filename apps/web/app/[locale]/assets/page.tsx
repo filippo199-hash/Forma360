@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type ReactNode, useState } from 'react';
+import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -36,11 +37,14 @@ export default function AssetsListPage() {
   const [includeArchived, setIncludeArchived] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
+  const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
+
   const { data: typesData } = trpc.assetTypes.list.useQuery({});
   const types = typesData ?? [];
 
   const { data, isLoading } = trpc.assets.list.useQuery({
     typeId: typeFilter === 'all' ? undefined : typeFilter,
+    ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
     includeArchived,
   });
   const allRows = (data ?? []) as AssetRow[];
@@ -171,6 +175,8 @@ export default function AssetsListPage() {
           ) : null}
         </div>
       </header>
+
+      {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-1">

@@ -28,6 +28,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ActionDetailPanel } from '../../../src/components/actions/action-detail-panel';
+import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { toast } from 'sonner';
 import { Button } from '../../../src/components/ui/button';
@@ -387,10 +388,12 @@ export default function ActionsListPage() {
   }
 
   // ── Data
+  const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
   const listInput: {
     status?: Exclude<StatusFilter, 'all'>;
     sourceType?: Exclude<SourceFilter, 'all'>;
     priority?: Exclude<PriorityFilter, 'all'>;
+    siteId?: string;
     assignedToMe: boolean;
     overdueOnly: boolean;
     includeArchived: boolean;
@@ -407,6 +410,7 @@ export default function ActionsListPage() {
   if (status !== 'all' && view === 'list') listInput.status = status;
   if (source !== 'all') listInput.sourceType = source;
   if (priority !== 'all') listInput.priority = priority;
+  if (siteFilter !== '') listInput.siteId = siteFilter;
   if (query.trim().length > 0) listInput.query = query.trim();
 
   const { data: rows, isLoading } = trpc.actions.list.useQuery(listInput);
@@ -492,6 +496,10 @@ export default function ActionsListPage() {
             ) : null}
           </div>
         </header>
+
+        {siteFilter !== '' ? (
+          <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} />
+        ) : null}
 
         {/* Saved views bar */}
         {views.length > 0 ? (

@@ -49,7 +49,10 @@ export default function ObservationsListPage() {
 
   const [status, setStatus] = useState<StatusFilter>('all');
   const [categoryId, setCategoryId] = useState<string>('');
-  const [siteId, setSiteId] = useState<string>('');
+  const [siteId, setSiteId] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('site') ?? '';
+  });
   const [includeArchived, setIncludeArchived] = useState(false);
   const [pages, setPages] = useState<string[]>([]);
 
