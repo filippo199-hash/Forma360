@@ -1102,7 +1102,8 @@
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "文档",
-    "ai": "AI助手"
+    "ai": "AI助手",
+    "sites": "站点"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2657,5 +2658,39 @@
     "applyExisting": "Apply to existing assets",
     "applyNew": "Only new assets",
     "appliedToast": "Updated {count} asset(s)"
+  },
+  "sites": {
+    "title": "Sites & Projects",
+    "subtitle": "Everything happening at each of your sites and projects.",
+    "newButton": "New",
+    "empty": "No sites or projects yet.",
+    "createdToast": "Created.",
+    "kindProject": "Project",
+    "kindSite": "Site",
+    "status_planning": "Planning",
+    "status_active": "Active",
+    "status_on_hold": "On hold",
+    "status_completed": "Completed",
+    "membersCount": "{count} members",
+    "sectionProjects": "Projects",
+    "sectionSites": "Sites",
+    "dialogTitle": "New site or project",
+    "fieldName": "Name",
+    "namePlaceholder": "e.g. Tower Refurbishment",
+    "fieldClient": "Client",
+    "clientPlaceholder": "e.g. Acme Construction Ltd",
+    "fieldStart": "Start date",
+    "fieldEnd": "End date",
+    "fieldStatus": "Status",
+    "createButton": "Create",
+    "backToList": "Back to Sites & Projects",
+    "countObservations": "Observations",
+    "countInspections": "Inspections",
+    "countActions": "Actions",
+    "countAssets": "Assets",
+    "countDocuments": "Documents",
+    "countMembers": "Members",
+    "detailClient": "Client",
+    "detailTimeline": "Timeline"
   }
 }

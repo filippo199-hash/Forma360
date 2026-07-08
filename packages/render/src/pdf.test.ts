@@ -53,6 +53,7 @@ const MIGRATION_FILES = [
   '0033_document_visibility.sql',
   '0034_maintenance_programs.sql',
   '0035_asset_owner.sql',
+  '0036_site_projects.sql',
 ];
 
 async function bootDb() {

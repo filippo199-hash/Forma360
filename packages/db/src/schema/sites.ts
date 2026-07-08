@@ -17,6 +17,7 @@
  */
 import { sql } from 'drizzle-orm';
 import {
+  date,
   index,
   integer,
   jsonb,
@@ -59,6 +60,22 @@ export const sites = pgTable(
      * rejected at the router (G-E10).
      */
     membershipMode: text('membership_mode').notNull().default('manual'),
+    /**
+     * "site" (permanent location) | "project" (time-bound job). Same table +
+     * access model; `kind` only drives labelling and which lifecycle fields
+     * are shown. Defaults to 'site' so existing rows are unaffected.
+     */
+    kind: text('kind').notNull().default('site'),
+    /**
+     * Project lifecycle: 'planning' | 'active' | 'on_hold' | 'completed'.
+     * Null for plain sites (they're always active).
+     */
+    status: text('status'),
+    /** Optional client / customer name (projects). */
+    client: text('client'),
+    /** Project start / end (calendar dates, no time). Null for sites. */
+    startDate: date('start_date'),
+    endDate: date('end_date'),
     /** Free-form tenant metadata (coordinates, custom codes, timezone, ...). */
     metadata: jsonb('metadata')
       .notNull()

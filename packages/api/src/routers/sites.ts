@@ -19,7 +19,16 @@
  *   - depth ≤ 5 (6 levels total, 0–5). G-E07 enforced at router layer.
  *   - ≤ 50,000 sites per tenant — checked at create.
  */
-import { siteMembers, siteMembershipRules, sites } from '@forma360/db/schema';
+import {
+  actions,
+  assets,
+  documents,
+  inspections,
+  issues,
+  siteMembers,
+  siteMembershipRules,
+  sites,
+} from '@forma360/db/schema';
 import {
   registerDependentResolver,
   type DependentResolver,
@@ -85,6 +94,11 @@ export const sitesRouter = router({
         path: sites.path,
         membershipMode: sites.membershipMode,
         archivedAt: sites.archivedAt,
+        kind: sites.kind,
+        status: sites.status,
+        client: sites.client,
+        startDate: sites.startDate,
+        endDate: sites.endDate,
       })
       .from(sites)
       .where(and(eq(sites.tenantId, ctx.tenantId), isNull(sites.archivedAt)))
@@ -113,6 +127,122 @@ export const sitesRouter = router({
     return rows;
   }),
 
+  /**
+   * Operational hub list: every non-archived site/project plus a member
+   * count, for the top-level Sites/Projects page cards.
+   */
+  hub: tenantProcedure.use(requirePermission('sites.view')).query(async ({ ctx }) => {
+    const siteRows = await ctx.db
+      .select({
+        id: sites.id,
+        name: sites.name,
+        parentId: sites.parentId,
+        kind: sites.kind,
+        status: sites.status,
+        client: sites.client,
+        startDate: sites.startDate,
+        endDate: sites.endDate,
+      })
+      .from(sites)
+      .where(and(eq(sites.tenantId, ctx.tenantId), isNull(sites.archivedAt)))
+      .orderBy(sites.name);
+
+    const memberRows = await ctx.db
+      .select({ siteId: siteMembers.siteId, c: count() })
+      .from(siteMembers)
+      .where(eq(siteMembers.tenantId, ctx.tenantId))
+      .groupBy(siteMembers.siteId);
+    const memberMap = new Map(memberRows.map((r) => [r.siteId, Number(r.c)]));
+
+    return siteRows.map((s) => ({ ...s, memberCount: memberMap.get(s.id) ?? 0 }));
+  }),
+
+  /**
+   * Single site/project detail + rolled-up counts of everything attached to
+   * it, for the hub detail (Overview tab).
+   */
+  getHub: tenantProcedure
+    .use(requirePermission('sites.view'))
+    .input(z.object({ id: z.string().length(26) }))
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select()
+        .from(sites)
+        .where(and(eq(sites.tenantId, ctx.tenantId), eq(sites.id, input.id)))
+        .limit(1);
+      const site = rows[0];
+      if (site === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      const tid = ctx.tenantId;
+      const [observations, actionCount, assetCount, documentCount, inspectionCount, members] =
+        await Promise.all([
+          ctx.db
+            .select({ c: count() })
+            .from(issues)
+            .where(
+              and(eq(issues.tenantId, tid), eq(issues.siteId, input.id), isNull(issues.archivedAt)),
+            )
+            .then((r) => Number(r[0]?.c ?? 0)),
+          ctx.db
+            .select({ c: count() })
+            .from(actions)
+            .where(
+              and(
+                eq(actions.tenantId, tid),
+                eq(actions.siteId, input.id),
+                isNull(actions.archivedAt),
+              ),
+            )
+            .then((r) => Number(r[0]?.c ?? 0)),
+          ctx.db
+            .select({ c: count() })
+            .from(assets)
+            .where(
+              and(eq(assets.tenantId, tid), eq(assets.siteId, input.id), isNull(assets.archivedAt)),
+            )
+            .then((r) => Number(r[0]?.c ?? 0)),
+          ctx.db
+            .select({ c: count() })
+            .from(documents)
+            .where(
+              and(
+                eq(documents.tenantId, tid),
+                eq(documents.siteId, input.id),
+                isNull(documents.archivedAt),
+              ),
+            )
+            .then((r) => Number(r[0]?.c ?? 0)),
+          ctx.db
+            .select({ c: count() })
+            .from(inspections)
+            .where(
+              and(
+                eq(inspections.tenantId, tid),
+                eq(inspections.siteId, input.id),
+                isNull(inspections.archivedAt),
+              ),
+            )
+            .then((r) => Number(r[0]?.c ?? 0)),
+          ctx.db
+            .select({ c: count() })
+            .from(siteMembers)
+            .where(and(eq(siteMembers.tenantId, tid), eq(siteMembers.siteId, input.id)))
+            .then((r) => Number(r[0]?.c ?? 0)),
+        ]);
+
+      return {
+        site,
+        counts: {
+          observations,
+          actions: actionCount,
+          assets: assetCount,
+          documents: documentCount,
+          inspections: inspectionCount,
+          members,
+        },
+      };
+    }),
+
   create: tenantProcedure
     .use(requirePermission('sites.manage'))
     .input(
@@ -121,6 +251,20 @@ export const sitesRouter = router({
         parentId: z.string().length(26).nullable().optional(),
         membershipMode: z.enum(['manual', 'rule_based']).default('manual'),
         metadata: z.record(z.unknown()).optional(),
+        // Sites/Projects lifecycle (projects only; sites leave these null).
+        kind: z.enum(['site', 'project']).default('site'),
+        status: z.enum(['planning', 'active', 'on_hold', 'completed']).nullable().optional(),
+        client: z.string().max(200).nullable().optional(),
+        startDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable()
+          .optional(),
+        endDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable()
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -167,6 +311,11 @@ export const sitesRouter = router({
         path,
         membershipMode: input.membershipMode,
         metadata: input.metadata ?? {},
+        kind: input.kind,
+        status: input.status ?? (input.kind === 'project' ? 'active' : null),
+        client: input.client ?? null,
+        startDate: input.startDate ?? null,
+        endDate: input.endDate ?? null,
       });
       return { id };
     }),
@@ -179,6 +328,19 @@ export const sitesRouter = router({
         name: z.string().min(1).max(120).optional(),
         membershipMode: z.enum(['manual', 'rule_based']).optional(),
         metadata: z.record(z.unknown()).optional(),
+        kind: z.enum(['site', 'project']).optional(),
+        status: z.enum(['planning', 'active', 'on_hold', 'completed']).nullable().optional(),
+        client: z.string().max(200).nullable().optional(),
+        startDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable()
+          .optional(),
+        endDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable()
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -186,6 +348,11 @@ export const sitesRouter = router({
       if (input.name !== undefined) updates.name = input.name;
       if (input.membershipMode !== undefined) updates.membershipMode = input.membershipMode;
       if (input.metadata !== undefined) updates.metadata = input.metadata;
+      if (input.kind !== undefined) updates.kind = input.kind;
+      if (input.status !== undefined) updates.status = input.status;
+      if (input.client !== undefined) updates.client = input.client;
+      if (input.startDate !== undefined) updates.startDate = input.startDate;
+      if (input.endDate !== undefined) updates.endDate = input.endDate;
       await ctx.db
         .update(sites)
         .set(updates)
