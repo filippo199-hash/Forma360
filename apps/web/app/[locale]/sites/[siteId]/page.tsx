@@ -6,6 +6,7 @@ import {
   Building2,
   ClipboardCheck,
   FolderOpen,
+  Image as ImageIcon,
   ListChecks,
   MapPin,
   Users,
@@ -14,9 +15,11 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { SiteMediaGallery } from '../../../../src/components/sites/site-media-gallery';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../src/components/ui/tabs';
 import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -39,6 +42,7 @@ export default function SiteDetailPage() {
     { id: siteId },
     { enabled: siteId !== '' },
   );
+  const [tab, setTab] = useState('overview');
 
   if (isLoading || data === undefined) {
     return (
@@ -65,6 +69,7 @@ export default function SiteDetailPage() {
     value: number;
     icon: ReactNode;
     href: string | null;
+    selectsTab?: string;
   }> = [
     {
       key: 'observations',
@@ -100,6 +105,14 @@ export default function SiteDetailPage() {
       value: counts.documents,
       icon: <FolderOpen className="h-5 w-5" />,
       href: `/${locale}/documents?site=${siteId}`,
+    },
+    {
+      key: 'media',
+      label: t('countMedia'),
+      value: counts.media,
+      icon: <ImageIcon className="h-5 w-5" />,
+      href: null,
+      selectsTab: 'media',
     },
     {
       key: 'members',
@@ -156,33 +169,61 @@ export default function SiteDetailPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {tiles.map((tile) => {
-          const inner = (
-            <Card
-              className={cn(
-                'h-full',
-                tile.href !== null
-                  ? 'transition-colors hover:border-primary/50 hover:bg-muted/30'
-                  : '',
-              )}
-            >
-              <CardContent className="space-y-2 p-4">
-                <div className="text-muted-foreground">{tile.icon}</div>
-                <div className="text-2xl font-semibold">{tile.value}</div>
-                <div className="text-xs text-muted-foreground">{tile.label}</div>
-              </CardContent>
-            </Card>
-          );
-          return tile.href !== null ? (
-            <Link key={tile.key} href={tile.href}>
-              {inner}
-            </Link>
-          ) : (
-            <div key={tile.key}>{inner}</div>
-          );
-        })}
-      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="overview">{t('tabOverview')}</TabsTrigger>
+          <TabsTrigger value="media">{t('tabMedia')}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="mt-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {tiles.map((tile) => {
+              const interactive = tile.href !== null || tile.selectsTab !== undefined;
+              const inner = (
+                <Card
+                  className={cn(
+                    'h-full',
+                    interactive
+                      ? 'transition-colors hover:border-primary/50 hover:bg-muted/30'
+                      : '',
+                  )}
+                >
+                  <CardContent className="space-y-2 p-4">
+                    <div className="text-muted-foreground">{tile.icon}</div>
+                    <div className="text-2xl font-semibold">{tile.value}</div>
+                    <div className="text-xs text-muted-foreground">{tile.label}</div>
+                  </CardContent>
+                </Card>
+              );
+              if (tile.href !== null) {
+                return (
+                  <Link key={tile.key} href={tile.href}>
+                    {inner}
+                  </Link>
+                );
+              }
+              if (tile.selectsTab !== undefined) {
+                const target = tile.selectsTab;
+                return (
+                  <button
+                    key={tile.key}
+                    type="button"
+                    onClick={() => setTab(target)}
+                    className="text-left"
+                  >
+                    {inner}
+                  </button>
+                );
+              }
+              return <div key={tile.key}>{inner}</div>;
+            })}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="media" className="mt-4">
+          <SiteMediaGallery siteId={siteId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

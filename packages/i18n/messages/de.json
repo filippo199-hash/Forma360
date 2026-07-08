@@ -2716,6 +2716,22 @@
     "filteredBy": "Filtered by",
     "clearFilter": "Clear filter",
     "titleSites": "Sites",
-    "titleProjects": "Projects"
+    "titleProjects": "Projects",
+    "tabOverview": "Overview",
+    "tabMedia": "Media",
+    "countMedia": "Media",
+    "mediaTitle": "Media",
+    "mediaSubtitle": "Progress photos and videos for this site or project.",
+    "mediaEmpty": "No photos or videos yet.",
+    "mediaAdd": "Add media",
+    "mediaUploading": "Uploading…",
+    "mediaUploadError": "Upload failed.",
+    "mediaCaptionPlaceholder": "Add a caption…",
+    "mediaSaveCaption": "Save",
+    "mediaDelete": "Delete",
+    "mediaDeleteConfirm": "Delete this media? This cannot be undone.",
+    "mediaDeletedToast": "Deleted.",
+    "mediaUploadedBy": "Uploaded by",
+    "mediaVideoBadge": "Video"
   }
 }

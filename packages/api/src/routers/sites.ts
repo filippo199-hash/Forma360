@@ -25,6 +25,7 @@ import {
   documents,
   inspections,
   issues,
+  siteMedia,
   siteMembers,
   siteMembershipRules,
   sites,
@@ -174,61 +175,79 @@ export const sitesRouter = router({
       if (site === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
 
       const tid = ctx.tenantId;
-      const [observations, actionCount, assetCount, documentCount, inspectionCount, members] =
-        await Promise.all([
-          ctx.db
-            .select({ c: count() })
-            .from(issues)
-            .where(
-              and(eq(issues.tenantId, tid), eq(issues.siteId, input.id), isNull(issues.archivedAt)),
-            )
-            .then((r) => Number(r[0]?.c ?? 0)),
-          ctx.db
-            .select({ c: count() })
-            .from(actions)
-            .where(
-              and(
-                eq(actions.tenantId, tid),
-                eq(actions.siteId, input.id),
-                isNull(actions.archivedAt),
-              ),
-            )
-            .then((r) => Number(r[0]?.c ?? 0)),
-          ctx.db
-            .select({ c: count() })
-            .from(assets)
-            .where(
-              and(eq(assets.tenantId, tid), eq(assets.siteId, input.id), isNull(assets.archivedAt)),
-            )
-            .then((r) => Number(r[0]?.c ?? 0)),
-          ctx.db
-            .select({ c: count() })
-            .from(documents)
-            .where(
-              and(
-                eq(documents.tenantId, tid),
-                eq(documents.siteId, input.id),
-                isNull(documents.archivedAt),
-              ),
-            )
-            .then((r) => Number(r[0]?.c ?? 0)),
-          ctx.db
-            .select({ c: count() })
-            .from(inspections)
-            .where(
-              and(
-                eq(inspections.tenantId, tid),
-                eq(inspections.siteId, input.id),
-                isNull(inspections.archivedAt),
-              ),
-            )
-            .then((r) => Number(r[0]?.c ?? 0)),
-          ctx.db
-            .select({ c: count() })
-            .from(siteMembers)
-            .where(and(eq(siteMembers.tenantId, tid), eq(siteMembers.siteId, input.id)))
-            .then((r) => Number(r[0]?.c ?? 0)),
-        ]);
+      const [
+        observations,
+        actionCount,
+        assetCount,
+        documentCount,
+        inspectionCount,
+        members,
+        mediaCount,
+      ] = await Promise.all([
+        ctx.db
+          .select({ c: count() })
+          .from(issues)
+          .where(
+            and(eq(issues.tenantId, tid), eq(issues.siteId, input.id), isNull(issues.archivedAt)),
+          )
+          .then((r) => Number(r[0]?.c ?? 0)),
+        ctx.db
+          .select({ c: count() })
+          .from(actions)
+          .where(
+            and(
+              eq(actions.tenantId, tid),
+              eq(actions.siteId, input.id),
+              isNull(actions.archivedAt),
+            ),
+          )
+          .then((r) => Number(r[0]?.c ?? 0)),
+        ctx.db
+          .select({ c: count() })
+          .from(assets)
+          .where(
+            and(eq(assets.tenantId, tid), eq(assets.siteId, input.id), isNull(assets.archivedAt)),
+          )
+          .then((r) => Number(r[0]?.c ?? 0)),
+        ctx.db
+          .select({ c: count() })
+          .from(documents)
+          .where(
+            and(
+              eq(documents.tenantId, tid),
+              eq(documents.siteId, input.id),
+              isNull(documents.archivedAt),
+            ),
+          )
+          .then((r) => Number(r[0]?.c ?? 0)),
+        ctx.db
+          .select({ c: count() })
+          .from(inspections)
+          .where(
+            and(
+              eq(inspections.tenantId, tid),
+              eq(inspections.siteId, input.id),
+              isNull(inspections.archivedAt),
+            ),
+          )
+          .then((r) => Number(r[0]?.c ?? 0)),
+        ctx.db
+          .select({ c: count() })
+          .from(siteMembers)
+          .where(and(eq(siteMembers.tenantId, tid), eq(siteMembers.siteId, input.id)))
+          .then((r) => Number(r[0]?.c ?? 0)),
+        ctx.db
+          .select({ c: count() })
+          .from(siteMedia)
+          .where(
+            and(
+              eq(siteMedia.tenantId, tid),
+              eq(siteMedia.siteId, input.id),
+              isNull(siteMedia.archivedAt),
+            ),
+          )
+          .then((r) => Number(r[0]?.c ?? 0)),
+      ]);
 
       return {
         site,
@@ -239,6 +258,7 @@ export const sitesRouter = router({
           documents: documentCount,
           inspections: inspectionCount,
           members,
+          media: mediaCount,
         },
       };
     }),

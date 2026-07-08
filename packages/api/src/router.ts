@@ -44,6 +44,7 @@ import { maintenancePlansRouter } from './routers/maintenancePlans';
 import { maintenanceProgramsRouter } from './routers/maintenancePrograms';
 import { aiAssistantRouter } from './routers/aiAssistant';
 import { searchRouter } from './routers/search';
+import { siteMediaRouter } from './routers/siteMedia';
 import { schedulesRouter } from './routers/schedules';
 import { signaturesRouter } from './routers/signatures';
 import { router } from './trpc';
@@ -74,6 +75,7 @@ export function buildAppRouter(deps: {
     customFields: customFieldsRouter,
     groups: groupsRouter,
     sites: sitesRouter,
+    siteMedia: siteMediaRouter,
     accessRules: accessRulesRouter,
     templates: templatesRouter,
     globalResponseSets: globalResponseSetsRouter,
