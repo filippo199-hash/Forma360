@@ -1,7 +1,8 @@
 'use client';
 
-import { ImagePlus, Play, Sparkles, Trash2 } from 'lucide-react';
+import { AlertTriangle, ImagePlus, Play, Sparkles, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useHasPermission } from '../../lib/permissions-context';
@@ -34,6 +35,10 @@ async function analyzeOne(id: string): Promise<void> {
 export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
   const t = useTranslations('sites');
   const canManage = useHasPermission('sites.manage');
+  const canReport = useHasPermission('issues.report');
+  const router = useRouter();
+  const params = useParams<{ locale: string }>();
+  const locale = params.locale ?? 'en';
   const utils = trpc.useUtils();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,8 +48,11 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [captionDraft, setCaptionDraft] = useState('');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [raising, setRaising] = useState(false);
 
   const createMedia = trpc.siteMedia.create.useMutation();
+  const createIssue = trpc.issues.issues.create.useMutation();
+  const createAttachment = trpc.issues.attachments.create.useMutation();
   const updateCaption = trpc.siteMedia.updateCaption.useMutation({
     onSuccess: () => void utils.siteMedia.list.invalidate({ siteId }),
   });
@@ -116,6 +124,47 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
       await utils.siteMedia.list.invalidate({ siteId });
     } finally {
       setAnalyzingId(null);
+    }
+  }
+
+  async function raiseObservation(m: (typeof media)[number]) {
+    setRaising(true);
+    try {
+      const res = await fetch('/api/site-media/draft-observation', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: m.id }),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error(err.error === 'NO_CATEGORY' ? t('mediaNoCategory') : t('mediaRaiseError'));
+        return;
+      }
+      const draft = (await res.json()) as {
+        title: string;
+        description: string;
+        categoryId: string;
+      };
+      const issue = await createIssue.mutateAsync({
+        categoryId: draft.categoryId,
+        title: draft.title,
+        description: draft.description.length > 0 ? draft.description : undefined,
+        siteId,
+      });
+      await createAttachment.mutateAsync({
+        issueId: issue.issueId,
+        storageKey: m.storageKey,
+        filename: m.filename,
+        mimeType: m.mimeType,
+        sizeBytes: m.sizeBytes,
+      });
+      toast.success(t('mediaRaisedToast'));
+      setOpenId(null);
+      router.push(`/${locale}/observations?observation=${issue.issueId}`);
+    } catch {
+      toast.error(t('mediaRaiseError'));
+    } finally {
+      setRaising(false);
     }
   }
 
@@ -285,6 +334,17 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
                     {t('mediaUploadedBy')} {open.uploaderName ?? '—'}
                   </span>
                   <div className="flex items-center gap-1">
+                    {open.kind === 'photo' && canReport ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={raising}
+                        onClick={() => void raiseObservation(open)}
+                      >
+                        <AlertTriangle className="mr-1 h-3.5 w-3.5" />
+                        {raising ? t('mediaRaising') : t('mediaRaiseObservation')}
+                      </Button>
+                    ) : null}
                     {open.kind === 'photo' ? (
                       <Button
                         variant="ghost"

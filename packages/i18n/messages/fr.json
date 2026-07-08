@@ -2735,6 +2735,11 @@
     "mediaVideoBadge": "Video",
     "mediaAllTags": "All",
     "mediaAutoTag": "Auto-tag",
-    "mediaAnalyzing": "Analyzing…"
+    "mediaAnalyzing": "Analyzing…",
+    "mediaRaiseObservation": "Raise observation",
+    "mediaRaising": "Raising…",
+    "mediaRaisedToast": "Observation created from photo.",
+    "mediaRaiseError": "Could not raise observation.",
+    "mediaNoCategory": "Create an observation category first."
   }
 }

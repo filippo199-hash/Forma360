@@ -22,6 +22,22 @@ export function coerceResult(raw: unknown): MediaVisionResult {
   return { tags, caption };
 }
 
+export interface ObservationDraft {
+  title: string;
+  description: string;
+  category: string;
+}
+
+export function coerceObservationDraft(raw: unknown): ObservationDraft {
+  if (typeof raw !== 'object' || raw === null) return { title: '', description: '', category: '' };
+  const obj = raw as Record<string, unknown>;
+  const title = typeof obj.title === 'string' ? obj.title.trim().slice(0, 500) : '';
+  const description =
+    typeof obj.description === 'string' ? obj.description.trim().slice(0, 20_000) : '';
+  const category = typeof obj.category === 'string' ? obj.category.trim() : '';
+  return { title, description, category };
+}
+
 /** Extract the first JSON object from a model text response. */
 export function parseJsonObject(text: string): unknown {
   const start = text.indexOf('{');

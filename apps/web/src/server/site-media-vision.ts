@@ -8,9 +8,15 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { env } from './env';
-import { coerceResult, parseJsonObject, type MediaVisionResult } from './site-media-vision-parse';
+import {
+  coerceObservationDraft,
+  coerceResult,
+  parseJsonObject,
+  type MediaVisionResult,
+  type ObservationDraft,
+} from './site-media-vision-parse';
 
-export type { MediaVisionResult } from './site-media-vision-parse';
+export type { MediaVisionResult, ObservationDraft } from './site-media-vision-parse';
 
 type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
 
@@ -54,4 +60,57 @@ export async function analyzeMediaImage(
   const textBlock = message.content.find((b) => b.type === 'text');
   const text = textBlock !== undefined && textBlock.type === 'text' ? textBlock.text : '';
   return coerceResult(parseJsonObject(text));
+}
+
+/**
+ * Draft a health-and-safety observation from a photo: a short title, a
+ * factual description, and the best-matching category name from the tenant's
+ * existing categories (empty string if none fit). Best-effort — an empty title
+ * signals "couldn't draft" to the caller.
+ */
+export async function draftObservationFromImage(
+  base64: string,
+  mediaType: string,
+  categoryNames: readonly string[],
+): Promise<ObservationDraft> {
+  if (!SUPPORTED.has(mediaType)) return { title: '', description: '', category: '' };
+
+  const catList =
+    categoryNames.length > 0
+      ? `Choose the single best-fitting category from this exact list: ${categoryNames
+          .map((c) => `"${c}"`)
+          .join(', ')}. Use "" if none fit.`
+      : 'There are no categories; use "" for category.';
+
+  const system =
+    'You help a health-and-safety / quality manager raise an observation from a site photo. ' +
+    'Look at the image and reply with ONLY a JSON object of the form ' +
+    '{"title": string, "description": string, "category": string}. ' +
+    '`title` is a short specific summary (max ~80 chars) of the issue or thing observed. ' +
+    '`description` is 1-3 factual sentences describing what is visible and any apparent hazard or concern. ' +
+    `${catList} ` +
+    'Report only what is visible; do not invent context.';
+
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  const message = await client.messages.create({
+    model: 'claude-opus-4-8',
+    max_tokens: 600,
+    system,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType as ImageMediaType, data: base64 },
+          },
+          { type: 'text', text: 'Draft an observation for this photo.' },
+        ],
+      },
+    ],
+  });
+
+  const textBlock = message.content.find((b) => b.type === 'text');
+  const text = textBlock !== undefined && textBlock.type === 'text' ? textBlock.text : '';
+  return coerceObservationDraft(parseJsonObject(text));
 }

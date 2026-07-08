@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coerceResult, parseJsonObject } from './site-media-vision-parse';
+import { coerceObservationDraft, coerceResult, parseJsonObject } from './site-media-vision-parse';
 
 describe('site-media-vision parsing', () => {
   it('extracts a JSON object embedded in prose', () => {
@@ -31,5 +31,20 @@ describe('site-media-vision parsing', () => {
   it('degrades to empty result on malformed input', () => {
     expect(coerceResult(null)).toEqual({ tags: [], caption: '' });
     expect(coerceResult({ tags: 'not-an-array' })).toEqual({ tags: [], caption: '' });
+  });
+
+  it('coerces an observation draft and trims fields', () => {
+    expect(
+      coerceObservationDraft({
+        title: '  Trip hazard on stairs ',
+        description: '  Loose cable across the stairwell. ',
+        category: ' Safety ',
+      }),
+    ).toEqual({
+      title: 'Trip hazard on stairs',
+      description: 'Loose cable across the stairwell.',
+      category: 'Safety',
+    });
+    expect(coerceObservationDraft(null)).toEqual({ title: '', description: '', category: '' });
   });
 });
