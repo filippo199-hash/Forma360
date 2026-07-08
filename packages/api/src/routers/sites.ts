@@ -28,6 +28,7 @@ import {
   siteMedia,
   siteMembers,
   siteMembershipRules,
+  sitePlans,
   sites,
 } from '@forma360/db/schema';
 import {
@@ -183,6 +184,7 @@ export const sitesRouter = router({
         inspectionCount,
         members,
         mediaCount,
+        planCount,
       ] = await Promise.all([
         ctx.db
           .select({ c: count() })
@@ -247,6 +249,17 @@ export const sitesRouter = router({
             ),
           )
           .then((r) => Number(r[0]?.c ?? 0)),
+        ctx.db
+          .select({ c: count() })
+          .from(sitePlans)
+          .where(
+            and(
+              eq(sitePlans.tenantId, tid),
+              eq(sitePlans.siteId, input.id),
+              isNull(sitePlans.archivedAt),
+            ),
+          )
+          .then((r) => Number(r[0]?.c ?? 0)),
       ]);
 
       return {
@@ -259,6 +272,7 @@ export const sitesRouter = router({
           inspections: inspectionCount,
           members,
           media: mediaCount,
+          plans: planCount,
         },
       };
     }),

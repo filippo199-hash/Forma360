@@ -23,4 +23,5 @@ export * from './assets';
 export * from './maintenancePrograms';
 export * from './documents';
 export * from './site-media';
+export * from './site-plans';
 export * from './ai';

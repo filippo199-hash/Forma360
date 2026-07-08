@@ -8,6 +8,7 @@ import {
   FolderOpen,
   Image as ImageIcon,
   ListChecks,
+  Map as MapIcon,
   MapPin,
   Users,
   Wrench,
@@ -17,6 +18,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { SiteMediaGallery } from '../../../../src/components/sites/site-media-gallery';
+import { SitePlansViewer } from '../../../../src/components/sites/site-plans-viewer';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../src/components/ui/tabs';
@@ -115,6 +117,14 @@ export default function SiteDetailPage() {
       selectsTab: 'media',
     },
     {
+      key: 'plans',
+      label: t('countPlans'),
+      value: counts.plans,
+      icon: <MapIcon className="h-5 w-5" />,
+      href: null,
+      selectsTab: 'plans',
+    },
+    {
       key: 'members',
       label: t('countMembers'),
       value: counts.members,
@@ -173,6 +183,7 @@ export default function SiteDetailPage() {
         <TabsList>
           <TabsTrigger value="overview">{t('tabOverview')}</TabsTrigger>
           <TabsTrigger value="media">{t('tabMedia')}</TabsTrigger>
+          <TabsTrigger value="plans">{t('tabPlans')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
@@ -222,6 +233,10 @@ export default function SiteDetailPage() {
 
         <TabsContent value="media" className="mt-4">
           <SiteMediaGallery siteId={siteId} />
+        </TabsContent>
+
+        <TabsContent value="plans" className="mt-4">
+          <SitePlansViewer siteId={siteId} />
         </TabsContent>
       </Tabs>
     </div>

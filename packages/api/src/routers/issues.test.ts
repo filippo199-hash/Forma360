@@ -86,6 +86,7 @@ const MIGRATION_FILES = [
   '0035_asset_owner.sql',
   '0036_site_projects.sql',
   '0037_site_media.sql',
+  '0038_site_plans.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
