@@ -17,6 +17,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
+import { SiteHeaderActions } from '../../../../src/components/sites/site-header-actions';
 import { SiteLocationCard } from '../../../../src/components/sites/site-location-card';
 import { SiteMediaGallery } from '../../../../src/components/sites/site-media-gallery';
 import { SitePlansViewer } from '../../../../src/components/sites/site-plans-viewer';
@@ -165,6 +166,18 @@ export default function SiteDetailPage() {
               {statusLabel}
             </span>
           ) : null}
+          <SiteHeaderActions
+            site={{
+              id: site.id,
+              name: site.name,
+              kind: site.kind,
+              status: site.status,
+              client: site.client,
+              startDate: site.startDate,
+              endDate: site.endDate,
+            }}
+            counts={counts}
+          />
         </div>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-muted-foreground">
           {site.client !== null && site.client !== '' ? (

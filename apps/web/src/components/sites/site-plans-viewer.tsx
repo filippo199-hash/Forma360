@@ -2,8 +2,11 @@
 
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
   ClipboardCheck,
   Image as ImageIcon,
+  Layers,
   MapPin,
   Maximize2,
   Minus,
@@ -27,6 +30,7 @@ import { Label } from '../ui/label';
 import { Sheet, SheetContent } from '../ui/sheet';
 import { Skeleton } from '../ui/skeleton';
 
+// 'note' is retained for rendering legacy pins but is no longer offered.
 type EntityType = 'note' | 'observation' | 'asset' | 'media' | 'inspection';
 
 const ENTITY_META: Record<EntityType, { color: string; ring: string; Icon: typeof MapPin }> = {
@@ -37,7 +41,13 @@ const ENTITY_META: Record<EntityType, { color: string; ring: string; Icon: typeo
   inspection: { color: 'bg-emerald-500', ring: 'ring-emerald-300', Icon: ClipboardCheck },
 };
 
-const FILTER_TYPES: readonly EntityType[] = ['observation', 'asset', 'inspection', 'media', 'note'];
+// Selectable pin types (note removed per product decision).
+const PIN_TYPES: readonly Exclude<EntityType, 'note'>[] = [
+  'observation',
+  'asset',
+  'inspection',
+  'media',
+];
 
 function fileUrl(storageKey: string): string {
   return `/api/files?key=${encodeURIComponent(storageKey)}`;
@@ -50,6 +60,8 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
   const canManage = useHasPermission('sites.manage');
   const utils = trpc.useUtils();
   const planFileRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const { data: plans = [], isLoading: plansLoading } = trpc.sitePlans.listPlans.useQuery({
     siteId,
@@ -67,10 +79,18 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
   const [addMode, setAddMode] = useState(false);
   const [typeFilter, setTypeFilter] = useState<EntityType | null>(null);
   const [activePinId, setActivePinId] = useState<string | null>(null);
+  const [hoverPin, setHoverPin] = useState<{
+    id: string;
+    label: string;
+    entityType: string;
+    left: number;
+    top: number;
+  } | null>(null);
+  const [manageOpen, setManageOpen] = useState(false);
 
   // Pin-create dialog state
   const [draft, setDraft] = useState<{ x: number; y: number } | null>(null);
-  const [draftType, setDraftType] = useState<EntityType>('note');
+  const [draftType, setDraftType] = useState<Exclude<EntityType, 'note'>>('observation');
   const [draftEntityId, setDraftEntityId] = useState<string>('');
   const [draftLabel, setDraftLabel] = useState<string>('');
 
@@ -78,10 +98,14 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
+  const [smooth, setSmooth] = useState(false);
   const panRef = useRef<{ startX: number; startY: number; ox: number; oy: number } | null>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
 
   const createPlan = trpc.sitePlans.createPlan.useMutation();
+  const renamePlan = trpc.sitePlans.renamePlan.useMutation({
+    onSuccess: () => void utils.sitePlans.listPlans.invalidate({ siteId }),
+  });
+  const reorderPlan = trpc.sitePlans.reorderPlan.useMutation();
   const archivePlan = trpc.sitePlans.archivePlan.useMutation({
     onSuccess: () => {
       void utils.sitePlans.listPlans.invalidate({ siteId });
@@ -96,7 +120,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
       setDraft(null);
       setDraftLabel('');
       setDraftEntityId('');
-      setDraftType('note');
+      setDraftType('observation');
     },
   });
   const archivePin = trpc.sitePlans.archivePin.useMutation({
@@ -127,10 +151,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
 
   const entityOptions: Array<{ id: string; label: string }> = useMemo(() => {
     if (draftType === 'observation')
-      return (obsList?.items ?? []).map((o) => ({
-        id: o.id,
-        label: o.title,
-      }));
+      return (obsList?.items ?? []).map((o) => ({ id: o.id, label: o.title }));
     if (draftType === 'asset') return (assetList ?? []).map((a) => ({ id: a.id, label: a.name }));
     if (draftType === 'media')
       return (mediaList ?? []).map((m) => ({
@@ -161,7 +182,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
       const body = (await res.json()) as { storageKey: string; filename: string; mimeType: string };
       const created = await createPlan.mutateAsync({
         siteId,
-        name: file.name.replace(/\.[^.]+$/, '').slice(0, 200) || 'Plan',
+        name: t('planDefaultName', { n: plans.length + 1 }),
         storageKey: body.storageKey,
         mimeType: body.mimeType,
       });
@@ -185,6 +206,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (addMode) return;
+    setSmooth(false);
     panRef.current = { startX: e.clientX, startY: e.clientY, ox: tx, oy: ty };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
@@ -197,17 +219,58 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
     panRef.current = null;
   }
   function zoomBy(factor: number) {
+    setSmooth(false);
     setScale((s) => Math.min(6, Math.max(1, s * factor)));
   }
   function resetView() {
+    setSmooth(true);
     setScale(1);
     setTx(0);
     setTy(0);
   }
 
+  /** Centre the plan on a pin (normalised x,y) so it's visible beside the sheet. */
+  function focusPin(px: number, py: number) {
+    const cont = containerRef.current;
+    const img = imgRef.current;
+    if (cont === null || img === null || img.naturalWidth === 0) return;
+    const cw = cont.clientWidth;
+    const ch = cont.clientHeight;
+    const s = Math.max(scale, 2);
+    // Bias left so the pin isn't hidden behind the right-hand detail sheet.
+    const targetX = cw * 0.36;
+    const targetY = ch * 0.5;
+    setSmooth(true);
+    setScale(s);
+    setTx(targetX - px * img.naturalWidth * s);
+    setTy(targetY - py * img.naturalHeight * s);
+  }
+
+  function openPin(pin: { id: string; x: number; y: number }) {
+    setActivePinId(pin.id);
+    setHoverPin(null);
+    focusPin(pin.x, pin.y);
+  }
+
+  function showHover(
+    e: React.MouseEvent<HTMLButtonElement>,
+    pin: { id: string; label: string; entityType: string },
+  ) {
+    const cont = containerRef.current;
+    if (cont === null) return;
+    const btnRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const contRect = cont.getBoundingClientRect();
+    setHoverPin({
+      id: pin.id,
+      label: pin.label,
+      entityType: pin.entityType,
+      left: btnRect.left - contRect.left + btnRect.width / 2,
+      top: btnRect.top - contRect.top,
+    });
+  }
+
   function submitPin() {
-    if (draft === null || activePlanId === null) return;
-    const entityId = draftType === 'note' || draftEntityId === '' ? null : draftEntityId;
+    if (draft === null || activePlanId === null || draftEntityId === '') return;
     const label =
       draftLabel.trim().length > 0
         ? draftLabel.trim()
@@ -217,7 +280,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
       x: draft.x,
       y: draft.y,
       entityType: draftType,
-      entityId,
+      entityId: draftEntityId,
       label,
     });
   }
@@ -231,9 +294,25 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
     return null;
   }
 
+  async function moveLevel(planId: string, dir: -1 | 1) {
+    const ordered = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
+    const idx = ordered.findIndex((p) => p.id === planId);
+    const swap = ordered[idx + dir];
+    const self = ordered[idx];
+    if (swap === undefined || self === undefined) return;
+    await Promise.all([
+      reorderPlan.mutateAsync({ id: self.id, sortOrder: swap.sortOrder }),
+      reorderPlan.mutateAsync({ id: swap.id, sortOrder: self.sortOrder }),
+    ]);
+    await utils.sitePlans.listPlans.invalidate({ siteId });
+  }
+
   if (plansLoading) {
     return <Skeleton className="h-96 w-full rounded-lg" />;
   }
+
+  // Highest level on top, matching an indoor-map floor selector.
+  const levelsTopDown = [...plans].sort((a, b) => b.sortOrder - a.sortOrder);
 
   return (
     <div className="space-y-4">
@@ -263,28 +342,6 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
         </div>
       ) : (
         <>
-          {/* Level switcher */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {plans.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => {
-                  setSelectedPlanId(p.id);
-                  resetView();
-                }}
-                className={cn(
-                  'rounded-md border px-3 py-1.5 text-sm font-medium transition-colors',
-                  p.id === activePlanId
-                    ? 'border-primary bg-primary/5 text-foreground'
-                    : 'border-input text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-
           {/* Type filter */}
           <div className="flex flex-wrap items-center gap-1.5">
             <button
@@ -299,7 +356,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
             >
               {t('mediaAllTags')}
             </button>
-            {FILTER_TYPES.map((ty2) => (
+            {PIN_TYPES.map((ty2) => (
               <button
                 key={ty2}
                 type="button"
@@ -312,7 +369,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                 )}
               >
                 <span className={cn('h-2 w-2 rounded-full', ENTITY_META[ty2].color)} />
-                {t(`pinType_${ty2}` as 'pinType_note')}
+                {t(`pinType_${ty2}` as 'pinType_observation')}
               </button>
             ))}
           </div>
@@ -341,6 +398,12 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                   {addMode ? t('planDropCancel') : t('planDropPin')}
                 </Button>
                 <div className="ml-auto flex items-center gap-1">
+                  {canManage ? (
+                    <Button variant="outline" size="sm" onClick={() => setManageOpen(true)}>
+                      <Layers className="mr-1.5 h-4 w-4" />
+                      {t('planManageLevels')}
+                    </Button>
+                  ) : null}
                   <Button variant="outline" size="icon" onClick={() => zoomBy(1 / 1.2)}>
                     <Minus className="h-4 w-4" />
                   </Button>
@@ -350,23 +413,11 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                   <Button variant="outline" size="icon" onClick={resetView}>
                     <Maximize2 className="h-4 w-4" />
                   </Button>
-                  {canManage ? (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => {
-                        if (window.confirm(t('planDeleteConfirm')))
-                          archivePlan.mutate({ id: activePlan.id });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  ) : null}
                 </div>
               </div>
 
               <div
+                ref={containerRef}
                 className={cn(
                   'relative h-[62vh] overflow-hidden rounded-lg border bg-muted/40',
                   addMode ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing',
@@ -377,7 +428,10 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                 onWheel={(e) => zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1)}
               >
                 <div
-                  className="absolute left-0 top-0 origin-top-left"
+                  className={cn(
+                    'absolute left-0 top-0 origin-top-left',
+                    smooth ? 'transition-transform duration-500' : '',
+                  )}
                   style={{ transform: `translate(${tx}px, ${ty}px) scale(${scale})` }}
                 >
                   <div className="relative">
@@ -392,28 +446,93 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                     {visiblePins.map((pin) => {
                       const meta = ENTITY_META[(pin.entityType as EntityType) ?? 'note'];
                       const Icon = meta.Icon;
+                      const isActive = pin.id === activePinId;
+                      const dimmed = activePinId !== null && !isActive;
                       return (
                         <button
                           key={pin.id}
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setActivePinId(pin.id);
+                            openPin(pin);
                           }}
+                          onMouseEnter={(e) => showHover(e, pin)}
+                          onMouseLeave={() => setHoverPin(null)}
                           className={cn(
-                            'absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-white shadow ring-2',
+                            'absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-white shadow ring-2 transition-all',
                             meta.color,
                             meta.ring,
+                            isActive ? 'z-20 h-8 w-8 ring-4 ring-offset-1' : 'h-6 w-6',
+                            dimmed ? 'opacity-40' : 'opacity-100',
                           )}
                           style={{ left: `${pin.x * 100}%`, top: `${pin.y * 100}%` }}
-                          title={pin.label}
                         >
-                          <Icon className="h-3.5 w-3.5" />
+                          <Icon className={isActive ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
+                          {isActive ? (
+                            <span
+                              className={cn(
+                                'absolute inline-flex h-full w-full animate-ping rounded-full opacity-60',
+                                meta.color,
+                              )}
+                            />
+                          ) : null}
                         </button>
                       );
                     })}
                   </div>
                 </div>
+
+                {/* Hover detail popup (unscaled, container-relative) */}
+                {hoverPin !== null ? (
+                  <div
+                    className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-full"
+                    style={{ left: hoverPin.left, top: hoverPin.top - 8 }}
+                  >
+                    <div className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs text-background shadow-lg">
+                      <span
+                        className={cn(
+                          'h-2 w-2 rounded-full',
+                          ENTITY_META[(hoverPin.entityType as EntityType) ?? 'note'].color,
+                        )}
+                      />
+                      <span className="font-medium">
+                        {hoverPin.label.length > 0 ? hoverPin.label : t('planPinUntitled')}
+                      </span>
+                      <span className="opacity-70">
+                        ·{' '}
+                        {t(
+                          `pinType_${(hoverPin.entityType as EntityType) ?? 'note'}` as 'pinType_observation',
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Google-Maps-style vertical level selector */}
+                {plans.length > 1 ? (
+                  <div className="absolute right-3 top-3 flex max-h-[80%] flex-col overflow-y-auto rounded-lg border bg-background/95 shadow-sm backdrop-blur">
+                    {levelsTopDown.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlanId(p.id);
+                          setActivePinId(null);
+                          resetView();
+                        }}
+                        className={cn(
+                          'min-w-[3rem] px-3 py-2 text-sm font-medium transition-colors',
+                          p.id === activePlanId
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-muted-foreground hover:bg-muted',
+                        )}
+                        title={p.name}
+                      >
+                        {p.name.length > 10 ? `${p.name.slice(0, 10)}…` : p.name}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <p className="text-xs text-muted-foreground">{t('planHint')}</p>
             </div>
@@ -434,37 +553,38 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                 id="pin-type"
                 value={draftType}
                 onChange={(e) => {
-                  setDraftType(e.target.value as EntityType);
+                  setDraftType(e.target.value as Exclude<EntityType, 'note'>);
                   setDraftEntityId('');
                 }}
                 className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                {(['note', 'observation', 'asset', 'inspection', 'media'] as const).map((ty3) => (
+                {PIN_TYPES.map((ty3) => (
                   <option key={ty3} value={ty3}>
-                    {t(`pinType_${ty3}` as 'pinType_note')}
+                    {t(`pinType_${ty3}` as 'pinType_observation')}
                   </option>
                 ))}
               </select>
             </div>
 
-            {draftType !== 'note' ? (
-              <div className="space-y-1.5">
-                <Label htmlFor="pin-entity">{t('planPinLink')}</Label>
-                <select
-                  id="pin-entity"
-                  value={draftEntityId}
-                  onChange={(e) => setDraftEntityId(e.target.value)}
-                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">{t('planPinLinkNone')}</option>
-                  {entityOptions.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
+            <div className="space-y-1.5">
+              <Label htmlFor="pin-entity">{t('planPinLink')}</Label>
+              <select
+                id="pin-entity"
+                value={draftEntityId}
+                onChange={(e) => setDraftEntityId(e.target.value)}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t('planPinLinkChoose')}</option>
+                {entityOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              {entityOptions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t('planPinLinkEmpty')}</p>
+              ) : null}
+            </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="pin-label">{t('planPinLabel')}</Label>
@@ -481,9 +601,63 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
             <Button variant="ghost" onClick={() => setDraft(null)}>
               {t('mediaCompareCancel')}
             </Button>
-            <Button onClick={submitPin} disabled={createPin.isPending}>
+            <Button onClick={submitPin} disabled={createPin.isPending || draftEntityId === ''}>
               {t('planPinSave')}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage levels dialog */}
+      <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('planManageLevels')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {[...plans]
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((p, idx, arr) => (
+                <div key={p.id} className="flex items-center gap-2">
+                  <Input
+                    defaultValue={p.name}
+                    className="flex-1"
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      if (v.length > 0 && v !== p.name) renamePlan.mutate({ id: p.id, name: v });
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={idx === 0}
+                    onClick={() => void moveLevel(p.id, -1)}
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={idx === arr.length - 1}
+                    onClick={() => void moveLevel(p.id, 1)}
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => {
+                      if (window.confirm(t('planDeleteConfirm'))) archivePlan.mutate({ id: p.id });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setManageOpen(false)}>{t('planManageDone')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -511,11 +685,15 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {t(
-                      `pinType_${(activePin.entityType as EntityType) ?? 'note'}` as 'pinType_note',
+                      `pinType_${(activePin.entityType as EntityType) ?? 'note'}` as 'pinType_observation',
                     )}
                   </div>
                 </div>
               </div>
+
+              <p className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                {t('planPinLocatedHint')}
+              </p>
 
               {pinHref(activePin) !== null ? (
                 <Button asChild variant="outline" size="sm">

@@ -2791,6 +2791,24 @@
     "locationSaved": "Location saved.",
     "locationSearchError": "Address search failed.",
     "locationNotFound": "No match found.",
-    "locationInvalid": "Enter valid coordinates."
+    "locationInvalid": "Enter valid coordinates.",
+    "planDefaultName": "Level {n}",
+    "planManageLevels": "Manage levels",
+    "planManageDone": "Done",
+    "planPinLinkChoose": "Choose one…",
+    "planPinLinkEmpty": "Nothing of this type is attached to this project yet.",
+    "planPinLocatedHint": "Highlighted on the plan behind this panel.",
+    "editButton": "Edit",
+    "archiveButton": "Archive",
+    "editTitle": "Edit site or project",
+    "editSaveButton": "Save changes",
+    "editSavedToast": "Saved.",
+    "archiveTitle": "Archive \"{name}\"?",
+    "archiveIntro": "Archiving removes this from the active list. Everything attached to it is kept — nothing is deleted.",
+    "archiveDepsTitle": "Attached to this project",
+    "archiveDepsKept": "All of these are preserved and stay accessible from their own modules.",
+    "archiveNoDeps": "Nothing is attached to this project yet.",
+    "archiveConfirm": "Archive project",
+    "archivedToast": "Archived."
   }
 }
