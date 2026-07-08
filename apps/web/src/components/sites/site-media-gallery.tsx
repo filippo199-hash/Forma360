@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, Check, GitCompare, ImagePlus, Play, Sparkles, Trash2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -34,6 +34,7 @@ async function analyzeOne(id: string): Promise<void> {
 
 export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
   const t = useTranslations('sites');
+  const format = useFormatter();
   const canManage = useHasPermission('sites.manage');
   const canReport = useHasPermission('issues.report');
   const router = useRouter();
@@ -217,6 +218,96 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
     }
   }
 
+  function dayKeyOf(m: (typeof media)[number]): string {
+    return new Date(m.capturedAt ?? m.createdAt).toISOString().slice(0, 10);
+  }
+
+  function dayLabel(iso: string): string {
+    const now = new Date();
+    const todayKey = now.toISOString().slice(0, 10);
+    const yKey = new Date(now.getTime() - 86_400_000).toISOString().slice(0, 10);
+    if (iso === todayKey) return t('mediaToday');
+    if (iso === yKey) return t('mediaYesterday');
+    const d = new Date(`${iso}T00:00:00`);
+    return format.dateTime(d, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' as const } : {}),
+    });
+  }
+
+  // Group the visible media by the day it was added (newest first — `visible`
+  // is already ordered created-desc, so insertion order gives newest groups
+  // first). A Google-Photos-style dated timeline.
+  const groups: Array<{ key: string; items: Array<(typeof media)[number]> }> = [];
+  for (const m of visible) {
+    const key = dayKeyOf(m);
+    const last = groups[groups.length - 1];
+    if (last !== undefined && last.key === key) last.items.push(m);
+    else groups.push({ key, items: [m] });
+  }
+
+  function renderTile(m: (typeof media)[number]) {
+    return (
+      <button
+        key={m.id}
+        type="button"
+        onClick={() => {
+          if (compareMode) {
+            if (m.kind === 'photo') toggleSelect(m.id);
+            return;
+          }
+          setOpenId(m.id);
+          setCaptionDraft(m.caption);
+        }}
+        className={cn(
+          'group relative aspect-square overflow-hidden rounded-lg border bg-muted',
+          selected.includes(m.id) ? 'ring-2 ring-primary ring-offset-2' : '',
+          compareMode && m.kind !== 'photo' ? 'cursor-not-allowed opacity-40' : '',
+        )}
+      >
+        {m.kind === 'video' ? (
+          <>
+            <video
+              src={fileUrl(m.storageKey)}
+              className="h-full w-full object-cover"
+              preload="metadata"
+              muted
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+              <span className="rounded-full bg-black/60 p-2">
+                <Play className="h-5 w-5 fill-white text-white" />
+              </span>
+            </div>
+          </>
+        ) : (
+          <img
+            src={fileUrl(m.storageKey)}
+            alt={m.caption.length > 0 ? m.caption : m.filename}
+            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            loading="lazy"
+          />
+        )}
+        {compareMode && selected.includes(m.id) ? (
+          <span className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <Check className="h-3.5 w-3.5" />
+          </span>
+        ) : null}
+        {m.tags.length > 0 ? (
+          <span className="absolute right-1.5 top-1.5 rounded-full bg-primary/90 p-1">
+            <Sparkles className="h-3 w-3 text-primary-foreground" />
+          </span>
+        ) : null}
+        {m.caption.length > 0 ? (
+          <div className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 text-left text-xs text-white">
+            {m.caption}
+          </div>
+        ) : null}
+      </button>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -310,63 +401,17 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
           {t('mediaEmpty')}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {visible.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => {
-                if (compareMode) {
-                  if (m.kind === 'photo') toggleSelect(m.id);
-                  return;
-                }
-                setOpenId(m.id);
-                setCaptionDraft(m.caption);
-              }}
-              className={cn(
-                'group relative aspect-square overflow-hidden rounded-lg border bg-muted',
-                selected.includes(m.id) ? 'ring-2 ring-primary ring-offset-2' : '',
-                compareMode && m.kind !== 'photo' ? 'cursor-not-allowed opacity-40' : '',
-              )}
-            >
-              {m.kind === 'video' ? (
-                <>
-                  <video
-                    src={fileUrl(m.storageKey)}
-                    className="h-full w-full object-cover"
-                    preload="metadata"
-                    muted
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                    <span className="rounded-full bg-black/60 p-2">
-                      <Play className="h-5 w-5 fill-white text-white" />
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <img
-                  src={fileUrl(m.storageKey)}
-                  alt={m.caption.length > 0 ? m.caption : m.filename}
-                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                  loading="lazy"
-                />
-              )}
-              {compareMode && selected.includes(m.id) ? (
-                <span className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <Check className="h-3.5 w-3.5" />
-                </span>
-              ) : null}
-              {m.tags.length > 0 ? (
-                <span className="absolute right-1.5 top-1.5 rounded-full bg-primary/90 p-1">
-                  <Sparkles className="h-3 w-3 text-primary-foreground" />
-                </span>
-              ) : null}
-              {m.caption.length > 0 ? (
-                <div className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 text-left text-xs text-white">
-                  {m.caption}
-                </div>
-              ) : null}
-            </button>
+        <div className="space-y-6">
+          {groups.map((g) => (
+            <div key={g.key} className="space-y-2">
+              <h3 className="sticky top-0 z-10 bg-background/80 py-1 text-sm font-semibold backdrop-blur">
+                {dayLabel(g.key)}{' '}
+                <span className="font-normal text-muted-foreground">({g.items.length})</span>
+              </h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {g.items.map(renderTile)}
+              </div>
+            </div>
           ))}
         </div>
       )}

@@ -2816,6 +2816,8 @@
     "archiveDepsKept": "All of these are preserved and stay accessible from their own modules.",
     "archiveNoDeps": "Nothing is attached to this project yet.",
     "archiveConfirm": "Archive project",
-    "archivedToast": "Archived."
+    "archivedToast": "Archived.",
+    "mediaToday": "Today",
+    "mediaYesterday": "Yesterday"
   }
 }
