@@ -114,3 +114,66 @@ export async function draftObservationFromImage(
   const text = textBlock !== undefined && textBlock.type === 'text' ? textBlock.text : '';
   return coerceObservationDraft(parseJsonObject(text));
 }
+
+export interface MediaImageInput {
+  base64: string;
+  mediaType: string;
+  /** Human label for the image, e.g. a date, shown to the model for context. */
+  label: string;
+}
+
+/**
+ * Compare two site photos taken at different times and describe what changed.
+ * The first input is treated as the earlier ("before") image, the second as
+ * the later ("after"). Returns freeform markdown; empty string on failure.
+ */
+export async function compareMediaImages(
+  before: MediaImageInput,
+  after: MediaImageInput,
+): Promise<string> {
+  if (!SUPPORTED.has(before.mediaType) || !SUPPORTED.has(after.mediaType)) return '';
+
+  const system =
+    'You compare two progress photos of the same site/project taken at different times, for a ' +
+    'health-and-safety / operations manager. The first image is the EARLIER state, the second is ' +
+    'the LATER state. Describe concisely what has changed between them using short markdown bullet ' +
+    'points grouped under **Progress**, **New concerns**, and **Resolved / removed** (omit a group ' +
+    'if empty). Note new hazards, added or removed equipment/materials, and work completed. If the ' +
+    'two photos appear to show different places, say so plainly. Report only what is visible.';
+
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  const message = await client.messages.create({
+    model: 'claude-opus-4-8',
+    max_tokens: 900,
+    system,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: `Earlier image (${before.label}):` },
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: before.mediaType as ImageMediaType,
+              data: before.base64,
+            },
+          },
+          { type: 'text', text: `Later image (${after.label}):` },
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: after.mediaType as ImageMediaType,
+              data: after.base64,
+            },
+          },
+          { type: 'text', text: 'What changed between the earlier and later photo?' },
+        ],
+      },
+    ],
+  });
+
+  const textBlock = message.content.find((b) => b.type === 'text');
+  return textBlock !== undefined && textBlock.type === 'text' ? textBlock.text : '';
+}

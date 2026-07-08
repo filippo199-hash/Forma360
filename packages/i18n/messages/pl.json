@@ -2733,6 +2733,15 @@
     "mediaRaising": "Raising…",
     "mediaRaisedToast": "Observation created from photo.",
     "mediaRaiseError": "Could not raise observation.",
-    "mediaNoCategory": "Create an observation category first."
+    "mediaNoCategory": "Create an observation category first.",
+    "mediaCompare": "Compare",
+    "mediaCompareSelected": "Compare {count}/2",
+    "mediaComparing": "Comparing…",
+    "mediaCompareCancel": "Cancel",
+    "mediaCompareError": "Comparison failed.",
+    "mediaCompareTitle": "What changed",
+    "mediaCompareBefore": "Earlier",
+    "mediaCompareAfter": "Later",
+    "mediaCompareEmpty": "No comparison available."
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, ImagePlus, Play, Sparkles, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, GitCompare, ImagePlus, Play, Sparkles, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
@@ -49,6 +49,14 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
   const [captionDraft, setCaptionDraft] = useState('');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [raising, setRaising] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [comparing, setComparing] = useState(false);
+  const [comparison, setComparison] = useState<{
+    text: string;
+    beforeId: string;
+    afterId: string;
+  } | null>(null);
 
   const createMedia = trpc.siteMedia.create.useMutation();
   const createIssue = trpc.issues.issues.create.useMutation();
@@ -73,6 +81,47 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
 
   const visible = tagFilter === null ? media : media.filter((m) => m.tags.includes(tagFilter));
   const open = openId === null ? null : (media.find((m) => m.id === openId) ?? null);
+  const photoCount = useMemo(() => media.filter((m) => m.kind === 'photo').length, [media]);
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 2) return [prev[1] as string, id]; // keep last + new
+      return [...prev, id];
+    });
+  }
+
+  function exitCompare() {
+    setCompareMode(false);
+    setSelected([]);
+  }
+
+  async function runCompare() {
+    if (selected.length !== 2) return;
+    setComparing(true);
+    try {
+      const res = await fetch('/api/site-media/compare', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ids: selected }),
+      });
+      if (!res.ok) {
+        toast.error(t('mediaCompareError'));
+        return;
+      }
+      const body = (await res.json()) as { comparison: string; beforeId: string; afterId: string };
+      setComparison({ text: body.comparison, beforeId: body.beforeId, afterId: body.afterId });
+    } catch {
+      toast.error(t('mediaCompareError'));
+    } finally {
+      setComparing(false);
+    }
+  }
+
+  const comparisonBefore =
+    comparison === null ? null : (media.find((m) => m.id === comparison.beforeId) ?? null);
+  const comparisonAfter =
+    comparison === null ? null : (media.find((m) => m.id === comparison.afterId) ?? null);
 
   async function handleFiles(files: FileList | null) {
     if (files === null || files.length === 0) return;
@@ -175,10 +224,38 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
           <h2 className="text-lg font-semibold">{t('mediaTitle')}</h2>
           <p className="text-sm text-muted-foreground">{t('mediaSubtitle')}</p>
         </div>
-        <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-          <ImagePlus className="mr-1.5 h-4 w-4" />
-          {uploading ? t('mediaUploading') : t('mediaAdd')}
-        </Button>
+        <div className="flex items-center gap-2">
+          {compareMode ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => void runCompare()}
+                disabled={selected.length !== 2 || comparing}
+              >
+                <GitCompare className="mr-1.5 h-4 w-4" />
+                {comparing
+                  ? t('mediaComparing')
+                  : t('mediaCompareSelected', { count: selected.length })}
+              </Button>
+              <Button variant="ghost" onClick={exitCompare}>
+                {t('mediaCompareCancel')}
+              </Button>
+            </>
+          ) : (
+            <>
+              {photoCount >= 2 ? (
+                <Button variant="outline" onClick={() => setCompareMode(true)}>
+                  <GitCompare className="mr-1.5 h-4 w-4" />
+                  {t('mediaCompare')}
+                </Button>
+              ) : null}
+              <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                <ImagePlus className="mr-1.5 h-4 w-4" />
+                {uploading ? t('mediaUploading') : t('mediaAdd')}
+              </Button>
+            </>
+          )}
+        </div>
         <input
           ref={fileInputRef}
           type="file"
@@ -239,10 +316,18 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
               key={m.id}
               type="button"
               onClick={() => {
+                if (compareMode) {
+                  if (m.kind === 'photo') toggleSelect(m.id);
+                  return;
+                }
                 setOpenId(m.id);
                 setCaptionDraft(m.caption);
               }}
-              className="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
+              className={cn(
+                'group relative aspect-square overflow-hidden rounded-lg border bg-muted',
+                selected.includes(m.id) ? 'ring-2 ring-primary ring-offset-2' : '',
+                compareMode && m.kind !== 'photo' ? 'cursor-not-allowed opacity-40' : '',
+              )}
             >
               {m.kind === 'video' ? (
                 <>
@@ -266,6 +351,11 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
                   loading="lazy"
                 />
               )}
+              {compareMode && selected.includes(m.id) ? (
+                <span className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Check className="h-3.5 w-3.5" />
+                </span>
+              ) : null}
               {m.tags.length > 0 ? (
                 <span className="absolute right-1.5 top-1.5 rounded-full bg-primary/90 p-1">
                   <Sparkles className="h-3 w-3 text-primary-foreground" />
@@ -374,6 +464,48 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
                     ) : null}
                   </div>
                 </div>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={comparison !== null} onOpenChange={(o) => !o && setComparison(null)}>
+        <DialogContent className="max-w-4xl">
+          {comparison !== null ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-base font-semibold">
+                <GitCompare className="h-4 w-4 text-primary" />
+                {t('mediaCompareTitle')}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <figure className="space-y-1">
+                  {comparisonBefore !== null ? (
+                    <img
+                      src={fileUrl(comparisonBefore.storageKey)}
+                      alt={t('mediaCompareBefore')}
+                      className="aspect-video w-full rounded-md object-cover"
+                    />
+                  ) : null}
+                  <figcaption className="text-center text-xs text-muted-foreground">
+                    {t('mediaCompareBefore')}
+                  </figcaption>
+                </figure>
+                <figure className="space-y-1">
+                  {comparisonAfter !== null ? (
+                    <img
+                      src={fileUrl(comparisonAfter.storageKey)}
+                      alt={t('mediaCompareAfter')}
+                      className="aspect-video w-full rounded-md object-cover"
+                    />
+                  ) : null}
+                  <figcaption className="text-center text-xs text-muted-foreground">
+                    {t('mediaCompareAfter')}
+                  </figcaption>
+                </figure>
+              </div>
+              <div className="max-h-[40vh] overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-4 text-sm leading-relaxed">
+                {comparison.text.length > 0 ? comparison.text : t('mediaCompareEmpty')}
               </div>
             </div>
           ) : null}
