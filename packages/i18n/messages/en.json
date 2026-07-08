@@ -2966,6 +2966,9 @@
     "mediaDeleteConfirm": "Delete this media? This cannot be undone.",
     "mediaDeletedToast": "Deleted.",
     "mediaUploadedBy": "Uploaded by",
-    "mediaVideoBadge": "Video"
+    "mediaVideoBadge": "Video",
+    "mediaAllTags": "All",
+    "mediaAutoTag": "Auto-tag",
+    "mediaAnalyzing": "Analyzing…"
   }
 }
