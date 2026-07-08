@@ -2819,6 +2819,9 @@
     "archiveModeDissociateHelp": "Unlink observations, inspections, actions, assets and documents — they stay in their own modules. Photos and plans stay with the archived project.",
     "archiveModeDelete": "Delete everything",
     "archiveModeDeleteHelp": "Also remove all attached observations, inspections, actions, assets, documents, photos and plans.",
-    "archiveConfirmDelete": "Delete project & data"
+    "archiveConfirmDelete": "Delete project & data",
+    "overviewViewAll": "View all",
+    "overviewNothing": "Nothing yet",
+    "overviewMore": "+{count} more"
   }
 }

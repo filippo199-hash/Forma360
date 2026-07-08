@@ -1,27 +1,15 @@
 'use client';
 
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Building2,
-  ClipboardCheck,
-  FolderOpen,
-  Image as ImageIcon,
-  ListChecks,
-  Map as MapIcon,
-  MapPin,
-  Users,
-  Wrench,
-} from 'lucide-react';
+import { ArrowLeft, Building2, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { SiteHeaderActions } from '../../../../src/components/sites/site-header-actions';
 import { SiteLocationCard } from '../../../../src/components/sites/site-location-card';
 import { SiteMediaGallery } from '../../../../src/components/sites/site-media-gallery';
+import { SiteOverview } from '../../../../src/components/sites/site-overview';
 import { SitePlansViewer } from '../../../../src/components/sites/site-plans-viewer';
-import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../src/components/ui/tabs';
 import { cn } from '../../../../src/lib/cn';
@@ -66,74 +54,6 @@ export default function SiteDetailPage() {
     site.status === 'completed'
       ? t(`status_${site.status}` as 'status_active')
       : null;
-
-  const tiles: Array<{
-    key: string;
-    label: string;
-    value: number;
-    icon: ReactNode;
-    href: string | null;
-    selectsTab?: string;
-  }> = [
-    {
-      key: 'observations',
-      label: t('countObservations'),
-      value: counts.observations,
-      icon: <AlertTriangle className="h-5 w-5" />,
-      href: `/${locale}/observations?site=${siteId}`,
-    },
-    {
-      key: 'inspections',
-      label: t('countInspections'),
-      value: counts.inspections,
-      icon: <ClipboardCheck className="h-5 w-5" />,
-      href: `/${locale}/inspections?site=${siteId}`,
-    },
-    {
-      key: 'actions',
-      label: t('countActions'),
-      value: counts.actions,
-      icon: <ListChecks className="h-5 w-5" />,
-      href: `/${locale}/actions?site=${siteId}`,
-    },
-    {
-      key: 'assets',
-      label: t('countAssets'),
-      value: counts.assets,
-      icon: <Wrench className="h-5 w-5" />,
-      href: `/${locale}/assets?site=${siteId}`,
-    },
-    {
-      key: 'documents',
-      label: t('countDocuments'),
-      value: counts.documents,
-      icon: <FolderOpen className="h-5 w-5" />,
-      href: `/${locale}/documents?site=${siteId}`,
-    },
-    {
-      key: 'media',
-      label: t('countMedia'),
-      value: counts.media,
-      icon: <ImageIcon className="h-5 w-5" />,
-      href: null,
-      selectsTab: 'media',
-    },
-    {
-      key: 'plans',
-      label: t('countPlans'),
-      value: counts.plans,
-      icon: <MapIcon className="h-5 w-5" />,
-      href: null,
-      selectsTab: 'plans',
-    },
-    {
-      key: 'members',
-      label: t('countMembers'),
-      value: counts.members,
-      icon: <Users className="h-5 w-5" />,
-      href: null,
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -200,58 +120,19 @@ export default function SiteDetailPage() {
           <TabsTrigger value="plans">{t('tabPlans')}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            {tiles.map((tile) => {
-              const interactive = tile.href !== null || tile.selectsTab !== undefined;
-              const inner = (
-                <Card
-                  className={cn(
-                    'h-full',
-                    interactive
-                      ? 'transition-colors hover:border-primary/50 hover:bg-muted/30'
-                      : '',
-                  )}
-                >
-                  <CardContent className="space-y-2 p-4">
-                    <div className="text-muted-foreground">{tile.icon}</div>
-                    <div className="text-2xl font-semibold">{tile.value}</div>
-                    <div className="text-xs text-muted-foreground">{tile.label}</div>
-                  </CardContent>
-                </Card>
-              );
-              if (tile.href !== null) {
-                return (
-                  <Link key={tile.key} href={tile.href}>
-                    {inner}
-                  </Link>
-                );
-              }
-              if (tile.selectsTab !== undefined) {
-                const target = tile.selectsTab;
-                return (
-                  <button
-                    key={tile.key}
-                    type="button"
-                    onClick={() => setTab(target)}
-                    className="text-left"
-                  >
-                    {inner}
-                  </button>
-                );
-              }
-              return <div key={tile.key}>{inner}</div>;
-            })}
-          </div>
-
-          <div className="mt-4">
-            <SiteLocationCard
-              siteId={siteId}
-              latitude={site.latitude}
-              longitude={site.longitude}
-              locationAddress={site.locationAddress}
-            />
-          </div>
+        <TabsContent value="overview" className="mt-4 space-y-4">
+          <SiteOverview
+            siteId={siteId}
+            locale={locale}
+            counts={{ members: counts.members }}
+            onOpenTab={setTab}
+          />
+          <SiteLocationCard
+            siteId={siteId}
+            latitude={site.latitude}
+            longitude={site.longitude}
+            locationAddress={site.locationAddress}
+          />
         </TabsContent>
 
         <TabsContent value="media" className="mt-4">
