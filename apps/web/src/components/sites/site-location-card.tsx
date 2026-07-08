@@ -20,9 +20,10 @@ interface SiteLocationCardProps {
 }
 
 function embedUrl(lat: number, lng: number): string {
-  const d = 0.008;
-  const bbox = `${lng - d},${lat - d},${lng + d},${lat + d}`;
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+  // Google Maps keyless embed renders raster tiles reliably (the OSM
+  // export/embed endpoint frequently serves blank tiles under its tile
+  // usage policy). The marker sits at the q= coordinate.
+  return `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
 }
 
 interface NominatimHit {
