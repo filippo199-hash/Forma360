@@ -82,6 +82,13 @@ try {
       "phone" varchar(32) PRIMARY KEY NOT NULL,
       "opted_out_at" timestamptz NOT NULL DEFAULT now()
     );
+    -- 0036: Sites → Sites & Projects (kind discriminator + project lifecycle)
+    ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "kind" text NOT NULL DEFAULT 'site';
+    ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "status" text;
+    ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "client" text;
+    ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "start_date" date;
+    ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "end_date" date;
+    CREATE INDEX IF NOT EXISTS "sites_tenant_kind_idx" ON "sites" ("tenant_id", "kind");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {
