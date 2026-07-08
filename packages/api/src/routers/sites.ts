@@ -375,6 +375,9 @@ export const sitesRouter = router({
           .regex(/^\d{4}-\d{2}-\d{2}$/)
           .nullable()
           .optional(),
+        latitude: z.number().min(-90).max(90).nullable().optional(),
+        longitude: z.number().min(-180).max(180).nullable().optional(),
+        locationAddress: z.string().max(500).nullable().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -387,6 +390,9 @@ export const sitesRouter = router({
       if (input.client !== undefined) updates.client = input.client;
       if (input.startDate !== undefined) updates.startDate = input.startDate;
       if (input.endDate !== undefined) updates.endDate = input.endDate;
+      if (input.latitude !== undefined) updates.latitude = input.latitude;
+      if (input.longitude !== undefined) updates.longitude = input.longitude;
+      if (input.locationAddress !== undefined) updates.locationAddress = input.locationAddress;
       await ctx.db
         .update(sites)
         .set(updates)

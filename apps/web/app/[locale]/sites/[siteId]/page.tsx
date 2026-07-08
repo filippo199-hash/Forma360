@@ -17,6 +17,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
+import { SiteLocationCard } from '../../../../src/components/sites/site-location-card';
 import { SiteMediaGallery } from '../../../../src/components/sites/site-media-gallery';
 import { SitePlansViewer } from '../../../../src/components/sites/site-plans-viewer';
 import { Card, CardContent } from '../../../../src/components/ui/card';
@@ -228,6 +229,15 @@ export default function SiteDetailPage() {
               }
               return <div key={tile.key}>{inner}</div>;
             })}
+          </div>
+
+          <div className="mt-4">
+            <SiteLocationCard
+              siteId={siteId}
+              latitude={site.latitude}
+              longitude={site.longitude}
+              locationAddress={site.locationAddress}
+            />
           </div>
         </TabsContent>
 

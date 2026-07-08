@@ -3013,6 +3013,25 @@
     "pinType_observation": "Observation",
     "pinType_asset": "Asset",
     "pinType_media": "Photo",
-    "pinType_inspection": "Inspection"
+    "pinType_inspection": "Inspection",
+    "locationTitle": "Location",
+    "locationEmpty": "No location set.",
+    "locationSet": "Set location",
+    "locationEdit": "Edit",
+    "locationOpenMap": "Open map",
+    "locationDirections": "Directions",
+    "locationDialogTitle": "Set location",
+    "locationAddressLabel": "Address",
+    "locationAddressPlaceholder": "Search an address or place…",
+    "locationSearch": "Search",
+    "locationSearching": "Searching…",
+    "locationLat": "Latitude",
+    "locationLng": "Longitude",
+    "locationPreview": "Preview",
+    "locationSaveButton": "Save location",
+    "locationSaved": "Location saved.",
+    "locationSearchError": "Address search failed.",
+    "locationNotFound": "No match found.",
+    "locationInvalid": "Enter valid coordinates."
   }
 }

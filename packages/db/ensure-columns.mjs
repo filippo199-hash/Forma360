@@ -140,6 +140,10 @@ try {
     );
     CREATE INDEX IF NOT EXISTS "site_plan_pins_tenant_idx" ON "site_plan_pins" ("tenant_id");
     CREATE INDEX IF NOT EXISTS "site_plan_pins_plan_idx" ON "site_plan_pins" ("tenant_id", "plan_id");
+    -- 0039: Site/Project geolocation (world-map view, Phase 4)
+    ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "latitude" real;
+    ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "longitude" real;
+    ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "location_address" text;
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

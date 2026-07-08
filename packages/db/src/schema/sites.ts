@@ -22,6 +22,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  real,
   text,
   timestamp,
   unique,
@@ -76,6 +77,10 @@ export const sites = pgTable(
     /** Project start / end (calendar dates, no time). Null for sites. */
     startDate: date('start_date'),
     endDate: date('end_date'),
+    /** Geolocation of the site/project for the world-map view (Phase 4). */
+    latitude: real('latitude'),
+    longitude: real('longitude'),
+    locationAddress: text('location_address'),
     /** Free-form tenant metadata (coordinates, custom codes, timezone, ...). */
     metadata: jsonb('metadata')
       .notNull()
