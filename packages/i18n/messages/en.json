@@ -3052,6 +3052,8 @@
     "archiveConfirm": "Archive project",
     "archivedToast": "Archived.",
     "mediaToday": "Today",
-    "mediaYesterday": "Yesterday"
+    "mediaYesterday": "Yesterday",
+    "mediaTypePhoto": "Photo",
+    "mediaTypeVideo": "Video"
   }
 }

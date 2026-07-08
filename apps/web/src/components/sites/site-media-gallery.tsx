@@ -299,11 +299,22 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
             <Sparkles className="h-3 w-3 text-primary-foreground" />
           </span>
         ) : null}
+        {/* Always-visible caption strip (collapses under the hover overlay). */}
         {m.caption.length > 0 ? (
-          <div className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 text-left text-xs text-white">
+          <div className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 text-left text-xs text-white group-hover:opacity-0">
             {m.caption}
           </div>
         ) : null}
+        {/* On hover: title + type + who uploaded it. */}
+        <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/85 via-black/30 to-transparent p-2 text-left opacity-0 transition-opacity group-hover:opacity-100">
+          <p className="line-clamp-2 text-xs font-medium leading-snug text-white">
+            {m.caption.length > 0 ? m.caption : m.filename}
+          </p>
+          <p className="mt-0.5 text-[10px] leading-tight text-white/80">
+            {m.kind === 'video' ? t('mediaTypeVideo') : t('mediaTypePhoto')} ·{' '}
+            {t('mediaUploadedBy')} {m.uploaderName ?? '—'}
+          </p>
+        </div>
       </button>
     );
   }
@@ -404,7 +415,7 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
         <div className="space-y-6">
           {groups.map((g) => (
             <div key={g.key} className="space-y-2">
-              <h3 className="sticky top-0 z-10 bg-background/80 py-1 text-sm font-semibold backdrop-blur">
+              <h3 className="text-sm font-semibold text-foreground">
                 {dayLabel(g.key)}{' '}
                 <span className="font-normal text-muted-foreground">({g.items.length})</span>
               </h3>
