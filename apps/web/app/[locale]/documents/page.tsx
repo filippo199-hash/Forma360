@@ -57,12 +57,6 @@ export default function DocumentsPage() {
     {},
   );
 
-  // Sub-folders of the current selected folder
-  const { data: subFolders = [], isLoading: subLoading } = trpc.documentFolders.list.useQuery(
-    { parentId: currentFolderId },
-    { enabled: currentFolderId !== null },
-  );
-
   // Documents — undefined folderId = all docs; string = scoped to folder.
   // When a site/project filter is active, list that site's docs across all
   // folders (folderId untethered) so the hub drill-in shows everything.
@@ -126,10 +120,6 @@ export default function DocumentsPage() {
     setEditFolderSiteIds((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
     );
-  }
-
-  function navigateIntoSubfolder(folder: FolderCrumb) {
-    setFolderPath((prev) => [...prev, folder]);
   }
 
   function navigateToCrumb(index: number) {
@@ -365,9 +355,9 @@ export default function DocumentsPage() {
       </Dialog>
 
       {/* Two-panel layout */}
-      <div className="grid gap-4 md:grid-cols-[200px_1fr]">
-        {/* Folder sidebar */}
-        <aside className="space-y-1">
+      <div className="grid gap-4 md:grid-cols-[220px_1fr]">
+        {/* Folder sidebar — sticky + scrollable for large trees */}
+        <aside className="space-y-1 md:sticky md:top-4 md:max-h-[calc(100vh-7rem)] md:self-start md:overflow-y-auto md:pr-1">
           {foldersLoading ? (
             <Skeleton className="h-8 w-full" />
           ) : (
@@ -409,38 +399,6 @@ export default function DocumentsPage() {
                 </span>
               ))}
             </nav>
-          ) : null}
-
-          {/* Sub-folders inside current folder */}
-          {currentFolderId !== null ? (
-            subLoading ? (
-              <Skeleton className="h-16 w-full" />
-            ) : subFolders.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                {subFolders.map((sf) => (
-                  <button
-                    key={sf.id}
-                    type="button"
-                    onClick={() =>
-                      navigateIntoSubfolder({
-                        id: sf.id,
-                        name: sf.name,
-                        visibleToGroupIds: Array.isArray(sf.visibleToGroupIds)
-                          ? (sf.visibleToGroupIds as string[])
-                          : [],
-                        visibleToSiteIds: Array.isArray(sf.visibleToSiteIds)
-                          ? (sf.visibleToSiteIds as string[])
-                          : [],
-                      })
-                    }
-                    className="flex items-center gap-2 rounded-md border bg-card px-3 py-2.5 text-sm transition-colors hover:bg-accent text-left"
-                  >
-                    <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{sf.name}</span>
-                  </button>
-                ))}
-              </div>
-            ) : null
           ) : null}
 
           {/* Search */}
