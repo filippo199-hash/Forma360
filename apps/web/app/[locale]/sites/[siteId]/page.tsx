@@ -11,7 +11,6 @@ import { SiteMediaGallery } from '../../../../src/components/sites/site-media-ga
 import { SiteOverview } from '../../../../src/components/sites/site-overview';
 import { SitePlansViewer } from '../../../../src/components/sites/site-plans-viewer';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../src/components/ui/tabs';
 import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -113,36 +112,56 @@ export default function SiteDetailPage() {
         </div>
       </header>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="overview">{t('tabOverview')}</TabsTrigger>
-          <TabsTrigger value="media">{t('tabMedia')}</TabsTrigger>
-          <TabsTrigger value="plans">{t('tabPlans')}</TabsTrigger>
-        </TabsList>
+      <div className="border-b">
+        <nav aria-label={t('title')} className="flex gap-1 overflow-x-auto">
+          {(['overview', 'media', 'plans'] as const).map((key) => {
+            const active = tab === key;
+            const label =
+              key === 'overview'
+                ? t('tabOverview')
+                : key === 'media'
+                  ? t('tabMedia')
+                  : t('tabPlans');
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTab(key)}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  '-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors',
+                  active
+                    ? 'border-foreground font-medium text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
 
-        <TabsContent value="overview" className="mt-4 space-y-4">
-          <SiteOverview
-            siteId={siteId}
-            locale={locale}
-            counts={{ members: counts.members }}
-            onOpenTab={setTab}
-          />
-          <SiteLocationCard
-            siteId={siteId}
-            latitude={site.latitude}
-            longitude={site.longitude}
-            locationAddress={site.locationAddress}
-          />
-        </TabsContent>
-
-        <TabsContent value="media" className="mt-4">
-          <SiteMediaGallery siteId={siteId} />
-        </TabsContent>
-
-        <TabsContent value="plans" className="mt-4">
-          <SitePlansViewer siteId={siteId} />
-        </TabsContent>
-      </Tabs>
+      <div className="mt-4">
+        {tab === 'overview' ? (
+          <div className="space-y-4">
+            <SiteOverview
+              siteId={siteId}
+              locale={locale}
+              counts={{ members: counts.members }}
+              onOpenTab={setTab}
+            />
+            <SiteLocationCard
+              siteId={siteId}
+              latitude={site.latitude}
+              longitude={site.longitude}
+              locationAddress={site.locationAddress}
+            />
+          </div>
+        ) : null}
+        {tab === 'media' ? <SiteMediaGallery siteId={siteId} /> : null}
+        {tab === 'plans' ? <SitePlansViewer siteId={siteId} /> : null}
+      </div>
     </div>
   );
 }
