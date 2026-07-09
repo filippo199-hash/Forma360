@@ -452,6 +452,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                         <button
                           key={pin.id}
                           type="button"
+                          onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.stopPropagation();
                             openPin(pin);
@@ -508,9 +509,14 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                   </div>
                 ) : null}
 
-                {/* Google-Maps-style vertical level selector */}
+                {/* Google-Maps-style vertical level selector. stopPropagation on
+                    pointerdown so the container's pan handler doesn't capture the
+                    pointer and swallow the button click. */}
                 {plans.length > 1 ? (
-                  <div className="absolute right-3 top-3 flex max-h-[80%] flex-col overflow-y-auto rounded-lg border bg-background/95 shadow-sm backdrop-blur">
+                  <div
+                    className="absolute right-3 top-3 flex max-h-[80%] flex-col overflow-y-auto rounded-lg border bg-background/95 shadow-sm backdrop-blur"
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
                     {levelsTopDown.map((p) => (
                       <button
                         key={p.id}
