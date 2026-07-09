@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { FolderTree } from '../../../src/components/documents/folder-tree';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -51,10 +52,10 @@ export default function DocumentsPage() {
   const [newFolderGroupIds, setNewFolderGroupIds] = useState<string[]>([]);
   const [newFolderSiteIds, setNewFolderSiteIds] = useState<string[]>([]);
 
-  // Top-level folders for the sidebar
-  const { data: rootFolders = [], isLoading: rootLoading } = trpc.documentFolders.list.useQuery({
-    parentId: null,
-  });
+  // Every folder (flat, with parentId) — the sidebar builds a nested tree.
+  const { data: allFolders = [], isLoading: foldersLoading } = trpc.documentFolders.list.useQuery(
+    {},
+  );
 
   // Sub-folders of the current selected folder
   const { data: subFolders = [], isLoading: subLoading } = trpc.documentFolders.list.useQuery(
@@ -125,10 +126,6 @@ export default function DocumentsPage() {
     setEditFolderSiteIds((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
     );
-  }
-
-  function openFolderInSidebar(folder: FolderCrumb) {
-    setFolderPath([folder]);
   }
 
   function navigateIntoSubfolder(folder: FolderCrumb) {
@@ -371,48 +368,15 @@ export default function DocumentsPage() {
       <div className="grid gap-4 md:grid-cols-[200px_1fr]">
         {/* Folder sidebar */}
         <aside className="space-y-1">
-          <button
-            type="button"
-            onClick={() => navigateToCrumb(-1)}
-            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-              folderPath.length === 0
-                ? 'bg-accent text-accent-foreground'
-                : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-            }`}
-          >
-            <FolderOpen className="h-4 w-4 shrink-0" />
-            {t('allDocuments')}
-          </button>
-
-          {rootLoading ? (
+          {foldersLoading ? (
             <Skeleton className="h-8 w-full" />
           ) : (
-            rootFolders.map((folder) => (
-              <button
-                key={folder.id}
-                type="button"
-                onClick={() =>
-                  openFolderInSidebar({
-                    id: folder.id,
-                    name: folder.name,
-                    visibleToGroupIds: Array.isArray(folder.visibleToGroupIds)
-                      ? (folder.visibleToGroupIds as string[])
-                      : [],
-                    visibleToSiteIds: Array.isArray(folder.visibleToSiteIds)
-                      ? (folder.visibleToSiteIds as string[])
-                      : [],
-                  })
-                }
-                className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                  folderPath[0]?.id === folder.id
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-                }`}
-              >
-                <FolderOpen className="h-4 w-4 shrink-0" />
-                <span className="truncate">{folder.name}</span>
-              </button>
-            ))
+            <FolderTree
+              folders={allFolders}
+              currentFolderId={currentFolderId}
+              allDocumentsLabel={t('allDocuments')}
+              onNavigate={setFolderPath}
+            />
           )}
         </aside>
 
