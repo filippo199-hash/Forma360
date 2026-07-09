@@ -39,7 +39,7 @@ import {
 import { validateRuleConditions } from '@forma360/permissions/rules';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, count, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, ne, notInArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertUsersInTenant } from '../tenant-guards';
@@ -131,10 +131,14 @@ export const sitesRouter = router({
   }),
 
   /**
-   * Operational hub list: every non-archived site/project plus a member
-   * count, for the top-level Sites/Projects page cards.
+   * Operational hub list: every site/project (active AND archived, so the
+   * page can offer an "Archived" tab) with the roll-ups a project manager
+   * scans at a glance — member count plus open-observation and open-action
+   * counts for a quick health read. `archivedAt` lets the client split the
+   * two tabs from a single fetch and offer restore.
    */
   hub: tenantProcedure.use(requirePermission('sites.view')).query(async ({ ctx }) => {
+    const tid = ctx.tenantId;
     const siteRows = await ctx.db
       .select({
         id: sites.id,
@@ -145,20 +149,121 @@ export const sitesRouter = router({
         client: sites.client,
         startDate: sites.startDate,
         endDate: sites.endDate,
+        archivedAt: sites.archivedAt,
+        updatedAt: sites.updatedAt,
       })
       .from(sites)
-      .where(and(eq(sites.tenantId, ctx.tenantId), isNull(sites.archivedAt)))
+      .where(eq(sites.tenantId, tid))
       .orderBy(sites.name);
 
     const memberRows = await ctx.db
       .select({ siteId: siteMembers.siteId, c: count() })
       .from(siteMembers)
-      .where(eq(siteMembers.tenantId, ctx.tenantId))
+      .where(eq(siteMembers.tenantId, tid))
       .groupBy(siteMembers.siteId);
     const memberMap = new Map(memberRows.map((r) => [r.siteId, Number(r.c)]));
 
-    return siteRows.map((s) => ({ ...s, memberCount: memberMap.get(s.id) ?? 0 }));
+    // Open observations (issues) per site — anything not yet closed.
+    const obsRows = await ctx.db
+      .select({ siteId: issues.siteId, c: count() })
+      .from(issues)
+      .where(and(eq(issues.tenantId, tid), isNull(issues.archivedAt), ne(issues.status, 'closed')))
+      .groupBy(issues.siteId);
+    const obsMap = new Map(obsRows.map((r) => [r.siteId, Number(r.c)]));
+
+    // Open actions per site — anything not in a terminal state.
+    const actRows = await ctx.db
+      .select({ siteId: actions.siteId, c: count() })
+      .from(actions)
+      .where(
+        and(
+          eq(actions.tenantId, tid),
+          isNull(actions.archivedAt),
+          notInArray(actions.status, ['completed', 'cancelled']),
+        ),
+      )
+      .groupBy(actions.siteId);
+    const actMap = new Map(actRows.map((r) => [r.siteId, Number(r.c)]));
+
+    return siteRows.map((s) => ({
+      ...s,
+      memberCount: memberMap.get(s.id) ?? 0,
+      openObservations: obsMap.get(s.id) ?? 0,
+      openActions: actMap.get(s.id) ?? 0,
+    }));
   }),
+
+  /**
+   * Bring a site/project back from the archive. Un-archives the site row and,
+   * for a `delete`-mode archive, precisely restores the records that were
+   * archived in the same action (matched on the site's `archivedAt` stamp) so
+   * things independently archived earlier stay archived. Dissociated records
+   * were unlinked (not archived), so they are simply not re-attached.
+   */
+  restore: tenantProcedure
+    .use(requirePermission('sites.manage'))
+    .input(z.object({ id: z.string().length(26) }))
+    .mutation(async ({ ctx, input }) => {
+      const tid = ctx.tenantId;
+      const sid = input.id;
+      const row = await ctx.db
+        .select({ archivedAt: sites.archivedAt })
+        .from(sites)
+        .where(and(eq(sites.tenantId, tid), eq(sites.id, sid)))
+        .limit(1);
+      const existing = row[0];
+      if (existing === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      const stamp = existing.archivedAt;
+      if (stamp === null) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Not archived' });
+
+      const now = new Date();
+      const restoreWhere = (
+        table: typeof issues | typeof inspections | typeof actions | typeof assets,
+      ) =>
+        ctx.db
+          .update(table)
+          .set({ archivedAt: null })
+          .where(and(eq(table.tenantId, tid), eq(table.siteId, sid), eq(table.archivedAt, stamp)));
+      await restoreWhere(issues);
+      await restoreWhere(inspections);
+      await restoreWhere(actions);
+      await restoreWhere(assets);
+      await ctx.db
+        .update(documents)
+        .set({ archivedAt: null })
+        .where(
+          and(eq(documents.tenantId, tid), eq(documents.siteId, sid), eq(documents.archivedAt, stamp)),
+        );
+      await ctx.db
+        .update(siteMedia)
+        .set({ archivedAt: null })
+        .where(
+          and(eq(siteMedia.tenantId, tid), eq(siteMedia.siteId, sid), eq(siteMedia.archivedAt, stamp)),
+        );
+      await ctx.db
+        .update(sitePlans)
+        .set({ archivedAt: null })
+        .where(
+          and(eq(sitePlans.tenantId, tid), eq(sitePlans.siteId, sid), eq(sitePlans.archivedAt, stamp)),
+        );
+      await ctx.db
+        .update(sitePlanPins)
+        .set({ archivedAt: null })
+        .where(
+          and(
+            eq(sitePlanPins.tenantId, tid),
+            eq(sitePlanPins.siteId, sid),
+            eq(sitePlanPins.archivedAt, stamp),
+          ),
+        );
+
+      await ctx.db
+        .update(sites)
+        .set({ archivedAt: null, updatedAt: now })
+        .where(and(eq(sites.tenantId, tid), eq(sites.id, sid)));
+      ctx.logger.info({ siteId: sid }, '[sites] restored from archive');
+      return { ok: true as const };
+    }),
 
   /**
    * Single site/project detail + rolled-up counts of everything attached to

@@ -3078,6 +3078,24 @@
     "planPhotoChoose": "Choose a photo…",
     "planPhotoAutoTag": "Added to the gallery and auto-labelled by AI.",
     "planPinCreateAdd": "Create & add pin",
-    "planPinError": "Could not add the pin."
+    "planPinError": "Could not add the pin.",
+    "viewActive": "Active",
+    "viewArchived": "Archived",
+    "searchPlaceholder": "Search by name or client…",
+    "filterAllStatuses": "All statuses",
+    "kindAll": "All types",
+    "sortLabel": "Sort",
+    "sortRecent": "Recently updated",
+    "sortName": "Name",
+    "sortDeadline": "Deadline",
+    "restoreButton": "Restore",
+    "restoredToast": "Restored.",
+    "noArchived": "Nothing archived yet.",
+    "noResults": "No matches for your filters.",
+    "timelineDaysLeft": "{count} days left",
+    "timelineOverdue": "Overdue",
+    "timelineComplete": "Complete",
+    "timelineNotStarted": "Not started",
+    "openItemsNone": "No open items"
   }
 }

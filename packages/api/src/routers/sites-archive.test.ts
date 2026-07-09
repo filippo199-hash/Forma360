@@ -99,10 +99,37 @@ describe('sites.archiveWithMode', () => {
     expect(hub.counts.observations).toBe(0);
     // …but media stays with the archived project.
     expect(hub.counts.media).toBe(1);
-    // Site itself is archived → gone from the hub list.
-    expect((await caller.sites.hub()).some((s) => s.id === siteId)).toBe(false);
+    // Site itself is archived → present in the hub feed but flagged archived
+    // (the page splits it into the Archived tab).
+    const listed = (await caller.sites.hub()).find((s) => s.id === siteId);
+    expect(listed?.archivedAt).not.toBeNull();
     // The observation still exists and is still active in its module.
     expect((await caller.issues.issues.list({})).items).toHaveLength(1);
+  });
+
+  it('restore: brings back the project and the records archived with it', async () => {
+    const { caller, siteId } = await seedProjectWithStuff();
+    await caller.sites.archiveWithMode({ id: siteId, mode: 'delete' });
+
+    // Everything was archived along with the project.
+    expect((await caller.issues.issues.list({})).items).toHaveLength(0);
+    let hub = await caller.sites.getHub({ id: siteId });
+    expect(hub.counts.media).toBe(0);
+
+    await caller.sites.restore({ id: siteId });
+
+    // The project is active again…
+    const listed = (await caller.sites.hub()).find((s) => s.id === siteId);
+    expect(listed?.archivedAt).toBeNull();
+    // …and the records archived in the same action came back.
+    expect((await caller.issues.issues.list({})).items).toHaveLength(1);
+    hub = await caller.sites.getHub({ id: siteId });
+    expect(hub.counts.media).toBe(1);
+  });
+
+  it('restore: rejects a project that is not archived', async () => {
+    const { caller, siteId } = await seedProjectWithStuff();
+    await expect(caller.sites.restore({ id: siteId })).rejects.toThrow();
   });
 
   it('delete: archives the observation and the media too', async () => {
