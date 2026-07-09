@@ -41,13 +41,21 @@ const ENTITY_META: Record<EntityType, { color: string; ring: string; Icon: typeo
   inspection: { color: 'bg-emerald-500', ring: 'ring-emerald-300', Icon: ClipboardCheck },
 };
 
-// Selectable pin types (note removed per product decision).
-const PIN_TYPES: readonly Exclude<EntityType, 'note'>[] = [
+// Pin types shown in the view filter (legacy inspection/note pins still
+// render under "All").
+const FILTER_TYPES: readonly Exclude<EntityType, 'note' | 'inspection'>[] = [
   'observation',
   'asset',
-  'inspection',
   'media',
 ];
+
+// What a user can drop: link/create an observation, link/create an asset,
+// or upload a photo (which auto-tags).
+type CreateType = 'observation' | 'asset' | 'photo';
+const CREATE_TYPES: readonly CreateType[] = ['observation', 'asset', 'photo'];
+const NEW = '__new__';
+
+const SELECT_CLS = 'block w-full rounded-md border border-input bg-background px-3 py-2 text-sm';
 
 function fileUrl(storageKey: string): string {
   return `/api/files?key=${encodeURIComponent(storageKey)}`;
@@ -90,9 +98,24 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
 
   // Pin-create dialog state
   const [draft, setDraft] = useState<{ x: number; y: number } | null>(null);
-  const [draftType, setDraftType] = useState<Exclude<EntityType, 'note'>>('observation');
-  const [draftEntityId, setDraftEntityId] = useState<string>('');
-  const [draftLabel, setDraftLabel] = useState<string>('');
+  const [draftType, setDraftType] = useState<CreateType>('observation');
+  const [linkId, setLinkId] = useState<string>(''); // existing entity id, or NEW
+  const [newObs, setNewObs] = useState({ title: '', categoryId: '', description: '' });
+  const [newAsset, setNewAsset] = useState({ name: '', typeId: '' });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoLabel, setPhotoLabel] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  function resetDraft() {
+    setDraft(null);
+    setDraftType('observation');
+    setLinkId('');
+    setNewObs({ title: '', categoryId: '', description: '' });
+    setNewAsset({ name: '', typeId: '' });
+    setPhotoFile(null);
+    setPhotoLabel('');
+  }
 
   // Pan/zoom
   const [scale, setScale] = useState(1);
@@ -117,10 +140,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
   const createPin = trpc.sitePlans.createPin.useMutation({
     onSuccess: () => {
       if (activePlanId !== null) void utils.sitePlans.listPins.invalidate({ planId: activePlanId });
-      setDraft(null);
-      setDraftLabel('');
-      setDraftEntityId('');
-      setDraftType('observation');
+      resetDraft();
     },
   });
   const archivePin = trpc.sitePlans.archivePin.useMutation({
@@ -129,39 +149,40 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
       setActivePinId(null);
     },
   });
+  const createIssue = trpc.issues.issues.create.useMutation();
+  const createAsset = trpc.assets.create.useMutation();
+  const createMediaRow = trpc.siteMedia.create.useMutation();
 
-  // Entity option lists — loaded only while the create dialog is open.
+  // Option lists — loaded only while the create dialog is open.
   const optsEnabled = draft !== null;
   const { data: obsList } = trpc.issues.issues.list.useQuery(
     { siteId },
+    { enabled: optsEnabled && draftType === 'observation' },
+  );
+  const { data: categories } = trpc.issues.categories.list.useQuery(
+    {},
     { enabled: optsEnabled && draftType === 'observation' },
   );
   const { data: assetList } = trpc.assets.list.useQuery(
     { siteId },
     { enabled: optsEnabled && draftType === 'asset' },
   );
-  const { data: mediaList } = trpc.siteMedia.list.useQuery(
-    { siteId },
-    { enabled: optsEnabled && draftType === 'media' },
-  );
-  const { data: inspList } = trpc.inspections.list.useQuery(
-    { siteId },
-    { enabled: optsEnabled && draftType === 'inspection' },
+  const { data: assetTypeList } = trpc.assetTypes.list.useQuery(
+    {},
+    { enabled: optsEnabled && draftType === 'asset' },
   );
 
-  const entityOptions: Array<{ id: string; label: string }> = useMemo(() => {
-    if (draftType === 'observation')
-      return (obsList?.items ?? []).map((o) => ({ id: o.id, label: o.title }));
-    if (draftType === 'asset') return (assetList ?? []).map((a) => ({ id: a.id, label: a.name }));
-    if (draftType === 'media')
-      return (mediaList ?? []).map((m) => ({
-        id: m.id,
-        label: m.caption.length > 0 ? m.caption : m.filename,
-      }));
-    if (draftType === 'inspection')
-      return (inspList ?? []).map((i) => ({ id: i.id, label: i.title ?? i.id }));
-    return [];
-  }, [draftType, obsList, assetList, mediaList, inspList]);
+  const obsOptions = useMemo(
+    () =>
+      (obsList?.items ?? [])
+        .filter((o) => o.status !== 'closed')
+        .map((o) => ({ id: o.id, label: o.title })),
+    [obsList],
+  );
+  const assetOptions = useMemo(
+    () => (assetList ?? []).map((a) => ({ id: a.id, label: a.name })),
+    [assetList],
+  );
 
   const visiblePins = typeFilter === null ? pins : pins.filter((p) => p.entityType === typeFilter);
   const activePin = activePinId === null ? null : (pins.find((p) => p.id === activePinId) ?? null);
@@ -269,20 +290,106 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
     });
   }
 
-  function submitPin() {
-    if (draft === null || activePlanId === null || draftEntityId === '') return;
-    const label =
-      draftLabel.trim().length > 0
-        ? draftLabel.trim()
-        : (entityOptions.find((o) => o.id === draftEntityId)?.label ?? '');
-    createPin.mutate({
-      planId: activePlanId,
-      x: draft.x,
-      y: draft.y,
-      entityType: draftType,
-      entityId: draftEntityId,
-      label,
-    });
+  const canSubmitPin =
+    draftType === 'observation'
+      ? linkId === NEW
+        ? newObs.title.trim() !== '' && newObs.categoryId !== ''
+        : linkId !== ''
+      : draftType === 'asset'
+        ? linkId === NEW
+          ? newAsset.name.trim() !== ''
+          : linkId !== ''
+        : photoFile !== null;
+
+  async function submitPin() {
+    if (draft === null || activePlanId === null || !canSubmitPin) return;
+    setSubmitting(true);
+    try {
+      let entityType: EntityType = 'observation';
+      let entityId: string;
+      let label = '';
+
+      if (draftType === 'observation') {
+        entityType = 'observation';
+        if (linkId === NEW) {
+          const issue = await createIssue.mutateAsync({
+            categoryId: newObs.categoryId,
+            title: newObs.title.trim(),
+            siteId,
+            ...(newObs.description.trim() !== '' ? { description: newObs.description.trim() } : {}),
+          });
+          entityId = issue.issueId;
+          label = newObs.title.trim();
+          void utils.sites.getHub.invalidate({ id: siteId });
+        } else {
+          entityId = linkId;
+          label = obsOptions.find((o) => o.id === linkId)?.label ?? '';
+        }
+      } else if (draftType === 'asset') {
+        entityType = 'asset';
+        if (linkId === NEW) {
+          const asset = await createAsset.mutateAsync({
+            name: newAsset.name.trim(),
+            siteId,
+            ...(newAsset.typeId !== '' ? { typeId: newAsset.typeId } : {}),
+          });
+          entityId = asset.assetId;
+          label = newAsset.name.trim();
+          void utils.sites.getHub.invalidate({ id: siteId });
+        } else {
+          entityId = linkId;
+          label = assetOptions.find((a) => a.id === linkId)?.label ?? '';
+        }
+      } else {
+        // photo — upload, register, auto-tag, pin
+        entityType = 'media';
+        if (photoFile === null) return;
+        const form = new FormData();
+        form.set('siteId', siteId);
+        form.set('file', photoFile);
+        const res = await fetch('/api/upload/site-media', { method: 'POST', body: form });
+        if (!res.ok) {
+          toast.error(t('mediaUploadError'));
+          return;
+        }
+        const body = (await res.json()) as {
+          storageKey: string;
+          filename: string;
+          mimeType: string;
+          sizeBytes: number;
+        };
+        const media = await createMediaRow.mutateAsync({
+          siteId,
+          storageKey: body.storageKey,
+          filename: body.filename,
+          mimeType: body.mimeType,
+          sizeBytes: body.sizeBytes,
+          ...(photoLabel.trim() !== '' ? { caption: photoLabel.trim() } : {}),
+        });
+        entityId = media.id;
+        label = photoLabel.trim();
+        // Auto-tag the photo (best-effort) then refresh the gallery.
+        void fetch('/api/site-media/analyze', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id: media.id }),
+        }).then(() => utils.siteMedia.list.invalidate({ siteId }));
+        void utils.sites.getHub.invalidate({ id: siteId });
+      }
+
+      await createPin.mutateAsync({
+        planId: activePlanId,
+        x: draft.x,
+        y: draft.y,
+        entityType,
+        entityId,
+        label,
+      });
+    } catch {
+      toast.error(t('planPinError'));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function pinHref(pin: { entityType: string; entityId: string | null }): string | null {
@@ -356,7 +463,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
             >
               {t('mediaAllTags')}
             </button>
-            {PIN_TYPES.map((ty2) => (
+            {FILTER_TYPES.map((ty2) => (
               <button
                 key={ty2}
                 type="button"
@@ -547,7 +654,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
       )}
 
       {/* Create-pin dialog */}
-      <Dialog open={draft !== null} onOpenChange={(o) => !o && setDraft(null)}>
+      <Dialog open={draft !== null} onOpenChange={(o) => !o && resetDraft()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('planNewPin')}</DialogTitle>
@@ -559,56 +666,185 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                 id="pin-type"
                 value={draftType}
                 onChange={(e) => {
-                  setDraftType(e.target.value as Exclude<EntityType, 'note'>);
-                  setDraftEntityId('');
+                  setDraftType(e.target.value as CreateType);
+                  setLinkId('');
                 }}
-                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className={SELECT_CLS}
               >
-                {PIN_TYPES.map((ty3) => (
+                {CREATE_TYPES.map((ty3) => (
                   <option key={ty3} value={ty3}>
-                    {t(`pinType_${ty3}` as 'pinType_observation')}
+                    {ty3 === 'observation'
+                      ? t('pinType_observation')
+                      : ty3 === 'asset'
+                        ? t('pinType_asset')
+                        : t('pinType_media')}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="pin-entity">{t('planPinLink')}</Label>
-              <select
-                id="pin-entity"
-                value={draftEntityId}
-                onChange={(e) => setDraftEntityId(e.target.value)}
-                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="">{t('planPinLinkChoose')}</option>
-                {entityOptions.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              {entityOptions.length === 0 ? (
-                <p className="text-xs text-muted-foreground">{t('planPinLinkEmpty')}</p>
-              ) : null}
-            </div>
+            {/* Observation: link an open one or create a new one */}
+            {draftType === 'observation' ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="pin-obs">{t('planPinLink')}</Label>
+                  <select
+                    id="pin-obs"
+                    value={linkId}
+                    onChange={(e) => setLinkId(e.target.value)}
+                    className={SELECT_CLS}
+                  >
+                    <option value="">{t('planPinLinkChoose')}</option>
+                    <option value={NEW}>{t('planPinNewObservation')}</option>
+                    {obsOptions.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {linkId === NEW ? (
+                  <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="obs-title">{t('planObsTitle')}</Label>
+                      <Input
+                        id="obs-title"
+                        value={newObs.title}
+                        onChange={(e) => setNewObs((s) => ({ ...s, title: e.target.value }))}
+                        placeholder={t('planObsTitlePlaceholder')}
+                        maxLength={500}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="obs-cat">{t('planObsCategory')}</Label>
+                      <select
+                        id="obs-cat"
+                        value={newObs.categoryId}
+                        onChange={(e) => setNewObs((s) => ({ ...s, categoryId: e.target.value }))}
+                        className={SELECT_CLS}
+                      >
+                        <option value="">{t('planPinLinkChoose')}</option>
+                        {(categories ?? []).map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                      {(categories ?? []).length === 0 ? (
+                        <p className="text-xs text-muted-foreground">{t('mediaNoCategory')}</p>
+                      ) : null}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="obs-desc">{t('planObsDescription')}</Label>
+                      <textarea
+                        id="obs-desc"
+                        value={newObs.description}
+                        onChange={(e) => setNewObs((s) => ({ ...s, description: e.target.value }))}
+                        rows={2}
+                        maxLength={2000}
+                        className={SELECT_CLS}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
 
-            <div className="space-y-1.5">
-              <Label htmlFor="pin-label">{t('planPinLabel')}</Label>
-              <Input
-                id="pin-label"
-                value={draftLabel}
-                onChange={(e) => setDraftLabel(e.target.value)}
-                placeholder={t('planPinLabelPlaceholder')}
-                maxLength={500}
-              />
-            </div>
+            {/* Asset: link an existing one or create a new one */}
+            {draftType === 'asset' ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="pin-asset">{t('planPinLink')}</Label>
+                  <select
+                    id="pin-asset"
+                    value={linkId}
+                    onChange={(e) => setLinkId(e.target.value)}
+                    className={SELECT_CLS}
+                  >
+                    <option value="">{t('planPinLinkChoose')}</option>
+                    <option value={NEW}>{t('planPinNewAsset')}</option>
+                    {assetOptions.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {linkId === NEW ? (
+                  <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="asset-name">{t('planAssetName')}</Label>
+                      <Input
+                        id="asset-name"
+                        value={newAsset.name}
+                        onChange={(e) => setNewAsset((s) => ({ ...s, name: e.target.value }))}
+                        placeholder={t('planAssetNamePlaceholder')}
+                        maxLength={500}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="asset-type">{t('planAssetType')}</Label>
+                      <select
+                        id="asset-type"
+                        value={newAsset.typeId}
+                        onChange={(e) => setNewAsset((s) => ({ ...s, typeId: e.target.value }))}
+                        className={SELECT_CLS}
+                      >
+                        <option value="">{t('planAssetTypeNone')}</option>
+                        {(assetTypeList ?? []).map((ty) => (
+                          <option key={ty.id} value={ty.id}>
+                            {ty.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+
+            {/* Photo: upload + auto-tag, no linking */}
+            {draftType === 'photo' ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label>{t('planPhotoUpload')}</Label>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="hidden"
+                    onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => photoInputRef.current?.click()}
+                  >
+                    <ImageIcon className="mr-1.5 h-4 w-4" />
+                    {photoFile !== null ? photoFile.name : t('planPhotoChoose')}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">{t('planPhotoAutoTag')}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="photo-label">{t('planPinLabel')}</Label>
+                  <Input
+                    id="photo-label"
+                    value={photoLabel}
+                    onChange={(e) => setPhotoLabel(e.target.value)}
+                    placeholder={t('mediaCaptionPlaceholder')}
+                    maxLength={500}
+                  />
+                </div>
+              </>
+            ) : null}
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setDraft(null)}>
+            <Button variant="ghost" onClick={resetDraft}>
               {t('mediaCompareCancel')}
             </Button>
-            <Button onClick={submitPin} disabled={createPin.isPending || draftEntityId === ''}>
-              {t('planPinSave')}
+            <Button onClick={() => void submitPin()} disabled={submitting || !canSubmitPin}>
+              {draftType !== 'photo' && linkId === NEW ? t('planPinCreateAdd') : t('planPinSave')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -2829,6 +2829,21 @@
     "archiveConfirmDelete": "Delete project & data",
     "overviewViewAll": "View all",
     "overviewNothing": "Nothing yet",
-    "overviewMore": "+{count} more"
+    "overviewMore": "+{count} more",
+    "planPinNewObservation": "＋ New observation",
+    "planPinNewAsset": "＋ New asset",
+    "planObsTitle": "Title",
+    "planObsTitlePlaceholder": "What did you observe?",
+    "planObsCategory": "Category",
+    "planObsDescription": "Description (optional)",
+    "planAssetName": "Name",
+    "planAssetNamePlaceholder": "e.g. Fire extinguisher #3",
+    "planAssetType": "Type (optional)",
+    "planAssetTypeNone": "No type",
+    "planPhotoUpload": "Photo",
+    "planPhotoChoose": "Choose a photo…",
+    "planPhotoAutoTag": "Added to the gallery and auto-labelled by AI.",
+    "planPinCreateAdd": "Create & add pin",
+    "planPinError": "Could not add the pin."
   }
 }
