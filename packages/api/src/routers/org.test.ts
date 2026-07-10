@@ -250,15 +250,17 @@ describe('Phase 1 org routers (groups / sites / accessRules)', () => {
       );
     });
 
-    it('refuses manual membership edits on rule_based site (G-E10)', async () => {
+    it('allows manual membership edits regardless of stored mode', async () => {
+      // Rule-based membership was retired from the Sites UI, so the stored
+      // mode no longer gates manual member edits (its reconcile is inert).
       const caller = createCaller(ctxFor(adminUserId));
       const { id: siteId } = await caller.sites.create({
         name: 'HQ',
         membershipMode: 'rule_based',
       });
-      await expect(caller.sites.addMember({ siteId, userId: adminUserId })).rejects.toThrow(
-        /rule_based/,
-      );
+      await caller.sites.addMember({ siteId, userId: adminUserId });
+      const team = await caller.sites.team({ siteId });
+      expect(team.memberIds).toContain(adminUserId);
     });
 
     it('matrix returns only the edges matching the requested filter', async () => {

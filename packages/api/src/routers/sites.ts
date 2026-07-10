@@ -770,18 +770,11 @@ export const sitesRouter = router({
     .input(z.object({ siteId: z.string().length(26), userId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const [row] = await ctx.db
-        .select()
+        .select({ id: sites.id })
         .from(sites)
         .where(and(eq(sites.tenantId, ctx.tenantId), eq(sites.id, input.siteId)))
         .limit(1);
       if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
-      if (row.membershipMode !== 'manual') {
-        // G-E10
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Site is rule_based; manual membership edits are disabled.',
-        });
-      }
       // Target user must belong to this tenant.
       await assertUsersInTenant(ctx.db, ctx.tenantId, [input.userId]);
       await ctx.db
@@ -801,17 +794,11 @@ export const sitesRouter = router({
     .input(z.object({ siteId: z.string().length(26), userId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const [row] = await ctx.db
-        .select()
+        .select({ id: sites.id })
         .from(sites)
         .where(and(eq(sites.tenantId, ctx.tenantId), eq(sites.id, input.siteId)))
         .limit(1);
       if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
-      if (row.membershipMode !== 'manual') {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Site is rule_based; manual membership edits are disabled.',
-        });
-      }
       await ctx.db
         .delete(siteMembers)
         .where(
@@ -830,17 +817,11 @@ export const sitesRouter = router({
     .input(z.object({ siteId: z.string().length(26), userIds: z.array(z.string()).min(1).max(500) }))
     .mutation(async ({ ctx, input }) => {
       const [row] = await ctx.db
-        .select()
+        .select({ id: sites.id })
         .from(sites)
         .where(and(eq(sites.tenantId, ctx.tenantId), eq(sites.id, input.siteId)))
         .limit(1);
       if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
-      if (row.membershipMode !== 'manual') {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Site is rule_based; manual membership edits are disabled.',
-        });
-      }
       await assertUsersInTenant(ctx.db, ctx.tenantId, input.userIds);
       await ctx.db
         .insert(siteMembers)
