@@ -2880,6 +2880,18 @@
     "teamModeUpdated": "Membership updated.",
     "teamError": "Something went wrong.",
     "fieldParent": "Parent (optional)",
-    "parentNone": "No parent"
+    "parentNone": "No parent",
+    "teamMembersSubtitle": "Individuals with access to this site or project.",
+    "teamMembersAdd": "Add people…",
+    "teamGroupsHeading": "Groups",
+    "teamGroupsSubtitle": "Assign a whole group — everyone in it gets access, and stays in sync as the group changes.",
+    "teamGroupsAdd": "Add a group…",
+    "teamGroupsEmpty": "No groups assigned.",
+    "teamGroupMemberCount": "{count} members",
+    "teamEveryoneHeading": "Everyone with access",
+    "teamEveryoneSubtitle": "Individual members plus everyone in the assigned groups.",
+    "teamViaGroup": "via {name}",
+    "teamDirect": "Member",
+    "teamEveryoneEmpty": "No one has access yet."
   }
 }

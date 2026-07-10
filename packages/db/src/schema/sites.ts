@@ -22,6 +22,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   real,
   text,
   timestamp,
@@ -32,6 +33,7 @@ import {
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants';
 import { user } from './auth';
+import { groups } from './groups';
 
 export const siteMembershipMode = ['manual', 'rule_based'] as const;
 export type SiteMembershipMode = (typeof siteMembershipMode)[number];
@@ -135,6 +137,38 @@ export const siteMembers = pgTable(
 
 export type SiteMember = typeof siteMembers.$inferSelect;
 export type NewSiteMember = typeof siteMembers.$inferInsert;
+
+/**
+ * Groups assigned to a site/project. The site's effective team is its direct
+ * `site_members` UNION the members of every assigned group. Kept as a link
+ * table (not materialised into site_members) so group membership changes are
+ * reflected instantly and removal is a single delete.
+ */
+export const siteGroups = pgTable(
+  'site_groups',
+  {
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    siteId: varchar('site_id', { length: 26 })
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    groupId: varchar('group_id', { length: 26 })
+      .notNull()
+      .references(() => groups.id, { onDelete: 'cascade' }),
+    addedAt: timestamp('added_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    primaryKey({ columns: [table.siteId, table.groupId] }),
+    index('site_groups_tenant_group_idx').on(table.tenantId, table.groupId),
+    index('site_groups_tenant_site_idx').on(table.tenantId, table.siteId),
+  ],
+);
+
+export type SiteGroup = typeof siteGroups.$inferSelect;
+export type NewSiteGroup = typeof siteGroups.$inferInsert;
 
 export const siteMembershipRules = pgTable(
   'site_membership_rules',

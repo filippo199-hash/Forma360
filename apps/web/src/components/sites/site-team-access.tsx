@@ -1,23 +1,23 @@
 'use client';
 
-import { Users, X } from 'lucide-react';
+import { Users, UsersRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '../../lib/cn';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
-import { Button } from '../ui/button';
+import { GroupUserSelector } from '../selectors/group-user-selector';
 import { Card, CardContent } from '../ui/card';
 import { Skeleton } from '../ui/skeleton';
 
 type MembershipMode = 'manual' | 'rule_based';
 
 /**
- * Team & access tab for a site/project. This is where a site's people live
- * now — membership used to be a standalone "Sites" grouping tab in Settings,
- * which collided with "Groups". Unifying: Groups group people; a site/project
- * simply has its own team, managed here in context.
+ * Team & access tab for a site/project. A site's team is the union of its
+ * direct individual members AND the members of any assigned groups — this is
+ * also what grants site-scoped access. Groups group people; a site simply
+ * points at the people + groups that belong to it.
  */
 export function SiteTeamAccess({
   siteId,
@@ -30,45 +30,57 @@ export function SiteTeamAccess({
   const canManage = useHasPermission('sites.manage');
   const utils = trpc.useUtils();
 
-  const { data: usersData } = trpc.users.list.useQuery({});
-  const users = usersData?.users ?? [];
-  const { data: matrixData, isLoading } = trpc.sites.matrix.useQuery({ siteIds: [siteId] });
+  const { data, isLoading } = trpc.sites.team.useQuery({ siteId });
 
-  const edges = useMemo(
-    () => (matrixData?.edges ?? []).filter((e) => e.siteId === siteId),
-    [matrixData, siteId],
-  );
-  const memberIds = new Set(edges.map((e) => e.userId));
-  const memberUsers = users.filter((u) => memberIds.has(u.id));
-  const addableUsers = users.filter((u) => !memberIds.has(u.id));
+  // Local mirrors of the persisted sets so the multi-selects feel instant;
+  // reseeded whenever the server data changes.
+  const [memberIds, setMemberIds] = useState<string[]>([]);
+  const [groupIds, setGroupIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (data !== undefined) {
+      setMemberIds(data.memberIds);
+      setGroupIds(data.groupIds);
+    }
+  }, [data]);
 
-  const [addUserId, setAddUserId] = useState('');
+  function onError(err: { message: string }) {
+    toast.error(err.message.length > 0 ? err.message : t('teamError'));
+    void utils.sites.team.invalidate({ siteId });
+  }
+  const invalidate = () => {
+    void utils.sites.team.invalidate({ siteId });
+    void utils.sites.getHub.invalidate({ id: siteId });
+  };
 
   const updateMode = trpc.sites.update.useMutation({
     onSuccess: () => {
-      void utils.sites.getHub.invalidate({ id: siteId });
-      void utils.sites.matrix.invalidate();
+      invalidate();
       toast.success(t('teamModeUpdated'));
     },
-    onError: (err) => toast.error(err.message || t('teamError')),
+    onError,
   });
+  const addMembers = trpc.sites.addMembers.useMutation({ onSuccess: invalidate, onError });
+  const removeMember = trpc.sites.removeMember.useMutation({ onSuccess: invalidate, onError });
+  const addGroup = trpc.sites.addGroup.useMutation({ onSuccess: invalidate, onError });
+  const removeGroup = trpc.sites.removeGroup.useMutation({ onSuccess: invalidate, onError });
 
-  const addMember = trpc.sites.addMember.useMutation({
-    onSuccess: () => {
-      void utils.sites.matrix.invalidate();
-      void utils.sites.getHub.invalidate({ id: siteId });
-      setAddUserId('');
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  function onMembersChange(next: string[]) {
+    const added = next.filter((id) => !memberIds.includes(id));
+    const removed = memberIds.filter((id) => !next.includes(id));
+    setMemberIds(next);
+    if (added.length > 0) addMembers.mutate({ siteId, userIds: added });
+    for (const userId of removed) removeMember.mutate({ siteId, userId });
+  }
 
-  const removeMember = trpc.sites.removeMember.useMutation({
-    onSuccess: () => {
-      void utils.sites.matrix.invalidate();
-      void utils.sites.getHub.invalidate({ id: siteId });
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  function onGroupsChange(next: string[]) {
+    const added = next.filter((id) => !groupIds.includes(id));
+    const removed = groupIds.filter((id) => !next.includes(id));
+    setGroupIds(next);
+    for (const groupId of added) addGroup.mutate({ siteId, groupId });
+    for (const groupId of removed) removeGroup.mutate({ siteId, groupId });
+  }
+
+  const groupNameById = new Map((data?.groups ?? []).map((g) => [g.id, g.name]));
 
   return (
     <div className="space-y-4">
@@ -108,79 +120,108 @@ export function SiteTeamAccess({
         </CardContent>
       </Card>
 
-      {/* Members */}
-      <Card>
-        <CardContent className="space-y-4 p-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Users className="h-4 w-4 text-primary" />
-            {t('teamMembersHeading')}
-            <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
-              {memberUsers.length}
-            </span>
-          </div>
-
-          {membershipMode === 'manual' && canManage ? (
-            <div className="flex gap-2">
-              <select
-                value={addUserId}
-                onChange={(e) => setAddUserId(e.target.value)}
-                className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="">{t('teamAddPlaceholder')}</option>
-                {addableUsers.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} — {u.email}
-                  </option>
-                ))}
-              </select>
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (addUserId === '') return;
-                  addMember.mutate({ siteId, userId: addUserId });
-                }}
-                disabled={addUserId === '' || addMember.isPending}
-              >
-                {t('teamAddButton')}
-              </Button>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Individual members */}
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Users className="h-4 w-4 text-primary" />
+              {t('teamMembersHeading')}
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                {memberIds.length}
+              </span>
             </div>
-          ) : membershipMode === 'rule_based' ? (
-            <p className="text-sm text-muted-foreground">{t('teamRuleNote')}</p>
-          ) : null}
+            <p className="text-sm text-muted-foreground">{t('teamMembersSubtitle')}</p>
+            {membershipMode === 'rule_based' ? (
+              <p className="rounded-md bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
+                {t('teamRuleNote')}
+              </p>
+            ) : (
+              <GroupUserSelector
+                mode="users"
+                value={memberIds}
+                onChange={onMembersChange}
+                disabled={!canManage}
+                placeholder={t('teamMembersAdd')}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Groups */}
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <UsersRound className="h-4 w-4 text-primary" />
+              {t('teamGroupsHeading')}
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                {groupIds.length}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">{t('teamGroupsSubtitle')}</p>
+            <GroupUserSelector
+              mode="groups"
+              value={groupIds}
+              onChange={onGroupsChange}
+              disabled={!canManage}
+              placeholder={t('teamGroupsAdd')}
+            />
+            {(data?.groups ?? []).length > 0 ? (
+              <ul className="space-y-1 pt-1 text-xs text-muted-foreground">
+                {(data?.groups ?? []).map((g) => (
+                  <li key={g.id} className="flex items-center justify-between">
+                    <span className="truncate text-foreground">{g.name}</span>
+                    <span>{t('teamGroupMemberCount', { count: g.memberCount })}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Everyone with access — deduped roster */}
+      <Card>
+        <CardContent className="space-y-3 p-4">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              {t('teamEveryoneHeading')}
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                {data?.effective.length ?? 0}
+              </span>
+            </div>
+            <p className="mt-0.5 text-sm text-muted-foreground">{t('teamEveryoneSubtitle')}</p>
+          </div>
 
           {isLoading ? (
             <Skeleton className="h-24 w-full" />
-          ) : memberUsers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('teamEmpty')}</p>
+          ) : (data?.effective.length ?? 0) === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('teamEveryoneEmpty')}</p>
           ) : (
             <ul className="divide-y rounded-md border">
-              {memberUsers.map((u) => {
-                const edge = edges.find((e) => e.userId === u.id);
-                const manualEdge = edge?.addedVia === 'manual' || edge?.addedVia === 'invite';
-                return (
-                  <li key={u.id} className="flex items-center justify-between px-4 py-2.5">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{u.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{u.email}</p>
-                      {edge !== undefined && !manualEdge ? (
-                        <p className="text-xs text-purple-600">{t('teamAddedViaRule')}</p>
-                      ) : null}
-                    </div>
-                    {manualEdge && membershipMode === 'manual' && canManage ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="shrink-0 text-muted-foreground"
-                        onClick={() => removeMember.mutate({ siteId, userId: u.id })}
-                        disabled={removeMember.isPending}
-                        aria-label={t('teamRemove')}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+              {(data?.effective ?? []).map((p) => (
+                <li key={p.userId} className="flex items-center justify-between gap-2 px-4 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{p.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{p.email}</p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap justify-end gap-1">
+                    {p.direct ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                        {t('teamDirect')}
+                      </span>
                     ) : null}
-                  </li>
-                );
-              })}
+                    {p.viaGroupIds.map((gid) => (
+                      <span
+                        key={gid}
+                        className="rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-900/40 dark:text-purple-200"
+                      >
+                        {t('teamViaGroup', { name: groupNameById.get(gid) ?? '' })}
+                      </span>
+                    ))}
+                  </div>
+                </li>
+              ))}
             </ul>
           )}
         </CardContent>

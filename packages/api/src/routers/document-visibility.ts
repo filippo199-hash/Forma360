@@ -10,8 +10,8 @@
  *
  * Callers with `documents.manage` bypass all of this and see everything.
  */
-import { groupMembers, siteMembers } from '@forma360/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { groupMembers, siteGroups, siteMembers } from '@forma360/db/schema';
+import { and, eq, inArray } from 'drizzle-orm';
 
 export interface ViewerMemberships {
   groupIds: Set<string>;
@@ -34,10 +34,22 @@ export async function loadViewerMemberships(
       .from(siteMembers)
       .where(and(eq(siteMembers.tenantId, tenantId), eq(siteMembers.userId, userId))),
   ]);
-  return {
-    groupIds: new Set((g as { id: string }[]).map((r) => r.id)),
-    siteIds: new Set((s as { id: string }[]).map((r) => r.id)),
-  };
+  const groupIds = new Set((g as { id: string }[]).map((r) => r.id));
+  const siteIds = new Set((s as { id: string }[]).map((r) => r.id));
+
+  // A group assigned to a site/project extends its members' site access:
+  // any site that lists one of the viewer's groups counts as a membership.
+  if (groupIds.size > 0) {
+    const sg = await db
+      .select({ id: siteGroups.siteId })
+      .from(siteGroups)
+      .where(
+        and(eq(siteGroups.tenantId, tenantId), inArray(siteGroups.groupId, [...groupIds])),
+      );
+    for (const r of sg as { id: string }[]) siteIds.add(r.id);
+  }
+
+  return { groupIds, siteIds };
 }
 
 function asStringArray(v: unknown): string[] {

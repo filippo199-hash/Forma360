@@ -144,6 +144,16 @@ try {
     ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "latitude" real;
     ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "longitude" real;
     ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "location_address" text;
+    -- 0040: Groups assigned to a site/project (Team & access)
+    CREATE TABLE IF NOT EXISTS "site_groups" (
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "site_id" varchar(26) NOT NULL REFERENCES "sites"("id") ON DELETE CASCADE,
+      "group_id" varchar(26) NOT NULL REFERENCES "groups"("id") ON DELETE CASCADE,
+      "added_at" timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT "site_groups_site_group_pk" PRIMARY KEY ("site_id", "group_id")
+    );
+    CREATE INDEX IF NOT EXISTS "site_groups_tenant_group_idx" ON "site_groups" ("tenant_id", "group_id");
+    CREATE INDEX IF NOT EXISTS "site_groups_tenant_site_idx" ON "site_groups" ("tenant_id", "site_id");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

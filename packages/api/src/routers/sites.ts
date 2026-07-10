@@ -23,14 +23,18 @@ import {
   actions,
   assets,
   documents,
+  groupMembers,
+  groups,
   inspections,
   issues,
+  siteGroups,
   siteMedia,
   siteMembers,
   siteMembershipRules,
   sitePlanPins,
   sitePlans,
   sites,
+  user,
 } from '@forma360/db/schema';
 import {
   registerDependentResolver,
@@ -818,6 +822,173 @@ export const sitesRouter = router({
           ),
         );
       return { ok: true as const };
+    }),
+
+  /** Bulk manual add — the Team & access multi-select. */
+  addMembers: tenantProcedure
+    .use(requirePermission('sites.manage'))
+    .input(z.object({ siteId: z.string().length(26), userIds: z.array(z.string()).min(1).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await ctx.db
+        .select()
+        .from(sites)
+        .where(and(eq(sites.tenantId, ctx.tenantId), eq(sites.id, input.siteId)))
+        .limit(1);
+      if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (row.membershipMode !== 'manual') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Site is rule_based; manual membership edits are disabled.',
+        });
+      }
+      await assertUsersInTenant(ctx.db, ctx.tenantId, input.userIds);
+      await ctx.db
+        .insert(siteMembers)
+        .values(
+          input.userIds.map((userId) => ({
+            tenantId: ctx.tenantId,
+            siteId: input.siteId,
+            userId,
+            addedVia: 'manual',
+          })),
+        )
+        .onConflictDoNothing();
+      return { ok: true as const };
+    }),
+
+  /**
+   * Assign a group to a site/project. The group's members become part of the
+   * site's effective team (and gain its site-scoped access) via
+   * `loadViewerMemberships`, kept in sync automatically as group membership
+   * changes. Independent of the manual/rule_based direct-membership mode.
+   */
+  addGroup: tenantProcedure
+    .use(requirePermission('sites.manage'))
+    .input(z.object({ siteId: z.string().length(26), groupId: z.string().length(26) }))
+    .mutation(async ({ ctx, input }) => {
+      const [s] = await ctx.db
+        .select({ id: sites.id })
+        .from(sites)
+        .where(and(eq(sites.tenantId, ctx.tenantId), eq(sites.id, input.siteId)))
+        .limit(1);
+      if (s === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      const [g] = await ctx.db
+        .select({ id: groups.id })
+        .from(groups)
+        .where(and(eq(groups.tenantId, ctx.tenantId), eq(groups.id, input.groupId)))
+        .limit(1);
+      if (g === undefined) throw new TRPCError({ code: 'NOT_FOUND', message: 'Group not found' });
+      await ctx.db
+        .insert(siteGroups)
+        .values({ tenantId: ctx.tenantId, siteId: input.siteId, groupId: input.groupId })
+        .onConflictDoNothing();
+      return { ok: true as const };
+    }),
+
+  removeGroup: tenantProcedure
+    .use(requirePermission('sites.manage'))
+    .input(z.object({ siteId: z.string().length(26), groupId: z.string().length(26) }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .delete(siteGroups)
+        .where(
+          and(
+            eq(siteGroups.tenantId, ctx.tenantId),
+            eq(siteGroups.siteId, input.siteId),
+            eq(siteGroups.groupId, input.groupId),
+          ),
+        );
+      return { ok: true as const };
+    }),
+
+  /**
+   * Everything the Team & access tab needs in one round-trip: the direct
+   * members, the assigned groups (with member counts), and the deduped
+   * effective roster (direct ∪ group members) with per-person provenance.
+   */
+  team: tenantProcedure
+    .use(requirePermission('sites.view'))
+    .input(z.object({ siteId: z.string().length(26) }))
+    .query(async ({ ctx, input }) => {
+      const tid = ctx.tenantId;
+      const sid = input.siteId;
+
+      const directRows = await ctx.db
+        .select({
+          userId: siteMembers.userId,
+          name: user.name,
+          email: user.email,
+          addedVia: siteMembers.addedVia,
+        })
+        .from(siteMembers)
+        .innerJoin(user, and(eq(siteMembers.userId, user.id), eq(user.tenantId, tid)))
+        .where(and(eq(siteMembers.tenantId, tid), eq(siteMembers.siteId, sid)))
+        .orderBy(user.name);
+
+      const groupRows = await ctx.db
+        .select({ id: groups.id, name: groups.name })
+        .from(siteGroups)
+        .innerJoin(groups, and(eq(siteGroups.groupId, groups.id), isNull(groups.archivedAt)))
+        .where(and(eq(siteGroups.tenantId, tid), eq(siteGroups.siteId, sid)))
+        .orderBy(groups.name);
+      const groupIds = groupRows.map((g) => g.id);
+
+      const groupMemberRows =
+        groupIds.length > 0
+          ? await ctx.db
+              .select({
+                groupId: groupMembers.groupId,
+                userId: groupMembers.userId,
+                name: user.name,
+                email: user.email,
+              })
+              .from(groupMembers)
+              .innerJoin(user, and(eq(groupMembers.userId, user.id), eq(user.tenantId, tid)))
+              .where(and(eq(groupMembers.tenantId, tid), inArray(groupMembers.groupId, groupIds)))
+          : [];
+
+      const countByGroup = new Map<string, number>();
+      for (const r of groupMemberRows) {
+        countByGroup.set(r.groupId, (countByGroup.get(r.groupId) ?? 0) + 1);
+      }
+
+      // Deduped effective roster with provenance.
+      const eff = new Map<
+        string,
+        { userId: string; name: string; email: string; direct: boolean; viaGroupIds: string[] }
+      >();
+      for (const r of directRows) {
+        eff.set(r.userId, {
+          userId: r.userId,
+          name: r.name,
+          email: r.email,
+          direct: true,
+          viaGroupIds: [],
+        });
+      }
+      for (const r of groupMemberRows) {
+        const existing = eff.get(r.userId);
+        if (existing !== undefined) {
+          if (!existing.viaGroupIds.includes(r.groupId)) existing.viaGroupIds.push(r.groupId);
+        } else {
+          eff.set(r.userId, {
+            userId: r.userId,
+            name: r.name,
+            email: r.email,
+            direct: false,
+            viaGroupIds: [r.groupId],
+          });
+        }
+      }
+      const effective = [...eff.values()].sort((a, b) => a.name.localeCompare(b.name));
+
+      return {
+        members: directRows,
+        memberIds: directRows.map((r) => r.userId),
+        groups: groupRows.map((g) => ({ ...g, memberCount: countByGroup.get(g.id) ?? 0 })),
+        groupIds,
+        effective,
+      };
     }),
 
   /**
