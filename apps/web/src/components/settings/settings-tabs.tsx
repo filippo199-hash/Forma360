@@ -10,7 +10,7 @@ interface SettingsTabsProps {
   isAdmin: boolean;
 }
 
-type TabKey = 'profile' | 'company' | 'users' | 'permissions' | 'groups' | 'sites';
+type TabKey = 'profile' | 'company' | 'users' | 'permissions' | 'groups';
 
 /**
  * Horizontal tab bar for the settings sections. Replaces the old vertical
@@ -22,7 +22,7 @@ export function SettingsTabs({ locale, isAdmin }: SettingsTabsProps) {
   const t = useTranslations('settings');
   const pathname = usePathname();
 
-  const allTabs: TabKey[] = ['profile', 'company', 'users', 'permissions', 'groups', 'sites'];
+  const allTabs: TabKey[] = ['profile', 'company', 'users', 'permissions', 'groups'];
   const tabs: TabKey[] = isAdmin ? allTabs : ['profile'];
 
   return (

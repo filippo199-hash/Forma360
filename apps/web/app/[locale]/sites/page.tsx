@@ -125,6 +125,7 @@ export default function SitesHubPage() {
   const [status, setStatus] = useState<Status>('active');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [parentId, setParentId] = useState('');
 
   function openCreate() {
     setKind(defaultKind);
@@ -140,6 +141,7 @@ export default function SitesHubPage() {
       setClient('');
       setStartDate('');
       setEndDate('');
+      setParentId('');
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -157,6 +159,7 @@ export default function SitesHubPage() {
     create.mutate({
       name: name.trim(),
       kind,
+      ...(parentId !== '' ? { parentId } : {}),
       ...(kind === 'project'
         ? {
             status,
@@ -481,6 +484,25 @@ export default function SitesHubPage() {
                 maxLength={120}
                 autoFocus
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="site-parent">{t('fieldParent')}</Label>
+              <select
+                id="site-parent"
+                value={parentId}
+                onChange={(e) => setParentId(e.target.value)}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t('parentNone')}</option>
+                {rows
+                  .filter((r) => r.archivedAt === null)
+                  .map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+              </select>
             </div>
 
             {kind === 'project' ? (

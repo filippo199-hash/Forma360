@@ -2862,6 +2862,24 @@
     "timelineOverdue": "Overdue",
     "timelineComplete": "Complete",
     "timelineNotStarted": "Not started",
-    "openItemsNone": "No open items"
+    "openItemsNone": "No open items",
+    "tabTeam": "Team & access",
+    "teamMembership": "Membership",
+    "teamSubtitle": "Who is assigned to this site or project — this also controls who can access it.",
+    "modeManual": "Manual",
+    "modeRuleBased": "Rule-based",
+    "teamModeManualHelp": "Add and remove people yourself.",
+    "teamModeRuleHelp": "Membership is kept in sync from rules.",
+    "teamMembersHeading": "Members",
+    "teamAddPlaceholder": "Add a person…",
+    "teamAddButton": "Add",
+    "teamEmpty": "No one assigned yet.",
+    "teamRuleNote": "Members are managed automatically by membership rules.",
+    "teamAddedViaRule": "Added by rule",
+    "teamRemove": "Remove",
+    "teamModeUpdated": "Membership updated.",
+    "teamError": "Something went wrong.",
+    "fieldParent": "Parent (optional)",
+    "parentNone": "No parent"
   }
 }

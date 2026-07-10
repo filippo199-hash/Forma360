@@ -10,6 +10,7 @@ import { SiteLocationCard } from '../../../../src/components/sites/site-location
 import { SiteMediaGallery } from '../../../../src/components/sites/site-media-gallery';
 import { SiteOverview } from '../../../../src/components/sites/site-overview';
 import { SitePlansViewer } from '../../../../src/components/sites/site-plans-viewer';
+import { SiteTeamAccess } from '../../../../src/components/sites/site-team-access';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -114,14 +115,16 @@ export default function SiteDetailPage() {
 
       <div className="border-b">
         <nav aria-label={t('title')} className="flex gap-1 overflow-x-auto">
-          {(['overview', 'media', 'plans'] as const).map((key) => {
+          {(['overview', 'media', 'plans', 'team'] as const).map((key) => {
             const active = tab === key;
             const label =
               key === 'overview'
                 ? t('tabOverview')
                 : key === 'media'
                   ? t('tabMedia')
-                  : t('tabPlans');
+                  : key === 'plans'
+                    ? t('tabPlans')
+                    : t('tabTeam');
             return (
               <button
                 key={key}
@@ -161,6 +164,12 @@ export default function SiteDetailPage() {
         ) : null}
         {tab === 'media' ? <SiteMediaGallery siteId={siteId} /> : null}
         {tab === 'plans' ? <SitePlansViewer siteId={siteId} /> : null}
+        {tab === 'team' ? (
+          <SiteTeamAccess
+            siteId={siteId}
+            membershipMode={site.membershipMode === 'rule_based' ? 'rule_based' : 'manual'}
+          />
+        ) : null}
       </div>
     </div>
   );
