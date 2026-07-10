@@ -2,8 +2,9 @@
 
 import { ExternalLink, MapPin, Navigation, Pencil, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { cn } from '../../lib/cn';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
@@ -48,6 +49,59 @@ export function SiteLocationCard({
   const [lat, setLat] = useState<string>(latitude !== null ? String(latitude) : '');
   const [lng, setLng] = useState<string>(longitude !== null ? String(longitude) : '');
   const [searching, setSearching] = useState(false);
+
+  // Type-ahead suggestions (Nominatim). Debounced; a pick fills lat/lng.
+  const [suggestions, setSuggestions] = useState<NominatimHit[]>([]);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
+  const justSelected = useRef(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const q = query.trim();
+    // Skip the fetch immediately after picking a suggestion (query was set by us).
+    if (justSelected.current) {
+      justSelected.current = false;
+      return;
+    }
+    if (q.length < 3) {
+      setSuggestions([]);
+      setShowSuggest(false);
+      return;
+    }
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&addressdetails=0&limit=5&q=${encodeURIComponent(q)}`,
+            { headers: { Accept: 'application/json' }, signal: ctrl.signal },
+          );
+          if (!res.ok) return;
+          const hits = (await res.json()) as NominatimHit[];
+          setSuggestions(hits);
+          setShowSuggest(true);
+          setActiveIdx(-1);
+        } catch {
+          // aborted or network hiccup — leave the previous suggestions be
+        }
+      })();
+    }, 350);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [query, open]);
+
+  function selectHit(hit: NominatimHit) {
+    justSelected.current = true;
+    setQuery(hit.display_name);
+    setLat(hit.lat);
+    setLng(hit.lon);
+    setSuggestions([]);
+    setShowSuggest(false);
+    setActiveIdx(-1);
+  }
 
   const update = trpc.sites.update.useMutation({
     onSuccess: () => {
@@ -167,18 +221,74 @@ export function SiteLocationCard({
             <div className="space-y-1.5">
               <Label htmlFor="loc-search">{t('locationAddressLabel')}</Label>
               <div className="flex gap-2">
-                <Input
-                  id="loc-search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t('locationAddressPlaceholder')}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      void geocode();
-                    }
-                  }}
-                />
+                <div className="relative flex-1">
+                  <Input
+                    id="loc-search"
+                    value={query}
+                    autoComplete="off"
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t('locationAddressPlaceholder')}
+                    onFocus={() => {
+                      if (suggestions.length > 0) setShowSuggest(true);
+                    }}
+                    onBlur={() => {
+                      // Delay so an option's onMouseDown can register first.
+                      window.setTimeout(() => setShowSuggest(false), 120);
+                    }}
+                    onKeyDown={(e) => {
+                      if (showSuggest && suggestions.length > 0) {
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setActiveIdx((i) => (i + 1) % suggestions.length);
+                          return;
+                        }
+                        if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setActiveIdx((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+                          return;
+                        }
+                        if (e.key === 'Escape') {
+                          setShowSuggest(false);
+                          return;
+                        }
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const hit = suggestions[activeIdx];
+                          if (hit !== undefined) selectHit(hit);
+                          else void geocode();
+                          return;
+                        }
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        void geocode();
+                      }
+                    }}
+                  />
+                  {showSuggest && suggestions.length > 0 ? (
+                    <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-auto rounded-md border bg-popover py-1 text-popover-foreground shadow-md">
+                      {suggestions.map((hit, i) => (
+                        <li key={`${hit.lat},${hit.lon},${i}`}>
+                          <button
+                            type="button"
+                            // onMouseDown (not onClick) so the pick fires before the input blurs.
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              selectHit(hit);
+                            }}
+                            onMouseEnter={() => setActiveIdx(i)}
+                            className={cn(
+                              'flex w-full items-start gap-2 px-3 py-2 text-left text-sm',
+                              i === activeIdx ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60',
+                            )}
+                          >
+                            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <span className="leading-snug">{hit.display_name}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
                 <Button variant="outline" onClick={() => void geocode()} disabled={searching}>
                   <Search className="mr-1 h-4 w-4" />
                   {searching ? t('locationSearching') : t('locationSearch')}
