@@ -164,12 +164,7 @@ export default function SiteDetailPage() {
         ) : null}
         {tab === 'media' ? <SiteMediaGallery siteId={siteId} /> : null}
         {tab === 'plans' ? <SitePlansViewer siteId={siteId} /> : null}
-        {tab === 'team' ? (
-          <SiteTeamAccess
-            siteId={siteId}
-            membershipMode={site.membershipMode === 'rule_based' ? 'rule_based' : 'manual'}
-          />
-        ) : null}
+        {tab === 'team' ? <SiteTeamAccess siteId={siteId} /> : null}
       </div>
     </div>
   );

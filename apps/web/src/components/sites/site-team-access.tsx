@@ -4,28 +4,20 @@ import { Users, UsersRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { cn } from '../../lib/cn';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 import { Card, CardContent } from '../ui/card';
 import { Skeleton } from '../ui/skeleton';
 
-type MembershipMode = 'manual' | 'rule_based';
-
 /**
  * Team & access tab for a site/project. A site's team is the union of its
  * direct individual members AND the members of any assigned groups — this is
  * also what grants site-scoped access. Groups group people; a site simply
- * points at the people + groups that belong to it.
+ * points at the people + groups that belong to it. (No membership "mode":
+ * assigning a group is the auto-synced path, adding people is the manual one.)
  */
-export function SiteTeamAccess({
-  siteId,
-  membershipMode,
-}: {
-  siteId: string;
-  membershipMode: MembershipMode;
-}) {
+export function SiteTeamAccess({ siteId }: { siteId: string }) {
   const t = useTranslations('sites');
   const canManage = useHasPermission('sites.manage');
   const utils = trpc.useUtils();
@@ -52,13 +44,6 @@ export function SiteTeamAccess({
     void utils.sites.getHub.invalidate({ id: siteId });
   };
 
-  const updateMode = trpc.sites.update.useMutation({
-    onSuccess: () => {
-      invalidate();
-      toast.success(t('teamModeUpdated'));
-    },
-    onError,
-  });
   const addMembers = trpc.sites.addMembers.useMutation({ onSuccess: invalidate, onError });
   const removeMember = trpc.sites.removeMember.useMutation({ onSuccess: invalidate, onError });
   const addGroup = trpc.sites.addGroup.useMutation({ onSuccess: invalidate, onError });
@@ -84,41 +69,10 @@ export function SiteTeamAccess({
 
   return (
     <div className="space-y-4">
-      {/* Membership mode */}
-      <Card>
-        <CardContent className="space-y-3 p-4">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">{t('teamMembership')}</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">{t('teamSubtitle')}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:max-w-md">
-            {(['manual', 'rule_based'] as const).map((mode) => {
-              const active = membershipMode === mode;
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  disabled={!canManage || updateMode.isPending || active}
-                  onClick={() => updateMode.mutate({ id: siteId, membershipMode: mode })}
-                  className={cn(
-                    'rounded-md border px-3 py-2 text-left text-sm transition-colors',
-                    active
-                      ? 'border-primary bg-primary/5'
-                      : 'border-input hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60',
-                  )}
-                >
-                  <span className="block font-medium text-foreground">
-                    {mode === 'manual' ? t('modeManual') : t('modeRuleBased')}
-                  </span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {mode === 'manual' ? t('teamModeManualHelp') : t('teamModeRuleHelp')}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        <h2 className="text-sm font-semibold text-foreground">{t('teamMembership')}</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">{t('teamSubtitle')}</p>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Individual members */}
@@ -132,19 +86,13 @@ export function SiteTeamAccess({
               </span>
             </div>
             <p className="text-sm text-muted-foreground">{t('teamMembersSubtitle')}</p>
-            {membershipMode === 'rule_based' ? (
-              <p className="rounded-md bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
-                {t('teamRuleNote')}
-              </p>
-            ) : (
-              <GroupUserSelector
-                mode="users"
-                value={memberIds}
-                onChange={onMembersChange}
-                disabled={!canManage}
-                placeholder={t('teamMembersAdd')}
-              />
-            )}
+            <GroupUserSelector
+              mode="users"
+              value={memberIds}
+              onChange={onMembersChange}
+              disabled={!canManage}
+              placeholder={t('teamMembersAdd')}
+            />
           </CardContent>
         </Card>
 
