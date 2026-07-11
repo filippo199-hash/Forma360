@@ -260,7 +260,7 @@ export default function DocumentDetailPage() {
     // Break out of page padding to go edge-to-edge
     <div className="-mx-4 -mb-6 -mt-6 flex flex-col" style={{ height: 'calc(100vh - 0px)' }}>
       {/* ── Top bar ─────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center gap-3 border-b bg-background px-4 py-2.5">
+      <div className="flex shrink-0 items-center gap-3 border-b px-4 py-2.5">
         <Link
           href={`/${locale}/documents`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
