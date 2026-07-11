@@ -2938,6 +2938,9 @@
     "teamEveryoneSubtitle": "Individual members plus everyone in the assigned groups.",
     "teamViaGroup": "via {name}",
     "teamDirect": "Member",
-    "teamEveryoneEmpty": "No one has access yet."
+    "teamEveryoneEmpty": "No one has access yet.",
+    "planLocationHeading": "Location on plan",
+    "planLocationOpen": "Open on plan",
+    "planLocationHint": "Click to see where this is on the floor plan."
   }
 }

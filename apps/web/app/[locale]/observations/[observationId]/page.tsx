@@ -40,6 +40,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { EntityPlanMiniMap } from '../../../../src/components/sites/entity-plan-minimap';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -522,6 +523,7 @@ export default function ObservationDetailPage() {
               </div>
 
               <aside className="space-y-4">
+                <EntityPlanMiniMap entityType="observation" entityId={issueId} locale={locale} />
                 <Card>
                   <CardContent className="space-y-2 p-6 text-sm">
                     <h2 className="text-base font-semibold">{t('locationTitle')}</h2>

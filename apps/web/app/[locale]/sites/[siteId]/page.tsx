@@ -3,7 +3,7 @@
 import { ArrowLeft, Building2, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { SiteHeaderActions } from '../../../../src/components/sites/site-header-actions';
 import { SiteLocationCard } from '../../../../src/components/sites/site-location-card';
@@ -34,7 +34,13 @@ export default function SiteDetailPage() {
     { id: siteId },
     { enabled: siteId !== '' },
   );
-  const [tab, setTab] = useState('overview');
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab');
+  const [tab, setTab] = useState(
+    initialTab === 'media' || initialTab === 'plans' || initialTab === 'team'
+      ? initialTab
+      : 'overview',
+  );
 
   if (isLoading || data === undefined) {
     return (

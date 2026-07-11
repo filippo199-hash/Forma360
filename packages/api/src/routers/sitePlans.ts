@@ -176,6 +176,45 @@ export const sitePlansRouter = router({
         .orderBy(asc(sitePlanPins.createdAt));
     }),
 
+  /**
+   * The plan pin (if any) that locates a given entity — e.g. an observation
+   * or inspection dropped on a floor plan. Powers the "location on plan"
+   * mini-map on that entity's detail page (#7). Returns the pin plus its
+   * plan (image + site) so the caller can render a thumbnail with a marker.
+   */
+  pinForEntity: tenantProcedure
+    .use(requirePermission('sites.view'))
+    .input(z.object({ entityType: pinEntity, entityId: z.string().length(26) }))
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({
+          pinId: sitePlanPins.id,
+          planId: sitePlanPins.planId,
+          x: sitePlanPins.x,
+          y: sitePlanPins.y,
+          label: sitePlanPins.label,
+          siteId: sitePlans.siteId,
+          planName: sitePlans.name,
+          storageKey: sitePlans.storageKey,
+          mimeType: sitePlans.mimeType,
+        })
+        .from(sitePlanPins)
+        .innerJoin(
+          sitePlans,
+          and(eq(sitePlanPins.planId, sitePlans.id), isNull(sitePlans.archivedAt)),
+        )
+        .where(
+          and(
+            eq(sitePlanPins.tenantId, ctx.tenantId),
+            eq(sitePlanPins.entityType, input.entityType),
+            eq(sitePlanPins.entityId, input.entityId),
+            isNull(sitePlanPins.archivedAt),
+          ),
+        )
+        .limit(1);
+      return rows[0] ?? null;
+    }),
+
   createPin: tenantProcedure
     .use(requirePermission('sites.view'))
     .input(createPinInput)
