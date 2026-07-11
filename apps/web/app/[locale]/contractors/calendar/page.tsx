@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, CalendarClock, ChevronLeft, ChevronRight, LogIn } from 'lucide-react';
+import { ArrowLeft, CalendarClock, ChevronLeft, ChevronRight, LogIn, Plus } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -206,7 +206,7 @@ export default function ContractorCalendarPage() {
               return (
                 <div
                   key={cell.key}
-                  className={`min-h-[104px] border-b border-r p-1.5 text-left align-top ${
+                  className={`group min-h-[104px] border-b border-r p-1.5 text-left align-top ${
                     cell.inMonth ? '' : 'bg-muted/30 text-muted-foreground'
                   }`}
                 >
@@ -228,7 +228,7 @@ export default function ContractorCalendarPage() {
                           setCreateOpen(true);
                         }}
                       >
-                        +
+                        <Plus className="h-3.5 w-3.5" />
                       </button>
                     ) : null}
                   </div>
