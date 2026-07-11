@@ -178,6 +178,13 @@ describe('Documents router (Phase 5C)', () => {
 
     const versions = await caller.documents.versions.list({ documentId });
     expect(versions).toHaveLength(2);
+
+    // Promote v1 back to current — re-points file fields, no new version.
+    await caller.documents.setCurrentVersion({ documentId, version: 1 });
+    const { document: reverted } = await caller.documents.get({ documentId });
+    expect(reverted.currentVersion).toBe(1);
+    expect(reverted.filename).toBe('policy-v1.pdf');
+    expect(await caller.documents.versions.list({ documentId })).toHaveLength(2);
   });
 
   it('D-E06: prevents deleting a folder with documents', async () => {

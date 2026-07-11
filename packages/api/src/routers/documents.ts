@@ -446,6 +446,52 @@ export const documentsRouter = router({
       return { versionId, version: nextVersion };
     }),
 
+  /**
+   * Promote an existing historical version to be the current one. Re-points
+   * the document's file fields + currentVersion at the chosen version row (no
+   * new version is created — version rows stay immutable).
+   */
+  setCurrentVersion: tenantProcedure
+    .use(requirePermission('documents.manage'))
+    .input(z.object({ documentId: z.string().length(26), version: z.number().int().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const doc = await loadDocumentOrThrow(ctx.db, ctx.tenantId, input.documentId);
+      if (doc.archivedAt !== null) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'document-archived' });
+      }
+      if (input.version === doc.currentVersion) return { ok: true as const };
+      const vRows = await ctx.db
+        .select({
+          storageKey: documentVersions.storageKey,
+          filename: documentVersions.filename,
+          mimeType: documentVersions.mimeType,
+          sizeBytes: documentVersions.sizeBytes,
+        })
+        .from(documentVersions)
+        .where(
+          and(
+            eq(documentVersions.tenantId, ctx.tenantId),
+            eq(documentVersions.documentId, doc.id),
+            eq(documentVersions.version, input.version),
+          ),
+        )
+        .limit(1);
+      const v = vRows[0];
+      if (v === undefined) throw new TRPCError({ code: 'NOT_FOUND', message: 'version-not-found' });
+      await ctx.db
+        .update(documents)
+        .set({
+          currentVersion: input.version,
+          storageKey: v.storageKey,
+          filename: v.filename,
+          mimeType: v.mimeType,
+          sizeBytes: v.sizeBytes,
+          updatedAt: new Date(),
+        })
+        .where(eq(documents.id, doc.id));
+      return { ok: true as const };
+    }),
+
   archive: tenantProcedure
     .use(requirePermission('documents.manage'))
     .input(documentIdInput)

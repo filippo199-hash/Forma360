@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, Link2, Link2Off } from 'lucide-react';
+import { Copy, FileText, Film, Link2, Link2Off, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -231,18 +231,48 @@ export default function HeadsUpDetailPage() {
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       {t('attachmentsHeading')}
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {attachments.map((att) => (
-                        <div
-                          key={att.id}
-                          className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-xs"
-                        >
-                          <span>{att.filename}</span>
-                          <span className="text-muted-foreground">
-                            {t('fileSizeKb', { kb: (att.sizeBytes / 1024).toFixed(0) })}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="flex flex-wrap gap-3">
+                      {attachments.map((att) => {
+                        const url = `/api/heads-up/attachment?attachmentId=${encodeURIComponent(att.id)}&disposition=inline`;
+                        const isImage = att.mimeType.startsWith('image/');
+                        const isVideo = att.mimeType.startsWith('video/');
+                        return (
+                          <a
+                            key={att.id}
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group w-36 overflow-hidden rounded-md border bg-card transition-colors hover:border-primary/50"
+                          >
+                            <div className="relative flex h-24 items-center justify-center bg-muted/40">
+                              {isImage ? (
+                                <img
+                                  src={url}
+                                  alt={att.filename}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : isVideo ? (
+                                <>
+                                  <Film className="h-8 w-8 text-muted-foreground" />
+                                  <span className="absolute rounded-full bg-black/60 p-1.5">
+                                    <Play className="h-3.5 w-3.5 fill-white text-white" />
+                                  </span>
+                                </>
+                              ) : (
+                                <FileText className="h-8 w-8 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="p-2">
+                              <p className="truncate text-xs font-medium" title={att.filename}>
+                                {att.filename}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {t('fileSizeKb', { kb: (att.sizeBytes / 1024).toFixed(0) })}
+                              </p>
+                            </div>
+                          </a>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : null}

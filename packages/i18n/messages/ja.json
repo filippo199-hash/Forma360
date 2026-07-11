@@ -2526,7 +2526,18 @@
       "moveNoFolder": "フォルダーなし（最上位）",
       "moveSave": "移動",
       "movedToast": "ドキュメントを移動しました",
-      "moveFolderLabel": "Folder"
+      "moveFolderLabel": "Folder",
+      "editButton": "Edit",
+      "editTitle": "Edit document",
+      "editNameLabel": "Name",
+      "editDescriptionLabel": "Description",
+      "editExpiryLabel": "Expiry date",
+      "editRemindersLabel": "Reminders (days before expiry)",
+      "editRemindersHelp": "Comma-separated, e.g. 30, 7",
+      "editSavedToast": "Document updated.",
+      "makeCurrentButton": "Make current",
+      "madeCurrentToast": "Set as current version.",
+      "viewingBadge": "Viewing"
     },
     "upload": {
       "labelsCreate": "新しいラベル",

@@ -2797,7 +2797,18 @@
       "moveNoFolder": "No folder (top level)",
       "moveSave": "Move",
       "movedToast": "Document moved",
-      "moveFolderLabel": "Folder"
+      "moveFolderLabel": "Folder",
+      "editButton": "Edit",
+      "editTitle": "Edit document",
+      "editNameLabel": "Name",
+      "editDescriptionLabel": "Description",
+      "editExpiryLabel": "Expiry date",
+      "editRemindersLabel": "Reminders (days before expiry)",
+      "editRemindersHelp": "Comma-separated, e.g. 30, 7",
+      "editSavedToast": "Document updated.",
+      "makeCurrentButton": "Make current",
+      "madeCurrentToast": "Set as current version.",
+      "viewingBadge": "Viewing"
     }
   },
   "entitySelect": {

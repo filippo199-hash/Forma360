@@ -101,7 +101,7 @@ export function FolderTree({
             className={cn(
               'flex items-center rounded-md transition-colors',
               active
-                ? 'bg-accent text-accent-foreground'
+                ? 'bg-primary/10 font-medium text-primary'
                 : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
             )}
             style={{ paddingLeft: `${depth * 14 + 2}px` }}
@@ -143,7 +143,7 @@ export function FolderTree({
         className={cn(
           'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
           currentFolderId === null
-            ? 'bg-accent text-accent-foreground'
+            ? 'bg-primary/10 font-medium text-primary'
             : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
         )}
       >

@@ -34,10 +34,11 @@ export default function ActionSettingsPage() {
   const canSettings = useHasPermission('actions.settings');
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/${locale}/actions`}>
+    <div className="-mx-4 -my-6 flex flex-1 flex-col bg-[#eef4fb] px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="mx-auto w-full max-w-[1200px] space-y-8">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/${locale}/actions`}>
             <ChevronLeft className="mr-1 h-4 w-4" />
             {tCommon('back')}
           </Link>
@@ -49,8 +50,9 @@ export default function ActionSettingsPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
       </header>
 
-      <CategoriesSection canSettings={canSettings} t={t} tCommon={tCommon} locale={locale} />
-      <PriorityDueDatesSection canSettings={canSettings} t={t} tCommon={tCommon} />
+        <CategoriesSection canSettings={canSettings} t={t} tCommon={tCommon} locale={locale} />
+        <PriorityDueDatesSection canSettings={canSettings} t={t} tCommon={tCommon} />
+      </div>
     </div>
   );
 }

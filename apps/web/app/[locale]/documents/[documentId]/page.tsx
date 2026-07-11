@@ -1,6 +1,15 @@
 'use client';
 
-import { ArrowLeft, Download, FileText, FileUp, Film, Image as ImageIcon, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  FileText,
+  FileUp,
+  Film,
+  Image as ImageIcon,
+  Pencil,
+  X,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -12,10 +21,14 @@ import { Button } from '../../../../src/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '../../../../src/components/ui/dialog';
+import { Input } from '../../../../src/components/ui/input';
+import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { Textarea } from '../../../../src/components/ui/textarea';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -39,14 +52,17 @@ function DocumentPreview({
   documentId,
   mimeType,
   filename,
+  version,
 }: {
   documentId: string;
   mimeType: string;
   filename: string;
+  version?: number;
 }) {
   const t = useTranslations('documents.detail');
   const kind = previewKind(mimeType);
-  const base = `/api/documents/download?documentId=${encodeURIComponent(documentId)}`;
+  const versionQs = version !== undefined ? `&version=${version}` : '';
+  const base = `/api/documents/download?documentId=${encodeURIComponent(documentId)}${versionQs}`;
   const inlineUrl = `${base}&disposition=inline`;
   const downloadUrl = `${base}&disposition=attachment`;
 
@@ -133,6 +149,16 @@ export default function DocumentDetailPage() {
   const [moveFolderId, setMoveFolderId] = useState<string>('');
   const [moveSiteId, setMoveSiteId] = useState<string>('');
 
+  // #2: which version's file the preview shows (null = current).
+  const [viewingVersion, setViewingVersion] = useState<number | null>(null);
+
+  // #1: edit-details dialog.
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editExpiresAt, setEditExpiresAt] = useState('');
+  const [editReminders, setEditReminders] = useState('');
+
   const { data, isLoading } = trpc.documents.get.useQuery({ documentId });
   const { data: versionsData } = trpc.documents.versions.list.useQuery(
     { documentId },
@@ -177,6 +203,16 @@ export default function DocumentDetailPage() {
     onSuccess: () => {
       void utils.documents.get.invalidate({ documentId });
       void utils.documents.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  const setCurrentVersion = trpc.documents.setCurrentVersion.useMutation({
+    onSuccess: () => {
+      toast.success(t('madeCurrentToast'));
+      setViewingVersion(null);
+      void utils.documents.get.invalidate({ documentId });
+      void utils.documents.versions.list.invalidate({ documentId });
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -242,6 +278,13 @@ export default function DocumentDetailPage() {
   } = data;
   const isArchived = doc.archivedAt !== null;
 
+  // #2: resolve which version the left preview should render.
+  const versionList = versionsData ?? versions;
+  const viewedV =
+    viewingVersion !== null ? versionList.find((v) => v.version === viewingVersion) : undefined;
+  const previewMime = viewedV?.mimeType ?? doc.mimeType;
+  const previewName = viewedV?.filename ?? doc.filename;
+
   const docLabelIds = Array.isArray(doc.labelIds) ? (doc.labelIds as string[]) : [];
   const docLabels = docLabelIds
     .map((id) => labelMap.get(id))
@@ -275,9 +318,11 @@ export default function DocumentDetailPage() {
         {/* Left — document preview ───────────────────────────── */}
         <div className="min-h-0 flex-1 overflow-hidden border-r bg-muted/20">
           <DocumentPreview
+            key={viewingVersion ?? 'current'}
             documentId={documentId}
-            mimeType={doc.mimeType}
-            filename={doc.filename}
+            mimeType={previewMime}
+            filename={previewName}
+            {...(viewingVersion !== null ? { version: viewingVersion } : {})}
           />
         </div>
 
@@ -311,6 +356,27 @@ export default function DocumentDetailPage() {
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2">
+              {canManage && !isArchived ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditName(doc.name);
+                    setEditDescription(doc.description);
+                    setEditExpiresAt(
+                      doc.expiresAt !== null
+                        ? new Date(doc.expiresAt).toISOString().slice(0, 10)
+                        : '',
+                    );
+                    setEditReminders(docReminderDays.join(', '));
+                    setEditOpen(true);
+                  }}
+                >
+                  <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                  {t('editButton')}
+                </Button>
+              ) : null}
               {canManage && !isArchived ? (
                 <Button
                   type="button"
@@ -476,31 +542,64 @@ export default function DocumentDetailPage() {
                 {(versionsData ?? versions).length === 0 ? (
                   <p className="text-sm text-muted-foreground">{t('noVersions')}</p>
                 ) : (
-                  (versionsData ?? versions).map((v) => (
-                    <div
-                      key={v.id}
-                      className={cn(
-                        'rounded-md border p-3 text-xs',
-                        v.version === doc.currentVersion && 'border-primary/30 bg-primary/5',
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono font-semibold">
-                          {t('versionNum', { n: String(v.version) })}
-                          {v.version === doc.currentVersion ? (
-                            <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] text-primary">
-                              {t('currentVersionBadge')}
+                  (versionsData ?? versions).map((v) => {
+                    const isCurrent = v.version === doc.currentVersion;
+                    const isViewing =
+                      viewingVersion === v.version || (viewingVersion === null && isCurrent);
+                    return (
+                      <div
+                        key={v.id}
+                        className={cn(
+                          'rounded-md border p-3 text-xs transition-colors',
+                          isCurrent && 'border-primary/30 bg-primary/5',
+                          isViewing && 'ring-2 ring-primary/40',
+                        )}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setViewingVersion(isCurrent ? null : v.version)}
+                          className="block w-full text-left"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono font-semibold">
+                              {t('versionNum', { n: String(v.version) })}
+                              {isCurrent ? (
+                                <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] text-primary">
+                                  {t('currentVersionBadge')}
+                                </span>
+                              ) : null}
+                              {isViewing && !isCurrent ? (
+                                <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                                  {t('viewingBadge')}
+                                </span>
+                              ) : null}
                             </span>
-                          ) : null}
-                        </span>
-                        <span className="text-muted-foreground">{formatBytes(v.sizeBytes)}</span>
+                            <span className="text-muted-foreground">{formatBytes(v.sizeBytes)}</span>
+                          </div>
+                          <p className="mt-1 truncate text-muted-foreground">{v.filename}</p>
+                          <p className="mt-0.5 text-muted-foreground">
+                            {v.uploaderName ?? '—'} · {new Date(v.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </button>
+                        {canManage && !isCurrent && !isArchived ? (
+                          <div className="mt-2 flex justify-end">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              disabled={setCurrentVersion.isPending}
+                              onClick={() =>
+                                setCurrentVersion.mutate({ documentId, version: v.version })
+                              }
+                            >
+                              {t('makeCurrentButton')}
+                            </Button>
+                          </div>
+                        ) : null}
                       </div>
-                      <p className="mt-1 truncate text-muted-foreground">{v.filename}</p>
-                      <p className="mt-0.5 text-muted-foreground">
-                        {v.uploaderName ?? '—'} · {new Date(v.uploadedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             ) : null}
@@ -559,6 +658,96 @@ export default function DocumentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Edit-details dialog (#1) ──────────────────────────── */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('editTitle')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="doc-edit-name">{t('editNameLabel')}</Label>
+              <Input
+                id="doc-edit-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                maxLength={500}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="doc-edit-desc">{t('editDescriptionLabel')}</Label>
+              <Textarea
+                id="doc-edit-desc"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                maxLength={5000}
+                rows={4}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="doc-edit-expiry">{t('editExpiryLabel')}</Label>
+                <Input
+                  id="doc-edit-expiry"
+                  type="date"
+                  value={editExpiresAt}
+                  onChange={(e) => setEditExpiresAt(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="doc-edit-reminders">{t('editRemindersLabel')}</Label>
+                <Input
+                  id="doc-edit-reminders"
+                  value={editReminders}
+                  onChange={(e) => setEditReminders(e.target.value)}
+                  placeholder="30, 7"
+                  disabled={editExpiresAt === ''}
+                />
+                <p className="text-xs text-muted-foreground">{t('editRemindersHelp')}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              disabled={updateDoc.isPending || editName.trim().length === 0}
+              onClick={() => {
+                const reminders =
+                  editExpiresAt === ''
+                    ? []
+                    : editReminders
+                        .split(',')
+                        .map((s) => Number.parseInt(s.trim(), 10))
+                        .filter((n) => Number.isInteger(n) && n >= 1 && n <= 365);
+                updateDoc.mutate(
+                  {
+                    documentId,
+                    name: editName.trim(),
+                    description: editDescription,
+                    expiresAt:
+                      editExpiresAt === ''
+                        ? null
+                        : new Date(`${editExpiresAt}T00:00:00.000Z`).toISOString(),
+                    reminderDays: reminders,
+                  },
+                  {
+                    onSuccess: () => {
+                      toast.success(t('editSavedToast'));
+                      setEditOpen(false);
+                    },
+                  },
+                );
+              }}
+            >
+              {tCommon('save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Upload-new-version dialog ─────────────────────────── */}
       <Dialog open={showVersionDialog} onOpenChange={setShowVersionDialog}>

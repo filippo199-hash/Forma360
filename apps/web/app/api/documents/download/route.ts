@@ -10,7 +10,7 @@
  *
  * Used by the document detail page to drive the inline file preview panel.
  */
-import { documents } from '@forma360/db/schema';
+import { documentVersions, documents } from '@forma360/db/schema';
 import { createStorage } from '@forma360/shared/storage';
 import { and, eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
@@ -59,9 +59,38 @@ export async function GET(req: Request): Promise<Response> {
     .where(and(eq(documents.tenantId, ctx.auth.tenantId), eq(documents.id, documentId)))
     .limit(1);
 
-  const doc = rows[0];
+  let doc = rows[0];
   if (doc === undefined) {
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
+  }
+
+  // `?version=N` previews/downloads a specific historical version instead of
+  // the current one. Tenant ownership is already proven via the parent document.
+  const versionParam = searchParams.get('version');
+  if (versionParam !== null && versionParam.length > 0) {
+    const versionNum = Number.parseInt(versionParam, 10);
+    if (!Number.isNaN(versionNum)) {
+      const vRows = await ctx.db
+        .select({
+          storageKey: documentVersions.storageKey,
+          filename: documentVersions.filename,
+          mimeType: documentVersions.mimeType,
+          sizeBytes: documentVersions.sizeBytes,
+        })
+        .from(documentVersions)
+        .where(
+          and(
+            eq(documentVersions.documentId, documentId),
+            eq(documentVersions.version, versionNum),
+          ),
+        )
+        .limit(1);
+      const v = vRows[0];
+      if (v === undefined) {
+        return NextResponse.json({ error: 'VERSION_NOT_FOUND' }, { status: 404 });
+      }
+      doc = v;
+    }
   }
 
   // `?disposition=inline` (preview iframe) renders in-browser; anything else
