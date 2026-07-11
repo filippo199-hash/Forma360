@@ -7,7 +7,7 @@
 import { permissionSets, user } from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
 import { and, eq } from 'drizzle-orm';
-import { isPermissionKey, type PermissionKey } from './catalogue';
+import { grantsAdminAccess, isPermissionKey, type PermissionKey } from './catalogue';
 
 /**
  * Load the permission list for the given (tenant, user). Unknown keys in
@@ -31,7 +31,12 @@ export async function loadUserPermissions(
   return row.permissions.filter(isPermissionKey);
 }
 
-/** Pure predicate. Use for UI "is this button enabled?" without a DB trip. */
+/**
+ * Pure predicate. Use for UI "is this button enabled?" without a DB trip.
+ * Administrators (holders of `org.settings`) implicitly hold every catalogue
+ * key — otherwise a permission-set snapshot taken before a new module existed
+ * would lock admins out of it.
+ */
 export function hasPermission(perms: ReadonlyArray<string>, required: PermissionKey): boolean {
-  return perms.includes(required);
+  return perms.includes(required) || grantsAdminAccess(perms);
 }

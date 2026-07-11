@@ -13,7 +13,7 @@
  * (see ADR 0002).
  */
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
-import type { PermissionKey } from '@forma360/permissions/catalogue';
+import { grantsAdminAccess, type PermissionKey } from '@forma360/permissions/catalogue';
 import { middleware, procedure, TRPCError } from './trpc';
 
 /**
@@ -88,7 +88,9 @@ export function requirePermission(perm: PermissionKey) {
       throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Authentication required' });
     }
     const perms = await loadUserPermissions(ctx.db, ctx.auth.tenantId, ctx.auth.userId);
-    if (!perms.includes(perm)) {
+    // Administrators (org.settings) implicitly hold every key — a permission
+    // set snapshotted before a module existed must not lock admins out of it.
+    if (!perms.includes(perm) && !grantsAdminAccess(perms)) {
       throw new TRPCError({
         code: 'FORBIDDEN',
         message: `Missing permission: ${perm}`,

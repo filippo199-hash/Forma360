@@ -1,5 +1,6 @@
 'use client';
 
+import { grantsAdminAccess } from '@forma360/permissions/catalogue';
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 /**
@@ -22,5 +23,7 @@ export function PermissionsProvider({
 
 export function useHasPermission(key: string): boolean {
   const perms = useContext(PermissionsContext);
-  return perms.includes(key);
+  // Administrators (org.settings) implicitly hold every key — mirrors the
+  // server so a pre-existing admin isn't locked out of newly-added modules.
+  return perms.includes(key) || grantsAdminAccess(perms);
 }
