@@ -54,6 +54,24 @@ export default function ContractorsPage() {
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : t('error')),
   });
+
+  // Group the on-site people by contractor so the guard sees, per contractor,
+  // the headcount and who exactly is still inside.
+  type OnSiteRow = NonNullable<typeof onSite.data>[number];
+  const onSiteTotal = onSite.data?.length ?? 0;
+  const onSiteGroups = useMemo(() => {
+    const map = new Map<string, { contractorId: string; contractorName: string; people: OnSiteRow[] }>();
+    for (const v of onSite.data ?? []) {
+      const g = map.get(v.contractorId) ?? {
+        contractorId: v.contractorId,
+        contractorName: v.contractorName,
+        people: [],
+      };
+      g.people.push(v);
+      map.set(v.contractorId, g);
+    }
+    return [...map.values()];
+  }, [onSite.data]);
   const rows = data ?? [];
   const [search, setSearch] = useState('');
   const visible = useMemo(() => {
@@ -125,65 +143,77 @@ export default function ContractorsPage() {
         </div>
       </header>
 
-      {/* Gate board — who is currently on site (checked in, not checked out). */}
-      {(onSite.data?.length ?? 0) > 0 ? (
+      {/* Gate board — who is currently on site, grouped by contractor. */}
+      {onSiteTotal > 0 ? (
         <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-950/20">
           <CardContent className="p-4">
             <div className="mb-3 flex items-center gap-2">
               <DoorOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               <h2 className="text-sm font-semibold">
-                {t('onSite.heading', { count: onSite.data?.length ?? 0 })}
+                {t('onSite.heading', { count: onSiteTotal })}
               </h2>
             </div>
-            <ul className="divide-y divide-emerald-200/60 dark:divide-emerald-900/40">
-              {(onSite.data ?? []).map((v) => (
-                <li key={v.id} className="flex items-center gap-3 py-2 text-sm">
-                  <span className="relative flex h-2.5 w-2.5 shrink-0">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">
-                      <Link
-                        href={`/${locale}/contractors/${v.contractorId}`}
-                        className="hover:underline"
-                      >
-                        {v.contractorName}
-                      </Link>
-                      {v.isWalkIn ? (
-                        <span className="ml-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
-                          {t('visits.walkInBadge')}
-                        </span>
-                      ) : null}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {v.title}
-                      {v.siteName !== null ? ` · ${v.siteName}` : ''}
-                      {v.checkedInAt !== null
-                        ? ` · ${t('onSite.since', {
-                            time: format.dateTime(new Date(v.checkedInAt), {
-                              timeStyle: 'short',
-                              timeZone: BROWSER_TZ,
-                            }),
-                          })}`
-                        : ''}
-                    </p>
-                  </div>
-                  {canManage ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 shrink-0"
-                      disabled={checkOut.isPending}
-                      onClick={() => checkOut.mutate({ id: v.id })}
+            <div className="space-y-4">
+              {onSiteGroups.map((g) => (
+                <div key={g.contractorId}>
+                  <div className="mb-1 flex items-baseline justify-between gap-2">
+                    <Link
+                      href={`/${locale}/contractors/${g.contractorId}`}
+                      className="text-sm font-semibold hover:underline"
                     >
-                      <LogOut className="mr-1 h-3.5 w-3.5" />
-                      {t('visits.checkOut')}
-                    </Button>
-                  ) : null}
-                </li>
+                      {g.contractorName}
+                    </Link>
+                    <span className="shrink-0 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                      {t('onSite.perContractor', { count: g.people.length })}
+                    </span>
+                  </div>
+                  <ul className="divide-y divide-emerald-200/60 dark:divide-emerald-900/40">
+                    {g.people.map((v) => (
+                      <li key={v.id} className="flex items-center gap-3 py-2 text-sm">
+                        <span className="relative flex h-2.5 w-2.5 shrink-0">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium">
+                            {v.visitorName ?? v.title}
+                            {v.isWalkIn ? (
+                              <span className="ml-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
+                                {t('visits.walkInBadge')}
+                              </span>
+                            ) : null}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {v.visitorName !== null ? `${v.title} · ` : ''}
+                            {v.siteName !== null ? `${v.siteName} · ` : ''}
+                            {v.checkedInAt !== null
+                              ? t('onSite.since', {
+                                  time: format.dateTime(new Date(v.checkedInAt), {
+                                    timeStyle: 'short',
+                                    timeZone: BROWSER_TZ,
+                                  }),
+                                })
+                              : ''}
+                          </p>
+                        </div>
+                        {canManage ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 shrink-0"
+                            disabled={checkOut.isPending}
+                            onClick={() => checkOut.mutate({ id: v.id })}
+                          >
+                            <LogOut className="mr-1 h-3.5 w-3.5" />
+                            {t('visits.checkOut')}
+                          </Button>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           </CardContent>
         </Card>
       ) : null}

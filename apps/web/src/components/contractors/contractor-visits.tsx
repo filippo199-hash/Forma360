@@ -91,6 +91,7 @@ export function VisitCreateDialog({
 
   const [contractorId, setContractorId] = useState(fixedContractorId ?? '');
   const [title, setTitle] = useState('');
+  const [visitorName, setVisitorName] = useState('');
   const [siteId, setSiteId] = useState('');
   const [start, setStart] = useState(dayAt9(defaultDay));
   const [end, setEnd] = useState('');
@@ -100,6 +101,7 @@ export function VisitCreateDialog({
   const reset = () => {
     setContractorId(fixedContractorId ?? '');
     setTitle('');
+    setVisitorName('');
     setSiteId('');
     setStart(dayAt9(defaultDay));
     setEnd('');
@@ -136,8 +138,9 @@ export function VisitCreateDialog({
   function submit() {
     if (!canSubmit) return;
     const siteArg = siteId === '' ? {} : { siteId };
+    const visitorArg = visitorName.trim() === '' ? {} : { visitorName: visitorName.trim() };
     if (walkIn) {
-      createWalkIn.mutate({ contractorId: cid, title: title.trim(), ...siteArg });
+      createWalkIn.mutate({ contractorId: cid, title: title.trim(), ...siteArg, ...visitorArg });
     } else {
       create.mutate({
         contractorId: cid,
@@ -145,6 +148,7 @@ export function VisitCreateDialog({
         scheduledStart: new Date(start).toISOString(),
         authorize,
         ...siteArg,
+        ...visitorArg,
         ...(end !== '' ? { scheduledEnd: new Date(end).toISOString() } : {}),
         ...(notes.trim() !== '' ? { notes: notes.trim() } : {}),
       });
@@ -185,6 +189,17 @@ export function VisitCreateDialog({
               onChange={(e) => setTitle(e.target.value)}
               maxLength={300}
               autoFocus
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="v-visitor">{t('visits.visitorLabel')}</Label>
+            <Input
+              id="v-visitor"
+              value={visitorName}
+              onChange={(e) => setVisitorName(e.target.value)}
+              maxLength={300}
+              placeholder={t('visits.visitorPlaceholder')}
             />
           </div>
 
@@ -371,6 +386,12 @@ export function VisitDetailDialog({
                 <dt className="text-muted-foreground">{t('visits.visitContractorLabel')}</dt>
                 <dd className="text-right font-medium">{data.contractorName}</dd>
               </div>
+              {v.visitorName !== null && v.visitorName !== '' ? (
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">{t('visits.visitorLabel')}</dt>
+                  <dd className="text-right">{v.visitorName}</dd>
+                </div>
+              ) : null}
               {data.siteName !== null ? (
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted-foreground">{t('visits.visitSiteLabel')}</dt>

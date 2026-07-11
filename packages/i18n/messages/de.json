@@ -3057,7 +3057,9 @@
       "event_check_in": "Checked in",
       "event_check_out": "Checked out",
       "method_self_scan": "Self-scan",
-      "method_staff": "Staff"
+      "method_staff": "Staff",
+      "visitorLabel": "Who’s attending",
+      "visitorPlaceholder": "Name(s) of who is coming"
     },
     "gate": {
       "navLink": "Gate",
@@ -3161,8 +3163,9 @@
       "cancelInvite": "Cancel invite"
     },
     "onSite": {
-      "heading": "On site now ({count})",
-      "since": "since {time}"
+      "heading": "On site now — {count, plural, one {# person} other {# people}}",
+      "since": "since {time}",
+      "perContractor": "{count, plural, one {# person} other {# people}}"
     }
   }
 }

@@ -166,12 +166,13 @@ describe('contractors.visits router', () => {
     expect(afterDelete).toHaveLength(0);
   });
 
-  it('onSiteNow lists only currently checked-in visits', async () => {
+  it('onSiteNow lists only checked-in visits, with visitor names', async () => {
     const caller = createCaller(ctxFor(adminUserId));
-    // A walk-in is immediately on site.
+    // A walk-in with a named attendee is immediately on site.
     const walkIn = await caller.contractors.visits.createWalkIn({
       contractorId,
       title: 'On site now',
+      visitorName: 'Alice Volt',
     });
     // A scheduled-but-not-checked-in visit must NOT appear.
     await caller.contractors.visits.create({
@@ -182,6 +183,8 @@ describe('contractors.visits router', () => {
 
     let onSite = await caller.contractors.visits.onSiteNow();
     expect(onSite.map((v) => v.title)).toEqual(['On site now']);
+    expect(onSite[0]?.visitorName).toBe('Alice Volt');
+    expect(onSite[0]?.contractorName).toBe('Sparky Electrical');
 
     // After check-out it drops off the board.
     await caller.contractors.visits.checkOut({ id: walkIn.id });

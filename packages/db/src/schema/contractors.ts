@@ -180,6 +180,8 @@ export const contractorVisits = pgTable(
     /** Optional site/project the visit is for. Kept if the site is archived. */
     siteId: varchar('site_id', { length: 26 }),
     title: text('title').notNull(),
+    /** Who from the contractor is attending — shown on the gate on-site board. */
+    visitorName: text('visitor_name'),
     status: text('status').notNull().default('scheduled').$type<ContractorVisitStatus>(),
     scheduledStart: timestamp('scheduled_start', { withTimezone: true, mode: 'date' }).notNull(),
     scheduledEnd: timestamp('scheduled_end', { withTimezone: true, mode: 'date' }),
