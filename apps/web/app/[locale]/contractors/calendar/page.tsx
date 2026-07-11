@@ -16,6 +16,9 @@ import { Card, CardContent } from '../../../../src/components/ui/card';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
+/** The viewer's timezone — visit times are entered/bucketed in local time. */
+const BROWSER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 /** Local YYYY-MM-DD for a Date (calendar grouping is done in local time). */
 function localKey(d: Date): string {
   const y = d.getFullYear();
@@ -244,7 +247,10 @@ export default function ContractorCalendarPage() {
                             'bg-muted text-muted-foreground'
                           }`}
                         >
-                          {format.dateTime(new Date(v.scheduledStart), { timeStyle: 'short' })}{' '}
+                          {format.dateTime(new Date(v.scheduledStart), {
+                            timeStyle: 'short',
+                            timeZone: BROWSER_TZ,
+                          })}{' '}
                           {v.contractorName}
                         </button>
                       </li>

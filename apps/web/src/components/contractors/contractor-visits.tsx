@@ -55,6 +55,14 @@ function dayAt9(day: string | undefined): string {
 }
 
 /**
+ * The viewer's own timezone. Visit times are entered via a browser-local
+ * `datetime-local` input, so they must be displayed in the same zone (the
+ * next-intl provider isn't given a timeZone, so it would otherwise render in
+ * UTC and shift the wall-clock time).
+ */
+const BROWSER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/**
  * Create / walk-in dialog. When `fixedContractorId` is set the contractor is
  * locked (used from a contractor's own page); otherwise a picker is shown.
  */
@@ -268,6 +276,7 @@ export function VisitDetailDialog({
 }) {
   const t = useTranslations('contractors');
   const format = useFormatter();
+  const utils = trpc.useUtils();
   const { data } = trpc.contractors.visits.get.useQuery(
     { id: visitId ?? '' },
     { enabled: visitId !== null },
@@ -277,6 +286,8 @@ export function VisitDetailDialog({
     toast.error(err.message.length > 0 ? err.message : t('error'));
   const done = (msg: string) => () => {
     toast.success(msg);
+    // Refresh this dialog (so the available actions update) and the parent list.
+    if (visitId !== null) void utils.contractors.visits.get.invalidate({ id: visitId });
     onChanged();
   };
 
@@ -347,6 +358,7 @@ export function VisitDetailDialog({
                   {format.dateTime(new Date(v.scheduledStart), {
                     dateStyle: 'medium',
                     timeStyle: 'short',
+                    timeZone: BROWSER_TZ,
                   })}
                 </dd>
               </div>
@@ -509,6 +521,7 @@ export function ContractorVisitsSection({
                         {format.dateTime(new Date(v.scheduledStart), {
                           dateStyle: 'medium',
                           timeStyle: 'short',
+                          timeZone: BROWSER_TZ,
                         })}
                         {v.siteName !== null ? ` · ${v.siteName}` : ''}
                       </p>
