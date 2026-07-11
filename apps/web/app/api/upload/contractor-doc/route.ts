@@ -8,7 +8,7 @@
  * Storage key: <tenantId>/contractor-docs/<contractorId>/<filename>
  * Auth: session-required + `contractors.manage`.
  */
-import { loadUserPermissions } from '@forma360/permissions/requirePermission';
+import { hasPermission, loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { objectKey } from '@forma360/shared/storage';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -40,7 +40,9 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const perms = await loadUserPermissions(ctx.db, ctx.auth.tenantId, ctx.auth.userId);
-  if (!perms.includes('contractors.manage')) {
+  // Admins (org.settings) implicitly hold every key — a permission set
+  // snapshotted before this module existed must not lock admins out.
+  if (!hasPermission(perms, 'contractors.manage')) {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
 
