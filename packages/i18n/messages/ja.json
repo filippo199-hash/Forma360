@@ -62,7 +62,8 @@
     "copy": "Copy",
     "copied": "Copied",
     "enabled": "有効",
-    "disabled": "無効"
+    "disabled": "無効",
+    "remove": "Remove"
   },
   "auth": {
     "signIn": {
@@ -2140,7 +2141,12 @@
         "view": "View only",
         "acknowledge": "Acknowledgement required",
         "sign": "Signature required"
-      }
+      },
+      "attachDocument": "Attach a document",
+      "attachDocumentHint": "Pick from your document library — recipients can view (and sign, if required) the current version.",
+      "searchDocuments": "Search documents…",
+      "noDocuments": "No documents found.",
+      "versionShort": "v{n}"
     },
     "detail": {
       "backLink": "Back to Heads Up",
@@ -2488,7 +2494,8 @@
       "tabs": {
         "overview": "Overview",
         "versions": "Versions",
-        "access": "Access"
+        "access": "Access",
+        "signatures": "Signatures"
       },
       "fields": {
         "folder": "Folder",
@@ -2537,7 +2544,11 @@
       "editSavedToast": "Document updated.",
       "makeCurrentButton": "Make current",
       "madeCurrentToast": "Set as current version.",
-      "viewingBadge": "Viewing"
+      "viewingBadge": "Viewing",
+      "signaturesEmpty": "Not sent for signature yet.",
+      "signaturesSentBy": "Sent by {name}",
+      "signaturesPending": "Pending",
+      "signaturesRequestTitle": "Sent via Heads-Up"
     },
     "upload": {
       "labelsCreate": "新しいラベル",

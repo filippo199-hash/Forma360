@@ -18,9 +18,11 @@
  *   - sendReminder: send reminder emails to pending recipients.
  */
 import {
+  documents,
   groups,
   headsUpAttachments,
   headsUpComments,
+  headsUpDocuments,
   headsUpReactions,
   headsUpRecipients,
   headsUps,
@@ -96,6 +98,8 @@ const createInput = z.object({
   expiresAt: z.string().datetime().optional(),
   /** Attachments already uploaded to R2; will be recorded in the DB atomically. */
   attachments: z.array(attachmentInput).max(6).default([]),
+  /** Library documents to attach (#4). Each is version-anchored at send time. */
+  documentIds: z.array(z.string().length(26)).max(20).default([]),
   /** JSON-encoded recipient spec for pre-selecting groups/sites/users at publish time. */
   recipientSpec: z.string().optional(),
 });
@@ -288,7 +292,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
       .query(async ({ ctx, input }) => {
         const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
 
-        const [recipientCountRows, creatorRows, attachmentRows] = await Promise.all([
+        const [recipientCountRows, creatorRows, attachmentRows, documentRows] = await Promise.all([
           ctx.db
             .select({ total: count() })
             .from(headsUpRecipients)
@@ -302,6 +306,16 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             .select()
             .from(headsUpAttachments)
             .where(eq(headsUpAttachments.headsUpId, headsUp.id)),
+          ctx.db
+            .select({
+              documentId: headsUpDocuments.documentId,
+              documentVersion: headsUpDocuments.documentVersion,
+              name: documents.name,
+              mimeType: documents.mimeType,
+            })
+            .from(headsUpDocuments)
+            .innerJoin(documents, eq(headsUpDocuments.documentId, documents.id))
+            .where(eq(headsUpDocuments.headsUpId, headsUp.id)),
         ]);
 
         return {
@@ -309,6 +323,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
           creatorName: creatorRows[0]?.name ?? null,
           recipientCount: Number(recipientCountRows[0]?.total ?? 0),
           attachments: attachmentRows,
+          documents: documentRows,
         };
       }),
 
@@ -352,6 +367,31 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
               createdAt: now,
             })),
           );
+        }
+
+        // Attach library documents (#4), version-anchored at send time.
+        if (input.documentIds.length > 0) {
+          const docRows = await ctx.db
+            .select({ id: documents.id, currentVersion: documents.currentVersion })
+            .from(documents)
+            .where(
+              and(
+                eq(documents.tenantId, ctx.tenantId),
+                inArray(documents.id, input.documentIds),
+                isNull(documents.archivedAt),
+              ),
+            );
+          if (docRows.length > 0) {
+            await ctx.db.insert(headsUpDocuments).values(
+              docRows.map((d) => ({
+                tenantId: ctx.tenantId,
+                headsUpId: id,
+                documentId: d.id,
+                documentVersion: d.currentVersion,
+                createdAt: now,
+              })),
+            );
+          }
         }
 
         return { headsUpId: id };

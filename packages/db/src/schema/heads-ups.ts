@@ -24,11 +24,13 @@ import {
   index,
   integer,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { user } from './auth';
+import { documents } from './documents';
 import { tenants } from './tenants';
 
 export const headsUpStatus = ['draft', 'published', 'archived'] as const;
@@ -128,6 +130,36 @@ export const headsUpAttachments = pgTable(
 );
 
 export type HeadsUpAttachment = typeof headsUpAttachments.$inferSelect;
+
+/**
+ * Library documents attached to a Heads-Up (#4). Distinct from
+ * `heads_up_attachments` (ad-hoc uploads): these reference an existing
+ * document and pin the version that was current at send time, so the
+ * sign-offs collected on the Heads-Up surface back on the document page
+ * anchored to that version.
+ */
+export const headsUpDocuments = pgTable(
+  'heads_up_documents',
+  {
+    tenantId: text('tenant_id')
+      .notNull()
+      .references(() => tenants.id),
+    headsUpId: text('heads_up_id')
+      .notNull()
+      .references(() => headsUps.id, { onDelete: 'cascade' }),
+    documentId: text('document_id')
+      .notNull()
+      .references(() => documents.id, { onDelete: 'cascade' }),
+    documentVersion: integer('document_version').notNull().default(1),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.headsUpId, t.documentId] }),
+    index('heads_up_documents_document_idx').on(t.tenantId, t.documentId),
+  ],
+);
+
+export type HeadsUpDocument = typeof headsUpDocuments.$inferSelect;
 
 export const headsUpComments = pgTable(
   'heads_up_comments',

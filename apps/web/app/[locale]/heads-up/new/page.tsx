@@ -125,6 +125,8 @@ export default function NewHeadsUpPage() {
   const [publishAt, setPublishAt] = useState<Date | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
+  const [docQuery, setDocQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: groupsData } = trpc.groups.list.useQuery(undefined, { staleTime: 60_000 });
@@ -151,6 +153,8 @@ export default function NewHeadsUpPage() {
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
+
+  const { data: allDocuments = [] } = trpc.documents.list.useQuery({});
 
   // ── tRPC mutations ──
   const createMutation = trpc.headsUps.create.useMutation({
@@ -283,6 +287,7 @@ export default function NewHeadsUpPage() {
       allowReactions,
       publishAt: andPublish && publishAt !== null ? publishAt.toISOString() : undefined,
       attachments: readyAttachments,
+      documentIds: selectedDocumentIds,
       recipientSpec,
     });
   }
@@ -372,6 +377,78 @@ export default function NewHeadsUpPage() {
                     )}
                   </li>
                 ))}
+              </ul>
+            ) : null}
+          </section>
+
+          <Separator />
+
+          {/* ── Attach library document (#4) ── */}
+          <section>
+            <h2 className="mb-1 text-sm font-semibold">{t('attachDocument')}</h2>
+            <p className="mb-2 text-xs text-muted-foreground">{t('attachDocumentHint')}</p>
+            <Input
+              value={docQuery}
+              onChange={(e) => setDocQuery(e.target.value)}
+              placeholder={t('searchDocuments')}
+              className="h-9"
+            />
+            {selectedDocumentIds.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {selectedDocumentIds.map((id) => {
+                  const d = allDocuments.find((x) => x.id === id);
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 py-0.5 pl-2.5 pr-1 text-xs text-primary"
+                    >
+                      {d?.name ?? id}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedDocumentIds((prev) => prev.filter((x) => x !== id))
+                        }
+                        className="rounded-full p-0.5 hover:bg-primary/20"
+                        aria-label={tCommon('remove')}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            ) : null}
+            {docQuery.trim().length > 0 ? (
+              <ul className="mt-2 max-h-44 overflow-y-auto rounded-md border">
+                {allDocuments
+                  .filter(
+                    (d) =>
+                      !selectedDocumentIds.includes(d.id) &&
+                      d.name.toLowerCase().includes(docQuery.trim().toLowerCase()),
+                  )
+                  .slice(0, 20)
+                  .map((d) => (
+                    <li key={d.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedDocumentIds((prev) => [...prev, d.id]);
+                          setDocQuery('');
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent/60"
+                      >
+                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{d.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                {allDocuments.filter(
+                  (d) =>
+                    !selectedDocumentIds.includes(d.id) &&
+                    d.name.toLowerCase().includes(docQuery.trim().toLowerCase()),
+                ).length === 0 ? (
+                  <li className="px-3 py-2 text-sm text-muted-foreground">{t('noDocuments')}</li>
+                ) : null}
               </ul>
             ) : null}
           </section>

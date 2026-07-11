@@ -17,12 +17,15 @@ import {
   documentFolders,
   documentVersions,
   documents,
+  headsUpDocuments,
+  headsUpRecipients,
+  headsUps,
   type Document,
 } from '@forma360/db/schema';
 import { user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, asc, desc, eq, ilike, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import {
@@ -490,6 +493,69 @@ export const documentsRouter = router({
         })
         .where(eq(documents.id, doc.id));
       return { ok: true as const };
+    }),
+
+  /**
+   * Sign-off requests for a document (#4). Every Heads-Up that attached this
+   * document, with the version it was sent at and each recipient's sign
+   * status — surfacing the signatures collected via Heads-Up on the document
+   * page, grouped per version by the caller.
+   */
+  signatureRequests: tenantProcedure
+    .use(requirePermission('documents.view'))
+    .input(z.object({ documentId: z.string().length(26) }))
+    .query(async ({ ctx, input }) => {
+      const links = await ctx.db
+        .select({
+          headsUpId: headsUpDocuments.headsUpId,
+          documentVersion: headsUpDocuments.documentVersion,
+          title: headsUps.title,
+          engagementLevel: headsUps.engagementLevel,
+          requireSignature: headsUps.requireSignature,
+          status: headsUps.status,
+          createdAt: headsUps.createdAt,
+          senderName: user.name,
+        })
+        .from(headsUpDocuments)
+        .innerJoin(headsUps, eq(headsUpDocuments.headsUpId, headsUps.id))
+        .leftJoin(user, eq(headsUps.createdByUserId, user.id))
+        .where(
+          and(
+            eq(headsUpDocuments.tenantId, ctx.tenantId),
+            eq(headsUpDocuments.documentId, input.documentId),
+          ),
+        )
+        .orderBy(desc(headsUps.createdAt));
+
+      if (links.length === 0) return [];
+
+      const headsUpIds = links.map((l) => l.headsUpId);
+      const recipients = await ctx.db
+        .select({
+          headsUpId: headsUpRecipients.headsUpId,
+          userId: headsUpRecipients.userId,
+          name: user.name,
+          email: user.email,
+          signedAt: headsUpRecipients.signedAt,
+          acknowledgedAt: headsUpRecipients.acknowledgedAt,
+          viewedAt: headsUpRecipients.viewedAt,
+        })
+        .from(headsUpRecipients)
+        .leftJoin(user, eq(headsUpRecipients.userId, user.id))
+        .where(inArray(headsUpRecipients.headsUpId, headsUpIds))
+        .orderBy(user.name);
+
+      const byHeadsUp = new Map<string, typeof recipients>();
+      for (const r of recipients) {
+        const arr = byHeadsUp.get(r.headsUpId) ?? [];
+        arr.push(r);
+        byHeadsUp.set(r.headsUpId, arr);
+      }
+
+      return links.map((l) => ({
+        ...l,
+        recipients: byHeadsUp.get(l.headsUpId) ?? [],
+      }));
     }),
 
   archive: tenantProcedure

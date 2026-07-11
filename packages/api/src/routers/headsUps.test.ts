@@ -61,6 +61,7 @@ const MIGRATION_FILES = [
   '0038_site_plans.sql',
   '0039_site_geolocation.sql',
   '0040_site_groups.sql',
+  '0041_heads_up_documents.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -159,6 +160,42 @@ describe('Heads Up router (Phase 5A)', () => {
 
     const { headsUp } = await caller.headsUps.get({ headsUpId });
     expect(headsUp.status).toBe('published');
+  });
+
+  it('#4: attaches a library document and surfaces sign-offs on the document page', async () => {
+    const adminCaller = createCaller(ctxFor(adminUserId));
+    const memberCaller = createCaller(ctxFor(memberUserId));
+
+    const { documentId } = await adminCaller.documents.create({
+      name: 'Safety Policy',
+      storageKey: `${tenantId}/documents/policy.pdf`,
+      filename: 'policy.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 1024,
+    });
+
+    const { headsUpId } = await adminCaller.headsUps.create({
+      title: 'Please sign the policy',
+      engagementLevel: 'sign',
+      requireAcknowledgement: true,
+      requireSignature: true,
+      documentIds: [documentId],
+    });
+    await adminCaller.headsUps.publish({ headsUpId, userIds: [memberUserId] });
+
+    // The document is linked, version-anchored, recipient pending.
+    let reqs = await adminCaller.documents.signatureRequests({ documentId });
+    expect(reqs).toHaveLength(1);
+    expect(reqs[0]?.documentVersion).toBe(1);
+    expect(reqs[0]?.recipients).toHaveLength(1);
+    expect(reqs[0]?.recipients[0]?.signedAt).toBeNull();
+
+    // The recipient acknowledges + signs; the sign-off shows on the doc page.
+    await memberCaller.headsUps.markAcknowledged({ headsUpId });
+    await memberCaller.headsUps.sign({ headsUpId, signatureData: 'sig' });
+
+    reqs = await adminCaller.documents.signatureRequests({ documentId });
+    expect(reqs[0]?.recipients[0]?.signedAt).not.toBeNull();
   });
 
   it('tracks view engagement correctly', async () => {

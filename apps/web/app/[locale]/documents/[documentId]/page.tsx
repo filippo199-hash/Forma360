@@ -2,6 +2,8 @@
 
 import {
   ArrowLeft,
+  Check,
+  Clock,
   Download,
   FileText,
   FileUp,
@@ -35,7 +37,7 @@ import { trpc } from '../../../../src/lib/trpc/client';
 
 const MAX_BYTES = 50 * 1024 * 1024;
 
-type Tab = 'overview' | 'versions' | 'access';
+type Tab = 'overview' | 'versions' | 'access' | 'signatures';
 
 /** Classify a MIME type for the preview renderer. */
 function previewKind(mimeType: string): 'pdf' | 'image' | 'video' | 'text' | 'none' {
@@ -163,6 +165,10 @@ export default function DocumentDetailPage() {
   const { data: versionsData } = trpc.documents.versions.list.useQuery(
     { documentId },
     { enabled: tab === 'versions' },
+  );
+  const { data: sigRequests } = trpc.documents.signatureRequests.useQuery(
+    { documentId },
+    { enabled: tab === 'signatures' },
   );
   const { data: allLabels = [] } = trpc.documentLabels.list.useQuery();
   const { data: allGroups = [] } = trpc.groups.list.useQuery();
@@ -416,7 +422,7 @@ export default function DocumentDetailPage() {
 
           {/* Tab bar */}
           <nav className="flex shrink-0 border-b px-2">
-            {(['overview', 'versions', 'access'] as const).map((tabKey) => (
+            {(['overview', 'versions', 'access', 'signatures'] as const).map((tabKey) => (
               <TabButton
                 key={tabKey}
                 active={tab === tabKey}
@@ -653,6 +659,66 @@ export default function DocumentDetailPage() {
                     {t('saveVisibility')}
                   </Button>
                 ) : null}
+              </div>
+            ) : null}
+
+            {/* ── Signatures tab (#4) ── */}
+            {tab === 'signatures' ? (
+              <div className="space-y-3">
+                {(sigRequests ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t('signaturesEmpty')}</p>
+                ) : (
+                  (sigRequests ?? []).map((req) => {
+                    const signedCount = req.recipients.filter(
+                      (r) => r.signedAt !== null || r.acknowledgedAt !== null,
+                    ).length;
+                    return (
+                      <div key={req.headsUpId} className="space-y-2 rounded-md border p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">{req.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {t('signaturesSentBy', { name: req.senderName ?? '—' })} ·{' '}
+                              {new Date(req.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                            {t('versionNum', { n: String(req.documentVersion) })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {signedCount}/{req.recipients.length}
+                        </p>
+                        <ul className="divide-y rounded-md border text-xs">
+                          {req.recipients.map((r) => {
+                            const at = r.signedAt ?? r.acknowledgedAt;
+                            return (
+                              <li
+                                key={r.userId}
+                                className="flex items-center justify-between gap-2 px-2.5 py-1.5"
+                              >
+                                <span className="min-w-0 truncate">
+                                  {r.name ?? r.email ?? r.userId}
+                                </span>
+                                {at !== null ? (
+                                  <span className="inline-flex shrink-0 items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                    <Check className="h-3.5 w-3.5" />
+                                    {new Date(at).toLocaleDateString()}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    {t('signaturesPending')}
+                                  </span>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             ) : null}
           </div>

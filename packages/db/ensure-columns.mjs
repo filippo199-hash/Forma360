@@ -154,6 +154,16 @@ try {
     );
     CREATE INDEX IF NOT EXISTS "site_groups_tenant_group_idx" ON "site_groups" ("tenant_id", "group_id");
     CREATE INDEX IF NOT EXISTS "site_groups_tenant_site_idx" ON "site_groups" ("tenant_id", "site_id");
+    -- 0041: Library documents attached to a Heads-Up (signature workflow)
+    CREATE TABLE IF NOT EXISTS "heads_up_documents" (
+      "tenant_id" text NOT NULL REFERENCES "tenants"("id"),
+      "heads_up_id" text NOT NULL REFERENCES "heads_ups"("id") ON DELETE CASCADE,
+      "document_id" text NOT NULL REFERENCES "documents"("id") ON DELETE CASCADE,
+      "document_version" integer NOT NULL DEFAULT 1,
+      "created_at" timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT "heads_up_documents_heads_up_document_pk" PRIMARY KEY ("heads_up_id", "document_id")
+    );
+    CREATE INDEX IF NOT EXISTS "heads_up_documents_document_idx" ON "heads_up_documents" ("tenant_id", "document_id");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {
