@@ -675,6 +675,36 @@ export const contractorsRouter = router({
           .orderBy(asc(contractorVisits.scheduledStart));
       }),
 
+    /**
+     * Everyone currently on site — visits checked-in but not yet checked-out.
+     * Powers the gate guard's "who is still inside" board on the directory.
+     */
+    onSiteNow: tenantProcedure
+      .use(requirePermission('contractors.view'))
+      .query(async ({ ctx }) => {
+        return ctx.db
+          .select({
+            id: contractorVisits.id,
+            contractorId: contractorVisits.contractorId,
+            contractorName: contractors.name,
+            title: contractorVisits.title,
+            siteName: sites.name,
+            isWalkIn: contractorVisits.isWalkIn,
+            checkedInAt: contractorVisits.checkedInAt,
+          })
+          .from(contractorVisits)
+          .innerJoin(contractors, eq(contractorVisits.contractorId, contractors.id))
+          .leftJoin(sites, eq(contractorVisits.siteId, sites.id))
+          .where(
+            and(
+              eq(contractorVisits.tenantId, ctx.tenantId),
+              isNull(contractorVisits.archivedAt),
+              eq(contractorVisits.status, 'checked_in'),
+            ),
+          )
+          .orderBy(desc(contractorVisits.checkedInAt));
+      }),
+
     /** All non-archived visits for one contractor (detail page). */
     listForContractor: tenantProcedure
       .use(requirePermission('contractors.view'))

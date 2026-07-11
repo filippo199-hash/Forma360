@@ -1,7 +1,7 @@
 'use client';
 
-import { HardHat, Plus, Search } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { DoorOpen, HardHat, LogOut, Plus, Search } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -22,6 +22,9 @@ import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
+/** Viewer's timezone — check-in times are stored as absolute instants. */
+const BROWSER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 type Compliance = 'compliant' | 'non_compliant' | 'no_requirements';
 
 const BADGE: Record<Compliance, string> = {
@@ -33,12 +36,24 @@ const BADGE: Record<Compliance, string> = {
 export default function ContractorsPage() {
   const t = useTranslations('contractors');
   const tCommon = useTranslations('common');
+  const format = useFormatter();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canManage = useHasPermission('contractors.manage');
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.contractors.list.useQuery();
+  // Live "who is on site" board for the gate guard — refetch every 30s.
+  const onSite = trpc.contractors.visits.onSiteNow.useQuery(undefined, {
+    refetchInterval: 30_000,
+  });
+  const checkOut = trpc.contractors.visits.checkOut.useMutation({
+    onSuccess: () => {
+      toast.success(t('visits.checkedOutToast'));
+      void utils.contractors.visits.onSiteNow.invalidate();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('error')),
+  });
   const rows = data ?? [];
   const [search, setSearch] = useState('');
   const visible = useMemo(() => {
@@ -109,6 +124,69 @@ export default function ContractorsPage() {
           ) : null}
         </div>
       </header>
+
+      {/* Gate board — who is currently on site (checked in, not checked out). */}
+      {(onSite.data?.length ?? 0) > 0 ? (
+        <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+          <CardContent className="p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <DoorOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <h2 className="text-sm font-semibold">
+                {t('onSite.heading', { count: onSite.data?.length ?? 0 })}
+              </h2>
+            </div>
+            <ul className="divide-y divide-emerald-200/60 dark:divide-emerald-900/40">
+              {(onSite.data ?? []).map((v) => (
+                <li key={v.id} className="flex items-center gap-3 py-2 text-sm">
+                  <span className="relative flex h-2.5 w-2.5 shrink-0">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">
+                      <Link
+                        href={`/${locale}/contractors/${v.contractorId}`}
+                        className="hover:underline"
+                      >
+                        {v.contractorName}
+                      </Link>
+                      {v.isWalkIn ? (
+                        <span className="ml-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
+                          {t('visits.walkInBadge')}
+                        </span>
+                      ) : null}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {v.title}
+                      {v.siteName !== null ? ` · ${v.siteName}` : ''}
+                      {v.checkedInAt !== null
+                        ? ` · ${t('onSite.since', {
+                            time: format.dateTime(new Date(v.checkedInAt), {
+                              timeStyle: 'short',
+                              timeZone: BROWSER_TZ,
+                            }),
+                          })}`
+                        : ''}
+                    </p>
+                  </div>
+                  {canManage ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 shrink-0"
+                      disabled={checkOut.isPending}
+                      onClick={() => checkOut.mutate({ id: v.id })}
+                    >
+                      <LogOut className="mr-1 h-3.5 w-3.5" />
+                      {t('visits.checkOut')}
+                    </Button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="relative max-w-xs">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

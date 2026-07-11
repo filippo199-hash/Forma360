@@ -3159,6 +3159,10 @@
       "remove": "Remove",
       "removeConfirm": "Revoke this user’s portal access?",
       "cancelInvite": "Cancel invite"
+    },
+    "onSite": {
+      "heading": "On site now ({count})",
+      "since": "since {time}"
     }
   }
 }
