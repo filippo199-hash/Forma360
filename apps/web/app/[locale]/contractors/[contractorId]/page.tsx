@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Check, FileText, Plus, Upload, X } from 'lucide-react';
+import { ArrowLeft, Check, FileText, Pencil, Plus, Upload, X } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -30,6 +30,15 @@ const DOC_BADGE: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
   rejected: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
 };
+
+const STATUS_BADGE: Record<string, string> = {
+  compliant: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
+  non_compliant: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
+  suspended: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-100',
+  no_requirements: 'bg-muted text-muted-foreground',
+};
+
+const OVERRIDE_OPTIONS = ['', 'compliant', 'non_compliant', 'suspended'] as const;
 
 export default function ContractorDetailPage() {
   const t = useTranslations('contractors');
@@ -123,6 +132,19 @@ export default function ContractorDetailPage() {
     },
     onError: onErr,
   });
+  const setOverride = trpc.contractors.setComplianceOverride.useMutation({
+    onSuccess: () => {
+      toast.success(t('savedToast'));
+      invalidate();
+      setOverrideOpen(false);
+    },
+    onError: onErr,
+  });
+
+  // Compliance-override dialog
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [ovValue, setOvValue] = useState<string>('');
+  const [ovReason, setOvReason] = useState('');
 
   // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
@@ -187,12 +209,7 @@ export default function ContractorDetailPage() {
   }
 
   const { contractor, requirements, complianceStatus } = data;
-  const statusBadge =
-    complianceStatus === 'compliant'
-      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100'
-      : complianceStatus === 'non_compliant'
-        ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200'
-        : 'bg-muted text-muted-foreground';
+  const isOverridden = contractor.complianceOverride !== null;
 
   return (
     <div className="space-y-6">
@@ -206,9 +223,32 @@ export default function ContractorDetailPage() {
 
       <header className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{contractor.name}</h1>
-        <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', statusBadge)}>
+        <button
+          type="button"
+          disabled={!canManage}
+          onClick={() => {
+            setOvValue(contractor.complianceOverride ?? '');
+            setOvReason(contractor.complianceOverrideReason ?? '');
+            setOverrideOpen(true);
+          }}
+          className={cn(
+            'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+            STATUS_BADGE[complianceStatus] ?? 'bg-muted text-muted-foreground',
+            canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default',
+          )}
+          title={canManage ? t('override.editTitle') : undefined}
+        >
           {t(`status_${complianceStatus}` as 'status_compliant')}
-        </span>
+          {isOverridden ? <Pencil className="h-3 w-3 opacity-70" /> : null}
+        </button>
+        {isOverridden ? (
+          <span
+            className="text-xs text-muted-foreground"
+            title={contractor.complianceOverrideReason ?? undefined}
+          >
+            {t('override.manualIndicator')}
+          </span>
+        ) : null}
         {contractor.category !== null && contractor.category !== '' ? (
           <span className="rounded-md border bg-background px-2 py-0.5 text-xs text-muted-foreground">
             {contractor.category}
@@ -265,6 +305,72 @@ export default function ContractorDetailPage() {
           ) : null}
         </div>
       </header>
+
+      {/* Compliance-override dialog */}
+      <Dialog open={overrideOpen} onOpenChange={setOverrideOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('override.title')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">{t('override.intro')}</p>
+            <div className="space-y-1.5">
+              {OVERRIDE_OPTIONS.map((opt) => (
+                <label key={opt || 'auto'} className="flex items-start gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="ov"
+                    className="mt-0.5"
+                    checked={ovValue === opt}
+                    onChange={() => setOvValue(opt)}
+                  />
+                  <span>
+                    {opt === ''
+                      ? t('override.auto', {
+                          status: t(
+                            `status_${data.derivedComplianceStatus}` as 'status_compliant',
+                          ),
+                        })
+                      : t(`status_${opt}` as 'status_compliant')}
+                  </span>
+                </label>
+              ))}
+            </div>
+            {ovValue !== '' ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="ov-reason">{t('override.reasonLabel')}</Label>
+                <Input
+                  id="ov-reason"
+                  value={ovReason}
+                  onChange={(e) => setOvReason(e.target.value)}
+                  maxLength={1000}
+                  placeholder={t('override.reasonPlaceholder')}
+                />
+              </div>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOverrideOpen(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              disabled={setOverride.isPending}
+              onClick={() =>
+                setOverride.mutate({
+                  id: contractorId,
+                  override:
+                    ovValue === ''
+                      ? null
+                      : (ovValue as 'compliant' | 'non_compliant' | 'suspended'),
+                  ...(ovValue !== '' && ovReason.trim() !== '' ? { reason: ovReason.trim() } : {}),
+                })
+              }
+            >
+              {t('saveButton')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

@@ -258,15 +258,20 @@ export const contractorsRouter = router({
       docsByContractorReq.set(d.contractorId, inner);
     }
 
-    return rows.map((c) => ({
-      ...c,
-      complianceStatus: computeStatus(
+    return rows.map((c) => {
+      const derived = computeStatus(
         reqsByContractor.get(c.id) ?? [],
         docsByContractorReq.get(c.id) ?? new Map(),
         t,
-      ),
-      requirementCount: (reqsByContractor.get(c.id) ?? []).length,
-    }));
+      );
+      return {
+        ...c,
+        // A manual override wins over the derived status.
+        complianceStatus: c.complianceOverride ?? derived,
+        derivedComplianceStatus: derived,
+        requirementCount: (reqsByContractor.get(c.id) ?? []).length,
+      };
+    });
   }),
 
   get: tenantProcedure
@@ -326,14 +331,16 @@ export const contractorsRouter = router({
         documents: docs.filter((d) => d.requirementId === r.id),
       }));
 
+      const derivedComplianceStatus = computeStatus(
+        reqs.map((r) => ({ id: r.id, blocking: r.blocking })),
+        docsByReq,
+        t,
+      );
       return {
         contractor,
         requirements,
-        complianceStatus: computeStatus(
-          reqs.map((r) => ({ id: r.id, blocking: r.blocking })),
-          docsByReq,
-          t,
-        ),
+        complianceStatus: contractor.complianceOverride ?? derivedComplianceStatus,
+        derivedComplianceStatus,
       };
     }),
 
@@ -394,6 +401,33 @@ export const contractorsRouter = router({
       await ctx.db
         .update(contractors)
         .set(updates)
+        .where(and(eq(contractors.tenantId, ctx.tenantId), eq(contractors.id, input.id)));
+      return { ok: true as const };
+    }),
+
+  /**
+   * Manually override (or clear) a contractor's compliance status. Passing
+   * `override: null` reverts to the document-derived status.
+   */
+  setComplianceOverride: tenantProcedure
+    .use(requirePermission('contractors.manage'))
+    .input(
+      z.object({
+        id: z.string().length(26),
+        override: z.enum(['compliant', 'non_compliant', 'suspended']).nullable(),
+        reason: z.string().max(1000).nullable().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await loadContractorOrThrow(ctx.db, ctx.tenantId, input.id);
+      await ctx.db
+        .update(contractors)
+        .set({
+          complianceOverride: input.override,
+          complianceOverrideReason:
+            input.override === null ? null : (input.reason?.trim() ?? null) || null,
+          updatedAt: new Date(),
+        })
         .where(and(eq(contractors.tenantId, ctx.tenantId), eq(contractors.id, input.id)));
       return { ok: true as const };
     }),

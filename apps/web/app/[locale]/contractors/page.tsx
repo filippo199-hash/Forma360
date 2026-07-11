@@ -25,11 +25,12 @@ import { trpc } from '../../../src/lib/trpc/client';
 /** Viewer's timezone — check-in times are stored as absolute instants. */
 const BROWSER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-type Compliance = 'compliant' | 'non_compliant' | 'no_requirements';
+type Compliance = 'compliant' | 'non_compliant' | 'no_requirements' | 'suspended';
 
 const BADGE: Record<Compliance, string> = {
   compliant: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
   non_compliant: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
+  suspended: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-100',
   no_requirements: 'bg-muted text-muted-foreground',
 };
 

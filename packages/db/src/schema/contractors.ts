@@ -26,6 +26,10 @@ import { tenants } from './tenants';
 export const contractorStatus = ['active', 'inactive'] as const;
 export type ContractorStatus = (typeof contractorStatus)[number];
 
+/** Manual compliance-status override values (null = derive from documents). */
+export const contractorComplianceOverride = ['compliant', 'non_compliant', 'suspended'] as const;
+export type ContractorComplianceOverride = (typeof contractorComplianceOverride)[number];
+
 export const contractors = pgTable(
   'contractors',
   {
@@ -37,6 +41,13 @@ export const contractors = pgTable(
     /** Trade / category — drives requirement templates (Phase 1b). */
     category: text('category'),
     status: text('status').notNull().default('active').$type<ContractorStatus>(),
+    /**
+     * Manual compliance override. When null, compliance is derived from the
+     * documents; when set, this wins (e.g. force `non_compliant`, or `suspended`
+     * to bar a contractor regardless of paperwork). See `complianceOverride`.
+     */
+    complianceOverride: text('compliance_override').$type<ContractorComplianceOverride>(),
+    complianceOverrideReason: text('compliance_override_reason'),
     primaryContactName: text('primary_contact_name'),
     primaryContactEmail: text('primary_contact_email'),
     notes: text('notes'),

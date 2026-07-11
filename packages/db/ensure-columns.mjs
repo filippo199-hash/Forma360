@@ -306,6 +306,9 @@ try {
     CREATE INDEX IF NOT EXISTS "contractor_users_contractor_idx" ON "contractor_users" ("tenant_id", "contractor_id");
     -- 0048: visitor name on visits (gate on-site board shows who is inside)
     ALTER TABLE "contractor_visits" ADD COLUMN IF NOT EXISTS "visitor_name" text;
+    -- 0049: manual compliance-status override
+    ALTER TABLE "contractors" ADD COLUMN IF NOT EXISTS "compliance_override" text;
+    ALTER TABLE "contractors" ADD COLUMN IF NOT EXISTS "compliance_override_reason" text;
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

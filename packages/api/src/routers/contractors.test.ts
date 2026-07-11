@@ -135,6 +135,37 @@ describe('contractors router', () => {
     expect(got.complianceStatus).toBe('non_compliant');
   });
 
+  it('a manual override wins over the derived status and can be cleared', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { id: contractorId } = await caller.contractors.create({ name: 'Override Co' });
+    // No requirements → derived is no_requirements.
+    let got = await caller.contractors.get({ id: contractorId });
+    expect(got.complianceStatus).toBe('no_requirements');
+
+    // Force suspended with a reason.
+    await caller.contractors.setComplianceOverride({
+      id: contractorId,
+      override: 'suspended',
+      reason: 'Safety breach on site',
+    });
+    got = await caller.contractors.get({ id: contractorId });
+    expect(got.complianceStatus).toBe('suspended');
+    expect(got.derivedComplianceStatus).toBe('no_requirements');
+    expect(got.contractor.complianceOverride).toBe('suspended');
+    expect(got.contractor.complianceOverrideReason).toBe('Safety breach on site');
+
+    // Also reflected in the list.
+    const list = await caller.contractors.list();
+    expect(list.find((c) => c.id === contractorId)?.complianceStatus).toBe('suspended');
+
+    // Clearing reverts to derived and wipes the reason.
+    await caller.contractors.setComplianceOverride({ id: contractorId, override: null });
+    got = await caller.contractors.get({ id: contractorId });
+    expect(got.complianceStatus).toBe('no_requirements');
+    expect(got.contractor.complianceOverride).toBeNull();
+    expect(got.contractor.complianceOverrideReason).toBeNull();
+  });
+
   it('advisory requirements do not affect compliance', async () => {
     const caller = createCaller(ctxFor(adminUserId));
     const { id: contractorId } = await caller.contractors.create({ name: 'Cleaners' });
