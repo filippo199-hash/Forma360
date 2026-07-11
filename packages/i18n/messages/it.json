@@ -3016,6 +3016,25 @@
     "notesLabel": "Notes",
     "uploadDocFor": "Upload for: {name}",
     "chooseFile": "Choose a file (PDF, image)…",
-    "error": "Something went wrong."
+    "error": "Something went wrong.",
+    "manageTemplates": "Requirement templates",
+    "templatesTitle": "Requirement templates",
+    "templatesSubtitle": "Define document sets per trade. New contractors in a trade get these automatically.",
+    "templatesEmpty": "No templates yet.",
+    "templateCategory": "Trade / category",
+    "templateName": "Document name",
+    "addTemplate": "Add template",
+    "applyTemplate": "Apply {category} template",
+    "appliedToast": "{count} requirement(s) added.",
+    "copyUploadLink": "Copy upload link",
+    "uploadLinkCopied": "Upload link copied.",
+    "uploadLinkGenerating": "Generating…",
+    "editContractor": "Edit",
+    "portalTitle": "Upload documents",
+    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalUploaded": "Uploaded — thank you. The company will review it.",
+    "portalInvalid": "This upload link is invalid or has expired.",
+    "portalUpload": "Upload",
+    "portalDone": "Uploaded ✓"
   }
 }

@@ -87,12 +87,19 @@ export default function ContractorsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
-        {canManage ? (
-          <Button onClick={() => setOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" />
-            {t('newButton')}
-          </Button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {canManage ? (
+            <Button variant="outline" asChild>
+              <Link href={`/${locale}/contractors/templates`}>{t('manageTemplates')}</Link>
+            </Button>
+          ) : null}
+          {canManage ? (
+            <Button onClick={() => setOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              {t('newButton')}
+            </Button>
+          ) : null}
+        </div>
       </header>
 
       <div className="relative max-w-xs">

@@ -27,6 +27,11 @@ import { createUserAnonymisationHandler } from './workers/user-anonymisation';
 import { createSendEmail, createSendTemplatedEmail } from '@forma360/shared/email';
 import { createMaintenanceTickHandler, MAINTENANCE_TICK_CRON } from './workers/maintenance-tick';
 import { createMaintenanceNotifyHandler } from './workers/maintenance-notify';
+import {
+  createContractorDocReminderHandler,
+  CONTRACTOR_DOC_REMINDER_CRON,
+  type DueReminder,
+} from './workers/contractor-doc-reminder';
 import { createObservationNotifyHandler } from './workers/observation-notify';
 
 function buildRedis(url: string): Redis {
@@ -185,6 +190,39 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   );
   logger.info({ cron: MAINTENANCE_TICK_CRON }, '[worker] registered maintenance-tick repeatable');
 
+  // ─── Contractors Phase 1 — compliance-document expiry reminders ─────────
+  const contractorReminderWorker = new Worker(
+    QUEUE_NAMES.CONTRACTOR_DOC_REMINDER,
+    createContractorDocReminderHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'contractor-doc-reminder' }),
+      appUrl: env.APP_URL,
+      notify: async (r: DueReminder, uploadUrl: string) => {
+        await sendTemplatedEmail({
+          to: r.email,
+          templateKey: 'contractor-doc-expiry',
+          variables: {
+            contractorName: r.contractorName,
+            requirementName: r.requirementName,
+            expiresOn: r.endDate,
+            url: uploadUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const contractorReminderQueue = getQueue(QUEUE_NAMES.CONTRACTOR_DOC_REMINDER, connection);
+  await contractorReminderQueue.upsertJobScheduler(
+    'contractor-doc-reminder',
+    { pattern: CONTRACTOR_DOC_REMINDER_CRON, tz: 'UTC' },
+    { name: 'contractor-doc-reminder', data: {} },
+  );
+  logger.info(
+    { cron: CONTRACTOR_DOC_REMINDER_CRON },
+    '[worker] registered contractor-doc-reminder repeatable',
+  );
+
   // ─── Phase 3 — Observation notifications ───────────────────────────────
   const observationNotifyWorker = new Worker(
     QUEUE_NAMES.OBSERVATION_NOTIFY,
@@ -234,6 +272,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     scheduleReminderWorker,
     maintenanceTickWorker,
     maintenanceNotifyWorker,
+    contractorReminderWorker,
     observationNotifyWorker,
   ];
   for (const w of allWorkers) {

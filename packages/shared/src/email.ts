@@ -25,6 +25,7 @@ import headsUpReminder from '../../i18n/emails/en/heads-up-reminder.json';
 import inspectionNotify from '../../i18n/emails/en/inspection-notify.json';
 import invite from '../../i18n/emails/en/invite.json';
 import issueCreated from '../../i18n/emails/en/issue-created.json';
+import contractorDocExpiry from '../../i18n/emails/en/contractor-doc-expiry.json';
 import maintenanceReminder from '../../i18n/emails/en/maintenance-reminder.json';
 import observationCriticalAlert from '../../i18n/emails/en/observation-critical-alert.json';
 import observationNotification from '../../i18n/emails/en/observation-notification.json';
@@ -42,6 +43,7 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   invite,
   'issue-created': issueCreated,
   'maintenance-reminder': maintenanceReminder,
+  'contractor-doc-expiry': contractorDocExpiry,
   'observation-critical-alert': observationCriticalAlert,
   'observation-notification': observationNotification,
   otp,

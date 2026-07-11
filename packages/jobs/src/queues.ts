@@ -66,6 +66,11 @@ export const QUEUE_NAMES = {
    * settings.
    */
   OBSERVATION_NOTIFY: 'forma360-observation-notify',
+  /**
+   * Contractors Phase 1 — daily scan that emails contractors whose compliance
+   * documents are expiring within the reminder window (single reminder).
+   */
+  CONTRACTOR_DOC_REMINDER: 'forma360-contractor-doc-reminder',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -163,6 +168,10 @@ export const observationNotifyPayloadSchema = z.object({
 });
 export type ObservationNotifyPayload = z.infer<typeof observationNotifyPayloadSchema>;
 
+/** Contractor doc-reminder tick — no payload; the worker scans for due docs. */
+export const contractorDocReminderPayloadSchema = z.object({}).strict();
+export type ContractorDocReminderPayload = z.infer<typeof contractorDocReminderPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -179,6 +188,7 @@ export interface QueuePayloads {
   [QUEUE_NAMES.MAINTENANCE_TICK]: MaintenanceTickPayload;
   [QUEUE_NAMES.MAINTENANCE_NOTIFY]: MaintenanceNotifyPayload;
   [QUEUE_NAMES.OBSERVATION_NOTIFY]: ObservationNotifyPayload;
+  [QUEUE_NAMES.CONTRACTOR_DOC_REMINDER]: ContractorDocReminderPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -194,6 +204,7 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.MAINTENANCE_TICK]: maintenanceTickPayloadSchema,
   [QUEUE_NAMES.MAINTENANCE_NOTIFY]: maintenanceNotifyPayloadSchema,
   [QUEUE_NAMES.OBSERVATION_NOTIFY]: observationNotifyPayloadSchema,
+  [QUEUE_NAMES.CONTRACTOR_DOC_REMINDER]: contractorDocReminderPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

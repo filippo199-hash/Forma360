@@ -5,9 +5,11 @@
  * every *blocking* requirement has a `verified` document whose end date has
  * not passed. Advisory requirements don't affect the status.
  */
+import { randomBytes } from 'node:crypto';
 import type { Database } from '@forma360/db/client';
 import {
   contractorDocuments,
+  contractorRequirementTemplates,
   contractorRequirements,
   contractors,
   user,
@@ -16,7 +18,7 @@ import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
-import { requirePermission, tenantProcedure } from '../procedures';
+import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
 import { assertStorageKeyInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 
@@ -56,6 +58,52 @@ function computeStatus(reqs: ReqRow[], docsByReq: Map<string, DocRow[]>, t: stri
   if (blocking.length === 0) return 'no_requirements';
   const allMet = blocking.every((r) => requirementSatisfied(docsByReq.get(r.id) ?? [], t));
   return allMet ? 'compliant' : 'non_compliant';
+}
+
+/**
+ * Copy the trade templates for a category into a contractor's requirements,
+ * skipping any whose name already exists on the contractor. Returns the count
+ * applied.
+ */
+async function applyTemplatesForCategory(
+  db: Database,
+  tenantId: string,
+  contractorId: string,
+  category: string,
+): Promise<number> {
+  const templates = await db
+    .select()
+    .from(contractorRequirementTemplates)
+    .where(
+      and(
+        eq(contractorRequirementTemplates.tenantId, tenantId),
+        eq(contractorRequirementTemplates.category, category),
+      ),
+    );
+  if (templates.length === 0) return 0;
+  const existing = await db
+    .select({ name: contractorRequirements.name })
+    .from(contractorRequirements)
+    .where(
+      and(
+        eq(contractorRequirements.tenantId, tenantId),
+        eq(contractorRequirements.contractorId, contractorId),
+      ),
+    );
+  const have = new Set(existing.map((r) => r.name));
+  const toAdd = templates.filter((t) => !have.has(t.name));
+  if (toAdd.length === 0) return 0;
+  await db.insert(contractorRequirements).values(
+    toAdd.map((t) => ({
+      id: newId(),
+      tenantId,
+      contractorId,
+      name: t.name,
+      blocking: t.blocking,
+      recurrenceMonths: t.recurrenceMonths,
+    })),
+  );
+  return toAdd.length;
 }
 
 async function loadContractorOrThrow(db: Database, tenantId: string, id: string) {
@@ -225,6 +273,11 @@ export const contractorsRouter = router({
         primaryContactEmail: input.primaryContactEmail ?? null,
         notes: input.notes ?? null,
       });
+      // Auto-apply trade templates matching the category.
+      const category = input.category?.trim();
+      if (category !== undefined && category !== '') {
+        await applyTemplatesForCategory(ctx.db, ctx.tenantId, id, category);
+      }
       return { id };
     }),
 
@@ -391,5 +444,101 @@ export const contractorsRouter = router({
           and(eq(contractorDocuments.tenantId, ctx.tenantId), eq(contractorDocuments.id, input.id)),
         );
       return { ok: true as const };
+    }),
+
+  // ─── Requirement trade templates ───────────────────────────────────────
+  templates: router({
+    list: tenantProcedure.use(requirePermission('contractors.view')).query(async ({ ctx }) => {
+      return ctx.db
+        .select()
+        .from(contractorRequirementTemplates)
+        .where(eq(contractorRequirementTemplates.tenantId, ctx.tenantId))
+        .orderBy(contractorRequirementTemplates.category, contractorRequirementTemplates.name);
+    }),
+    create: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(
+        z.object({
+          category: z.string().min(1).max(120),
+          name: z.string().min(1).max(200),
+          blocking: z.boolean().default(true),
+          recurrenceMonths: z.number().int().min(1).max(120).nullable().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const id = newId();
+        await ctx.db.insert(contractorRequirementTemplates).values({
+          id,
+          tenantId: ctx.tenantId,
+          category: input.category.trim(),
+          name: input.name.trim(),
+          blocking: input.blocking,
+          recurrenceMonths: input.recurrenceMonths ?? null,
+        });
+        return { id };
+      }),
+    remove: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ id: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        await ctx.db
+          .delete(contractorRequirementTemplates)
+          .where(
+            and(
+              eq(contractorRequirementTemplates.tenantId, ctx.tenantId),
+              eq(contractorRequirementTemplates.id, input.id),
+            ),
+          );
+        return { ok: true as const };
+      }),
+  }),
+
+  /** Apply the contractor's category templates on demand. */
+  applyTemplates: tenantProcedure
+    .use(requirePermission('contractors.manage'))
+    .input(z.object({ id: z.string().length(26) }))
+    .mutation(async ({ ctx, input }) => {
+      const c = await loadContractorOrThrow(ctx.db, ctx.tenantId, input.id);
+      if (c.category === null || c.category === '') return { applied: 0 };
+      const applied = await applyTemplatesForCategory(ctx.db, ctx.tenantId, input.id, c.category);
+      return { applied };
+    }),
+
+  // ─── Public upload portal (no login) ───────────────────────────────────
+  /** Regenerate (or create) the opaque token for the public upload link. */
+  regenerateUploadLink: tenantProcedure
+    .use(requirePermission('contractors.manage'))
+    .input(z.object({ id: z.string().length(26) }))
+    .mutation(async ({ ctx, input }) => {
+      await loadContractorOrThrow(ctx.db, ctx.tenantId, input.id);
+      const token = randomBytes(24).toString('hex');
+      await ctx.db
+        .update(contractors)
+        .set({ uploadToken: token, updatedAt: new Date() })
+        .where(and(eq(contractors.tenantId, ctx.tenantId), eq(contractors.id, input.id)));
+      return { token };
+    }),
+
+  /** Public: resolve a contractor by its upload token (name + requirements only). */
+  publicByToken: publicProcedure
+    .input(z.object({ token: z.string().min(10).max(200) }))
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({ id: contractors.id, name: contractors.name, tenantId: contractors.tenantId })
+        .from(contractors)
+        .where(and(eq(contractors.uploadToken, input.token), isNull(contractors.archivedAt)))
+        .limit(1);
+      const c = rows[0];
+      if (c === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      const reqs = await ctx.db
+        .select({
+          id: contractorRequirements.id,
+          name: contractorRequirements.name,
+          blocking: contractorRequirements.blocking,
+        })
+        .from(contractorRequirements)
+        .where(eq(contractorRequirements.contractorId, c.id))
+        .orderBy(contractorRequirements.createdAt);
+      return { contractorName: c.name, requirements: reqs };
     }),
 });

@@ -93,6 +93,41 @@ export default function ContractorDetailPage() {
     },
     onError: onErr,
   });
+  const update = trpc.contractors.update.useMutation({
+    onSuccess: () => {
+      toast.success(t('savedToast'));
+      invalidate();
+      setEditOpen(false);
+    },
+    onError: onErr,
+  });
+  const applyTemplates = trpc.contractors.applyTemplates.useMutation({
+    onSuccess: (res) => {
+      toast.success(t('appliedToast', { count: res.applied }));
+      invalidate();
+    },
+    onError: onErr,
+  });
+  const regenLink = trpc.contractors.regenerateUploadLink.useMutation({
+    onSuccess: async ({ token }) => {
+      const url = `${window.location.origin}/${locale}/contractor-upload/${token}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success(t('uploadLinkCopied'));
+      } catch {
+        window.prompt(t('copyUploadLink'), url);
+      }
+    },
+    onError: onErr,
+  });
+
+  // Edit dialog
+  const [editOpen, setEditOpen] = useState(false);
+  const [edName, setEdName] = useState('');
+  const [edCategory, setEdCategory] = useState('');
+  const [edContactName, setEdContactName] = useState('');
+  const [edContactEmail, setEdContactEmail] = useState('');
+  const [edNotes, setEdNotes] = useState('');
 
   // Add-requirement dialog
   const [reqOpen, setReqOpen] = useState(false);
@@ -176,15 +211,50 @@ export default function ContractorDetailPage() {
             {contractor.category}
           </span>
         ) : null}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {canManage && contractor.category !== null && contractor.category !== '' ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={applyTemplates.isPending}
+              onClick={() => applyTemplates.mutate({ id: contractorId })}
+            >
+              {t('applyTemplate', { category: contractor.category })}
+            </Button>
+          ) : null}
+          {canManage ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={regenLink.isPending}
+              onClick={() => regenLink.mutate({ id: contractorId })}
+            >
+              {regenLink.isPending ? t('uploadLinkGenerating') : t('copyUploadLink')}
+            </Button>
+          ) : null}
+          {canManage ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEdName(contractor.name);
+                setEdCategory(contractor.category ?? '');
+                setEdContactName(contractor.primaryContactName ?? '');
+                setEdContactEmail(contractor.primaryContactEmail ?? '');
+                setEdNotes(contractor.notes ?? '');
+                setEditOpen(true);
+              }}
+            >
+              {t('editContractor')}
+            </Button>
+          ) : null}
           {canManage ? (
             <Button
               variant="outline"
               size="sm"
               className="text-destructive hover:text-destructive"
               onClick={() => {
-                if (window.confirm(t('archiveConfirm')))
-                  archive.mutate({ id: contractorId });
+                if (window.confirm(t('archiveConfirm'))) archive.mutate({ id: contractorId });
               }}
             >
               {t('archiveButton')}
@@ -192,6 +262,87 @@ export default function ContractorDetailPage() {
           ) : null}
         </div>
       </header>
+
+      {/* Edit dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('editTitle')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="ed-name">{t('fieldName')}</Label>
+              <Input
+                id="ed-name"
+                value={edName}
+                onChange={(e) => setEdName(e.target.value)}
+                maxLength={200}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ed-cat">{t('fieldCategory')}</Label>
+              <Input
+                id="ed-cat"
+                value={edCategory}
+                onChange={(e) => setEdCategory(e.target.value)}
+                maxLength={120}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="ed-cn">{t('fieldContactName')}</Label>
+                <Input
+                  id="ed-cn"
+                  value={edContactName}
+                  onChange={(e) => setEdContactName(e.target.value)}
+                  maxLength={200}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ed-ce">{t('fieldContactEmail')}</Label>
+                <Input
+                  id="ed-ce"
+                  type="email"
+                  value={edContactEmail}
+                  onChange={(e) => setEdContactEmail(e.target.value)}
+                  maxLength={200}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ed-notes">{t('fieldNotes')}</Label>
+              <textarea
+                id="ed-notes"
+                value={edNotes}
+                onChange={(e) => setEdNotes(e.target.value)}
+                rows={3}
+                maxLength={5000}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              disabled={update.isPending || edName.trim() === ''}
+              onClick={() =>
+                update.mutate({
+                  id: contractorId,
+                  name: edName.trim(),
+                  category: edCategory.trim() === '' ? null : edCategory.trim(),
+                  primaryContactName: edContactName.trim() === '' ? null : edContactName.trim(),
+                  primaryContactEmail: edContactEmail.trim() === '' ? null : edContactEmail.trim(),
+                  notes: edNotes.trim() === '' ? null : edNotes.trim(),
+                })
+              }
+            >
+              {t('saveButton')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {contractor.primaryContactName !== null ||
       contractor.primaryContactEmail !== null ||

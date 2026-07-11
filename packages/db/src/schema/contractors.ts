@@ -37,6 +37,8 @@ export const contractors = pgTable(
     primaryContactName: text('primary_contact_name'),
     primaryContactEmail: text('primary_contact_email'),
     notes: text('notes'),
+    /** Opaque token for the public, no-login contractor upload portal. */
+    uploadToken: text('upload_token'),
     archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'date' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -101,6 +103,8 @@ export const contractorDocuments = pgTable(
     endDate: date('end_date'),
     status: text('status').notNull().default('pending').$type<ContractorDocumentStatus>(),
     rejectReason: text('reject_reason'),
+    /** Stamped when the single pre-expiry reminder has been sent (dedupe). */
+    reminderSentAt: timestamp('reminder_sent_at', { withTimezone: true, mode: 'date' }),
     uploadedByUserId: varchar('uploaded_by_user_id', { length: 64 }).references(() => user.id, {
       onDelete: 'set null',
     }),
@@ -117,3 +121,27 @@ export const contractorDocuments = pgTable(
 );
 
 export type ContractorDocument = typeof contractorDocuments.$inferSelect;
+
+/**
+ * Requirement templates keyed by trade/category. When a contractor's category
+ * matches, these are copied into `contractor_requirements` (auto on create, or
+ * via "apply template"). Contractors can then add/remove per-contractor
+ * overrides on top.
+ */
+export const contractorRequirementTemplates = pgTable(
+  'contractor_requirement_templates',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    category: text('category').notNull(),
+    name: text('name').notNull(),
+    blocking: boolean('blocking').notNull().default(true),
+    recurrenceMonths: integer('recurrence_months'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('contractor_req_templates_tenant_idx').on(t.tenantId, t.category)],
+);
+
+export type ContractorRequirementTemplate = typeof contractorRequirementTemplates.$inferSelect;

@@ -209,6 +209,20 @@ try {
     );
     CREATE INDEX IF NOT EXISTS "contractor_documents_requirement_idx" ON "contractor_documents" ("tenant_id", "requirement_id");
     CREATE INDEX IF NOT EXISTS "contractor_documents_contractor_idx" ON "contractor_documents" ("tenant_id", "contractor_id");
+    -- 0043: Contractors Phase 1b (templates, public upload token, reminder stamp)
+    ALTER TABLE "contractors" ADD COLUMN IF NOT EXISTS "upload_token" text;
+    CREATE UNIQUE INDEX IF NOT EXISTS "contractors_upload_token_idx" ON "contractors" ("upload_token");
+    ALTER TABLE "contractor_documents" ADD COLUMN IF NOT EXISTS "reminder_sent_at" timestamptz;
+    CREATE TABLE IF NOT EXISTS "contractor_requirement_templates" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "category" text NOT NULL,
+      "name" text NOT NULL,
+      "blocking" boolean NOT NULL DEFAULT true,
+      "recurrence_months" integer,
+      "created_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "contractor_req_templates_tenant_idx" ON "contractor_requirement_templates" ("tenant_id", "category");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {
