@@ -93,6 +93,11 @@ export default function ContractorsPage() {
           </Button>
           {canManage ? (
             <Button variant="outline" asChild>
+              <Link href={`/${locale}/contractors/gate`}>{t('gate.navLink')}</Link>
+            </Button>
+          ) : null}
+          {canManage ? (
+            <Button variant="outline" asChild>
               <Link href={`/${locale}/contractors/templates`}>{t('manageTemplates')}</Link>
             </Button>
           ) : null}

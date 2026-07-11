@@ -12,6 +12,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -203,3 +204,84 @@ export const contractorVisits = pgTable(
 );
 
 export type ContractorVisit = typeof contractorVisits.$inferSelect;
+
+/**
+ * Gate check-in (Phase 2b).
+ *
+ * `contractor_gate_fields` are the company-configurable questions captured at
+ * the gate (e.g. "Site induction complete?", "Vehicle reg"). Answers are
+ * stored per event as a `{ fieldId: value }` map. `contractor_visit_events`
+ * is the append-only audit log of check-ins / check-outs, recording whether
+ * the contractor self-scanned or a staff member did it (with a reason).
+ * `contractor_gate_config` holds the per-tenant opaque token behind the
+ * public self-scan kiosk.
+ */
+export const contractorGateFieldType = ['text', 'number', 'yes_no'] as const;
+export type ContractorGateFieldType = (typeof contractorGateFieldType)[number];
+
+export const contractorGateFields = pgTable(
+  'contractor_gate_fields',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    label: text('label').notNull(),
+    fieldType: text('field_type').notNull().default('text').$type<ContractorGateFieldType>(),
+    required: boolean('required').notNull().default(false),
+    sortOrder: integer('sort_order').notNull().default(0),
+    archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'date' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('contractor_gate_fields_tenant_idx').on(t.tenantId, t.sortOrder)],
+);
+
+export type ContractorGateField = typeof contractorGateFields.$inferSelect;
+
+export const contractorVisitEventType = ['check_in', 'check_out'] as const;
+export type ContractorVisitEventType = (typeof contractorVisitEventType)[number];
+
+/** `self_scan` = contractor via the public kiosk; `staff` = a logged-in user. */
+export const contractorVisitEventMethod = ['self_scan', 'staff'] as const;
+export type ContractorVisitEventMethod = (typeof contractorVisitEventMethod)[number];
+
+export const contractorVisitEvents = pgTable(
+  'contractor_visit_events',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    visitId: varchar('visit_id', { length: 26 })
+      .notNull()
+      .references(() => contractorVisits.id, { onDelete: 'cascade' }),
+    contractorId: varchar('contractor_id', { length: 26 })
+      .notNull()
+      .references(() => contractors.id, { onDelete: 'cascade' }),
+    eventType: text('event_type').notNull().$type<ContractorVisitEventType>(),
+    method: text('method').notNull().$type<ContractorVisitEventMethod>(),
+    /** Set when staff check someone in without an authorised/self-scan path. */
+    overrideReason: text('override_reason'),
+    /** Answers to the configured gate fields: { [gateFieldId]: string }. */
+    capturedFields: jsonb('captured_fields').$type<Record<string, string>>(),
+    actorUserId: varchar('actor_user_id', { length: 64 }).references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    at: timestamp('at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('contractor_visit_events_visit_idx').on(t.tenantId, t.visitId)],
+);
+
+export type ContractorVisitEvent = typeof contractorVisitEvents.$inferSelect;
+
+export const contractorGateConfig = pgTable('contractor_gate_config', {
+  tenantId: varchar('tenant_id', { length: 26 })
+    .primaryKey()
+    .references(() => tenants.id, { onDelete: 'restrict' }),
+  /** Opaque token behind the public self-scan kiosk URL. */
+  gateToken: text('gate_token'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type ContractorGateConfig = typeof contractorGateConfig.$inferSelect;

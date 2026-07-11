@@ -245,6 +245,38 @@ try {
     );
     CREATE INDEX IF NOT EXISTS "contractor_visits_tenant_start_idx" ON "contractor_visits" ("tenant_id", "scheduled_start");
     CREATE INDEX IF NOT EXISTS "contractor_visits_contractor_idx" ON "contractor_visits" ("tenant_id", "contractor_id");
+    -- 0045: Contractors Phase 2b (gate check-in)
+    CREATE TABLE IF NOT EXISTS "contractor_gate_fields" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "label" text NOT NULL,
+      "field_type" text NOT NULL DEFAULT 'text',
+      "required" boolean NOT NULL DEFAULT false,
+      "sort_order" integer NOT NULL DEFAULT 0,
+      "archived_at" timestamptz,
+      "created_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "contractor_gate_fields_tenant_idx" ON "contractor_gate_fields" ("tenant_id", "sort_order");
+    CREATE TABLE IF NOT EXISTS "contractor_visit_events" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "visit_id" varchar(26) NOT NULL REFERENCES "contractor_visits"("id") ON DELETE CASCADE,
+      "contractor_id" varchar(26) NOT NULL REFERENCES "contractors"("id") ON DELETE CASCADE,
+      "event_type" text NOT NULL,
+      "method" text NOT NULL,
+      "override_reason" text,
+      "captured_fields" jsonb,
+      "actor_user_id" varchar(64) REFERENCES "user"("id") ON DELETE SET NULL,
+      "at" timestamptz NOT NULL DEFAULT now(),
+      "created_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "contractor_visit_events_visit_idx" ON "contractor_visit_events" ("tenant_id", "visit_id");
+    CREATE TABLE IF NOT EXISTS "contractor_gate_config" (
+      "tenant_id" varchar(26) PRIMARY KEY NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "gate_token" text,
+      "updated_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS "contractor_gate_config_token_idx" ON "contractor_gate_config" ("gate_token");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

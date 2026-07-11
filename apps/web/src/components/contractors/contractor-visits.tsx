@@ -281,13 +281,35 @@ export function VisitDetailDialog({
     { id: visitId ?? '' },
     { enabled: visitId !== null },
   );
+  const gateFieldsQ = trpc.contractors.gateFields.list.useQuery(undefined, {
+    enabled: visitId !== null,
+  });
+  const eventsQ = trpc.contractors.visits.events.useQuery(
+    { visitId: visitId ?? '' },
+    { enabled: visitId !== null },
+  );
+  const gateFields = gateFieldsQ.data ?? [];
+  const fieldLabel = (id: string) => gateFields.find((f) => f.id === id)?.label ?? id;
+
+  // Check-in form (capture fields + optional staff-override reason).
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [overrideReason, setOverrideReason] = useState('');
+  const resetCheckIn = () => {
+    setCheckingIn(false);
+    setAnswers({});
+    setOverrideReason('');
+  };
 
   const onErr = (err: { message: string }) =>
     toast.error(err.message.length > 0 ? err.message : t('error'));
   const done = (msg: string) => () => {
     toast.success(msg);
-    // Refresh this dialog (so the available actions update) and the parent list.
-    if (visitId !== null) void utils.contractors.visits.get.invalidate({ id: visitId });
+    // Refresh this dialog (actions + audit log) and the parent list.
+    if (visitId !== null) {
+      void utils.contractors.visits.get.invalidate({ id: visitId });
+      void utils.contractors.visits.events.invalidate({ visitId });
+    }
     onChanged();
   };
 
@@ -296,7 +318,10 @@ export function VisitDetailDialog({
     onError: onErr,
   });
   const checkInM = trpc.contractors.visits.checkIn.useMutation({
-    onSuccess: done(t('visits.checkedInToast')),
+    onSuccess: () => {
+      resetCheckIn();
+      done(t('visits.checkedInToast'))();
+    },
     onError: onErr,
   });
   const checkOutM = trpc.contractors.visits.checkOut.useMutation({
@@ -378,7 +403,75 @@ export function VisitDetailDialog({
               ) : null}
             </dl>
 
-            {canManage ? (
+            {/* Check-in form: capture fields + optional staff-override reason. */}
+            {canManage && checkingIn ? (
+              <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+                {gateFields.map((f) => (
+                  <div key={f.id} className="space-y-1">
+                    <Label htmlFor={`ci-${f.id}`} className="text-xs">
+                      {f.label}
+                      {f.required ? <span className="text-destructive"> *</span> : null}
+                    </Label>
+                    {f.fieldType === 'yes_no' ? (
+                      <select
+                        id={`ci-${f.id}`}
+                        value={answers[f.id] ?? ''}
+                        onChange={(e) => setAnswers((a) => ({ ...a, [f.id]: e.target.value }))}
+                        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      >
+                        <option value="">—</option>
+                        <option value="yes">{t('gate.yes')}</option>
+                        <option value="no">{t('gate.no')}</option>
+                      </select>
+                    ) : (
+                      <Input
+                        id={`ci-${f.id}`}
+                        type={f.fieldType === 'number' ? 'number' : 'text'}
+                        value={answers[f.id] ?? ''}
+                        onChange={(e) => setAnswers((a) => ({ ...a, [f.id]: e.target.value }))}
+                        className="h-9"
+                      />
+                    )}
+                  </div>
+                ))}
+                <div className="space-y-1">
+                  <Label htmlFor="ci-override" className="text-xs">
+                    {t('visits.overrideReasonLabel')}
+                  </Label>
+                  <Input
+                    id="ci-override"
+                    value={overrideReason}
+                    onChange={(e) => setOverrideReason(e.target.value)}
+                    placeholder={t('visits.overrideReasonPlaceholder')}
+                    className="h-9"
+                    maxLength={1000}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button size="sm" variant="ghost" onClick={resetCheckIn}>
+                    {t('visits.cancelVisit')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() =>
+                      checkInM.mutate({
+                        id: v.id,
+                        ...(Object.keys(answers).length > 0 ? { capturedFields: answers } : {}),
+                        ...(overrideReason.trim() !== ''
+                          ? { overrideReason: overrideReason.trim() }
+                          : {}),
+                      })
+                    }
+                  >
+                    <LogIn className="mr-1 h-3.5 w-3.5" />
+                    {t('visits.checkIn')}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            {canManage && !checkingIn ? (
               <DialogFooter className="flex-wrap gap-2 sm:justify-start">
                 {v.authorizedByUserId === null ? (
                   <Button
@@ -392,21 +485,13 @@ export function VisitDetailDialog({
                   </Button>
                 ) : null}
                 {v.checkedInAt === null && v.status !== 'cancelled' ? (
-                  <Button
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => checkInM.mutate({ id: v.id })}
-                  >
+                  <Button size="sm" disabled={busy} onClick={() => setCheckingIn(true)}>
                     <LogIn className="mr-1 h-3.5 w-3.5" />
                     {t('visits.checkIn')}
                   </Button>
                 ) : null}
                 {v.checkedInAt !== null && v.checkedOutAt === null ? (
-                  <Button
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => checkOutM.mutate({ id: v.id })}
-                  >
+                  <Button size="sm" disabled={busy} onClick={() => checkOutM.mutate({ id: v.id })}>
                     <LogOut className="mr-1 h-3.5 w-3.5" />
                     {t('visits.checkOut')}
                   </Button>
@@ -444,6 +529,51 @@ export function VisitDetailDialog({
                   {t('visits.deleteVisit')}
                 </Button>
               </DialogFooter>
+            ) : null}
+
+            {/* Gate audit log */}
+            {(eventsQ.data ?? []).length > 0 ? (
+              <div className="mt-2 border-t pt-3">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t('visits.eventLog')}
+                </p>
+                <ul className="space-y-2 text-xs">
+                  {(eventsQ.data ?? []).map((ev) => (
+                    <li key={ev.id} className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {t(`visits.event_${ev.eventType}` as 'visits.event_check_in')}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {format.dateTime(new Date(ev.at), {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                            timeZone: BROWSER_TZ,
+                          })}
+                        </span>
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground">
+                          {ev.method === 'self_scan'
+                            ? t('visits.method_self_scan')
+                            : (ev.actorName ?? t('visits.method_staff'))}
+                        </span>
+                      </div>
+                      {ev.overrideReason !== null && ev.overrideReason !== '' ? (
+                        <span className="text-muted-foreground">
+                          {t('visits.overrideReasonLabel')}: {ev.overrideReason}
+                        </span>
+                      ) : null}
+                      {ev.capturedFields !== null &&
+                      Object.keys(ev.capturedFields).length > 0 ? (
+                        <span className="text-muted-foreground">
+                          {Object.entries(ev.capturedFields)
+                            .map(([fid, val]) => `${fieldLabel(fid)}: ${val}`)
+                            .join(' · ')}
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
           </>
         )}

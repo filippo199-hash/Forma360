@@ -135,6 +135,8 @@ export const PERMISSION_KEYS = [
   'contractors.view',
   'contractors.manage',
   'contractors.verifyDocs',
+  // Gate check-in operators (reception / security) — Phase 2b.
+  'contractors.gate',
 
   // ─── Organisation settings ───────────────────────────────────────────────
   // `org.settings` is what the S-E02 last-admin check counts: any user whose

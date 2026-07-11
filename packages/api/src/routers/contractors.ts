@@ -9,8 +9,11 @@ import { randomBytes } from 'node:crypto';
 import type { Database } from '@forma360/db/client';
 import {
   contractorDocuments,
+  contractorGateConfig,
+  contractorGateFields,
   contractorRequirementTemplates,
   contractorRequirements,
+  contractorVisitEvents,
   contractorVisits,
   contractors,
   sites,
@@ -132,6 +135,38 @@ async function loadVisitOrThrow(db: Database, tenantId: string, id: string) {
 
 /** ISO 8601 datetime (e.g. from `new Date().toISOString()`). */
 const isoDateTime = z.string().datetime();
+
+/** Answers to the configured gate fields, keyed by gate-field id. */
+const capturedFieldsSchema = z.record(z.string().length(26), z.string().max(2000));
+
+/** Append a gate check-in / check-out event to the audit log. */
+async function insertVisitEvent(
+  db: Database,
+  args: {
+    tenantId: string;
+    visitId: string;
+    contractorId: string;
+    eventType: 'check_in' | 'check_out';
+    method: 'self_scan' | 'staff';
+    actorUserId: string | null;
+    capturedFields?: Record<string, string>;
+    overrideReason?: string | null;
+  },
+): Promise<void> {
+  await db.insert(contractorVisitEvents).values({
+    id: newId(),
+    tenantId: args.tenantId,
+    visitId: args.visitId,
+    contractorId: args.contractorId,
+    eventType: args.eventType,
+    method: args.method,
+    actorUserId: args.actorUserId,
+    ...(args.capturedFields !== undefined ? { capturedFields: args.capturedFields } : {}),
+    ...(args.overrideReason != null && args.overrideReason !== ''
+      ? { overrideReason: args.overrideReason }
+      : {}),
+  });
+}
 
 export const contractorsRouter = router({
   list: tenantProcedure.use(requirePermission('contractors.view')).query(async ({ ctx }) => {
@@ -725,6 +760,14 @@ export const contractorsRouter = router({
           notes: input.notes ?? null,
           createdByUserId: ctx.auth.userId,
         });
+        await insertVisitEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          visitId: id,
+          contractorId: input.contractorId,
+          eventType: 'check_in',
+          method: 'staff',
+          actorUserId: ctx.auth.userId,
+        });
         return { id };
       }),
 
@@ -776,34 +819,92 @@ export const contractorsRouter = router({
 
     checkIn: tenantProcedure
       .use(requirePermission('contractors.manage'))
-      .input(z.object({ id: z.string().length(26) }))
+      .input(
+        z.object({
+          id: z.string().length(26),
+          capturedFields: capturedFieldsSchema.optional(),
+          overrideReason: z.string().max(1000).optional(),
+        }),
+      )
       .mutation(async ({ ctx, input }) => {
         const visit = await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
         if (visit.status === 'cancelled')
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit is cancelled' });
+        const now = new Date();
         await ctx.db
           .update(contractorVisits)
-          .set({ status: 'checked_in', checkedInAt: new Date(), updatedAt: new Date() })
+          .set({ status: 'checked_in', checkedInAt: now, updatedAt: now })
           .where(
             and(eq(contractorVisits.tenantId, ctx.tenantId), eq(contractorVisits.id, input.id)),
           );
+        await insertVisitEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          visitId: visit.id,
+          contractorId: visit.contractorId,
+          eventType: 'check_in',
+          method: 'staff',
+          actorUserId: ctx.auth.userId,
+          ...(input.capturedFields !== undefined ? { capturedFields: input.capturedFields } : {}),
+          ...(input.overrideReason !== undefined ? { overrideReason: input.overrideReason } : {}),
+        });
         return { ok: true as const };
       }),
 
     checkOut: tenantProcedure
       .use(requirePermission('contractors.manage'))
-      .input(z.object({ id: z.string().length(26) }))
+      .input(
+        z.object({
+          id: z.string().length(26),
+          capturedFields: capturedFieldsSchema.optional(),
+        }),
+      )
       .mutation(async ({ ctx, input }) => {
         const visit = await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
         if (visit.checkedInAt === null)
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit was never checked in' });
+        const now = new Date();
         await ctx.db
           .update(contractorVisits)
-          .set({ status: 'checked_out', checkedOutAt: new Date(), updatedAt: new Date() })
+          .set({ status: 'checked_out', checkedOutAt: now, updatedAt: now })
           .where(
             and(eq(contractorVisits.tenantId, ctx.tenantId), eq(contractorVisits.id, input.id)),
           );
+        await insertVisitEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          visitId: visit.id,
+          contractorId: visit.contractorId,
+          eventType: 'check_out',
+          method: 'staff',
+          actorUserId: ctx.auth.userId,
+          ...(input.capturedFields !== undefined ? { capturedFields: input.capturedFields } : {}),
+        });
         return { ok: true as const };
+      }),
+
+    /** Audit log of gate events for a visit (newest first). */
+    events: tenantProcedure
+      .use(requirePermission('contractors.view'))
+      .input(z.object({ visitId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        return ctx.db
+          .select({
+            id: contractorVisitEvents.id,
+            eventType: contractorVisitEvents.eventType,
+            method: contractorVisitEvents.method,
+            overrideReason: contractorVisitEvents.overrideReason,
+            capturedFields: contractorVisitEvents.capturedFields,
+            actorName: user.name,
+            at: contractorVisitEvents.at,
+          })
+          .from(contractorVisitEvents)
+          .leftJoin(user, eq(contractorVisitEvents.actorUserId, user.id))
+          .where(
+            and(
+              eq(contractorVisitEvents.tenantId, ctx.tenantId),
+              eq(contractorVisitEvents.visitId, input.visitId),
+            ),
+          )
+          .orderBy(desc(contractorVisitEvents.at));
       }),
 
     /** Set a terminal non-attended status: `cancelled` or `no_show`. */
@@ -831,6 +932,245 @@ export const contractorsRouter = router({
           .where(
             and(eq(contractorVisits.tenantId, ctx.tenantId), eq(contractorVisits.id, input.id)),
           );
+        return { ok: true as const };
+      }),
+  }),
+
+  // ─── Gate: company-configurable capture fields (Phase 2b) ──────────────
+  gateFields: router({
+    list: tenantProcedure.use(requirePermission('contractors.view')).query(async ({ ctx }) => {
+      return ctx.db
+        .select()
+        .from(contractorGateFields)
+        .where(
+          and(
+            eq(contractorGateFields.tenantId, ctx.tenantId),
+            isNull(contractorGateFields.archivedAt),
+          ),
+        )
+        .orderBy(asc(contractorGateFields.sortOrder), asc(contractorGateFields.createdAt));
+    }),
+    create: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(
+        z.object({
+          label: z.string().min(1).max(200),
+          fieldType: z.enum(['text', 'number', 'yes_no']).default('text'),
+          required: z.boolean().default(false),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const existing = await ctx.db
+          .select({ sortOrder: contractorGateFields.sortOrder })
+          .from(contractorGateFields)
+          .where(
+            and(
+              eq(contractorGateFields.tenantId, ctx.tenantId),
+              isNull(contractorGateFields.archivedAt),
+            ),
+          );
+        const nextOrder = existing.reduce((m, r) => Math.max(m, r.sortOrder + 1), 0);
+        const id = newId();
+        await ctx.db.insert(contractorGateFields).values({
+          id,
+          tenantId: ctx.tenantId,
+          label: input.label.trim(),
+          fieldType: input.fieldType,
+          required: input.required,
+          sortOrder: nextOrder,
+        });
+        return { id };
+      }),
+    update: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(
+        z.object({
+          id: z.string().length(26),
+          label: z.string().min(1).max(200).optional(),
+          fieldType: z.enum(['text', 'number', 'yes_no']).optional(),
+          required: z.boolean().optional(),
+          sortOrder: z.number().int().min(0).optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const updates: Partial<typeof contractorGateFields.$inferInsert> = {};
+        if (input.label !== undefined) updates.label = input.label.trim();
+        if (input.fieldType !== undefined) updates.fieldType = input.fieldType;
+        if (input.required !== undefined) updates.required = input.required;
+        if (input.sortOrder !== undefined) updates.sortOrder = input.sortOrder;
+        await ctx.db
+          .update(contractorGateFields)
+          .set(updates)
+          .where(
+            and(
+              eq(contractorGateFields.tenantId, ctx.tenantId),
+              eq(contractorGateFields.id, input.id),
+            ),
+          );
+        return { ok: true as const };
+      }),
+    remove: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ id: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        // Soft-archive so historical event answers keep resolving their label.
+        await ctx.db
+          .update(contractorGateFields)
+          .set({ archivedAt: new Date() })
+          .where(
+            and(
+              eq(contractorGateFields.tenantId, ctx.tenantId),
+              eq(contractorGateFields.id, input.id),
+            ),
+          );
+        return { ok: true as const };
+      }),
+  }),
+
+  // ─── Gate: self-scan kiosk (Phase 2b) ──────────────────────────────────
+  gate: router({
+    /** The tenant's kiosk token (null until first generated). */
+    config: tenantProcedure.use(requirePermission('contractors.manage')).query(async ({ ctx }) => {
+      const rows = await ctx.db
+        .select({ gateToken: contractorGateConfig.gateToken })
+        .from(contractorGateConfig)
+        .where(eq(contractorGateConfig.tenantId, ctx.tenantId))
+        .limit(1);
+      return { gateToken: rows[0]?.gateToken ?? null };
+    }),
+    regenerateToken: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .mutation(async ({ ctx }) => {
+        const token = randomBytes(24).toString('hex');
+        await ctx.db
+          .insert(contractorGateConfig)
+          .values({ tenantId: ctx.tenantId, gateToken: token })
+          .onConflictDoUpdate({
+            target: contractorGateConfig.tenantId,
+            set: { gateToken: token, updatedAt: new Date() },
+          });
+        return { token };
+      }),
+
+    /** Public: resolve the kiosk by token — today's visits + capture fields. */
+    publicByToken: publicProcedure
+      .input(z.object({ token: z.string().min(10).max(200) }))
+      .query(async ({ ctx, input }) => {
+        const cfg = await ctx.db
+          .select({ tenantId: contractorGateConfig.tenantId })
+          .from(contractorGateConfig)
+          .where(eq(contractorGateConfig.gateToken, input.token))
+          .limit(1);
+        const tenantId = cfg[0]?.tenantId;
+        if (tenantId === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+        const now = Date.now();
+        const from = new Date(now - 24 * 3_600_000);
+        const to = new Date(now + 24 * 3_600_000);
+        const visits = await ctx.db
+          .select({
+            id: contractorVisits.id,
+            contractorName: contractors.name,
+            title: contractorVisits.title,
+            status: contractorVisits.status,
+            scheduledStart: contractorVisits.scheduledStart,
+          })
+          .from(contractorVisits)
+          .innerJoin(contractors, eq(contractorVisits.contractorId, contractors.id))
+          .where(
+            and(
+              eq(contractorVisits.tenantId, tenantId),
+              isNull(contractorVisits.archivedAt),
+              inArray(contractorVisits.status, ['scheduled', 'checked_in']),
+              between(contractorVisits.scheduledStart, from, to),
+            ),
+          )
+          .orderBy(asc(contractorVisits.scheduledStart));
+
+        const fields = await ctx.db
+          .select({
+            id: contractorGateFields.id,
+            label: contractorGateFields.label,
+            fieldType: contractorGateFields.fieldType,
+            required: contractorGateFields.required,
+          })
+          .from(contractorGateFields)
+          .where(
+            and(
+              eq(contractorGateFields.tenantId, tenantId),
+              isNull(contractorGateFields.archivedAt),
+            ),
+          )
+          .orderBy(asc(contractorGateFields.sortOrder), asc(contractorGateFields.createdAt));
+
+        return { visits, fields };
+      }),
+
+    /** Public: a contractor self-checks-in / out at the kiosk. */
+    selfCheckIn: publicProcedure
+      .input(
+        z.object({
+          token: z.string().min(10).max(200),
+          visitId: z.string().length(26),
+          eventType: z.enum(['check_in', 'check_out']),
+          capturedFields: capturedFieldsSchema.optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const cfg = await ctx.db
+          .select({ tenantId: contractorGateConfig.tenantId })
+          .from(contractorGateConfig)
+          .where(eq(contractorGateConfig.gateToken, input.token))
+          .limit(1);
+        const tenantId = cfg[0]?.tenantId;
+        if (tenantId === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+        const visit = await loadVisitOrThrow(ctx.db, tenantId, input.visitId);
+
+        // Enforce required capture fields on check-in.
+        if (input.eventType === 'check_in') {
+          const required = await ctx.db
+            .select({ id: contractorGateFields.id })
+            .from(contractorGateFields)
+            .where(
+              and(
+                eq(contractorGateFields.tenantId, tenantId),
+                eq(contractorGateFields.required, true),
+                isNull(contractorGateFields.archivedAt),
+              ),
+            );
+          const answers = input.capturedFields ?? {};
+          for (const f of required) {
+            if ((answers[f.id] ?? '').trim() === '') {
+              throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing required field' });
+            }
+          }
+          if (visit.status === 'cancelled')
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit is cancelled' });
+        } else if (visit.checkedInAt === null) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit was never checked in' });
+        }
+
+        const now = new Date();
+        await ctx.db
+          .update(contractorVisits)
+          .set(
+            input.eventType === 'check_in'
+              ? { status: 'checked_in', checkedInAt: now, updatedAt: now }
+              : { status: 'checked_out', checkedOutAt: now, updatedAt: now },
+          )
+          .where(
+            and(eq(contractorVisits.tenantId, tenantId), eq(contractorVisits.id, input.visitId)),
+          );
+        await insertVisitEvent(ctx.db, {
+          tenantId,
+          visitId: visit.id,
+          contractorId: visit.contractorId,
+          eventType: input.eventType,
+          method: 'self_scan',
+          actorUserId: null,
+          ...(input.capturedFields !== undefined ? { capturedFields: input.capturedFields } : {}),
+        });
         return { ok: true as const };
       }),
   }),
