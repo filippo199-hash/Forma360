@@ -4,7 +4,7 @@
  * inside `@forma360/api/src/routers/users`. The router itself is a
  * singleton — this is the analog of the per-request `authDeps` factory.
  */
-import { setUsersRouterDeps } from '@forma360/api';
+import { setContractorsRouterDeps, setUsersRouterDeps } from '@forma360/api';
 import { createSendTemplatedEmail } from '@forma360/shared/email';
 import { env } from './env';
 import { logger } from './logger';
@@ -18,6 +18,12 @@ const sendTemplatedEmail = createSendTemplatedEmail({
 });
 
 setUsersRouterDeps({
+  sendEmail: sendTemplatedEmail,
+  appUrl: env.APP_URL,
+});
+
+// Phase 4 — external contractor portal invites reuse the same invite email.
+setContractorsRouterDeps({
   sendEmail: sendTemplatedEmail,
   appUrl: env.APP_URL,
 });

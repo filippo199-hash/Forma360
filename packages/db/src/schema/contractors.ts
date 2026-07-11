@@ -319,3 +319,40 @@ export const contractorAssets = pgTable(
 );
 
 export type ContractorAsset = typeof contractorAssets.$inferSelect;
+
+/**
+ * External contractor users (Phase 4).
+ *
+ * Links a logged-in `user` (created via the normal invite → accept → email-OTP
+ * flow) to the contractor they represent, plus the set of portal *activities*
+ * the company granted them. Their actual permissions are enforced through a
+ * per-user permission set derived from these activities; this row drives the
+ * portal shell (which contractor, which activity tiles) and the
+ * acknowledgement-onboarding step. `userId` is `text` to match `user.id`.
+ */
+export const contractorUsers = pgTable(
+  'contractor_users',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    contractorId: varchar('contractor_id', { length: 26 })
+      .notNull()
+      .references(() => contractors.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    /** Granted portal activities (see @forma360/permissions/contractor-activities). */
+    activities: jsonb('activities').$type<string[]>().notNull().default([]),
+    /** Stamped when the user completes the acknowledgement-onboarding step. */
+    acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true, mode: 'date' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('contractor_users_user_unique').on(t.userId),
+    index('contractor_users_contractor_idx').on(t.tenantId, t.contractorId),
+  ],
+);
+
+export type ContractorUser = typeof contractorUsers.$inferSelect;

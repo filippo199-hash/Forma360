@@ -8,10 +8,16 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { redirect } from 'next/navigation';
 import { ChatBubble } from '../../src/components/ai/chat-bubble';
+import { PortalHeader } from '../../src/components/portal/portal-header';
 import { SiteFooter } from '../../src/components/site-footer';
 import { SiteHeader } from '../../src/components/site-header';
 import { SiteSidebar } from '../../src/components/site-sidebar';
+import {
+  isPathAllowedForExternal,
+  loadContractorUser,
+} from '../../src/server/contractor-portal';
 import { ThemeProvider } from '../../src/components/theme-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
 import { Toaster } from '../../src/components/ui/sonner';
@@ -74,7 +80,27 @@ export default async function LocaleLayout({
   // `x-pathname`; if it is ever absent we fall back to showing the sidebar.
   const pathname = requestHeaders.get('x-pathname') ?? '';
   const isHomePage = /^\/[a-z]{2}\/?$/.test(pathname);
-  const showSidebar = isSignedIn && !isHomePage;
+
+  // External contractor users (Phase 4) are confined to the portal + the
+  // route prefixes their granted activities unlock. Internal users have no
+  // `contractor_users` row and skip all of this.
+  const membership =
+    isSignedIn && session.user.tenantId != null
+      ? await loadContractorUser(session.user.id, session.user.tenantId as string)
+      : null;
+  const isExternal = membership !== null;
+  if (isExternal && !isHomePage) {
+    const onPortal = pathname.startsWith(`/${locale}/portal`);
+    // Force the acknowledgement-onboarding step before anything else.
+    if (membership.acknowledgedAt === null) {
+      if (!onPortal) redirect(`/${locale}/portal`);
+    } else if (!isPathAllowedForExternal(pathname, locale, membership.activities)) {
+      redirect(`/${locale}/portal`);
+    }
+  }
+
+  const showSidebar = isSignedIn && !isHomePage && !isExternal;
+  const displayName = session?.user.name ?? '';
 
   return (
     <html
@@ -86,7 +112,13 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <TRPCProvider>
-              {showSidebar ? (
+              {isExternal && !isHomePage ? (
+                /* External contractor portal — minimal shell, no internal nav. */
+                <div className="flex min-h-screen flex-col">
+                  <PortalHeader name={displayName} locale={locale} />
+                  <main className="flex-1">{children}</main>
+                </div>
+              ) : showSidebar ? (
                 /* Signed-in app shell — full-height dark sidebar on the left,
                  * header + content in the column to its right (Cantiere360). */
                 <div className="flex min-h-screen">

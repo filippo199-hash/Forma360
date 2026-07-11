@@ -91,7 +91,12 @@ export const permissionsRouter = router({
           updatedAt: permissionSets.updatedAt,
         })
         .from(permissionSets)
-        .where(eq(permissionSets.tenantId, ctx.tenantId))
+        .where(
+          and(
+            eq(permissionSets.tenantId, ctx.tenantId),
+            eq(permissionSets.externalManaged, false),
+          ),
+        )
         .orderBy(permissionSets.name),
       // Active users grouped by permission set — robust vs a correlated
       // subquery, which mis-rendered as 0 (usability audit).

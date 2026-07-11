@@ -19,6 +19,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { ContractorAssetsSection } from '../../../../src/components/contractors/contractor-assets';
+import { ContractorUsersSection } from '../../../../src/components/contractors/contractor-users';
 import { ContractorVisitsSection } from '../../../../src/components/contractors/contractor-visits';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
@@ -519,6 +520,9 @@ export default function ContractorDetailPage() {
 
       {/* Serviced assets (Phase 3) */}
       <ContractorAssetsSection contractorId={contractorId} canManage={canManage} />
+
+      {/* Portal users (Phase 4) */}
+      <ContractorUsersSection contractorId={contractorId} canManage={canManage} />
 
       {/* Add-requirement dialog */}
       <Dialog open={reqOpen} onOpenChange={setReqOpen}>

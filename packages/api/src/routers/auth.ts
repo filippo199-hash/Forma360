@@ -24,6 +24,7 @@
  *     the tenant name and inviter context.
  */
 import {
+  contractorUsers,
   groupMembers,
   invitations,
   permissionSets,
@@ -400,6 +401,21 @@ export function createAuthRouter(deps: AuthRouterDeps) {
                 addedAt: now,
               })),
             )
+            .onConflictDoNothing();
+        }
+
+        // External contractor invites (Phase 4) — link the new user to the
+        // contractor with the granted portal activities.
+        if (invite.contractorId !== null && invite.contractorId !== undefined) {
+          await tx
+            .insert(contractorUsers)
+            .values({
+              id: newId(),
+              tenantId: invite.tenantId,
+              contractorId: invite.contractorId,
+              userId,
+              activities: invite.contractorActivities ?? [],
+            })
             .onConflictDoNothing();
         }
 

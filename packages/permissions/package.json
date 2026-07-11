@@ -35,6 +35,10 @@
     "./dependents": {
       "types": "./src/dependents.ts",
       "default": "./src/dependents.ts"
+    },
+    "./contractor-activities": {
+      "types": "./src/contractor-activities.ts",
+      "default": "./src/contractor-activities.ts"
     }
   },
   "scripts": {

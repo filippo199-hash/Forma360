@@ -76,6 +76,14 @@ export const invitations = pgTable(
      */
     phone: text('phone'),
 
+    /**
+     * External contractor invites (Phase 4). When set, acceptance also creates
+     * a `contractor_users` row linking the new user to this contractor with the
+     * stored `contractorActivities`. Null for ordinary internal invites.
+     */
+    contractorId: varchar('contractor_id', { length: 26 }),
+    contractorActivities: jsonb('contractor_activities').$type<string[]>(),
+
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   },
   (t) => ({

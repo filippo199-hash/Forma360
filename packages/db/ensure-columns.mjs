@@ -289,6 +289,21 @@ try {
     CREATE UNIQUE INDEX IF NOT EXISTS "contractor_assets_unique" ON "contractor_assets" ("contractor_id", "asset_id");
     CREATE INDEX IF NOT EXISTS "contractor_assets_asset_idx" ON "contractor_assets" ("tenant_id", "asset_id");
     CREATE INDEX IF NOT EXISTS "contractor_assets_contractor_idx" ON "contractor_assets" ("tenant_id", "contractor_id");
+    -- 0047: Contractors Phase 4 (external contractor users)
+    ALTER TABLE "permission_sets" ADD COLUMN IF NOT EXISTS "external_managed" boolean NOT NULL DEFAULT false;
+    ALTER TABLE "invitations" ADD COLUMN IF NOT EXISTS "contractor_id" varchar(26);
+    ALTER TABLE "invitations" ADD COLUMN IF NOT EXISTS "contractor_activities" jsonb;
+    CREATE TABLE IF NOT EXISTS "contractor_users" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "contractor_id" varchar(26) NOT NULL REFERENCES "contractors"("id") ON DELETE CASCADE,
+      "user_id" text NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+      "activities" jsonb NOT NULL DEFAULT '[]'::jsonb,
+      "acknowledged_at" timestamptz,
+      "created_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS "contractor_users_user_unique" ON "contractor_users" ("user_id");
+    CREATE INDEX IF NOT EXISTS "contractor_users_contractor_idx" ON "contractor_users" ("tenant_id", "contractor_id");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

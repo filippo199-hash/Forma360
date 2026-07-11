@@ -16,12 +16,20 @@ import {
   contractorGateFields,
   contractorRequirementTemplates,
   contractorRequirements,
+  contractorUsers,
   contractorVisitEvents,
   contractorVisits,
   contractors,
+  invitations,
+  permissionSets,
   sites,
+  tenants,
   user,
 } from '@forma360/db/schema';
+import {
+  CONTRACTOR_ACTIVITIES,
+  activitiesToPermissionKeys,
+} from '@forma360/permissions/contractor-activities';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { aliasedTable, and, asc, between, desc, eq, inArray, isNull } from 'drizzle-orm';
@@ -138,6 +146,30 @@ async function loadVisitOrThrow(db: Database, tenantId: string, id: string) {
 
 /** ISO 8601 datetime (e.g. from `new Date().toISOString()`). */
 const isoDateTime = z.string().datetime();
+
+/**
+ * Email dispatch for the external-contractor-user invite. Wired at app boot
+ * via `setContractorsRouterDeps` (mirrors the users router); null in tests so
+ * the invitation row is created without sending mail.
+ */
+export interface ContractorsRouterDeps {
+  sendEmail:
+    | ((args: {
+        to: string;
+        templateKey: 'invite';
+        variables: Record<string, string>;
+      }) => Promise<unknown>)
+    | null;
+  appUrl: string;
+}
+const contractorsDeps: ContractorsRouterDeps = { sendEmail: null, appUrl: 'http://localhost:3000' };
+export function setContractorsRouterDeps(deps: ContractorsRouterDeps): void {
+  contractorsDeps.sendEmail = deps.sendEmail;
+  contractorsDeps.appUrl = deps.appUrl;
+}
+
+const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const activitiesInput = z.array(z.enum(CONTRACTOR_ACTIVITIES)).default([]);
 
 /** Answers to the configured gate fields, keyed by gate-field id. */
 const capturedFieldsSchema = z.record(z.string().length(26), z.string().max(2000));
@@ -1278,5 +1310,273 @@ export const contractorsRouter = router({
           );
         return { ok: true as const };
       }),
+  }),
+
+  // ─── External contractor users / portal (Phase 4) ──────────────────────
+  users: router({
+    /** Accepted external users + pending invites for a contractor. */
+    list: tenantProcedure
+      .use(requirePermission('contractors.view'))
+      .input(z.object({ contractorId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        const members = await ctx.db
+          .select({
+            id: contractorUsers.id,
+            userId: contractorUsers.userId,
+            name: user.name,
+            email: user.email,
+            activities: contractorUsers.activities,
+            acknowledgedAt: contractorUsers.acknowledgedAt,
+            deactivatedAt: user.deactivatedAt,
+          })
+          .from(contractorUsers)
+          .innerJoin(user, eq(contractorUsers.userId, user.id))
+          .where(
+            and(
+              eq(contractorUsers.tenantId, ctx.tenantId),
+              eq(contractorUsers.contractorId, input.contractorId),
+            ),
+          )
+          .orderBy(asc(user.name));
+
+        const pending = await ctx.db
+          .select({
+            id: invitations.id,
+            email: invitations.email,
+            name: invitations.name,
+            activities: invitations.contractorActivities,
+            createdAt: invitations.createdAt,
+          })
+          .from(invitations)
+          .where(
+            and(
+              eq(invitations.tenantId, ctx.tenantId),
+              eq(invitations.contractorId, input.contractorId),
+              isNull(invitations.acceptedAt),
+            ),
+          )
+          .orderBy(desc(invitations.createdAt));
+
+        return { members, pending };
+      }),
+
+    /** Invite a person to the portal as this contractor's user. */
+    invite: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(
+        z.object({
+          contractorId: z.string().length(26),
+          email: z.string().email().max(200),
+          name: z.string().max(200).optional(),
+          activities: activitiesInput,
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const contractor = await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+        const emailLower = input.email.trim().toLowerCase();
+
+        const existingUser = await ctx.db
+          .select({ id: user.id })
+          .from(user)
+          .where(and(eq(user.tenantId, ctx.tenantId), eq(user.email, emailLower)))
+          .limit(1);
+        if (existingUser[0] !== undefined) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'A user with this email already exists' });
+        }
+
+        // Per-user, platform-managed permission set derived from activities.
+        const permissionSetId = newId();
+        await ctx.db.insert(permissionSets).values({
+          id: permissionSetId,
+          tenantId: ctx.tenantId,
+          name: `Contractor · ${emailLower}`,
+          description: `Portal access for ${contractor.name}`,
+          permissions: activitiesToPermissionKeys(input.activities),
+          isSystem: false,
+          externalManaged: true,
+        });
+
+        const token = randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + INVITATION_TTL_MS);
+        // Reuse an existing active invite for this email, else insert.
+        const active = await ctx.db
+          .select({ id: invitations.id })
+          .from(invitations)
+          .where(
+            and(
+              eq(invitations.tenantId, ctx.tenantId),
+              eq(invitations.email, emailLower),
+              isNull(invitations.acceptedAt),
+            ),
+          )
+          .limit(1);
+        let invitationId: string;
+        if (active[0] !== undefined) {
+          invitationId = active[0].id;
+          await ctx.db
+            .update(invitations)
+            .set({
+              token,
+              expiresAt,
+              permissionSetId,
+              contractorId: input.contractorId,
+              contractorActivities: input.activities,
+              ...(input.name !== undefined ? { name: input.name } : {}),
+            })
+            .where(eq(invitations.id, invitationId));
+        } else {
+          invitationId = newId();
+          await ctx.db.insert(invitations).values({
+            id: invitationId,
+            tenantId: ctx.tenantId,
+            email: emailLower,
+            ...(input.name !== undefined ? { name: input.name } : {}),
+            permissionSetId,
+            token,
+            invitedByUserId: ctx.auth.userId,
+            expiresAt,
+            contractorId: input.contractorId,
+            contractorActivities: input.activities,
+          });
+        }
+
+        if (contractorsDeps.sendEmail !== null) {
+          try {
+            const [tenantRow] = await ctx.db
+              .select({ name: tenants.name })
+              .from(tenants)
+              .where(eq(tenants.id, ctx.tenantId))
+              .limit(1);
+            const inviteUrl = `${contractorsDeps.appUrl.replace(/\/$/, '')}/en/invite/${token}`;
+            await contractorsDeps.sendEmail({
+              to: emailLower,
+              templateKey: 'invite',
+              variables: {
+                inviterName: contractor.name,
+                tenantName: tenantRow?.name ?? 'Forma360',
+                inviteUrl,
+                expiresIn: '7 days',
+              },
+            });
+          } catch (err) {
+            ctx.logger.error({ err, invitationId }, '[contractors] portal invite email failed');
+          }
+        }
+        return { invitationId, token };
+      }),
+
+    /** Change a portal user's activities (updates their derived permission set). */
+    updateActivities: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ userId: z.string(), activities: activitiesInput }))
+      .mutation(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select({ id: contractorUsers.id })
+          .from(contractorUsers)
+          .where(
+            and(
+              eq(contractorUsers.tenantId, ctx.tenantId),
+              eq(contractorUsers.userId, input.userId),
+            ),
+          )
+          .limit(1);
+        if (rows[0] === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+        await ctx.db
+          .update(contractorUsers)
+          .set({ activities: input.activities })
+          .where(eq(contractorUsers.id, rows[0].id));
+
+        const [u] = await ctx.db
+          .select({ permissionSetId: user.permissionSetId })
+          .from(user)
+          .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, input.userId)))
+          .limit(1);
+        if (u !== undefined) {
+          await ctx.db
+            .update(permissionSets)
+            .set({ permissions: activitiesToPermissionKeys(input.activities) })
+            .where(
+              and(
+                eq(permissionSets.tenantId, ctx.tenantId),
+                eq(permissionSets.id, u.permissionSetId),
+                eq(permissionSets.externalManaged, true),
+              ),
+            );
+        }
+        return { ok: true as const };
+      }),
+
+    /** Revoke portal access: unlink + deactivate the user (blocks login). */
+    remove: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ userId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        await ctx.db
+          .delete(contractorUsers)
+          .where(
+            and(
+              eq(contractorUsers.tenantId, ctx.tenantId),
+              eq(contractorUsers.userId, input.userId),
+            ),
+          );
+        await ctx.db
+          .update(user)
+          .set({ deactivatedAt: new Date() })
+          .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, input.userId)));
+        return { ok: true as const };
+      }),
+
+    /** Cancel a pending portal invite. */
+    cancelInvite: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ invitationId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        await ctx.db
+          .delete(invitations)
+          .where(
+            and(
+              eq(invitations.tenantId, ctx.tenantId),
+              eq(invitations.id, input.invitationId),
+              isNull(invitations.acceptedAt),
+            ),
+          );
+        return { ok: true as const };
+      }),
+
+    /** Portal: the signed-in external user's own membership (or null). */
+    me: tenantProcedure.query(async ({ ctx }) => {
+      const rows = await ctx.db
+        .select({
+          contractorId: contractorUsers.contractorId,
+          contractorName: contractors.name,
+          activities: contractorUsers.activities,
+          acknowledgedAt: contractorUsers.acknowledgedAt,
+        })
+        .from(contractorUsers)
+        .innerJoin(contractors, eq(contractorUsers.contractorId, contractors.id))
+        .where(
+          and(
+            eq(contractorUsers.tenantId, ctx.tenantId),
+            eq(contractorUsers.userId, ctx.auth.userId),
+          ),
+        )
+        .limit(1);
+      return rows[0] ?? null;
+    }),
+
+    /** Portal: the external user completes the acknowledgement-onboarding step. */
+    acknowledge: tenantProcedure.mutation(async ({ ctx }) => {
+      await ctx.db
+        .update(contractorUsers)
+        .set({ acknowledgedAt: new Date() })
+        .where(
+          and(
+            eq(contractorUsers.tenantId, ctx.tenantId),
+            eq(contractorUsers.userId, ctx.auth.userId),
+          ),
+        );
+      return { ok: true as const };
+    }),
   }),
 });

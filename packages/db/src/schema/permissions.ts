@@ -44,6 +44,13 @@ export const permissionSets = pgTable(
      */
     isSystem: boolean('is_system').notNull().default(false),
 
+    /**
+     * `true` for per-user sets the platform manages automatically (e.g. an
+     * external contractor user's activity-derived set — Phase 4). Hidden from
+     * the permission-sets admin list; not user-editable.
+     */
+    externalManaged: boolean('external_managed').notNull().default(false),
+
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
       .notNull()
       .default(sql`now()`),
