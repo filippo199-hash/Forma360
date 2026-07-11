@@ -8,6 +8,9 @@
 import { randomBytes } from 'node:crypto';
 import type { Database } from '@forma360/db/client';
 import {
+  assetTypes,
+  assets,
+  contractorAssets,
   contractorDocuments,
   contractorGateConfig,
   contractorGateFields,
@@ -1171,6 +1174,108 @@ export const contractorsRouter = router({
           actorUserId: null,
           ...(input.capturedFields !== undefined ? { capturedFields: input.capturedFields } : {}),
         });
+        return { ok: true as const };
+      }),
+  }),
+
+  // ─── Contractor ↔ asset link (Phase 3) ─────────────────────────────────
+  assets: router({
+    /** Assets this contractor services. */
+    listForContractor: tenantProcedure
+      .use(requirePermission('contractors.view'))
+      .input(z.object({ contractorId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        return ctx.db
+          .select({
+            linkId: contractorAssets.id,
+            assetId: assets.id,
+            name: assets.name,
+            typeName: assetTypes.name,
+            siteName: sites.name,
+            note: contractorAssets.note,
+          })
+          .from(contractorAssets)
+          .innerJoin(assets, eq(contractorAssets.assetId, assets.id))
+          .leftJoin(assetTypes, eq(assets.typeId, assetTypes.id))
+          .leftJoin(sites, eq(assets.siteId, sites.id))
+          .where(
+            and(
+              eq(contractorAssets.tenantId, ctx.tenantId),
+              eq(contractorAssets.contractorId, input.contractorId),
+              isNull(assets.archivedAt),
+            ),
+          )
+          .orderBy(asc(assets.name));
+      }),
+
+    /** Contractors that service this asset. */
+    listForAsset: tenantProcedure
+      .use(requirePermission('contractors.view'))
+      .input(z.object({ assetId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        return ctx.db
+          .select({
+            linkId: contractorAssets.id,
+            contractorId: contractors.id,
+            name: contractors.name,
+            category: contractors.category,
+            note: contractorAssets.note,
+          })
+          .from(contractorAssets)
+          .innerJoin(contractors, eq(contractorAssets.contractorId, contractors.id))
+          .where(
+            and(
+              eq(contractorAssets.tenantId, ctx.tenantId),
+              eq(contractorAssets.assetId, input.assetId),
+              isNull(contractors.archivedAt),
+            ),
+          )
+          .orderBy(asc(contractors.name));
+      }),
+
+    link: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(
+        z.object({
+          contractorId: z.string().length(26),
+          assetId: z.string().length(26),
+          note: z.string().max(500).nullable().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+        const assetRows = await ctx.db
+          .select({ id: assets.id })
+          .from(assets)
+          .where(and(eq(assets.tenantId, ctx.tenantId), eq(assets.id, input.assetId)))
+          .limit(1);
+        if (assetRows[0] === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+        const id = newId();
+        await ctx.db
+          .insert(contractorAssets)
+          .values({
+            id,
+            tenantId: ctx.tenantId,
+            contractorId: input.contractorId,
+            assetId: input.assetId,
+            note: input.note ?? null,
+          })
+          .onConflictDoNothing({
+            target: [contractorAssets.contractorId, contractorAssets.assetId],
+          });
+        return { ok: true as const };
+      }),
+
+    unlink: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ id: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        await ctx.db
+          .delete(contractorAssets)
+          .where(
+            and(eq(contractorAssets.tenantId, ctx.tenantId), eq(contractorAssets.id, input.id)),
+          );
         return { ok: true as const };
       }),
   }),

@@ -24,6 +24,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
+import { AssetContractorsSection } from '../../../../src/components/contractors/contractor-assets';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -49,6 +50,8 @@ export default function AssetDetailPage() {
   const canManage = useHasPermission('assets.manage');
   const canRecord = useHasPermission('assets.readings.record');
   const canManageMaintenance = useHasPermission('assets.maintenance.manage');
+  const canViewContractors = useHasPermission('contractors.view');
+  const canLinkContractors = useHasPermission('contractors.manage');
 
   const [tab, setTab] = useState<Tab>('overview');
   const [editing, setEditing] = useState(false);
@@ -381,7 +384,8 @@ export default function AssetDetailPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardContent className="space-y-3 p-6 text-sm">
                 <h2 className="text-base font-semibold">{t('detailsHeading')}</h2>
@@ -422,6 +426,10 @@ export default function AssetDetailPage() {
                 )}
               </CardContent>
             </Card>
+            </div>
+            {canViewContractors ? (
+              <AssetContractorsSection assetId={assetId} canManage={canLinkContractors} />
+            ) : null}
           </div>
         )
       ) : null}

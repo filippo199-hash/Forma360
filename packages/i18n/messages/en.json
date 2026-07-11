@@ -3330,6 +3330,24 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No"
+    },
+    "assets": {
+      "heading": "Serviced assets",
+      "contractorSubtitle": "Assets this contractor installs, services, or maintains.",
+      "assetHeading": "Contractors",
+      "assetSubtitle": "Contractors who service this asset.",
+      "linkAsset": "Link asset",
+      "linkContractor": "Link contractor",
+      "unlink": "Unlink",
+      "noAssets": "No assets linked yet.",
+      "noContractors": "No contractors linked yet.",
+      "assetLabel": "Asset",
+      "contractorLabel": "Contractor",
+      "selectAsset": "Select an asset…",
+      "selectContractor": "Select a contractor…",
+      "noteLabel": "Note",
+      "notePlaceholder": "Optional — e.g. annual service",
+      "linkedToast": "Linked."
     }
   }
 }

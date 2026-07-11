@@ -277,6 +277,18 @@ try {
       "updated_at" timestamptz NOT NULL DEFAULT now()
     );
     CREATE UNIQUE INDEX IF NOT EXISTS "contractor_gate_config_token_idx" ON "contractor_gate_config" ("gate_token");
+    -- 0046: Contractors Phase 3 (contractor ↔ asset link)
+    CREATE TABLE IF NOT EXISTS "contractor_assets" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "contractor_id" varchar(26) NOT NULL REFERENCES "contractors"("id") ON DELETE CASCADE,
+      "asset_id" text NOT NULL REFERENCES "assets"("id") ON DELETE CASCADE,
+      "note" text,
+      "created_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS "contractor_assets_unique" ON "contractor_assets" ("contractor_id", "asset_id");
+    CREATE INDEX IF NOT EXISTS "contractor_assets_asset_idx" ON "contractor_assets" ("tenant_id", "asset_id");
+    CREATE INDEX IF NOT EXISTS "contractor_assets_contractor_idx" ON "contractor_assets" ("tenant_id", "contractor_id");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

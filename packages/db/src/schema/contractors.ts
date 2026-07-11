@@ -16,8 +16,10 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { assets } from './assets';
 import { user } from './auth';
 import { tenants } from './tenants';
 
@@ -285,3 +287,35 @@ export const contractorGateConfig = pgTable('contractor_gate_config', {
 });
 
 export type ContractorGateConfig = typeof contractorGateConfig.$inferSelect;
+
+/**
+ * Contractor ↔ asset link (Phase 3).
+ *
+ * Many-to-many: an asset can be serviced by several contractors, and a
+ * contractor services many assets. `assetId` is `text` to match `assets.id`
+ * (which is a text ULID, not a varchar(26)). Mirrors `maintenanceProgramAssets`.
+ */
+export const contractorAssets = pgTable(
+  'contractor_assets',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    contractorId: varchar('contractor_id', { length: 26 })
+      .notNull()
+      .references(() => contractors.id, { onDelete: 'cascade' }),
+    assetId: text('asset_id')
+      .notNull()
+      .references(() => assets.id, { onDelete: 'cascade' }),
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('contractor_assets_unique').on(t.contractorId, t.assetId),
+    index('contractor_assets_asset_idx').on(t.tenantId, t.assetId),
+    index('contractor_assets_contractor_idx').on(t.tenantId, t.contractorId),
+  ],
+);
+
+export type ContractorAsset = typeof contractorAssets.$inferSelect;
