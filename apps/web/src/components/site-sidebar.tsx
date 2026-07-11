@@ -7,6 +7,7 @@ import {
   Building2,
   ClipboardCheck,
   FolderOpen,
+  HardHat,
   ListChecks,
   Settings,
   Wrench,
@@ -32,6 +33,7 @@ interface NavItem {
     | 'headsUp'
     | 'assets'
     | 'documents'
+    | 'contractors'
     | 'settings';
   href: string;
   icon: LucideIcon;
@@ -62,6 +64,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
     { key: 'headsUp', href: `/${locale}/heads-up`, icon: Bell },
     { key: 'assets', href: `/${locale}/assets`, icon: Wrench },
     { key: 'documents', href: `/${locale}/documents`, icon: FolderOpen },
+    { key: 'contractors', href: `/${locale}/contractors`, icon: HardHat },
   ];
 
   const settingsItem: NavItem = {

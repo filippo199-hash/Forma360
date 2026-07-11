@@ -164,6 +164,51 @@ try {
       CONSTRAINT "heads_up_documents_heads_up_document_pk" PRIMARY KEY ("heads_up_id", "document_id")
     );
     CREATE INDEX IF NOT EXISTS "heads_up_documents_document_idx" ON "heads_up_documents" ("tenant_id", "document_id");
+    -- 0042: Contractors module (directory + compliance documents)
+    CREATE TABLE IF NOT EXISTS "contractors" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "name" text NOT NULL,
+      "category" text,
+      "status" text NOT NULL DEFAULT 'active',
+      "primary_contact_name" text,
+      "primary_contact_email" text,
+      "notes" text,
+      "archived_at" timestamptz,
+      "created_at" timestamptz NOT NULL DEFAULT now(),
+      "updated_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "contractors_tenant_idx" ON "contractors" ("tenant_id");
+    CREATE TABLE IF NOT EXISTS "contractor_requirements" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "contractor_id" varchar(26) NOT NULL REFERENCES "contractors"("id") ON DELETE CASCADE,
+      "name" text NOT NULL,
+      "blocking" boolean NOT NULL DEFAULT true,
+      "recurrence_months" integer,
+      "created_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "contractor_requirements_contractor_idx" ON "contractor_requirements" ("tenant_id", "contractor_id");
+    CREATE TABLE IF NOT EXISTS "contractor_documents" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "contractor_id" varchar(26) NOT NULL REFERENCES "contractors"("id") ON DELETE CASCADE,
+      "requirement_id" varchar(26) NOT NULL REFERENCES "contractor_requirements"("id") ON DELETE CASCADE,
+      "storage_key" text NOT NULL,
+      "filename" text NOT NULL,
+      "mime_type" text NOT NULL,
+      "size_bytes" integer NOT NULL DEFAULT 0,
+      "start_date" date,
+      "end_date" date,
+      "status" text NOT NULL DEFAULT 'pending',
+      "reject_reason" text,
+      "uploaded_by_user_id" varchar(64),
+      "verified_by_user_id" varchar(64),
+      "verified_at" timestamptz,
+      "created_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "contractor_documents_requirement_idx" ON "contractor_documents" ("tenant_id", "requirement_id");
+    CREATE INDEX IF NOT EXISTS "contractor_documents_contractor_idx" ON "contractor_documents" ("tenant_id", "contractor_id");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

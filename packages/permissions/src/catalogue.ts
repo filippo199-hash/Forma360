@@ -37,6 +37,7 @@ export const PERMISSION_MODULES = [
   'training',
   'integrations',
   'billing',
+  'contractors',
   'org',
 ] as const;
 
@@ -129,6 +130,11 @@ export const PERMISSION_KEYS = [
   // ─── Integrations & billing (admin-only) ─────────────────────────────────
   'integrations.manage',
   'billing.manage',
+
+  // ─── Contractors (Phase 1: directory + compliance) ───────────────────────
+  'contractors.view',
+  'contractors.manage',
+  'contractors.verifyDocs',
 
   // ─── Organisation settings ───────────────────────────────────────────────
   // `org.settings` is what the S-E02 last-admin check counts: any user whose

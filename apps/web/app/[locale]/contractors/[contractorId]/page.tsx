@@ -1,0 +1,459 @@
+'use client';
+
+import { ArrowLeft, Check, FileText, Plus, Upload, X } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '../../../../src/components/ui/button';
+import { Card, CardContent } from '../../../../src/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../src/components/ui/dialog';
+import { Input } from '../../../../src/components/ui/input';
+import { Label } from '../../../../src/components/ui/label';
+import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { cn } from '../../../../src/lib/cn';
+import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { trpc } from '../../../../src/lib/trpc/client';
+
+const DOC_BADGE: Record<string, string> = {
+  verified: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
+  pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
+  rejected: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
+};
+
+export default function ContractorDetailPage() {
+  const t = useTranslations('contractors');
+  const tCommon = useTranslations('common');
+  const format = useFormatter();
+  const params = useParams<{ locale: string; contractorId: string }>();
+  const locale = params.locale ?? 'en';
+  const contractorId = params.contractorId ?? '';
+  const canManage = useHasPermission('contractors.manage');
+  const canVerify = useHasPermission('contractors.verifyDocs');
+  const utils = trpc.useUtils();
+  const router = useRouter();
+
+  const { data, isLoading } = trpc.contractors.get.useQuery(
+    { id: contractorId },
+    { enabled: contractorId !== '' },
+  );
+
+  const invalidate = () => void utils.contractors.get.invalidate({ id: contractorId });
+  const onErr = (err: { message: string }) =>
+    toast.error(err.message.length > 0 ? err.message : t('error'));
+
+  const addRequirement = trpc.contractors.addRequirement.useMutation({
+    onSuccess: () => {
+      invalidate();
+      setReqOpen(false);
+      setReqName('');
+      setReqBlocking(true);
+    },
+    onError: onErr,
+  });
+  const removeRequirement = trpc.contractors.removeRequirement.useMutation({
+    onSuccess: invalidate,
+    onError: onErr,
+  });
+  const addDocument = trpc.contractors.addDocument.useMutation({
+    onSuccess: () => {
+      toast.success(t('uploadedToast'));
+      invalidate();
+      setUploadReqId(null);
+      setUpStart('');
+      setUpEnd('');
+    },
+    onError: onErr,
+  });
+  const verifyDocument = trpc.contractors.verifyDocument.useMutation({
+    onSuccess: () => {
+      toast.success(t('verifiedToast'));
+      invalidate();
+    },
+    onError: onErr,
+  });
+  const rejectDocument = trpc.contractors.rejectDocument.useMutation({
+    onSuccess: () => {
+      toast.success(t('rejectedToast'));
+      invalidate();
+    },
+    onError: onErr,
+  });
+  const archive = trpc.contractors.archive.useMutation({
+    onSuccess: () => {
+      toast.success(t('archivedToast'));
+      router.push(`/${locale}/contractors`);
+    },
+    onError: onErr,
+  });
+
+  // Add-requirement dialog
+  const [reqOpen, setReqOpen] = useState(false);
+  const [reqName, setReqName] = useState('');
+  const [reqBlocking, setReqBlocking] = useState(true);
+
+  // Upload-document dialog
+  const [uploadReqId, setUploadReqId] = useState<string | null>(null);
+  const [upStart, setUpStart] = useState('');
+  const [upEnd, setUpEnd] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file === undefined || uploadReqId === null) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('contractorId', contractorId);
+      const res = await fetch('/api/upload/contractor-doc', { method: 'POST', body: form });
+      if (!res.ok) throw new Error('upload-failed');
+      const body = (await res.json()) as {
+        storageKey: string;
+        filename: string;
+        mimeType: string;
+        sizeBytes: number;
+      };
+      addDocument.mutate({
+        requirementId: uploadReqId,
+        storageKey: body.storageKey,
+        filename: body.filename,
+        mimeType: body.mimeType,
+        sizeBytes: body.sizeBytes,
+        ...(upStart !== '' ? { startDate: upStart } : {}),
+        ...(upEnd !== '' ? { endDate: upEnd } : {}),
+      });
+    } catch {
+      toast.error(t('error'));
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  }
+
+  if (isLoading || data === undefined) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
+  }
+
+  const { contractor, requirements, complianceStatus } = data;
+  const statusBadge =
+    complianceStatus === 'compliant'
+      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100'
+      : complianceStatus === 'non_compliant'
+        ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200'
+        : 'bg-muted text-muted-foreground';
+
+  return (
+    <div className="space-y-6">
+      <Link
+        href={`/${locale}/contractors`}
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        {t('backToList')}
+      </Link>
+
+      <header className="flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">{contractor.name}</h1>
+        <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', statusBadge)}>
+          {t(`status_${complianceStatus}` as 'status_compliant')}
+        </span>
+        {contractor.category !== null && contractor.category !== '' ? (
+          <span className="rounded-md border bg-background px-2 py-0.5 text-xs text-muted-foreground">
+            {contractor.category}
+          </span>
+        ) : null}
+        <div className="ml-auto flex items-center gap-2">
+          {canManage ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => {
+                if (window.confirm(t('archiveConfirm')))
+                  archive.mutate({ id: contractorId });
+              }}
+            >
+              {t('archiveButton')}
+            </Button>
+          ) : null}
+        </div>
+      </header>
+
+      {contractor.primaryContactName !== null ||
+      contractor.primaryContactEmail !== null ||
+      (contractor.notes !== null && contractor.notes !== '') ? (
+        <Card>
+          <CardContent className="grid gap-x-8 gap-y-2 p-4 text-sm sm:grid-cols-2">
+            {contractor.primaryContactName !== null || contractor.primaryContactEmail !== null ? (
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t('contactLabel')}
+                </p>
+                <p>{contractor.primaryContactName ?? '—'}</p>
+                {contractor.primaryContactEmail !== null ? (
+                  <p className="text-muted-foreground">{contractor.primaryContactEmail}</p>
+                ) : null}
+              </div>
+            ) : null}
+            {contractor.notes !== null && contractor.notes !== '' ? (
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t('notesLabel')}
+                </p>
+                <p className="whitespace-pre-wrap">{contractor.notes}</p>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* Requirements */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold">{t('requirementsHeading')}</h2>
+            <p className="text-sm text-muted-foreground">{t('requirementsSubtitle')}</p>
+          </div>
+          {canManage ? (
+            <Button variant="outline" size="sm" onClick={() => setReqOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              {t('addRequirement')}
+            </Button>
+          ) : null}
+        </div>
+
+        {requirements.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              {t('noRequirements')}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {requirements.map((r) => (
+              <Card key={r.id}>
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{r.name}</span>
+                    {r.blocking ? (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700 dark:bg-slate-700 dark:text-slate-100">
+                        {t('reqBlocking')}
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                        {t('reqAdvisory')}
+                      </span>
+                    )}
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-0.5 text-[11px] font-medium',
+                        r.satisfied
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100'
+                          : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
+                      )}
+                    >
+                      {r.satisfied ? t('reqSatisfied') : t('reqMissing')}
+                    </span>
+                    <div className="ml-auto flex items-center gap-2">
+                      {canManage ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7"
+                          onClick={() => {
+                            setUploadReqId(r.id);
+                            setUpStart('');
+                            setUpEnd('');
+                          }}
+                        >
+                          <Upload className="mr-1 h-3.5 w-3.5" />
+                          {t('uploadDocument')}
+                        </Button>
+                      ) : null}
+                      {canManage ? (
+                        <button
+                          type="button"
+                          className="text-xs text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            if (window.confirm(t('reqRemoveConfirm')))
+                              removeRequirement.mutate({ id: r.id });
+                          }}
+                        >
+                          {t('reqRemove')}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {r.documents.length > 0 ? (
+                    <ul className="divide-y rounded-md border">
+                      {r.documents.map((d) => (
+                        <li key={d.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+                          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate">{d.filename}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {d.endDate !== null
+                                ? t('expires', {
+                                    date: format.dateTime(new Date(`${d.endDate}T00:00:00`), {
+                                      dateStyle: 'medium',
+                                    }),
+                                  })
+                                : t('noExpiry')}
+                              {d.status === 'rejected' && d.rejectReason !== null
+                                ? ` · ${d.rejectReason}`
+                                : ''}
+                            </p>
+                          </div>
+                          <span
+                            className={cn(
+                              'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                              DOC_BADGE[d.status] ?? 'bg-muted text-muted-foreground',
+                            )}
+                          >
+                            {t(`docStatus_${d.status}` as 'docStatus_pending')}
+                          </span>
+                          {canVerify && d.status !== 'verified' ? (
+                            <button
+                              type="button"
+                              title={t('verifyButton')}
+                              className="shrink-0 rounded p-1 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                              onClick={() => verifyDocument.mutate({ id: d.id })}
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                          ) : null}
+                          {canVerify && d.status !== 'rejected' ? (
+                            <button
+                              type="button"
+                              title={t('rejectButton')}
+                              className="shrink-0 rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                              onClick={() => {
+                                const reason = window.prompt(t('rejectReasonPrompt')) ?? '';
+                                rejectDocument.mutate({ id: d.id, reason });
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Add-requirement dialog */}
+      <Dialog open={reqOpen} onOpenChange={setReqOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('addRequirement')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="req-name">{t('fieldName')}</Label>
+              <Input
+                id="req-name"
+                value={reqName}
+                onChange={(e) => setReqName(e.target.value)}
+                placeholder={t('reqNamePlaceholder')}
+                maxLength={200}
+                autoFocus
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={reqBlocking}
+                onChange={(e) => setReqBlocking(e.target.checked)}
+              />
+              {t('reqBlocking')}
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReqOpen(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              disabled={addRequirement.isPending || reqName.trim() === ''}
+              onClick={() =>
+                addRequirement.mutate({
+                  contractorId,
+                  name: reqName.trim(),
+                  blocking: reqBlocking,
+                })
+              }
+            >
+              {tCommon('save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload-document dialog */}
+      <Dialog open={uploadReqId !== null} onOpenChange={(o) => !o && setUploadReqId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('uploadDocument')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="up-start">{t('startDateLabel')}</Label>
+                <Input
+                  id="up-start"
+                  type="date"
+                  value={upStart}
+                  onChange={(e) => setUpStart(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="up-end">{t('endDateLabel')}</Label>
+                <Input
+                  id="up-end"
+                  type="date"
+                  value={upEnd}
+                  onChange={(e) => setUpEnd(e.target.value)}
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading || addDocument.isPending}
+              className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-center text-sm transition-colors hover:border-primary/60 hover:bg-muted/40 disabled:opacity-60"
+            >
+              <Upload className="h-6 w-6 text-muted-foreground" />
+              {uploading || addDocument.isPending ? t('uploading') : t('chooseFile')}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              className="hidden"
+              onChange={handleFile}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
