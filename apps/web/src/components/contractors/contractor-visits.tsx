@@ -1,0 +1,546 @@
+'use client';
+
+import { CalendarClock, LogIn, LogOut, ShieldCheck } from 'lucide-react';
+import { useFormatter, useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { cn } from '../../lib/cn';
+import { trpc } from '../../lib/trpc/client';
+import { Button } from '../ui/button';
+import { Card, CardContent } from '../ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+
+export type VisitStatus =
+  | 'scheduled'
+  | 'checked_in'
+  | 'checked_out'
+  | 'cancelled'
+  | 'no_show';
+
+export const VISIT_STATUS_BADGE: Record<VisitStatus, string> = {
+  scheduled: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
+  checked_in: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
+  checked_out: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
+  cancelled: 'bg-muted text-muted-foreground line-through',
+  no_show: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
+};
+
+/** Small coloured status pill for a visit. */
+export function VisitStatusBadge({ status }: { status: string }) {
+  const t = useTranslations('contractors');
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+        VISIT_STATUS_BADGE[status as VisitStatus] ?? 'bg-muted text-muted-foreground',
+      )}
+    >
+      {t(`visits.status_${status}` as 'visits.status_scheduled')}
+    </span>
+  );
+}
+
+/** Local datetime-local string (YYYY-MM-DDTHH:mm) for a given day at 09:00. */
+function dayAt9(day: string | undefined): string {
+  if (day === undefined) return '';
+  return `${day}T09:00`;
+}
+
+/**
+ * Create / walk-in dialog. When `fixedContractorId` is set the contractor is
+ * locked (used from a contractor's own page); otherwise a picker is shown.
+ */
+export function VisitCreateDialog({
+  open,
+  onOpenChange,
+  fixedContractorId,
+  defaultDay,
+  walkIn = false,
+  onDone,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  fixedContractorId?: string;
+  defaultDay?: string;
+  walkIn?: boolean;
+  onDone: () => void;
+}) {
+  const t = useTranslations('contractors');
+  const tCommon = useTranslations('common');
+
+  const contractorsQ = trpc.contractors.list.useQuery(undefined, {
+    enabled: open && fixedContractorId === undefined,
+  });
+  const sitesQ = trpc.sites.list.useQuery(undefined, { enabled: open, retry: false });
+
+  const [contractorId, setContractorId] = useState(fixedContractorId ?? '');
+  const [title, setTitle] = useState('');
+  const [siteId, setSiteId] = useState('');
+  const [start, setStart] = useState(dayAt9(defaultDay));
+  const [end, setEnd] = useState('');
+  const [notes, setNotes] = useState('');
+  const [authorize, setAuthorize] = useState(true);
+
+  const reset = () => {
+    setContractorId(fixedContractorId ?? '');
+    setTitle('');
+    setSiteId('');
+    setStart(dayAt9(defaultDay));
+    setEnd('');
+    setNotes('');
+    setAuthorize(true);
+  };
+
+  const onErr = (err: { message: string }) =>
+    toast.error(err.message.length > 0 ? err.message : t('error'));
+
+  const create = trpc.contractors.visits.create.useMutation({
+    onSuccess: () => {
+      toast.success(t('visits.visitCreatedToast'));
+      onOpenChange(false);
+      reset();
+      onDone();
+    },
+    onError: onErr,
+  });
+  const createWalkIn = trpc.contractors.visits.createWalkIn.useMutation({
+    onSuccess: () => {
+      toast.success(t('visits.walkInToast'));
+      onOpenChange(false);
+      reset();
+      onDone();
+    },
+    onError: onErr,
+  });
+
+  const pending = create.isPending || createWalkIn.isPending;
+  const cid = fixedContractorId ?? contractorId;
+  const canSubmit = cid !== '' && title.trim() !== '' && (walkIn || start !== '');
+
+  function submit() {
+    if (!canSubmit) return;
+    const siteArg = siteId === '' ? {} : { siteId };
+    if (walkIn) {
+      createWalkIn.mutate({ contractorId: cid, title: title.trim(), ...siteArg });
+    } else {
+      create.mutate({
+        contractorId: cid,
+        title: title.trim(),
+        scheduledStart: new Date(start).toISOString(),
+        authorize,
+        ...siteArg,
+        ...(end !== '' ? { scheduledEnd: new Date(end).toISOString() } : {}),
+        ...(notes.trim() !== '' ? { notes: notes.trim() } : {}),
+      });
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{walkIn ? t('visits.walkInTitle') : t('visits.newVisit')}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {fixedContractorId === undefined ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="v-contractor">{t('visits.visitContractorLabel')}</Label>
+              <select
+                id="v-contractor"
+                value={contractorId}
+                onChange={(e) => setContractorId(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">{t('visits.selectContractor')}</option>
+                {(contractorsQ.data ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="v-title">{t('visits.visitTitleLabel')}</Label>
+            <Input
+              id="v-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={300}
+              autoFocus
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="v-site">{t('visits.visitSiteLabel')}</Label>
+            <select
+              id="v-site"
+              value={siteId}
+              onChange={(e) => setSiteId(e.target.value)}
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="">{t('visits.noSite')}</option>
+              {(sitesQ.data ?? []).map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {!walkIn ? (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="v-start">{t('visits.visitStartLabel')}</Label>
+                  <Input
+                    id="v-start"
+                    type="datetime-local"
+                    value={start}
+                    onChange={(e) => setStart(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="v-end">{t('visits.visitEndLabel')}</Label>
+                  <Input
+                    id="v-end"
+                    type="datetime-local"
+                    value={end}
+                    onChange={(e) => setEnd(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="v-notes">{t('visits.visitNotesLabel')}</Label>
+                <textarea
+                  id="v-notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                  maxLength={5000}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={authorize}
+                  onChange={(e) => setAuthorize(e.target.checked)}
+                />
+                {t('visits.authorizeOnCreate')}
+              </label>
+            </>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {tCommon('cancel')}
+          </Button>
+          <Button onClick={submit} disabled={pending || !canSubmit}>
+            {walkIn ? t('visits.walkInButton') : t('visits.createVisitButton')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Detail dialog with the lifecycle actions for a single visit. */
+export function VisitDetailDialog({
+  visitId,
+  onOpenChange,
+  canManage,
+  onChanged,
+}: {
+  visitId: string | null;
+  onOpenChange: (o: boolean) => void;
+  canManage: boolean;
+  onChanged: () => void;
+}) {
+  const t = useTranslations('contractors');
+  const format = useFormatter();
+  const { data } = trpc.contractors.visits.get.useQuery(
+    { id: visitId ?? '' },
+    { enabled: visitId !== null },
+  );
+
+  const onErr = (err: { message: string }) =>
+    toast.error(err.message.length > 0 ? err.message : t('error'));
+  const done = (msg: string) => () => {
+    toast.success(msg);
+    onChanged();
+  };
+
+  const authorizeM = trpc.contractors.visits.authorize.useMutation({
+    onSuccess: done(t('visits.authorizedToast')),
+    onError: onErr,
+  });
+  const checkInM = trpc.contractors.visits.checkIn.useMutation({
+    onSuccess: done(t('visits.checkedInToast')),
+    onError: onErr,
+  });
+  const checkOutM = trpc.contractors.visits.checkOut.useMutation({
+    onSuccess: done(t('visits.checkedOutToast')),
+    onError: onErr,
+  });
+  const setStatusM = trpc.contractors.visits.setStatus.useMutation({
+    onSuccess: done(t('visits.visitUpdatedToast')),
+    onError: onErr,
+  });
+  const deleteM = trpc.contractors.visits.delete.useMutation({
+    onSuccess: () => {
+      toast.success(t('visits.visitDeletedToast'));
+      onOpenChange(false);
+      onChanged();
+    },
+    onError: onErr,
+  });
+
+  const v = data?.visit;
+  const busy =
+    authorizeM.isPending ||
+    checkInM.isPending ||
+    checkOutM.isPending ||
+    setStatusM.isPending ||
+    deleteM.isPending;
+
+  return (
+    <Dialog open={visitId !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        {data === undefined || v === undefined ? null : (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex flex-wrap items-center gap-2">
+                {v.title}
+                <VisitStatusBadge status={v.status} />
+                {v.isWalkIn ? (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
+                    {t('visits.walkInBadge')}
+                  </span>
+                ) : null}
+              </DialogTitle>
+            </DialogHeader>
+
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">{t('visits.visitContractorLabel')}</dt>
+                <dd className="text-right font-medium">{data.contractorName}</dd>
+              </div>
+              {data.siteName !== null ? (
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">{t('visits.visitSiteLabel')}</dt>
+                  <dd className="text-right">{data.siteName}</dd>
+                </div>
+              ) : null}
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">{t('visits.visitStartLabel')}</dt>
+                <dd className="text-right">
+                  {format.dateTime(new Date(v.scheduledStart), {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">{t('visits.authorisationLabel')}</dt>
+                <dd className="text-right">
+                  {data.authorizedByName !== null
+                    ? t('visits.authorizedBy', { name: data.authorizedByName })
+                    : t('visits.notAuthorized')}
+                </dd>
+              </div>
+              {v.notes !== null && v.notes !== '' ? (
+                <div>
+                  <dt className="text-muted-foreground">{t('visits.visitNotesLabel')}</dt>
+                  <dd className="mt-0.5 whitespace-pre-wrap">{v.notes}</dd>
+                </div>
+              ) : null}
+            </dl>
+
+            {canManage ? (
+              <DialogFooter className="flex-wrap gap-2 sm:justify-start">
+                {v.authorizedByUserId === null ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => authorizeM.mutate({ id: v.id })}
+                  >
+                    <ShieldCheck className="mr-1 h-3.5 w-3.5" />
+                    {t('visits.authorize')}
+                  </Button>
+                ) : null}
+                {v.checkedInAt === null && v.status !== 'cancelled' ? (
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => checkInM.mutate({ id: v.id })}
+                  >
+                    <LogIn className="mr-1 h-3.5 w-3.5" />
+                    {t('visits.checkIn')}
+                  </Button>
+                ) : null}
+                {v.checkedInAt !== null && v.checkedOutAt === null ? (
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => checkOutM.mutate({ id: v.id })}
+                  >
+                    <LogOut className="mr-1 h-3.5 w-3.5" />
+                    {t('visits.checkOut')}
+                  </Button>
+                ) : null}
+                {v.status === 'scheduled' ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => setStatusM.mutate({ id: v.id, status: 'cancelled' })}
+                    >
+                      {t('visits.cancelVisit')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => setStatusM.mutate({ id: v.id, status: 'no_show' })}
+                    >
+                      {t('visits.markNoShow')}
+                    </Button>
+                  </>
+                ) : null}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  disabled={busy}
+                  onClick={() => {
+                    if (window.confirm(t('visits.deleteVisitConfirm')))
+                      deleteM.mutate({ id: v.id });
+                  }}
+                >
+                  {t('visits.deleteVisit')}
+                </Button>
+              </DialogFooter>
+            ) : null}
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Visits list + scheduling controls embedded on a contractor's detail page. */
+export function ContractorVisitsSection({
+  contractorId,
+  canManage,
+}: {
+  contractorId: string;
+  canManage: boolean;
+}) {
+  const t = useTranslations('contractors');
+  const format = useFormatter();
+  const utils = trpc.useUtils();
+  const { data } = trpc.contractors.visits.listForContractor.useQuery({ contractorId });
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [walkInOpen, setWalkInOpen] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
+
+  const refresh = () => {
+    void utils.contractors.visits.listForContractor.invalidate({ contractorId });
+    void utils.contractors.visits.list.invalidate();
+  };
+
+  const visits = data ?? [];
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold">{t('visits.visitsHeading')}</h2>
+          <p className="text-sm text-muted-foreground">{t('visits.visitsSubtitle')}</p>
+        </div>
+        {canManage ? (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setWalkInOpen(true)}>
+              <LogIn className="mr-1 h-4 w-4" />
+              {t('visits.logWalkIn')}
+            </Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <CalendarClock className="mr-1 h-4 w-4" />
+              {t('visits.newVisit')}
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+      {visits.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            {t('visits.noVisits')}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <ul className="divide-y">
+              {visits.map((v) => (
+                <li key={v.id}>
+                  <button
+                    type="button"
+                    onClick={() => setDetailId(v.id)}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted/40"
+                  >
+                    <CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{v.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format.dateTime(new Date(v.scheduledStart), {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })}
+                        {v.siteName !== null ? ` · ${v.siteName}` : ''}
+                      </p>
+                    </div>
+                    <VisitStatusBadge status={v.status} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      <VisitCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        fixedContractorId={contractorId}
+        onDone={refresh}
+      />
+      <VisitCreateDialog
+        open={walkInOpen}
+        onOpenChange={setWalkInOpen}
+        fixedContractorId={contractorId}
+        walkIn
+        onDone={refresh}
+      />
+      <VisitDetailDialog
+        visitId={detailId}
+        onOpenChange={(o) => !o && setDetailId(null)}
+        canManage={canManage}
+        onChanged={refresh}
+      />
+    </section>
+  );
+}

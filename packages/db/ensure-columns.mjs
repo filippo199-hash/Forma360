@@ -223,6 +223,28 @@ try {
       "created_at" timestamptz NOT NULL DEFAULT now()
     );
     CREATE INDEX IF NOT EXISTS "contractor_req_templates_tenant_idx" ON "contractor_requirement_templates" ("tenant_id", "category");
+    -- 0044: Contractors Phase 2a (visits / calendar)
+    CREATE TABLE IF NOT EXISTS "contractor_visits" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
+      "contractor_id" varchar(26) NOT NULL REFERENCES "contractors"("id") ON DELETE CASCADE,
+      "site_id" varchar(26),
+      "title" text NOT NULL,
+      "status" text NOT NULL DEFAULT 'scheduled',
+      "scheduled_start" timestamptz NOT NULL,
+      "scheduled_end" timestamptz,
+      "is_walk_in" boolean NOT NULL DEFAULT false,
+      "authorized_by_user_id" varchar(64) REFERENCES "user"("id") ON DELETE SET NULL,
+      "checked_in_at" timestamptz,
+      "checked_out_at" timestamptz,
+      "notes" text,
+      "created_by_user_id" varchar(64) REFERENCES "user"("id") ON DELETE SET NULL,
+      "archived_at" timestamptz,
+      "created_at" timestamptz NOT NULL DEFAULT now(),
+      "updated_at" timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "contractor_visits_tenant_start_idx" ON "contractor_visits" ("tenant_id", "scheduled_start");
+    CREATE INDEX IF NOT EXISTS "contractor_visits_contractor_idx" ON "contractor_visits" ("tenant_id", "contractor_id");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

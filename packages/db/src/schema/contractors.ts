@@ -145,3 +145,61 @@ export const contractorRequirementTemplates = pgTable(
 );
 
 export type ContractorRequirementTemplate = typeof contractorRequirementTemplates.$inferSelect;
+
+/**
+ * Contractor visits (Phase 2: visits / calendar / gate).
+ *
+ * A concrete visit occurrence — a planned appointment or an on-the-spot
+ * walk-in — optionally tied to a site/project. The **authoriser IS the
+ * approval**: a visit with `authorizedByUserId` set is approved. The gate
+ * check-in flow (Phase 2b) stamps `checkedInAt` / `checkedOutAt` and records
+ * how (self-scan vs staff override) in `contractor_visit_events`.
+ */
+export const contractorVisitStatus = [
+  'scheduled',
+  'checked_in',
+  'checked_out',
+  'cancelled',
+  'no_show',
+] as const;
+export type ContractorVisitStatus = (typeof contractorVisitStatus)[number];
+
+export const contractorVisits = pgTable(
+  'contractor_visits',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    contractorId: varchar('contractor_id', { length: 26 })
+      .notNull()
+      .references(() => contractors.id, { onDelete: 'cascade' }),
+    /** Optional site/project the visit is for. Kept if the site is archived. */
+    siteId: varchar('site_id', { length: 26 }),
+    title: text('title').notNull(),
+    status: text('status').notNull().default('scheduled').$type<ContractorVisitStatus>(),
+    scheduledStart: timestamp('scheduled_start', { withTimezone: true, mode: 'date' }).notNull(),
+    scheduledEnd: timestamp('scheduled_end', { withTimezone: true, mode: 'date' }),
+    /** True for unplanned arrivals logged at the gate. */
+    isWalkIn: boolean('is_walk_in').notNull().default(false),
+    /** The user who authorised the visit — presence == approved. */
+    authorizedByUserId: varchar('authorized_by_user_id', { length: 64 }).references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    checkedInAt: timestamp('checked_in_at', { withTimezone: true, mode: 'date' }),
+    checkedOutAt: timestamp('checked_out_at', { withTimezone: true, mode: 'date' }),
+    notes: text('notes'),
+    createdByUserId: varchar('created_by_user_id', { length: 64 }).references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'date' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('contractor_visits_tenant_start_idx').on(t.tenantId, t.scheduledStart),
+    index('contractor_visits_contractor_idx').on(t.tenantId, t.contractorId),
+  ],
+);
+
+export type ContractorVisit = typeof contractorVisits.$inferSelect;

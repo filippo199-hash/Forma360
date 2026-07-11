@@ -11,12 +11,14 @@ import {
   contractorDocuments,
   contractorRequirementTemplates,
   contractorRequirements,
+  contractorVisits,
   contractors,
+  sites,
   user,
 } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { aliasedTable, and, asc, between, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
 import { assertStorageKeyInTenant } from '../tenant-guards';
@@ -116,6 +118,20 @@ async function loadContractorOrThrow(db: Database, tenantId: string, id: string)
   if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
   return row;
 }
+
+async function loadVisitOrThrow(db: Database, tenantId: string, id: string) {
+  const rows = await db
+    .select()
+    .from(contractorVisits)
+    .where(and(eq(contractorVisits.tenantId, tenantId), eq(contractorVisits.id, id)))
+    .limit(1);
+  const row = rows[0];
+  if (row === undefined || row.archivedAt !== null) throw new TRPCError({ code: 'NOT_FOUND' });
+  return row;
+}
+
+/** ISO 8601 datetime (e.g. from `new Date().toISOString()`). */
+const isoDateTime = z.string().datetime();
 
 export const contractorsRouter = router({
   list: tenantProcedure.use(requirePermission('contractors.view')).query(async ({ ctx }) => {
@@ -541,4 +557,281 @@ export const contractorsRouter = router({
         .orderBy(contractorRequirements.createdAt);
       return { contractorName: c.name, requirements: reqs };
     }),
+
+  // ─── Visits / calendar (Phase 2a) ──────────────────────────────────────
+  visits: router({
+    /** Visits overlapping a [from, to] date-range — powers the calendar. */
+    list: tenantProcedure
+      .use(requirePermission('contractors.view'))
+      .input(
+        z.object({
+          from: isoDateTime,
+          to: isoDateTime,
+          contractorId: z.string().length(26).optional(),
+          siteId: z.string().length(26).optional(),
+        }),
+      )
+      .query(async ({ ctx, input }) => {
+        const authorizer = aliasedTable(user, 'visit_authorizer');
+        const conds = [
+          eq(contractorVisits.tenantId, ctx.tenantId),
+          isNull(contractorVisits.archivedAt),
+          between(contractorVisits.scheduledStart, new Date(input.from), new Date(input.to)),
+        ];
+        if (input.contractorId !== undefined)
+          conds.push(eq(contractorVisits.contractorId, input.contractorId));
+        if (input.siteId !== undefined) conds.push(eq(contractorVisits.siteId, input.siteId));
+        return ctx.db
+          .select({
+            id: contractorVisits.id,
+            contractorId: contractorVisits.contractorId,
+            contractorName: contractors.name,
+            siteId: contractorVisits.siteId,
+            siteName: sites.name,
+            title: contractorVisits.title,
+            status: contractorVisits.status,
+            scheduledStart: contractorVisits.scheduledStart,
+            scheduledEnd: contractorVisits.scheduledEnd,
+            isWalkIn: contractorVisits.isWalkIn,
+            authorizedByName: authorizer.name,
+            checkedInAt: contractorVisits.checkedInAt,
+            checkedOutAt: contractorVisits.checkedOutAt,
+          })
+          .from(contractorVisits)
+          .innerJoin(contractors, eq(contractorVisits.contractorId, contractors.id))
+          .leftJoin(sites, eq(contractorVisits.siteId, sites.id))
+          .leftJoin(authorizer, eq(contractorVisits.authorizedByUserId, authorizer.id))
+          .where(and(...conds))
+          .orderBy(asc(contractorVisits.scheduledStart));
+      }),
+
+    /** All non-archived visits for one contractor (detail page). */
+    listForContractor: tenantProcedure
+      .use(requirePermission('contractors.view'))
+      .input(z.object({ contractorId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        return ctx.db
+          .select({
+            id: contractorVisits.id,
+            siteId: contractorVisits.siteId,
+            siteName: sites.name,
+            title: contractorVisits.title,
+            status: contractorVisits.status,
+            scheduledStart: contractorVisits.scheduledStart,
+            scheduledEnd: contractorVisits.scheduledEnd,
+            isWalkIn: contractorVisits.isWalkIn,
+            checkedInAt: contractorVisits.checkedInAt,
+            checkedOutAt: contractorVisits.checkedOutAt,
+          })
+          .from(contractorVisits)
+          .leftJoin(sites, eq(contractorVisits.siteId, sites.id))
+          .where(
+            and(
+              eq(contractorVisits.tenantId, ctx.tenantId),
+              eq(contractorVisits.contractorId, input.contractorId),
+              isNull(contractorVisits.archivedAt),
+            ),
+          )
+          .orderBy(desc(contractorVisits.scheduledStart));
+      }),
+
+    get: tenantProcedure
+      .use(requirePermission('contractors.view'))
+      .input(z.object({ id: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        const authorizer = aliasedTable(user, 'visit_authorizer');
+        const rows = await ctx.db
+          .select({
+            visit: contractorVisits,
+            contractorName: contractors.name,
+            siteName: sites.name,
+            authorizedByName: authorizer.name,
+          })
+          .from(contractorVisits)
+          .innerJoin(contractors, eq(contractorVisits.contractorId, contractors.id))
+          .leftJoin(sites, eq(contractorVisits.siteId, sites.id))
+          .leftJoin(authorizer, eq(contractorVisits.authorizedByUserId, authorizer.id))
+          .where(
+            and(
+              eq(contractorVisits.tenantId, ctx.tenantId),
+              eq(contractorVisits.id, input.id),
+              isNull(contractorVisits.archivedAt),
+            ),
+          )
+          .limit(1);
+        const row = rows[0];
+        if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        return row;
+      }),
+
+    /** Schedule a planned visit. `authorize` stamps the caller as authoriser. */
+    create: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(
+        z.object({
+          contractorId: z.string().length(26),
+          siteId: z.string().length(26).nullable().optional(),
+          title: z.string().min(1).max(300),
+          scheduledStart: isoDateTime,
+          scheduledEnd: isoDateTime.nullable().optional(),
+          notes: z.string().max(5000).nullable().optional(),
+          authorize: z.boolean().default(false),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+        const id = newId();
+        await ctx.db.insert(contractorVisits).values({
+          id,
+          tenantId: ctx.tenantId,
+          contractorId: input.contractorId,
+          siteId: input.siteId ?? null,
+          title: input.title.trim(),
+          scheduledStart: new Date(input.scheduledStart),
+          scheduledEnd: input.scheduledEnd != null ? new Date(input.scheduledEnd) : null,
+          notes: input.notes ?? null,
+          createdByUserId: ctx.auth.userId,
+          ...(input.authorize ? { authorizedByUserId: ctx.auth.userId } : {}),
+        });
+        return { id };
+      }),
+
+    /** Log an unplanned arrival — created already checked-in at the gate. */
+    createWalkIn: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(
+        z.object({
+          contractorId: z.string().length(26),
+          siteId: z.string().length(26).nullable().optional(),
+          title: z.string().min(1).max(300),
+          notes: z.string().max(5000).nullable().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+        const now = new Date();
+        const id = newId();
+        await ctx.db.insert(contractorVisits).values({
+          id,
+          tenantId: ctx.tenantId,
+          contractorId: input.contractorId,
+          siteId: input.siteId ?? null,
+          title: input.title.trim(),
+          status: 'checked_in',
+          scheduledStart: now,
+          isWalkIn: true,
+          authorizedByUserId: ctx.auth.userId,
+          checkedInAt: now,
+          notes: input.notes ?? null,
+          createdByUserId: ctx.auth.userId,
+        });
+        return { id };
+      }),
+
+    update: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(
+        z.object({
+          id: z.string().length(26),
+          title: z.string().min(1).max(300).optional(),
+          siteId: z.string().length(26).nullable().optional(),
+          scheduledStart: isoDateTime.optional(),
+          scheduledEnd: isoDateTime.nullable().optional(),
+          notes: z.string().max(5000).nullable().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
+        const updates: Partial<typeof contractorVisits.$inferInsert> = { updatedAt: new Date() };
+        if (input.title !== undefined) updates.title = input.title.trim();
+        if (input.siteId !== undefined) updates.siteId = input.siteId;
+        if (input.scheduledStart !== undefined)
+          updates.scheduledStart = new Date(input.scheduledStart);
+        if (input.scheduledEnd !== undefined)
+          updates.scheduledEnd = input.scheduledEnd === null ? null : new Date(input.scheduledEnd);
+        if (input.notes !== undefined) updates.notes = input.notes;
+        await ctx.db
+          .update(contractorVisits)
+          .set(updates)
+          .where(
+            and(eq(contractorVisits.tenantId, ctx.tenantId), eq(contractorVisits.id, input.id)),
+          );
+        return { ok: true as const };
+      }),
+
+    /** Approve a scheduled visit (authoriser == approval). */
+    authorize: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ id: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
+        await ctx.db
+          .update(contractorVisits)
+          .set({ authorizedByUserId: ctx.auth.userId, updatedAt: new Date() })
+          .where(
+            and(eq(contractorVisits.tenantId, ctx.tenantId), eq(contractorVisits.id, input.id)),
+          );
+        return { ok: true as const };
+      }),
+
+    checkIn: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ id: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        const visit = await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
+        if (visit.status === 'cancelled')
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit is cancelled' });
+        await ctx.db
+          .update(contractorVisits)
+          .set({ status: 'checked_in', checkedInAt: new Date(), updatedAt: new Date() })
+          .where(
+            and(eq(contractorVisits.tenantId, ctx.tenantId), eq(contractorVisits.id, input.id)),
+          );
+        return { ok: true as const };
+      }),
+
+    checkOut: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ id: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        const visit = await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
+        if (visit.checkedInAt === null)
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit was never checked in' });
+        await ctx.db
+          .update(contractorVisits)
+          .set({ status: 'checked_out', checkedOutAt: new Date(), updatedAt: new Date() })
+          .where(
+            and(eq(contractorVisits.tenantId, ctx.tenantId), eq(contractorVisits.id, input.id)),
+          );
+        return { ok: true as const };
+      }),
+
+    /** Set a terminal non-attended status: `cancelled` or `no_show`. */
+    setStatus: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ id: z.string().length(26), status: z.enum(['cancelled', 'no_show']) }))
+      .mutation(async ({ ctx, input }) => {
+        await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
+        await ctx.db
+          .update(contractorVisits)
+          .set({ status: input.status, updatedAt: new Date() })
+          .where(
+            and(eq(contractorVisits.tenantId, ctx.tenantId), eq(contractorVisits.id, input.id)),
+          );
+        return { ok: true as const };
+      }),
+
+    delete: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ id: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        await ctx.db
+          .update(contractorVisits)
+          .set({ archivedAt: new Date(), updatedAt: new Date() })
+          .where(
+            and(eq(contractorVisits.tenantId, ctx.tenantId), eq(contractorVisits.id, input.id)),
+          );
+        return { ok: true as const };
+      }),
+  }),
 });

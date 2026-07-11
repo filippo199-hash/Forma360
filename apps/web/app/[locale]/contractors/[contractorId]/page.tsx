@@ -18,6 +18,7 @@ import {
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { ContractorVisitsSection } from '../../../../src/components/contractors/contractor-visits';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -511,6 +512,9 @@ export default function ContractorDetailPage() {
           </div>
         )}
       </section>
+
+      {/* Visits (Phase 2a) */}
+      <ContractorVisitsSection contractorId={contractorId} canManage={canManage} />
 
       {/* Add-requirement dialog */}
       <Dialog open={reqOpen} onOpenChange={setReqOpen}>

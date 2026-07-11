@@ -88,6 +88,9 @@ export default function ContractorsPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href={`/${locale}/contractors/calendar`}>{t('visits.calendarLink')}</Link>
+          </Button>
           {canManage ? (
             <Button variant="outline" asChild>
               <Link href={`/${locale}/contractors/templates`}>{t('manageTemplates')}</Link>
