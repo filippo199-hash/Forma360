@@ -1142,5 +1142,26 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         if (result.length === 0) throw new TRPCError({ code: 'NOT_FOUND' });
         return { ok: true as const };
       }),
+
+    /** Attach (or detach) an existing inspection to a site/project. */
+    setSite: tenantProcedure
+      .use(requirePermission('inspections.manage'))
+      .input(
+        z.object({
+          inspectionId: z.string().length(26),
+          siteId: z.string().length(26).nullable(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        const result = await ctx.db
+          .update(inspections)
+          .set({ siteId: input.siteId, updatedAt: new Date() })
+          .where(
+            and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)),
+          )
+          .returning({ id: inspections.id });
+        if (result.length === 0) throw new TRPCError({ code: 'NOT_FOUND' });
+        return { ok: true as const };
+      }),
   });
 }

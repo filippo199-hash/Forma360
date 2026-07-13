@@ -309,6 +309,8 @@ try {
     -- 0049: manual compliance-status override
     ALTER TABLE "contractors" ADD COLUMN IF NOT EXISTS "compliance_override" text;
     ALTER TABLE "contractors" ADD COLUMN IF NOT EXISTS "compliance_override_reason" text;
+    -- 0050: overstay-alert dedupe stamp
+    ALTER TABLE "contractor_visits" ADD COLUMN IF NOT EXISTS "overstay_alerted_at" timestamptz;
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

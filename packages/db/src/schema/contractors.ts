@@ -204,6 +204,8 @@ export const contractorVisits = pgTable(
     }),
     checkedInAt: timestamp('checked_in_at', { withTimezone: true, mode: 'date' }),
     checkedOutAt: timestamp('checked_out_at', { withTimezone: true, mode: 'date' }),
+    /** Stamped when the >24h on-site overstay alert has been sent (dedupe). */
+    overstayAlertedAt: timestamp('overstay_alerted_at', { withTimezone: true, mode: 'date' }),
     notes: text('notes'),
     createdByUserId: varchar('created_by_user_id', { length: 64 }).references(() => user.id, {
       onDelete: 'set null',

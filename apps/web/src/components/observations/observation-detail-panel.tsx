@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { SiteSelector } from '../selectors/site-selector';
+import { usePlaceTerms } from '../../lib/terminology';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -75,6 +76,7 @@ export function ObservationDetailPanel({
 }) {
   const t = useTranslations('issues.detail');
   const tFields = useTranslations('issues.detail.fields');
+  const { label: placeLabel } = usePlaceTerms();
   const tStatus = useTranslations('issues.status');
   const tPriority = useTranslations('issues.priority');
   const tReportedVia = useTranslations('issues.reportedVia');
@@ -345,7 +347,7 @@ export function ObservationDetailPanel({
                       {issue.categorySnapshot.name}
                     </span>
                   </DetailRow>
-                  <DetailRow label={tFields('site')}>
+                  <DetailRow label={placeLabel}>
                     {canManage ? (
                       <SiteSelector
                         value={

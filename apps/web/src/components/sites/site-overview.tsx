@@ -6,18 +6,25 @@ import {
   ClipboardCheck,
   FolderOpen,
   Image as ImageIcon,
+  Link2,
   ListChecks,
   Map as MapIcon,
+  Search,
   Users,
   Wrench,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
+import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
+import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Input } from '../ui/input';
 import { Skeleton } from '../ui/skeleton';
+import { toast } from 'sonner';
 
 interface SiteOverviewProps {
   siteId: string;
@@ -62,8 +69,126 @@ function fileUrl(storageKey: string): string {
   return `/api/files?key=${encodeURIComponent(storageKey)}`;
 }
 
+type LinkKind = 'inspection' | 'action' | 'asset';
+
+/**
+ * Picker to attach an *existing* inspection / action / asset to this site.
+ * Lists candidates not already on the site; selecting one sets its site via
+ * the entity's own update mutation (a thin `inspections.setSite` for inspections).
+ */
+function LinkPickerDialog({
+  kind,
+  siteId,
+  title,
+  onClose,
+}: {
+  kind: LinkKind;
+  siteId: string;
+  title: string;
+  onClose: () => void;
+}) {
+  const t = useTranslations('sites');
+  const utils = trpc.useUtils();
+  const [q, setQ] = useState('');
+
+  const inspQ = trpc.inspections.list.useQuery({}, { enabled: kind === 'inspection' });
+  const actQ = trpc.actions.list.useQuery({}, { enabled: kind === 'action' });
+  const assetQ = trpc.assets.list.useQuery(undefined, { enabled: kind === 'asset' });
+
+  const onErr = (err: { message: string }) =>
+    toast.error(err.message.length > 0 ? err.message : 'Something went wrong');
+  const done = () => {
+    toast.success(t('linkedToast'));
+    void utils.inspections.list.invalidate();
+    void utils.actions.list.invalidate();
+    void utils.assets.list.invalidate();
+    onClose();
+  };
+  const setInspSite = trpc.inspections.setSite.useMutation({ onSuccess: done, onError: onErr });
+  const updateAction = trpc.actions.update.useMutation({ onSuccess: done, onError: onErr });
+  const updateAsset = trpc.assets.update.useMutation({ onSuccess: done, onError: onErr });
+  const pending = setInspSite.isPending || updateAction.isPending || updateAsset.isPending;
+
+  const candidates = useMemo(() => {
+    if (kind === 'inspection') {
+      return (inspQ.data ?? [])
+        .filter((i) => i.siteId !== siteId && i.archivedAt === null)
+        .map((i) => ({ id: i.id, label: i.title ?? `#${i.documentNumber ?? ''}` }));
+    }
+    if (kind === 'action') {
+      return (actQ.data ?? [])
+        .filter((a) => a.siteId !== siteId)
+        .map((a) => ({ id: a.id, label: a.title }));
+    }
+    return (assetQ.data ?? [])
+      .filter((a) => a.siteId !== siteId && a.archivedAt === null)
+      .map((a) => ({ id: a.id, label: a.name }));
+  }, [kind, siteId, inspQ.data, actQ.data, assetQ.data]);
+
+  const filtered = candidates.filter((c) => c.label.toLowerCase().includes(q.trim().toLowerCase()));
+  const loading = inspQ.isLoading || actQ.isLoading || assetQ.isLoading;
+
+  function link(id: string) {
+    if (kind === 'inspection') setInspSite.mutate({ inspectionId: id, siteId });
+    else if (kind === 'action') updateAction.mutate({ actionId: id, siteId });
+    else updateAsset.mutate({ assetId: id, siteId });
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t('linkSearchPlaceholder')}
+              className="h-9 pl-8"
+              autoFocus
+            />
+          </div>
+          <div className="max-h-72 overflow-y-auto rounded-md border">
+            {loading ? (
+              <div className="space-y-2 p-3">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <p className="p-4 text-center text-sm text-muted-foreground">{t('linkNone')}</p>
+            ) : (
+              <ul className="divide-y">
+                {filtered.map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => link(c.id)}
+                      className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50 disabled:opacity-50"
+                    >
+                      <span className="truncate">{c.label}</span>
+                      <Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverviewProps) {
   const t = useTranslations('sites');
+  const canManageInspections = useHasPermission('inspections.manage');
+  const canManageActions = useHasPermission('actions.manage');
+  const canManageAssets = useHasPermission('assets.manage');
+  const [linkKind, setLinkKind] = useState<LinkKind | null>(null);
 
   const obs = trpc.issues.issues.list.useQuery({ siteId });
   const insp = trpc.inspections.list.useQuery({ siteId });
@@ -112,6 +237,7 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
     viewAllHref,
     onViewAll,
     loading,
+    footer,
   }: {
     icon: ReactNode;
     label: string;
@@ -120,6 +246,7 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
     viewAllHref?: string;
     onViewAll?: () => void;
     loading: boolean;
+    footer?: ReactNode;
   }) {
     const header = (
       <div className="flex items-center justify-between">
@@ -192,10 +319,23 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
               ) : null}
             </ul>
           )}
+          {footer !== undefined ? <div className="pt-1">{footer}</div> : null}
         </CardContent>
       </Card>
     );
   }
+
+  const linkButton = (kind: LinkKind, label: string) => (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-7 w-full"
+      onClick={() => setLinkKind(kind)}
+    >
+      <Link2 className="mr-1 h-3.5 w-3.5" />
+      {label}
+    </Button>
+  );
 
   const mediaRows = media.data ?? [];
   const planRows = plans.data ?? [];
@@ -217,6 +357,7 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
         total={actItems.length}
         viewAllHref={`/${locale}/actions?site=${siteId}`}
         loading={acts.isLoading}
+        footer={canManageActions ? linkButton('action', t('linkAction')) : undefined}
       />
       <ListCard
         icon={<ClipboardCheck className="h-4 w-4" />}
@@ -225,6 +366,7 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
         total={inspItems.length}
         viewAllHref={`/${locale}/inspections?site=${siteId}`}
         loading={insp.isLoading}
+        footer={canManageInspections ? linkButton('inspection', t('linkInspection')) : undefined}
       />
       <ListCard
         icon={<Wrench className="h-4 w-4" />}
@@ -233,6 +375,7 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
         total={assetItems.length}
         viewAllHref={`/${locale}/assets?site=${siteId}`}
         loading={assets.isLoading}
+        footer={canManageAssets ? linkButton('asset', t('linkAsset')) : undefined}
       />
 
       {/* Media — thumbnail strip */}
@@ -366,6 +509,21 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
           </p>
         </CardContent>
       </Card>
+
+      {linkKind !== null ? (
+        <LinkPickerDialog
+          kind={linkKind}
+          siteId={siteId}
+          title={
+            linkKind === 'action'
+              ? t('linkAction')
+              : linkKind === 'inspection'
+                ? t('linkInspection')
+                : t('linkAsset')
+          }
+          onClose={() => setLinkKind(null)}
+        />
+      ) : null}
     </div>
   );
 }

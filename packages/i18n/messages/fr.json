@@ -2918,7 +2918,17 @@
     "teamEveryoneEmpty": "No one has access yet.",
     "planLocationHeading": "Location on plan",
     "planLocationOpen": "Open on plan",
-    "planLocationHint": "Click to see where this is on the floor plan."
+    "planLocationHint": "Click to see where this is on the floor plan.",
+    "kindSiteProject": "Site / Project",
+    "selectSite": "Select a site",
+    "selectProject": "Select a project",
+    "selectSiteProject": "Select a site / project",
+    "linkAction": "Link an action",
+    "linkInspection": "Link an inspection",
+    "linkAsset": "Link an asset",
+    "linkedToast": "Linked.",
+    "linkSearchPlaceholder": "Search…",
+    "linkNone": "Nothing available to link."
   },
   "contractors": {
     "title": "Contractors",
@@ -3176,6 +3186,13 @@
       "reasonPlaceholder": "Optional — why is this set manually?",
       "manualIndicator": "Manually set",
       "editTitle": "Click to change the compliance status"
-    }
+    },
+    "templateBlockingHelp": "“Blocking” means this document must be uploaded, in date, and verified for the contractor to count as Compliant. Leave it unchecked for advisory documents that are useful to have but don’t affect the compliance status.",
+    "addCategoryHeading": "Add a document requirement",
+    "templateCategoryPlaceholder": "e.g. Electrical",
+    "templateDocCount": "{count, plural, one {# document} other {# documents}}",
+    "reqBlockingShort": "Blocking",
+    "addDocPlaceholder": "Add another document to this trade…",
+    "addDocument": "Add document"
   }
 }

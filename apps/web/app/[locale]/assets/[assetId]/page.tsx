@@ -26,6 +26,7 @@ import { SiteSelector } from '../../../../src/components/selectors/site-selector
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { AssetContractorsSection } from '../../../../src/components/contractors/contractor-assets';
 import { cn } from '../../../../src/lib/cn';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -52,6 +53,7 @@ export default function AssetDetailPage() {
   const canManageMaintenance = useHasPermission('assets.maintenance.manage');
   const canViewContractors = useHasPermission('contractors.view');
   const canLinkContractors = useHasPermission('contractors.manage');
+  const { label: placeLabel } = usePlaceTerms();
 
   const [tab, setTab] = useState<Tab>('overview');
   const [editing, setEditing] = useState(false);
@@ -348,7 +350,7 @@ export default function AssetDetailPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>{t('fields.site')}</Label>
+                  <Label>{placeLabel}</Label>
                   <SiteSelector
                     value={editSiteId !== '' ? [editSiteId] : []}
                     onChange={(next) => setEditSiteId(next[0] ?? '')}
@@ -393,7 +395,7 @@ export default function AssetDetailPage() {
                   <p className="text-muted-foreground">{asset.description}</p>
                 ) : null}
                 <DetailRow label={t('fields.type')}>{assetType?.name ?? '—'}</DetailRow>
-                <DetailRow label={t('fields.site')}>{siteName ?? '—'}</DetailRow>
+                <DetailRow label={placeLabel}>{siteName ?? '—'}</DetailRow>
                 <DetailRow label={t('fields.owner')}>{ownerName ?? '—'}</DetailRow>
                 {asset.parentId !== null ? (
                   <DetailRow label={t('fields.parent')}>

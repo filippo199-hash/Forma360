@@ -4,6 +4,7 @@ import { Check, ChevronLeft, ChevronRight, MapPin, Search, X } from 'lucide-reac
 import { useMemo, useState } from 'react';
 import { trpc } from '../../lib/trpc/client';
 import { cn } from '../../lib/cn';
+import { usePlaceTerms } from '../../lib/terminology';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 interface SiteLite {
@@ -44,11 +45,14 @@ export function SiteSelector({
   onChange,
   multiple = true,
   label,
-  placeholder = 'Select site',
+  placeholder,
   disabled = false,
   className,
   filterSite,
 }: SiteSelectorProps) {
+  // Fall back to the tenant's terminology ("Select a site" / "…project").
+  const { selectPlaceholder } = usePlaceTerms();
+  const ph = placeholder ?? selectPlaceholder;
   const { data } = trpc.sites.list.useQuery();
   const sites = useMemo<SiteLite[]>(() => {
     const mapped = (data ?? []).map((s) => ({
@@ -120,10 +124,10 @@ export function SiteSelector({
     .filter((s): s is SiteLite => s !== undefined);
   const triggerText =
     selectedSites.length === 0
-      ? placeholder
+      ? ph
       : multiple
         ? `${selectedSites.length} selected`
-        : (selectedSites[0]?.name ?? placeholder);
+        : (selectedSites[0]?.name ?? ph);
 
   return (
     <div className={cn('space-y-2', className)}>

@@ -14,6 +14,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -35,6 +36,7 @@ const PRIORITIES: ReadonlyArray<Priority> = ['low', 'medium', 'high', 'critical'
  */
 export default function NewActionPage() {
   const t = useTranslations('actions.create');
+  const { label: placeLabel } = usePlaceTerms();
   const tType = useTranslations('actions.create.type');
   const tPriority = useTranslations('actions.priority');
   const tCommon = useTranslations('common');
@@ -283,7 +285,7 @@ export default function NewActionPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="site">
-                  {t('siteLabel')}
+                  {placeLabel}
                   {isRequired('site') ? <span className="ml-1 text-destructive">*</span> : null}
                 </Label>
                 <SiteSelector

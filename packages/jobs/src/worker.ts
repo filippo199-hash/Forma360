@@ -32,6 +32,11 @@ import {
   CONTRACTOR_DOC_REMINDER_CRON,
   type DueReminder,
 } from './workers/contractor-doc-reminder';
+import {
+  createContractorOverstayHandler,
+  CONTRACTOR_OVERSTAY_CRON,
+  type OverstayVisit,
+} from './workers/contractor-overstay';
 import { createObservationNotifyHandler } from './workers/observation-notify';
 
 function buildRedis(url: string): Redis {
@@ -223,6 +228,38 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     '[worker] registered contractor-doc-reminder repeatable',
   );
 
+  // ─── Contractors Phase 2 — overstay (>24h on site) alerts ──────────────
+  const contractorOverstayWorker = new Worker(
+    QUEUE_NAMES.CONTRACTOR_OVERSTAY,
+    createContractorOverstayHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'contractor-overstay' }),
+      appUrl: env.APP_URL,
+      notify: async (v: OverstayVisit, email: string, boardUrl: string) => {
+        await sendTemplatedEmail({
+          to: email,
+          templateKey: 'contractor-overstay',
+          variables: {
+            who: v.visitorName ?? 'A visitor',
+            contractorName: v.contractorName,
+            title: v.title,
+            siteLine: v.siteName !== null ? ` at ${v.siteName}` : '',
+            checkedInAt: v.checkedInAt.toISOString().replace('T', ' ').slice(0, 16),
+            url: boardUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const contractorOverstayQueue = getQueue(QUEUE_NAMES.CONTRACTOR_OVERSTAY, connection);
+  await contractorOverstayQueue.upsertJobScheduler(
+    'contractor-overstay',
+    { pattern: CONTRACTOR_OVERSTAY_CRON, tz: 'UTC' },
+    { name: 'contractor-overstay', data: {} },
+  );
+  logger.info({ cron: CONTRACTOR_OVERSTAY_CRON }, '[worker] registered contractor-overstay repeatable');
+
   // ─── Phase 3 — Observation notifications ───────────────────────────────
   const observationNotifyWorker = new Worker(
     QUEUE_NAMES.OBSERVATION_NOTIFY,
@@ -273,6 +310,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     maintenanceTickWorker,
     maintenanceNotifyWorker,
     contractorReminderWorker,
+    contractorOverstayWorker,
     observationNotifyWorker,
   ];
   for (const w of allWorkers) {

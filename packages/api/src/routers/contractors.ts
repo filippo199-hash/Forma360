@@ -156,7 +156,7 @@ export interface ContractorsRouterDeps {
   sendEmail:
     | ((args: {
         to: string;
-        templateKey: 'invite';
+        templateKey: 'invite' | 'contractor-portal-invite' | 'contractor-overstay';
         variables: Record<string, string>;
       }) => Promise<unknown>)
     | null;
@@ -1517,14 +1517,25 @@ export const contractorsRouter = router({
               .where(eq(tenants.id, ctx.tenantId))
               .limit(1);
             const inviteUrl = `${contractorsDeps.appUrl.replace(/\/$/, '')}/en/invite/${token}`;
+            const ACTIVITY_WORDS: Record<string, string> = {
+              inspections: 'conduct inspections',
+              observations: 'raise observations',
+              actions: 'view and comment on actions',
+              documents: 'view documents',
+            };
+            const activitiesText =
+              input.activities.length > 0
+                ? input.activities.map((a) => ACTIVITY_WORDS[a] ?? a).join(', ')
+                : 'access the portal';
             await contractorsDeps.sendEmail({
               to: emailLower,
-              templateKey: 'invite',
+              templateKey: 'contractor-portal-invite',
               variables: {
-                inviterName: contractor.name,
+                contractorName: contractor.name,
                 tenantName: tenantRow?.name ?? 'Forma360',
                 inviteUrl,
                 expiresIn: '7 days',
+                activities: activitiesText,
               },
             });
           } catch (err) {

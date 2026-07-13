@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { SiteSelector } from '../selectors/site-selector';
+import { usePlaceTerms } from '../../lib/terminology';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 import { AssetField } from './asset-field';
 import { Button } from '../ui/button';
@@ -61,6 +62,7 @@ const STATUS_COLORS: Record<Status, string> = {
 export function ActionDetailPanel({ actionId, locale }: { actionId: string; locale: string }) {
   const t = useTranslations('actions.detail');
   const tFields = useTranslations('actions.detail.fields');
+  const { label: placeLabel } = usePlaceTerms();
   const tStatus = useTranslations('actions.status');
   const tPriority = useTranslations('actions.priority');
   const tCommon = useTranslations('common');
@@ -504,7 +506,7 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                     )}
                   </DetailRow>
 
-                  <DetailRow label={tFields('site')}>
+                  <DetailRow label={placeLabel}>
                     {canEdit ? (
                       <SiteSelector
                         value={action.siteId !== null ? [action.siteId] : []}

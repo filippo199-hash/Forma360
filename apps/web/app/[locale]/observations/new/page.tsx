@@ -17,6 +17,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -49,6 +50,7 @@ export default function NewObservationPage() {
   const t = useTranslations('issues.new');
   const tAttachments = useTranslations('issues.attachments');
   const tCommon = useTranslations('common');
+  const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -282,7 +284,7 @@ export default function NewObservationPage() {
 
                 {showSite ? (
                   <div className="space-y-1.5">
-                    <Label htmlFor="site">{t('siteLabel')}</Label>
+                    <Label htmlFor="site">{placeLabel}</Label>
                     <SiteSelector
                       value={siteId !== '' ? [siteId] : []}
                       onChange={(next) => setSiteId(next[0] ?? '')}

@@ -656,6 +656,7 @@ export default function ContractorDetailPage() {
               />
               {t('reqBlocking')}
             </label>
+            <p className="text-xs text-muted-foreground">{t('templateBlockingHelp')}</p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setReqOpen(false)}>

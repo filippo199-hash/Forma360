@@ -1,0 +1,8 @@
+{
+  "subject": "{contractorName} invited you to the {tenantName} contractor portal",
+  "preheader": "Set up your access to work with {tenantName}.",
+  "greeting": "Hi,",
+  "body": "You've been invited to the {tenantName} contractor portal on behalf of {contractorName}. Use the link below to set up your login — it's valid for {expiresIn}. Once you're in you can: {activities}.",
+  "cta": "Accept invitation",
+  "footer": "If you were not expecting this invitation, you can safely ignore this message."
+}

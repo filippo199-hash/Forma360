@@ -1,6 +1,7 @@
 'use client';
 
 import type { SiteTerminology } from '@forma360/db/schema';
+import { useTranslations } from 'next-intl';
 import { trpc } from './trpc/client';
 
 /**
@@ -26,4 +27,25 @@ export function hubTitleKey(term: SiteTerminology): 'titleSites' | 'titleProject
   if (term === 'sites') return 'titleSites';
   if (term === 'projects') return 'titleProjects';
   return 'title';
+}
+
+/** i18n key (sites namespace) for the singular place noun — "Site" / "Project". */
+export function placeLabelKey(term: SiteTerminology): 'kindSite' | 'kindProject' | 'kindSiteProject' {
+  if (term === 'sites') return 'kindSite';
+  if (term === 'projects') return 'kindProject';
+  return 'kindSiteProject';
+}
+
+/**
+ * Terminology-aware place labels for forms/selectors. `label` is the singular
+ * field noun ("Site" / "Project" / "Site / Project"); `selectPlaceholder` is
+ * the picker's empty-state ("Select a project"). Respects the tenant setting so
+ * every place-picker reads the way the user configured it.
+ */
+export function usePlaceTerms(): { term: SiteTerminology; label: string; selectPlaceholder: string } {
+  const term = useTerminology();
+  const t = useTranslations('sites');
+  const selectKey =
+    term === 'sites' ? 'selectSite' : term === 'projects' ? 'selectProject' : 'selectSiteProject';
+  return { term, label: t(placeLabelKey(term)), selectPlaceholder: t(selectKey) };
 }
