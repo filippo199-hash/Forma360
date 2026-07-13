@@ -125,16 +125,16 @@ function LinkPickerDialog({
     if (kind === 'inspection') {
       return (inspQ.data ?? [])
         .filter((i) => i.siteId !== siteId && i.archivedAt === null)
-        .map((i) => ({
-          id: i.id,
-          label:
-            (i.title ?? '').trim() !== ''
-              ? i.title!
+        .map((i) => {
+          const title = (i.title ?? '').trim();
+          const label =
+            title !== ''
+              ? title
               : i.documentNumber != null
                 ? `#${i.documentNumber}`
-                : i.id.slice(-6),
-          meta: withPlace(i.status, i.siteId),
-        }));
+                : i.id.slice(-6);
+          return { id: i.id, label, meta: withPlace(i.status, i.siteId) };
+        });
     }
     if (kind === 'action') {
       return (actQ.data ?? [])
@@ -143,13 +143,13 @@ function LinkPickerDialog({
     }
     return (assetQ.data ?? [])
       .filter((a) => a.siteId !== siteId && a.archivedAt === null)
-      .map((a) => ({
-        id: a.id,
-        label: a.name,
-        meta: [a.typeName, siteNameOf(a.siteId) ? t('linkCurrentlyOn', { place: siteNameOf(a.siteId)! }) : t('linkUnassigned')]
+      .map((a) => {
+        const place = siteNameOf(a.siteId);
+        const meta = [a.typeName, place ? t('linkCurrentlyOn', { place }) : t('linkUnassigned')]
           .filter((p): p is string => p !== null && p !== undefined && p !== '')
-          .join(' · '),
-      }));
+          .join(' · ');
+        return { id: a.id, label: a.name, meta };
+      });
   }, [kind, siteId, inspQ.data, actQ.data, assetQ.data, sitesQ.data, t]);
 
   const filtered = candidates.filter((c) => c.label.toLowerCase().includes(q.trim().toLowerCase()));
