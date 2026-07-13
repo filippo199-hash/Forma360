@@ -3162,7 +3162,9 @@
     "linkAsset": "Link an asset",
     "linkedToast": "Linked.",
     "linkSearchPlaceholder": "Search…",
-    "linkNone": "Nothing available to link."
+    "linkNone": "Nothing available to link.",
+    "linkCurrentlyOn": "{place}",
+    "linkUnassigned": "unassigned"
   },
   "contractors": {
     "title": "Contractors",

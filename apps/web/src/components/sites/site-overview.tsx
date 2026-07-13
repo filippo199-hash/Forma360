@@ -94,6 +94,9 @@ function LinkPickerDialog({
   const inspQ = trpc.inspections.list.useQuery({}, { enabled: kind === 'inspection' });
   const actQ = trpc.actions.list.useQuery({}, { enabled: kind === 'action' });
   const assetQ = trpc.assets.list.useQuery(undefined, { enabled: kind === 'asset' });
+  const sitesQ = trpc.sites.list.useQuery();
+  const siteNameOf = (id: string | null | undefined): string | null =>
+    id == null ? null : ((sitesQ.data ?? []).find((s) => s.id === id)?.name ?? null);
 
   const onErr = (err: { message: string }) =>
     toast.error(err.message.length > 0 ? err.message : 'Something went wrong');
@@ -109,21 +112,45 @@ function LinkPickerDialog({
   const updateAsset = trpc.assets.update.useMutation({ onSuccess: done, onError: onErr });
   const pending = setInspSite.isPending || updateAction.isPending || updateAsset.isPending;
 
+  // Each candidate carries a `meta` line (status · current place) so the user
+  // can tell otherwise-identically-named entries apart.
   const candidates = useMemo(() => {
+    const withPlace = (status: string | null, otherSiteId: string | null | undefined): string => {
+      const place = siteNameOf(otherSiteId);
+      const parts = [status, place ? t('linkCurrentlyOn', { place }) : t('linkUnassigned')].filter(
+        (p): p is string => p !== null && p !== undefined && p !== '',
+      );
+      return parts.join(' · ');
+    };
     if (kind === 'inspection') {
       return (inspQ.data ?? [])
         .filter((i) => i.siteId !== siteId && i.archivedAt === null)
-        .map((i) => ({ id: i.id, label: i.title ?? `#${i.documentNumber ?? ''}` }));
+        .map((i) => ({
+          id: i.id,
+          label:
+            (i.title ?? '').trim() !== ''
+              ? i.title!
+              : i.documentNumber != null
+                ? `#${i.documentNumber}`
+                : i.id.slice(-6),
+          meta: withPlace(i.status, i.siteId),
+        }));
     }
     if (kind === 'action') {
       return (actQ.data ?? [])
         .filter((a) => a.siteId !== siteId)
-        .map((a) => ({ id: a.id, label: a.title }));
+        .map((a) => ({ id: a.id, label: a.title, meta: withPlace(a.status, a.siteId) }));
     }
     return (assetQ.data ?? [])
       .filter((a) => a.siteId !== siteId && a.archivedAt === null)
-      .map((a) => ({ id: a.id, label: a.name }));
-  }, [kind, siteId, inspQ.data, actQ.data, assetQ.data]);
+      .map((a) => ({
+        id: a.id,
+        label: a.name,
+        meta: [a.typeName, siteNameOf(a.siteId) ? t('linkCurrentlyOn', { place: siteNameOf(a.siteId)! }) : t('linkUnassigned')]
+          .filter((p): p is string => p !== null && p !== undefined && p !== '')
+          .join(' · '),
+      }));
+  }, [kind, siteId, inspQ.data, actQ.data, assetQ.data, sitesQ.data, t]);
 
   const filtered = candidates.filter((c) => c.label.toLowerCase().includes(q.trim().toLowerCase()));
   const loading = inspQ.isLoading || actQ.isLoading || assetQ.isLoading;
@@ -169,7 +196,14 @@ function LinkPickerDialog({
                       onClick={() => link(c.id)}
                       className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50 disabled:opacity-50"
                     >
-                      <span className="truncate">{c.label}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate">{c.label}</span>
+                        {c.meta !== '' ? (
+                          <span className="block truncate text-xs capitalize text-muted-foreground">
+                            {c.meta}
+                          </span>
+                        ) : null}
+                      </span>
                       <Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     </button>
                   </li>
