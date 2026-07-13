@@ -115,25 +115,36 @@ function LinkPickerDialog({
   // Each candidate carries a `meta` line (status · current place) so the user
   // can tell otherwise-identically-named entries apart.
   const candidates = useMemo(() => {
+    const humanize = (s: string | null): string | null =>
+      s == null ? null : s.replace(/_/g, ' ');
     const withPlace = (status: string | null, otherSiteId: string | null | undefined): string => {
       const place = siteNameOf(otherSiteId);
-      const parts = [status, place ? t('linkCurrentlyOn', { place }) : t('linkUnassigned')].filter(
-        (p): p is string => p !== null && p !== undefined && p !== '',
-      );
+      const parts = [
+        humanize(status),
+        place ? t('linkCurrentlyOn', { place }) : t('linkUnassigned'),
+      ].filter((p): p is string => p !== null && p !== undefined && p !== '');
       return parts.join(' · ');
     };
     if (kind === 'inspection') {
       return (inspQ.data ?? [])
         .filter((i) => i.siteId !== siteId && i.archivedAt === null)
         .map((i) => {
+          // Prefer the template name — the inspection "title" is auto-set to the
+          // conduct date, which isn't a recognisable name.
+          const name = (i.templateName ?? '').trim();
           const title = (i.title ?? '').trim();
           const label =
-            title !== ''
-              ? title
-              : i.documentNumber != null
-                ? `#${i.documentNumber}`
-                : i.id.slice(-6);
-          return { id: i.id, label, meta: withPlace(i.status, i.siteId) };
+            name !== ''
+              ? name
+              : title !== ''
+                ? title
+                : i.documentNumber != null
+                  ? `#${i.documentNumber}`
+                  : i.id.slice(-6);
+          // Show the doc number as a suffix in the meta so identical templates differ.
+          const num = i.documentNumber != null ? `#${i.documentNumber}` : null;
+          const base = withPlace(i.status, i.siteId);
+          return { id: i.id, label, meta: [num, base].filter(Boolean).join(' · ') };
         });
     }
     if (kind === 'action') {
@@ -178,7 +189,7 @@ function LinkPickerDialog({
               autoFocus
             />
           </div>
-          <div className="max-h-72 overflow-y-auto rounded-md border">
+          <div className="max-h-72 overflow-y-auto overflow-x-hidden rounded-md border">
             {loading ? (
               <div className="space-y-2 p-3">
                 <Skeleton className="h-4 w-3/4" />
@@ -194,16 +205,16 @@ function LinkPickerDialog({
                       type="button"
                       disabled={pending}
                       onClick={() => link(c.id)}
-                      className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50 disabled:opacity-50"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50 disabled:opacity-50"
                     >
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate">{c.label}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate">{c.label}</p>
                         {c.meta !== '' ? (
-                          <span className="block truncate text-xs capitalize text-muted-foreground">
+                          <p className="truncate text-xs capitalize text-muted-foreground">
                             {c.meta}
-                          </span>
+                          </p>
                         ) : null}
-                      </span>
+                      </div>
                       <Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     </button>
                   </li>
