@@ -22,6 +22,7 @@ import { SiteSelector } from '../../../../src/components/selectors/site-selector
 import { AssetField } from '../../../../src/components/actions/asset-field';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type Tab = 'overview' | 'activity' | 'comments';
@@ -54,6 +55,7 @@ export default function ActionDetailPage() {
   const tStatus = useTranslations('actions.status');
   const tPriority = useTranslations('actions.priority');
   const tCommon = useTranslations('common');
+  const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string; actionId: string }>();
   const locale = params.locale ?? 'en';
   const actionId = params.actionId ?? '';
@@ -135,7 +137,8 @@ export default function ActionDetailPage() {
   const refLabel = action.referenceNumber ?? action.id.slice(-6);
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-6">
+    <div className="-mx-4 -my-6 flex flex-1 flex-col bg-[#eef4fb] px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="mx-auto w-full max-w-[1200px] space-y-6">
       <div>
         <Link
           href={`/${locale}/actions`}
@@ -483,7 +486,7 @@ export default function ActionDetailPage() {
                   tFields('noDueDate')
                 )}
               </DetailRow>
-              <DetailRow label={tFields('site')}>
+              <DetailRow label={placeLabel}>
                 {canEdit ? (
                   <SiteSelector
                     value={action.siteId !== null ? [action.siteId] : []}
@@ -536,6 +539,7 @@ export default function ActionDetailPage() {
       ) : null}
 
       {tab === 'comments' ? <CommentsThread actionId={actionId} readOnly={isArchived} /> : null}
+      </div>
     </div>
   );
 }

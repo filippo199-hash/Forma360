@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/compon
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 /**
@@ -305,6 +306,7 @@ function InvitePanel({
   onCancel: () => void;
 }) {
   const t = useTranslations('settings.users.invite');
+  const { labelPlural: placesLabel } = usePlaceTerms();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -465,7 +467,7 @@ function InvitePanel({
             </div>
 
             <div className="space-y-1.5">
-              <Label>{t('sitesLabel')}</Label>
+              <Label>{placesLabel}</Label>
               {sites.length > 0 ? (
                 <div className="max-h-36 overflow-y-auto rounded-md border p-2 space-y-1">
                   {sites.map((s) => (

@@ -33,6 +33,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 const MAX_BYTES = 50 * 1024 * 1024;
@@ -131,6 +132,7 @@ export default function DocumentDetailPage() {
   const t = useTranslations('documents.detail');
   const tUpload = useTranslations('documents.upload');
   const tCommon = useTranslations('common');
+  const { labelPlural: placesLabel } = usePlaceTerms();
   const params = useParams<{ locale: string; documentId: string }>();
   const locale = params.locale ?? 'en';
   const documentId = params.documentId ?? '';
@@ -636,7 +638,7 @@ export default function DocumentDetailPage() {
                     <SiteSelector
                       value={visSiteIds}
                       onChange={setVisSiteIds}
-                      label={t('visSitesLabel')}
+                      label={placesLabel}
                       disabled={!canManage}
                     />
                   </div>

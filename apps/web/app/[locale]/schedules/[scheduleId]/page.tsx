@@ -18,6 +18,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Switch } from '../../../../src/components/ui/switch';
 import { formatInTimeZone } from '@forma360/shared/timezone';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 // ─── Timezone helpers ────────────────────────────────────────────────────────
@@ -134,6 +135,7 @@ function buildSummary(opts: {
 
 export default function ScheduleEditPage() {
   const t = useTranslations('schedules');
+  const { labelPlural: placesLabel } = usePlaceTerms();
   const tCommon = useTranslations('common');
   const params = useParams<{ locale: string; scheduleId: string }>();
   const router = useRouter();
@@ -356,7 +358,7 @@ export default function ScheduleEditPage() {
               </div>
               <div>
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t('form.assignedSitesLabel')}
+                  {t('form.assignedSitesLabel', { places: placesLabel })}
                 </p>
                 <SitePicker selected={siteIds} onChange={setSiteIds} />
               </div>

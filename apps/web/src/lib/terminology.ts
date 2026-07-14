@@ -42,10 +42,29 @@ export function placeLabelKey(term: SiteTerminology): 'kindSite' | 'kindProject'
  * the picker's empty-state ("Select a project"). Respects the tenant setting so
  * every place-picker reads the way the user configured it.
  */
-export function usePlaceTerms(): { term: SiteTerminology; label: string; selectPlaceholder: string } {
+export function usePlaceTerms(): {
+  term: SiteTerminology;
+  /** Singular field noun — "Site" / "Project" / "Site / Project". */
+  label: string;
+  /** Plural noun — "Sites" / "Projects" / "Sites & Projects". */
+  labelPlural: string;
+  /** Picker empty-state — "Select a project". */
+  selectPlaceholder: string;
+  /** Multi-select "add" placeholder — "Add projects". */
+  addPlaceholder: string;
+} {
   const term = useTerminology();
   const t = useTranslations('sites');
+  const tNav = useTranslations('nav');
   const selectKey =
     term === 'sites' ? 'selectSite' : term === 'projects' ? 'selectProject' : 'selectSiteProject';
-  return { term, label: t(placeLabelKey(term)), selectPlaceholder: t(selectKey) };
+  const addKey =
+    term === 'sites' ? 'addSites' : term === 'projects' ? 'addProjects' : 'addSitesProjects';
+  return {
+    term,
+    label: t(placeLabelKey(term)),
+    labelPlural: tNav(navLabelKey(term)),
+    selectPlaceholder: t(selectKey),
+    addPlaceholder: t(addKey),
+  };
 }

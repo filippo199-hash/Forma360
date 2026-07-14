@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { usePlaceTerms } from '../../lib/terminology';
 import { SiteSelector } from '../selectors/site-selector';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 
@@ -33,13 +34,13 @@ export function GroupPicker({ selected, onChange }: AudiencePickerProps) {
 }
 
 export function SitePicker({ selected, onChange }: AudiencePickerProps) {
-  const t = useTranslations('templates.editor.publishTab');
+  const { labelPlural, addPlaceholder } = usePlaceTerms();
   return (
     <SiteSelector
       value={selected}
       onChange={onChange}
-      label={t('sitesLabel')}
-      placeholder={t('addSites')}
+      label={labelPlural}
+      placeholder={addPlaceholder}
     />
   );
 }

@@ -13,6 +13,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { cn } from '../../../../src/lib/cn';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 const MAX_BYTES = 50 * 1024 * 1024;
@@ -46,6 +47,7 @@ type ResponsibleType = 'none' | 'user' | 'group';
 
 export default function DocumentNewPage() {
   const t = useTranslations('documents.upload');
+  const { label: placeLabel } = usePlaceTerms();
   const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -319,7 +321,7 @@ export default function DocumentNewPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="doc-site">{t('siteLabel')}</Label>
+              <Label htmlFor="doc-site">{placeLabel}</Label>
               <select
                 id="doc-site"
                 value={siteId}

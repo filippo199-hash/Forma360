@@ -10,6 +10,7 @@ import { GroupUserSelector } from '../../../../src/components/selectors/group-us
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 /**
@@ -21,6 +22,7 @@ import { trpc } from '../../../../src/lib/trpc/client';
  */
 export default function SchedulesCalendarPage() {
   const t = useTranslations('schedules.calendar');
+  const { labelPlural: placesLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
 
@@ -144,7 +146,7 @@ export default function SchedulesCalendarPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-48">
-          <SiteSelector value={siteIds} onChange={setSiteIds} label={t('filterSite')} />
+          <SiteSelector value={siteIds} onChange={setSiteIds} label={placesLabel} />
         </div>
         <div className="w-48">
           <GroupUserSelector

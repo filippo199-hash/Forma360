@@ -1,5 +1,6 @@
 'use client';
 
+import { MapPin, User, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -8,6 +9,7 @@ import { SectionTabBar } from '../../../src/components/inspections/section-tab-b
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { humanizeRrule } from '../../../src/lib/rrule-text';
 import { trpc } from '../../../src/lib/trpc/client';
 
 type PausedFilter = 'all' | 'active' | 'paused';
@@ -16,7 +18,6 @@ export default function SchedulesPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const t = useTranslations('schedules');
-  const tCommon = useTranslations('common');
 
   const [pausedFilter, setPausedFilter] = useState<PausedFilter>('all');
   const [templateId, setTemplateId] = useState<string | undefined>(undefined);
@@ -48,22 +49,27 @@ export default function SchedulesPage() {
         </header>
 
         <div className="flex flex-wrap items-center gap-2">
-          {(['all', 'active', 'paused'] as PausedFilter[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setPausedFilter(key)}
-              className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                pausedFilter === key ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60'
-              }`}
-            >
-              {key === 'all'
-                ? tCommon('search')
-                : key === 'active'
-                  ? t('filterActive')
-                  : t('filterPaused')}
-            </button>
-          ))}
+          <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-muted p-0.5">
+            {(['all', 'active', 'paused'] as PausedFilter[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setPausedFilter(key)}
+                aria-pressed={pausedFilter === key}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  pausedFilter === key
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {key === 'all'
+                  ? t('filterAll')
+                  : key === 'active'
+                    ? t('filterActive')
+                    : t('filterPaused')}
+              </button>
+            ))}
+          </div>
           <select
             className="ml-auto rounded-md border border-border bg-background px-3 py-1.5 text-sm"
             value={templateId ?? ''}
@@ -107,8 +113,41 @@ export default function SchedulesPage() {
                   </span>
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {row.timezone} / {row.rrule}
+                  {humanizeRrule(row.rrule, row.timezone)}
                 </div>
+                {row.siteNames.length > 0 ||
+                row.assigneeGroupNames.length > 0 ||
+                row.assigneeUserNames.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {row.siteNames.map((name) => (
+                      <span
+                        key={`site-${name}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-950/50 dark:text-sky-300"
+                      >
+                        <MapPin className="h-3 w-3" />
+                        {name}
+                      </span>
+                    ))}
+                    {row.assigneeGroupNames.map((name) => (
+                      <span
+                        key={`group-${name}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-950/50 dark:text-violet-300"
+                      >
+                        <Users className="h-3 w-3" />
+                        {name}
+                      </span>
+                    ))}
+                    {row.assigneeUserNames.map((name) => (
+                      <span
+                        key={`user-${name}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                      >
+                        <User className="h-3 w-3" />
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </Link>
             ))}
           </div>

@@ -43,6 +43,7 @@ import { SiteSelector } from '../../../../src/components/selectors/site-selector
 import { EntityPlanMiniMap } from '../../../../src/components/sites/entity-plan-minimap';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 /**
@@ -77,6 +78,7 @@ const PRIORITY_DOT_CLASS: Record<Priority, string> = {
 
 export default function ObservationDetailPage() {
   const t = useTranslations('issues.detail');
+  const { label: placeLabel } = usePlaceTerms();
   const tFields = useTranslations('issues.detail.fields');
   const tStatus = useTranslations('issues.status');
   const tPriority = useTranslations('issues.priority');
@@ -410,7 +412,7 @@ export default function ObservationDetailPage() {
                             {issue.categorySnapshot.name}
                           </span>
                         </Field>
-                        <Field label={t('fields.site')}>
+                        <Field label={placeLabel}>
                           {canManage ? (
                             <SiteSelector
                               value={issue.siteId !== null ? [issue.siteId] : []}

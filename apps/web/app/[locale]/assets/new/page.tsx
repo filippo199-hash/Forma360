@@ -12,6 +12,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 interface CustomField {
@@ -24,6 +25,7 @@ interface CustomField {
 
 export default function NewAssetPage() {
   const t = useTranslations('assets.new');
+  const { label: placeLabel } = usePlaceTerms();
   const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -281,7 +283,7 @@ export default function NewAssetPage() {
         <div className="rounded-xl border bg-background p-5 space-y-4">
           {/* Site */}
           <div className="space-y-1.5">
-            <Label>{t('fields.site')}</Label>
+            <Label>{placeLabel}</Label>
             <SiteSelector
               value={siteId !== '' ? [siteId] : []}
               onChange={(next) => setSiteId(next[0] ?? '')}

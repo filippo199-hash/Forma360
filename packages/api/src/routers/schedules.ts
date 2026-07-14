@@ -23,10 +23,13 @@
  * template-archive cascade preview.
  */
 import {
+  groups,
   inspections,
   scheduledInspectionOccurrences,
+  sites,
   templateSchedules,
   templates,
+  user,
 } from '@forma360/db/schema';
 import {
   registerDependentResolver,
@@ -210,11 +213,53 @@ export const schedulesRouter = router({
       if (input.paused !== undefined) {
         where.push(eq(templateSchedules.paused, input.paused));
       }
-      return ctx.db
+      const rows = await ctx.db
         .select()
         .from(templateSchedules)
         .where(and(...where))
         .orderBy(desc(templateSchedules.updatedAt));
+
+      // Resolve the human names of every assignment target (group / site /
+      // direct user) so the list can tag each schedule with what it's
+      // attached to (To-Do #1). One batched lookup per dimension.
+      const groupIdSet = new Set<string>();
+      const siteIdSet = new Set<string>();
+      const userIdSet = new Set<string>();
+      for (const r of rows) {
+        for (const g of r.assigneeGroupIds ?? []) groupIdSet.add(g);
+        for (const s of r.siteIds ?? []) siteIdSet.add(s);
+        for (const u of r.assigneeUserIds ?? []) userIdSet.add(u);
+      }
+      const [groupRows, siteRows, userRows] = await Promise.all([
+        groupIdSet.size > 0
+          ? ctx.db
+              .select({ id: groups.id, name: groups.name })
+              .from(groups)
+              .where(and(eq(groups.tenantId, ctx.tenantId), inArray(groups.id, [...groupIdSet])))
+          : Promise.resolve([] as { id: string; name: string }[]),
+        siteIdSet.size > 0
+          ? ctx.db
+              .select({ id: sites.id, name: sites.name })
+              .from(sites)
+              .where(and(eq(sites.tenantId, ctx.tenantId), inArray(sites.id, [...siteIdSet])))
+          : Promise.resolve([] as { id: string; name: string }[]),
+        userIdSet.size > 0
+          ? ctx.db
+              .select({ id: user.id, name: user.name })
+              .from(user)
+              .where(and(eq(user.tenantId, ctx.tenantId), inArray(user.id, [...userIdSet])))
+          : Promise.resolve([] as { id: string; name: string }[]),
+      ]);
+      const groupName = new Map(groupRows.map((g) => [g.id, g.name]));
+      const siteName = new Map(siteRows.map((s) => [s.id, s.name]));
+      const userName = new Map(userRows.map((u) => [u.id, u.name]));
+
+      return rows.map((r) => ({
+        ...r,
+        assigneeGroupNames: (r.assigneeGroupIds ?? []).map((id) => groupName.get(id) ?? id),
+        siteNames: (r.siteIds ?? []).map((id) => siteName.get(id) ?? id),
+        assigneeUserNames: (r.assigneeUserIds ?? []).map((id) => userName.get(id) ?? id),
+      }));
     }),
 
   listForTemplate: tenantProcedure
@@ -624,5 +669,4 @@ export async function pauseSchedulesForTemplate(
 
 // Silence unused imports for helpers that are sometimes tree-shaken
 // during typecheck-only runs.
-void inArray;
 void sql;

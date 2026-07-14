@@ -11,6 +11,7 @@ import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../src/lib/permissions-context';
+import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
 
 type StatusFilter = 'all' | IssueStatusValue;
@@ -26,6 +27,7 @@ const STATUSES: readonly StatusFilter[] = ['all', 'open', 'investigation', 'clos
 export default function ObservationsListPage() {
   const t = useTranslations('issues.list');
   const tStatus = useTranslations('issues.status');
+  const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
 
@@ -143,7 +145,7 @@ export default function ObservationsListPage() {
         </div>
         <div className="flex flex-col gap-1 text-sm">
           <label htmlFor="filter-site" className="text-xs font-medium text-muted-foreground">
-            {t('filterSite')}
+            {placeLabel}
           </label>
           <select
             id="filter-site"
