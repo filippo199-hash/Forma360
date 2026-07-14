@@ -341,7 +341,9 @@ export default function ScheduleEditPage() {
           <section className="space-y-4 rounded-md border border-border bg-muted/30 p-4">
             <div className="space-y-1">
               <h2 className="text-sm font-semibold">{t('form.assignedSectionHeading')}</h2>
-              <p className="text-xs text-muted-foreground">{t('form.assignedHint')}</p>
+              <p className="text-xs text-muted-foreground">
+                {t('form.assignedHint', { place: placesLabel.toLowerCase() })}
+              </p>
             </div>
             <div className="space-y-4">
               <div>
