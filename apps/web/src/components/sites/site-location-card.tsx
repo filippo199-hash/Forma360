@@ -12,6 +12,7 @@ import { Card, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { LocationPickerMap } from './location-picker-map';
 
 interface SiteLocationCardProps {
   siteId: string;
@@ -296,6 +297,19 @@ export function SiteLocationCard({
               </div>
             </div>
 
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">{t('locationMapHint')}</p>
+              <LocationPickerMap
+                lat={previewValid ? previewLat : null}
+                lng={previewValid ? previewLng : null}
+                onChange={(nextLat, nextLng) => {
+                  setLat(String(nextLat));
+                  setLng(String(nextLng));
+                }}
+                className="h-64 w-full overflow-hidden rounded-md border"
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="loc-lat">{t('locationLat')}</Label>
@@ -306,15 +320,6 @@ export function SiteLocationCard({
                 <Input id="loc-lng" value={lng} onChange={(e) => setLng(e.target.value)} />
               </div>
             </div>
-
-            {previewValid ? (
-              <iframe
-                title={t('locationPreview')}
-                src={embedUrl(previewLat, previewLng)}
-                className="h-48 w-full rounded-md border"
-                loading="lazy"
-              />
-            ) : null}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>

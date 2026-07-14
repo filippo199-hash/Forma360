@@ -2804,6 +2804,7 @@
     "locationOpenMap": "Open map",
     "locationDirections": "Directions",
     "locationDialogTitle": "Set location",
+    "locationMapHint": "Click the map or drag the pin to set the location.",
     "locationAddressLabel": "Address",
     "locationAddressPlaceholder": "Search an address or place…",
     "locationSearch": "Search",
