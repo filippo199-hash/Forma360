@@ -132,7 +132,7 @@ export default function DocumentDetailPage() {
   const t = useTranslations('documents.detail');
   const tUpload = useTranslations('documents.upload');
   const tCommon = useTranslations('common');
-  const { labelPlural: placesLabel } = usePlaceTerms();
+  const { labelPlural: placesLabel, noneLabel: placeNone } = usePlaceTerms();
   const params = useParams<{ locale: string; documentId: string }>();
   const locale = params.locale ?? 'en';
   const documentId = params.documentId ?? '';
@@ -887,7 +887,7 @@ export default function DocumentDetailPage() {
                 onChange={(e) => setMoveSiteId(e.target.value)}
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               >
-                <option value="">{tUpload('noSite')}</option>
+                <option value="">{placeNone}</option>
                 {allSites.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}

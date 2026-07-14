@@ -52,6 +52,8 @@ export function usePlaceTerms(): {
   selectPlaceholder: string;
   /** Multi-select "add" placeholder — "Add projects". */
   addPlaceholder: string;
+  /** Unset/empty value — "No project". */
+  noneLabel: string;
 } {
   const term = useTerminology();
   const t = useTranslations('sites');
@@ -60,11 +62,14 @@ export function usePlaceTerms(): {
     term === 'sites' ? 'selectSite' : term === 'projects' ? 'selectProject' : 'selectSiteProject';
   const addKey =
     term === 'sites' ? 'addSites' : term === 'projects' ? 'addProjects' : 'addSitesProjects';
+  const noneKey =
+    term === 'sites' ? 'noneSite' : term === 'projects' ? 'noneProject' : 'noneSiteProject';
   return {
     term,
     label: t(placeLabelKey(term)),
     labelPlural: tNav(navLabelKey(term)),
     selectPlaceholder: t(selectKey),
     addPlaceholder: t(addKey),
+    noneLabel: t(noneKey),
   };
 }

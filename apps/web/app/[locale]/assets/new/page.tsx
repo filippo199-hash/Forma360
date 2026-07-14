@@ -25,7 +25,7 @@ interface CustomField {
 
 export default function NewAssetPage() {
   const t = useTranslations('assets.new');
-  const { label: placeLabel } = usePlaceTerms();
+  const { label: placeLabel, noneLabel: placeNone } = usePlaceTerms();
   const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -288,7 +288,7 @@ export default function NewAssetPage() {
               value={siteId !== '' ? [siteId] : []}
               onChange={(next) => setSiteId(next[0] ?? '')}
               multiple={false}
-              placeholder={t('fields.noSite')}
+              placeholder={placeNone}
             />
           </div>
 

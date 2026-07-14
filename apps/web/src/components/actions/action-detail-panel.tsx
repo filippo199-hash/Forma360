@@ -62,7 +62,7 @@ const STATUS_COLORS: Record<Status, string> = {
 export function ActionDetailPanel({ actionId, locale }: { actionId: string; locale: string }) {
   const t = useTranslations('actions.detail');
   const tFields = useTranslations('actions.detail.fields');
-  const { label: placeLabel } = usePlaceTerms();
+  const { label: placeLabel, noneLabel: placeNone } = usePlaceTerms();
   const tStatus = useTranslations('actions.status');
   const tPriority = useTranslations('actions.priority');
   const tCommon = useTranslations('common');
@@ -512,12 +512,12 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                         value={action.siteId !== null ? [action.siteId] : []}
                         onChange={(next) => update.mutate({ actionId, siteId: next[0] ?? null })}
                         multiple={false}
-                        placeholder={tFields('noSite')}
+                        placeholder={placeNone}
                       />
                     ) : action.siteId !== null ? (
                       ((sites ?? []).find((s) => s.id === action.siteId)?.name ?? '—')
                     ) : (
-                      tFields('noSite')
+                      placeNone
                     )}
                   </DetailRow>
 

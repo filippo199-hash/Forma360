@@ -55,7 +55,7 @@ export default function ActionDetailPage() {
   const tStatus = useTranslations('actions.status');
   const tPriority = useTranslations('actions.priority');
   const tCommon = useTranslations('common');
-  const { label: placeLabel } = usePlaceTerms();
+  const { label: placeLabel, noneLabel: placeNone } = usePlaceTerms();
   const params = useParams<{ locale: string; actionId: string }>();
   const locale = params.locale ?? 'en';
   const actionId = params.actionId ?? '';
@@ -492,12 +492,12 @@ export default function ActionDetailPage() {
                     value={action.siteId !== null ? [action.siteId] : []}
                     onChange={(next) => update.mutate({ actionId, siteId: next[0] ?? null })}
                     multiple={false}
-                    placeholder={tFields('noSite')}
+                    placeholder={placeNone}
                   />
                 ) : action.siteId !== null ? (
                   ((sites ?? []).find((s) => s.id === action.siteId)?.name ?? '—')
                 ) : (
-                  tFields('noSite')
+                  placeNone
                 )}
               </DetailRow>
               <DetailRow label={tFields('label')}>

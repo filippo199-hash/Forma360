@@ -53,7 +53,7 @@ export default function AssetDetailPage() {
   const canManageMaintenance = useHasPermission('assets.maintenance.manage');
   const canViewContractors = useHasPermission('contractors.view');
   const canLinkContractors = useHasPermission('contractors.manage');
-  const { label: placeLabel } = usePlaceTerms();
+  const { label: placeLabel, noneLabel: placeNone } = usePlaceTerms();
 
   const [tab, setTab] = useState<Tab>('overview');
   const [editing, setEditing] = useState(false);
@@ -355,7 +355,7 @@ export default function AssetDetailPage() {
                     value={editSiteId !== '' ? [editSiteId] : []}
                     onChange={(next) => setEditSiteId(next[0] ?? '')}
                     multiple={false}
-                    placeholder={t('fields.noSite')}
+                    placeholder={placeNone}
                   />
                 </div>
                 <div className="space-y-1.5">
