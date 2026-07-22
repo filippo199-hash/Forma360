@@ -355,7 +355,7 @@ export default function DocumentsPage() {
       </Dialog>
 
       {/* Two-panel layout */}
-      <div className="grid gap-4 md:grid-cols-[220px_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
         {/* Folder sidebar — sticky + scrollable for large trees */}
         <aside className="min-w-0 space-y-1 overflow-x-auto md:sticky md:top-4 md:max-h-[calc(100vh-7rem)] md:self-start md:overflow-y-auto md:pr-1">
           {foldersLoading ? (
