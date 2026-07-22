@@ -14,10 +14,7 @@ import { PortalHeader } from '../../src/components/portal/portal-header';
 import { SiteFooter } from '../../src/components/site-footer';
 import { SiteHeader } from '../../src/components/site-header';
 import { SiteSidebar } from '../../src/components/site-sidebar';
-import {
-  isPathAllowedForExternal,
-  loadContractorUser,
-} from '../../src/server/contractor-portal';
+import { isPathAllowedForExternal, loadContractorUser } from '../../src/server/contractor-portal';
 import { ThemeProvider } from '../../src/components/theme-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
 import { Toaster } from '../../src/components/ui/sonner';

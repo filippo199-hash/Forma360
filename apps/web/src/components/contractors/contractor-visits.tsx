@@ -8,22 +8,11 @@ import { cn } from '../../lib/cn';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 
-export type VisitStatus =
-  | 'scheduled'
-  | 'checked_in'
-  | 'checked_out'
-  | 'cancelled'
-  | 'no_show';
+export type VisitStatus = 'scheduled' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
 
 export const VISIT_STATUS_BADGE: Record<VisitStatus, string> = {
   scheduled: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
@@ -222,7 +211,7 @@ export function VisitCreateDialog({
 
           {!walkIn ? (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="v-start">{t('visits.visitStartLabel')}</Label>
                   <Input
@@ -583,8 +572,7 @@ export function VisitDetailDialog({
                           {t('visits.overrideReasonLabel')}: {ev.overrideReason}
                         </span>
                       ) : null}
-                      {ev.capturedFields !== null &&
-                      Object.keys(ev.capturedFields).length > 0 ? (
+                      {ev.capturedFields !== null && Object.keys(ev.capturedFields).length > 0 ? (
                         <span className="text-muted-foreground">
                           {Object.entries(ev.capturedFields)
                             .map(([fid, val]) => `${fieldLabel(fid)}: ${val}`)

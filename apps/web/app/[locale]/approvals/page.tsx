@@ -38,49 +38,51 @@ export default function ApprovalsPage() {
 
         <Card>
           <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/40 text-left">
-                <tr>
-                  <th className="px-3 py-2 font-medium">{tInsp('table.title')}</th>
-                  <th className="px-3 py-2 font-medium">{tInsp('table.documentNumber')}</th>
-                  <th className="px-3 py-2 font-medium">{t('submittedAt')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/40 text-left">
                   <tr>
-                    <td colSpan={3} className="p-4">
-                      <Skeleton className="h-4 w-full" />
-                    </td>
+                    <th className="px-3 py-2 font-medium">{tInsp('table.title')}</th>
+                    <th className="px-3 py-2 font-medium">{tInsp('table.documentNumber')}</th>
+                    <th className="px-3 py-2 font-medium">{t('submittedAt')}</th>
                   </tr>
-                ) : (data ?? []).length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="p-8 text-center text-muted-foreground">
-                      {t('empty')}
-                    </td>
-                  </tr>
-                ) : (
-                  (data ?? []).map((r) => (
-                    <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10">
-                      <td className="px-3 py-2">
-                        <Link
-                          href={`/${locale}/approvals/${r.id}`}
-                          className="font-medium hover:underline"
-                        >
-                          {r.title}
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
-                        {r.documentNumber ?? '—'}
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {r.submittedAt !== null ? formatRelative(r.submittedAt) : '—'}
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={3} className="p-4">
+                        <Skeleton className="h-4 w-full" />
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (data ?? []).length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-muted-foreground">
+                        {t('empty')}
+                      </td>
+                    </tr>
+                  ) : (
+                    (data ?? []).map((r) => (
+                      <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10">
+                        <td className="px-3 py-2">
+                          <Link
+                            href={`/${locale}/approvals/${r.id}`}
+                            className="font-medium hover:underline"
+                          >
+                            {r.title}
+                          </Link>
+                        </td>
+                        <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                          {r.documentNumber ?? '—'}
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {r.submittedAt !== null ? formatRelative(r.submittedAt) : '—'}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       </div>

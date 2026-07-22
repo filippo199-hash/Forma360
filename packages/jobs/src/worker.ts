@@ -258,7 +258,10 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     { pattern: CONTRACTOR_OVERSTAY_CRON, tz: 'UTC' },
     { name: 'contractor-overstay', data: {} },
   );
-  logger.info({ cron: CONTRACTOR_OVERSTAY_CRON }, '[worker] registered contractor-overstay repeatable');
+  logger.info(
+    { cron: CONTRACTOR_OVERSTAY_CRON },
+    '[worker] registered contractor-overstay repeatable',
+  );
 
   // ─── Phase 3 — Observation notifications ───────────────────────────────
   const observationNotifyWorker = new Worker(

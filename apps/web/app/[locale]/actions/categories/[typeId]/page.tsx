@@ -179,325 +179,327 @@ export default function ActionTypeDetailPage() {
   return (
     <div className="-mx-4 -my-6 flex flex-1 flex-col bg-[#eef4fb] px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="mx-auto w-full max-w-[1200px] space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <Link
-            href={`/${locale}/actions/categories`}
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ChevronLeft className="mr-1 h-4 w-4" />
-            {t('backLink')}
-          </Link>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{type.name}</h1>
-          {type.archivedAt !== null ? (
-            <p className="mt-1 text-sm text-muted-foreground">{t('archivedNotice')}</p>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2">
-          {dirty ? (
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={update.isPending}
-              onClick={() => {
-                setSeeded(false);
-              }}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <Link
+              href={`/${locale}/actions/categories`}
+              className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
             >
-              {tCommon('cancel')}
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              {t('backLink')}
+            </Link>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight">{type.name}</h1>
+            {type.archivedAt !== null ? (
+              <p className="mt-1 text-sm text-muted-foreground">{t('archivedNotice')}</p>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-2">
+            {dirty ? (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={update.isPending}
+                onClick={() => {
+                  setSeeded(false);
+                }}
+              >
+                {tCommon('cancel')}
+              </Button>
+            ) : null}
+            <Button type="button" disabled={!canSave} onClick={onSave}>
+              {tCommon('save')}
             </Button>
-          ) : null}
+          </div>
+        </div>
+
+        {/* Basics */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('basics.title')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="t-name">{t('basics.nameLabel')}</Label>
+              <Input
+                id="t-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={200}
+                disabled={!canSettings}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="t-desc">{t('basics.descriptionLabel')}</Label>
+              <Textarea
+                id="t-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={2000}
+                rows={3}
+                disabled={!canSettings}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="t-color">{t('basics.colorLabel')}</Label>
+              <Input
+                id="t-color"
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="h-10 w-20 p-1"
+                disabled={!canSettings}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Custom questions */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle>{t('questions.title')}</CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">{t('questions.subtitle')}</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (questions.length >= MAX_QUESTIONS) return;
+                  setQuestions((prev) => [
+                    ...prev,
+                    { id: newId(), prompt: '', type: 'text', required: false },
+                  ]);
+                }}
+                disabled={!canSettings || questions.length >= MAX_QUESTIONS}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                {t('questions.addButton')}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {questions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('questions.empty')}</p>
+            ) : (
+              <div className="space-y-3">
+                {questions.map((q, i) => (
+                  <QuestionRow
+                    key={q.id}
+                    question={q}
+                    disabled={!canSettings}
+                    onChange={(patch) =>
+                      setQuestions((prev) => {
+                        const list = prev.slice();
+                        const current = list[i];
+                        if (current === undefined) return prev;
+                        const merged: ActionCustomQuestion = { ...current, ...patch };
+                        if (
+                          merged.type === 'multipleChoice' &&
+                          (merged.options === undefined || merged.options.length === 0)
+                        ) {
+                          merged.options = [''];
+                        }
+                        if (merged.type !== 'multipleChoice') {
+                          delete merged.options;
+                        }
+                        list[i] = merged;
+                        return list;
+                      })
+                    }
+                    onRemove={() =>
+                      setQuestions((prev) => {
+                        const list = prev.slice();
+                        list.splice(i, 1);
+                        return list;
+                      })
+                    }
+                  />
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  {t('questions.counter', { count: questions.length, max: MAX_QUESTIONS })}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Required fields */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('required.title')}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t('required.subtitle')}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              {ACTION_REQUIRED_FIELDS.map((field) => {
+                const checked = requiredFields.includes(field);
+                return (
+                  <label
+                    key={field}
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-md border bg-card p-3"
+                  >
+                    <span className="text-sm">{t(`required.fields.${field}`)}</span>
+                    <Switch
+                      checked={checked}
+                      onCheckedChange={(v) => {
+                        setRequiredFields((prev) => {
+                          if (v) return prev.includes(field) ? prev : [...prev, field];
+                          return prev.filter((f) => f !== field);
+                        });
+                      }}
+                      disabled={!canSettings}
+                    />
+                  </label>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Labels */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle>{t('labels.title')}</CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">{t('labels.subtitle')}</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (labels.length >= MAX_LABELS) return;
+                  setLabels((prev) => [...prev, '']);
+                }}
+                disabled={!canSettings || labels.length >= MAX_LABELS}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                {t('labels.addButton')}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {labels.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('labels.empty')}</p>
+            ) : (
+              <div className="space-y-2">
+                {labels.map((lbl, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Input
+                      value={lbl}
+                      onChange={(e) =>
+                        setLabels((prev) => {
+                          const next = prev.slice();
+                          next[i] = e.target.value;
+                          return next;
+                        })
+                      }
+                      placeholder={t('labels.placeholder')}
+                      maxLength={MAX_LABEL_TEXT}
+                      disabled={!canSettings}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setLabels((prev) => {
+                          const next = prev.slice();
+                          next.splice(i, 1);
+                          return next;
+                        })
+                      }
+                      disabled={!canSettings}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  {t('labels.counter', { count: labels.length, max: MAX_LABELS })}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Visibility */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('visibility.title')}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t('visibility.subtitle')}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {ACTION_VISIBILITY_RULES.map((rule) => (
+                <label
+                  key={rule}
+                  className="flex cursor-pointer items-start gap-3 rounded-md border bg-card p-3"
+                >
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value={rule}
+                    checked={visibility === rule}
+                    onChange={() => setVisibility(rule)}
+                    disabled={!canSettings}
+                    className="mt-1"
+                  />
+                  <div>
+                    <div className="text-sm font-medium">
+                      {t(`visibility.options.${rule}.label`)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t(`visibility.options.${rule}.help`)}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Transition rules */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('transitions.title')}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t('transitions.subtitle')}</p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {(['completed', 'cancelled'] as const).map((status) => (
+              <TransitionPicker
+                key={status}
+                status={status}
+                groups={groups ?? []}
+                allowedGroupIds={transitionRules[status].allowedGroupIds}
+                disabled={!canSettings}
+                onChange={(ids) =>
+                  setTransitionRules((prev) => ({
+                    ...prev,
+                    [status]: { allowedGroupIds: ids },
+                  }))
+                }
+              />
+            ))}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-2 pb-8">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => router.push(`/${locale}/actions/categories`)}
+          >
+            {t('done')}
+          </Button>
           <Button type="button" disabled={!canSave} onClick={onSave}>
             {tCommon('save')}
           </Button>
         </div>
-      </div>
-
-      {/* Basics */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('basics.title')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="t-name">{t('basics.nameLabel')}</Label>
-            <Input
-              id="t-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={200}
-              disabled={!canSettings}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="t-desc">{t('basics.descriptionLabel')}</Label>
-            <Textarea
-              id="t-desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={2000}
-              rows={3}
-              disabled={!canSettings}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="t-color">{t('basics.colorLabel')}</Label>
-            <Input
-              id="t-color"
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="h-10 w-20 p-1"
-              disabled={!canSettings}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Custom questions */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle>{t('questions.title')}</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">{t('questions.subtitle')}</p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (questions.length >= MAX_QUESTIONS) return;
-                setQuestions((prev) => [
-                  ...prev,
-                  { id: newId(), prompt: '', type: 'text', required: false },
-                ]);
-              }}
-              disabled={!canSettings || questions.length >= MAX_QUESTIONS}
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              {t('questions.addButton')}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {questions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('questions.empty')}</p>
-          ) : (
-            <div className="space-y-3">
-              {questions.map((q, i) => (
-                <QuestionRow
-                  key={q.id}
-                  question={q}
-                  disabled={!canSettings}
-                  onChange={(patch) =>
-                    setQuestions((prev) => {
-                      const list = prev.slice();
-                      const current = list[i];
-                      if (current === undefined) return prev;
-                      const merged: ActionCustomQuestion = { ...current, ...patch };
-                      if (
-                        merged.type === 'multipleChoice' &&
-                        (merged.options === undefined || merged.options.length === 0)
-                      ) {
-                        merged.options = [''];
-                      }
-                      if (merged.type !== 'multipleChoice') {
-                        delete merged.options;
-                      }
-                      list[i] = merged;
-                      return list;
-                    })
-                  }
-                  onRemove={() =>
-                    setQuestions((prev) => {
-                      const list = prev.slice();
-                      list.splice(i, 1);
-                      return list;
-                    })
-                  }
-                />
-              ))}
-              <p className="text-xs text-muted-foreground">
-                {t('questions.counter', { count: questions.length, max: MAX_QUESTIONS })}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Required fields */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('required.title')}</CardTitle>
-          <p className="text-sm text-muted-foreground">{t('required.subtitle')}</p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {ACTION_REQUIRED_FIELDS.map((field) => {
-              const checked = requiredFields.includes(field);
-              return (
-                <label
-                  key={field}
-                  className="flex cursor-pointer items-center justify-between gap-3 rounded-md border bg-card p-3"
-                >
-                  <span className="text-sm">{t(`required.fields.${field}`)}</span>
-                  <Switch
-                    checked={checked}
-                    onCheckedChange={(v) => {
-                      setRequiredFields((prev) => {
-                        if (v) return prev.includes(field) ? prev : [...prev, field];
-                        return prev.filter((f) => f !== field);
-                      });
-                    }}
-                    disabled={!canSettings}
-                  />
-                </label>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Labels */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle>{t('labels.title')}</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">{t('labels.subtitle')}</p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (labels.length >= MAX_LABELS) return;
-                setLabels((prev) => [...prev, '']);
-              }}
-              disabled={!canSettings || labels.length >= MAX_LABELS}
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              {t('labels.addButton')}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {labels.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('labels.empty')}</p>
-          ) : (
-            <div className="space-y-2">
-              {labels.map((lbl, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Input
-                    value={lbl}
-                    onChange={(e) =>
-                      setLabels((prev) => {
-                        const next = prev.slice();
-                        next[i] = e.target.value;
-                        return next;
-                      })
-                    }
-                    placeholder={t('labels.placeholder')}
-                    maxLength={MAX_LABEL_TEXT}
-                    disabled={!canSettings}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      setLabels((prev) => {
-                        const next = prev.slice();
-                        next.splice(i, 1);
-                        return next;
-                      })
-                    }
-                    disabled={!canSettings}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <p className="text-xs text-muted-foreground">
-                {t('labels.counter', { count: labels.length, max: MAX_LABELS })}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Visibility */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('visibility.title')}</CardTitle>
-          <p className="text-sm text-muted-foreground">{t('visibility.subtitle')}</p>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {ACTION_VISIBILITY_RULES.map((rule) => (
-              <label
-                key={rule}
-                className="flex cursor-pointer items-start gap-3 rounded-md border bg-card p-3"
-              >
-                <input
-                  type="radio"
-                  name="visibility"
-                  value={rule}
-                  checked={visibility === rule}
-                  onChange={() => setVisibility(rule)}
-                  disabled={!canSettings}
-                  className="mt-1"
-                />
-                <div>
-                  <div className="text-sm font-medium">{t(`visibility.options.${rule}.label`)}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {t(`visibility.options.${rule}.help`)}
-                  </div>
-                </div>
-              </label>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Transition rules */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('transitions.title')}</CardTitle>
-          <p className="text-sm text-muted-foreground">{t('transitions.subtitle')}</p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {(['completed', 'cancelled'] as const).map((status) => (
-            <TransitionPicker
-              key={status}
-              status={status}
-              groups={groups ?? []}
-              allowedGroupIds={transitionRules[status].allowedGroupIds}
-              disabled={!canSettings}
-              onChange={(ids) =>
-                setTransitionRules((prev) => ({
-                  ...prev,
-                  [status]: { allowedGroupIds: ids },
-                }))
-              }
-            />
-          ))}
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end gap-2 pb-8">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => router.push(`/${locale}/actions/categories`)}
-        >
-          {t('done')}
-        </Button>
-        <Button type="button" disabled={!canSave} onClick={onSave}>
-          {tCommon('save')}
-        </Button>
-      </div>
       </div>
     </div>
   );

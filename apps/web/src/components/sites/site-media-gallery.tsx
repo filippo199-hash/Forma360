@@ -534,7 +534,7 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
                 <GitCompare className="h-4 w-4 text-primary" />
                 {t('mediaCompareTitle')}
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <figure className="space-y-1">
                   {comparisonBefore !== null ? (
                     <img

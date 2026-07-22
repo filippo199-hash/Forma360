@@ -82,42 +82,44 @@ export default function HeadsUpListPage() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/40">
-                <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.audience')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.engagement')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.createdBy')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.createdAt')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-3 py-2 font-medium">
-                      <Link href={`/${locale}/heads-up/${row.id}`} className="hover:underline">
-                        {row.title}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2">
-                      <StatusBadge status={row.status} t={t} />
-                    </td>
-                    <td className="px-3 py-2">
-                      <AudienceCell audience={row.audience} t={t} />
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {t(`engagement.${row.engagementLevel}`)}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">{row.creatorName ?? '—'}</td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {new Date(row.createdAt).toLocaleDateString()}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/40">
+                  <tr className="text-left">
+                    <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.audience')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.engagement')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.createdBy')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.createdAt')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="px-3 py-2 font-medium">
+                        <Link href={`/${locale}/heads-up/${row.id}`} className="hover:underline">
+                          {row.title}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2">
+                        <StatusBadge status={row.status} t={t} />
+                      </td>
+                      <td className="px-3 py-2">
+                        <AudienceCell audience={row.audience} t={t} />
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {t(`engagement.${row.engagementLevel}`)}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">{row.creatorName ?? '—'}</td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {new Date(row.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       )}

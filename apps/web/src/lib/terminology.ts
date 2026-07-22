@@ -30,7 +30,9 @@ export function hubTitleKey(term: SiteTerminology): 'titleSites' | 'titleProject
 }
 
 /** i18n key (sites namespace) for the singular place noun — "Site" / "Project". */
-export function placeLabelKey(term: SiteTerminology): 'kindSite' | 'kindProject' | 'kindSiteProject' {
+export function placeLabelKey(
+  term: SiteTerminology,
+): 'kindSite' | 'kindProject' | 'kindSiteProject' {
   if (term === 'sites') return 'kindSite';
   if (term === 'projects') return 'kindProject';
   return 'kindSiteProject';

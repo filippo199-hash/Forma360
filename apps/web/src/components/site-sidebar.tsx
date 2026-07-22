@@ -40,17 +40,11 @@ interface NavItem {
 }
 
 /**
- * Global left navigation. Module-level entries surface here; the
- * settings page keeps its own nested nav under the Settings entry.
- * Active-route detection matches the settings-nav pattern — exact match
- * or prefix-match with a trailing slash so deep nested routes still
- * light up the right parent.
- *
- * Render only when the viewer is signed in (the LocaleLayout decides
- * that). Template-editor pages use `fixed inset-0 z-50` so they overlay
- * the sidebar without disturbing layout flow.
+ * The shared nav-item list rendered by both the desktop sidebar and the
+ * mobile drawer ({@link MobileNav} in mobile-nav.tsx). `onNavigate` lets
+ * the mobile drawer close itself when a destination is picked.
  */
-export function SiteSidebar({ locale }: SiteSidebarProps) {
+export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigate?: () => void }) {
   const t = useTranslations('nav');
   const pathname = usePathname();
   const terminology = useTerminology();
@@ -92,6 +86,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
       <Link
         key={item.key}
         href={item.href}
+        {...(onNavigate !== undefined ? { onClick: onNavigate } : {})}
         className={cn(
           'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
           active
@@ -107,6 +102,29 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
   }
 
   return (
+    <nav aria-label={t('primaryLabel')} className="flex flex-1 flex-col gap-0.5 p-3">
+      {primary.map(renderItem)}
+      <div className="mt-auto pt-2">{renderItem(settingsItem)}</div>
+    </nav>
+  );
+}
+
+/**
+ * Global left navigation. Module-level entries surface here; the
+ * settings page keeps its own nested nav under the Settings entry.
+ * Active-route detection matches the settings-nav pattern — exact match
+ * or prefix-match with a trailing slash so deep nested routes still
+ * light up the right parent.
+ *
+ * Render only when the viewer is signed in (the LocaleLayout decides
+ * that). Template-editor pages use `fixed inset-0 z-50` so they overlay
+ * the sidebar without disturbing layout flow.
+ *
+ * Hidden below `md`; the header's {@link MobileNav} hamburger opens the
+ * same items in a drawer there.
+ */
+export function SiteSidebar({ locale }: SiteSidebarProps) {
+  return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
       {/* Brand wordmark at the top of the sidebar. */}
       <Link
@@ -115,10 +133,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
       >
         Forma360
       </Link>
-      <nav aria-label={t('primaryLabel')} className="flex flex-1 flex-col gap-0.5 p-3">
-        {primary.map(renderItem)}
-        <div className="mt-auto pt-2">{renderItem(settingsItem)}</div>
-      </nav>
+      <SiteNavItems locale={locale} />
     </aside>
   );
 }

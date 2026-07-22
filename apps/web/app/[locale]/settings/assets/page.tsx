@@ -123,50 +123,52 @@ export default function SettingsAssetTypesPage() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/40">
-                <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{tCommon('name')}</th>
-                  <th className="px-3 py-2 font-medium">{tCommon('description')}</th>
-                  <th className="px-3 py-2 font-medium">{t('customFieldsCount')}</th>
-                  {canManage ? <th className="px-3 py-2" /> : null}
-                </tr>
-              </thead>
-              <tbody>
-                {types.map((tp) => (
-                  <tr key={tp.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-3 py-2 font-medium">{tp.name}</td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {tp.description.length > 0 ? tp.description : '—'}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {Array.isArray(tp.customFields) ? tp.customFields.length : 0}
-                    </td>
-                    {canManage ? (
-                      <td className="px-3 py-2 text-right">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (
-                              typeof window !== 'undefined' &&
-                              !window.confirm(t('archiveConfirm'))
-                            ) {
-                              return;
-                            }
-                            archive.mutate({ typeId: tp.id });
-                          }}
-                          disabled={archive.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    ) : null}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/40">
+                  <tr className="text-left">
+                    <th className="px-3 py-2 font-medium">{tCommon('name')}</th>
+                    <th className="px-3 py-2 font-medium">{tCommon('description')}</th>
+                    <th className="px-3 py-2 font-medium">{t('customFieldsCount')}</th>
+                    {canManage ? <th className="px-3 py-2" /> : null}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {types.map((tp) => (
+                    <tr key={tp.id} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="px-3 py-2 font-medium">{tp.name}</td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {tp.description.length > 0 ? tp.description : '—'}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {Array.isArray(tp.customFields) ? tp.customFields.length : 0}
+                      </td>
+                      {canManage ? (
+                        <td className="px-3 py-2 text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (
+                                typeof window !== 'undefined' &&
+                                !window.confirm(t('archiveConfirm'))
+                              ) {
+                                return;
+                              }
+                              archive.mutate({ typeId: tp.id });
+                            }}
+                            disabled={archive.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      ) : null}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       )}

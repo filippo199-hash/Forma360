@@ -41,8 +41,14 @@ export default function ContractorTemplatesPage() {
   const onErr = (err: { message: string }) =>
     toast.error(err.message.length > 0 ? err.message : t('error'));
 
-  const create = trpc.contractors.templates.create.useMutation({ onSuccess: invalidate, onError: onErr });
-  const remove = trpc.contractors.templates.remove.useMutation({ onSuccess: invalidate, onError: onErr });
+  const create = trpc.contractors.templates.create.useMutation({
+    onSuccess: invalidate,
+    onError: onErr,
+  });
+  const remove = trpc.contractors.templates.remove.useMutation({
+    onSuccess: invalidate,
+    onError: onErr,
+  });
 
   // "New category" form.
   const [category, setCategory] = useState('');
@@ -98,7 +104,11 @@ export default function ContractorTemplatesPage() {
                 />
               </div>
               <label className="flex items-center gap-1.5 pb-2 text-sm">
-                <input type="checkbox" checked={blocking} onChange={(e) => setBlocking(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={blocking}
+                  onChange={(e) => setBlocking(e.target.checked)}
+                />
                 {t('reqBlocking')}
               </label>
               <Button

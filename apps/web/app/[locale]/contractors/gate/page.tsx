@@ -176,9 +176,7 @@ export default function ContractorGatePage() {
               </label>
               <Button
                 disabled={createField.isPending || label.trim() === ''}
-                onClick={() =>
-                  createField.mutate({ label: label.trim(), fieldType, required })
-                }
+                onClick={() => createField.mutate({ label: label.trim(), fieldType, required })}
               >
                 <Plus className="mr-1 h-4 w-4" />
                 {t('gate.addField')}
@@ -217,7 +215,9 @@ export default function ContractorGatePage() {
                         {t('gate.fieldRequired')}
                       </label>
                     ) : f.required ? (
-                      <span className="text-xs text-muted-foreground">{t('gate.fieldRequired')}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {t('gate.fieldRequired')}
+                      </span>
                     ) : null}
                     {canManage ? (
                       <button

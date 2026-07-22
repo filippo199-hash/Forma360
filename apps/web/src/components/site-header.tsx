@@ -8,6 +8,7 @@ import { db } from '../server/db';
 import { NAV } from '../content/site';
 import { GlobalSearch } from './global-search';
 import { UserMenu } from './header/user-menu';
+import { MobileNav } from './mobile-nav';
 
 export async function SiteHeader({ showBrand = true }: { showBrand?: boolean }) {
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
@@ -48,13 +49,19 @@ function SiteHeaderInner({
     <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="flex items-center justify-between px-4 py-2.5">
         {/* In the app shell the wordmark lives in the sidebar, so the header
-         * brand is hidden there (an empty spacer keeps the nav right-aligned). */}
+         * brand is hidden there on desktop. On mobile the sidebar is gone, so
+         * the header carries a hamburger drawer + wordmark instead. */}
         {showBrand ? (
           <Link href="/" className="font-semibold tracking-tight">
             Forma360
           </Link>
         ) : (
-          <span aria-hidden="true" />
+          <div className="flex items-center gap-1.5">
+            {session !== null ? <MobileNav locale={locale} /> : null}
+            <Link href={`/${locale}/ai`} className="font-semibold tracking-tight md:hidden">
+              Forma360
+            </Link>
+          </div>
         )}
         <nav aria-label={t('navigation.primary')} className="flex items-center gap-2 sm:gap-3">
           {session !== null ? <GlobalSearch /> : null}

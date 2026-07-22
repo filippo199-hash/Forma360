@@ -165,8 +165,6 @@ describe('contractors gate (Phase 2b)', () => {
 
   it('an invalid kiosk token is rejected', async () => {
     const pub = createCaller(publicCtx());
-    await expect(
-      pub.contractors.gate.publicByToken({ token: 'nope-nope-nope' }),
-    ).rejects.toThrow();
+    await expect(pub.contractors.gate.publicByToken({ token: 'nope-nope-nope' })).rejects.toThrow();
   });
 });

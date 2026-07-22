@@ -490,95 +490,99 @@ export default function HeadsUpDetailPage() {
 
           <Card>
             <CardContent className="p-0">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/40">
-                  <tr className="text-left">
-                    <th className="px-3 py-2 font-medium">{t('recipientColumns.name')}</th>
-                    <th className="px-3 py-2 font-medium">{t('recipientColumns.email')}</th>
-                    <th className="px-3 py-2 font-medium">{t('recipientColumns.viewed')}</th>
-                    {engagementLevel === 'acknowledge' || engagementLevel === 'sign' ? (
-                      <th className="px-3 py-2 font-medium">
-                        {t('recipientColumns.acknowledged')}
-                      </th>
-                    ) : null}
-                    {engagementLevel === 'sign' ? (
-                      <th className="px-3 py-2 font-medium">{t('recipientColumns.signed')}</th>
-                    ) : null}
-                    <th className="px-3 py-2 font-medium">{t('recipientColumns.lastReminder')}</th>
-                    {canManage && headsUp.status === 'published' ? (
-                      <th className="px-3 py-2 font-medium">{t('recipientColumns.actions')}</th>
-                    ) : null}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(recipientsData ?? []).map((r) => (
-                    <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-3 py-2">{r.userName ?? '—'}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{r.userEmail ?? '—'}</td>
-                      <td className="px-3 py-2">
-                        {r.viewedAt !== null ? (
-                          <span className="text-emerald-600">
-                            {new Date(r.viewedAt).toLocaleDateString()}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">{t('notYet')}</span>
-                        )}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/40">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">{t('recipientColumns.name')}</th>
+                      <th className="px-3 py-2 font-medium">{t('recipientColumns.email')}</th>
+                      <th className="px-3 py-2 font-medium">{t('recipientColumns.viewed')}</th>
                       {engagementLevel === 'acknowledge' || engagementLevel === 'sign' ? (
-                        <td className="px-3 py-2">
-                          {r.acknowledgedAt !== null ? (
-                            <span className="text-emerald-600">
-                              {new Date(r.acknowledgedAt).toLocaleDateString()}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">{t('notYet')}</span>
-                          )}
-                        </td>
+                        <th className="px-3 py-2 font-medium">
+                          {t('recipientColumns.acknowledged')}
+                        </th>
                       ) : null}
                       {engagementLevel === 'sign' ? (
+                        <th className="px-3 py-2 font-medium">{t('recipientColumns.signed')}</th>
+                      ) : null}
+                      <th className="px-3 py-2 font-medium">
+                        {t('recipientColumns.lastReminder')}
+                      </th>
+                      {canManage && headsUp.status === 'published' ? (
+                        <th className="px-3 py-2 font-medium">{t('recipientColumns.actions')}</th>
+                      ) : null}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(recipientsData ?? []).map((r) => (
+                      <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
+                        <td className="px-3 py-2">{r.userName ?? '—'}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{r.userEmail ?? '—'}</td>
                         <td className="px-3 py-2">
-                          {r.signedAt !== null ? (
+                          {r.viewedAt !== null ? (
                             <span className="text-emerald-600">
-                              {new Date(r.signedAt).toLocaleDateString()}
+                              {new Date(r.viewedAt).toLocaleDateString()}
                             </span>
                           ) : (
                             <span className="text-muted-foreground">{t('notYet')}</span>
                           )}
                         </td>
-                      ) : null}
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {r.reminderLastSentAt !== null && r.reminderLastSentAt !== undefined
-                          ? new Date(r.reminderLastSentAt).toLocaleDateString()
-                          : '—'}
-                      </td>
-                      {canManage && headsUp.status === 'published' ? (
-                        <td className="px-3 py-2">
-                          {isPending(r) ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={sendReminder.isPending}
-                              onClick={() => sendReminder.mutate({ headsUpId, userId: r.userId })}
-                            >
-                              {t('remindButton')}
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-emerald-600">{t('doneBadge')}</span>
-                          )}
+                        {engagementLevel === 'acknowledge' || engagementLevel === 'sign' ? (
+                          <td className="px-3 py-2">
+                            {r.acknowledgedAt !== null ? (
+                              <span className="text-emerald-600">
+                                {new Date(r.acknowledgedAt).toLocaleDateString()}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">{t('notYet')}</span>
+                            )}
+                          </td>
+                        ) : null}
+                        {engagementLevel === 'sign' ? (
+                          <td className="px-3 py-2">
+                            {r.signedAt !== null ? (
+                              <span className="text-emerald-600">
+                                {new Date(r.signedAt).toLocaleDateString()}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">{t('notYet')}</span>
+                            )}
+                          </td>
+                        ) : null}
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {r.reminderLastSentAt !== null && r.reminderLastSentAt !== undefined
+                            ? new Date(r.reminderLastSentAt).toLocaleDateString()
+                            : '—'}
                         </td>
-                      ) : null}
-                    </tr>
-                  ))}
-                  {(recipientsData ?? []).length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                        {t('noRecipients')}
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
+                        {canManage && headsUp.status === 'published' ? (
+                          <td className="px-3 py-2">
+                            {isPending(r) ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={sendReminder.isPending}
+                                onClick={() => sendReminder.mutate({ headsUpId, userId: r.userId })}
+                              >
+                                {t('remindButton')}
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-emerald-600">{t('doneBadge')}</span>
+                            )}
+                          </td>
+                        ) : null}
+                      </tr>
+                    ))}
+                    {(recipientsData ?? []).length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                          {t('noRecipients')}
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -8,13 +8,7 @@ import { cn } from '../../lib/cn';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 
@@ -177,9 +171,11 @@ export function ContractorUsersSection({
                         className="h-7"
                         onClick={() => {
                           setEditUserId(m.userId);
-                          setEditActivities(m.activities.filter((a): a is Activity =>
-                            (ACTIVITIES as readonly string[]).includes(a),
-                          ));
+                          setEditActivities(
+                            m.activities.filter((a): a is Activity =>
+                              (ACTIVITIES as readonly string[]).includes(a),
+                            ),
+                          );
                         }}
                       >
                         {t('users.editActivities')}

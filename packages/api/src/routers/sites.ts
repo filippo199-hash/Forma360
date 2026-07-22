@@ -236,19 +236,31 @@ export const sitesRouter = router({
         .update(documents)
         .set({ archivedAt: null })
         .where(
-          and(eq(documents.tenantId, tid), eq(documents.siteId, sid), eq(documents.archivedAt, stamp)),
+          and(
+            eq(documents.tenantId, tid),
+            eq(documents.siteId, sid),
+            eq(documents.archivedAt, stamp),
+          ),
         );
       await ctx.db
         .update(siteMedia)
         .set({ archivedAt: null })
         .where(
-          and(eq(siteMedia.tenantId, tid), eq(siteMedia.siteId, sid), eq(siteMedia.archivedAt, stamp)),
+          and(
+            eq(siteMedia.tenantId, tid),
+            eq(siteMedia.siteId, sid),
+            eq(siteMedia.archivedAt, stamp),
+          ),
         );
       await ctx.db
         .update(sitePlans)
         .set({ archivedAt: null })
         .where(
-          and(eq(sitePlans.tenantId, tid), eq(sitePlans.siteId, sid), eq(sitePlans.archivedAt, stamp)),
+          and(
+            eq(sitePlans.tenantId, tid),
+            eq(sitePlans.siteId, sid),
+            eq(sitePlans.archivedAt, stamp),
+          ),
         );
       await ctx.db
         .update(sitePlanPins)
@@ -814,7 +826,9 @@ export const sitesRouter = router({
   /** Bulk manual add — the Team & access multi-select. */
   addMembers: tenantProcedure
     .use(requirePermission('sites.manage'))
-    .input(z.object({ siteId: z.string().length(26), userIds: z.array(z.string()).min(1).max(500) }))
+    .input(
+      z.object({ siteId: z.string().length(26), userIds: z.array(z.string()).min(1).max(500) }),
+    )
     .mutation(async ({ ctx, input }) => {
       const [row] = await ctx.db
         .select({ id: sites.id })

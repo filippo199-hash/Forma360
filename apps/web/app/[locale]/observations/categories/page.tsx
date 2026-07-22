@@ -106,94 +106,98 @@ export default function CategoriesPage() {
 
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40">
-              <tr className="text-left">
-                <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.description')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.notifications')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.criticalAlerts')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.archived')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
-                <th className="px-3 py-2 text-right font-medium">{t('columns.actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="p-4">
-                    <Skeleton className="h-4 w-full" />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/40">
+                <tr className="text-left">
+                  <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.description')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.notifications')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.criticalAlerts')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.archived')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t('columns.actions')}</th>
                 </tr>
-              ) : (categories ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                    {t('empty')}
-                  </td>
-                </tr>
-              ) : (
-                (categories ?? []).map((c) => (
-                  <tr key={c.id} className="border-b last:border-0">
-                    <td className="px-3 py-2 font-medium">{c.name}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{c.description ?? '—'}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{c.notificationRule}</td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {c.criticalAlerts ? '✓' : '—'}
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="p-4">
+                      <Skeleton className="h-4 w-full" />
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {c.archivedAt !== null ? '✓' : '—'}
+                  </tr>
+                ) : (categories ?? []).length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                      {t('empty')}
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground">{formatDate(c.createdAt)}</td>
-                    <td className="px-3 py-2 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => router.push(`/${locale}/observations/categories/${c.id}`)}
-                        >
-                          {tCommon('edit')}
-                        </Button>
-                        {c.archivedAt === null ? (
+                  </tr>
+                ) : (
+                  (categories ?? []).map((c) => (
+                    <tr key={c.id} className="border-b last:border-0">
+                      <td className="px-3 py-2 font-medium">{c.name}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{c.description ?? '—'}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{c.notificationRule}</td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {c.criticalAlerts ? '✓' : '—'}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {c.archivedAt !== null ? '✓' : '—'}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">{formatDate(c.createdAt)}</td>
+                      <td className="px-3 py-2 text-right">
+                        <div className="flex justify-end gap-2">
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => archive.mutate({ categoryId: c.id })}
-                            disabled={archive.isPending}
+                            onClick={() =>
+                              router.push(`/${locale}/observations/categories/${c.id}`)
+                            }
                           >
-                            {tCommon('archive')}
+                            {tCommon('edit')}
                           </Button>
-                        ) : (
-                          <>
+                          {c.archivedAt === null ? (
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => restore.mutate({ categoryId: c.id })}
-                              disabled={restore.isPending}
+                              onClick={() => archive.mutate({ categoryId: c.id })}
+                              disabled={archive.isPending}
                             >
-                              {t('restoreButton')}
+                              {tCommon('archive')}
                             </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive"
-                              onClick={() => remove.mutate({ categoryId: c.id })}
-                              disabled={remove.isPending}
-                            >
-                              {tCommon('delete')}
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                          ) : (
+                            <>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => restore.mutate({ categoryId: c.id })}
+                                disabled={restore.isPending}
+                              >
+                                {t('restoreButton')}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() => remove.mutate({ categoryId: c.id })}
+                                disabled={remove.isPending}
+                              >
+                                {tCommon('delete')}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 

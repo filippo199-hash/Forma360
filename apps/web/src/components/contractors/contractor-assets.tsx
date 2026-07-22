@@ -7,13 +7,7 @@ import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 
@@ -34,7 +28,8 @@ export function ContractorAssetsSection({
   const [assetId, setAssetId] = useState('');
   const [note, setNote] = useState('');
 
-  const refresh = () => void utils.contractors.assets.listForContractor.invalidate({ contractorId });
+  const refresh = () =>
+    void utils.contractors.assets.listForContractor.invalidate({ contractorId });
   const onErr = (err: { message: string }) =>
     toast.error(err.message.length > 0 ? err.message : t('error'));
 

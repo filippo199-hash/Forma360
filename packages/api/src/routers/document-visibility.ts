@@ -43,9 +43,7 @@ export async function loadViewerMemberships(
     const sg = await db
       .select({ id: siteGroups.siteId })
       .from(siteGroups)
-      .where(
-        and(eq(siteGroups.tenantId, tenantId), inArray(siteGroups.groupId, [...groupIds])),
-      );
+      .where(and(eq(siteGroups.tenantId, tenantId), inArray(siteGroups.groupId, [...groupIds])));
     for (const r of sg as { id: string }[]) siteIds.add(r.id);
   }
 

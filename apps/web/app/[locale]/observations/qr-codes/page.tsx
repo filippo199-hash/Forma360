@@ -152,77 +152,82 @@ export default function QrCodesPage() {
           ) : rows.length === 0 ? (
             <EmptyState onCreate={() => setCreateSheetOpen(true)} />
           ) : (
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/40">
-                <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.category')}</th>
-                  <th className="px-3 py-2 text-right font-medium">
-                    <span className="sr-only">{t('actions.menuLabel')}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.categoryId} className="border-b last:border-0">
-                    <td className="px-3 py-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowDialog({ open: true, row })}
-                        className="flex items-center gap-2 font-medium hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                        aria-label={t('actions.show')}
-                      >
-                        <QrCodeIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        <span>{row.categoryName}</span>
-                      </button>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {formatRelative(row.createdAt)}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">—</td>
-                    <td className="px-3 py-2">
-                      <span className="inline-flex items-center rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">
-                        {row.categoryName}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            aria-label={t('actions.menuLabel')}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => setShowDialog({ open: true, row })}>
-                            <QrCodeIcon className="mr-2 h-4 w-4" />
-                            {t('actions.show')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => setRotateConfirm(row)}>
-                            <RotateCw className="mr-2 h-4 w-4" />
-                            {t('actions.rotate')}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onSelect={() => setRevokeConfirm(row)}
-                          >
-                            <ShieldOff className="mr-2 h-4 w-4" />
-                            {t('actions.revoke')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/40">
+                  <tr className="text-left">
+                    <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.category')}</th>
+                    <th className="px-3 py-2 text-right font-medium">
+                      <span className="sr-only">{t('actions.menuLabel')}</span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.categoryId} className="border-b last:border-0">
+                      <td className="px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowDialog({ open: true, row })}
+                          className="flex items-center gap-2 font-medium hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                          aria-label={t('actions.show')}
+                        >
+                          <QrCodeIcon
+                            className="h-4 w-4 text-muted-foreground"
+                            aria-hidden="true"
+                          />
+                          <span>{row.categoryName}</span>
+                        </button>
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {formatRelative(row.createdAt)}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">—</td>
+                      <td className="px-3 py-2">
+                        <span className="inline-flex items-center rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">
+                          {row.categoryName}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              aria-label={t('actions.menuLabel')}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => setShowDialog({ open: true, row })}>
+                              <QrCodeIcon className="mr-2 h-4 w-4" />
+                              {t('actions.show')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setRotateConfirm(row)}>
+                              <RotateCw className="mr-2 h-4 w-4" />
+                              {t('actions.rotate')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onSelect={() => setRevokeConfirm(row)}
+                            >
+                              <ShieldOff className="mr-2 h-4 w-4" />
+                              {t('actions.revoke')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>

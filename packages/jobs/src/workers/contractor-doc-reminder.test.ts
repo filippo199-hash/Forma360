@@ -87,7 +87,9 @@ describe('contractor-doc-reminder', () => {
 
   it('sends one reminder for a doc expiring inside the window, then dedupes', async () => {
     await seedDoc(7);
-    const notify = vi.fn<(r: DueReminder, uploadUrl: string) => Promise<void>>().mockResolvedValue();
+    const notify = vi
+      .fn<(r: DueReminder, uploadUrl: string) => Promise<void>>()
+      .mockResolvedValue();
 
     const sent = await runContractorDocReminders({
       db: db as unknown as Database,
@@ -114,7 +116,9 @@ describe('contractor-doc-reminder', () => {
   it('ignores docs outside the window, unverified docs, and archived contractors', async () => {
     await seedDoc(30); // beyond 14-day window
     await seedDoc(5, 'pending'); // not verified
-    const notify = vi.fn<(r: DueReminder, uploadUrl: string) => Promise<void>>().mockResolvedValue();
+    const notify = vi
+      .fn<(r: DueReminder, uploadUrl: string) => Promise<void>>()
+      .mockResolvedValue();
     const sent = await runContractorDocReminders({
       db: db as unknown as Database,
       logger,

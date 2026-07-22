@@ -63,13 +63,15 @@ function today(): string {
 
 /** A requirement is satisfied by a verified, unexpired document. */
 function requirementSatisfied(docs: DocRow[], t: string): boolean {
-  return docs.some(
-    (d) => d.status === 'verified' && (d.endDate === null || d.endDate >= t),
-  );
+  return docs.some((d) => d.status === 'verified' && (d.endDate === null || d.endDate >= t));
 }
 
 /** Company-wide compliance from a contractor's requirements + documents. */
-function computeStatus(reqs: ReqRow[], docsByReq: Map<string, DocRow[]>, t: string): ComplianceStatus {
+function computeStatus(
+  reqs: ReqRow[],
+  docsByReq: Map<string, DocRow[]>,
+  t: string,
+): ComplianceStatus {
   const blocking = reqs.filter((r) => r.blocking);
   if (blocking.length === 0) return 'no_requirements';
   const allMet = blocking.every((r) => requirementSatisfied(docsByReq.get(r.id) ?? [], t));
@@ -236,10 +238,7 @@ export const contractorsRouter = router({
       })
       .from(contractorDocuments)
       .where(
-        and(
-          eq(contractorDocuments.tenantId, tid),
-          inArray(contractorDocuments.contractorId, ids),
-        ),
+        and(eq(contractorDocuments.tenantId, tid), inArray(contractorDocuments.contractorId, ids)),
       );
 
     const t = today();
@@ -713,32 +712,30 @@ export const contractorsRouter = router({
      * Everyone currently on site — visits checked-in but not yet checked-out.
      * Powers the gate guard's "who is still inside" board on the directory.
      */
-    onSiteNow: tenantProcedure
-      .use(requirePermission('contractors.view'))
-      .query(async ({ ctx }) => {
-        return ctx.db
-          .select({
-            id: contractorVisits.id,
-            contractorId: contractorVisits.contractorId,
-            contractorName: contractors.name,
-            title: contractorVisits.title,
-            visitorName: contractorVisits.visitorName,
-            siteName: sites.name,
-            isWalkIn: contractorVisits.isWalkIn,
-            checkedInAt: contractorVisits.checkedInAt,
-          })
-          .from(contractorVisits)
-          .innerJoin(contractors, eq(contractorVisits.contractorId, contractors.id))
-          .leftJoin(sites, eq(contractorVisits.siteId, sites.id))
-          .where(
-            and(
-              eq(contractorVisits.tenantId, ctx.tenantId),
-              isNull(contractorVisits.archivedAt),
-              eq(contractorVisits.status, 'checked_in'),
-            ),
-          )
-          .orderBy(desc(contractorVisits.checkedInAt));
-      }),
+    onSiteNow: tenantProcedure.use(requirePermission('contractors.view')).query(async ({ ctx }) => {
+      return ctx.db
+        .select({
+          id: contractorVisits.id,
+          contractorId: contractorVisits.contractorId,
+          contractorName: contractors.name,
+          title: contractorVisits.title,
+          visitorName: contractorVisits.visitorName,
+          siteName: sites.name,
+          isWalkIn: contractorVisits.isWalkIn,
+          checkedInAt: contractorVisits.checkedInAt,
+        })
+        .from(contractorVisits)
+        .innerJoin(contractors, eq(contractorVisits.contractorId, contractors.id))
+        .leftJoin(sites, eq(contractorVisits.siteId, sites.id))
+        .where(
+          and(
+            eq(contractorVisits.tenantId, ctx.tenantId),
+            isNull(contractorVisits.archivedAt),
+            eq(contractorVisits.status, 'checked_in'),
+          ),
+        )
+        .orderBy(desc(contractorVisits.checkedInAt));
+    }),
 
     /** All non-archived visits for one contractor (detail page). */
     listForContractor: tenantProcedure
@@ -1450,7 +1447,10 @@ export const contractorsRouter = router({
           .where(and(eq(user.tenantId, ctx.tenantId), eq(user.email, emailLower)))
           .limit(1);
         if (existingUser[0] !== undefined) {
-          throw new TRPCError({ code: 'CONFLICT', message: 'A user with this email already exists' });
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'A user with this email already exists',
+          });
         }
 
         // Per-user, platform-managed permission set derived from activities.

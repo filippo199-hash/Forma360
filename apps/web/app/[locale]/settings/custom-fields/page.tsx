@@ -22,30 +22,32 @@ export default function CustomFieldsPage() {
       </header>
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40">
-              <tr className="text-left">
-                <th className="px-3 py-2 font-medium">{t('groups.table.name')}</th>
-                <th className="px-3 py-2 font-medium">{t('groups.table.mode')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={2} className="p-4">
-                    <Skeleton className="h-4 w-full" />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/40">
+                <tr className="text-left">
+                  <th className="px-3 py-2 font-medium">{t('groups.table.name')}</th>
+                  <th className="px-3 py-2 font-medium">{t('groups.table.mode')}</th>
                 </tr>
-              ) : (
-                (data ?? []).map((f) => (
-                  <tr key={f.id} className="border-b last:border-0">
-                    <td className="px-3 py-2">{f.name}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{f.type}</td>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={2} className="p-4">
+                      <Skeleton className="h-4 w-full" />
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  (data ?? []).map((f) => (
+                    <tr key={f.id} className="border-b last:border-0">
+                      <td className="px-3 py-2">{f.name}</td>
+                      <td className="px-3 py-2 font-mono text-xs">{f.type}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -57,7 +57,12 @@ export default function ContractorCalendarPage() {
     for (let i = 0; i < 42; i += 1) {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
-      out.push({ key: localKey(d), day: d.getDate(), inMonth: d.getMonth() === viewMonth, date: d });
+      out.push({
+        key: localKey(d),
+        day: d.getDate(),
+        inMonth: d.getMonth() === viewMonth,
+        date: d,
+      });
     }
     return out;
   }, [viewYear, viewMonth]);
@@ -274,12 +279,7 @@ export default function ContractorCalendarPage() {
         {...(createDay !== undefined ? { defaultDay: createDay } : {})}
         onDone={refresh}
       />
-      <VisitCreateDialog
-        open={walkInOpen}
-        onOpenChange={setWalkInOpen}
-        walkIn
-        onDone={refresh}
-      />
+      <VisitCreateDialog open={walkInOpen} onOpenChange={setWalkInOpen} walkIn onDone={refresh} />
       <VisitDetailDialog
         visitId={detailId}
         onOpenChange={(o) => !o && setDetailId(null)}

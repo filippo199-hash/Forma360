@@ -114,56 +114,58 @@ export default function UsersPage() {
 
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40">
-              <tr className="text-left">
-                <th className="px-3 py-2 font-medium">{t('table.name')}</th>
-                <th className="px-3 py-2 font-medium">{t('table.email')}</th>
-                <th className="px-3 py-2 font-medium">{t('table.status')}</th>
-                <th className="px-3 py-2 text-right font-medium">{t('table.actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={4} className="p-4">
-                    <Skeleton className="h-4 w-full" />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/40">
+                <tr className="text-left">
+                  <th className="px-3 py-2 font-medium">{t('table.name')}</th>
+                  <th className="px-3 py-2 font-medium">{t('table.email')}</th>
+                  <th className="px-3 py-2 font-medium">{t('table.status')}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t('table.actions')}</th>
                 </tr>
-              ) : (
-                (data?.users ?? []).map((u) => (
-                  <tr key={u.id} className="border-b last:border-0">
-                    <td className="px-3 py-2">{u.name}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{u.email}</td>
-                    <td className="px-3 py-2">
-                      {u.deactivatedAt !== null ? t('status.deactivated') : t('status.active')}
-                    </td>
-                    <td className="space-x-1 px-3 py-2 text-right">
-                      {u.deactivatedAt === null ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deactivate.mutate({ userId: u.id })}
-                          aria-label={t('row.deactivate')}
-                        >
-                          {t('row.deactivate')}
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => reactivate.mutate({ userId: u.id })}
-                          aria-label={t('row.reactivate')}
-                        >
-                          {t('row.reactivate')}
-                        </Button>
-                      )}
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="p-4">
+                      <Skeleton className="h-4 w-full" />
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  (data?.users ?? []).map((u) => (
+                    <tr key={u.id} className="border-b last:border-0">
+                      <td className="px-3 py-2">{u.name}</td>
+                      <td className="px-3 py-2 font-mono text-xs">{u.email}</td>
+                      <td className="px-3 py-2">
+                        {u.deactivatedAt !== null ? t('status.deactivated') : t('status.active')}
+                      </td>
+                      <td className="space-x-1 px-3 py-2 text-right">
+                        {u.deactivatedAt === null ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deactivate.mutate({ userId: u.id })}
+                            aria-label={t('row.deactivate')}
+                          >
+                            {t('row.deactivate')}
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => reactivate.mutate({ userId: u.id })}
+                            aria-label={t('row.reactivate')}
+                          >
+                            {t('row.reactivate')}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 
@@ -172,79 +174,81 @@ export default function UsersPage() {
           <CardTitle>{tInvitations('title')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40">
-              <tr className="text-left">
-                <th className="px-3 py-2 font-medium">{tInvitations('headerEmail')}</th>
-                <th className="px-3 py-2 font-medium">{tInvitations('headerName')}</th>
-                <th className="px-3 py-2 font-medium">{tInvitations('headerExpires')}</th>
-                <th className="px-3 py-2 text-right font-medium">
-                  {tInvitations('headerActions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {invitationsQuery.isLoading ? (
-                <tr>
-                  <td colSpan={4} className="p-4">
-                    <Skeleton className="h-4 w-full" />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/40">
+                <tr className="text-left">
+                  <th className="px-3 py-2 font-medium">{tInvitations('headerEmail')}</th>
+                  <th className="px-3 py-2 font-medium">{tInvitations('headerName')}</th>
+                  <th className="px-3 py-2 font-medium">{tInvitations('headerExpires')}</th>
+                  <th className="px-3 py-2 text-right font-medium">
+                    {tInvitations('headerActions')}
+                  </th>
                 </tr>
-              ) : invitations.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-3 py-6 text-center text-sm text-muted-foreground">
-                    {tInvitations('emptyState')}
-                  </td>
-                </tr>
-              ) : (
-                invitations.map((inv) => {
-                  const inviter = userById.get(inv.invitedByUserId);
-                  return (
-                    <tr key={inv.id} className="border-b last:border-0">
-                      <td className="px-3 py-2 font-mono text-xs">{inv.email}</td>
-                      <td className="px-3 py-2">
-                        <div>{inv.name ?? ''}</div>
-                        {inviter !== undefined ? (
-                          <div className="text-xs text-muted-foreground">
-                            {tInvitations('invitedBy', { name: inviter.name })}
-                          </div>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-2 text-xs text-muted-foreground">
-                        {tInvitations('expiresAt', {
-                          time: new Date(inv.expiresAt).toLocaleString(),
-                        })}
-                      </td>
-                      <td className="space-x-1 px-3 py-2 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            onResend({
-                              email: inv.email,
-                              name: inv.name,
-                              permissionSetId: inv.permissionSetId,
-                            })
-                          }
-                          disabled={resendInvite.isPending}
-                        >
-                          {tInvitations('resendButton')}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => cancelInvite.mutate({ invitationId: inv.id })}
-                          disabled={cancelInvite.isPending}
-                        >
-                          {tInvitations('cancelButton')}
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {invitationsQuery.isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="p-4">
+                      <Skeleton className="h-4 w-full" />
+                    </td>
+                  </tr>
+                ) : invitations.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-3 py-6 text-center text-sm text-muted-foreground">
+                      {tInvitations('emptyState')}
+                    </td>
+                  </tr>
+                ) : (
+                  invitations.map((inv) => {
+                    const inviter = userById.get(inv.invitedByUserId);
+                    return (
+                      <tr key={inv.id} className="border-b last:border-0">
+                        <td className="px-3 py-2 font-mono text-xs">{inv.email}</td>
+                        <td className="px-3 py-2">
+                          <div>{inv.name ?? ''}</div>
+                          {inviter !== undefined ? (
+                            <div className="text-xs text-muted-foreground">
+                              {tInvitations('invitedBy', { name: inviter.name })}
+                            </div>
+                          ) : null}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">
+                          {tInvitations('expiresAt', {
+                            time: new Date(inv.expiresAt).toLocaleString(),
+                          })}
+                        </td>
+                        <td className="space-x-1 px-3 py-2 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              onResend({
+                                email: inv.email,
+                                name: inv.name,
+                                permissionSetId: inv.permissionSetId,
+                              })
+                            }
+                            disabled={resendInvite.isPending}
+                          >
+                            {tInvitations('resendButton')}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => cancelInvite.mutate({ invitationId: inv.id })}
+                            disabled={cancelInvite.isPending}
+                          >
+                            {tInvitations('cancelButton')}
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 

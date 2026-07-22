@@ -125,7 +125,13 @@ describe('contractors.users portal (Phase 4)', () => {
       .limit(1);
     expect(set?.externalManaged).toBe(true);
     expect(new Set(set?.permissions)).toEqual(
-      new Set(['inspections.view', 'inspections.conduct', 'inspections.sign', 'issues.view', 'issues.report']),
+      new Set([
+        'inspections.view',
+        'inspections.conduct',
+        'inspections.sign',
+        'issues.view',
+        'issues.report',
+      ]),
     );
 
     // Hidden from the admin permission-sets list.
@@ -199,7 +205,12 @@ describe('contractors.users portal (Phase 4)', () => {
         await db
           .select({ id: schema.permissionSets.id })
           .from(schema.permissionSets)
-          .where(and(eq(schema.permissionSets.tenantId, tenantId), eq(schema.permissionSets.isSystem, true)))
+          .where(
+            and(
+              eq(schema.permissionSets.tenantId, tenantId),
+              eq(schema.permissionSets.isSystem, true),
+            ),
+          )
           .limit(1)
       )[0]!.id,
     });

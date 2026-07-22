@@ -469,156 +469,158 @@ function InspectionsTab({ locale }: { locale: string }) {
       {/* Table */}
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40 text-left">
-              <tr>
-                <th className="w-10 px-3 py-2">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleAll}
-                    aria-label={tBulk('selectAll')}
-                    className="h-4 w-4"
-                  />
-                </th>
-                <th className="px-3 py-2 font-medium">{t('table.inspection')}</th>
-                <th className="w-36 px-3 py-2 font-medium">{t('table.conductedBy')}</th>
-                <th className="w-28 px-3 py-2 font-medium">{t('table.actions')}</th>
-                <th className="w-36 px-3 py-2 font-medium">{t('table.conducted')}</th>
-                <th className="w-36 px-3 py-2 font-medium">{t('table.completed')}</th>
-                <th className="w-32 px-3 py-2" />
-                <th className="w-10 px-3 py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <tr key={i} className="border-b">
-                    <td colSpan={8} className="px-3 py-3">
-                      <Skeleton className="h-4 w-full" />
-                    </td>
-                  </tr>
-                ))
-              ) : filteredRows.length === 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/40 text-left">
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                    {t('empty')}
-                  </td>
+                  <th className="w-10 px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleAll}
+                      aria-label={tBulk('selectAll')}
+                      className="h-4 w-4"
+                    />
+                  </th>
+                  <th className="px-3 py-2 font-medium">{t('table.inspection')}</th>
+                  <th className="w-36 px-3 py-2 font-medium">{t('table.conductedBy')}</th>
+                  <th className="w-28 px-3 py-2 font-medium">{t('table.actions')}</th>
+                  <th className="w-36 px-3 py-2 font-medium">{t('table.conducted')}</th>
+                  <th className="w-36 px-3 py-2 font-medium">{t('table.completed')}</th>
+                  <th className="w-32 px-3 py-2" />
+                  <th className="w-10 px-3 py-2" />
                 </tr>
-              ) : (
-                groupedRows.map((group) => (
-                  <Fragment key={group.dateKey}>
-                    <tr className="bg-muted/20">
-                      <td
-                        colSpan={7}
-                        className="px-3 py-1.5 text-xs font-semibold text-muted-foreground"
-                      >
-                        {group.label}
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <tr key={i} className="border-b">
+                      <td colSpan={8} className="px-3 py-3">
+                        <Skeleton className="h-4 w-full" />
                       </td>
                     </tr>
-                    {group.rows.map((r) => {
-                      const isTerminal = r.status === 'completed' || r.status === 'rejected';
-                      const conductUrl = `/${locale}/inspections/${r.id}`;
-                      // Completed inspections go to the report page (shows inline
-                      // preview + download buttons); all other statuses go to the
-                      // status page (shows signing / approval / continue flow).
-                      const reportUrl =
-                        r.status === 'completed'
-                          ? `/${locale}/inspections/${r.id}/report`
-                          : `/${locale}/inspections/${r.id}/status`;
-                      const openCount = r.openActionsCount ?? 0;
-                      return (
-                        <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10">
-                          <td className="px-3 py-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedIds.has(r.id)}
-                              onChange={() => toggleRow(r.id)}
-                              aria-label={tBulk('selectRow')}
-                              className="h-4 w-4"
-                            />
-                          </td>
-                          <td className="px-3 py-3">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div
-                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${getAvatarColor(r.templateId)}`}
-                              >
-                                {getInitials(r.templateName)}
-                              </div>
-                              <div className="min-w-0">
-                                <Link
-                                  href={conductUrl}
-                                  className="block truncate font-medium hover:underline"
+                  ))
+                ) : filteredRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                      {t('empty')}
+                    </td>
+                  </tr>
+                ) : (
+                  groupedRows.map((group) => (
+                    <Fragment key={group.dateKey}>
+                      <tr className="bg-muted/20">
+                        <td
+                          colSpan={7}
+                          className="px-3 py-1.5 text-xs font-semibold text-muted-foreground"
+                        >
+                          {group.label}
+                        </td>
+                      </tr>
+                      {group.rows.map((r) => {
+                        const isTerminal = r.status === 'completed' || r.status === 'rejected';
+                        const conductUrl = `/${locale}/inspections/${r.id}`;
+                        // Completed inspections go to the report page (shows inline
+                        // preview + download buttons); all other statuses go to the
+                        // status page (shows signing / approval / continue flow).
+                        const reportUrl =
+                          r.status === 'completed'
+                            ? `/${locale}/inspections/${r.id}/report`
+                            : `/${locale}/inspections/${r.id}/status`;
+                        const openCount = r.openActionsCount ?? 0;
+                        return (
+                          <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10">
+                            <td className="px-3 py-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.has(r.id)}
+                                onChange={() => toggleRow(r.id)}
+                                aria-label={tBulk('selectRow')}
+                                className="h-4 w-4"
+                              />
+                            </td>
+                            <td className="px-3 py-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div
+                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${getAvatarColor(r.templateId)}`}
                                 >
-                                  {r.title}
-                                  {r.archivedAt !== null ? (
-                                    <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                                      {t('archivedBadge')}
+                                  {getInitials(r.templateName)}
+                                </div>
+                                <div className="min-w-0">
+                                  <Link
+                                    href={conductUrl}
+                                    className="block truncate font-medium hover:underline"
+                                  >
+                                    {r.title}
+                                    {r.archivedAt !== null ? (
+                                      <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                                        {t('archivedBadge')}
+                                      </span>
+                                    ) : null}
+                                  </Link>
+                                  {r.templateName !== null ? (
+                                    <span className="block truncate text-xs text-muted-foreground">
+                                      {r.templateName}
                                     </span>
                                   ) : null}
-                                </Link>
-                                {r.templateName !== null ? (
-                                  <span className="block truncate text-xs text-muted-foreground">
-                                    {r.templateName}
-                                  </span>
-                                ) : null}
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 text-muted-foreground">
-                            {r.conductedByName ?? '—'}
-                          </td>
-                          <td className="px-3 py-3 text-muted-foreground">
-                            {openCount > 0 ? (
-                              <span className="text-foreground">
-                                {t('openActionsCount', { count: openCount })}
-                              </span>
-                            ) : (
-                              '—'
-                            )}
-                          </td>
-                          <td className="px-3 py-3 text-muted-foreground">
-                            {formatDisplayDate(r.startedAt, locale)}
-                          </td>
-                          <td className="px-3 py-3 text-muted-foreground">
-                            {formatDisplayDate(r.completedAt, locale)}
-                          </td>
-                          <td className="px-3 py-3 text-right">
-                            {isTerminal ? (
-                              <Button
-                                variant="link"
-                                size="sm"
-                                className="h-auto p-0 text-primary"
-                                onClick={() => router.push(reportUrl)}
-                              >
-                                {t('viewReportButton')}
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="link"
-                                size="sm"
-                                className="h-auto p-0 text-primary"
-                                onClick={() => router.push(conductUrl)}
-                              >
-                                {t('continueButton')}
-                              </Button>
-                            )}
-                          </td>
-                          <td className="px-3 py-3">
-                            <InspectionRowMenu
-                              conductUrl={conductUrl}
-                              reportUrl={reportUrl}
-                              onArchive={() => setArchiveTarget(r.id)}
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </Fragment>
-                ))
-              )}
-            </tbody>
-          </table>
+                            </td>
+                            <td className="px-3 py-3 text-muted-foreground">
+                              {r.conductedByName ?? '—'}
+                            </td>
+                            <td className="px-3 py-3 text-muted-foreground">
+                              {openCount > 0 ? (
+                                <span className="text-foreground">
+                                  {t('openActionsCount', { count: openCount })}
+                                </span>
+                              ) : (
+                                '—'
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-muted-foreground">
+                              {formatDisplayDate(r.startedAt, locale)}
+                            </td>
+                            <td className="px-3 py-3 text-muted-foreground">
+                              {formatDisplayDate(r.completedAt, locale)}
+                            </td>
+                            <td className="px-3 py-3 text-right">
+                              {isTerminal ? (
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-primary"
+                                  onClick={() => router.push(reportUrl)}
+                                >
+                                  {t('viewReportButton')}
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-primary"
+                                  onClick={() => router.push(conductUrl)}
+                                >
+                                  {t('continueButton')}
+                                </Button>
+                              )}
+                            </td>
+                            <td className="px-3 py-3">
+                              <InspectionRowMenu
+                                conductUrl={conductUrl}
+                                reportUrl={reportUrl}
+                                onArchive={() => setArchiveTarget(r.id)}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 

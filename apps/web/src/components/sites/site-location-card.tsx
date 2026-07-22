@@ -279,7 +279,9 @@ export function SiteLocationCard({
                             onMouseEnter={() => setActiveIdx(i)}
                             className={cn(
                               'flex w-full items-start gap-2 px-3 py-2 text-left text-sm',
-                              i === activeIdx ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60',
+                              i === activeIdx
+                                ? 'bg-accent text-accent-foreground'
+                                : 'hover:bg-accent/60',
                             )}
                           >
                             <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />

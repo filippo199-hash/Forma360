@@ -476,7 +476,7 @@ export default function ActionsListPage() {
             <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">{t('subtitle')}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {canSettings ? (
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/${locale}/actions/settings`}>
@@ -981,141 +981,143 @@ function ListView({
   return (
     <Card>
       <CardContent className="p-0">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-muted/40">
-            <tr className="text-left">
-              <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
-              <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
-              <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
-              <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
-              <th className="px-3 py-2 font-medium">{t('columns.priority')}</th>
-              <th className="px-3 py-2 font-medium">{t('columns.assignee')}</th>
-              <th className="px-3 py-2 font-medium">{t('columns.due')}</th>
-              <th className="px-3 py-2 font-medium">{t('columns.source')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan={8} className="p-4">
-                  <Skeleton className="h-4 w-full" />
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-muted/40">
+              <tr className="text-left">
+                <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
+                <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
+                <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
+                <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
+                <th className="px-3 py-2 font-medium">{t('columns.priority')}</th>
+                <th className="px-3 py-2 font-medium">{t('columns.assignee')}</th>
+                <th className="px-3 py-2 font-medium">{t('columns.due')}</th>
+                <th className="px-3 py-2 font-medium">{t('columns.source')}</th>
               </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                  <p>{t('empty')}</p>
-                  {canCreate ? (
-                    <Link
-                      href={`/${locale}/actions/new`}
-                      className="mt-2 inline-block text-foreground underline-offset-4 hover:underline"
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="p-4">
+                    <Skeleton className="h-4 w-full" />
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                    <p>{t('empty')}</p>
+                    {canCreate ? (
+                      <Link
+                        href={`/${locale}/actions/new`}
+                        className="mt-2 inline-block text-foreground underline-offset-4 hover:underline"
+                      >
+                        {t('emptyCta')}
+                      </Link>
+                    ) : null}
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => {
+                  const overdue =
+                    row.dueAt !== null &&
+                    row.status !== 'completed' &&
+                    row.status !== 'cancelled' &&
+                    new Date(row.dueAt).getTime() < Date.now();
+                  return (
+                    <tr
+                      key={row.id}
+                      className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
+                      onClick={() => onSelect(row.id)}
                     >
-                      {t('emptyCta')}
-                    </Link>
-                  ) : null}
-                </td>
-              </tr>
-            ) : (
-              rows.map((row) => {
-                const overdue =
-                  row.dueAt !== null &&
-                  row.status !== 'completed' &&
-                  row.status !== 'cancelled' &&
-                  new Date(row.dueAt).getTime() < Date.now();
-                return (
-                  <tr
-                    key={row.id}
-                    className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
-                    onClick={() => onSelect(row.id)}
-                  >
-                    <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
-                      <a
-                        href={`/${locale}/actions/${row.id}`}
-                        draggable="false"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {row.referenceNumber ?? row.id.slice(-6)}
-                      </a>
-                    </td>
-                    <td className="px-3 py-2 font-medium">
-                      <a
-                        href={`/${locale}/actions/${row.id}`}
-                        draggable="false"
-                        className="hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {row.title}
-                      </a>
-                      {row.recurrence !== null && row.recurrence !== undefined ? (
-                        <span
-                          className="ml-2 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-200"
-                          title={t('recurringBadge')}
+                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                        <a
+                          href={`/${locale}/actions/${row.id}`}
+                          draggable="false"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          {t('recurringBadge')}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="px-3 py-2">
-                      {row.actionTypeName !== null ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
-                          {row.actionTypeColor !== null && row.actionTypeColor.length > 0 ? (
-                            <span
-                              className="h-2 w-2 rounded-full"
-                              style={{ backgroundColor: row.actionTypeColor }}
-                              aria-hidden="true"
-                            />
-                          ) : null}
-                          {row.actionTypeName}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.status === 'open' ||
-                      row.status === 'in_progress' ||
-                      row.status === 'completed' ||
-                      row.status === 'cancelled'
-                        ? tStatus(row.status)
-                        : row.status}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.priority === 'low' ||
-                      row.priority === 'medium' ||
-                      row.priority === 'high' ||
-                      row.priority === 'critical'
-                        ? tPriority(row.priority)
-                        : t('noPriority')}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.assigneeName ?? t('noAssignee')}
-                    </td>
-                    <td
-                      className={
-                        overdue
-                          ? 'px-3 py-2 font-medium text-destructive'
-                          : 'px-3 py-2 text-muted-foreground'
-                      }
-                    >
-                      {row.dueAt !== null
-                        ? new Date(row.dueAt).toLocaleDateString()
-                        : t('noDueDate')}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.sourceType === 'inspection'
-                        ? t('sourceInspection')
-                        : row.sourceType === 'issue'
-                          ? t('sourceIssue')
-                          : row.sourceType === 'maintenance'
-                            ? t('sourceMaintenance')
-                            : t('sourceStandalone')}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                          {row.referenceNumber ?? row.id.slice(-6)}
+                        </a>
+                      </td>
+                      <td className="px-3 py-2 font-medium">
+                        <a
+                          href={`/${locale}/actions/${row.id}`}
+                          draggable="false"
+                          className="hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {row.title}
+                        </a>
+                        {row.recurrence !== null && row.recurrence !== undefined ? (
+                          <span
+                            className="ml-2 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-200"
+                            title={t('recurringBadge')}
+                          >
+                            {t('recurringBadge')}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-2">
+                        {row.actionTypeName !== null ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
+                            {row.actionTypeColor !== null && row.actionTypeColor.length > 0 ? (
+                              <span
+                                className="h-2 w-2 rounded-full"
+                                style={{ backgroundColor: row.actionTypeColor }}
+                                aria-hidden="true"
+                              />
+                            ) : null}
+                            {row.actionTypeName}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {row.status === 'open' ||
+                        row.status === 'in_progress' ||
+                        row.status === 'completed' ||
+                        row.status === 'cancelled'
+                          ? tStatus(row.status)
+                          : row.status}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {row.priority === 'low' ||
+                        row.priority === 'medium' ||
+                        row.priority === 'high' ||
+                        row.priority === 'critical'
+                          ? tPriority(row.priority)
+                          : t('noPriority')}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {row.assigneeName ?? t('noAssignee')}
+                      </td>
+                      <td
+                        className={
+                          overdue
+                            ? 'px-3 py-2 font-medium text-destructive'
+                            : 'px-3 py-2 text-muted-foreground'
+                        }
+                      >
+                        {row.dueAt !== null
+                          ? new Date(row.dueAt).toLocaleDateString()
+                          : t('noDueDate')}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {row.sourceType === 'inspection'
+                          ? t('sourceInspection')
+                          : row.sourceType === 'issue'
+                            ? t('sourceIssue')
+                            : row.sourceType === 'maintenance'
+                              ? t('sourceMaintenance')
+                              : t('sourceStandalone')}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </CardContent>
     </Card>
   );

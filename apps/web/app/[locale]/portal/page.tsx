@@ -62,7 +62,9 @@ export default function ContractorPortalPage() {
           <CardContent className="space-y-5 p-6 text-center">
             <ShieldCheck className="mx-auto h-10 w-10 text-primary" />
             <div className="space-y-1">
-              <h1 className="text-xl font-semibold tracking-tight">{t('portal.onboardingTitle')}</h1>
+              <h1 className="text-xl font-semibold tracking-tight">
+                {t('portal.onboardingTitle')}
+              </h1>
               <p className="text-sm text-muted-foreground">
                 {t('portal.onboardingIntro', { contractor: data.contractorName })}
               </p>
@@ -111,7 +113,9 @@ export default function ContractorPortalPage() {
                       <Icon className="h-5 w-5" />
                     </span>
                     <div>
-                      <p className="font-medium">{t(`portal.activity_${a}` as 'portal.activity_inspections')}</p>
+                      <p className="font-medium">
+                        {t(`portal.activity_${a}` as 'portal.activity_inspections')}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {t(`portal.activityHint_${a}` as 'portal.activityHint_inspections')}
                       </p>

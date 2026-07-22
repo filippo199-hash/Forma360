@@ -115,9 +115,7 @@ export default function GateKioskPage() {
                         <select
                           id={`f-${f.id}`}
                           value={answers[f.id] ?? ''}
-                          onChange={(e) =>
-                            setAnswers((a) => ({ ...a, [f.id]: e.target.value }))
-                          }
+                          onChange={(e) => setAnswers((a) => ({ ...a, [f.id]: e.target.value }))}
                           className="h-11 w-full rounded-md border border-input bg-background px-3 text-base"
                         >
                           <option value="">—</option>
@@ -129,9 +127,7 @@ export default function GateKioskPage() {
                           id={`f-${f.id}`}
                           type={f.fieldType === 'number' ? 'number' : 'text'}
                           value={answers[f.id] ?? ''}
-                          onChange={(e) =>
-                            setAnswers((a) => ({ ...a, [f.id]: e.target.value }))
-                          }
+                          onChange={(e) => setAnswers((a) => ({ ...a, [f.id]: e.target.value }))}
                           className="h-11 text-base"
                         />
                       )}

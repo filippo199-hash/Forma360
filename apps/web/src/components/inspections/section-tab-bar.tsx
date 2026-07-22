@@ -17,7 +17,7 @@ export function SectionTabBar({ activeTab, locale }: { activeTab: SectionTab; lo
   const tabs: SectionTab[] = ['inspections', 'templates', 'approvals', 'schedules'];
 
   return (
-    <div className="mb-6 flex gap-1 border-b">
+    <div className="mb-6 flex gap-1 overflow-x-auto border-b">
       {tabs.map((tab) => (
         <Link
           key={tab}

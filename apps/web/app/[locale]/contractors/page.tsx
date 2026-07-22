@@ -61,7 +61,10 @@ export default function ContractorsPage() {
   type OnSiteRow = NonNullable<typeof onSite.data>[number];
   const onSiteTotal = onSite.data?.length ?? 0;
   const onSiteGroups = useMemo(() => {
-    const map = new Map<string, { contractorId: string; contractorName: string; people: OnSiteRow[] }>();
+    const map = new Map<
+      string,
+      { contractorId: string; contractorName: string; people: OnSiteRow[] }
+    >();
     for (const v of onSite.data ?? []) {
       const g = map.get(v.contractorId) ?? {
         contractorId: v.contractorId,
@@ -241,47 +244,49 @@ export default function ContractorsPage() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/40 text-left">
-                <tr>
-                  <th className="px-4 py-3 font-medium">{t('colName')}</th>
-                  <th className="px-4 py-3 font-medium">{t('colCategory')}</th>
-                  <th className="px-4 py-3 font-medium">{t('colContact')}</th>
-                  <th className="px-4 py-3 font-medium">{t('colCompliance')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((c) => {
-                  const status = c.complianceStatus as Compliance;
-                  return (
-                    <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-4 py-3">
-                        <Link
-                          href={`/${locale}/contractors/${c.id}`}
-                          className="font-medium text-foreground hover:underline"
-                        >
-                          {c.name}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{c.category ?? '—'}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {c.primaryContactName ?? c.primaryContactEmail ?? '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={cn(
-                            'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
-                            BADGE[status],
-                          )}
-                        >
-                          {t(`status_${status}` as 'status_compliant')}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/40 text-left">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">{t('colName')}</th>
+                    <th className="px-4 py-3 font-medium">{t('colCategory')}</th>
+                    <th className="px-4 py-3 font-medium">{t('colContact')}</th>
+                    <th className="px-4 py-3 font-medium">{t('colCompliance')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visible.map((c) => {
+                    const status = c.complianceStatus as Compliance;
+                    return (
+                      <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30">
+                        <td className="px-4 py-3">
+                          <Link
+                            href={`/${locale}/contractors/${c.id}`}
+                            className="font-medium text-foreground hover:underline"
+                          >
+                            {c.name}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{c.category ?? '—'}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {c.primaryContactName ?? c.primaryContactEmail ?? '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={cn(
+                              'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                              BADGE[status],
+                            )}
+                          >
+                            {t(`status_${status}` as 'status_compliant')}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -311,7 +316,7 @@ export default function ContractorsPage() {
                 maxLength={120}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="c-contact">{t('fieldContactName')}</Label>
                 <Input

@@ -44,9 +44,7 @@ export const ACTIVITY_ROUTE_PREFIXES: Record<ContractorActivity, readonly string
 };
 
 /** The de-duplicated permission-key set for a list of activities. */
-export function activitiesToPermissionKeys(
-  activities: readonly string[],
-): PermissionKey[] {
+export function activitiesToPermissionKeys(activities: readonly string[]): PermissionKey[] {
   const keys = new Set<PermissionKey>();
   for (const a of activities) {
     if (isContractorActivity(a)) {

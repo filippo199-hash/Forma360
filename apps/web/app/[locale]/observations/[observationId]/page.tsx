@@ -318,7 +318,7 @@ export default function ObservationDetailPage() {
       </header>
 
       <nav
-        className="mx-auto flex w-full max-w-[1200px] gap-1 border-b"
+        className="mx-auto flex w-full max-w-[1200px] gap-1 overflow-x-auto border-b"
         aria-label={t('tabs.overview')}
       >
         <div className="flex gap-6">
@@ -1360,7 +1360,7 @@ function AddActionDialog({
               maxLength={20_000}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="act-priority">{t('priorityLabel')}</Label>
               <select
@@ -1435,52 +1435,54 @@ function LinkedActionsCard({
         ) : rows.length === 0 ? (
           <p className="text-muted-foreground">{t('linkedActionsEmpty')}</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40">
-              <tr className="text-left">
-                <th className="px-3 py-2 font-medium">{tCols('title')}</th>
-                <th className="px-3 py-2 font-medium">{tCols('status')}</th>
-                <th className="px-3 py-2 font-medium">{tCols('priority')}</th>
-                <th className="px-3 py-2 font-medium">{tCols('due')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => {
-                // Localize the raw status text and surface the row as a
-                // link to the action detail. Reads `actions.status.*`
-                // from i18n, so "open" → "Open" etc. Falls back to the
-                // raw string if it isn't one of the known values.
-                const statusLabel =
-                  row.status === 'open' ||
-                  row.status === 'in_progress' ||
-                  row.status === 'completed' ||
-                  row.status === 'cancelled'
-                    ? tActionStatus(row.status)
-                    : row.status;
-                return (
-                  <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-3 py-2 font-medium">
-                      <Link href={`/${locale}/actions/${row.id}`} className="hover:underline">
-                        {row.title}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">{statusLabel}</td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.priority === 'low' ||
-                      row.priority === 'medium' ||
-                      row.priority === 'high' ||
-                      row.priority === 'critical'
-                        ? tPriority(row.priority)
-                        : tCols('noDue')}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.dueAt !== null ? new Date(row.dueAt).toLocaleString() : tCols('noDue')}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/40">
+                <tr className="text-left">
+                  <th className="px-3 py-2 font-medium">{tCols('title')}</th>
+                  <th className="px-3 py-2 font-medium">{tCols('status')}</th>
+                  <th className="px-3 py-2 font-medium">{tCols('priority')}</th>
+                  <th className="px-3 py-2 font-medium">{tCols('due')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  // Localize the raw status text and surface the row as a
+                  // link to the action detail. Reads `actions.status.*`
+                  // from i18n, so "open" → "Open" etc. Falls back to the
+                  // raw string if it isn't one of the known values.
+                  const statusLabel =
+                    row.status === 'open' ||
+                    row.status === 'in_progress' ||
+                    row.status === 'completed' ||
+                    row.status === 'cancelled'
+                      ? tActionStatus(row.status)
+                      : row.status;
+                  return (
+                    <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="px-3 py-2 font-medium">
+                        <Link href={`/${locale}/actions/${row.id}`} className="hover:underline">
+                          {row.title}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">{statusLabel}</td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {row.priority === 'low' ||
+                        row.priority === 'medium' ||
+                        row.priority === 'high' ||
+                        row.priority === 'critical'
+                          ? tPriority(row.priority)
+                          : tCols('noDue')}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {row.dueAt !== null ? new Date(row.dueAt).toLocaleString() : tCols('noDue')}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
         {canManage ? (
           <Button type="button" onClick={onOpenAdd}>

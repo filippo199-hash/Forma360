@@ -109,7 +109,8 @@ describe('contractor-overstay', () => {
       createdByUserId: inviterId,
     });
 
-    const notify = vi.fn<(v: OverstayVisit, email: string, url: string) => Promise<void>>()
+    const notify = vi
+      .fn<(v: OverstayVisit, email: string, url: string) => Promise<void>>()
       .mockResolvedValue();
     const alerted = await runContractorOverstayAlerts({
       db: db as unknown as Database,
@@ -148,7 +149,8 @@ describe('contractor-overstay', () => {
     await seedVisit({ checkedInHoursAgo: 40, status: 'checked_out' }); // left
     await seedVisit({ checkedInHoursAgo: 40, alerted: true }); // already alerted
 
-    const notify = vi.fn<(v: OverstayVisit, email: string, url: string) => Promise<void>>()
+    const notify = vi
+      .fn<(v: OverstayVisit, email: string, url: string) => Promise<void>>()
       .mockResolvedValue();
     const alerted = await runContractorOverstayAlerts({
       db: db as unknown as Database,

@@ -115,8 +115,7 @@ function LinkPickerDialog({
   // Each candidate carries a `meta` line (status · current place) so the user
   // can tell otherwise-identically-named entries apart.
   const candidates = useMemo(() => {
-    const humanize = (s: string | null): string | null =>
-      s == null ? null : s.replace(/_/g, ' ');
+    const humanize = (s: string | null): string | null => (s == null ? null : s.replace(/_/g, ' '));
     const withPlace = (status: string | null, otherSiteId: string | null | undefined): string => {
       const place = siteNameOf(otherSiteId);
       const parts = [
@@ -371,12 +370,7 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
   }
 
   const linkButton = (kind: LinkKind, label: string) => (
-    <Button
-      variant="outline"
-      size="sm"
-      className="h-7 w-full"
-      onClick={() => setLinkKind(kind)}
-    >
+    <Button variant="outline" size="sm" className="h-7 w-full" onClick={() => setLinkKind(kind)}>
       <Link2 className="mr-1 h-3.5 w-3.5" />
       {label}
     </Button>

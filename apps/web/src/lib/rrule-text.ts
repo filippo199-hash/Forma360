@@ -69,7 +69,8 @@ export function humanizeRrule(rrule: string, timezone?: string): string {
 
   const freq = params.get('FREQ');
   const interval = Number.parseInt(params.get('INTERVAL') ?? '1', 10);
-  const base = freq === undefined ? null : frequencyPhrase(freq, Number.isFinite(interval) ? interval : 1);
+  const base =
+    freq === undefined ? null : frequencyPhrase(freq, Number.isFinite(interval) ? interval : 1);
   if (base === null) {
     // Unrecognised shape — fall back to the raw rule so nothing is hidden.
     return timezone !== undefined && timezone.length > 0 ? `${cleaned} · ${timezone}` : cleaned;
@@ -95,7 +96,7 @@ export function humanizeRrule(rrule: string, timezone?: string): string {
   const byhour = params.get('BYHOUR');
   if (byhour !== undefined && byhour.length > 0) {
     const hour = Number.parseInt(byhour.split(',')[0] ?? '', 10);
-    const minute = Number.parseInt((params.get('BYMINUTE')?.split(',')[0] ?? '0'), 10);
+    const minute = Number.parseInt(params.get('BYMINUTE')?.split(',')[0] ?? '0', 10);
     if (Number.isFinite(hour)) {
       const hh = String(hour).padStart(2, '0');
       const mm = String(Number.isFinite(minute) ? minute : 0).padStart(2, '0');

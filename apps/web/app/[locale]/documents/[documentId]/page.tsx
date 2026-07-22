@@ -321,10 +321,10 @@ export default function DocumentDetailPage() {
         </Link>
       </div>
 
-      {/* ── Split view ─────────────────────────────────────────── */}
-      <div className="flex min-h-0 flex-1">
+      {/* ── Split view (stacks on mobile, side-by-side from lg) ── */}
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* Left — document preview ───────────────────────────── */}
-        <div className="min-h-0 flex-1 overflow-hidden border-r bg-muted/20">
+        <div className="min-h-[40vh] flex-1 overflow-hidden border-b bg-muted/20 lg:min-h-0 lg:border-b-0 lg:border-r">
           <DocumentPreview
             key={viewingVersion ?? 'current'}
             documentId={documentId}
@@ -335,7 +335,7 @@ export default function DocumentDetailPage() {
         </div>
 
         {/* Right — details panel ─────────────────────────────── */}
-        <div className="flex w-[380px] shrink-0 flex-col overflow-y-auto">
+        <div className="flex w-full shrink-0 flex-col overflow-y-auto lg:w-[380px]">
           {/* Header */}
           <div className="shrink-0 space-y-3 border-b p-5">
             <div>
@@ -582,7 +582,9 @@ export default function DocumentDetailPage() {
                                 </span>
                               ) : null}
                             </span>
-                            <span className="text-muted-foreground">{formatBytes(v.sizeBytes)}</span>
+                            <span className="text-muted-foreground">
+                              {formatBytes(v.sizeBytes)}
+                            </span>
                           </div>
                           <p className="mt-1 truncate text-muted-foreground">{v.filename}</p>
                           <p className="mt-0.5 text-muted-foreground">
@@ -754,7 +756,7 @@ export default function DocumentDetailPage() {
                 rows={4}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="doc-edit-expiry">{t('editExpiryLabel')}</Label>
                 <Input

@@ -67,8 +67,9 @@ export async function findDueReminders(
       ),
     );
   return rows
-    .filter((r): r is typeof r & { email: string; endDate: string } =>
-      r.email !== null && r.endDate !== null,
+    .filter(
+      (r): r is typeof r & { email: string; endDate: string } =>
+        r.email !== null && r.endDate !== null,
     )
     .map((r) => ({
       docId: r.docId,

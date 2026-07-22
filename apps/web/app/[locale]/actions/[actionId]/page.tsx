@@ -139,406 +139,408 @@ export default function ActionDetailPage() {
   return (
     <div className="-mx-4 -my-6 flex flex-1 flex-col bg-[#eef4fb] px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="mx-auto w-full max-w-[1200px] space-y-6">
-      <div>
-        <Link
-          href={`/${locale}/actions`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('backLink')}
-        </Link>
-      </div>
+        <div>
+          <Link
+            href={`/${locale}/actions`}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t('backLink')}
+          </Link>
+        </div>
 
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs">{refLabel}</span>
-            {editingTitle ? (
-              <form
-                className="flex items-center gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const next = titleDraft.trim();
-                  if (next.length === 0 || next === action.title) {
+        <header className="space-y-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs">{refLabel}</span>
+              {editingTitle ? (
+                <form
+                  className="flex items-center gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const next = titleDraft.trim();
+                    if (next.length === 0 || next === action.title) {
+                      setEditingTitle(false);
+                      return;
+                    }
+                    update.mutate({ actionId, title: next });
                     setEditingTitle(false);
-                    return;
+                  }}
+                >
+                  <Input
+                    value={titleDraft}
+                    onChange={(e) => setTitleDraft(e.target.value)}
+                    maxLength={500}
+                    autoFocus
+                    className="text-2xl font-semibold"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setEditingTitle(false);
+                    }}
+                  />
+                  <Button type="submit" size="sm" disabled={update.isPending}>
+                    {t('actions.saveTitle')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingTitle(false)}
+                  >
+                    {t('actions.cancelTitle')}
+                  </Button>
+                </form>
+              ) : (
+                <h1
+                  className={cn(
+                    'text-2xl font-semibold tracking-tight',
+                    canEdit ? 'cursor-text hover:underline' : '',
+                  )}
+                  onClick={() => {
+                    if (!canEdit) return;
+                    setTitleDraft(action.title);
+                    setEditingTitle(true);
+                  }}
+                  title={canEdit ? t('actions.editTitleHint') : ''}
+                >
+                  {action.title}
+                </h1>
+              )}
+              {canManage ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={isArchived}
+                    >
+                      <span
+                        className={cn(
+                          'rounded-md px-2 py-0.5 text-xs font-medium',
+                          STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
+                        )}
+                      >
+                        {tStatus(action.status as Status)}
+                      </span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {STATUSES.filter((s) => s !== action.status).map((s) => (
+                      <DropdownMenuItem
+                        key={s}
+                        onSelect={() => setStatus.mutate({ actionId, status: s })}
+                      >
+                        {tStatus(s)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <span
+                  className={cn(
+                    'rounded-md px-2 py-0.5 text-xs font-medium',
+                    STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
+                  )}
+                >
+                  {tStatus(action.status as Status)}
+                </span>
+              )}
+              {actionType !== null ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
+                  {actionType.color !== null && actionType.color.length > 0 ? (
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: actionType.color }}
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                  {actionType.name}
+                </span>
+              ) : null}
+              {action.recurrence !== null ? (
+                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-200">
+                  {t('recurringBadge')}
+                </span>
+              ) : null}
+              {isArchived ? (
+                <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  {t('archivedBadge')}
+                </span>
+              ) : null}
+              {isAuto ? (
+                <span
+                  className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-900/40 dark:text-violet-100"
+                  title={
+                    source?.title !== null && source?.title !== undefined
+                      ? t('autoGeneratedBy', { program: source.title })
+                      : t('autoGeneratedBadge')
                   }
-                  update.mutate({ actionId, title: next });
-                  setEditingTitle(false);
+                >
+                  <Wrench className="h-3 w-3" aria-hidden="true" />
+                  {t('autoGeneratedBadge')}
+                </span>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (typeof window === 'undefined') return;
+                  void navigator.clipboard
+                    .writeText(window.location.href)
+                    .then(() => toast.success(t('shareToast')))
+                    .catch(() => toast.error(tCommon('error')));
                 }}
               >
-                <Input
-                  value={titleDraft}
-                  onChange={(e) => setTitleDraft(e.target.value)}
-                  maxLength={500}
-                  autoFocus
-                  className="text-2xl font-semibold"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') setEditingTitle(false);
-                  }}
-                />
-                <Button type="submit" size="sm" disabled={update.isPending}>
-                  {t('actions.saveTitle')}
-                </Button>
+                <Share2 className="mr-1 h-4 w-4" />
+                {t('actions.share')}
+              </Button>
+              {canManage ? (
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingTitle(false)}
+                  onClick={() => {
+                    if (action.archivedAt === null) archive.mutate({ actionId });
+                    else restore.mutate({ actionId });
+                  }}
+                  disabled={archive.isPending || restore.isPending}
                 >
-                  {t('actions.cancelTitle')}
+                  <Archive className="mr-1 h-4 w-4" />
+                  {action.archivedAt === null ? t('actions.archive') : t('actions.restore')}
                 </Button>
-              </form>
-            ) : (
-              <h1
-                className={cn(
-                  'text-2xl font-semibold tracking-tight',
-                  canEdit ? 'cursor-text hover:underline' : '',
-                )}
-                onClick={() => {
-                  if (!canEdit) return;
-                  setTitleDraft(action.title);
-                  setEditingTitle(true);
-                }}
-                title={canEdit ? t('actions.editTitleHint') : ''}
-              >
-                {action.title}
-              </h1>
-            )}
-            {canManage ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={isArchived}
-                  >
-                    <span
-                      className={cn(
-                        'rounded-md px-2 py-0.5 text-xs font-medium',
-                        STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
-                      )}
-                    >
-                      {tStatus(action.status as Status)}
-                    </span>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {STATUSES.filter((s) => s !== action.status).map((s) => (
-                    <DropdownMenuItem
-                      key={s}
-                      onSelect={() => setStatus.mutate({ actionId, status: s })}
-                    >
-                      {tStatus(s)}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <span
-                className={cn(
-                  'rounded-md px-2 py-0.5 text-xs font-medium',
-                  STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
-                )}
-              >
-                {tStatus(action.status as Status)}
-              </span>
-            )}
-            {actionType !== null ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
-                {actionType.color !== null && actionType.color.length > 0 ? (
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: actionType.color }}
-                    aria-hidden="true"
-                  />
-                ) : null}
-                {actionType.name}
-              </span>
-            ) : null}
-            {action.recurrence !== null ? (
-              <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-200">
-                {t('recurringBadge')}
-              </span>
-            ) : null}
-            {isArchived ? (
-              <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                {t('archivedBadge')}
-              </span>
-            ) : null}
-            {isAuto ? (
-              <span
-                className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-900/40 dark:text-violet-100"
-                title={
-                  source?.title !== null && source?.title !== undefined
-                    ? t('autoGeneratedBy', { program: source.title })
-                    : t('autoGeneratedBadge')
-                }
-              >
-                <Wrench className="h-3 w-3" aria-hidden="true" />
-                {t('autoGeneratedBadge')}
-              </span>
-            ) : null}
+              ) : null}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                if (typeof window === 'undefined') return;
-                void navigator.clipboard
-                  .writeText(window.location.href)
-                  .then(() => toast.success(t('shareToast')))
-                  .catch(() => toast.error(tCommon('error')));
-              }}
-            >
-              <Share2 className="mr-1 h-4 w-4" />
-              {t('actions.share')}
-            </Button>
-            {canManage ? (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  if (action.archivedAt === null) archive.mutate({ actionId });
-                  else restore.mutate({ actionId });
-                }}
-                disabled={archive.isPending || restore.isPending}
-              >
-                <Archive className="mr-1 h-4 w-4" />
-                {action.archivedAt === null ? t('actions.archive') : t('actions.restore')}
-              </Button>
-            ) : null}
-          </div>
-        </div>
 
-        <nav className="flex gap-1 border-b">
-          <TabButton
-            active={tab === 'overview'}
-            onClick={() => setTab('overview')}
-            label={t('tabs.overview')}
-          />
-          <TabButton
-            active={tab === 'activity'}
-            onClick={() => setTab('activity')}
-            label={t('tabs.activity')}
-          />
-          <TabButton
-            active={tab === 'comments'}
-            onClick={() => setTab('comments')}
-            label={t('tabs.comments')}
-          />
-        </nav>
-      </header>
+          <nav className="flex gap-1 border-b">
+            <TabButton
+              active={tab === 'overview'}
+              onClick={() => setTab('overview')}
+              label={t('tabs.overview')}
+            />
+            <TabButton
+              active={tab === 'activity'}
+              onClick={() => setTab('activity')}
+              label={t('tabs.activity')}
+            />
+            <TabButton
+              active={tab === 'comments'}
+              onClick={() => setTab('comments')}
+              label={t('tabs.comments')}
+            />
+          </nav>
+        </header>
 
-      {tab === 'overview' ? (
-        <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="space-y-3 p-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-semibold">{t('descriptionTitle')}</h2>
-                  {canEdit ? (
-                    editingDescription ? null : (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setDescriptionDraft(action.description ?? '');
-                          setEditingDescription(true);
-                        }}
-                      >
-                        <Pencil className="mr-1 h-3.5 w-3.5" />
-                        {t('actions.editDescription')}
-                      </Button>
-                    )
-                  ) : null}
-                </div>
-                {editingDescription ? (
-                  <div className="space-y-2">
-                    <Textarea
-                      value={descriptionDraft}
-                      onChange={(e) => setDescriptionDraft(e.target.value)}
-                      rows={4}
-                      maxLength={20_000}
-                      autoFocus
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingDescription(false)}
-                      >
-                        {t('actions.cancelDescription')}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={update.isPending}
-                        onClick={() => {
-                          update.mutate({
-                            actionId,
-                            description:
-                              descriptionDraft.trim().length === 0 ? null : descriptionDraft.trim(),
-                          });
-                          setEditingDescription(false);
-                        }}
-                      >
-                        {t('actions.saveDescription')}
-                      </Button>
-                    </div>
+        {tab === 'overview' ? (
+          <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="space-y-3 p-6">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-base font-semibold">{t('descriptionTitle')}</h2>
+                    {canEdit ? (
+                      editingDescription ? null : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setDescriptionDraft(action.description ?? '');
+                            setEditingDescription(true);
+                          }}
+                        >
+                          <Pencil className="mr-1 h-3.5 w-3.5" />
+                          {t('actions.editDescription')}
+                        </Button>
+                      )
+                    ) : null}
                   </div>
-                ) : (
-                  <p
-                    className={
-                      action.description !== null && action.description.length > 0
-                        ? ''
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    {action.description ?? t('descriptionEmpty')}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                  {editingDescription ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={descriptionDraft}
+                        onChange={(e) => setDescriptionDraft(e.target.value)}
+                        rows={4}
+                        maxLength={20_000}
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingDescription(false)}
+                        >
+                          {t('actions.cancelDescription')}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={update.isPending}
+                          onClick={() => {
+                            update.mutate({
+                              actionId,
+                              description:
+                                descriptionDraft.trim().length === 0
+                                  ? null
+                                  : descriptionDraft.trim(),
+                            });
+                            setEditingDescription(false);
+                          }}
+                        >
+                          {t('actions.saveDescription')}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p
+                      className={
+                        action.description !== null && action.description.length > 0
+                          ? ''
+                          : 'text-muted-foreground'
+                      }
+                    >
+                      {action.description ?? t('descriptionEmpty')}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-            <SourceCard source={source} sourceId={action.sourceId} locale={locale} />
+              <SourceCard source={source} sourceId={action.sourceId} locale={locale} />
 
-            {actionType !== null ? (
-              <CustomQuestionsCard
+              {actionType !== null ? (
+                <CustomQuestionsCard
+                  actionId={actionId}
+                  actionType={actionType}
+                  responses={(action.customQuestionResponses ?? {}) as Record<string, unknown>}
+                  canEdit={canEdit}
+                />
+              ) : null}
+
+              <RecurrenceCard
                 actionId={actionId}
-                actionType={actionType}
-                responses={(action.customQuestionResponses ?? {}) as Record<string, unknown>}
+                recurrence={action.recurrence as RecurrenceCardValue}
                 canEdit={canEdit}
               />
-            ) : null}
+            </div>
 
-            <RecurrenceCard
-              actionId={actionId}
-              recurrence={action.recurrence as RecurrenceCardValue}
-              canEdit={canEdit}
-            />
+            <Card>
+              <CardContent className="space-y-3 p-6 text-sm">
+                <h2 className="text-base font-semibold">{t('detailsTitle')}</h2>
+                <DetailRow label={tFields('reference')}>
+                  <span className="font-mono text-xs">{refLabel}</span>
+                </DetailRow>
+                <DetailRow label={tFields('priority')}>
+                  {canEdit ? (
+                    <select
+                      value={action.priority ?? ''}
+                      onChange={(e) =>
+                        update.mutate({
+                          actionId,
+                          priority: e.target.value === '' ? null : (e.target.value as Priority),
+                        })
+                      }
+                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                    >
+                      <option value="">{tFields('noPriority')}</option>
+                      {PRIORITIES.map((p) => (
+                        <option key={p} value={p}>
+                          {tPriority(p)}
+                        </option>
+                      ))}
+                    </select>
+                  ) : action.priority !== null &&
+                    (action.priority === 'low' ||
+                      action.priority === 'medium' ||
+                      action.priority === 'high' ||
+                      action.priority === 'critical') ? (
+                    tPriority(action.priority)
+                  ) : (
+                    tFields('noPriority')
+                  )}
+                </DetailRow>
+                <DetailRow label={tFields('assignee')}>
+                  <AssigneePicker
+                    currentId={action.assigneeUserId}
+                    currentName={assignee?.name ?? null}
+                    canManage={canEdit}
+                    onChange={(next) => update.mutate({ actionId, assigneeUserId: next })}
+                    tFields={tFields}
+                  />
+                </DetailRow>
+                <DetailRow label={tFields('dueDate')}>
+                  {canEdit ? (
+                    <Input
+                      type="datetime-local"
+                      value={toLocalDatetime(action.dueAt)}
+                      onChange={(e) =>
+                        update.mutate({
+                          actionId,
+                          dueAt:
+                            e.target.value === '' ? null : new Date(e.target.value).toISOString(),
+                        })
+                      }
+                      className={overdue ? 'border-destructive text-destructive' : ''}
+                    />
+                  ) : action.dueAt !== null ? (
+                    new Date(action.dueAt).toLocaleString()
+                  ) : (
+                    tFields('noDueDate')
+                  )}
+                </DetailRow>
+                <DetailRow label={placeLabel}>
+                  {canEdit ? (
+                    <SiteSelector
+                      value={action.siteId !== null ? [action.siteId] : []}
+                      onChange={(next) => update.mutate({ actionId, siteId: next[0] ?? null })}
+                      multiple={false}
+                      placeholder={placeNone}
+                    />
+                  ) : action.siteId !== null ? (
+                    ((sites ?? []).find((s) => s.id === action.siteId)?.name ?? '—')
+                  ) : (
+                    placeNone
+                  )}
+                </DetailRow>
+                <DetailRow label={tFields('label')}>
+                  {canEdit ? (
+                    <LabelInput
+                      initial={action.label ?? ''}
+                      onCommit={(next) =>
+                        update.mutate({
+                          actionId,
+                          label: next.length === 0 ? null : next,
+                        })
+                      }
+                    />
+                  ) : action.label !== null && action.label.length > 0 ? (
+                    action.label
+                  ) : (
+                    tFields('noLabel')
+                  )}
+                </DetailRow>
+                <DetailRow label={tFields('asset')}>
+                  <AssetField
+                    linked={linkedAssets}
+                    canEdit={canEdit}
+                    locale={locale}
+                    onChange={(next) => update.mutate({ actionId, assetIds: next })}
+                  />
+                </DetailRow>
+              </CardContent>
+            </Card>
           </div>
+        ) : null}
 
-          <Card>
-            <CardContent className="space-y-3 p-6 text-sm">
-              <h2 className="text-base font-semibold">{t('detailsTitle')}</h2>
-              <DetailRow label={tFields('reference')}>
-                <span className="font-mono text-xs">{refLabel}</span>
-              </DetailRow>
-              <DetailRow label={tFields('priority')}>
-                {canEdit ? (
-                  <select
-                    value={action.priority ?? ''}
-                    onChange={(e) =>
-                      update.mutate({
-                        actionId,
-                        priority: e.target.value === '' ? null : (e.target.value as Priority),
-                      })
-                    }
-                    className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
-                  >
-                    <option value="">{tFields('noPriority')}</option>
-                    {PRIORITIES.map((p) => (
-                      <option key={p} value={p}>
-                        {tPriority(p)}
-                      </option>
-                    ))}
-                  </select>
-                ) : action.priority !== null &&
-                  (action.priority === 'low' ||
-                    action.priority === 'medium' ||
-                    action.priority === 'high' ||
-                    action.priority === 'critical') ? (
-                  tPriority(action.priority)
-                ) : (
-                  tFields('noPriority')
-                )}
-              </DetailRow>
-              <DetailRow label={tFields('assignee')}>
-                <AssigneePicker
-                  currentId={action.assigneeUserId}
-                  currentName={assignee?.name ?? null}
-                  canManage={canEdit}
-                  onChange={(next) => update.mutate({ actionId, assigneeUserId: next })}
-                  tFields={tFields}
-                />
-              </DetailRow>
-              <DetailRow label={tFields('dueDate')}>
-                {canEdit ? (
-                  <Input
-                    type="datetime-local"
-                    value={toLocalDatetime(action.dueAt)}
-                    onChange={(e) =>
-                      update.mutate({
-                        actionId,
-                        dueAt:
-                          e.target.value === '' ? null : new Date(e.target.value).toISOString(),
-                      })
-                    }
-                    className={overdue ? 'border-destructive text-destructive' : ''}
-                  />
-                ) : action.dueAt !== null ? (
-                  new Date(action.dueAt).toLocaleString()
-                ) : (
-                  tFields('noDueDate')
-                )}
-              </DetailRow>
-              <DetailRow label={placeLabel}>
-                {canEdit ? (
-                  <SiteSelector
-                    value={action.siteId !== null ? [action.siteId] : []}
-                    onChange={(next) => update.mutate({ actionId, siteId: next[0] ?? null })}
-                    multiple={false}
-                    placeholder={placeNone}
-                  />
-                ) : action.siteId !== null ? (
-                  ((sites ?? []).find((s) => s.id === action.siteId)?.name ?? '—')
-                ) : (
-                  placeNone
-                )}
-              </DetailRow>
-              <DetailRow label={tFields('label')}>
-                {canEdit ? (
-                  <LabelInput
-                    initial={action.label ?? ''}
-                    onCommit={(next) =>
-                      update.mutate({
-                        actionId,
-                        label: next.length === 0 ? null : next,
-                      })
-                    }
-                  />
-                ) : action.label !== null && action.label.length > 0 ? (
-                  action.label
-                ) : (
-                  tFields('noLabel')
-                )}
-              </DetailRow>
-              <DetailRow label={tFields('asset')}>
-                <AssetField
-                  linked={linkedAssets}
-                  canEdit={canEdit}
-                  locale={locale}
-                  onChange={(next) => update.mutate({ actionId, assetIds: next })}
-                />
-              </DetailRow>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
+        {tab === 'activity' ? (
+          <ActivityTimeline
+            actionId={actionId}
+            createdAt={action.createdAt}
+            createdByName={data?.creatorName ?? null}
+          />
+        ) : null}
 
-      {tab === 'activity' ? (
-        <ActivityTimeline
-          actionId={actionId}
-          createdAt={action.createdAt}
-          createdByName={data?.creatorName ?? null}
-        />
-      ) : null}
-
-      {tab === 'comments' ? <CommentsThread actionId={actionId} readOnly={isArchived} /> : null}
+        {tab === 'comments' ? <CommentsThread actionId={actionId} readOnly={isArchived} /> : null}
       </div>
     </div>
   );
@@ -1187,7 +1189,7 @@ function RecurrenceCard({
               <span>{t('enableLabel')}</span>
             </label>
             {enabled ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs uppercase tracking-wide text-muted-foreground">
                     {t('freqLabel')}

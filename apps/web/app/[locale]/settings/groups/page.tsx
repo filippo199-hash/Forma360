@@ -120,71 +120,79 @@ export default function GroupsPage() {
 
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40">
-              <tr className="text-left">
-                <th className="px-4 py-3 font-medium">{t('table.name')}</th>
-                <th className="px-4 py-3 font-medium">{t('table.mode')}</th>
-                <th className="px-4 py-3 font-medium">{t('table.description')}</th>
-                <th className="px-4 py-3 text-right font-medium">{t('table.actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={4} className="p-4">
-                    <Skeleton className="h-4 w-full" />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/40">
+                <tr className="text-left">
+                  <th className="px-4 py-3 font-medium">{t('table.name')}</th>
+                  <th className="px-4 py-3 font-medium">{t('table.mode')}</th>
+                  <th className="px-4 py-3 font-medium">{t('table.description')}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t('table.actions')}</th>
                 </tr>
-              ) : (groups ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">
-                    {t('empty')}
-                  </td>
-                </tr>
-              ) : (
-                (groups ?? []).map((group) => (
-                  <tr key={group.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-4 py-3 font-medium">{group.name}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          group.membershipMode === 'rule_based'
-                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200'
-                            : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        {t(`mode.${group.membershipMode}`)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{group.description ?? '—'}</td>
-                    <td className="flex items-center justify-end gap-1 px-4 py-3">
-                      <Button variant="ghost" size="sm" onClick={() => setMembersGroupId(group.id)}>
-                        <Users className="mr-1.5 h-3.5 w-3.5" />
-                        {t('membersButton')}
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(group)}>
-                        {t('editButton')}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => {
-                          if (window.confirm(t('archiveConfirm'))) {
-                            archiveGroup.mutate({ id: group.id });
-                          }
-                        }}
-                        disabled={archiveGroup.isPending}
-                      >
-                        {t('archiveButton')}
-                      </Button>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="p-4">
+                      <Skeleton className="h-4 w-full" />
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (groups ?? []).length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">
+                      {t('empty')}
+                    </td>
+                  </tr>
+                ) : (
+                  (groups ?? []).map((group) => (
+                    <tr key={group.id} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="px-4 py-3 font-medium">{group.name}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                            group.membershipMode === 'rule_based'
+                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200'
+                              : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          {t(`mode.${group.membershipMode}`)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {group.description ?? '—'}
+                      </td>
+                      <td className="flex items-center justify-end gap-1 px-4 py-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setMembersGroupId(group.id)}
+                        >
+                          <Users className="mr-1.5 h-3.5 w-3.5" />
+                          {t('membersButton')}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(group)}>
+                          {t('editButton')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => {
+                            if (window.confirm(t('archiveConfirm'))) {
+                              archiveGroup.mutate({ id: group.id });
+                            }
+                          }}
+                          disabled={archiveGroup.isPending}
+                        >
+                          {t('archiveButton')}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 

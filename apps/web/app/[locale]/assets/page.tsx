@@ -228,19 +228,21 @@ export default function AssetsListPage() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/40">
-                <tr className="text-left">
-                  <th className="w-12 px-3 py-2" />
-                  <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.qr')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.updatedAt')}</th>
-                </tr>
-              </thead>
-              <tbody>{parentRows.map((row) => renderRow(row, false))}</tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/40">
+                  <tr className="text-left">
+                    <th className="w-12 px-3 py-2" />
+                    <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.qr')}</th>
+                    <th className="px-3 py-2 font-medium">{t('columns.updatedAt')}</th>
+                  </tr>
+                </thead>
+                <tbody>{parentRows.map((row) => renderRow(row, false))}</tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       )}

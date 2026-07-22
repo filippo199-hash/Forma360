@@ -327,9 +327,7 @@ export default function ContractorDetailPage() {
                   <span>
                     {opt === ''
                       ? t('override.auto', {
-                          status: t(
-                            `status_${data.derivedComplianceStatus}` as 'status_compliant',
-                          ),
+                          status: t(`status_${data.derivedComplianceStatus}` as 'status_compliant'),
                         })
                       : t(`status_${opt}` as 'status_compliant')}
                   </span>
@@ -397,7 +395,7 @@ export default function ContractorDetailPage() {
                 maxLength={120}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="ed-cn">{t('fieldContactName')}</Label>
                 <Input
@@ -685,7 +683,7 @@ export default function ContractorDetailPage() {
             <DialogTitle>{t('uploadDocument')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="up-start">{t('startDateLabel')}</Label>
                 <Input

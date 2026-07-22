@@ -93,7 +93,9 @@ async function gateGuardEmails(db: Database, tenantId: string): Promise<string[]
     .innerJoin(permissionSets, eq(user.permissionSetId, permissionSets.id))
     .where(and(eq(user.tenantId, tenantId), isNull(user.deactivatedAt)));
   return rows
-    .filter((r) => r.permissions.includes('contractors.gate') || r.permissions.includes('org.settings'))
+    .filter(
+      (r) => r.permissions.includes('contractors.gate') || r.permissions.includes('org.settings'),
+    )
     .map((r) => r.email);
 }
 

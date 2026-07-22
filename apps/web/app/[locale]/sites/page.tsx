@@ -77,11 +77,15 @@ export default function SitesHubPage() {
 
   const archivedCount = rows.filter((r) => r.archivedAt !== null).length;
   const filtersActive =
-    search.trim() !== '' || statusFilter !== 'all' || (terminology === 'both' && kindFilter !== 'all');
+    search.trim() !== '' ||
+    statusFilter !== 'all' ||
+    (terminology === 'both' && kindFilter !== 'all');
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    let list = rows.filter((r) => (view === 'archived' ? r.archivedAt !== null : r.archivedAt === null));
+    let list = rows.filter((r) =>
+      view === 'archived' ? r.archivedAt !== null : r.archivedAt === null,
+    );
     if (q !== '') {
       list = list.filter(
         (r) =>
@@ -91,7 +95,9 @@ export default function SitesHubPage() {
     }
     if (statusFilter !== 'all') list = list.filter((r) => r.status === statusFilter);
     if (terminology === 'both' && kindFilter !== 'all') {
-      list = list.filter((r) => (kindFilter === 'project' ? r.kind === 'project' : r.kind !== 'project'));
+      list = list.filter((r) =>
+        kindFilter === 'project' ? r.kind === 'project' : r.kind !== 'project',
+      );
     }
     const sorted = [...list];
     if (sort === 'name') {
@@ -255,7 +261,9 @@ export default function SitesHubPage() {
                   {bar.text}
                 </span>
                 {row.endDate !== null ? (
-                  <span>{format.dateTime(new Date(`${row.endDate}T00:00:00`), { dateStyle: 'medium' })}</span>
+                  <span>
+                    {format.dateTime(new Date(`${row.endDate}T00:00:00`), { dateStyle: 'medium' })}
+                  </span>
                 ) : null}
               </div>
             </div>
@@ -264,10 +272,7 @@ export default function SitesHubPage() {
           {/* Health chips */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             {row.openObservations > 0 ? (
-              <span
-                className="inline-flex items-center gap-1"
-                title={t('countObservations')}
-              >
+              <span className="inline-flex items-center gap-1" title={t('countObservations')}>
                 <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
                 {row.openObservations}
               </span>
@@ -419,7 +424,9 @@ export default function SitesHubPage() {
       ) : visible.length === 0 ? (
         <EmptyState
           icon={<MapPin className="h-6 w-6" />}
-          text={rows.filter((r) => r.archivedAt === null).length === 0 ? t('empty') : t('noResults')}
+          text={
+            rows.filter((r) => r.archivedAt === null).length === 0 ? t('empty') : t('noResults')
+          }
         />
       ) : grouped ? (
         <div className="space-y-8">
@@ -517,7 +524,7 @@ export default function SitesHubPage() {
                     maxLength={200}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="site-start">{t('fieldStart')}</Label>
                     <Input

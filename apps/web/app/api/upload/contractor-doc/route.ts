@@ -19,12 +19,7 @@ import { storage } from '../../../../src/server/storage';
 import { createContext } from '../../../../src/server/trpc';
 
 const MAX_BYTES = 50 * 1024 * 1024;
-const ACCEPTED_MIME = new Set<string>([
-  'application/pdf',
-  'image/png',
-  'image/jpeg',
-  'image/webp',
-]);
+const ACCEPTED_MIME = new Set<string>(['application/pdf', 'image/png', 'image/jpeg', 'image/webp']);
 const FILENAME_SAFE = /[^A-Za-z0-9._-]/g;
 
 function sanitizeFilename(raw: string): string {

@@ -252,132 +252,134 @@ export default function TemplatesListPage() {
 
         <Card>
           <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/40">
-                <tr className="text-left">
-                  <th className="w-10 px-4 py-3">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-input accent-primary"
-                      aria-label={t('table.selectAll')}
-                    />
-                  </th>
-                  <th className="px-3 py-3 font-medium">{t('table.name')}</th>
-                  <th className="hidden px-3 py-3 font-medium md:table-cell">
-                    {t('table.lastPublished')}
-                  </th>
-                  <th className="hidden px-3 py-3 font-medium lg:table-cell">
-                    {t('table.access')}
-                  </th>
-                  <th className="px-3 py-3 font-medium">{t('table.status')}</th>
-                  <th className="px-3 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <tr key={i} className="border-b last:border-0">
-                      <td colSpan={6} className="px-4 py-4">
-                        <Skeleton className="h-8 w-full" />
-                      </td>
-                    </tr>
-                  ))
-                ) : filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                      {hasActiveFilters ? t('emptySearch') : t('empty')}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/40">
+                  <tr className="text-left">
+                    <th className="w-10 px-4 py-3">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-input accent-primary"
+                        aria-label={t('table.selectAll')}
+                      />
+                    </th>
+                    <th className="px-3 py-3 font-medium">{t('table.name')}</th>
+                    <th className="hidden px-3 py-3 font-medium md:table-cell">
+                      {t('table.lastPublished')}
+                    </th>
+                    <th className="hidden px-3 py-3 font-medium lg:table-cell">
+                      {t('table.access')}
+                    </th>
+                    <th className="px-3 py-3 font-medium">{t('table.status')}</th>
+                    <th className="px-3 py-3" />
                   </tr>
-                ) : (
-                  filtered.map((r) => {
-                    const status = normaliseStatus(r.status);
-                    const isPublished = status === 'published' && r.archivedAt === null;
-                    const isStarting = startingFor === r.id && startInspection.isPending;
-                    return (
-                      <tr key={r.id} className="border-b last:border-0 hover:bg-muted/20">
-                        <td className="px-4 py-3">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-input accent-primary"
-                            aria-label={t('table.selectRow')}
-                          />
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300">
-                              <LayoutGrid className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <Link
-                                href={`/${locale}/templates/${r.id}`}
-                                className="font-medium hover:underline"
-                              >
-                                {r.name}
-                              </Link>
-                              {r.description !== null && r.description.length > 0 ? (
-                                <p className="mt-0.5 max-w-xs truncate text-xs text-muted-foreground">
-                                  {r.description}
-                                </p>
-                              ) : null}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="hidden px-3 py-3 text-muted-foreground md:table-cell">
-                          {r.lastPublishedAt !== null ? formatRelative(r.lastPublishedAt) : '—'}
-                        </td>
-                        <td className="hidden px-3 py-3 lg:table-cell">
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            {r.accessRuleId === null ? (
-                              <>
-                                <Users className="h-3.5 w-3.5 shrink-0" />
-                                <span className="text-xs">{t('allUsers')}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Building2 className="h-3.5 w-3.5 shrink-0" />
-                                <span className="text-xs">
-                                  {r.accessRuleName ?? t('restricted')}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-3 py-3">
-                          <StatusBadge status={r.status} />
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center justify-end gap-2">
-                            {isPublished ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="hidden sm:flex"
-                                disabled={isStarting}
-                                onClick={() => {
-                                  setStartingFor(r.id);
-                                  startInspection.mutate({ templateId: r.id });
-                                }}
-                              >
-                                {isStarting
-                                  ? t('list.startingInspection')
-                                  : t('list.startInspection')}
-                              </Button>
-                            ) : null}
-                            <RowActionsMenu
-                              templateId={r.id}
-                              status={status}
-                              locale={locale}
-                              onArchive={() => setArchiveTarget(r.id)}
-                              onQrCode={() => setQrTarget({ id: r.id, name: r.name })}
-                            />
-                          </div>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <tr key={i} className="border-b last:border-0">
+                        <td colSpan={6} className="px-4 py-4">
+                          <Skeleton className="h-8 w-full" />
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                    ))
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                        {hasActiveFilters ? t('emptySearch') : t('empty')}
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((r) => {
+                      const status = normaliseStatus(r.status);
+                      const isPublished = status === 'published' && r.archivedAt === null;
+                      const isStarting = startingFor === r.id && startInspection.isPending;
+                      return (
+                        <tr key={r.id} className="border-b last:border-0 hover:bg-muted/20">
+                          <td className="px-4 py-3">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-input accent-primary"
+                              aria-label={t('table.selectRow')}
+                            />
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300">
+                                <LayoutGrid className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <Link
+                                  href={`/${locale}/templates/${r.id}`}
+                                  className="font-medium hover:underline"
+                                >
+                                  {r.name}
+                                </Link>
+                                {r.description !== null && r.description.length > 0 ? (
+                                  <p className="mt-0.5 max-w-xs truncate text-xs text-muted-foreground">
+                                    {r.description}
+                                  </p>
+                                ) : null}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="hidden px-3 py-3 text-muted-foreground md:table-cell">
+                            {r.lastPublishedAt !== null ? formatRelative(r.lastPublishedAt) : '—'}
+                          </td>
+                          <td className="hidden px-3 py-3 lg:table-cell">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              {r.accessRuleId === null ? (
+                                <>
+                                  <Users className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="text-xs">{t('allUsers')}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Building2 className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="text-xs">
+                                    {r.accessRuleName ?? t('restricted')}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <StatusBadge status={r.status} />
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center justify-end gap-2">
+                              {isPublished ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="hidden sm:flex"
+                                  disabled={isStarting}
+                                  onClick={() => {
+                                    setStartingFor(r.id);
+                                    startInspection.mutate({ templateId: r.id });
+                                  }}
+                                >
+                                  {isStarting
+                                    ? t('list.startingInspection')
+                                    : t('list.startInspection')}
+                                </Button>
+                              ) : null}
+                              <RowActionsMenu
+                                templateId={r.id}
+                                status={status}
+                                locale={locale}
+                                onArchive={() => setArchiveTarget(r.id)}
+                                onQrCode={() => setQrTarget({ id: r.id, name: r.name })}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 

@@ -393,88 +393,92 @@ export default function MaintenancePlanDetailPage() {
                   {t('noLinkedAssets')}
                 </div>
               ) : (
-                <table className="w-full text-sm">
-                  <thead className="border-b bg-muted/40">
-                    <tr className="text-left">
-                      <th className="px-3 py-2 font-medium">{t('assetColumns.asset')}</th>
-                      <th className="px-3 py-2 font-medium">{t('assetColumns.lastService')}</th>
-                      {canManage ? (
-                        <th className="px-3 py-2 font-medium">{t('assetColumns.recordService')}</th>
-                      ) : null}
-                      {canManage ? <th className="px-3 py-2" /> : null}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {linkedAssets.map((link) => (
-                      <tr key={link.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-3 py-2 font-medium">
-                          {link.assetId !== null ? (
-                            <Link
-                              href={`/${locale}/assets/${link.assetId}`}
-                              className="hover:underline"
-                            >
-                              {link.assetName ?? link.assetId}
-                            </Link>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-muted-foreground">
-                          {link.lastServiceDate ?? '—'}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-muted/40">
+                      <tr className="text-left">
+                        <th className="px-3 py-2 font-medium">{t('assetColumns.asset')}</th>
+                        <th className="px-3 py-2 font-medium">{t('assetColumns.lastService')}</th>
                         {canManage ? (
-                          <td className="px-3 py-2">
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="date"
-                                value={serviceDate[link.id] ?? ''}
-                                onChange={(e) =>
-                                  setServiceDate((prev) => ({
-                                    ...prev,
-                                    [link.id]: e.target.value,
-                                  }))
-                                }
-                                className="h-7 w-36 px-2 text-xs"
-                              />
-                              <Button
+                          <th className="px-3 py-2 font-medium">
+                            {t('assetColumns.recordService')}
+                          </th>
+                        ) : null}
+                        {canManage ? <th className="px-3 py-2" /> : null}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {linkedAssets.map((link) => (
+                        <tr key={link.id} className="border-b last:border-0 hover:bg-muted/30">
+                          <td className="px-3 py-2 font-medium">
+                            {link.assetId !== null ? (
+                              <Link
+                                href={`/${locale}/assets/${link.assetId}`}
+                                className="hover:underline"
+                              >
+                                {link.assetName ?? link.assetId}
+                              </Link>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {link.lastServiceDate ?? '—'}
+                          </td>
+                          {canManage ? (
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="date"
+                                  value={serviceDate[link.id] ?? ''}
+                                  onChange={(e) =>
+                                    setServiceDate((prev) => ({
+                                      ...prev,
+                                      [link.id]: e.target.value,
+                                    }))
+                                  }
+                                  className="h-7 w-36 px-2 text-xs"
+                                />
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={!serviceDate[link.id] || updateService.isPending}
+                                  onClick={() => {
+                                    if (link.assetId === null) return;
+                                    updateService.mutate({
+                                      planId,
+                                      assetId: link.assetId,
+                                      lastServiceDate: serviceDate[link.id],
+                                    });
+                                    setServiceDate((prev) => ({ ...prev, [link.id]: '' }));
+                                  }}
+                                >
+                                  {t('recordServiceButton')}
+                                </Button>
+                              </div>
+                            </td>
+                          ) : null}
+                          {canManage ? (
+                            <td className="px-3 py-2">
+                              <button
                                 type="button"
-                                size="sm"
-                                variant="outline"
-                                disabled={!serviceDate[link.id] || updateService.isPending}
+                                aria-label={t('unlinkAsset')}
                                 onClick={() => {
                                   if (link.assetId === null) return;
-                                  updateService.mutate({
-                                    planId,
-                                    assetId: link.assetId,
-                                    lastServiceDate: serviceDate[link.id],
-                                  });
-                                  setServiceDate((prev) => ({ ...prev, [link.id]: '' }));
+                                  unlinkAsset.mutate({ planId, assetId: link.assetId });
                                 }}
+                                className="text-muted-foreground hover:text-destructive"
                               >
-                                {t('recordServiceButton')}
-                              </Button>
-                            </div>
-                          </td>
-                        ) : null}
-                        {canManage ? (
-                          <td className="px-3 py-2">
-                            <button
-                              type="button"
-                              aria-label={t('unlinkAsset')}
-                              onClick={() => {
-                                if (link.assetId === null) return;
-                                unlinkAsset.mutate({ planId, assetId: link.assetId });
-                              }}
-                              className="text-muted-foreground hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </td>
-                        ) : null}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </td>
+                          ) : null}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>

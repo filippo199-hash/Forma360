@@ -388,46 +388,49 @@ export default function AssetDetailPage() {
         ) : (
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardContent className="space-y-3 p-6 text-sm">
-                <h2 className="text-base font-semibold">{t('detailsHeading')}</h2>
-                {asset.description !== '' ? (
-                  <p className="text-muted-foreground">{asset.description}</p>
-                ) : null}
-                <DetailRow label={t('fields.type')}>{assetType?.name ?? '—'}</DetailRow>
-                <DetailRow label={placeLabel}>{siteName ?? '—'}</DetailRow>
-                <DetailRow label={t('fields.owner')}>{ownerName ?? '—'}</DetailRow>
-                {asset.parentId !== null ? (
-                  <DetailRow label={t('fields.parent')}>
-                    <Link href={`/${locale}/assets/${asset.parentId}`} className="hover:underline">
-                      {asset.parentId.slice(-8)}
-                    </Link>
-                  </DetailRow>
-                ) : null}
-                <DetailRow label={t('fields.children')}>{String(childrenCount)}</DetailRow>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardContent className="space-y-3 p-6 text-sm">
+                  <h2 className="text-base font-semibold">{t('detailsHeading')}</h2>
+                  {asset.description !== '' ? (
+                    <p className="text-muted-foreground">{asset.description}</p>
+                  ) : null}
+                  <DetailRow label={t('fields.type')}>{assetType?.name ?? '—'}</DetailRow>
+                  <DetailRow label={placeLabel}>{siteName ?? '—'}</DetailRow>
+                  <DetailRow label={t('fields.owner')}>{ownerName ?? '—'}</DetailRow>
+                  {asset.parentId !== null ? (
+                    <DetailRow label={t('fields.parent')}>
+                      <Link
+                        href={`/${locale}/assets/${asset.parentId}`}
+                        className="hover:underline"
+                      >
+                        {asset.parentId.slice(-8)}
+                      </Link>
+                    </DetailRow>
+                  ) : null}
+                  <DetailRow label={t('fields.children')}>{String(childrenCount)}</DetailRow>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardContent className="space-y-3 p-6 text-sm">
-                <h2 className="text-base font-semibold">{t('latestReadingsHeading')}</h2>
-                {latestReadings.length === 0 ? (
-                  <p className="text-muted-foreground">{t('noReadings')}</p>
-                ) : (
-                  latestReadings.map((r) => (
-                    <div
-                      key={r.id}
-                      className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
-                    >
-                      <span className="font-medium">{r.fieldName}</span>
-                      <span>
-                        {r.value} {r.unit}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
+              <Card>
+                <CardContent className="space-y-3 p-6 text-sm">
+                  <h2 className="text-base font-semibold">{t('latestReadingsHeading')}</h2>
+                  {latestReadings.length === 0 ? (
+                    <p className="text-muted-foreground">{t('noReadings')}</p>
+                  ) : (
+                    latestReadings.map((r) => (
+                      <div
+                        key={r.id}
+                        className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
+                      >
+                        <span className="font-medium">{r.fieldName}</span>
+                        <span>
+                          {r.value} {r.unit}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
             </div>
             {canViewContractors ? (
               <AssetContractorsSection assetId={assetId} canManage={canLinkContractors} />
@@ -491,42 +494,44 @@ export default function AssetDetailPage() {
 
           <Card>
             <CardContent className="p-0">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/40">
-                  <tr className="text-left">
-                    <th className="px-3 py-2 font-medium">{t('readingColumns.field')}</th>
-                    <th className="px-3 py-2 font-medium">{t('readingColumns.value')}</th>
-                    <th className="px-3 py-2 font-medium">{t('readingColumns.source')}</th>
-                    <th className="px-3 py-2 font-medium">{t('readingColumns.capturedAt')}</th>
-                    <th className="px-3 py-2 font-medium">{t('readingColumns.capturedBy')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(readingsData ?? []).length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                        {t('noReadings')}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/40">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">{t('readingColumns.field')}</th>
+                      <th className="px-3 py-2 font-medium">{t('readingColumns.value')}</th>
+                      <th className="px-3 py-2 font-medium">{t('readingColumns.source')}</th>
+                      <th className="px-3 py-2 font-medium">{t('readingColumns.capturedAt')}</th>
+                      <th className="px-3 py-2 font-medium">{t('readingColumns.capturedBy')}</th>
                     </tr>
-                  ) : (
-                    (readingsData ?? []).map((r) => (
-                      <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-3 py-2 font-medium">{r.fieldName}</td>
-                        <td className="px-3 py-2">
-                          {r.value} {r.unit}
-                        </td>
-                        <td className="px-3 py-2 text-muted-foreground">{r.source}</td>
-                        <td className="px-3 py-2 text-muted-foreground">
-                          {new Date(r.capturedAt).toLocaleString()}
-                        </td>
-                        <td className="px-3 py-2 text-muted-foreground">
-                          {r.capturedByName ?? '—'}
+                  </thead>
+                  <tbody>
+                    {(readingsData ?? []).length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                          {t('noReadings')}
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      (readingsData ?? []).map((r) => (
+                        <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
+                          <td className="px-3 py-2 font-medium">{r.fieldName}</td>
+                          <td className="px-3 py-2">
+                            {r.value} {r.unit}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">{r.source}</td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {new Date(r.capturedAt).toLocaleString()}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {r.capturedByName ?? '—'}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -631,55 +636,60 @@ export default function AssetDetailPage() {
                       <p className="text-sm">{tMaintPrograms('noMaintenanceActions')}</p>
                     </div>
                   ) : (
-                    <table className="w-full text-sm">
-                      <thead className="border-b bg-muted/40">
-                        <tr className="text-left">
-                          <th className="px-3 py-2 font-medium">
-                            {tMaintPrograms('actionColumns.title')}
-                          </th>
-                          <th className="px-3 py-2 font-medium">
-                            {tMaintPrograms('actionColumns.detail')}
-                          </th>
-                          <th className="px-3 py-2 font-medium">
-                            {tMaintPrograms('actionColumns.status')}
-                          </th>
-                          <th className="px-3 py-2 font-medium">
-                            {tMaintPrograms('actionColumns.dueAt')}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(maintenanceData?.actions ?? []).map((action) => (
-                          <tr key={action.id} className="border-b last:border-0 hover:bg-muted/30">
-                            <td className="px-3 py-2 font-medium">
-                              <button
-                                type="button"
-                                onClick={() => setSelectedActionId(action.id)}
-                                className="text-left hover:underline"
-                              >
-                                {action.referenceNumber !== null ? (
-                                  <span className="mr-1 text-xs text-muted-foreground">
-                                    {action.referenceNumber}
-                                  </span>
-                                ) : null}
-                                {action.title}
-                              </button>
-                            </td>
-                            <td className="px-3 py-2 text-muted-foreground">
-                              {action.description !== '' ? action.description : '—'}
-                            </td>
-                            <td className="px-3 py-2 capitalize text-muted-foreground">
-                              {action.status.replace(/_/g, ' ')}
-                            </td>
-                            <td className="px-3 py-2 text-muted-foreground">
-                              {action.dueAt !== null
-                                ? new Date(action.dueAt).toLocaleDateString()
-                                : '—'}
-                            </td>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="border-b bg-muted/40">
+                          <tr className="text-left">
+                            <th className="px-3 py-2 font-medium">
+                              {tMaintPrograms('actionColumns.title')}
+                            </th>
+                            <th className="px-3 py-2 font-medium">
+                              {tMaintPrograms('actionColumns.detail')}
+                            </th>
+                            <th className="px-3 py-2 font-medium">
+                              {tMaintPrograms('actionColumns.status')}
+                            </th>
+                            <th className="px-3 py-2 font-medium">
+                              {tMaintPrograms('actionColumns.dueAt')}
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {(maintenanceData?.actions ?? []).map((action) => (
+                            <tr
+                              key={action.id}
+                              className="border-b last:border-0 hover:bg-muted/30"
+                            >
+                              <td className="px-3 py-2 font-medium">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedActionId(action.id)}
+                                  className="text-left hover:underline"
+                                >
+                                  {action.referenceNumber !== null ? (
+                                    <span className="mr-1 text-xs text-muted-foreground">
+                                      {action.referenceNumber}
+                                    </span>
+                                  ) : null}
+                                  {action.title}
+                                </button>
+                              </td>
+                              <td className="px-3 py-2 text-muted-foreground">
+                                {action.description !== '' ? action.description : '—'}
+                              </td>
+                              <td className="px-3 py-2 capitalize text-muted-foreground">
+                                {action.status.replace(/_/g, ' ')}
+                              </td>
+                              <td className="px-3 py-2 text-muted-foreground">
+                                {action.dueAt !== null
+                                  ? new Date(action.dueAt).toLocaleDateString()
+                                  : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -770,37 +780,39 @@ export default function AssetDetailPage() {
                 <p className="text-sm">{t('empty.actions')}</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.priority')}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.dueAt')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {linkedActions.map((a) => (
-                    <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-4 py-2">
-                        <Link href={`/${locale}/actions/${a.id}`} className="hover:underline">
-                          {a.referenceNumber ? (
-                            <span className="mr-1 text-xs text-muted-foreground">
-                              {a.referenceNumber}
-                            </span>
-                          ) : null}
-                          {a.title}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-2 capitalize">{a.status}</td>
-                      <td className="px-4 py-2 capitalize">{a.priority ?? '—'}</td>
-                      <td className="px-4 py-2">
-                        {a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.priority')}</th>
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.dueAt')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {linkedActions.map((a) => (
+                      <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30">
+                        <td className="px-4 py-2">
+                          <Link href={`/${locale}/actions/${a.id}`} className="hover:underline">
+                            {a.referenceNumber ? (
+                              <span className="mr-1 text-xs text-muted-foreground">
+                                {a.referenceNumber}
+                              </span>
+                            ) : null}
+                            {a.title}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2 capitalize">{a.status}</td>
+                        <td className="px-4 py-2 capitalize">{a.priority ?? '—'}</td>
+                        <td className="px-4 py-2">
+                          {a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -821,35 +833,40 @@ export default function AssetDetailPage() {
                 <p className="text-sm">{t('empty.inspections')}</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.docNumber')}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.startedAt')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {linkedInspections.map((ins) => (
-                    <tr
-                      key={`${ins.id}-${ins.questionId}`}
-                      className="border-b last:border-0 hover:bg-muted/30"
-                    >
-                      <td className="px-4 py-2">
-                        <Link href={`/${locale}/inspections/${ins.id}`} className="hover:underline">
-                          {ins.title}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-2 capitalize">{ins.status.replace(/_/g, ' ')}</td>
-                      <td className="px-4 py-2">{ins.documentNumber ?? '—'}</td>
-                      <td className="px-4 py-2">
-                        {ins.startedAt ? new Date(ins.startedAt).toLocaleDateString() : '—'}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.docNumber')}</th>
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.startedAt')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {linkedInspections.map((ins) => (
+                      <tr
+                        key={`${ins.id}-${ins.questionId}`}
+                        className="border-b last:border-0 hover:bg-muted/30"
+                      >
+                        <td className="px-4 py-2">
+                          <Link
+                            href={`/${locale}/inspections/${ins.id}`}
+                            className="hover:underline"
+                          >
+                            {ins.title}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2 capitalize">{ins.status.replace(/_/g, ' ')}</td>
+                        <td className="px-4 py-2">{ins.documentNumber ?? '—'}</td>
+                        <td className="px-4 py-2">
+                          {ins.startedAt ? new Date(ins.startedAt).toLocaleDateString() : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -870,40 +887,42 @@ export default function AssetDetailPage() {
                 <p className="text-sm">{t('empty.observations')}</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.priority')}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t('cols.createdAt')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {linkedObservations.map((obs) => (
-                    <tr key={obs.id} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-4 py-2">
-                        <Link
-                          href={`/${locale}/observations/${obs.id}`}
-                          className="hover:underline"
-                        >
-                          {obs.referenceNumber ? (
-                            <span className="mr-1 text-xs text-muted-foreground">
-                              {obs.referenceNumber}
-                            </span>
-                          ) : null}
-                          {obs.title}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-2 capitalize">{obs.status}</td>
-                      <td className="px-4 py-2 capitalize">{obs.priority ?? '—'}</td>
-                      <td className="px-4 py-2">
-                        {obs.createdAt ? new Date(obs.createdAt).toLocaleDateString() : '—'}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.priority')}</th>
+                      <th className="px-4 py-2 text-left font-medium">{t('cols.createdAt')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {linkedObservations.map((obs) => (
+                      <tr key={obs.id} className="border-b last:border-0 hover:bg-muted/30">
+                        <td className="px-4 py-2">
+                          <Link
+                            href={`/${locale}/observations/${obs.id}`}
+                            className="hover:underline"
+                          >
+                            {obs.referenceNumber ? (
+                              <span className="mr-1 text-xs text-muted-foreground">
+                                {obs.referenceNumber}
+                              </span>
+                            ) : null}
+                            {obs.title}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2 capitalize">{obs.status}</td>
+                        <td className="px-4 py-2 capitalize">{obs.priority ?? '—'}</td>
+                        <td className="px-4 py-2">
+                          {obs.createdAt ? new Date(obs.createdAt).toLocaleDateString() : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </CardContent>
         </Card>

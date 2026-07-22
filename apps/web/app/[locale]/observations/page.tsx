@@ -180,80 +180,84 @@ export default function ObservationsListPage() {
 
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40">
-              <tr className="text-left">
-                <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.category')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="p-4">
-                    <Skeleton className="h-4 w-full" />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/40">
+                <tr className="text-left">
+                  <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.category')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
                 </tr>
-              ) : (data?.items ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    <div>{t('empty')}</div>
-                    {canReport ? (
-                      <Link
-                        href={`/${locale}/observations/new`}
-                        className="mt-2 inline-block text-primary hover:underline"
-                      >
-                        {t('emptyCta')}
-                      </Link>
-                    ) : null}
-                  </td>
-                </tr>
-              ) : (
-                (data?.items ?? []).map((row) => (
-                  <tr
-                    key={row.id}
-                    className="border-b last:border-0 hover:bg-muted/30"
-                    onClick={() => handleSelectObservation(row.id)}
-                  >
-                    <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
-                      <Link
-                        href={`/${locale}/observations/${row.id}`}
-                        className="hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {row.referenceNumber}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2">
-                      <Link
-                        href={`/${locale}/observations/${row.id}`}
-                        className="font-medium hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {row.title}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">{row.categorySnapshot.name}</td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.siteId !== null
-                        ? ((sites ?? []).find((s) => s.id === row.siteId)?.name ?? '—')
-                        : '—'}
-                    </td>
-                    <td className="px-3 py-2">
-                      <ObservationStatusBadge status={row.status} />
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {formatRelative(row.createdAt)}
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="p-4">
+                      <Skeleton className="h-4 w-full" />
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (data?.items ?? []).length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                      <div>{t('empty')}</div>
+                      {canReport ? (
+                        <Link
+                          href={`/${locale}/observations/new`}
+                          className="mt-2 inline-block text-primary hover:underline"
+                        >
+                          {t('emptyCta')}
+                        </Link>
+                      ) : null}
+                    </td>
+                  </tr>
+                ) : (
+                  (data?.items ?? []).map((row) => (
+                    <tr
+                      key={row.id}
+                      className="border-b last:border-0 hover:bg-muted/30"
+                      onClick={() => handleSelectObservation(row.id)}
+                    >
+                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                        <Link
+                          href={`/${locale}/observations/${row.id}`}
+                          className="hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {row.referenceNumber}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2">
+                        <Link
+                          href={`/${locale}/observations/${row.id}`}
+                          className="font-medium hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {row.title}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {row.categorySnapshot.name}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {row.siteId !== null
+                          ? ((sites ?? []).find((s) => s.id === row.siteId)?.name ?? '—')
+                          : '—'}
+                      </td>
+                      <td className="px-3 py-2">
+                        <ObservationStatusBadge status={row.status} />
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {formatRelative(row.createdAt)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 

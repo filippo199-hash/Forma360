@@ -106,117 +106,119 @@ export default function ActionCategoriesPage() {
 
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40">
-              <tr className="text-left">
-                <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.activeActions')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.questions')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.visibility')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.default')}</th>
-                <th className="px-3 py-2 text-right font-medium">{t('columns.actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="p-4">
-                    <Skeleton className="h-4 w-full" />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/40">
+                <tr className="text-left">
+                  <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.activeActions')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.questions')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.visibility')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.default')}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t('columns.actions')}</th>
                 </tr>
-              ) : (types ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    {t('empty')}
-                  </td>
-                </tr>
-              ) : (
-                (types ?? []).map((row) => (
-                  <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-3 py-2 font-medium">
-                      <div className="flex items-center gap-2">
-                        {row.color !== null && row.color.length > 0 ? (
-                          <span
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: row.color }}
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        <Link
-                          href={`/${locale}/actions/categories/${row.id}`}
-                          className="hover:underline"
-                        >
-                          {row.name}
-                        </Link>
-                        {row.archivedAt !== null ? (
-                          <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                            {t('archivedBadge')}
-                          </span>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">{row.activeActions}</td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.customQuestions.length}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {t(`visibility.${row.visibility}`)}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {row.isDefault ? (
-                        <span className="rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground">
-                          {t('defaultBadge')}
-                        </span>
-                      ) : canSettings && row.archivedAt === null ? (
-                        <button
-                          type="button"
-                          onClick={() => setDefault.mutate({ typeId: row.id })}
-                          className="text-xs text-muted-foreground hover:underline"
-                        >
-                          {t('setDefault')}
-                        </button>
-                      ) : null}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => router.push(`/${locale}/actions/categories/${row.id}`)}
-                        >
-                          {tCommon('edit')}
-                        </Button>
-                        {canSettings ? (
-                          row.archivedAt === null ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => archive.mutate({ typeId: row.id })}
-                              disabled={archive.isPending}
-                            >
-                              {tCommon('archive')}
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => restore.mutate({ typeId: row.id })}
-                              disabled={restore.isPending}
-                            >
-                              {t('restoreButton')}
-                            </Button>
-                          )
-                        ) : null}
-                      </div>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="p-4">
+                      <Skeleton className="h-4 w-full" />
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (types ?? []).length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                      {t('empty')}
+                    </td>
+                  </tr>
+                ) : (
+                  (types ?? []).map((row) => (
+                    <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="px-3 py-2 font-medium">
+                        <div className="flex items-center gap-2">
+                          {row.color !== null && row.color.length > 0 ? (
+                            <span
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: row.color }}
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          <Link
+                            href={`/${locale}/actions/categories/${row.id}`}
+                            className="hover:underline"
+                          >
+                            {row.name}
+                          </Link>
+                          {row.archivedAt !== null ? (
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                              {t('archivedBadge')}
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">{row.activeActions}</td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {row.customQuestions.length}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {t(`visibility.${row.visibility}`)}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {row.isDefault ? (
+                          <span className="rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground">
+                            {t('defaultBadge')}
+                          </span>
+                        ) : canSettings && row.archivedAt === null ? (
+                          <button
+                            type="button"
+                            onClick={() => setDefault.mutate({ typeId: row.id })}
+                            className="text-xs text-muted-foreground hover:underline"
+                          >
+                            {t('setDefault')}
+                          </button>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push(`/${locale}/actions/categories/${row.id}`)}
+                          >
+                            {tCommon('edit')}
+                          </Button>
+                          {canSettings ? (
+                            row.archivedAt === null ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => archive.mutate({ typeId: row.id })}
+                                disabled={archive.isPending}
+                              >
+                                {tCommon('archive')}
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => restore.mutate({ typeId: row.id })}
+                                disabled={restore.isPending}
+                              >
+                                {t('restoreButton')}
+                              </Button>
+                            )
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 
