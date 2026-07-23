@@ -254,7 +254,9 @@ export default function SitesHubPage() {
                   time between start/end dates, NOT work completion. */}
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="font-medium">{t('timelineLabel')}</span>
-                {bar.tone === 'normal' ? <span>{t('timelineElapsed', { pct: bar.pct })}</span> : null}
+                {bar.tone === 'normal' ? (
+                  <span>{t('timelineElapsed', { pct: bar.pct })}</span>
+                ) : null}
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div

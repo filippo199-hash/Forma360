@@ -68,6 +68,10 @@ const MIGRATION_FILES = [
   '0045_contractor_gate.sql',
   '0046_contractor_assets.sql',
   '0047_contractor_users.sql',
+  '0048_contractor_visit_visitor.sql',
+  '0049_contractor_compliance_override.sql',
+  '0050_contractor_visit_overstay.sql',
+  '0051_site_fk_integrity.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {

@@ -51,7 +51,9 @@ export default function SchedulesPage() {
           </Button>
         </header>
 
-        {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
+        {siteFilter !== '' ? (
+          <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} />
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-muted p-0.5">

@@ -20,6 +20,7 @@
  */
 import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from './auth';
+import { sites } from './sites';
 import { tenants } from './tenants';
 
 // ─── Labels ─────────────────────────────────────────────────────────────────
@@ -112,7 +113,7 @@ export const documents = pgTable(
     filename: text('filename').notNull(),
     mimeType: text('mime_type').notNull(),
     sizeBytes: integer('size_bytes').notNull().default(0),
-    siteId: text('site_id'),
+    siteId: text('site_id').references(() => sites.id, { onDelete: 'set null' }),
     /**
      * Legacy plain-string labels array (kept for backward compat).
      * New code uses label_ids referencing document_labels.

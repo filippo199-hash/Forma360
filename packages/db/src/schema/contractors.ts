@@ -21,6 +21,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { assets } from './assets';
 import { user } from './auth';
+import { sites } from './sites';
 import { tenants } from './tenants';
 
 export const contractorStatus = ['active', 'inactive'] as const;
@@ -189,7 +190,9 @@ export const contractorVisits = pgTable(
       .notNull()
       .references(() => contractors.id, { onDelete: 'cascade' }),
     /** Optional site/project the visit is for. Kept if the site is archived. */
-    siteId: varchar('site_id', { length: 26 }),
+    siteId: varchar('site_id', { length: 26 }).references(() => sites.id, {
+      onDelete: 'set null',
+    }),
     title: text('title').notNull(),
     /** Who from the contractor is attending — shown on the gate on-site board. */
     visitorName: text('visitor_name'),

@@ -34,6 +34,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { user } from './auth';
+import { sites } from './sites';
 import { tenants } from './tenants';
 
 export interface AssetCustomFieldDef {
@@ -77,7 +78,7 @@ export const assets = pgTable(
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
     typeId: text('type_id').references(() => assetTypes.id),
-    siteId: text('site_id'),
+    siteId: text('site_id').references(() => sites.id, { onDelete: 'set null' }),
     parentId: text('parent_id'),
     /** Single responsible user for this asset. Cleared if the user is removed. */
     ownerUserId: text('owner_user_id').references(() => user.id, { onDelete: 'set null' }),

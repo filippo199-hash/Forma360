@@ -311,6 +311,35 @@ try {
     ALTER TABLE "contractors" ADD COLUMN IF NOT EXISTS "compliance_override_reason" text;
     -- 0050: overstay-alert dedupe stamp
     ALTER TABLE "contractor_visits" ADD COLUMN IF NOT EXISTS "overstay_alerted_at" timestamptz;
+    -- 0051: site FK integrity — null orphans, then add ON DELETE SET NULL FKs
+    -- (DO-blocks because ADD CONSTRAINT has no IF NOT EXISTS).
+    UPDATE "assets" a SET "site_id" = NULL
+      WHERE a."site_id" IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM "sites" s WHERE s."id" = a."site_id");
+    UPDATE "documents" d SET "site_id" = NULL
+      WHERE d."site_id" IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM "sites" s WHERE s."id" = d."site_id");
+    UPDATE "contractor_visits" v SET "site_id" = NULL
+      WHERE v."site_id" IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM "sites" s WHERE s."id" = v."site_id");
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'assets_site_id_fk') THEN
+        ALTER TABLE "assets" ADD CONSTRAINT "assets_site_id_fk"
+          FOREIGN KEY ("site_id") REFERENCES "sites"("id") ON DELETE SET NULL;
+      END IF;
+    END $$;
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'documents_site_id_fk') THEN
+        ALTER TABLE "documents" ADD CONSTRAINT "documents_site_id_fk"
+          FOREIGN KEY ("site_id") REFERENCES "sites"("id") ON DELETE SET NULL;
+      END IF;
+    END $$;
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'contractor_visits_site_id_fk') THEN
+        ALTER TABLE "contractor_visits" ADD CONSTRAINT "contractor_visits_site_id_fk"
+          FOREIGN KEY ("site_id") REFERENCES "sites"("id") ON DELETE SET NULL;
+      END IF;
+    END $$;
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

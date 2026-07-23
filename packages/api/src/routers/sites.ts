@@ -22,6 +22,7 @@
 import {
   actions,
   assets,
+  contractorVisits,
   documents,
   groupMembers,
   groups,
@@ -689,6 +690,23 @@ export const sitesRouter = router({
           .delete(siteMembers)
           .where(and(eq(siteMembers.tenantId, tid), eq(siteMembers.siteId, sid)));
       }
+
+      // Both modes: stop schedules from targeting the archived site (drop the
+      // id from the jsonb array) and unlink contractor visits (the visit log
+      // belongs to the contractor, not the site).
+      await ctx.db
+        .update(templateSchedules)
+        .set({ siteIds: sql`${templateSchedules.siteIds} - ${sid}`, updatedAt: now })
+        .where(
+          and(
+            eq(templateSchedules.tenantId, tid),
+            sql`${templateSchedules.siteIds} @> ${JSON.stringify([sid])}::jsonb`,
+          ),
+        );
+      await ctx.db
+        .update(contractorVisits)
+        .set({ siteId: null })
+        .where(and(eq(contractorVisits.tenantId, tid), eq(contractorVisits.siteId, sid)));
 
       await ctx.db
         .update(sites)

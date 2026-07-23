@@ -12,6 +12,7 @@ import { resetDependentsRegistryForTests } from '@forma360/permissions/dependent
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
+import { eq } from 'drizzle-orm';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContext, type Context } from '../context';
@@ -142,5 +143,55 @@ describe('sites.archiveWithMode', () => {
     expect(hub.counts.media).toBe(0);
     // The observation is archived (not in the default active list).
     expect((await caller.issues.issues.list({})).items).toHaveLength(0);
+  });
+
+  it('archive drops the site from schedules and unlinks contractor visits', async () => {
+    const { caller, siteId } = await seedProjectWithStuff();
+
+    // Seed a schedule targeting the site + a contractor visit at the site.
+    const templateId = newId();
+    await db.insert(schema.templates).values({
+      id: templateId,
+      tenantId,
+      name: 'Tpl',
+      createdBy: adminUserId,
+    });
+    const scheduleId = newId();
+    await db.insert(schema.templateSchedules).values({
+      id: scheduleId,
+      tenantId,
+      templateId,
+      name: 'Weekly check',
+      rrule: 'FREQ=WEEKLY',
+      startAt: new Date('2026-01-01T00:00:00Z'),
+      siteIds: [siteId],
+      createdBy: adminUserId,
+    });
+    const contractorId = newId();
+    await db.insert(schema.contractors).values({ id: contractorId, tenantId, name: 'Sparky' });
+    const visitId = newId();
+    await db.insert(schema.contractorVisits).values({
+      id: visitId,
+      tenantId,
+      contractorId,
+      siteId,
+      title: 'Fix wiring',
+      scheduledStart: new Date('2026-01-02T09:00:00Z'),
+      createdByUserId: adminUserId,
+    });
+
+    await caller.sites.archiveWithMode({ id: siteId, mode: 'dissociate' });
+
+    const [schedule] = await db
+      .select()
+      .from(schema.templateSchedules)
+      .where(eq(schema.templateSchedules.id, scheduleId));
+    expect(schedule?.siteIds ?? []).not.toContain(siteId);
+
+    const [visit] = await db
+      .select()
+      .from(schema.contractorVisits)
+      .where(eq(schema.contractorVisits.id, visitId));
+    expect(visit?.siteId).toBeNull();
   });
 });

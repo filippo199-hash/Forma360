@@ -1153,6 +1153,10 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         }),
       )
       .mutation(async ({ ctx, input }) => {
+        // Same guard as create — the target site must belong to this tenant.
+        if (input.siteId !== null) {
+          await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+        }
         const result = await ctx.db
           .update(inspections)
           .set({ siteId: input.siteId, updatedAt: new Date() })

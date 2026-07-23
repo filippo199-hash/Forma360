@@ -83,6 +83,10 @@ const MIGRATION_FILES = [
   '0045_contractor_gate.sql',
   '0046_contractor_assets.sql',
   '0047_contractor_users.sql',
+  '0048_contractor_visit_visitor.sql',
+  '0049_contractor_compliance_override.sql',
+  '0050_contractor_visit_overstay.sql',
+  '0051_site_fk_integrity.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -287,6 +291,25 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
       expect(snap.permissions).toContain('org.settings');
       expect(typeof snap.snapshotAt).toBe('string');
       expect(Number.isFinite(Date.parse(snap.snapshotAt))).toBe(true);
+    });
+
+    it('setSite validates the target site belongs to the tenant', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId } = await createPublishedTemplate(caller, 'SetSite');
+      const { inspectionId } = await caller.inspections.create({ templateId });
+
+      // A site id that doesn't exist in this tenant must be rejected.
+      await expect(caller.inspections.setSite({ inspectionId, siteId: newId() })).rejects.toThrow();
+
+      // A real tenant site is accepted; null detaches.
+      const siteId = newId();
+      await db.insert(schema.sites).values({ id: siteId, tenantId, name: 'Depot' });
+      await expect(caller.inspections.setSite({ inspectionId, siteId })).resolves.toEqual({
+        ok: true,
+      });
+      await expect(caller.inspections.setSite({ inspectionId, siteId: null })).resolves.toEqual({
+        ok: true,
+      });
     });
 
     it('stamps monotonic document numbers and increments the template counter', async () => {

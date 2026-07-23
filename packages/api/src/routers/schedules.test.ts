@@ -77,6 +77,10 @@ const MIGRATION_FILES = [
   '0045_contractor_gate.sql',
   '0046_contractor_assets.sql',
   '0047_contractor_users.sql',
+  '0048_contractor_visit_visitor.sql',
+  '0049_contractor_compliance_override.sql',
+  '0050_contractor_visit_overstay.sql',
+  '0051_site_fk_integrity.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -326,6 +330,12 @@ describe('schedules router (Phase 2 PR 32)', () => {
         reminderMinutesBefore: null,
       });
       expect(scheduleId).toHaveLength(26);
+
+      // list({ siteId }) filters via jsonb containment on siteIds.
+      const filtered = await caller.schedules.list({ siteId });
+      expect(filtered.map((r) => r.id)).toContain(scheduleId);
+      const other = await caller.schedules.list({ siteId: newId() });
+      expect(other.map((r) => r.id)).not.toContain(scheduleId);
     });
   });
 
