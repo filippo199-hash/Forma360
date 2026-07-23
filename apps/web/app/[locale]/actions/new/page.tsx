@@ -57,7 +57,11 @@ export default function NewActionPage() {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('low');
   const [dueAt, setDueAt] = useState('');
-  const [siteId, setSiteId] = useState('');
+  const [siteId, setSiteId] = useState<string>(() => {
+    // Pre-fill from ?site= — the "create here" flow from a project page.
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('site') ?? '';
+  });
   const [assigneeUserId, setAssigneeUserId] = useState('');
   const [label, setLabel] = useState('');
   const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});

@@ -34,7 +34,11 @@ export default function NewAssetPage() {
 
   const [name, setName] = useState('');
   const [typeId, setTypeId] = useState('');
-  const [siteId, setSiteId] = useState('');
+  const [siteId, setSiteId] = useState<string>(() => {
+    // Pre-fill from ?site= — the "create here" flow from a project page.
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('site') ?? '';
+  });
   const [parentId, setParentId] = useState('');
   const [ownerUserId, setOwnerUserId] = useState('');
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});

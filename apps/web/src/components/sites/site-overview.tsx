@@ -9,8 +9,8 @@ import {
   Link2,
   ListChecks,
   Map as MapIcon,
+  Plus,
   Search,
-  Users,
   Wrench,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -19,6 +19,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
+import { TemplatePickerDialog } from '../inspections/template-picker-dialog';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -29,7 +30,6 @@ import { toast } from 'sonner';
 interface SiteOverviewProps {
   siteId: string;
   locale: string;
-  counts: { members: number };
   onOpenTab: (tab: string) => void;
 }
 
@@ -227,12 +227,16 @@ function LinkPickerDialog({
   );
 }
 
-export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverviewProps) {
+export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
   const t = useTranslations('sites');
   const canManageInspections = useHasPermission('inspections.manage');
   const canManageActions = useHasPermission('actions.manage');
   const canManageAssets = useHasPermission('assets.manage');
+  const canReportObservations = useHasPermission('issues.report');
+  const canCreateActions = useHasPermission('actions.create');
+  const canManageDocuments = useHasPermission('documents.manage');
   const [linkKind, setLinkKind] = useState<LinkKind | null>(null);
+  const [showInspectionPicker, setShowInspectionPicker] = useState(false);
 
   const obs = trpc.issues.issues.list.useQuery({ siteId });
   const insp = trpc.inspections.list.useQuery({ siteId });
@@ -328,9 +332,7 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
             </div>
-          ) : total === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('overviewNothing')}</p>
-          ) : (
+          ) : total === 0 ? null : ( // compact zero-state: header + action buttons only
             <ul className="space-y-1.5">
               {items.slice(0, MAX).map((it) => {
                 const row = (
@@ -370,11 +372,28 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
   }
 
   const linkButton = (kind: LinkKind, label: string) => (
-    <Button variant="outline" size="sm" className="h-7 w-full" onClick={() => setLinkKind(kind)}>
+    <Button variant="outline" size="sm" className="h-7 flex-1" onClick={() => setLinkKind(kind)}>
       <Link2 className="mr-1 h-3.5 w-3.5" />
       {label}
     </Button>
   );
+
+  /** Primary "create here" — the new record arrives pre-linked to this place. */
+  const createLinkButton = (href: string, label: string) => (
+    <Button size="sm" className="h-7 flex-1" asChild>
+      <Link href={href}>
+        <Plus className="mr-1 h-3.5 w-3.5" />
+        {label}
+      </Link>
+    </Button>
+  );
+
+  /** Pair a primary create button with the secondary link-existing one. */
+  const footerRow = (...buttons: (ReactNode | undefined)[]) => {
+    const visible = buttons.filter((b): b is ReactNode => b !== undefined);
+    if (visible.length === 0) return undefined;
+    return <div className="flex gap-2">{visible}</div>;
+  };
 
   const mediaRows = media.data ?? [];
   const planRows = plans.data ?? [];
@@ -388,6 +407,14 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
         total={obsItems.length}
         viewAllHref={`/${locale}/observations?site=${siteId}`}
         loading={obs.isLoading}
+        footer={footerRow(
+          canReportObservations
+            ? createLinkButton(
+                `/${locale}/observations/new?site=${siteId}`,
+                t('createObservationButton'),
+              )
+            : undefined,
+        )}
       />
       <ListCard
         icon={<ListChecks className="h-4 w-4" />}
@@ -396,7 +423,12 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
         total={actItems.length}
         viewAllHref={`/${locale}/actions?site=${siteId}`}
         loading={acts.isLoading}
-        footer={canManageActions ? linkButton('action', t('linkAction')) : undefined}
+        footer={footerRow(
+          canCreateActions
+            ? createLinkButton(`/${locale}/actions/new?site=${siteId}`, t('createActionButton'))
+            : undefined,
+          canManageActions ? linkButton('action', t('linkAction')) : undefined,
+        )}
       />
       <ListCard
         icon={<ClipboardCheck className="h-4 w-4" />}
@@ -405,7 +437,15 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
         total={inspItems.length}
         viewAllHref={`/${locale}/inspections?site=${siteId}`}
         loading={insp.isLoading}
-        footer={canManageInspections ? linkButton('inspection', t('linkInspection')) : undefined}
+        footer={footerRow(
+          canManageInspections ? (
+            <Button size="sm" className="h-7 flex-1" onClick={() => setShowInspectionPicker(true)}>
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              {t('startInspectionButton')}
+            </Button>
+          ) : undefined,
+          canManageInspections ? linkButton('inspection', t('linkInspection')) : undefined,
+        )}
       />
       <ListCard
         icon={<Wrench className="h-4 w-4" />}
@@ -414,7 +454,12 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
         total={assetItems.length}
         viewAllHref={`/${locale}/assets?site=${siteId}`}
         loading={assets.isLoading}
-        footer={canManageAssets ? linkButton('asset', t('linkAsset')) : undefined}
+        footer={footerRow(
+          canManageAssets
+            ? createLinkButton(`/${locale}/assets/new?site=${siteId}`, t('createAssetButton'))
+            : undefined,
+          canManageAssets ? linkButton('asset', t('linkAsset')) : undefined,
+        )}
       />
 
       {/* Media — thumbnail strip */}
@@ -443,9 +488,7 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
           </button>
           {media.isLoading ? (
             <Skeleton className="h-16 w-full" />
-          ) : mediaRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('overviewNothing')}</p>
-          ) : (
+          ) : mediaRows.length === 0 ? null : ( // compact zero-state
             <div className="flex gap-2 overflow-hidden">
               {mediaRows.slice(0, 5).map((m) => (
                 <button
@@ -501,18 +544,17 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
           </button>
           {plans.isLoading ? (
             <Skeleton className="h-8 w-full" />
-          ) : planRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('overviewNothing')}</p>
-          ) : (
+          ) : planRows.length === 0 ? null : ( // compact zero-state
             <div className="flex flex-wrap gap-1.5">
               {planRows.map((p) => (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => onOpenTab('plans')}
-                  className="rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted"
+                  className="max-w-[180px] truncate rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted"
                 >
-                  {p.name}
+                  {/* Guard against file-hash names from uploads without a title. */}
+                  {/^[0-9a-f]{24,}$/i.test(p.name) ? t('plansUntitled') : p.name}
                 </button>
               ))}
             </div>
@@ -527,27 +569,22 @@ export function SiteOverview({ siteId, locale, counts, onOpenTab }: SiteOverview
         total={docItems.length}
         viewAllHref={`/${locale}/documents?site=${siteId}`}
         loading={docs.isLoading}
+        footer={footerRow(
+          canManageDocuments
+            ? createLinkButton(`/${locale}/documents/new?site=${siteId}`, t('uploadDocumentButton'))
+            : undefined,
+        )}
       />
 
-      {/* Members — count only (no per-site name list endpoint) */}
-      <Card className="h-full">
-        <CardContent className="space-y-3 p-4">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">
-              <Users className="h-4 w-4" />
-            </span>
-            <span className="text-sm font-semibold">{t('countMembers')}</span>
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-              {counts.members}
-            </span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {counts.members === 0
-              ? t('overviewNothing')
-              : t('membersCount', { count: counts.members })}
-          </p>
-        </CardContent>
-      </Card>
+      {/* Members card removed — the Team & access tab is the single home
+          for membership; a count-only duplicate card added noise. */}
+
+      <TemplatePickerDialog
+        open={showInspectionPicker}
+        onOpenChange={setShowInspectionPicker}
+        locale={locale}
+        siteId={siteId}
+      />
 
       {linkKind !== null ? (
         <LinkPickerDialog

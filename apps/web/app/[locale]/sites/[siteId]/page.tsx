@@ -166,12 +166,7 @@ export default function SiteDetailPage() {
       <div className="mt-4">
         {tab === 'overview' ? (
           <div className="space-y-4">
-            <SiteOverview
-              siteId={siteId}
-              locale={locale}
-              counts={{ members: counts.members }}
-              onOpenTab={setTab}
-            />
+            <SiteOverview siteId={siteId} locale={locale} onOpenTab={setTab} />
             <SiteLocationCard
               siteId={siteId}
               latitude={site.latitude}

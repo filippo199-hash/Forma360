@@ -60,7 +60,11 @@ export default function NewObservationPage() {
   const [categoryId, setCategoryId] = useState<string>('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [siteId, setSiteId] = useState<string>('');
+  const [siteId, setSiteId] = useState<string>(() => {
+    // Pre-fill from ?site= — the "create here" flow from a project page.
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('site') ?? '';
+  });
   const [dateOccurred, setDateOccurred] = useState(() => formatLocalDatetime(new Date()));
   const [locationAddress, setLocationAddress] = useState('');
   const [customQuestionResponses, setCustomQuestionResponses] = useState<Record<string, string>>(
