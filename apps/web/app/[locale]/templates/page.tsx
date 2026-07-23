@@ -150,7 +150,12 @@ export default function TemplatesListPage() {
             ) : null}
           </h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setShowExport(true)}>
+            {/* Desktop-only — CSV export is not a phone workflow. */}
+            <Button
+              variant="outline"
+              onClick={() => setShowExport(true)}
+              className="hidden sm:inline-flex"
+            >
               {t('export.button')}
             </Button>
             <Button onClick={() => setShowCreate(true)}>{t('newButton')}</Button>
@@ -256,7 +261,9 @@ export default function TemplatesListPage() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/40">
                   <tr className="text-left">
-                    <th className="w-10 px-4 py-3">
+                    {/* Bulk-select is desktop-only; on phones the column just
+                     * eats width the template names need. */}
+                    <th className="hidden w-10 px-4 py-3 sm:table-cell">
                       <input
                         type="checkbox"
                         className="h-4 w-4 rounded border-input accent-primary"
@@ -296,7 +303,7 @@ export default function TemplatesListPage() {
                       const isStarting = startingFor === r.id && startInspection.isPending;
                       return (
                         <tr key={r.id} className="border-b last:border-0 hover:bg-muted/20">
-                          <td className="px-4 py-3">
+                          <td className="hidden px-4 py-3 sm:table-cell">
                             <input
                               type="checkbox"
                               className="h-4 w-4 rounded border-input accent-primary"

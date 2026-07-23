@@ -32,7 +32,9 @@ export default async function TemplatesLayout({
   return (
     <PermissionsProvider permissions={permissions}>
       <div className="min-h-screen w-full bg-[#eef4fb] dark:bg-slate-900/40">
-        <div className="mx-auto w-full max-w-[1200px] px-4 py-8">{children}</div>
+        {/* No padding here — the page provides its own px-4 py-6, matching the
+         * sibling Inspections / Approvals / Schedules tab layouts. */}
+        <div className="mx-auto w-full max-w-[1200px]">{children}</div>
       </div>
     </PermissionsProvider>
   );
