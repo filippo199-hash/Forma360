@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Building2, MapPin } from 'lucide-react';
+import { Building2, ChevronRight, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -13,6 +13,7 @@ import { SitePlansViewer } from '../../../../src/components/sites/site-plans-vie
 import { SiteTeamAccess } from '../../../../src/components/sites/site-team-access';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { cn } from '../../../../src/lib/cn';
+import { hubTitleKey, usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type Status = 'planning' | 'active' | 'on_hold' | 'completed';
@@ -26,6 +27,7 @@ const STATUS_COLORS: Record<Status, string> = {
 
 export default function SiteDetailPage() {
   const t = useTranslations('sites');
+  const { term } = usePlaceTerms();
   const params = useParams<{ locale: string; siteId: string }>();
   const locale = params.locale ?? 'en';
   const siteId = params.siteId ?? '';
@@ -51,7 +53,7 @@ export default function SiteDetailPage() {
     );
   }
 
-  const { site, counts } = data;
+  const { site, parent, counts } = data;
   const isProject = site.kind === 'project';
   const statusLabel: string | null =
     site.status === 'planning' ||
@@ -63,13 +65,23 @@ export default function SiteDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link
-        href={`/${locale}/sites`}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {t('backToList')}
-      </Link>
+      {/* Breadcrumb: Hub › Parent › This — makes hierarchy visible on child
+          sites (previously the parent link only existed at creation time). */}
+      <nav className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+        <Link href={`/${locale}/sites`} className="hover:text-foreground">
+          {t(hubTitleKey(term))}
+        </Link>
+        {parent !== null ? (
+          <>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <Link href={`/${locale}/sites/${parent.id}`} className="hover:text-foreground">
+              {parent.name}
+            </Link>
+          </>
+        ) : null}
+        <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span className="text-foreground">{site.name}</span>
+      </nav>
 
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-3">

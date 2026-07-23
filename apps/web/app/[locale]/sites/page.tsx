@@ -29,7 +29,7 @@ import { Label } from '../../../src/components/ui/label';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
-import { hubTitleKey, useTerminology } from '../../../src/lib/terminology';
+import { hubTitleKey, usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
 
 type Kind = 'site' | 'project';
@@ -61,7 +61,7 @@ export default function SitesHubPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canManage = useHasPermission('sites.manage');
-  const terminology = useTerminology();
+  const { term: terminology, place, places } = usePlaceTerms();
   const defaultKind: Kind = terminology === 'sites' ? 'site' : 'project';
   const utils = trpc.useUtils();
 
@@ -237,12 +237,25 @@ export default function SitesHubPage() {
             ) : null}
           </div>
 
+          {/* Hierarchy at a glance — child sites show their parent. */}
+          {row.parentName !== null ? (
+            <p className="truncate text-xs text-muted-foreground">
+              {t('inParent', { name: row.parentName })}
+            </p>
+          ) : null}
+
           {row.client !== null && row.client !== '' ? (
             <p className="truncate text-sm text-muted-foreground">{row.client}</p>
           ) : null}
 
           {bar !== null ? (
             <div className="space-y-1">
+              {/* Explicit "Timeline" label — the bar tracks elapsed calendar
+                  time between start/end dates, NOT work completion. */}
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="font-medium">{t('timelineLabel')}</span>
+                {bar.tone === 'normal' ? <span>{t('timelineElapsed', { pct: bar.pct })}</span> : null}
+              </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
                   className={cn(
@@ -325,7 +338,9 @@ export default function SitesHubPage() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t(hubTitleKey(terminology))}</h1>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
+          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
+            {t('subtitle', { places })}
+          </p>
         </div>
         {canManage ? (
           <Button onClick={openCreate}>
@@ -425,7 +440,9 @@ export default function SitesHubPage() {
         <EmptyState
           icon={<MapPin className="h-6 w-6" />}
           text={
-            rows.filter((r) => r.archivedAt === null).length === 0 ? t('empty') : t('noResults')
+            rows.filter((r) => r.archivedAt === null).length === 0
+              ? t('empty', { places })
+              : t('noResults')
           }
         />
       ) : grouped ? (
@@ -458,28 +475,43 @@ export default function SitesHubPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('dialogTitle')}</DialogTitle>
+            <DialogTitle>{t('dialogTitle', { place })}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {terminology === 'both' ? (
-              <div className="grid grid-cols-2 gap-2">
+            {/* Always ask the kind — with a one-line explanation of each — so
+                users understand why some cards carry client/timeline/status
+                and others don't. */}
+            <div className="space-y-1.5">
+              <Label>{t('fieldKind')}</Label>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {(['project', 'site'] as const).map((k) => (
                   <button
                     key={k}
                     type="button"
                     onClick={() => setKind(k)}
+                    aria-pressed={kind === k}
                     className={cn(
-                      'rounded-md border px-3 py-2 text-sm font-medium transition-colors',
+                      'rounded-md border px-3 py-2 text-left transition-colors',
                       kind === k
-                        ? 'border-primary bg-primary/5 text-foreground'
-                        : 'border-input text-muted-foreground hover:text-foreground',
+                        ? 'border-primary bg-primary/5'
+                        : 'border-input hover:border-muted-foreground/40',
                     )}
                   >
-                    {k === 'project' ? t('kindProject') : t('kindSite')}
+                    <span className="flex items-center gap-1.5 text-sm font-medium">
+                      {k === 'project' ? (
+                        <MapPin className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                      {k === 'project' ? t('kindProject') : t('kindSite')}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {k === 'project' ? t('kindProjectHelp') : t('kindSiteHelp')}
+                    </span>
                   </button>
                 ))}
               </div>
-            ) : null}
+            </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="site-name">{t('fieldName')}</Label>

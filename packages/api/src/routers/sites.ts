@@ -34,6 +34,7 @@ import {
   sitePlanPins,
   sitePlans,
   sites,
+  templateSchedules,
   user,
 } from '@forma360/db/schema';
 import {
@@ -189,8 +190,13 @@ export const sitesRouter = router({
       .groupBy(actions.siteId);
     const actMap = new Map(actRows.map((r) => [r.siteId, Number(r.c)]));
 
+    // Resolve parent names in-memory — the hub already fetches every site,
+    // so the hierarchy line on cards costs no extra query.
+    const nameById = new Map(siteRows.map((s) => [s.id, s.name]));
+
     return siteRows.map((s) => ({
       ...s,
+      parentName: s.parentId !== null ? (nameById.get(s.parentId) ?? null) : null,
       memberCount: memberMap.get(s.id) ?? 0,
       openObservations: obsMap.get(s.id) ?? 0,
       openActions: actMap.get(s.id) ?? 0,
@@ -307,6 +313,8 @@ export const sitesRouter = router({
         members,
         mediaCount,
         planCount,
+        scheduleCount,
+        parentRow,
       ] = await Promise.all([
         ctx.db
           .select({ c: count() })
@@ -382,10 +390,31 @@ export const sitesRouter = router({
             ),
           )
           .then((r) => Number(r[0]?.c ?? 0)),
+        // Schedules targeting this site — siteIds is a jsonb id array.
+        ctx.db
+          .select({ c: count() })
+          .from(templateSchedules)
+          .where(
+            and(
+              eq(templateSchedules.tenantId, tid),
+              sql`${templateSchedules.siteIds} @> ${JSON.stringify([input.id])}::jsonb`,
+            ),
+          )
+          .then((r) => Number(r[0]?.c ?? 0)),
+        // Parent (for the detail breadcrumb) — null for root sites.
+        site.parentId !== null
+          ? ctx.db
+              .select({ id: sites.id, name: sites.name })
+              .from(sites)
+              .where(and(eq(sites.tenantId, tid), eq(sites.id, site.parentId)))
+              .limit(1)
+              .then((r) => r[0] ?? null)
+          : Promise.resolve(null),
       ]);
 
       return {
         site,
+        parent: parentRow,
         counts: {
           observations,
           actions: actionCount,
@@ -395,6 +424,7 @@ export const sitesRouter = router({
           members,
           media: mediaCount,
           plans: planCount,
+          schedules: scheduleCount,
         },
       };
     }),

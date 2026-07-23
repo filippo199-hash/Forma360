@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useHasPermission } from '../../lib/permissions-context';
+import { recordPlaceKey } from '../../lib/terminology';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -50,6 +51,10 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [archiveMode, setArchiveMode] = useState<'dissociate' | 'delete'>('dissociate');
+
+  // Copy refers to THIS record — use its kind ("site"/"project"), not the
+  // tenant-wide terminology, so archiving Site1 says "Archive site".
+  const place = t(recordPlaceKey(site.kind === 'project' ? 'project' : 'site'));
 
   const [name, setName] = useState(site.name);
   const [kind, setKind] = useState<Kind>(site.kind === 'project' ? 'project' : 'site');
@@ -134,23 +139,29 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('editTitle')}</DialogTitle>
+            <DialogTitle>{t('editTitle', { place })}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 text-left">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {(['project', 'site'] as const).map((k) => (
                 <button
                   key={k}
                   type="button"
                   onClick={() => setKind(k)}
+                  aria-pressed={kind === k}
                   className={cn(
-                    'rounded-md border px-3 py-2 text-sm font-medium transition-colors',
+                    'rounded-md border px-3 py-2 text-left transition-colors',
                     kind === k
-                      ? 'border-primary bg-primary/5 text-foreground'
-                      : 'border-input text-muted-foreground hover:text-foreground',
+                      ? 'border-primary bg-primary/5'
+                      : 'border-input hover:border-muted-foreground/40',
                   )}
                 >
-                  {k === 'project' ? t('kindProject') : t('kindSite')}
+                  <span className="block text-sm font-medium">
+                    {k === 'project' ? t('kindProject') : t('kindSite')}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {k === 'project' ? t('kindProjectHelp') : t('kindSiteHelp')}
+                  </span>
                 </button>
               ))}
             </div>
@@ -234,7 +245,7 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
             <p className="text-muted-foreground">{t('archiveIntro')}</p>
             {depRows.length > 0 ? (
               <div className="space-y-2 rounded-md border bg-muted/30 p-3">
-                <p className="font-medium">{t('archiveDepsTitle')}</p>
+                <p className="font-medium">{t('archiveDepsTitle', { place })}</p>
                 <ul className="space-y-0.5">
                   {depRows.map((r) => (
                     <li key={r.key} className="flex justify-between">
@@ -288,7 +299,7 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
                       </span>
                       <span className="block text-xs text-muted-foreground">
                         {m === 'dissociate'
-                          ? t('archiveModeDissociateHelp')
+                          ? t('archiveModeDissociateHelp', { place })
                           : t('archiveModeDeleteHelp')}
                       </span>
                     </span>
@@ -296,7 +307,7 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground">{t('archiveNoDeps')}</p>
+              <p className="text-muted-foreground">{t('archiveNoDeps', { place })}</p>
             )}
           </div>
           <DialogFooter>
@@ -308,7 +319,9 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
               onClick={() => archive.mutate({ id: site.id, mode: archiveMode })}
               disabled={archive.isPending}
             >
-              {archiveMode === 'delete' ? t('archiveConfirmDelete') : t('archiveConfirm')}
+              {archiveMode === 'delete'
+                ? t('archiveConfirmDelete', { place })
+                : t('archiveConfirm', { place })}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -2,6 +2,7 @@
 
 import { Check, ChevronLeft, ChevronRight, MapPin, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { trpc } from '../../lib/trpc/client';
 import { cn } from '../../lib/cn';
 import { usePlaceTerms } from '../../lib/terminology';
@@ -51,7 +52,8 @@ export function SiteSelector({
   filterSite,
 }: SiteSelectorProps) {
   // Fall back to the tenant's terminology ("Select a site" / "…project").
-  const { selectPlaceholder } = usePlaceTerms();
+  const { selectPlaceholder, places } = usePlaceTerms();
+  const t = useTranslations('sites');
   const ph = placeholder ?? selectPlaceholder;
   const { data } = trpc.sites.list.useQuery();
   const sites = useMemo<SiteLite[]>(() => {
@@ -126,7 +128,7 @@ export function SiteSelector({
     selectedSites.length === 0
       ? ph
       : multiple
-        ? `${selectedSites.length} selected`
+        ? t('selectorSelected', { count: selectedSites.length })
         : (selectedSites[0]?.name ?? ph);
 
   return (
@@ -153,7 +155,7 @@ export function SiteSelector({
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search"
+              placeholder={t('selectorSearch')}
               className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               autoFocus
             />
@@ -173,7 +175,9 @@ export function SiteSelector({
 
           <div className="max-h-64 overflow-y-auto py-1">
             {visibleSites.length === 0 ? (
-              <p className="px-3 py-6 text-center text-sm text-muted-foreground">No sites found</p>
+              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                {t('selectorNoResults', { places })}
+              </p>
             ) : (
               visibleSites.map((site) => {
                 const checked = draft.includes(site.id);
@@ -199,7 +203,7 @@ export function SiteSelector({
                           setLevel(site.id);
                           setSearch('');
                         }}
-                        aria-label={`Open ${site.name}`}
+                        aria-label={t('selectorOpenAria', { name: site.name })}
                         className="px-2 py-2 text-muted-foreground hover:text-foreground"
                       >
                         <ChevronRight className="h-4 w-4" aria-hidden />
@@ -217,7 +221,7 @@ export function SiteSelector({
               onClick={() => setViewAll(true)}
               className="block border-t px-3 py-2 text-sm font-medium text-primary hover:underline"
             >
-              View all
+              {t('selectorViewAll')}
             </button>
           ) : null}
 
@@ -227,14 +231,14 @@ export function SiteSelector({
               onClick={() => setDraft([])}
               className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
             >
-              Clear selections
+              {t('selectorClear')}
             </button>
             <button
               type="button"
               onClick={commit}
               className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
             >
-              Done
+              {t('selectorDone')}
             </button>
           </div>
         </PopoverContent>
@@ -252,7 +256,7 @@ export function SiteSelector({
               <button
                 type="button"
                 onClick={() => onChange(value.filter((x) => x !== s.id))}
-                aria-label={`Remove ${s.name}`}
+                aria-label={t('selectorRemoveAria', { name: s.name })}
                 className="rounded-full text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3 w-3" aria-hidden />

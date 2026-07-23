@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useHasPermission } from '../../lib/permissions-context';
+import { usePlaceTerms } from '../../lib/terminology';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent } from '../ui/dialog';
@@ -34,6 +35,7 @@ async function analyzeOne(id: string): Promise<void> {
 
 export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
   const t = useTranslations('sites');
+  const { place } = usePlaceTerms();
   const format = useFormatter();
   const canManage = useHasPermission('sites.manage');
   const canReport = useHasPermission('issues.report');
@@ -324,7 +326,7 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{t('mediaTitle')}</h2>
-          <p className="text-sm text-muted-foreground">{t('mediaSubtitle')}</p>
+          <p className="text-sm text-muted-foreground">{t('mediaSubtitle', { place })}</p>
         </div>
         <div className="flex items-center gap-2">
           {compareMode ? (

@@ -50,6 +50,10 @@ export function usePlaceTerms(): {
   label: string;
   /** Plural noun — "Sites" / "Projects" / "Sites & Projects". */
   labelPlural: string;
+  /** Lowercase singular noun for ICU params — "site" / "project" / "site or project". */
+  place: string;
+  /** Lowercase plural noun for ICU params — "sites" / "projects" / "sites and projects". */
+  places: string;
   /** Picker empty-state — "Select a project". */
   selectPlaceholder: string;
   /** Multi-select "add" placeholder — "Add projects". */
@@ -66,12 +70,31 @@ export function usePlaceTerms(): {
     term === 'sites' ? 'addSites' : term === 'projects' ? 'addProjects' : 'addSitesProjects';
   const noneKey =
     term === 'sites' ? 'noneSite' : term === 'projects' ? 'noneProject' : 'noneSiteProject';
+  const placeKey =
+    term === 'sites' ? 'placeOneSite' : term === 'projects' ? 'placeOneProject' : 'placeOneBoth';
+  const placesKey =
+    term === 'sites'
+      ? 'placeManySites'
+      : term === 'projects'
+        ? 'placeManyProjects'
+        : 'placeManyBoth';
   return {
     term,
     label: t(placeLabelKey(term)),
     labelPlural: tNav(navLabelKey(term)),
+    place: t(placeKey),
+    places: t(placesKey),
     selectPlaceholder: t(selectKey),
     addPlaceholder: t(addKey),
     noneLabel: t(noneKey),
   };
+}
+
+/**
+ * Lowercase noun for a specific record's kind — "site" / "project". Use this
+ * (not the tenant terminology) when the copy refers to one concrete record,
+ * e.g. "Archive project" on a kind=project detail page.
+ */
+export function recordPlaceKey(kind: 'site' | 'project'): 'placeOneSite' | 'placeOneProject' {
+  return kind === 'project' ? 'placeOneProject' : 'placeOneSite';
 }

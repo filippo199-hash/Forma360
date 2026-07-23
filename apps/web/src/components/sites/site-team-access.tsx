@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useHasPermission } from '../../lib/permissions-context';
+import { usePlaceTerms } from '../../lib/terminology';
 import { trpc } from '../../lib/trpc/client';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 import { Card, CardContent } from '../ui/card';
@@ -19,6 +20,7 @@ import { Skeleton } from '../ui/skeleton';
  */
 export function SiteTeamAccess({ siteId }: { siteId: string }) {
   const t = useTranslations('sites');
+  const { place } = usePlaceTerms();
   const canManage = useHasPermission('sites.manage');
   const utils = trpc.useUtils();
 
@@ -71,7 +73,7 @@ export function SiteTeamAccess({ siteId }: { siteId: string }) {
     <div className="space-y-4">
       <div>
         <h2 className="text-sm font-semibold text-foreground">{t('teamMembership')}</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">{t('teamSubtitle')}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">{t('teamSubtitle', { place })}</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -85,7 +87,7 @@ export function SiteTeamAccess({ siteId }: { siteId: string }) {
                 {memberIds.length}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">{t('teamMembersSubtitle')}</p>
+            <p className="text-sm text-muted-foreground">{t('teamMembersSubtitle', { place })}</p>
             <GroupUserSelector
               mode="users"
               value={memberIds}
