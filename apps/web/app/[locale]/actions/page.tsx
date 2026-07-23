@@ -474,14 +474,20 @@ export default function ActionsListPage() {
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">{t('subtitle')}</p>
+            <p className="mt-0.5 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {canSettings ? (
-              <Button variant="outline" size="sm" asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                title={t('settingsButton')}
+                className="w-9 px-0 sm:w-auto sm:px-3"
+              >
                 <Link href={`/${locale}/actions/settings`}>
-                  <Settings2 className="mr-1.5 h-3.5 w-3.5" />
-                  {t('settingsButton')}
+                  <Settings2 className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{t('settingsButton')}</span>
                 </Link>
               </Button>
             ) : null}

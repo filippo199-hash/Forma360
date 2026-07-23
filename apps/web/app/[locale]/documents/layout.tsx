@@ -22,7 +22,7 @@ export default async function DocumentsLayout({
   return (
     <PermissionsProvider permissions={permissions}>
       <div className="min-h-screen w-full bg-[#eef4fb] dark:bg-slate-900/40">
-        <div className="mx-auto w-full max-w-[1200px] px-4 py-8">{children}</div>
+        <div className="mx-auto w-full max-w-[1200px] px-4 py-4 sm:py-8">{children}</div>
       </div>
     </PermissionsProvider>
   );

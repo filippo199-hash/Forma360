@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, File, FolderOpen, FolderPlus, Plus, Upload } from 'lucide-react';
+import { ChevronRight, File, FolderOpen, FolderPlus, Plus, Settings, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -146,23 +146,36 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page header */}
-      <header className="flex flex-wrap items-center justify-between gap-4">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           {canFolderManage && currentFolderId !== null ? (
-            <Button type="button" variant="outline" onClick={openFolderAccess}>
-              {t('folderSettingsButton')}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={openFolderAccess}
+              title={t('folderSettingsButton')}
+              className="w-10 px-0 sm:w-auto sm:px-4"
+            >
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('folderSettingsButton')}</span>
             </Button>
           ) : null}
           {canFolderManage ? (
-            <Button type="button" variant="outline" onClick={() => setShowFolderDialog(true)}>
-              <FolderPlus className="mr-1 h-4 w-4" />
-              {t('newFolderButton')}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowFolderDialog(true)}
+              title={t('newFolderButton')}
+              className="w-10 px-0 sm:w-auto sm:px-4"
+            >
+              <FolderPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('newFolderButton')}</span>
             </Button>
           ) : null}
           <Button type="button" asChild>

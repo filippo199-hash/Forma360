@@ -1,6 +1,6 @@
 'use client';
 
-import { DoorOpen, HardHat, LogOut, Plus, Search } from 'lucide-react';
+import { CalendarDays, DoorOpen, FileText, HardHat, LogOut, Plus, Search } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -118,24 +118,49 @@ export default function ContractorsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
         </div>
+        {/* On phones the utility links collapse to icon-only squares to reclaim the row. */}
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" asChild>
-            <Link href={`/${locale}/contractors/calendar`}>{t('visits.calendarLink')}</Link>
+          <Button
+            variant="outline"
+            asChild
+            title={t('visits.calendarLink')}
+            className="w-10 px-0 sm:w-auto sm:px-4"
+          >
+            <Link href={`/${locale}/contractors/calendar`}>
+              <CalendarDays className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('visits.calendarLink')}</span>
+            </Link>
           </Button>
           {canManage ? (
-            <Button variant="outline" asChild>
-              <Link href={`/${locale}/contractors/gate`}>{t('gate.navLink')}</Link>
+            <Button
+              variant="outline"
+              asChild
+              title={t('gate.navLink')}
+              className="w-10 px-0 sm:w-auto sm:px-4"
+            >
+              <Link href={`/${locale}/contractors/gate`}>
+                <DoorOpen className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('gate.navLink')}</span>
+              </Link>
             </Button>
           ) : null}
           {canManage ? (
-            <Button variant="outline" asChild>
-              <Link href={`/${locale}/contractors/templates`}>{t('manageTemplates')}</Link>
+            <Button
+              variant="outline"
+              asChild
+              title={t('manageTemplates')}
+              className="w-10 px-0 sm:w-auto sm:px-4"
+            >
+              <Link href={`/${locale}/contractors/templates`}>
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('manageTemplates')}</span>
+              </Link>
             </Button>
           ) : null}
           {canManage ? (

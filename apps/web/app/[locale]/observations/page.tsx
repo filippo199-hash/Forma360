@@ -1,6 +1,7 @@
 'use client';
 
 import type { IssueStatusValue } from '@forma360/shared/issues-schema';
+import { Tags } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -81,16 +82,24 @@ export default function ObservationsListPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
+    <div className="mx-auto w-full max-w-[1200px] space-y-4 sm:space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           {canManageSettings ? (
-            <Button asChild variant="outline">
-              <Link href={`/${locale}/observations/categories`}>{t('manageCategoriesButton')}</Link>
+            <Button
+              asChild
+              variant="outline"
+              title={t('manageCategoriesButton')}
+              className="w-10 px-0 sm:w-auto sm:px-4"
+            >
+              <Link href={`/${locale}/observations/categories`}>
+                <Tags className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('manageCategoriesButton')}</span>
+              </Link>
             </Button>
           ) : null}
           {canReport ? (
