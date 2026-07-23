@@ -3,7 +3,7 @@
 import { ImagePlus, Loader2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -30,15 +30,15 @@ export default function NewAssetPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
+  const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState('');
   const [typeId, setTypeId] = useState('');
-  const [siteId, setSiteId] = useState<string>(() => {
-    // Pre-fill from ?site= — the "create here" flow from a project page.
-    if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('site') ?? '';
-  });
+  // Pre-fill from ?site= — the "create here" flow from a project page.
+  // useSearchParams (not window.location) so client-side navigations see
+  // the destination URL on first render.
+  const [siteId, setSiteId] = useState<string>(() => searchParams.get('site') ?? '');
   const [parentId, setParentId] = useState('');
   const [ownerUserId, setOwnerUserId] = useState('');
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});

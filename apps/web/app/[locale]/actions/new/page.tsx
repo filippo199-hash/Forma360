@@ -3,7 +3,7 @@
 import type { ActionCustomQuestion } from '@forma360/shared/actions-schema';
 import { ChevronRight, Package } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -43,6 +43,7 @@ export default function NewActionPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const canCreate = useHasPermission('actions.create');
   useEffect(() => {
@@ -57,11 +58,10 @@ export default function NewActionPage() {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('low');
   const [dueAt, setDueAt] = useState('');
-  const [siteId, setSiteId] = useState<string>(() => {
-    // Pre-fill from ?site= — the "create here" flow from a project page.
-    if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('site') ?? '';
-  });
+  // Pre-fill from ?site= — the "create here" flow from a project page.
+  // useSearchParams (not window.location) so client-side navigations see
+  // the destination URL on first render.
+  const [siteId, setSiteId] = useState<string>(() => searchParams.get('site') ?? '');
   const [assigneeUserId, setAssigneeUserId] = useState('');
   const [label, setLabel] = useState('');
   const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});

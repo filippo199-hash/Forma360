@@ -3,7 +3,7 @@
 import { FileUp, Plus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -52,6 +52,7 @@ export default function DocumentNewPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // File upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,10 +64,7 @@ export default function DocumentNewPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [folderId, setFolderId] = useState<string>('');
-  const [siteId, setSiteId] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('site') ?? '';
-  });
+  const [siteId, setSiteId] = useState<string>(() => searchParams.get('site') ?? '');
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [expiresAt, setExpiresAt] = useState('');

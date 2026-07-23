@@ -6,7 +6,7 @@ import type {
 } from '@forma360/shared/issues-schema';
 import { ChevronRight, Image as ImageIcon, Package, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -54,17 +54,17 @@ export default function NewObservationPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const canReport = useHasPermission('issues.report');
 
   const [categoryId, setCategoryId] = useState<string>('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [siteId, setSiteId] = useState<string>(() => {
-    // Pre-fill from ?site= — the "create here" flow from a project page.
-    if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('site') ?? '';
-  });
+  // Pre-fill from ?site= — the "create here" flow from a project page.
+  // useSearchParams (not window.location) so client-side navigations see
+  // the destination URL on first render.
+  const [siteId, setSiteId] = useState<string>(() => searchParams.get('site') ?? '');
   const [dateOccurred, setDateOccurred] = useState(() => formatLocalDatetime(new Date()));
   const [locationAddress, setLocationAddress] = useState('');
   const [customQuestionResponses, setCustomQuestionResponses] = useState<Record<string, string>>(
