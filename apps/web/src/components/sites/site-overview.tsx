@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  CalendarClock,
   ChevronRight,
   ClipboardCheck,
   FolderOpen,
@@ -238,6 +239,8 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
   const [linkKind, setLinkKind] = useState<LinkKind | null>(null);
   const [showInspectionPicker, setShowInspectionPicker] = useState(false);
 
+  const canManageSchedules = useHasPermission('templates.schedules.manage');
+
   const obs = trpc.issues.issues.list.useQuery({ siteId });
   const insp = trpc.inspections.list.useQuery({ siteId });
   const acts = trpc.actions.list.useQuery({ siteId });
@@ -245,6 +248,8 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
   const docs = trpc.documents.list.useQuery({ siteId });
   const media = trpc.siteMedia.list.useQuery({ siteId });
   const plans = trpc.sitePlans.listPlans.useQuery({ siteId });
+  // schedules.list requires the manage permission — only fetch when held.
+  const schedules = trpc.schedules.list.useQuery({ siteId }, { enabled: canManageSchedules });
 
   const obsItems: PreviewItem[] = (obs.data?.items ?? []).map((o) => ({
     id: o.id,
@@ -275,6 +280,12 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
     id: d.id,
     title: d.name,
     href: `/${locale}/documents/${d.id}`,
+  }));
+  const scheduleItems: PreviewItem[] = (schedules.data ?? []).map((s) => ({
+    id: s.id,
+    title: s.name,
+    href: `/${locale}/schedules/${s.id}`,
+    dot: s.paused ? 'bg-slate-400' : 'bg-emerald-500',
   }));
 
   function ListCard({
@@ -578,6 +589,17 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
 
       {/* Members card removed — the Team & access tab is the single home
           for membership; a count-only duplicate card added noise. */}
+
+      {canManageSchedules ? (
+        <ListCard
+          icon={<CalendarClock className="h-4 w-4" />}
+          label={t('countSchedules')}
+          items={scheduleItems}
+          total={scheduleItems.length}
+          viewAllHref={`/${locale}/schedules?site=${siteId}`}
+          loading={schedules.isLoading}
+        />
+      ) : null}
 
       <TemplatePickerDialog
         open={showInspectionPicker}

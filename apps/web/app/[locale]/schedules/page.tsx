@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
+import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -21,32 +22,36 @@ export default function SchedulesPage() {
 
   const [pausedFilter, setPausedFilter] = useState<PausedFilter>('all');
   const [templateId, setTemplateId] = useState<string | undefined>(undefined);
+  const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
 
   const query = useMemo(() => {
-    const out: { templateId?: string; paused?: boolean } = {};
+    const out: { templateId?: string; paused?: boolean; siteId?: string } = {};
     if (templateId !== undefined) out.templateId = templateId;
     if (pausedFilter === 'active') out.paused = false;
     if (pausedFilter === 'paused') out.paused = true;
+    if (siteFilter !== '') out.siteId = siteFilter;
     return out;
-  }, [pausedFilter, templateId]);
+  }, [pausedFilter, templateId, siteFilter]);
 
   const { data: rows, isLoading } = trpc.schedules.list.useQuery(query);
   const { data: templates } = trpc.templates.list.useQuery({});
 
   return (
-    <div className="px-4 py-6">
+    <div className="px-4 py-4 sm:py-6">
       <SectionTabBar activeTab="schedules" locale={locale} />
 
       <div className="space-y-4">
-        <header className="flex flex-wrap items-center justify-between gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+            <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
           </div>
           <Button asChild>
             <Link href={`/${locale}/schedules/new`}>{t('create')}</Link>
           </Button>
         </header>
+
+        {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-muted p-0.5">

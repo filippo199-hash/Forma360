@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { ObservationDetailPanel } from '../../../src/components/observations/observation-detail-panel';
+import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -52,10 +53,12 @@ export default function ObservationsListPage() {
 
   const [status, setStatus] = useState<StatusFilter>('all');
   const [categoryId, setCategoryId] = useState<string>('');
-  const [siteId, setSiteId] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('site') ?? '';
-  });
+  // ?site= deep links (from a project page) use the shared dismissible chip —
+  // same pattern as inspections/actions/documents/assets. The dropdown covers
+  // manual filtering and hides while the chip is active.
+  const { siteId: siteParam, clear: clearSiteParam } = useSiteFilterParam();
+  const [siteId, setSiteId] = useState<string>('');
+  const effectiveSiteId = siteParam !== '' ? siteParam : siteId;
   const [includeArchived, setIncludeArchived] = useState(false);
   const [pages, setPages] = useState<string[]>([]);
 
@@ -70,7 +73,7 @@ export default function ObservationsListPage() {
   } = { includeArchived };
   if (status !== 'all') listInput.status = status;
   if (categoryId !== '') listInput.categoryId = categoryId;
-  if (siteId !== '') listInput.siteId = siteId;
+  if (effectiveSiteId !== '') listInput.siteId = effectiveSiteId;
   if (currentCursor !== undefined) listInput.cursor = currentCursor;
 
   const { data, isLoading } = trpc.issues.issues.list.useQuery(listInput);
@@ -109,6 +112,8 @@ export default function ObservationsListPage() {
           ) : null}
         </div>
       </header>
+
+      {siteParam !== '' ? <SiteFilterChip siteId={siteParam} onClear={clearSiteParam} /> : null}
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1 text-sm">
@@ -152,27 +157,29 @@ export default function ObservationsListPage() {
             ))}
           </select>
         </div>
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="filter-site" className="text-xs font-medium text-muted-foreground">
-            {placeLabel}
-          </label>
-          <select
-            id="filter-site"
-            value={siteId}
-            onChange={(e) => {
-              setSiteId(e.target.value);
-              resetPagination();
-            }}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">{t('filterSiteAll')}</option>
-            {(sites ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {siteParam === '' ? (
+          <div className="flex flex-col gap-1 text-sm">
+            <label htmlFor="filter-site" className="text-xs font-medium text-muted-foreground">
+              {placeLabel}
+            </label>
+            <select
+              id="filter-site"
+              value={siteId}
+              onChange={(e) => {
+                setSiteId(e.target.value);
+                resetPagination();
+              }}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">{t('filterSiteAll')}</option>
+              {(sites ?? []).map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
         <label className="flex cursor-pointer items-center gap-2 text-sm">
           <input
             type="checkbox"

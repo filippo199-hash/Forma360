@@ -11,6 +11,7 @@ import {
   VisitDetailDialog,
   type VisitStatus,
 } from '../../../../src/components/contractors/contractor-visits';
+import { SiteFilterChip, useSiteFilterParam } from '../../../../src/components/site-filter-chip';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
@@ -39,6 +40,7 @@ export default function ContractorCalendarPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [contractorId, setContractorId] = useState('');
+  const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
   const [createOpen, setCreateOpen] = useState(false);
   const [walkInOpen, setWalkInOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -81,6 +83,7 @@ export default function ContractorCalendarPage() {
     from: rangeFrom.toISOString(),
     to: rangeTo.toISOString(),
     ...(contractorId !== '' ? { contractorId } : {}),
+    ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
   });
 
   const byDay = useMemo(() => {
@@ -153,6 +156,8 @@ export default function ContractorCalendarPage() {
           </Button>
         </div>
       </header>
+
+      {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="w-56">

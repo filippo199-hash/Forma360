@@ -202,6 +202,7 @@ export const schedulesRouter = router({
         .object({
           templateId: idSchema.optional(),
           paused: z.boolean().optional(),
+          siteId: idSchema.optional(),
         })
         .default({}),
     )
@@ -212,6 +213,10 @@ export const schedulesRouter = router({
       }
       if (input.paused !== undefined) {
         where.push(eq(templateSchedules.paused, input.paused));
+      }
+      if (input.siteId !== undefined) {
+        // siteIds is a jsonb id array — containment check.
+        where.push(sql`${templateSchedules.siteIds} @> ${JSON.stringify([input.siteId])}::jsonb`);
       }
       const rows = await ctx.db
         .select()
