@@ -235,7 +235,8 @@ export default function TemplatesListPage() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5">
                 <Filter className="h-3.5 w-3.5" />
-                {t('addFilter')}
+                {/* Icon-only on phones. */}
+                <span className="hidden sm:inline">{t('addFilter')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>

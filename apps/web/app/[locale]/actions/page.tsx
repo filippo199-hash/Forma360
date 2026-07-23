@@ -572,13 +572,14 @@ export default function ActionsListPage() {
               className="gap-1.5"
             >
               <Filter className="h-3.5 w-3.5" />
-              {t('addFilter')}
+              {/* Icon-only on phones. */}
+              <span className="hidden sm:inline">{t('addFilter')}</span>
               {nonDefaultFiltersCount > 0 ? (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                   {nonDefaultFiltersCount}
                 </span>
               ) : (
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                <ChevronDown className="hidden h-3 w-3 text-muted-foreground sm:block" />
               )}
             </Button>
 

@@ -300,7 +300,8 @@ function InspectionsTab({ locale }: { locale: string }) {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+          {/* Subtitle is desktop-only — vertical space is precious on phones. */}
+          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <label className="flex cursor-pointer items-center gap-2 text-sm">
@@ -313,7 +314,8 @@ function InspectionsTab({ locale }: { locale: string }) {
             />
             <span>{t('showArchived')}</span>
           </label>
-          <Button variant="outline" onClick={exportCurrentFilter}>
+          {/* Desktop-only — CSV export is not a phone workflow. */}
+          <Button variant="outline" onClick={exportCurrentFilter} className="hidden sm:inline-flex">
             {tExport('button')}
           </Button>
           <Button onClick={() => setShowPicker(true)}>{t('startButton')}</Button>
@@ -344,13 +346,14 @@ function InspectionsTab({ locale }: { locale: string }) {
             className="gap-1.5"
           >
             <Filter className="h-3.5 w-3.5" />
-            {t('addFilter')}
+            {/* Icon-only on phones. */}
+            <span className="hidden sm:inline">{t('addFilter')}</span>
             {activeFilters.size > 0 ? (
               <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                 {activeFilters.size}
               </span>
             ) : (
-              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+              <ChevronDown className="hidden h-3 w-3 text-muted-foreground sm:block" />
             )}
           </Button>
           {filterMenuOpen && ALL_FILTER_KEYS.some((k) => !activeFilters.has(k)) ? (
