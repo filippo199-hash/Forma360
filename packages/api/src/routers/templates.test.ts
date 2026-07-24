@@ -154,6 +154,7 @@ describe('templates router (Phase 2)', () => {
   let db: PgliteDatabase<typeof schema>;
   let tenantId: string;
   let adminUserId: string;
+  let standardSetId: string;
 
   function ctxFor(userId: string): Context {
     return createTestContext({
@@ -169,6 +170,7 @@ describe('templates router (Phase 2)', () => {
     tenantId = newId();
     await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
     const seeded = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
+    standardSetId = seeded.standard;
     adminUserId = `usr_${newId()}`;
     await db.insert(schema.user).values({
       id: adminUserId,
@@ -181,6 +183,71 @@ describe('templates router (Phase 2)', () => {
 
   afterEach(async () => {
     await client.close();
+  });
+
+  describe('access-rule enforcement on reads (B3 — IDOR regression)', () => {
+    it('non-member cannot get/getVersion a restricted template by id; member can; manager bypasses', async () => {
+      // Admin builds a published template restricted to the "North" group.
+      const admin = createCaller(ctxFor(adminUserId));
+      const { templateId } = await admin.templates.create({ name: 'North Only' });
+      await admin.templates.saveDraft({ templateId, content: validContent('North Only') });
+      const { versionId } = await admin.templates.publish({ templateId });
+
+      const northGroupId = newId();
+      await db.insert(schema.groups).values({ id: northGroupId, tenantId, name: 'North' });
+      await admin.templates.updateAccess({
+        templateId,
+        access: { mode: 'specific', groupIds: [northGroupId], siteIds: [] },
+      });
+
+      // A Standard user (holds templates.view, NOT templates.manage) who is
+      // NOT in the North group.
+      const outsiderId = `usr_${newId()}`;
+      await db.insert(schema.user).values({
+        id: outsiderId,
+        name: 'Sam Outsider',
+        email: 'sam@acme.test',
+        tenantId,
+        permissionSetId: standardSetId,
+      });
+      const outsider = createCaller(ctxFor(outsiderId));
+
+      // Both per-id reads must be FORBIDDEN for the non-member.
+      await expect(outsider.templates.get({ templateId })).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      });
+      await expect(outsider.templates.getVersion({ versionId })).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      });
+
+      // A manager/admin bypasses the rule (mirrors list).
+      await expect(admin.templates.get({ templateId })).resolves.toBeDefined();
+
+      // Once the outsider joins North, the same reads succeed.
+      await db
+        .insert(schema.groupMembers)
+        .values({ tenantId, groupId: northGroupId, userId: outsiderId });
+      await expect(outsider.templates.get({ templateId })).resolves.toBeDefined();
+      await expect(outsider.templates.getVersion({ versionId })).resolves.toBeDefined();
+    });
+
+    it('an open template (no access rule) is readable by any templates.view holder', async () => {
+      const admin = createCaller(ctxFor(adminUserId));
+      const { templateId } = await admin.templates.create({ name: 'Open' });
+      await admin.templates.saveDraft({ templateId, content: validContent('Open') });
+      await admin.templates.publish({ templateId });
+
+      const someoneId = `usr_${newId()}`;
+      await db.insert(schema.user).values({
+        id: someoneId,
+        name: 'Any User',
+        email: 'any@acme.test',
+        tenantId,
+        permissionSetId: standardSetId,
+      });
+      const someone = createCaller(ctxFor(someoneId));
+      await expect(someone.templates.get({ templateId })).resolves.toBeDefined();
+    });
   });
 
   describe('create + publish (T-01)', () => {
