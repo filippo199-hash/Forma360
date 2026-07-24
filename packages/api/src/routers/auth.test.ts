@@ -197,6 +197,16 @@ describe('auth router', () => {
       const adminSet = sets.find((s) => s.name === 'Administrator');
       expect(adminSet).toBeDefined();
 
+      // Default observation categories seeded so the report-observation form
+      // is usable immediately on a fresh tenant.
+      const cats = await db
+        .select()
+        .from(schema.issueCategories)
+        .where(eq(schema.issueCategories.tenantId, tenantId));
+      expect(cats.map((c) => c.name)).toEqual(
+        expect.arrayContaining(['Hazard', 'Near miss', 'Quality', 'Environmental']),
+      );
+
       // User row — emailVerified=false until they complete OTP.
       const userRow = (await db.select().from(schema.user).where(eq(schema.user.id, userId)))[0];
       expect(userRow).toBeDefined();

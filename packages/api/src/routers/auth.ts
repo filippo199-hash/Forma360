@@ -29,6 +29,7 @@ import {
   invitations,
   permissionSets,
   siteMembers,
+  issueCategories,
   tenants,
   user,
 } from '@forma360/db/schema';
@@ -76,6 +77,19 @@ const acceptInviteInput = z.object({
 });
 
 const getInviteDetailsInput = z.object({ token: z.string().length(64) });
+
+/**
+ * Sensible default observation categories seeded into every new tenant so the
+ * "Report observation" form is usable out of the box — a fresh tenant would
+ * otherwise land on an empty category dropdown with no way forward. Admins can
+ * rename, archive, or add more under Observations → Categories.
+ */
+const DEFAULT_OBSERVATION_CATEGORIES = [
+  'Hazard',
+  'Near miss',
+  'Quality',
+  'Environmental',
+] as const;
 
 export function createAuthRouter(deps: AuthRouterDeps) {
   const appUrl = deps.appUrl.replace(/\/$/, '');
@@ -220,6 +234,21 @@ export function createAuthRouter(deps: AuthRouterDeps) {
           tenantId,
           permissionSetId: sets.administrator,
         });
+
+        // 4. Default observation categories (see DEFAULT_OBSERVATION_CATEGORIES).
+        // jsonb / enum columns fall back to their schema defaults; only the
+        // not-null columns without a default are set here.
+        const catNow = new Date();
+        await tx.insert(issueCategories).values(
+          DEFAULT_OBSERVATION_CATEGORIES.map((name) => ({
+            id: newId(),
+            tenantId,
+            name,
+            createdBy: userId,
+            createdAt: catNow,
+            updatedAt: catNow,
+          })),
+        );
 
         return { tenantId, userId };
       });
