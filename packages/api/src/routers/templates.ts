@@ -501,12 +501,7 @@ export const templatesRouter = router({
         const accessRuleId = tplRows[0]?.accessRuleId ?? null;
         if (
           accessRuleId !== null &&
-          !(await callerSatisfiesTemplateRule(
-            ctx.db,
-            ctx.tenantId,
-            ctx.auth.userId,
-            accessRuleId,
-          ))
+          !(await callerSatisfiesTemplateRule(ctx.db, ctx.tenantId, ctx.auth.userId, accessRuleId))
         ) {
           throw new TRPCError({
             code: 'FORBIDDEN',

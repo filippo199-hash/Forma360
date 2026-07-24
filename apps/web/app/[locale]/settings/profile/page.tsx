@@ -101,9 +101,7 @@ export default function ProfilePage() {
               <Input
                 id="profile-set"
                 value={
-                  userGet.data?.user.permissionSetName ??
-                  userGet.data?.user.permissionSetId ??
-                  ''
+                  userGet.data?.user.permissionSetName ?? userGet.data?.user.permissionSetId ?? ''
                 }
                 readOnly
                 className="bg-muted"

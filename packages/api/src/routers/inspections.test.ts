@@ -271,7 +271,9 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
             {
               id: newId(),
               title: 's',
-              items: [{ id: siteQuestionId, type: 'site', prompt: 'Site conducted', required: false }],
+              items: [
+                { id: siteQuestionId, type: 'site', prompt: 'Site conducted', required: false },
+              ],
             },
           ],
         },
@@ -284,13 +286,24 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
               id: newId(),
               title: 's',
               items: [
-                { id: newId(), type: 'text', prompt: 'Notes?', required: false, multiline: false, maxLength: 2000 },
+                {
+                  id: newId(),
+                  type: 'text',
+                  prompt: 'Notes?',
+                  required: false,
+                  multiline: false,
+                  maxLength: 2000,
+                },
               ],
             },
           ],
         },
       ],
-      settings: { titleFormat: '{date}', documentNumberFormat: '{counter:6}', documentNumberStart: 1 },
+      settings: {
+        titleFormat: '{date}',
+        documentNumberFormat: '{counter:6}',
+        documentNumberStart: 1,
+      },
       customResponseSets: [],
     };
   }
