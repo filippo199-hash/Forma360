@@ -257,6 +257,97 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
     return { templateId };
   }
 
+  /** Template content whose title page carries one "Site conducted" question. */
+  function siteContent(title: string, siteQuestionId: string): TemplateContent {
+    return {
+      schemaVersion: TEMPLATE_SCHEMA_VERSION,
+      title,
+      pages: [
+        {
+          id: newId(),
+          type: 'title',
+          title: 'Title',
+          sections: [
+            {
+              id: newId(),
+              title: 's',
+              items: [{ id: siteQuestionId, type: 'site', prompt: 'Site conducted', required: false }],
+            },
+          ],
+        },
+        {
+          id: newId(),
+          type: 'inspection',
+          title: 'Inspection',
+          sections: [
+            {
+              id: newId(),
+              title: 's',
+              items: [
+                { id: newId(), type: 'text', prompt: 'Notes?', required: false, multiline: false, maxLength: 2000 },
+              ],
+            },
+          ],
+        },
+      ],
+      settings: { titleFormat: '{date}', documentNumberFormat: '{counter:6}', documentNumberStart: 1 },
+      customResponseSets: [],
+    };
+  }
+
+  describe('site question mirrors into inspection.siteId (B4)', () => {
+    it('saveProgress + submit populate inspection.siteId from the "site" answer', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const siteId = newId();
+      await db.insert(schema.sites).values({ id: siteId, tenantId, name: 'Warehouse 7' });
+
+      const siteQuestionId = newId();
+      const { templateId } = await createPublishedTemplate(
+        caller,
+        'Site Audit',
+        siteContent('Site Audit', siteQuestionId),
+      );
+      const { inspectionId } = await caller.inspections.create({ templateId });
+
+      await caller.inspections.saveProgress({
+        inspectionId,
+        responses: { [siteQuestionId]: siteId },
+      });
+      const afterSave = await db
+        .select({ siteId: schema.inspections.siteId })
+        .from(schema.inspections)
+        .where(eq(schema.inspections.id, inspectionId));
+      expect(afterSave[0]?.siteId).toBe(siteId);
+
+      await caller.inspections.submit({ inspectionId });
+      const afterSubmit = await db
+        .select({ siteId: schema.inspections.siteId })
+        .from(schema.inspections)
+        .where(eq(schema.inspections.id, inspectionId));
+      expect(afterSubmit[0]?.siteId).toBe(siteId);
+    });
+
+    it('ignores a site id that does not belong to the tenant', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const siteQuestionId = newId();
+      const { templateId } = await createPublishedTemplate(
+        caller,
+        'Site Audit 2',
+        siteContent('Site Audit 2', siteQuestionId),
+      );
+      const { inspectionId } = await caller.inspections.create({ templateId });
+      await caller.inspections.saveProgress({
+        inspectionId,
+        responses: { [siteQuestionId]: newId() },
+      });
+      const after = await db
+        .select({ siteId: schema.inspections.siteId })
+        .from(schema.inspections)
+        .where(eq(schema.inspections.id, inspectionId));
+      expect(after[0]?.siteId).toBeNull();
+    });
+  });
+
   describe('create', () => {
     it('populates accessSnapshot with groups, sites, permissions, snapshotAt (ADR 0007)', async () => {
       const caller = createCaller(ctxFor(adminUserId));

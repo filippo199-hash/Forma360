@@ -297,6 +297,66 @@ async function syncAssetSelections(
   }
 }
 
+/**
+ * Mirror the "Site conducted" (`type: 'site'`) answer into `inspection.siteId`
+ * so the report, `?site=` filters, Sites-overview links and the `{site}` title
+ * token all reflect the conducted site (bug B4). The response stores the raw
+ * site id; we validate it belongs to the tenant before writing and clear the
+ * column when the answer is empty/invalid. Returns the resolved site id so the
+ * submit path can use it for its side-effects (e.g. actions raised on submit).
+ * The first `site` question (conventionally the title-page one) wins.
+ */
+async function syncConductedSite(
+  db: Db,
+  tenantId: string,
+  inspectionId: string,
+  templateVersionId: string,
+  responses: Record<string, unknown>,
+): Promise<string | null> {
+  const versionRows = await db
+    .select({ content: templateVersions.content })
+    .from(templateVersions)
+    .where(eq(templateVersions.id, templateVersionId))
+    .limit(1);
+  const version = versionRows[0];
+  if (version === undefined) return null;
+
+  const content = parseTemplateContent(version.content);
+
+  let siteQuestionId: string | undefined;
+  for (const page of content.pages) {
+    for (const section of page.sections) {
+      for (const item of section.items) {
+        if (item.type === 'site') {
+          siteQuestionId = item.id;
+          break;
+        }
+      }
+      if (siteQuestionId !== undefined) break;
+    }
+    if (siteQuestionId !== undefined) break;
+  }
+  // No site question in this template → don't touch a siteId that may have been
+  // set another way.
+  if (siteQuestionId === undefined) return null;
+
+  const raw = responses[siteQuestionId];
+  const answeredSiteId = typeof raw === 'string' && raw.length === 26 ? raw : null;
+
+  let nextSiteId: string | null = null;
+  if (answeredSiteId !== null) {
+    const siteRows = await db
+      .select({ id: sites.id })
+      .from(sites)
+      .where(and(eq(sites.tenantId, tenantId), eq(sites.id, answeredSiteId)))
+      .limit(1);
+    if (siteRows[0] !== undefined) nextSiteId = answeredSiteId;
+  }
+
+  await db.update(inspections).set({ siteId: nextSiteId }).where(eq(inspections.id, inspectionId));
+  return nextSiteId;
+}
+
 export function createInspectionsRouter(deps: InspectionsRouterDeps) {
   const appUrl = deps.appUrl.replace(/\/$/, '');
 
@@ -740,6 +800,14 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           insp.templateVersionId,
           input.responses,
         );
+        // Mirror the "Site conducted" answer into inspection.siteId (bug B4).
+        await syncConductedSite(
+          ctx.db,
+          ctx.tenantId,
+          insp.id,
+          insp.templateVersionId,
+          input.responses,
+        );
 
         return { updatedAt: now.toISOString() };
       }),
@@ -783,6 +851,16 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         if (evMissing.length > 0) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'evidence-required' });
         }
+        // Mirror the "Site conducted" answer into inspection.siteId before the
+        // submit side-effects read it (bug B4). Belt-and-suspenders with the
+        // per-change sync in saveProgress.
+        const resolvedSiteId = await syncConductedSite(
+          ctx.db,
+          ctx.tenantId,
+          insp.id,
+          insp.templateVersionId,
+          responseMap,
+        );
         // Side-effects fire once on submit (responses are final after this).
         for (const active of collectActiveTriggers(version.content, responseMap)) {
           if (active.trigger.kind === 'requireAction') {
@@ -791,7 +869,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
               inspectionId: insp.id,
               sourceItemId: active.itemId,
               title: active.trigger.actionTitle,
-              siteId: insp.siteId,
+              siteId: resolvedSiteId,
               createdBy: ctx.auth.userId,
             });
           } else if (active.trigger.kind === 'notify' && active.trigger.email !== undefined) {
