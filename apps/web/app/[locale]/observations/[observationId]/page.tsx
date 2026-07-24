@@ -38,6 +38,7 @@ import {
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { EntityPlanMiniMap } from '../../../../src/components/sites/entity-plan-minimap';
@@ -151,16 +152,8 @@ export default function ObservationDetailPage() {
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
-  if (isLoading || data === undefined) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-12 w-2/3" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
+  // Error check first: on error `data` is undefined, so a bare loading gate
+  // below would loop the skeleton forever once the query has settled.
   if (error !== null && error !== undefined) {
     return (
       <div className="space-y-4">
@@ -171,7 +164,17 @@ export default function ObservationDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           {t('backLink')}
         </Link>
-        <p className="text-sm text-destructive">{error.message}</p>
+        <DetailNotFound error={error} />
+      </div>
+    );
+  }
+
+  if (isLoading || data === undefined) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-12 w-2/3" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }

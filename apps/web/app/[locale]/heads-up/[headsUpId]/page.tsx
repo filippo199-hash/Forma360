@@ -10,6 +10,7 @@ import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Separator } from '../../../../src/components/ui/separator';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
@@ -40,7 +41,7 @@ export default function HeadsUpDetailPage() {
   const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>('all');
   const [commentBody, setCommentBody] = useState('');
 
-  const { data, isLoading } = trpc.headsUps.get.useQuery({ headsUpId });
+  const { data, isLoading, error } = trpc.headsUps.get.useQuery({ headsUpId });
   const { data: summary } = trpc.headsUps.engagementSummary.useQuery(
     { headsUpId },
     { enabled: canAnalytics && data?.headsUp.status === 'published' },
@@ -122,6 +123,9 @@ export default function HeadsUpDetailPage() {
   });
 
   if (isLoading || data === undefined) {
+    if (error !== null && error !== undefined) {
+      return <DetailNotFound error={error} />;
+    }
     return <Skeleton className="m-6 h-96 w-full" />;
   }
 

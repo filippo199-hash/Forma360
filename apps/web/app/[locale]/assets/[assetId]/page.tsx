@@ -21,6 +21,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Sheet, SheetContent } from '../../../../src/components/ui/sheet';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
@@ -75,7 +76,7 @@ export default function AssetDetailPage() {
     null,
   );
 
-  const { data, isLoading } = trpc.assets.get.useQuery({ assetId });
+  const { data, isLoading, error } = trpc.assets.get.useQuery({ assetId });
   const { data: assetTypesList } = trpc.assetTypes.list.useQuery(undefined, { enabled: editing });
   const { data: readingsData } = trpc.assets.readings.list.useQuery(
     { assetId },
@@ -200,6 +201,9 @@ export default function AssetDetailPage() {
   }
 
   if (isLoading || data === undefined) {
+    if (error !== null && error !== undefined) {
+      return <DetailNotFound error={error} />;
+    }
     return <Skeleton className="m-6 h-96 w-full" />;
   }
 

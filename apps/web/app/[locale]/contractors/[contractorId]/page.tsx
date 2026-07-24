@@ -18,6 +18,7 @@ import {
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { ContractorAssetsSection } from '../../../../src/components/contractors/contractor-assets';
 import { ContractorUsersSection } from '../../../../src/components/contractors/contractor-users';
 import { ContractorVisitsSection } from '../../../../src/components/contractors/contractor-visits';
@@ -52,7 +53,7 @@ export default function ContractorDetailPage() {
   const utils = trpc.useUtils();
   const router = useRouter();
 
-  const { data, isLoading } = trpc.contractors.get.useQuery(
+  const { data, isLoading, error } = trpc.contractors.get.useQuery(
     { id: contractorId },
     { enabled: contractorId !== '' },
   );
@@ -200,6 +201,9 @@ export default function ContractorDetailPage() {
   }
 
   if (isLoading || data === undefined) {
+    if (error !== null && error !== undefined) {
+      return <DetailNotFound error={error} />;
+    }
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-64" />

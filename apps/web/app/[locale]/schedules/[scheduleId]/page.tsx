@@ -16,6 +16,7 @@ import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Switch } from '../../../../src/components/ui/switch';
 import { formatInTimeZone } from '@forma360/shared/timezone';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
@@ -142,7 +143,7 @@ export default function ScheduleEditPage() {
   const locale = params.locale ?? 'en';
   const scheduleId = params.scheduleId ?? '';
 
-  const { data, isLoading, refetch } = trpc.schedules.get.useQuery({ scheduleId });
+  const { data, isLoading, error, refetch } = trpc.schedules.get.useQuery({ scheduleId });
   const occurrencesQuery = trpc.schedules.listOccurrences.useQuery({ scheduleId, limit: 20 });
   const updateMutation = trpc.schedules.update.useMutation();
   const pauseMutation = trpc.schedules.pause.useMutation();
@@ -213,6 +214,9 @@ export default function ScheduleEditPage() {
   }
 
   if (isLoading || data === undefined) {
+    if (error !== null && error !== undefined) {
+      return <DetailNotFound error={error} />;
+    }
     return (
       <div className="space-y-4 p-6">
         <Skeleton className="h-10 w-64" />

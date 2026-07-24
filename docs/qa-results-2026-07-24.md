@@ -133,3 +133,30 @@ Full API suite green after both: **271 tests / 28 files**.
 **B11 verified live (contractor portal, deploy d64302ed):** As Alice, created contractor "Acme Subcontractors" → invited portal user Sam (filippo199+contractor@gmail.com; Inspections/Observations/Actions) → accepted via email + OTP → onboarding gate → portal home. As **Sam**, `actions.list` = **0** and `inspections.list` = **0** despite Tenant A holding internal records (A1's AC-000001, Alice's inspections). Sam then created an action → their list shows **exactly 1** ("Sam contractor task", **AC-000002**); the AC-**000002** counter proves AC-000001 exists internally yet is invisible to Sam. Portal Actions board renders only Sam's card. Two-directional: own records visible, all other records (internal + other contractors') hidden. ss_7264f2dr6.
 
 B10 is covered by the inspections + exports unit/integration tests (non-member get/list forbidden/filtered, share reads/mint forbidden); no separate live probe run (the QA tenant had no restricted-template instance conducted by a non-member to probe).
+
+## B14 — detail pages hang on an infinite loading skeleton for a stale/deleted/forbidden id (S9.3 error states)
+
+**Severity: medium-high (broad).** Found while testing S9.3 (bad ids in detail-page URLs). Navigating to `/{locale}/inspections/{id}` with a nonexistent (or no-access) id sat on a loading skeleton **indefinitely** — verified stuck at **420 s** (7 min) on a real, online browser (`navigator.onLine === true`). The API was fine throughout: `inspections.get` returned `404 NOT_FOUND` in ~470 ms.
+
+**Root cause (client-side, app-wide).** The React Query client (`apps/web/src/components/trpc-provider.tsx`) used a blanket `retry: 1`. On the 404 it scheduled a retry; with `networkMode: 'online'` React Query **pauses** a pending retry whenever its online-manager reports the browser offline — and that state can latch even while `navigator.onLine` is true (laptop sleep/wake, network handoff, VPN blip). The query stayed `status: 'pending'`, `fetchStatus: 'paused'`, `error: null`, `data: undefined` **forever**, so the page's not-found branch (which keys off `error`) never rendered. Confirmed by reading the live React Query cache state via the page's fiber tree.
+
+**Fix (commit `04aa905`).** Replace `retry: 1` with `shouldRetryQuery` (new pure, unit-tested `apps/web/src/lib/trpc/retry.ts`): **never retry a definitive 4xx** (NOT_FOUND / FORBIDDEN / BAD_REQUEST …) — it won't succeed on retry, and skipping it sends the query straight to `error` so the page renders its not-found state immediately (no retry ⇒ no pause). Transient 5xx / network errors still retry once. Applies to **every tRPC query** in the app. 3 unit tests (4xx→no retry, 5xx→one retry, network→one retry).
+
+**Second bug surfaced (commit `92d60a4`).** Even with the query reaching `error` fast, a page only shows not-found if it has an **error branch**. Two detail pages gated solely on `isLoading || data === undefined` → `<Skeleton>`:
+- `sites/[siteId]/page.tsx` — no error branch at all.
+- `templates/[templateId]/page.tsx` — had an error branch but as **dead code below** the loading gate (on error `data` is undefined, so the gate returned the skeleton first and the error block was unreachable).
+Both fixed by moving the error check **inside** the loading gate with a NOT_FOUND-specific message. Added reusable `common.notFound` ("Not found.") across all 10 locales. (The inspections family — `[inspectionId]/{page,status,report,signatures}`, `approvals/[inspectionId]` — already had the correct in-gate error branch, so the retry fix alone resolves them.)
+
+**Verified live (deploy `04aa905`):**
+- Bad inspection id `01KY0000000000000000000000` → renders **"Inspection not found."** within ~3 s (was 420 s+ skeleton). ss_42490acnj (before) → alert (after).
+- Valid inspection `01KY9YA1Z2RBB6EFVGSQRTB1FJ` → conduct page loads normally (Completed, doc 000003, full Details) — **no regression** from the retry change. ss_66510iyo3.
+- Sites/templates bad-id pages: fix deployed in `92d60a4` (verification pending deploy).
+
+| Case | Before | After |
+|---|---|---|
+| S9.3 bad inspection id | infinite skeleton (7 min+) | "Inspection not found." in ~3 s ✓ |
+| S9.3 bad site id (`sites/[id]`) | infinite skeleton | "Not found." (92d60a4) |
+| S9.3 bad template id (`templates/[id]`) | infinite skeleton (dead error branch) | "Not found." (92d60a4) |
+| valid inspection id | loads | loads (no regression) ✓ |
+
+**Residual (minor, not fixed):** the `enabled: id.length === 26` gate means a *malformed-length* id (e.g. a truncated link) disables the query entirely (never fires) → still an infinite skeleton. Rare (deep-links carry full 26-char ULIDs); a follow-up could render not-found when the id is structurally invalid.

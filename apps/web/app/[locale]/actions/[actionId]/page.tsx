@@ -17,6 +17,7 @@ import {
 } from '../../../../src/components/ui/dropdown-menu';
 import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { AssetField } from '../../../../src/components/actions/asset-field';
@@ -69,7 +70,7 @@ export default function ActionDetailPage() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
 
-  const { data, isLoading } = trpc.actions.get.useQuery({ actionId });
+  const { data, isLoading, error } = trpc.actions.get.useQuery({ actionId });
   const action = data?.action;
   const actionType = data?.actionType ?? null;
   const assignee = data?.assignee ?? null;
@@ -114,6 +115,9 @@ export default function ActionDetailPage() {
   });
 
   if (isLoading || action === undefined) {
+    if (error !== null && error !== undefined) {
+      return <DetailNotFound error={error} />;
+    }
     return <Skeleton className="m-6 h-96 w-full" />;
   }
 
