@@ -41,6 +41,7 @@ import {
   templateVersions,
   user,
 } from '@forma360/db/schema';
+import type { Database } from '@forma360/db/client';
 import { resolveAccessRule } from '@forma360/permissions/access';
 import {
   registerDependentResolver,
@@ -272,6 +273,47 @@ const importJsonInput = z.object({
   content: z.unknown(),
 });
 
+/**
+ * Whether a non-manager caller satisfies a template's access rule. The `list`
+ * endpoint filters restricted templates out; the per-id reads (`get`,
+ * `getVersion`) must apply the SAME rule so a direct call by id cannot bypass
+ * the audience restriction (bug B3 — a South-team user could otherwise read a
+ * North-only template's full content). Managers are checked separately and
+ * bypass this entirely, mirroring `list`.
+ */
+async function callerSatisfiesTemplateRule(
+  db: Database,
+  tenantId: string,
+  userId: string,
+  accessRuleId: string,
+): Promise<boolean> {
+  const ruleRows = await db
+    .select()
+    .from(accessRules)
+    .where(and(eq(accessRules.tenantId, tenantId), eq(accessRules.id, accessRuleId)))
+    .limit(1);
+  const rule = ruleRows[0];
+  // A missing / invalidated rule denies non-managers (matches list semantics).
+  if (rule === undefined) return false;
+  const groupRows = await db
+    .select({ groupId: groupMembers.groupId })
+    .from(groupMembers)
+    .where(and(eq(groupMembers.tenantId, tenantId), eq(groupMembers.userId, userId)));
+  const siteRows = await db
+    .select({ siteId: siteMembers.siteId })
+    .from(siteMembers)
+    .where(and(eq(siteMembers.tenantId, tenantId), eq(siteMembers.userId, userId)));
+  return resolveAccessRule(
+    {
+      id: rule.id,
+      groupIds: rule.groupIds,
+      siteIds: rule.siteIds,
+      invalidatedAt: rule.invalidatedAt,
+    },
+    { groupIds: groupRows.map((r) => r.groupId), siteIds: siteRows.map((r) => r.siteId) },
+  );
+}
+
 // ─── Router ────────────────────────────────────────────────────────────────
 
 export const templatesRouter = router({
@@ -395,6 +437,24 @@ export const templatesRouter = router({
       const tpl = rows[0];
       if (tpl === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
 
+      // Access-rule gate on the READ (bug B3). `list` hides restricted
+      // templates from non-managers; a direct `get` by id must apply the same
+      // rule so it cannot be bypassed. Managers (templates.manage) see all.
+      if (!ctx.permissions.includes('templates.manage') && tpl.accessRuleId !== null) {
+        const allowed = await callerSatisfiesTemplateRule(
+          ctx.db,
+          ctx.tenantId,
+          ctx.auth.userId,
+          tpl.accessRuleId,
+        );
+        if (!allowed) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not satisfy this template’s access rule',
+          });
+        }
+      }
+
       // Load every version so the editor can show history.
       const versions = await ctx.db
         .select()
@@ -427,6 +487,33 @@ export const templatesRouter = router({
         .limit(1);
       const version = rows[0];
       if (version === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      // Same access-rule gate as `get` (bug B3): a version's content must not be
+      // readable by id when the caller can't access its parent template. The
+      // conduct runtime reads pinned content via `inspections.get` (which is
+      // gated by the inspection's own access), not this endpoint.
+      if (!ctx.permissions.includes('templates.manage')) {
+        const tplRows = await ctx.db
+          .select({ accessRuleId: templates.accessRuleId })
+          .from(templates)
+          .where(and(eq(templates.tenantId, ctx.tenantId), eq(templates.id, version.templateId)))
+          .limit(1);
+        const accessRuleId = tplRows[0]?.accessRuleId ?? null;
+        if (
+          accessRuleId !== null &&
+          !(await callerSatisfiesTemplateRule(
+            ctx.db,
+            ctx.tenantId,
+            ctx.auth.userId,
+            accessRuleId,
+          ))
+        ) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not satisfy this template’s access rule',
+          });
+        }
+      }
       return version;
     }),
 
