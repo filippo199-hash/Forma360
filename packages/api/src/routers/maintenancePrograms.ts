@@ -19,6 +19,7 @@ import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertMaintenanceProgramsInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 import {
   cancelOpenMaintenanceActions,
@@ -118,7 +119,12 @@ export const maintenanceProgramsRouter = router({
       const triggers = await ctx.db
         .select()
         .from(maintenanceProgramTriggers)
-        .where(eq(maintenanceProgramTriggers.programId, program.id))
+        .where(
+          and(
+            eq(maintenanceProgramTriggers.tenantId, ctx.tenantId),
+            eq(maintenanceProgramTriggers.programId, program.id),
+          ),
+        )
         .orderBy(
           asc(maintenanceProgramTriggers.sortOrder),
           asc(maintenanceProgramTriggers.createdAt),
@@ -262,6 +268,7 @@ export const maintenanceProgramsRouter = router({
     .use(requirePermission('assets.maintenance.manage'))
     .input(triggerInput.extend({ programId: idSchema }))
     .mutation(async ({ ctx, input }) => {
+      await assertMaintenanceProgramsInTenant(ctx.db, ctx.tenantId, [input.programId]);
       // Place new triggers at the end.
       const existing = await ctx.db
         .select({ id: maintenanceProgramTriggers.id })
@@ -331,6 +338,7 @@ export const maintenanceProgramsRouter = router({
     .use(requirePermission('assets.maintenance.manage'))
     .input(z.object({ programId: idSchema, assetId: z.string().min(1).max(100) }))
     .mutation(async ({ ctx, input }) => {
+      await assertMaintenanceProgramsInTenant(ctx.db, ctx.tenantId, [input.programId]);
       const asset = await ctx.db
         .select({ id: assets.id, name: assets.name })
         .from(assets)
@@ -352,7 +360,12 @@ export const maintenanceProgramsRouter = router({
       const triggers = await ctx.db
         .select()
         .from(maintenanceProgramTriggers)
-        .where(eq(maintenanceProgramTriggers.programId, input.programId));
+        .where(
+          and(
+            eq(maintenanceProgramTriggers.tenantId, ctx.tenantId),
+            eq(maintenanceProgramTriggers.programId, input.programId),
+          ),
+        );
 
       let created = 0;
       for (const trigger of triggers) {
@@ -423,10 +436,16 @@ export const maintenanceProgramsRouter = router({
     .use(requirePermission('assets.maintenance.manage'))
     .input(z.object({ programId: idSchema }))
     .mutation(async ({ ctx, input }) => {
+      await assertMaintenanceProgramsInTenant(ctx.db, ctx.tenantId, [input.programId]);
       const triggers = await ctx.db
         .select()
         .from(maintenanceProgramTriggers)
-        .where(eq(maintenanceProgramTriggers.programId, input.programId));
+        .where(
+          and(
+            eq(maintenanceProgramTriggers.tenantId, ctx.tenantId),
+            eq(maintenanceProgramTriggers.programId, input.programId),
+          ),
+        );
       const triggerIds = triggers.map((t) => t.id);
 
       const attached = await ctx.db

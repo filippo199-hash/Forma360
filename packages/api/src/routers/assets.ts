@@ -27,6 +27,11 @@ import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import {
+  assertAssetTypesInTenant,
+  assertSitesInTenant,
+  assertUsersInTenant,
+} from '../tenant-guards';
 import { router } from '../trpc';
 
 type Db = Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'];
@@ -221,6 +226,10 @@ export const assetsRouter = router({
         }
       }
 
+      await assertAssetTypesInTenant(ctx.db, ctx.tenantId, [input.typeId]);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+      await assertUsersInTenant(ctx.db, ctx.tenantId, [input.ownerUserId]);
+
       const id = newId();
       const now = new Date();
       // Generate a unique QR token — retry on collision (extremely unlikely).
@@ -272,6 +281,10 @@ export const assetsRouter = router({
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'asset-parent-depth-exceeded' });
         }
       }
+
+      await assertAssetTypesInTenant(ctx.db, ctx.tenantId, [input.typeId]);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+      await assertUsersInTenant(ctx.db, ctx.tenantId, [input.ownerUserId]);
 
       const updates: Partial<typeof assets.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) updates.name = input.name;

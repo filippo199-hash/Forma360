@@ -331,6 +331,12 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
       .use(requirePermission('headsUp.publish'))
       .input(createInput)
       .mutation(async ({ ctx, input }) => {
+        // Attachment storage keys must live under this tenant's R2 prefix
+        // (mirrors `attachments.add`) — a foreign key would let `get` mint a
+        // signed download URL for another tenant's object.
+        for (const a of input.attachments ?? []) {
+          assertStorageKeyInTenant(ctx.tenantId, a.storageKey);
+        }
         const id = newId();
         const now = new Date();
         await ctx.db.insert(headsUps).values({

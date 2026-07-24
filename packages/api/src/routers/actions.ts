@@ -49,6 +49,7 @@ import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, lt, ne, or, sq
 import { loadContractorScope } from '../contractor-scope';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertAssetsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 import { rollForwardMaintenanceAction } from './maintenance-actions';
 
@@ -774,6 +775,10 @@ export const actionsRouter = router({
       const now = new Date();
       const dueAt = computeAutoDueAt(now, input.priority ?? null, daysByPriority, input.dueAt);
 
+      await assertUsersInTenant(ctx.db, ctx.tenantId, [input.assigneeUserId]);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+      await assertAssetsInTenant(ctx.db, ctx.tenantId, input.assetIds ?? []);
+
       const id = newId();
       const referenceNumber = await nextActionReferenceNumber(ctx.db, ctx.tenantId);
       await ctx.db.insert(actions).values({
@@ -862,6 +867,9 @@ export const actionsRouter = router({
           ? validateCustomResponses(type.customQuestions, input.customQuestionResponses ?? {})
           : {};
 
+      await assertUsersInTenant(ctx.db, ctx.tenantId, [input.assigneeUserId]);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+
       const daysByPriority = await loadPriorityDueDateDays(ctx.db, ctx.tenantId);
       const id = newId();
       const referenceNumber = await nextActionReferenceNumber(ctx.db, ctx.tenantId);
@@ -928,6 +936,9 @@ export const actionsRouter = router({
     .use(requirePermission('actions.create'))
     .input(createFromIssueInput)
     .mutation(async ({ ctx, input }) => {
+      await assertUsersInTenant(ctx.db, ctx.tenantId, [input.assigneeUserId]);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+
       const id = newId();
       const referenceNumber = await nextActionReferenceNumber(ctx.db, ctx.tenantId);
       const now = new Date();
@@ -971,6 +982,9 @@ export const actionsRouter = router({
     .input(updateInput)
     .mutation(async ({ ctx, input }) => {
       const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      await assertUsersInTenant(ctx.db, ctx.tenantId, [input.assigneeUserId]);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+      await assertAssetsInTenant(ctx.db, ctx.tenantId, input.assetIds ?? []);
       const updates: Partial<typeof actions.$inferInsert> = { updatedAt: new Date() };
       const events: Array<{
         kind: ActionActivityKind;

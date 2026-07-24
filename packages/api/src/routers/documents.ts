@@ -29,6 +29,7 @@ import { and, asc, desc, eq, ilike, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import {
+  assertDocumentFoldersInTenant,
   assertGroupsInTenant,
   assertSitesInTenant,
   assertStorageKeyInTenant,
@@ -327,11 +328,12 @@ export const documentsRouter = router({
       if (input.sizeBytes > MAX_FILE_SIZE_BYTES) {
         throw new TRPCError({ code: 'PAYLOAD_TOO_LARGE', message: 'file-too-large' });
       }
-      // Storage key + referenced site/owner must belong to this tenant.
+      // Storage key + referenced site/owner/folder must belong to this tenant.
       assertStorageKeyInTenant(ctx.tenantId, input.storageKey);
       await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
       await assertUsersInTenant(ctx.db, ctx.tenantId, [input.responsibleUserId]);
       await assertGroupsInTenant(ctx.db, ctx.tenantId, [input.responsibleGroupId]);
+      await assertDocumentFoldersInTenant(ctx.db, ctx.tenantId, [input.folderId]);
 
       const id = newId();
       const versionId = newId();
@@ -388,13 +390,15 @@ export const documentsRouter = router({
       if (doc.archivedAt !== null) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'document-archived' });
       }
-      // Referenced site / owner must belong to this tenant.
+      // Referenced site / owner / folder must belong to this tenant.
       if (input.siteId !== undefined)
         await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
       if (input.responsibleUserId !== undefined)
         await assertUsersInTenant(ctx.db, ctx.tenantId, [input.responsibleUserId]);
       if (input.responsibleGroupId !== undefined)
         await assertGroupsInTenant(ctx.db, ctx.tenantId, [input.responsibleGroupId]);
+      if (input.folderId !== undefined)
+        await assertDocumentFoldersInTenant(ctx.db, ctx.tenantId, [input.folderId]);
 
       const updates: Partial<typeof documents.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) updates.name = input.name;

@@ -18,7 +18,15 @@
  * All helpers are no-ops for an empty/absent list, dedupe, and ignore empty
  * strings, so callers can pass optional inputs directly.
  */
-import { assets, groups, sites, user } from '@forma360/db/schema';
+import {
+  assetTypes,
+  assets,
+  documentFolders,
+  groups,
+  maintenancePrograms,
+  sites,
+  user,
+} from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
 import { TRPCError } from '@trpc/server';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -119,6 +127,63 @@ export function assertAssetsInTenant(
       return new Set(rows.map((r) => r.id));
     },
     'asset',
+  );
+}
+
+/** Reject any id that is not an asset type in `tenantId`. */
+export function assertAssetTypesInTenant(
+  db: Db,
+  tenantId: string,
+  ids: ReadonlyArray<string | null | undefined>,
+): Promise<void> {
+  return assertAll(
+    ids,
+    async (unique) => {
+      const rows = await db
+        .select({ id: assetTypes.id })
+        .from(assetTypes)
+        .where(and(eq(assetTypes.tenantId, tenantId), inArray(assetTypes.id, unique)));
+      return new Set(rows.map((r) => r.id));
+    },
+    'asset type',
+  );
+}
+
+/** Reject any id that is not a maintenance program in `tenantId`. */
+export function assertMaintenanceProgramsInTenant(
+  db: Db,
+  tenantId: string,
+  ids: ReadonlyArray<string | null | undefined>,
+): Promise<void> {
+  return assertAll(
+    ids,
+    async (unique) => {
+      const rows = await db
+        .select({ id: maintenancePrograms.id })
+        .from(maintenancePrograms)
+        .where(and(eq(maintenancePrograms.tenantId, tenantId), inArray(maintenancePrograms.id, unique)));
+      return new Set(rows.map((r) => r.id));
+    },
+    'maintenance program',
+  );
+}
+
+/** Reject any id that is not a document folder in `tenantId`. */
+export function assertDocumentFoldersInTenant(
+  db: Db,
+  tenantId: string,
+  ids: ReadonlyArray<string | null | undefined>,
+): Promise<void> {
+  return assertAll(
+    ids,
+    async (unique) => {
+      const rows = await db
+        .select({ id: documentFolders.id })
+        .from(documentFolders)
+        .where(and(eq(documentFolders.tenantId, tenantId), inArray(documentFolders.id, unique)));
+      return new Set(rows.map((r) => r.id));
+    },
+    'document folder',
   );
 }
 

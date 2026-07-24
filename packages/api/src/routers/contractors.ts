@@ -35,7 +35,7 @@ import { TRPCError } from '@trpc/server';
 import { aliasedTable, and, asc, between, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
-import { assertStorageKeyInTenant } from '../tenant-guards';
+import { assertSitesInTenant, assertStorageKeyInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 
 const dateStr = z
@@ -813,6 +813,7 @@ export const contractorsRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+        await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
         const id = newId();
         await ctx.db.insert(contractorVisits).values({
           id,
@@ -844,6 +845,7 @@ export const contractorsRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+        await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
         const now = new Date();
         const id = newId();
         await ctx.db.insert(contractorVisits).values({
@@ -886,6 +888,7 @@ export const contractorsRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
+        await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
         const updates: Partial<typeof contractorVisits.$inferInsert> = { updatedAt: new Date() };
         if (input.title !== undefined) updates.title = input.title.trim();
         if (input.siteId !== undefined) updates.siteId = input.siteId;

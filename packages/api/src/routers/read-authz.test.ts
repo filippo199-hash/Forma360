@@ -20,6 +20,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContext, type Context } from '../context';
 import { loadContractorScope } from '../contractor-scope';
 import { appRouter } from '../router';
+import { assertUsersInTenant } from '../tenant-guards';
 import { createCallerFactory } from '../trpc';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -183,5 +184,41 @@ describe('read authorization', () => {
     // Internal admin is unrestricted — sees all three.
     const adminIds = (await admin.actions.list({})).map((r) => r.id);
     expect(adminIds).toEqual(expect.arrayContaining([aAction, bAction, internalAction]));
+  });
+
+  it('write-path guards reject a foreign-tenant reference id', async () => {
+    // A second tenant with a permission set + user of its own.
+    const otherTenant = newId();
+    await db.insert(schema.tenants).values({ id: otherTenant, name: 'Other', slug: 'other' });
+    const otherSet = newId();
+    await db.insert(schema.permissionSets).values({
+      id: otherSet,
+      tenantId: otherTenant,
+      name: 'Other',
+      permissions: [],
+    });
+    const foreignUser = newId();
+    await db.insert(schema.user).values({
+      id: foreignUser,
+      name: 'Foreign',
+      email: 'foreign@other.test',
+      tenantId: otherTenant,
+      permissionSetId: otherSet,
+    });
+
+    // The guard itself: own id passes, foreign id → NOT_FOUND, empty → no-op.
+    const database = db as unknown as Database;
+    await expect(assertUsersInTenant(database, tenantId, [adminId])).resolves.toBeUndefined();
+    await expect(assertUsersInTenant(database, tenantId, [])).resolves.toBeUndefined();
+    await expect(assertUsersInTenant(database, tenantId, [foreignUser])).rejects.toThrow(
+      /not found in this tenant/i,
+    );
+
+    // End-to-end: an admin cannot assign an action to the foreign-tenant user
+    // (which would otherwise leak that user's name + email via actions.get).
+    const admin = createCaller(ctxFor(adminId));
+    await expect(
+      admin.actions.createStandalone({ title: 'X', assigneeUserId: foreignUser }),
+    ).rejects.toThrow(/not found/i);
   });
 });
