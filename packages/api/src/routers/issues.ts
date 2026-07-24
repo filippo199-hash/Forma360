@@ -66,6 +66,7 @@ import { TRPCError } from '@trpc/server';
 import crypto from 'node:crypto';
 import { and, count, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { loadContractorScope } from '../contractor-scope';
 import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
 import {
   assertAssetsInTenant,
@@ -776,6 +777,11 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           // Strict < cursor to keep "previous page boundary" exclusive.
           where.push(sql`${issues.createdAt} < ${new Date(input.cursor)}`);
         }
+        // External contractor portal users only see observations they reported
+        // (internal users → scope null → unrestricted). `reportedByUserId` is
+        // nullable, so anonymous QR reports never match — correctly hidden.
+        const listScope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+        if (listScope !== null) where.push(inArray(issues.reportedByUserId, listScope.userIds));
         const rows = await ctx.db
           .select()
           .from(issues)
@@ -795,6 +801,14 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .input(issueIdInput)
       .query(async ({ ctx, input }) => {
         const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        // Contractor portal users only see observations they reported.
+        const getScope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+        if (
+          getScope !== null &&
+          (issue.reportedByUserId === null || !getScope.userIds.includes(issue.reportedByUserId))
+        ) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
         return {
           issue,
           categorySnapshot: issue.categorySnapshot,

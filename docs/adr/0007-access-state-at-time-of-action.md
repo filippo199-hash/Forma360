@@ -117,3 +117,24 @@ expected to:
 - **Versioned access rules with effective-date windows.** Dramatically
   more complex and has no product benefit the snapshot approach doesn't
   already give us.
+
+## Addendum (2026-07-24) — read-visibility gating is distinct from the snapshot
+
+The "re-evaluate on every read" non-option above concerns an **in-flight
+action's own evidence snapshot** — the conductor's frozen group/site/permission
+state that keeps a compliance record internally consistent. That snapshot is
+still never re-evaluated; `inspections.accessSnapshot` is authoritative for the
+action's evidence integrity.
+
+Separately, **who may *view* an inspection** is a read-visibility question, not
+an evidence-integrity one. A template can carry an access rule; QA found that a
+non-member with `inspections.view` could read/export/share any instance of a
+restricted template (the template-content gate from the templates B3 fix did
+not extend to instances). So `inspections.get`/`list` and the export/share
+paths now evaluate the pinned template's **current** access rule for
+non-managers (managers bypass), via `callerSatisfiesAccessRule`
+(`packages/api/src/access-rule.ts`). This is a bounded per-request check (a
+handful of indexed lookups), not the per-in-flight-row re-evaluation the
+non-option rejected, and it does not touch the evidence snapshot. External
+contractor portal reads are additionally scoped to their own contractor
+(`packages/api/src/contractor-scope.ts`).

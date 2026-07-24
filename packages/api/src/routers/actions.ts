@@ -45,7 +45,8 @@ import {
   type TransitionRules,
 } from '@forma360/shared/actions-schema';
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, ilike, isNotNull, isNull, lt, ne, sql } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, lt, ne, or, sql } from 'drizzle-orm';
+import { loadContractorScope } from '../contractor-scope';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -548,6 +549,16 @@ export const actionsRouter = router({
         where.push(ne(actions.status, 'completed'));
         where.push(ne(actions.status, 'cancelled'));
       }
+      // External contractor portal users only see actions they created or are
+      // assigned (internal users → scope null → unrestricted).
+      const listScope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+      if (listScope !== null) {
+        const scopeClause = or(
+          inArray(actions.createdBy, listScope.userIds),
+          inArray(actions.assigneeUserId, listScope.userIds),
+        );
+        if (scopeClause !== undefined) where.push(scopeClause);
+      }
 
       // Sort order. Priority sort puts NULL last (NULLS LAST) so blank-
       // priority rows don't crowd the top. `CASE` maps the priority text
@@ -607,6 +618,14 @@ export const actionsRouter = router({
     .input(actionIdInput)
     .query(async ({ ctx, input }) => {
       const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      // Contractor portal users only see actions they created or are assigned.
+      const getScope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+      if (getScope !== null) {
+        const mine =
+          getScope.userIds.includes(action.createdBy) ||
+          (action.assigneeUserId !== null && getScope.userIds.includes(action.assigneeUserId));
+        if (!mine) throw new TRPCError({ code: 'NOT_FOUND' });
+      }
       const assigneeRows =
         action.assigneeUserId !== null
           ? await ctx.db

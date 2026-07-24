@@ -61,6 +61,7 @@ import { createInspectionActionIfAbsent } from './actions';
 import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
 import { callerSatisfiesAccessRule, loadCallerAccessSnapshot } from '../access-rule';
+import { loadContractorScope } from '../contractor-scope';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertSitesInTenant } from '../tenant-guards';
@@ -479,6 +480,10 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           where.push(eq(inspections.sourceId, input.sourceIssueId));
         }
         if (!input.includeArchived) where.push(isNull(inspections.archivedAt));
+        // External contractor portal users only see inspections authored within
+        // their own contractor (internal users → scope null → unrestricted).
+        const listScope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+        if (listScope !== null) where.push(inArray(inspections.createdBy, listScope.userIds));
         const rows = await ctx.db
           .select({
             id: inspections.id,
@@ -560,6 +565,14 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           .limit(1);
         const insp = rows[0];
         if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+        // External contractor portal users may only read inspections authored
+        // within their own contractor. Hidden as NOT_FOUND (indistinguishable
+        // from a non-existent id).
+        const getScope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+        if (getScope !== null && !getScope.userIds.includes(insp.createdBy)) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
 
         // Non-managers may only read an inspection whose template's access rule
         // they satisfy (extends the B3 template-content gate to instances).

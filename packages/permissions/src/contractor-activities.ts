@@ -7,8 +7,12 @@
  * normal `requirePermission` path via a per-user permission set) and to the
  * route prefixes the portal shell lets them reach.
  *
- * Data-level scoping (only seeing their own records) is a later refinement;
- * an activity currently grants feature access within the tenant.
+ * Data-level scoping: these permission keys grant tenant-wide *feature* access,
+ * but the primary read surfaces enforce a per-contractor filter so a portal
+ * user only sees their own contractor's records. `inspections`/`issues`/
+ * `actions` list + get resolve `loadContractorScope` (`packages/api/src/
+ * contractor-scope.ts`) and constrain rows to those authored (or, for actions,
+ * assigned) within the caller's contractor. Internal users are unaffected.
  */
 import type { PermissionKey } from './catalogue';
 
