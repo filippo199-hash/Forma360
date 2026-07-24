@@ -69,6 +69,13 @@ _Note: T-Mcr / T-NorthMcr / T-Invalid deferred — 3-template group oracle (T-Op
 | B3 regression unit tests | — | PASS | — | 2 tests added to templates.test.ts (commit 812df61); non-member→FORBIDDEN, member/manager→ok, open template→ok. All green. |
 | B4 fix downstream validation | A1 | PASS | — | After the fix, the Manchester **site overview shows the conducted inspection** (000003) under "Inspections: 1"; pre-fix inspections (siteId null) correctly absent. Full chain works: answer site → siteId set → report shows it → site overview links it. ss_9275ivsiq |
 | B4 regression unit tests | — | PASS | — | 2 tests in inspections.test.ts (commit cf84bbd): saveProgress+submit populate siteId; cross-tenant site id ignored. |
+| S7.9 Schedules (create/recurrence/materialise) | A1 | PASS | — | Create schedule for T-Open, weekly Mon 09:00 Europe/London, assigned North Team; **human-readable summary** correct ("…every Monday at 09:00…"); saved → detail page (Pause/Materialise/Delete); "Materialise now" → job enqueued. Clean. ss_62362t75d |
+| S7.5 Actions (standalone create) | A1 | PASS | — | Create action "Fix warehouse door hinge" with Site=Manchester → AC-000001 Open; detail page shows all fields, site saved, recurrence option, Share/Archive. Board (Open/In-progress/Completed/Cancelled) + List/Board + saved views present. Clean. ss_2440mss81 |
+| S7.10 Observations (create form) | A1 | NOTE (not a bug) | — | Report-observation form is category-gated; a fresh tenant has **no default categories**, so the category dropdown is empty and the form can't proceed until one is created via "Manage categories". Minor onboarding friction — consider seeding default categories or an inline "create category" hint. |
+
+## Observations (non-bug)
+- Fresh-tenant observation form blocks on an empty category dropdown (see S7.10) — onboarding-friction candidate, not a defect.
+- Schedule detail, action detail, and all pickers correctly show tenant sites (Manchester/London) — no cross-tenant leakage in any picker checked.
 | S1.3 Invite flow assigns set+group+site at invite | A0 | PASS | — | Invite form has Permission-set dropdown + group checkboxes + site checkboxes; all assigned at invite time (no post-accept step). A1/A2/A3 invited, emails sent, pending rows correct |
 | S7.11 Site create (Site vs Project type toggle) | A0 | PASS | — | Selecting "Site" correctly hides Project-only fields (Client/dates/status); Manchester+London created |
 | S7.13 Group create (manual mode) | A0 | PASS | — | North Team + South Team created |
