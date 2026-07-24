@@ -115,13 +115,14 @@ describe('contractors.users portal (Phase 4)', () => {
       .from(schema.user)
       .where(eq(schema.user.id, userId))
       .limit(1);
+    if (!u) throw new Error('expected the invited user row');
     const [set] = await db
       .select({
         permissions: schema.permissionSets.permissions,
         externalManaged: schema.permissionSets.externalManaged,
       })
       .from(schema.permissionSets)
-      .where(eq(schema.permissionSets.id, u!.permissionSetId))
+      .where(eq(schema.permissionSets.id, u.permissionSetId))
       .limit(1);
     expect(set?.externalManaged).toBe(true);
     expect(new Set(set?.permissions)).toEqual(
@@ -176,10 +177,11 @@ describe('contractors.users portal (Phase 4)', () => {
       .from(schema.user)
       .where(eq(schema.user.id, userId))
       .limit(1);
+    if (!u) throw new Error('expected the invited user row');
     const [set] = await db
       .select({ permissions: schema.permissionSets.permissions })
       .from(schema.permissionSets)
-      .where(eq(schema.permissionSets.id, u!.permissionSetId))
+      .where(eq(schema.permissionSets.id, u.permissionSetId))
       .limit(1);
     expect(new Set(set?.permissions)).toEqual(new Set(['documents.view']));
 
@@ -196,23 +198,20 @@ describe('contractors.users portal (Phase 4)', () => {
 
   it('inviting an email that already has a tenant user is rejected', async () => {
     const admin = createCaller(ctxFor(adminUserId));
+    const [systemSet] = await db
+      .select({ id: schema.permissionSets.id })
+      .from(schema.permissionSets)
+      .where(
+        and(eq(schema.permissionSets.tenantId, tenantId), eq(schema.permissionSets.isSystem, true)),
+      )
+      .limit(1);
+    if (!systemSet) throw new Error('expected a seeded system permission set');
     await db.insert(schema.user).values({
       id: newId(),
       name: 'Existing',
       email: 'dupe@sparky.test',
       tenantId,
-      permissionSetId: (
-        await db
-          .select({ id: schema.permissionSets.id })
-          .from(schema.permissionSets)
-          .where(
-            and(
-              eq(schema.permissionSets.tenantId, tenantId),
-              eq(schema.permissionSets.isSystem, true),
-            ),
-          )
-          .limit(1)
-      )[0]!.id,
+      permissionSetId: systemSet.id,
     });
     await expect(
       admin.contractors.users.invite({

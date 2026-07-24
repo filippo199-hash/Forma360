@@ -102,8 +102,8 @@ describe('contractors.assets link (Phase 3)', () => {
     const caller = createCaller(ctxFor(adminUserId));
     await caller.contractors.assets.link({ contractorId, assetId });
     const [link] = await caller.contractors.assets.listForContractor({ contractorId });
-    expect(link).toBeDefined();
-    await caller.contractors.assets.unlink({ id: link!.linkId });
+    if (!link) throw new Error('expected a contractor-asset link');
+    await caller.contractors.assets.unlink({ id: link.linkId });
     expect(await caller.contractors.assets.listForContractor({ contractorId })).toHaveLength(0);
   });
 

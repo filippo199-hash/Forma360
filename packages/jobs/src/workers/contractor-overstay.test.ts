@@ -90,18 +90,18 @@ describe('contractor-overstay', () => {
   it('alerts inviter + gate guard for a >24h visit, once, then dedupes', async () => {
     // Inviter is a separate user.
     const inviterId = newId();
+    const [permissionSet] = await db
+      .select({ id: schema.permissionSets.id })
+      .from(schema.permissionSets)
+      .where(eq(schema.permissionSets.tenantId, tenantId))
+      .limit(1);
+    if (!permissionSet) throw new Error('expected a seeded permission set for the tenant');
     await db.insert(schema.user).values({
       id: inviterId,
       name: 'Boss',
       email: 'boss@acme.test',
       tenantId,
-      permissionSetId: (
-        await db
-          .select({ id: schema.permissionSets.id })
-          .from(schema.permissionSets)
-          .where(eq(schema.permissionSets.tenantId, tenantId))
-          .limit(1)
-      )[0]!.id,
+      permissionSetId: permissionSet.id,
     });
     const visitId = await seedVisit({
       checkedInHoursAgo: 30,
