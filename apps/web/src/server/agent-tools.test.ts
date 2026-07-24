@@ -82,9 +82,13 @@ describe('tool routing sets', () => {
     for (const name of dbReads) expect(CALLER_TOOL_NAMES.has(name)).toBe(false);
   });
 
-  it('routes the two permission-gated reads through the caller', () => {
+  it('routes the permission-gated reads through the caller', () => {
     expect(CALLER_TOOL_NAMES.has('list_observation_categories')).toBe(true);
     expect(CALLER_TOOL_NAMES.has('list_users')).toBe(true);
+    // list_documents MUST be caller-backed: documents carry per-folder/group/
+    // site visibility, so it has to reuse `documents.list` (which filters for
+    // non-managers) rather than a plain tenant-scoped db read (B9).
+    expect(CALLER_TOOL_NAMES.has('list_documents')).toBe(true);
   });
 });
 

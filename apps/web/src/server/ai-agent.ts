@@ -21,7 +21,6 @@ import {
   aiConversations,
   aiMessages,
   assets,
-  documents,
   headsUps,
   type InspectionStatus,
   inspections,
@@ -215,17 +214,17 @@ async function executeTool(
     }
 
     case 'list_documents': {
-      const rows = await db
-        .select({
-          id: documents.id,
-          name: documents.name,
-          createdAt: documents.createdAt,
-        })
-        .from(documents)
-        .where(eq(documents.tenantId, tenantId))
-        .orderBy(desc(documents.createdAt))
-        .limit(limit);
-      return { total: rows.length, documents: rows };
+      // Documents carry per-folder / group / site visibility (unlike the other
+      // list_* reads). Route through the caller so `documents.list` applies the
+      // same non-manager visibility filter the UI does — a direct db read would
+      // leak restricted documents' names to users who can't see them.
+      const rows = await caller.documents.list({});
+      const trimmed = rows.slice(0, limit).map((d) => ({
+        id: d.id,
+        name: d.name,
+        createdAt: d.createdAt,
+      }));
+      return { total: trimmed.length, documents: trimmed };
     }
 
     case 'list_schedules': {

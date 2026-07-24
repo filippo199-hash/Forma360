@@ -8,6 +8,8 @@
  * documents download route: signed R2 URL in prod, local stream in dev.
  */
 import { headsUpAttachments } from '@forma360/db/schema';
+import { grantsAdminAccess } from '@forma360/permissions/catalogue';
+import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { createStorage } from '@forma360/shared/storage';
 import { and, eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
@@ -36,6 +38,14 @@ export async function GET(req: Request): Promise<Response> {
   const ctx = await createContext({ headers: hdrs });
   if (ctx.auth === null) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  }
+
+  // Match the tRPC layer: viewing a heads-up (and thus its attachments) needs
+  // `headsUp.view`. The tRPC surface enforces this; this file route must too,
+  // or a tenant user without the permission could pull attachment content by id.
+  const perms = await loadUserPermissions(ctx.db, ctx.auth.tenantId, ctx.auth.userId);
+  if (!perms.includes('headsUp.view') && !grantsAdminAccess(perms)) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);

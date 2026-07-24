@@ -28,13 +28,19 @@ export type ToolName =
   | 'create_headsup';
 
 /**
- * Tools that go through the tRPC caller (writes + the two reads backed by
- * permission-gated procedures). The remaining `list_*` reads query the db
- * directly, so they don't need a caller built.
+ * Tools that go through the tRPC caller (writes + the reads backed by
+ * permission-gated procedures). `list_documents` is caller-backed too: unlike
+ * the other `list_*` reads, documents carry per-folder / group / site
+ * visibility, so it must reuse `documents.list` (which filters for
+ * non-managers) rather than read the db directly — a plain tenant-scoped read
+ * would surface restricted documents' names to users who can't see them.
+ * The remaining `list_*` reads have no per-row visibility, so they query the
+ * db directly.
  */
 export const CALLER_TOOL_NAMES = new Set<ToolName>([
   'list_observation_categories',
   'list_users',
+  'list_documents',
   'create_observation',
   'create_action',
   'comment_on_action',
