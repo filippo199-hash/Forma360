@@ -1,5 +1,7 @@
 import { setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { signInHref } from '../../../src/lib/sign-in-redirect';
 import type { ReactNode } from 'react';
 import { PermissionsProvider } from '../../../src/lib/permissions-context';
 import { loadCurrentUserPermissions } from '../../../src/server/load-permissions';
@@ -22,7 +24,7 @@ export default async function InspectionsLayout({
 
   const { permissions, session } = await loadCurrentUserPermissions();
   if (session === null) {
-    redirect(`/${locale}`);
+    redirect(signInHref(locale, (await headers()).get('x-pathname')));
   }
 
   return (

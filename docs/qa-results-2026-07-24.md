@@ -188,3 +188,35 @@ New shared `apps/web/src/components/detail-not-found.tsx` owns the `common.notFo
 | valid `inspections/{id}` | loads normally (no regression) ✓ |
 
 **Net B14 outcome:** every detail page in the app now resolves a stale/deleted/forbidden id to a not-found message in ~3 s instead of an infinite loading skeleton. Root fix (no-retry-on-4xx) is global; per-page error branches make each page render that state. Three commits: `04aa905` (retry predicate + tests), `92d60a4` (sites/templates + `common.notFound` ×10 locales), `6d5bcf0` (6 pages + shared component).
+
+## S8.3 — Gate kiosk (public, unauthenticated) — PASS, no security bug
+
+The contractor gate kiosk exposes two **public** procedures (`contractors.gate.publicByToken` read, `selfCheckIn` write). Adversarially reviewed + probed:
+- **Token = capability, high entropy:** `regenerateToken` = `randomBytes(24).toString('hex')` → **48 hex chars / 192-bit** (live-confirmed `tokenLen:48, hex:true`). Not brute-forceable/enumerable. Only exposed to authed managers (`gate.config`/`regenerateToken` require `contractors.manage`).
+- **All reads/writes scoped to the token's tenant.** `publicByToken` derives `tenantId` from the token then filters every query by it; `selfCheckIn` resolves `tenantId` from token and loads the visit via `loadVisitOrThrow(db, tenantId, visitId)` (`and(eq(tenantId), eq(id))`) — a **cross-tenant visitId → NOT_FOUND**, so a token-holder cannot check-in another tenant's visit.
+- **Bad token → NOT_FOUND** (live, unauthenticated: `badTokenStatus:404`). No crash/leak.
+- **No stored XSS:** `capturedFields` = `z.record(fieldId, z.string().max(2000))`; **no `dangerouslySetInnerHTML`** anywhere in the contractor/gate UI → React escapes values.
+- **Live:** generated a token for Northwind (throwaway tenant), then an **unauthenticated** (`credentials:'omit'`) `publicByToken` returned `200` with tenant-scoped (empty — no in-window visits) data. ✓
+
+Inherent trust model (whoever has the kiosk token can operate the kiosk) is by design; mitigation is token secrecy + `regenerateToken`. No rate-limit on the public write (low-severity availability note; needs the token).
+
+## S7.4 — Issue → action conversion — PASS (API + UI, bidirectional)
+
+Live in Northwind (seeded a category + observation, both were 0 before): observation **OBS-000001** → `actions.createFromIssue` → action **AC-000003** (priority high). `createFromIssue` stamps `sourceType:'issue'`, `sourceId`, writes a `created` activity.
+- **Linkage (API):** `actions.list({sourceType:'issue', sourceId})` returns exactly the one action (`linkedMatch:true`).
+- **Forward (UI):** observation detail → **Actions** tab shows "Replace leaking valve" / Open / High, linking to `/actions/{id}`.
+- **Reverse (UI):** action detail shows "Linked to observation OBS-000001 — S7.4 leaking valve near pump" + Open button.
+- **Regression:** both `observations/[id]` and `actions/[id]` render normally post-B14 (the moved/added error branches didn't break the happy path).
+
+## B15 — deep links are lost on login (S9.6 deep-link-after-login)
+
+**Severity: medium (UX / notification links).** An unauthenticated user who clicks a deep link — an email notification (heads-up, action assignment, schedule reminder), a shared observation, a bookmark — was bounced to the marketing homepage and, after signing in, landed on `/templates`, **never the page they clicked**.
+
+**Root cause.** All 13 module layouts gate on session and, when null, did `redirect(\`/${locale}\`)` — discarding the intended path (no `?next=`/`callbackUrl`). Post-OTP, `sign-in-card.tsx` hard-navigated to `\`/${locale}/templates\`` unconditionally. **Confirmed live:** an unauthenticated (`credentials:'omit'`) request to `/en/inspections/{id}` → `opaqueredirect` → `finalUrl: https://forma360.io/en`, path dropped.
+
+**Fix (commit pending).** New pure helper `apps/web/src/lib/sign-in-redirect.ts`:
+- `signInHref(locale, pathname)` → `/{locale}/sign-in?next=<path>` (used by all 13 layouts, reading the path from the middleware's `x-pathname` header). Deep links now go **straight to sign-in** carrying their destination (skips the marketing bounce).
+- `safeNextPath(next, locale)` — the **open-redirect guard** (the security boundary, since `next` is attacker-controllable): a destination is honoured only if it starts with `/{locale}/`, isn't protocol-relative (`//host`), and has no backslash tricks; otherwise falls back to `/{locale}/templates`. Used by the sign-in page (already-signed-in redirect) and `sign-in-card.tsx` (post-OTP navigation).
+- 6 unit tests cover the guard (accepts local paths; rejects `https://`, `//host`, `/\evil`, cross-locale, empty/null).
+
+**Behaviour change (intentional):** an unauthenticated hit to a protected route now lands on the **sign-in page** (with the deep link preserved) rather than the marketing homepage. The `/{locale}` root still shows marketing. Sign-up + invite-accept flows keep their `/templates` landing (a brand-new user/invitee has no prior deep link). Verification pending deploy.

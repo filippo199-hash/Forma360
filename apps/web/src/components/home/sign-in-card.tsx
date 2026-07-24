@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { safeNextPath } from '../../lib/sign-in-redirect';
 
 type Step = 'enterEmail' | 'enterCode';
 
@@ -27,7 +28,7 @@ type Step = 'enterEmail' | 'enterCode';
  *     session cookie + we hard-reload so the new session is picked up
  *     on the very next request.
  */
-export function SignInCard() {
+export function SignInCard({ next = null }: { next?: string | null }) {
   const t = useTranslations('auth.signIn');
   const tCommon = useTranslations('common');
   const locale = useLocale();
@@ -80,7 +81,9 @@ export function SignInCard() {
         return;
       }
       // Hard navigation so the new session cookie is picked up server-side.
-      window.location.assign(`/${locale}/templates`);
+      // `next` preserves a deep link the user was bounced from (S9.6);
+      // safeNextPath guards against open-redirect before we navigate.
+      window.location.assign(safeNextPath(next, locale));
     } catch {
       setError(tCommon('error'));
     } finally {
