@@ -822,13 +822,17 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         const settings = version.content.settings;
 
         const inserted = await ctx.db.transaction(async (tx) => {
+          // Atomic increment: `SET counter = counter + 1 … RETURNING` runs under
+          // the row lock, so two concurrent starts serialize and receive
+          // distinct numbers. A JS literal (`tpl.documentNumberCounter + 1`)
+          // from the pre-tx read would let both writers stamp the same number.
           const counterRows = await tx
             .update(templates)
             .set({
-              documentNumberCounter: tpl.documentNumberCounter + 1,
+              documentNumberCounter: sql`${templates.documentNumberCounter} + 1`,
               updatedAt: now,
             })
-            .where(eq(templates.id, tpl.id))
+            .where(and(eq(templates.tenantId, ctx.tenantId), eq(templates.id, tpl.id)))
             .returning({ counter: templates.documentNumberCounter });
           const counter = counterRows[0]?.counter ?? tpl.documentNumberCounter + 1;
           const documentNumber = renderDocumentNumber(settings.documentNumberFormat, counter);
