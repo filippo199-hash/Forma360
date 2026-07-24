@@ -10,7 +10,10 @@
  *
  * Used by the document detail page to drive the inline file preview panel.
  */
+import { isDocumentVisibleToUser } from '@forma360/api/document-visibility';
 import { documentVersions, documents } from '@forma360/db/schema';
+import { grantsAdminAccess } from '@forma360/permissions/catalogue';
+import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { createStorage } from '@forma360/shared/storage';
 import { and, eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
@@ -47,22 +50,50 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
   }
 
-  // Verify ownership.
+  // Verify ownership + fetch the fields needed for the visibility check.
   const rows = await ctx.db
     .select({
       storageKey: documents.storageKey,
       filename: documents.filename,
       mimeType: documents.mimeType,
       sizeBytes: documents.sizeBytes,
+      folderId: documents.folderId,
+      visibleToGroupIds: documents.visibleToGroupIds,
+      visibleToSiteIds: documents.visibleToSiteIds,
     })
     .from(documents)
     .where(and(eq(documents.tenantId, ctx.auth.tenantId), eq(documents.id, documentId)))
     .limit(1);
 
-  let doc = rows[0];
-  if (doc === undefined) {
+  const parent = rows[0];
+  if (parent === undefined) {
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
+
+  // Authorization: folder + own group/site visibility (B8). `documents.list`
+  // filters hidden documents out; this by-id download must refuse them too, or
+  // any signed-in tenant user could pull a restricted folder's file by guessing
+  // an id. Managers/admins bypass — parity with `list`. A hidden document 404s
+  // (not 403) so it is indistinguishable from one that does not exist.
+  const perms = await loadUserPermissions(ctx.db, ctx.auth.tenantId, ctx.auth.userId);
+  const isManager = perms.includes('documents.manage') || grantsAdminAccess(perms);
+  if (!isManager) {
+    const visible = await isDocumentVisibleToUser(ctx.db, ctx.auth.tenantId, ctx.auth.userId, {
+      folderId: parent.folderId,
+      visibleToGroupIds: parent.visibleToGroupIds,
+      visibleToSiteIds: parent.visibleToSiteIds,
+    });
+    if (!visible) {
+      return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
+    }
+  }
+
+  let doc = {
+    storageKey: parent.storageKey,
+    filename: parent.filename,
+    mimeType: parent.mimeType,
+    sizeBytes: parent.sizeBytes,
+  };
 
   // `?version=N` previews/downloads a specific historical version instead of
   // the current one. Tenant ownership is already proven via the parent document.

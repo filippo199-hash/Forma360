@@ -19,6 +19,10 @@
     "./router": {
       "types": "./src/router.ts",
       "default": "./src/router.ts"
+    },
+    "./document-visibility": {
+      "types": "./src/routers/document-visibility.ts",
+      "default": "./src/routers/document-visibility.ts"
     }
   },
   "scripts": {

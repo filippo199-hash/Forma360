@@ -10,7 +10,7 @@
  *
  * Callers with `documents.manage` bypass all of this and see everything.
  */
-import { groupMembers, siteGroups, siteMembers } from '@forma360/db/schema';
+import { documentFolders, groupMembers, siteGroups, siteMembers } from '@forma360/db/schema';
 import { and, eq, inArray } from 'drizzle-orm';
 
 export interface ViewerMemberships {
@@ -103,4 +103,39 @@ export function makeFolderVisibilityChecker(
   }
 
   return visible;
+}
+
+/**
+ * Whether a single document is visible to a viewer: its own group/site
+ * visibility passes AND every ancestor folder's visibility passes. Loads the
+ * viewer's memberships and the tenant's folder tree, then reuses the same
+ * predicates the `list` endpoint uses — so a by-id read (get, download,
+ * versions) enforces exactly what the list already filters. Callers that hold
+ * `documents.manage` (or admin) must bypass this themselves; this function
+ * makes no permission assumptions.
+ */
+export async function isDocumentVisibleToUser(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any,
+  tenantId: string,
+  userId: string,
+  doc: { folderId: string | null; visibleToGroupIds: unknown; visibleToSiteIds: unknown },
+): Promise<boolean> {
+  const [viewer, allFolders] = await Promise.all([
+    loadViewerMemberships(db, tenantId, userId),
+    db
+      .select({
+        id: documentFolders.id,
+        parentId: documentFolders.parentId,
+        visibleToGroupIds: documentFolders.visibleToGroupIds,
+        visibleToSiteIds: documentFolders.visibleToSiteIds,
+      })
+      .from(documentFolders)
+      .where(eq(documentFolders.tenantId, tenantId)),
+  ]);
+  const folderVisible = makeFolderVisibilityChecker(allFolders as FolderVis[], viewer);
+  return (
+    ownVisibilityPasses(doc.visibleToGroupIds, doc.visibleToSiteIds, viewer) &&
+    folderVisible(doc.folderId)
+  );
 }

@@ -36,12 +36,31 @@ import {
 } from '../tenant-guards';
 import { router } from '../trpc';
 import {
+  isDocumentVisibleToUser,
   loadViewerMemberships,
   makeFolderVisibilityChecker,
   ownVisibilityPasses,
 } from './document-visibility';
 
 type Db = Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'];
+
+/**
+ * Guard a by-id document read against folder + own visibility. `list`
+ * filters hidden documents out; a raw `.get`/`versions`/`signatureRequests`
+ * by id must refuse them too, or a non-member can read a restricted folder's
+ * contents (and storage keys) by guessing an id. Managers/admins bypass —
+ * they see everything, matching `list`.
+ */
+async function assertDocumentVisibleOrThrow(
+  ctx: { db: Db; tenantId: string; auth: { userId: string }; permissions: readonly string[] },
+  doc: { folderId: string | null; visibleToGroupIds: unknown; visibleToSiteIds: unknown },
+): Promise<void> {
+  if (ctx.permissions.includes('documents.manage')) return;
+  const visible = await isDocumentVisibleToUser(ctx.db, ctx.tenantId, ctx.auth.userId, doc);
+  if (!visible) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'document-not-visible' });
+  }
+}
 
 const documentIdInput = z.object({ documentId: z.string().length(26) });
 
@@ -236,6 +255,7 @@ export const documentsRouter = router({
     .input(documentIdInput)
     .query(async ({ ctx, input }) => {
       const doc = await loadDocumentOrThrow(ctx.db, ctx.tenantId, input.documentId);
+      await assertDocumentVisibleOrThrow(ctx, doc);
 
       const [uploaderRows, folderRows, versionRows, responsibleUserRows] = await Promise.all([
         ctx.db
@@ -505,6 +525,9 @@ export const documentsRouter = router({
     .use(requirePermission('documents.view'))
     .input(z.object({ documentId: z.string().length(26) }))
     .query(async ({ ctx, input }) => {
+      const doc = await loadDocumentOrThrow(ctx.db, ctx.tenantId, input.documentId);
+      await assertDocumentVisibleOrThrow(ctx, doc);
+
       const links = await ctx.db
         .select({
           headsUpId: headsUpDocuments.headsUpId,
@@ -651,7 +674,8 @@ export const documentsRouter = router({
       .use(requirePermission('documents.view'))
       .input(documentIdInput)
       .query(async ({ ctx, input }) => {
-        await loadDocumentOrThrow(ctx.db, ctx.tenantId, input.documentId);
+        const doc = await loadDocumentOrThrow(ctx.db, ctx.tenantId, input.documentId);
+        await assertDocumentVisibleOrThrow(ctx, doc);
         const rows = await ctx.db
           .select({
             id: documentVersions.id,

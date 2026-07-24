@@ -99,6 +99,7 @@ describe('Documents router (Phase 5C)', () => {
   let db: PgliteDatabase<typeof schema>;
   let tenantId: string;
   let adminUserId: string;
+  let seededSets: Awaited<ReturnType<typeof seedDefaultPermissionSets>>;
 
   function ctxFor(userId: string): Context {
     return createTestContext({
@@ -114,6 +115,7 @@ describe('Documents router (Phase 5C)', () => {
     tenantId = newId();
     await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
     const seeded = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
+    seededSets = seeded;
     adminUserId = newId();
     await db.insert(schema.user).values({
       id: adminUserId,
@@ -148,6 +150,64 @@ describe('Documents router (Phase 5C)', () => {
     expect(doc.name).toBe('Risk Assessment 2024');
     expect(folderName).toBe('Safety Docs');
     expect(doc.currentVersion).toBe(1);
+  });
+
+  it('B8: by-id reads (get/versions) enforce folder visibility for non-members', async () => {
+    const admin = createCaller(ctxFor(adminUserId));
+
+    // A group + a folder restricted to it + a document inside.
+    const groupId = newId();
+    await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'North Team' });
+    const { folderId } = await admin.documentFolders.create({
+      name: 'North Only',
+      visibleToGroupIds: [groupId],
+    });
+    const { documentId } = await admin.documents.create({
+      name: 'North Secret',
+      folderId,
+      storageKey: `${tenantId}/documents/north-secret.pdf`,
+      filename: 'north-secret.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 1024,
+    });
+
+    // Standard user NOT in the group vs Standard user IN the group.
+    const outsiderId = newId();
+    const memberId = newId();
+    await db.insert(schema.user).values([
+      {
+        id: outsiderId,
+        name: 'Outsider',
+        email: 'out@acme.test',
+        tenantId,
+        permissionSetId: seededSets.standard,
+      },
+      {
+        id: memberId,
+        name: 'Member',
+        email: 'mem@acme.test',
+        tenantId,
+        permissionSetId: seededSets.standard,
+      },
+    ]);
+    await db.insert(schema.groupMembers).values({ tenantId, groupId, userId: memberId });
+
+    // Non-member: get + versions are FORBIDDEN, and the doc is absent from list.
+    const outsider = createCaller(ctxFor(outsiderId));
+    await expect(outsider.documents.get({ documentId })).rejects.toThrow(/FORBIDDEN|not-visible/i);
+    await expect(outsider.documents.versions.list({ documentId })).rejects.toThrow(
+      /FORBIDDEN|not-visible/i,
+    );
+    const outsiderList = await outsider.documents.list({});
+    expect(outsiderList.find((d) => d.id === documentId)).toBeUndefined();
+
+    // Member of the group: get + versions succeed.
+    const member = createCaller(ctxFor(memberId));
+    expect((await member.documents.get({ documentId })).document.id).toBe(documentId);
+    expect(await member.documents.versions.list({ documentId })).toHaveLength(1);
+
+    // Admin (manager) bypasses visibility entirely.
+    expect((await admin.documents.get({ documentId })).document.id).toBe(documentId);
   });
 
   it('D-E03: rejects files larger than 50 MB', async () => {
