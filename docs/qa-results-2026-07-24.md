@@ -67,6 +67,8 @@ _Note: T-Mcr / T-NorthMcr / T-Invalid deferred — 3-template group oracle (T-Op
 | S7.2 Inspection lifecycle (conduct→submit→complete→report) | A1 | PARTIAL PASS | B4 | Start → fill Title page → answer question → submit → **Completed**; report renders (Title+Page1) with PDF/Word/Share buttons; "Prepared by" = full name. BUT the answered **site is missing from the report** (B4). Responses persist correctly with normal timing. |
 | S4 IDOR — inspections.create | (code-verified) | PASS | — | create loads memberships + resolveAccessRule → FORBIDDEN if unsatisfied (inspections.ts:567-617). Live E2E deferred. |
 | B3 regression unit tests | — | PASS | — | 2 tests added to templates.test.ts (commit 812df61); non-member→FORBIDDEN, member/manager→ok, open template→ok. All green. |
+| B4 fix downstream validation | A1 | PASS | — | After the fix, the Manchester **site overview shows the conducted inspection** (000003) under "Inspections: 1"; pre-fix inspections (siteId null) correctly absent. Full chain works: answer site → siteId set → report shows it → site overview links it. ss_9275ivsiq |
+| B4 regression unit tests | — | PASS | — | 2 tests in inspections.test.ts (commit cf84bbd): saveProgress+submit populate siteId; cross-tenant site id ignored. |
 | S1.3 Invite flow assigns set+group+site at invite | A0 | PASS | — | Invite form has Permission-set dropdown + group checkboxes + site checkboxes; all assigned at invite time (no post-accept step). A1/A2/A3 invited, emails sent, pending rows correct |
 | S7.11 Site create (Site vs Project type toggle) | A0 | PASS | — | Selecting "Site" correctly hides Project-only fields (Client/dates/status); Manchester+London created |
 | S7.13 Group create (manual mode) | A0 | PASS | — | North Team + South Team created |
