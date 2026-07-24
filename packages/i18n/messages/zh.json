@@ -979,7 +979,19 @@
       "signSlotCta": "Sign",
       "signedBadge": "Signed",
       "docxButton": "Download Word",
-      "viewReportButton": "查看报告"
+      "viewReportButton": "查看报告",
+      "awaitingWorkflowTitle": "Awaiting signatures",
+      "awaitingWorkflowBody": "{filled} of {total} signatures collected.",
+      "workflowSignerLabel": "Signatory {position}",
+      "workflowStatusPending": "Pending",
+      "workflowStatusSigned": "Signed",
+      "workflowSignedAt": "Signed {time}",
+      "workflowYourTurnTitle": "Your signature is required",
+      "workflowYourTurnBody": "Add your signature below to continue the workflow.",
+      "workflowWaitingTitle": "Signatures in progress",
+      "workflowWaitingBody": "Waiting for the other signatories. You'll be emailed when it's your turn to sign.",
+      "workflowSignSuccess": "Signature saved",
+      "workflowSignError": "Could not save your signature"
     },
     "signatures": {
       "title": "Sign inspection",

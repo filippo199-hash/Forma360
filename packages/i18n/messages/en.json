@@ -1109,7 +1109,19 @@
       "signSlot": "Sign slot {index}",
       "signSlotCta": "Sign",
       "signedBadge": "Signed",
-      "viewReportButton": "View report"
+      "viewReportButton": "View report",
+      "awaitingWorkflowTitle": "Awaiting signatures",
+      "awaitingWorkflowBody": "{filled} of {total} signatures collected.",
+      "workflowSignerLabel": "Signatory {position}",
+      "workflowStatusPending": "Pending",
+      "workflowStatusSigned": "Signed",
+      "workflowSignedAt": "Signed {time}",
+      "workflowYourTurnTitle": "Your signature is required",
+      "workflowYourTurnBody": "Add your signature below to continue the workflow.",
+      "workflowWaitingTitle": "Signatures in progress",
+      "workflowWaitingBody": "Waiting for the other signatories. You'll be emailed when it's your turn to sign.",
+      "workflowSignSuccess": "Signature saved",
+      "workflowSignError": "Could not save your signature"
     },
     "exports": {
       "shareButton": "Share link",

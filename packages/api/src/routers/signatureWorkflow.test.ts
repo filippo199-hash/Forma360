@@ -505,6 +505,98 @@ describe('template-level signature workflow', () => {
     });
   });
 
+  describe('inspections.get exposes workflow state for the status page', () => {
+    it('sequential: only the current-turn signer gets viewerCanSignWorkflow=true', async () => {
+      const templateId = await publishWorkflowTemplate({
+        name: 'SeqGet',
+        mode: 'sequential',
+        signerIds: [signer1Id, signer2Id, signer3Id],
+      });
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      const { inspectionId } = await adminCaller.inspections.create({ templateId });
+      await adminCaller.inspections.submit({ inspectionId });
+
+      // Signer 1 is the current turn → can sign; name pre-fill resolves.
+      const s1 = await createCaller(ctxFor(signer1Id)).inspections.get({ inspectionId });
+      expect(s1.viewerCanSignWorkflow).toBe(true);
+      expect(s1.viewerSignerName).toBe('Signer One');
+      expect(s1.workflowSigners).toHaveLength(3);
+      expect(s1.workflowSigners.every((r) => r.status === 'pending')).toBe(true);
+      expect(s1.workflowSigners.map((r) => r.signerName)).toEqual([
+        'Signer One',
+        'Signer Two',
+        'Signer Three',
+      ]);
+
+      // Signer 2 is not yet their turn → cannot sign, but still sees the roster.
+      const s2 = await createCaller(ctxFor(signer2Id)).inspections.get({ inspectionId });
+      expect(s2.viewerCanSignWorkflow).toBe(false);
+      expect(s2.viewerSignerName).toBe('Signer Two');
+
+      // A non-signatory admin can view the roster but never sign.
+      const admin = await adminCaller.inspections.get({ inspectionId });
+      expect(admin.viewerCanSignWorkflow).toBe(false);
+      expect(admin.viewerSignerName).toBeNull();
+      expect(admin.workflowSigners).toHaveLength(3);
+
+      // After signer 1 signs, the turn advances to signer 2.
+      await createCaller(ctxFor(signer1Id)).inspections.signWorkflow({
+        inspectionId,
+        signatureData: 'one',
+      });
+      const s1After = await createCaller(ctxFor(signer1Id)).inspections.get({ inspectionId });
+      expect(s1After.viewerCanSignWorkflow).toBe(false);
+      const s2After = await createCaller(ctxFor(signer2Id)).inspections.get({ inspectionId });
+      expect(s2After.viewerCanSignWorkflow).toBe(true);
+    });
+
+    it('parallel: every pending signer gets viewerCanSignWorkflow=true', async () => {
+      const templateId = await publishWorkflowTemplate({
+        name: 'ParGet',
+        mode: 'parallel',
+        signerIds: [signer1Id, signer2Id],
+      });
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      const { inspectionId } = await adminCaller.inspections.create({ templateId });
+      await adminCaller.inspections.submit({ inspectionId });
+
+      const s1 = await createCaller(ctxFor(signer1Id)).inspections.get({ inspectionId });
+      const s2 = await createCaller(ctxFor(signer2Id)).inspections.get({ inspectionId });
+      expect(s1.viewerCanSignWorkflow).toBe(true);
+      expect(s2.viewerCanSignWorkflow).toBe(true);
+
+      // Once signer 1 has signed, they can no longer sign; signer 2 still can.
+      await createCaller(ctxFor(signer1Id)).inspections.signWorkflow({
+        inspectionId,
+        signatureData: 'one',
+      });
+      const s1After = await createCaller(ctxFor(signer1Id)).inspections.get({ inspectionId });
+      expect(s1After.viewerCanSignWorkflow).toBe(false);
+      const s2After = await createCaller(ctxFor(signer2Id)).inspections.get({ inspectionId });
+      expect(s2After.viewerCanSignWorkflow).toBe(true);
+    });
+
+    it('completed inspection: no one can sign', async () => {
+      const templateId = await publishWorkflowTemplate({
+        name: 'DoneGet',
+        mode: 'parallel',
+        signerIds: [signer1Id],
+      });
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      const { inspectionId } = await adminCaller.inspections.create({ templateId });
+      await adminCaller.inspections.submit({ inspectionId });
+      await createCaller(ctxFor(signer1Id)).inspections.signWorkflow({
+        inspectionId,
+        signatureData: 'one',
+      });
+
+      const done = await createCaller(ctxFor(signer1Id)).inspections.get({ inspectionId });
+      expect(done.inspection.status).toBe('completed');
+      expect(done.viewerCanSignWorkflow).toBe(false);
+      expect(done.workflowSigners[0]?.status).toBe('signed');
+    });
+  });
+
   describe('schema validation', () => {
     it('validateSignatureWorkflow rejects enabled with no signatories', () => {
       const content = workflowContent({

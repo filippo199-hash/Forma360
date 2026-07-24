@@ -560,9 +560,24 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           )
           .orderBy(inspectionApprovals.decidedAt);
 
-        const workflowSigners = await ctx.db
-          .select()
+        const workflowSignerRows = await ctx.db
+          .select({
+            id: inspectionWorkflowSigners.id,
+            tenantId: inspectionWorkflowSigners.tenantId,
+            inspectionId: inspectionWorkflowSigners.inspectionId,
+            position: inspectionWorkflowSigners.position,
+            signerUserId: inspectionWorkflowSigners.signerUserId,
+            status: inspectionWorkflowSigners.status,
+            signedAt: inspectionWorkflowSigners.signedAt,
+            signatureData: inspectionWorkflowSigners.signatureData,
+            comment: inspectionWorkflowSigners.comment,
+            createdAt: inspectionWorkflowSigners.createdAt,
+            signerNameRaw: user.name,
+            signerFirstName: user.firstName,
+            signerLastName: user.lastName,
+          })
           .from(inspectionWorkflowSigners)
+          .leftJoin(user, eq(user.id, inspectionWorkflowSigners.signerUserId))
           .where(
             and(
               eq(inspectionWorkflowSigners.tenantId, ctx.tenantId),
@@ -570,6 +585,38 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             ),
           )
           .orderBy(asc(inspectionWorkflowSigners.position));
+        const workflowSigners = workflowSignerRows.map(
+          ({ signerNameRaw, signerFirstName, signerLastName, ...row }) => ({
+            ...row,
+            signerName:
+              signerFirstName !== null && signerLastName !== null
+                ? `${signerFirstName} ${signerLastName}`
+                : signerNameRaw,
+          }),
+        );
+
+        // Whether the caller may sign the workflow *right now*. Mirrors the
+        // turn rules enforced in `signWorkflow` (sequential = lowest pending;
+        // parallel = any pending) so the status page can render the pad
+        // without re-deriving the rules client-side. `viewerSignerName`
+        // pre-fills the pad for the calling signer.
+        const workflow = version.content.settings.signatureWorkflow;
+        const viewerRow = workflowSigners.find((r) => r.signerUserId === ctx.auth.userId);
+        const viewerSignerName = viewerRow?.signerName ?? null;
+        let viewerCanSignWorkflow = false;
+        if (
+          insp.status === 'awaiting_signature_workflow' &&
+          workflow?.enabled === true &&
+          viewerRow !== undefined &&
+          viewerRow.status === 'pending'
+        ) {
+          if (workflow.mode === 'sequential') {
+            const lowestPending = workflowSigners.find((r) => r.status === 'pending');
+            viewerCanSignWorkflow = lowestPending?.id === viewerRow.id;
+          } else {
+            viewerCanSignWorkflow = true;
+          }
+        }
 
         // Resolve names for the report's title page (site, conducted-by).
         const [siteRow] =
@@ -599,6 +646,8 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           signatures: sigs,
           approvals: approvalRows,
           workflowSigners,
+          viewerCanSignWorkflow,
+          viewerSignerName,
         };
       }),
 
