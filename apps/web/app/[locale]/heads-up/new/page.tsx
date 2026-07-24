@@ -157,8 +157,32 @@ export default function NewHeadsUpPage() {
   const { data: allDocuments = [] } = trpc.documents.list.useQuery({});
 
   // ── tRPC mutations ──
+  // `create` always writes a draft; publishing immediately is a create→publish
+  // chain (the "Publish" button must actually publish, not just save a draft).
+  // A scheduled publishAt is left as a draft for the schedule job to publish.
+  const publishAfterCreateRef = useRef(false);
+  const createdIdRef = useRef<string | null>(null);
+
+  const publishMutation = trpc.headsUps.publish.useMutation({
+    onSuccess: () => {
+      toast.success(t('publishedToast'));
+      if (createdIdRef.current !== null) router.push(`/${locale}/heads-up/${createdIdRef.current}`);
+    },
+    onError: (err) => {
+      // The draft exists — send the user to the detail page to retry publish.
+      toast.error(err.message.length > 0 ? err.message : tCommon('error'));
+      if (createdIdRef.current !== null) router.push(`/${locale}/heads-up/${createdIdRef.current}`);
+    },
+  });
+
   const createMutation = trpc.headsUps.create.useMutation({
     onSuccess: ({ headsUpId }) => {
+      if (publishAfterCreateRef.current) {
+        // Publish resolves recipients from the recipientSpec just stored.
+        createdIdRef.current = headsUpId;
+        publishMutation.mutate({ headsUpId });
+        return;
+      }
       toast.success(t('savedToast'));
       router.push(`/${locale}/heads-up/${headsUpId}`);
     },
@@ -277,6 +301,10 @@ export default function NewHeadsUpPage() {
       userIds: [] as string[],
     });
 
+    // Publish immediately only for an unscheduled "Publish"; a scheduled
+    // publishAt stays a draft until the schedule fires.
+    publishAfterCreateRef.current = andPublish && publishAt === null;
+
     createMutation.mutate({
       title: title.trim(),
       description: description.trim(),
@@ -292,7 +320,8 @@ export default function NewHeadsUpPage() {
     });
   }
 
-  const canSave = title.trim().length > 0 && !createMutation.isPending;
+  const canSave =
+    title.trim().length > 0 && !createMutation.isPending && !publishMutation.isPending;
 
   // ── Preview card ──
   const previewTitle = title.trim().length > 0 ? title : t('previewUntitled');
