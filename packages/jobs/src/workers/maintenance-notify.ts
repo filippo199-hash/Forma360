@@ -116,6 +116,14 @@ export function createMaintenanceNotifyHandler(deps: MaintenanceNotifyDeps) {
       }
     }
 
+    // Only stamp the dedup marker once we've actually delivered (or there was
+    // nobody to notify). If every send failed, leave this due-date window
+    // unstamped and throw so BullMQ retries — otherwise the marker suppresses
+    // every future attempt and the reminder is silently lost forever (an asset
+    // goes un-serviced with no alert).
+    if (!sent && adminRows.length > 0) {
+      throw new Error('[maintenance-notify] all reminder emails failed — will retry');
+    }
     // Stamp dedup log.
     const newSentForDue = [...sentForDue, daysBefore];
     await deps.db
