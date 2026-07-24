@@ -135,8 +135,8 @@ describe('read authorization', () => {
     const contractorA = newId();
     const contractorB = newId();
     await db.insert(schema.contractors).values([
-      { id: contractorA, tenantId, name: 'Acme Sub', createdBy: adminId },
-      { id: contractorB, tenantId, name: 'Beta Sub', createdBy: adminId },
+      { id: contractorA, tenantId, name: 'Acme Sub' },
+      { id: contractorB, tenantId, name: 'Beta Sub' },
     ]);
     const portalSet = newId();
     await db.insert(schema.permissionSets).values({

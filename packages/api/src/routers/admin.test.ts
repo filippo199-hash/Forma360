@@ -255,7 +255,10 @@ describe('Phase 1 admin routers', () => {
       const targetId = `usr_${newId()}`;
       await db.insert(schema.user).values({
         id: targetId,
-        name: 'Dave',
+        name: 'Dave Smith',
+        firstName: 'Dave',
+        lastName: 'Smith',
+        phone: '+15551234567',
         email: 'dave@acme.test',
         tenantId,
         permissionSetId: standardSetId,
@@ -278,6 +281,10 @@ describe('Phase 1 admin routers', () => {
       const row = (await db.select().from(schema.user)).find((r) => r.id === targetId);
       expect(row?.name).toBe('Anonymised User');
       expect(row?.email).toMatch(/@anonymised\.local$/);
+      // first/last name + phone are PII too — must be scrubbed (B12).
+      expect(row?.firstName).toBeNull();
+      expect(row?.lastName).toBeNull();
+      expect(row?.phone).toBeNull();
       expect(row?.deactivatedAt).toBeInstanceOf(Date);
 
       const values = await db.select().from(schema.userCustomFieldValues);

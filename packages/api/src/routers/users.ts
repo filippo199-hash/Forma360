@@ -498,6 +498,12 @@ export const usersRouter = router({
         .update(user)
         .set({
           name: 'Anonymised User',
+          // `firstName`/`lastName`/`phone` (added after this handler first
+          // shipped) are PII and are now rendered across the UI — scrub them
+          // too, or the person's real name survives anonymisation.
+          firstName: null,
+          lastName: null,
+          phone: null,
           email: tombstone,
           image: null,
           deactivatedAt: new Date(),
