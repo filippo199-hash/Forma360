@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
@@ -65,34 +65,55 @@ export function VisibilityTab({
     setSiteIds([...currentAccess.siteIds]);
   }, [currentAccess]);
 
+  // Whether the in-flight save should be followed by publishing. A ref (not
+  // state) so the mutation's onSuccess reads the latest intent without a stale
+  // closure when the shell's top-bar button triggers a save→publish.
+  const publishAfterSaveRef = useRef(false);
+
   const updateAccess = trpc.templates.updateAccess.useMutation({
     onSuccess: () => {
       void utils.templates.get.invalidate({ templateId });
       void utils.templates.list.invalidate();
       void utils.templates.getAccess.invalidate({ templateId });
-      if (publishMode && onPublished !== undefined) {
-        // Wizard mode: don't show a "saved" toast — the shell will show
-        // "Template published" after the publish mutation completes.
-        onPublished();
+      if (publishAfterSaveRef.current) {
+        publishAfterSaveRef.current = false;
+        // Save→publish flow: the shell fires `templates.publish` and shows the
+        // "Template published" toast, so we stay quiet here.
+        onPublished?.();
       } else {
         toast.success(t('saveSuccess'));
       }
     },
     onError: () => {
+      publishAfterSaveRef.current = false;
       toast.error(t('saveError'));
     },
   });
 
-  function handleSave() {
-    updateAccess.mutate({
-      templateId,
-      access: { mode, groupIds, siteIds },
-    });
+  function persistAccess() {
+    updateAccess.mutate({ templateId, access: { mode, groupIds, siteIds } });
   }
 
-  // Keep the shell's top-bar Publish button pointed at the latest handler
-  // (captures the current mode/groups/sites via closure).
-  if (submitRef !== undefined) submitRef.current = handleSave;
+  /** In-tab "Save changes" (non-wizard): persist the audience, no publish. */
+  function handleSaveOnly() {
+    publishAfterSaveRef.current = false;
+    persistAccess();
+  }
+
+  /**
+   * Persist the audience and then publish. Used by the in-tab "Publish" button
+   * (wizard mode) AND by the shell's top-bar Publish button — so a selection
+   * made after jumping straight to this tab via the stepper (outside the
+   * wizard) is committed rather than silently dropped on publish (bug B1).
+   */
+  function handleSaveAndPublish() {
+    publishAfterSaveRef.current = true;
+    persistAccess();
+  }
+
+  // The shell's top-bar Publish button always saves the current selection then
+  // publishes (captures the current mode/groups/sites via closure).
+  if (submitRef !== undefined) submitRef.current = handleSaveAndPublish;
 
   return (
     <div className="flex-1 overflow-y-auto bg-muted/30">
@@ -156,7 +177,7 @@ export function VisibilityTab({
           </Button>
           {publishMode ? (
             <Button
-              onClick={handleSave}
+              onClick={handleSaveAndPublish}
               disabled={updateAccess.isPending || isPublishing}
               className="min-w-[140px]"
             >
@@ -168,7 +189,7 @@ export function VisibilityTab({
             </Button>
           ) : (
             <Button
-              onClick={handleSave}
+              onClick={handleSaveOnly}
               disabled={updateAccess.isPending}
               className="min-w-[140px]"
             >

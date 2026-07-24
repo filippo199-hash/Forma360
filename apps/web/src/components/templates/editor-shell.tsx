@@ -151,6 +151,28 @@ export function EditorShell({
     publish.mutate({ templateId });
   }
 
+  /**
+   * Top-bar Publish clicked while on the Visibility tab — whether or not the
+   * user entered via the wizard. Save any unsaved build changes first, then let
+   * VisibilityTab persist the CURRENT audience and publish. This is what stops
+   * a visibility selection made after jumping straight to this tab via the
+   * stepper from being silently discarded on publish (bug B1).
+   */
+  function handlePublishFromVisibility() {
+    if (state.isDirty) {
+      const payload: Parameters<typeof saveDraft.mutate>[0] = {
+        templateId,
+        content: state.content,
+        ...(state.loadedUpdatedAt !== null ? { expectedUpdatedAt: state.loadedUpdatedAt } : {}),
+      };
+      saveDraft.mutate(payload, {
+        onSuccess: () => visibilitySubmitRef.current?.(),
+      });
+    } else {
+      visibilitySubmitRef.current?.();
+    }
+  }
+
   const tabs: { id: ActiveTab; label: string }[] = [
     { id: 'build', label: t('build') },
     { id: 'settings', label: t('settings') },
@@ -253,7 +275,20 @@ export function EditorShell({
           >
             {t('saveButton')}
           </Button>
-          {publishMode && activeTab === 'settings' ? (
+          {activeTab === 'visibility' ? (
+            // On the Visibility tab the top-bar Publish ALWAYS commits the
+            // current audience selection then publishes — regardless of whether
+            // the user arrived via the wizard or jumped here via the stepper.
+            // This prevents the selection from being silently dropped (bug B1).
+            <Button
+              size="sm"
+              onClick={handlePublishFromVisibility}
+              disabled={publish.isPending || saveDraft.isPending}
+              aria-label={t('publishButton')}
+            >
+              {publish.isPending ? t('publishWizardSaving') : t('publishButton')}
+            </Button>
+          ) : publishMode && activeTab === 'settings' ? (
             <Button
               size="sm"
               onClick={handleSettingsNext}
@@ -264,18 +299,7 @@ export function EditorShell({
                 ? t('settingsTab.savingForWizard')
                 : t('settingsTab.continueToVisibility')}
             </Button>
-          ) : null}
-          {publishMode && activeTab === 'visibility' ? (
-            <Button
-              size="sm"
-              onClick={() => visibilitySubmitRef.current?.()}
-              disabled={publish.isPending}
-              aria-label={t('publishButton')}
-            >
-              {publish.isPending ? t('publishWizardSaving') : t('publishButton')}
-            </Button>
-          ) : null}
-          {!publishMode ? (
+          ) : (
             <Button
               size="sm"
               onClick={handlePublishClick}
@@ -284,7 +308,7 @@ export function EditorShell({
             >
               {saveDraft.isPending ? t('publishWizardSaving') : t('publishButton')}
             </Button>
-          ) : null}
+          )}
         </div>
       </header>
 
