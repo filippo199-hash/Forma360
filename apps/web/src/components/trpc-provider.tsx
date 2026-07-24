@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import superjson from 'superjson';
 import { trpc } from '../lib/trpc/client';
+import { shouldRetryQuery } from '../lib/trpc/retry';
 
 /**
  * Wraps every client component in the TanStack Query + tRPC React contexts.
@@ -20,7 +21,7 @@ export function TRPCProvider({ children }: { children: ReactNode }) {
           queries: {
             staleTime: 30_000,
             refetchOnWindowFocus: false,
-            retry: 1,
+            retry: shouldRetryQuery,
           },
         },
       }),
