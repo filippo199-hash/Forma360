@@ -160,3 +160,31 @@ Both fixed by moving the error check **inside** the loading gate with a NOT_FOUN
 | valid inspection id | loads | loads (no regression) ✓ |
 
 **Residual (minor, not fixed):** the `enabled: id.length === 26` gate means a *malformed-length* id (e.g. a truncated link) disables the query entirely (never fires) → still an infinite skeleton. Rare (deep-links carry full 26-char ULIDs); a follow-up could render not-found when the id is structurally invalid.
+
+### B14 systemic sweep — every detail page (2026-07-24)
+
+After fixing sites/templates I swept **all** detail-page routes for the same "skeleton with no reachable error branch" shape. The inspections family (`[inspectionId]/{page,status,report,signatures}`, `approvals/[inspectionId]`) was the **only** group already correct. Six more pages hung on a bad id:
+
+| Page | Bug shape | Fix (commit `6d5bcf0`) |
+|---|---|---|
+| `schedules/[scheduleId]` | no error branch | in-gate `<DetailNotFound>` |
+| `contractors/[contractorId]` | no error branch | in-gate `<DetailNotFound>` |
+| `actions/[actionId]` | no error branch | in-gate `<DetailNotFound>` |
+| `assets/[assetId]` | no error branch | in-gate `<DetailNotFound>` |
+| `heads-up/[headsUpId]` | no error branch | in-gate `<DetailNotFound>` |
+| `observations/[observationId]` | not-found block was **dead code below** the gate | moved above gate; kept back-link; `<DetailNotFound>` message |
+
+New shared `apps/web/src/components/detail-not-found.tsx` owns the `common.notFound` / `common.error` distinction so the pattern is one component, not eight copies. All six queries throw NOT_FOUND server-side (verified in the routers). typecheck + lint + the retry unit test all green.
+
+**Verified live — all 9 detail-page families** (deploys `04aa905` / `92d60a4` / `6d5bcf0`). Each bad id `01KY0000000000000000000000` renders a not-found alert in ~3 s with **0 skeletons** (was 7 min+):
+
+| Page | Result |
+|---|---|
+| `inspections/{id}` | "Inspection not found." ✓ |
+| `sites/{id}` · `templates/{id}` | "Not found." ✓ |
+| `actions/{id}` · `assets/{id}` · `schedules/{id}` | "Not found." ✓ |
+| `heads-up/{id}` · `contractors/{id}` | "Not found." ✓ |
+| `observations/{id}` | "Not found." + back-link ✓ |
+| valid `inspections/{id}` | loads normally (no regression) ✓ |
+
+**Net B14 outcome:** every detail page in the app now resolves a stale/deleted/forbidden id to a not-found message in ~3 s instead of an infinite loading skeleton. Root fix (no-retry-on-4xx) is global; per-page error branches make each page render that state. Three commits: `04aa905` (retry predicate + tests), `92d60a4` (sites/templates + `common.notFound` ×10 locales), `6d5bcf0` (6 pages + shared component).
