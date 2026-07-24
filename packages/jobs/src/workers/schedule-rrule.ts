@@ -15,6 +15,16 @@ import rrulePkg from 'rrule';
 import type { RRuleSet as RRuleSetType } from 'rrule';
 const { RRule, RRuleSet, rrulestr } = rrulePkg;
 
+/**
+ * Hard ceiling on how many occurrences any single RRULE may expand to in one
+ * call. A 14-day materialise window never legitimately exceeds ~336 (hourly);
+ * this 6× margin bounds a pathological rule (e.g. `FREQ=HOURLY;BYMINUTE=0..59`
+ * or an absurd date range) so `rule.between` can't allocate a multi-million
+ * element array and wedge the shared worker for every tenant. Defence-in-depth
+ * alongside `validateRrule`'s frequency floor.
+ */
+export const MAX_OCCURRENCES_PER_RULE = 2000;
+
 export interface OccurrencesBetweenInput {
   /** The raw RRULE string (e.g. `FREQ=DAILY;BYHOUR=9`). */
   rrule: string;
@@ -40,7 +50,10 @@ export function occurrencesBetween(input: OccurrencesBetweenInput): Date[] {
   const upper = input.endAt && input.endAt < input.until ? input.endAt : input.until;
   // rrule.between is start-exclusive by default; inc=true keeps equal
   // timestamps on both ends, matching the half-open semantics we want.
-  return rule.between(input.from, upper, true);
+  // The iterator caps the walk at MAX_OCCURRENCES_PER_RULE so a pathological
+  // rule (e.g. sub-hourly, or `BYMINUTE=0..59`) can't allocate an unbounded
+  // array and wedge the shared worker.
+  return rule.between(input.from, upper, true, (_date, i) => i < MAX_OCCURRENCES_PER_RULE);
 }
 
 /**
@@ -57,6 +70,12 @@ export function validateRrule(rrule: string): string | null {
     if (parsed instanceof RRule) {
       if (parsed.options.freq === undefined || parsed.options.freq === null) {
         return 'RRULE missing FREQ';
+      }
+      // Floor the frequency: sub-hourly rules (MINUTELY=5, SECONDLY=6) are
+      // never a legitimate inspection cadence and would expand to millions of
+      // occurrences, starving the shared materialise worker for every tenant.
+      if (parsed.options.freq >= RRule.MINUTELY) {
+        return 'RRULE frequency too high — the minimum interval is hourly';
       }
       return null;
     }

@@ -72,6 +72,14 @@ registerDependentResolver('notifications', schedulesResolver);
 // ─── RRULE validation ──────────────────────────────────────────────────────
 
 /**
+ * Hard ceiling on occurrences expanded from a single RRULE. Mirrors the
+ * worker's `MAX_OCCURRENCES_PER_RULE` — bounds memory when the month
+ * calendar expands a rule over a wide range so one pathological schedule
+ * can't OOM the API process.
+ */
+const MAX_OCCURRENCES_PER_RULE = 2000;
+
+/**
  * Parse an RRULE string. Returns null on success, otherwise a message
  * suitable for a BAD_REQUEST cause.
  */
@@ -81,6 +89,12 @@ function validateRrule(rrule: string): string | null {
     if (parsed instanceof RRule) {
       if (parsed.options.freq === undefined || parsed.options.freq === null) {
         return 'RRULE must include a FREQ (e.g. FREQ=DAILY)';
+      }
+      // Reject sub-hourly cadences (MINUTELY/SECONDLY) — never a legitimate
+      // inspection schedule, and they expand to millions of occurrences that
+      // would starve the shared materialise worker for every tenant.
+      if (parsed.options.freq >= RRule.MINUTELY) {
+        return 'RRULE frequency too high — the minimum interval is hourly';
       }
     }
     return null;
@@ -104,7 +118,7 @@ function occurrencesInRange(
   try {
     const rule = rrulestr(rrule, { dtstart: startAt });
     const upper = endAt !== null && endAt < to ? endAt : to;
-    return rule.between(from, upper, true);
+    return rule.between(from, upper, true, (_d, i) => i < MAX_OCCURRENCES_PER_RULE);
   } catch {
     return [];
   }
@@ -587,6 +601,12 @@ export const schedulesRouter = router({
     .query(async ({ ctx, input }) => {
       const from = new Date(input.from);
       const to = new Date(input.to);
+      // Bound the range so a `from: 2000 … to: 9999` request can't expand
+      // every schedule over millennia and OOM the request. A calendar never
+      // needs more than a year at a time.
+      if (to.getTime() - from.getTime() > 366 * 24 * 60 * 60 * 1000) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Date range too wide (max 366 days)' });
+      }
 
       const scheds = await ctx.db
         .select({
