@@ -219,4 +219,10 @@ Live in Northwind (seeded a category + observation, both were 0 before): observa
 - `safeNextPath(next, locale)` — the **open-redirect guard** (the security boundary, since `next` is attacker-controllable): a destination is honoured only if it starts with `/{locale}/`, isn't protocol-relative (`//host`), and has no backslash tricks; otherwise falls back to `/{locale}/templates`. Used by the sign-in page (already-signed-in redirect) and `sign-in-card.tsx` (post-OTP navigation).
 - 6 unit tests cover the guard (accepts local paths; rejects `https://`, `//host`, `/\evil`, cross-locale, empty/null).
 
-**Behaviour change (intentional):** an unauthenticated hit to a protected route now lands on the **sign-in page** (with the deep link preserved) rather than the marketing homepage. The `/{locale}` root still shows marketing. Sign-up + invite-accept flows keep their `/templates` landing (a brand-new user/invitee has no prior deep link). Verification pending deploy.
+**Behaviour change (intentional):** an unauthenticated hit to a protected route now lands on the **sign-in page** (with the deep link preserved) rather than the marketing homepage. The `/{locale}` root still shows marketing. Sign-up + invite-accept flows keep their `/templates` landing (a brand-new user/invitee has no prior deep link).
+
+**Verified live (deploy `85f075d`) — full E2E:**
+1. Unauthenticated (`credentials:'omit'`) `/en/inspections/{id}` and `/en/actions/{id}` → both redirect to `/en/sign-in?next=<encoded original path>` (was `/en`, path dropped). ✓
+2. Signed out as Alice, navigated to `/en/inspections/01KY9YA1Z2RBB6EFVGSQRTB1FJ` → landed on the **sign-in page** with `?next=%2Fen%2Finspections%2F…` in the URL (not marketing). ✓
+3. Entered email + OTP → **landed on the inspection** `/en/inspections/01KY9YA1Z2RBB6EFVGSQRTB1FJ` (conduct page rendered), **not** `/templates`. ✓
+Normal login is unaffected (the OTP flow completed cleanly). ss_02825alr3 (sign-in w/ next) → ss_82688g9fg (landed on deep link).
