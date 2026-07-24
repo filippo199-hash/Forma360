@@ -60,6 +60,8 @@ _Note: T-Mcr / T-NorthMcr / T-Invalid deferred — 3-template group oracle (T-Op
 | S4.4-partial Admin page direct URL | A2 | PASS | — | Direct nav to /templates redirected to /settings/profile (admin-gated layout) |
 | **S4 IDOR — templates.get/getVersion by id** | A3 (South) | **PASS (after B3 fix)** | B3 | Was a leak (200) → now 403 for forbidden template; 200 for own/public. Server enforces access rule on the read path. |
 | S2.5 Server-side enforcement — inspections.create | (code-verified) | PASS | — | inspections.create loads caller memberships + resolveAccessRule → FORBIDDEN if not satisfied (templates.ts:567-617). Live E2E not yet run. |
+| **S5.1 Cross-tenant list isolation** | B0 (Tenant B admin) | **PASS** | — | B0 sees 0 of Tenant A's templates, sites, users. All lists empty. ss_2056npy5l / ss_5490hruwp / ss_7406rzma2 |
+| **S5.3 Cross-tenant read by ID** | B0 | **PASS** | — | `templates.get(A's T-North id)` from B0's admin session → **404 NOT_FOUND** (tenant-scoped query, no row). Even admin + known id can't cross the tenant boundary. |
 | S1.3 Invite flow assigns set+group+site at invite | A0 | PASS | — | Invite form has Permission-set dropdown + group checkboxes + site checkboxes; all assigned at invite time (no post-accept step). A1/A2/A3 invited, emails sent, pending rows correct |
 | S7.11 Site create (Site vs Project type toggle) | A0 | PASS | — | Selecting "Site" correctly hides Project-only fields (Client/dates/status); Manchester+London created |
 | S7.13 Group create (manual mode) | A0 | PASS | — | North Team + South Team created |
