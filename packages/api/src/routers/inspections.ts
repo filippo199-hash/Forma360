@@ -59,7 +59,8 @@ import type { SignatureWorkflow } from '@forma360/shared/template-schema';
 import { collectActiveTriggers, missingEvidence } from '@forma360/shared/inspection-eval';
 import { createInspectionActionIfAbsent } from './actions';
 import { TRPCError } from '@trpc/server';
-import { and, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
+import { callerSatisfiesAccessRule, loadCallerAccessSnapshot } from '../access-rule';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertSitesInTenant } from '../tenant-guards';
@@ -478,7 +479,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           where.push(eq(inspections.sourceId, input.sourceIssueId));
         }
         if (!input.includeArchived) where.push(isNull(inspections.archivedAt));
-        return ctx.db
+        const rows = await ctx.db
           .select({
             id: inspections.id,
             templateId: inspections.templateId,
@@ -497,6 +498,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             sourceType: inspections.sourceType,
             sourceId: inspections.sourceId,
             templateName: templates.name,
+            accessRuleId: templates.accessRuleId,
             conductedByName: user.name,
             openActionsCount: sql<number>`(
               SELECT COUNT(*)::int FROM actions a
@@ -512,6 +514,37 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           .leftJoin(user, eq(user.id, inspections.createdBy))
           .where(and(...where))
           .orderBy(desc(inspections.startedAt));
+
+        // Non-managers only see inspections whose pinned template's access rule
+        // they satisfy — extends the B3 template-content gate to the instances.
+        // Managers (inspections.manage) bypass, matching templates.list.
+        if (ctx.permissions.includes('inspections.manage')) return rows;
+        const ruleIds = [
+          ...new Set(
+            rows.map((r) => r.accessRuleId).filter((id): id is string => id !== null),
+          ),
+        ];
+        if (ruleIds.length === 0) return rows;
+        const rules = await ctx.db
+          .select()
+          .from(accessRules)
+          .where(and(eq(accessRules.tenantId, ctx.tenantId), inArray(accessRules.id, ruleIds)));
+        const ruleMap = new Map(rules.map((r) => [r.id, r]));
+        const snap = await loadCallerAccessSnapshot(ctx.db, ctx.tenantId, ctx.auth.userId);
+        return rows.filter((r) => {
+          if (r.accessRuleId === null) return true;
+          const rule = ruleMap.get(r.accessRuleId);
+          if (rule === undefined) return false;
+          return resolveAccessRule(
+            {
+              id: rule.id,
+              groupIds: rule.groupIds,
+              siteIds: rule.siteIds,
+              invalidatedAt: rule.invalidatedAt,
+            },
+            snap,
+          );
+        });
       }),
 
     get: tenantProcedure
@@ -527,6 +560,27 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           .limit(1);
         const insp = rows[0];
         if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+        // Non-managers may only read an inspection whose template's access rule
+        // they satisfy (extends the B3 template-content gate to instances).
+        // Managers (inspections.manage) bypass, matching templates.get.
+        if (!ctx.permissions.includes('inspections.manage')) {
+          const tplRows = await ctx.db
+            .select({ accessRuleId: templates.accessRuleId })
+            .from(templates)
+            .where(and(eq(templates.tenantId, ctx.tenantId), eq(templates.id, insp.templateId)))
+            .limit(1);
+          const accessRuleId = tplRows[0]?.accessRuleId ?? null;
+          if (
+            accessRuleId !== null &&
+            !(await callerSatisfiesAccessRule(ctx.db, ctx.tenantId, ctx.auth.userId, accessRuleId))
+          ) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'You do not satisfy this template’s access rule',
+            });
+          }
+        }
 
         const versionRows = await ctx.db
           .select()

@@ -214,6 +214,7 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
   let db: PgliteDatabase<typeof schema>;
   let tenantId: string;
   let adminUserId: string;
+  let seededSets: Awaited<ReturnType<typeof seedDefaultPermissionSets>>;
 
   function ctxFor(userId: string): Context {
     return createTestContext({
@@ -232,6 +233,7 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
     tenantId = newId();
     await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
     const seeded = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
+    seededSets = seeded;
     adminUserId = `usr_${newId()}`;
     await db.insert(schema.user).values({
       id: adminUserId,
@@ -497,6 +499,84 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
         .where(eq(schema.templates.id, templateId));
 
       await expect(caller.inspections.create({ templateId })).rejects.toThrow(/access rule/i);
+    });
+  });
+
+  describe('read gating by template access rule (extends B3 to instances)', () => {
+    it('non-member cannot get/list/export an inspection of a restricted template; member + manager can', async () => {
+      const admin = createCaller(ctxFor(adminUserId));
+      // Conduct first, THEN restrict the template (create-time rule is a
+      // separate gate; here we exercise the read gate).
+      const { templateId } = await createPublishedTemplate(admin, 'Restricted');
+      const { inspectionId } = await admin.inspections.create({ templateId });
+      const { templateId: openTpl } = await createPublishedTemplate(admin, 'Open');
+      const { inspectionId: openInsp } = await admin.inspections.create({ templateId: openTpl });
+
+      const groupId = newId();
+      await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'North' });
+      const ruleId = newId();
+      await db.insert(schema.accessRules).values({
+        id: ruleId,
+        tenantId,
+        name: 'North only',
+        groupIds: [groupId],
+        siteIds: [],
+      });
+      await db
+        .update(schema.templates)
+        .set({ accessRuleId: ruleId })
+        .where(eq(schema.templates.id, templateId));
+
+      const outsiderId = `usr_${newId()}`;
+      const memberId = `usr_${newId()}`;
+      const managerId = `usr_${newId()}`;
+      await db.insert(schema.user).values([
+        {
+          id: outsiderId,
+          name: 'Out',
+          email: 'out@acme.test',
+          tenantId,
+          permissionSetId: seededSets.standard,
+        },
+        {
+          id: memberId,
+          name: 'Mem',
+          email: 'mem@acme.test',
+          tenantId,
+          permissionSetId: seededSets.standard,
+        },
+        {
+          id: managerId,
+          name: 'Mgr',
+          email: 'mgr@acme.test',
+          tenantId,
+          permissionSetId: seededSets.manager,
+        },
+      ]);
+      await db.insert(schema.groupMembers).values({ tenantId, groupId, userId: memberId });
+
+      // Non-member Standard user: get FORBIDDEN, absent from list.
+      const outsider = createCaller(ctxFor(outsiderId));
+      await expect(outsider.inspections.get({ inspectionId })).rejects.toThrow(
+        /FORBIDDEN|access rule/i,
+      );
+      const outList = await outsider.inspections.list({});
+      expect(outList.find((r) => r.id === inspectionId)).toBeUndefined();
+      // …but the OPEN template's inspection is visible to the non-member.
+      expect((await outsider.inspections.get({ inspectionId: openInsp })).inspection.id).toBe(
+        openInsp,
+      );
+      expect((await outsider.inspections.list({})).find((r) => r.id === openInsp)).toBeDefined();
+
+      // Group member: full read access to the restricted inspection.
+      const member = createCaller(ctxFor(memberId));
+      expect((await member.inspections.get({ inspectionId })).inspection.id).toBe(inspectionId);
+      expect((await member.inspections.list({})).find((r) => r.id === inspectionId)).toBeDefined();
+
+      // Manager (not in the group) bypasses the rule.
+      const manager = createCaller(ctxFor(managerId));
+      expect((await manager.inspections.get({ inspectionId })).inspection.id).toBe(inspectionId);
+      expect((await manager.inspections.list({})).find((r) => r.id === inspectionId)).toBeDefined();
     });
   });
 

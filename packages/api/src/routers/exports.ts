@@ -16,11 +16,12 @@
  *   - revokeShareLink (inspections.export) — sets `revokedAt = now()`.
  */
 import type { Database } from '@forma360/db/client';
-import { inspections, publicInspectionLinks } from '@forma360/db/schema';
+import { inspections, publicInspectionLinks, templates } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { callerSatisfiesAccessRule } from '../access-rule';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
@@ -170,17 +171,44 @@ export function createExportsRouter(deps: ExportsRouterDeps) {
 }
 
 /**
- * Narrow helper that throws `NOT_FOUND` unless the inspection exists
- * in the caller's tenant. Keeps every mutation's guard consistent.
+ * Narrow helper that throws `NOT_FOUND` unless the inspection exists in the
+ * caller's tenant, and `FORBIDDEN` unless a non-manager satisfies the pinned
+ * template's access rule (parity with `inspections.get` — extends the B3
+ * template gate to instances, so render/share/list-links can't reach an
+ * inspection the caller couldn't `get`). Managers (`inspections.manage`) bypass.
  */
 async function requireInspection(
-  ctx: { db: Database; tenantId: string },
+  ctx: {
+    db: Database;
+    tenantId: string;
+    permissions: readonly string[];
+    auth: { userId: string };
+  },
   inspectionId: string,
 ): Promise<void> {
   const rows = await ctx.db
-    .select({ id: inspections.id })
+    .select({ id: inspections.id, templateId: inspections.templateId })
     .from(inspections)
     .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, inspectionId)))
     .limit(1);
-  if (rows[0] === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+  const insp = rows[0];
+  if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+  if (!ctx.permissions.includes('inspections.manage')) {
+    const tplRows = await ctx.db
+      .select({ accessRuleId: templates.accessRuleId })
+      .from(templates)
+      .where(and(eq(templates.tenantId, ctx.tenantId), eq(templates.id, insp.templateId)))
+      .limit(1);
+    const accessRuleId = tplRows[0]?.accessRuleId ?? null;
+    if (
+      accessRuleId !== null &&
+      !(await callerSatisfiesAccessRule(ctx.db, ctx.tenantId, ctx.auth.userId, accessRuleId))
+    ) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not satisfy this template’s access rule',
+      });
+    }
+  }
 }

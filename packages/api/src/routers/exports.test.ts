@@ -352,5 +352,62 @@ describe('exports router (Phase 2 PR 31)', () => {
       // Non-empty list is not required; the fact that it didn't throw is the assertion
       expect(setRows.length).toBeGreaterThan(0);
     });
+
+    it('FORBIDs a non-manager who fails the template access rule (share reads/mint)', async () => {
+      // Restrict the inspection's template to a group the caller is not in.
+      const inspRows = await db
+        .select({ templateId: schema.inspections.templateId })
+        .from(schema.inspections)
+        .where(eq(schema.inspections.id, inspectionId))
+        .limit(1);
+      const restrictedTemplateId = inspRows[0]?.templateId ?? '';
+      const groupId = newId();
+      await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'North' });
+      const ruleId = newId();
+      await db.insert(schema.accessRules).values({
+        id: ruleId,
+        tenantId,
+        name: 'North only',
+        groupIds: [groupId],
+        siteIds: [],
+      });
+      await db
+        .update(schema.templates)
+        .set({ accessRuleId: ruleId })
+        .where(eq(schema.templates.id, restrictedTemplateId));
+
+      // A non-manager holding both view + export, but NOT in the group.
+      const userId = `usr_${newId()}`;
+      const setId = newId();
+      await db.insert(schema.permissionSets).values({
+        id: setId,
+        tenantId,
+        name: 'Exporter',
+        permissions: ['inspections.view', 'inspections.export'],
+      });
+      await db.insert(schema.user).values({
+        id: userId,
+        name: 'Carl',
+        email: 'carl@acme.test',
+        tenantId,
+        permissionSetId: setId,
+      });
+      const router = buildAppRouter({
+        exports: exportsDeps,
+        inspectionsExport: stubInspectionsExportDeps,
+        auth: stubAuthDeps,
+        inspections: stubInspectionsDeps,
+        issues: stubIssuesDeps,
+
+        headsUps: stubHeadsUpsDeps,
+      });
+      const caller = createCallerFactory(router)(ctxFor(userId));
+      await expect(() => caller.exports.listShareLinks({ inspectionId })).rejects.toThrow(
+        /FORBIDDEN|access rule/i,
+      );
+      await expect(() => caller.exports.createShareLink({ inspectionId })).rejects.toThrow(
+        /FORBIDDEN|access rule/i,
+      );
+    });
   });
 });
