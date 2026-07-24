@@ -100,9 +100,13 @@ export default function ProfilePage() {
               <Label htmlFor="profile-set">{t('permissionSetLabel')}</Label>
               <Input
                 id="profile-set"
-                value={userGet.data?.user.permissionSetId ?? ''}
+                value={
+                  userGet.data?.user.permissionSetName ??
+                  userGet.data?.user.permissionSetId ??
+                  ''
+                }
                 readOnly
-                className="bg-muted font-mono text-xs"
+                className="bg-muted"
               />
               <p className="text-xs text-muted-foreground">{t('readOnlyNote')}</p>
             </div>

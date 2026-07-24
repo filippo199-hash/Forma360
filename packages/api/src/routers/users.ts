@@ -143,10 +143,14 @@ export const usersRouter = router({
         email: user.email,
         emailVerified: user.emailVerified,
         permissionSetId: user.permissionSetId,
+        // Human-readable set name so surfaces like the profile page can show
+        // "Standard" instead of the raw ULID (bug B2). Null if the set is gone.
+        permissionSetName: permissionSets.name,
         deactivatedAt: user.deactivatedAt,
         createdAt: user.createdAt,
       })
       .from(user)
+      .leftJoin(permissionSets, eq(user.permissionSetId, permissionSets.id))
       .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, input.id)))
       .limit(1);
     if (row[0] === undefined) {
