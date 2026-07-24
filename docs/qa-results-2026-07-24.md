@@ -226,3 +226,34 @@ Live in Northwind (seeded a category + observation, both were 0 before): observa
 2. Signed out as Alice, navigated to `/en/inspections/01KY9YA1Z2RBB6EFVGSQRTB1FJ` → landed on the **sign-in page** with `?next=%2Fen%2Finspections%2F…` in the URL (not marketing). ✓
 3. Entered email + OTP → **landed on the inspection** `/en/inspections/01KY9YA1Z2RBB6EFVGSQRTB1FJ` (conduct page rendered), **not** `/templates`. ✓
 Normal login is unaffected (the OTP flow completed cleanly). ss_02825alr3 (sign-in w/ next) → ss_82688g9fg (landed on deep link).
+
+## Parallel deep-audit — 5 agents (2026-07-24, "most thorough" pass)
+
+Ran 5 concurrent code-audit agents over the whole backend, each on a bug class not yet swept: write-path tenant-scoping, input-validation/DoS, silent failures, date/number correctness, delete/archive integrity. ~25 findings, all read-verified against source. **Fixed the highest-severity tier this session (B16–B19); the rest are triaged + queued below.**
+
+### FIXED + deployed
+
+- **B16 — RRULE expansion DoS (HIGH, cross-tenant availability)** — commit `1ab4eba`. `schedule-materialise` (shared worker) and the month-calendar query called `rule.between()` with no cap, so `FREQ=SECONDLY` / a wide range expanded to a multi-million-element array — wedging the worker for **all** tenants, or OOM-ing the API. Fix: `validateRrule` rejects sub-hourly cadences; `occurrencesBetween`/`occurrencesInRange` cap the walk at `MAX_OCCURRENCES_PER_RULE=2000` via the rrule iterator; `calendarOccurrences` rejects >366-day ranges. Unit tests added.
+- **B17 — 6 cross-tenant write-path leaks (HIGH, security)** — commit `ae463e0`. Mutations stored a client FK id without a tenant check; a tenant-blind read-back join then leaked it. `actions.assigneeUserId` leaked a foreign user's **name + email**; `maintenancePrograms.programId` allowed **injecting an unremovable trigger** into a victim's program that fires real actions on their assets; `assets` (typeId/siteId/ownerUserId), `contractors` (visit siteId), `headsUps` (attachment storageKey → foreign R2 file), `documents` (folderId) leaked names/files. Fix: 3 new `assert*InTenant` guards + calls at every write; tenant filter on the maintenance-trigger reads. Cross-tenant regression test in `read-authz.test`. Full API suite green.
+- **B18 — maintenance reminders lost on email outage (HIGH, reliability)** — commit `99e44fd`. The dedup marker was stamped even when every admin email failed, so BullMQ marked the job done and suppressed the window forever (incl. the daily overdue alert) → assets silently un-serviced. Fix: throw to retry when there were recipients but none succeeded; stamp only after a success.
+- **B19 — duplicate inspection document numbers (HIGH, data integrity)** — commit `8b5f696`. The per-template counter was written as a JS literal from a pre-tx read, so concurrent "Start inspection" calls stamped the same `000042`. Fix: atomic `SET counter = counter + 1 … RETURNING` under the row lock (contradicted the CLAUDE.md "atomic counter" claim).
+
+### QUEUED (verified, not yet fixed — follow-up tasks spawned)
+
+| # | Sev | Finding | Location |
+|---|---|---|---|
+| Q1 | MED-HIGH | `OBS-`/`AC-` reference numbers use `count()+1` (no lock/unique index) → **duplicate refs** under concurrency; actions + maintenance-actions count the same table | `issues.ts:314`, `actions.ts:66`, `maintenance-actions.ts:105` |
+| Q2 | MED | 3 soft-delete "is it empty?" guards count only non-archived children while the FK is RESTRICT/NO-ACTION → **undeletable** entity + unhandled 500 once children are archived | `customFields.delete`, `issues.categories.delete`, `documentFolders.delete` |
+| Q3 | MED | `documentFolders` create/update accept `parentId` with **no cycle / self-parent / tenant guard** → folder cycles (unreachable, unremovable) + cross-tenant reparent | `documentFolders.ts:108,136` |
+| Q4 | MED | `sites.archiveWithMode` ignores child sites → **orphaned active subtree** parented to a hidden archived site | `sites.ts:589` |
+| Q5 | MED | Site/Project media upload: no `catch` on the metadata write after R2 upload → silent failure (no toast, orphaned blob) | `site-media-gallery.tsx:133` |
+| Q6 | MED | `issues.list` cursor keyed on non-unique `createdAt` (strict `<`) → **tie-rows at a page boundary silently skipped** | `issues.ts:776` |
+| Q7 | MED | Schedule materialise filters floating wall-clock occurrences with real-UTC window bounds → near-edge occurrences missed on first-materialise / after resume for non-UTC zones | `schedule-rrule.ts` + `schedule-materialise.ts` |
+| Q8 | MED | Unbounded `z.record(z.unknown())` custom-field/metadata inputs persisted raw to JSONB (no size/type validation) | `assets.ts:76`, `issues.ts`, `sites.ts`, `actions.ts` |
+| Q9 | MED-LOW | Schedule occurrence insert + reminder enqueue not atomic → a Redis blip after the insert drops the reminder permanently | `schedule-materialise.ts:150` |
+| Q10 | LOW | `documentLabels.delete` doesn't prune the id from `documents.labelIds` → dangling id, chip renders blank | `documentLabels.ts:94` |
+| Q11 | LOW | `template-logo` GET storage-key check weaker than `/api/files` (dev-only path traversal; not prod-exploitable) | `upload/template-logo/route.ts:145` |
+| Q12 | LOW | Write-path Tier-2 integrity (no *proven* live leak today, read paths tenant-scoped): `documentFolders.parentId`, `inspections.saveProgress` assetIds, `actions` siteId/sourceId, `documents.access.grant` | various |
+| Q13 | LOW (a11y) | ~15 `DialogContent` dialogs lack a `DialogDescription`/`aria-describedby` → Radix warning + screen-reader gap | `apps/web/src/components/ui/dialog.tsx` consumers |
+
+Minor/negligible (noted, no action): contractor-overstay fires at ≥24h vs ">24h" (hourly cron, negligible); maintenance-notify exact-day equality (misses a window only on worker downtime).
