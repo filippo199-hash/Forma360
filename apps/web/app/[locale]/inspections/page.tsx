@@ -37,6 +37,7 @@ import {
 import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { TemplatePickerDialog } from '../../../src/components/inspections/template-picker-dialog';
+import { AwaitingSignatureBanner } from '../../../src/components/inspections/awaiting-signature-banner';
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { trpc } from '../../../src/lib/trpc/client';
 
@@ -297,6 +298,9 @@ function InspectionsTab({ locale }: { locale: string }) {
 
   return (
     <div className="space-y-4">
+      {/* Signatory call-out — invisible unless the caller has pending signatures. */}
+      <AwaitingSignatureBanner />
+
       {/* Header */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>

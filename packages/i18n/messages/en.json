@@ -1226,7 +1226,13 @@
     "filter_conductedOn": "Conducted on",
     "filterAny": "Any",
     "filterFrom": "From",
-    "filterTo": "To"
+    "filterTo": "To",
+    "awaitingSignature": {
+      "heading": "Awaiting your signature",
+      "title": "{count, plural, one {# inspection awaits your signature} other {# inspections await your signature}}",
+      "requestedBy": "Requested by {name}",
+      "signCta": "Sign"
+    }
   },
   "schedules": {
     "title": "Schedules",
