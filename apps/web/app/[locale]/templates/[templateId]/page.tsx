@@ -31,18 +31,21 @@ export default function TemplateEditorPage() {
   }, [data]);
 
   if (isLoading || data === undefined) {
+    // The error check must live inside the loading gate: on error `data` is
+    // undefined, so a bare `isLoading || !data` skeleton would hang forever
+    // (the query has already settled). Render not-found / error here instead.
+    if (error !== null && error !== undefined) {
+      return (
+        <p role="alert" className="text-sm text-destructive">
+          {error.data?.code === 'NOT_FOUND' ? tCommon('notFound') : tCommon('error')}
+        </p>
+      );
+    }
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-40 w-full" />
       </div>
-    );
-  }
-  if (error !== null && error !== undefined) {
-    return (
-      <p role="alert" className="text-sm text-destructive">
-        {tCommon('error')}
-      </p>
     );
   }
 

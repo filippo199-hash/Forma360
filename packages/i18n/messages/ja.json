@@ -2,6 +2,7 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong.",
+    "notFound": "Not found.",
     "retry": "Try again",
     "save": "Save",
     "cancel": "Cancel",

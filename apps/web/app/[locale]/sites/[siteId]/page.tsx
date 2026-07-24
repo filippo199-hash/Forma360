@@ -27,12 +27,13 @@ const STATUS_COLORS: Record<Status, string> = {
 
 export default function SiteDetailPage() {
   const t = useTranslations('sites');
+  const tCommon = useTranslations('common');
   const { term } = usePlaceTerms();
   const params = useParams<{ locale: string; siteId: string }>();
   const locale = params.locale ?? 'en';
   const siteId = params.siteId ?? '';
 
-  const { data, isLoading } = trpc.sites.getHub.useQuery(
+  const { data, isLoading, error } = trpc.sites.getHub.useQuery(
     { id: siteId },
     { enabled: siteId !== '' },
   );
@@ -45,6 +46,15 @@ export default function SiteDetailPage() {
   );
 
   if (isLoading || data === undefined) {
+    // Error check inside the loading gate: on error `data` is undefined, so a
+    // bare skeleton would hang forever. Render not-found / error instead.
+    if (error !== null && error !== undefined) {
+      return (
+        <p role="alert" className="text-sm text-destructive">
+          {error.data?.code === 'NOT_FOUND' ? tCommon('notFound') : tCommon('error')}
+        </p>
+      );
+    }
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-64" />
