@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -28,7 +29,9 @@ export default function ProfilePage() {
   const updateProfile = trpc.users.updateProfile.useMutation({
     onSuccess: () => {
       void utils.users.get.invalidate();
+      toast.success(t('saveSuccess'));
     },
+    onError: (err) => toast.error(err.message || t('saveError')),
   });
 
   const [firstName, setFirstName] = useState('');
@@ -50,11 +53,46 @@ export default function ProfilePage() {
     }
   }, [userGet.data]);
 
+  const loadError = meQuery.error ?? userGet.error;
+  const isLoading = meQuery.isLoading || userGet.isLoading;
+
   return (
     <div className="space-y-6 max-w-2xl">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
       </header>
+      {loadError !== null ? (
+        <Card>
+          <CardContent className="py-8 space-y-3 text-center">
+            <p className="text-sm text-destructive">{loadError.message || tCommon('error')}</p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void meQuery.refetch();
+                void userGet.refetch();
+              }}
+            >
+              {tCommon('retry')}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : isLoading ? (
+        <Card>
+          <CardHeader>
+            <div className="h-5 w-24 animate-pulse rounded bg-muted" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="h-9 animate-pulse rounded bg-muted" />
+              <div className="h-9 animate-pulse rounded bg-muted" />
+            </div>
+            <div className="h-9 animate-pulse rounded bg-muted" />
+            <div className="h-9 animate-pulse rounded bg-muted" />
+            <div className="h-9 w-20 animate-pulse rounded bg-muted" />
+          </CardContent>
+        </Card>
+      ) : (
       <Card>
         <CardHeader>
           <CardTitle>{tCommon('name')}</CardTitle>
@@ -74,6 +112,7 @@ export default function ProfilePage() {
                   id="profile-first"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
+                  maxLength={60}
                   required
                 />
               </div>
@@ -83,6 +122,7 @@ export default function ProfilePage() {
                   id="profile-last"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
+                  maxLength={60}
                   required
                 />
               </div>
@@ -100,9 +140,7 @@ export default function ProfilePage() {
               <Label htmlFor="profile-set">{t('permissionSetLabel')}</Label>
               <Input
                 id="profile-set"
-                value={
-                  userGet.data?.user.permissionSetName ?? userGet.data?.user.permissionSetId ?? ''
-                }
+                value={userGet.data?.user.permissionSetName ?? '—'}
                 readOnly
                 className="bg-muted"
               />
@@ -114,6 +152,7 @@ export default function ProfilePage() {
           </form>
         </CardContent>
       </Card>
+      )}
       <LanguageSelect />
     </div>
   );

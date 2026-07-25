@@ -160,6 +160,8 @@ export default function CompanyPage() {
           <p className="mb-4 text-sm text-muted-foreground">{t('terminologyHelp')}</p>
           {tenantQuery.isLoading ? (
             <Skeleton className="h-24 w-full" />
+          ) : tenantQuery.error !== null || tenantQuery.data === undefined ? (
+            <p className="text-sm text-destructive">{tCommon('error')}</p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-3">
               {TERMINOLOGY_OPTIONS.map((opt) => {
@@ -182,7 +184,11 @@ export default function CompanyPage() {
                     type="button"
                     disabled={updateSettings.isPending}
                     onClick={() => {
-                      if (!active) updateSettings.mutate({ terminology: opt });
+                      if (active) return;
+                      const confirmed = window.confirm(
+                        t('terminologyConfirm', { label: t(titleKey) }),
+                      );
+                      if (confirmed) updateSettings.mutate({ terminology: opt });
                     }}
                     className={cn(
                       'rounded-lg border p-3 text-left transition-colors',

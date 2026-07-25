@@ -13,7 +13,7 @@ import { trpc } from '../../../../src/lib/trpc/client';
  */
 export default function PermissionsPage() {
   const t = useTranslations('settings.permissions');
-  const { data, isLoading } = trpc.permissions.list.useQuery();
+  const { data, isLoading, error } = trpc.permissions.list.useQuery();
 
   return (
     <div className="space-y-6">
@@ -24,6 +24,18 @@ export default function PermissionsPage() {
 
       {isLoading ? (
         <Skeleton className="h-32 w-full" />
+      ) : error ? (
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-destructive">
+            {t('loadError')}
+          </CardContent>
+        </Card>
+      ) : (data ?? []).length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            {t('empty')}
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {(data ?? []).map((set) => (

@@ -1,0 +1,24 @@
+# UX audit — Settings
+
+**Module:** Settings (profile, company/terminology, users & invitations, permission sets, groups, custom fields, asset types). Routers `users`, `permissions`, `groups`, `customFields`, `tenants`, `assetTypes`.
+**Investigated:** 2026-07-25 · full code map.
+**Surfaces:** `app/[locale]/settings/{layout,page,profile,company,users,permissions,groups,custom-fields,assets}/page.tsx`, redirect stubs `settings/{actions,sites}/page.tsx`, `src/components/settings/{settings-tabs,language-select}.tsx`.
+
+## Fixed (Workflow fan-out, 5 slices + adversarial verify)
+- **Users:** the four row mutations (deactivate / reactivate / resend-invite / cancel-invite) now surface **`onError` toasts** — the server's **last-admin / min-admin guard** (`users.ts`) previously failed **silently**, so an admin trying to deactivate the last admin saw nothing happen. Deactivate/reactivate buttons disable while pending. **Cancel-invite now confirms** before the hard-delete. `users.list` + `listInvitations` render an inline error (were silent-empty on fetch failure). Invitation-expiry date is locale-formatted. A **mobile card layout** replaces the horizontal-scroll table below `md`, plus a zero-users empty state. The stale header comment that advertised nonexistent per-row "anonymise" + "CSV import" was corrected.
+- **Groups:** the member row no longer leaks a **raw ULID** when a name is null (falls back to email, then "Unnamed user"); the groups / users / members queries surface load errors instead of the misleading empty state; a **mobile card layout** was added; **member-remove confirms**; the empty state gained a "New group" CTA.
+- **Company:** the **org-wide Sites↔Projects terminology switch now confirms** before applying (it was a single unconfirmed click that relabels the wording for the whole organisation); the terminology card handles query error instead of silently defaulting to "both".
+- **Profile:** `updateProfile` gained a **success toast + `onError` toast** (was fire-and-forget); a loading skeleton + error branch (the form previously flashed empty); the permission-set **raw-ULID fallback** was dropped for a neutral "—"; name inputs got `maxLength={60}` to match the invite form.
+- **Read-only views (permissions + custom fields):** both list queries now surface load errors + empty states. The custom-fields table columns were **mislabeled** — they borrowed `groups.table.name/mode` and rendered the raw `type` enum; now they use proper `colName`/`colType` headers and a **localized type map** (`text` / `select` / `multi-select`) with a safe raw fallback.
+
+**Good (left as-is):** the **Groups** page and the **Asset-types** settings page were already the module's reference standard (confirm-on-archive, `onError` toasts, empty states, dependents preview) — the fixes bring the rest up to that bar. The company-details card already had an error branch and optimistic-free save with toasts. The settings shell (sidebar + horizontal sub-tabs) and locale switch work correctly.
+
+## Deferred (flagged — feature-level, not a UX-polish fix)
+1. **[High — feature] `users.anonymise` (S-E09) has no UI.** The router fully implements GDPR anonymisation (`users.ts:457–527`) but no settings surface exposes it. Needs a deliberate design: a strong multi-step "type the name to confirm" dialog gated behind `admin.previewDependents`, since it is **irreversible** and fans out across modules. Out of scope for a polish pass.
+2. **[High — feature] Permission-set editor is read-only.** `permissions/page.tsx` only lists sets; the router has full CRUD (`permissions.create/update/delete` + the S-E02 last-admin guard). Building the permission-matrix editor (64 keys × 17 modules) is a feature.
+3. **[Medium — feature] Custom-field CRUD is absent + the page is orphaned.** `custom-fields/page.tsx` is view-only and **not linked in the settings nav** (`settings-tabs.tsx:25` omits it). The router has full CRUD + the S-E04 deletion guard. Wiring it into nav only makes sense once the create/edit/delete editor exists — deferred together.
+4. **[Medium — feature] No per-user detail / edit page.** You can invite / deactivate / reactivate a user but not open one to edit their profile, permission set, custom-field values, or group/site membership from an admin view.
+5. **[Medium — feature] No branding / logo settings.** `tenants.update` only takes `name`; there's no org logo/theme surface (the inspection report already supports a logo, uploaded elsewhere).
+6. **[Low] `language-select.tsx:48`** keeps a hardcoded "Language" label (deliberate per its comment — the control is language-agnostic by design); left as-is.
+
+_The five polish slices bring Settings up to the app's error/mobile/i18n/confirmation bar. The five deferred items are genuine product/eng follow-ups (an irreversible-action UI, two CRUD editors, a user-detail page, branding) — each warrants its own PR with its own tests, not a drive-by change in a UX pass._

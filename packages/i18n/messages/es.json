@@ -228,7 +228,9 @@
         "headerExpires": "Expires",
         "headerActions": "Actions"
       },
-      "inviteSentToast": "Invitation sent to {email}."
+      "inviteSentToast": "Invitation sent to {email}.",
+      "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
+      "emptyState": "No users yet. Invite someone to get started."
     },
     "permissions": {
       "title": "Permission sets",
@@ -242,7 +244,9 @@
         "descriptionLabel": "Description",
         "permissionsLabel": "Permissions"
       },
-      "permissionsCount": "{count} permisos"
+      "permissionsCount": "{count} permisos",
+      "loadError": "Couldn't load permission sets. Please try again.",
+      "empty": "No permission sets yet."
     },
     "groups": {
       "title": "Groups",
@@ -284,12 +288,17 @@
         "addPlaceholder": "Seleccionar usuario…",
         "removeButton": "Eliminar",
         "addedViaRule": "Agregado por regla",
-        "ruleBasedNote": "Gestionado automáticamente."
+        "ruleBasedNote": "Gestionado automáticamente.",
+        "unnamed": "Unnamed user",
+        "loadError": "Couldn't load members. Please try again.",
+        "usersLoadError": "Couldn't load users. Please try again."
       },
       "modeHint": {
         "manual": "Los miembros se agregan y eliminan manualmente.",
         "rule_based": "Los miembros se sincronizan automáticamente."
-      }
+      },
+      "loadError": "Couldn't load groups. Please refresh to try again.",
+      "removeMemberConfirm": "Remove this member from the group?"
     },
     "sites": {
       "title": "Sites",
@@ -338,7 +347,9 @@
       "permissionSetLabel": "Your permission set",
       "readOnlyNote": "Only administrators can change your permission set.",
       "firstNameLabel": "Nombre",
-      "lastNameLabel": "Apellido"
+      "lastNameLabel": "Apellido",
+      "saveSuccess": "Profile updated.",
+      "saveError": "Failed to update profile."
     },
     "company": {
       "title": "Company",
@@ -362,7 +373,17 @@
       "terminologySitesHelp": "Permanent locations — factories, branches, stores.",
       "terminologyProjects": "Projects only",
       "terminologyProjectsHelp": "Time-bound jobs — construction sites, rollouts.",
-      "terminologySaved": "Terminology updated."
+      "terminologySaved": "Terminology updated.",
+      "terminologyConfirm": "Change the wording to '{label}' everywhere for your whole organisation?"
+    },
+    "customFields": {
+      "colName": "Name",
+      "colType": "Type",
+      "loadError": "Couldn't load custom fields. Please try again.",
+      "empty": "No custom fields yet.",
+      "type_text": "Text",
+      "type_select": "Select",
+      "type_multi_select": "Multi-select"
     }
   },
   "templates": {

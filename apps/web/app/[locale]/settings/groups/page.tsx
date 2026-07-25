@@ -26,8 +26,8 @@ export default function GroupsPage() {
   const t = useTranslations('settings.groups');
   const utils = trpc.useUtils();
 
-  const { data: groups, isLoading } = trpc.groups.list.useQuery();
-  const { data: usersData } = trpc.users.list.useQuery({});
+  const { data: groups, isLoading, error: groupsError } = trpc.groups.list.useQuery();
+  const { data: usersData, error: usersError } = trpc.users.list.useQuery({});
   const users = usersData?.users ?? [];
 
   // Create dialog state
@@ -47,7 +47,11 @@ export default function GroupsPage() {
 
   const membersGroup = (groups ?? []).find((g) => g.id === membersGroupId) ?? null;
 
-  const { data: membersList, isLoading: membersLoading } = trpc.groups.members.useQuery(
+  const {
+    data: membersList,
+    isLoading: membersLoading,
+    error: membersError,
+  } = trpc.groups.members.useQuery(
     { groupId: membersGroupId ?? '' },
     { enabled: membersGroupId !== null },
   );
@@ -120,7 +124,7 @@ export default function GroupsPage() {
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
@@ -137,10 +141,20 @@ export default function GroupsPage() {
                       <Skeleton className="h-4 w-full" />
                     </td>
                   </tr>
+                ) : groupsError ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-10 text-center text-sm text-destructive">
+                      {t('loadError')}
+                    </td>
+                  </tr>
                 ) : (groups ?? []).length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">
-                      {t('empty')}
+                    <td colSpan={4} className="px-4 py-10 text-center">
+                      <p className="text-muted-foreground">{t('empty')}</p>
+                      <Button className="mt-4" size="sm" onClick={() => setShowCreate(true)}>
+                        <Plus className="mr-1.5 h-4 w-4" />
+                        {t('createButton')}
+                      </Button>
                     </td>
                   </tr>
                 ) : (
@@ -192,6 +206,69 @@ export default function GroupsPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* ── Mobile card list ──────────────────────────────────────────── */}
+          <div className="md:hidden">
+            {isLoading ? (
+              <div className="p-4">
+                <Skeleton className="h-24 w-full" />
+              </div>
+            ) : groupsError ? (
+              <p className="px-4 py-10 text-center text-sm text-destructive">{t('loadError')}</p>
+            ) : (groups ?? []).length === 0 ? (
+              <div className="px-4 py-10 text-center">
+                <p className="text-sm text-muted-foreground">{t('empty')}</p>
+                <Button className="mt-4" size="sm" onClick={() => setShowCreate(true)}>
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  {t('createButton')}
+                </Button>
+              </div>
+            ) : (
+              <ul className="divide-y">
+                {(groups ?? []).map((group) => (
+                  <li key={group.id} className="space-y-2 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium">{group.name}</p>
+                      <span
+                        className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                          group.membershipMode === 'rule_based'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {t(`mode.${group.membershipMode}`)}
+                      </span>
+                    </div>
+                    {group.description !== null ? (
+                      <p className="text-sm text-muted-foreground">{group.description}</p>
+                    ) : null}
+                    <div className="flex flex-wrap items-center gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => setMembersGroupId(group.id)}>
+                        <Users className="mr-1.5 h-3.5 w-3.5" />
+                        {t('membersButton')}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(group)}>
+                        {t('editButton')}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => {
+                          if (window.confirm(t('archiveConfirm'))) {
+                            archiveGroup.mutate({ id: group.id });
+                          }
+                        }}
+                        disabled={archiveGroup.isPending}
+                      >
+                        {t('archiveButton')}
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -328,7 +405,9 @@ export default function GroupsPage() {
 
           <div className="mt-6 space-y-6">
             {/* Add member */}
-            {membersGroup?.membershipMode === 'manual' ? (
+            {membersGroup?.membershipMode === 'manual' && usersError ? (
+              <p className="text-sm text-destructive">{t('members.usersLoadError')}</p>
+            ) : membersGroup?.membershipMode === 'manual' ? (
               <div className="flex gap-2">
                 <select
                   value={addUserId}
@@ -360,6 +439,8 @@ export default function GroupsPage() {
             {/* Member list */}
             {membersLoading ? (
               <Skeleton className="h-32 w-full" />
+            ) : membersError ? (
+              <p className="text-sm text-destructive">{t('members.loadError')}</p>
             ) : (membersList ?? []).length === 0 ? (
               <p className="text-sm text-muted-foreground">{t('members.empty')}</p>
             ) : (
@@ -367,7 +448,9 @@ export default function GroupsPage() {
                 {(membersList ?? []).map((m) => (
                   <li key={m.userId} className="flex items-center justify-between px-4 py-2.5">
                     <div>
-                      <p className="text-sm font-medium">{m.userName ?? m.userId}</p>
+                      <p className="text-sm font-medium">
+                        {m.userName ?? m.userEmail ?? t('members.unnamed')}
+                      </p>
                       {m.userEmail !== null ? (
                         <p className="text-xs text-muted-foreground">{m.userEmail}</p>
                       ) : null}
@@ -382,7 +465,7 @@ export default function GroupsPage() {
                         size="sm"
                         className="shrink-0 text-muted-foreground"
                         onClick={() => {
-                          if (membersGroupId)
+                          if (membersGroupId && window.confirm(t('removeMemberConfirm')))
                             removeMember.mutate({ groupId: membersGroupId, userId: m.userId });
                         }}
                         disabled={removeMember.isPending}

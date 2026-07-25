@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
@@ -12,22 +13,28 @@ import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 /**
- * Users admin page. Three capabilities:
- *   - invite (opens the invite panel) — emails the invitee on submit
- *   - per-row deactivate / reactivate / anonymise
- *   - CSV import (dialog) + CSV export (one-click download)
+ * Users admin page. It lets an administrator:
+ *   - invite a user (opens the invite panel) — emails the invitee on submit
+ *   - deactivate / reactivate a user from their table row
+ *   - export the user list to CSV (one-click download)
  *
- * Below the existing users table we render a "Pending invitations"
- * section backed by `users.listInvitations`. Each row offers Resend
- * (which re-issues the invite with a refreshed token / TTL) and
- * Cancel (hard-delete of the invitations row).
+ * Below the users table we render a "Pending invitations" section backed
+ * by `users.listInvitations`. Each row offers Resend (which re-issues the
+ * invite with a refreshed token / TTL) and Cancel (hard-delete of the
+ * invitations row).
  */
 export default function UsersPage() {
+  const params = useParams();
+  const locale = typeof params.locale === 'string' ? params.locale : 'en';
   const t = useTranslations('settings.users');
   const tInvitations = useTranslations('settings.users.invitations');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
-  const { data, isLoading } = trpc.users.list.useQuery({});
+  const {
+    data,
+    isLoading,
+    error: usersError,
+  } = trpc.users.list.useQuery({});
   const { data: sets } = trpc.permissions.list.useQuery();
   const { data: groupsData } = trpc.groups.list.useQuery();
   const { data: sitesData } = trpc.sites.list.useQuery();
@@ -46,18 +53,22 @@ export default function UsersPage() {
       void utils.users.listInvitations.invalidate();
       toast.success(tInvitations('cancelSuccess'));
     },
+    onError: (e) => toast.error(e.message || tCommon('error')),
   });
   const resendInvite = trpc.users.invite.useMutation({
     onSuccess: (_result, vars) => {
       void utils.users.listInvitations.invalidate();
       toast.success(tInvitations('resendSuccess', { email: vars.email }));
     },
+    onError: (e) => toast.error(e.message || tCommon('error')),
   });
   const deactivate = trpc.users.deactivate.useMutation({
     onSuccess: () => utils.users.list.invalidate(),
+    onError: (e) => toast.error(e.message || tCommon('error')),
   });
   const reactivate = trpc.users.reactivate.useMutation({
     onSuccess: () => utils.users.list.invalidate(),
+    onError: (e) => toast.error(e.message || tCommon('error')),
   });
 
   const [showInvite, setShowInvite] = useState(false);
@@ -82,7 +93,8 @@ export default function UsersPage() {
   }
 
   const invitations = invitationsQuery.data?.invitations ?? [];
-  const userById = new Map((data?.users ?? []).map((u) => [u.id, u]));
+  const users = data?.users ?? [];
+  const userById = new Map(users.map((u) => [u.id, u]));
 
   return (
     <div className="space-y-6">
@@ -114,58 +126,103 @@ export default function UsersPage() {
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/40">
-                <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('table.name')}</th>
-                  <th className="px-3 py-2 font-medium">{t('table.email')}</th>
-                  <th className="px-3 py-2 font-medium">{t('table.status')}</th>
-                  <th className="px-3 py-2 text-right font-medium">{t('table.actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={4} className="p-4">
-                      <Skeleton className="h-4 w-full" />
-                    </td>
-                  </tr>
-                ) : (
-                  (data?.users ?? []).map((u) => (
-                    <tr key={u.id} className="border-b last:border-0">
-                      <td className="px-3 py-2">{u.name}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{u.email}</td>
-                      <td className="px-3 py-2">
-                        {u.deactivatedAt !== null ? t('status.deactivated') : t('status.active')}
-                      </td>
-                      <td className="space-x-1 px-3 py-2 text-right">
-                        {u.deactivatedAt === null ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deactivate.mutate({ userId: u.id })}
-                            aria-label={t('row.deactivate')}
-                          >
-                            {t('row.deactivate')}
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => reactivate.mutate({ userId: u.id })}
-                            aria-label={t('row.reactivate')}
-                          >
-                            {t('row.reactivate')}
-                          </Button>
-                        )}
-                      </td>
+          {usersError !== null ? (
+            <p role="alert" className="px-3 py-6 text-center text-sm text-destructive">
+              {usersError.message || tCommon('error')}
+            </p>
+          ) : isLoading ? (
+            <div className="p-4">
+              <Skeleton className="h-4 w-full" />
+            </div>
+          ) : users.length === 0 ? (
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t('emptyState')}</p>
+          ) : (
+            <>
+              {/* Mobile: stacked cards */}
+              <ul className="divide-y md:hidden">
+                {users.map((u) => (
+                  <li key={u.id} className="space-y-1 px-3 py-3">
+                    <div className="font-medium">{u.name}</div>
+                    <div className="font-mono text-xs text-muted-foreground">{u.email}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {u.deactivatedAt !== null ? t('status.deactivated') : t('status.active')}
+                    </div>
+                    <div className="pt-1">
+                      {u.deactivatedAt === null ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deactivate.mutate({ userId: u.id })}
+                          disabled={deactivate.isPending}
+                          aria-label={t('row.deactivate')}
+                        >
+                          {t('row.deactivate')}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => reactivate.mutate({ userId: u.id })}
+                          disabled={reactivate.isPending}
+                          aria-label={t('row.reactivate')}
+                        >
+                          {t('row.reactivate')}
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Desktop: table */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/40">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">{t('table.name')}</th>
+                      <th className="px-3 py-2 font-medium">{t('table.email')}</th>
+                      <th className="px-3 py-2 font-medium">{t('table.status')}</th>
+                      <th className="px-3 py-2 text-right font-medium">{t('table.actions')}</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {users.map((u) => (
+                      <tr key={u.id} className="border-b last:border-0">
+                        <td className="px-3 py-2">{u.name}</td>
+                        <td className="px-3 py-2 font-mono text-xs">{u.email}</td>
+                        <td className="px-3 py-2">
+                          {u.deactivatedAt !== null ? t('status.deactivated') : t('status.active')}
+                        </td>
+                        <td className="space-x-1 px-3 py-2 text-right">
+                          {u.deactivatedAt === null ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deactivate.mutate({ userId: u.id })}
+                              disabled={deactivate.isPending}
+                              aria-label={t('row.deactivate')}
+                            >
+                              {t('row.deactivate')}
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => reactivate.mutate({ userId: u.id })}
+                              disabled={reactivate.isPending}
+                              aria-label={t('row.reactivate')}
+                            >
+                              {t('row.reactivate')}
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -187,7 +244,17 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {invitationsQuery.isLoading ? (
+                {invitationsQuery.error !== null ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      role="alert"
+                      className="px-3 py-6 text-center text-sm text-destructive"
+                    >
+                      {invitationsQuery.error.message || tCommon('error')}
+                    </td>
+                  </tr>
+                ) : invitationsQuery.isLoading ? (
                   <tr>
                     <td colSpan={4} className="p-4">
                       <Skeleton className="h-4 w-full" />
@@ -215,7 +282,7 @@ export default function UsersPage() {
                         </td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">
                           {tInvitations('expiresAt', {
-                            time: new Date(inv.expiresAt).toLocaleString(),
+                            time: new Date(inv.expiresAt).toLocaleString(locale),
                           })}
                         </td>
                         <td className="space-x-1 px-3 py-2 text-right">
@@ -236,7 +303,10 @@ export default function UsersPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => cancelInvite.mutate({ invitationId: inv.id })}
+                            onClick={() => {
+                              if (!window.confirm(t('cancelInviteConfirm'))) return;
+                              cancelInvite.mutate({ invitationId: inv.id });
+                            }}
                             disabled={cancelInvite.isPending}
                           >
                             {tInvitations('cancelButton')}

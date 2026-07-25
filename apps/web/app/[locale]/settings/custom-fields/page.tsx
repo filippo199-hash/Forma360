@@ -12,9 +12,15 @@ import { trpc } from '../../../../src/lib/trpc/client';
  * page renders the list and leaves the create/edit UI to a follow-on
  * iteration.
  */
+const FIELD_TYPE_KEYS: Record<string, string> = {
+  text: 'customFields.type_text',
+  select: 'customFields.type_select',
+  multi_select: 'customFields.type_multi_select',
+};
+
 export default function CustomFieldsPage() {
   const t = useTranslations('settings');
-  const { data, isLoading } = trpc.customFields.list.useQuery();
+  const { data, isLoading, error } = trpc.customFields.list.useQuery();
   return (
     <div className="space-y-6">
       <header>
@@ -26,8 +32,8 @@ export default function CustomFieldsPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('groups.table.name')}</th>
-                  <th className="px-3 py-2 font-medium">{t('groups.table.mode')}</th>
+                  <th className="px-3 py-2 font-medium">{t('customFields.colName')}</th>
+                  <th className="px-3 py-2 font-medium">{t('customFields.colType')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -37,13 +43,28 @@ export default function CustomFieldsPage() {
                       <Skeleton className="h-4 w-full" />
                     </td>
                   </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={2} className="px-3 py-10 text-center text-sm text-destructive">
+                      {t('customFields.loadError')}
+                    </td>
+                  </tr>
+                ) : (data ?? []).length === 0 ? (
+                  <tr>
+                    <td colSpan={2} className="px-3 py-10 text-center text-sm text-muted-foreground">
+                      {t('customFields.empty')}
+                    </td>
+                  </tr>
                 ) : (
-                  (data ?? []).map((f) => (
-                    <tr key={f.id} className="border-b last:border-0">
-                      <td className="px-3 py-2">{f.name}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{f.type}</td>
-                    </tr>
-                  ))
+                  (data ?? []).map((f) => {
+                    const typeKey = FIELD_TYPE_KEYS[f.type];
+                    return (
+                      <tr key={f.id} className="border-b last:border-0">
+                        <td className="px-3 py-2">{f.name}</td>
+                        <td className="px-3 py-2">{typeKey ? t(typeKey) : f.type}</td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
