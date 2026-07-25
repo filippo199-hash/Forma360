@@ -14,7 +14,7 @@
  *
  * See ADR 0008.
  */
-import { publicInspectionLinks } from '@forma360/db/schema';
+import { headsUps, publicInspectionLinks } from '@forma360/db/schema';
 import { randomBytes } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import type { Database } from '@forma360/db/client';
@@ -80,6 +80,70 @@ export async function validateShareToken(
     linkId: row.id,
     inspectionId: row.inspectionId,
     tenantId: row.tenantId,
+  };
+}
+
+/** What `validateHeadsUpShareToken` hands back on a successful lookup. */
+export interface HeadsUpShareClaims {
+  /** Owning tenant — callers must use this when querying sibling tables. */
+  tenantId: string;
+  /** The heads-up the token grants read-access to. */
+  headsUpId: string;
+  title: string;
+  description: string | null;
+  engagementLevel: string;
+  createdByUserId: string;
+  status: string;
+}
+
+/**
+ * Look up a heads-up share token and verify it grants read access.
+ *
+ * Heads-up tokens are 32 hex chars stored on `heads_ups.share_token`
+ * (unique); revoking nulls the column. Returns null on:
+ *   - wrong-length token (length-gated before any DB hit, symmetry with
+ *     {@link validateShareToken})
+ *   - unknown token
+ *   - a row whose `status` is not `published` (drafts / archived are never
+ *     leaked through the public share surface)
+ *
+ * `now` is accepted for signature symmetry with the other validators; the
+ * heads-up token has no time-based expiry of its own.
+ */
+export async function validateHeadsUpShareToken(
+  db: Database,
+  token: string,
+  now: Date = new Date(),
+): Promise<HeadsUpShareClaims | null> {
+  void now;
+  // Heads-up tokens are 32 hex chars; a length mismatch can never match a
+  // real row, so skip the DB round-trip (and the timing side-channel).
+  if (typeof token !== 'string' || token.length !== 32) return null;
+
+  const rows = await db
+    .select({
+      tenantId: headsUps.tenantId,
+      headsUpId: headsUps.id,
+      title: headsUps.title,
+      description: headsUps.description,
+      engagementLevel: headsUps.engagementLevel,
+      createdByUserId: headsUps.createdByUserId,
+      status: headsUps.status,
+    })
+    .from(headsUps)
+    .where(eq(headsUps.shareToken, token))
+    .limit(1);
+  const row = rows[0];
+  if (row === undefined) return null;
+  if (row.status !== 'published') return null;
+  return {
+    tenantId: row.tenantId,
+    headsUpId: row.headsUpId,
+    title: row.title,
+    description: row.description,
+    engagementLevel: row.engagementLevel,
+    createdByUserId: row.createdByUserId,
+    status: row.status,
   };
 }
 

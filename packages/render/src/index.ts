@@ -22,10 +22,12 @@ export {
 export {
   generateShareToken,
   validateShareToken,
+  validateHeadsUpShareToken,
   buildShareUrl,
   revokeShareLinkRow,
   SHARE_TOKEN_BYTES,
   type ShareTokenClaims,
+  type HeadsUpShareClaims,
 } from './share';
 export { signRenderToken, verifyRenderToken, DEFAULT_RENDER_TOKEN_TTL_SECONDS } from './hmac';
 export {

@@ -275,4 +275,79 @@ describe('Heads Up router (Phase 5A)', () => {
     expect(comments).toHaveLength(1);
     expect(comments[0]?.body).toBe('Great briefing!');
   });
+
+  it('listForRecipient + getForRecipient: recipient inbox with engagement', async () => {
+    const adminCaller = createCaller(ctxFor(adminUserId));
+    const memberCaller = createCaller(ctxFor(memberUserId));
+
+    const { headsUpId } = await adminCaller.headsUps.create({
+      title: 'Please sign',
+      engagementLevel: 'sign',
+      requireAcknowledgement: true,
+      requireSignature: true,
+    });
+    await adminCaller.headsUps.publish({ headsUpId, userIds: [memberUserId] });
+
+    // Recipient sees it, pending (not yet signed).
+    const list = await memberCaller.headsUps.listForRecipient();
+    const row = list.find((h) => h.id === headsUpId);
+    expect(row).toBeDefined();
+    expect(row?.pending).toBe(true);
+    expect(row?.creatorName).toBe('Admin');
+
+    // pending filter includes it; done filter excludes it.
+    const pendingList = await memberCaller.headsUps.listForRecipient({ filter: 'pending' });
+    expect(pendingList.some((h) => h.id === headsUpId)).toBe(true);
+    const doneList = await memberCaller.headsUps.listForRecipient({ filter: 'done' });
+    expect(doneList.some((h) => h.id === headsUpId)).toBe(false);
+
+    // getForRecipient returns it with engagement state.
+    const detail = await memberCaller.headsUps.getForRecipient({ headsUpId });
+    expect(detail.headsUp.title).toBe('Please sign');
+    expect(detail.creatorName).toBe('Admin');
+    expect(detail.engagement.signedAt).toBeNull();
+
+    // A non-recipient (the admin creator) cannot read it → NOT_FOUND.
+    await expect(adminCaller.headsUps.getForRecipient({ headsUpId })).rejects.toThrow(
+      'heads-up-not-found',
+    );
+
+    // Engagement mutations flip the returned fields.
+    await memberCaller.headsUps.markViewed({ headsUpId });
+    await memberCaller.headsUps.markAcknowledged({ headsUpId });
+    await memberCaller.headsUps.sign({ headsUpId, signatureData: 'sig' });
+
+    const afterSign = await memberCaller.headsUps.getForRecipient({ headsUpId });
+    expect(afterSign.engagement.viewedAt).not.toBeNull();
+    expect(afterSign.engagement.acknowledgedAt).not.toBeNull();
+    expect(afterSign.engagement.signedAt).not.toBeNull();
+
+    // Now done filter includes it (pending flipped false); pending excludes it.
+    const afterPending = await memberCaller.headsUps.listForRecipient({ filter: 'pending' });
+    expect(afterPending.some((h) => h.id === headsUpId)).toBe(false);
+    const afterDone = await memberCaller.headsUps.listForRecipient({ filter: 'done' });
+    expect(afterDone.some((h) => h.id === headsUpId && h.pending === false)).toBe(true);
+  });
+
+  it('recipient views exclude draft heads-ups', async () => {
+    const adminCaller = createCaller(ctxFor(adminUserId));
+    const memberCaller = createCaller(ctxFor(memberUserId));
+
+    // A draft with a recipient row must not surface — the status guard, not
+    // just the absence of recipients, is what protects it.
+    const { headsUpId } = await adminCaller.headsUps.create({ title: 'Draft only' });
+    await db.insert(schema.headsUpRecipients).values({
+      id: newId(),
+      tenantId,
+      headsUpId,
+      userId: memberUserId,
+    });
+
+    const list = await memberCaller.headsUps.listForRecipient();
+    expect(list.some((h) => h.id === headsUpId)).toBe(false);
+
+    await expect(memberCaller.headsUps.getForRecipient({ headsUpId })).rejects.toThrow(
+      'heads-up-not-found',
+    );
+  });
 });

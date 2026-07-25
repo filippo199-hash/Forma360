@@ -11,10 +11,12 @@ import { dirname, join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import * as schema from '@forma360/db/schema';
+import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   generateShareToken,
   validateShareToken,
+  validateHeadsUpShareToken,
   revokeShareLinkRow,
   buildShareUrl,
   SHARE_TOKEN_BYTES,
@@ -249,6 +251,116 @@ describe('revokeShareLinkRow', () => {
       linkId: 'LNK' + 'X'.repeat(23),
     });
     expect(ok).toBe(false);
+  });
+});
+
+describe('validateHeadsUpShareToken', () => {
+  let client: PGlite;
+  let db: PgliteDatabase<typeof schema>;
+  let tenantId: string;
+
+  const hexToken = (seed: string): string => (seed + '0'.repeat(32)).slice(0, 32);
+
+  beforeEach(async () => {
+    ({ client, db } = await bootDb());
+    tenantId = '01HYZTENANT000000000000001';
+    await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+    const permissionSetId = '01HYZPERMSET0000000000000001'.slice(0, 26);
+    await db.insert(schema.permissionSets).values({
+      id: permissionSetId,
+      tenantId,
+      name: 'Standard',
+    });
+    await db.insert(schema.user).values({
+      id: 'u1',
+      name: 'User One',
+      email: 'u1@example.test',
+      tenantId,
+      permissionSetId,
+    });
+  });
+
+  afterEach(async () => {
+    await client.close();
+  });
+
+  async function insertHeadsUp(input: {
+    id: string;
+    shareToken: string | null;
+    status?: string;
+    title?: string;
+    description?: string;
+    engagementLevel?: string;
+  }) {
+    await db.insert(schema.headsUps).values({
+      id: input.id,
+      tenantId,
+      title: input.title ?? 'Safety notice',
+      description: input.description ?? 'Please read',
+      status: input.status ?? 'published',
+      engagementLevel: input.engagementLevel ?? 'acknowledge',
+      shareToken: input.shareToken,
+      createdByUserId: 'u1',
+    });
+  }
+
+  it('resolves the projected fields for a valid published token', async () => {
+    const token = hexToken('abc123');
+    await insertHeadsUp({
+      id: 'HU1',
+      shareToken: token,
+      title: 'Fire drill',
+      description: 'Muster point B',
+      engagementLevel: 'sign',
+    });
+    const claims = await validateHeadsUpShareToken(db as unknown as Database, token);
+    expect(claims).not.toBeNull();
+    expect(claims?.tenantId).toBe(tenantId);
+    expect(claims?.headsUpId).toBe('HU1');
+    expect(claims?.title).toBe('Fire drill');
+    expect(claims?.description).toBe('Muster point B');
+    expect(claims?.engagementLevel).toBe('sign');
+    expect(claims?.createdByUserId).toBe('u1');
+    expect(claims?.status).toBe('published');
+  });
+
+  it('returns null for a wrong-length token without hitting the DB', async () => {
+    expect(await validateHeadsUpShareToken(db as unknown as Database, 'short')).toBeNull();
+    // 43-char inspection-style token is also the wrong length here.
+    expect(
+      await validateHeadsUpShareToken(db as unknown as Database, generateShareToken()),
+    ).toBeNull();
+  });
+
+  it('returns null for an unknown token', async () => {
+    const claims = await validateHeadsUpShareToken(db as unknown as Database, hexToken('deadbeef'));
+    expect(claims).toBeNull();
+  });
+
+  it('returns null for a draft heads-up (does not leak drafts)', async () => {
+    const token = hexToken('draft1');
+    await insertHeadsUp({ id: 'HU2', shareToken: token, status: 'draft' });
+    const claims = await validateHeadsUpShareToken(db as unknown as Database, token);
+    expect(claims).toBeNull();
+  });
+
+  it('returns null for an archived heads-up (does not leak archived)', async () => {
+    const token = hexToken('arch01');
+    await insertHeadsUp({ id: 'HU3', shareToken: token, status: 'archived' });
+    const claims = await validateHeadsUpShareToken(db as unknown as Database, token);
+    expect(claims).toBeNull();
+  });
+
+  it('returns null after the token has been revoked (nulled)', async () => {
+    const token = hexToken('revoke');
+    await insertHeadsUp({ id: 'HU4', shareToken: token });
+    // Revoke = null the column.
+    await db
+      .update(schema.headsUps)
+      .set({ shareToken: null })
+      .where(eq(schema.headsUps.id, 'HU4'));
+    const claims = await validateHeadsUpShareToken(db as unknown as Database, token);
+    expect(claims).toBeNull();
   });
 });
 

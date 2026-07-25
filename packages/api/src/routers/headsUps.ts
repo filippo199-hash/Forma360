@@ -327,6 +327,161 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
         };
       }),
 
+    /**
+     * Recipient-facing inbox: the published heads-ups targeted at the
+     * current user, with their own engagement state. Only surfaces
+     * heads-ups this user is an actual recipient of (never leaks
+     * non-targeted or draft/archived messages).
+     */
+    listForRecipient: tenantProcedure
+      .use(requirePermission('headsUp.view'))
+      .input(z.object({ filter: z.enum(['all', 'pending', 'done']).optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select({
+            id: headsUps.id,
+            title: headsUps.title,
+            engagementLevel: headsUps.engagementLevel,
+            requireAcknowledgement: headsUps.requireAcknowledgement,
+            requireSignature: headsUps.requireSignature,
+            publishAt: headsUps.publishAt,
+            expiresAt: headsUps.expiresAt,
+            createdAt: headsUps.createdAt,
+            creatorName: user.name,
+            viewedAt: headsUpRecipients.viewedAt,
+            acknowledgedAt: headsUpRecipients.acknowledgedAt,
+            signedAt: headsUpRecipients.signedAt,
+          })
+          .from(headsUpRecipients)
+          .innerJoin(headsUps, eq(headsUps.id, headsUpRecipients.headsUpId))
+          .leftJoin(user, eq(user.id, headsUps.createdByUserId))
+          .where(
+            and(
+              eq(headsUpRecipients.tenantId, ctx.tenantId),
+              eq(headsUpRecipients.userId, ctx.auth.userId),
+              eq(headsUps.status, 'published'),
+            ),
+          )
+          .orderBy(desc(headsUps.createdAt));
+
+        const filter = input?.filter ?? 'all';
+        const mapped = rows.map((row) => {
+          const pending =
+            row.engagementLevel === 'sign'
+              ? row.signedAt === null
+              : row.engagementLevel === 'acknowledge'
+                ? row.acknowledgedAt === null
+                : row.viewedAt === null;
+          return {
+            id: row.id,
+            title: row.title,
+            engagementLevel: row.engagementLevel,
+            requireAcknowledgement: row.requireAcknowledgement,
+            requireSignature: row.requireSignature,
+            publishAt: row.publishAt,
+            expiresAt: row.expiresAt,
+            creatorName: row.creatorName,
+            viewedAt: row.viewedAt,
+            acknowledgedAt: row.acknowledgedAt,
+            signedAt: row.signedAt,
+            pending,
+          };
+        });
+
+        const filtered =
+          filter === 'pending'
+            ? mapped.filter((r) => r.pending)
+            : filter === 'done'
+              ? mapped.filter((r) => !r.pending)
+              : mapped;
+
+        // Pending-first; SQL already ordered by createdAt desc and Array.sort
+        // is stable, so within each pending group the createdAt order holds.
+        filtered.sort((a, b) => Number(b.pending) - Number(a.pending));
+        return filtered;
+      }),
+
+    /**
+     * Recipient-facing detail view for a single heads-up. Only the
+     * targeted recipient of a *published* heads-up may read it — any other
+     * caller (non-recipient, or a draft/archived message) gets NOT_FOUND
+     * so we never leak the existence of a message they weren't sent.
+     */
+    getForRecipient: tenantProcedure
+      .use(requirePermission('headsUp.view'))
+      .input(z.object({ headsUpId: z.string().min(1) }))
+      .query(async ({ ctx, input }) => {
+        const [recipientRows, headsUpRows] = await Promise.all([
+          ctx.db
+            .select()
+            .from(headsUpRecipients)
+            .where(
+              and(
+                eq(headsUpRecipients.tenantId, ctx.tenantId),
+                eq(headsUpRecipients.headsUpId, input.headsUpId),
+                eq(headsUpRecipients.userId, ctx.auth.userId),
+              ),
+            )
+            .limit(1),
+          ctx.db
+            .select()
+            .from(headsUps)
+            .where(and(eq(headsUps.tenantId, ctx.tenantId), eq(headsUps.id, input.headsUpId)))
+            .limit(1),
+        ]);
+
+        const recipient = recipientRows[0];
+        const headsUp = headsUpRows[0];
+        if (recipient === undefined || headsUp === undefined || headsUp.status !== 'published') {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'heads-up-not-found' });
+        }
+
+        const [creatorRows, attachmentRows, documentRows] = await Promise.all([
+          ctx.db
+            .select({ name: user.name })
+            .from(user)
+            .where(eq(user.id, headsUp.createdByUserId))
+            .limit(1),
+          ctx.db
+            .select()
+            .from(headsUpAttachments)
+            .where(eq(headsUpAttachments.headsUpId, headsUp.id)),
+          ctx.db
+            .select({
+              documentId: headsUpDocuments.documentId,
+              documentVersion: headsUpDocuments.documentVersion,
+              name: documents.name,
+              mimeType: documents.mimeType,
+            })
+            .from(headsUpDocuments)
+            .innerJoin(documents, eq(headsUpDocuments.documentId, documents.id))
+            .where(eq(headsUpDocuments.headsUpId, headsUp.id)),
+        ]);
+
+        return {
+          headsUp: {
+            id: headsUp.id,
+            title: headsUp.title,
+            description: headsUp.description,
+            engagementLevel: headsUp.engagementLevel,
+            requireAcknowledgement: headsUp.requireAcknowledgement,
+            requireSignature: headsUp.requireSignature,
+            allowReactions: headsUp.allowReactions,
+            allowComments: headsUp.allowComments,
+            publishAt: headsUp.publishAt,
+            expiresAt: headsUp.expiresAt,
+          },
+          creatorName: creatorRows[0]?.name ?? null,
+          attachments: attachmentRows,
+          documents: documentRows,
+          engagement: {
+            viewedAt: recipient.viewedAt,
+            acknowledgedAt: recipient.acknowledgedAt,
+            signedAt: recipient.signedAt,
+          },
+        };
+      }),
+
     create: tenantProcedure
       .use(requirePermission('headsUp.publish'))
       .input(createInput)

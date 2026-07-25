@@ -18,6 +18,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
+import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
@@ -116,9 +117,12 @@ export default function NewHeadsUpPage() {
   const [allowComments, setAllowComments] = useState(true);
   const [allowReactions, setAllowReactions] = useState(true);
   const [engagementLevel, setEngagementLevel] = useState<EngagementLevel>('view');
-  const [audienceMode, setAudienceMode] = useState<'everyone' | 'groups' | 'sites'>('everyone');
+  const [audienceMode, setAudienceMode] = useState<'everyone' | 'groups' | 'sites' | 'users'>(
+    'everyone',
+  );
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [audienceError, setAudienceError] = useState(false);
   const [groupsOpen, setGroupsOpen] = useState(false);
   const [sitesOpen, setSitesOpen] = useState(false);
@@ -290,7 +294,8 @@ export default function NewHeadsUpPage() {
     }
     const audienceEmpty =
       (audienceMode === 'groups' && selectedGroupIds.length === 0) ||
-      (audienceMode === 'sites' && selectedSiteIds.length === 0);
+      (audienceMode === 'sites' && selectedSiteIds.length === 0) ||
+      (audienceMode === 'users' && selectedUserIds.length === 0);
     if (audienceEmpty) {
       setAudienceError(true);
       toast.error(t('selectAudience'));
@@ -311,7 +316,7 @@ export default function NewHeadsUpPage() {
       broadcastToAll: audienceMode === 'everyone',
       groupIds: audienceMode === 'groups' ? selectedGroupIds : [],
       siteIds: audienceMode === 'sites' ? selectedSiteIds : [],
-      userIds: [] as string[],
+      userIds: audienceMode === 'users' ? selectedUserIds : [],
     });
 
     // Publish immediately only for an unscheduled "Publish"; a scheduled
@@ -589,9 +594,9 @@ export default function NewHeadsUpPage() {
           <section>
             <h2 className="mb-2 text-sm font-semibold">{t('fields.audienceLabel')}</h2>
 
-            {/* Mode toggle — 3 options */}
-            <div className="grid grid-cols-3 gap-2">
-              {(['everyone', 'groups', 'sites'] as const).map((mode) => (
+            {/* Mode toggle — 4 options */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {(['everyone', 'groups', 'sites', 'users'] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
@@ -612,7 +617,9 @@ export default function NewHeadsUpPage() {
                     ? t('fields.audienceEveryone')
                     : mode === 'groups'
                       ? t('fields.audienceGroups')
-                      : placeTerms.labelPlural}
+                      : mode === 'sites'
+                        ? placeTerms.labelPlural
+                        : t('fields.audienceUsers')}
                 </button>
               ))}
             </div>
@@ -734,6 +741,22 @@ export default function NewHeadsUpPage() {
                     ))}
                   </div>
                 ) : null}
+              </div>
+            ) : null}
+
+            {/* Users picker */}
+            {audienceMode === 'users' ? (
+              <div className="mt-3">
+                <GroupUserSelector
+                  mode="users"
+                  multiple
+                  value={selectedUserIds}
+                  onChange={(next) => {
+                    setAudienceError(false);
+                    setSelectedUserIds(next);
+                  }}
+                  placeholder={t('fields.selectUsersPlaceholder')}
+                />
               </div>
             ) : null}
           </section>

@@ -2240,7 +2240,9 @@
         "audienceGroups": "Gruppi specifici",
         "audienceSites": "Siti specifici",
         "selectSitesPlaceholder": "Seleziona siti…",
-        "noSites": "Nessun sito ancora"
+        "noSites": "Nessun sito ancora",
+        "audienceUsers": "Specific people",
+        "selectUsersPlaceholder": "Select people…"
       },
       "engagementLevel": "Livello di coinvolgimento",
       "engagementHint": {
@@ -2363,6 +2365,33 @@
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
       "engagementError": "Could not load engagement data. Please try again.",
       "commentsError": "Could not load comments. Please try again."
+    },
+    "inbox": {
+      "tabMyFeed": "My feed",
+      "tabManage": "Manage",
+      "feedTitle": "My feed",
+      "filterAll": "All",
+      "filterPending": "Pending",
+      "filterDone": "Done",
+      "empty": "You have no heads-up messages yet.",
+      "loadError": "Could not load your feed. Please try again.",
+      "needsView": "Needs view",
+      "needsAck": "Needs acknowledgement",
+      "needsSign": "Needs signature",
+      "viewedBadge": "Viewed",
+      "acknowledgedBadge": "Acknowledged",
+      "signedBadge": "Signed",
+      "acknowledgeButton": "Acknowledge",
+      "signButton": "Sign",
+      "reSignRequired": "Re-sign required",
+      "acknowledgedToast": "Acknowledged",
+      "signedToast": "Signed",
+      "viewedToast": "Marked as read",
+      "notTargeted": "This heads-up isn't available to you.",
+      "backLink": "Back to Heads Up",
+      "documentsHeading": "Documents",
+      "documentVersion": "v{n}",
+      "commentsHeading": "Comments"
     }
   },
   "assets": {
