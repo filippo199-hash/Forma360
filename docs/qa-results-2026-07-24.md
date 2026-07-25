@@ -257,3 +257,16 @@ Ran 5 concurrent code-audit agents over the whole backend, each on a bug class n
 | Q13 | LOW (a11y) | ~15 `DialogContent` dialogs lack a `DialogDescription`/`aria-describedby` → Radix warning + screen-reader gap | `apps/web/src/components/ui/dialog.tsx` consumers |
 
 Minor/negligible (noted, no action): contractor-overstay fires at ≥24h vs ">24h" (hourly cron, negligible); maintenance-notify exact-day equality (misses a window only on worker downtime).
+
+### Queued follow-ups Q1–Q6 — FIXED (2026-07-24, second pass)
+
+All six deployed together (commits `41b76de`, `be92172`, `6fa0ece`, `f4ed6eb`, `53eaeee`, `5ea1d96`). typecheck + lint + affected tests green (62/62 across issues/admin/documents/sites-archive + 4/4 reference-counter incl. a 20-way concurrency proof).
+
+- **Q1 — reference-number race** (`41b76de`): new atomic `reference_counters(tenant_id, series, value)` table + `nextReferenceValue` upsert (`INSERT … ON CONFLICT DO UPDATE SET value = value + 1 RETURNING`). issues → 'issue', actions + maintenance-actions → shared 'action'. Migration 0052 seeds each tenant from its current max ref (mirrored in `ensure-columns.mjs`; appended to all 16 `MIGRATION_FILES` lists). **Deployed — migration applied clean on prod (SUCCESS).**
+- **Q2 — 3 FK-500 delete guards** (`be92172` issues categories, `6fa0ece` doc folders, `f4ed6eb` custom fields): each now counts ALL children (archived included) / stored values, returning a clean BAD_REQUEST instead of a raw FK 500.
+- **Q3 — document-folder reparent** (`6fa0ece`): tenant guard + self- and ancestor-cycle checks (walk up the proposed parent) before persisting parentId in create/update.
+- **Q4 — site archive orphaned subtree** (`53eaeee`): block archiving a site with active sub-sites (clear "archive or move its sub-sites first" error) + 2 tests.
+- **Q5 — silent site-media upload** (`5ea1d96`): per-file loop body wrapped in try/catch → `toast.error` + continue (no more silent stop / orphaned blob / aborted batch).
+- **Q6 — issues.list cursor** (`be92172`): opaque `<iso>_<id>` keyset cursor with an (createdAt, id) tiebreaker — no more silently-skipped tie-rows across a page boundary. (actions/inspections don't use a createdAt cursor — issues-specific.)
+
+Remaining queued: Q7 (schedule tz-frame), Q8 (unbounded JSONB), Q9 (schedule reminder enqueue atomicity), Q10 (documentLabels dangling id), Q11 (template-logo dev traversal), Q12 (Tier-2 write-path integrity), Q13 (dialog a11y).
