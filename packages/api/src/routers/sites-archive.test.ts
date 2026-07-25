@@ -194,4 +194,36 @@ describe('sites.archiveWithMode', () => {
       .where(eq(schema.contractorVisits.id, visitId));
     expect(visit?.siteId).toBeNull();
   });
+
+  it('blocks archiving a site that has an active sub-site', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { id: parentId } = await caller.sites.create({ name: 'Parent' });
+    await caller.sites.create({ name: 'Child', parentId });
+
+    // Archiving the non-leaf parent is refused so the child cannot be
+    // orphaned (active child, hidden archived ancestor).
+    await expect(
+      caller.sites.archiveWithMode({ id: parentId, mode: 'dissociate' }),
+    ).rejects.toThrow(/sub-sites first|BAD_REQUEST/);
+
+    // The parent stays active — nothing was archived.
+    const listed = (await caller.sites.hub()).find((s) => s.id === parentId);
+    expect(listed?.archivedAt).toBeNull();
+  });
+
+  it('archives a leaf, then the parent once its only child is archived', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { id: parentId } = await caller.sites.create({ name: 'Parent' });
+    const { id: childId } = await caller.sites.create({ name: 'Child', parentId });
+
+    // The leaf child archives fine.
+    await caller.sites.archiveWithMode({ id: childId, mode: 'dissociate' });
+    const listedChild = (await caller.sites.hub()).find((s) => s.id === childId);
+    expect(listedChild?.archivedAt).not.toBeNull();
+
+    // With the child archived, the parent is a leaf and now archives too.
+    await caller.sites.archiveWithMode({ id: parentId, mode: 'dissociate' });
+    const listedParent = (await caller.sites.hub()).find((s) => s.id === parentId);
+    expect(listedParent?.archivedAt).not.toBeNull();
+  });
 });

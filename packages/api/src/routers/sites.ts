@@ -600,6 +600,22 @@ export const sitesRouter = router({
         .limit(1);
       if (exists[0] === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
 
+      // Refuse to archive a non-leaf: an active child would keep its
+      // parentId/path pointing at a now-hidden ancestor (sites.list filters
+      // out archived rows), leaving an orphaned active subtree. Make the user
+      // archive or move the sub-sites first — mirrors the move (G-17) flow.
+      const activeChild = await ctx.db
+        .select({ id: sites.id })
+        .from(sites)
+        .where(and(eq(sites.tenantId, tid), eq(sites.parentId, sid), isNull(sites.archivedAt)))
+        .limit(1);
+      if (activeChild[0] !== undefined) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This site has active sub-sites. Archive or move its sub-sites first.',
+        });
+      }
+
       if (input.mode === 'dissociate') {
         await ctx.db
           .update(issues)
