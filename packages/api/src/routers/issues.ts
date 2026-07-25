@@ -158,7 +158,8 @@ const listIssuesInput = z
     siteId: z.string().length(26).optional(),
     includeArchived: z.boolean().default(false),
     limit: z.number().int().min(1).max(200).default(50),
-    cursor: z.string().datetime().optional(),
+    // Opaque keyset cursor "<createdAt ISO>_<id>" (id tiebreaker).
+    cursor: z.string().optional(),
   })
   .default({});
 
@@ -591,17 +592,15 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .input(categoryIdInput)
       .mutation(async ({ ctx, input }) => {
         const cat = await loadCategoryOrThrow(ctx.db, ctx.tenantId, input.categoryId);
-        // I-E02 guard: count open (non-archived, status != closed) issues.
+        // I-E02 guard: count ALL issues in the category, archived included.
+        // `issues.category_id` is ON DELETE RESTRICT and archive only sets
+        // `archivedAt`, so archived issues still reference the category — a
+        // non-archived-only count would pass and then the delete would hit a
+        // raw FK 500. Block with a clean BAD_REQUEST instead.
         const openRows = await ctx.db
           .select({ c: count() })
           .from(issues)
-          .where(
-            and(
-              eq(issues.tenantId, ctx.tenantId),
-              eq(issues.categoryId, cat.id),
-              isNull(issues.archivedAt),
-            ),
-          );
+          .where(and(eq(issues.tenantId, ctx.tenantId), eq(issues.categoryId, cat.id)));
         const openIssueCount = openRows[0]?.c ?? 0;
         if (openIssueCount > 0) {
           throw new TRPCError({
@@ -771,8 +770,17 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         if (input.categoryId !== undefined) where.push(eq(issues.categoryId, input.categoryId));
         if (input.siteId !== undefined) where.push(eq(issues.siteId, input.siteId));
         if (input.cursor !== undefined) {
-          // Strict < cursor to keep "previous page boundary" exclusive.
-          where.push(sql`${issues.createdAt} < ${new Date(input.cursor)}`);
+          // Keyset cursor with an (createdAt, id) tiebreaker: a bare
+          // `createdAt < cursor` would skip rows sharing the boundary
+          // createdAt (e.g. a same-microsecond batch import) between pages.
+          const sep = input.cursor.lastIndexOf('_');
+          const cursorCreatedAt = new Date(input.cursor.slice(0, sep));
+          const cursorId = input.cursor.slice(sep + 1);
+          if (!Number.isNaN(cursorCreatedAt.getTime()) && cursorId.length > 0) {
+            where.push(
+              sql`(${issues.createdAt} < ${cursorCreatedAt} OR (${issues.createdAt} = ${cursorCreatedAt} AND ${issues.id} < ${cursorId}))`,
+            );
+          }
         }
         // External contractor portal users only see observations they reported
         // (internal users → scope null → unrestricted). `reportedByUserId` is
@@ -783,13 +791,13 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           .select()
           .from(issues)
           .where(and(...where))
-          .orderBy(desc(issues.createdAt))
+          .orderBy(desc(issues.createdAt), desc(issues.id))
           .limit(input.limit + 1);
 
         const hasMore = rows.length > input.limit;
         const slice = hasMore ? rows.slice(0, input.limit) : rows;
-        const nextCursor =
-          hasMore && slice.length > 0 ? slice[slice.length - 1]?.createdAt.toISOString() : null;
+        const last = hasMore && slice.length > 0 ? slice[slice.length - 1] : undefined;
+        const nextCursor = last !== undefined ? `${last.createdAt.toISOString()}_${last.id}` : null;
         return { items: slice, nextCursor };
       }),
 
