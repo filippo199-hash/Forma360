@@ -2,6 +2,7 @@
 
 **Module:** Inspections (list, conduct, status/report, signatures, approvals)
 **Investigated:** 2026-07-25 · live walkthrough on prod (Northwind tenant, Alice Admin — started + conducted a real "Clothing Shop – Morning Opening Walkthrough" inspection) + full code map
+**Status:** ✅ All 14 implemented & deployed — commit `06d1247` (2026-07-25). Live-verified: #2 (page dots + jump list), #3 (picker hides un-startable), #6 (multi-file), #9 (mobile cards), #11 (no raise-action on instructions), #14a (no View-report on in-progress). The rest are typecheck/test-covered (no approval-workflow / rejected / conflict state existed in the test tenant to exercise #1/#4/#5/#8/#12 live).
 **Primary code:**
 - List: `apps/web/app/[locale]/inspections/page.tsx`, `inspections/template-picker-dialog.tsx`
 - Conduct: `apps/web/app/[locale]/inspections/[inspectionId]/page.tsx`, `src/components/inspections/conduct-shell.tsx`, `conduct-state.ts`, `response-input.tsx`, `evidence-uploader.tsx`, `signature-pad.tsx`
