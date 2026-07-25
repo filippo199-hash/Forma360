@@ -65,7 +65,7 @@ export default function SitesHubPage() {
   const defaultKind: Kind = terminology === 'sites' ? 'site' : 'project';
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.sites.hub.useQuery();
+  const { data, isLoading, error } = trpc.sites.hub.useQuery();
   const rows = data ?? [];
 
   // ── View + filters ────────────────────────────────────────────────
@@ -160,8 +160,12 @@ export default function SitesHubPage() {
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
+  const dateOrderError =
+    kind === 'project' && startDate !== '' && endDate !== '' && endDate < startDate;
+
   function submit() {
     if (name.trim().length === 0) return;
+    if (dateOrderError) return;
     create.mutate({
       name: name.trim(),
       kind,
@@ -223,7 +227,9 @@ export default function SitesHubPage() {
               ) : (
                 <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
               )}
-              <span className="truncate leading-snug">{row.name}</span>
+              <span className="truncate leading-snug" title={row.name}>
+                {row.name}
+              </span>
             </div>
             {label !== null ? (
               <span
@@ -239,13 +245,18 @@ export default function SitesHubPage() {
 
           {/* Hierarchy at a glance — child sites show their parent. */}
           {row.parentName !== null ? (
-            <p className="truncate text-xs text-muted-foreground">
+            <p
+              className="truncate text-xs text-muted-foreground"
+              title={t('inParent', { name: row.parentName })}
+            >
               {t('inParent', { name: row.parentName })}
             </p>
           ) : null}
 
           {row.client !== null && row.client !== '' ? (
-            <p className="truncate text-sm text-muted-foreground">{row.client}</p>
+            <p className="truncate text-sm text-muted-foreground" title={row.client}>
+              {row.client}
+            </p>
           ) : null}
 
           {bar !== null ? (
@@ -436,17 +447,30 @@ export default function SitesHubPage() {
           <Skeleton className="h-40 w-full" />
           <Skeleton className="h-40 w-full" />
         </div>
+      ) : error !== null ? (
+        <EmptyState
+          icon={<AlertTriangle className="h-6 w-6 text-red-500" />}
+          text={t('loadError')}
+        />
       ) : view === 'archived' && visible.length === 0 ? (
         <EmptyState icon={<Archive className="h-6 w-6" />} text={t('noArchived')} />
       ) : visible.length === 0 ? (
-        <EmptyState
-          icon={<MapPin className="h-6 w-6" />}
-          text={
-            rows.filter((r) => r.archivedAt === null).length === 0
-              ? t('empty', { places })
-              : t('noResults')
-          }
-        />
+        rows.filter((r) => r.archivedAt === null).length === 0 ? (
+          <EmptyState
+            icon={<MapPin className="h-6 w-6" />}
+            text={t('empty', { places })}
+            action={
+              canManage ? (
+                <Button onClick={openCreate}>
+                  <Plus className="mr-1 h-4 w-4" />
+                  {t('newButton')}
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <EmptyState icon={<MapPin className="h-6 w-6" />} text={t('noResults')} />
+        )
       ) : grouped ? (
         <div className="space-y-8">
           {projects.length > 0 ? (
@@ -575,9 +599,13 @@ export default function SitesHubPage() {
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
+                      aria-invalid={dateOrderError}
                     />
                   </div>
                 </div>
+                {dateOrderError ? (
+                  <p className="text-sm text-red-600">{t('dateOrderError')}</p>
+                ) : null}
                 <div className="space-y-1.5">
                   <Label htmlFor="site-status">{t('fieldStatus')}</Label>
                   <select
@@ -599,7 +627,10 @@ export default function SitesHubPage() {
             <Button variant="ghost" onClick={() => setOpen(false)}>
               {tCommon('cancel')}
             </Button>
-            <Button onClick={submit} disabled={create.isPending || name.trim().length === 0}>
+            <Button
+              onClick={submit}
+              disabled={create.isPending || name.trim().length === 0 || dateOrderError}
+            >
               {t('createButton')}
             </Button>
           </DialogFooter>
@@ -609,12 +640,21 @@ export default function SitesHubPage() {
   );
 }
 
-function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
+function EmptyState({
+  icon,
+  text,
+  action,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  action?: React.ReactNode;
+}) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
         {icon}
         <p>{text}</p>
+        {action !== undefined ? <div className="mt-2">{action}</div> : null}
       </CardContent>
     </Card>
   );

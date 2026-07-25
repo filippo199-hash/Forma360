@@ -89,6 +89,9 @@ function LinkPickerDialog({
   onClose: () => void;
 }) {
   const t = useTranslations('sites');
+  const tCommon = useTranslations('common');
+  const tInspStatus = useTranslations('inspections.status');
+  const tActStatus = useTranslations('actions.status');
   const utils = trpc.useUtils();
   const [q, setQ] = useState('');
 
@@ -100,7 +103,7 @@ function LinkPickerDialog({
     id == null ? null : ((sitesQ.data ?? []).find((s) => s.id === id)?.name ?? null);
 
   const onErr = (err: { message: string }) =>
-    toast.error(err.message.length > 0 ? err.message : 'Something went wrong');
+    toast.error(err.message.length > 0 ? err.message : tCommon('error'));
   const done = () => {
     toast.success(t('linkedToast'));
     void utils.inspections.list.invalidate();
@@ -116,11 +119,31 @@ function LinkPickerDialog({
   // Each candidate carries a `meta` line (status · current place) so the user
   // can tell otherwise-identically-named entries apart.
   const candidates = useMemo(() => {
-    const humanize = (s: string | null): string | null => (s == null ? null : s.replace(/_/g, ' '));
-    const withPlace = (status: string | null, otherSiteId: string | null | undefined): string => {
+    // `as readonly string[]` widens the const tuple only so `.includes` accepts a
+    // free-form status string; the guard still narrows the return type.
+    const isInspStatusKey = (
+      s: string,
+    ): s is 'in_progress' | 'awaiting_signatures' | 'awaiting_approval' | 'completed' | 'rejected' =>
+      (
+        ['in_progress', 'awaiting_signatures', 'awaiting_approval', 'completed', 'rejected'] as readonly string[]
+      ).includes(s);
+    const isActStatusKey = (
+      s: string,
+    ): s is 'open' | 'in_progress' | 'completed' | 'cancelled' =>
+      (['open', 'in_progress', 'completed', 'cancelled'] as readonly string[]).includes(s);
+    // Localise a known status enum; fall back to a humanised form for statuses
+    // that have no translation key yet (e.g. workflow-only states).
+    const inspStatusLabel = (s: string): string =>
+      isInspStatusKey(s) ? tInspStatus(s) : s.replace(/_/g, ' ');
+    const actStatusLabel = (s: string): string =>
+      isActStatusKey(s) ? tActStatus(s) : s.replace(/_/g, ' ');
+    const withPlace = (
+      statusLabel: string | null,
+      otherSiteId: string | null | undefined,
+    ): string => {
       const place = siteNameOf(otherSiteId);
       const parts = [
-        humanize(status),
+        statusLabel,
         place ? t('linkCurrentlyOn', { place }) : t('linkUnassigned'),
       ].filter((p): p is string => p !== null && p !== undefined && p !== '');
       return parts.join(' · ');
@@ -140,17 +163,17 @@ function LinkPickerDialog({
                 ? title
                 : i.documentNumber != null
                   ? `#${i.documentNumber}`
-                  : i.id.slice(-6);
+                  : t('pinType_inspection');
           // Show the doc number as a suffix in the meta so identical templates differ.
           const num = i.documentNumber != null ? `#${i.documentNumber}` : null;
-          const base = withPlace(i.status, i.siteId);
+          const base = withPlace(inspStatusLabel(i.status), i.siteId);
           return { id: i.id, label, meta: [num, base].filter(Boolean).join(' · ') };
         });
     }
     if (kind === 'action') {
       return (actQ.data ?? [])
         .filter((a) => a.siteId !== siteId)
-        .map((a) => ({ id: a.id, label: a.title, meta: withPlace(a.status, a.siteId) }));
+        .map((a) => ({ id: a.id, label: a.title, meta: withPlace(actStatusLabel(a.status), a.siteId) }));
     }
     return (assetQ.data ?? [])
       .filter((a) => a.siteId !== siteId && a.archivedAt === null)
@@ -161,7 +184,7 @@ function LinkPickerDialog({
           .join(' · ');
         return { id: a.id, label: a.name, meta };
       });
-  }, [kind, siteId, inspQ.data, actQ.data, assetQ.data, sitesQ.data, t]);
+  }, [kind, siteId, inspQ.data, actQ.data, assetQ.data, sitesQ.data, t, tInspStatus, tActStatus]);
 
   const filtered = candidates.filter((c) => c.label.toLowerCase().includes(q.trim().toLowerCase()));
   const loading = inspQ.isLoading || actQ.isLoading || assetQ.isLoading;
@@ -208,9 +231,14 @@ function LinkPickerDialog({
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50 disabled:opacity-50"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="truncate">{c.label}</p>
+                        <p className="truncate" title={c.label}>
+                          {c.label}
+                        </p>
                         {c.meta !== '' ? (
-                          <p className="truncate text-xs capitalize text-muted-foreground">
+                          <p
+                            className="truncate text-xs capitalize text-muted-foreground"
+                            title={c.meta}
+                          >
                             {c.meta}
                           </p>
                         ) : null}
@@ -288,6 +316,17 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
     dot: s.paused ? 'bg-slate-400' : 'bg-emerald-500',
   }));
 
+  // One shared inline "couldn't load" line for every card, so a failed query
+  // reads as an error rather than a misleading empty/zero state.
+  function CardError() {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+        {t('overviewCardError')}
+      </p>
+    );
+  }
+
   function ListCard({
     icon,
     label,
@@ -296,6 +335,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
     viewAllHref,
     onViewAll,
     loading,
+    error,
     footer,
   }: {
     icon: ReactNode;
@@ -305,6 +345,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
     viewAllHref?: string;
     onViewAll?: () => void;
     loading: boolean;
+    error?: boolean;
     footer?: ReactNode;
   }) {
     const header = (
@@ -343,6 +384,8 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
             </div>
+          ) : error === true ? (
+            <CardError />
           ) : total === 0 ? null : ( // compact zero-state: header + action buttons only
             <ul className="space-y-1.5">
               {items.slice(0, MAX).map((it) => {
@@ -351,7 +394,9 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
                     {it.dot !== undefined ? (
                       <span className={cn('h-2 w-2 shrink-0 rounded-full', it.dot)} />
                     ) : null}
-                    <span className="flex-1 truncate text-sm">{it.title}</span>
+                    <span className="flex-1 truncate text-sm" title={it.title}>
+                      {it.title}
+                    </span>
                     {it.meta !== undefined ? (
                       <span className="shrink-0 text-xs text-muted-foreground">{it.meta}</span>
                     ) : null}
@@ -418,6 +463,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
         total={obsItems.length}
         viewAllHref={`/${locale}/observations?site=${siteId}`}
         loading={obs.isLoading}
+        error={obs.isError}
         footer={footerRow(
           canReportObservations
             ? createLinkButton(
@@ -434,6 +480,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
         total={actItems.length}
         viewAllHref={`/${locale}/actions?site=${siteId}`}
         loading={acts.isLoading}
+        error={acts.isError}
         footer={footerRow(
           canCreateActions
             ? createLinkButton(`/${locale}/actions/new?site=${siteId}`, t('createActionButton'))
@@ -448,6 +495,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
         total={inspItems.length}
         viewAllHref={`/${locale}/inspections?site=${siteId}`}
         loading={insp.isLoading}
+        error={insp.isError}
         footer={footerRow(
           canManageInspections ? (
             <Button size="sm" className="h-7 flex-1" onClick={() => setShowInspectionPicker(true)}>
@@ -465,6 +513,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
         total={assetItems.length}
         viewAllHref={`/${locale}/assets?site=${siteId}`}
         loading={assets.isLoading}
+        error={assets.isError}
         footer={footerRow(
           canManageAssets
             ? createLinkButton(`/${locale}/assets/new?site=${siteId}`, t('createAssetButton'))
@@ -499,6 +548,8 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
           </button>
           {media.isLoading ? (
             <Skeleton className="h-16 w-full" />
+          ) : media.isError ? (
+            <CardError />
           ) : mediaRows.length === 0 ? null : ( // compact zero-state
             <div className="flex gap-2 overflow-hidden">
               {mediaRows.slice(0, 5).map((m) => (
@@ -555,19 +606,25 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
           </button>
           {plans.isLoading ? (
             <Skeleton className="h-8 w-full" />
+          ) : plans.isError ? (
+            <CardError />
           ) : planRows.length === 0 ? null : ( // compact zero-state
             <div className="flex flex-wrap gap-1.5">
-              {planRows.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => onOpenTab('plans')}
-                  className="max-w-[180px] truncate rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted"
-                >
-                  {/* Guard against file-hash names from uploads without a title. */}
-                  {/^[0-9a-f]{24,}$/i.test(p.name) ? t('plansUntitled') : p.name}
-                </button>
-              ))}
+              {planRows.map((p) => {
+                // Guard against file-hash names from uploads without a title.
+                const planName = /^[0-9a-f]{24,}$/i.test(p.name) ? t('plansUntitled') : p.name;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => onOpenTab('plans')}
+                    title={planName}
+                    className="max-w-[180px] truncate rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted"
+                  >
+                    {planName}
+                  </button>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -580,6 +637,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
         total={docItems.length}
         viewAllHref={`/${locale}/documents?site=${siteId}`}
         loading={docs.isLoading}
+        error={docs.isError}
         footer={footerRow(
           canManageDocuments
             ? createLinkButton(`/${locale}/documents/new?site=${siteId}`, t('uploadDocumentButton'))
@@ -598,6 +656,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
           total={scheduleItems.length}
           viewAllHref={`/${locale}/schedules?site=${siteId}`}
           loading={schedules.isLoading}
+          error={schedules.isError}
         />
       ) : null}
 

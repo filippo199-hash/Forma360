@@ -3106,7 +3106,14 @@
     "selectorDone": "Done",
     "selectorSelected": "{count} selected",
     "selectorOpenAria": "Open {name}",
-    "selectorRemoveAria": "Remove {name}"
+    "selectorRemoveAria": "Remove {name}",
+    "dateOrderError": "End date can't be before the start date.",
+    "loadError": "Couldn't load your sites and projects. Please try again.",
+    "overviewCardError": "Couldn't load",
+    "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
+    "plans": {
+      "deletePinConfirm": "Delete this pin?"
+    }
   },
   "contractors": {
     "title": "Contractors",

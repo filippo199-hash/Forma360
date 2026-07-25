@@ -3,7 +3,7 @@
 import { Pencil, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useHasPermission } from '../../lib/permissions-context';
 import { recordPlaceKey } from '../../lib/terminology';
@@ -69,16 +69,44 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
   const [client, setClient] = useState(site.client ?? '');
   const [startDate, setStartDate] = useState(site.startDate ?? '');
   const [endDate, setEndDate] = useState(site.endDate ?? '');
+  const [parentId, setParentId] = useState('');
+  const [dateError, setDateError] = useState(false);
 
-  const update = trpc.sites.update.useMutation({
-    onSuccess: () => {
-      void utils.sites.getHub.invalidate({ id: site.id });
-      void utils.sites.hub.invalidate();
-      toast.success(t('editSavedToast'));
-      setEditOpen(false);
-    },
-    onError: () => toast.error(tCommon('error')),
-  });
+  // Eligible parents: the full active tree, minus this record and its
+  // descendants (moving a node beneath its own descendant would make a cycle;
+  // the router rejects it too, but we hide the options up front).
+  const list = trpc.sites.list.useQuery(undefined, { enabled: editOpen });
+  const listRows = list.data ?? [];
+  const selfRow = listRows.find((r) => r.id === site.id);
+  const currentParentId = selfRow?.parentId ?? null;
+  const eligibleParents = listRows.filter(
+    (r) => r.id !== site.id && !r.path.split('.').includes(site.id),
+  );
+
+  // Seed the parent select from the loaded tree once per open, so a background
+  // refetch can't clobber a choice the user just made.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!editOpen) {
+      seededRef.current = false;
+      return;
+    }
+    if (!seededRef.current && list.data !== undefined) {
+      setParentId(currentParentId ?? '');
+      seededRef.current = true;
+    }
+  }, [editOpen, list.data, currentParentId]);
+
+  function afterSaved() {
+    void utils.sites.getHub.invalidate({ id: site.id });
+    void utils.sites.hub.invalidate();
+    void utils.sites.list.invalidate();
+    toast.success(t('editSavedToast'));
+    setEditOpen(false);
+  }
+
+  const update = trpc.sites.update.useMutation();
+  const move = trpc.sites.move.useMutation();
 
   const archive = trpc.sites.archiveWithMode.useMutation({
     onSuccess: () => {
@@ -91,19 +119,49 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
 
   function save() {
     if (name.trim().length === 0) return;
-    update.mutate({
-      id: site.id,
-      name: name.trim(),
-      kind,
-      ...(kind === 'project'
-        ? {
-            status,
-            client: client.trim() === '' ? null : client.trim(),
-            startDate: startDate === '' ? null : startDate,
-            endDate: endDate === '' ? null : endDate,
+    // End must not precede start (project dates only).
+    if (kind === 'project' && startDate !== '' && endDate !== '' && endDate < startDate) {
+      setDateError(true);
+      return;
+    }
+    setDateError(false);
+
+    const nextParent = parentId === '' ? null : parentId;
+    const parentChanged = nextParent !== (currentParentId ?? null);
+
+    update.mutate(
+      {
+        id: site.id,
+        name: name.trim(),
+        kind,
+        ...(kind === 'project'
+          ? {
+              status,
+              client: client.trim() === '' ? null : client.trim(),
+              startDate: startDate === '' ? null : startDate,
+              endDate: endDate === '' ? null : endDate,
+            }
+          : { status: null, client: null, startDate: null, endDate: null }),
+      },
+      {
+        onSuccess: () => {
+          if (!parentChanged) {
+            afterSaved();
+            return;
           }
-        : { status: null, client: null, startDate: null, endDate: null }),
-    });
+          // Parent moves are a separate mutation; the router validates
+          // max-depth and cycles and surfaces the reason in the error message.
+          move.mutate(
+            { id: site.id, parentId: nextParent },
+            {
+              onSuccess: afterSaved,
+              onError: (err) => toast.error(err.message || tCommon('error')),
+            },
+          );
+        },
+        onError: () => toast.error(tCommon('error')),
+      },
+    );
   }
 
   if (!canManage) return null;
@@ -176,6 +234,27 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
               />
             </div>
 
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-parent">{t('fieldParent')}</Label>
+              <select
+                id="edit-parent"
+                value={parentId}
+                onChange={(e) => setParentId(e.target.value)}
+                disabled={list.isLoading}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t('parentNone')}</option>
+                {eligibleParents.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+              {list.error ? (
+                <p className="text-xs text-destructive">{t('parentLoadError')}</p>
+              ) : null}
+            </div>
+
             {kind === 'project' ? (
               <>
                 <div className="space-y-1.5">
@@ -187,25 +266,36 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
                     maxLength={200}
                   />
                 </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="edit-start">{t('fieldStart')}</Label>
-                    <Input
-                      id="edit-start"
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit-start">{t('fieldStart')}</Label>
+                      <Input
+                        id="edit-start"
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => {
+                          setStartDate(e.target.value);
+                          setDateError(false);
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit-end">{t('fieldEnd')}</Label>
+                      <Input
+                        id="edit-end"
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => {
+                          setEndDate(e.target.value);
+                          setDateError(false);
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="edit-end">{t('fieldEnd')}</Label>
-                    <Input
-                      id="edit-end"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
+                  {dateError ? (
+                    <p className="text-xs text-destructive">{t('dateOrderError')}</p>
+                  ) : null}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="edit-status">{t('fieldStatus')}</Label>
@@ -228,7 +318,10 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
             <Button variant="ghost" onClick={() => setEditOpen(false)}>
               {tCommon('cancel')}
             </Button>
-            <Button onClick={save} disabled={update.isPending || name.trim().length === 0}>
+            <Button
+              onClick={save}
+              disabled={update.isPending || move.isPending || name.trim().length === 0}
+            >
               {t('editSaveButton')}
             </Button>
           </DialogFooter>

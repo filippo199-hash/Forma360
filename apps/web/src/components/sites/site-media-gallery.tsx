@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useHasPermission } from '../../lib/permissions-context';
 import { usePlaceTerms } from '../../lib/terminology';
 import { trpc } from '../../lib/trpc/client';
+import { AutoGrowTextarea } from '../ui/auto-grow-textarea';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent } from '../ui/dialog';
 import { Skeleton } from '../ui/skeleton';
@@ -262,6 +263,7 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
       <button
         key={m.id}
         type="button"
+        title={m.caption.length > 0 ? m.caption : m.filename}
         onClick={() => {
           if (compareMode) {
             if (m.kind === 'photo') toggleSelect(m.id);
@@ -467,8 +469,8 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
               ) : null}
 
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <input
+                <div className="flex items-start gap-2">
+                  <AutoGrowTextarea
                     value={captionDraft}
                     onChange={(e) => setCaptionDraft(e.target.value)}
                     placeholder={t('mediaCaptionPlaceholder')}

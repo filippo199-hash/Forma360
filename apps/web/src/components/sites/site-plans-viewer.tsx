@@ -126,7 +126,10 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
 
   const createPlan = trpc.sitePlans.createPlan.useMutation();
   const renamePlan = trpc.sitePlans.renamePlan.useMutation({
-    onSuccess: () => void utils.sitePlans.listPlans.invalidate({ siteId }),
+    onSuccess: () => {
+      void utils.sitePlans.listPlans.invalidate({ siteId });
+      toast.success(t('editSavedToast'));
+    },
   });
   const reorderPlan = trpc.sitePlans.reorderPlan.useMutation();
   const archivePlan = trpc.sitePlans.archivePlan.useMutation({
@@ -872,7 +875,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    disabled={idx === 0}
+                    disabled={idx === 0 || reorderPlan.isPending}
                     onClick={() => void moveLevel(p.id, -1)}
                   >
                     <ArrowUp className="h-4 w-4" />
@@ -880,7 +883,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    disabled={idx === arr.length - 1}
+                    disabled={idx === arr.length - 1 || reorderPlan.isPending}
                     onClick={() => void moveLevel(p.id, 1)}
                   >
                     <ArrowDown className="h-4 w-4" />
@@ -949,7 +952,10 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                   size="sm"
                   className="text-destructive hover:text-destructive"
                   disabled={archivePin.isPending}
-                  onClick={() => archivePin.mutate({ id: activePin.id })}
+                  onClick={() => {
+                    if (window.confirm(t('plans.deletePinConfirm')))
+                      archivePin.mutate({ id: activePin.id });
+                  }}
                 >
                   <Trash2 className="mr-1 h-3.5 w-3.5" />
                   {t('planPinDelete')}

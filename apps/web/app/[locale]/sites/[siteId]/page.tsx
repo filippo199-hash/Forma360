@@ -1,7 +1,7 @@
 'use client';
 
 import { Building2, ChevronRight, MapPin } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -28,6 +28,7 @@ const STATUS_COLORS: Record<Status, string> = {
 export default function SiteDetailPage() {
   const t = useTranslations('sites');
   const tCommon = useTranslations('common');
+  const format = useFormatter();
   const { term } = usePlaceTerms();
   const params = useParams<{ locale: string; siteId: string }>();
   const locale = params.locale ?? 'en';
@@ -135,7 +136,14 @@ export default function SiteDetailPage() {
           ) : null}
           {isProject && (site.startDate !== null || site.endDate !== null) ? (
             <span>
-              {t('detailTimeline')}: {site.startDate ?? '—'} → {site.endDate ?? '—'}
+              {t('detailTimeline')}:{' '}
+              {site.startDate !== null
+                ? format.dateTime(new Date(site.startDate), { dateStyle: 'medium' })
+                : '—'}{' '}
+              →{' '}
+              {site.endDate !== null
+                ? format.dateTime(new Date(site.endDate), { dateStyle: 'medium' })
+                : '—'}
             </span>
           ) : null}
         </div>
