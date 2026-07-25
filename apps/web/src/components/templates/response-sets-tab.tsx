@@ -1,9 +1,9 @@
 'use client';
 
 import { newId } from '@forma360/shared/id';
-import { Plus } from 'lucide-react';
+import { Combine, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -23,6 +23,28 @@ export function ResponseSetsTab() {
   const sets = state.content.customResponseSets;
   const [selectedSetId, setSelectedSetId] = useState<string | null>(sets[0]?.id ?? null);
   const selectedSet = sets.find((s) => s.id === selectedSetId) ?? null;
+
+  // How many sets are exact duplicates of an earlier one (same scale, ignoring
+  // triggers). Drives the "Merge duplicates" affordance.
+  const duplicateCount = useMemo(() => {
+    const seen = new Set<string>();
+    let dupes = 0;
+    for (const set of sets) {
+      const sig = JSON.stringify({
+        multiSelect: set.multiSelect,
+        options: set.options.map((o) => ({ label: o.label, color: o.color })),
+      });
+      if (seen.has(sig)) dupes += 1;
+      else seen.add(sig);
+    }
+    return dupes;
+  }, [sets]);
+
+  function handleMergeDuplicates() {
+    dispatch({ type: 'mergeDuplicateResponseSets' });
+    // The first occurrence of each scale is always kept, so sets[0] survives.
+    setSelectedSetId(sets[0]?.id ?? null);
+  }
 
   function handleAdd() {
     const id = newId();
@@ -64,7 +86,9 @@ export function ResponseSetsTab() {
                       : 'text-foreground hover:bg-accent/60'
                   }`}
                 >
-                  <span className="truncate font-medium">{set.name}</span>
+                  <span className="truncate font-medium" title={set.name}>
+                    {set.name}
+                  </span>
                   <span
                     className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${
                       isSelected
@@ -80,7 +104,7 @@ export function ResponseSetsTab() {
           )}
         </div>
 
-        <div className="border-t p-2">
+        <div className="space-y-1 border-t p-2">
           <Button
             variant="ghost"
             size="sm"
@@ -91,6 +115,17 @@ export function ResponseSetsTab() {
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             {t('addButton')}
           </Button>
+          {duplicateCount > 0 ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground hover:bg-accent hover:text-foreground"
+              onClick={handleMergeDuplicates}
+            >
+              <Combine className="mr-1.5 h-3.5 w-3.5" />
+              {t('mergeDuplicates', { count: duplicateCount })}
+            </Button>
+          ) : null}
         </div>
       </div>
 

@@ -271,6 +271,50 @@ describe('buildTemplateContentFromSpec', () => {
     }
   });
 
+  it('collapses same-scale questions with differing triggers into ONE response set', () => {
+    // Same Yes/No scale, but each question wants a DIFFERENT requireAction title.
+    // Pre-fix these produced three near-duplicate sets (triggers were part of the
+    // dedup key); now they share one, since the key is {label,color} only.
+    const yn = (action: string) => [
+      { label: 'Yes', color: 'green' as const },
+      { label: 'No', color: 'red' as const, flag: true, requireAction: action },
+    ];
+    const content = buildTemplateContentFromSpec(
+      spec({
+        pages: [
+          {
+            title: 'Fire',
+            sections: [
+              {
+                title: 'Checks',
+                questions: [
+                  {
+                    prompt: 'Extinguisher charged?',
+                    type: 'multipleChoice',
+                    options: yn('Recharge extinguisher'),
+                  },
+                  { prompt: 'Exit clear?', type: 'multipleChoice', options: yn('Clear the exit') },
+                  {
+                    prompt: 'Alarm working?',
+                    type: 'multipleChoice',
+                    options: yn('Repair the alarm'),
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    // One shared Yes/No set despite three different requireAction titles.
+    expect(content.customResponseSets).toHaveLength(1);
+    const a = itemByPrompt(content, 'Extinguisher charged?');
+    const b = itemByPrompt(content, 'Exit clear?');
+    if (a?.type !== 'multipleChoice' || b?.type !== 'multipleChoice')
+      throw new Error('expected MC');
+    expect(a.responseSetId).toBe(b.responseSetId);
+  });
+
   it('maps user / asset / site / location questions to picker item types', () => {
     const content = buildTemplateContentFromSpec(
       spec({

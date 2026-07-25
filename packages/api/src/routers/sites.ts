@@ -127,6 +127,7 @@ export const sitesRouter = router({
       .select({
         id: sites.id,
         name: sites.name,
+        kind: sites.kind,
         parentId: sites.parentId,
         depth: sites.depth,
         path: sites.path,

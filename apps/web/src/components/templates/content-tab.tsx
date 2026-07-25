@@ -51,6 +51,7 @@ import {
   ChevronRight,
   Copy,
   FileText,
+  FolderKanban,
   GitBranch,
   GripVertical,
   Hash,
@@ -94,6 +95,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
+import { AutoGrowTextarea } from '../ui/auto-grow-textarea';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -116,22 +118,37 @@ type OtherType = Exclude<SupportedItemType | StubItemType, 'multipleChoice'>;
 
 /** Ordered list of "other responses" shown in the right column of the picker. */
 const OTHER_TYPES: ReadonlyArray<{
+  /** Underlying question type. Site + Project share the 'site' type. */
   type: OtherType;
+  /** i18n key under `templates.editor.questionType` for the picker label. */
+  labelKey: string;
+  /** For the two site rows: which place kind this picks. */
+  siteKind?: 'site' | 'project';
   icon: React.ReactNode;
 }> = [
-  { type: 'text', icon: <Type className="h-4 w-4 text-orange-500" /> },
-  { type: 'number', icon: <Hash className="h-4 w-4 text-blue-500" /> },
-  { type: 'checkbox', icon: <CheckSquare className="h-4 w-4 text-blue-500" /> },
-  { type: 'datetime', icon: <Calendar className="h-4 w-4 text-green-500" /> },
-  { type: 'media', icon: <ImageIcon className="h-4 w-4 text-teal-500" /> },
-  { type: 'slider', icon: <SlidersHorizontal className="h-4 w-4 text-purple-500" /> },
-  { type: 'annotation', icon: <Pencil className="h-4 w-4 text-yellow-500" /> },
-  { type: 'signature', icon: <PenLine className="h-4 w-4 text-teal-500" /> },
-  { type: 'site', icon: <MapPin className="h-4 w-4 text-rose-500" /> },
-  { type: 'location', icon: <MapPin className="h-4 w-4 text-orange-500" /> },
-  { type: 'instruction', icon: <Info className="h-4 w-4 text-blue-400" /> },
-  { type: 'asset', icon: <Box className="h-4 w-4 text-yellow-600" /> },
-] as const;
+  { type: 'text', labelKey: 'text', icon: <Type className="h-4 w-4 text-orange-500" /> },
+  { type: 'number', labelKey: 'number', icon: <Hash className="h-4 w-4 text-blue-500" /> },
+  { type: 'checkbox', labelKey: 'checkbox', icon: <CheckSquare className="h-4 w-4 text-blue-500" /> },
+  { type: 'datetime', labelKey: 'datetime', icon: <Calendar className="h-4 w-4 text-green-500" /> },
+  { type: 'media', labelKey: 'media', icon: <ImageIcon className="h-4 w-4 text-teal-500" /> },
+  {
+    type: 'slider',
+    labelKey: 'slider',
+    icon: <SlidersHorizontal className="h-4 w-4 text-purple-500" />,
+  },
+  { type: 'annotation', labelKey: 'annotation', icon: <Pencil className="h-4 w-4 text-yellow-500" /> },
+  { type: 'signature', labelKey: 'signature', icon: <PenLine className="h-4 w-4 text-teal-500" /> },
+  { type: 'site', labelKey: 'site', siteKind: 'site', icon: <MapPin className="h-4 w-4 text-rose-500" /> },
+  {
+    type: 'site',
+    labelKey: 'project',
+    siteKind: 'project',
+    icon: <FolderKanban className="h-4 w-4 text-indigo-500" />,
+  },
+  { type: 'location', labelKey: 'location', icon: <MapPin className="h-4 w-4 text-orange-500" /> },
+  { type: 'instruction', labelKey: 'instruction', icon: <Info className="h-4 w-4 text-blue-400" /> },
+  { type: 'asset', labelKey: 'asset', icon: <Box className="h-4 w-4 text-yellow-600" /> },
+];
 
 // ─── Type-chip catalogue (colored squares on each question row) ──────────────
 
@@ -453,21 +470,19 @@ function TemplateHeaderCard({ templateId }: { templateId: string }) {
 
       {/* Title + description */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <input
-          type="text"
+        <AutoGrowTextarea
           value={state.content.title}
           onChange={(e) => dispatch({ type: 'updateContentTitle', title: e.target.value })}
-          className="mb-2 w-full bg-transparent text-3xl font-bold tracking-tight text-foreground outline-none"
+          className="mb-2 w-full bg-transparent text-3xl font-bold leading-tight tracking-tight text-foreground outline-none"
           aria-label={t('settingsTab.templateTitleLabel')}
         />
-        <input
-          type="text"
+        <AutoGrowTextarea
           value={state.content.description ?? ''}
           onChange={(e) =>
             dispatch({ type: 'updateContentDescription', description: e.target.value })
           }
           placeholder="Add a description…"
-          className="w-full bg-transparent text-sm text-muted-foreground outline-none"
+          className="w-full bg-transparent text-sm leading-snug text-muted-foreground outline-none"
           aria-label={t('pagesTab.pageDescriptionLabel')}
         />
       </div>
@@ -1190,15 +1205,15 @@ function SortableQuestionRow({
 
         {/* Question text — for instructions this is a non-editable preview;
             the text is edited in the labelled "Instruction text" area below. */}
-        <div className="flex items-center gap-1.5 py-4 pl-2 pr-3">
+        <div className="flex items-start gap-1.5 py-4 pl-2 pr-3">
           {required ? (
-            <span className="shrink-0 text-base font-bold text-destructive">*</span>
+            <span className="mt-px shrink-0 text-base font-bold text-destructive">*</span>
           ) : null}
           {item.type === 'instruction' ? (
             <button
               type="button"
               onClick={() => dispatch({ type: 'selectItem', itemId: item.id })}
-              className="flex-1 truncate bg-transparent text-left text-[15px] font-medium text-foreground outline-none"
+              className="flex-1 whitespace-pre-wrap break-words bg-transparent text-left text-[15px] font-medium text-foreground outline-none"
             >
               {item.body.trim().length > 0 ? (
                 item.body
@@ -1207,13 +1222,12 @@ function SortableQuestionRow({
               )}
             </button>
           ) : (
-            <input
-              type="text"
+            <AutoGrowTextarea
               value={prompt}
               onChange={(e) => handlePromptChange(e.target.value)}
               onClick={() => dispatch({ type: 'selectItem', itemId: item.id })}
               placeholder={t('questionPlaceholder')}
-              className="flex-1 bg-transparent text-[15px] font-medium outline-none"
+              className="flex-1 break-words bg-transparent text-[15px] font-medium leading-snug outline-none"
             />
           )}
         </div>
@@ -1450,12 +1464,17 @@ function TypeOfResponsePicker({
       : customResponseSets.filter((rs) => rs.name.toLowerCase().includes(search.toLowerCase()));
 
   /** Replace the item type by deleting + re-adding with copied prompt. */
-  function replaceItemType(newType: SupportedItemType | StubItemType, responseSetId?: string) {
+  function replaceItemType(
+    newType: SupportedItemType | StubItemType,
+    responseSetId?: string,
+    extraPatch?: Partial<Item>,
+  ) {
     const savedPrompt =
       item.type === 'instruction' ? item.body : 'prompt' in item ? item.prompt : 'New question';
 
     dispatch({ type: 'deleteItem', itemId: item.id });
 
+    const base = makeItem(newType);
     const newItem =
       newType === 'multipleChoice' && responseSetId !== undefined
         ? {
@@ -1463,10 +1482,11 @@ function TypeOfResponsePicker({
             prompt: savedPrompt,
             responseSetId,
           }
-        : {
-            ...makeItem(newType),
-            ...('prompt' in makeItem(newType) ? { prompt: savedPrompt } : {}),
-          };
+        : ({
+            ...base,
+            ...('prompt' in base ? { prompt: savedPrompt } : {}),
+            ...(extraPatch ?? {}),
+          } as Item);
 
     dispatch({ type: 'addItem', pageId, sectionId, item: newItem });
     dispatch({ type: 'selectItem', itemId: newItem.id });
@@ -1528,7 +1548,25 @@ function TypeOfResponsePicker({
     setEditingSetId(newSetId);
   }
 
-  function selectType(type: OtherType) {
+  function selectType(type: OtherType, siteKind?: 'site' | 'project') {
+    // Site and Project share the 'site' question type, differing only in the
+    // siteKind that scopes the conduct picker. Switching between them is a
+    // patch, not a type change.
+    if (type === 'site') {
+      const nextKind = siteKind ?? 'site';
+      const currentKind = item.type === 'site' ? (item.siteKind ?? 'site') : null;
+      if (currentKind === nextKind) {
+        setOpen(false);
+        return;
+      }
+      if (item.type === 'site') {
+        dispatch({ type: 'updateItem', itemId: item.id, patch: { siteKind: nextKind } });
+        setOpen(false);
+        return;
+      }
+      replaceItemType('site', undefined, { siteKind: nextKind });
+      return;
+    }
     if (item.type === type) {
       setOpen(false);
       return;
@@ -1647,19 +1685,22 @@ function TypeOfResponsePicker({
               {t('otherResponsesLabel')}
             </p>
             <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">
-              {OTHER_TYPES.map(({ type, icon }) => {
-                const isActive = item.type === type;
+              {OTHER_TYPES.map(({ type, labelKey, siteKind, icon }) => {
+                const isActive =
+                  type === 'site'
+                    ? item.type === 'site' && (item.siteKind ?? 'site') === (siteKind ?? 'site')
+                    : item.type === type;
                 return (
                   <button
-                    key={type}
+                    key={labelKey}
                     type="button"
-                    onClick={() => selectType(type)}
+                    onClick={() => selectType(type, siteKind)}
                     className={`flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent ${
                       isActive ? 'bg-accent font-medium' : ''
                     }`}
                   >
                     {icon}
-                    {tType(type as Parameters<typeof tType>[0])}
+                    {tType(labelKey as Parameters<typeof tType>[0])}
                   </button>
                 );
               })}
@@ -1847,7 +1888,8 @@ function ResponseTypeTrigger({
         {rs.options.slice(0, 3).map((opt) => (
           <span
             key={opt.id}
-            className={`rounded-full px-1.5 py-0.5 text-[11px] ${responseChipClasses(opt.color)}`}
+            title={opt.label}
+            className={`max-w-[10rem] truncate rounded-full px-1.5 py-0.5 text-[11px] ${responseChipClasses(opt.color)}`}
           >
             {opt.label}
           </span>
@@ -1859,6 +1901,11 @@ function ResponseTypeTrigger({
     );
   }
 
-  const label = tType(item.type as Parameters<typeof tType>[0]);
-  return <span className="truncate text-sm">{label}</span>;
+  const labelKey = item.type === 'site' && item.siteKind === 'project' ? 'project' : item.type;
+  const label = tType(labelKey as Parameters<typeof tType>[0]);
+  return (
+    <span className="truncate text-sm" title={label}>
+      {label}
+    </span>
+  );
 }

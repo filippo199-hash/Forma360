@@ -74,7 +74,17 @@ function resolveResponseSet(
   multiSelect: boolean,
   ctx: BuildCtx,
 ): { id: string; optionIds: string[] } {
-  const signature = JSON.stringify({ multiSelect, options: setOptions });
+  // Dedup key is the option *scale* (labels + colors) only — NOT the triggers.
+  // Triggers (requireAction title, requireEvidence, notify) vary per question,
+  // and if they were part of the key the AI would spawn a near-duplicate
+  // "Yes / No / N/A" set for every question that scored the same scale with a
+  // slightly different action title. Keying on {label,color} collapses those
+  // into one shared set; the first question's triggers are the ones kept (the
+  // generation agent is prompted to use a uniform trigger per repeated scale).
+  const signature = JSON.stringify({
+    multiSelect,
+    options: setOptions.map((o) => ({ label: o.label, color: o.color })),
+  });
   const existing = ctx.setBySignature.get(signature);
   if (existing !== undefined) return existing;
 

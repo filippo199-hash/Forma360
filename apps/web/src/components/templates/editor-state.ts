@@ -95,6 +95,7 @@ export type EditorAction =
   | { type: 'addResponseSet'; set: CustomResponseSet }
   | { type: 'updateResponseSet'; setId: string; patch: Partial<CustomResponseSet> }
   | { type: 'deleteResponseSet'; setId: string }
+  | { type: 'mergeDuplicateResponseSets' }
   | {
       type: 'updateResponseOption';
       setId: string;
@@ -415,6 +416,70 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           ),
         },
       };
+    case 'mergeDuplicateResponseSets': {
+      // Collapse response sets that share the same scale (multiSelect + the
+      // ordered {label,color} option list), ignoring triggers. Questions
+      // pointing at a dropped duplicate are repointed to the kept set, with
+      // their per-question flag + jump option-ids remapped by position.
+      const sets = state.content.customResponseSets;
+      const sigToKeptId = new Map<string, string>();
+      const keptSets: CustomResponseSet[] = [];
+      const setIdRemap = new Map<string, string>();
+      const optIdRemap = new Map<string, string>();
+      for (const set of sets) {
+        const sig = JSON.stringify({
+          multiSelect: set.multiSelect,
+          options: set.options.map((o) => ({ label: o.label, color: o.color })),
+        });
+        const keptId = sigToKeptId.get(sig);
+        if (keptId === undefined) {
+          sigToKeptId.set(sig, set.id);
+          keptSets.push(set);
+          continue;
+        }
+        const keptSet = keptSets.find((k) => k.id === keptId);
+        if (keptSet === undefined) continue;
+        setIdRemap.set(set.id, keptId);
+        set.options.forEach((o, i) => {
+          const keptOpt = keptSet.options[i];
+          if (keptOpt !== undefined) optIdRemap.set(o.id, keptOpt.id);
+        });
+      }
+      if (setIdRemap.size === 0) return state; // nothing to merge — no-op
+
+      const remapItem = (it: Item): Item => {
+        if (it.type !== 'multipleChoice') return it;
+        const newSetId = setIdRemap.get(it.responseSetId);
+        if (newSetId === undefined) return it;
+        return {
+          ...it,
+          responseSetId: newSetId,
+          ...(it.flaggedOptionIds !== undefined
+            ? { flaggedOptionIds: it.flaggedOptionIds.map((id) => optIdRemap.get(id) ?? id) }
+            : {}),
+          ...(it.jumps !== undefined
+            ? {
+                jumps: it.jumps.map((j) => ({
+                  ...j,
+                  optionId: optIdRemap.get(j.optionId) ?? j.optionId,
+                })),
+              }
+            : {}),
+        };
+      };
+
+      const pages = state.content.pages.map((p) =>
+        'sections' in p
+          ? { ...p, sections: p.sections.map((s) => ({ ...s, items: s.items.map(remapItem) })) }
+          : p,
+      );
+
+      return {
+        ...state,
+        isDirty: true,
+        content: { ...state.content, pages, customResponseSets: keptSets },
+      };
+    }
     case 'updateResponseOption':
       return {
         ...state,

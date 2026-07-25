@@ -200,6 +200,7 @@ export function EditorShell({
           <input
             type="text"
             value={state.content.title}
+            title={state.content.title}
             onChange={(e) => dispatch({ type: 'updateContentTitle', title: e.target.value })}
             className="min-w-0 flex-1 truncate bg-transparent text-sm font-medium text-foreground outline-none"
             aria-label={t('settingsTab.templateTitleLabel')}

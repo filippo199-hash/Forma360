@@ -262,7 +262,17 @@ const checkboxQuestion = z.object({
 
 // Title-page-only question kinds (auto-populated at inspection start).
 
-const sitePickerQuestion = z.object({ ...baseItemFields, type: z.literal('site') });
+const sitePickerQuestion = z.object({
+  ...baseItemFields,
+  type: z.literal('site'),
+  /**
+   * Which place kind this question accepts during conduct. Absent = both kinds
+   * (legacy content + AI-built questions); `'site'` restricts the picker to
+   * Sites, `'project'` to Projects. Lets a template tag a Project distinctly
+   * from a Site while both live in the one `sites` table.
+   */
+  siteKind: z.enum(['site', 'project']).optional(),
+});
 const conductedByQuestion = z.object({ ...baseItemFields, type: z.literal('conductedBy') });
 const inspectionDateQuestion = z.object({ ...baseItemFields, type: z.literal('inspectionDate') });
 const documentNumberQuestion = z.object({ ...baseItemFields, type: z.literal('documentNumber') });

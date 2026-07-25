@@ -1,4 +1,5 @@
-import type { TemplateContent } from '@forma360/shared/template-schema';
+import { newId } from '@forma360/shared/id';
+import type { CustomResponseSet, TemplateContent } from '@forma360/shared/template-schema';
 import { TEMPLATE_SCHEMA_VERSION } from '@forma360/shared/template-schema';
 import { describe, expect, it } from 'vitest';
 import { editorReducer, makeItem, type EditorState } from './editor-state';
@@ -64,6 +65,76 @@ function initialState(): EditorState {
 }
 
 describe('editorReducer', () => {
+  it('mergeDuplicateResponseSets collapses same-scale sets and repoints questions', () => {
+    const s = initialState();
+    const aNo = newId();
+    const bNo = newId();
+    // Two duplicate Yes/No sets (same scale, different option ids + triggers)
+    // plus one distinct set that must survive untouched.
+    const setA: CustomResponseSet = {
+      id: newId(),
+      name: 'Yes/No A',
+      sourceGlobalId: null,
+      multiSelect: false,
+      options: [
+        { id: newId(), label: 'Yes', color: 'green' },
+        { id: aNo, label: 'No', color: 'red' },
+      ],
+    };
+    const setB: CustomResponseSet = {
+      id: newId(),
+      name: 'Yes/No B',
+      sourceGlobalId: null,
+      multiSelect: false,
+      options: [
+        { id: newId(), label: 'Yes', color: 'green' },
+        {
+          id: bNo,
+          label: 'No',
+          color: 'red',
+          triggers: [{ kind: 'requireEvidence', mediaKind: 'any', minCount: 1 }],
+        },
+      ],
+    };
+    const setC: CustomResponseSet = {
+      id: newId(),
+      name: 'OK/Bad',
+      sourceGlobalId: null,
+      multiSelect: false,
+      options: [
+        { id: newId(), label: 'OK', color: 'green' },
+        { id: newId(), label: 'Bad', color: 'red' },
+      ],
+    };
+    s.content.customResponseSets = [setA, setB, setC];
+
+    // One question per duplicate set, each flagging its own "No" option.
+    const q1 = { ...makeItem('multipleChoice'), responseSetId: setA.id, flaggedOptionIds: [aNo] };
+    const q2 = { ...makeItem('multipleChoice'), responseSetId: setB.id, flaggedOptionIds: [bNo] };
+    const page = s.content.pages[1];
+    const sec = page?.sections[0];
+    if (sec === undefined) throw new Error('bad fixture');
+    sec.items = [q1, q2];
+
+    const next = editorReducer(s, { type: 'mergeDuplicateResponseSets' });
+
+    // setB folds into setA; setC survives → two sets remain.
+    expect(next.content.customResponseSets.map((rs) => rs.id).sort()).toEqual(
+      [setA.id, setC.id].sort(),
+    );
+    const items = next.content.pages[1]?.sections[0]?.items ?? [];
+    const [m1, m2] = items;
+    if (m1?.type !== 'multipleChoice' || m2?.type !== 'multipleChoice')
+      throw new Error('expected MC');
+    // Both questions now point at the kept set.
+    expect(m1.responseSetId).toBe(setA.id);
+    expect(m2.responseSetId).toBe(setA.id);
+    // q2's flagged "No" is remapped by position from setB's id to setA's id.
+    expect(m2.flaggedOptionIds).toEqual([aNo]);
+    expect(next.isDirty).toBe(true);
+  });
+
+
   it('addItem adds to the requested section and flips isDirty', () => {
     const s = initialState();
     const item = makeItem('text');

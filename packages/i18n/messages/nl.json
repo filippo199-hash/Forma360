@@ -556,6 +556,7 @@
         "inspectionDate": "Inspection date",
         "documentNumber": "Document number",
         "site": "Site",
+        "project": "Project",
         "location": "Location",
         "asset": "Asset",
         "company": "Company",
@@ -630,6 +631,7 @@
       },
       "responseSetsTab": {
         "addButton": "New response set",
+        "mergeDuplicates": "{count, plural, one {Merge # duplicate} other {Merge # duplicates}}",
         "empty": "No custom response sets. Add one here or attach a global response set to a multiple-choice question.",
         "nameLabel": "Name",
         "multiSelectLabel": "Multi-select",

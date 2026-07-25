@@ -120,12 +120,19 @@ function SitePickerInput({
 
   const allSites = sitesQuery.data ?? [];
 
+  // Restrict to the kind this question tags. Absent siteKind = both kinds.
+  const scoped = useMemo(
+    () =>
+      item.siteKind === undefined ? allSites : allSites.filter((s) => s.kind === item.siteKind),
+    [allSites, item.siteKind],
+  );
+
   const filtered = useMemo(
     () =>
       search.trim() === ''
-        ? allSites
-        : allSites.filter((s) => s.name.toLowerCase().includes(search.toLowerCase())),
-    [allSites, search],
+        ? scoped
+        : scoped.filter((s) => s.name.toLowerCase().includes(search.toLowerCase())),
+    [scoped, search],
   );
 
   const raw = state.responses[item.id];
@@ -140,7 +147,7 @@ function SitePickerInput({
     return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
   }
 
-  if (allSites.length === 0) {
+  if (scoped.length === 0) {
     return <p className="text-sm italic text-muted-foreground">{t('noSites')}</p>;
   }
 

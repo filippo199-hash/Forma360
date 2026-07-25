@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { AutoGrowTextarea } from '../ui/auto-grow-textarea';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -147,15 +148,15 @@ function CommonFields({ item }: { item: Item }) {
 
   return (
     <div className="space-y-3">
-      {/* Prompt input — no extra label, just the input */}
-      <Input
+      {/* Prompt input — auto-growing so a long question is fully visible */}
+      <AutoGrowTextarea
         id={`prompt-${item.id}`}
         value={item.prompt}
         onChange={(e) =>
           dispatch({ type: 'updateItem', itemId: item.id, patch: { prompt: e.target.value } })
         }
         placeholder={t('questionPrompt')}
-        className="font-medium"
+        className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium leading-snug ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label={t('questionPrompt')}
       />
 
