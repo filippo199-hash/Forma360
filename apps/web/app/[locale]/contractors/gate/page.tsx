@@ -95,7 +95,11 @@ export default function ContractorGatePage() {
               <h2 className="text-base font-semibold">{t('gate.kioskHeading')}</h2>
               <p className="text-sm text-muted-foreground">{t('gate.kioskSubtitle')}</p>
             </div>
-            {kioskUrl !== null ? (
+            {configQ.error ? (
+              <p className="text-sm text-destructive">{t('error')}</p>
+            ) : configQ.isLoading ? (
+              <Skeleton className="h-8 w-56" />
+            ) : kioskUrl !== null ? (
               <div className="flex flex-wrap items-center gap-2">
                 <code className="max-w-full truncate rounded bg-muted px-2 py-1 text-xs">
                   {kioskUrl}
@@ -118,7 +122,7 @@ export default function ContractorGatePage() {
             ) : (
               <p className="text-sm text-muted-foreground">{t('gate.noLinkYet')}</p>
             )}
-            {canManage ? (
+            {canManage && configQ.error == null && !configQ.isLoading ? (
               <Button
                 size="sm"
                 variant={token === null ? 'default' : 'outline'}
@@ -187,6 +191,12 @@ export default function ContractorGatePage() {
 
         {fieldsQ.isLoading ? (
           <Skeleton className="h-24 w-full" />
+        ) : fieldsQ.error ? (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-destructive">
+              {t('error')}
+            </CardContent>
+          </Card>
         ) : (fieldsQ.data ?? []).length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -208,6 +218,7 @@ export default function ContractorGatePage() {
                         <input
                           type="checkbox"
                           checked={f.required}
+                          disabled={updateField.isPending}
                           onChange={(e) =>
                             updateField.mutate({ id: f.id, required: e.target.checked })
                           }
@@ -223,8 +234,13 @@ export default function ContractorGatePage() {
                       <button
                         type="button"
                         aria-label={t('gate.removeField')}
-                        className="rounded p-1 text-muted-foreground hover:text-destructive"
-                        onClick={() => removeField.mutate({ id: f.id })}
+                        disabled={removeField.isPending}
+                        className="rounded p-1 text-muted-foreground hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
+                        onClick={() => {
+                          if (window.confirm(t('gate.removeFieldConfirm'))) {
+                            removeField.mutate({ id: f.id });
+                          }
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

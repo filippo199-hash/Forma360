@@ -3247,7 +3247,12 @@
       "method_self_scan": "Self-scan",
       "method_staff": "Staff",
       "visitorLabel": "Who’s attending",
-      "visitorPlaceholder": "Name(s) of who is coming"
+      "visitorPlaceholder": "Name(s) of who is coming",
+      "visitDetailTitle": "Visit details",
+      "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
+      "cancelConfirm": "Cancel this visit?",
+      "noShowConfirm": "Mark this visit as a no-show?",
+      "noVisitsThisMonth": "No visits scheduled this month."
     },
     "gate": {
       "navLink": "Gate",
@@ -3285,7 +3290,8 @@
       "checkedOutThanks": "You're checked out. Thanks for visiting.",
       "backToList": "Back",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "removeFieldConfirm": "Remove this capture field?"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3349,12 +3355,14 @@
       "editActivities": "Edit activities",
       "remove": "Remove",
       "removeConfirm": "Revoke this user’s portal access?",
-      "cancelInvite": "Cancel invite"
+      "cancelInvite": "Cancel invite",
+      "cancelInviteConfirm": "Cancel this pending invitation?"
     },
     "onSite": {
       "heading": "On site now — {count, plural, one {# person} other {# people}}",
       "since": "since {time}",
-      "perContractor": "{count, plural, one {# person} other {# people}}"
+      "perContractor": "{count, plural, one {# person} other {# people}}",
+      "loadError": "Couldn't load the on-site board."
     },
     "status_suspended": "Suspended",
     "override": {
@@ -3372,7 +3380,11 @@
     "templateDocCount": "{count, plural, one {# document} other {# documents}}",
     "reqBlockingShort": "Blocking",
     "addDocPlaceholder": "Add another document to this trade…",
-    "addDocument": "Add document"
+    "addDocument": "Add document",
+    "loadError": "Couldn't load contractors. Please try again.",
+    "rejectReasonLabel": "Reason for rejection",
+    "rejectReasonPlaceholder": "Explain why this document is being rejected…",
+    "rejectSubmit": "Reject document"
   },
   "groupUserSelector": {
     "placeholder": "Select",

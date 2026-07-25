@@ -17,6 +17,7 @@ import {
 } from '../../../../src/components/ui/dialog';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
+import { Textarea } from '../../../../src/components/ui/textarea';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { ContractorAssetsSection } from '../../../../src/components/contractors/contractor-assets';
@@ -96,6 +97,8 @@ export default function ContractorDetailPage() {
     onSuccess: () => {
       toast.success(t('rejectedToast'));
       invalidate();
+      setRejectDocId(null);
+      setRejectReason('');
     },
     onError: onErr,
   });
@@ -159,6 +162,10 @@ export default function ContractorDetailPage() {
   const [reqOpen, setReqOpen] = useState(false);
   const [reqName, setReqName] = useState('');
   const [reqBlocking, setReqBlocking] = useState(true);
+
+  // Reject-document dialog
+  const [rejectDocId, setRejectDocId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   // Upload-document dialog
   const [uploadReqId, setUploadReqId] = useState<string | null>(null);
@@ -341,10 +348,11 @@ export default function ContractorDetailPage() {
             {ovValue !== '' ? (
               <div className="space-y-1.5">
                 <Label htmlFor="ov-reason">{t('override.reasonLabel')}</Label>
-                <Input
+                <Textarea
                   id="ov-reason"
                   value={ovReason}
                   onChange={(e) => setOvReason(e.target.value)}
+                  rows={3}
                   maxLength={1000}
                   placeholder={t('override.reasonPlaceholder')}
                 />
@@ -567,7 +575,9 @@ export default function ContractorDetailPage() {
                         <li key={d.id} className="flex items-center gap-3 px-3 py-2 text-sm">
                           <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate">{d.filename}</p>
+                            <p className="truncate" title={d.filename}>
+                              {d.filename}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {d.endDate !== null
                                 ? t('expires', {
@@ -593,7 +603,8 @@ export default function ContractorDetailPage() {
                             <button
                               type="button"
                               title={t('verifyButton')}
-                              className="shrink-0 rounded p-1 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                              disabled={verifyDocument.isPending}
+                              className="shrink-0 rounded p-1 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-emerald-900/30"
                               onClick={() => verifyDocument.mutate({ id: d.id })}
                             >
                               <Check className="h-4 w-4" />
@@ -603,10 +614,11 @@ export default function ContractorDetailPage() {
                             <button
                               type="button"
                               title={t('rejectButton')}
-                              className="shrink-0 rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                              disabled={rejectDocument.isPending}
+                              className="shrink-0 rounded p-1 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/30"
                               onClick={() => {
-                                const reason = window.prompt(t('rejectReasonPrompt')) ?? '';
-                                rejectDocument.mutate({ id: d.id, reason });
+                                setRejectDocId(d.id);
+                                setRejectReason('');
                               }}
                             >
                               <X className="h-4 w-4" />
@@ -675,6 +687,43 @@ export default function ContractorDetailPage() {
               }
             >
               {tCommon('save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject-document dialog */}
+      <Dialog open={rejectDocId !== null} onOpenChange={(o) => !o && setRejectDocId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('rejectButton')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="reject-reason">{t('rejectReasonLabel')}</Label>
+            <Textarea
+              id="reject-reason"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+              maxLength={1000}
+              placeholder={t('rejectReasonPlaceholder')}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRejectDocId(null)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              variant="outline"
+              className="text-destructive hover:text-destructive"
+              disabled={rejectDocument.isPending || rejectDocId === null}
+              onClick={() => {
+                if (rejectDocId !== null)
+                  rejectDocument.mutate({ id: rejectDocId, reason: rejectReason.trim() });
+              }}
+            >
+              {t('rejectSubmit')}
             </Button>
           </DialogFooter>
         </DialogContent>

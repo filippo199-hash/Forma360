@@ -1,6 +1,14 @@
 'use client';
 
-import { ArrowLeft, CalendarClock, ChevronLeft, ChevronRight, LogIn, Plus } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CalendarClock,
+  ChevronLeft,
+  ChevronRight,
+  LogIn,
+  Plus,
+} from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -14,6 +22,7 @@ import {
 import { SiteFilterChip, useSiteFilterParam } from '../../../../src/components/site-filter-chip';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
+import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -79,12 +88,19 @@ export default function ContractorCalendarPage() {
 
   const utils = trpc.useUtils();
   const contractorsQ = trpc.contractors.list.useQuery();
-  const { data } = trpc.contractors.visits.list.useQuery({
+  const {
+    data,
+    isLoading: visitsLoading,
+    error: visitsError,
+  } = trpc.contractors.visits.list.useQuery({
     from: rangeFrom.toISOString(),
     to: rangeTo.toISOString(),
     ...(contractorId !== '' ? { contractorId } : {}),
     ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
   });
+
+  const isLoading = visitsLoading || contractorsQ.isLoading;
+  const loadError = visitsError ?? contractorsQ.error;
 
   const byDay = useMemo(() => {
     const map = new Map<string, NonNullable<typeof data>>();
@@ -96,6 +112,16 @@ export default function ContractorCalendarPage() {
     }
     return map;
   }, [data]);
+
+  /** Current-month days that have at least one visit — drives the mobile agenda list. */
+  const agendaDays = useMemo(
+    () =>
+      cells
+        .filter((cell) => cell.inMonth)
+        .map((cell) => ({ ...cell, items: byDay.get(cell.key) ?? [] }))
+        .filter((cell) => cell.items.length > 0),
+    [cells, byDay],
+  );
 
   const weekdayLabels = useMemo(() => {
     const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
@@ -203,80 +229,188 @@ export default function ContractorCalendarPage() {
         ) : null}
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="grid grid-cols-7 border-b text-center text-xs font-medium text-muted-foreground">
-            {weekdayLabels.map((w) => (
-              <div key={w} className="py-2">
-                {w}
+      {loadError ? (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-2 py-12 text-center text-sm text-muted-foreground">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            {t('visits.calendarLoadError')}
+          </CardContent>
+        </Card>
+      ) : isLoading ? (
+        <Card>
+          <CardContent className="p-0">
+            <div className="hidden grid-cols-7 md:grid">
+              {Array.from({ length: 42 }, (_, i) => (
+                <div key={i} className="min-h-[104px] border-b border-r p-1.5">
+                  <Skeleton className="mb-2 h-6 w-6 rounded-full" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-3 p-4 md:hidden">
+              {Array.from({ length: 5 }, (_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Desktop: month grid */}
+          <Card className="hidden md:block">
+            <CardContent className="p-0">
+              <div className="grid grid-cols-7 border-b text-center text-xs font-medium text-muted-foreground">
+                {weekdayLabels.map((w) => (
+                  <div key={w} className="py-2">
+                    {w}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7">
-            {cells.map((cell) => {
-              const items = byDay.get(cell.key) ?? [];
-              const isToday = cell.key === todayKey;
-              return (
-                <div
-                  key={cell.key}
-                  className={`group min-h-[104px] border-b border-r p-1.5 text-left align-top ${
-                    cell.inMonth ? '' : 'bg-muted/30 text-muted-foreground'
-                  }`}
-                >
-                  <div className="mb-1 flex items-center justify-between">
-                    <span
-                      className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
-                        isToday ? 'bg-primary font-semibold text-primary-foreground' : ''
+              <div className="grid grid-cols-7">
+                {cells.map((cell) => {
+                  const items = byDay.get(cell.key) ?? [];
+                  const isToday = cell.key === todayKey;
+                  return (
+                    <div
+                      key={cell.key}
+                      className={`min-h-[104px] border-b border-r p-1.5 text-left align-top ${
+                        cell.inMonth ? '' : 'bg-muted/30 text-muted-foreground'
                       }`}
                     >
-                      {cell.day}
-                    </span>
-                    {canManage && cell.inMonth ? (
+                      <div className="mb-1 flex items-center justify-between">
+                        <span
+                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
+                            isToday ? 'bg-primary font-semibold text-primary-foreground' : ''
+                          }`}
+                        >
+                          {cell.day}
+                        </span>
+                        {canManage && cell.inMonth ? (
+                          <button
+                            type="button"
+                            aria-label={t('visits.newVisit')}
+                            className="-m-1 p-1 text-muted-foreground transition hover:text-foreground focus:text-foreground"
+                            onClick={() => {
+                              setCreateDay(cell.key);
+                              setCreateOpen(true);
+                            }}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        ) : null}
+                      </div>
+                      <ul className="space-y-1">
+                        {items.slice(0, 3).map((v) => (
+                          <li key={v.id}>
+                            <button
+                              type="button"
+                              onClick={() => setDetailId(v.id)}
+                              title={`${v.contractorName} · ${v.title}`}
+                              className={`block w-full truncate rounded px-1 py-0.5 text-left text-[11px] leading-tight ${
+                                VISIT_STATUS_BADGE[v.status as VisitStatus] ??
+                                'bg-muted text-muted-foreground'
+                              }`}
+                            >
+                              {format.dateTime(new Date(v.scheduledStart), {
+                                timeStyle: 'short',
+                                timeZone: BROWSER_TZ,
+                              })}{' '}
+                              {v.contractorName}
+                            </button>
+                          </li>
+                        ))}
+                        {items.length > 3 ? (
+                          <li className="px-1 text-[11px] text-muted-foreground">
+                            {t('visits.more', { count: items.length - 3 })}
+                          </li>
+                        ) : null}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Mobile: agenda list for the current month */}
+          <div className="space-y-4 md:hidden">
+            {agendaDays.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-sm text-muted-foreground">
+                  <CalendarClock className="h-5 w-5" />
+                  {t('visits.noVisitsThisMonth')}
+                </CardContent>
+              </Card>
+            ) : (
+              agendaDays.map((cell) => (
+                <div key={cell.key}>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <h2
+                      className={`text-sm font-semibold ${
+                        cell.key === todayKey ? 'text-primary' : ''
+                      }`}
+                    >
+                      {format.dateTime(cell.date, {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                      })}
+                    </h2>
+                    {canManage ? (
                       <button
                         type="button"
                         aria-label={t('visits.newVisit')}
-                        className="text-muted-foreground opacity-0 transition hover:text-foreground focus:opacity-100 group-hover:opacity-100"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                         onClick={() => {
                           setCreateDay(cell.key);
                           setCreateOpen(true);
                         }}
                       >
-                        <Plus className="h-3.5 w-3.5" />
+                        <Plus className="h-4 w-4" />
                       </button>
                     ) : null}
                   </div>
-                  <ul className="space-y-1">
-                    {items.slice(0, 3).map((v) => (
-                      <li key={v.id}>
-                        <button
-                          type="button"
-                          onClick={() => setDetailId(v.id)}
-                          title={`${v.contractorName} · ${v.title}`}
-                          className={`block w-full truncate rounded px-1 py-0.5 text-left text-[11px] leading-tight ${
-                            VISIT_STATUS_BADGE[v.status as VisitStatus] ??
-                            'bg-muted text-muted-foreground'
-                          }`}
-                        >
-                          {format.dateTime(new Date(v.scheduledStart), {
-                            timeStyle: 'short',
-                            timeZone: BROWSER_TZ,
-                          })}{' '}
-                          {v.contractorName}
-                        </button>
-                      </li>
-                    ))}
-                    {items.length > 3 ? (
-                      <li className="px-1 text-[11px] text-muted-foreground">
-                        {t('visits.more', { count: items.length - 3 })}
-                      </li>
-                    ) : null}
-                  </ul>
+                  <Card>
+                    <CardContent className="p-0">
+                      <ul className="divide-y">
+                        {cell.items.map((v) => (
+                          <li key={v.id}>
+                            <button
+                              type="button"
+                              onClick={() => setDetailId(v.id)}
+                              className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
+                            >
+                              <span
+                                className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${
+                                  VISIT_STATUS_BADGE[v.status as VisitStatus] ??
+                                  'bg-muted text-muted-foreground'
+                                }`}
+                              >
+                                {format.dateTime(new Date(v.scheduledStart), {
+                                  timeStyle: 'short',
+                                  timeZone: BROWSER_TZ,
+                                })}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-medium">
+                                  {v.contractorName}
+                                </span>
+                                <span className="block truncate text-xs text-muted-foreground">
+                                  {v.title}
+                                </span>
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </>
+      )}
 
       <VisitCreateDialog
         open={createOpen}

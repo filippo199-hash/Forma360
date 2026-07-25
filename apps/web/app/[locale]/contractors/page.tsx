@@ -43,7 +43,7 @@ export default function ContractorsPage() {
   const canManage = useHasPermission('contractors.manage');
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.contractors.list.useQuery();
+  const { data, isLoading, error } = trpc.contractors.list.useQuery();
   // Live "who is on site" board for the gate guard — refetch every 30s.
   const onSite = trpc.contractors.visits.onSiteNow.useQuery(undefined, {
     refetchInterval: 30_000,
@@ -173,7 +173,13 @@ export default function ContractorsPage() {
       </header>
 
       {/* Gate board — who is currently on site, grouped by contractor. */}
-      {onSiteTotal > 0 ? (
+      {onSite.error !== null && onSiteTotal === 0 ? (
+        <Card className="border-destructive/40">
+          <CardContent className="p-4 text-sm text-destructive">
+            {t('onSite.loadError')}
+          </CardContent>
+        </Card>
+      ) : onSiteTotal > 0 ? (
         <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-950/20">
           <CardContent className="p-4">
             <div className="mb-3 flex items-center gap-2">
@@ -197,48 +203,56 @@ export default function ContractorsPage() {
                     </span>
                   </div>
                   <ul className="divide-y divide-emerald-200/60 dark:divide-emerald-900/40">
-                    {g.people.map((v) => (
-                      <li key={v.id} className="flex items-center gap-3 py-2 text-sm">
-                        <span className="relative flex h-2.5 w-2.5 shrink-0">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">
-                            {v.visitorName ?? v.title}
-                            {v.isWalkIn ? (
-                              <span className="ml-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
-                                {t('visits.walkInBadge')}
-                              </span>
-                            ) : null}
-                          </p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {v.visitorName !== null ? `${v.title} · ` : ''}
-                            {v.siteName !== null ? `${v.siteName} · ` : ''}
-                            {v.checkedInAt !== null
-                              ? t('onSite.since', {
-                                  time: format.dateTime(new Date(v.checkedInAt), {
-                                    timeStyle: 'short',
-                                    timeZone: BROWSER_TZ,
-                                  }),
-                                })
-                              : ''}
-                          </p>
-                        </div>
-                        {canManage ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 shrink-0"
-                            disabled={checkOut.isPending}
-                            onClick={() => checkOut.mutate({ id: v.id })}
-                          >
-                            <LogOut className="mr-1 h-3.5 w-3.5" />
-                            {t('visits.checkOut')}
-                          </Button>
-                        ) : null}
-                      </li>
-                    ))}
+                    {g.people.map((v) => {
+                      const personName = v.visitorName ?? v.title;
+                      const subline = [
+                        v.visitorName !== null ? v.title : '',
+                        v.siteName !== null ? v.siteName : '',
+                        v.checkedInAt !== null
+                          ? t('onSite.since', {
+                              time: format.dateTime(new Date(v.checkedInAt), {
+                                timeStyle: 'short',
+                                timeZone: BROWSER_TZ,
+                              }),
+                            })
+                          : '',
+                      ]
+                        .filter((s) => s !== '')
+                        .join(' · ');
+                      return (
+                        <li key={v.id} className="flex items-center gap-3 py-2 text-sm">
+                          <span className="relative flex h-2.5 w-2.5 shrink-0">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium" title={personName}>
+                              {personName}
+                              {v.isWalkIn ? (
+                                <span className="ml-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
+                                  {t('visits.walkInBadge')}
+                                </span>
+                              ) : null}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground" title={subline}>
+                              {subline}
+                            </p>
+                          </div>
+                          {canManage ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 shrink-0"
+                              disabled={checkOut.isPending}
+                              onClick={() => checkOut.mutate({ id: v.id })}
+                            >
+                              <LogOut className="mr-1 h-3.5 w-3.5" />
+                              {t('visits.checkOut')}
+                            </Button>
+                          ) : null}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               ))}
@@ -259,61 +273,115 @@ export default function ContractorsPage() {
 
       {isLoading ? (
         <Skeleton className="h-48 w-full" />
+      ) : error !== null ? (
+        <Card className="border-destructive/40">
+          <CardContent className="flex flex-col items-center gap-2 py-12 text-center text-destructive">
+            <HardHat className="h-6 w-6" />
+            <p>{t('loadError')}</p>
+          </CardContent>
+        </Card>
       ) : visible.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
             <HardHat className="h-6 w-6" />
             <p>{t('empty')}</p>
+            {canManage ? (
+              <Button className="mt-2" onClick={() => setOpen(true)}>
+                <Plus className="mr-1 h-4 w-4" />
+                {t('newButton')}
+              </Button>
+            ) : null}
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/40 text-left">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">{t('colName')}</th>
-                    <th className="px-4 py-3 font-medium">{t('colCategory')}</th>
-                    <th className="px-4 py-3 font-medium">{t('colContact')}</th>
-                    <th className="px-4 py-3 font-medium">{t('colCompliance')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visible.map((c) => {
-                    const status = c.complianceStatus as Compliance;
-                    return (
-                      <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-4 py-3">
-                          <Link
-                            href={`/${locale}/contractors/${c.id}`}
-                            className="font-medium text-foreground hover:underline"
-                          >
-                            {c.name}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">{c.category ?? '—'}</td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {c.primaryContactName ?? c.primaryContactEmail ?? '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={cn(
-                              'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
-                              BADGE[status],
-                            )}
-                          >
-                            {t(`status_${status}` as 'status_compliant')}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        <>
+          {/* Table (desktop) — the mobile card list below takes over under md. */}
+          <Card className="hidden md:block">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/40 text-left">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">{t('colName')}</th>
+                      <th className="px-4 py-3 font-medium">{t('colCategory')}</th>
+                      <th className="px-4 py-3 font-medium">{t('colContact')}</th>
+                      <th className="px-4 py-3 font-medium">{t('colCompliance')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.map((c) => {
+                      const status = c.complianceStatus as Compliance;
+                      return (
+                        <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30">
+                          <td className="px-4 py-3">
+                            <Link
+                              href={`/${locale}/contractors/${c.id}`}
+                              className="font-medium text-foreground hover:underline"
+                            >
+                              {c.name}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">{c.category ?? '—'}</td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {c.primaryContactName ?? c.primaryContactEmail ?? '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={cn(
+                                'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                                BADGE[status],
+                              )}
+                            >
+                              {t(`status_${status}` as 'status_compliant')}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card list (mobile) — stacked layout under md; the table is hidden there. */}
+          <div className="space-y-3 md:hidden">
+            {visible.map((c) => {
+              const status = c.complianceStatus as Compliance;
+              return (
+                <Link key={c.id} href={`/${locale}/contractors/${c.id}`} className="block">
+                  <Card className="transition-colors hover:bg-muted/30">
+                    <CardContent className="space-y-3 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="min-w-0 truncate font-medium">{c.name}</p>
+                        <span
+                          className={cn(
+                            'inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
+                            BADGE[status],
+                          )}
+                        >
+                          {t(`status_${status}` as 'status_compliant')}
+                        </span>
+                      </div>
+                      <dl className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                        <div>
+                          <dt className="font-medium text-foreground">{t('colCategory')}</dt>
+                          <dd className="truncate">{c.category ?? '—'}</dd>
+                        </div>
+                        <div>
+                          <dt className="font-medium text-foreground">{t('colContact')}</dt>
+                          <dd className="truncate">
+                            {c.primaryContactName ?? c.primaryContactEmail ?? '—'}
+                          </dd>
+                        </div>
+                      </dl>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>

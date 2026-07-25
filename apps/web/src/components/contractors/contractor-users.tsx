@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, Clock, Mail, UserPlus, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Mail, UserPlus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ import { Card, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Skeleton } from '../ui/skeleton';
 
 const ACTIVITIES = ['inspections', 'observations', 'actions', 'documents'] as const;
 type Activity = (typeof ACTIVITIES)[number];
@@ -59,6 +60,38 @@ function ActivityPicker({
   );
 }
 
+/** Skeleton shown while the portal-user list is loading. */
+function UserListSkeleton() {
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <ul className="divide-y">
+          {[0, 1, 2].map((i) => (
+            <li key={i} className="flex items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Error card so a failed load isn't mistaken for an empty list. */
+function UserListError({ message }: { message: string }) {
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center gap-2 py-8 text-center text-sm text-destructive">
+        <AlertTriangle className="h-5 w-5" />
+        {message}
+      </CardContent>
+    </Card>
+  );
+}
+
 /** "Users" section on the contractor detail page — invite + manage portal users. */
 export function ContractorUsersSection({
   contractorId,
@@ -70,7 +103,7 @@ export function ContractorUsersSection({
   const t = useTranslations('contractors');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
-  const { data } = trpc.contractors.users.list.useQuery({ contractorId });
+  const { data, error, isLoading } = trpc.contractors.users.list.useQuery({ contractorId });
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -128,7 +161,11 @@ export function ContractorUsersSection({
         ) : null}
       </div>
 
-      {members.length === 0 && pending.length === 0 ? (
+      {isLoading ? (
+        <UserListSkeleton />
+      ) : error ? (
+        <UserListError message={t('error')} />
+      ) : members.length === 0 && pending.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
             {t('users.empty')}
@@ -142,7 +179,9 @@ export function ContractorUsersSection({
                 <li key={m.id} className="flex items-center gap-3 px-4 py-3 text-sm">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="truncate font-medium">{m.name}</span>
+                      <span className="truncate font-medium" title={m.name}>
+                        {m.name}
+                      </span>
                       {m.deactivatedAt !== null ? (
                         <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] text-red-700 dark:bg-red-900/40 dark:text-red-200">
                           {t('users.revoked')}
@@ -158,7 +197,9 @@ export function ContractorUsersSection({
                         </span>
                       )}
                     </div>
-                    <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                    <p className="truncate text-xs text-muted-foreground" title={m.email}>
+                      {m.email}
+                    </p>
                     <div className="mt-1">
                       <ActivityChips activities={m.activities} />
                     </div>
@@ -183,7 +224,8 @@ export function ContractorUsersSection({
                       <button
                         type="button"
                         aria-label={t('users.remove')}
-                        className="rounded p-1 text-muted-foreground hover:text-destructive"
+                        disabled={remove.isPending}
+                        className="rounded p-1 text-muted-foreground hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
                         onClick={() => {
                           if (window.confirm(t('users.removeConfirm')))
                             remove.mutate({ userId: m.userId });
@@ -200,7 +242,9 @@ export function ContractorUsersSection({
                   <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="truncate font-medium">{p.email}</span>
+                      <span className="truncate font-medium" title={p.email}>
+                        {p.email}
+                      </span>
                       <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         {t('users.invited')}
@@ -214,8 +258,12 @@ export function ContractorUsersSection({
                     <button
                       type="button"
                       aria-label={t('users.cancelInvite')}
-                      className="rounded p-1 text-muted-foreground hover:text-destructive"
-                      onClick={() => cancelInvite.mutate({ invitationId: p.id })}
+                      disabled={cancelInvite.isPending}
+                      className="rounded p-1 text-muted-foreground hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
+                      onClick={() => {
+                        if (window.confirm(t('users.cancelInviteConfirm')))
+                          cancelInvite.mutate({ invitationId: p.id });
+                      }}
                     >
                       <X className="h-4 w-4" />
                     </button>

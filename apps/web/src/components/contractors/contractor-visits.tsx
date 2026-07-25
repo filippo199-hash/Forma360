@@ -1,16 +1,19 @@
 'use client';
 
-import { CalendarClock, LogIn, LogOut, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CalendarClock, LogIn, LogOut, ShieldCheck } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '../../lib/cn';
+import { usePlaceTerms } from '../../lib/terminology';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Skeleton } from '../ui/skeleton';
+import { Textarea } from '../ui/textarea';
 
 export type VisitStatus = 'scheduled' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
 
@@ -72,6 +75,7 @@ export function VisitCreateDialog({
 }) {
   const t = useTranslations('contractors');
   const tCommon = useTranslations('common');
+  const placeTerms = usePlaceTerms();
 
   const contractorsQ = trpc.contractors.list.useQuery(undefined, {
     enabled: open && fixedContractorId === undefined,
@@ -193,14 +197,14 @@ export function VisitCreateDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="v-site">{t('visits.visitSiteLabel')}</Label>
+            <Label htmlFor="v-site">{placeTerms.label}</Label>
             <select
               id="v-site"
               value={siteId}
               onChange={(e) => setSiteId(e.target.value)}
               className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
-              <option value="">{t('visits.noSite')}</option>
+              <option value="">{placeTerms.noneLabel}</option>
               {(sitesQ.data ?? []).map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -279,9 +283,11 @@ export function VisitDetailDialog({
   onChanged: () => void;
 }) {
   const t = useTranslations('contractors');
+  const tCommon = useTranslations('common');
   const format = useFormatter();
+  const placeTerms = usePlaceTerms();
   const utils = trpc.useUtils();
-  const { data } = trpc.contractors.visits.get.useQuery(
+  const { data, isLoading, error } = trpc.contractors.visits.get.useQuery(
     { id: visitId ?? '' },
     { enabled: visitId !== null },
   );
@@ -356,7 +362,31 @@ export function VisitDetailDialog({
   return (
     <Dialog open={visitId !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        {data === undefined || v === undefined ? null : (
+        {isLoading ? (
+          <div className="space-y-4 py-2">
+            <Skeleton className="h-6 w-2/3" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </div>
+        ) : error !== null || data === undefined || v === undefined ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>{t('visits.visitDetailTitle')}</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              {t('error')}
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => onOpenChange(false)}>
+                {tCommon('close')}
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
           <>
             <DialogHeader>
               <DialogTitle className="flex flex-wrap items-center gap-2">
@@ -383,7 +413,7 @@ export function VisitDetailDialog({
               ) : null}
               {data.siteName !== null ? (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">{t('visits.visitSiteLabel')}</dt>
+                  <dt className="text-muted-foreground">{placeTerms.label}</dt>
                   <dd className="text-right">{data.siteName}</dd>
                 </div>
               ) : null}
@@ -448,12 +478,12 @@ export function VisitDetailDialog({
                   <Label htmlFor="ci-override" className="text-xs">
                     {t('visits.overrideReasonLabel')}
                   </Label>
-                  <Input
+                  <Textarea
                     id="ci-override"
                     value={overrideReason}
                     onChange={(e) => setOverrideReason(e.target.value)}
                     placeholder={t('visits.overrideReasonPlaceholder')}
-                    className="h-9"
+                    rows={2}
                     maxLength={1000}
                   />
                 </div>
@@ -512,7 +542,10 @@ export function VisitDetailDialog({
                       size="sm"
                       variant="outline"
                       disabled={busy}
-                      onClick={() => setStatusM.mutate({ id: v.id, status: 'cancelled' })}
+                      onClick={() => {
+                        if (window.confirm(t('visits.cancelConfirm')))
+                          setStatusM.mutate({ id: v.id, status: 'cancelled' });
+                      }}
                     >
                       {t('visits.cancelVisit')}
                     </Button>
@@ -520,7 +553,10 @@ export function VisitDetailDialog({
                       size="sm"
                       variant="outline"
                       disabled={busy}
-                      onClick={() => setStatusM.mutate({ id: v.id, status: 'no_show' })}
+                      onClick={() => {
+                        if (window.confirm(t('visits.noShowConfirm')))
+                          setStatusM.mutate({ id: v.id, status: 'no_show' });
+                      }}
                     >
                       {t('visits.markNoShow')}
                     </Button>
@@ -602,7 +638,9 @@ export function ContractorVisitsSection({
   const t = useTranslations('contractors');
   const format = useFormatter();
   const utils = trpc.useUtils();
-  const { data } = trpc.contractors.visits.listForContractor.useQuery({ contractorId });
+  const { data, isLoading, error } = trpc.contractors.visits.listForContractor.useQuery({
+    contractorId,
+  });
 
   const [createOpen, setCreateOpen] = useState(false);
   const [walkInOpen, setWalkInOpen] = useState(false);
@@ -636,7 +674,30 @@ export function ContractorVisitsSection({
         ) : null}
       </div>
 
-      {visits.length === 0 ? (
+      {isLoading ? (
+        <Card>
+          <CardContent className="p-0">
+            <ul className="divide-y">
+              {[0, 1, 2].map((i) => (
+                <li key={i} className="flex items-center gap-3 px-4 py-3">
+                  <Skeleton className="h-4 w-4 shrink-0 rounded" />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : error !== null ? (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-2 py-8 text-center text-sm text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            {t('error')}
+          </CardContent>
+        </Card>
+      ) : visits.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
             {t('visits.noVisits')}
@@ -655,7 +716,9 @@ export function ContractorVisitsSection({
                   >
                     <CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{v.title}</p>
+                      <p className="truncate font-medium" title={v.title}>
+                        {v.title}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {format.dateTime(new Date(v.scheduledStart), {
                           dateStyle: 'medium',
