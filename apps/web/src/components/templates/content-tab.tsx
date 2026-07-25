@@ -49,6 +49,7 @@ import {
   CheckSquare,
   ChevronDown,
   ChevronRight,
+  Combine,
   Copy,
   FileText,
   FolderKanban,
@@ -1463,6 +1464,23 @@ function TypeOfResponsePicker({
       ? customResponseSets
       : customResponseSets.filter((rs) => rs.name.toLowerCase().includes(search.toLowerCase()));
 
+  // Number of response sets that duplicate an earlier one's scale (same
+  // options + multiSelect, ignoring triggers). Drives the "Merge duplicates"
+  // affordance in the picker footer.
+  const duplicateSetCount = useMemo(() => {
+    const seen = new Set<string>();
+    let dupes = 0;
+    for (const rs of customResponseSets) {
+      const sig = JSON.stringify({
+        multiSelect: rs.multiSelect,
+        options: rs.options.map((o) => ({ label: o.label, color: o.color })),
+      });
+      if (seen.has(sig)) dupes += 1;
+      else seen.add(sig);
+    }
+    return dupes;
+  }, [customResponseSets]);
+
   /** Replace the item type by deleting + re-adding with copied prompt. */
   function replaceItemType(
     newType: SupportedItemType | StubItemType,
@@ -1664,7 +1682,7 @@ function TypeOfResponsePicker({
               ) : null}
             </div>
 
-            <div className="border-t px-3 py-2">
+            <div className="space-y-1 border-t px-3 py-2">
               <Button
                 type="button"
                 variant="ghost"
@@ -1676,6 +1694,18 @@ function TypeOfResponsePicker({
                 <Plus className="mr-1.5 h-3.5 w-3.5" />
                 {tPicker('createNew')}
               </Button>
+              {duplicateSetCount > 0 ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => dispatch({ type: 'mergeDuplicateResponseSets' })}
+                  className="w-full justify-start text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  <Combine className="mr-1.5 h-3.5 w-3.5" />
+                  {tPicker('mergeDuplicates', { count: duplicateSetCount })}
+                </Button>
+              ) : null}
             </div>
           </div>
 

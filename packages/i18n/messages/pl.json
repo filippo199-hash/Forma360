@@ -767,6 +767,7 @@
       },
       "responseSetsPicker": {
         "createNew": "Create response set",
+        "mergeDuplicates": "{count, plural, one {Merge # duplicate} other {Merge # duplicates}}",
         "editSet": "Edit response set",
         "manageSet": "Manage response set",
         "deleteSet": "Delete response set",

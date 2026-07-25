@@ -2,6 +2,7 @@
 
 **Module:** Templates / template editor (`/[locale]/templates` + `/[locale]/templates/[templateId]`)
 **Investigated:** 2026-07-25 · live walkthrough on prod (T-Open template) + code review
+**Status:** ✅ All 6 implemented & deployed — commit `7ddf431` (2026-07-25).
 **Primary code:** `apps/web/src/components/templates/editor-shell.tsx` (top bar + title), `content-tab.tsx` (1864 lines — the build canvas: pages, questions, response-type picker), `item-detail.tsx` (per-question settings), `response-sets-tab.tsx` (response-set catalogue), `packages/shared/src/template-builder.ts` (AI spec → template content), `apps/web/src/server/template-agent.ts` (AI generation prompt), `packages/shared/src/template-spec.ts` (AI spec schema)
 
 ---
