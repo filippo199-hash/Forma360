@@ -66,6 +66,7 @@ import { TRPCError } from '@trpc/server';
 import crypto from 'node:crypto';
 import { and, count, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { boundedRecord } from '../bounded-json';
 import { loadContractorScope } from '../contractor-scope';
 import { nextReferenceValue } from '../reference-counter';
 import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
@@ -171,8 +172,8 @@ const createIssueInput = z.object({
   locationGps: issueGpsSchema.optional(),
   locationAddress: z.string().max(500).optional(),
   dateOccurred: z.string().datetime().optional(),
-  customFieldValues: z.record(z.unknown()).optional(),
-  customQuestionResponses: z.record(z.unknown()).optional(),
+  customFieldValues: boundedRecord.optional(),
+  customQuestionResponses: boundedRecord.optional(),
   /** Asset IDs to link to this observation. */
   assetIds: z.array(z.string()).optional(),
 });
@@ -183,8 +184,8 @@ const updateIssueInput = z.object({
   description: z.string().max(20_000).nullable().optional(),
   dateOccurred: z.string().datetime().optional(),
   siteId: z.string().length(26).nullable().optional(),
-  customFieldValues: z.record(z.unknown()).optional(),
-  customQuestionResponses: z.record(z.unknown()).optional(),
+  customFieldValues: boundedRecord.optional(),
+  customQuestionResponses: boundedRecord.optional(),
   priority: issuePrioritySchema.nullable().optional(),
   dueAt: z.string().datetime().nullable().optional(),
   assigneeUserId: z.string().nullable().optional(),
@@ -230,8 +231,8 @@ const createFromShareTokenInput = z.object({
   locationGps: issueGpsSchema.optional(),
   locationAddress: z.string().max(500).optional(),
   dateOccurred: z.string().datetime().optional(),
-  customFieldValues: z.record(z.unknown()).optional(),
-  customQuestionResponses: z.record(z.unknown()).optional(),
+  customFieldValues: boundedRecord.optional(),
+  customQuestionResponses: boundedRecord.optional(),
 });
 
 const publicGetByShareTokenInput = z.object({

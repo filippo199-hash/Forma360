@@ -63,6 +63,7 @@ import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { callerSatisfiesAccessRule, loadCallerAccessSnapshot } from '../access-rule';
 import { loadContractorScope } from '../contractor-scope';
 import { z } from 'zod';
+import { boundedRecord } from '../bounded-json';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertSitesInTenant } from '../tenant-guards';
 import { router } from '../trpc';
@@ -176,7 +177,7 @@ const createInput = z.object({
 
 const saveProgressInput = z.object({
   inspectionId: z.string().length(26),
-  responses: z.record(z.unknown()),
+  responses: boundedRecord,
   expectedUpdatedAt: z.string().datetime().optional(),
 });
 

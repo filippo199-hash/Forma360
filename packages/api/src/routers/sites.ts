@@ -47,6 +47,7 @@ import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, count, eq, inArray, isNull, ne, notInArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { boundedRecord } from '../bounded-json';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
@@ -437,7 +438,7 @@ export const sitesRouter = router({
         name: z.string().min(1).max(120),
         parentId: z.string().length(26).nullable().optional(),
         membershipMode: z.enum(['manual', 'rule_based']).default('manual'),
-        metadata: z.record(z.unknown()).optional(),
+        metadata: boundedRecord.optional(),
         // Sites/Projects lifecycle (projects only; sites leave these null).
         kind: z.enum(['site', 'project']).default('site'),
         status: z.enum(['planning', 'active', 'on_hold', 'completed']).nullable().optional(),
@@ -514,7 +515,7 @@ export const sitesRouter = router({
         id: z.string().length(26),
         name: z.string().min(1).max(120).optional(),
         membershipMode: z.enum(['manual', 'rule_based']).optional(),
-        metadata: z.record(z.unknown()).optional(),
+        metadata: boundedRecord.optional(),
         kind: z.enum(['site', 'project']).optional(),
         status: z.enum(['planning', 'active', 'on_hold', 'completed']).nullable().optional(),
         client: z.string().max(200).nullable().optional(),

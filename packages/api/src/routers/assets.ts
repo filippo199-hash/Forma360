@@ -26,6 +26,7 @@ import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
+import { boundedRecord } from '../bounded-json';
 import { requirePermission, tenantProcedure } from '../procedures';
 import {
   assertAssetTypesInTenant,
@@ -78,7 +79,7 @@ const createInput = z.object({
   parentId: z.string().length(26).optional(),
   ownerUserId: z.string().length(26).optional(),
   photoKey: z.string().optional(),
-  customFieldValues: z.record(z.string(), z.unknown()).default({}),
+  customFieldValues: boundedRecord.default({}),
 });
 
 const updateInput = z.object({
@@ -90,7 +91,7 @@ const updateInput = z.object({
   parentId: z.string().length(26).nullable().optional(),
   ownerUserId: z.string().length(26).nullable().optional(),
   photoKey: z.string().nullable().optional(),
-  customFieldValues: z.record(z.string(), z.unknown()).optional(),
+  customFieldValues: boundedRecord.optional(),
 });
 
 const listInput = z

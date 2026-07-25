@@ -62,6 +62,7 @@ import {
 import { loadContractorScope } from '../contractor-scope';
 import { nextReferenceValue } from '../reference-counter';
 import { z } from 'zod';
+import { boundedRecord } from '../bounded-json';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertAssetsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
@@ -439,7 +440,7 @@ const createStandaloneInput = z.object({
   /** Optional action type. NULL = no type (legacy / quick-create). */
   actionTypeId: z.string().length(26).optional(),
   /** Map of `{ questionId: response }`. Validated against the type. */
-  customQuestionResponses: z.record(z.string(), z.unknown()).optional(),
+  customQuestionResponses: boundedRecord.optional(),
   /** Optional recurrence config (rrule + endDate). */
   recurrence: recurrenceConfigSchema.nullable().optional(),
   /** Asset IDs to link to this action. */
@@ -459,7 +460,7 @@ const createFromInspectionQuestionInput = z.object({
   /** Optional action type. NULL = no type (legacy / quick-create). */
   actionTypeId: z.string().length(26).optional(),
   /** Map of `{ questionId: response }`. Validated against the type. */
-  customQuestionResponses: z.record(z.string(), z.unknown()).optional(),
+  customQuestionResponses: boundedRecord.optional(),
 });
 
 const createFromIssueInput = z.object({
@@ -487,7 +488,7 @@ const updateInput = z.object({
    * Full replacement of the action's custom-question response map.
    * Validated against the action's current type at the router boundary.
    */
-  customQuestionResponses: z.record(z.string(), z.unknown()).optional(),
+  customQuestionResponses: boundedRecord.optional(),
   recurrence: recurrenceConfigSchema.nullable().optional(),
   /** Asset IDs to link to this action. Replaces existing links when provided. */
   assetIds: z.array(z.string()).optional(),
@@ -1507,7 +1508,7 @@ export const actionsRouter = router({
 
     create: tenantProcedure
       .use(requirePermission('actions.view'))
-      .input(z.object({ name: z.string().min(1).max(80), config: z.record(z.unknown()) }))
+      .input(z.object({ name: z.string().min(1).max(80), config: boundedRecord }))
       .mutation(async ({ ctx, input }) => {
         const id = newId();
         await ctx.db.insert(actionSavedViews).values({
