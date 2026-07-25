@@ -16,11 +16,11 @@
  */
 import { appRouter } from '@forma360/api';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
-import { objectKey } from '@forma360/shared/storage';
+import { isObjectKey, objectKey } from '@forma360/shared/storage';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { createContext } from '../../../../src/server/trpc';
 import { env } from '../../../../src/server/env';
 import { storage } from '../../../../src/server/storage';
@@ -148,6 +148,13 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
   }
 
+  // Key must be a well-formed `<tenantId>/<module>/<entityId>/<filename>`
+  // object key. This rejects path-traversal payloads (extra `../` segments
+  // fail the 4-segment shape) before the key ever reaches the filesystem.
+  if (!isObjectKey(key)) {
+    return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
+  }
+
   // Enforce tenant prefix on the key — prevents a caller from signing URLs
   // to another tenant's objects.
   if (!key.startsWith(`${ctx.auth.tenantId}/templates/`)) {
@@ -167,7 +174,12 @@ export async function GET(req: Request): Promise<Response> {
   // Dev / test: stream the file out of .local-storage so the preview
   // works without R2 creds.
   try {
-    const path = join(process.cwd(), '.local-storage', key);
+    const base = join(process.cwd(), '.local-storage');
+    const path = join(base, key);
+    // Belt-and-suspenders: never let a resolved path escape the storage root.
+    if (!resolve(path).startsWith(resolve(base) + sep)) {
+      return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
+    }
     const buf = await readFile(path);
     const contentType = guessContentType(key);
     return new Response(new Uint8Array(buf), {
