@@ -66,7 +66,8 @@
     "disabled": "Disabled",
     "remove": "Remove",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "restore": "Restore"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -2455,7 +2456,8 @@
         "owner": "Owner",
         "noOwner": "No owner",
         "ownerPlaceholder": "Select owner"
-      }
+      },
+      "fieldRequired": "{name} is required"
     },
     "categories": {
       "title": "Asset categories",
@@ -2518,6 +2520,13 @@
           "date": "Date",
           "select": "Select (dropdown)"
         }
+      },
+      "addFieldHint": "Click \"Add field\" to define what data to collect for each asset.",
+      "fieldCount": "{count, plural, one {# field} other {# fields}}",
+      "validation": {
+        "fieldNameRequired": "All fields must have a name",
+        "nameRequired": "Category name is required",
+        "selectNeedsOption": "Select field \"{name}\" needs at least one option"
       }
     },
     "detail": {
@@ -2603,7 +2612,8 @@
         "docNumber": "Doc #",
         "startedAt": "Started",
         "createdAt": "Created"
-      }
+      },
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
     },
     "settings": {
       "title": "Settings",
@@ -3012,7 +3022,10 @@
     "applyBody": "You changed this program. Apply the new schedule to the {count} asset(s) already linked, or only to assets linked from now on?",
     "applyExisting": "Apply to existing assets",
     "applyNew": "Only new assets",
-    "appliedToast": "Updated {count} asset(s)"
+    "appliedToast": "Updated {count} asset(s)",
+    "detachAssetConfirm": "Detach this asset from the program?",
+    "loadError": "Could not load maintenance programs.",
+    "removeTriggerConfirm": "Remove this trigger from the program?"
   },
   "sites": {
     "title": "Sites & Projects",
@@ -3472,7 +3485,8 @@
       "selectContractor": "Select a contractor…",
       "noteLabel": "Note",
       "notePlaceholder": "Optional — e.g. annual service",
-      "linkedToast": "Linked."
+      "linkedToast": "Linked.",
+      "unlinkConfirm": "Remove this link?"
     },
     "portal": {
       "signOut": "Sign out",

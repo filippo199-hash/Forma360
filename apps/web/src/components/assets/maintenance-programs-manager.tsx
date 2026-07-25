@@ -30,7 +30,7 @@ export function MaintenanceProgramsManager() {
   const router = useRouter();
   const canManage = useHasPermission('assets.maintenance.manage');
 
-  const { data: listData, isLoading } = trpc.maintenancePrograms.list.useQuery();
+  const { data: listData, isLoading, error } = trpc.maintenancePrograms.list.useQuery();
   const programs = listData?.programs ?? [];
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -169,7 +169,14 @@ export function MaintenanceProgramsManager() {
         </DialogContent>
       </Dialog>
 
-      {isLoading ? (
+      {error !== null && error !== undefined ? (
+        <p
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+        >
+          {t('loadError')}
+        </p>
+      ) : isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />

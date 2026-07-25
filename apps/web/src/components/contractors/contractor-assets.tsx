@@ -1,6 +1,6 @@
 'use client';
 
-import { Boxes, HardHat, Plus, X } from 'lucide-react';
+import { AlertTriangle, Boxes, HardHat, Plus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -10,6 +10,40 @@ import { Card, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Skeleton } from '../ui/skeleton';
+
+/** Shared skeleton shown while a link list is loading. */
+function LinkListSkeleton() {
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <ul className="divide-y">
+          {[0, 1, 2].map((i) => (
+            <li key={i} className="flex items-center gap-3 px-4 py-3">
+              <Skeleton className="h-4 w-4 shrink-0 rounded" />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Shared error card so a failed load isn't mistaken for an empty list. */
+function LinkListError({ message }: { message: string }) {
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center gap-2 py-8 text-center text-sm text-destructive">
+        <AlertTriangle className="h-5 w-5" />
+        {message}
+      </CardContent>
+    </Card>
+  );
+}
 
 /** "Serviced assets" section for a contractor's detail page. */
 export function ContractorAssetsSection({
@@ -69,7 +103,11 @@ export function ContractorAssetsSection({
         ) : null}
       </div>
 
-      {links.length === 0 ? (
+      {linksQ.isLoading ? (
+        <LinkListSkeleton />
+      ) : linksQ.error ? (
+        <LinkListError message={t('error')} />
+      ) : links.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-2 py-8 text-center text-sm text-muted-foreground">
             <Boxes className="h-5 w-5" />
@@ -80,27 +118,39 @@ export function ContractorAssetsSection({
         <Card>
           <CardContent className="p-0">
             <ul className="divide-y">
-              {links.map((l) => (
-                <li key={l.linkId} className="flex items-center gap-3 px-4 py-3 text-sm">
-                  <Boxes className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{l.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {[l.typeName, l.siteName, l.note].filter(Boolean).join(' · ') || '—'}
-                    </p>
-                  </div>
-                  {canManage ? (
-                    <button
-                      type="button"
-                      aria-label={t('assets.unlink')}
-                      className="rounded p-1 text-muted-foreground hover:text-destructive"
-                      onClick={() => unlink.mutate({ id: l.linkId })}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  ) : null}
-                </li>
-              ))}
+              {links.map((l) => {
+                const detail = [l.typeName, l.siteName, l.note].filter(Boolean).join(' · ');
+                return (
+                  <li key={l.linkId} className="flex items-center gap-3 px-4 py-3 text-sm">
+                    <Boxes className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium" title={l.name}>
+                        {l.name}
+                      </p>
+                      <p
+                        className="truncate text-xs text-muted-foreground"
+                        title={detail || undefined}
+                      >
+                        {detail || '—'}
+                      </p>
+                    </div>
+                    {canManage ? (
+                      <button
+                        type="button"
+                        aria-label={t('assets.unlink')}
+                        className="rounded p-1 text-muted-foreground hover:text-destructive"
+                        onClick={() => {
+                          if (window.confirm(t('assets.unlinkConfirm'))) {
+                            unlink.mutate({ id: l.linkId });
+                          }
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           </CardContent>
         </Card>
@@ -211,7 +261,11 @@ export function AssetContractorsSection({
         ) : null}
       </div>
 
-      {links.length === 0 ? (
+      {linksQ.isLoading ? (
+        <LinkListSkeleton />
+      ) : linksQ.error ? (
+        <LinkListError message={t('error')} />
+      ) : links.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-2 py-8 text-center text-sm text-muted-foreground">
             <HardHat className="h-5 w-5" />
@@ -222,27 +276,39 @@ export function AssetContractorsSection({
         <Card>
           <CardContent className="p-0">
             <ul className="divide-y">
-              {links.map((l) => (
-                <li key={l.linkId} className="flex items-center gap-3 px-4 py-3 text-sm">
-                  <HardHat className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{l.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {[l.category, l.note].filter(Boolean).join(' · ') || '—'}
-                    </p>
-                  </div>
-                  {canManage ? (
-                    <button
-                      type="button"
-                      aria-label={t('assets.unlink')}
-                      className="rounded p-1 text-muted-foreground hover:text-destructive"
-                      onClick={() => unlink.mutate({ id: l.linkId })}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  ) : null}
-                </li>
-              ))}
+              {links.map((l) => {
+                const detail = [l.category, l.note].filter(Boolean).join(' · ');
+                return (
+                  <li key={l.linkId} className="flex items-center gap-3 px-4 py-3 text-sm">
+                    <HardHat className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium" title={l.name}>
+                        {l.name}
+                      </p>
+                      <p
+                        className="truncate text-xs text-muted-foreground"
+                        title={detail || undefined}
+                      >
+                        {detail || '—'}
+                      </p>
+                    </div>
+                    {canManage ? (
+                      <button
+                        type="button"
+                        aria-label={t('assets.unlink')}
+                        className="rounded p-1 text-muted-foreground hover:text-destructive"
+                        onClick={() => {
+                          if (window.confirm(t('assets.unlinkConfirm'))) {
+                            unlink.mutate({ id: l.linkId });
+                          }
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           </CardContent>
         </Card>

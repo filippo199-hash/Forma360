@@ -114,7 +114,7 @@ export default function NewAssetPage() {
       if (field.required === true) {
         const val = customFieldValues[field.id] ?? '';
         if (val.trim().length === 0) {
-          toast.error(`"${field.name}" is required`);
+          toast.error(t('fieldRequired', { name: field.name }));
           return;
         }
       }
@@ -211,7 +211,6 @@ export default function NewAssetPage() {
               <Link
                 href={`/${locale}/assets/settings`}
                 className="text-xs text-primary hover:underline"
-                tabIndex={-1}
               >
                 {t('newCategoryLink')}
               </Link>

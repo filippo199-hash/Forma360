@@ -44,6 +44,11 @@ export default function AssetDetailPage() {
   const t = useTranslations('assets.detail');
   const tMaintPrograms = useTranslations('maintenancePrograms');
   const tCommon = useTranslations('common');
+  const tActionStatus = useTranslations('actions.status');
+  const tActionPriority = useTranslations('actions.priority');
+  const tInspectionStatus = useTranslations('inspections.status');
+  const tIssueStatus = useTranslations('issues.status');
+  const tIssuePriority = useTranslations('issues.priority');
   const params = useParams<{ locale: string; assetId: string }>();
   const locale = params.locale ?? 'en';
   const assetId = params.assetId ?? '';
@@ -55,6 +60,18 @@ export default function AssetDetailPage() {
   const canViewContractors = useHasPermission('contractors.view');
   const canLinkContractors = useHasPermission('contractors.manage');
   const { label: placeLabel, noneLabel: placeNone } = usePlaceTerms();
+
+  // Localise enum labels; fall back gracefully for any unexpected value.
+  const inspectionStatusLabel = (s: string): string =>
+    s === 'in_progress' ||
+    s === 'awaiting_signatures' ||
+    s === 'awaiting_approval' ||
+    s === 'completed' ||
+    s === 'rejected'
+      ? tInspectionStatus(s)
+      : s.replace(/_/g, ' ');
+  const issueStatusLabel = (s: string): string =>
+    s === 'open' || s === 'investigation' || s === 'closed' ? tIssueStatus(s) : s;
 
   const [tab, setTab] = useState<Tab>('overview');
   const [editing, setEditing] = useState(false);
@@ -82,8 +99,14 @@ export default function AssetDetailPage() {
     { assetId },
     { enabled: tab === 'readings' },
   );
-  const { data: maintenanceData, isLoading: maintenanceLoading } =
-    trpc.maintenancePrograms.listForAsset.useQuery({ assetId }, { enabled: tab === 'maintenance' });
+  const {
+    data: maintenanceData,
+    isLoading: maintenanceLoading,
+    error: maintenanceError,
+  } = trpc.maintenancePrograms.listForAsset.useQuery(
+    { assetId },
+    { enabled: tab === 'maintenance' },
+  );
   const { data: programsListData } = trpc.maintenancePrograms.list.useQuery(undefined, {
     enabled: tab === 'maintenance' && canManageMaintenance,
   });
@@ -284,8 +307,11 @@ export default function AssetDetailPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (isArchived) restore.mutate({ assetId });
-                  else archive.mutate({ assetId });
+                  if (isArchived) {
+                    restore.mutate({ assetId });
+                    return;
+                  }
+                  if (window.confirm(t('archiveConfirm'))) archive.mutate({ assetId });
                 }}
                 disabled={archive.isPending || restore.isPending}
               >
@@ -525,7 +551,7 @@ export default function AssetDetailPage() {
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">{r.source}</td>
                           <td className="px-3 py-2 text-muted-foreground">
-                            {new Date(r.capturedAt).toLocaleString()}
+                            {new Date(r.capturedAt).toLocaleString(locale)}
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">
                             {r.capturedByName ?? '—'}
@@ -582,6 +608,8 @@ export default function AssetDetailPage() {
 
           {maintenanceLoading ? (
             <Skeleton className="h-48 w-full" />
+          ) : maintenanceError !== null ? (
+            <DetailNotFound error={maintenanceError} />
           ) : (
             <>
               {/* Attached programs */}
@@ -681,12 +709,12 @@ export default function AssetDetailPage() {
                               <td className="px-3 py-2 text-muted-foreground">
                                 {action.description !== '' ? action.description : '—'}
                               </td>
-                              <td className="px-3 py-2 capitalize text-muted-foreground">
-                                {action.status.replace(/_/g, ' ')}
+                              <td className="px-3 py-2 text-muted-foreground">
+                                {tActionStatus(action.status)}
                               </td>
                               <td className="px-3 py-2 text-muted-foreground">
                                 {action.dueAt !== null
-                                  ? new Date(action.dueAt).toLocaleDateString()
+                                  ? new Date(action.dueAt).toLocaleDateString(locale)
                                   : '—'}
                               </td>
                             </tr>
@@ -751,9 +779,9 @@ export default function AssetDetailPage() {
                         type="button"
                         aria-label={t('media.removePhoto')}
                         onClick={() => update.mutate({ assetId, photoKey: null })}
-                        className="absolute right-1.5 top-1.5 hidden rounded-full bg-background/80 p-1 shadow group-hover:flex"
+                        className="absolute right-1.5 top-1.5 flex rounded-full bg-background/90 p-1.5 text-muted-foreground shadow transition-colors hover:text-destructive"
                       >
-                        <X className="h-3.5 w-3.5 text-destructive" />
+                        <X className="h-4 w-4" />
                       </button>
                     ) : null}
                   </div>
@@ -807,10 +835,12 @@ export default function AssetDetailPage() {
                             {a.title}
                           </Link>
                         </td>
-                        <td className="px-4 py-2 capitalize">{a.status}</td>
-                        <td className="px-4 py-2 capitalize">{a.priority ?? '—'}</td>
+                        <td className="px-4 py-2">{tActionStatus(a.status)}</td>
                         <td className="px-4 py-2">
-                          {a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}
+                          {a.priority !== null ? tActionPriority(a.priority) : '—'}
+                        </td>
+                        <td className="px-4 py-2">
+                          {a.dueAt ? new Date(a.dueAt).toLocaleDateString(locale) : '—'}
                         </td>
                       </tr>
                     ))}
@@ -861,10 +891,10 @@ export default function AssetDetailPage() {
                             {ins.title}
                           </Link>
                         </td>
-                        <td className="px-4 py-2 capitalize">{ins.status.replace(/_/g, ' ')}</td>
+                        <td className="px-4 py-2">{inspectionStatusLabel(ins.status)}</td>
                         <td className="px-4 py-2">{ins.documentNumber ?? '—'}</td>
                         <td className="px-4 py-2">
-                          {ins.startedAt ? new Date(ins.startedAt).toLocaleDateString() : '—'}
+                          {ins.startedAt ? new Date(ins.startedAt).toLocaleDateString(locale) : '—'}
                         </td>
                       </tr>
                     ))}
@@ -917,10 +947,12 @@ export default function AssetDetailPage() {
                             {obs.title}
                           </Link>
                         </td>
-                        <td className="px-4 py-2 capitalize">{obs.status}</td>
-                        <td className="px-4 py-2 capitalize">{obs.priority ?? '—'}</td>
+                        <td className="px-4 py-2">{issueStatusLabel(obs.status)}</td>
                         <td className="px-4 py-2">
-                          {obs.createdAt ? new Date(obs.createdAt).toLocaleDateString() : '—'}
+                          {obs.priority !== null ? tIssuePriority(obs.priority) : '—'}
+                        </td>
+                        <td className="px-4 py-2">
+                          {obs.createdAt ? new Date(obs.createdAt).toLocaleDateString(locale) : '—'}
                         </td>
                       </tr>
                     ))}

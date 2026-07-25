@@ -66,7 +66,8 @@
     "disabled": "Disattivo",
     "remove": "Remove",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "restore": "Restore"
   },
   "auth": {
     "signIn": {
@@ -2370,7 +2371,8 @@
         "owner": "Proprietario",
         "noOwner": "Nessun proprietario",
         "ownerPlaceholder": "Seleziona proprietario"
-      }
+      },
+      "fieldRequired": "{name} is required"
     },
     "detail": {
       "backLink": "Back to Assets",
@@ -2448,12 +2450,22 @@
         "docNumber": "N. doc",
         "startedAt": "Avviato",
         "createdAt": "Creato"
-      }
+      },
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
     },
     "settings": {
       "title": "Settings",
       "categoriesTab": "Categories",
       "programsTab": "Maintenance programs"
+    },
+    "categories": {
+      "addFieldHint": "Click \"Add field\" to define what data to collect for each asset.",
+      "fieldCount": "{count, plural, one {# field} other {# fields}}",
+      "validation": {
+        "fieldNameRequired": "All fields must have a name",
+        "nameRequired": "Category name is required",
+        "selectNeedsOption": "Select field \"{name}\" needs at least one option"
+      }
     }
   },
   "assetTypes": {
@@ -2813,7 +2825,10 @@
     "applyBody": "You changed this program. Apply the new schedule to the {count} asset(s) already linked, or only to assets linked from now on?",
     "applyExisting": "Apply to existing assets",
     "applyNew": "Only new assets",
-    "appliedToast": "Updated {count} asset(s)"
+    "appliedToast": "Updated {count} asset(s)",
+    "detachAssetConfirm": "Detach this asset from the program?",
+    "loadError": "Could not load maintenance programs.",
+    "removeTriggerConfirm": "Remove this trigger from the program?"
   },
   "sites": {
     "title": "Sites & Projects",
@@ -3273,7 +3288,8 @@
       "selectContractor": "Select a contractor…",
       "noteLabel": "Note",
       "notePlaceholder": "Optional — e.g. annual service",
-      "linkedToast": "Linked."
+      "linkedToast": "Linked.",
+      "unlinkConfirm": "Remove this link?"
     },
     "portal": {
       "signOut": "Sign out",

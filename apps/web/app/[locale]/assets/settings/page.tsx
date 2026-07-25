@@ -44,15 +44,6 @@ function newFieldId(): string {
   return `f_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
-// ─── Field type pill ─────────────────────────────────────────────────────────
-
-const FIELD_TYPE_LABELS: Record<FieldType, string> = {
-  text: 'Text',
-  number: 'Number',
-  date: 'Date',
-  select: 'Select',
-};
-
 // ─── Custom field editor row ──────────────────────────────────────────────────
 
 function FieldRow({
@@ -100,7 +91,7 @@ function FieldRow({
           >
             {(['text', 'number', 'date', 'select'] as const).map((ft) => (
               <option key={ft} value={ft}>
-                {FIELD_TYPE_LABELS[ft]}
+                {tF(`types.${ft}`)}
               </option>
             ))}
           </select>
@@ -178,7 +169,7 @@ function CategoryRow({
 
   const update = trpc.assetTypes.update.useMutation({
     onSuccess: () => {
-      toast.success('Category saved');
+      toast.success(tCat('edit.savedToast'));
       setSaving(false);
       onSaved();
     },
@@ -190,15 +181,15 @@ function CategoryRow({
 
   const archive = trpc.assetTypes.archive.useMutation({
     onSuccess: () => {
-      toast.success('Category archived');
+      toast.success(tCat('archive.toast'));
       onArchived();
     },
     onError: (err) => {
       const msg = err.message;
       const assetCount = msg.includes('asset-type-has-active-assets:') ? msg.split(':')[1] : null;
       toast.error(
-        assetCount !== null
-          ? `Cannot archive: ${assetCount} active asset(s) use this category.`
+        assetCount != null
+          ? tCat('archive.errorHasAssets', { count: assetCount })
           : err.message.length > 0
             ? err.message
             : tCommon('error'),
@@ -225,17 +216,17 @@ function CategoryRow({
 
   async function handleSave() {
     if (editName.trim().length === 0) {
-      toast.error('Category name is required');
+      toast.error(tCat('validation.nameRequired'));
       return;
     }
     // Validate fields.
     for (const f of fields) {
       if (f.name.trim().length === 0) {
-        toast.error('All fields must have a name');
+        toast.error(tCat('validation.fieldNameRequired'));
         return;
       }
       if (f.fieldType === 'select' && (f.options ?? []).length === 0) {
-        toast.error(`Select field "${f.name}" needs at least one option`);
+        toast.error(tCat('validation.selectNeedsOption', { name: f.name }));
         return;
       }
     }
@@ -255,7 +246,7 @@ function CategoryRow({
   }
 
   function handleArchive() {
-    if (!window.confirm('Archive this category? Active assets will keep their data.')) return;
+    if (!window.confirm(tCat('archive.confirm'))) return;
     archive.mutate({ typeId: type.id });
   }
 
@@ -279,7 +270,7 @@ function CategoryRow({
           </span>
         ) : null}
         <span className="ml-3 shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-          {fieldCount} {fieldCount === 1 ? 'field' : 'fields'}
+          {tCat('fieldCount', { count: fieldCount })}
         </span>
       </button>
 
@@ -300,12 +291,13 @@ function CategoryRow({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={`cat-desc-${type.id}`}>{tCommon('description')}</Label>
-              <Input
+              <Textarea
                 id={`cat-desc-${type.id}`}
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
                 maxLength={5000}
-                placeholder={tCat('edit.namePlaceholder')}
+                rows={3}
+                placeholder={tCat('edit.descriptionPlaceholder')}
                 disabled={!canManage}
               />
             </div>
@@ -326,9 +318,7 @@ function CategoryRow({
             {fields.length === 0 ? (
               <p className="rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground">
                 {tCat('noCustomFieldsYet')}{' '}
-                {canManage
-                  ? 'Click "Add field" to define what data to collect for each asset.'
-                  : ''}
+                {canManage ? tCat('addFieldHint') : ''}
               </p>
             ) : (
               <div className="space-y-2">
@@ -402,7 +392,9 @@ export default function AssetSettingsPage() {
   const [newFields, setNewFields] = useState<CustomField[]>([]);
   const [search, setSearch] = useState('');
 
-  const { data, isLoading } = trpc.assetTypes.list.useQuery({ includeArchived: false });
+  const { data, isLoading, error, refetch } = trpc.assetTypes.list.useQuery({
+    includeArchived: false,
+  });
   const types = data ?? [];
 
   const filtered =
@@ -426,11 +418,11 @@ export default function AssetSettingsPage() {
     if (newName.trim().length === 0) return;
     for (const f of newFields) {
       if (f.name.trim().length === 0) {
-        toast.error('All fields must have a name');
+        toast.error(t('validation.fieldNameRequired'));
         return;
       }
       if (f.fieldType === 'select' && (f.options ?? []).length === 0) {
-        toast.error(`Select field "${f.name}" needs at least one option`);
+        toast.error(t('validation.selectNeedsOption', { name: f.name }));
         return;
       }
     }
@@ -523,11 +515,12 @@ export default function AssetSettingsPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="new-cat-desc">{t('descriptionLabel')}</Label>
-                    <Input
+                    <Textarea
                       id="new-cat-desc"
                       value={newDesc}
                       onChange={(e) => setNewDesc(e.target.value)}
                       maxLength={5000}
+                      rows={3}
                       placeholder={t('optionalPlaceholder')}
                     />
                   </div>
@@ -592,7 +585,21 @@ export default function AssetSettingsPage() {
           ) : null}
 
           {/* Category list */}
-          {isLoading ? (
+          {error ? (
+            <Card>
+              <CardContent className="py-14 text-center">
+                <p className="text-sm font-medium text-destructive">{tCommon('error')}</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => void refetch()}
+                >
+                  {tCommon('retry')}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : isLoading ? (
             <Skeleton className="h-40 w-full" />
           ) : filtered.length === 0 ? (
             <Card>

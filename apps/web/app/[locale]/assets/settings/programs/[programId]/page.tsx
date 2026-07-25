@@ -20,6 +20,7 @@ import { Input } from '../../../../../../src/components/ui/input';
 import { Label } from '../../../../../../src/components/ui/label';
 import { Skeleton } from '../../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../../src/components/ui/textarea';
+import { DetailNotFound } from '../../../../../../src/components/detail-not-found';
 import { useHasPermission } from '../../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../../src/lib/trpc/client';
 
@@ -35,7 +36,7 @@ export default function MaintenanceProgramDetailPage() {
   const utils = trpc.useUtils();
   const canManage = useHasPermission('assets.maintenance.manage');
 
-  const { data, isLoading } = trpc.maintenancePrograms.get.useQuery({ programId });
+  const { data, isLoading, error } = trpc.maintenancePrograms.get.useQuery({ programId });
 
   // Editable header fields
   const [name, setName] = useState('');
@@ -161,6 +162,7 @@ export default function MaintenanceProgramDetailPage() {
       : intervalValue !== '' && Number(intervalValue) > 0);
 
   if (isLoading || data === undefined) {
+    if (error) return <DetailNotFound error={error} />;
     return <Skeleton className="m-6 h-96 w-full" />;
   }
 
@@ -264,7 +266,11 @@ export default function MaintenanceProgramDetailPage() {
                       size="sm"
                       aria-label={t('removeTrigger')}
                       disabled={removeTrigger.isPending}
-                      onClick={() => removeTrigger.mutate({ triggerId: trigger.id })}
+                      onClick={() => {
+                        if (window.confirm(t('removeTriggerConfirm'))) {
+                          removeTrigger.mutate({ triggerId: trigger.id });
+                        }
+                      }}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -386,7 +392,11 @@ export default function MaintenanceProgramDetailPage() {
                       variant="ghost"
                       size="sm"
                       disabled={detachAsset.isPending}
-                      onClick={() => detachAsset.mutate({ programId, assetId: asset.assetId })}
+                      onClick={() => {
+                        if (window.confirm(t('detachAssetConfirm'))) {
+                          detachAsset.mutate({ programId, assetId: asset.assetId });
+                        }
+                      }}
                     >
                       {t('detach')}
                     </Button>

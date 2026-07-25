@@ -10,6 +10,7 @@ import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../src/lib/permissions-context';
+import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
 
 type AssetRow = {
@@ -29,9 +30,11 @@ type AssetRow = {
 export default function AssetsListPage() {
   const t = useTranslations('assets.list');
   const tSettings = useTranslations('assets.settings');
+  const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canManage = useHasPermission('assets.manage');
+  const { label: placeLabel } = usePlaceTerms();
 
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [includeArchived, setIncludeArchived] = useState(false);
@@ -42,7 +45,7 @@ export default function AssetsListPage() {
   const { data: typesData } = trpc.assetTypes.list.useQuery({});
   const types = typesData ?? [];
 
-  const { data, isLoading } = trpc.assets.list.useQuery({
+  const { data, isLoading, error } = trpc.assets.list.useQuery({
     typeId: typeFilter === 'all' ? undefined : typeFilter,
     ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
     includeArchived,
@@ -141,7 +144,9 @@ export default function AssetsListPage() {
               <span className="text-muted-foreground">—</span>
             )}
           </td>
-          <td className="px-3 py-2 text-muted-foreground">{row.updatedAt.toLocaleDateString()}</td>
+          <td className="px-3 py-2 text-muted-foreground">
+            {row.updatedAt.toLocaleDateString(locale)}
+          </td>
         </tr>
 
         {/* Children — rendered inline when expanded */}
@@ -209,7 +214,15 @@ export default function AssetsListPage() {
         </label>
       </div>
 
-      {isLoading ? (
+      {error ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p role="alert" className="text-sm text-destructive">
+              {tCommon('error')}
+            </p>
+          </CardContent>
+        </Card>
+      ) : isLoading ? (
         <Skeleton className="h-64 w-full" />
       ) : parentRows.length === 0 ? (
         <Card>
@@ -226,25 +239,72 @@ export default function AssetsListPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/40">
-                  <tr className="text-left">
-                    <th className="w-12 px-3 py-2" />
-                    <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.qr')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.updatedAt')}</th>
-                  </tr>
-                </thead>
-                <tbody>{parentRows.map((row) => renderRow(row, false))}</tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        <>
+          {/* Table (desktop) — hidden under md; the card list takes over there. */}
+          <Card className="hidden md:block">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/40">
+                    <tr className="text-left">
+                      <th className="w-12 px-3 py-2" />
+                      <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
+                      <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
+                      <th className="px-3 py-2 font-medium">{placeLabel}</th>
+                      <th className="px-3 py-2 font-medium">{t('columns.qr')}</th>
+                      <th className="px-3 py-2 font-medium">{t('columns.updatedAt')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>{parentRows.map((row) => renderRow(row, false))}</tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card list (mobile) — stacked layout under md; the table is hidden there. */}
+          <div className="space-y-3 md:hidden">
+            {allRows.map((row) => (
+              <Link key={row.id} href={`/${locale}/assets/${row.id}`} className="block">
+                <Card
+                  className={`transition-colors hover:bg-muted/30 ${
+                    row.archivedAt !== null ? 'opacity-60' : ''
+                  } ${row.parentId !== null ? 'ml-4 border-l-2' : ''}`}
+                >
+                  <CardContent className="space-y-3 p-4">
+                    <div className="flex items-center gap-3">
+                      {row.photoKey !== null ? (
+                        <img
+                          src={`/api/files?key=${encodeURIComponent(row.photoKey)}`}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <p className="min-w-0 truncate font-medium">{row.name}</p>
+                    </div>
+                    <dl className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <div>
+                        <dt className="font-medium text-foreground">{t('columns.type')}</dt>
+                        <dd className="truncate">{row.typeName ?? '—'}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-foreground">{placeLabel}</dt>
+                        <dd className="truncate">{row.siteName ?? '—'}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-foreground">{t('columns.updatedAt')}</dt>
+                        <dd>{row.updatedAt.toLocaleDateString(locale)}</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
