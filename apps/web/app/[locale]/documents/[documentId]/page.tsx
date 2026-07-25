@@ -31,6 +31,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
@@ -163,7 +164,7 @@ export default function DocumentDetailPage() {
   const [editExpiresAt, setEditExpiresAt] = useState('');
   const [editReminders, setEditReminders] = useState('');
 
-  const { data, isLoading } = trpc.documents.get.useQuery({ documentId });
+  const { data, isLoading, error } = trpc.documents.get.useQuery({ documentId });
   const { data: versionsData } = trpc.documents.versions.list.useQuery(
     { documentId },
     { enabled: tab === 'versions' },
@@ -271,6 +272,7 @@ export default function DocumentDetailPage() {
   }
 
   if (isLoading || data === undefined) {
+    if (error) return <DetailNotFound error={error} />;
     return <Skeleton className="m-6 h-96 w-full" />;
   }
 
@@ -412,11 +414,11 @@ export default function DocumentDetailPage() {
                   size="sm"
                   onClick={() => {
                     if (isArchived) restore.mutate({ documentId });
-                    else archive.mutate({ documentId });
+                    else if (window.confirm(t('archiveConfirm'))) archive.mutate({ documentId });
                   }}
                   disabled={archive.isPending || restore.isPending}
                 >
-                  {isArchived ? tCommon('save') : tCommon('archive')}
+                  {isArchived ? tCommon('restore') : tCommon('archive')}
                 </Button>
               ) : null}
             </div>
@@ -464,7 +466,9 @@ export default function DocumentDetailPage() {
                     </span>
                   </DetailRow>
                   <DetailRow label={t('fields.filename')}>
-                    <span className="truncate font-mono text-xs">{doc.filename}</span>
+                    <span className="truncate font-mono text-xs" title={doc.filename}>
+                      {doc.filename}
+                    </span>
                   </DetailRow>
                   <DetailRow label={t('fields.size')}>{formatBytes(doc.sizeBytes)}</DetailRow>
                   <DetailRow label={t('fields.version')}>
@@ -476,7 +480,7 @@ export default function DocumentDetailPage() {
 
                   {doc.startDate !== null ? (
                     <DetailRow label={t('fields.startDate')}>
-                      {new Date(doc.startDate).toLocaleDateString()}
+                      {new Date(doc.startDate).toLocaleDateString(locale)}
                     </DetailRow>
                   ) : null}
 
@@ -491,7 +495,7 @@ export default function DocumentDetailPage() {
                               : ''
                         }
                       >
-                        {new Date(doc.expiresAt).toLocaleDateString()}
+                        {new Date(doc.expiresAt).toLocaleDateString(locale)}
                         {isExpired ? ` (${t('expiredBadge').toLowerCase()})` : ''}
                       </span>
                     </DetailRow>
@@ -586,9 +590,12 @@ export default function DocumentDetailPage() {
                               {formatBytes(v.sizeBytes)}
                             </span>
                           </div>
-                          <p className="mt-1 truncate text-muted-foreground">{v.filename}</p>
+                          <p className="mt-1 truncate text-muted-foreground" title={v.filename}>
+                            {v.filename}
+                          </p>
                           <p className="mt-0.5 text-muted-foreground">
-                            {v.uploaderName ?? '—'} · {new Date(v.uploadedAt).toLocaleDateString()}
+                            {v.uploaderName ?? '—'} ·{' '}
+                            {new Date(v.uploadedAt).toLocaleDateString(locale)}
                           </p>
                         </button>
                         {canManage && !isCurrent && !isArchived ? (
@@ -680,10 +687,12 @@ export default function DocumentDetailPage() {
                       <div key={req.headsUpId} className="space-y-2 rounded-md border p-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">{req.title}</p>
+                            <p className="truncate text-sm font-medium" title={req.title}>
+                              {req.title}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {t('signaturesSentBy', { name: req.senderName ?? '—' })} ·{' '}
-                              {new Date(req.createdAt).toLocaleDateString()}
+                              {new Date(req.createdAt).toLocaleDateString(locale)}
                             </p>
                           </div>
                           <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
@@ -701,13 +710,13 @@ export default function DocumentDetailPage() {
                                 key={r.userId}
                                 className="flex items-center justify-between gap-2 px-2.5 py-1.5"
                               >
-                                <span className="min-w-0 truncate">
-                                  {r.name ?? r.email ?? r.userId}
+                                <span className="min-w-0 truncate" title={r.name ?? r.email ?? '—'}>
+                                  {r.name ?? r.email ?? '—'}
                                 </span>
                                 {at !== null ? (
                                   <span className="inline-flex shrink-0 items-center gap-1 text-emerald-600 dark:text-emerald-400">
                                     <Check className="h-3.5 w-3.5" />
-                                    {new Date(at).toLocaleDateString()}
+                                    {new Date(at).toLocaleDateString(locale)}
                                   </span>
                                 ) : (
                                   <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">

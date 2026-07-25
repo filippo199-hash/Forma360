@@ -1,6 +1,7 @@
 'use client';
 
 import { Check, Search, Users, UserRound, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { trpc } from '../../lib/trpc/client';
 import { cn } from '../../lib/cn';
@@ -40,10 +41,12 @@ export function GroupUserSelector({
   mode = 'both',
   multiple = true,
   label,
-  placeholder = 'Select',
+  placeholder,
   disabled = false,
   className,
 }: GroupUserSelectorProps) {
+  const t = useTranslations('groupUserSelector');
+  const placeholderText = placeholder ?? t('placeholder');
   const wantGroups = mode !== 'users';
   const wantUsers = mode !== 'groups';
 
@@ -110,10 +113,10 @@ export function GroupUserSelector({
   const selected = value.map((id) => byId.get(id)).filter((e): e is Entity => e !== undefined);
   const triggerText =
     selected.length === 0
-      ? placeholder
+      ? placeholderText
       : multiple
-        ? `${selected.length} selected`
-        : (selected[0]?.name ?? placeholder);
+        ? t('selected', { count: selected.length })
+        : (selected[0]?.name ?? placeholderText);
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -145,13 +148,13 @@ export function GroupUserSelector({
                     setSearch('');
                   }}
                   className={cn(
-                    'flex-1 -mb-px border-b-2 px-3 py-2 text-sm font-medium capitalize transition-colors',
+                    'flex-1 -mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
                     tab === tk
                       ? 'border-foreground text-foreground'
                       : 'border-transparent text-muted-foreground hover:text-foreground',
                   )}
                 >
-                  {tk}
+                  {t(tk === 'groups' ? 'tabGroups' : 'tabUsers')}
                 </button>
               ))}
             </div>
@@ -162,7 +165,9 @@ export function GroupUserSelector({
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={showTabs ? `Search ${tab}` : 'Search'}
+              placeholder={
+                showTabs ? (tab === 'groups' ? t('searchGroups') : t('searchUsers')) : t('search')
+              }
               className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               autoFocus
             />
@@ -170,7 +175,9 @@ export function GroupUserSelector({
 
           <div className="max-h-64 overflow-y-auto py-1">
             {filtered.length === 0 ? (
-              <p className="px-3 py-6 text-center text-sm text-muted-foreground">Nothing found</p>
+              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                {t('nothingFound')}
+              </p>
             ) : (
               filtered.map((e) => {
                 const checked = draft.includes(e.id);
@@ -207,14 +214,14 @@ export function GroupUserSelector({
               onClick={() => setDraft([])}
               className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
             >
-              Clear selections
+              {t('clear')}
             </button>
             <button
               type="button"
               onClick={commit}
               className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
             >
-              Done
+              {t('done')}
             </button>
           </div>
         </PopoverContent>
@@ -231,7 +238,7 @@ export function GroupUserSelector({
               <button
                 type="button"
                 onClick={() => onChange(value.filter((x) => x !== e.id))}
-                aria-label={`Remove ${e.name}`}
+                aria-label={t('removeAria', { name: e.name })}
                 className="rounded-full text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3 w-3" aria-hidden />

@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronRight, FolderOpen } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 
@@ -45,6 +46,7 @@ export function FolderTree({
   allDocumentsLabel: string;
   onNavigate: (crumbs: FolderCrumb[]) => void;
 }) {
+  const t = useTranslations('documents.folder');
   const byId = new Map(folders.map((f) => [f.id, f]));
   const children = new Map<string | null, FolderNode[]>();
   for (const f of folders) {
@@ -113,7 +115,7 @@ export function FolderTree({
                 'flex h-7 w-5 shrink-0 items-center justify-center',
                 hasKids ? 'hover:text-foreground' : 'invisible',
               )}
-              aria-label={open ? 'Collapse' : 'Expand'}
+              aria-label={open ? t('collapse') : t('expand')}
               aria-expanded={hasKids ? open : undefined}
             >
               <ChevronRight
@@ -126,7 +128,9 @@ export function FolderTree({
               className="flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-2 text-left text-sm"
             >
               <FolderOpen className="h-4 w-4 shrink-0" />
-              <span className="truncate">{f.name}</span>
+              <span className="truncate" title={f.name}>
+                {f.name}
+              </span>
             </button>
           </div>
           {hasKids && open ? renderLevel(f.id, depth + 1) : null}

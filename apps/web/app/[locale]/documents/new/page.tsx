@@ -131,7 +131,9 @@ export default function DocumentNewPage() {
       });
       if (!res.ok) {
         const body = (await res.json()) as { error?: string };
-        throw new Error(body.error ?? 'upload-failed');
+        // Empty sentinel so the catch below falls back to the generic
+        // key when the server gave us no specific reason.
+        throw new Error(body.error ?? '');
       }
       const result = (await res.json()) as UploadedFile;
       setUploadedFile(result);
@@ -140,22 +142,33 @@ export default function DocumentNewPage() {
         const base = result.filename.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
         setName(base.trim());
       }
-    } catch {
-      toast.error(t('errorToast'));
+    } catch (error) {
+      // Surface the server's specific reason when present; fall back to the
+      // generic toast only when there's no message to show.
+      const message = error instanceof Error ? error.message.trim() : '';
+      toast.error(message.length > 0 ? message : t('errorToast'));
     } finally {
       setIsUploading(false);
     }
   }
 
+  // A document is one file + metadata, so we only ever take the first file.
+  // If several are dropped/selected, hint that the rest are ignored.
+  function takeFirstFile(files: FileList): File | undefined {
+    if (files.length > 1) toast(t('oneFileHint'));
+    return files[0];
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    if (e.target.files === null) return;
+    const file = takeFirstFile(e.target.files);
     if (file !== undefined) void uploadFile(file);
   }
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
+    const file = takeFirstFile(e.dataTransfer.files);
     if (file !== undefined) void uploadFile(file);
   }
 

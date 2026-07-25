@@ -2563,7 +2563,8 @@
       "folderAccessSavedToast": "フォルダーアクセスを更新しました",
       "folderSettingsButton": "Folder settings",
       "folderSettingsTitle": "Folder settings",
-      "folderNameLabel": "Folder name"
+      "folderNameLabel": "Folder name",
+      "loadError": "Couldn't load documents. Please try again."
     },
     "detail": {
       "backLink": "Back to Documents",
@@ -2638,7 +2639,8 @@
       "signaturesEmpty": "Not sent for signature yet.",
       "signaturesSentBy": "Sent by {name}",
       "signaturesPending": "Pending",
-      "signaturesRequestTitle": "Sent via Heads-Up"
+      "signaturesRequestTitle": "Sent via Heads-Up",
+      "archiveConfirm": "Archive this document? It will be hidden from the main list but can be restored later."
     },
     "upload": {
       "labelsCreate": "新しいラベル",
@@ -2649,7 +2651,14 @@
       "responsibleSelectUser": "ユーザーを選択…",
       "responsibleSelectGroup": "グループを選択…",
       "siteLabel": "Site / Project",
-      "noSite": "No site / project"
+      "noSite": "No site / project",
+      "oneFileHint": "Only the first file is used — a document holds one file."
+    },
+    "folder": {
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "deletedToast": "Folder deleted",
+      "visibleToPlaces": "Visible to {places}"
     }
   },
   "search": {
@@ -3322,5 +3331,18 @@
     "reqBlockingShort": "Blocking",
     "addDocPlaceholder": "Add another document to this trade…",
     "addDocument": "Add document"
+  },
+  "groupUserSelector": {
+    "placeholder": "Select",
+    "selected": "{count} selected",
+    "tabGroups": "Groups",
+    "tabUsers": "Users",
+    "search": "Search",
+    "searchGroups": "Search groups",
+    "searchUsers": "Search users",
+    "nothingFound": "Nothing found",
+    "clear": "Clear selections",
+    "done": "Done",
+    "removeAria": "Remove {name}"
   }
 }

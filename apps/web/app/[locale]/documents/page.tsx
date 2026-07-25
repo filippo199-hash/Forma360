@@ -1,6 +1,15 @@
 'use client';
 
-import { ChevronRight, File, FolderOpen, FolderPlus, Plus, Settings, Upload } from 'lucide-react';
+import {
+  ChevronRight,
+  File,
+  FolderOpen,
+  FolderPlus,
+  Plus,
+  Settings,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -20,6 +29,7 @@ import { Input } from '../../../src/components/ui/input';
 import { Label } from '../../../src/components/ui/label';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../src/lib/permissions-context';
+import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
 
 type FolderCrumb = {
@@ -36,6 +46,7 @@ export default function DocumentsPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canFolderManage = useHasPermission('documents.folders.manage');
+  const placeTerms = usePlaceTerms();
   const utils = trpc.useUtils();
   const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
 
@@ -53,14 +64,20 @@ export default function DocumentsPage() {
   const [newFolderSiteIds, setNewFolderSiteIds] = useState<string[]>([]);
 
   // Every folder (flat, with parentId) — the sidebar builds a nested tree.
-  const { data: allFolders = [], isLoading: foldersLoading } = trpc.documentFolders.list.useQuery(
-    {},
-  );
+  const {
+    data: allFolders = [],
+    isLoading: foldersLoading,
+    error: foldersError,
+  } = trpc.documentFolders.list.useQuery({});
 
   // Documents — undefined folderId = all docs; string = scoped to folder.
   // When a site/project filter is active, list that site's docs across all
   // folders (folderId untethered) so the hub drill-in shows everything.
-  const { data: docs = [], isLoading: docsLoading } = trpc.documents.list.useQuery({
+  const {
+    data: docs = [],
+    isLoading: docsLoading,
+    error: docsError,
+  } = trpc.documents.list.useQuery({
     folderId: siteFilter !== '' ? undefined : (currentFolderId ?? undefined),
     query: query.trim().length > 0 ? query.trim() : undefined,
     ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
@@ -105,6 +122,31 @@ export default function DocumentsPage() {
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
+  const deleteFolder = trpc.documentFolders.delete.useMutation({
+    onSuccess: () => {
+      toast.success(tFolder('deletedToast'));
+      setFolderAccessOpen(false);
+      // Drop the deleted folder from the breadcrumb (fall back to its parent).
+      setFolderPath((prev) => prev.slice(0, -1));
+      void utils.documentFolders.list.invalidate();
+    },
+    onError: (err) => {
+      if (err.message === 'folder-has-subfolders') {
+        toast.error(tFolder('subfoldersToast'));
+      } else if (err.message === 'folder-has-documents') {
+        toast.error(tFolder('documentsToast'));
+      } else {
+        toast.error(err.message.length > 0 ? err.message : tCommon('error'));
+      }
+    },
+  });
+
+  function handleDeleteFolder() {
+    if (currentFolderId === null) return;
+    if (!window.confirm(tFolder('deleteConfirm'))) return;
+    deleteFolder.mutate({ folderId: currentFolderId });
+  }
+
   function openFolderAccess() {
     setEditFolderName(currentFolder?.name ?? '');
     setEditFolderGroupIds(currentFolder?.visibleToGroupIds ?? []);
@@ -145,6 +187,55 @@ export default function DocumentsPage() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  // Derive the per-row freshness/expiry flags + resolved labels once, so the
+  // desktop table and the mobile card list stay in sync.
+  function deriveDoc(doc: (typeof docs)[number]) {
+    const now = Date.now();
+    const isExpired = doc.expiresAt !== null && new Date(doc.expiresAt).getTime() < now;
+    const daysUntilExpiry =
+      doc.expiresAt !== null
+        ? Math.ceil((new Date(doc.expiresAt).getTime() - now) / 86_400_000)
+        : null;
+    const isStale =
+      doc.freshnessDays !== null &&
+      (now - new Date(doc.updatedAt).getTime()) / 86_400_000 > doc.freshnessDays;
+    const docLabelIds = Array.isArray(doc.labelIds) ? (doc.labelIds as string[]) : [];
+    const docLabels = docLabelIds
+      .map((id) => labelMap.get(id))
+      .filter((l): l is NonNullable<typeof l> => l !== undefined);
+    return { isExpired, daysUntilExpiry, isStale, docLabels };
+  }
+
+  function docTags(v: ReturnType<typeof deriveDoc>) {
+    return (
+      <div className="flex flex-wrap gap-1">
+        {v.isExpired ? (
+          <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-800 dark:bg-red-900/40 dark:text-red-200">
+            {t('expiredTag')}
+          </span>
+        ) : v.daysUntilExpiry !== null && v.daysUntilExpiry <= 30 ? (
+          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
+            {t('expiresInTag', { days: String(v.daysUntilExpiry) })}
+          </span>
+        ) : null}
+        {v.isStale ? (
+          <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-medium text-orange-800 dark:bg-orange-900/40 dark:text-orange-100">
+            {t('staleTag')}
+          </span>
+        ) : null}
+        {v.docLabels.map((lbl) => (
+          <span
+            key={lbl.id}
+            className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
+            style={{ backgroundColor: lbl.color }}
+          >
+            {lbl.name}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Page header */}
@@ -164,6 +255,19 @@ export default function DocumentsPage() {
             >
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">{t('folderSettingsButton')}</span>
+            </Button>
+          ) : null}
+          {canFolderManage && currentFolderId !== null ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDeleteFolder}
+              disabled={deleteFolder.isPending}
+              title={tFolder('deleteButton')}
+              className="w-10 px-0 text-destructive hover:text-destructive sm:w-auto sm:px-4"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">{tFolder('deleteButton')}</span>
             </Button>
           ) : null}
           {canFolderManage ? (
@@ -241,7 +345,7 @@ export default function DocumentsPage() {
 
             {sites.length > 0 ? (
               <div className="space-y-1.5">
-                <Label>{tFolder('sitesLabel')}</Label>
+                <Label>{tFolder('visibleToPlaces', { places: placeTerms.labelPlural })}</Label>
                 <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border p-2">
                   {sites.map((s) => (
                     <label key={s.id} className="flex cursor-pointer items-center gap-2 text-sm">
@@ -294,7 +398,7 @@ export default function DocumentsPage() {
                 id="folder-name"
                 value={editFolderName}
                 onChange={(e) => setEditFolderName(e.target.value)}
-                maxLength={120}
+                maxLength={500}
               />
             </div>
             <p className="text-xs text-muted-foreground">{tFolder('visibilityHint')}</p>
@@ -318,7 +422,7 @@ export default function DocumentsPage() {
             ) : null}
             {sites.length > 0 ? (
               <div className="space-y-1.5">
-                <Label>{tFolder('sitesLabel')}</Label>
+                <Label>{tFolder('visibleToPlaces', { places: placeTerms.labelPlural })}</Label>
                 <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border p-2">
                   {sites.map((s) => (
                     <label key={s.id} className="flex cursor-pointer items-center gap-2 text-sm">
@@ -373,6 +477,10 @@ export default function DocumentsPage() {
         <aside className="min-w-0 space-y-1 overflow-x-auto md:sticky md:top-4 md:max-h-[calc(100vh-7rem)] md:self-start md:overflow-y-auto md:pr-1">
           {foldersLoading ? (
             <Skeleton className="h-8 w-full" />
+          ) : foldersError ? (
+            <p role="alert" className="text-sm text-destructive">
+              {t('loadError')}
+            </p>
           ) : (
             <FolderTree
               folders={allFolders}
@@ -424,6 +532,14 @@ export default function DocumentsPage() {
           {/* Documents */}
           {docsLoading ? (
             <Skeleton className="h-48 w-full" />
+          ) : docsError ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p role="alert" className="text-sm text-destructive">
+                  {t('loadError')}
+                </p>
+              </CardContent>
+            </Card>
           ) : docs.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
@@ -440,101 +556,110 @@ export default function DocumentsPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="border-b bg-muted/40">
-                      <tr className="text-left">
-                        <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                        <th className="px-3 py-2 font-medium">{t('columns.version')}</th>
-                        <th className="px-3 py-2 font-medium">{t('columns.size')}</th>
-                        <th className="px-3 py-2 font-medium">{t('columns.expiresAt')}</th>
-                        <th className="px-3 py-2 font-medium">{t('columns.uploadedBy')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {docs.map((doc) => {
-                        const now = Date.now();
-                        const isExpired =
-                          doc.expiresAt !== null && new Date(doc.expiresAt).getTime() < now;
-                        const daysUntilExpiry =
-                          doc.expiresAt !== null
-                            ? Math.ceil((new Date(doc.expiresAt).getTime() - now) / 86_400_000)
-                            : null;
-                        const isStale =
-                          doc.freshnessDays !== null &&
-                          (now - new Date(doc.updatedAt).getTime()) / 86_400_000 >
-                            doc.freshnessDays;
-                        const docLabelIds = Array.isArray(doc.labelIds)
-                          ? (doc.labelIds as string[])
-                          : [];
-                        const docLabels = docLabelIds
-                          .map((id) => labelMap.get(id))
-                          .filter((l): l is NonNullable<typeof l> => l !== undefined);
-
-                        return (
-                          <tr key={doc.id} className="border-b last:border-0 hover:bg-muted/30">
-                            <td className="max-w-xs px-3 py-2.5">
-                              <div className="flex flex-col gap-1">
-                                <Link
-                                  href={`/${locale}/documents/${doc.id}`}
-                                  className="inline-flex items-center gap-1.5 font-medium hover:underline"
-                                >
-                                  <File className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                  <span className="truncate">{doc.name}</span>
-                                </Link>
-                                <div className="flex flex-wrap gap-1">
-                                  {isExpired ? (
-                                    <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-800 dark:bg-red-900/40 dark:text-red-200">
-                                      {t('expiredTag')}
+            <>
+              {/* Table (desktop) — hidden below md; the card list takes over there. */}
+              <Card className="hidden md:block">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="border-b bg-muted/40">
+                        <tr className="text-left">
+                          <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
+                          <th className="px-3 py-2 font-medium">{t('columns.version')}</th>
+                          <th className="px-3 py-2 font-medium">{t('columns.size')}</th>
+                          <th className="px-3 py-2 font-medium">{t('columns.expiresAt')}</th>
+                          <th className="px-3 py-2 font-medium">{t('columns.uploadedBy')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {docs.map((doc) => {
+                          const view = deriveDoc(doc);
+                          return (
+                            <tr key={doc.id} className="border-b last:border-0 hover:bg-muted/30">
+                              <td className="max-w-xs px-3 py-2.5">
+                                <div className="flex flex-col gap-1">
+                                  <Link
+                                    href={`/${locale}/documents/${doc.id}`}
+                                    className="inline-flex items-center gap-1.5 font-medium hover:underline"
+                                  >
+                                    <File className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                    <span className="truncate" title={doc.name}>
+                                      {doc.name}
                                     </span>
-                                  ) : daysUntilExpiry !== null && daysUntilExpiry <= 30 ? (
-                                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
-                                      {t('expiresInTag', {
-                                        days: String(daysUntilExpiry),
-                                      })}
-                                    </span>
-                                  ) : null}
-                                  {isStale ? (
-                                    <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-medium text-orange-800 dark:bg-orange-900/40 dark:text-orange-100">
-                                      {t('staleTag')}
-                                    </span>
-                                  ) : null}
-                                  {docLabels.map((lbl) => (
-                                    <span
-                                      key={lbl.id}
-                                      className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
-                                      style={{ backgroundColor: lbl.color }}
-                                    >
-                                      {lbl.name}
-                                    </span>
-                                  ))}
+                                  </Link>
+                                  {docTags(view)}
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2.5 text-muted-foreground">
-                              {t('versionNum', { n: String(doc.currentVersion) })}
-                            </td>
-                            <td className="px-3 py-2.5 text-muted-foreground">
-                              {formatBytes(doc.sizeBytes)}
-                            </td>
-                            <td className="px-3 py-2.5 text-muted-foreground">
+                              </td>
+                              <td className="px-3 py-2.5 text-muted-foreground">
+                                {t('versionNum', { n: String(doc.currentVersion) })}
+                              </td>
+                              <td className="px-3 py-2.5 text-muted-foreground">
+                                {formatBytes(doc.sizeBytes)}
+                              </td>
+                              <td className="px-3 py-2.5 text-muted-foreground">
+                                {doc.expiresAt !== null
+                                  ? new Date(doc.expiresAt).toLocaleDateString(locale)
+                                  : '—'}
+                              </td>
+                              <td className="px-3 py-2.5 text-muted-foreground">
+                                {doc.uploaderName ?? '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card list (mobile) — stacked layout under md; the table is hidden there. */}
+              <div className="space-y-3 md:hidden">
+                {docs.map((doc) => {
+                  const view = deriveDoc(doc);
+                  return (
+                    <Card key={doc.id}>
+                      <CardContent className="space-y-3 p-4">
+                        <Link
+                          href={`/${locale}/documents/${doc.id}`}
+                          className="flex items-center gap-1.5 font-medium hover:underline"
+                        >
+                          <File className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate" title={doc.name}>
+                            {doc.name}
+                          </span>
+                        </Link>
+                        {docTags(view)}
+                        <dl className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                          <div>
+                            <dt className="font-medium text-foreground">{t('columns.version')}</dt>
+                            <dd>{t('versionNum', { n: String(doc.currentVersion) })}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium text-foreground">{t('columns.size')}</dt>
+                            <dd>{formatBytes(doc.sizeBytes)}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium text-foreground">{t('columns.expiresAt')}</dt>
+                            <dd>
                               {doc.expiresAt !== null
-                                ? new Date(doc.expiresAt).toLocaleDateString()
+                                ? new Date(doc.expiresAt).toLocaleDateString(locale)
                                 : '—'}
-                            </td>
-                            <td className="px-3 py-2.5 text-muted-foreground">
-                              {doc.uploaderName ?? '—'}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium text-foreground">
+                              {t('columns.uploadedBy')}
+                            </dt>
+                            <dd className="truncate">{doc.uploaderName ?? '—'}</dd>
+                          </div>
+                        </dl>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </div>
