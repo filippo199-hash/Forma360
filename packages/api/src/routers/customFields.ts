@@ -13,7 +13,12 @@
  * Registers a `customUserFields` dependents-resolver that counts
  * referencing group + site membership rules.
  */
-import { customUserFields, groupMembershipRules, siteMembershipRules } from '@forma360/db/schema';
+import {
+  customUserFields,
+  groupMembershipRules,
+  siteMembershipRules,
+  userCustomFieldValues,
+} from '@forma360/db/schema';
 import {
   registerDependentResolver,
   type DependentResolver,
@@ -159,6 +164,28 @@ export const customFieldsRouter = router({
             groups: refs.groups,
             sites: refs.sites,
           },
+        });
+      }
+      // Stored per-user values also block deletion: user_custom_field_values
+      // .field_id is ON DELETE RESTRICT, so a populated field can't be deleted
+      // and the raw FK error would surface as a 500. Block with a clear error.
+      const valueRows = await ctx.db
+        .select({ c: count() })
+        .from(userCustomFieldValues)
+        .where(
+          and(
+            eq(userCustomFieldValues.tenantId, ctx.tenantId),
+            eq(userCustomFieldValues.fieldId, input.id),
+          ),
+        );
+      const valueCount = Number(valueRows[0]?.c ?? 0);
+      if (valueCount > 0) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `This field has ${valueCount} stored value${
+            valueCount === 1 ? '' : 's'
+          }. Clear those first, or archive the field instead of deleting it.`,
+          cause: { code: 'HAS_DEPENDENTS', values: valueCount },
         });
       }
       await ctx.db
