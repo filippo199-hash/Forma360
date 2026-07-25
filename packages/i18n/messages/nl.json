@@ -374,7 +374,7 @@
       "terminologyProjects": "Projects only",
       "terminologyProjectsHelp": "Time-bound jobs — construction sites, rollouts.",
       "terminologySaved": "Terminology updated.",
-      "terminologyConfirm": "Change the wording to '{label}' everywhere for your whole organisation?"
+      "terminologyConfirm": "Change the wording to “{label}” everywhere for your whole organisation?"
     },
     "customFields": {
       "colName": "Name",
