@@ -132,28 +132,35 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
     const newPhotoIds: string[] = [];
     try {
       for (const file of Array.from(files)) {
-        const form = new FormData();
-        form.set('siteId', siteId);
-        form.set('file', file);
-        const res = await fetch('/api/upload/site-media', { method: 'POST', body: form });
-        if (!res.ok) {
+        try {
+          const form = new FormData();
+          form.set('siteId', siteId);
+          form.set('file', file);
+          const res = await fetch('/api/upload/site-media', { method: 'POST', body: form });
+          if (!res.ok) {
+            toast.error(t('mediaUploadError'));
+            continue;
+          }
+          const body = (await res.json()) as {
+            storageKey: string;
+            filename: string;
+            mimeType: string;
+            sizeBytes: number;
+          };
+          const created = await createMedia.mutateAsync({
+            siteId,
+            storageKey: body.storageKey,
+            filename: body.filename,
+            mimeType: body.mimeType,
+            sizeBytes: body.sizeBytes,
+          });
+          if (body.mimeType.startsWith('image/')) newPhotoIds.push(created.id);
+        } catch {
+          // Metadata write failed after the R2 upload (or the JSON parse threw).
+          // Surface it and move on so one bad file doesn't abort the whole batch.
           toast.error(t('mediaUploadError'));
           continue;
         }
-        const body = (await res.json()) as {
-          storageKey: string;
-          filename: string;
-          mimeType: string;
-          sizeBytes: number;
-        };
-        const created = await createMedia.mutateAsync({
-          siteId,
-          storageKey: body.storageKey,
-          filename: body.filename,
-          mimeType: body.mimeType,
-          sizeBytes: body.sizeBytes,
-        });
-        if (body.mimeType.startsWith('image/')) newPhotoIds.push(created.id);
       }
       await utils.siteMedia.list.invalidate({ siteId });
       await utils.sites.getHub.invalidate({ id: siteId });
