@@ -27,11 +27,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../../../src/components/ui/dropdown-menu';
+import { AutoGrowTextarea } from '../../../../src/components/ui/auto-grow-textarea';
 import { Input } from '../../../../src/components/ui/input';
 import { Separator } from '../../../../src/components/ui/separator';
 import { Switch } from '../../../../src/components/ui/switch';
-import { Textarea } from '../../../../src/components/ui/textarea';
 import { cn } from '../../../../src/lib/cn';
+import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -78,25 +79,23 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function scheduleLabel(type: 'now' | 'tomorrow' | 'nextweek'): string {
+function scheduleLabel(
+  type: 'now' | 'tomorrow' | 'nextweek',
+  locale: string,
+  timeLabel: string,
+): string {
   const now = new Date();
   if (type === 'tomorrow') {
     const d = new Date(now);
     d.setDate(d.getDate() + 1);
     d.setHours(9, 0, 0, 0);
-    return (
-      d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) +
-      ', 9:00 am'
-    );
+    return `${d.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })}, ${timeLabel}`;
   }
   if (type === 'nextweek') {
     const d = new Date(now);
     d.setDate(d.getDate() + ((7 - d.getDay() + 3) % 7) || 7); // next Wednesday
     d.setHours(9, 0, 0, 0);
-    return (
-      d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) +
-      ', 9:00'
-    );
+    return `${d.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })}, ${timeLabel}`;
   }
   return '';
 }
@@ -109,6 +108,7 @@ export default function NewHeadsUpPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
+  const placeTerms = usePlaceTerms();
 
   // ── Form state ──
   const [title, setTitle] = useState('');
@@ -119,6 +119,7 @@ export default function NewHeadsUpPage() {
   const [audienceMode, setAudienceMode] = useState<'everyone' | 'groups' | 'sites'>('everyone');
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
+  const [audienceError, setAudienceError] = useState(false);
   const [groupsOpen, setGroupsOpen] = useState(false);
   const [sitesOpen, setSitesOpen] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('tablet');
@@ -129,13 +130,15 @@ export default function NewHeadsUpPage() {
   const [docQuery, setDocQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: groupsData } = trpc.groups.list.useQuery(undefined, { staleTime: 60_000 });
+  const { data: groupsData, error: groupsError } = trpc.groups.list.useQuery(undefined, {
+    staleTime: 60_000,
+  });
   const groups = groupsData ?? [];
   const selectedGroupNames = groups
     .filter((g) => selectedGroupIds.includes(g.id))
     .map((g) => g.name);
 
-  const { data: sitesData } = trpc.sites.list.useQuery(undefined, {
+  const { data: sitesData, error: sitesError } = trpc.sites.list.useQuery(undefined, {
     staleTime: 60_000,
     enabled: audienceMode === 'sites',
   });
@@ -143,18 +146,20 @@ export default function NewHeadsUpPage() {
   const selectedSiteNames = sites.filter((s) => selectedSiteIds.includes(s.id)).map((s) => s.name);
 
   function toggleGroup(id: string) {
+    setAudienceError(false);
     setSelectedGroupIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
 
   function toggleSite(id: string) {
+    setAudienceError(false);
     setSelectedSiteIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
 
-  const { data: allDocuments = [] } = trpc.documents.list.useQuery({});
+  const { data: allDocuments = [], error: documentsError } = trpc.documents.list.useQuery({});
 
   // ── tRPC mutations ──
   // `create` always writes a draft; publishing immediately is a create→publish
@@ -281,6 +286,14 @@ export default function NewHeadsUpPage() {
     const stillUploading = pendingFiles.some((f) => f.uploading);
     if (stillUploading) {
       toast.error(t('waitForUploads'));
+      return;
+    }
+    const audienceEmpty =
+      (audienceMode === 'groups' && selectedGroupIds.length === 0) ||
+      (audienceMode === 'sites' && selectedSiteIds.length === 0);
+    if (audienceEmpty) {
+      setAudienceError(true);
+      toast.error(t('selectAudience'));
       return;
     }
     const readyAttachments = pendingFiles
@@ -422,6 +435,9 @@ export default function NewHeadsUpPage() {
               placeholder={t('searchDocuments')}
               className="h-9"
             />
+            {documentsError !== null ? (
+              <p className="mt-1.5 text-xs text-destructive">{tCommon('error')}</p>
+            ) : null}
             {selectedDocumentIds.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {selectedDocumentIds.map((id) => {
@@ -431,7 +447,7 @@ export default function NewHeadsUpPage() {
                       key={id}
                       className="inline-flex items-center gap-1 rounded-full bg-primary/10 py-0.5 pl-2.5 pr-1 text-xs text-primary"
                     >
-                      {d?.name ?? id}
+                      {d?.name ?? tCommon('loading')}
                       <button
                         type="button"
                         onClick={() =>
@@ -509,14 +525,14 @@ export default function NewHeadsUpPage() {
               </label>
               <span className="text-xs text-muted-foreground">{description.length}/5000</span>
             </div>
-            <Textarea
+            <AutoGrowTextarea
               id="hu-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('fields.descriptionPlaceholder')}
               rows={5}
               maxLength={5000}
-              className="resize-none"
+              className="flex min-h-[112px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
@@ -581,6 +597,7 @@ export default function NewHeadsUpPage() {
                   type="button"
                   onClick={() => {
                     setAudienceMode(mode);
+                    setAudienceError(false);
                     if (mode !== 'groups') setGroupsOpen(false);
                     if (mode !== 'sites') setSitesOpen(false);
                   }}
@@ -595,10 +612,14 @@ export default function NewHeadsUpPage() {
                     ? t('fields.audienceEveryone')
                     : mode === 'groups'
                       ? t('fields.audienceGroups')
-                      : t('fields.audienceSites')}
+                      : placeTerms.labelPlural}
                 </button>
               ))}
             </div>
+
+            {audienceError ? (
+              <p className="mt-2 text-xs text-destructive">{t('selectAudience')}</p>
+            ) : null}
 
             {/* Groups picker */}
             {audienceMode === 'groups' ? (
@@ -640,6 +661,9 @@ export default function NewHeadsUpPage() {
                     </div>
                   ) : null}
                 </div>
+                {groupsError !== null ? (
+                  <p className="mt-1.5 text-xs text-destructive">{tCommon('error')}</p>
+                ) : null}
                 {selectedGroupNames.length > 0 ? (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {selectedGroupNames.map((name) => (
@@ -666,7 +690,7 @@ export default function NewHeadsUpPage() {
                   >
                     <span className={selectedSiteIds.length === 0 ? 'text-muted-foreground' : ''}>
                       {selectedSiteIds.length === 0
-                        ? t('fields.selectSitesPlaceholder')
+                        ? placeTerms.addPlaceholder
                         : selectedSiteNames.join(', ')}
                     </span>
                     <span className="ml-2 text-muted-foreground">▾</span>
@@ -695,6 +719,9 @@ export default function NewHeadsUpPage() {
                     </div>
                   ) : null}
                 </div>
+                {sitesError !== null ? (
+                  <p className="mt-1.5 text-xs text-destructive">{tCommon('error')}</p>
+                ) : null}
                 {selectedSiteNames.length > 0 ? (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {selectedSiteNames.map((name) => (
@@ -734,7 +761,7 @@ export default function NewHeadsUpPage() {
             <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
               {t('scheduledFor')}:{' '}
               <strong>
-                {publishAt.toLocaleString(undefined, {
+                {publishAt.toLocaleString(locale, {
                   weekday: 'short',
                   month: 'short',
                   day: 'numeric',
@@ -786,7 +813,11 @@ export default function NewHeadsUpPage() {
                   <DropdownMenuItem
                     onClick={() => {
                       setSchedule('tomorrow');
-                      toast.info(t('scheduledFor') + ': ' + scheduleLabel('tomorrow'));
+                      toast.info(
+                        t('scheduledFor') +
+                          ': ' +
+                          scheduleLabel('tomorrow', locale, t('publishTime9am')),
+                      );
                     }}
                   >
                     <span className="flex-1">{t('publishTomorrow')}</span>
@@ -795,11 +826,15 @@ export default function NewHeadsUpPage() {
                   <DropdownMenuItem
                     onClick={() => {
                       setSchedule('nextweek');
-                      toast.info(t('scheduledFor') + ': ' + scheduleLabel('nextweek'));
+                      toast.info(
+                        t('scheduledFor') +
+                          ': ' +
+                          scheduleLabel('nextweek', locale, t('publishTime9am')),
+                      );
                     }}
                   >
                     <span className="flex-1">{t('publishNextWeek')}</span>
-                    <span className="text-xs text-muted-foreground">9:00</span>
+                    <span className="text-xs text-muted-foreground">{t('publishTime9am')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

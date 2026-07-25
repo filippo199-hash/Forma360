@@ -42,15 +42,15 @@ export default function HeadsUpDetailPage() {
   const [commentBody, setCommentBody] = useState('');
 
   const { data, isLoading, error } = trpc.headsUps.get.useQuery({ headsUpId });
-  const { data: summary } = trpc.headsUps.engagementSummary.useQuery(
+  const { data: summary, error: summaryError } = trpc.headsUps.engagementSummary.useQuery(
     { headsUpId },
     { enabled: canAnalytics && data?.headsUp.status === 'published' },
   );
-  const { data: recipientsData } = trpc.headsUps.listRecipients.useQuery(
+  const { data: recipientsData, error: recipientsError } = trpc.headsUps.listRecipients.useQuery(
     { headsUpId, filter: recipientFilter },
     { enabled: canAnalytics && tab === 'engagement' },
   );
-  const { data: commentsData } = trpc.headsUps.comments.list.useQuery(
+  const { data: commentsData, error: commentsError } = trpc.headsUps.comments.list.useQuery(
     { headsUpId },
     { enabled: tab === 'comments' },
   );
@@ -195,7 +195,11 @@ export default function HeadsUpDetailPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => archive.mutate({ headsUpId })}
+                onClick={() => {
+                  if (window.confirm(t('archiveConfirm'))) {
+                    archive.mutate({ headsUpId });
+                  }
+                }}
                 disabled={archive.isPending}
               >
                 {tCommon('archive')}
@@ -343,7 +347,11 @@ export default function HeadsUpDetailPage() {
                         size="sm"
                         variant="ghost"
                         disabled={disableShareLink.isPending}
-                        onClick={() => disableShareLink.mutate({ headsUpId })}
+                        onClick={() => {
+                          if (window.confirm(t('revokeShareConfirm'))) {
+                            disableShareLink.mutate({ headsUpId });
+                          }
+                        }}
                         className="text-destructive hover:text-destructive"
                       >
                         <Link2Off className="mr-1.5 h-3.5 w-3.5" />
@@ -384,12 +392,12 @@ export default function HeadsUpDetailPage() {
               <DetailRow label={t('fields.recipients')}>{String(recipientCount)}</DetailRow>
               {headsUp.publishAt !== null ? (
                 <DetailRow label={t('fields.publishAt')}>
-                  {new Date(headsUp.publishAt).toLocaleString()}
+                  {new Date(headsUp.publishAt).toLocaleString(locale)}
                 </DetailRow>
               ) : null}
               {headsUp.expiresAt !== null ? (
                 <DetailRow label={t('fields.expiresAt')}>
-                  {new Date(headsUp.expiresAt).toLocaleString()}
+                  {new Date(headsUp.expiresAt).toLocaleString(locale)}
                 </DetailRow>
               ) : null}
               <Separator />
@@ -492,9 +500,93 @@ export default function HeadsUpDetailPage() {
             ))}
           </div>
 
+          {recipientsError !== null || summaryError !== null ? (
+            <Card>
+              <CardContent className="p-8 text-center text-sm text-destructive">
+                {t('engagementError')}
+              </CardContent>
+            </Card>
+          ) : (
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              {/* Mobile: stacked cards */}
+              <div className="divide-y md:hidden">
+                {(recipientsData ?? []).map((r) => (
+                  <div key={r.id} className="space-y-2 p-4">
+                    <div>
+                      <p className="text-sm font-medium">{r.userName ?? '—'}</p>
+                      <p className="text-xs text-muted-foreground">{r.userEmail ?? '—'}</p>
+                    </div>
+                    <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                      <dt className="text-muted-foreground">{t('recipientColumns.viewed')}</dt>
+                      <dd>
+                        {r.viewedAt !== null ? (
+                          <span className="text-emerald-600">
+                            {new Date(r.viewedAt).toLocaleDateString(locale)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">{t('notYet')}</span>
+                        )}
+                      </dd>
+                      {engagementLevel === 'acknowledge' || engagementLevel === 'sign' ? (
+                        <>
+                          <dt className="text-muted-foreground">
+                            {t('recipientColumns.acknowledged')}
+                          </dt>
+                          <dd>
+                            {r.acknowledgedAt !== null ? (
+                              <span className="text-emerald-600">
+                                {new Date(r.acknowledgedAt).toLocaleDateString(locale)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">{t('notYet')}</span>
+                            )}
+                          </dd>
+                        </>
+                      ) : null}
+                      {engagementLevel === 'sign' ? (
+                        <>
+                          <dt className="text-muted-foreground">
+                            {t('recipientColumns.signed')}
+                          </dt>
+                          <dd>
+                            {r.signedAt !== null ? (
+                              <span className="text-emerald-600">
+                                {new Date(r.signedAt).toLocaleDateString(locale)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">{t('notYet')}</span>
+                            )}
+                          </dd>
+                        </>
+                      ) : null}
+                    </dl>
+                    {canManage && headsUp.status === 'published' ? (
+                      <div>
+                        {isPending(r) ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={sendReminder.isPending}
+                            onClick={() => sendReminder.mutate({ headsUpId, userId: r.userId })}
+                          >
+                            {t('remindButton')}
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-emerald-600">{t('doneBadge')}</span>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+                {(recipientsData ?? []).length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">{t('noRecipients')}</div>
+                ) : null}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-sm">
                   <thead className="border-b bg-muted/40">
                     <tr className="text-left">
@@ -525,7 +617,7 @@ export default function HeadsUpDetailPage() {
                         <td className="px-3 py-2">
                           {r.viewedAt !== null ? (
                             <span className="text-emerald-600">
-                              {new Date(r.viewedAt).toLocaleDateString()}
+                              {new Date(r.viewedAt).toLocaleDateString(locale)}
                             </span>
                           ) : (
                             <span className="text-muted-foreground">{t('notYet')}</span>
@@ -535,7 +627,7 @@ export default function HeadsUpDetailPage() {
                           <td className="px-3 py-2">
                             {r.acknowledgedAt !== null ? (
                               <span className="text-emerald-600">
-                                {new Date(r.acknowledgedAt).toLocaleDateString()}
+                                {new Date(r.acknowledgedAt).toLocaleDateString(locale)}
                               </span>
                             ) : (
                               <span className="text-muted-foreground">{t('notYet')}</span>
@@ -546,7 +638,7 @@ export default function HeadsUpDetailPage() {
                           <td className="px-3 py-2">
                             {r.signedAt !== null ? (
                               <span className="text-emerald-600">
-                                {new Date(r.signedAt).toLocaleDateString()}
+                                {new Date(r.signedAt).toLocaleDateString(locale)}
                               </span>
                             ) : (
                               <span className="text-muted-foreground">{t('notYet')}</span>
@@ -555,7 +647,7 @@ export default function HeadsUpDetailPage() {
                         ) : null}
                         <td className="px-3 py-2 text-muted-foreground">
                           {r.reminderLastSentAt !== null && r.reminderLastSentAt !== undefined
-                            ? new Date(r.reminderLastSentAt).toLocaleDateString()
+                            ? new Date(r.reminderLastSentAt).toLocaleDateString(locale)
                             : '—'}
                         </td>
                         {canManage && headsUp.status === 'published' ? (
@@ -589,6 +681,7 @@ export default function HeadsUpDetailPage() {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
       ) : null}
 
@@ -617,7 +710,9 @@ export default function HeadsUpDetailPage() {
             </Card>
           ) : null}
 
-          {(commentsData ?? []).length === 0 ? (
+          {commentsError !== null ? (
+            <p className="text-sm text-destructive">{t('commentsError')}</p>
+          ) : (commentsData ?? []).length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('noComments')}</p>
           ) : (
             (commentsData ?? []).map((c) => (
@@ -626,7 +721,7 @@ export default function HeadsUpDetailPage() {
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">{c.authorName ?? '—'}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(c.createdAt).toLocaleString()}
+                      {new Date(c.createdAt).toLocaleString(locale)}
                     </p>
                   </div>
                   <p className="whitespace-pre-wrap text-sm">{c.body}</p>

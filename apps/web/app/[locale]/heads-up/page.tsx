@@ -23,7 +23,7 @@ export default function HeadsUpListPage() {
 
   const [status, setStatus] = useState<StatusFilter>('all');
 
-  const { data, isLoading } = trpc.headsUps.list.useQuery({
+  const { data, isLoading, error } = trpc.headsUps.list.useQuery({
     status: status === 'all' ? undefined : status,
   });
 
@@ -65,6 +65,13 @@ export default function HeadsUpListPage() {
 
       {isLoading ? (
         <Skeleton className="h-64 w-full" />
+      ) : error ? (
+        <p
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+        >
+          {t('loadError')}
+        </p>
       ) : rows.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -80,48 +87,78 @@ export default function HeadsUpListPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/40">
-                  <tr className="text-left">
-                    <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.audience')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.engagement')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.createdBy')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.createdAt')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-3 py-2 font-medium">
-                        <Link href={`/${locale}/heads-up/${row.id}`} className="hover:underline">
-                          {row.title}
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2">
-                        <StatusBadge status={row.status} t={t} />
-                      </td>
-                      <td className="px-3 py-2">
-                        <AudienceCell audience={row.audience} t={t} />
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {t(`engagement.${row.engagementLevel}`)}
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">{row.creatorName ?? '—'}</td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {new Date(row.createdAt).toLocaleDateString()}
-                      </td>
+        <>
+          {/* Table (desktop) — hidden under md; the card list takes over there. */}
+          <Card className="hidden md:block">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/40">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
+                      <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
+                      <th className="px-3 py-2 font-medium">{t('columns.audience')}</th>
+                      <th className="px-3 py-2 font-medium">{t('columns.engagement')}</th>
+                      <th className="px-3 py-2 font-medium">{t('columns.createdBy')}</th>
+                      <th className="px-3 py-2 font-medium">{t('columns.createdAt')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
+                        <td className="px-3 py-2 font-medium">
+                          <Link href={`/${locale}/heads-up/${row.id}`} className="hover:underline">
+                            {row.title}
+                          </Link>
+                        </td>
+                        <td className="px-3 py-2">
+                          <StatusBadge status={row.status} t={t} />
+                        </td>
+                        <td className="px-3 py-2">
+                          <AudienceCell audience={row.audience} t={t} />
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {t(`engagement.${row.engagementLevel}`)}
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {row.creatorName ?? '—'}
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {new Date(row.createdAt).toLocaleDateString(locale)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card list (mobile) — stacked layout under md; the table is hidden there. */}
+          <div className="space-y-3 md:hidden">
+            {rows.map((row) => (
+              <Link key={row.id} href={`/${locale}/heads-up/${row.id}`} className="block">
+                <Card className="transition-colors hover:bg-muted/30">
+                  <CardContent className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="min-w-0 font-medium">{row.title}</p>
+                      <StatusBadge status={row.status} t={t} />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs font-medium text-foreground">
+                        {t('columns.audience')}
+                      </div>
+                      <AudienceCell audience={row.audience} t={t} />
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t('columns.createdAt')}: {new Date(row.createdAt).toLocaleDateString(locale)}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

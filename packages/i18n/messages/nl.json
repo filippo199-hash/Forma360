@@ -2156,7 +2156,8 @@
         "audience": "Doelgroep"
       },
       "audienceAll": "Iedereen",
-      "audienceIndividual": "Individuele gebruikers"
+      "audienceIndividual": "Individuele gebruikers",
+      "loadError": "Could not load heads-up messages. Please try again."
     },
     "new": {
       "pageTitle": "New Heads Up",
@@ -2219,7 +2220,8 @@
       "attachDocumentHint": "Pick from your document library — recipients can view (and sign, if required) the current version.",
       "searchDocuments": "Search documents…",
       "noDocuments": "No documents found.",
-      "versionShort": "v{n}"
+      "versionShort": "v{n}",
+      "selectAudience": "Select at least one group or site, or choose 'Everyone'."
     },
     "detail": {
       "backLink": "Back to Heads Up",
@@ -2293,7 +2295,11 @@
         "smile": "😄"
       },
       "publishToastWithCount": "Gepubliceerd voor {count} ontvangers",
-      "syncAllRecipientsButton": "Alle gebruikers synchroniseren als ontvangers"
+      "syncAllRecipientsButton": "Alle gebruikers synchroniseren als ontvangers",
+      "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
+      "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
+      "engagementError": "Could not load engagement data. Please try again.",
+      "commentsError": "Could not load comments. Please try again."
     }
   },
   "assets": {
