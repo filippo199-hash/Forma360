@@ -76,6 +76,7 @@ const MIGRATION_FILES = [
   '0049_contractor_compliance_override.sql',
   '0050_contractor_visit_overstay.sql',
   '0051_site_fk_integrity.sql',
+  '0052_reference_counters.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {

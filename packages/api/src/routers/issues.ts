@@ -67,6 +67,7 @@ import crypto from 'node:crypto';
 import { and, count, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { loadContractorScope } from '../contractor-scope';
+import { nextReferenceValue } from '../reference-counter';
 import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
 import {
   assertAssetsInTenant,
@@ -312,11 +313,7 @@ function buildCategorySnapshot(cat: IssueCategory): IssueCategorySnapshot {
  * internally named `issues`.)
  */
 async function nextReferenceNumber(db: Db, tenantId: string): Promise<string> {
-  const totalRows = await db
-    .select({ c: count() })
-    .from(issues)
-    .where(eq(issues.tenantId, tenantId));
-  const next = (totalRows[0]?.c ?? 0) + 1;
+  const next = await nextReferenceValue(db, tenantId, 'issue');
   return `OBS-${next.toString().padStart(6, '0')}`;
 }
 

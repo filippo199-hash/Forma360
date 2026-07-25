@@ -340,6 +340,30 @@ try {
           FOREIGN KEY ("site_id") REFERENCES "sites"("id") ON DELETE SET NULL;
       END IF;
     END $$;
+
+    CREATE TABLE IF NOT EXISTS "reference_counters" (
+      "tenant_id" text NOT NULL,
+      "series" text NOT NULL,
+      "value" integer NOT NULL DEFAULT 0,
+      CONSTRAINT "reference_counters_tenant_id_series_pk" PRIMARY KEY ("tenant_id","series")
+    );
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reference_counters_tenant_id_tenants_id_fk') THEN
+        ALTER TABLE "reference_counters" ADD CONSTRAINT "reference_counters_tenant_id_tenants_id_fk"
+          FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE CASCADE;
+      END IF;
+    END $$;
+    -- Seed each tenant's counter from its current max reference number so new
+    -- numbers never collide with existing ones. Idempotent (ON CONFLICT DO
+    -- NOTHING), so re-running on every deploy is a no-op once seeded.
+    INSERT INTO "reference_counters" ("tenant_id", "series", "value")
+    SELECT "tenant_id", 'issue', COALESCE(max(CAST(substring("reference_number" FROM '[0-9]+$') AS integer)), 0)
+    FROM "issues" GROUP BY "tenant_id"
+    ON CONFLICT ("tenant_id", "series") DO NOTHING;
+    INSERT INTO "reference_counters" ("tenant_id", "series", "value")
+    SELECT "tenant_id", 'action', COALESCE(max(CAST(substring("reference_number" FROM '[0-9]+$') AS integer)), 0)
+    FROM "actions" GROUP BY "tenant_id"
+    ON CONFLICT ("tenant_id", "series") DO NOTHING;
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {

@@ -18,7 +18,8 @@ import {
   type MaintenanceProgramTrigger,
 } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
-import { and, count, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
+import { nextReferenceValue } from '../reference-counter';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = any;
@@ -103,8 +104,7 @@ export const DEFAULT_MAINTENANCE_TEMPLATES: MaintenanceTemplate[] = [
 ];
 
 async function nextRef(db: Db, tenantId: string): Promise<string> {
-  const rows = await db.select({ c: count() }).from(actions).where(eq(actions.tenantId, tenantId));
-  const next = Number(rows[0]?.c ?? 0) + 1;
+  const next = await nextReferenceValue(db, tenantId, 'action');
   return `AC-${next.toString().padStart(6, '0')}`;
 }
 

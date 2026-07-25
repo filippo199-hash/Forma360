@@ -45,8 +45,22 @@ import {
   type TransitionRules,
 } from '@forma360/shared/actions-schema';
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, lt, ne, or, sql } from 'drizzle-orm';
+import {
+  and,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  ne,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { loadContractorScope } from '../contractor-scope';
+import { nextReferenceValue } from '../reference-counter';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertAssetsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
@@ -65,11 +79,7 @@ const ACTION_LIST_LIMIT = 100;
  * (display value, gaps are acceptable).
  */
 async function nextActionReferenceNumber(db: Db, tenantId: string): Promise<string> {
-  const totalRows = await db
-    .select({ c: count() })
-    .from(actions)
-    .where(eq(actions.tenantId, tenantId));
-  const next = (totalRows[0]?.c ?? 0) + 1;
+  const next = await nextReferenceValue(db, tenantId, 'action');
   return `AC-${next.toString().padStart(6, '0')}`;
 }
 
