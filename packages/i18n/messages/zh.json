@@ -1354,7 +1354,8 @@
       "submitButton": "Submit",
       "successToast": "Observation {ref} reported.",
       "errorToast": "Could not report the observation. Please try again.",
-      "assetsLabel": "资产"
+      "assetsLabel": "资产",
+      "attachmentsFailed": "Observation created, but {count} file(s) failed to upload."
     },
     "detail": {
       "backLink": "Back to observations",
@@ -1444,7 +1445,9 @@
           "attachmentAdded": "added file {filename}",
           "attachmentRemoved": "removed file {filename}",
           "edited": "edited the observation"
-        }
+        },
+        "system": "System",
+        "systemActor": "System"
       },
       "inspectionsEmpty": "Linked inspections will appear here.",
       "linkedActionsEmpty": "Linked actions will appear here.",
@@ -1489,7 +1492,14 @@
         "due": "Due",
         "noDue": "—"
       },
-      "openFullPage": "打开完整页面"
+      "openFullPage": "打开完整页面",
+      "archiveConfirmTitle": "Archive this observation?",
+      "archiveConfirmBody": "It will be hidden from the default list. You can restore it later.",
+      "comments": {
+        "addButton": "Add comment",
+        "placeholder": "Add a comment…"
+      },
+      "sourceBadge": "Observation"
     },
     "categories": {
       "title": "Manage observation categories",
@@ -1632,6 +1642,17 @@
         "counter": "{count} / 10 questions",
         "validationPromptEmpty": "Question prompt is required.",
         "validationOptionsEmpty": "Add at least one choice."
+      },
+      "archivedNo": "Not archived",
+      "archivedYes": "Archived",
+      "criticalOff": "Critical alerts off",
+      "criticalOn": "Critical alerts on",
+      "deleteConfirmTitle": "Delete category?",
+      "deleteConfirmBody": "Deleting \"{name}\" can't be undone. Observations already reported under this category keep their details, but it will no longer be available when reporting new observations.",
+      "recipients": {
+        "groups": "{count, plural, one {# group} other {# groups}}",
+        "sites": "{count, plural, one {# site} other {# sites}}",
+        "users": "{count, plural, one {# user} other {# users}}"
       }
     },
     "qrCodes": {

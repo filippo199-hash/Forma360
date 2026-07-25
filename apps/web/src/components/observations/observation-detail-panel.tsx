@@ -44,6 +44,8 @@ import { Textarea } from '../ui/textarea';
 import { cn } from '../../lib/cn';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
+import { DetailNotFound } from '../detail-not-found';
+import { ObservationCommentComposer } from './observation-comment-composer';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -88,12 +90,13 @@ export function ObservationDetailPanel({
   const [editingDescription, setEditingDescription] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [closeOpen, setCloseOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [addActionOpen, setAddActionOpen] = useState(false);
   const [attachInspectionOpen, setAttachInspectionOpen] = useState(false);
 
   const issueId = observationId;
 
-  const { data, isLoading } = trpc.issues.issues.get.useQuery({ issueId });
+  const { data, isLoading, error } = trpc.issues.issues.get.useQuery({ issueId });
   const { data: sites } = trpc.sites.list.useQuery();
   const { data: users } = trpc.users.list.useQuery({});
 
@@ -141,11 +144,22 @@ export function ObservationDetailPanel({
   const archive = trpc.issues.issues.archive.useMutation({
     onSuccess: () => {
       toast.success(t('archiveToast'));
+      setArchiveOpen(false);
       void utils.issues.issues.get.invalidate({ issueId });
       void utils.issues.issues.list.invalidate();
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
+
+  // Error check first: on error `data` is undefined, so a bare loading gate
+  // below would loop the skeleton forever once the query has settled.
+  if (error !== null && error !== undefined) {
+    return (
+      <div className="p-6">
+        <DetailNotFound error={error} />
+      </div>
+    );
+  }
 
   if (isLoading || data === undefined) {
     return (
@@ -263,7 +277,7 @@ export function ObservationDetailPanel({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => archive.mutate({ issueId })}
+                onClick={() => setArchiveOpen(true)}
                 disabled={archive.isPending}
               >
                 <Archive className="h-3.5 w-3.5" />
@@ -480,7 +494,14 @@ export function ObservationDetailPanel({
         ) : null}
 
         {tab === 'activity' ? (
-          <div className="p-6">
+          <div className="space-y-4 p-6">
+            <ObservationCommentComposer
+              observationId={issueId}
+              onAdded={() => {
+                void utils.issues.activity.list.invalidate({ issueId });
+                void utils.issues.issues.get.invalidate({ issueId });
+              }}
+            />
             <ActivityTimeline issueId={issueId} />
           </div>
         ) : null}
@@ -547,6 +568,27 @@ export function ObservationDetailPanel({
             cancelLabel={tCommon('cancel')}
             confirmLabel={t('closeButton')}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('archiveConfirmTitle')}</DialogTitle>
+            <DialogDescription>{t('archiveConfirmBody')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setArchiveOpen(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => archive.mutate({ issueId })}
+              disabled={archive.isPending}
+            >
+              {t('archiveButton')}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -624,6 +666,7 @@ function ActivityTimeline({ issueId }: { issueId: string }) {
   const t = useTranslations('issues.detail');
   const tEvents = useTranslations('issues.detail.activity.events');
   const tPriority = useTranslations('issues.priority');
+  const tStatus = useTranslations('issues.status');
   const { data } = trpc.issues.activity.list.useQuery({ issueId });
   if (data === undefined) {
     return <Skeleton className="h-64 w-full" />;
@@ -642,9 +685,9 @@ function ActivityTimeline({ issueId }: { issueId: string }) {
       <CardContent className="space-y-4 p-6">
         <ul className="space-y-3">
           {data.map((event) => {
-            const actor = event.actorName ?? 'System';
+            const actor = event.actorName ?? t('activity.systemActor');
             const initial = (actor[0] ?? '?').toUpperCase();
-            const sentence = describeActivity(event, tEvents, tPriority);
+            const sentence = describeActivity(event, tEvents, tPriority, tStatus);
             return (
               <li key={event.id} className="flex items-start gap-3">
                 <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
@@ -888,7 +931,7 @@ function LinkedActionsCard({
               >
                 {/* Reference + source badge */}
                 <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="rounded bg-muted px-1.5 py-0.5">Observation</span>
+                  <span className="rounded bg-muted px-1.5 py-0.5">{t('sourceBadge')}</span>
                   <span className="font-mono">{row.referenceNumber ?? row.id.slice(-6)}</span>
                 </div>
                 {/* Title */}
@@ -1347,16 +1390,20 @@ function describeActivity(
   event: { kind: string; payload: Record<string, unknown> },
   tEvents: (k: string, vars?: Record<string, string>) => string,
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string,
+  tStatus: (k: 'open' | 'investigation' | 'closed') => string,
 ): string {
   const payload = event.payload;
   switch (event.kind) {
     case 'created':
       return tEvents('created');
-    case 'status_changed':
+    case 'status_changed': {
+      const from = String(payload.from ?? '');
+      const to = String(payload.to ?? '');
       return tEvents('statusChanged', {
-        from: String(payload.from ?? ''),
-        to: String(payload.to ?? ''),
+        from: isStatus(from) ? tStatus(from) : from,
+        to: isStatus(to) ? tStatus(to) : to,
       });
+    }
     case 'priority_changed': {
       const to = payload.to as string | null;
       if (to === null || to === undefined) return tEvents('priorityChanged', { to: '—' });
@@ -1388,6 +1435,10 @@ function describeActivity(
 
 function isPriority(v: string): v is 'low' | 'medium' | 'high' | 'critical' {
   return v === 'low' || v === 'medium' || v === 'high' || v === 'critical';
+}
+
+function isStatus(v: string): v is 'open' | 'investigation' | 'closed' {
+  return v === 'open' || v === 'investigation' || v === 'closed';
 }
 
 function formatDate(d: Date | string | null | undefined): string {

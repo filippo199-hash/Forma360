@@ -152,11 +152,14 @@ export default function NewObservationPage() {
     if (files === null || files.length === 0) return;
     setUploading(true);
     try {
-      for (const file of Array.from(files)) {
-        const result = await uploadOne(file);
-        if (result !== null) {
-          setPendingFiles((prev) => [...prev, result]);
-        }
+      // Upload in parallel — a multi-photo report shouldn't wait for each
+      // file to finish before starting the next. `uploadOne` already
+      // surfaces its own error toast and resolves to null on failure, so
+      // we simply keep the ones that succeeded (preserving pick order).
+      const results = await Promise.all(Array.from(files).map((file) => uploadOne(file)));
+      const uploaded = results.filter((r): r is PendingFile => r !== null);
+      if (uploaded.length > 0) {
+        setPendingFiles((prev) => [...prev, ...uploaded]);
       }
     } finally {
       setUploading(false);
@@ -198,20 +201,26 @@ export default function NewObservationPage() {
     try {
       const result = await createIssue.mutateAsync(input);
       // Attach any pre-uploaded files now that we know the real issue id.
-      for (const file of pendingFiles) {
-        try {
-          await createAttachment.mutateAsync({
+      // The observation itself is already created, so we always navigate to
+      // it — but we must tell the truth about any attachment that failed
+      // rather than firing an unconditional success toast.
+      const attachResults = await Promise.allSettled(
+        pendingFiles.map((file) =>
+          createAttachment.mutateAsync({
             issueId: result.issueId,
             storageKey: file.storageKey,
             filename: file.filename,
             mimeType: file.mimeType,
             sizeBytes: file.sizeBytes,
-          });
-        } catch {
-          // Best-effort — leave the blob orphaned for cleanup.
-        }
+          }),
+        ),
+      );
+      const failedCount = attachResults.filter((r) => r.status === 'rejected').length;
+      if (failedCount > 0) {
+        toast.warning(t('attachmentsFailed', { count: failedCount }));
+      } else {
+        toast.success(t('successToast', { ref: result.referenceNumber }));
       }
-      toast.success(t('successToast', { ref: result.referenceNumber }));
       router.push(`/${locale}/observations/${result.issueId}`);
     } catch (err) {
       const message =
@@ -260,7 +269,10 @@ export default function NewObservationPage() {
             {categorySelected ? (
               <div className="space-y-5 border-t pt-5">
                 <div className="space-y-1.5">
-                  <Label htmlFor="title">{t('titleLabel')}</Label>
+                  <Label htmlFor="title">
+                    {t('titleLabel')}
+                    <span className="ml-1 text-destructive">*</span>
+                  </Label>
                   <Input
                     id="title"
                     value={title}
@@ -280,9 +292,11 @@ export default function NewObservationPage() {
                       rows={4}
                       maxLength={MAX_DESCRIPTION}
                     />
-                    <p className="text-right text-xs text-muted-foreground">
-                      {t('descriptionCounter', { count: description.length })}
-                    </p>
+                    {MAX_DESCRIPTION - description.length <= 200 ? (
+                      <p className="text-right text-xs text-muted-foreground">
+                        {t('descriptionCounter', { count: description.length })}
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
 
@@ -344,7 +358,7 @@ export default function NewObservationPage() {
                             <button
                               type="button"
                               aria-label={tAttachments('deleteAction')}
-                              className="absolute right-1 top-1 rounded-full bg-background/80 p-0.5 text-muted-foreground opacity-0 shadow transition-opacity hover:text-destructive group-hover:opacity-100"
+                              className="absolute right-1 top-1 rounded-full bg-background/90 p-1 text-muted-foreground shadow transition-colors hover:text-destructive"
                               onClick={() =>
                                 setPendingFiles((prev) =>
                                   prev.filter((x) => x.storageKey !== f.storageKey),

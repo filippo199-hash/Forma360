@@ -43,6 +43,7 @@ export function ShowQrCodeDialog({
   token,
 }: ShowQrCodeDialogProps) {
   const t = useTranslations('issues.qrCodes.showDialog');
+  const tCommon = useTranslations('common');
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [url, setUrl] = useState('');
 
@@ -82,7 +83,7 @@ export function ShowQrCodeDialog({
       await navigator.clipboard.writeText(url);
       toast.success(t('copySuccess'));
     } catch {
-      toast.error(t('copySuccess'));
+      toast.error(tCommon('error'));
     }
   }
 

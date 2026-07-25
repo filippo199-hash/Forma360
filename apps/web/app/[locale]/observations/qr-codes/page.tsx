@@ -26,6 +26,7 @@ import {
 } from '../../../../src/components/ui/dropdown-menu';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { relativeTime } from '../../../../src/lib/relative-time';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 interface QrCodeRow {
@@ -152,82 +153,82 @@ export default function QrCodesPage() {
           ) : rows.length === 0 ? (
             <EmptyState onCreate={() => setCreateSheetOpen(true)} />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/40">
-                  <tr className="text-left">
-                    <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.category')}</th>
-                    <th className="px-3 py-2 text-right font-medium">
-                      <span className="sr-only">{t('actions.menuLabel')}</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.categoryId} className="border-b last:border-0">
-                      <td className="px-3 py-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowDialog({ open: true, row })}
-                          className="flex items-center gap-2 font-medium hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                          aria-label={t('actions.show')}
-                        >
-                          <QrCodeIcon
-                            className="h-4 w-4 text-muted-foreground"
-                            aria-hidden="true"
-                          />
-                          <span>{row.categoryName}</span>
-                        </button>
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {formatRelative(row.createdAt)}
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">—</td>
-                      <td className="px-3 py-2">
-                        <span className="inline-flex items-center rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">
-                          {row.categoryName}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              aria-label={t('actions.menuLabel')}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => setShowDialog({ open: true, row })}>
-                              <QrCodeIcon className="mr-2 h-4 w-4" />
-                              {t('actions.show')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setRotateConfirm(row)}>
-                              <RotateCw className="mr-2 h-4 w-4" />
-                              {t('actions.rotate')}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onSelect={() => setRevokeConfirm(row)}
-                            >
-                              <ShieldOff className="mr-2 h-4 w-4" />
-                              {t('actions.revoke')}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
+            <>
+              {/* Desktop table */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/40">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
+                      <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
+                      <th className="px-3 py-2 text-right font-medium">
+                        <span className="sr-only">{t('actions.menuLabel')}</span>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.categoryId} className="border-b last:border-0">
+                        <td className="px-3 py-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowDialog({ open: true, row })}
+                            className="flex items-center gap-2 font-medium hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                            aria-label={t('actions.show')}
+                          >
+                            <QrCodeIcon
+                              className="h-4 w-4 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                            <span>{row.categoryName}</span>
+                          </button>
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {relativeTime(row.createdAt, locale)}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <RowActionsMenu
+                            onShow={() => setShowDialog({ open: true, row })}
+                            onRotate={() => setRotateConfirm(row)}
+                            onRevoke={() => setRevokeConfirm(row)}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile stacked cards */}
+              <ul className="divide-y md:hidden">
+                {rows.map((row) => (
+                  <li key={row.categoryId} className="flex items-start justify-between gap-3 p-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowDialog({ open: true, row })}
+                      className="flex min-w-0 flex-1 items-start gap-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                      aria-label={t('actions.show')}
+                    >
+                      <QrCodeIcon
+                        className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{row.categoryName}</span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          {relativeTime(row.createdAt, locale)}
+                        </span>
+                      </span>
+                    </button>
+                    <RowActionsMenu
+                      onShow={() => setShowDialog({ open: true, row })}
+                      onRotate={() => setRotateConfirm(row)}
+                      onRevoke={() => setRevokeConfirm(row)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </CardContent>
       </Card>
@@ -346,14 +347,43 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
   );
 }
 
-function formatRelative(d: Date | string): string {
-  const ms = Date.now() - new Date(d).getTime();
-  const s = Math.floor(ms / 1000);
-  if (s < 60) return `${s}s ago`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const days = Math.floor(h / 24);
-  return `${days}d ago`;
+function RowActionsMenu({
+  onShow,
+  onRotate,
+  onRevoke,
+}: {
+  onShow: () => void;
+  onRotate: () => void;
+  onRevoke: () => void;
+}) {
+  const t = useTranslations('issues.qrCodes');
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          aria-label={t('actions.menuLabel')}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={onShow}>
+          <QrCodeIcon className="mr-2 h-4 w-4" />
+          {t('actions.show')}
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={onRotate}>
+          <RotateCw className="mr-2 h-4 w-4" />
+          {t('actions.rotate')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-destructive" onSelect={onRevoke}>
+          <ShieldOff className="mr-2 h-4 w-4" />
+          {t('actions.revoke')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }

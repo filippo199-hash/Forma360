@@ -58,6 +58,10 @@ export default function CategoriesPage() {
   });
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
+  const notificationRuleLabel = (rule: string): string =>
+    t(`notificationRule.${rule === 'private' || rule === 'detailed' ? rule : 'summary'}`);
 
   const archive = trpc.issues.categories.archive.useMutation({
     onSuccess: () => {
@@ -78,10 +82,61 @@ export default function CategoriesPage() {
   const remove = trpc.issues.categories.delete.useMutation({
     onSuccess: () => {
       toast.success(t('deleteToast'));
+      setDeleteTarget(null);
       void utils.issues.categories.list.invalidate();
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
+
+  const list = categories ?? [];
+
+  function actionsFor(c: (typeof list)[number]) {
+    return (
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push(`/${locale}/observations/categories/${c.id}`)}
+        >
+          {tCommon('edit')}
+        </Button>
+        {c.archivedAt === null ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => archive.mutate({ categoryId: c.id })}
+            disabled={archive.isPending}
+          >
+            {tCommon('archive')}
+          </Button>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => restore.mutate({ categoryId: c.id })}
+              disabled={restore.isPending}
+            >
+              {t('restoreButton')}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-destructive"
+              onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
+              disabled={remove.isPending}
+            >
+              {tCommon('delete')}
+            </Button>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-[1200px] space-y-6">
@@ -106,7 +161,8 @@ export default function CategoriesPage() {
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop / tablet table */}
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
@@ -126,80 +182,114 @@ export default function CategoriesPage() {
                       <Skeleton className="h-4 w-full" />
                     </td>
                   </tr>
-                ) : (categories ?? []).length === 0 ? (
+                ) : list.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-muted-foreground">
                       {t('empty')}
                     </td>
                   </tr>
                 ) : (
-                  (categories ?? []).map((c) => (
+                  list.map((c) => (
                     <tr key={c.id} className="border-b last:border-0">
                       <td className="px-3 py-2 font-medium">{c.name}</td>
                       <td className="px-3 py-2 text-muted-foreground">{c.description ?? '—'}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{c.notificationRule}</td>
                       <td className="px-3 py-2 text-muted-foreground">
-                        {c.criticalAlerts ? '✓' : '—'}
+                        {notificationRuleLabel(c.notificationRule)}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
-                        {c.archivedAt !== null ? '✓' : '—'}
+                        <span
+                          aria-label={c.criticalAlerts ? t('criticalOn') : t('criticalOff')}
+                          title={c.criticalAlerts ? t('criticalOn') : t('criticalOff')}
+                        >
+                          {c.criticalAlerts ? '✓' : '—'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        <span
+                          aria-label={c.archivedAt !== null ? t('archivedYes') : t('archivedNo')}
+                          title={c.archivedAt !== null ? t('archivedYes') : t('archivedNo')}
+                        >
+                          {c.archivedAt !== null ? '✓' : '—'}
+                        </span>
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">{formatDate(c.createdAt)}</td>
-                      <td className="px-3 py-2 text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              router.push(`/${locale}/observations/categories/${c.id}`)
-                            }
-                          >
-                            {tCommon('edit')}
-                          </Button>
-                          {c.archivedAt === null ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => archive.mutate({ categoryId: c.id })}
-                              disabled={archive.isPending}
-                            >
-                              {tCommon('archive')}
-                            </Button>
-                          ) : (
-                            <>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => restore.mutate({ categoryId: c.id })}
-                                disabled={restore.isPending}
-                              >
-                                {t('restoreButton')}
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive"
-                                onClick={() => remove.mutate({ categoryId: c.id })}
-                                disabled={remove.isPending}
-                              >
-                                {tCommon('delete')}
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+                      <td className="px-3 py-2 text-right">{actionsFor(c)}</td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
+
+          {/* Mobile stacked cards */}
+          <div className="divide-y md:hidden">
+            {isLoading ? (
+              <div className="p-4">
+                <Skeleton className="h-24 w-full" />
+              </div>
+            ) : list.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">{t('empty')}</div>
+            ) : (
+              list.map((c) => (
+                <div key={c.id} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">{c.name}</div>
+                      {c.description !== null && c.description.length > 0 ? (
+                        <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+                          {c.description}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <dt className="text-muted-foreground">{t('columns.notifications')}:</dt>
+                      <dd>{notificationRuleLabel(c.notificationRule)}</dd>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <dt className="text-muted-foreground">{t('columns.criticalAlerts')}:</dt>
+                      <dd>{c.criticalAlerts ? t('criticalOn') : t('criticalOff')}</dd>
+                    </div>
+                    {c.archivedAt !== null ? (
+                      <div className="flex items-center gap-1.5">
+                        <dd className="font-medium text-muted-foreground">{t('archivedYes')}</dd>
+                      </div>
+                    ) : null}
+                  </dl>
+                  {actionsFor(c)}
+                </div>
+              ))
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      {deleteTarget !== null ? (
+        <Dialog open onOpenChange={(v) => !v && setDeleteTarget(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('deleteConfirmTitle')}</DialogTitle>
+              <DialogDescription>
+                {t('deleteConfirmBody', { name: deleteTarget.name })}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setDeleteTarget(null)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button
+                type="button"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => remove.mutate({ categoryId: deleteTarget.id })}
+                disabled={remove.isPending}
+              >
+                {tCommon('delete')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
 
       {createOpen ? (
         <CreateCategoryDialog open={createOpen} onOpenChange={setCreateOpen} locale={locale} />

@@ -487,13 +487,13 @@ function NotificationsCard({
     ? tDetail('notificationsCard.recipientsAll')
     : [
         effectiveSpec.groupIds.length > 0
-          ? `${effectiveSpec.groupIds.length} group${effectiveSpec.groupIds.length !== 1 ? 's' : ''}`
+          ? t('recipients.groups', { count: effectiveSpec.groupIds.length })
           : null,
         effectiveSpec.siteIds.length > 0
-          ? `${effectiveSpec.siteIds.length} site${effectiveSpec.siteIds.length !== 1 ? 's' : ''}`
+          ? t('recipients.sites', { count: effectiveSpec.siteIds.length })
           : null,
         effectiveSpec.userIds.length > 0
-          ? `${effectiveSpec.userIds.length} user${effectiveSpec.userIds.length !== 1 ? 's' : ''}`
+          ? t('recipients.users', { count: effectiveSpec.userIds.length })
           : null,
       ]
         .filter(Boolean)
@@ -639,13 +639,13 @@ function CriticalAlertsCard({
     ? tDetail('notificationsCard.recipientsAll')
     : [
         effectiveSpec.groupIds.length > 0
-          ? `${effectiveSpec.groupIds.length} group${effectiveSpec.groupIds.length !== 1 ? 's' : ''}`
+          ? t('recipients.groups', { count: effectiveSpec.groupIds.length })
           : null,
         effectiveSpec.siteIds.length > 0
-          ? `${effectiveSpec.siteIds.length} site${effectiveSpec.siteIds.length !== 1 ? 's' : ''}`
+          ? t('recipients.sites', { count: effectiveSpec.siteIds.length })
           : null,
         effectiveSpec.userIds.length > 0
-          ? `${effectiveSpec.userIds.length} user${effectiveSpec.userIds.length !== 1 ? 's' : ''}`
+          ? t('recipients.users', { count: effectiveSpec.userIds.length })
           : null,
       ]
         .filter(Boolean)

@@ -41,6 +41,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { ObservationCommentComposer } from '../../../../src/components/observations/observation-comment-composer';
 import { EntityPlanMiniMap } from '../../../../src/components/sites/entity-plan-minimap';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
@@ -104,6 +105,7 @@ export default function ObservationDetailPage() {
   const [editingDescription, setEditingDescription] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [closeOpen, setCloseOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [addInspectionOpen, setAddInspectionOpen] = useState(false);
   const [addActionOpen, setAddActionOpen] = useState(false);
 
@@ -301,7 +303,7 @@ export default function ObservationDetailPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    onSelect={() => archive.mutate({ issueId })}
+                    onSelect={() => setArchiveOpen(true)}
                     disabled={archive.isPending}
                   >
                     <Archive className="mr-2 h-4 w-4" />
@@ -472,7 +474,7 @@ export default function ObservationDetailPage() {
                               onChange={(e) => updateDueAt(e.target.value)}
                             />
                           ) : issue.dueAt !== null && issue.dueAt !== undefined ? (
-                            <span>{formatDate(issue.dueAt)}</span>
+                            <span>{formatDate(issue.dueAt, locale)}</span>
                           ) : (
                             <span className="text-muted-foreground">{t('fields.noDueDate')}</span>
                           )}
@@ -485,7 +487,7 @@ export default function ObservationDetailPage() {
                               onChange={(e) => updateDateOccurred(e.target.value)}
                             />
                           ) : (
-                            <span>{formatDate(issue.dateOccurred)}</span>
+                            <span>{formatDate(issue.dateOccurred, locale)}</span>
                           )}
                         </Field>
                         <Field label={t('fields.reference')}>
@@ -521,7 +523,9 @@ export default function ObservationDetailPage() {
                       <p className="text-muted-foreground">
                         {issue.reportedByName ?? t('reportedAnonymous')}
                       </p>
-                      <p className="text-xs text-muted-foreground">{formatDate(issue.createdAt)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(issue.createdAt, locale)}
+                      </p>
                     </section>
                   </CardContent>
                 </Card>
@@ -557,7 +561,22 @@ export default function ObservationDetailPage() {
             </div>
           ) : null}
 
-          {tab === 'activity' ? <ActivityTimeline issueId={issueId} /> : null}
+          {tab === 'activity' ? (
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="p-6">
+                  <ObservationCommentComposer
+                    observationId={issueId}
+                    onAdded={() => {
+                      void utils.issues.activity.list.invalidate({ issueId });
+                      void utils.issues.issues.get.invalidate({ issueId });
+                    }}
+                  />
+                </CardContent>
+              </Card>
+              <ActivityTimeline issueId={issueId} locale={locale} />
+            </div>
+          ) : null}
 
           {tab === 'files' ? (
             <AttachmentsCard issueId={issueId} canManage={canManage} compact={false} />
@@ -606,6 +625,28 @@ export default function ObservationDetailPage() {
             cancelLabel={tCommon('cancel')}
             confirmLabel={t('closeButton')}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('archiveConfirmTitle')}</DialogTitle>
+            <DialogDescription>{t('archiveConfirmBody')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setArchiveOpen(false)}>
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={archive.isPending}
+              onClick={() => archive.mutate({ issueId })}
+            >
+              {t('archiveButton')}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -821,11 +862,16 @@ function AssigneePicker({
   );
 }
 
-function ActivityTimeline({ issueId }: { issueId: string }) {
+function ActivityTimeline({ issueId, locale }: { issueId: string; locale: string }) {
   const t = useTranslations('issues.detail');
   const tEvents = useTranslations('issues.detail.activity.events');
+  const tActivity = useTranslations('issues.detail.activity');
   const tPriority = useTranslations('issues.priority');
+  const tStatus = useTranslations('issues.status');
   const { data } = trpc.issues.activity.list.useQuery({ issueId });
+  const { data: usersData } = trpc.users.list.useQuery({});
+  const resolveUser = (id: string): string =>
+    (usersData?.users ?? []).find((u) => u.id === id)?.name ?? id;
   if (data === undefined) {
     return <Skeleton className="h-64 w-full" />;
   }
@@ -843,9 +889,9 @@ function ActivityTimeline({ issueId }: { issueId: string }) {
       <CardContent className="space-y-4 p-6">
         <ul className="space-y-3">
           {data.map((event) => {
-            const actor = event.actorName ?? 'System';
+            const actor = event.actorName ?? tActivity('system');
             const initial = (actor[0] ?? '?').toUpperCase();
-            const sentence = describeActivity(event, tEvents, tPriority);
+            const sentence = describeActivity(event, tEvents, tPriority, tStatus, resolveUser, locale);
             return (
               <li key={event.id} className="flex items-start gap-3">
                 <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
@@ -861,7 +907,9 @@ function ActivityTimeline({ issueId }: { issueId: string }) {
                       {String((event.payload as Record<string, unknown>).body ?? '')}
                     </p>
                   ) : null}
-                  <p className="text-xs text-muted-foreground">{formatDate(event.createdAt)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(event.createdAt, locale)}
+                  </p>
                 </div>
               </li>
             );
@@ -879,15 +927,20 @@ function describeActivity(
   },
   tEvents: (k: string, vars?: Record<string, string>) => string,
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string,
+  tStatus: (k: 'open' | 'investigation' | 'closed') => string,
+  resolveUser: (id: string) => string,
+  locale: string,
 ): string {
   const payload = event.payload;
+  const localiseStatus = (v: string): string =>
+    v === 'open' || v === 'investigation' || v === 'closed' ? tStatus(v) : v;
   switch (event.kind) {
     case 'created':
       return tEvents('created');
     case 'status_changed':
       return tEvents('statusChanged', {
-        from: String(payload.from ?? ''),
-        to: String(payload.to ?? ''),
+        from: localiseStatus(String(payload.from ?? '')),
+        to: localiseStatus(String(payload.to ?? '')),
       });
     case 'priority_changed': {
       const to = payload.to as string | null;
@@ -898,12 +951,12 @@ function describeActivity(
     case 'assignee_changed': {
       const to = payload.to as string | null;
       if (to === null || to === undefined || to === '') return tEvents('assigneeCleared');
-      return tEvents('assigneeChanged', { to });
+      return tEvents('assigneeChanged', { to: resolveUser(to) });
     }
     case 'due_date_changed': {
       const to = payload.to as string | null;
       if (to === null || to === undefined) return tEvents('dueDateCleared');
-      return tEvents('dueDateChanged', { to: new Date(to).toLocaleString() });
+      return tEvents('dueDateChanged', { to: new Date(to).toLocaleString(locale) });
     }
     case 'commented':
       return tEvents('commented');
@@ -1142,11 +1195,11 @@ function CloseForm({
   );
 }
 
-function formatDate(d: Date | string | null | undefined): string {
+function formatDate(d: Date | string | null | undefined, locale: string): string {
   if (d === null || d === undefined) return '—';
   const dt = new Date(d);
   if (Number.isNaN(dt.getTime())) return '—';
-  return dt.toLocaleString();
+  return dt.toLocaleString(locale);
 }
 
 function formatValue(v: unknown): string {
@@ -1478,7 +1531,9 @@ function LinkedActionsCard({
                           : tCols('noDue')}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
-                        {row.dueAt !== null ? new Date(row.dueAt).toLocaleString() : tCols('noDue')}
+                        {row.dueAt !== null
+                          ? new Date(row.dueAt).toLocaleString(locale)
+                          : tCols('noDue')}
                       </td>
                     </tr>
                   );

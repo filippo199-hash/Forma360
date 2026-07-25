@@ -4,7 +4,7 @@ import type { IssueStatusValue } from '@forma360/shared/issues-schema';
 import { Tags } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ObservationDetailPanel } from '../../../src/components/observations/observation-detail-panel';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
@@ -14,10 +14,54 @@ import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
+import { relativeTime } from '../../../src/lib/relative-time';
 import { trpc } from '../../../src/lib/trpc/client';
 
 type StatusFilter = 'all' | IssueStatusValue;
 const STATUSES: readonly StatusFilter[] = ['all', 'open', 'investigation', 'closed'];
+
+interface ObservationRowView {
+  id: string;
+  reference: string;
+  title: string;
+  categoryName: string;
+  siteName: string;
+  status: string;
+  createdLabel: string;
+  detailUrl: string;
+}
+
+/**
+ * Per-row derived view-model shared by the desktop table and the mobile card
+ * list so the "where does the row link / how is created rendered" logic lives
+ * in one place (mirrors the inspections list's `deriveRowView`).
+ */
+function deriveObservationRow(
+  row: {
+    id: string;
+    referenceNumber: string;
+    title: string;
+    categorySnapshot: { name: string };
+    siteId: string | null;
+    status: string;
+    createdAt: Date | string;
+  },
+  sites: ReadonlyArray<{ id: string; name: string }> | undefined,
+  locale: string,
+): ObservationRowView {
+  const siteName =
+    row.siteId !== null ? ((sites ?? []).find((s) => s.id === row.siteId)?.name ?? '—') : '—';
+  return {
+    id: row.id,
+    reference: row.referenceNumber,
+    title: row.title,
+    categoryName: row.categorySnapshot.name,
+    siteName,
+    status: row.status,
+    createdLabel: relativeTime(row.createdAt, locale),
+    detailUrl: `/${locale}/observations/${row.id}`,
+  };
+}
 
 /**
  * Observations list. Filterable by status / category / site / archived.
@@ -32,19 +76,18 @@ export default function ObservationsListPage() {
   const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
+  const router = useRouter();
 
   const canReport = useHasPermission('issues.report');
   const canManageSettings = useHasPermission('issues.settings');
 
+  // The detail Sheet stays for `?observation=` deep links (site media gallery,
+  // plans viewer, and overview all link in that way). Row clicks now navigate
+  // to the full detail page — one predictable primary target per row.
   const [selectedObservationId, setSelectedObservationId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
     return new URLSearchParams(window.location.search).get('observation');
   });
-
-  function handleSelectObservation(id: string) {
-    setSelectedObservationId(id);
-    window.history.pushState(null, '', `/${locale}/observations?observation=${id}`);
-  }
 
   function handleClosePanel() {
     setSelectedObservationId(null);
@@ -194,7 +237,8 @@ export default function ObservationsListPage() {
         </label>
       </div>
 
-      <Card>
+      {/* Table (desktop) — the mobile card list below takes over under md. */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -203,7 +247,7 @@ export default function ObservationsListPage() {
                   <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.category')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
+                  <th className="px-3 py-2 font-medium">{placeLabel}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
                 </tr>
@@ -230,52 +274,103 @@ export default function ObservationsListPage() {
                     </td>
                   </tr>
                 ) : (
-                  (data?.items ?? []).map((row) => (
-                    <tr
-                      key={row.id}
-                      className="border-b last:border-0 hover:bg-muted/30"
-                      onClick={() => handleSelectObservation(row.id)}
-                    >
-                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
-                        <Link
-                          href={`/${locale}/observations/${row.id}`}
-                          className="hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {row.referenceNumber}
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2">
-                        <Link
-                          href={`/${locale}/observations/${row.id}`}
-                          className="font-medium hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {row.title}
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {row.categorySnapshot.name}
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {row.siteId !== null
-                          ? ((sites ?? []).find((s) => s.id === row.siteId)?.name ?? '—')
-                          : '—'}
-                      </td>
-                      <td className="px-3 py-2">
-                        <ObservationStatusBadge status={row.status} />
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {formatRelative(row.createdAt)}
-                      </td>
-                    </tr>
-                  ))
+                  (data?.items ?? []).map((row) => {
+                    const view = deriveObservationRow(row, sites, locale);
+                    return (
+                      <tr
+                        key={view.id}
+                        className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
+                        onClick={() => router.push(view.detailUrl)}
+                      >
+                        <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                          <Link
+                            href={view.detailUrl}
+                            className="hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {view.reference}
+                          </Link>
+                        </td>
+                        <td className="px-3 py-2">
+                          <Link
+                            href={view.detailUrl}
+                            className="font-medium hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {view.title}
+                          </Link>
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">{view.categoryName}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{view.siteName}</td>
+                        <td className="px-3 py-2">
+                          <ObservationStatusBadge status={view.status} />
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">{view.createdLabel}</td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
+
+      {/* Card list (mobile) — stacked layout under md; the table is hidden there. */}
+      <div className="space-y-3 md:hidden">
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-4">
+              <Skeleton className="h-24 w-full" />
+            </CardContent>
+          </Card>
+        ) : (data?.items ?? []).length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              <div>{t('empty')}</div>
+              {canReport ? (
+                <Link
+                  href={`/${locale}/observations/new`}
+                  className="mt-2 inline-block text-primary hover:underline"
+                >
+                  {t('emptyCta')}
+                </Link>
+              ) : null}
+            </CardContent>
+          </Card>
+        ) : (
+          (data?.items ?? []).map((row) => {
+            const view = deriveObservationRow(row, sites, locale);
+            return (
+              <Link key={view.id} href={view.detailUrl} className="block">
+                <Card className="transition-colors hover:bg-muted/30">
+                  <CardContent className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="min-w-0 font-medium">{view.title}</p>
+                      <ObservationStatusBadge status={view.status} />
+                    </div>
+                    <p className="font-mono text-xs text-muted-foreground">{view.reference}</p>
+                    <dl className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <div>
+                        <dt className="font-medium text-foreground">{t('columns.category')}</dt>
+                        <dd className="truncate">{view.categoryName}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-foreground">{placeLabel}</dt>
+                        <dd className="truncate">{view.siteName}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-foreground">{t('columns.created')}</dt>
+                        <dd>{view.createdLabel}</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })
+        )}
+      </div>
 
       <div className="flex items-center justify-between">
         <Button
@@ -344,16 +439,4 @@ function ObservationStatusBadge({ status }: { status: string }) {
       {t(normalised)}
     </span>
   );
-}
-
-function formatRelative(d: Date | string): string {
-  const ms = Date.now() - new Date(d).getTime();
-  const s = Math.floor(ms / 1000);
-  if (s < 60) return `${s}s ago`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const days = Math.floor(h / 24);
-  return `${days}d ago`;
 }
