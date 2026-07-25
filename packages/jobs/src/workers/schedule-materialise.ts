@@ -106,13 +106,23 @@ export function createScheduleMaterialiseHandler(deps: ScheduleMaterialiseDeps) 
     // occurrence — and the reminder fired from it — lands at the true instant
     // the user set (To-Do #1). A 09:00 Europe/London recurrence fires at
     // 08:00Z in summer, not 09:00Z.
+    // occurrencesBetween walks the rrule in FLOATING wall-clock time (UTC
+    // fields = the intended local time); floatingToZonedUtc then maps each to
+    // its true instant. The [now, windowEnd) filter must run in the TRUE
+    // frame, not the floating one — otherwise a non-UTC schedule mis-frames
+    // occurrences near `now` (west-of-UTC drops a near-future one; east-of-UTC
+    // keeps a near-past one). So walk a padded window (±14h covers any tz
+    // offset + DST), convert, then keep only true instants inside the window.
+    const TZ_PAD_MS = 14 * 60 * 60 * 1000;
     const fireTimes = occurrencesBetween({
       rrule: sched.rrule,
       startAt: sched.startAt,
-      from: now,
-      until: windowEnd,
+      from: new Date(now.getTime() - TZ_PAD_MS),
+      until: new Date(windowEnd.getTime() + TZ_PAD_MS),
       endAt: sched.endAt,
-    }).map((d) => floatingToZonedUtc(d, sched.timezone));
+    })
+      .map((d) => floatingToZonedUtc(d, sched.timezone))
+      .filter((t) => t.getTime() >= now.getTime() && t.getTime() < windowEnd.getTime());
     if (fireTimes.length === 0) {
       await deps.db
         .update(templateSchedules)
@@ -175,14 +185,27 @@ export function createScheduleMaterialiseHandler(deps: ScheduleMaterialiseDeps) 
         if (sched.reminderMinutesBefore !== null) {
           const reminderAt = new Date(fireTime.getTime() - sched.reminderMinutesBefore * 60 * 1000);
           if (reminderAt > now && reminderAt <= windowEnd) {
-            await enqueue(
-              QUEUE_NAMES.SCHEDULE_REMINDER,
-              { tenantId, occurrenceId: newRow.id },
-              {
-                connection: deps.connection,
-                jobOptions: { delay: reminderAt.getTime() - now.getTime() },
-              },
-            );
+            try {
+              await enqueue(
+                QUEUE_NAMES.SCHEDULE_REMINDER,
+                { tenantId, occurrenceId: newRow.id },
+                {
+                  connection: deps.connection,
+                  jobOptions: { delay: reminderAt.getTime() - now.getTime() },
+                },
+              );
+            } catch (err) {
+              // The occurrence row committed but enqueuing its reminder failed
+              // (e.g. a transient Redis outage). Roll the occurrence back so the
+              // next tick re-inserts AND re-enqueues it — otherwise the row
+              // persists, the retry's insert conflicts (ON CONFLICT DO NOTHING),
+              // and the reminder is lost forever.
+              await deps.db
+                .delete(scheduledInspectionOccurrences)
+                .where(eq(scheduledInspectionOccurrences.id, newRow.id));
+              created -= 1;
+              throw err;
+            }
           }
         }
       }
