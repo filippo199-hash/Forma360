@@ -23,6 +23,14 @@ const updateSettingsInput = z.object({
   terminology: z.enum(['sites', 'projects', 'both']),
 });
 
+const updateBrandingInput = z.object({
+  logoStorageKey: z.string().max(500).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
+});
+
 export const tenantsRouter = router({
   /**
    * Return the caller's current tenant plus a small set of derived fields
@@ -113,6 +121,43 @@ export const tenantsRouter = router({
         { tenantId: ctx.tenantId, terminology: input.terminology },
         '[tenants] settings updated',
       );
+      return { settings: next };
+    }),
+
+  /**
+   * Admin-only patch on the tenant `branding` block inside `settings`. When
+   * the input carries any key we set `branding` to the patch; when it is
+   * empty we clear branding entirely (set to `undefined`). Other settings
+   * keys (terminology, siteLabels) are preserved by the read-merge-write.
+   */
+  updateBranding: tenantProcedure
+    .use(requirePermission('org.settings'))
+    .input(updateBrandingInput)
+    .mutation(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({ settings: tenants.settings })
+        .from(tenants)
+        .where(eq(tenants.id, ctx.tenantId))
+        .limit(1);
+      const current = rows[0]?.settings;
+      if (current === undefined) {
+        throw new TRPCError({ code: 'NOT_FOUND' });
+      }
+      const next: TenantSettings = { ...current };
+      if (input.logoStorageKey !== undefined || input.primaryColor !== undefined) {
+        next.branding = {
+          ...(input.logoStorageKey !== undefined ? { logoStorageKey: input.logoStorageKey } : {}),
+          ...(input.primaryColor !== undefined ? { primaryColor: input.primaryColor } : {}),
+        };
+      } else {
+        // No keys present → clear branding entirely.
+        delete next.branding;
+      }
+      await ctx.db
+        .update(tenants)
+        .set({ settings: next, updatedAt: new Date() })
+        .where(eq(tenants.id, ctx.tenantId));
+      ctx.logger.info({ tenantId: ctx.tenantId }, '[tenants] branding updated');
       return { settings: next };
     }),
 });

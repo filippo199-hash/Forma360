@@ -30,6 +30,12 @@ export type SiteTerminology = 'sites' | 'projects' | 'both';
 export interface TenantSettings {
   siteLabels?: readonly string[];
   terminology?: SiteTerminology;
+  /**
+   * Optional tenant branding. `logoStorageKey` is an R2 object key (rendered
+   * via a signed URL at read time); `primaryColor` is a `#rrggbb` hex string.
+   * Absent until an admin sets it via `tenants.updateBranding`.
+   */
+  branding?: { logoStorageKey?: string; primaryColor?: string };
   [key: string]: unknown;
 }
 

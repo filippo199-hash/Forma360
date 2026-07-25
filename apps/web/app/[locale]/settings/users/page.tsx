@@ -1,14 +1,17 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { AnonymiseUserDialog } from '../../../../src/components/settings/anonymise-user-dialog';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -30,6 +33,8 @@ export default function UsersPage() {
   const tInvitations = useTranslations('settings.users.invitations');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
+  const canAnonymise = useHasPermission('users.anonymise');
+  const meQuery = trpc.health.me.useQuery();
   const {
     data,
     isLoading,
@@ -70,8 +75,21 @@ export default function UsersPage() {
     onSuccess: () => utils.users.list.invalidate(),
     onError: (e) => toast.error(e.message || tCommon('error')),
   });
+  const anonymise = trpc.users.anonymise.useMutation({
+    onSuccess: (_result, vars) => {
+      void utils.users.list.invalidate();
+      void utils.users.listInvitations.invalidate();
+      const target = userById.get(vars.userId);
+      toast.success(t('anonymise.successToast', { name: target?.name ?? '' }));
+      setAnonTarget(null);
+    },
+    onError: (e) => toast.error(e.message || tCommon('error')),
+  });
 
   const [showInvite, setShowInvite] = useState(false);
+  const [anonTarget, setAnonTarget] = useState<{ id: string; name: string; email: string } | null>(
+    null,
+  );
 
   async function exportCsv() {
     const result = await utils.users.listExport.fetch();
@@ -140,38 +158,61 @@ export default function UsersPage() {
             <>
               {/* Mobile: stacked cards */}
               <ul className="divide-y md:hidden">
-                {users.map((u) => (
-                  <li key={u.id} className="space-y-1 px-3 py-3">
-                    <div className="font-medium">{u.name}</div>
-                    <div className="font-mono text-xs text-muted-foreground">{u.email}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {u.deactivatedAt !== null ? t('status.deactivated') : t('status.active')}
-                    </div>
-                    <div className="pt-1">
-                      {u.deactivatedAt === null ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deactivate.mutate({ userId: u.id })}
-                          disabled={deactivate.isPending}
-                          aria-label={t('row.deactivate')}
-                        >
-                          {t('row.deactivate')}
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => reactivate.mutate({ userId: u.id })}
-                          disabled={reactivate.isPending}
-                          aria-label={t('row.reactivate')}
-                        >
-                          {t('row.reactivate')}
-                        </Button>
-                      )}
-                    </div>
-                  </li>
-                ))}
+                {users.map((u) => {
+                  const isSelf = u.id === meQuery.data?.userId;
+                  const isTombstoned = u.email.endsWith('@anonymised.local');
+                  return (
+                    <li key={u.id} className="space-y-1 px-3 py-3">
+                      <Link
+                        href={`/${locale}/settings/users/${u.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {u.name}
+                      </Link>
+                      <div className="font-mono text-xs text-muted-foreground">{u.email}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {u.deactivatedAt !== null ? t('status.deactivated') : t('status.active')}
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {u.deactivatedAt === null ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deactivate.mutate({ userId: u.id })}
+                            disabled={deactivate.isPending}
+                            aria-label={t('row.deactivate')}
+                          >
+                            {t('row.deactivate')}
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => reactivate.mutate({ userId: u.id })}
+                            disabled={reactivate.isPending}
+                            aria-label={t('row.reactivate')}
+                          >
+                            {t('row.reactivate')}
+                          </Button>
+                        )}
+                        {canAnonymise ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setAnonTarget({ id: u.id, name: u.name, email: u.email })
+                            }
+                            disabled={isSelf || isTombstoned || anonymise.isPending}
+                            className="text-destructive hover:text-destructive"
+                            aria-label={t('row.anonymise')}
+                          >
+                            {t('row.anonymise')}
+                          </Button>
+                        ) : null}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
 
               {/* Desktop: table */}
@@ -186,38 +227,65 @@ export default function UsersPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((u) => (
-                      <tr key={u.id} className="border-b last:border-0">
-                        <td className="px-3 py-2">{u.name}</td>
-                        <td className="px-3 py-2 font-mono text-xs">{u.email}</td>
-                        <td className="px-3 py-2">
-                          {u.deactivatedAt !== null ? t('status.deactivated') : t('status.active')}
-                        </td>
-                        <td className="space-x-1 px-3 py-2 text-right">
-                          {u.deactivatedAt === null ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deactivate.mutate({ userId: u.id })}
-                              disabled={deactivate.isPending}
-                              aria-label={t('row.deactivate')}
+                    {users.map((u) => {
+                      const isSelf = u.id === meQuery.data?.userId;
+                      const isTombstoned = u.email.endsWith('@anonymised.local');
+                      return (
+                        <tr key={u.id} className="border-b last:border-0">
+                          <td className="px-3 py-2">
+                            <Link
+                              href={`/${locale}/settings/users/${u.id}`}
+                              className="hover:underline"
                             >
-                              {t('row.deactivate')}
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => reactivate.mutate({ userId: u.id })}
-                              disabled={reactivate.isPending}
-                              aria-label={t('row.reactivate')}
-                            >
-                              {t('row.reactivate')}
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                              {u.name}
+                            </Link>
+                          </td>
+                          <td className="px-3 py-2 font-mono text-xs">{u.email}</td>
+                          <td className="px-3 py-2">
+                            {u.deactivatedAt !== null
+                              ? t('status.deactivated')
+                              : t('status.active')}
+                          </td>
+                          <td className="space-x-1 px-3 py-2 text-right">
+                            {u.deactivatedAt === null ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deactivate.mutate({ userId: u.id })}
+                                disabled={deactivate.isPending}
+                                aria-label={t('row.deactivate')}
+                              >
+                                {t('row.deactivate')}
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => reactivate.mutate({ userId: u.id })}
+                                disabled={reactivate.isPending}
+                                aria-label={t('row.reactivate')}
+                              >
+                                {t('row.reactivate')}
+                              </Button>
+                            )}
+                            {canAnonymise ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setAnonTarget({ id: u.id, name: u.name, email: u.email })
+                                }
+                                disabled={isSelf || isTombstoned || anonymise.isPending}
+                                className="text-destructive hover:text-destructive"
+                                aria-label={t('row.anonymise')}
+                              >
+                                {t('row.anonymise')}
+                              </Button>
+                            ) : null}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -327,6 +395,21 @@ export default function UsersPage() {
           {tCommon('error')}
         </p>
       ) : null}
+
+      <AnonymiseUserDialog
+        userId={anonTarget?.id ?? ''}
+        userName={anonTarget?.name ?? ''}
+        userEmail={anonTarget?.email ?? ''}
+        open={anonTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setAnonTarget(null);
+        }}
+        onConfirm={() => {
+          if (anonTarget === null) return;
+          anonymise.mutate({ userId: anonTarget.id, confirmEmail: anonTarget.email });
+        }}
+        pending={anonymise.isPending}
+      />
     </div>
   );
 }

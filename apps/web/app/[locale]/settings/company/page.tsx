@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/compon
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { CompanyBranding } from '../../../../src/components/settings/company-branding';
 import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -207,6 +208,8 @@ export default function CompanyPage() {
           )}
         </CardContent>
       </Card>
+
+      <CompanyBranding branding={tenantQuery.data?.tenant.settings?.branding ?? null} />
     </div>
   );
 }

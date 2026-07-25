@@ -167,7 +167,33 @@ export const usersRouter = router({
         ),
       );
 
-    return { user: row[0], fieldValues };
+    // Group + site memberships for the profile page. Tenant-scoped inner
+    // joins so archived / cross-tenant rows never leak. Additive — existing
+    // consumers of `get` keep working.
+    const groupMemberships = await ctx.db
+      .select({
+        id: groups.id,
+        name: groups.name,
+        addedVia: groupMembers.addedVia,
+      })
+      .from(groupMembers)
+      .innerJoin(groups, and(eq(groupMembers.groupId, groups.id), eq(groups.tenantId, ctx.tenantId)))
+      .where(and(eq(groupMembers.tenantId, ctx.tenantId), eq(groupMembers.userId, input.id)))
+      .orderBy(groups.name);
+
+    const siteMemberships = await ctx.db
+      .select({
+        id: sites.id,
+        name: sites.name,
+        depth: sites.depth,
+        addedVia: siteMembers.addedVia,
+      })
+      .from(siteMembers)
+      .innerJoin(sites, and(eq(siteMembers.siteId, sites.id), eq(sites.tenantId, ctx.tenantId)))
+      .where(and(eq(siteMembers.tenantId, ctx.tenantId), eq(siteMembers.userId, input.id)))
+      .orderBy(sites.name);
+
+    return { user: row[0], fieldValues, groupMemberships, siteMemberships };
   }),
 
   /**
@@ -190,6 +216,39 @@ export const usersRouter = router({
         .update(user)
         .set({ name, firstName, lastName, updatedAt: new Date() })
         .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)));
+      return { ok: true as const };
+    }),
+
+  /**
+   * Admin edit of another user's name (`users.manage`). Unlike
+   * `updateProfile` (which is hardcoded to `ctx.auth.userId`), this targets
+   * an arbitrary tenant member. Keeps the canonical `name` in sync as
+   * "First Last" so every display surface shows the full name.
+   */
+  updateName: tenantProcedure
+    .use(requirePermission('users.manage'))
+    .input(
+      z.object({
+        userId: z.string().min(1),
+        firstName: z.string().min(1).max(60),
+        // Allow an empty last name — single-name and bulk-imported users
+        // legitimately have none. Stored as null when blank.
+        lastName: z.string().max(60),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const firstName = input.firstName.trim();
+      const lastName = input.lastName.trim();
+      const name = [firstName, lastName].filter(Boolean).join(' ');
+      await ctx.db
+        .update(user)
+        .set({
+          name,
+          firstName,
+          lastName: lastName === '' ? null : lastName,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, input.userId)));
       return { ok: true as const };
     }),
 
