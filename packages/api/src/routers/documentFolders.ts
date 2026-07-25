@@ -11,6 +11,7 @@ import { TRPCError } from '@trpc/server';
 import { and, count, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertDocumentFoldersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 import { loadViewerMemberships, makeFolderVisibilityChecker } from './document-visibility';
 
@@ -99,6 +100,9 @@ export const documentFoldersRouter = router({
     .use(requirePermission('documents.folders.manage'))
     .input(createInput)
     .mutation(async ({ ctx, input }) => {
+      // A parent folder must belong to this tenant (else the tree could
+      // reference another tenant's folder).
+      await assertDocumentFoldersInTenant(ctx.db, ctx.tenantId, [input.parentId]);
       const id = newId();
       const now = new Date();
       await ctx.db.insert(documentFolders).values({
@@ -129,6 +133,33 @@ export const documentFoldersRouter = router({
       const folder = rows[0];
       if (folder === undefined) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'folder-not-found' });
+      }
+
+      // Reparenting guards: the new parent must belong to this tenant and must
+      // not be the folder itself or one of its descendants — otherwise the move
+      // forms an unreachable, unremovable cycle.
+      if (input.parentId !== undefined && input.parentId !== null) {
+        await assertDocumentFoldersInTenant(ctx.db, ctx.tenantId, [input.parentId]);
+        if (input.parentId === folder.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'folder-parent-self' });
+        }
+        // Walk up the ancestry from the proposed parent; reaching this folder
+        // means the parent is a descendant → cycle. `seen` guards a pre-existing
+        // cycle from looping forever.
+        let cursor: string | null = input.parentId;
+        const seen = new Set<string>();
+        while (cursor !== null && !seen.has(cursor)) {
+          if (cursor === folder.id) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'folder-parent-cycle' });
+          }
+          seen.add(cursor);
+          const parentRows = await ctx.db
+            .select({ parentId: documentFolders.parentId })
+            .from(documentFolders)
+            .where(and(eq(documentFolders.tenantId, ctx.tenantId), eq(documentFolders.id, cursor)))
+            .limit(1);
+          cursor = parentRows[0]?.parentId ?? null;
+        }
       }
 
       const updates: Partial<typeof documentFolders.$inferInsert> = { updatedAt: new Date() };
@@ -170,10 +201,13 @@ export const documentFoldersRouter = router({
         throw new TRPCError({ code: 'CONFLICT', message: 'folder-has-subfolders' });
       }
 
+      // Count ALL documents (archived included): `documents.folder_id` has no
+      // cascade/set-null, so a folder holding even archived docs can't be
+      // deleted — block with a clean CONFLICT instead of a raw FK 500.
       const docCount = await ctx.db
         .select({ c: count() })
         .from(documents)
-        .where(and(eq(documents.folderId, folder.id), isNull(documents.archivedAt)));
+        .where(eq(documents.folderId, folder.id));
       if (Number(docCount[0]?.c ?? 0) > 0) {
         throw new TRPCError({ code: 'CONFLICT', message: 'folder-has-documents' });
       }
