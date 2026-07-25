@@ -217,7 +217,14 @@ function CategoriesSection({
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => archive.mutate({ typeId: row.id })}
+                                onClick={() => {
+                                  const msg =
+                                    row.activeActions > 0
+                                      ? t('archiveConfirmInUse', { count: row.activeActions })
+                                      : t('archiveConfirm');
+                                  if (typeof window !== 'undefined' && !window.confirm(msg)) return;
+                                  archive.mutate({ typeId: row.id });
+                                }}
                                 disabled={archive.isPending}
                               >
                                 {tCommon('archive')}

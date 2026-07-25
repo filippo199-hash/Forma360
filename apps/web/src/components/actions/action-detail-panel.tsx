@@ -21,6 +21,7 @@ import { SiteSelector } from '../selectors/site-selector';
 import { usePlaceTerms } from '../../lib/terminology';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 import { AssetField } from './asset-field';
+import { DetailNotFound } from '../detail-not-found';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import {
@@ -75,7 +76,7 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
 
-  const { data, isLoading } = trpc.actions.get.useQuery({ actionId });
+  const { data, isLoading, error } = trpc.actions.get.useQuery({ actionId });
   const action = data?.action;
   const actionType = data?.actionType ?? null;
   const assignee = data?.assignee ?? null;
@@ -122,6 +123,15 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
   });
 
   if (isLoading || action === undefined) {
+    // On a settled error `action` stays undefined — show a recoverable
+    // error/not-found state instead of skeletoning forever.
+    if (error !== null && error !== undefined) {
+      return (
+        <div className="p-6">
+          <DetailNotFound error={error} />
+        </div>
+      );
+    }
     return (
       <div className="space-y-4 p-6">
         <Skeleton className="h-7 w-3/4" />
@@ -500,7 +510,7 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                         className={overdue ? 'border-destructive text-destructive' : ''}
                       />
                     ) : action.dueAt !== null ? (
-                      new Date(action.dueAt).toLocaleString()
+                      new Date(action.dueAt).toLocaleString(locale)
                     ) : (
                       tFields('noDueDate')
                     )}
@@ -579,13 +589,14 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
               actionId={actionId}
               createdAt={action.createdAt}
               createdByName={data?.creatorName ?? null}
+              locale={locale}
             />
           </div>
         ) : null}
 
         {tab === 'comments' ? (
           <div className="p-6">
-            <CommentsThread actionId={actionId} readOnly={isArchived} />
+            <CommentsThread actionId={actionId} readOnly={isArchived} locale={locale} />
           </div>
         ) : null}
       </div>
@@ -706,15 +717,24 @@ function ActivityTimeline({
   actionId,
   createdAt,
   createdByName,
+  locale,
 }: {
   actionId: string;
   createdAt: Date | string;
   createdByName: string | null;
+  locale: string;
 }) {
   const tEvents = useTranslations('actions.detail.activity.events');
   const tStatus = useTranslations('actions.status');
   const tPriority = useTranslations('actions.priority');
   const { data, isLoading } = trpc.actions.activity.list.useQuery({ actionId });
+  // Resolve the raw user/site ids stored in assignee/site-change payloads to
+  // names so the feed doesn't print 26-char ULIDs.
+  const { data: usersData } = trpc.users.list.useQuery({});
+  const { data: sitesData } = trpc.sites.list.useQuery();
+  const userName = (id: string): string =>
+    usersData?.users.find((u) => u.id === id)?.name ?? id;
+  const siteName = (id: string): string => sitesData?.find((s) => s.id === id)?.name ?? id;
 
   if (isLoading) return <Skeleton className="h-32 w-full" />;
   const rows = data ?? [];
@@ -730,7 +750,9 @@ function ActivityTimeline({
             <span className="font-medium">{createdByName ?? '—'}</span>{' '}
             <span className="text-muted-foreground">{tEvents('created')}</span>
           </p>
-          <p className="text-xs text-muted-foreground">{new Date(createdAt).toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground">
+            {new Date(createdAt).toLocaleString(locale)}
+          </p>
         </div>
       </div>
     );
@@ -761,11 +783,11 @@ function ActivityTimeline({
           text = tEvents('status_changed', { from: statusLabel(from), to: statusLabel(to) });
         } else if (row.kind === 'due_date_changed') {
           const to = String(payload['to'] ?? '');
-          text = tEvents('due_date_changed', { to: new Date(to).toLocaleString() });
+          text = tEvents('due_date_changed', { to: new Date(to).toLocaleString(locale) });
         } else if (row.kind === 'assignee_changed') {
-          text = tEvents('assignee_changed', { to: String(payload['to'] ?? '') });
+          text = tEvents('assignee_changed', { to: userName(String(payload['to'] ?? '')) });
         } else if (row.kind === 'site_changed') {
-          text = tEvents('site_changed', { to: String(payload['to'] ?? '') });
+          text = tEvents('site_changed', { to: siteName(String(payload['to'] ?? '')) });
         } else if (row.kind === 'label_changed') {
           text = tEvents('label_changed', { to: String(payload['to'] ?? '') });
         } else if (row.kind === 'created' && payload['auto'] === true) {
@@ -804,7 +826,7 @@ function ActivityTimeline({
                 <span className="text-muted-foreground">{text}</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                {new Date(row.createdAt).toLocaleString()}
+                {new Date(row.createdAt).toLocaleString(locale)}
               </p>
             </div>
           </div>
@@ -814,7 +836,15 @@ function ActivityTimeline({
   );
 }
 
-function CommentsThread({ actionId, readOnly }: { actionId: string; readOnly: boolean }) {
+function CommentsThread({
+  actionId,
+  readOnly,
+  locale,
+}: {
+  actionId: string;
+  readOnly: boolean;
+  locale: string;
+}) {
   const t = useTranslations('actions.detail.comments');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
@@ -875,7 +905,7 @@ function CommentsThread({ actionId, readOnly }: { actionId: string; readOnly: bo
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">{c.authorName ?? '—'}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(c.createdAt).toLocaleString()}
+                  {new Date(c.createdAt).toLocaleString(locale)}
                 </p>
               </div>
               <p className="whitespace-pre-wrap text-sm">{c.body}</p>

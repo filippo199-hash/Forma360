@@ -304,8 +304,13 @@ export default function ActionDetailPage() {
                   type="button"
                   variant="ghost"
                   onClick={() => {
-                    if (action.archivedAt === null) archive.mutate({ actionId });
-                    else restore.mutate({ actionId });
+                    if (action.archivedAt === null) {
+                      if (typeof window !== 'undefined' && !window.confirm(t('archiveConfirm')))
+                        return;
+                      archive.mutate({ actionId });
+                    } else {
+                      restore.mutate({ actionId });
+                    }
                   }}
                   disabled={archive.isPending || restore.isPending}
                 >
@@ -487,7 +492,7 @@ export default function ActionDetailPage() {
                       className={overdue ? 'border-destructive text-destructive' : ''}
                     />
                   ) : action.dueAt !== null ? (
-                    new Date(action.dueAt).toLocaleString()
+                    new Date(action.dueAt).toLocaleString(locale)
                   ) : (
                     tFields('noDueDate')
                   )}
@@ -541,10 +546,13 @@ export default function ActionDetailPage() {
             actionId={actionId}
             createdAt={action.createdAt}
             createdByName={data?.creatorName ?? null}
+            locale={locale}
           />
         ) : null}
 
-        {tab === 'comments' ? <CommentsThread actionId={actionId} readOnly={isArchived} /> : null}
+        {tab === 'comments' ? (
+          <CommentsThread actionId={actionId} readOnly={isArchived} locale={locale} />
+        ) : null}
       </div>
     </div>
   );
@@ -709,15 +717,23 @@ function ActivityTimeline({
   actionId,
   createdAt,
   createdByName,
+  locale,
 }: {
   actionId: string;
   createdAt: Date | string;
   createdByName: string | null;
+  locale: string;
 }) {
   const tEvents = useTranslations('actions.detail.activity.events');
   const tStatus = useTranslations('actions.status');
   const tPriority = useTranslations('actions.priority');
   const { data, isLoading } = trpc.actions.activity.list.useQuery({ actionId });
+  // Resolve raw user/site ids in assignee/site-change payloads to names.
+  const { data: usersData } = trpc.users.list.useQuery({});
+  const { data: sitesData } = trpc.sites.list.useQuery();
+  const userName = (id: string): string =>
+    usersData?.users.find((u) => u.id === id)?.name ?? id;
+  const siteName = (id: string): string => sitesData?.find((s) => s.id === id)?.name ?? id;
   if (isLoading) return <Skeleton className="h-32 w-full" />;
   const rows = data ?? [];
   // Pre-migration actions (created before action_activity existed)
@@ -739,7 +755,7 @@ function ActivityTimeline({
                 <span className="text-muted-foreground">{tEvents('created')}</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                {new Date(createdAt).toLocaleString()}
+                {new Date(createdAt).toLocaleString(locale)}
               </p>
             </div>
           </div>
@@ -773,11 +789,11 @@ function ActivityTimeline({
             text = tEvents('status_changed', { from: statusLabel(from), to: statusLabel(to) });
           } else if (row.kind === 'due_date_changed') {
             const to = String(payload['to'] ?? '');
-            text = tEvents('due_date_changed', { to: new Date(to).toLocaleString() });
+            text = tEvents('due_date_changed', { to: new Date(to).toLocaleString(locale) });
           } else if (row.kind === 'assignee_changed') {
-            text = tEvents('assignee_changed', { to: String(payload['to'] ?? '') });
+            text = tEvents('assignee_changed', { to: userName(String(payload['to'] ?? '')) });
           } else if (row.kind === 'site_changed') {
-            text = tEvents('site_changed', { to: String(payload['to'] ?? '') });
+            text = tEvents('site_changed', { to: siteName(String(payload['to'] ?? '')) });
           } else if (row.kind === 'label_changed') {
             text = tEvents('label_changed', { to: String(payload['to'] ?? '') });
           } else if (row.kind === 'created' && payload['auto'] === true) {
@@ -815,7 +831,7 @@ function ActivityTimeline({
                   <span className="text-muted-foreground">{text}</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(row.createdAt).toLocaleString()}
+                  {new Date(row.createdAt).toLocaleString(locale)}
                 </p>
               </div>
             </div>
@@ -826,7 +842,15 @@ function ActivityTimeline({
   );
 }
 
-function CommentsThread({ actionId, readOnly }: { actionId: string; readOnly: boolean }) {
+function CommentsThread({
+  actionId,
+  readOnly,
+  locale,
+}: {
+  actionId: string;
+  readOnly: boolean;
+  locale: string;
+}) {
   const t = useTranslations('actions.detail.comments');
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
@@ -891,7 +915,7 @@ function CommentsThread({ actionId, readOnly }: { actionId: string; readOnly: bo
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">{c.authorName ?? '—'}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(c.createdAt).toLocaleString()}
+                  {new Date(c.createdAt).toLocaleString(locale)}
                 </p>
               </div>
               <p className="whitespace-pre-wrap text-sm">{c.body}</p>

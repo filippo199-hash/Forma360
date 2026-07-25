@@ -413,7 +413,8 @@ export default function ActionsListPage() {
   if (siteFilter !== '') listInput.siteId = siteFilter;
   if (query.trim().length > 0) listInput.query = query.trim();
 
-  const { data: rows, isLoading } = trpc.actions.list.useQuery(listInput);
+  const { data: rows, isLoading, error } = trpc.actions.list.useQuery(listInput);
+  const isError = error !== null && error !== undefined;
   const list = useMemo(() => rows ?? [], [rows]);
 
   // Apply optimistic overrides to grouped data
@@ -800,6 +801,14 @@ export default function ActionsListPage() {
         </div>
 
         {/* Content */}
+        {isError ? (
+          <p
+            role="alert"
+            className="mb-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+          >
+            {t('loadError')}
+          </p>
+        ) : null}
         {view === 'list' ? (
           <ListView
             rows={list}
@@ -878,6 +887,8 @@ function FilterChip({
   onToggle?: () => void;
   children?: React.ReactNode;
 }) {
+  const tCommon = useTranslations('common');
+  const tFilters = useTranslations('actions.filters');
   return (
     <div
       className={cn(
@@ -896,7 +907,7 @@ function FilterChip({
           onClick={onToggle}
           className={cn('font-medium', active === true ? 'text-primary' : 'text-muted-foreground')}
         >
-          {active === true ? 'On' : 'Off'}
+          {active === true ? tCommon('on') : tCommon('off')}
         </button>
       )}
       {removable ? (
@@ -904,7 +915,7 @@ function FilterChip({
           type="button"
           onClick={onRemove}
           className="ml-0.5 rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label={`Remove ${label} filter`}
+          aria-label={tFilters('removeAria', { label })}
         >
           <X className="h-3 w-3" />
         </button>
@@ -1106,7 +1117,7 @@ function ListView({
                         }
                       >
                         {row.dueAt !== null
-                          ? new Date(row.dueAt).toLocaleDateString()
+                          ? new Date(row.dueAt).toLocaleDateString(locale)
                           : t('noDueDate')}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
@@ -1200,7 +1211,7 @@ function BoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex h-[calc(100vh-15rem)] min-h-[400px] flex-col gap-2 overflow-hidden rounded-lg border border-l-4 bg-card p-3 shadow-sm transition-colors',
+        'flex h-auto min-h-[240px] flex-col gap-2 overflow-hidden rounded-lg border border-l-4 bg-card p-3 shadow-sm transition-colors md:h-[calc(100vh-15rem)] md:min-h-[400px]',
         STATUS_COLUMN_COLORS[status],
         isOver && canManage && 'bg-primary/5 ring-2 ring-primary/20',
       )}
@@ -1384,7 +1395,7 @@ function BoardCardContent({
         ) : null}
         {row.dueAt !== null ? (
           <span className={overdue ? 'font-medium text-destructive' : 'text-muted-foreground'}>
-            {new Date(row.dueAt).toLocaleDateString()}
+            {new Date(row.dueAt).toLocaleDateString(locale)}
           </span>
         ) : null}
         <span className="text-muted-foreground">{row.assigneeName ?? t('noAssignee')}</span>
