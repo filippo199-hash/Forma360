@@ -190,6 +190,8 @@ const rejectInput = z.object({
 
 const deleteInput = z.object({ inspectionId: z.string().length(26) });
 
+const reopenInput = z.object({ inspectionId: z.string().length(26) });
+
 const signWorkflowInput = z.object({
   inspectionId: z.string().length(26),
   signatureData: z.string().min(1).max(2_000_000),
@@ -618,8 +620,21 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           .orderBy(inspectionSignatures.slotIndex);
 
         const approvalRows = await ctx.db
-          .select()
+          .select({
+            id: inspectionApprovals.id,
+            tenantId: inspectionApprovals.tenantId,
+            inspectionId: inspectionApprovals.inspectionId,
+            approverUserId: inspectionApprovals.approverUserId,
+            decision: inspectionApprovals.decision,
+            comment: inspectionApprovals.comment,
+            decidedAt: inspectionApprovals.decidedAt,
+            createdAt: inspectionApprovals.createdAt,
+            approverNameRaw: user.name,
+            approverFirstName: user.firstName,
+            approverLastName: user.lastName,
+          })
           .from(inspectionApprovals)
+          .leftJoin(user, eq(user.id, inspectionApprovals.approverUserId))
           .where(
             and(
               eq(inspectionApprovals.tenantId, ctx.tenantId),
@@ -627,6 +642,18 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             ),
           )
           .orderBy(inspectionApprovals.decidedAt);
+        // Resolve each approver's display name (first+last, else the `name`
+        // column) so the status / report pages show a person, not a raw ULID.
+        // Falls back to null when the user row is gone; the UI renders the id.
+        const approvals = approvalRows.map(
+          ({ approverNameRaw, approverFirstName, approverLastName, ...row }) => ({
+            ...row,
+            approverName:
+              approverFirstName !== null && approverLastName !== null
+                ? `${approverFirstName} ${approverLastName}`
+                : approverNameRaw,
+          }),
+        );
 
         const workflowSignerRows = await ctx.db
           .select({
@@ -712,7 +739,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           },
           version,
           signatures: sigs,
-          approvals: approvalRows,
+          approvals,
           workflowSigners,
           viewerCanSignWorkflow,
           viewerSignerName,
@@ -1326,6 +1353,56 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           .returning({ id: inspections.id });
         if (result.length === 0) throw new TRPCError({ code: 'NOT_FOUND' });
         return { ok: true as const };
+      }),
+
+    /**
+     * Reopen a rejected inspection back to `in_progress` so the work can be
+     * corrected and resubmitted. The captured `responses` are preserved; only
+     * the rejection-terminal columns (`rejectedAt`, `rejectedReason`) are
+     * cleared. Authorised for the original conductor (recovering their own
+     * work) OR any manager (`inspections.manage` — the same key that gates
+     * `reject`). The `inspections.view` floor matches the status page that
+     * hosts the button (it already requires `view` to render). Any status
+     * other than `rejected` is a BAD_REQUEST.
+     */
+    reopen: tenantProcedure
+      .use(requirePermission('inspections.view'))
+      .input(reopenInput)
+      .mutation(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select()
+          .from(inspections)
+          .where(
+            and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)),
+          )
+          .limit(1);
+        const insp = rows[0];
+        if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (insp.status !== 'rejected') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Only rejected inspections can be reopened',
+          });
+        }
+        const isConductor = insp.conductedBy === ctx.auth.userId;
+        const isManager = ctx.permissions.includes('inspections.manage');
+        if (!isConductor && !isManager) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only the conductor or a manager can reopen this inspection',
+          });
+        }
+        const now = new Date();
+        await ctx.db
+          .update(inspections)
+          .set({
+            status: 'in_progress',
+            rejectedAt: null,
+            rejectedReason: null,
+            updatedAt: now,
+          })
+          .where(eq(inspections.id, insp.id));
+        return { status: 'in_progress' as const };
       }),
 
     delete: tenantProcedure

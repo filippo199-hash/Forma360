@@ -869,7 +869,7 @@
       "savedAt": "Saved {time}",
       "offline": "Saving locally — will retry",
       "conflictTitle": "Another editor saved changes",
-      "conflictBody": "This inspection was updated elsewhere. Reload to see the latest responses before continuing.",
+      "conflictBody": "This inspection was changed somewhere else. You can reload and keep your answers — they'll be merged on top of the latest version — or discard your unsaved changes.",
       "conflictReload": "Reload",
       "submitButton": "Submit inspection",
       "submitConfirmTitle": "Submit inspection?",
@@ -956,7 +956,19 @@
         "add": "Anexar arquivo",
         "remove": "Remover"
       },
-      "missingEvidence": "{count} pergunta(s) ainda precisam de evidência"
+      "missingEvidence": "{count} pergunta(s) ainda precisam de evidência",
+      "conflictKeep": "Reload & keep my answers",
+      "conflictDiscard": "Discard my changes",
+      "submitBlockedHeading": "{count, plural, one {# item left before you can submit} other {# items left before you can submit}}",
+      "untitledQuestion": "Question",
+      "andMoreBlocking": "+{count} more",
+      "blockReason": {
+        "answer": "needs an answer",
+        "evidence": "needs evidence",
+        "range": "out of range"
+      },
+      "skippedTooltip": "Skipped by an answer above",
+      "pageIncomplete": "Has items still to complete"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1119,6 +1131,12 @@
       "title": "{count, plural, one {# inspection awaits your signature} other {# inspections await your signature}}",
       "requestedBy": "Requested by {name}",
       "signCta": "Sign"
+    },
+    "templatePicker": {
+      "emptyNoAccess": "No templates are available for you to start. Ask an admin for access."
+    },
+    "shareLinks": {
+      "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
     }
   },
   "nav": {

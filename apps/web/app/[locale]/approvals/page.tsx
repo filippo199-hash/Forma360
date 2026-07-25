@@ -8,15 +8,20 @@ import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { trpc } from '../../../src/lib/trpc/client';
 
-function formatRelative(d: Date): string {
-  const ms = Date.now() - new Date(d).getTime();
-  const s = Math.floor(ms / 1000);
-  if (s < 60) return `${s}s ago`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+/**
+ * Locale-aware relative time (e.g. "5 minutes ago", "just now"). Picks the
+ * largest sensible unit and defers wording + pluralisation to the runtime's
+ * Intl.RelativeTimeFormat — no i18n key needed.
+ */
+function relativeTime(date: Date, locale: string): string {
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+  if (seconds < 60) return rtf.format(-seconds, 'second');
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return rtf.format(-minutes, 'minute');
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return rtf.format(-hours, 'hour');
+  return rtf.format(-Math.floor(hours / 24), 'day');
 }
 
 export default function ApprovalsPage() {
@@ -75,7 +80,7 @@ export default function ApprovalsPage() {
                           {r.documentNumber ?? '—'}
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">
-                          {r.submittedAt !== null ? formatRelative(r.submittedAt) : '—'}
+                          {r.submittedAt !== null ? relativeTime(r.submittedAt, locale) : '—'}
                         </td>
                       </tr>
                     ))

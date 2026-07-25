@@ -283,7 +283,11 @@ function TextInput({
           className="min-h-[96px]"
           aria-label={item.prompt}
         />
-        <p className="text-xs text-muted-foreground">{t('charsRemaining', { count: remaining })}</p>
+        {remaining <= 50 ? (
+          <p className="text-xs text-muted-foreground">
+            {t('charsRemaining', { count: remaining })}
+          </p>
+        ) : null}
       </div>
     );
   }
@@ -298,7 +302,11 @@ function TextInput({
         placeholder={t('placeholder')}
         aria-label={item.prompt}
       />
-      <p className="text-xs text-muted-foreground">{t('charsRemaining', { count: remaining })}</p>
+      {remaining <= 50 ? (
+        <p className="text-xs text-muted-foreground">
+          {t('charsRemaining', { count: remaining })}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -551,18 +559,25 @@ function MediaInput({
   const keys: string[] = Array.isArray(raw) ? (raw as string[]) : [];
   const [uploading, setUploading] = useState(false);
 
-  async function upload(file: File) {
+  // Upload every picked file in turn (a multi-photo question shouldn't need a
+  // tap-per-file). We thread the running key list through the loop rather than
+  // re-reading `keys` so each dispatch builds on the last, and stop at maxCount.
+  async function uploadMany(files: File[]) {
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append('inspectionId', state.inspectionId);
-      form.append('itemId', item.id);
-      form.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: form });
-      if (!res.ok) throw new Error(`upload failed ${res.status}`);
-      const body = (await res.json()) as { key: string };
-      const next = [...keys, body.key].slice(0, item.maxCount);
-      dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: next });
+      let current = keys;
+      for (const file of files) {
+        if (current.length >= item.maxCount) break;
+        const form = new FormData();
+        form.append('inspectionId', state.inspectionId);
+        form.append('itemId', item.id);
+        form.append('file', file);
+        const res = await fetch('/api/upload', { method: 'POST', body: form });
+        if (!res.ok) throw new Error(`upload failed ${res.status}`);
+        const body = (await res.json()) as { key: string };
+        current = [...current, body.key].slice(0, item.maxCount);
+        dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: current });
+      }
     } catch {
       toast.error(tConduct('uploadError'));
     } finally {
@@ -571,9 +586,9 @@ function MediaInput({
   }
 
   async function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file !== undefined) {
-      await upload(file);
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length > 0) {
+      await uploadMany(files);
       e.target.value = '';
     }
   }
@@ -598,6 +613,7 @@ function MediaInput({
                   : 'image/*,video/*,application/pdf'
           }
           capture={item.mediaKind === 'photo' ? 'environment' : undefined}
+          multiple={item.maxCount > 1}
           onChange={onChange}
           disabled={readonly || uploading || keys.length >= item.maxCount}
           className="hidden"
@@ -614,7 +630,7 @@ function MediaInput({
                   type="button"
                   aria-label={t('remove')}
                   onClick={() => remove(k)}
-                  className="absolute right-1 top-1 rounded-full bg-background/80 p-0.5 text-muted-foreground opacity-0 shadow transition-opacity hover:text-destructive group-hover:opacity-100"
+                  className="absolute right-1 top-1 rounded-full bg-background/90 p-1 text-muted-foreground shadow transition-colors hover:text-destructive"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>

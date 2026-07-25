@@ -31,17 +31,23 @@ export function EvidenceUploader({
   const [uploading, setUploading] = useState(false);
   const satisfied = keys.length >= need;
 
-  async function upload(file: File) {
+  // Upload every picked file so the inspector can satisfy a "3 photos"
+  // requirement in one go rather than a tap-per-file.
+  async function uploadMany(files: File[]) {
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append('inspectionId', state.inspectionId);
-      form.append('itemId', itemId);
-      form.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: form });
-      if (!res.ok) throw new Error(`upload failed ${res.status}`);
-      const body = (await res.json()) as { key: string };
-      dispatch({ type: 'SET_RESPONSE', itemId: evidenceKey(itemId), value: [...keys, body.key] });
+      let current = keys;
+      for (const file of files) {
+        const form = new FormData();
+        form.append('inspectionId', state.inspectionId);
+        form.append('itemId', itemId);
+        form.append('file', file);
+        const res = await fetch('/api/upload', { method: 'POST', body: form });
+        if (!res.ok) throw new Error(`upload failed ${res.status}`);
+        const body = (await res.json()) as { key: string };
+        current = [...current, body.key];
+        dispatch({ type: 'SET_RESPONSE', itemId: evidenceKey(itemId), value: current });
+      }
     } catch {
       toast.error(tConduct('uploadError'));
     } finally {
@@ -50,9 +56,9 @@ export function EvidenceUploader({
   }
 
   async function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file !== undefined) {
-      await upload(file);
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length > 0) {
+      await uploadMany(files);
       e.target.value = '';
     }
   }
@@ -84,6 +90,7 @@ export function EvidenceUploader({
           <input
             type="file"
             accept="image/*,video/*,application/pdf"
+            multiple
             onChange={onChange}
             disabled={uploading}
             className="hidden"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -26,6 +26,7 @@ import { trpc } from '../../../../../src/lib/trpc/client';
  */
 export default function InspectionStatusPage() {
   const params = useParams<{ locale: string; inspectionId: string }>();
+  const router = useRouter();
   const inspectionId = params.inspectionId ?? '';
   const locale = params.locale ?? 'en';
   const t = useTranslations('inspections.statusPage');
@@ -49,6 +50,16 @@ export default function InspectionStatusPage() {
     },
     onError: () => {
       toast.error(t('workflowSignError'));
+    },
+  });
+  const reopen = trpc.inspections.reopen.useMutation({
+    onSuccess: () => {
+      void utils.inspections.get.invalidate({ inspectionId });
+      void utils.inspections.list.invalidate();
+      router.push(`/${locale}/inspections/${inspectionId}`);
+    },
+    onError: () => {
+      toast.error(tCommon('error'));
     },
   });
 
@@ -232,7 +243,7 @@ export default function InspectionStatusPage() {
               ) : null}
               {approvedRow !== undefined ? (
                 <p className="text-xs text-muted-foreground">
-                  {t('approvedBy', { user: approvedRow.approverUserId })}
+                  {t('approvedBy', { user: approvedRow.approverName ?? approvedRow.approverUserId })}
                 </p>
               ) : null}
               <div className="flex flex-wrap gap-2">
@@ -258,8 +269,13 @@ export default function InspectionStatusPage() {
               <p className="text-sm text-muted-foreground">
                 {t('rejectedBody', { reason: inspection.rejectedReason ?? '' })}
               </p>
-              {/* TODO: reopen flow lands with the wider rejections PR. */}
-              <Button variant="outline" disabled>
+              <Button
+                variant="outline"
+                disabled={reopen.isPending}
+                onClick={() => {
+                  reopen.mutate({ inspectionId });
+                }}
+              >
                 {t('reopenButton')}
               </Button>
             </>

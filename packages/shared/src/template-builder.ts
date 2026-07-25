@@ -35,6 +35,52 @@ const TITLE_PAGE_ONLY = new Set<Item['type']>([
   'company',
 ]);
 
+/**
+ * Prompt word-stems that mark a free-text answer as long-form. Matched
+ * case-insensitively as *substrings*, so "note" also catches "notes",
+ * "comment" catches "comments", "detail" catches "details", and so on. A rare
+ * false positive (e.g. "footnote") only makes a field multiline — the safer
+ * default — and the author can still flip it in the editor.
+ */
+const LONG_FORM_TEXT_STEMS = [
+  'note',
+  'comment',
+  'describe',
+  'description',
+  'detail',
+  'remark',
+  'explain',
+  'observation',
+  'summary',
+  'feedback',
+] as const;
+
+/** Field cap for long-form free-text (handover notes, comments, descriptions…). */
+const LONG_TEXT_MAX_LENGTH = 2000;
+/** Field cap for short identifier-style free-text ("Store name", "Reference"). */
+const SHORT_TEXT_MAX_LENGTH = 255;
+
+/**
+ * Decide whether a free-text question should default to a multi-line textarea
+ * rather than a single-line input.
+ *
+ * Long-form answers (handover notes, comments, descriptions, remarks…) get
+ * visually clipped in a single-line field during conduct, so they default to
+ * multiline; short identifier fields ("Store name", "Reference") stay
+ * single-line. Decision order:
+ *   1. An explicit flag (if a caller ever supplies one) always wins.
+ *   2. Otherwise: the prompt mentions a long-form word-stem, OR the field's
+ *      `maxLength` is large enough (>= 500) that a single line clearly won't
+ *      hold the answer.
+ *
+ * Pure + exported so the heuristic is unit-testable in isolation.
+ */
+export function inferMultiline(prompt: string, maxLength: number, explicit?: boolean): boolean {
+  if (explicit !== undefined) return explicit;
+  const p = prompt.toLowerCase();
+  return LONG_FORM_TEXT_STEMS.some((stem) => p.includes(stem)) || maxLength >= 500;
+}
+
 interface BuildCtx {
   customResponseSets: CustomResponseSet[];
   /** question key → assigned item id (for jump targets). */
@@ -175,8 +221,16 @@ function buildItem(q: SpecQuestion, itemId: string, globalIndex: number, ctx: Bu
   switch (q.type) {
     case 'multipleChoice':
       return buildMultipleChoice(q, itemId, globalIndex, ctx);
-    case 'text':
-      return { ...base, type: 'text', multiline: false, maxLength: 2000 };
+    case 'text': {
+      // The spec carries no explicit maxLength today, so start from the short
+      // cap and let the prompt wording decide: long-form free-text (notes,
+      // comments, descriptions…) becomes a multi-line textarea with a generous
+      // cap so a long handover note isn't clipped during conduct; short
+      // identifier fields ("Store name", "Reference") stay single-line.
+      const multiline = inferMultiline(q.prompt, SHORT_TEXT_MAX_LENGTH);
+      const maxLength = multiline ? LONG_TEXT_MAX_LENGTH : SHORT_TEXT_MAX_LENGTH;
+      return { ...base, type: 'text', multiline, maxLength };
+    }
     case 'number':
       return {
         ...base,

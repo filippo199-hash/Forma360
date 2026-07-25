@@ -289,6 +289,55 @@ function hasValue(v: unknown): boolean {
   return true;
 }
 
+/**
+ * Answered number items whose value falls outside the template's min/max.
+ * The submit gate blocks on these (previously an out-of-range number showed
+ * only an inline hint but still submitted). Optional numbers that are left
+ * blank are fine — the check only applies once a value is entered.
+ */
+export function findInvalidNumbers(content: TemplateContent, responses: Responses): string[] {
+  const invalid: string[] = [];
+  for (const page of content.pages) {
+    for (const section of page.sections) {
+      for (const item of section.items) {
+        if (item.type !== 'number') continue;
+        if (!isItemRevealed(item, content, responses)) continue;
+        const raw = responses[item.id];
+        if (raw === undefined || raw === null || raw === '') continue;
+        const n = typeof raw === 'number' ? raw : Number(raw);
+        if (Number.isNaN(n)) continue;
+        if (item.min !== undefined && n < item.min) invalid.push(item.id);
+        else if (item.max !== undefined && n > item.max) invalid.push(item.id);
+      }
+    }
+  }
+  return invalid;
+}
+
+/** Location metadata for a single item, used to jump to it from the submit gate. */
+export interface ItemLocation {
+  pageId: string;
+  pageIndex: number;
+  prompt: string | null;
+}
+
+/** Map every item id → the page it lives on + its prompt (for jump-to-question). */
+export function itemLocations(content: TemplateContent): Map<string, ItemLocation> {
+  const map = new Map<string, ItemLocation>();
+  content.pages.forEach((page, pageIndex) => {
+    for (const section of page.sections) {
+      for (const item of section.items) {
+        map.set(item.id, {
+          pageId: page.id,
+          pageIndex,
+          prompt: 'prompt' in item ? item.prompt : null,
+        });
+      }
+    }
+  });
+  return map;
+}
+
 // ─── Initial state ──────────────────────────────────────────────────────────
 
 export function initialConductState(seed: Omit<ConductState, 'saveStatus'>): ConductState {

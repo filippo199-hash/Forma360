@@ -136,6 +136,33 @@ function toDateGroupKey(d: Date): string {
   return `${dt.getFullYear()}-${String(dt.getMonth()).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 }
 
+interface InspectionRowView {
+  isTerminal: boolean;
+  conductUrl: string;
+  reportUrl: string;
+  openCount: number;
+}
+
+/**
+ * Per-row derived view-model shared by the desktop table and the mobile card
+ * list so the "is this terminal / where does it link" logic lives in one place.
+ */
+function deriveRowView(
+  r: { id: string; status: string; openActionsCount?: number | null },
+  locale: string,
+): InspectionRowView {
+  const isTerminal = r.status === 'completed' || r.status === 'rejected';
+  const conductUrl = `/${locale}/inspections/${r.id}`;
+  // Completed inspections go to the report page (inline preview + download
+  // buttons); every other status goes to the status page (signing / approval /
+  // continue flow).
+  const reportUrl =
+    r.status === 'completed'
+      ? `/${locale}/inspections/${r.id}/report`
+      : `/${locale}/inspections/${r.id}/status`;
+  return { isTerminal, conductUrl, reportUrl, openCount: r.openActionsCount ?? 0 };
+}
+
 function InspectionsTab({ locale }: { locale: string }) {
   const t = useTranslations('inspections');
   const tFilter = useTranslations('inspections.filter');
@@ -292,6 +319,25 @@ function InspectionsTab({ locale }: { locale: string }) {
     return groups;
   }, [filteredRows, locale]);
 
+  // Human-readable status label, reusing the filter-namespace copy. Used by the
+  // mobile card list (the desktop table shows status implicitly via actions).
+  function statusLabel(status: string): string {
+    switch (status) {
+      case 'in_progress':
+        return tFilter('inProgress');
+      case 'awaiting_signatures':
+        return tFilter('awaitingSignatures');
+      case 'awaiting_approval':
+        return tFilter('awaitingApproval');
+      case 'completed':
+        return tFilter('completed');
+      case 'rejected':
+        return tFilter('rejected');
+      default:
+        return status;
+    }
+  }
+
   const allSelected = filteredRows.length > 0 && selectedIds.size === filteredRows.length;
   const selectionCount = selectedIds.size;
   const totalCount = rows?.length ?? 0;
@@ -319,8 +365,8 @@ function InspectionsTab({ locale }: { locale: string }) {
             />
             <span>{t('showArchived')}</span>
           </label>
-          {/* Desktop-only — CSV export is not a phone workflow. */}
-          <Button variant="outline" onClick={exportCurrentFilter} className="hidden sm:inline-flex">
+          {/* Available on mobile too (finding #9) — exports the current filter. */}
+          <Button variant="outline" onClick={exportCurrentFilter}>
             {tExport('button')}
           </Button>
           <Button onClick={() => setShowPicker(true)}>{t('startButton')}</Button>
@@ -474,8 +520,8 @@ function InspectionsTab({ locale }: { locale: string }) {
         </span>
       </div>
 
-      {/* Table */}
-      <Card>
+      {/* Table (desktop) — the mobile card list below takes over under md. */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -526,16 +572,10 @@ function InspectionsTab({ locale }: { locale: string }) {
                         </td>
                       </tr>
                       {group.rows.map((r) => {
-                        const isTerminal = r.status === 'completed' || r.status === 'rejected';
-                        const conductUrl = `/${locale}/inspections/${r.id}`;
-                        // Completed inspections go to the report page (shows inline
-                        // preview + download buttons); all other statuses go to the
-                        // status page (shows signing / approval / continue flow).
-                        const reportUrl =
-                          r.status === 'completed'
-                            ? `/${locale}/inspections/${r.id}/report`
-                            : `/${locale}/inspections/${r.id}/status`;
-                        const openCount = r.openActionsCount ?? 0;
+                        const { isTerminal, conductUrl, reportUrl, openCount } = deriveRowView(
+                          r,
+                          locale,
+                        );
                         return (
                           <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10">
                             <td className="px-3 py-3">
@@ -617,6 +657,7 @@ function InspectionsTab({ locale }: { locale: string }) {
                               <InspectionRowMenu
                                 conductUrl={conductUrl}
                                 reportUrl={reportUrl}
+                                isTerminal={isTerminal}
                                 onArchive={() => setArchiveTarget(r.id)}
                               />
                             </td>
@@ -631,6 +672,113 @@ function InspectionsTab({ locale }: { locale: string }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Card list (mobile) — stacked layout under md; the table is hidden there. */}
+      <div className="space-y-4 md:hidden">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))
+        ) : filteredRows.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">{t('empty')}</CardContent>
+          </Card>
+        ) : (
+          groupedRows.map((group) => (
+            <div key={group.dateKey} className="space-y-2">
+              <p className="px-1 text-xs font-semibold text-muted-foreground">{group.label}</p>
+              {group.rows.map((r) => {
+                const { isTerminal, conductUrl, reportUrl, openCount } = deriveRowView(r, locale);
+                return (
+                  <Card key={r.id}>
+                    <CardContent className="space-y-3 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${getAvatarColor(r.templateId)}`}
+                          >
+                            {getInitials(r.templateName)}
+                          </div>
+                          <div className="min-w-0">
+                            <Link
+                              href={conductUrl}
+                              className="block truncate font-medium hover:underline"
+                            >
+                              {r.title}
+                            </Link>
+                            {r.templateName !== null ? (
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {r.templateName}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        <InspectionRowMenu
+                          conductUrl={conductUrl}
+                          reportUrl={reportUrl}
+                          isTerminal={isTerminal}
+                          onArchive={() => setArchiveTarget(r.id)}
+                        />
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground">
+                          {statusLabel(r.status)}
+                        </span>
+                        {r.archivedAt !== null ? (
+                          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 uppercase tracking-wide text-muted-foreground">
+                            {t('archivedBadge')}
+                          </span>
+                        ) : null}
+                        {openCount > 0 ? (
+                          <span className="text-foreground">
+                            {t('openActionsCount', { count: openCount })}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <dl className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                        <div>
+                          <dt className="font-medium text-foreground">{t('table.conductedBy')}</dt>
+                          <dd className="truncate">{r.conductedByName ?? '—'}</dd>
+                        </div>
+                        <div>
+                          <dt className="font-medium text-foreground">{t('table.conducted')}</dt>
+                          <dd>{formatDisplayDate(r.startedAt, locale)}</dd>
+                        </div>
+                      </dl>
+
+                      <div className="flex justify-end">
+                        {isTerminal ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(reportUrl)}
+                          >
+                            {t('viewReportButton')}
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(conductUrl)}
+                          >
+                            {t('continueButton')}
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ))
+        )}
+      </div>
 
       {/* Bulk action bar */}
       {selectionCount > 0 ? (
@@ -759,10 +907,12 @@ function FilterChip({
 function InspectionRowMenu({
   conductUrl,
   reportUrl,
+  isTerminal,
   onArchive,
 }: {
   conductUrl: string;
   reportUrl: string;
+  isTerminal: boolean;
   onArchive: () => void;
 }) {
   const t = useTranslations('inspections');
@@ -785,10 +935,14 @@ function InspectionRowMenu({
           <Pencil className="mr-2 h-4 w-4" />
           {t('rowMenu.editInspection')}
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => router.push(reportUrl)}>
-          <FileEdit className="mr-2 h-4 w-4" />
-          {t('rowMenu.viewReport')}
-        </DropdownMenuItem>
+        {/* "View report" only exists once the inspection is terminal — an
+            in-progress inspection has no report yet (finding #14a). */}
+        {isTerminal ? (
+          <DropdownMenuItem onSelect={() => router.push(reportUrl)}>
+            <FileEdit className="mr-2 h-4 w-4" />
+            {t('rowMenu.viewReport')}
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem className="text-destructive" onSelect={onArchive}>
           <Archive className="mr-2 h-4 w-4" />

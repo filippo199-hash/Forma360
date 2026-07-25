@@ -195,7 +195,9 @@ export default function InspectionReportPage() {
             </span>
           ) : null}
           {approvedRow !== undefined ? (
-            <span>{t('approvedBy', { user: approvedRow.approverUserId })}</span>
+            <span>
+              {t('approvedBy', { user: approvedRow.approverName ?? approvedRow.approverUserId })}
+            </span>
           ) : null}
         </div>
 
@@ -350,6 +352,7 @@ interface ApprovalRow {
   id: string;
   decision: string;
   approverUserId: string;
+  approverName: string | null;
   comment: string | null;
   decidedAt: Date | string | null;
 }
@@ -549,7 +552,7 @@ function ReportBody({
                 <p>
                   <span className="font-medium capitalize">{a.decision}</span>
                   {' · '}
-                  {a.approverUserId}
+                  {a.approverName ?? a.approverUserId}
                   {a.decidedAt !== null ? (
                     <span className="ml-1 text-muted-foreground">
                       · {new Date(a.decidedAt).toLocaleString()}

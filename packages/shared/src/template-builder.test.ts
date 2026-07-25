@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTemplateContentFromSpec } from './template-builder';
+import { buildTemplateContentFromSpec, inferMultiline } from './template-builder';
 import { collectActiveTriggers, computeSkippedItemIds } from './inspection-eval';
 import { effectiveFlaggedOptionIds, templateContentSchema } from './template-schema';
 import { parseTemplateSpec, type templateSpecSchema, type TemplateSpec } from './template-spec';
@@ -371,5 +371,53 @@ describe('buildTemplateContentFromSpec', () => {
     expect(templateContentSchema.safeParse(content).success).toBe(true);
     expect(itemByPrompt(content, 'Count')?.type).toBe('number');
     expect(itemByPrompt(content, 'Sign here')?.type).toBe('signature');
+  });
+
+  it('defaults long-form free-text to multiline, keeps short fields single-line', () => {
+    const content = buildTemplateContentFromSpec(
+      spec({
+        pages: [
+          {
+            title: 'Handover',
+            sections: [
+              {
+                title: 'S',
+                questions: [
+                  { prompt: 'Additional comments', type: 'text' },
+                  { prompt: 'Store name', type: 'text' },
+                  { prompt: 'Reference', type: 'text' },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    const comments = itemByPrompt(content, 'Additional comments');
+    const store = itemByPrompt(content, 'Store name');
+    const reference = itemByPrompt(content, 'Reference');
+    if (comments?.type !== 'text' || store?.type !== 'text' || reference?.type !== 'text') {
+      throw new Error('expected text items');
+    }
+    // Long-form note-style question → multi-line textarea so it isn't clipped.
+    expect(comments.multiline).toBe(true);
+    // Short identifier fields → single-line input.
+    expect(store.multiline).toBe(false);
+    expect(reference.multiline).toBe(false);
+  });
+});
+
+describe('inferMultiline', () => {
+  it('flags long-form prompts and large maxLength, keeps short fields single-line', () => {
+    expect(inferMultiline('Additional comments', 255)).toBe(true);
+    expect(inferMultiline('Describe the incident', 255)).toBe(true);
+    expect(inferMultiline('Handover notes', 255)).toBe(true);
+    expect(inferMultiline('Store name', 255)).toBe(false);
+    expect(inferMultiline('Reference', 255)).toBe(false);
+    // A large cap alone forces multiline even without a long-form word.
+    expect(inferMultiline('Reference', 500)).toBe(true);
+    // An explicit flag always wins over the heuristic.
+    expect(inferMultiline('Additional comments', 255, false)).toBe(false);
+    expect(inferMultiline('Store name', 255, true)).toBe(true);
   });
 });

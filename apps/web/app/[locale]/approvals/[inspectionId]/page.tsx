@@ -66,6 +66,7 @@ export default function ApprovalDetailPage() {
   const t = useTranslations('approvals');
   const tCommon = useTranslations('common');
   const tConduct = useTranslations('inspections.conduct');
+  const tStatus = useTranslations('inspections.status');
 
   const insp = trpc.inspections.get.useQuery(
     { inspectionId },
@@ -194,7 +195,9 @@ export default function ApprovalDetailPage() {
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">
-          {t('notAwaiting', { status: inspection.status })}
+          {/* inspection.status is always one of the InspectionStatus values, all
+              of which are keys under the inspections.status namespace. */}
+          {t('notAwaiting', { status: tStatus(inspection.status as 'completed') })}
         </p>
       )}
 

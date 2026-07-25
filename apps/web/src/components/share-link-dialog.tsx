@@ -40,9 +40,14 @@ const EXPIRATION_MS: Record<Exclude<Expiration, 'never'>, number> = {
 
 export function ShareLinkDialog({ inspectionId }: Props) {
   const t = useTranslations('inspections.exports');
+  const tShare = useTranslations('inspections.shareLinks');
+  const tCommon = useTranslations('common');
   const [open, setOpen] = useState(false);
   const [expiration, setExpiration] = useState<Expiration>('never');
   const [justCopied, setJustCopied] = useState<string | null>(null);
+  // linkId currently awaiting revoke confirmation (finding #14b) — revoke is
+  // irreversible, so we require an explicit confirm step.
+  const [confirmingRevoke, setConfirmingRevoke] = useState<string | null>(null);
 
   const utils = trpc.useUtils();
   const list = trpc.exports.listShareLinks.useQuery(
@@ -184,18 +189,48 @@ export function ShareLinkDialog({ inspectionId }: Props) {
                           ? t('expiresAt', { time: new Date(link.expiresAt).toLocaleString() })
                           : t('neverExpires')}
                   </span>
-                  {!link.revoked ? (
+                  {!link.revoked && confirmingRevoke !== link.linkId ? (
                     <Button
                       size="sm"
                       variant="outline"
                       className="h-7 shrink-0 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => revokeMut.mutate({ linkId: link.linkId })}
+                      onClick={() => setConfirmingRevoke(link.linkId)}
                       disabled={revokeMut.isPending}
                     >
                       {t('revoke')}
                     </Button>
                   ) : null}
                 </div>
+
+                {/* Inline revoke confirmation — revoke is irreversible (finding #14b). */}
+                {confirmingRevoke === link.linkId ? (
+                  <div className="flex flex-col gap-2 border-t bg-destructive/5 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="text-muted-foreground">{tShare('revokeConfirm')}</span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setConfirmingRevoke(null)}
+                        disabled={revokeMut.isPending}
+                      >
+                        {tCommon('cancel')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => {
+                          revokeMut.mutate({ linkId: link.linkId });
+                          setConfirmingRevoke(null);
+                        }}
+                        disabled={revokeMut.isPending}
+                      >
+                        {t('revoke')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>

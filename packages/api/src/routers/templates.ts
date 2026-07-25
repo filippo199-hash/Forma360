@@ -387,19 +387,9 @@ export const templatesRouter = router({
               .where(and(eq(accessRules.tenantId, ctx.tenantId), inArray(accessRules.id, ruleIds)));
       const ruleMap = new Map(ruleRows.map((r) => [r.id, r]));
 
-      const enriched = rows.map((r) => ({
-        ...r,
-        lastPublishedAt: lastPublishedMap.get(r.id) ?? null,
-        accessRuleName:
-          r.accessRuleId !== null ? (ruleMap.get(r.accessRuleId)?.name ?? null) : null,
-      }));
-
-      // Admin / template-manager users see every template regardless of
-      // access rule. For everyone else we gate by the rule: null = visible
-      // to all, non-null = caller's group/site memberships must satisfy it.
-      const isManager = ctx.permissions.includes('templates.manage');
-      if (isManager) return enriched;
-
+      // Caller's group + site membership. Loaded for every role because it
+      // feeds both the per-template `canStart` flag (below) and the
+      // non-manager visibility filter at the end.
       const userGroupRows = await ctx.db
         .select({ groupId: groupMembers.groupId })
         .from(groupMembers)
@@ -416,6 +406,37 @@ export const templatesRouter = router({
         groupIds: userGroupRows.map((r) => r.groupId),
         siteIds: userSiteRows.map((r) => r.siteId),
       };
+
+      // `canStart` mirrors the `inspections.create` gate exactly so the
+      // template picker only offers templates the caller can actually start
+      // (finding #3): the caller needs the `inspections.conduct` permission
+      // AND must satisfy the template's access rule. `create` has NO manager
+      // bypass, so neither does this — an admin who isn't in a required
+      // group/site genuinely can't start. A null rule is open to everyone; a
+      // dangling rule id denies (create would throw on the missing rule).
+      const canConduct = ctx.permissions.includes('inspections.conduct');
+      const computeCanStart = (accessRuleId: string | null): boolean => {
+        if (!canConduct) return false;
+        if (accessRuleId === null) return true;
+        const rule = ruleMap.get(accessRuleId);
+        if (rule === undefined) return false;
+        return resolveAccessRule(rule, userSnapshot);
+      };
+
+      const enriched = rows.map((r) => ({
+        ...r,
+        lastPublishedAt: lastPublishedMap.get(r.id) ?? null,
+        accessRuleName:
+          r.accessRuleId !== null ? (ruleMap.get(r.accessRuleId)?.name ?? null) : null,
+        canStart: computeCanStart(r.accessRuleId),
+      }));
+
+      // Admin / template-manager users see every template regardless of
+      // access rule (visibility is separate from `canStart`). For everyone
+      // else we gate visibility by the rule: null = visible to all, non-null
+      // = caller's group/site memberships must satisfy it.
+      const isManager = ctx.permissions.includes('templates.manage');
+      if (isManager) return enriched;
 
       return enriched.filter((tpl) => {
         if (tpl.accessRuleId === null) return true;

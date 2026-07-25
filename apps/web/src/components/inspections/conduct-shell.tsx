@@ -27,8 +27,10 @@ import { ActionDetailPanel } from '../actions/action-detail-panel';
 import { useConduct } from './conduct-context';
 import { missingEvidence, requiredEvidenceCount } from '@forma360/shared/inspection-eval';
 import {
+  findInvalidNumbers,
   findUnansweredRequired,
   isItemRevealed,
+  itemLocations,
   skippedPages,
   type Responses,
 } from './conduct-state';
@@ -37,6 +39,9 @@ import { ResponseInput } from './response-input';
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;
 const RETRY_INTERVAL_MS = 15_000;
+
+/** Stable empty set so readonly inspections don't churn the PageTabs props. */
+const EMPTY_PAGE_SET: ReadonlySet<string> = new Set<string>();
 
 function localStorageKey(inspectionId: string): string {
   return `forma360:conduct:pending:${inspectionId}`;
@@ -152,6 +157,14 @@ export function ConductShell() {
     },
     onError: (err) => {
       if (err.data?.code === 'CONFLICT') {
+        // Persist the in-memory answers so "Reload & keep my answers" can
+        // re-apply them onto the fresh server version after reload — a bare
+        // reload would otherwise discard everything typed since the last save.
+        savePending(state.inspectionId, {
+          responses: state.responses,
+          basedOn: state.loadedUpdatedAt,
+          editedAt: Date.now(),
+        });
         dispatch({ type: 'MARK_CONFLICT' });
         setShowConflict(true);
         return;
@@ -223,17 +236,15 @@ export function ConductShell() {
   useEffect(() => {
     const pending = loadPending(state.inspectionId);
     if (pending !== null) {
-      // If the pending payload is newer than what we loaded from the
-      // server, merge it into the reducer so the UI reflects the unsaved
-      // edits and trigger a fresh save.
-      if (pending.basedOn === state.loadedUpdatedAt) {
-        dispatch({ type: 'MERGE_RESPONSES', responses: pending.responses });
-        scheduleSave();
-      } else {
-        // Drift — surface a conflict rather than overwrite.
-        dispatch({ type: 'MARK_CONFLICT' });
-        setShowConflict(true);
-      }
+      // Re-apply the user's pending answers on top of whatever we just loaded
+      // from the server, then save with the fresh `expectedUpdatedAt`. This
+      // covers BOTH the offline-recovery case (same base) and the conflict
+      // "Reload & keep my answers" case (server advanced under us) — in both
+      // we must not lose typed work. Merge is last-writer-wins per field;
+      // inspections are single-conductor so this is safe. "Discard changes"
+      // clears the pending payload before reload, so nothing is merged.
+      dispatch({ type: 'MERGE_RESPONSES', responses: pending.responses });
+      scheduleSave();
     }
     function onOnline() {
       const p = loadPending(state.inspectionId);
@@ -299,7 +310,54 @@ export function ConductShell() {
     () => missingEvidence(state.content, state.responses),
     [state.content, state.responses],
   );
-  const canSubmit = missing.length === 0 && evidenceMissing.length === 0 && !readonly;
+  const invalidNumbers = useMemo(
+    () => findInvalidNumbers(state.content, state.responses),
+    [state.content, state.responses],
+  );
+  const canSubmit =
+    missing.length === 0 &&
+    evidenceMissing.length === 0 &&
+    invalidNumbers.length === 0 &&
+    !readonly;
+
+  // Everything blocking submit, with its page + prompt, so the inspector can
+  // jump straight to each one instead of hunting page-by-page.
+  const locations = useMemo(() => itemLocations(state.content), [state.content]);
+  const blocking = useMemo(() => {
+    const seen = new Set<string>();
+    const out: {
+      id: string;
+      pageId: string;
+      pageIndex: number;
+      prompt: string | null;
+      reason: 'answer' | 'evidence' | 'range';
+    }[] = [];
+    const add = (id: string, reason: 'answer' | 'evidence' | 'range') => {
+      const key = `${id}:${reason}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      const loc = locations.get(id);
+      if (loc !== undefined) out.push({ id, ...loc, reason });
+    };
+    missing.forEach((id) => add(id, 'answer'));
+    invalidNumbers.forEach((id) => add(id, 'range'));
+    evidenceMissing.forEach((e) => add(e.itemId, 'evidence'));
+    return out.sort((a, b) => a.pageIndex - b.pageIndex);
+  }, [missing, invalidNumbers, evidenceMissing, locations]);
+  const blockingPageIds = useMemo(() => new Set(blocking.map((b) => b.pageId)), [blocking]);
+
+  const jumpTo = useCallback(
+    (pageId: string, itemId: string) => {
+      dispatch({ type: 'SET_PAGE', pageId });
+      // Let the new page render, then bring the question into view.
+      setTimeout(() => {
+        document
+          .getElementById(`item-${itemId}`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 60);
+    },
+    [dispatch],
+  );
 
   function handleSubmit() {
     submit.mutate({ inspectionId: state.inspectionId });
@@ -331,7 +389,7 @@ export function ConductShell() {
             <SaveIndicator />
           </div>
         </div>
-        <PageTabs />
+        <PageTabs blockingPageIds={readonly ? EMPTY_PAGE_SET : blockingPageIds} />
       </header>
 
       {/* ── Scrollable content ───────────────────────────────────────── */}
@@ -404,12 +462,31 @@ export function ConductShell() {
               )}
             </div>
 
-            {!canSubmit && !readonly ? (
-              <p className="text-xs text-muted-foreground">
-                {evidenceMissing.length > 0 && missing.length === 0
-                  ? t('missingEvidence', { count: evidenceMissing.length })
-                  : t('missingRequired')}
-              </p>
+            {blocking.length > 0 && !readonly ? (
+              <div className="space-y-1.5 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-950/30">
+                <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                  {t('submitBlockedHeading', { count: blocking.length })}
+                </p>
+                <ul className="space-y-0.5">
+                  {blocking.slice(0, 12).map((b) => (
+                    <li key={`${b.id}:${b.reason}`}>
+                      <button
+                        type="button"
+                        onClick={() => jumpTo(b.pageId, b.id)}
+                        className="text-left text-xs text-amber-800 underline-offset-2 hover:underline dark:text-amber-300"
+                      >
+                        {b.pageIndex + 1}. {b.prompt ?? t('untitledQuestion')} —{' '}
+                        {t(`blockReason.${b.reason}`)}
+                      </button>
+                    </li>
+                  ))}
+                  {blocking.length > 12 ? (
+                    <li className="text-xs text-amber-700 dark:text-amber-400">
+                      {t('andMoreBlocking', { count: blocking.length - 12 })}
+                    </li>
+                  ) : null}
+                </ul>
+              </div>
             ) : null}
           </div>
         </main>
@@ -437,7 +514,18 @@ export function ConductShell() {
             <DialogDescription>{t('conflictBody')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => window.location.reload()}>{t('conflictReload')}</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Throw away the local edits and reload the server version.
+                clearPending(state.inspectionId);
+                window.location.reload();
+              }}
+            >
+              {t('conflictDiscard')}
+            </Button>
+            {/* Answers were persisted on conflict; reload re-applies them. */}
+            <Button onClick={() => window.location.reload()}>{t('conflictKeep')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -501,7 +589,8 @@ function SaveIndicator() {
   return null;
 }
 
-function PageTabs() {
+function PageTabs({ blockingPageIds }: { blockingPageIds: ReadonlySet<string> }) {
+  const t = useTranslations('inspections.conduct');
   const { state, dispatch } = useConduct();
   const skipped = skippedPages(state.content, state.responses);
   return (
@@ -509,6 +598,7 @@ function PageTabs() {
       {state.content.pages.map((p, i) => {
         const active = p.id === state.selectedPageId;
         const isSkipped = skipped.has(p.id);
+        const isIncomplete = !isSkipped && blockingPageIds.has(p.id);
         return (
           <button
             key={p.id}
@@ -517,8 +607,8 @@ function PageTabs() {
               if (!isSkipped) dispatch({ type: 'SET_PAGE', pageId: p.id });
             }}
             disabled={isSkipped}
-            title={isSkipped ? 'Skipped by an answer above' : undefined}
-            className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs transition-colors ${
+            title={isSkipped ? t('skippedTooltip') : isIncomplete ? t('pageIncomplete') : undefined}
+            className={`flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-xs transition-colors ${
               active
                 ? 'bg-accent text-accent-foreground'
                 : isSkipped
@@ -526,7 +616,15 @@ function PageTabs() {
                   : 'text-muted-foreground hover:bg-accent/60'
             }`}
           >
-            {i + 1}. {p.title}
+            <span>
+              {i + 1}. {p.title}
+            </span>
+            {isIncomplete ? (
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
+                aria-label={t('pageIncomplete')}
+              />
+            ) : null}
           </button>
         );
       })}
@@ -647,13 +745,15 @@ function ItemRow({
         ) : (
           <span />
         )}
-        <RaiseActionTrigger
-          inspectionId={state.inspectionId}
-          questionId={item.id}
-          questionPrompt={prompt}
-          hasAction={raisedActionId !== null}
-          onActionRaised={onActionRaised}
-        />
+        {item.type !== 'instruction' ? (
+          <RaiseActionTrigger
+            inspectionId={state.inspectionId}
+            questionId={item.id}
+            questionPrompt={prompt}
+            hasAction={raisedActionId !== null}
+            onActionRaised={onActionRaised}
+          />
+        ) : null}
       </div>
       <div id={`item-${item.id}`}>
         <ResponseInput item={item} readonly={readonly} responseSets={customResponseSets} />
@@ -685,6 +785,7 @@ const ACTION_STATUS_COLORS: Record<string, string> = {
  */
 function LinkedActionCard({ actionId, onOpen }: { actionId: string; onOpen: () => void }) {
   const t = useTranslations('inspections.conduct');
+  const tActionStatus = useTranslations('actions.status');
   const { data, isLoading } = trpc.actions.get.useQuery({ actionId });
   const action = data?.action;
 
@@ -694,7 +795,7 @@ function LinkedActionCard({ actionId, onOpen }: { actionId: string; onOpen: () =
   if (action === undefined) return null;
 
   const statusColor = ACTION_STATUS_COLORS[action.status] ?? ACTION_STATUS_COLORS['open'];
-  const statusLabel = action.status.replace(/_/g, ' ');
+  const statusLabel = tActionStatus(action.status as 'open');
 
   return (
     <button
@@ -703,9 +804,7 @@ function LinkedActionCard({ actionId, onOpen }: { actionId: string; onOpen: () =
       className="flex w-full items-center gap-2.5 rounded-md border bg-muted/40 px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
       aria-label={t('openLinkedAction', { title: action.title })}
     >
-      <span
-        className={cn('shrink-0 rounded px-1.5 py-0.5 text-xs font-medium capitalize', statusColor)}
-      >
+      <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-xs font-medium', statusColor)}>
         {statusLabel}
       </span>
       <span className="min-w-0 flex-1 truncate font-medium">{action.title}</span>

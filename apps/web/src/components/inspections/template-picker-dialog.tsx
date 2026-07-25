@@ -34,6 +34,7 @@ export function TemplatePickerDialog({
   siteId?: string;
 }) {
   const t = useTranslations('inspections.picker');
+  const tAccess = useTranslations('inspections.templatePicker');
   const router = useRouter();
   const { data: templates, isLoading } = trpc.templates.list.useQuery(
     { status: 'published' },
@@ -45,6 +46,12 @@ export function TemplatePickerDialog({
     () => (templates ?? []).filter((r) => r.currentVersionId !== null && r.archivedAt === null),
     [templates],
   );
+
+  // Only offer templates the caller can actually start (finding #3). `canStart`
+  // is computed server-side to mirror the inspections.create gate, so anything
+  // filtered out here would otherwise error with "You do not satisfy this
+  // template's access rule" on Start.
+  const startable = useMemo(() => published.filter((r) => r.canStart), [published]);
 
   const create = trpc.inspections.create.useMutation({
     onSuccess: (res) => {
@@ -71,9 +78,13 @@ export function TemplatePickerDialog({
             <Skeleton className="h-24 w-full" />
           ) : published.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">{t('empty')}</p>
+          ) : startable.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              {tAccess('emptyNoAccess')}
+            </p>
           ) : (
             <ul className="space-y-1">
-              {published.map((tpl) => {
+              {startable.map((tpl) => {
                 const checked = selected === tpl.id;
                 return (
                   <li key={tpl.id}>

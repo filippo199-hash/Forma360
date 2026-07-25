@@ -31,6 +31,15 @@ export type ReviewSignature = {
   signedAt: Date;
 };
 
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|heic|heif|bmp|svg|avif)$/i;
+
+/** R2 keys are `<tenant>/…/<timestamp>_<original name>`; show the clean name. */
+function filenameFromKey(key: string): string {
+  const base = key.split('/').at(-1) ?? key;
+  const underscore = base.indexOf('_');
+  return underscore > 0 ? base.slice(underscore + 1) : base;
+}
+
 export function InspectionReview({
   content,
   responses,
@@ -218,13 +227,32 @@ function ReviewValue({
     case 'media': {
       const keys: string[] = Array.isArray(value) ? (value as string[]) : [];
       if (keys.length === 0) return <span className="italic">{emptyLabel}</span>;
+      // Approvers must be able to SEE the evidence they're approving — show a
+      // thumbnail for images and a clean file link for everything else, rather
+      // than the raw storage key.
       return (
-        <ul className="space-y-1">
-          {keys.map((k) => (
-            <li key={k} className="truncate font-mono text-xs">
-              {k}
-            </li>
-          ))}
+        <ul className="flex flex-wrap gap-2">
+          {keys.map((k) => {
+            const href = `/api/files?key=${encodeURIComponent(k)}`;
+            const name = filenameFromKey(k);
+            return (
+              <li key={k}>
+                <a href={href} target="_blank" rel="noopener noreferrer" className="block">
+                  {IMAGE_EXT.test(k) ? (
+                    <img
+                      src={href}
+                      alt={name}
+                      className="h-20 w-20 rounded border object-cover"
+                    />
+                  ) : (
+                    <span className="inline-flex max-w-[12rem] items-center gap-1.5 rounded-md border bg-background px-2 py-1 text-xs hover:underline">
+                      📎 <span className="truncate">{name}</span>
+                    </span>
+                  )}
+                </a>
+              </li>
+            );
+          })}
         </ul>
       );
     }
@@ -254,10 +282,14 @@ function ReviewValue({
     }
     case 'instruction':
       return <InstructionBody item={item} />;
+    case 'location': {
+      // Location is a free-text address / "lat, lng" string — show it.
+      const s = typeof value === 'string' ? value : '';
+      return s.length === 0 ? <span className="italic">{emptyLabel}</span> : <span>{s}</span>;
+    }
     case 'site':
     case 'asset':
     case 'company':
-    case 'location':
     case 'annotation':
     case 'table':
       return <span className="italic">{tStub('stubNotice')}</span>;
