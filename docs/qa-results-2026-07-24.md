@@ -270,3 +270,17 @@ All six deployed together (commits `41b76de`, `be92172`, `6fa0ece`, `f4ed6eb`, `
 - **Q6 — issues.list cursor** (`be92172`): opaque `<iso>_<id>` keyset cursor with an (createdAt, id) tiebreaker — no more silently-skipped tie-rows across a page boundary. (actions/inspections don't use a createdAt cursor — issues-specific.)
 
 Remaining queued: Q7 (schedule tz-frame), Q8 (unbounded JSONB), Q9 (schedule reminder enqueue atomicity), Q10 (documentLabels dangling id), Q11 (template-logo dev traversal), Q12 (Tier-2 write-path integrity), Q13 (dialog a11y).
+
+### Queued follow-ups Q7–Q11 — FIXED (third pass); Q12–Q13 deferred
+
+Deployed together (schedule fixes + labels/traversal + JSONB caps, pushed through `af4ddda`). Verification: api 282/282 (incl. 4 new bounded-json), jobs 10/10 (incl. schedule-rrule + materialise), typecheck + lint clean across api/web/jobs.
+
+- **Q7 — schedule materialise timezone frame**: `occurrencesBetween` walks the rrule in floating wall-clock time but the `[now, windowEnd)` filter ran against the floating values (true instant computed only afterwards), so non-UTC schedules mis-framed near-`now` occurrences (west-of-UTC permanently dropped a near-future one). Now walk a padded ±14h window, convert to the true instant, then filter. (`schedule-materialise.ts`)
+- **Q9 — reminder enqueue atomicity**: a Redis blip after the occurrence row committed threw the handler; the retry's insert conflicted and the reminder was skipped forever. Now roll the just-inserted occurrence back on enqueue failure so the retry re-inserts AND re-enqueues.
+- **Q10 — dangling document-label ids**: `documentLabels.delete` now prunes the id from every referencing document's `labelIds` jsonb array in the same tx (was leaving a blank chip).
+- **Q11 — template-logo dev traversal**: GET now applies the `/api/files` `isObjectKey` + resolve-under-root guards (dev-only `.local-storage` escape; not prod-exploitable).
+- **Q8 — unbounded JSONB inputs**: shared `boundedRecord` (64KB + depth-12 caps, hardened vs BigInt/circular/stack) applied to 15 persisted custom-field/metadata/response inputs across assets/inspections/issues/sites/actions.
+
+**Deferred (documented, lowest priority):**
+- **Q12** — Tier-2 write-path integrity (documentFolders.parentId already fixed in Q3; the rest — inspections.saveProgress assetIds, actions siteId/sourceId — are latent: read paths are tenant-scoped, no proven live leak; defense-in-depth only).
+- **Q13** — dialog a11y: ~15 `DialogContent` lack a `DialogDescription` (benign Radix console warning; functional a11y via `DialogTitle` is intact). A proper fix is a per-dialog description sweep, disproportionate to severity right now.
