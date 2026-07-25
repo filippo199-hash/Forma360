@@ -2628,7 +2628,13 @@
     ],
     "bubbleTitle": "Asystent",
     "bubbleLabel": "Zapytaj asystenta",
-    "close": "Zamknij"
+    "close": "Zamknij",
+    "inputHint": "Enter to send · Shift+Enter for new line",
+    "stop": "Stop",
+    "copy": "Copy",
+    "copied": "Copied",
+    "working": "Looking things up…",
+    "openHistory": "Conversations"
   },
   "maintenancePrograms": {
     "title": "Maintenance Programs",

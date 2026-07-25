@@ -106,7 +106,13 @@
     ],
     "bubbleTitle": "Assistant",
     "bubbleLabel": "Ask the assistant",
-    "close": "Close"
+    "close": "Close",
+    "inputHint": "Enter to send · Shift+Enter for new line",
+    "stop": "Stop",
+    "copy": "Copy",
+    "copied": "Copied",
+    "working": "Looking things up…",
+    "openHistory": "Conversations"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

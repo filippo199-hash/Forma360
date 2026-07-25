@@ -2628,7 +2628,13 @@
     ],
     "bubbleTitle": "アシスタント",
     "bubbleLabel": "アシスタントに質問",
-    "close": "閉じる"
+    "close": "閉じる",
+    "inputHint": "Enter to send · Shift+Enter for new line",
+    "stop": "Stop",
+    "copy": "Copy",
+    "copied": "Copied",
+    "working": "Looking things up…",
+    "openHistory": "Conversations"
   },
   "maintenancePrograms": {
     "title": "Maintenance Programs",
