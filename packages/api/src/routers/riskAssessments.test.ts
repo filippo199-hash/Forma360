@@ -1,0 +1,380 @@
+/**
+ * Integration tests for the riskAssessments router (FreeHS module B1).
+ *
+ * Edge cases:
+ *   - RA-E01: create stamps sequential RA-XXXX references
+ *   - RA-E02: publish refuses an assessment with no hazards
+ *   - RA-E03: publish refuses unscored hazards (initial + residual required)
+ *   - RA-E04: a PPE-only hazard needs a justification to publish
+ *   - RA-E05: publish creates one action per planned control, exactly once
+ *     (republish does not duplicate)
+ *   - RA-E06: distribute requires active; acknowledgement lifecycle incl.
+ *     re-distribution reset
+ *   - RA-E07: acknowledging without being a recipient → NOT_FOUND
+ *   - RA-E08: recordReview logs the trigger and computes the next due date
+ *     from the review frequency
+ *   - RA-E09: person-specific variant copies hazards + controls as a linked
+ *     draft with action links cleared
+ *   - RA-E10: tenant isolation on get
+ *   - RA-E11: a disabled module (wrong brand) refuses every call
+ *   - RA-E12: standard users can view but not create
+ */
+import { readFile, readdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import { PGlite } from '@electric-sql/pglite';
+import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
+import { createLogger } from '@forma360/shared/logger';
+import { newId } from '@forma360/shared/id';
+import * as schema from '@forma360/db/schema';
+import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
+import { eq } from 'drizzle-orm';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { createTestContext } from '../context';
+import { appRouter } from '../router';
+import { createRiskAssessmentsRouter } from './riskAssessments';
+import { createCallerFactory, router } from '../trpc';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const MIGRATIONS_DIR = join(__dirname, '..', '..', '..', 'db', 'migrations');
+
+async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
+  const client = new PGlite();
+  const db = drizzle(client, { schema });
+  const files = (await readdir(MIGRATIONS_DIR)).filter((f) => f.endsWith('.sql')).sort();
+  for (const file of files) {
+    const sqlText = await readFile(join(MIGRATIONS_DIR, file), 'utf-8');
+    for (const stmt of sqlText.split('--> statement-breakpoint').map((s) => s.trim())) {
+      if (stmt.length > 0) await client.exec(stmt);
+    }
+  }
+  return { client, db };
+}
+
+const silentLogger = () => createLogger({ service: 'ra-test', level: 'fatal', nodeEnv: 'test' });
+const createCaller = createCallerFactory(appRouter);
+
+describe('riskAssessments router', () => {
+  let client: PGlite;
+  let db: PgliteDatabase<typeof schema>;
+  let tenantId: string;
+  let adminId: string;
+  let standardId: string;
+
+  function callerFor(userId: string) {
+    return createCaller(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId, email: 'ra@x.test', tenantId: tenantId as never },
+      }),
+    );
+  }
+
+  beforeEach(async () => {
+    ({ client, db } = await bootDb());
+    tenantId = newId();
+    await db
+      .insert(schema.tenants)
+      .values({ id: tenantId, name: 'Acme', slug: `acme-${tenantId}` });
+    const sets = await seedDefaultPermissionSets(db as never, tenantId);
+    adminId = `usr_${newId()}`;
+    standardId = `usr_${newId()}`;
+    await db.insert(schema.user).values([
+      {
+        id: adminId,
+        name: 'Alice Admin',
+        email: `alice-${tenantId}@acme.test`,
+        tenantId,
+        permissionSetId: sets.administrator,
+      },
+      {
+        id: standardId,
+        name: 'Stan Standard',
+        email: `stan-${tenantId}@acme.test`,
+        tenantId,
+        permissionSetId: sets.standard,
+      },
+    ]);
+  });
+
+  afterEach(async () => {
+    await client.close();
+  });
+
+  async function createScoredAssessment(caller: ReturnType<typeof callerFor>) {
+    const { assessmentId } = await caller.riskAssessments.create({
+      title: 'Manual handling',
+      activity: 'Moving stock',
+      type: 'standing',
+    });
+    const { hazardId } = await caller.riskAssessments.addHazard({
+      assessmentId,
+      hazard: 'Heavy lifting',
+      harmDescription: 'Back injury',
+      affectedGroups: ['employees', 'contractors'],
+      existingControls: 'Team lifting',
+      initialLikelihood: 4,
+      initialSeverity: 4,
+      residualLikelihood: 2,
+      residualSeverity: 3,
+    });
+    return { assessmentId, hazardId };
+  }
+
+  it('RA-E01: stamps sequential RA-XXXX reference numbers', async () => {
+    const caller = callerFor(adminId);
+    const first = await caller.riskAssessments.create({ title: 'One', activity: '' });
+    const second = await caller.riskAssessments.create({ title: 'Two', activity: '' });
+    expect(first.referenceNumber).toBe('RA-0001');
+    expect(second.referenceNumber).toBe('RA-0002');
+    const list = await caller.riskAssessments.list({ status: 'all', type: 'all' });
+    expect(list).toHaveLength(2);
+    expect(list.every((a) => a.status === 'draft')).toBe(true);
+  });
+
+  it('RA-E02: publish refuses an assessment without hazards', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId } = await caller.riskAssessments.create({ title: 'Empty', activity: '' });
+    await expect(caller.riskAssessments.publish({ assessmentId })).rejects.toMatchObject({
+      message: 'no-hazards',
+    });
+  });
+
+  it('RA-E03: publish refuses unscored hazards', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId } = await caller.riskAssessments.create({ title: 'Part', activity: '' });
+    await caller.riskAssessments.addHazard({
+      assessmentId,
+      hazard: 'Slips',
+      harmDescription: '',
+      affectedGroups: [],
+      existingControls: '',
+      initialLikelihood: 3,
+      initialSeverity: 3,
+      // residual missing
+    });
+    await expect(caller.riskAssessments.publish({ assessmentId })).rejects.toMatchObject({
+      message: 'unscored-hazards',
+    });
+  });
+
+  it('RA-E04: PPE-only hazard needs a justification to publish', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId, hazardId } = await createScoredAssessment(caller);
+    const { controlId } = await caller.riskAssessments.addControl({
+      hazardId,
+      description: 'Gloves',
+      tier: 'ppe',
+      status: 'in_place',
+    });
+    await expect(caller.riskAssessments.publish({ assessmentId })).rejects.toMatchObject({
+      message: 'ppe-only-needs-justification',
+    });
+    await caller.riskAssessments.updateControl({
+      controlId,
+      ppeJustification:
+        'Higher-order controls not reasonably practicable for residual splash risk.',
+    });
+    const res = await caller.riskAssessments.publish({ assessmentId });
+    expect(res.ok).toBe(true);
+  });
+
+  it('RA-E05: publish creates one action per planned control, exactly once', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId, hazardId } = await createScoredAssessment(caller);
+    await caller.riskAssessments.addControl({
+      hazardId,
+      description: 'Install lifting hoist',
+      tier: 'engineering',
+      status: 'planned',
+    });
+    await caller.riskAssessments.addControl({
+      hazardId,
+      description: 'Team lift SOP',
+      tier: 'administrative',
+      status: 'in_place',
+    });
+    const first = await caller.riskAssessments.publish({ assessmentId });
+    expect(first.actionsCreated).toBe(1);
+
+    const actionRows = await db
+      .select()
+      .from(schema.actions)
+      .where(eq(schema.actions.tenantId, tenantId));
+    expect(actionRows).toHaveLength(1);
+    const action = actionRows[0];
+    expect(action?.sourceType).toBe('risk_assessment');
+    expect(action?.sourceId).toBe(assessmentId);
+    expect(action?.title).toContain('Install lifting hoist');
+    expect(action?.referenceNumber).toMatch(/^AC-\d{6}$/);
+
+    const detail = await caller.riskAssessments.get({ assessmentId });
+    const planned = detail.hazards[0]?.controls.find((c) => c.status === 'planned');
+    expect(planned?.actionId).toBe(action?.id);
+
+    // Republish must not duplicate the action.
+    const second = await caller.riskAssessments.publish({ assessmentId });
+    expect(second.actionsCreated).toBe(0);
+    const actionRows2 = await db
+      .select()
+      .from(schema.actions)
+      .where(eq(schema.actions.tenantId, tenantId));
+    expect(actionRows2).toHaveLength(1);
+  });
+
+  it('RA-E06: distribution + acknowledgement lifecycle', async () => {
+    const admin = callerFor(adminId);
+    const standard = callerFor(standardId);
+    const { assessmentId } = await createScoredAssessment(admin);
+
+    // Draft assessments cannot be distributed.
+    await expect(
+      admin.riskAssessments.distribute({ assessmentId, userIds: [standardId] }),
+    ).rejects.toMatchObject({ message: 'not-active' });
+
+    await admin.riskAssessments.publish({ assessmentId });
+    await admin.riskAssessments.distribute({ assessmentId, userIds: [standardId] });
+
+    const pending = await standard.riskAssessments.listMyPending();
+    expect(pending).toHaveLength(1);
+
+    await standard.riskAssessments.acknowledge({ assessmentId });
+    const afterAck = await standard.riskAssessments.listMyPending();
+    expect(afterAck).toHaveLength(0);
+
+    const detail = await admin.riskAssessments.get({ assessmentId });
+    const ack = detail.acknowledgements.find((a) => a.userId === standardId);
+    expect(ack?.acknowledgedAt).not.toBeNull();
+
+    // Re-distribution resets the acknowledgement.
+    await admin.riskAssessments.distribute({ assessmentId, userIds: [standardId] });
+    const detail2 = await admin.riskAssessments.get({ assessmentId });
+    const ack2 = detail2.acknowledgements.find((a) => a.userId === standardId);
+    expect(ack2?.acknowledgedAt).toBeNull();
+    const rawRow = await db
+      .select()
+      .from(schema.riskAssessmentAcknowledgements)
+      .where(eq(schema.riskAssessmentAcknowledgements.userId, standardId));
+    expect(rawRow[0]?.redistributed).toBe(true);
+  });
+
+  it('RA-E07: acknowledging without being a recipient → NOT_FOUND', async () => {
+    const admin = callerFor(adminId);
+    const standard = callerFor(standardId);
+    const { assessmentId } = await createScoredAssessment(admin);
+    await admin.riskAssessments.publish({ assessmentId });
+    await expect(standard.riskAssessments.acknowledge({ assessmentId })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('RA-E08: recordReview logs the trigger and computes the next due date', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId } = await createScoredAssessment(caller);
+    await caller.riskAssessments.update({ assessmentId, reviewFrequencyMonths: 12 });
+    const res = await caller.riskAssessments.recordReview({
+      assessmentId,
+      trigger: 'incident',
+      outcome: 'updated',
+      note: 'Near miss on 14/07.',
+    });
+    expect(res.nextReviewAt).not.toBeNull();
+    const inAYear = new Date();
+    inAYear.setMonth(inAYear.getMonth() + 12);
+    expect(Math.abs((res.nextReviewAt as Date).getTime() - inAYear.getTime())).toBeLessThan(
+      1000 * 60 * 60 * 24 * 3,
+    );
+    const detail = await caller.riskAssessments.get({ assessmentId });
+    expect(detail.reviews).toHaveLength(1);
+    expect(detail.reviews[0]?.trigger).toBe('incident');
+    expect(detail.assessment.lastReviewedBy).toBe(adminId);
+  });
+
+  it('RA-E09: person-specific variant copies hazards + controls as a linked draft', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId, hazardId } = await createScoredAssessment(caller);
+    await caller.riskAssessments.addControl({
+      hazardId,
+      description: 'Hoist',
+      tier: 'engineering',
+      status: 'planned',
+    });
+    await caller.riskAssessments.publish({ assessmentId });
+
+    const variant = await caller.riskAssessments.createPersonSpecific({
+      assessmentId,
+      kind: 'young_person',
+    });
+    const detail = await caller.riskAssessments.get({ assessmentId: variant.assessmentId });
+    expect(detail.assessment.status).toBe('draft');
+    expect(detail.assessment.personSpecificFor).toBe('young_person');
+    expect(detail.assessment.parentAssessmentId).toBe(assessmentId);
+    expect(detail.hazards).toHaveLength(1);
+    expect(detail.hazards[0]?.controls).toHaveLength(1);
+    // Copied planned control must NOT inherit the parent's action link.
+    expect(detail.hazards[0]?.controls[0]?.actionId).toBeNull();
+
+    const parent = await caller.riskAssessments.get({ assessmentId });
+    expect(parent.linkedVariants).toHaveLength(1);
+  });
+
+  it('RA-E10: tenant isolation on get', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId } = await createScoredAssessment(caller);
+
+    const otherTenantId = newId();
+    await db
+      .insert(schema.tenants)
+      .values({ id: otherTenantId, name: 'Other', slug: `other-${otherTenantId}` });
+    const otherSets = await seedDefaultPermissionSets(db as never, otherTenantId);
+    const otherAdmin = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: otherAdmin,
+      name: 'Eve',
+      email: `eve-${otherTenantId}@other.test`,
+      tenantId: otherTenantId,
+      permissionSetId: otherSets.administrator,
+    });
+    const otherCaller = createCaller(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId: otherAdmin, email: 'eve@x', tenantId: otherTenantId as never },
+      }),
+    );
+    await expect(otherCaller.riskAssessments.get({ assessmentId })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('RA-E11: a disabled module refuses every call (brand gating)', async () => {
+    const disabledRouter = router({
+      riskAssessments: createRiskAssessmentsRouter({ enabled: false }),
+    });
+    const disabledCaller = createCallerFactory(disabledRouter)(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId: adminId, email: 'ra@x.test', tenantId: tenantId as never },
+      }),
+    );
+    await expect(
+      disabledCaller.riskAssessments.list({ status: 'all', type: 'all' }),
+    ).rejects.toMatchObject({ message: 'module-disabled' });
+    await expect(
+      disabledCaller.riskAssessments.create({ title: 'X', activity: '' }),
+    ).rejects.toMatchObject({ message: 'module-disabled' });
+  });
+
+  it('RA-E12: standard users can view but not create', async () => {
+    const admin = callerFor(adminId);
+    const standard = callerFor(standardId);
+    await createScoredAssessment(admin);
+    const list = await standard.riskAssessments.list({ status: 'all', type: 'all' });
+    expect(list).toHaveLength(1);
+    await expect(
+      standard.riskAssessments.create({ title: 'Nope', activity: '' }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+});

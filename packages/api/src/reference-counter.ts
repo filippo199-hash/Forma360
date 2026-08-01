@@ -2,8 +2,8 @@ import type { Database } from '@forma360/db/client';
 import { referenceCounters } from '@forma360/db/schema';
 import { sql } from 'drizzle-orm';
 
-/** Reference-number series. 'issue' → OBS-, 'action' → AC-. */
-export type ReferenceSeries = 'issue' | 'action';
+/** Reference-number series. 'issue' → OBS-, 'action' → AC-, 'riskAssessment' → RA-. */
+export type ReferenceSeries = 'issue' | 'action' | 'riskAssessment';
 
 /**
  * Atomically claim the next reference number for a (tenant, series).

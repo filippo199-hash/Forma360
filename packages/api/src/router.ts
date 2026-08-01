@@ -47,6 +47,10 @@ import { searchRouter } from './routers/search';
 import { siteMediaRouter } from './routers/siteMedia';
 import { sitePlansRouter } from './routers/sitePlans';
 import { contractorsRouter } from './routers/contractors';
+import {
+  createRiskAssessmentsRouter,
+  type RiskAssessmentsRouterDeps,
+} from './routers/riskAssessments';
 import { schedulesRouter } from './routers/schedules';
 import { signaturesRouter } from './routers/signatures';
 import { router } from './trpc';
@@ -66,6 +70,12 @@ export function buildAppRouter(deps: {
   inspections: InspectionsRouterDeps;
   issues: IssuesRouterDeps;
   headsUps: HeadsUpsRouterDeps;
+  /**
+   * Brand-gated (ADR 0010). Optional so pre-existing callers compile;
+   * omitting it DISABLES the module — production wiring passes the active
+   * brand's catalogue verdict explicitly.
+   */
+  riskAssessments?: RiskAssessmentsRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -102,6 +112,7 @@ export function buildAppRouter(deps: {
     documents: documentsRouter,
     search: searchRouter,
     aiAssistant: aiAssistantRouter,
+    riskAssessments: createRiskAssessmentsRouter(deps.riskAssessments ?? { enabled: false }),
   });
 }
 
@@ -224,6 +235,11 @@ export const stubHeadsUpsDeps: HeadsUpsRouterDeps = {
   },
 };
 
+/** Test-only risk-assessments deps — the module is enabled so the full
+ * surface is exercisable; brand gating is tested by building the router
+ * with `enabled: false` explicitly. */
+export const stubRiskAssessmentsDeps: RiskAssessmentsRouterDeps = { enabled: true };
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
@@ -231,6 +247,7 @@ export const appRouter = buildAppRouter({
   inspections: stubInspectionsDeps,
   issues: stubIssuesDeps,
   headsUps: stubHeadsUpsDeps,
+  riskAssessments: stubRiskAssessmentsDeps,
 });
 
 export type AppRouter = typeof appRouter;
