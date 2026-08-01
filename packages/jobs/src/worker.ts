@@ -9,6 +9,7 @@
  *      upsertJobScheduler.
  *   5. Handles SIGTERM / SIGINT by closing workers and queues cleanly.
  */
+import { getBrand } from '@forma360/shared/brand';
 import { parseServerEnv } from '@forma360/shared/env';
 import { createLogger, type Logger } from '@forma360/shared/logger';
 import * as Sentry from '@sentry/node';
@@ -144,6 +145,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     resendApiKey: env.RESEND_API_KEY,
     resendFrom: env.RESEND_FROM,
     logger: logger.child({ component: 'email' }),
+    productName: getBrand(env.BRAND).name,
   });
 
   const scheduleReminderWorker = new Worker(
@@ -173,6 +175,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     resendApiKey: env.RESEND_API_KEY,
     resendFrom: env.RESEND_FROM,
     logger: logger.child({ component: 'email-templated' }),
+    productName: getBrand(env.BRAND).name,
   });
 
   const maintenanceNotifyWorker = new Worker(

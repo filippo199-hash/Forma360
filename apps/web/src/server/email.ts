@@ -1,9 +1,11 @@
+import { getBrand } from '@forma360/shared/brand';
 import { createSendEmail, createSendTemplatedEmail } from '@forma360/shared/email';
 import { env } from './env';
 import { logger } from './logger';
 
 const baseConfig = {
   delivery: env.EMAIL_DELIVERY,
+  productName: getBrand(env.BRAND).name,
   ...(env.EMAIL_DELIVERY === 'resend'
     ? { resendApiKey: env.RESEND_API_KEY, resendFrom: env.RESEND_FROM }
     : {}),

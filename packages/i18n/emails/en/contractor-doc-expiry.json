@@ -4,5 +4,5 @@
   "greeting": "Hi,",
   "body": "Your document \"{requirementName}\" for {contractorName} expires on {expiresOn}. Please upload a renewed version so you stay compliant: {url}",
   "cta": "Upload a new document",
-  "footer": "You are receiving this because you are the contact for this contractor on Forma360."
+  "footer": "You are receiving this because you are the contact for this contractor on {productName}."
 }

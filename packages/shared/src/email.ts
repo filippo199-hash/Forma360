@@ -14,6 +14,7 @@
  */
 import { Resend } from 'resend';
 import { z } from 'zod';
+import { BRANDS, DEFAULT_BRAND_ID } from './brand';
 import type { Logger } from './logger';
 
 // Email templates are statically imported into a map. A variable dynamic
@@ -118,23 +119,29 @@ export const defaultTemplateLoader: TemplateLoader = (kind) => {
   return Promise.resolve(templateSchema.parse(tpl));
 };
 
-/** Render a template into the subject + plaintext body that we send. */
+/**
+ * Render a template into the subject + plaintext body that we send.
+ * Templates are brand-neutral (ADR 0010): the `{productName}` placeholder is
+ * substituted here so one template file serves every brand.
+ */
 export function renderEmail(
   template: EmailTemplate,
   url: string,
+  productName: string = BRANDS[DEFAULT_BRAND_ID].name,
 ): { subject: string; text: string } {
+  const vars = { productName };
   const text = [
-    template.preheader,
+    interpolate(template.preheader, vars),
     '',
-    template.greeting,
+    interpolate(template.greeting, vars),
     '',
-    template.body,
+    interpolate(template.body, vars),
     '',
-    `${template.cta}: ${url}`,
+    `${interpolate(template.cta, vars)}: ${url}`,
     '',
-    template.footer,
+    interpolate(template.footer, vars),
   ].join('\n');
-  return { subject: template.subject, text };
+  return { subject: interpolate(template.subject, vars), text };
 }
 
 // ─── Templated email (variable interpolation) ───────────────────────────────
@@ -233,6 +240,12 @@ export interface EmailDeps {
   logger: Logger;
   /** Override in tests; defaults to reading from packages/i18n/emails/en. */
   loadTemplate?: TemplateLoader;
+  /**
+   * Brand name substituted for `{productName}` in templates (ADR 0010).
+   * Wire from `getBrand(env.BRAND).name` at every boot site; the default
+   * only exists so tests and legacy callers keep working.
+   */
+  productName?: string;
 }
 
 /** Zod guard for the subset of the Resend response we rely on. */
@@ -242,7 +255,14 @@ const resendResponseSchema = z.object({
 });
 
 export function createSendEmail(deps: EmailDeps): SendEmail {
-  const { delivery, resendApiKey, resendFrom, logger, loadTemplate = defaultTemplateLoader } = deps;
+  const {
+    delivery,
+    resendApiKey,
+    resendFrom,
+    logger,
+    loadTemplate = defaultTemplateLoader,
+    productName = BRANDS[DEFAULT_BRAND_ID].name,
+  } = deps;
 
   let resend: Resend | undefined;
   if (delivery === 'resend') {
@@ -257,7 +277,7 @@ export function createSendEmail(deps: EmailDeps): SendEmail {
 
   return async function sendEmail(email): Promise<DeliveryResult> {
     const template = await loadTemplate(email.kind);
-    const { subject, text } = renderEmail(template, email.url);
+    const { subject, text } = renderEmail(template, email.url, productName);
 
     if (delivery === 'console') {
       logger.info(
@@ -325,6 +345,8 @@ export interface TemplatedEmailDeps {
   logger: Logger;
   /** Override in tests; defaults to reading from packages/i18n/emails/en. */
   loadTemplate?: TemplatedTemplateLoader;
+  /** Brand name substituted for `{productName}` in templates. See EmailDeps. */
+  productName?: string;
 }
 
 /**
@@ -339,6 +361,7 @@ export function createSendTemplatedEmail(deps: TemplatedEmailDeps): SendTemplate
     resendFrom,
     logger,
     loadTemplate = defaultTemplatedTemplateLoader,
+    productName = BRANDS[DEFAULT_BRAND_ID].name,
   } = deps;
 
   let resend: Resend | undefined;
@@ -354,7 +377,12 @@ export function createSendTemplatedEmail(deps: TemplatedEmailDeps): SendTemplate
 
   return async function sendTemplatedEmail(email): Promise<DeliveryResult> {
     const template = await loadTemplate(email.templateKey);
-    const { subject, text } = renderTemplatedEmail(template, email.variables);
+    // productName is injected for every send; an explicit caller variable of
+    // the same name wins (none exist today, but the spread order allows it).
+    const { subject, text } = renderTemplatedEmail(template, {
+      productName,
+      ...email.variables,
+    });
 
     if (delivery === 'console') {
       logger.info(

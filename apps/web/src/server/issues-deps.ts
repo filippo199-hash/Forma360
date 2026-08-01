@@ -5,6 +5,7 @@
  */
 import type { IssuesRouterDeps } from '@forma360/api';
 import { QUEUE_NAMES, getQueue } from '@forma360/jobs/queues';
+import { getBrand } from '@forma360/shared/brand';
 import { createSendTemplatedEmail } from '@forma360/shared/email';
 import Redis from 'ioredis';
 import { env } from './env';
@@ -13,6 +14,7 @@ import { storage } from './storage';
 
 const sendTemplatedEmail = createSendTemplatedEmail({
   delivery: env.EMAIL_DELIVERY,
+  productName: getBrand(env.BRAND).name,
   ...(env.EMAIL_DELIVERY === 'resend'
     ? { resendApiKey: env.RESEND_API_KEY, resendFrom: env.RESEND_FROM }
     : {}),

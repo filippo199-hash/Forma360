@@ -4,5 +4,5 @@
   "greeting": "Hi,",
   "body": "The maintenance plan \"{planName}\" for asset \"{assetName}\" is {status}. Service is due on {dueDate}.",
   "cta": "View maintenance plan",
-  "footer": "You are receiving this because you are an administrator on this Forma360 account."
+  "footer": "You are receiving this because you are an administrator on this {productName} account."
 }

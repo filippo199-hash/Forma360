@@ -1,8 +1,8 @@
 {
-  "subject": "Your Forma360 sign-in code: {otp}",
-  "preheader": "Use the code below to sign in to Forma360.",
+  "subject": "Your {productName} sign-in code: {otp}",
+  "preheader": "Use the code below to sign in to {productName}.",
   "greeting": "Hi,",
   "body": "Here is your one-time sign-in code:\n\n{otp}\n\nIt expires in 10 minutes. If you didn't try to sign in, you can safely ignore this message.",
   "cta": "Your code is {otp}",
-  "footer": "Forma360 will never ask you for this code over the phone or chat."
+  "footer": "{productName} will never ask you for this code over the phone or chat."
 }

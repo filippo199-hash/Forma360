@@ -2,7 +2,7 @@
   "subject": "Reminder: {headsUpTitle}",
   "preheader": "You have a heads-up message waiting for your action.",
   "greeting": "Hi {recipientName},",
-  "body": "You have a heads-up message that requires your attention: \"{headsUpTitle}\". Please open Forma360 to {actionRequired} it.",
+  "body": "You have a heads-up message that requires your attention: \"{headsUpTitle}\". Please open {productName} to {actionRequired} it.",
   "cta": "Open heads-up",
-  "footer": "You are receiving this reminder because a Forma360 administrator asked you to take action on this message."
+  "footer": "You are receiving this reminder because a {productName} administrator asked you to take action on this message."
 }

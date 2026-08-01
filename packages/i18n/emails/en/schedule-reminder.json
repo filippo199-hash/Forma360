@@ -1,8 +1,8 @@
 {
   "subject": "Upcoming inspection reminder",
-  "preheader": "An inspection is scheduled on Forma360.",
+  "preheader": "An inspection is scheduled on {productName}.",
   "greeting": "Hi,",
-  "body": "This is a reminder that an inspection has been scheduled for you. Open Forma360 to start it when you are ready.",
+  "body": "This is a reminder that an inspection has been scheduled for you. Open {productName} to start it when you are ready.",
   "cta": "Open inspection",
-  "footer": "You are receiving this because a Forma360 administrator scheduled an inspection for your account."
+  "footer": "You are receiving this because a {productName} administrator scheduled an inspection for your account."
 }

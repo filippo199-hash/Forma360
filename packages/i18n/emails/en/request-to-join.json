@@ -1,8 +1,8 @@
 {
   "subject": "{requesterEmail} wants to join {tenantName}",
-  "preheader": "Someone has asked to join your Forma360 workspace.",
+  "preheader": "Someone has asked to join your {productName} workspace.",
   "greeting": "Hi {adminName},",
-  "body": "{requesterName} ({requesterEmail}) has asked to join {tenantName} on Forma360. If you would like to grant them access, invite them from Settings → Users.",
+  "body": "{requesterName} ({requesterEmail}) has asked to join {tenantName} on {productName}. If you would like to grant them access, invite them from Settings → Users.",
   "cta": "Open settings",
-  "footer": "You are receiving this because you are an administrator of {tenantName} on Forma360."
+  "footer": "You are receiving this because you are an administrator of {tenantName} on {productName}."
 }

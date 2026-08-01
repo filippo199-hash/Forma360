@@ -5,12 +5,14 @@
  * singleton — this is the analog of the per-request `authDeps` factory.
  */
 import { setContractorsRouterDeps, setUsersRouterDeps } from '@forma360/api';
+import { getBrand } from '@forma360/shared/brand';
 import { createSendTemplatedEmail } from '@forma360/shared/email';
 import { env } from './env';
 import { logger } from './logger';
 
 const sendTemplatedEmail = createSendTemplatedEmail({
   delivery: env.EMAIL_DELIVERY,
+  productName: getBrand(env.BRAND).name,
   ...(env.EMAIL_DELIVERY === 'resend'
     ? { resendApiKey: env.RESEND_API_KEY, resendFrom: env.RESEND_FROM }
     : {}),
@@ -26,4 +28,5 @@ setUsersRouterDeps({
 setContractorsRouterDeps({
   sendEmail: sendTemplatedEmail,
   appUrl: env.APP_URL,
+  productName: getBrand(env.BRAND).name,
 });

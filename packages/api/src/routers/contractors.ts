@@ -6,6 +6,7 @@
  * not passed. Advisory requirements don't affect the status.
  */
 import { randomBytes } from 'node:crypto';
+import { DEFAULT_BRAND_ID, getBrand } from '@forma360/shared/brand';
 import type { Database } from '@forma360/db/client';
 import {
   assetTypes,
@@ -163,11 +164,18 @@ export interface ContractorsRouterDeps {
       }) => Promise<unknown>)
     | null;
   appUrl: string;
+  /** Brand name (ADR 0010) used as the tenant-name fallback in invite copy. */
+  productName: string;
 }
-const contractorsDeps: ContractorsRouterDeps = { sendEmail: null, appUrl: 'http://localhost:3000' };
+const contractorsDeps: ContractorsRouterDeps = {
+  sendEmail: null,
+  appUrl: 'http://localhost:3000',
+  productName: getBrand(DEFAULT_BRAND_ID).name,
+};
 export function setContractorsRouterDeps(deps: ContractorsRouterDeps): void {
   contractorsDeps.sendEmail = deps.sendEmail;
   contractorsDeps.appUrl = deps.appUrl;
+  contractorsDeps.productName = deps.productName;
 }
 
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -1535,7 +1543,7 @@ export const contractorsRouter = router({
               templateKey: 'contractor-portal-invite',
               variables: {
                 contractorName: contractor.name,
-                tenantName: tenantRow?.name ?? 'Forma360',
+                tenantName: tenantRow?.name ?? contractorsDeps.productName,
                 inviteUrl,
                 expiresIn: '7 days',
                 activities: activitiesText,

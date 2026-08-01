@@ -1,8 +1,8 @@
 {
   "subject": "New observation: {referenceNumber} – {issueTitle}",
-  "preheader": "A new observation has been reported in Forma360.",
+  "preheader": "A new observation has been reported in {productName}.",
   "greeting": "A new observation has been reported.",
-  "body": "Reference: {referenceNumber}\n\nTitle: {issueTitle}\n\nOpen Forma360 to review and take action.",
+  "body": "Reference: {referenceNumber}\n\nTitle: {issueTitle}\n\nOpen {productName} to review and take action.",
   "cta": "View observation",
   "footer": "You are receiving this notification because you are a recipient for this observation category."
 }

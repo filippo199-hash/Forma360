@@ -1,8 +1,8 @@
 {
-  "subject": "Verify your Forma360 email",
+  "subject": "Verify your {productName} email",
   "preheader": "Confirm your address to activate your account.",
   "greeting": "Hi,",
-  "body": "Welcome to Forma360. Please confirm your email address by clicking the link below. The link is valid for 24 hours.",
+  "body": "Welcome to {productName}. Please confirm your email address by clicking the link below. The link is valid for 24 hours.",
   "cta": "Verify email",
-  "footer": "If you did not create a Forma360 account, you can ignore this message."
+  "footer": "If you did not create a {productName} account, you can ignore this message."
 }
