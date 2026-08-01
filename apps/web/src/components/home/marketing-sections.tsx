@@ -20,6 +20,7 @@ import {
   STATS,
   WHATSAPP_SPOTLIGHT,
 } from '../../content/site';
+import { activeBrand } from '../../lib/brand';
 
 const ICONS: Record<Module['icon'], LucideIcon> = {
   'clipboard-check': ClipboardCheck,
@@ -107,7 +108,7 @@ function ChatMockup() {
           <Bot className="h-5 w-5" aria-hidden />
         </span>
         <div className="leading-tight">
-          <p className="text-sm font-semibold">Forma360 Assistant</p>
+          <p className="text-sm font-semibold">{`${activeBrand.name} Assistant`}</p>
           <p className="text-[11px] text-white/70">online</p>
         </div>
       </div>

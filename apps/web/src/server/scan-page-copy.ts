@@ -12,8 +12,10 @@
  * ESLint rule happy (the rule flags literal JSX text, not expressions
  * referencing an imported identifier).
  */
+import { activeBrand } from '../lib/brand';
+
 export const SCAN_PAGE_COPY = {
-  brandName: 'Forma360',
+  brandName: activeBrand.name,
   loading: 'Loading…',
   invalidTitle: 'This QR code is no longer active.',
   invalidBody:

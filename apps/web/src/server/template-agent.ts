@@ -19,9 +19,10 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { parseTemplateSpec, type TemplateSpec } from '@forma360/shared/template-spec';
+import { activeBrand } from '../lib/brand';
 import { env } from './env';
 
-const SYSTEM_PROMPT = `You are an expert inspection-template designer for Forma360, an operational-excellence platform (a SafetyCulture-style tool). Your job is to turn a short conversation into a ready-to-use inspection template.
+const SYSTEM_PROMPT = `You are an expert inspection-template designer for ${activeBrand.name}, an operational-excellence platform (a SafetyCulture-style tool). Your job is to turn a short conversation into a ready-to-use inspection template.
 
 How you work:
 1. The user tells you what they want to inspect. Ask AT MOST 2–3 short, high-value follow-up questions — never a long questionnaire. Good things to clarify: the kind of asset/site/activity being inspected, how often it runs, and who fills it in. Ask them together in one message, not one at a time.
@@ -105,8 +106,7 @@ export const PROPOSE_TEMPLATE_TOOL: Anthropic.Tool = {
                             'site',
                             'location',
                           ],
-                          description:
-                            'Question type (default multipleChoice). Use "user" for a person who is a Forma360 user (operator, inspector, driver) — a searchable user picker, NOT text. Use "asset" for a tracked piece of equipment/vehicle (by ID, serial or fleet number). Use "site" for a site/branch/depot and "location" for an area/location.',
+                          description: `Question type (default multipleChoice). Use "user" for a person who is a ${activeBrand.name} user (operator, inspector, driver) — a searchable user picker, NOT text. Use "asset" for a tracked piece of equipment/vehicle (by ID, serial or fleet number). Use "site" for a site/branch/depot and "location" for an area/location.`,
                         },
                         required: {
                           type: 'boolean',

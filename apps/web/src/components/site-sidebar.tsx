@@ -16,6 +16,7 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { activeBrand } from '../lib/brand';
 import { cn } from '../lib/cn';
 import { navLabelKey, useTerminology } from '../lib/terminology';
 
@@ -131,7 +132,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
         href={`/${locale}/ai`}
         className="flex h-14 shrink-0 items-center gap-2 border-b border-sidebar-border px-4 font-semibold tracking-tight text-sidebar-foreground"
       >
-        Forma360
+        {activeBrand.name}
       </Link>
       <SiteNavItems locale={locale} />
     </aside>

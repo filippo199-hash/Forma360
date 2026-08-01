@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { CONTACT } from '../../../src/content/legal';
+import { activeBrand } from '../../../src/lib/brand';
 
 export const metadata: Metadata = {
-  title: 'Contact — Forma360',
-  description: 'Get in touch with the Forma360 team.',
+  title: `Contact — ${activeBrand.name}`,
+  description: `Get in touch with the ${activeBrand.name} team.`,
 };
 
 export default async function ContactPage({ params }: { params: Promise<{ locale: string }> }) {

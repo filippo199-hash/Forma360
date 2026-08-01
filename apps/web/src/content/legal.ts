@@ -28,14 +28,14 @@ export const PRIVACY_POLICY: LegalDoc = {
   title: 'Privacy Policy',
   updated: COMPANY.lastUpdated,
   intro: [
-    `${COMPANY.legalEntity}, with its registered office at ${COMPANY.address} (“we”, “us”, “our”), operates the Forma360 operational-excellence platform at ${COMPANY.website}, including its AI assistant on the web and over WhatsApp. This Privacy Policy explains what personal data we collect, how we use it, who we share it with, and the rights you have. We are the data controller for the personal data described below.`,
+    `${COMPANY.legalEntity}, with its registered office at ${COMPANY.address} (“we”, “us”, “our”), operates the ${COMPANY.name} operational-excellence platform at ${COMPANY.website}, including its AI assistant on the web and over WhatsApp. This Privacy Policy explains what personal data we collect, how we use it, who we share it with, and the rights you have. We are the data controller for the personal data described below.`,
     `If you have any questions about this policy or how we handle your data, contact us at ${COMPANY.privacyEmail}.`,
   ],
   sections: [
     {
       heading: '1. Who this policy covers',
       body: [
-        'This policy applies to people who create or use a Forma360 account, members of organisations (“tenants”) that use Forma360, and anyone who contacts our AI assistant — including over WhatsApp.',
+        `This policy applies to people who create or use a ${COMPANY.name} account, members of organisations (“tenants”) that use ${COMPANY.name}, and anyone who contacts our AI assistant — including over WhatsApp.`,
       ],
     },
     {
@@ -53,8 +53,8 @@ export const PRIVACY_POLICY: LegalDoc = {
       heading: '3. How we use your data',
       body: ['We use personal data to:'],
       bullets: [
-        'Provide, maintain and secure the Forma360 platform and your organisation’s workspace.',
-        'Operate the AI assistant: match your WhatsApp number to your Forma360 account, scope requests to your organisation’s data, generate answers, and send replies.',
+        `Provide, maintain and secure the ${COMPANY.name} platform and your organisation’s workspace.`,
+        `Operate the AI assistant: match your WhatsApp number to your ${COMPANY.name} account, scope requests to your organisation’s data, generate answers, and send replies.`,
         'Authenticate you (passwordless email one-time codes) and manage permissions.',
         'Send service communications, such as verification codes and notifications you have configured.',
         'Diagnose problems, prevent abuse, and improve the service.',
@@ -76,7 +76,7 @@ export const PRIVACY_POLICY: LegalDoc = {
     {
       heading: '6. WhatsApp messaging',
       body: [
-        'Our WhatsApp assistant is provided through the WhatsApp Business Platform operated by Meta. When you message us on WhatsApp, Meta processes your message to deliver it to us and to deliver our replies to you, in accordance with Meta’s and WhatsApp’s own terms and privacy policies. We use your WhatsApp number solely to identify your Forma360 account and to respond to you. You can stop messaging the assistant at any time, and you can ask us to unlink your number (see “Your rights” and our Data Deletion page).',
+        `Our WhatsApp assistant is provided through the WhatsApp Business Platform operated by Meta. When you message us on WhatsApp, Meta processes your message to deliver it to us and to deliver our replies to you, in accordance with Meta’s and WhatsApp’s own terms and privacy policies. We use your WhatsApp number solely to identify your ${COMPANY.name} account and to respond to you. You can stop messaging the assistant at any time, and you can ask us to unlink your number (see “Your rights” and our Data Deletion page).`,
       ],
     },
     {
@@ -122,7 +122,7 @@ export const PRIVACY_POLICY: LegalDoc = {
     {
       heading: '12. Children',
       body: [
-        'Forma360 is a workplace tool and is not directed to children. We do not knowingly collect data from anyone under 16.',
+        `${COMPANY.name} is a workplace tool and is not directed to children. We do not knowingly collect data from anyone under 16.`,
       ],
     },
     {
@@ -144,13 +144,13 @@ export const TERMS_OF_SERVICE: LegalDoc = {
   title: 'Terms of Service',
   updated: COMPANY.lastUpdated,
   intro: [
-    `These Terms of Service (“Terms”) govern your access to and use of the Forma360 platform and its AI assistant (the “Service”) provided by ${COMPANY.legalEntity}, with its registered office at ${COMPANY.address} (“we”, “us”, “our”). By creating an account or using the Service, you agree to these Terms.`,
+    `These Terms of Service (“Terms”) govern your access to and use of the ${COMPANY.name} platform and its AI assistant (the “Service”) provided by ${COMPANY.legalEntity}, with its registered office at ${COMPANY.address} (“we”, “us”, “our”). By creating an account or using the Service, you agree to these Terms.`,
   ],
   sections: [
     {
       heading: '1. The Service',
       body: [
-        'Forma360 is a multi-tenant operational-excellence platform for inspections, issues, corrective actions, assets, documents and analytics, including an AI assistant available on the web and over WhatsApp. We may add, change or remove features over time.',
+        `${COMPANY.name} is a multi-tenant operational-excellence platform for inspections, issues, corrective actions, assets, documents and analytics, including an AI assistant available on the web and over WhatsApp. We may add, change or remove features over time.`,
       ],
     },
     {
@@ -236,13 +236,13 @@ export const DATA_DELETION: LegalDoc = {
       body: ['You can request deletion in either of these ways:'],
       bullets: [
         `Email ${COMPANY.privacyEmail} from the email address associated with your account, with the subject “Delete my data”. If your request concerns WhatsApp, include the WhatsApp phone number you used.`,
-        'Ask your organisation’s administrator to deactivate or anonymise your user account from within Forma360.',
+        `Ask your organisation’s administrator to deactivate or anonymise your user account from within ${COMPANY.name}.`,
       ],
     },
     {
       heading: 'What gets deleted',
       body: [
-        'On a verified request we delete or anonymise the personal data we hold about you, including your account profile, your AI assistant conversation history, and the link between your WhatsApp number and your Forma360 account so the assistant no longer recognises you.',
+        `On a verified request we delete or anonymise the personal data we hold about you, including your account profile, your AI assistant conversation history, and the link between your WhatsApp number and your ${COMPANY.name} account so the assistant no longer recognises you.`,
       ],
     },
     {
@@ -260,14 +260,14 @@ export const DATA_DELETION: LegalDoc = {
     {
       heading: 'WhatsApp data',
       body: [
-        'Messages you send on WhatsApp are also handled by Meta under its own policies. Deleting your data with us removes it from Forma360; to manage data held by WhatsApp itself, use the controls in your WhatsApp app or contact Meta.',
+        `Messages you send on WhatsApp are also handled by Meta under its own policies. Deleting your data with us removes it from ${COMPANY.name}; to manage data held by WhatsApp itself, use the controls in your WhatsApp app or contact Meta.`,
       ],
     },
   ],
 };
 
 export const ABOUT = {
-  title: 'About Forma360',
+  title: `About ${COMPANY.name}`,
   paragraphs: [
     `${COMPANY.name} is an operational-excellence platform that helps organisations run inspections, manage issues and corrective actions, track assets and maintenance, centralise documents, and understand performance through analytics — all with strict, multi-tenant data isolation.`,
     'Our built-in AI assistant lets teams ask questions about their operations in plain language and get instant, data-scoped answers — on the web and over WhatsApp, so people can check in from wherever they work.',

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { auth } from '../server/auth';
 import { db } from '../server/db';
 import { NAV } from '../content/site';
+import { activeBrand } from '../lib/brand';
 import { GlobalSearch } from './global-search';
 import { UserMenu } from './header/user-menu';
 import { MobileNav } from './mobile-nav';
@@ -53,13 +54,13 @@ function SiteHeaderInner({
          * the header carries a hamburger drawer + wordmark instead. */}
         {showBrand ? (
           <Link href="/" className="font-semibold tracking-tight">
-            Forma360
+            {activeBrand.name}
           </Link>
         ) : (
           <div className="flex items-center gap-1.5">
             {session !== null ? <MobileNav locale={locale} /> : null}
             <Link href={`/${locale}/ai`} className="font-semibold tracking-tight md:hidden">
-              Forma360
+              {activeBrand.name}
             </Link>
           </div>
         )}

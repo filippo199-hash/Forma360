@@ -6,31 +6,30 @@
  * user-facing string in one editable place. The public marketing + legal
  * pages are English-only by design (legal/review content), separate from the
  * in-app i18n catalogue.
+ *
+ * Brand identity (product name, legal entity, domains) comes from the brand
+ * catalogue (ADR 0010) — never hardcode a product name in this file.
  */
+import { activeBrand } from '../lib/brand';
 
 /** Company / contact details. Used across legal pages, contact, and footer. */
 export const COMPANY = {
   /** Product / trading name. */
-  name: 'Forma360',
+  name: activeBrand.name,
   /** Registered legal-entity name (Companies House). */
-  legalName: 'Forma360 Ltd',
+  legalName: activeBrand.legalName,
   /** Companies House registration number (England & Wales). */
-  companyNumber: '17292397',
-  /**
-   * Full legal-entity descriptor for the opening line of legal documents,
-   * e.g. "Forma360 Ltd, a company registered in England and Wales under
-   * company number 17292397".
-   */
-  legalEntity:
-    'Forma360 Ltd, a company registered in England and Wales under company number 17292397',
+  companyNumber: activeBrand.companyNumber,
+  /** Full legal-entity descriptor for the opening line of legal documents. */
+  legalEntity: activeBrand.legalEntity,
   /** Registered office address (Companies House / Meta App Settings → Basic). */
-  address: '128 City Road, London, EC1V 2NX, United Kingdom',
+  address: activeBrand.address,
   /** Country of establishment / governing law. */
-  jurisdiction: 'England and Wales',
+  jurisdiction: activeBrand.jurisdiction,
   /** Public-facing contact addresses. Must forward to a monitored inbox. */
-  email: 'support@forma360.io',
-  privacyEmail: 'privacy@forma360.io',
-  website: 'https://forma360.io',
+  email: activeBrand.supportEmail,
+  privacyEmail: activeBrand.privacyEmail,
+  website: activeBrand.website,
   /** Last review date shown on legal documents. */
   lastUpdated: '22 June 2026',
 } as const;
@@ -45,8 +44,7 @@ export const NAV = {
 export const HERO = {
   eyebrow: 'The operational excellence platform',
   title: 'Inspect, resolve, improve — and just ask.',
-  subtitle:
-    'Forma360 brings inspections, issues, corrective actions, assets and analytics into one platform. Its AI assistant answers questions about your operations in plain language — in the app or over WhatsApp.',
+  subtitle: `${activeBrand.name} brings inspections, issues, corrective actions, assets and analytics into one platform. Its AI assistant answers questions about your operations in plain language — in the app or over WhatsApp.`,
   primaryCta: 'Get started',
   secondaryCta: 'Book a demo',
   /** Shown instead of the primary CTA when the visitor is already signed in. */
@@ -161,7 +159,7 @@ export interface ChatTurn {
 export const WHATSAPP_SPOTLIGHT = {
   eyebrow: 'What sets us apart',
   title: 'Your operations, one WhatsApp message away',
-  body: 'No app to open, no dashboard to learn. Your team messages the Forma360 assistant on WhatsApp and gets answers scoped to your organisation — instantly. We match the sender to their account, look up only their data, and reply in the same chat.',
+  body: `No app to open, no dashboard to learn. Your team messages the ${activeBrand.name} assistant on WhatsApp and gets answers scoped to your organisation — instantly. We match the sender to their account, look up only their data, and reply in the same chat.`,
   bullets: [
     'Answers scoped to the sender’s own organisation',
     'Powered by the same AI assistant as the web app',
@@ -191,5 +189,4 @@ export const CTA = {
 } as const;
 
 /** Short explanation of how the WhatsApp assistant works (used on About). */
-export const WHATSAPP_BLURB =
-  'Members of an organisation can message the Forma360 assistant on WhatsApp. We match the sender’s WhatsApp number to their Forma360 user account, scope the request to that organisation’s data, generate an answer with our AI assistant, and reply — all within the conversation the user started.';
+export const WHATSAPP_BLURB = `Members of an organisation can message the ${activeBrand.name} assistant on WhatsApp. We match the sender’s WhatsApp number to their ${activeBrand.name} user account, scope the request to that organisation’s data, generate an answer with our AI assistant, and reply — all within the conversation the user started.`;

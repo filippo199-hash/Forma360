@@ -40,11 +40,12 @@ import {
   toToolError,
   WRITE_INSTRUCTIONS,
 } from './agent-tools';
+import { activeBrand } from '../lib/brand';
 import { createServerCaller, type ServerCaller } from './server-caller';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import type { PermissionKey } from '@forma360/permissions/catalogue';
 
-const SYSTEM_PROMPT = `You are an AI assistant for Forma360, an operational-excellence platform.
+const SYSTEM_PROMPT = `You are an AI assistant for ${activeBrand.name}, an operational-excellence platform.
 You have access to this company's data via tools. Always use tools to look up real data before answering questions about inspections, issues, actions, assets, documents, or heads-up items.
 Be concise and helpful. Format lists clearly. Always scope your responses to the data you retrieve — never invent data.
 Today's date context is provided when you call tools. Times are UTC.`;

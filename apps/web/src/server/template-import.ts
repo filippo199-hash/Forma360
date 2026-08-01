@@ -12,11 +12,12 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { parseTemplateSpec, type TemplateSpec } from '@forma360/shared/template-spec';
+import { activeBrand } from '../lib/brand';
 import { env } from './env';
 import { PROPOSE_TEMPLATE_TOOL } from './template-agent';
 import { isExcelLike, isPdf, workbookToText } from './template-import-xlsx';
 
-const IMPORT_SYSTEM_PROMPT = `You convert existing inspection checklists and forms into Forma360 inspection templates.
+const IMPORT_SYSTEM_PROMPT = `You convert existing inspection checklists and forms into ${activeBrand.name} inspection templates.
 
 You are given a source document (a PDF form or a spreadsheet exported to text). Read it carefully and reproduce its structure as faithfully as you can, then call the proposeTemplate tool with the result. Rules:
 - Preserve the document's own sections, ordering and wording as closely as possible. Do not invent extra questions that aren't implied by the source, and don't drop questions that are there.
@@ -44,7 +45,7 @@ function buildUserContent(input: {
       },
       {
         type: 'text',
-        text: `Convert this inspection form ("${filename}") into a Forma360 template by calling proposeTemplate.`,
+        text: `Convert this inspection form ("${filename}") into a ${activeBrand.name} template by calling proposeTemplate.`,
       },
     ];
   }
@@ -57,7 +58,7 @@ function buildUserContent(input: {
     return [
       {
         type: 'text',
-        text: `Convert this spreadsheet checklist ("${filename}") into a Forma360 template by calling proposeTemplate. The sheets, as CSV:\n\n${text}`,
+        text: `Convert this spreadsheet checklist ("${filename}") into a ${activeBrand.name} template by calling proposeTemplate. The sheets, as CSV:\n\n${text}`,
       },
     ];
   }

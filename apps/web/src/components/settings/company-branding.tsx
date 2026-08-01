@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { activeBrand } from '../../lib/brand';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
@@ -34,7 +35,9 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
   const [logoStorageKey, setLogoStorageKey] = useState<string | undefined>(
     branding?.logoStorageKey,
   );
-  const [primaryColor, setPrimaryColor] = useState<string>(branding?.primaryColor ?? DEFAULT_PRIMARY);
+  const [primaryColor, setPrimaryColor] = useState<string>(
+    branding?.primaryColor ?? DEFAULT_PRIMARY,
+  );
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -184,7 +187,7 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
                     {t('noLogo')}
                   </div>
                 )}
-                <span className="text-sm font-medium">Forma360</span>
+                <span className="text-sm font-medium">{activeBrand.name}</span>
               </div>
             </div>
           </div>

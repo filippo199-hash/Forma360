@@ -1,5 +1,6 @@
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
+import { activeBrand } from '../lib/brand';
 
 export function SiteFooter() {
   const locale = useLocale();
@@ -15,7 +16,8 @@ export function SiteFooter() {
     <footer className="border-t text-xs text-muted-foreground">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <span>
-          © {year} Forma360 Ltd · Company No. 17292397 · Registered in England &amp; Wales
+          © {year} {activeBrand.legalName} · Company No. {activeBrand.companyNumber} · Registered in
+          England &amp; Wales
         </span>
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
           {links.map((l) => (

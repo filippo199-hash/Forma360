@@ -3,6 +3,7 @@
 import type { TemplateContent } from '@forma360/shared/template-schema';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
+import { activeBrand } from '../../lib/brand';
 import { responseChipClasses } from '../../lib/response-colors';
 import { InstructionBody } from '../inspections/instruction-render';
 import { Button } from '../ui/button';
@@ -322,7 +323,7 @@ function BrandingForm({
             ) : (
               <div className="h-8 w-12 rounded bg-white/30" aria-hidden="true" />
             )}
-            <span className="text-sm font-medium">Forma360</span>
+            <span className="text-sm font-medium">{activeBrand.name}</span>
           </div>
           <div className="h-2 w-full" style={{ backgroundColor: accentColor ?? '#38bdf8' }} />
         </div>

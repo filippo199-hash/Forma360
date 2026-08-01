@@ -14,6 +14,7 @@ import { PortalHeader } from '../../src/components/portal/portal-header';
 import { SiteFooter } from '../../src/components/site-footer';
 import { SiteHeader } from '../../src/components/site-header';
 import { SiteSidebar } from '../../src/components/site-sidebar';
+import { activeBrand } from '../../src/lib/brand';
 import { isPathAllowedForExternal, loadContractorUser } from '../../src/server/contractor-portal';
 import { ThemeProvider } from '../../src/components/theme-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
@@ -42,8 +43,8 @@ const hanken = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'Forma360',
-  description: 'Forma360 — operational excellence platform.',
+  title: activeBrand.name,
+  description: `${activeBrand.name} — operational excellence platform.`,
 };
 
 export const viewport: Viewport = {

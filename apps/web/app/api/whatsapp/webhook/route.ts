@@ -16,6 +16,7 @@
 import { and, desc, eq, gt, isNull, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { aiConversations, user, whatsappOptOuts } from '@forma360/db/schema';
+import { activeBrand } from '../../../../src/lib/brand';
 import { type AgentImage, SUPPORTED_IMAGE_MEDIA_TYPES } from '../../../../src/server/agent-tools';
 import { runAiAgentTurn } from '../../../../src/server/ai-agent';
 import { rateLimit } from '../../../../src/server/rate-limit';
@@ -37,9 +38,8 @@ const log = logger.child({ module: 'whatsapp-webhook' });
 /** Continue the user's most recent conversation if touched within this window. */
 const CONVERSATION_RECENCY_MS = 6 * 60 * 60 * 1000;
 
-/** Message shown when an inbound number isn't linked to any Forma360 user. */
-const UNLINKED_REPLY =
-  "Hi! This WhatsApp number isn't linked to a Forma360 account yet. Ask your administrator to add your phone number to your user profile, then try again.";
+/** Message shown when an inbound number isn't linked to any user account. */
+const UNLINKED_REPLY = `Hi! This WhatsApp number isn't linked to a ${activeBrand.name} account yet. Ask your administrator to add your phone number to your user profile, then try again.`;
 
 const GENERIC_ERROR_REPLY =
   'Sorry — something went wrong handling your message. Please try again in a moment.';
@@ -55,9 +55,8 @@ const OPT_OUT_KEYWORDS = new Set(['stop', 'unsubscribe', 'cancel', 'quit', 'end'
 /** Keywords that opt a previously-opted-out sender back IN. */
 const OPT_IN_KEYWORDS = new Set(['start', 'unstop', 'resume', 'subscribe']);
 
-const OPT_OUT_REPLY =
-  "You've been unsubscribed from the Forma360 WhatsApp assistant and won't receive further messages here. Reply START at any time to resume.";
-const OPT_IN_REPLY = "You're resubscribed to the Forma360 WhatsApp assistant. How can I help?";
+const OPT_OUT_REPLY = `You've been unsubscribed from the ${activeBrand.name} WhatsApp assistant and won't receive further messages here. Reply START at any time to resume.`;
+const OPT_IN_REPLY = `You're resubscribed to the ${activeBrand.name} WhatsApp assistant. How can I help?`;
 
 /** Normalise to the first word, lowercased, letters only ("STOP." → "stop"). */
 function firstKeyword(text: string): string {
