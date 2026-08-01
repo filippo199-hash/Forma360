@@ -465,8 +465,13 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   titles live). Email templates use the `{productName}` placeholder;
   both dispatchers substitute it from their `productName` dep.
 - **Brand differences live in exactly four places**: brand config, i18n
-  overrides, the module catalogue (future), entitlement defaults
-  (future). Inline `if (brand === 'x')` in core logic is banned.
+  overrides, the module catalogue (`BRAND_MODULES` + `brandHasModule` in
+  `packages/shared/src/brand.ts`), entitlement defaults (future). Inline
+  `if (brand === 'x')` in core logic is banned.
+- **Brand-only modules**: FreeHS ships `riskAssessments` (module B1 —
+  HSE five-step editor at `packages/api/src/routers/riskAssessments.ts` +
+  `apps/web/app/[locale]/risk-assessments`). The router is built with
+  `{ enabled }` from the brand catalogue; nav + API both gate on it.
 - **Everything internal stays `forma360`** (package scope, queue names,
   ESLint rule namespace, object keys). Users never see those.
 - Each brand gets its own Railway project, Postgres, Redis, R2, Resend

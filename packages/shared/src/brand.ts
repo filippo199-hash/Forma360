@@ -102,3 +102,24 @@ export function resolveBrandId(value: unknown): BrandId {
 export function getBrand(id: BrandId): BrandConfig {
   return BRANDS[id];
 }
+
+// ─── Module catalogue (ADR 0010, place 3 of 4) ───────────────────────────────
+
+/** Modules that exist only in some brands. Core modules are not listed. */
+export const BRAND_ONLY_MODULES = ['riskAssessments'] as const;
+
+export type BrandOnlyModule = (typeof BRAND_ONLY_MODULES)[number];
+
+/**
+ * Which brand-only modules each product ships. Core modules (inspections,
+ * issues, actions, …) exist everywhere and are governed by permissions
+ * only; this catalogue gates the brand-specific surface on top.
+ */
+export const BRAND_MODULES: Record<BrandId, ReadonlyArray<BrandOnlyModule>> = {
+  forma360: [],
+  freehs: ['riskAssessments'],
+};
+
+export function brandHasModule(id: BrandId, module: BrandOnlyModule): boolean {
+  return BRAND_MODULES[id].includes(module);
+}
