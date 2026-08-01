@@ -13,6 +13,7 @@
  *   - Every new variable is added here first, then to `.env.example`.
  */
 import { z, type ZodError } from 'zod';
+import { brandIdSchema, DEFAULT_BRAND_ID } from './brand';
 
 // ─── Enumerations ───────────────────────────────────────────────────────────
 
@@ -25,6 +26,19 @@ const emailDeliverySchema = z.enum(['resend', 'console']);
 const serverSchemaBase = z.object({
   NODE_ENV: nodeEnvSchema.default('development'),
   APP_URL: z.string().url(),
+
+  /**
+   * Which product identity this deployment serves (ADR 0010). One deployment
+   * serves exactly one brand; the Forma360 and FreeHS Railway projects differ
+   * only in env. Defaults to forma360 so existing deployments are unaffected.
+   */
+  BRAND: brandIdSchema.default(DEFAULT_BRAND_ID),
+  /**
+   * Build-time mirror of BRAND for the client bundle (Next.js inlines
+   * NEXT_PUBLIC_* at build). Declared here too so the refinement below can
+   * refuse a deployment where server and client disagree on the brand.
+   */
+  NEXT_PUBLIC_BRAND: brandIdSchema.optional(),
 
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
@@ -117,6 +131,25 @@ const serverSchema = serverSchemaBase.superRefine((val, ctx) => {
         'Set EMAIL_DELIVERY=resend in production environments.',
     });
   }
+  // The server (BRAND) and the client bundle (NEXT_PUBLIC_BRAND, inlined at
+  // build) must agree on the brand, or one deployment would show two
+  // identities. Refuse the mismatch at boot rather than shipping it.
+  if (val.NEXT_PUBLIC_BRAND !== undefined && val.NEXT_PUBLIC_BRAND !== val.BRAND) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['NEXT_PUBLIC_BRAND'],
+      message: `NEXT_PUBLIC_BRAND (${val.NEXT_PUBLIC_BRAND}) must match BRAND (${val.BRAND}).`,
+    });
+  }
+  if (val.BRAND !== DEFAULT_BRAND_ID && val.NEXT_PUBLIC_BRAND === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['NEXT_PUBLIC_BRAND'],
+      message:
+        `BRAND=${val.BRAND} requires NEXT_PUBLIC_BRAND=${val.BRAND} as well — ` +
+        'the client bundle reads the NEXT_PUBLIC_ variant at build time.',
+    });
+  }
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;
@@ -125,6 +158,8 @@ export type ServerEnv = z.infer<typeof serverSchema>;
 
 const clientSchema = z.object({
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+  /** Brand id inlined into the client bundle. Absent means the default brand. */
+  NEXT_PUBLIC_BRAND: brandIdSchema.optional(),
 });
 
 export type ClientEnv = z.infer<typeof clientSchema>;

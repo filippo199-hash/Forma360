@@ -12,6 +12,10 @@
       "types": "./src/env.ts",
       "default": "./src/env.ts"
     },
+    "./brand": {
+      "types": "./src/brand.ts",
+      "default": "./src/brand.ts"
+    },
     "./id": {
       "types": "./src/id.ts",
       "default": "./src/id.ts"

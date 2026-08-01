@@ -115,6 +115,35 @@ describe('parseServerEnv', () => {
     expect(withoutDsn.SENTRY_DSN).toBeUndefined();
   });
 
+  it('defaults BRAND to forma360', () => {
+    expect(parseServerEnv(validServerEnv).BRAND).toBe('forma360');
+  });
+
+  it('accepts a matching BRAND / NEXT_PUBLIC_BRAND pair', () => {
+    const env = parseServerEnv({
+      ...validServerEnv,
+      BRAND: 'freehs',
+      NEXT_PUBLIC_BRAND: 'freehs',
+    });
+    expect(env.BRAND).toBe('freehs');
+  });
+
+  it('rejects an unknown BRAND value', () => {
+    expect(() => parseServerEnv({ ...validServerEnv, BRAND: 'acme' })).toThrow(/BRAND/);
+  });
+
+  it('rejects a BRAND / NEXT_PUBLIC_BRAND mismatch', () => {
+    expect(() =>
+      parseServerEnv({ ...validServerEnv, BRAND: 'freehs', NEXT_PUBLIC_BRAND: 'forma360' }),
+    ).toThrow(/NEXT_PUBLIC_BRAND/);
+  });
+
+  it('rejects a non-default BRAND without its NEXT_PUBLIC mirror', () => {
+    expect(() => parseServerEnv({ ...validServerEnv, BRAND: 'freehs' })).toThrow(
+      /NEXT_PUBLIC_BRAND/,
+    );
+  });
+
   it('collects all failing variables in a single error', () => {
     try {
       parseServerEnv({ ...validServerEnv, APP_URL: 'bad', DATABASE_URL: 'also-bad' });

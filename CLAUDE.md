@@ -449,6 +449,29 @@ PR.
   endpoint every destructive admin UI calls. Phase 3's issue archive /
   category delete flows reuse it.
 
+## Brands (ADR 0010) — Forma360 + FreeHS
+
+The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
+(freehs.software). One deployment serves exactly one brand, selected by
+`BRAND` + `NEXT_PUBLIC_BRAND` (must match; schema-enforced).
+
+- **Brand config** at `packages/shared/src/brand.ts` (`BRANDS`,
+  `getBrand`, `resolveBrandId`). In apps/web, import `activeBrand` from
+  `apps/web/src/lib/brand.ts` — works in server AND client code.
+- **Never hardcode a product name** in user-facing strings. Web surfaces
+  use `activeBrand.name`; i18n copy that differs per brand goes in
+  `packages/i18n/overrides/<brand>/<locale>.json` (deep-merged over the
+  base bundle at request time — this is also where per-brand module
+  titles live). Email templates use the `{productName}` placeholder;
+  both dispatchers substitute it from their `productName` dep.
+- **Brand differences live in exactly four places**: brand config, i18n
+  overrides, the module catalogue (future), entitlement defaults
+  (future). Inline `if (brand === 'x')` in core logic is banned.
+- **Everything internal stays `forma360`** (package scope, queue names,
+  ESLint rule namespace, object keys). Users never see those.
+- Each brand gets its own Railway project, Postgres, Redis, R2, Resend
+  domain, Sentry and secrets. Databases are never shared across brands.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)
@@ -460,6 +483,7 @@ PR.
 - [0007 — Access state at time of action](./docs/adr/0007-access-state-at-time-of-action.md)
 - [0008 — Rendered output strategy](./docs/adr/0008-rendered-output-strategy.md)
 - [0009 — Template content schema](./docs/adr/0009-template-content-schema.md)
+- [0010 — Multi-brand, single codebase](./docs/adr/0010-multi-brand-single-codebase.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase
