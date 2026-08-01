@@ -68,7 +68,10 @@ export function ReviewSection({
   const [note, setNote] = useState('');
 
   const update = trpc.riskAssessments.update.useMutation({
-    onSuccess: onChanged,
+    onSuccess: () => {
+      toast.success(t('review.savedToast'));
+      onChanged();
+    },
     onError: () => toast.error(t('saveError')),
   });
   const record = trpc.riskAssessments.recordReview.useMutation({

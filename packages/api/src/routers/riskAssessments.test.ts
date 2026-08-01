@@ -377,4 +377,53 @@ describe('riskAssessments router', () => {
       standard.riskAssessments.create({ title: 'Nope', activity: '' }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
+
+  it('RA-E13: create seeds the 12-month review schedule and get exposes creator + linked actions', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId, hazardId } = await createScoredAssessment(caller);
+    const detail = await caller.riskAssessments.get({ assessmentId });
+    expect(detail.createdByName).toBe('Alice Admin');
+    expect(detail.assessment.reviewFrequencyMonths).toBe(12);
+    const due = detail.assessment.nextReviewAt;
+    expect(due).not.toBeNull();
+    const expected = new Date();
+    expected.setMonth(expected.getMonth() + 12);
+    expect(Math.abs((due as Date).getTime() - expected.getTime())).toBeLessThan(
+      1000 * 60 * 60 * 24 * 3,
+    );
+
+    await caller.riskAssessments.addControl({
+      hazardId,
+      description: 'Install hoist',
+      tier: 'engineering',
+      status: 'planned',
+    });
+    await caller.riskAssessments.publish({ assessmentId });
+    const after = await caller.riskAssessments.get({ assessmentId });
+    expect(after.linkedActions).toHaveLength(1);
+    expect(after.linkedActions[0]?.title).toContain('Install hoist');
+  });
+
+  it('RA-E14: generated actions default to publisher / medium / due in 7 days', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId, hazardId } = await createScoredAssessment(caller);
+    await caller.riskAssessments.addControl({
+      hazardId,
+      description: 'Guard rail',
+      tier: 'engineering',
+      status: 'planned',
+    });
+    await caller.riskAssessments.publish({ assessmentId });
+    const rows = await db
+      .select()
+      .from(schema.actions)
+      .where(eq(schema.actions.tenantId, tenantId));
+    expect(rows).toHaveLength(1);
+    const action = rows[0];
+    expect(action?.assigneeUserId).toBe(adminId);
+    expect(action?.priority).toBe('medium');
+    const dueIn = (action?.dueAt as Date).getTime() - Date.now();
+    expect(dueIn).toBeGreaterThan(1000 * 60 * 60 * 24 * 6);
+    expect(dueIn).toBeLessThan(1000 * 60 * 60 * 24 * 8);
+  });
 });

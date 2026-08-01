@@ -13,6 +13,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
+import { MatrixPicker } from './matrix-picker';
 import { RiskBandChip } from './risk-band-chip';
 
 export interface HazardControl {
@@ -38,53 +39,13 @@ export interface HazardWithControls {
 }
 
 const TIERS = ['eliminate', 'substitute', 'engineering', 'administrative', 'ppe'] as const;
-const SCORES = [1, 2, 3, 4, 5] as const;
-
-/** One-click 1–5 picker — a small segmented row instead of a dropdown. */
-function ScoreButtons({
-  value,
-  onPick,
-  label,
-  disabled,
-}: {
-  value: number | null;
-  onPick: (v: number) => void;
-  label: string;
-  disabled: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <div
-        className="inline-flex overflow-hidden rounded-md border"
-        role="group"
-        aria-label={label}
-      >
-        {SCORES.map((s) => (
-          <button
-            key={s}
-            type="button"
-            disabled={disabled}
-            aria-pressed={value === s}
-            onClick={() => onPick(s)}
-            className={`px-2.5 py-1 text-sm transition-colors ${
-              value === s
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-background text-muted-foreground hover:bg-accent'
-            } ${s !== 5 ? 'border-r' : ''}`}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /**
  * One hazard through HSE steps 1–3. Zero-click persistence: text fields
- * auto-save on blur, scores / chips / control changes save immediately —
- * an assessor never has to remember a Save button.
+ * auto-save on blur; matrix cells, chips and control changes save
+ * immediately. Initial and residual risk use the classic 5×5 matrix.
+ * The PPE-only justification lives at the BOTTOM of the controls block
+ * and only appears when the hierarchy rule demands it.
  */
 export function HazardCard({
   hazard,
@@ -167,10 +128,12 @@ export function HazardCard({
   const groupLabel = (g: string): string =>
     (presetGroups as ReadonlyArray<string>).includes(g) ? t(`hazards.groups.${g}` as never) : g;
 
-  const ppeOnly =
-    hazard.controls.length > 0 &&
-    hazard.controls.every((c) => c.tier === 'ppe') &&
-    !hazard.controls.some((c) => (c.ppeJustification ?? '').trim().length > 0);
+  const ppeControls = hazard.controls.filter((c) => c.tier === 'ppe');
+  const allPpe = hazard.controls.length > 0 && ppeControls.length === hazard.controls.length;
+  const hasJustification = hazard.controls.some(
+    (c) => (c.ppeJustification ?? '').trim().length > 0,
+  );
+  const justificationTarget = ppeControls[0];
 
   return (
     <Card>
@@ -274,58 +237,6 @@ export function HazardCard({
           ) : null}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label>{t('hazards.initialRisk')}</Label>
-            <div className="flex flex-wrap items-end gap-3">
-              <ScoreButtons
-                value={iL}
-                onPick={(v) => {
-                  setIL(v);
-                  update.mutate({ hazardId: hazard.id, initialLikelihood: v });
-                }}
-                label={t('hazards.likelihood')}
-                disabled={!canManage}
-              />
-              <ScoreButtons
-                value={iS}
-                onPick={(v) => {
-                  setIS(v);
-                  update.mutate({ hazardId: hazard.id, initialSeverity: v });
-                }}
-                label={t('hazards.severity')}
-                disabled={!canManage}
-              />
-              <RiskBandChip score={scoreFor(iL, iS)} matrix={matrix} />
-            </div>
-            <p className="text-xs text-muted-foreground">{t('hazards.scoreHint')}</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label>{t('hazards.residualRisk')}</Label>
-            <div className="flex flex-wrap items-end gap-3">
-              <ScoreButtons
-                value={rL}
-                onPick={(v) => {
-                  setRL(v);
-                  update.mutate({ hazardId: hazard.id, residualLikelihood: v });
-                }}
-                label={t('hazards.likelihood')}
-                disabled={!canManage}
-              />
-              <ScoreButtons
-                value={rS}
-                onPick={(v) => {
-                  setRS(v);
-                  update.mutate({ hazardId: hazard.id, residualSeverity: v });
-                }}
-                label={t('hazards.severity')}
-                disabled={!canManage}
-              />
-              <RiskBandChip score={scoreFor(rL, rS)} matrix={matrix} />
-            </div>
-          </div>
-        </div>
-
         <div className="space-y-1.5">
           <Label>{t('hazards.existingControlsLabel')}</Label>
           <Textarea
@@ -343,16 +254,41 @@ export function HazardCard({
           />
         </div>
 
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-1">
+            <MatrixPicker
+              label={t('hazards.initialRisk')}
+              likelihood={iL}
+              severity={iS}
+              matrix={matrix}
+              disabled={!canManage}
+              onPick={(l, s) => {
+                setIL(l);
+                setIS(s);
+                update.mutate({ hazardId: hazard.id, initialLikelihood: l, initialSeverity: s });
+              }}
+            />
+            <p className="text-xs text-muted-foreground">{t('matrixHint')}</p>
+          </div>
+          <MatrixPicker
+            label={t('hazards.residualRisk')}
+            likelihood={rL}
+            severity={rS}
+            matrix={matrix}
+            disabled={!canManage}
+            onPick={(l, s) => {
+              setRL(l);
+              setRS(s);
+              update.mutate({ hazardId: hazard.id, residualLikelihood: l, residualSeverity: s });
+            }}
+          />
+        </div>
+
         <div className="space-y-2 rounded-md border p-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">{t('controls.sectionTitle')}</p>
             <p className="text-xs text-muted-foreground">{t('controls.hint')}</p>
           </div>
-          {ppeOnly ? (
-            <p className="text-xs font-medium text-orange-600 dark:text-orange-400">
-              {t('controls.ppeRuleHint')}
-            </p>
-          ) : null}
           <ul className="space-y-2">
             {hazard.controls.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center gap-2 text-sm">
@@ -400,19 +336,6 @@ export function HazardCard({
                   >
                     <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                   </Button>
-                ) : null}
-                {c.tier === 'ppe' && canManage ? (
-                  <Input
-                    className="h-8 w-full"
-                    defaultValue={c.ppeJustification ?? ''}
-                    placeholder={t('controls.ppeJustificationPlaceholder')}
-                    onBlur={(e) => {
-                      const v = e.target.value;
-                      if (v !== (c.ppeJustification ?? '')) {
-                        updateControl.mutate({ controlId: c.id, ppeJustification: v });
-                      }
-                    }}
-                  />
                 ) : null}
               </li>
             ))}
@@ -477,6 +400,34 @@ export function HazardCard({
               >
                 {t('controls.save')}
               </Button>
+            </div>
+          ) : null}
+
+          {/* Hierarchy rule: only when this hazard relies on PPE alone does
+              the justification appear — at the bottom, out of the way. */}
+          {allPpe && justificationTarget !== undefined ? (
+            <div className="space-y-1 border-t pt-2">
+              {!hasJustification ? (
+                <p className="text-xs font-medium text-orange-600 dark:text-orange-400">
+                  {t('controls.ppeRuleHint')}
+                </p>
+              ) : null}
+              <Label className="text-xs">{t('controls.ppeJustificationLabel')}</Label>
+              <Input
+                className="h-8"
+                disabled={!canManage}
+                defaultValue={justificationTarget.ppeJustification ?? ''}
+                placeholder={t('controls.ppeJustificationPlaceholder')}
+                onBlur={(e) => {
+                  const v = e.target.value;
+                  if (v !== (justificationTarget.ppeJustification ?? '')) {
+                    updateControl.mutate({
+                      controlId: justificationTarget.id,
+                      ppeJustification: v,
+                    });
+                  }
+                }}
+              />
             </div>
           ) : null}
         </div>

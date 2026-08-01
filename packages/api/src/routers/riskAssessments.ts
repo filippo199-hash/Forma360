@@ -282,6 +282,27 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           .from(riskAssessmentAcknowledgements)
           .leftJoin(user, eq(user.id, riskAssessmentAcknowledgements.userId))
           .where(eq(riskAssessmentAcknowledgements.assessmentId, assessment.id));
+        const creatorRows = await ctx.db
+          .select({ name: user.name })
+          .from(user)
+          .where(eq(user.id, assessment.createdBy))
+          .limit(1);
+        const linkedActions = await ctx.db
+          .select({
+            id: actions.id,
+            referenceNumber: actions.referenceNumber,
+            title: actions.title,
+            status: actions.status,
+            dueAt: actions.dueAt,
+          })
+          .from(actions)
+          .where(
+            and(
+              eq(actions.tenantId, ctx.tenantId),
+              eq(actions.sourceType, 'risk_assessment'),
+              eq(actions.sourceId, assessment.id),
+            ),
+          );
         const linkedVariants = await ctx.db
           .select({
             id: riskAssessments.id,
@@ -298,6 +319,7 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           );
         return {
           assessment,
+          createdByName: creatorRows[0]?.name ?? null,
           hazards: hazards.map((h) => ({
             ...h,
             controls: controls.filter((c) => c.hazardId === h.id),
@@ -305,6 +327,7 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           reviews,
           acknowledgements: acks,
           linkedVariants,
+          linkedActions,
           myAcknowledgement: acks.find((a) => a.userId === ctx.auth.userId) ?? null,
         };
       }),
@@ -317,6 +340,10 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
         const id = newId();
         const n = await nextReferenceValue(ctx.db, ctx.tenantId, 'riskAssessment');
         const referenceNumber = `RA-${String(n).padStart(4, '0')}`;
+        // Review defaults: assessments must stay alive — 12-monthly review,
+        // first one due 12 months from creation. Both editable afterwards.
+        const nextReviewAt = new Date();
+        nextReviewAt.setMonth(nextReviewAt.getMonth() + 12);
         await ctx.db.insert(riskAssessments).values({
           id,
           tenantId: ctx.tenantId,
@@ -327,6 +354,8 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           ...(input.siteId !== undefined ? { siteId: input.siteId } : {}),
           ...(input.locationText !== undefined ? { locationText: input.locationText } : {}),
           assessorUserId: ctx.auth.userId,
+          reviewFrequencyMonths: 12,
+          nextReviewAt,
           createdBy: ctx.auth.userId,
         });
         ctx.logger.info({ assessmentId: id }, '[riskAssessments] created');
@@ -598,6 +627,11 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
               title: `Implement control: ${control.description}`,
               description: `Raised by risk assessment ${assessment.referenceNumber ?? assessment.id} (${assessment.title})${hazard !== undefined ? ` — hazard: ${hazard.hazard}` : ''}.`,
               status: 'open',
+              // Ownership defaults per the HSE-manager spec: assigned to the
+              // publisher, medium priority, due one week out.
+              assigneeUserId: ctx.auth.userId,
+              priority: 'medium',
+              dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
               createdBy: ctx.auth.userId,
             });
             await tx

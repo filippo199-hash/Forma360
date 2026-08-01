@@ -143,3 +143,20 @@ body {
     animation: none;
   }
 }
+
+/* Risk-assessment one-page print (FreeHS B1). The detail page marks its
+   interactive UI `print:hidden` and renders a compact print-only block;
+   these rules strip the app shell so the record fits a single page. */
+@media print {
+  aside,
+  header,
+  nav {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  body {
+    background: white !important;
+  }
+}

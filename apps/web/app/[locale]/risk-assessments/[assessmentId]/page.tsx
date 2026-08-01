@@ -1,27 +1,55 @@
 'use client';
 
 /**
- * Risk assessment detail — the HSE five-step editor. Sections: hazards
- * (steps 1–3 per hazard via HazardCard), record/publish (step 4 — enforces
- * scoring + the PPE-only justification rule server-side and surfaces the
- * specific error), review (step 5) and distribution/acknowledgement.
- * Person-specific variants are prompted when the affected groups call for
- * them and created as linked drafts.
+ * Risk assessment detail — the HSE five-step editor.
+ *
+ * Publish flow (per the practitioner review): the Publish button first
+ * guards the title (suggesting one if the assessment is still untitled),
+ * then — when planned controls exist — shows a confirmation dialog
+ * previewing the actions that will be created (assignee = publisher,
+ * medium priority, due in 7 days) with the assessor sign-off statement.
+ * No planned controls → publishes directly. A second Publish button sits
+ * at the bottom of the page so nobody scrolls back up.
+ *
+ * Printing: the on-screen editor is `print:hidden`; a compact print-only
+ * block renders the whole record to fit one page (globals.css strips the
+ * app shell in @media print).
  */
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { HazardCard } from '../../../../src/components/risk-assessments/hazard-card';
 import { HazardQuickAdd } from '../../../../src/components/risk-assessments/hazard-quick-add';
 import { DistributionSection } from '../../../../src/components/risk-assessments/distribution-section';
 import { ReviewSection } from '../../../../src/components/risk-assessments/review-section';
 import { Button } from '../../../../src/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../src/components/ui/dialog';
+import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { bandForScore, scoreFor } from '../../../../src/lib/risk-matrix';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 const PUBLISH_ERRORS = new Set(['no-hazards', 'unscored-hazards', 'ppe-only-needs-justification']);
+
+const PRESET_GROUPS = [
+  'employees',
+  'cleaners',
+  'contractors',
+  'visitors',
+  'young_persons',
+  'new_expectant_mothers',
+  'lone_workers',
+  'members_of_public',
+] as const;
 
 export default function RiskAssessmentDetailPage() {
   const t = useTranslations('riskAssessments');
@@ -34,14 +62,23 @@ export default function RiskAssessmentDetailPage() {
 
   const utils = trpc.useUtils();
   const query = trpc.riskAssessments.get.useQuery({ assessmentId });
+  const [titleText, setTitleText] = useState<string | null>(null);
+  const [titleDialogOpen, setTitleDialogOpen] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const refresh = (): void => {
     void utils.riskAssessments.get.invalidate({ assessmentId });
     void utils.riskAssessments.list.invalidate();
   };
 
+  const update = trpc.riskAssessments.update.useMutation({
+    onSuccess: refresh,
+    onError: () => toast.error(t('saveError')),
+  });
   const publish = trpc.riskAssessments.publish.useMutation({
     onSuccess: (res) => {
+      setConfirmOpen(false);
       toast.success(t('publish.successToast'));
       if (res.actionsCreated > 0) {
         toast.success(t('publish.actionsCreated', { count: res.actionsCreated }));
@@ -49,6 +86,7 @@ export default function RiskAssessmentDetailPage() {
       refresh();
     },
     onError: (err) => {
+      setConfirmOpen(false);
       const key = PUBLISH_ERRORS.has(err.message) ? err.message : 'generic';
       toast.error(t(`publish.errors.${key}` as never));
     },
@@ -90,9 +128,18 @@ export default function RiskAssessmentDetailPage() {
     );
   }
 
-  const { assessment, hazards, reviews, acknowledgements, linkedVariants, myAcknowledgement } =
-    query.data;
+  const {
+    assessment,
+    createdByName,
+    hazards,
+    reviews,
+    acknowledgements,
+    linkedVariants,
+    linkedActions,
+    myAcknowledgement,
+  } = query.data;
   const editable = canManage && assessment.archivedAt === null;
+  const title = titleText ?? assessment.title;
   const affected = new Set(hazards.flatMap((h) => [...h.affectedGroups]));
   const variantKinds = new Set(linkedVariants.map((v) => v.personSpecificFor));
   const suggestYoung =
@@ -118,228 +165,460 @@ export default function RiskAssessmentDetailPage() {
     const justified = h.controls.some((c) => (c.ppeJustification ?? '').trim().length > 0);
     return !allPpe || justified;
   });
+  const pendingPlanned = hazards
+    .flatMap((h) => h.controls)
+    .filter((c) => c.status === 'planned' && c.actionId === null);
+  const isUntitled = title.trim().length === 0 || title === t('untitled');
+
+  function suggestTitle(): string {
+    const firstHazard = hazards[0];
+    if (firstHazard !== undefined && firstHazard.hazard.trim().length > 0) {
+      return `${firstHazard.hazard} — ${new Date().getFullYear()}`;
+    }
+    if (assessment.activity.trim().length > 0) {
+      return assessment.activity.trim().slice(0, 80);
+    }
+    return `${assessment.referenceNumber ?? ''} ${new Date().toLocaleDateString(locale)}`.trim();
+  }
+
+  function proceedAfterTitle(): void {
+    if (pendingPlanned.length > 0) {
+      setConfirmOpen(true);
+    } else {
+      publish.mutate({ assessmentId });
+    }
+  }
+
+  function startPublish(): void {
+    if (isUntitled) {
+      setTitleDraft(suggestTitle());
+      setTitleDialogOpen(true);
+    } else {
+      proceedAfterTitle();
+    }
+  }
+
+  function saveTitle(next: string): void {
+    setTitleText(next);
+    update.mutate({ assessmentId, title: next });
+  }
+
+  const publishButton = (
+    <Button type="button" disabled={publish.isPending} onClick={startPublish}>
+      {publish.isPending
+        ? t('publish.publishing')
+        : assessment.status === 'active'
+          ? t('publish.republish')
+          : t('publish.button')}
+    </Button>
+  );
+
+  const createdLine =
+    createdByName !== null
+      ? t('createdByLine', {
+          name: createdByName,
+          date: new Date(assessment.createdAt).toLocaleDateString(locale),
+        })
+      : null;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
-      <Link
-        href={`/${locale}/risk-assessments`}
-        className="text-sm text-muted-foreground underline-offset-2 hover:underline"
-      >
-        ← {t('backToList')}
-      </Link>
+    <>
+      <div className="mx-auto max-w-5xl space-y-4 px-4 py-6 print:hidden">
+        <Link
+          href={`/${locale}/risk-assessments`}
+          className="text-sm text-muted-foreground underline-offset-2 hover:underline"
+        >
+          ← {t('backToList')}
+        </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold">{assessment.title}</h1>
-            <span className="font-mono text-xs text-muted-foreground">
-              {assessment.referenceNumber}
-            </span>
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-              {t(`type.${assessment.type}`)}
-            </span>
-            <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-              {t(`status.${assessment.status}`)}
-            </span>
-            {assessment.personSpecificFor !== null ? (
-              <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                {t(`personSpecific.badge.${assessment.personSpecificFor}`)}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              {editable ? (
+                <Input
+                  className="h-9 max-w-xl border-transparent px-1 text-xl font-semibold shadow-none hover:border-input focus-visible:border-input"
+                  value={title}
+                  placeholder={t('create.titlePlaceholder')}
+                  onChange={(e) => setTitleText(e.target.value)}
+                  onBlur={() => {
+                    const next = title.trim();
+                    if (next.length > 0 && next !== assessment.title) {
+                      saveTitle(next);
+                    }
+                  }}
+                />
+              ) : (
+                <h1 className="text-xl font-semibold">{title}</h1>
+              )}
+              <span className="font-mono text-xs text-muted-foreground">
+                {assessment.referenceNumber}
               </span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                {t(`type.${assessment.type}`)}
+              </span>
+              <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                {t(`status.${assessment.status}`)}
+              </span>
+              {assessment.personSpecificFor !== null ? (
+                <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                  {t(`personSpecific.badge.${assessment.personSpecificFor}`)}
+                </span>
+              ) : null}
+              {createdLine !== null ? (
+                <span className="text-xs text-muted-foreground">{createdLine}</span>
+              ) : null}
+            </div>
+            {assessment.activity.length > 0 ? (
+              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{assessment.activity}</p>
             ) : null}
           </div>
-          {assessment.activity.length > 0 ? (
-            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{assessment.activity}</p>
-          ) : null}
-        </div>
-        {editable ? (
           <div className="flex shrink-0 gap-2">
+            <Button type="button" variant="outline" onClick={() => window.print()}>
+              {t('print')}
+            </Button>
+            {editable ? (
+              <>
+                {publishButton}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (window.confirm(t('publish.archiveConfirm'))) {
+                      archive.mutate({ assessmentId });
+                    }
+                  }}
+                >
+                  {t('publish.archiveButton')}
+                </Button>
+              </>
+            ) : null}
+          </div>
+        </div>
+
+        {myAcknowledgement !== null && myAcknowledgement.acknowledgedAt === null ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+            <span>{t('distribution.acknowledgeBanner')}</span>
+            <Button
+              type="button"
+              size="sm"
+              disabled={acknowledge.isPending}
+              onClick={() => acknowledge.mutate({ assessmentId })}
+            >
+              {acknowledge.isPending
+                ? t('distribution.acknowledging')
+                : t('distribution.acknowledgeButton')}
+            </Button>
+          </div>
+        ) : null}
+
+        {(suggestYoung || suggestExpectant) && canCreate ? (
+          <div className="rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
+            <p className="font-medium">{t('personSpecific.promptTitle')}</p>
+            <p className="mt-0.5 text-xs">
+              {t('personSpecific.promptBody', {
+                group: [
+                  ...(suggestYoung ? [t('hazards.groups.young_persons')] : []),
+                  ...(suggestExpectant ? [t('hazards.groups.new_expectant_mothers')] : []),
+                ].join(' · '),
+              })}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {suggestYoung ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={createVariant.isPending}
+                  onClick={() => createVariant.mutate({ assessmentId, kind: 'young_person' })}
+                >
+                  {t('personSpecific.createYoung')}
+                </Button>
+              ) : null}
+              {suggestExpectant ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={createVariant.isPending}
+                  onClick={() =>
+                    createVariant.mutate({ assessmentId, kind: 'new_expectant_mother' })
+                  }
+                >
+                  {t('personSpecific.createExpectant')}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {linkedVariants.length > 0 ? (
+          <div className="text-sm">
+            <span className="font-medium">{t('personSpecific.linkedTitle')}: </span>
+            {linkedVariants.map((v) => (
+              <Link
+                key={v.id}
+                className="mr-2 underline underline-offset-2"
+                href={`/${locale}/risk-assessments/${v.id}`}
+              >
+                {v.personSpecificFor !== null
+                  ? t(`personSpecific.badge.${v.personSpecificFor}`)
+                  : v.title}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+        {assessment.parentAssessmentId !== null ? (
+          <Link
+            className="block text-sm text-muted-foreground underline underline-offset-2"
+            href={`/${locale}/risk-assessments/${assessment.parentAssessmentId}`}
+          >
+            {t('personSpecific.parentLink', { title })}
+          </Link>
+        ) : null}
+
+        {editable ? (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border px-3 py-2 text-xs">
+            <span className="font-medium">{t('readiness.title')}</span>
+            {[
+              { ok: hazards.length > 0, label: t('readiness.hazards') },
+              { ok: allScored, label: t('readiness.scored') },
+              { ok: ppeOk, label: t('readiness.ppe') },
+            ].map((item) => (
+              <span
+                key={item.label}
+                className={
+                  item.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'
+                }
+              >
+                {item.ok ? '✓' : '○'} {item.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        <div>
+          <h2 className="text-base font-semibold">{t('hazards.sectionTitle')}</h2>
+          <p className="max-w-3xl text-xs text-muted-foreground">{t('hazards.sectionHint')}</p>
+        </div>
+
+        {editable ? <HazardQuickAdd assessmentId={assessmentId} onAdded={refresh} /> : null}
+
+        {hazards.length === 0 ? (
+          <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+            {t('hazards.emptyHint')}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {hazards.map((h) => (
+              <HazardCard
+                key={h.id}
+                hazard={h}
+                matrix={assessment.matrix}
+                canManage={editable}
+                presetGroups={PRESET_GROUPS}
+                onChanged={refresh}
+              />
+            ))}
+          </div>
+        )}
+
+        {linkedActions.length > 0 ? (
+          <div className="rounded-md border p-3">
+            <p className="mb-2 text-sm font-medium">{t('linkedActions.title')}</p>
+            <ul className="space-y-1.5">
+              {linkedActions.map((a) => (
+                <li key={a.id}>
+                  <Link
+                    href={`/${locale}/actions/${a.id}`}
+                    className="flex flex-wrap items-center gap-2 text-sm hover:underline"
+                  >
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {a.referenceNumber}
+                    </span>
+                    <span className="min-w-0 flex-1">{a.title}</span>
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-xs">{a.status}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <ReviewSection
+          assessmentId={assessmentId}
+          reviewFrequencyMonths={assessment.reviewFrequencyMonths}
+          nextReviewAt={assessment.nextReviewAt}
+          lastReviewedAt={assessment.lastReviewedAt}
+          reviews={reviews}
+          canManage={editable}
+          onChanged={refresh}
+        />
+
+        <DistributionSection
+          assessmentId={assessmentId}
+          isActive={assessment.status === 'active'}
+          acknowledgements={acknowledgements}
+          canManage={editable}
+          onChanged={refresh}
+        />
+
+        {editable ? <div className="flex justify-end pb-4">{publishButton}</div> : null}
+      </div>
+
+      {/* One-page print record. */}
+      <div className="hidden print:block px-6 py-4 text-[11px] leading-tight text-black">
+        <div className="mb-1 flex items-baseline justify-between border-b border-black pb-1">
+          <span className="text-base font-bold">{title}</span>
+          <span className="font-mono">{assessment.referenceNumber}</span>
+        </div>
+        <p className="mb-2">
+          {t(`type.${assessment.type}`)} · {t(`status.${assessment.status}`)}
+          {createdLine !== null ? ` · ${createdLine}` : ''}
+          {assessment.nextReviewAt !== null
+            ? ` · ${t('review.nextReviewLabel')}: ${new Date(assessment.nextReviewAt).toLocaleDateString(locale)}`
+            : ''}
+        </p>
+        {assessment.activity.length > 0 ? <p className="mb-2">{assessment.activity}</p> : null}
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              {[
+                t('hazards.hazardLabel'),
+                t('hazards.affectedLabel'),
+                t('hazards.initialRisk'),
+                t('controls.sectionTitle'),
+                t('hazards.residualRisk'),
+              ].map((h) => (
+                <th key={h} className="border border-black px-1 py-0.5 text-left align-top">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {hazards.map((h) => {
+              const initial = scoreFor(h.initialLikelihood, h.initialSeverity);
+              const residual = scoreFor(h.residualLikelihood, h.residualSeverity);
+              return (
+                <tr key={h.id}>
+                  <td className="border border-black px-1 py-0.5 align-top">
+                    <span className="font-semibold">{h.hazard}</span>
+                    {h.harmDescription.length > 0 ? <> — {h.harmDescription}</> : null}
+                  </td>
+                  <td className="border border-black px-1 py-0.5 align-top">
+                    {h.affectedGroups
+                      .map((g) =>
+                        (PRESET_GROUPS as ReadonlyArray<string>).includes(g)
+                          ? t(`hazards.groups.${g}` as never)
+                          : g,
+                      )
+                      .join(', ')}
+                  </td>
+                  <td className="border border-black px-1 py-0.5 align-top">
+                    {initial !== null
+                      ? `${initial} (${t(`band.${bandForScore(initial, assessment.matrix)}`)})`
+                      : '—'}
+                  </td>
+                  <td className="border border-black px-1 py-0.5 align-top">
+                    {h.existingControls.length > 0 ? <p>{h.existingControls}</p> : null}
+                    {h.controls.map((c) => (
+                      <p key={c.id}>
+                        [{t(`controls.tier.${c.tier}`)}] {c.description}
+                        {c.status === 'planned' ? ` (${t('controls.statusPlanned')})` : ''}
+                      </p>
+                    ))}
+                  </td>
+                  <td className="border border-black px-1 py-0.5 align-top">
+                    {residual !== null
+                      ? `${residual} (${t(`band.${bandForScore(residual, assessment.matrix)}`)})`
+                      : '—'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <p className="mt-2">
+          {t('publishConfirm.signOff')}
+          {createdByName !== null ? ` — ${createdByName}` : ''}
+          {assessment.publishedAt !== null
+            ? `, ${new Date(assessment.publishedAt).toLocaleDateString(locale)}`
+            : ''}
+        </p>
+      </div>
+
+      {/* Title guard before publishing an untitled assessment. */}
+      <Dialog open={titleDialogOpen} onOpenChange={setTitleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('titlePrompt.title')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t('titlePrompt.hint')}</p>
+          <Input
+            autoFocus
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && titleDraft.trim().length > 0) {
+                e.preventDefault();
+                saveTitle(titleDraft.trim());
+                setTitleDialogOpen(false);
+                proceedAfterTitle();
+              }
+            }}
+          />
+          <DialogFooter>
+            <Button
+              type="button"
+              disabled={titleDraft.trim().length === 0}
+              onClick={() => {
+                saveTitle(titleDraft.trim());
+                setTitleDialogOpen(false);
+                proceedAfterTitle();
+              }}
+            >
+              {t('titlePrompt.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Publish confirmation with the actions that will be created. */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('publishConfirm.title')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm">
+            {t('publishConfirm.actionsIntro', { count: pendingPlanned.length })}
+          </p>
+          <ul className="max-h-56 space-y-1 overflow-y-auto text-sm">
+            {pendingPlanned.map((c) => (
+              <li key={c.id} className="rounded border px-2 py-1.5">
+                <span className="block">{c.description}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {t('publishConfirm.actionMeta')}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground">{t('publishConfirm.signOff')}</p>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
+              {t('publishConfirm.cancel')}
+            </Button>
             <Button
               type="button"
               disabled={publish.isPending}
               onClick={() => publish.mutate({ assessmentId })}
             >
-              {publish.isPending
-                ? t('publish.publishing')
-                : assessment.status === 'active'
-                  ? t('publish.republish')
-                  : t('publish.button')}
+              {publish.isPending ? t('publish.publishing') : t('publishConfirm.confirm')}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                if (window.confirm(t('publish.archiveConfirm'))) {
-                  archive.mutate({ assessmentId });
-                }
-              }}
-            >
-              {t('publish.archiveButton')}
-            </Button>
-          </div>
-        ) : null}
-      </div>
-
-      {myAcknowledgement !== null && myAcknowledgement.acknowledgedAt === null ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
-          <span>{t('distribution.acknowledgeBanner')}</span>
-          <Button
-            type="button"
-            size="sm"
-            disabled={acknowledge.isPending}
-            onClick={() => acknowledge.mutate({ assessmentId })}
-          >
-            {acknowledge.isPending
-              ? t('distribution.acknowledging')
-              : t('distribution.acknowledgeButton')}
-          </Button>
-        </div>
-      ) : null}
-
-      {(suggestYoung || suggestExpectant) && canCreate ? (
-        <div className="rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
-          <p className="font-medium">{t('personSpecific.promptTitle')}</p>
-          <p className="mt-0.5 text-xs">
-            {t('personSpecific.promptBody', {
-              group: [
-                ...(suggestYoung ? [t('hazards.groups.young_persons')] : []),
-                ...(suggestExpectant ? [t('hazards.groups.new_expectant_mothers')] : []),
-              ].join(' · '),
-            })}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {suggestYoung ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={createVariant.isPending}
-                onClick={() => createVariant.mutate({ assessmentId, kind: 'young_person' })}
-              >
-                {t('personSpecific.createYoung')}
-              </Button>
-            ) : null}
-            {suggestExpectant ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={createVariant.isPending}
-                onClick={() => createVariant.mutate({ assessmentId, kind: 'new_expectant_mother' })}
-              >
-                {t('personSpecific.createExpectant')}
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      {linkedVariants.length > 0 ? (
-        <div className="text-sm">
-          <span className="font-medium">{t('personSpecific.linkedTitle')}: </span>
-          {linkedVariants.map((v) => (
-            <Link
-              key={v.id}
-              className="mr-2 underline underline-offset-2"
-              href={`/${locale}/risk-assessments/${v.id}`}
-            >
-              {v.personSpecificFor !== null
-                ? t(`personSpecific.badge.${v.personSpecificFor}`)
-                : v.title}
-            </Link>
-          ))}
-        </div>
-      ) : null}
-      {assessment.parentAssessmentId !== null ? (
-        <Link
-          className="block text-sm text-muted-foreground underline underline-offset-2"
-          href={`/${locale}/risk-assessments/${assessment.parentAssessmentId}`}
-        >
-          {t('personSpecific.parentLink', { title: assessment.title })}
-        </Link>
-      ) : null}
-
-      <ol className="flex flex-wrap gap-x-4 gap-y-1 rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-        <li>{t('steps.hazards')}</li>
-        <li>{t('steps.people')}</li>
-        <li>{t('steps.evaluate')}</li>
-        <li>{t('steps.record')}</li>
-        <li>{t('steps.review')}</li>
-      </ol>
-
-      {editable ? (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border px-3 py-2 text-xs">
-          <span className="font-medium">{t('readiness.title')}</span>
-          {[
-            { ok: hazards.length > 0, label: t('readiness.hazards') },
-            { ok: allScored, label: t('readiness.scored') },
-            { ok: ppeOk, label: t('readiness.ppe') },
-          ].map((item) => (
-            <span
-              key={item.label}
-              className={
-                item.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'
-              }
-            >
-              {item.ok ? '✓' : '○'} {item.label}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      <div>
-        <h2 className="text-base font-semibold">{t('hazards.sectionTitle')}</h2>
-        <p className="max-w-3xl text-xs text-muted-foreground">{t('hazards.sectionHint')}</p>
-      </div>
-
-      {editable ? <HazardQuickAdd assessmentId={assessmentId} onAdded={refresh} /> : null}
-
-      {hazards.length === 0 ? (
-        <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-          {t('hazards.emptyHint')}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {hazards.map((h) => (
-            <HazardCard
-              key={h.id}
-              hazard={h}
-              matrix={assessment.matrix}
-              canManage={editable}
-              presetGroups={[
-                'employees',
-                'cleaners',
-                'contractors',
-                'visitors',
-                'young_persons',
-                'new_expectant_mothers',
-                'lone_workers',
-                'members_of_public',
-              ]}
-              onChanged={refresh}
-            />
-          ))}
-        </div>
-      )}
-
-      <ReviewSection
-        assessmentId={assessmentId}
-        reviewFrequencyMonths={assessment.reviewFrequencyMonths}
-        nextReviewAt={assessment.nextReviewAt}
-        lastReviewedAt={assessment.lastReviewedAt}
-        reviews={reviews}
-        canManage={editable}
-        onChanged={refresh}
-      />
-
-      <DistributionSection
-        assessmentId={assessmentId}
-        isActive={assessment.status === 'active'}
-        acknowledgements={acknowledgements}
-        canManage={editable}
-        onChanged={refresh}
-      />
-    </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

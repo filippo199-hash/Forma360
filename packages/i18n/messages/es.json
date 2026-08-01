@@ -3768,7 +3768,8 @@
       "saving": "Saving…",
       "logTitle": "Review history",
       "logEmpty": "No reviews recorded yet.",
-      "scheduleSave": "Save schedule"
+      "scheduleSave": "Save schedule",
+      "savedToast": "Review schedule saved."
     },
     "distribution": {
       "sectionTitle": "Distribution & acknowledgement",
@@ -3814,6 +3815,26 @@
       "hazards": "At least one hazard",
       "scored": "All hazards scored (initial + residual)",
       "ppe": "No PPE-only hazard without justification"
+    },
+    "print": "Print",
+    "createdByLine": "Created by {name} on {date}",
+    "untitled": "Untitled risk assessment",
+    "matrixHint": "Severity down the side, likelihood across — click a cell.",
+    "linkedActions": {
+      "title": "Actions raised by this assessment"
+    },
+    "publishConfirm": {
+      "title": "Publish this assessment?",
+      "signOff": "By publishing you confirm this risk assessment is suitable and sufficient for the activity, and you sign it as the assessor.",
+      "actionsIntro": "Publishing will create {count} action(s) from your planned controls:",
+      "actionMeta": "Assigned to you · Medium priority · Due in 7 days",
+      "confirm": "Confirm and publish",
+      "cancel": "Cancel"
+    },
+    "titlePrompt": {
+      "title": "Name this assessment before publishing",
+      "hint": "A clear title helps everyone find it later. Here is a suggestion — edit it if you like.",
+      "save": "Save title and continue"
     }
   }
 }

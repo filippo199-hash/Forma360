@@ -65,15 +65,8 @@ export function DistributionSection({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">{t('distribution.sectionTitle')}</CardTitle>
-        {canManage ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={!isActive}
-            title={isActive ? undefined : t('distribution.needsActive')}
-            onClick={() => setDialogOpen(true)}
-          >
+        {canManage && isActive ? (
+          <Button type="button" size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
             {t('distribution.distributeButton')}
           </Button>
         ) : null}

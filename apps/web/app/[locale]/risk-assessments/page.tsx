@@ -1,26 +1,20 @@
 'use client';
 
 /**
- * Risk assessments list (FreeHS module B1). Filterable by status/type,
- * shows worst residual band, review-due badge and acknowledgement
- * progress per assessment, plus a banner when the signed-in user has
- * assessments waiting for their acknowledgement.
+ * Risk assessments list (FreeHS module B1). Status tabs (matching the
+ * Observations page pattern), dashboard stat chips, instant client-side
+ * search + filters, and a pending-acknowledgements banner. "New
+ * assessment" creates an untitled draft and lands straight on the editor
+ * — no dialog; the editor guards the title at publish time.
  */
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { RiskBandChip } from '../../../src/components/risk-assessments/risk-band-chip';
 import { Button } from '../../../src/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../../src/components/ui/dialog';
 import { Input } from '../../../src/components/ui/input';
-import { Label } from '../../../src/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -29,7 +23,7 @@ import {
   SelectValue,
 } from '../../../src/components/ui/select';
 import { Skeleton } from '../../../src/components/ui/skeleton';
-import { Textarea } from '../../../src/components/ui/textarea';
+import { Tabs, TabsList, TabsTrigger } from '../../../src/components/ui/tabs';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
@@ -47,12 +41,24 @@ export default function RiskAssessmentsPage() {
   const [search, setSearch] = useState('');
   const [dueOnly, setDueOnly] = useState(false);
   // One round-trip: archived rows need their own fetch, everything else is
-  // filtered client-side so filters + search feel instant.
+  // filtered client-side so tabs + search feel instant.
   const list = trpc.riskAssessments.list.useQuery({
     status: status === 'archived' ? 'archived' : 'all',
     type: 'all',
   });
   const pending = trpc.riskAssessments.listMyPending.useQuery();
+
+  const create = trpc.riskAssessments.create.useMutation({
+    onSuccess: (res) => {
+      router.push(`/${locale}/risk-assessments/${res.assessmentId}`);
+    },
+    onError: () => toast.error(t('create.error')),
+  });
+
+  function handleCreate(): void {
+    if (create.isPending) return;
+    create.mutate({ title: t('untitled'), activity: '' });
+  }
 
   const needle = search.trim().toLowerCase();
   const rows = (list.data ?? []).filter(
@@ -71,17 +77,11 @@ export default function RiskAssessmentsPage() {
     myPending: pending.data?.length ?? 0,
   };
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [activity, setActivity] = useState('');
-  const [newType, setNewType] = useState<'standing' | 'dynamic'>('standing');
-  const [location, setLocation] = useState('');
-
-  const create = trpc.riskAssessments.create.useMutation({
-    onSuccess: (res) => {
-      router.push(`/${locale}/risk-assessments/${res.assessmentId}`);
-    },
-  });
+  const newButton = canCreate ? (
+    <Button type="button" disabled={create.isPending} onClick={handleCreate}>
+      {create.isPending ? t('create.submitting') : t('newButton')}
+    </Button>
+  ) : null;
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 px-4 py-6">
@@ -90,11 +90,7 @@ export default function RiskAssessmentsPage() {
           <h1 className="text-xl font-semibold">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
-        {canCreate ? (
-          <Button type="button" onClick={() => setCreateOpen(true)}>
-            {t('newButton')}
-          </Button>
-        ) : null}
+        {newButton}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -136,6 +132,15 @@ export default function RiskAssessmentsPage() {
         </div>
       ) : null}
 
+      <Tabs value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
+        <TabsList>
+          <TabsTrigger value="all">{t('filters.all')}</TabsTrigger>
+          <TabsTrigger value="active">{t('status.active')}</TabsTrigger>
+          <TabsTrigger value="draft">{t('status.draft')}</TabsTrigger>
+          <TabsTrigger value="archived">{t('status.archived')}</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <div className="flex flex-wrap gap-2">
         <Input
           className="w-64"
@@ -143,17 +148,6 @@ export default function RiskAssessmentsPage() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('searchPlaceholder')}
         />
-        <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('filters.all')}</SelectItem>
-            <SelectItem value="draft">{t('status.draft')}</SelectItem>
-            <SelectItem value="active">{t('status.active')}</SelectItem>
-            <SelectItem value="archived">{t('status.archived')}</SelectItem>
-          </SelectContent>
-        </Select>
         <Select value={type} onValueChange={(v) => setType(v as TypeFilter)}>
           <SelectTrigger className="w-44">
             <SelectValue />
@@ -175,11 +169,7 @@ export default function RiskAssessmentsPage() {
       ) : rows.length === 0 ? (
         <div className="space-y-3 rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
           <p>{t('empty')}</p>
-          {canCreate ? (
-            <Button type="button" onClick={() => setCreateOpen(true)}>
-              {t('newButton')}
-            </Button>
-          ) : null}
+          {newButton}
         </div>
       ) : (
         <ul className="divide-y rounded-md border">
@@ -226,93 +216,6 @@ export default function RiskAssessmentsPage() {
           ))}
         </ul>
       )}
-
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('create.title')}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="ra-title">{t('create.titleLabel')}</Label>
-              <Input
-                id="ra-title"
-                autoFocus
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && title.trim().length > 0 && !create.isPending) {
-                    e.preventDefault();
-                    create.mutate({
-                      title: title.trim(),
-                      activity: activity.trim(),
-                      type: newType,
-                      ...(location.trim().length > 0 ? { locationText: location.trim() } : {}),
-                    });
-                  }
-                }}
-                placeholder={t('create.titlePlaceholder')}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="ra-activity">{t('create.activityLabel')}</Label>
-              <Textarea
-                id="ra-activity"
-                rows={2}
-                value={activity}
-                onChange={(e) => setActivity(e.target.value)}
-                placeholder={t('create.activityPlaceholder')}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>{t('create.typeLabel')}</Label>
-              <Select
-                value={newType}
-                onValueChange={(v) => setNewType(v as 'standing' | 'dynamic')}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standing">{t('type.standing')}</SelectItem>
-                  <SelectItem value="dynamic">{t('type.dynamic')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {newType === 'standing'
-                  ? t('create.typeStandingHint')
-                  : t('create.typeDynamicHint')}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="ra-location">{t('create.locationLabel')}</Label>
-              <Input
-                id="ra-location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder={t('create.locationPlaceholder')}
-              />
-            </div>
-            {create.isError ? <p className="text-sm text-red-600">{t('create.error')}</p> : null}
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              disabled={title.trim().length === 0 || create.isPending}
-              onClick={() =>
-                create.mutate({
-                  title: title.trim(),
-                  activity: activity.trim(),
-                  type: newType,
-                  ...(location.trim().length > 0 ? { locationText: location.trim() } : {}),
-                })
-              }
-            >
-              {create.isPending ? t('create.submitting') : t('create.submit')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
