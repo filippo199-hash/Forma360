@@ -16,7 +16,13 @@ import {
   validateHeadsUpShareToken,
   loadInspectionSnapshot,
 } from '@forma360/render';
-import { documents, headsUpAttachments, headsUpDocuments, headsUps, user } from '@forma360/db/schema';
+import {
+  documents,
+  headsUpAttachments,
+  headsUpDocuments,
+  headsUps,
+  user,
+} from '@forma360/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { PrintLayout } from '../../../src/components/print-layout';

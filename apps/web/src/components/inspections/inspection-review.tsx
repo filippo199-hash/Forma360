@@ -239,11 +239,7 @@ function ReviewValue({
               <li key={k}>
                 <a href={href} target="_blank" rel="noopener noreferrer" className="block">
                   {IMAGE_EXT.test(k) ? (
-                    <img
-                      src={href}
-                      alt={name}
-                      className="h-20 w-20 rounded border object-cover"
-                    />
+                    <img src={href} alt={name} className="h-20 w-20 rounded border object-cover" />
                   ) : (
                     <span className="inline-flex max-w-[12rem] items-center gap-1.5 rounded-md border bg-background px-2 py-1 text-xs hover:underline">
                       📎 <span className="truncate">{name}</span>

@@ -303,9 +303,7 @@ function TextInput({
         aria-label={item.prompt}
       />
       {remaining <= 50 ? (
-        <p className="text-xs text-muted-foreground">
-          {t('charsRemaining', { count: remaining })}
-        </p>
+        <p className="text-xs text-muted-foreground">{t('charsRemaining', { count: remaining })}</p>
       ) : null}
     </div>
   );

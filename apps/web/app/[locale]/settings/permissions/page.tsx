@@ -186,9 +186,7 @@ export default function PermissionsPage() {
                               variant="ghost"
                               size="sm"
                               className="text-destructive hover:text-destructive"
-                              disabled={
-                                set.isSystem || set.userCount > 0 || deleteSet.isPending
-                              }
+                              disabled={set.isSystem || set.userCount > 0 || deleteSet.isPending}
                               onClick={() => {
                                 if (window.confirm(t('deleteConfirm'))) {
                                   deleteSet.mutate({ id: set.id });

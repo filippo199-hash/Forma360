@@ -93,65 +93,65 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       ) : (
-      <Card>
-        <CardHeader>
-          <CardTitle>{tCommon('name')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              updateProfile.mutate({ firstName, lastName });
-            }}
-            className="space-y-4"
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>{tCommon('name')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateProfile.mutate({ firstName, lastName });
+              }}
+              className="space-y-4"
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-first">{t('firstNameLabel')}</Label>
+                  <Input
+                    id="profile-first"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    maxLength={60}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-last">{t('lastNameLabel')}</Label>
+                  <Input
+                    id="profile-last"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    maxLength={60}
+                    required
+                  />
+                </div>
+              </div>
               <div className="space-y-1.5">
-                <Label htmlFor="profile-first">{t('firstNameLabel')}</Label>
+                <Label htmlFor="profile-email">{t('emailLabel')}</Label>
                 <Input
-                  id="profile-first"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  maxLength={60}
-                  required
+                  id="profile-email"
+                  value={userGet.data?.user.email ?? ''}
+                  readOnly
+                  className="bg-muted"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="profile-last">{t('lastNameLabel')}</Label>
+                <Label htmlFor="profile-set">{t('permissionSetLabel')}</Label>
                 <Input
-                  id="profile-last"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  maxLength={60}
-                  required
+                  id="profile-set"
+                  value={userGet.data?.user.permissionSetName ?? '—'}
+                  readOnly
+                  className="bg-muted"
                 />
+                <p className="text-xs text-muted-foreground">{t('readOnlyNote')}</p>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="profile-email">{t('emailLabel')}</Label>
-              <Input
-                id="profile-email"
-                value={userGet.data?.user.email ?? ''}
-                readOnly
-                className="bg-muted"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="profile-set">{t('permissionSetLabel')}</Label>
-              <Input
-                id="profile-set"
-                value={userGet.data?.user.permissionSetName ?? '—'}
-                readOnly
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground">{t('readOnlyNote')}</p>
-            </div>
-            <Button type="submit" disabled={updateProfile.isPending}>
-              {tCommon('save')}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <Button type="submit" disabled={updateProfile.isPending}>
+                {tCommon('save')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       )}
       <LanguageSelect />
     </div>

@@ -640,7 +640,9 @@ export default function DocumentsPage() {
                             <dd>{formatBytes(doc.sizeBytes)}</dd>
                           </div>
                           <div>
-                            <dt className="font-medium text-foreground">{t('columns.expiresAt')}</dt>
+                            <dt className="font-medium text-foreground">
+                              {t('columns.expiresAt')}
+                            </dt>
                             <dd>
                               {doc.expiresAt !== null
                                 ? new Date(doc.expiresAt).toLocaleDateString(locale)

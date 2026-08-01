@@ -123,13 +123,22 @@ function LinkPickerDialog({
     // free-form status string; the guard still narrows the return type.
     const isInspStatusKey = (
       s: string,
-    ): s is 'in_progress' | 'awaiting_signatures' | 'awaiting_approval' | 'completed' | 'rejected' =>
+    ): s is
+      | 'in_progress'
+      | 'awaiting_signatures'
+      | 'awaiting_approval'
+      | 'completed'
+      | 'rejected' =>
       (
-        ['in_progress', 'awaiting_signatures', 'awaiting_approval', 'completed', 'rejected'] as readonly string[]
+        [
+          'in_progress',
+          'awaiting_signatures',
+          'awaiting_approval',
+          'completed',
+          'rejected',
+        ] as readonly string[]
       ).includes(s);
-    const isActStatusKey = (
-      s: string,
-    ): s is 'open' | 'in_progress' | 'completed' | 'cancelled' =>
+    const isActStatusKey = (s: string): s is 'open' | 'in_progress' | 'completed' | 'cancelled' =>
       (['open', 'in_progress', 'completed', 'cancelled'] as readonly string[]).includes(s);
     // Localise a known status enum; fall back to a humanised form for statuses
     // that have no translation key yet (e.g. workflow-only states).
@@ -173,7 +182,11 @@ function LinkPickerDialog({
     if (kind === 'action') {
       return (actQ.data ?? [])
         .filter((a) => a.siteId !== siteId)
-        .map((a) => ({ id: a.id, label: a.title, meta: withPlace(actStatusLabel(a.status), a.siteId) }));
+        .map((a) => ({
+          id: a.id,
+          label: a.title,
+          meta: withPlace(actStatusLabel(a.status), a.siteId),
+        }));
     }
     return (assetQ.data ?? [])
       .filter((a) => a.siteId !== siteId && a.archivedAt === null)

@@ -50,7 +50,9 @@ export function AwaitingSignatureBanner() {
               </p>
             </div>
             <Button size="sm" asChild>
-              <Link href={`/${locale}/inspections/${item.inspectionId}/status`}>{t('signCta')}</Link>
+              <Link href={`/${locale}/inspections/${item.inspectionId}/status`}>
+                {t('signCta')}
+              </Link>
             </Button>
           </li>
         ))}

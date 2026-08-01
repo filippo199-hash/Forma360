@@ -355,10 +355,7 @@ describe('validateHeadsUpShareToken', () => {
     const token = hexToken('revoke');
     await insertHeadsUp({ id: 'HU4', shareToken: token });
     // Revoke = null the column.
-    await db
-      .update(schema.headsUps)
-      .set({ shareToken: null })
-      .where(eq(schema.headsUps.id, 'HU4'));
+    await db.update(schema.headsUps).set({ shareToken: null }).where(eq(schema.headsUps.id, 'HU4'));
     const claims = await validateHeadsUpShareToken(db as unknown as Database, token);
     expect(claims).toBeNull();
   });

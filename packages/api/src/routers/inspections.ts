@@ -528,9 +528,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         // Managers (inspections.manage) bypass, matching templates.list.
         if (ctx.permissions.includes('inspections.manage')) return rows;
         const ruleIds = [
-          ...new Set(
-            rows.map((r) => r.accessRuleId).filter((id): id is string => id !== null),
-          ),
+          ...new Set(rows.map((r) => r.accessRuleId).filter((id): id is string => id !== null)),
         ];
         if (ruleIds.length === 0) return rows;
         const rules = await ctx.db

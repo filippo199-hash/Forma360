@@ -91,7 +91,8 @@ export default function UserDetailPage() {
   const siteMemberships = data.siteMemberships;
   const fieldValues = data.fieldValues;
 
-  const nameDirty = firstName.trim() !== (u.firstName ?? '') || lastName.trim() !== (u.lastName ?? '');
+  const nameDirty =
+    firstName.trim() !== (u.firstName ?? '') || lastName.trim() !== (u.lastName ?? '');
   const canSaveName =
     canManage && nameDirty && firstName.trim().length > 0 && !updateName.isPending;
 
@@ -154,9 +155,7 @@ export default function UserDetailPage() {
                 {t('profile.statusLabel')}
               </div>
               <div className="text-sm">
-                {u.deactivatedAt !== null
-                  ? tUsers('status.deactivated')
-                  : tUsers('status.active')}
+                {u.deactivatedAt !== null ? tUsers('status.deactivated') : tUsers('status.active')}
               </div>
             </div>
           </div>
@@ -377,7 +376,12 @@ function CustomFieldEditor({
       )}
       {dirty ? (
         <div className="flex justify-end pt-1">
-          <Button type="button" size="sm" disabled={disabled || setValue.isPending} onClick={onSave}>
+          <Button
+            type="button"
+            size="sm"
+            disabled={disabled || setValue.isPending}
+            onClick={onSave}
+          >
             {tCommon('save')}
           </Button>
         </div>

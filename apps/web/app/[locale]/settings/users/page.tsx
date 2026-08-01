@@ -35,11 +35,7 @@ export default function UsersPage() {
   const utils = trpc.useUtils();
   const canAnonymise = useHasPermission('users.anonymise');
   const meQuery = trpc.health.me.useQuery();
-  const {
-    data,
-    isLoading,
-    error: usersError,
-  } = trpc.users.list.useQuery({});
+  const { data, isLoading, error: usersError } = trpc.users.list.useQuery({});
   const { data: sets } = trpc.permissions.list.useQuery();
   const { data: groupsData } = trpc.groups.list.useQuery();
   const { data: sitesData } = trpc.sites.list.useQuery();

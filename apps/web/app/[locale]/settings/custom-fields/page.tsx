@@ -168,7 +168,9 @@ export default function CustomFieldsPage() {
                   <th className="px-4 py-3 font-medium">{t('customFields.colRequired')}</th>
                   <th className="px-4 py-3 font-medium">{t('customFields.colOptions')}</th>
                   {canManage ? (
-                    <th className="px-4 py-3 text-right font-medium">{t('groups.table.actions')}</th>
+                    <th className="px-4 py-3 text-right font-medium">
+                      {t('groups.table.actions')}
+                    </th>
                   ) : null}
                 </tr>
               </thead>
@@ -204,38 +206,38 @@ export default function CustomFieldsPage() {
                   fields.map((f) => {
                     const typeKey = FIELD_TYPE_KEYS[f.type];
                     return (
-                    <tr key={f.id} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-4 py-3 font-medium">{f.name}</td>
-                      <td className="px-4 py-3">{typeKey ? t(typeKey) : f.type}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {f.required === 'true'
-                          ? t('customFields.requiredYes')
-                          : t('customFields.requiredNo')}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {isSelectType(f.type) ? f.options.length : '—'}
-                      </td>
-                      {canManage ? (
-                        <td className="flex items-center justify-end gap-1 px-4 py-3">
-                          <Button variant="ghost" size="sm" onClick={() => openEdit(f)}>
-                            {t('customFields.editButton')}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => {
-                              if (window.confirm(t('customFields.deleteConfirm'))) {
-                                deleteField.mutate({ id: f.id });
-                              }
-                            }}
-                            disabled={deleteField.isPending}
-                          >
-                            {t('customFields.deleteButton')}
-                          </Button>
+                      <tr key={f.id} className="border-b last:border-0 hover:bg-muted/30">
+                        <td className="px-4 py-3 font-medium">{f.name}</td>
+                        <td className="px-4 py-3">{typeKey ? t(typeKey) : f.type}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {f.required === 'true'
+                            ? t('customFields.requiredYes')
+                            : t('customFields.requiredNo')}
                         </td>
-                      ) : null}
-                    </tr>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {isSelectType(f.type) ? f.options.length : '—'}
+                        </td>
+                        {canManage ? (
+                          <td className="flex items-center justify-end gap-1 px-4 py-3">
+                            <Button variant="ghost" size="sm" onClick={() => openEdit(f)}>
+                              {t('customFields.editButton')}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                if (window.confirm(t('customFields.deleteConfirm'))) {
+                                  deleteField.mutate({ id: f.id });
+                                }
+                              }}
+                              disabled={deleteField.isPending}
+                            >
+                              {t('customFields.deleteButton')}
+                            </Button>
+                          </td>
+                        ) : null}
+                      </tr>
                     );
                   })
                 )}
@@ -268,40 +270,40 @@ export default function CustomFieldsPage() {
                 {fields.map((f) => {
                   const typeKey = FIELD_TYPE_KEYS[f.type];
                   return (
-                  <li key={f.id} className="space-y-2 p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium">{f.name}</p>
-                      <span className="inline-flex shrink-0 items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                        {typeKey ? t(typeKey) : f.type}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {f.required === 'true'
-                        ? t('customFields.requiredYes')
-                        : t('customFields.requiredNo')}
-                      {isSelectType(f.type) ? ` · ${f.options.length}` : ''}
-                    </p>
-                    {canManage ? (
-                      <div className="flex flex-wrap items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(f)}>
-                          {t('customFields.editButton')}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => {
-                            if (window.confirm(t('customFields.deleteConfirm'))) {
-                              deleteField.mutate({ id: f.id });
-                            }
-                          }}
-                          disabled={deleteField.isPending}
-                        >
-                          {t('customFields.deleteButton')}
-                        </Button>
+                    <li key={f.id} className="space-y-2 p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-medium">{f.name}</p>
+                        <span className="inline-flex shrink-0 items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                          {typeKey ? t(typeKey) : f.type}
+                        </span>
                       </div>
-                    ) : null}
-                  </li>
+                      <p className="text-sm text-muted-foreground">
+                        {f.required === 'true'
+                          ? t('customFields.requiredYes')
+                          : t('customFields.requiredNo')}
+                        {isSelectType(f.type) ? ` · ${f.options.length}` : ''}
+                      </p>
+                      {canManage ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(f)}>
+                            {t('customFields.editButton')}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (window.confirm(t('customFields.deleteConfirm'))) {
+                                deleteField.mutate({ id: f.id });
+                              }
+                            }}
+                            disabled={deleteField.isPending}
+                          >
+                            {t('customFields.deleteButton')}
+                          </Button>
+                        </div>
+                      ) : null}
+                    </li>
                   );
                 })}
               </ul>

@@ -243,7 +243,9 @@ export default function InspectionStatusPage() {
               ) : null}
               {approvedRow !== undefined ? (
                 <p className="text-xs text-muted-foreground">
-                  {t('approvedBy', { user: approvedRow.approverName ?? approvedRow.approverUserId })}
+                  {t('approvedBy', {
+                    user: approvedRow.approverName ?? approvedRow.approverUserId,
+                  })}
                 </p>
               ) : null}
               <div className="flex flex-wrap gap-2">

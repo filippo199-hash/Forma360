@@ -161,7 +161,9 @@ export function assertMaintenanceProgramsInTenant(
       const rows = await db
         .select({ id: maintenancePrograms.id })
         .from(maintenancePrograms)
-        .where(and(eq(maintenancePrograms.tenantId, tenantId), inArray(maintenancePrograms.id, unique)));
+        .where(
+          and(eq(maintenancePrograms.tenantId, tenantId), inArray(maintenancePrograms.id, unique)),
+        );
       return new Set(rows.map((r) => r.id));
     },
     'maintenance program',

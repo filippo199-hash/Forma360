@@ -95,13 +95,7 @@ type FeedItem = {
   pending: boolean;
 };
 
-function RecipientFeed({
-  locale,
-  tInbox,
-}: {
-  locale: string;
-  tInbox: (key: string) => string;
-}) {
+function RecipientFeed({ locale, tInbox }: { locale: string; tInbox: (key: string) => string }) {
   const [filter, setFilter] = useState<FeedFilter>('all');
   const { data, isLoading, error } = trpc.headsUps.listForRecipient.useQuery({ filter });
   const rows = data ?? [];
@@ -121,9 +115,7 @@ function RecipientFeed({
                 : 'border-input bg-background text-muted-foreground hover:border-foreground'
             }`}
           >
-            {tInbox(
-              f === 'all' ? 'filterAll' : f === 'pending' ? 'filterPending' : 'filterDone',
-            )}
+            {tInbox(f === 'all' ? 'filterAll' : f === 'pending' ? 'filterPending' : 'filterDone')}
           </button>
         ))}
       </div>
@@ -146,11 +138,7 @@ function RecipientFeed({
       ) : (
         <div className="space-y-3">
           {rows.map((row) => (
-            <Link
-              key={row.id}
-              href={`/${locale}/heads-up/${row.id}/view`}
-              className="block"
-            >
+            <Link key={row.id} href={`/${locale}/heads-up/${row.id}/view`} className="block">
               <Card className="transition-colors hover:bg-muted/30">
                 <CardContent className="flex items-start justify-between gap-3 p-4">
                   <div className="min-w-0 space-y-1">

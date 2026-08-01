@@ -129,7 +129,11 @@ const OTHER_TYPES: ReadonlyArray<{
 }> = [
   { type: 'text', labelKey: 'text', icon: <Type className="h-4 w-4 text-orange-500" /> },
   { type: 'number', labelKey: 'number', icon: <Hash className="h-4 w-4 text-blue-500" /> },
-  { type: 'checkbox', labelKey: 'checkbox', icon: <CheckSquare className="h-4 w-4 text-blue-500" /> },
+  {
+    type: 'checkbox',
+    labelKey: 'checkbox',
+    icon: <CheckSquare className="h-4 w-4 text-blue-500" />,
+  },
   { type: 'datetime', labelKey: 'datetime', icon: <Calendar className="h-4 w-4 text-green-500" /> },
   { type: 'media', labelKey: 'media', icon: <ImageIcon className="h-4 w-4 text-teal-500" /> },
   {
@@ -137,9 +141,18 @@ const OTHER_TYPES: ReadonlyArray<{
     labelKey: 'slider',
     icon: <SlidersHorizontal className="h-4 w-4 text-purple-500" />,
   },
-  { type: 'annotation', labelKey: 'annotation', icon: <Pencil className="h-4 w-4 text-yellow-500" /> },
+  {
+    type: 'annotation',
+    labelKey: 'annotation',
+    icon: <Pencil className="h-4 w-4 text-yellow-500" />,
+  },
   { type: 'signature', labelKey: 'signature', icon: <PenLine className="h-4 w-4 text-teal-500" /> },
-  { type: 'site', labelKey: 'site', siteKind: 'site', icon: <MapPin className="h-4 w-4 text-rose-500" /> },
+  {
+    type: 'site',
+    labelKey: 'site',
+    siteKind: 'site',
+    icon: <MapPin className="h-4 w-4 text-rose-500" />,
+  },
   {
     type: 'site',
     labelKey: 'project',
@@ -147,7 +160,11 @@ const OTHER_TYPES: ReadonlyArray<{
     icon: <FolderKanban className="h-4 w-4 text-indigo-500" />,
   },
   { type: 'location', labelKey: 'location', icon: <MapPin className="h-4 w-4 text-orange-500" /> },
-  { type: 'instruction', labelKey: 'instruction', icon: <Info className="h-4 w-4 text-blue-400" /> },
+  {
+    type: 'instruction',
+    labelKey: 'instruction',
+    icon: <Info className="h-4 w-4 text-blue-400" />,
+  },
   { type: 'asset', labelKey: 'asset', icon: <Box className="h-4 w-4 text-yellow-600" /> },
 ];
 

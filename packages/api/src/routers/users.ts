@@ -177,7 +177,10 @@ export const usersRouter = router({
         addedVia: groupMembers.addedVia,
       })
       .from(groupMembers)
-      .innerJoin(groups, and(eq(groupMembers.groupId, groups.id), eq(groups.tenantId, ctx.tenantId)))
+      .innerJoin(
+        groups,
+        and(eq(groupMembers.groupId, groups.id), eq(groups.tenantId, ctx.tenantId)),
+      )
       .where(and(eq(groupMembers.tenantId, ctx.tenantId), eq(groupMembers.userId, input.id)))
       .orderBy(groups.name);
 

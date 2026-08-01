@@ -83,10 +83,7 @@ export function PermissionMatrix({ draft, onChange, readOnly = false }: Permissi
                       onCheckedChange={() => toggleKey(key)}
                       disabled={readOnly}
                     />
-                    <label
-                      htmlFor={id}
-                      className="cursor-pointer text-sm text-muted-foreground"
-                    >
+                    <label htmlFor={id} className="cursor-pointer text-sm text-muted-foreground">
                       {t(`perms.${key.replaceAll('.', '_')}`)}
                     </label>
                   </li>

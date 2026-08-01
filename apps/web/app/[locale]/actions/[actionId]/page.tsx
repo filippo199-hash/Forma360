@@ -731,8 +731,7 @@ function ActivityTimeline({
   // Resolve raw user/site ids in assignee/site-change payloads to names.
   const { data: usersData } = trpc.users.list.useQuery({});
   const { data: sitesData } = trpc.sites.list.useQuery();
-  const userName = (id: string): string =>
-    usersData?.users.find((u) => u.id === id)?.name ?? id;
+  const userName = (id: string): string => usersData?.users.find((u) => u.id === id)?.name ?? id;
   const siteName = (id: string): string => sitesData?.find((s) => s.id === id)?.name ?? id;
   if (isLoading) return <Skeleton className="h-32 w-full" />;
   const rows = data ?? [];

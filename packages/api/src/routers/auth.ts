@@ -84,12 +84,7 @@ const getInviteDetailsInput = z.object({ token: z.string().length(64) });
  * otherwise land on an empty category dropdown with no way forward. Admins can
  * rename, archive, or add more under Observations → Categories.
  */
-const DEFAULT_OBSERVATION_CATEGORIES = [
-  'Hazard',
-  'Near miss',
-  'Quality',
-  'Environmental',
-] as const;
+const DEFAULT_OBSERVATION_CATEGORIES = ['Hazard', 'Near miss', 'Quality', 'Environmental'] as const;
 
 export function createAuthRouter(deps: AuthRouterDeps) {
   const appUrl = deps.appUrl.replace(/\/$/, '');

@@ -134,7 +134,6 @@ describe('editorReducer', () => {
     expect(next.isDirty).toBe(true);
   });
 
-
   it('addItem adds to the requested section and flips isDirty', () => {
     const s = initialState();
     const item = makeItem('text');

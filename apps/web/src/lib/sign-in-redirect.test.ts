@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SIGNED_IN_PATH, isSafeNextPath, safeNextPath, signInHref } from './sign-in-redirect';
+import {
+  DEFAULT_SIGNED_IN_PATH,
+  isSafeNextPath,
+  safeNextPath,
+  signInHref,
+} from './sign-in-redirect';
 
 describe('sign-in-redirect', () => {
   describe('isSafeNextPath / safeNextPath — open-redirect guard', () => {

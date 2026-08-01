@@ -685,7 +685,9 @@ function InspectionsTab({ locale }: { locale: string }) {
           ))
         ) : filteredRows.length === 0 ? (
           <Card>
-            <CardContent className="p-8 text-center text-muted-foreground">{t('empty')}</CardContent>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              {t('empty')}
+            </CardContent>
           </Card>
         ) : (
           groupedRows.map((group) => (

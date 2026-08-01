@@ -891,7 +891,14 @@ function ActivityTimeline({ issueId, locale }: { issueId: string; locale: string
           {data.map((event) => {
             const actor = event.actorName ?? tActivity('system');
             const initial = (actor[0] ?? '?').toUpperCase();
-            const sentence = describeActivity(event, tEvents, tPriority, tStatus, resolveUser, locale);
+            const sentence = describeActivity(
+              event,
+              tEvents,
+              tPriority,
+              tStatus,
+              resolveUser,
+              locale,
+            );
             return (
               <li key={event.id} className="flex items-start gap-3">
                 <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">

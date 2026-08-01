@@ -317,8 +317,7 @@ function CategoryRow({
 
             {fields.length === 0 ? (
               <p className="rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground">
-                {tCat('noCustomFieldsYet')}{' '}
-                {canManage ? tCat('addFieldHint') : ''}
+                {tCat('noCustomFieldsYet')} {canManage ? tCat('addFieldHint') : ''}
               </p>
             ) : (
               <div className="space-y-2">

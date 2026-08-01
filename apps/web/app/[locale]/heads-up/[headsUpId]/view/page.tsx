@@ -124,7 +124,11 @@ export default function HeadsUpRecipientViewPage() {
                     >
                       <div className="relative flex h-24 items-center justify-center bg-muted/40">
                         {isImage ? (
-                          <img src={url} alt={att.filename} className="h-full w-full object-cover" />
+                          <img
+                            src={url}
+                            alt={att.filename}
+                            className="h-full w-full object-cover"
+                          />
                         ) : isVideo ? (
                           <>
                             <Film className="h-8 w-8 text-muted-foreground" />
