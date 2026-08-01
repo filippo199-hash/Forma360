@@ -115,6 +115,21 @@ export function DistributionSection({
             <DialogTitle>{t('distribution.dialogTitle')}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">{t('distribution.selectHint')}</p>
+          <label className="flex cursor-pointer items-center gap-2 rounded p-1.5 text-sm font-medium hover:bg-accent">
+            <Checkbox
+              checked={
+                (usersQuery.data?.users.length ?? 0) > 0 &&
+                selected.size === (usersQuery.data?.users.length ?? 0)
+              }
+              onCheckedChange={() => {
+                const all = usersQuery.data?.users ?? [];
+                setSelected((prev) =>
+                  prev.size === all.length ? new Set() : new Set(all.map((u) => u.id)),
+                );
+              }}
+            />
+            {t('distribution.selectAll')}
+          </label>
           <div className="max-h-72 space-y-1 overflow-y-auto">
             {(usersQuery.data?.users ?? []).map((u) => (
               <label

@@ -3688,7 +3688,9 @@
       "save": "Save hazard",
       "saving": "Saving…",
       "remove": "Remove hazard",
-      "removeConfirm": "Remove this hazard and its controls?"
+      "removeConfirm": "Remove this hazard and its controls?",
+      "quickAddPlaceholder": "Type a hazard and press Enter — e.g. Working at height",
+      "add": "Add"
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
@@ -3774,7 +3776,8 @@
       "acknowledgeButton": "I have read and understood it",
       "acknowledging": "Saving…",
       "acknowledgedToast": "Acknowledgement recorded.",
-      "pendingBanner": "{count} risk assessment(s) waiting for your acknowledgement."
+      "pendingBanner": "{count} risk assessment(s) waiting for your acknowledgement.",
+      "selectAll": "Select everyone"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -3788,6 +3791,19 @@
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
       "createdToast": "Linked assessment created as a draft."
+    },
+    "stats": {
+      "active": "Active",
+      "drafts": "Drafts",
+      "reviewDue": "Reviews due",
+      "myPending": "Waiting for me"
+    },
+    "searchPlaceholder": "Search by title or reference…",
+    "readiness": {
+      "title": "Ready to publish?",
+      "hazards": "At least one hazard identified",
+      "scored": "Every hazard scored — initial and residual",
+      "ppe": "No hazard relies on PPE alone without justification"
     }
   }
 }

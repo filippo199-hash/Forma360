@@ -11,11 +11,13 @@
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { HazardCard } from '../../../../src/components/risk-assessments/hazard-card';
 import { DistributionSection } from '../../../../src/components/risk-assessments/distribution-section';
 import { ReviewSection } from '../../../../src/components/risk-assessments/review-section';
 import { Button } from '../../../../src/components/ui/button';
+import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -33,6 +35,7 @@ export default function RiskAssessmentDetailPage() {
 
   const utils = trpc.useUtils();
   const query = trpc.riskAssessments.get.useQuery({ assessmentId });
+  const [newHazard, setNewHazard] = useState('');
 
   const refresh = (): void => {
     void utils.riskAssessments.get.invalidate({ assessmentId });
@@ -40,7 +43,10 @@ export default function RiskAssessmentDetailPage() {
   };
 
   const addHazard = trpc.riskAssessments.addHazard.useMutation({
-    onSuccess: refresh,
+    onSuccess: () => {
+      setNewHazard('');
+      refresh();
+    },
     onError: () => toast.error(t('saveError')),
   });
   const publish = trpc.riskAssessments.publish.useMutation({
@@ -106,6 +112,21 @@ export default function RiskAssessmentDetailPage() {
     assessment.personSpecificFor === null &&
     affected.has('new_expectant_mothers') &&
     !variantKinds.has('new_expectant_mother');
+  const allScored =
+    hazards.length > 0 &&
+    hazards.every(
+      (h) =>
+        h.initialLikelihood !== null &&
+        h.initialSeverity !== null &&
+        h.residualLikelihood !== null &&
+        h.residualSeverity !== null,
+    );
+  const ppeOk = hazards.every((h) => {
+    if (h.controls.length === 0) return true;
+    const allPpe = h.controls.every((c) => c.tier === 'ppe');
+    const justified = h.controls.some((c) => (c.ppeJustification ?? '').trim().length > 0);
+    return !allPpe || justified;
+  });
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
@@ -256,31 +277,68 @@ export default function RiskAssessmentDetailPage() {
         <li>{t('steps.review')}</li>
       </ol>
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold">{t('hazards.sectionTitle')}</h2>
-          <p className="max-w-3xl text-xs text-muted-foreground">{t('hazards.sectionHint')}</p>
+      {editable ? (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border px-3 py-2 text-xs">
+          <span className="font-medium">{t('readiness.title')}</span>
+          {[
+            { ok: hazards.length > 0, label: t('readiness.hazards') },
+            { ok: allScored, label: t('readiness.scored') },
+            { ok: ppeOk, label: t('readiness.ppe') },
+          ].map((item) => (
+            <span
+              key={item.label}
+              className={
+                item.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'
+              }
+            >
+              {item.ok ? '✓' : '○'} {item.label}
+            </span>
+          ))}
         </div>
-        {editable ? (
+      ) : null}
+
+      <div>
+        <h2 className="text-base font-semibold">{t('hazards.sectionTitle')}</h2>
+        <p className="max-w-3xl text-xs text-muted-foreground">{t('hazards.sectionHint')}</p>
+      </div>
+
+      {editable ? (
+        <div className="flex gap-2">
+          <Input
+            value={newHazard}
+            placeholder={t('hazards.quickAddPlaceholder')}
+            onChange={(e) => setNewHazard(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newHazard.trim().length > 0 && !addHazard.isPending) {
+                e.preventDefault();
+                addHazard.mutate({
+                  assessmentId,
+                  hazard: newHazard.trim(),
+                  harmDescription: '',
+                  affectedGroups: ['employees'],
+                  existingControls: '',
+                });
+              }
+            }}
+          />
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            disabled={addHazard.isPending}
+            disabled={newHazard.trim().length === 0 || addHazard.isPending}
             onClick={() =>
               addHazard.mutate({
                 assessmentId,
-                hazard: t('hazards.hazardLabel'),
+                hazard: newHazard.trim(),
                 harmDescription: '',
                 affectedGroups: ['employees'],
                 existingControls: '',
               })
             }
           >
-            {t('hazards.addButton')}
+            {t('hazards.add')}
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {hazards.length === 0 ? (
         <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">

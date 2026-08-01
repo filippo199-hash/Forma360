@@ -2,7 +2,7 @@
 
 import { Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { MatrixThresholds } from '../../lib/risk-matrix';
 import { scoreFor } from '../../lib/risk-matrix';
@@ -38,46 +38,53 @@ export interface HazardWithControls {
 }
 
 const TIERS = ['eliminate', 'substitute', 'engineering', 'administrative', 'ppe'] as const;
-const SCORES = ['1', '2', '3', '4', '5'] as const;
+const SCORES = [1, 2, 3, 4, 5] as const;
 
-function ScoreSelect({
+/** One-click 1–5 picker — a small segmented row instead of a dropdown. */
+function ScoreButtons({
   value,
-  onChange,
+  onPick,
   label,
   disabled,
 }: {
   value: number | null;
-  onChange: (v: number) => void;
+  onPick: (v: number) => void;
   label: string;
   disabled: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <Select
-        {...(value !== null ? { value: String(value) } : {})}
-        onValueChange={(v) => onChange(Number(v))}
-        disabled={disabled}
+      <div
+        className="inline-flex overflow-hidden rounded-md border"
+        role="group"
+        aria-label={label}
       >
-        <SelectTrigger className="w-20">
-          <SelectValue placeholder="–" />
-        </SelectTrigger>
-        <SelectContent>
-          {SCORES.map((s) => (
-            <SelectItem key={s} value={s}>
-              {s}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        {SCORES.map((s) => (
+          <button
+            key={s}
+            type="button"
+            disabled={disabled}
+            aria-pressed={value === s}
+            onClick={() => onPick(s)}
+            className={`px-2.5 py-1 text-sm transition-colors ${
+              value === s
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-background text-muted-foreground hover:bg-accent'
+            } ${s !== 5 ? 'border-r' : ''}`}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
 /**
- * One hazard through HSE steps 1–3: the hazard, who might be harmed and
- * how, evaluation (initial score → controls with hierarchy tiers →
- * residual score). Header fields save explicitly; controls save on action.
+ * One hazard through HSE steps 1–3. Zero-click persistence: text fields
+ * auto-save on blur, scores / chips / control changes save immediately —
+ * an assessor never has to remember a Save button.
  */
 export function HazardCard({
   hazard,
@@ -102,6 +109,13 @@ export function HazardCard({
   const [iS, setIS] = useState(hazard.initialSeverity);
   const [rL, setRL] = useState(hazard.residualLikelihood);
   const [rS, setRS] = useState(hazard.residualSeverity);
+
+  // Last-saved snapshot so blur handlers only fire a mutation on real change.
+  const saved = useRef({
+    text: hazard.hazard,
+    harm: hazard.harmDescription,
+    existing: hazard.existingControls,
+  });
 
   const [controlDesc, setControlDesc] = useState('');
   const [controlTier, setControlTier] = useState<(typeof TIERS)[number]>('engineering');
@@ -131,21 +145,22 @@ export function HazardCard({
     onError: () => toast.error(t('saveError')),
   });
 
-  function toggleGroup(g: string): void {
-    setGroups((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]));
+  function persistGroups(next: string[]): void {
+    setGroups(next);
+    update.mutate({ hazardId: hazard.id, affectedGroups: next });
   }
 
-  function saveHazard(): void {
-    update.mutate({
+  function toggleGroup(g: string): void {
+    persistGroups(groups.includes(g) ? groups.filter((x) => x !== g) : [...groups, g]);
+  }
+
+  function submitControl(): void {
+    if (controlDesc.trim().length === 0 || addControl.isPending) return;
+    addControl.mutate({
       hazardId: hazard.id,
-      hazard: text,
-      harmDescription: harm,
-      affectedGroups: groups,
-      existingControls: existing,
-      initialLikelihood: iL,
-      initialSeverity: iS,
-      residualLikelihood: rL,
-      residualSeverity: rS,
+      description: controlDesc.trim(),
+      tier: controlTier,
+      status: controlStatus,
     });
   }
 
@@ -160,7 +175,7 @@ export function HazardCard({
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-2">
-        <CardTitle className="text-base">{hazard.hazard}</CardTitle>
+        <CardTitle className="text-base">{text}</CardTitle>
         <div className="flex items-center gap-2">
           <RiskBandChip score={scoreFor(iL, iS)} matrix={matrix} />
           <span className="text-xs text-muted-foreground" aria-hidden="true">
@@ -192,6 +207,12 @@ export function HazardCard({
               value={text}
               disabled={!canManage}
               onChange={(e) => setText(e.target.value)}
+              onBlur={() => {
+                if (text.trim().length > 0 && text !== saved.current.text) {
+                  saved.current.text = text;
+                  update.mutate({ hazardId: hazard.id, hazard: text });
+                }
+              }}
               placeholder={t('hazards.hazardPlaceholder')}
             />
           </div>
@@ -201,6 +222,12 @@ export function HazardCard({
               value={harm}
               disabled={!canManage}
               onChange={(e) => setHarm(e.target.value)}
+              onBlur={() => {
+                if (harm !== saved.current.harm) {
+                  saved.current.harm = harm;
+                  update.mutate({ hazardId: hazard.id, harmDescription: harm });
+                }
+              }}
               placeholder={t('hazards.harmPlaceholder')}
             />
           </div>
@@ -250,16 +277,22 @@ export function HazardCard({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
             <Label>{t('hazards.initialRisk')}</Label>
-            <div className="flex items-end gap-3">
-              <ScoreSelect
+            <div className="flex flex-wrap items-end gap-3">
+              <ScoreButtons
                 value={iL}
-                onChange={setIL}
+                onPick={(v) => {
+                  setIL(v);
+                  update.mutate({ hazardId: hazard.id, initialLikelihood: v });
+                }}
                 label={t('hazards.likelihood')}
                 disabled={!canManage}
               />
-              <ScoreSelect
+              <ScoreButtons
                 value={iS}
-                onChange={setIS}
+                onPick={(v) => {
+                  setIS(v);
+                  update.mutate({ hazardId: hazard.id, initialSeverity: v });
+                }}
                 label={t('hazards.severity')}
                 disabled={!canManage}
               />
@@ -269,16 +302,22 @@ export function HazardCard({
           </div>
           <div className="space-y-1.5">
             <Label>{t('hazards.residualRisk')}</Label>
-            <div className="flex items-end gap-3">
-              <ScoreSelect
+            <div className="flex flex-wrap items-end gap-3">
+              <ScoreButtons
                 value={rL}
-                onChange={setRL}
+                onPick={(v) => {
+                  setRL(v);
+                  update.mutate({ hazardId: hazard.id, residualLikelihood: v });
+                }}
                 label={t('hazards.likelihood')}
                 disabled={!canManage}
               />
-              <ScoreSelect
+              <ScoreButtons
                 value={rS}
-                onChange={setRS}
+                onPick={(v) => {
+                  setRS(v);
+                  update.mutate({ hazardId: hazard.id, residualSeverity: v });
+                }}
                 label={t('hazards.severity')}
                 disabled={!canManage}
               />
@@ -294,6 +333,12 @@ export function HazardCard({
             disabled={!canManage}
             rows={2}
             onChange={(e) => setExisting(e.target.value)}
+            onBlur={() => {
+              if (existing !== saved.current.existing) {
+                saved.current.existing = existing;
+                update.mutate({ hazardId: hazard.id, existingControls: existing });
+              }
+            }}
             placeholder={t('hazards.existingControlsPlaceholder')}
           />
         </div>
@@ -321,7 +366,7 @@ export function HazardCard({
                     onValueChange={(v) =>
                       updateControl.mutate({
                         controlId: c.id,
-                        status: v as 'in_place' | 'planned',
+                        status: v === 'planned' ? 'planned' : 'in_place',
                       })
                     }
                   >
@@ -379,6 +424,12 @@ export function HazardCard({
                 <Input
                   value={controlDesc}
                   onChange={(e) => setControlDesc(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      submitControl();
+                    }
+                  }}
                   placeholder={t('controls.descriptionPlaceholder')}
                 />
               </div>
@@ -386,7 +437,10 @@ export function HazardCard({
                 <Label className="text-xs">{t('controls.tierLabel')}</Label>
                 <Select
                   value={controlTier}
-                  onValueChange={(v) => setControlTier(v as (typeof TIERS)[number])}
+                  onValueChange={(v) => {
+                    const tier = TIERS.find((x) => x === v);
+                    if (tier !== undefined) setControlTier(tier);
+                  }}
                 >
                   <SelectTrigger className="w-48">
                     <SelectValue />
@@ -404,7 +458,7 @@ export function HazardCard({
                 <Label className="text-xs">{t('controls.statusLabel')}</Label>
                 <Select
                   value={controlStatus}
-                  onValueChange={(v) => setControlStatus(v as 'in_place' | 'planned')}
+                  onValueChange={(v) => setControlStatus(v === 'planned' ? 'planned' : 'in_place')}
                 >
                   <SelectTrigger className="w-48">
                     <SelectValue />
@@ -419,28 +473,13 @@ export function HazardCard({
                 type="button"
                 size="sm"
                 disabled={controlDesc.trim().length === 0 || addControl.isPending}
-                onClick={() =>
-                  addControl.mutate({
-                    hazardId: hazard.id,
-                    description: controlDesc.trim(),
-                    tier: controlTier,
-                    status: controlStatus,
-                  })
-                }
+                onClick={submitControl}
               >
                 {t('controls.save')}
               </Button>
             </div>
           ) : null}
         </div>
-
-        {canManage ? (
-          <div className="flex justify-end">
-            <Button type="button" size="sm" onClick={saveHazard} disabled={update.isPending}>
-              {update.isPending ? t('hazards.saving') : t('hazards.save')}
-            </Button>
-          </div>
-        ) : null}
       </CardContent>
     </Card>
   );

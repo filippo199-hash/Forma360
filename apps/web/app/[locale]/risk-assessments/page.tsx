@@ -44,8 +44,32 @@ export default function RiskAssessmentsPage() {
 
   const [status, setStatus] = useState<StatusFilter>('all');
   const [type, setType] = useState<TypeFilter>('all');
-  const list = trpc.riskAssessments.list.useQuery({ status, type });
+  const [search, setSearch] = useState('');
+  const [dueOnly, setDueOnly] = useState(false);
+  // One round-trip: archived rows need their own fetch, everything else is
+  // filtered client-side so filters + search feel instant.
+  const list = trpc.riskAssessments.list.useQuery({
+    status: status === 'archived' ? 'archived' : 'all',
+    type: 'all',
+  });
   const pending = trpc.riskAssessments.listMyPending.useQuery();
+
+  const needle = search.trim().toLowerCase();
+  const rows = (list.data ?? []).filter(
+    (a) =>
+      (status === 'all' || status === 'archived' || a.status === status) &&
+      (type === 'all' || a.type === type) &&
+      (!dueOnly || a.reviewDue) &&
+      (needle.length === 0 ||
+        a.title.toLowerCase().includes(needle) ||
+        (a.referenceNumber ?? '').toLowerCase().includes(needle)),
+  );
+  const stats = {
+    active: (list.data ?? []).filter((a) => a.status === 'active').length,
+    drafts: (list.data ?? []).filter((a) => a.status === 'draft').length,
+    reviewDue: (list.data ?? []).filter((a) => a.reviewDue).length,
+    myPending: pending.data?.length ?? 0,
+  };
 
   const [createOpen, setCreateOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -73,6 +97,30 @@ export default function RiskAssessmentsPage() {
         ) : null}
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            { key: 'active', value: stats.active, onClick: () => setStatus('active') },
+            { key: 'drafts', value: stats.drafts, onClick: () => setStatus('draft') },
+            { key: 'reviewDue', value: stats.reviewDue, onClick: () => setDueOnly((v) => !v) },
+            { key: 'myPending', value: stats.myPending, onClick: undefined },
+          ] as const
+        ).map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={s.onClick}
+            disabled={s.onClick === undefined}
+            className={`rounded-md border px-3 py-1.5 text-left transition-colors ${
+              s.key === 'reviewDue' && dueOnly ? 'border-primary bg-accent' : 'hover:bg-accent'
+            } ${s.onClick === undefined ? 'cursor-default' : ''}`}
+          >
+            <span className="block text-lg font-semibold leading-tight">{s.value}</span>
+            <span className="block text-xs text-muted-foreground">{t(`stats.${s.key}`)}</span>
+          </button>
+        ))}
+      </div>
+
       {pending.data !== undefined && pending.data.length > 0 ? (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
           {t('distribution.pendingBanner', { count: pending.data.length })}{' '}
@@ -89,6 +137,12 @@ export default function RiskAssessmentsPage() {
       ) : null}
 
       <div className="flex flex-wrap gap-2">
+        <Input
+          className="w-64"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('searchPlaceholder')}
+        />
         <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
           <SelectTrigger className="w-40">
             <SelectValue />
@@ -118,13 +172,18 @@ export default function RiskAssessmentsPage() {
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-16 w-full" />
         </div>
-      ) : list.data === undefined || list.data.length === 0 ? (
-        <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-          {t('empty')}
+      ) : rows.length === 0 ? (
+        <div className="space-y-3 rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+          <p>{t('empty')}</p>
+          {canCreate ? (
+            <Button type="button" onClick={() => setCreateOpen(true)}>
+              {t('newButton')}
+            </Button>
+          ) : null}
         </div>
       ) : (
         <ul className="divide-y rounded-md border">
-          {list.data.map((a) => (
+          {rows.map((a) => (
             <li key={a.id}>
               <Link
                 href={`/${locale}/risk-assessments/${a.id}`}
@@ -178,8 +237,20 @@ export default function RiskAssessmentsPage() {
               <Label htmlFor="ra-title">{t('create.titleLabel')}</Label>
               <Input
                 id="ra-title"
+                autoFocus
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && title.trim().length > 0 && !create.isPending) {
+                    e.preventDefault();
+                    create.mutate({
+                      title: title.trim(),
+                      activity: activity.trim(),
+                      type: newType,
+                      ...(location.trim().length > 0 ? { locationText: location.trim() } : {}),
+                    });
+                  }
+                }}
                 placeholder={t('create.titlePlaceholder')}
               />
             </div>
