@@ -38,6 +38,7 @@ export const PERMISSION_MODULES = [
   'integrations',
   'billing',
   'contractors',
+  'riskAssessments',
   'org',
 ] as const;
 
@@ -137,6 +138,11 @@ export const PERMISSION_KEYS = [
   'contractors.verifyDocs',
   // Gate check-in operators (reception / security) — Phase 2b.
   'contractors.gate',
+
+  // ─── Risk assessments (FreeHS module B1) ─────────────────────────────────
+  'riskAssessments.view',
+  'riskAssessments.create',
+  'riskAssessments.manage',
 
   // ─── Organisation settings ───────────────────────────────────────────────
   // `org.settings` is what the S-E02 last-admin check counts: any user whose

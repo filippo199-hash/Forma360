@@ -29,6 +29,7 @@ describe('PERMISSION_KEYS', () => {
         'integrations',
         'billing',
         'contractors',
+        'riskAssessments',
         'org',
       ]),
     );
