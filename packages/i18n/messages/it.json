@@ -3731,8 +3731,11 @@
       "saving": "Saving…",
       "remove": "Remove hazard",
       "removeConfirm": "Remove this hazard and its controls?",
-      "quickAddPlaceholder": "Type a hazard and press Enter — e.g. Working at height",
-      "add": "Add"
+      "quickAddPlaceholder": "Type a hazard and press Enter — or pick from the library",
+      "add": "Add",
+      "suggestionsLabel": "Common hazards — one click pre-fills the whole card",
+      "prefilledToast": "Pre-filled from the hazard library — review and adjust for your site.",
+      "plainEnterHint": "Press Enter to add exactly what you typed instead"
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
@@ -3843,9 +3846,9 @@
     "searchPlaceholder": "Search by title or reference…",
     "readiness": {
       "title": "Ready to publish?",
-      "hazards": "At least one hazard identified",
-      "scored": "Every hazard scored — initial and residual",
-      "ppe": "No hazard relies on PPE alone without justification"
+      "hazards": "At least one hazard",
+      "scored": "All hazards scored (initial + residual)",
+      "ppe": "No PPE-only hazard without justification"
     }
   }
 }

@@ -11,13 +11,12 @@
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { toast } from 'sonner';
 import { HazardCard } from '../../../../src/components/risk-assessments/hazard-card';
+import { HazardQuickAdd } from '../../../../src/components/risk-assessments/hazard-quick-add';
 import { DistributionSection } from '../../../../src/components/risk-assessments/distribution-section';
 import { ReviewSection } from '../../../../src/components/risk-assessments/review-section';
 import { Button } from '../../../../src/components/ui/button';
-import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -35,20 +34,12 @@ export default function RiskAssessmentDetailPage() {
 
   const utils = trpc.useUtils();
   const query = trpc.riskAssessments.get.useQuery({ assessmentId });
-  const [newHazard, setNewHazard] = useState('');
 
   const refresh = (): void => {
     void utils.riskAssessments.get.invalidate({ assessmentId });
     void utils.riskAssessments.list.invalidate();
   };
 
-  const addHazard = trpc.riskAssessments.addHazard.useMutation({
-    onSuccess: () => {
-      setNewHazard('');
-      refresh();
-    },
-    onError: () => toast.error(t('saveError')),
-  });
   const publish = trpc.riskAssessments.publish.useMutation({
     onSuccess: (res) => {
       toast.success(t('publish.successToast'));
@@ -302,43 +293,7 @@ export default function RiskAssessmentDetailPage() {
         <p className="max-w-3xl text-xs text-muted-foreground">{t('hazards.sectionHint')}</p>
       </div>
 
-      {editable ? (
-        <div className="flex gap-2">
-          <Input
-            value={newHazard}
-            placeholder={t('hazards.quickAddPlaceholder')}
-            onChange={(e) => setNewHazard(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && newHazard.trim().length > 0 && !addHazard.isPending) {
-                e.preventDefault();
-                addHazard.mutate({
-                  assessmentId,
-                  hazard: newHazard.trim(),
-                  harmDescription: '',
-                  affectedGroups: ['employees'],
-                  existingControls: '',
-                });
-              }
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            disabled={newHazard.trim().length === 0 || addHazard.isPending}
-            onClick={() =>
-              addHazard.mutate({
-                assessmentId,
-                hazard: newHazard.trim(),
-                harmDescription: '',
-                affectedGroups: ['employees'],
-                existingControls: '',
-              })
-            }
-          >
-            {t('hazards.add')}
-          </Button>
-        </div>
-      ) : null}
+      {editable ? <HazardQuickAdd assessmentId={assessmentId} onAdded={refresh} /> : null}
 
       {hazards.length === 0 ? (
         <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
