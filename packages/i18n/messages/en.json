@@ -3855,6 +3855,8 @@
     },
     "filters": {
       "all": "All",
+      "allStatuses": "All statuses",
+      "allTypes": "All types",
       "status": "Status",
       "type": "Type",
       "reviewDueOnly": "Reviews due",
@@ -4030,7 +4032,9 @@
       "acknowledgedToast": "Acknowledgement recorded.",
       "pendingBanner": "{count} risk assessment(s) waiting for your acknowledgement.",
       "selectAll": "Select everyone",
-      "shareHeadsUp": "Share via Heads Up"
+      "shareHeadsUp": "Share via Heads Up",
+      "sharingHeadsUp": "Preparing…",
+      "attachmentFailed": "Couldn't attach the PDF — sharing without it."
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",

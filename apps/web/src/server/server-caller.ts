@@ -13,10 +13,8 @@
 import { buildAppRouter } from '@forma360/api';
 import type { Context } from '@forma360/api/context';
 import { user } from '@forma360/db/schema';
-import { brandHasModule } from '@forma360/shared/brand';
 import { newId, type Id } from '@forma360/shared/id';
 import { eq } from 'drizzle-orm';
-import { activeBrand } from '../lib/brand';
 import { authDeps } from './auth-deps';
 import { db } from './db';
 import { exportsDeps } from './exports-deps';
@@ -25,6 +23,7 @@ import { inspectionsDeps } from './inspections-deps';
 import { inspectionsExportDeps } from './inspections-export-deps';
 import { issuesDeps } from './issues-deps';
 import { logger } from './logger';
+import { riskAssessmentsDeps } from './risk-assessments-deps';
 import { enqueue } from './trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps,
 // mirroring the HTTP entrypoint so a caller built here behaves identically.
@@ -40,7 +39,7 @@ const appRouter = buildAppRouter({
   inspections: inspectionsDeps,
   issues: issuesDeps,
   headsUps: headsUpsDeps,
-  riskAssessments: { enabled: brandHasModule(activeBrand.id, 'riskAssessments') },
+  riskAssessments: riskAssessmentsDeps,
 });
 
 export type ServerCaller = ReturnType<typeof appRouter.createCaller>;

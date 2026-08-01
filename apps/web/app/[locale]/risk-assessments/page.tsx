@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * Risk assessments list (FreeHS module B1). Status tabs, instant
- * client-side search + filters (type, reviews due), an Inspections-style
- * table, and a pending-acknowledgements banner. "New assessment" creates
- * an untitled draft and lands straight on the editor — no dialog; the
- * editor guards the title at publish time.
+ * Risk assessments list (FreeHS module B1). One filter row (status, type,
+ * site/project, reviews due) over an Inspections-style table, plus a
+ * pending-acknowledgements banner. "New assessment" creates an untitled
+ * draft and lands straight on the editor — no dialog; the editor guards
+ * the title at publish time.
  */
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { RiskBandChip } from '../../../src/components/risk-assessments/risk-band-chip';
+import { RaStatusChip } from '../../../src/components/risk-assessments/status-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Input } from '../../../src/components/ui/input';
 import {
@@ -23,7 +24,6 @@ import {
   SelectValue,
 } from '../../../src/components/ui/select';
 import { Skeleton } from '../../../src/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '../../../src/components/ui/tabs';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
@@ -115,15 +115,6 @@ export default function RiskAssessmentsPage() {
         </div>
       ) : null}
 
-      <Tabs value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
-        <TabsList>
-          <TabsTrigger value="all">{t('filters.all')}</TabsTrigger>
-          <TabsTrigger value="active">{t('status.active')}</TabsTrigger>
-          <TabsTrigger value="draft">{t('status.draft')}</TabsTrigger>
-          <TabsTrigger value="archived">{t('status.archived')}</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
       <div className="flex flex-wrap items-center gap-2">
         <Input
           className="w-64"
@@ -131,12 +122,23 @@ export default function RiskAssessmentsPage() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('searchPlaceholder')}
         />
+        <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('filters.allStatuses')}</SelectItem>
+            <SelectItem value="active">{t('status.active')}</SelectItem>
+            <SelectItem value="draft">{t('status.draft')}</SelectItem>
+            <SelectItem value="archived">{t('status.archived')}</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={type} onValueChange={(v) => setType(v as TypeFilter)}>
           <SelectTrigger className="w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('filters.all')}</SelectItem>
+            <SelectItem value="all">{t('filters.allTypes')}</SelectItem>
             <SelectItem value="standing">{t('type.standing')}</SelectItem>
             <SelectItem value="dynamic">{t('type.dynamic')}</SelectItem>
           </SelectContent>
@@ -225,9 +227,7 @@ export default function RiskAssessmentsPage() {
                     <td className="px-3 py-3 text-xs text-muted-foreground">{a.siteName ?? '—'}</td>
                     <td className="px-3 py-3 text-xs">{t(`type.${a.type}`)}</td>
                     <td className="px-3 py-3">
-                      <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                        {t(`status.${a.status}`)}
-                      </span>
+                      <RaStatusChip status={a.status} />
                     </td>
                     <td className="px-3 py-3 text-xs">{a.hazardCount}</td>
                     <td className="px-3 py-3">

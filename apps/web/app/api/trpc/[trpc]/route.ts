@@ -11,9 +11,7 @@
  *     server logs with client-side telemetry.
  */
 import { buildAppRouter } from '@forma360/api';
-import { brandHasModule } from '@forma360/shared/brand';
 import { isId } from '@forma360/shared/id';
-import { activeBrand } from '../../../../src/lib/brand';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { logger } from '../../../../src/server/logger';
 import { authDeps } from '../../../../src/server/auth-deps';
@@ -22,6 +20,7 @@ import { headsUpsDeps } from '../../../../src/server/heads-up-deps';
 import { inspectionsDeps } from '../../../../src/server/inspections-deps';
 import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { issuesDeps } from '../../../../src/server/issues-deps';
+import { riskAssessmentsDeps } from '../../../../src/server/risk-assessments-deps';
 import { createContext } from '../../../../src/server/trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps.
 import '../../../../src/server/users-deps';
@@ -37,7 +36,7 @@ const appRouter = buildAppRouter({
   inspections: inspectionsDeps,
   issues: issuesDeps,
   headsUps: headsUpsDeps,
-  riskAssessments: { enabled: brandHasModule(activeBrand.id, 'riskAssessments') },
+  riskAssessments: riskAssessmentsDeps,
 });
 
 async function handler(req: Request): Promise<Response> {

@@ -23,6 +23,8 @@ import { toast } from 'sonner';
 import { HazardCard } from '../../../../src/components/risk-assessments/hazard-card';
 import { HazardQuickAdd } from '../../../../src/components/risk-assessments/hazard-quick-add';
 import { DistributionSection } from '../../../../src/components/risk-assessments/distribution-section';
+import { RaStatusChip } from '../../../../src/components/risk-assessments/status-chip';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { ReviewSection } from '../../../../src/components/risk-assessments/review-section';
 import { Button } from '../../../../src/components/ui/button';
 import {
@@ -32,15 +34,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../../../src/components/ui/dialog';
+import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../../src/components/ui/select';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '../../../../src/components/ui/tabs';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { bandForScore, scoreFor } from '../../../../src/lib/risk-matrix';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -69,9 +66,7 @@ export default function RiskAssessmentDetailPage() {
 
   const utils = trpc.useUtils();
   const query = trpc.riskAssessments.get.useQuery({ assessmentId });
-  // Site/project picker source. listForConductor needs no extra permission,
-  // so any manager can link the assessment to a site.
-  const sitesQuery = trpc.sites.listForConductor.useQuery(undefined, { enabled: canManage });
+  const [panelTab, setPanelTab] = useState<'review' | 'distribution'>('review');
   const [titleText, setTitleText] = useState<string | null>(null);
   const [titleDialogOpen, setTitleDialogOpen] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
@@ -126,6 +121,9 @@ export default function RiskAssessmentDetailPage() {
     },
     onError: () => toast.error(t('saveError')),
   });
+  // Renders the PDF into R2 for the Heads Up hand-off; errors are handled
+  // inline in shareViaHeadsUp (the share still goes out without the file).
+  const prepareAttachment = trpc.riskAssessments.prepareHeadsUpAttachment.useMutation();
 
   if (query.isLoading) {
     return (
@@ -208,8 +206,9 @@ export default function RiskAssessmentDetailPage() {
 
   /**
    * Point 5 of the practitioner review: distribution rides the Heads Up
-   * machinery. Publish first (validations apply), then land on the Heads
-   * Up composer pre-filled — the user only picks the recipients.
+   * machinery. Publish first (validations apply), render the PDF copy of
+   * the record, then land on the Heads Up composer pre-filled with the
+   * PDF attached — the user only picks the recipients.
    */
   async function shareViaHeadsUp(): Promise<void> {
     if (sharing) return;
@@ -221,8 +220,20 @@ export default function RiskAssessmentDetailPage() {
       const huTitle = `${title} (${assessment.referenceNumber ?? ''})`.trim();
       const link = `${window.location.origin}/${locale}/risk-assessments/${assessmentId}`;
       const huDescription = `${t('distribution.acknowledgeBanner')}\n\n${huTitle}\n${link}`;
+      // The PDF is best-effort: if rendering fails the share still goes
+      // out, just without the file.
+      let attQuery = '';
+      try {
+        const att = await prepareAttachment.mutateAsync({ assessmentId });
+        attQuery =
+          `&attKey=${encodeURIComponent(att.storageKey)}` +
+          `&attName=${encodeURIComponent(att.filename)}` +
+          `&attSize=${att.sizeBytes}`;
+      } catch {
+        toast.error(t('distribution.attachmentFailed'));
+      }
       router.push(
-        `/${locale}/heads-up/new?title=${encodeURIComponent(huTitle)}&description=${encodeURIComponent(huDescription)}`,
+        `/${locale}/heads-up/new?title=${encodeURIComponent(huTitle)}&description=${encodeURIComponent(huDescription)}${attQuery}`,
       );
     } catch {
       // publish.mutateAsync already surfaced the specific toast.
@@ -286,51 +297,29 @@ export default function RiskAssessmentDetailPage() {
               <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
                 {t(`type.${assessment.type}`)}
               </span>
-              <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                {t(`status.${assessment.status}`)}
-              </span>
+              <RaStatusChip status={assessment.status} />
               {assessment.personSpecificFor !== null ? (
                 <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
                   {t(`personSpecific.badge.${assessment.personSpecificFor}`)}
                 </span>
               ) : null}
-              {editable ? (
-                <Select
-                  value={assessment.siteId ?? 'none'}
-                  onValueChange={(v) =>
-                    update.mutate({ assessmentId, siteId: v === 'none' ? null : v })
-                  }
-                >
-                  <SelectTrigger
-                    aria-label={t('site.label')}
-                    className="h-7 w-auto min-w-36 gap-1 px-2 text-xs"
-                  >
-                    <SelectValue placeholder={t('site.none')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t('site.none')}</SelectItem>
-                    {(sitesQuery.data ?? []).map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {'  '.repeat(s.depth) + s.name}
-                      </SelectItem>
-                    ))}
-                    {assessment.siteId !== null &&
-                    !(sitesQuery.data ?? []).some((s) => s.id === assessment.siteId) ? (
-                      // Linked site no longer in the active list (archived):
-                      // keep it selectable so the picker shows the truth.
-                      <SelectItem value={assessment.siteId}>
-                        {siteName ?? assessment.siteId}
-                      </SelectItem>
-                    ) : null}
-                  </SelectContent>
-                </Select>
-              ) : siteName !== null ? (
+              {!editable && siteName !== null ? (
                 <span className="rounded bg-muted px-1.5 py-0.5 text-xs">{siteName}</span>
               ) : null}
               {createdLine !== null ? (
                 <span className="text-xs text-muted-foreground">{createdLine}</span>
               ) : null}
             </div>
+            {editable ? (
+              <div className="mt-2 max-w-sm">
+                <SiteSelector
+                  multiple={false}
+                  value={assessment.siteId !== null ? [assessment.siteId] : []}
+                  onChange={(next) => update.mutate({ assessmentId, siteId: next[0] ?? null })}
+                  placeholder={t('site.none')}
+                />
+              </div>
+            ) : null}
             {assessment.activity.length > 0 ? (
               <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{assessment.activity}</p>
             ) : null}
@@ -522,25 +511,41 @@ export default function RiskAssessmentDetailPage() {
           </div>
         ) : null}
 
-        <ReviewSection
-          assessmentId={assessmentId}
-          reviewFrequencyMonths={assessment.reviewFrequencyMonths}
-          nextReviewAt={assessment.nextReviewAt}
-          lastReviewedAt={assessment.lastReviewedAt}
-          reviews={reviews}
-          canManage={editable}
-          onChanged={refresh}
-        />
-
-        <DistributionSection
-          assessmentId={assessmentId}
-          isActive={assessment.status === 'active'}
-          acknowledgements={acknowledgements}
-          canManage={canManage && assessment.archivedAt === null}
-          onChanged={refresh}
-          onShareHeadsUp={() => void shareViaHeadsUp()}
-          sharing={sharing}
-        />
+        {/* Review + Distribution share one tabbed card to save vertical space. */}
+        <Card>
+          <CardContent className="space-y-4 pt-4">
+            <Tabs
+              value={panelTab}
+              onValueChange={(v) => setPanelTab(v === 'distribution' ? 'distribution' : 'review')}
+            >
+              <TabsList>
+                <TabsTrigger value="review">{t('review.sectionTitle')}</TabsTrigger>
+                <TabsTrigger value="distribution">{t('distribution.sectionTitle')}</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {panelTab === 'review' ? (
+              <ReviewSection
+                assessmentId={assessmentId}
+                reviewFrequencyMonths={assessment.reviewFrequencyMonths}
+                nextReviewAt={assessment.nextReviewAt}
+                lastReviewedAt={assessment.lastReviewedAt}
+                reviews={reviews}
+                canManage={editable}
+                onChanged={refresh}
+              />
+            ) : (
+              <DistributionSection
+                assessmentId={assessmentId}
+                isActive={assessment.status === 'active'}
+                acknowledgements={acknowledgements}
+                canManage={canManage && assessment.archivedAt === null}
+                onChanged={refresh}
+                onShareHeadsUp={() => void shareViaHeadsUp()}
+                sharing={sharing}
+              />
+            )}
+          </CardContent>
+        </Card>
 
         {events.length > 0 ? (
           <div className="rounded-md border p-3">

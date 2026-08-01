@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -37,7 +36,8 @@ function toDateInputValue(d: Date | null): string {
 /**
  * HSE step 5 — keep the assessment alive. Shows the schedule (frequency +
  * next due), the review history, and a "record a review" dialog with the
- * trigger that prompted it.
+ * trigger that prompted it. Card-less: the detail page hosts it inside
+ * the tabbed Review / Distribution card.
  */
 export function ReviewSection({
   assessmentId,
@@ -86,94 +86,95 @@ export function ReviewSection({
   const overdue = nextReviewAt !== null && new Date(nextReviewAt) <= new Date();
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">{t('review.sectionTitle')}</CardTitle>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end gap-3">
         {canManage ? (
-          <Button type="button" size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="order-last ml-auto"
+            onClick={() => setDialogOpen(true)}
+          >
             {t('review.recordButton')}
           </Button>
         ) : null}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="space-y-1">
-            <Label className="text-xs">{t('review.frequencyLabel')}</Label>
-            <Input
-              type="number"
-              min={1}
-              max={60}
-              className="w-28"
-              value={frequency}
-              disabled={!canManage}
-              onChange={(e) => setFrequency(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t('review.nextReviewLabel')}</Label>
-            <Input
-              type="date"
-              className="w-44"
-              value={nextDue}
-              disabled={!canManage}
-              onChange={(e) => setNextDue(e.target.value)}
-            />
-          </div>
-          {canManage ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={update.isPending}
-              onClick={() =>
-                update.mutate({
-                  assessmentId,
-                  reviewFrequencyMonths: frequency === '' ? null : Number(frequency),
-                  nextReviewAt: nextDue === '' ? null : new Date(`${nextDue}T00:00:00.000Z`),
-                })
-              }
-            >
-              {t('review.scheduleSave')}
-            </Button>
-          ) : null}
-          {overdue ? (
-            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
-              {t('reviewDue')}
-            </span>
-          ) : null}
+        <div className="space-y-1">
+          <Label className="text-xs">{t('review.frequencyLabel')}</Label>
+          <Input
+            type="number"
+            min={1}
+            max={60}
+            className="w-28"
+            value={frequency}
+            disabled={!canManage}
+            onChange={(e) => setFrequency(e.target.value)}
+          />
         </div>
-        <p className="text-xs text-muted-foreground">
-          {lastReviewedAt !== null
-            ? t('review.lastReviewed', {
-                date: new Date(lastReviewedAt).toLocaleDateString(locale),
+        <div className="space-y-1">
+          <Label className="text-xs">{t('review.nextReviewLabel')}</Label>
+          <Input
+            type="date"
+            className="w-44"
+            value={nextDue}
+            disabled={!canManage}
+            onChange={(e) => setNextDue(e.target.value)}
+          />
+        </div>
+        {canManage ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={update.isPending}
+            onClick={() =>
+              update.mutate({
+                assessmentId,
+                reviewFrequencyMonths: frequency === '' ? null : Number(frequency),
+                nextReviewAt: nextDue === '' ? null : new Date(`${nextDue}T00:00:00.000Z`),
               })
-            : t('review.neverReviewed')}
-        </p>
+            }
+          >
+            {t('review.scheduleSave')}
+          </Button>
+        ) : null}
+        {overdue ? (
+          <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
+            {t('reviewDue')}
+          </span>
+        ) : null}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {lastReviewedAt !== null
+          ? t('review.lastReviewed', {
+              date: new Date(lastReviewedAt).toLocaleDateString(locale),
+            })
+          : t('review.neverReviewed')}
+      </p>
 
-        <div>
-          <p className="mb-1 text-sm font-medium">{t('review.logTitle')}</p>
-          {reviews.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('review.logEmpty')}</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {reviews.map((r) => (
-                <li key={r.id} className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">
-                    {new Date(r.reviewedAt).toLocaleDateString(locale)}
-                  </span>
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                    {t(`review.trigger.${r.trigger}`)}
-                  </span>
-                  <span>{t(`review.outcome.${r.outcome}`)}</span>
-                  {r.note.length > 0 ? (
-                    <span className="text-muted-foreground">— {r.note}</span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </CardContent>
+      <div>
+        <p className="mb-1 text-sm font-medium">{t('review.logTitle')}</p>
+        {reviews.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('review.logEmpty')}</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {reviews.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="text-muted-foreground">
+                  {new Date(r.reviewedAt).toLocaleDateString(locale)}
+                </span>
+                <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                  {t(`review.trigger.${r.trigger}`)}
+                </span>
+                <span>{t(`review.outcome.${r.outcome}`)}</span>
+                {r.note.length > 0 ? (
+                  <span className="text-muted-foreground">— {r.note}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -230,6 +231,6 @@ export function ReviewSection({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 }

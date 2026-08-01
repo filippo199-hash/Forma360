@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 
@@ -19,7 +18,8 @@ export interface AckEntry {
 
 /**
  * Distribution & acknowledgement — the record that the people doing the
- * work have actually read the assessment.
+ * work have actually read the assessment. Card-less: the detail page
+ * hosts it inside the tabbed Review / Distribution card.
  */
 export function DistributionSection({
   assessmentId,
@@ -67,17 +67,16 @@ export function DistributionSection({
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">{t('distribution.sectionTitle')}</CardTitle>
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">{t('distribution.hint')}</p>
         {canManage && isActive ? (
           <Button type="button" size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
             {t('distribution.distributeButton')}
           </Button>
         ) : null}
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <p className="text-xs text-muted-foreground">{t('distribution.hint')}</p>
+      </div>
+      <div className="space-y-2">
         {!isActive ? (
           <p className="text-sm text-muted-foreground">{t('distribution.needsActive')}</p>
         ) : acknowledgements.length === 0 ? (
@@ -114,11 +113,11 @@ export function DistributionSection({
               disabled={sharing}
               onClick={onShareHeadsUp}
             >
-              {t('distribution.shareHeadsUp')}
+              {sharing ? t('distribution.sharingHeadsUp') : t('distribution.shareHeadsUp')}
             </Button>
           </div>
         ) : null}
-      </CardContent>
+      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -164,6 +163,6 @@ export function DistributionSection({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 }

@@ -12,6 +12,9 @@ import {
   inspectionApprovals,
   inspectionSignatures,
   inspections,
+  riskAssessmentControls,
+  riskAssessmentHazards,
+  riskAssessments,
   sites,
   templateVersions,
   templates,
@@ -215,4 +218,130 @@ export function hashInspectionSnapshot(snap: InspectionRenderSnapshot): string {
     })),
   };
   return createHash('sha256').update(JSON.stringify(stable)).digest('hex');
+}
+
+// ── Risk assessments (FreeHS module B1) ─────────────────────────────────────
+
+export interface RiskAssessmentRenderSnapshot {
+  assessment: {
+    id: string;
+    tenantId: string;
+    referenceNumber: string | null;
+    title: string;
+    activity: string;
+    type: string;
+    status: string;
+    siteName: string | null;
+    matrix: { lowMax: number; mediumMax: number; highMax: number };
+    createdByName: string | null;
+    publishedAt: string | null;
+    nextReviewAt: string | null;
+    createdAt: string;
+  };
+  hazards: Array<{
+    id: string;
+    hazard: string;
+    harmDescription: string;
+    affectedGroups: ReadonlyArray<string>;
+    initialLikelihood: number | null;
+    initialSeverity: number | null;
+    existingControls: string;
+    residualLikelihood: number | null;
+    residualSeverity: number | null;
+    controls: Array<{
+      id: string;
+      description: string;
+      tier: string;
+      status: string;
+      ppeJustification: string | null;
+    }>;
+  }>;
+}
+
+/**
+ * Load a risk assessment into a renderer-ready snapshot. Returns `null`
+ * when the assessment doesn't exist in the requested tenant.
+ */
+export async function loadRiskAssessmentSnapshot(
+  db: Database,
+  input: { tenantId: string; assessmentId: string },
+): Promise<RiskAssessmentRenderSnapshot | null> {
+  const raRows = await db
+    .select()
+    .from(riskAssessments)
+    .where(
+      and(eq(riskAssessments.tenantId, input.tenantId), eq(riskAssessments.id, input.assessmentId)),
+    )
+    .limit(1);
+  const ra = raRows[0];
+  if (ra === undefined) return null;
+
+  const hazardRows = await db
+    .select()
+    .from(riskAssessmentHazards)
+    .where(eq(riskAssessmentHazards.assessmentId, ra.id))
+    .orderBy(riskAssessmentHazards.sortOrder, riskAssessmentHazards.createdAt);
+  const controlRows = await db
+    .select()
+    .from(riskAssessmentControls)
+    .where(eq(riskAssessmentControls.assessmentId, ra.id))
+    .orderBy(riskAssessmentControls.createdAt);
+
+  let siteName: string | null = null;
+  if (ra.siteId !== null) {
+    const siteRows = await db
+      .select({ name: sites.name })
+      .from(sites)
+      .where(eq(sites.id, ra.siteId))
+      .limit(1);
+    siteName = siteRows[0]?.name ?? null;
+  }
+  const creatorRows = await db
+    .select({ name: user.name })
+    .from(user)
+    .where(eq(user.id, ra.createdBy))
+    .limit(1);
+
+  return {
+    assessment: {
+      id: ra.id,
+      tenantId: ra.tenantId,
+      referenceNumber: ra.referenceNumber,
+      title: ra.title,
+      activity: ra.activity,
+      type: ra.type,
+      status: ra.status,
+      siteName,
+      matrix: ra.matrix,
+      createdByName: creatorRows[0]?.name ?? null,
+      publishedAt: ra.publishedAt?.toISOString() ?? null,
+      nextReviewAt: ra.nextReviewAt?.toISOString() ?? null,
+      createdAt: ra.createdAt.toISOString(),
+    },
+    hazards: hazardRows.map((h) => ({
+      id: h.id,
+      hazard: h.hazard,
+      harmDescription: h.harmDescription,
+      affectedGroups: h.affectedGroups,
+      initialLikelihood: h.initialLikelihood,
+      initialSeverity: h.initialSeverity,
+      existingControls: h.existingControls,
+      residualLikelihood: h.residualLikelihood,
+      residualSeverity: h.residualSeverity,
+      controls: controlRows
+        .filter((c) => c.hazardId === h.id)
+        .map((c) => ({
+          id: c.id,
+          description: c.description,
+          tier: c.tier,
+          status: c.status,
+          ppeJustification: c.ppeJustification,
+        })),
+    })),
+  };
+}
+
+/** Stable content hash for the risk-assessment PDF cache key. */
+export function hashRiskAssessmentSnapshot(snap: RiskAssessmentRenderSnapshot): string {
+  return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
 }

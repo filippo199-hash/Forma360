@@ -20,7 +20,8 @@ import { signRenderToken } from './hmac';
 import {
   loadInspectionSnapshot,
   hashInspectionSnapshot,
-  type InspectionRenderSnapshot,
+  loadRiskAssessmentSnapshot,
+  hashRiskAssessmentSnapshot,
 } from './snapshot';
 import type { Database } from '@forma360/db/client';
 import type { Storage } from '@forma360/shared/storage';
@@ -86,7 +87,41 @@ export async function renderInspectionPdf(
   // by construction, so overwrite is safe. Real HEAD probes can be added
   // later without a schema change.
 
-  const bytes = await renderPdfBytes(deps, snap);
+  const bytes = await renderPdfBytes(deps, {
+    url: buildRenderUrl(deps, 'inspection', snap.inspection.id),
+    stubTitle: snap.inspection.title,
+  });
+
+  await uploadPdf(deps, { key, bytes });
+
+  return {
+    key,
+    bytes: bytes.length,
+    cached: false,
+    stub: isStub(bytes),
+  };
+}
+
+/**
+ * Render a risk assessment to PDF (FreeHS module B1), caching by content
+ * hash — same pipeline as inspections, different print route. Used by the
+ * "Share via Heads Up" flow to attach the assessment record.
+ */
+export async function renderRiskAssessmentPdf(
+  deps: RenderDeps,
+  input: { tenantId: string; assessmentId: string },
+): Promise<RenderResult> {
+  const snap = await loadRiskAssessmentSnapshot(deps.db, input);
+  if (snap === null) {
+    throw new Error(`Risk assessment not found: ${input.assessmentId}`);
+  }
+  const hash = hashRiskAssessmentSnapshot(snap);
+  const key = `${input.tenantId}/risk-assessments/${input.assessmentId}/pdf-${hash}.pdf`;
+
+  const bytes = await renderPdfBytes(deps, {
+    url: buildRenderUrl(deps, 'risk-assessment', snap.assessment.id),
+    stubTitle: snap.assessment.title,
+  });
 
   await uploadPdf(deps, { key, bytes });
 
@@ -109,21 +144,20 @@ export function pdfObjectKey(tenantId: string, inspectionId: string, hash: strin
  */
 async function renderPdfBytes(
   deps: RenderDeps,
-  snap: InspectionRenderSnapshot,
+  input: { url: string; stubTitle: string },
 ): Promise<Uint8Array> {
   if (deps.puppeteerRender !== undefined) {
-    const url = buildRenderUrl(deps, snap.inspection.id);
-    return deps.puppeteerRender({ url });
+    return deps.puppeteerRender({ url: input.url });
   }
 
   try {
-    return await renderWithChromium(deps, snap);
+    return await renderWithChromium(deps, input.url);
   } catch (err) {
     deps.onLog?.({
       level: 'warn',
       msg: `PDF render falling back to stub: ${err instanceof Error ? err.message : String(err)}`,
     });
-    return renderStubPdf(snap);
+    return renderStubPdf(input.stubTitle);
   }
 }
 
@@ -142,10 +176,7 @@ async function renderPdfBytes(
  * even system chromium is missing the function throws and the caller
  * falls back to the stub path.
  */
-async function renderWithChromium(
-  deps: RenderDeps,
-  snap: InspectionRenderSnapshot,
-): Promise<Uint8Array> {
+async function renderWithChromium(deps: RenderDeps, url: string): Promise<Uint8Array> {
   // Dynamic import keeps the render package importable on platforms
   // where the binary can't run (e.g. pglite unit-test runs).
   const puppeteerMod = await dynImport('puppeteer-core').catch(() => null);
@@ -214,7 +245,7 @@ async function renderWithChromium(
   });
   try {
     const page = await browser.newPage();
-    await page.goto(buildRenderUrl(deps, snap.inspection.id), {
+    await page.goto(url, {
       waitUntil: 'networkidle0',
       timeout: 30_000,
     });
@@ -260,13 +291,22 @@ function resolveSystemChromium(): string {
   return 'chromium';
 }
 
-function buildRenderUrl(deps: RenderDeps, inspectionId: string): string {
+/**
+ * Build the HMAC-tokened print-route URL. `kind` picks the route
+ * (`/render/inspection/...` or `/render/risk-assessment/...`); the token
+ * signs the subject id, whatever entity it belongs to.
+ */
+function buildRenderUrl(
+  deps: RenderDeps,
+  kind: 'inspection' | 'risk-assessment',
+  subjectId: string,
+): string {
   const token = signRenderToken({
     secret: deps.renderSharedSecret,
-    inspectionId,
+    inspectionId: subjectId,
   });
   const base = deps.appUrl.replace(/\/+$/, '');
-  return `${base}/render/inspection/${inspectionId}?token=${encodeURIComponent(token)}`;
+  return `${base}/render/${kind}/${subjectId}?token=${encodeURIComponent(token)}`;
 }
 
 /**
@@ -274,8 +314,8 @@ function buildRenderUrl(deps: RenderDeps, inspectionId: string): string {
  * configured — <title>" notice. Used on envs without chromium so the
  * rest of the UX (download button, R2 cache key flow) stays wired.
  */
-function renderStubPdf(snap: InspectionRenderSnapshot): Uint8Array {
-  const notice = `Render engine not configured - ${truncate(snap.inspection.title, 120)}`;
+function renderStubPdf(title: string): Uint8Array {
+  const notice = `Render engine not configured - ${truncate(title, 120)}`;
   return buildMinimalPdf(notice);
 }
 

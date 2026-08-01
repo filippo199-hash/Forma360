@@ -530,4 +530,46 @@ describe('riskAssessments router', () => {
       caller.riskAssessments.create({ title: 'X', activity: '', siteId: foreignSiteId }),
     ).rejects.toMatchObject({ message: 'unknown-site' });
   });
+
+  it('RA-E19: prepareHeadsUpAttachment renders via the injected dep; refuses without it', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId } = await createScoredAssessment(caller);
+
+    // Default appRouter carries no renderPdf dep → explicit refusal.
+    await expect(
+      caller.riskAssessments.prepareHeadsUpAttachment({ assessmentId }),
+    ).rejects.toMatchObject({ message: 'render-unavailable' });
+
+    // With an injected renderer the procedure returns the attachment
+    // descriptor the Heads Up composer expects.
+    const seen: Array<{ tenantId: string; assessmentId: string }> = [];
+    const renderRouter = router({
+      riskAssessments: createRiskAssessmentsRouter({
+        enabled: true,
+        renderPdf: (input) => {
+          seen.push(input);
+          return Promise.resolve({
+            key: `${input.tenantId}/risk-assessments/${input.assessmentId}/pdf-abc.pdf`,
+            bytes: 12_345,
+            stub: false,
+          });
+        },
+      }),
+    });
+    const renderCaller = createCallerFactory(renderRouter)(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId: adminId, email: 'ra@x.test', tenantId: tenantId as never },
+      }),
+    );
+    const att = await renderCaller.riskAssessments.prepareHeadsUpAttachment({ assessmentId });
+    expect(seen).toEqual([{ tenantId, assessmentId }]);
+    expect(att.storageKey).toBe(`${tenantId}/risk-assessments/${assessmentId}/pdf-abc.pdf`);
+    expect(att.filename).toMatch(/^RA-\d{4}\.pdf$/);
+    expect(att.mimeType).toBe('application/pdf');
+    expect(att.sizeBytes).toBe(12_345);
+    // Cross-tenant isolation of the underlying load is covered by RA-E10;
+    // prepareHeadsUpAttachment goes through the same loadAssessment guard.
+  });
 });

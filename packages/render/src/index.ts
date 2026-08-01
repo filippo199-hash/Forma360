@@ -12,7 +12,13 @@
  *
  * See ADR 0008 for the architectural decisions behind each surface.
  */
-export { renderInspectionPdf, pdfObjectKey, type RenderDeps, type RenderResult } from './pdf';
+export {
+  renderInspectionPdf,
+  renderRiskAssessmentPdf,
+  pdfObjectKey,
+  type RenderDeps,
+  type RenderResult,
+} from './pdf';
 export {
   renderInspectionDocx,
   docxObjectKey,
@@ -33,5 +39,8 @@ export { signRenderToken, verifyRenderToken, DEFAULT_RENDER_TOKEN_TTL_SECONDS } 
 export {
   loadInspectionSnapshot,
   hashInspectionSnapshot,
+  loadRiskAssessmentSnapshot,
+  hashRiskAssessmentSnapshot,
   type InspectionRenderSnapshot,
+  type RiskAssessmentRenderSnapshot,
 } from './snapshot';

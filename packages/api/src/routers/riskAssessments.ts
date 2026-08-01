@@ -62,6 +62,16 @@ import { router } from '../trpc';
 export interface RiskAssessmentsRouterDeps {
   /** Wired from the brand module catalogue (ADR 0010). */
   enabled: boolean;
+  /**
+   * Renders the assessment to a PDF in R2 and returns its object key —
+   * wired to `@forma360/render`'s `renderRiskAssessmentPdf` in the web
+   * app. Optional so tests and non-web callers can omit it; the
+   * `prepareHeadsUpAttachment` procedure refuses when absent.
+   */
+  renderPdf?: (input: {
+    tenantId: string;
+    assessmentId: string;
+  }) => Promise<{ key: string; bytes: number; stub: boolean }>;
 }
 
 const score = z.number().int().min(1).max(5);
@@ -532,6 +542,34 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           kind: 'moved_to_draft',
         });
         return { ok: true };
+      }),
+
+    /**
+     * Render the assessment to a PDF in R2 so "Share via Heads Up" can
+     * attach it. Returns the attachment descriptor the Heads Up composer
+     * feeds straight into `headsUps.create`.
+     */
+    prepareHeadsUpAttachment: tenantProcedure
+      .use(requirePermission('riskAssessments.manage'))
+      .input(z.object({ assessmentId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        if (deps.renderPdf === undefined) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'render-unavailable' });
+        }
+        const assessment = await loadAssessment(ctx.db, ctx.tenantId, input.assessmentId);
+        const rendered = await deps.renderPdf({
+          tenantId: ctx.tenantId,
+          assessmentId: assessment.id,
+        });
+        const stem = assessment.referenceNumber ?? 'risk-assessment';
+        return {
+          storageKey: rendered.key,
+          filename: `${stem}.pdf`,
+          mimeType: 'application/pdf',
+          sizeBytes: rendered.bytes,
+          stub: rendered.stub,
+        };
       }),
 
     addHazard: tenantProcedure

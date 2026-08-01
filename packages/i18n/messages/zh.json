@@ -3618,6 +3618,8 @@
     },
     "filters": {
       "all": "All",
+      "allStatuses": "所有状态",
+      "allTypes": "所有类型",
       "status": "Status",
       "type": "Type",
       "reviewDueOnly": "Reviews due",
@@ -3793,7 +3795,9 @@
       "acknowledgedToast": "Acknowledgement recorded.",
       "pendingBanner": "{count} risk assessment(s) waiting for your acknowledgement.",
       "selectAll": "Select everyone",
-      "shareHeadsUp": "Share via Heads Up"
+      "shareHeadsUp": "Share via Heads Up",
+      "sharingHeadsUp": "正在准备…",
+      "attachmentFailed": "无法附加 PDF，将在不附加的情况下分享。"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",

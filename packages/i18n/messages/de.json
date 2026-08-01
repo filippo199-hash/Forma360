@@ -3625,6 +3625,8 @@
     },
     "filters": {
       "all": "All",
+      "allStatuses": "Alle Status",
+      "allTypes": "Alle Typen",
       "status": "Status",
       "type": "Type",
       "reviewDueOnly": "Reviews due",
@@ -3800,7 +3802,9 @@
       "acknowledgedToast": "Acknowledgement recorded.",
       "pendingBanner": "{count} risk assessment(s) waiting for your acknowledgement.",
       "selectAll": "Select everyone",
-      "shareHeadsUp": "Share via Heads Up"
+      "shareHeadsUp": "Share via Heads Up",
+      "sharingHeadsUp": "Wird vorbereitet…",
+      "attachmentFailed": "PDF konnte nicht angehängt werden — Freigabe ohne Anhang."
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",

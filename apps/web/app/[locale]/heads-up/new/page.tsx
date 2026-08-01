@@ -53,6 +53,18 @@ interface PendingFile {
 type PreviewDevice = 'tablet' | 'mobile';
 type EngagementLevel = 'view' | 'acknowledge' | 'sign';
 
+/**
+ * Attachment already sitting in R2, referenced by key — e.g. the PDF a
+ * risk assessment renders before handing off to this composer. No File
+ * object; it skips the upload path entirely.
+ */
+interface ExternalAttachment {
+  storageKey: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
 const ENGAGEMENT_OPTIONS: Array<{
   value: EngagementLevel;
   icon: React.ComponentType<{ className?: string }>;
@@ -132,10 +144,12 @@ export default function NewHeadsUpPage() {
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
   const [docQuery, setDocQuery] = useState('');
+  const [externalAttachments, setExternalAttachments] = useState<ExternalAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Prefill support for "Share via Heads Up" (risk assessments): reads
-  // ?title= & ?description= once on mount. window.location (not
+  // ?title= & ?description= (+ an optional pre-rendered R2 attachment via
+  // attKey/attName/attSize) once on mount. window.location (not
   // useSearchParams) avoids the Suspense-boundary requirement at build time.
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
@@ -146,6 +160,23 @@ export default function NewHeadsUpPage() {
     }
     if (qDescription !== null && qDescription.length > 0) {
       setDescription((cur) => (cur === '' ? qDescription : cur));
+    }
+    const attKey = sp.get('attKey');
+    const attName = sp.get('attName');
+    const attSize = Number.parseInt(sp.get('attSize') ?? '', 10);
+    if (attKey !== null && attKey.length > 0 && attName !== null && attName.length > 0) {
+      setExternalAttachments((cur) =>
+        cur.length === 0
+          ? [
+              {
+                storageKey: attKey,
+                filename: attName,
+                mimeType: sp.get('attMime') ?? 'application/pdf',
+                sizeBytes: Number.isFinite(attSize) && attSize >= 0 ? attSize : 0,
+              },
+            ]
+          : cur,
+      );
     }
   }, []);
 
@@ -316,16 +347,19 @@ export default function NewHeadsUpPage() {
       toast.error(t('selectAudience'));
       return;
     }
-    const readyAttachments = pendingFiles
-      .filter(
-        (f): f is typeof f & { storageKey: string } => f.storageKey !== null && f.error === null,
-      )
-      .map((f) => ({
-        storageKey: f.storageKey,
-        filename: f.file.name,
-        mimeType: f.file.type || 'application/octet-stream',
-        sizeBytes: f.file.size,
-      }));
+    const readyAttachments = [
+      ...externalAttachments,
+      ...pendingFiles
+        .filter(
+          (f): f is typeof f & { storageKey: string } => f.storageKey !== null && f.error === null,
+        )
+        .map((f) => ({
+          storageKey: f.storageKey,
+          filename: f.file.name,
+          mimeType: f.file.type || 'application/octet-stream',
+          sizeBytes: f.file.size,
+        })),
+    ];
 
     const recipientSpec = JSON.stringify({
       broadcastToAll: audienceMode === 'everyone',
@@ -396,6 +430,40 @@ export default function NewHeadsUpPage() {
               className="hidden"
               onChange={(e) => e.target.files && addFiles(e.target.files)}
             />
+
+            {/* Pre-rendered attachments handed in by another module (already in R2). */}
+            {externalAttachments.length > 0 ? (
+              <ul className="mt-3 space-y-2">
+                {externalAttachments.map((att) => (
+                  <li
+                    key={att.storageKey}
+                    className="flex items-center gap-3 rounded-md border bg-muted/30 px-3 py-2"
+                  >
+                    <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium">{att.filename}</p>
+                      {att.sizeBytes > 0 ? (
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatBytes(att.sizeBytes)}
+                        </p>
+                      ) : null}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExternalAttachments((prev) =>
+                          prev.filter((x) => x.storageKey !== att.storageKey),
+                        );
+                      }}
+                      className="rounded p-0.5 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
 
             {/* File chips */}
             {pendingFiles.length > 0 ? (
