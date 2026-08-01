@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * Risk assessments list (FreeHS module B1). Status tabs (matching the
- * Observations page pattern), dashboard stat chips, instant client-side
- * search + filters, and a pending-acknowledgements banner. "New
- * assessment" creates an untitled draft and lands straight on the editor
- * — no dialog; the editor guards the title at publish time.
+ * Risk assessments list (FreeHS module B1). Status tabs, instant
+ * client-side search + filters (type, reviews due), an Inspections-style
+ * table, and a pending-acknowledgements banner. "New assessment" creates
+ * an untitled draft and lands straight on the editor — no dialog; the
+ * editor guards the title at publish time.
  */
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
@@ -38,6 +38,8 @@ export default function RiskAssessmentsPage() {
 
   const [status, setStatus] = useState<StatusFilter>('all');
   const [type, setType] = useState<TypeFilter>('all');
+  // 'all' | 'none' (no site) | a site id present in the data.
+  const [siteFilter, setSiteFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [dueOnly, setDueOnly] = useState(false);
   // One round-trip: archived rows need their own fetch, everything else is
@@ -60,23 +62,28 @@ export default function RiskAssessmentsPage() {
     create.mutate({ title: t('untitled'), activity: '' });
   }
 
+  // Site/project filter options come from the loaded rows themselves, so
+  // every option is guaranteed to match at least one assessment.
+  const siteNameById = new Map<string, string>();
+  for (const a of list.data ?? []) {
+    if (a.siteId !== null && a.siteName !== null) siteNameById.set(a.siteId, a.siteName);
+  }
+  const siteOptions = [...siteNameById.entries()].sort((x, y) => x[1].localeCompare(y[1]));
+  const hasSiteless = (list.data ?? []).some((a) => a.siteId === null);
+
   const needle = search.trim().toLowerCase();
   const rows = (list.data ?? []).filter(
     (a) =>
       (status === 'all' || status === 'archived' || a.status === status) &&
       (type === 'all' || a.type === type) &&
+      (siteFilter === 'all' ||
+        (siteFilter === 'none' ? a.siteId === null : a.siteId === siteFilter)) &&
       (!dueOnly || a.reviewDue) &&
       (needle.length === 0 ||
         a.title.toLowerCase().includes(needle) ||
-        (a.referenceNumber ?? '').toLowerCase().includes(needle)),
+        (a.referenceNumber ?? '').toLowerCase().includes(needle) ||
+        (a.siteName ?? '').toLowerCase().includes(needle)),
   );
-  const stats = {
-    active: (list.data ?? []).filter((a) => a.status === 'active').length,
-    drafts: (list.data ?? []).filter((a) => a.status === 'draft').length,
-    reviewDue: (list.data ?? []).filter((a) => a.reviewDue).length,
-    myPending: pending.data?.length ?? 0,
-  };
-
   const newButton = canCreate ? (
     <Button type="button" disabled={create.isPending} onClick={handleCreate}>
       {create.isPending ? t('create.submitting') : t('newButton')}
@@ -91,30 +98,6 @@ export default function RiskAssessmentsPage() {
           <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
         {newButton}
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {(
-          [
-            { key: 'active', value: stats.active, onClick: () => setStatus('active') },
-            { key: 'drafts', value: stats.drafts, onClick: () => setStatus('draft') },
-            { key: 'reviewDue', value: stats.reviewDue, onClick: () => setDueOnly((v) => !v) },
-            { key: 'myPending', value: stats.myPending, onClick: undefined },
-          ] as const
-        ).map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={s.onClick}
-            disabled={s.onClick === undefined}
-            className={`rounded-md border px-3 py-1.5 text-left transition-colors ${
-              s.key === 'reviewDue' && dueOnly ? 'border-primary bg-accent' : 'hover:bg-accent'
-            } ${s.onClick === undefined ? 'cursor-default' : ''}`}
-          >
-            <span className="block text-lg font-semibold leading-tight">{s.value}</span>
-            <span className="block text-xs text-muted-foreground">{t(`stats.${s.key}`)}</span>
-          </button>
-        ))}
       </div>
 
       {pending.data !== undefined && pending.data.length > 0 ? (
@@ -141,7 +124,7 @@ export default function RiskAssessmentsPage() {
         </TabsList>
       </Tabs>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Input
           className="w-64"
           value={search}
@@ -158,6 +141,33 @@ export default function RiskAssessmentsPage() {
             <SelectItem value="dynamic">{t('type.dynamic')}</SelectItem>
           </SelectContent>
         </Select>
+        {siteOptions.length > 0 ? (
+          <Select value={siteFilter} onValueChange={setSiteFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('filters.allSites')}</SelectItem>
+              {hasSiteless ? <SelectItem value="none">{t('filters.noSite')}</SelectItem> : null}
+              {siteOptions.map(([id, name]) => (
+                <SelectItem key={id} value={id}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
+        <Button
+          type="button"
+          size="sm"
+          variant={dueOnly ? 'default' : 'outline'}
+          onClick={() => setDueOnly((v) => !v)}
+        >
+          {t('filters.reviewDueOnly')}
+        </Button>
+        <span className="ml-auto text-sm text-muted-foreground">
+          {t('resultsCount', { count: rows.length })}
+        </span>
       </div>
 
       {list.isLoading ? (
@@ -172,49 +182,84 @@ export default function RiskAssessmentsPage() {
           {newButton}
         </div>
       ) : (
-        <ul className="divide-y rounded-md border">
-          {rows.map((a) => (
-            <li key={a.id}>
-              <Link
-                href={`/${locale}/risk-assessments/${a.id}`}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-3 transition-colors hover:bg-accent"
-              >
-                <span className="w-16 shrink-0 font-mono text-xs text-muted-foreground">
-                  {a.referenceNumber}
-                </span>
-                <span className="min-w-40 flex-1 font-medium">{a.title}</span>
-                <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                  {t(`type.${a.type}`)}
-                </span>
-                <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                  {t(`status.${a.status}`)}
-                </span>
-                {a.personSpecificFor !== null ? (
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                    {t(`personSpecific.badge.${a.personSpecificFor}`)}
-                  </span>
-                ) : null}
-                <span className="text-xs text-muted-foreground">
-                  {t('columns.hazards')}: {a.hazardCount}
-                </span>
-                <RiskBandChip
-                  score={a.maxResidualScore > 0 ? a.maxResidualScore : null}
-                  matrix={a.matrix}
-                />
-                {a.reviewDue ? (
-                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
-                    {t('reviewDue')}
-                  </span>
-                ) : null}
-                {a.ackTotal > 0 ? (
-                  <span className="text-xs text-muted-foreground">
-                    {t('columns.acks')}: {a.ackDone}/{a.ackTotal}
-                  </span>
-                ) : null}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="rounded-md border">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/40 text-left">
+                <tr>
+                  <th className="w-20 px-3 py-2 font-medium">{t('columns.reference')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
+                  <th className="w-36 px-3 py-2 font-medium">{t('columns.site')}</th>
+                  <th className="w-28 px-3 py-2 font-medium">{t('columns.type')}</th>
+                  <th className="w-24 px-3 py-2 font-medium">{t('columns.status')}</th>
+                  <th className="w-20 px-3 py-2 font-medium">{t('columns.hazards')}</th>
+                  <th className="w-32 px-3 py-2 font-medium">{t('columns.residualRisk')}</th>
+                  <th className="w-32 px-3 py-2 font-medium">{t('columns.review')}</th>
+                  <th className="w-36 px-3 py-2 font-medium">{t('columns.acks')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((a) => (
+                  <tr
+                    key={a.id}
+                    className="cursor-pointer border-b last:border-0 hover:bg-muted/10"
+                    onClick={() => router.push(`/${locale}/risk-assessments/${a.id}`)}
+                  >
+                    <td className="px-3 py-3 font-mono text-xs text-muted-foreground">
+                      {a.referenceNumber}
+                    </td>
+                    <td className="px-3 py-3">
+                      <Link
+                        href={`/${locale}/risk-assessments/${a.id}`}
+                        className="font-medium hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {a.title}
+                      </Link>
+                      {a.personSpecificFor !== null ? (
+                        <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs">
+                          {t(`personSpecific.badge.${a.personSpecificFor}`)}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-3 text-xs text-muted-foreground">{a.siteName ?? '—'}</td>
+                    <td className="px-3 py-3 text-xs">{t(`type.${a.type}`)}</td>
+                    <td className="px-3 py-3">
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                        {t(`status.${a.status}`)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-xs">{a.hazardCount}</td>
+                    <td className="px-3 py-3">
+                      <RiskBandChip
+                        score={a.maxResidualScore > 0 ? a.maxResidualScore : null}
+                        matrix={a.matrix}
+                      />
+                    </td>
+                    <td className="px-3 py-3">
+                      {a.reviewDue ? (
+                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                          {t('reviewDue')}
+                        </span>
+                      ) : a.nextReviewAt !== null ? (
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(a.nextReviewAt).toLocaleDateString(locale)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {t('noReviewScheduled')}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-xs text-muted-foreground">
+                      {a.ackTotal > 0 ? `${a.ackDone}/${a.ackTotal}` : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </div>
   );

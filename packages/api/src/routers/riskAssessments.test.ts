@@ -426,4 +426,108 @@ describe('riskAssessments router', () => {
     expect(dueIn).toBeGreaterThan(1000 * 60 * 60 * 24 * 6);
     expect(dueIn).toBeLessThan(1000 * 60 * 60 * 24 * 8);
   });
+
+  it('RA-E15: moveToDraft returns an active or archived assessment to draft', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId } = await createScoredAssessment(caller);
+    await caller.riskAssessments.publish({ assessmentId });
+    await caller.riskAssessments.moveToDraft({ assessmentId });
+    let detail = await caller.riskAssessments.get({ assessmentId });
+    expect(detail.assessment.status).toBe('draft');
+
+    await caller.riskAssessments.archive({ assessmentId });
+    await caller.riskAssessments.moveToDraft({ assessmentId });
+    detail = await caller.riskAssessments.get({ assessmentId });
+    expect(detail.assessment.status).toBe('draft');
+    expect(detail.assessment.archivedAt).toBeNull();
+  });
+
+  it('RA-E16: the last hazard cannot be removed', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId, hazardId } = await createScoredAssessment(caller);
+    await expect(caller.riskAssessments.removeHazard({ hazardId })).rejects.toMatchObject({
+      message: 'last-hazard',
+    });
+    const { hazardId: second } = await caller.riskAssessments.addHazard({
+      assessmentId,
+      hazard: 'Second hazard',
+      harmDescription: '',
+      affectedGroups: [],
+      existingControls: '',
+    });
+    await expect(caller.riskAssessments.removeHazard({ hazardId: second })).resolves.toMatchObject({
+      ok: true,
+    });
+  });
+
+  it('RA-E17: the change log records mutations immutably with actor names', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId, hazardId } = await createScoredAssessment(caller);
+    await caller.riskAssessments.addControl({
+      hazardId,
+      description: 'Guard',
+      tier: 'engineering',
+      status: 'in_place',
+    });
+    await caller.riskAssessments.publish({ assessmentId });
+    await caller.riskAssessments.moveToDraft({ assessmentId });
+    const detail = await caller.riskAssessments.get({ assessmentId });
+    const kinds = detail.events.map((e) => e.kind);
+    for (const expected of [
+      'created',
+      'hazard_added',
+      'control_added',
+      'published',
+      'moved_to_draft',
+    ]) {
+      expect(kinds).toContain(expected);
+    }
+    expect(detail.events.every((e) => e.actorName === 'Alice Admin')).toBe(true);
+    // Immutability: the router exposes no mutation surface for events.
+    const surface = Object.keys(caller.riskAssessments);
+    expect(surface.some((k) => /event/i.test(k) && /update|delete|remove/i.test(k))).toBe(false);
+  });
+
+  it('RA-E18: site link is tenant-checked, surfaced in list/get, and logged', async () => {
+    const caller = callerFor(adminId);
+    const siteId = newId();
+    await db.insert(schema.sites).values({ id: siteId, tenantId, name: 'Warehouse A' });
+
+    const { assessmentId } = await caller.riskAssessments.create({
+      title: 'Forklifts',
+      activity: '',
+    });
+    await caller.riskAssessments.update({ assessmentId, siteId });
+
+    const detail = await caller.riskAssessments.get({ assessmentId });
+    expect(detail.assessment.siteId).toBe(siteId);
+    expect(detail.siteName).toBe('Warehouse A');
+    expect(detail.events.map((e) => e.kind)).toContain('site_changed');
+    expect(detail.events.find((e) => e.kind === 'site_changed')?.detail).toBe('Warehouse A');
+
+    const list = await caller.riskAssessments.list({ status: 'all', type: 'all' });
+    expect(list.find((a) => a.id === assessmentId)?.siteName).toBe('Warehouse A');
+
+    // Clearing the site works and logs with an empty detail.
+    await caller.riskAssessments.update({ assessmentId, siteId: null });
+    const cleared = await caller.riskAssessments.get({ assessmentId });
+    expect(cleared.assessment.siteId).toBeNull();
+    expect(cleared.siteName).toBeNull();
+
+    // Another tenant's site is rejected — the FK alone would accept it.
+    const otherTenantId = newId();
+    await db
+      .insert(schema.tenants)
+      .values({ id: otherTenantId, name: 'Rival', slug: `rival-${otherTenantId}` });
+    const foreignSiteId = newId();
+    await db
+      .insert(schema.sites)
+      .values({ id: foreignSiteId, tenantId: otherTenantId, name: 'Foreign yard' });
+    await expect(
+      caller.riskAssessments.update({ assessmentId, siteId: foreignSiteId }),
+    ).rejects.toMatchObject({ message: 'unknown-site' });
+    await expect(
+      caller.riskAssessments.create({ title: 'X', activity: '', siteId: foreignSiteId }),
+    ).rejects.toMatchObject({ message: 'unknown-site' });
+  });
 });

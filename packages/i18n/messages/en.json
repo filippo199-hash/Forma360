@@ -3841,6 +3841,7 @@
     "columns": {
       "reference": "Ref",
       "title": "Title",
+      "site": "Site / project",
       "type": "Type",
       "status": "Status",
       "hazards": "Hazards",
@@ -3848,10 +3849,17 @@
       "review": "Review",
       "acks": "Read & understood"
     },
+    "site": {
+      "label": "Site / project",
+      "none": "No site"
+    },
     "filters": {
       "all": "All",
       "status": "Status",
-      "type": "Type"
+      "type": "Type",
+      "reviewDueOnly": "Reviews due",
+      "allSites": "All sites",
+      "noSite": "No site"
     },
     "type": {
       "standing": "Standing",
@@ -3930,7 +3938,10 @@
       "add": "Add",
       "suggestionsLabel": "Common hazards — one click pre-fills the whole card",
       "prefilledToast": "Pre-filled from the hazard library — review and adjust for your site.",
-      "plainEnterHint": "Press Enter to add exactly what you typed instead"
+      "plainEnterHint": "Press Enter to add exactly what you typed instead",
+      "addAnother": "Add another hazard",
+      "addGroup": "Add group",
+      "lastHazardError": "An assessment must keep at least one hazard."
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
@@ -4018,7 +4029,8 @@
       "acknowledging": "Saving…",
       "acknowledgedToast": "Acknowledgement recorded.",
       "pendingBanner": "{count} risk assessment(s) waiting for your acknowledgement.",
-      "selectAll": "Select everyone"
+      "selectAll": "Select everyone",
+      "shareHeadsUp": "Share via Heads Up"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -4065,6 +4077,27 @@
       "title": "Name this assessment before publishing",
       "hint": "A clear title helps everyone find it later. Here is a suggestion — edit it if you like.",
       "save": "Save title and continue"
+    },
+    "resultsCount": "{count} result(s)",
+    "moveToDraft": "Move to draft",
+    "changeLog": {
+      "title": "Change log",
+      "kinds": {
+        "created": "Created",
+        "title_changed": "Title changed",
+        "site_changed": "Site / project changed",
+        "published": "Published",
+        "moved_to_draft": "Moved to draft",
+        "archived": "Archived",
+        "hazard_added": "Hazard added",
+        "hazard_removed": "Hazard removed",
+        "control_added": "Control added",
+        "control_removed": "Control removed",
+        "review_recorded": "Review recorded",
+        "distributed": "Distributed",
+        "acknowledged": "Acknowledged",
+        "variant_created": "Person-specific variant created"
+      }
     }
   }
 }

@@ -51,12 +51,15 @@ export function HazardCard({
   hazard,
   matrix,
   canManage,
+  canRemove,
   presetGroups,
   onChanged,
 }: {
   hazard: HazardWithControls;
   matrix: MatrixThresholds;
   canManage: boolean;
+  /** False when this is the assessment's only hazard — one must remain. */
+  canRemove: boolean;
   presetGroups: ReadonlyArray<string>;
   onChanged: () => void;
 }) {
@@ -65,6 +68,7 @@ export function HazardCard({
   const [harm, setHarm] = useState(hazard.harmDescription);
   const [groups, setGroups] = useState<string[]>([...hazard.affectedGroups]);
   const [customGroup, setCustomGroup] = useState('');
+  const [addingGroup, setAddingGroup] = useState(false);
   const [existing, setExisting] = useState(hazard.existingControls);
   const [iL, setIL] = useState(hazard.initialLikelihood);
   const [iS, setIS] = useState(hazard.initialSeverity);
@@ -88,7 +92,8 @@ export function HazardCard({
   });
   const remove = trpc.riskAssessments.removeHazard.useMutation({
     onSuccess: onChanged,
-    onError: () => toast.error(t('saveError')),
+    onError: (err) =>
+      toast.error(err.message === 'last-hazard' ? t('hazards.lastHazardError') : t('saveError')),
   });
   const addControl = trpc.riskAssessments.addControl.useMutation({
     onSuccess: () => {
@@ -145,7 +150,7 @@ export function HazardCard({
             →
           </span>
           <RiskBandChip score={scoreFor(rL, rS)} matrix={matrix} />
-          {canManage ? (
+          {canManage && canRemove ? (
             <Button
               type="button"
               variant="ghost"
@@ -219,22 +224,40 @@ export function HazardCard({
                 </button>
               );
             })}
-          </div>
-          {canManage ? (
-            <Input
-              className="mt-1 max-w-60"
-              value={customGroup}
-              placeholder={t('hazards.affectedCustomPlaceholder')}
-              onChange={(e) => setCustomGroup(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && customGroup.trim().length > 0) {
-                  e.preventDefault();
-                  toggleGroup(customGroup.trim());
+            {canManage && !addingGroup ? (
+              <button
+                type="button"
+                onClick={() => setAddingGroup(true)}
+                className="rounded-full border border-dashed border-input px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                + {t('hazards.addGroup')}
+              </button>
+            ) : null}
+            {canManage && addingGroup ? (
+              <Input
+                autoFocus
+                className="h-6 w-44 rounded-full px-2.5 text-xs"
+                value={customGroup}
+                placeholder={t('hazards.affectedCustomPlaceholder')}
+                onChange={(e) => setCustomGroup(e.target.value)}
+                onBlur={() => {
+                  setAddingGroup(false);
                   setCustomGroup('');
-                }
-              }}
-            />
-          ) : null}
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && customGroup.trim().length > 0) {
+                    e.preventDefault();
+                    toggleGroup(customGroup.trim());
+                    setCustomGroup('');
+                    setAddingGroup(false);
+                  } else if (e.key === 'Escape') {
+                    setAddingGroup(false);
+                    setCustomGroup('');
+                  }
+                }}
+              />
+            ) : null}
+          </div>
         </div>
 
         <div className="space-y-1.5">

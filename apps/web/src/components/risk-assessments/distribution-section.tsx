@@ -27,12 +27,17 @@ export function DistributionSection({
   acknowledgements,
   canManage,
   onChanged,
+  onShareHeadsUp,
+  sharing = false,
 }: {
   assessmentId: string;
   isActive: boolean;
   acknowledgements: AckEntry[];
   canManage: boolean;
   onChanged: () => void;
+  /** Publishes (when needed) and jumps to a pre-filled Heads Up compose. */
+  onShareHeadsUp?: () => void;
+  sharing?: boolean;
 }) {
   const t = useTranslations('riskAssessments');
   const locale = useLocale();
@@ -100,6 +105,19 @@ export function DistributionSection({
             ))}
           </ul>
         )}
+        {canManage && onShareHeadsUp !== undefined ? (
+          <div className="flex justify-end pt-1">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={sharing}
+              onClick={onShareHeadsUp}
+            >
+              {t('distribution.shareHeadsUp')}
+            </Button>
+          </div>
+        ) : null}
       </CardContent>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

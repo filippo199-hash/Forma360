@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
 import {
@@ -133,6 +133,21 @@ export default function NewHeadsUpPage() {
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
   const [docQuery, setDocQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Prefill support for "Share via Heads Up" (risk assessments): reads
+  // ?title= & ?description= once on mount. window.location (not
+  // useSearchParams) avoids the Suspense-boundary requirement at build time.
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const qTitle = sp.get('title');
+    const qDescription = sp.get('description');
+    if (qTitle !== null && qTitle.length > 0) {
+      setTitle((cur) => (cur === '' ? qTitle : cur));
+    }
+    if (qDescription !== null && qDescription.length > 0) {
+      setDescription((cur) => (cur === '' ? qDescription : cur));
+    }
+  }, []);
 
   const { data: groupsData, error: groupsError } = trpc.groups.list.useQuery(undefined, {
     staleTime: 60_000,

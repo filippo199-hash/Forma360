@@ -379,6 +379,13 @@
       "when": 1780000028000,
       "tag": "0053_risk_assessments",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1780000029000,
+      "tag": "0054_risk_assessment_events",
+      "breakpoints": true
     }
   ]
 }

@@ -285,3 +285,48 @@ export const riskAssessmentAcknowledgements = pgTable(
 );
 
 export type RiskAssessmentAcknowledgement = typeof riskAssessmentAcknowledgements.$inferSelect;
+
+export const RA_EVENT_KINDS = [
+  'created',
+  'title_changed',
+  'site_changed',
+  'published',
+  'moved_to_draft',
+  'archived',
+  'hazard_added',
+  'hazard_removed',
+  'control_added',
+  'control_removed',
+  'review_recorded',
+  'distributed',
+  'acknowledged',
+  'variant_created',
+] as const;
+export type RaEventKind = (typeof RA_EVENT_KINDS)[number];
+
+/**
+ * Append-only change log (practitioner review #9 point 4). The router
+ * writes one row per meaningful mutation and exposes no way to alter or
+ * remove rows — the log is evidence, not state.
+ */
+export const riskAssessmentEvents = pgTable(
+  'risk_assessment_events',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    assessmentId: varchar('assessment_id', { length: 26 })
+      .notNull()
+      .references(() => riskAssessments.id, { onDelete: 'cascade' }),
+    actorUserId: text('actor_user_id').notNull(),
+    kind: text('kind').notNull().$type<RaEventKind>(),
+    detail: text('detail').notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [index('ra_events_assessment_idx').on(table.assessmentId, table.createdAt)],
+);
+
+export type RiskAssessmentEvent = typeof riskAssessmentEvents.$inferSelect;

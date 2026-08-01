@@ -33,6 +33,13 @@ import {
   DialogTitle,
 } from '../../../../src/components/ui/dialog';
 import { Input } from '../../../../src/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../../src/components/ui/select';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { bandForScore, scoreFor } from '../../../../src/lib/risk-matrix';
@@ -62,10 +69,15 @@ export default function RiskAssessmentDetailPage() {
 
   const utils = trpc.useUtils();
   const query = trpc.riskAssessments.get.useQuery({ assessmentId });
+  // Site/project picker source. listForConductor needs no extra permission,
+  // so any manager can link the assessment to a site.
+  const sitesQuery = trpc.sites.listForConductor.useQuery(undefined, { enabled: canManage });
   const [titleText, setTitleText] = useState<string | null>(null);
   const [titleDialogOpen, setTitleDialogOpen] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [showBottomAdd, setShowBottomAdd] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   const refresh = (): void => {
     void utils.riskAssessments.get.invalidate({ assessmentId });
@@ -92,6 +104,10 @@ export default function RiskAssessmentDetailPage() {
     },
   });
   const archive = trpc.riskAssessments.archive.useMutation({
+    onSuccess: refresh,
+    onError: () => toast.error(t('saveError')),
+  });
+  const moveToDraft = trpc.riskAssessments.moveToDraft.useMutation({
     onSuccess: refresh,
     onError: () => toast.error(t('saveError')),
   });
@@ -130,6 +146,8 @@ export default function RiskAssessmentDetailPage() {
 
   const {
     assessment,
+    siteName,
+    events,
     createdByName,
     hazards,
     reviews,
@@ -150,21 +168,6 @@ export default function RiskAssessmentDetailPage() {
     assessment.personSpecificFor === null &&
     affected.has('new_expectant_mothers') &&
     !variantKinds.has('new_expectant_mother');
-  const allScored =
-    hazards.length > 0 &&
-    hazards.every(
-      (h) =>
-        h.initialLikelihood !== null &&
-        h.initialSeverity !== null &&
-        h.residualLikelihood !== null &&
-        h.residualSeverity !== null,
-    );
-  const ppeOk = hazards.every((h) => {
-    if (h.controls.length === 0) return true;
-    const allPpe = h.controls.every((c) => c.tier === 'ppe');
-    const justified = h.controls.some((c) => (c.ppeJustification ?? '').trim().length > 0);
-    return !allPpe || justified;
-  });
   const pendingPlanned = hazards
     .flatMap((h) => h.controls)
     .filter((c) => c.status === 'planned' && c.actionId === null);
@@ -201,6 +204,31 @@ export default function RiskAssessmentDetailPage() {
   function saveTitle(next: string): void {
     setTitleText(next);
     update.mutate({ assessmentId, title: next });
+  }
+
+  /**
+   * Point 5 of the practitioner review: distribution rides the Heads Up
+   * machinery. Publish first (validations apply), then land on the Heads
+   * Up composer pre-filled — the user only picks the recipients.
+   */
+  async function shareViaHeadsUp(): Promise<void> {
+    if (sharing) return;
+    setSharing(true);
+    try {
+      if (assessment.status !== 'active') {
+        await publish.mutateAsync({ assessmentId });
+      }
+      const huTitle = `${title} (${assessment.referenceNumber ?? ''})`.trim();
+      const link = `${window.location.origin}/${locale}/risk-assessments/${assessmentId}`;
+      const huDescription = `${t('distribution.acknowledgeBanner')}\n\n${huTitle}\n${link}`;
+      router.push(
+        `/${locale}/heads-up/new?title=${encodeURIComponent(huTitle)}&description=${encodeURIComponent(huDescription)}`,
+      );
+    } catch {
+      // publish.mutateAsync already surfaced the specific toast.
+    } finally {
+      setSharing(false);
+    }
   }
 
   const publishButton = (
@@ -266,6 +294,39 @@ export default function RiskAssessmentDetailPage() {
                   {t(`personSpecific.badge.${assessment.personSpecificFor}`)}
                 </span>
               ) : null}
+              {editable ? (
+                <Select
+                  value={assessment.siteId ?? 'none'}
+                  onValueChange={(v) =>
+                    update.mutate({ assessmentId, siteId: v === 'none' ? null : v })
+                  }
+                >
+                  <SelectTrigger
+                    aria-label={t('site.label')}
+                    className="h-7 w-auto min-w-36 gap-1 px-2 text-xs"
+                  >
+                    <SelectValue placeholder={t('site.none')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('site.none')}</SelectItem>
+                    {(sitesQuery.data ?? []).map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {'  '.repeat(s.depth) + s.name}
+                      </SelectItem>
+                    ))}
+                    {assessment.siteId !== null &&
+                    !(sitesQuery.data ?? []).some((s) => s.id === assessment.siteId) ? (
+                      // Linked site no longer in the active list (archived):
+                      // keep it selectable so the picker shows the truth.
+                      <SelectItem value={assessment.siteId}>
+                        {siteName ?? assessment.siteId}
+                      </SelectItem>
+                    ) : null}
+                  </SelectContent>
+                </Select>
+              ) : siteName !== null ? (
+                <span className="rounded bg-muted px-1.5 py-0.5 text-xs">{siteName}</span>
+              ) : null}
               {createdLine !== null ? (
                 <span className="text-xs text-muted-foreground">{createdLine}</span>
               ) : null}
@@ -281,6 +342,16 @@ export default function RiskAssessmentDetailPage() {
             {editable ? (
               <>
                 {publishButton}
+                {assessment.status === 'active' ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={moveToDraft.isPending}
+                    onClick={() => moveToDraft.mutate({ assessmentId })}
+                  >
+                    {t('moveToDraft')}
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"
@@ -293,6 +364,16 @@ export default function RiskAssessmentDetailPage() {
                   {t('publish.archiveButton')}
                 </Button>
               </>
+            ) : null}
+            {canManage && assessment.status === 'archived' ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={moveToDraft.isPending}
+                onClick={() => moveToDraft.mutate({ assessmentId })}
+              >
+                {t('moveToDraft')}
+              </Button>
             ) : null}
           </div>
         </div>
@@ -378,26 +459,6 @@ export default function RiskAssessmentDetailPage() {
           </Link>
         ) : null}
 
-        {editable ? (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border px-3 py-2 text-xs">
-            <span className="font-medium">{t('readiness.title')}</span>
-            {[
-              { ok: hazards.length > 0, label: t('readiness.hazards') },
-              { ok: allScored, label: t('readiness.scored') },
-              { ok: ppeOk, label: t('readiness.ppe') },
-            ].map((item) => (
-              <span
-                key={item.label}
-                className={
-                  item.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'
-                }
-              >
-                {item.ok ? '✓' : '○'} {item.label}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
         <div>
           <h2 className="text-base font-semibold">{t('hazards.sectionTitle')}</h2>
           <p className="max-w-3xl text-xs text-muted-foreground">{t('hazards.sectionHint')}</p>
@@ -417,12 +478,27 @@ export default function RiskAssessmentDetailPage() {
                 hazard={h}
                 matrix={assessment.matrix}
                 canManage={editable}
+                canRemove={hazards.length > 1}
                 presetGroups={PRESET_GROUPS}
                 onChanged={refresh}
               />
             ))}
           </div>
         )}
+
+        {editable && hazards.length > 0 ? (
+          showBottomAdd ? (
+            <HazardQuickAdd assessmentId={assessmentId} onAdded={refresh} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowBottomAdd(true)}
+              className="w-full rounded-md border border-dashed px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              + {t('hazards.addAnother')}
+            </button>
+          )
+        ) : null}
 
         {linkedActions.length > 0 ? (
           <div className="rounded-md border p-3">
@@ -460,9 +536,31 @@ export default function RiskAssessmentDetailPage() {
           assessmentId={assessmentId}
           isActive={assessment.status === 'active'}
           acknowledgements={acknowledgements}
-          canManage={editable}
+          canManage={canManage && assessment.archivedAt === null}
           onChanged={refresh}
+          onShareHeadsUp={() => void shareViaHeadsUp()}
+          sharing={sharing}
         />
+
+        {events.length > 0 ? (
+          <div className="rounded-md border p-3">
+            <p className="mb-2 text-sm font-medium">{t('changeLog.title')}</p>
+            <ul className="space-y-1">
+              {events.map((e) => (
+                <li key={e.id} className="flex flex-wrap items-baseline gap-x-2 text-xs">
+                  <span className="text-muted-foreground">
+                    {new Date(e.createdAt).toLocaleString(locale)}
+                  </span>
+                  <span className="font-medium">{e.actorName ?? '—'}</span>
+                  <span>{t(`changeLog.kinds.${e.kind}` as never)}</span>
+                  {e.detail.length > 0 ? (
+                    <span className="text-muted-foreground">— {e.detail}</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {editable ? <div className="flex justify-end pb-4">{publishButton}</div> : null}
       </div>
@@ -475,6 +573,7 @@ export default function RiskAssessmentDetailPage() {
         </div>
         <p className="mb-2">
           {t(`type.${assessment.type}`)} · {t(`status.${assessment.status}`)}
+          {siteName !== null ? ` · ${siteName}` : ''}
           {createdLine !== null ? ` · ${createdLine}` : ''}
           {assessment.nextReviewAt !== null
             ? ` · ${t('review.nextReviewLabel')}: ${new Date(assessment.nextReviewAt).toLocaleDateString(locale)}`

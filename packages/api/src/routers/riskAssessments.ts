@@ -40,11 +40,14 @@ import {
   REVIEW_OUTCOMES,
   REVIEW_TRIGGERS,
   RISK_ASSESSMENT_TYPES,
+  type RaEventKind,
   riskAssessmentAcknowledgements,
+  riskAssessmentEvents,
   riskAssessmentControls,
   riskAssessmentHazards,
   riskAssessmentReviews,
   riskAssessments,
+  sites,
   user,
 } from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
@@ -116,6 +119,38 @@ async function loadAssessment(db: Database, tenantId: string, assessmentId: stri
   return assessment;
 }
 
+/**
+ * Load a site scoped to the tenant or throw. The FK alone only proves the
+ * site exists — this is what stops a crafted request linking an assessment
+ * to another tenant's site.
+ */
+async function loadSiteInTenant(db: Database, tenantId: string, siteId: string) {
+  const rows = await db
+    .select({ id: sites.id, name: sites.name })
+    .from(sites)
+    .where(and(eq(sites.id, siteId), eq(sites.tenantId, tenantId)))
+    .limit(1);
+  const site = rows[0];
+  if (site === undefined) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'unknown-site' });
+  }
+  return site;
+}
+
+/** Resolve site names for a set of assessment rows (list/get display). */
+async function siteNamesById(
+  db: Database,
+  tenantId: string,
+  siteIds: ReadonlyArray<string>,
+): Promise<Map<string, string>> {
+  if (siteIds.length === 0) return new Map();
+  const rows = await db
+    .select({ id: sites.id, name: sites.name })
+    .from(sites)
+    .where(and(eq(sites.tenantId, tenantId), inArray(sites.id, [...siteIds])));
+  return new Map(rows.map((r) => [r.id, r.name]));
+}
+
 /** Load a hazard scoped to the tenant or throw NOT_FOUND. */
 async function loadHazard(db: Database, tenantId: string, hazardId: string) {
   const rows = await db
@@ -136,6 +171,27 @@ async function touch(db: Database, assessmentId: string): Promise<void> {
     .update(riskAssessments)
     .set({ updatedAt: new Date() })
     .where(eq(riskAssessments.id, assessmentId));
+}
+
+/** Append one immutable change-log row. Never updated or deleted. */
+async function logEvent(
+  db: Database,
+  entry: {
+    tenantId: string;
+    assessmentId: string;
+    actorUserId: string;
+    kind: RaEventKind;
+    detail?: string;
+  },
+): Promise<void> {
+  await db.insert(riskAssessmentEvents).values({
+    id: newId(),
+    tenantId: entry.tenantId,
+    assessmentId: entry.assessmentId,
+    actorUserId: entry.actorUserId,
+    kind: entry.kind,
+    detail: entry.detail ?? '',
+  });
 }
 
 export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
@@ -200,6 +256,12 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
               .where(inArray(riskAssessmentAcknowledgements.assessmentId, ids))
           : [];
 
+        const siteNames = await siteNamesById(
+          ctx.db,
+          ctx.tenantId,
+          rows.map((r) => r.siteId).filter((v): v is string => v !== null),
+        );
+
         const now = new Date();
         return rows.map((r) => {
           const hazards = hazardRows.filter((h) => h.assessmentId === r.id);
@@ -213,6 +275,7 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           const acks = ackRows.filter((a) => a.assessmentId === r.id);
           return {
             ...r,
+            siteName: r.siteId !== null ? (siteNames.get(r.siteId) ?? null) : null,
             hazardCount: hazards.length,
             maxResidualScore: maxResidual,
             ackTotal: acks.length,
@@ -317,8 +380,28 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
               eq(riskAssessments.parentAssessmentId, assessment.id),
             ),
           );
+        const events = await ctx.db
+          .select({
+            id: riskAssessmentEvents.id,
+            kind: riskAssessmentEvents.kind,
+            detail: riskAssessmentEvents.detail,
+            createdAt: riskAssessmentEvents.createdAt,
+            actorName: user.name,
+          })
+          .from(riskAssessmentEvents)
+          .leftJoin(user, eq(user.id, riskAssessmentEvents.actorUserId))
+          .where(eq(riskAssessmentEvents.assessmentId, assessment.id))
+          .orderBy(desc(riskAssessmentEvents.createdAt))
+          .limit(100);
+        const siteNames = await siteNamesById(
+          ctx.db,
+          ctx.tenantId,
+          assessment.siteId !== null ? [assessment.siteId] : [],
+        );
         return {
           assessment,
+          siteName: assessment.siteId !== null ? (siteNames.get(assessment.siteId) ?? null) : null,
+          events,
           createdByName: creatorRows[0]?.name ?? null,
           hazards: hazards.map((h) => ({
             ...h,
@@ -337,6 +420,9 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
       .input(createInput)
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
+        if (input.siteId !== undefined) {
+          await loadSiteInTenant(ctx.db, ctx.tenantId, input.siteId);
+        }
         const id = newId();
         const n = await nextReferenceValue(ctx.db, ctx.tenantId, 'riskAssessment');
         const referenceNumber = `RA-${String(n).padStart(4, '0')}`;
@@ -358,6 +444,13 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           nextReviewAt,
           createdBy: ctx.auth.userId,
         });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: id,
+          actorUserId: ctx.auth.userId,
+          kind: 'created',
+          detail: input.title,
+        });
         ctx.logger.info({ assessmentId: id }, '[riskAssessments] created');
         return { assessmentId: id, referenceNumber };
       }),
@@ -372,6 +465,12 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
         }
         const { assessmentId: _id, ...patch } = input;
+        // Resolve (and tenant-check) the target site up front so the event
+        // detail can carry the human-readable name.
+        const nextSite =
+          patch.siteId !== undefined && patch.siteId !== null
+            ? await loadSiteInTenant(ctx.db, ctx.tenantId, patch.siteId)
+            : null;
         await ctx.db
           .update(riskAssessments)
           .set({
@@ -387,6 +486,51 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
             updatedAt: new Date(),
           })
           .where(eq(riskAssessments.id, assessment.id));
+        if (patch.title !== undefined && patch.title !== assessment.title) {
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            assessmentId: assessment.id,
+            actorUserId: ctx.auth.userId,
+            kind: 'title_changed',
+            detail: patch.title,
+          });
+        }
+        if (patch.siteId !== undefined && patch.siteId !== assessment.siteId) {
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            assessmentId: assessment.id,
+            actorUserId: ctx.auth.userId,
+            kind: 'site_changed',
+            detail: nextSite?.name ?? '',
+          });
+        }
+        return { ok: true };
+      }),
+
+    /**
+     * Move an active (or archived) assessment back to draft — the status
+     * lever the practitioner asked for. Activation stays exclusive to
+     * `publish` so its validations can never be bypassed.
+     */
+    moveToDraft: tenantProcedure
+      .use(requirePermission('riskAssessments.manage'))
+      .input(z.object({ assessmentId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const assessment = await loadAssessment(ctx.db, ctx.tenantId, input.assessmentId);
+        if (assessment.status === 'draft' && assessment.archivedAt === null) {
+          return { ok: true };
+        }
+        await ctx.db
+          .update(riskAssessments)
+          .set({ status: 'draft', archivedAt: null, updatedAt: new Date() })
+          .where(eq(riskAssessments.id, assessment.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: assessment.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'moved_to_draft',
+        });
         return { ok: true };
       }),
 
@@ -420,6 +564,13 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           residualSeverity: input.residualSeverity ?? null,
         });
         await touch(ctx.db, assessment.id);
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: assessment.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'hazard_added',
+          detail: input.hazard,
+        });
         return { hazardId: id };
       }),
 
@@ -465,8 +616,23 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
         const hazard = await loadHazard(ctx.db, ctx.tenantId, input.hazardId);
+        // An assessment must always keep at least one hazard.
+        const countRows = await ctx.db
+          .select({ n: sql<number>`count(*)` })
+          .from(riskAssessmentHazards)
+          .where(eq(riskAssessmentHazards.assessmentId, hazard.assessmentId));
+        if (Number(countRows[0]?.n ?? 0) <= 1) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'last-hazard' });
+        }
         await ctx.db.delete(riskAssessmentHazards).where(eq(riskAssessmentHazards.id, hazard.id));
         await touch(ctx.db, hazard.assessmentId);
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: hazard.assessmentId,
+          actorUserId: ctx.auth.userId,
+          kind: 'hazard_removed',
+          detail: hazard.hazard,
+        });
         return { ok: true };
       }),
 
@@ -488,6 +654,13 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           ppeJustification: input.ppeJustification ?? null,
         });
         await touch(ctx.db, hazard.assessmentId);
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: hazard.assessmentId,
+          actorUserId: ctx.auth.userId,
+          kind: 'control_added',
+          detail: input.description,
+        });
         return { controlId: id };
       }),
 
@@ -544,6 +717,13 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           .delete(riskAssessmentControls)
           .where(eq(riskAssessmentControls.id, control.id));
         await touch(ctx.db, control.assessmentId);
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: control.assessmentId,
+          actorUserId: ctx.auth.userId,
+          kind: 'control_removed',
+          detail: control.description,
+        });
         return { ok: true };
       }),
 
@@ -649,6 +829,13 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
             })
             .where(eq(riskAssessments.id, assessment.id));
         });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: assessment.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'published',
+          detail: String(createdActionIds.length),
+        });
         ctx.logger.info(
           { assessmentId: assessment.id, actionsCreated: createdActionIds.length },
           '[riskAssessments] published',
@@ -666,6 +853,12 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           .update(riskAssessments)
           .set({ status: 'archived', archivedAt: new Date(), updatedAt: new Date() })
           .where(eq(riskAssessments.id, assessment.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: assessment.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'archived',
+        });
         return { ok: true };
       }),
 
@@ -713,6 +906,13 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
             })
             .where(eq(riskAssessments.id, assessment.id));
         });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: assessment.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'review_recorded',
+          detail: input.trigger,
+        });
         return { ok: true, nextReviewAt };
       }),
 
@@ -756,6 +956,13 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
               set: { distributedAt: now, acknowledgedAt: null, redistributed: true },
             });
         }
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: assessment.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'distributed',
+          detail: String(tenantUsers.length),
+        });
         return { ok: true, distributed: tenantUsers.length };
       }),
 
@@ -778,6 +985,12 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
         if (rows.length === 0) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'not-distributed-to-you' });
         }
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: input.assessmentId,
+          actorUserId: ctx.auth.userId,
+          kind: 'acknowledged',
+        });
         return { ok: true };
       }),
 
@@ -844,6 +1057,13 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
               });
             }
           }
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          assessmentId: parent.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'variant_created',
+          detail: input.kind,
         });
         return { assessmentId: id };
       }),
