@@ -1,0 +1,15 @@
+{
+  "auth": {
+    "signIn": {
+      "title": "Sign in to FreeHS"
+    },
+    "signUp": {
+      "subtitle": "FreeHS — operational excellence for your whole organisation."
+    }
+  },
+  "templates": {
+    "create": {
+      "optImportDesc": "Upload an existing checklist and convert it into a FreeHS template."
+    }
+  }
+}

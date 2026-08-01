@@ -314,9 +314,16 @@ importers:
 
   packages/i18n:
     dependencies:
+      '@forma360/shared':
+        specifier: workspace:^
+        version: link:../shared
       next-intl:
         specifier: ^4.0.0
         version: 4.9.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(typescript@5.9.3)
+    devDependencies:
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@25.6.0)(@vitest/ui@2.1.9)(happy-dom@16.8.1)(lightningcss@1.32.0)(terser@5.46.1)
 
   packages/jobs:
     dependencies:
