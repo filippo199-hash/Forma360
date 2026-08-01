@@ -13,6 +13,7 @@
 import { buildAppRouter } from '@forma360/api';
 import { isId } from '@forma360/shared/id';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
+import { logger } from '../../../../src/server/logger';
 import { authDeps } from '../../../../src/server/auth-deps';
 import { exportsDeps } from '../../../../src/server/exports-deps';
 import { headsUpsDeps } from '../../../../src/server/heads-up-deps';
@@ -51,6 +52,22 @@ async function handler(req: Request): Promise<Response> {
       });
       contextRequestId = ctx.requestId;
       return ctx;
+    },
+    // Without this hook the fetch adapter swallows procedure errors in
+    // production — a 500 leaves no server-side trace at all. Log every
+    // INTERNAL error (and the cause chain) so incidents are diagnosable.
+    onError({ error, path, type }) {
+      logger.error(
+        {
+          err: error,
+          cause: error.cause instanceof Error ? error.cause.message : undefined,
+          code: error.code,
+          path,
+          type,
+          requestId: contextRequestId,
+        },
+        '[trpc] procedure error',
+      );
     },
   });
 
