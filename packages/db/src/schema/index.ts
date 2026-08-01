@@ -27,3 +27,4 @@ export * from './site-plans';
 export * from './contractors';
 export * from './ai';
 export * from './reference-counters';
+export * from './risk-assessments';
