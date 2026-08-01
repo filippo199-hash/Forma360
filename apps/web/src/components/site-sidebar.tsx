@@ -10,12 +10,14 @@ import {
   HardHat,
   ListChecks,
   Settings,
+  ShieldAlert,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { brandHasModule } from '@forma360/shared/brand';
 import { activeBrand } from '../lib/brand';
 import { cn } from '../lib/cn';
 import { navLabelKey, useTerminology } from '../lib/terminology';
@@ -32,6 +34,7 @@ interface NavItem {
     | 'issues'
     | 'actions'
     | 'headsUp'
+    | 'riskAssessments'
     | 'assets'
     | 'documents'
     | 'contractors'
@@ -50,6 +53,14 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
   const pathname = usePathname();
   const terminology = useTerminology();
 
+  // Brand-gated (ADR 0010): Risk Assessments ships only where the active
+  // brand's module catalogue enables it.
+  const riskAssessmentsItem: NavItem = {
+    key: 'riskAssessments',
+    href: `/${locale}/risk-assessments`,
+    icon: ShieldAlert,
+  };
+
   const primary: NavItem[] = [
     { key: 'ai', href: `/${locale}/ai`, icon: Bot },
     { key: 'sites', href: `/${locale}/sites`, icon: Building2 },
@@ -57,6 +68,7 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     { key: 'issues', href: `/${locale}/observations`, icon: AlertTriangle },
     { key: 'actions', href: `/${locale}/actions`, icon: ListChecks },
     { key: 'headsUp', href: `/${locale}/heads-up`, icon: Bell },
+    ...(brandHasModule(activeBrand.id, 'riskAssessments') ? [riskAssessmentsItem] : []),
     { key: 'assets', href: `/${locale}/assets`, icon: Wrench },
     { key: 'documents', href: `/${locale}/documents`, icon: FolderOpen },
     { key: 'contractors', href: `/${locale}/contractors`, icon: HardHat },

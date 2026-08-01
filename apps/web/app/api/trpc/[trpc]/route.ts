@@ -11,7 +11,9 @@
  *     server logs with client-side telemetry.
  */
 import { buildAppRouter } from '@forma360/api';
+import { brandHasModule } from '@forma360/shared/brand';
 import { isId } from '@forma360/shared/id';
+import { activeBrand } from '../../../../src/lib/brand';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { logger } from '../../../../src/server/logger';
 import { authDeps } from '../../../../src/server/auth-deps';
@@ -26,6 +28,8 @@ import '../../../../src/server/users-deps';
 
 // Build the router once with production dependencies (R2-backed
 // renderers, HMAC-signed render tokens, APP_URL-based share URLs).
+// Risk Assessments is brand-gated (ADR 0010): enabled only where the
+// active brand's module catalogue includes it.
 const appRouter = buildAppRouter({
   exports: exportsDeps,
   inspectionsExport: inspectionsExportDeps,
@@ -33,6 +37,7 @@ const appRouter = buildAppRouter({
   inspections: inspectionsDeps,
   issues: issuesDeps,
   headsUps: headsUpsDeps,
+  riskAssessments: { enabled: brandHasModule(activeBrand.id, 'riskAssessments') },
 });
 
 async function handler(req: Request): Promise<Response> {

@@ -13,8 +13,10 @@
 import { buildAppRouter } from '@forma360/api';
 import type { Context } from '@forma360/api/context';
 import { user } from '@forma360/db/schema';
+import { brandHasModule } from '@forma360/shared/brand';
 import { newId, type Id } from '@forma360/shared/id';
 import { eq } from 'drizzle-orm';
+import { activeBrand } from '../lib/brand';
 import { authDeps } from './auth-deps';
 import { db } from './db';
 import { exportsDeps } from './exports-deps';
@@ -38,6 +40,7 @@ const appRouter = buildAppRouter({
   inspections: inspectionsDeps,
   issues: issuesDeps,
   headsUps: headsUpsDeps,
+  riskAssessments: { enabled: brandHasModule(activeBrand.id, 'riskAssessments') },
 });
 
 export type ServerCaller = ReturnType<typeof appRouter.createCaller>;

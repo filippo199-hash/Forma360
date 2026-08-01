@@ -1364,7 +1364,8 @@
     "sites": "Standorte",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
-    "contractors": "Contractors"
+    "contractors": "Contractors",
+    "riskAssessments": "Risk assessments"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -3597,5 +3598,203 @@
     "clear": "Clear selections",
     "done": "Done",
     "removeAria": "Remove {name}"
+  },
+  "riskAssessments": {
+    "title": "Risk assessments",
+    "subtitle": "Create, review and keep suitable and sufficient risk assessments alive.",
+    "newButton": "New assessment",
+    "empty": "No risk assessments yet. Create the first one to get started.",
+    "loading": "Loading…",
+    "notFound": "This risk assessment could not be found.",
+    "backToList": "Back to risk assessments",
+    "saveError": "Could not save. Try again.",
+    "columns": {
+      "reference": "Ref",
+      "title": "Title",
+      "type": "Type",
+      "status": "Status",
+      "hazards": "Hazards",
+      "residualRisk": "Residual risk",
+      "review": "Review",
+      "acks": "Read & understood"
+    },
+    "filters": {
+      "all": "All",
+      "status": "Status",
+      "type": "Type"
+    },
+    "type": {
+      "standing": "Standing",
+      "dynamic": "Point-of-work"
+    },
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "band": {
+      "none": "Not scored",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "reviewDue": "Review due",
+    "noReviewScheduled": "Not scheduled",
+    "create": {
+      "title": "New risk assessment",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Manual handling — warehouse",
+      "activityLabel": "Activity or process being assessed",
+      "activityPlaceholder": "Describe the task, area or process this assessment covers.",
+      "typeLabel": "Assessment type",
+      "typeStandingHint": "The standing assessment for a routine activity.",
+      "typeDynamicHint": "A point-of-work assessment for changing conditions on site.",
+      "locationLabel": "Location (optional)",
+      "locationPlaceholder": "Building, area or site location",
+      "submit": "Create assessment",
+      "submitting": "Creating…",
+      "error": "Could not create the assessment. Try again."
+    },
+    "steps": {
+      "hazards": "1 · Identify hazards",
+      "people": "2 · Who might be harmed and how",
+      "evaluate": "3 · Evaluate risks and controls",
+      "record": "4 · Record the findings",
+      "review": "5 · Review"
+    },
+    "hazards": {
+      "sectionTitle": "Hazards",
+      "sectionHint": "Work through the HSE five steps for each hazard: what could cause harm, who is at risk and how, what controls exist, and what the risk is before and after controls.",
+      "addButton": "Add hazard",
+      "emptyHint": "No hazards yet. An assessment needs at least one hazard before it can be published.",
+      "hazardLabel": "Hazard",
+      "hazardPlaceholder": "What could cause harm? e.g. lifting heavy stock from pallets",
+      "harmLabel": "How could people be harmed?",
+      "harmPlaceholder": "Describe the injury or ill health that could result.",
+      "affectedLabel": "Who might be harmed?",
+      "affectedHint": "Think beyond direct employees — include everyone who could be exposed.",
+      "affectedCustomPlaceholder": "Add another group…",
+      "groups": {
+        "employees": "Employees",
+        "cleaners": "Cleaners",
+        "contractors": "Contractors",
+        "visitors": "Visitors",
+        "young_persons": "Young persons",
+        "new_expectant_mothers": "New & expectant mothers",
+        "lone_workers": "Lone workers",
+        "members_of_public": "Members of the public"
+      },
+      "existingControlsLabel": "Existing controls",
+      "existingControlsPlaceholder": "What is already in place to control this risk?",
+      "initialRisk": "Initial risk (before controls)",
+      "residualRisk": "Residual risk (with controls)",
+      "likelihood": "Likelihood",
+      "severity": "Severity",
+      "scoreHint": "1 = lowest, 5 = highest",
+      "save": "Save hazard",
+      "saving": "Saving…",
+      "remove": "Remove hazard",
+      "removeConfirm": "Remove this hazard and its controls?"
+    },
+    "controls": {
+      "sectionTitle": "Controls (hierarchy of control)",
+      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "addButton": "Add control",
+      "descriptionLabel": "Control",
+      "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
+      "tierLabel": "Hierarchy tier",
+      "tier": {
+        "eliminate": "Eliminate",
+        "substitute": "Substitute",
+        "engineering": "Engineering controls",
+        "administrative": "Administrative controls",
+        "ppe": "PPE"
+      },
+      "statusLabel": "Status",
+      "statusInPlace": "In place",
+      "statusPlanned": "Planned — creates an action",
+      "ppeJustificationLabel": "Justification for stopping at PPE",
+      "ppeJustificationPlaceholder": "Why are higher-order controls not reasonably practicable for this hazard?",
+      "ppeRuleHint": "PPE-only hazards need a justification before publishing.",
+      "actionLink": "Action created",
+      "remove": "Remove control",
+      "save": "Add"
+    },
+    "publish": {
+      "button": "Publish assessment",
+      "publishing": "Publishing…",
+      "republish": "Republish",
+      "successToast": "Assessment published.",
+      "actionsCreated": "{count} action(s) created from planned controls.",
+      "archiveButton": "Archive",
+      "archiveConfirm": "Archive this assessment? It stays readable but can no longer be edited.",
+      "errors": {
+        "no-hazards": "Add at least one hazard before publishing.",
+        "unscored-hazards": "Every hazard needs initial and residual likelihood × severity scores.",
+        "ppe-only-needs-justification": "At least one hazard relies on PPE alone — add a justification or a higher-order control.",
+        "generic": "Could not publish. Check the assessment and try again."
+      }
+    },
+    "review": {
+      "sectionTitle": "Review",
+      "frequencyLabel": "Review every (months)",
+      "nextReviewLabel": "Next review due",
+      "lastReviewed": "Last reviewed {date}",
+      "neverReviewed": "Not reviewed yet",
+      "recordButton": "Record a review",
+      "dialogTitle": "Record a review",
+      "triggerLabel": "What prompted this review?",
+      "trigger": {
+        "scheduled": "Scheduled review",
+        "incident": "Related incident",
+        "process_change": "Change of process",
+        "legislation_change": "Change of legislation",
+        "new_equipment": "New equipment",
+        "manual": "Other"
+      },
+      "outcomeLabel": "Outcome",
+      "outcome": {
+        "confirmed": "Still suitable — confirmed",
+        "updated": "Assessment updated"
+      },
+      "noteLabel": "Notes (optional)",
+      "save": "Save review",
+      "saving": "Saving…",
+      "logTitle": "Review history",
+      "logEmpty": "No reviews recorded yet.",
+      "scheduleSave": "Save schedule"
+    },
+    "distribution": {
+      "sectionTitle": "Distribution & acknowledgement",
+      "hint": "Send this assessment to the people doing the work and track that they have read it.",
+      "distributeButton": "Distribute",
+      "dialogTitle": "Distribute to people",
+      "selectHint": "Choose who must read and acknowledge this assessment.",
+      "submit": "Send",
+      "sending": "Sending…",
+      "needsActive": "Publish the assessment before distributing it.",
+      "empty": "Not distributed to anyone yet.",
+      "acknowledged": "Acknowledged",
+      "pending": "Pending",
+      "acknowledgeBanner": "You have been asked to read and acknowledge this assessment.",
+      "acknowledgeButton": "I have read and understood it",
+      "acknowledging": "Saving…",
+      "acknowledgedToast": "Acknowledgement recorded.",
+      "pendingBanner": "{count} risk assessment(s) waiting for your acknowledgement."
+    },
+    "personSpecific": {
+      "promptTitle": "Person-specific assessment recommended",
+      "promptBody": "This assessment affects {group}. The law expects a specific assessment for them — create a linked one now.",
+      "createYoung": "Create young-persons assessment",
+      "createExpectant": "Create new & expectant mothers assessment",
+      "badge": {
+        "young_person": "Young persons",
+        "new_expectant_mother": "New & expectant mothers"
+      },
+      "linkedTitle": "Linked person-specific assessments",
+      "parentLink": "Part of: {title}",
+      "createdToast": "Linked assessment created as a draft."
+    }
   }
 }
