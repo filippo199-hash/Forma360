@@ -3307,7 +3307,9 @@
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
       "deletePinConfirm": "Delete this pin?"
-    }
+    },
+    "treeExpand": "Déplier {name}",
+    "treeCollapse": "Replier {name}"
   },
   "contractors": {
     "title": "Contractors",

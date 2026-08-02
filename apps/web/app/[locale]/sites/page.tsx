@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   Archive,
   Building2,
+  ChevronRight,
   ListChecks,
   MapPin,
   Plus,
@@ -118,10 +119,34 @@ export default function SitesHubPage() {
     return sorted;
   }, [rows, view, search, statusFilter, kindFilter, sort, terminology]);
 
-  // Group by kind only when nothing is being filtered and both axes are in use.
-  const grouped = terminology === 'both' && view === 'active' && !filtersActive;
-  const projects = visible.filter((r) => r.kind === 'project');
-  const plainSites = visible.filter((r) => r.kind !== 'project');
+  // ── Hierarchy tree (default browse mode) ─────────────────────────
+  // Children nest under their parent with indent guides; searching or
+  // filtering switches to the flat card grid because matches can sit in
+  // different branches. Collapsed state is per node.
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+  const treeMode = !filtersActive;
+  const byParent = useMemo(() => {
+    const idSet = new Set(visible.map((r) => r.id));
+    const m = new Map<string | null, typeof visible>();
+    for (const r of visible) {
+      // A child whose parent isn't in this view (e.g. active child of an
+      // archived parent) renders as a root — its card keeps the "in X" hint.
+      const key = r.parentId !== null && idSet.has(r.parentId) ? r.parentId : null;
+      const list = m.get(key) ?? [];
+      list.push(r);
+      m.set(key, list);
+    }
+    return m;
+  }, [visible]);
+
+  function toggleCollapsed(id: string): void {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   // ── Create dialog ─────────────────────────────────────────────────
   const [open, setOpen] = useState(false);
@@ -346,6 +371,126 @@ export default function SitesHubPage() {
     );
   }
 
+  // ── Tree rows ─────────────────────────────────────────────────────
+  function renderTreeNodes(parentKey: string | null): React.ReactNode {
+    const nodes = byParent.get(parentKey) ?? [];
+    return nodes.map((row) => {
+      const kids = byParent.get(row.id) ?? [];
+      const isCollapsed = collapsedIds.has(row.id);
+      const isProject = row.kind === 'project';
+      const isArchived = row.archivedAt !== null;
+      const label = statusLabel(row.status);
+      const timelineText =
+        isProject && row.status === 'completed'
+          ? t('timelineComplete')
+          : isProject && row.endDate !== null
+            ? daysUntil(row.endDate) < 0
+              ? t('timelineOverdue')
+              : t('timelineDaysLeft', { count: daysUntil(row.endDate) })
+            : null;
+
+      return (
+        <div key={row.id}>
+          <div
+            className={cn(
+              'group flex items-center gap-1.5 rounded-md px-1.5 py-1.5 transition-colors hover:bg-muted/40',
+              isArchived && 'opacity-70',
+            )}
+          >
+            {kids.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => toggleCollapsed(row.id)}
+                aria-label={
+                  isCollapsed
+                    ? t('treeExpand', { name: row.name })
+                    : t('treeCollapse', { name: row.name })
+                }
+                aria-expanded={!isCollapsed}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <ChevronRight
+                  className={cn('h-4 w-4 transition-transform', !isCollapsed && 'rotate-90')}
+                />
+              </button>
+            ) : (
+              <span className="h-6 w-6 shrink-0" aria-hidden />
+            )}
+            {isProject ? (
+              <MapPin className="h-4 w-4 shrink-0 text-primary" />
+            ) : (
+              <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+            <Link
+              href={`/${locale}/sites/${row.id}`}
+              className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-0.5"
+            >
+              <span className="truncate text-sm font-medium" title={row.name}>
+                {row.name}
+              </span>
+              {label !== null ? (
+                <span
+                  className={cn(
+                    'shrink-0 rounded-md px-1.5 py-0.5 text-xs font-medium',
+                    STATUS_COLORS[row.status as Status] ?? STATUS_COLORS.active,
+                  )}
+                >
+                  {label}
+                </span>
+              ) : null}
+              {kids.length > 0 && isCollapsed ? (
+                <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                  {kids.length}
+                </span>
+              ) : null}
+              <span className="ml-auto flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                {row.client !== null && row.client !== '' ? (
+                  <span className="hidden max-w-36 truncate sm:inline" title={row.client}>
+                    {row.client}
+                  </span>
+                ) : null}
+                {timelineText !== null ? (
+                  <span className="hidden sm:inline">{timelineText}</span>
+                ) : null}
+                {row.openObservations > 0 ? (
+                  <span className="inline-flex items-center gap-1" title={t('countObservations')}>
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                    {row.openObservations}
+                  </span>
+                ) : null}
+                {row.openActions > 0 ? (
+                  <span className="inline-flex items-center gap-1" title={t('countActions')}>
+                    <ListChecks className="h-3.5 w-3.5 text-sky-500" />
+                    {row.openActions}
+                  </span>
+                ) : null}
+                <span className="inline-flex items-center gap-1" title={t('countMembers')}>
+                  <Users className="h-3.5 w-3.5" />
+                  {row.memberCount}
+                </span>
+              </span>
+            </Link>
+            {isArchived && canManage ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 shrink-0 px-2 text-xs"
+                disabled={restore.isPending}
+                onClick={() => restore.mutate({ id: row.id })}
+              >
+                <RotateCcw className="mr-1 h-3 w-3" />
+                {t('restoreButton')}
+              </Button>
+            ) : null}
+          </div>
+          {kids.length > 0 && !isCollapsed ? (
+            <div className="ml-[19px] border-l border-border pl-2.5">{renderTreeNodes(row.id)}</div>
+          ) : null}
+        </div>
+      );
+    });
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -471,29 +616,12 @@ export default function SitesHubPage() {
         ) : (
           <EmptyState icon={<MapPin className="h-6 w-6" />} text={t('noResults')} />
         )
-      ) : grouped ? (
-        <div className="space-y-8">
-          {projects.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t('sectionProjects')}
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {projects.map(renderCard)}
-              </div>
-            </section>
-          ) : null}
-          {plainSites.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t('sectionSites')}
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {plainSites.map(renderCard)}
-              </div>
-            </section>
-          ) : null}
-        </div>
+      ) : treeMode ? (
+        /* Hierarchy view — children indent under their parent with guide
+           lines; chevrons collapse whole branches. */
+        <Card>
+          <CardContent className="p-2">{renderTreeNodes(null)}</CardContent>
+        </Card>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visible.map(renderCard)}</div>
       )}
