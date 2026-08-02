@@ -17,6 +17,7 @@ import { newId, type Id } from '@forma360/shared/id';
 import { eq } from 'drizzle-orm';
 import { authDeps } from './auth-deps';
 import { db } from './db';
+import { coshhDeps } from './coshh-deps';
 import { exportsDeps } from './exports-deps';
 import { headsUpsDeps } from './heads-up-deps';
 import { inspectionsDeps } from './inspections-deps';
@@ -40,6 +41,7 @@ const appRouter = buildAppRouter({
   issues: issuesDeps,
   headsUps: headsUpsDeps,
   riskAssessments: riskAssessmentsDeps,
+  coshh: coshhDeps,
 });
 
 export type ServerCaller = ReturnType<typeof appRouter.createCaller>;
