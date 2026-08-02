@@ -76,6 +76,12 @@ export const QUEUE_NAMES = {
    * when a visit has been on site (checked in) for more than 24 hours.
    */
   CONTRACTOR_OVERSTAY: 'forma360-contractor-overstay',
+  /**
+   * FreeHS B1 — daily chase of pending risk-assessment acknowledgements
+   * (feedback A-3): first reminder after a grace period, weekly repeats,
+   * deduped via `last_reminder_at`.
+   */
+  RA_ACK_REMINDER: 'forma360-ra-ack-reminder',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -180,6 +186,11 @@ export type ContractorDocReminderPayload = z.infer<typeof contractorDocReminderP
 export const contractorOverstayPayloadSchema = z.object({}).strict();
 export type ContractorOverstayPayload = z.infer<typeof contractorOverstayPayloadSchema>;
 
+/** RA acknowledgement-reminder tick — no payload; the worker scans for
+ * pending acknowledgements. */
+export const raAckReminderPayloadSchema = z.object({}).strict();
+export type RaAckReminderPayload = z.infer<typeof raAckReminderPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -198,6 +209,7 @@ export interface QueuePayloads {
   [QUEUE_NAMES.OBSERVATION_NOTIFY]: ObservationNotifyPayload;
   [QUEUE_NAMES.CONTRACTOR_DOC_REMINDER]: ContractorDocReminderPayload;
   [QUEUE_NAMES.CONTRACTOR_OVERSTAY]: ContractorOverstayPayload;
+  [QUEUE_NAMES.RA_ACK_REMINDER]: RaAckReminderPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -215,6 +227,7 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.OBSERVATION_NOTIFY]: observationNotifyPayloadSchema,
   [QUEUE_NAMES.CONTRACTOR_DOC_REMINDER]: contractorDocReminderPayloadSchema,
   [QUEUE_NAMES.CONTRACTOR_OVERSTAY]: contractorOverstayPayloadSchema,
+  [QUEUE_NAMES.RA_ACK_REMINDER]: raAckReminderPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

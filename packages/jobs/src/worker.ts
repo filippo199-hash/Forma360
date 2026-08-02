@@ -39,6 +39,11 @@ import {
   type OverstayVisit,
 } from './workers/contractor-overstay';
 import { createObservationNotifyHandler } from './workers/observation-notify';
+import {
+  createRaAckReminderHandler,
+  RA_ACK_REMINDER_CRON,
+  type PendingAckReminder,
+} from './workers/ra-ack-reminder';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -278,6 +283,39 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     workerOptions,
   );
 
+  // ─── FreeHS B1 — risk-assessment acknowledgement chase (A-3) ───────────
+  const raAckReminderWorker = new Worker(
+    QUEUE_NAMES.RA_ACK_REMINDER,
+    createRaAckReminderHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'ra-ack-reminder' }),
+      appUrl: env.APP_URL,
+      notify: async (r: PendingAckReminder, viewUrl: string) => {
+        await sendTemplatedEmail({
+          to: r.email,
+          templateKey: 'risk-assessment-ack-reminder',
+          variables: {
+            recipientName: r.userName,
+            title: r.title,
+            referenceNumber: r.referenceNumber ?? '',
+            distributedDate: r.distributedAt.toISOString().slice(0, 10),
+            dueLine:
+              r.dueAt !== null ? ` (due by ${r.dueAt.toISOString().slice(0, 10)})` : '',
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const raAckReminderQueue = getQueue(QUEUE_NAMES.RA_ACK_REMINDER, connection);
+  await raAckReminderQueue.upsertJobScheduler(
+    'ra-ack-reminder',
+    { pattern: RA_ACK_REMINDER_CRON, tz: 'UTC' },
+    { name: 'ra-ack-reminder', data: {} },
+  );
+  logger.info({ cron: RA_ACK_REMINDER_CRON }, '[worker] registered ra-ack-reminder repeatable');
+
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
   await scheduleTickQueue.upsertJobScheduler(
@@ -318,6 +356,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     contractorReminderWorker,
     contractorOverstayWorker,
     observationNotifyWorker,
+    raAckReminderWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {
