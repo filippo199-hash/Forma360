@@ -3,9 +3,9 @@
 /**
  * Risk assessments list (FreeHS module B1). One filter row (status, type,
  * site/project, reviews due) over an Inspections-style table, plus a
- * pending-acknowledgements banner. "New assessment" creates an untitled
- * draft and lands straight on the editor — no dialog; the editor guards
- * the title at publish time.
+ * pending-acknowledgements banner. "New assessment" opens a small dialog
+ * (title + site + activity) so a mis-click never leaves an "Untitled"
+ * draft behind (feedback T-5) — the row is only created on submit.
  */
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
@@ -14,8 +14,17 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { RiskBandChip } from '../../../src/components/risk-assessments/risk-band-chip';
 import { RaStatusChip } from '../../../src/components/risk-assessments/status-chip';
+import { SiteSelector } from '../../../src/components/selectors/site-selector';
 import { Button } from '../../../src/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../src/components/ui/dialog';
 import { Input } from '../../../src/components/ui/input';
+import { Label } from '../../../src/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -24,6 +33,7 @@ import {
   SelectValue,
 } from '../../../src/components/ui/select';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { Textarea } from '../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
@@ -50,16 +60,38 @@ export default function RiskAssessmentsPage() {
   });
   const pending = trpc.riskAssessments.listMyPending.useQuery();
 
+  // T-5: creation goes through a dialog — no row exists until submit.
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newType, setNewType] = useState<'standing' | 'dynamic'>('standing');
+  const [newSiteIds, setNewSiteIds] = useState<string[]>([]);
+  const [newActivity, setNewActivity] = useState('');
+
   const create = trpc.riskAssessments.create.useMutation({
     onSuccess: (res) => {
+      setCreateOpen(false);
       router.push(`/${locale}/risk-assessments/${res.assessmentId}`);
     },
     onError: () => toast.error(t('create.error')),
   });
 
   function handleCreate(): void {
-    if (create.isPending) return;
-    create.mutate({ title: t('untitled'), activity: '' });
+    setNewTitle('');
+    setNewType('standing');
+    setNewSiteIds([]);
+    setNewActivity('');
+    setCreateOpen(true);
+  }
+
+  function submitCreate(): void {
+    if (create.isPending || newTitle.trim().length === 0) return;
+    const siteId = newSiteIds[0];
+    create.mutate({
+      title: newTitle.trim(),
+      activity: newActivity.trim(),
+      type: newType,
+      ...(siteId !== undefined ? { siteId } : {}),
+    });
   }
 
   // Site/project filter options come from the loaded rows themselves, so
@@ -233,6 +265,7 @@ export default function RiskAssessmentsPage() {
                     <td className="px-3 py-3">
                       <RiskBandChip
                         score={a.maxResidualScore > 0 ? a.maxResidualScore : null}
+                        band={a.maxResidualBand}
                         matrix={a.matrix}
                       />
                     </td>
@@ -261,6 +294,82 @@ export default function RiskAssessmentsPage() {
           </div>
         </div>
       )}
+
+      {/* T-5: the create dialog — title + context first, row on submit. */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('create.title')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>{t('create.titleLabel')}</Label>
+              <Input
+                autoFocus
+                value={newTitle}
+                placeholder={t('create.titlePlaceholder')}
+                onChange={(e) => setNewTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitCreate();
+                  }
+                }}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>{t('create.typeLabel')}</Label>
+              <Select
+                value={newType}
+                onValueChange={(v) => setNewType(v === 'dynamic' ? 'dynamic' : 'standing')}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standing">{t('type.standing')}</SelectItem>
+                  <SelectItem value="dynamic">{t('type.dynamic')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {newType === 'standing'
+                  ? t('create.typeStandingHint')
+                  : t('create.typeDynamicHint')}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <Label>{t('site.label')}</Label>
+              <SiteSelector
+                multiple={false}
+                value={newSiteIds}
+                onChange={setNewSiteIds}
+                placeholder={t('site.none')}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>{t('create.activityLabel')}</Label>
+              <Textarea
+                rows={2}
+                value={newActivity}
+                placeholder={t('create.activityPlaceholder')}
+                onChange={(e) => setNewActivity(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
+              {t('create.cancel')}
+            </Button>
+            <Button
+              type="button"
+              disabled={newTitle.trim().length === 0 || create.isPending}
+              onClick={submitCreate}
+            >
+              {create.isPending ? t('create.submitting') : t('create.submit')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -245,8 +245,20 @@ export const stubHeadsUpsDeps: HeadsUpsRouterDeps = {
 
 /** Test-only risk-assessments deps — the module is enabled so the full
  * surface is exercisable; brand gating is tested by building the router
- * with `enabled: false` explicitly. */
-export const stubRiskAssessmentsDeps: RiskAssessmentsRouterDeps = { enabled: true };
+ * with `enabled: false` explicitly. Shares the `__authStubMailbox` so
+ * tests can read the distribution emails that would have been sent. */
+export const stubRiskAssessmentsDeps: RiskAssessmentsRouterDeps = {
+  enabled: true,
+  sendEmail: async (mail): Promise<DeliveryResult> => {
+    __authStubMailbox.push({
+      to: mail.to,
+      templateKey: mail.templateKey,
+      variables: mail.variables,
+    });
+    return { delivery: 'console' };
+  },
+  appUrl: 'http://localhost:3000',
+};
 
 /** Test-only coshh deps — enabled, so the full surface is exercisable;
  * brand gating is tested by building the router with `enabled: false`. */

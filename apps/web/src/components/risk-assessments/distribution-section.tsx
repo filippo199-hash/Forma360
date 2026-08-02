@@ -7,6 +7,8 @@ import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 export interface AckEntry {
   userId: string;
@@ -14,12 +16,22 @@ export interface AckEntry {
   userEmail: string | null;
   distributedAt: Date;
   acknowledgedAt: Date | null;
+  acknowledgedVersion: number | null;
+  versionNumber: number;
+  dueAt: Date | null;
+}
+
+/** An entry is pending when never acknowledged or acknowledged an older version. */
+function isPending(a: AckEntry): boolean {
+  return a.acknowledgedAt === null || (a.acknowledgedVersion ?? 0) < a.versionNumber;
 }
 
 /**
  * Distribution & acknowledgement — the record that the people doing the
- * work have actually read the assessment. Card-less: the detail page
- * hosts it inside the tabbed Review / Distribution card.
+ * work have actually read the assessment. Version-aware (feedback A-1):
+ * an acknowledgement of an older version shows as "re-acknowledgement
+ * pending", never silently green. Card-less: the detail page hosts it
+ * inside the tabbed Review / Distribution card.
  */
 export function DistributionSection({
   assessmentId,
@@ -34,21 +46,23 @@ export function DistributionSection({
   isActive: boolean;
   acknowledgements: AckEntry[];
   canManage: boolean;
-  onChanged: () => void;
-  /** Publishes (when needed) and jumps to a pre-filled Heads Up compose. */
+  /** Jumps to a pre-filled Heads Up compose (active assessments only — T-4). */
   onShareHeadsUp?: () => void;
   sharing?: boolean;
+  onChanged: () => void;
 }) {
   const t = useTranslations('riskAssessments');
   const locale = useLocale();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [dueDate, setDueDate] = useState('');
 
   const usersQuery = trpc.users.list.useQuery({ limit: 200 }, { enabled: dialogOpen });
   const distribute = trpc.riskAssessments.distribute.useMutation({
     onSuccess: () => {
       setDialogOpen(false);
       setSelected(new Set());
+      toast.success(t('distribution.sentToast'));
       onChanged();
     },
     onError: () => toast.error(t('saveError')),
@@ -65,6 +79,8 @@ export function DistributionSection({
       return next;
     });
   }
+
+  const now = Date.now();
 
   return (
     <div className="space-y-2">
@@ -83,38 +99,71 @@ export function DistributionSection({
           <p className="text-sm text-muted-foreground">{t('distribution.empty')}</p>
         ) : (
           <ul className="divide-y">
-            {acknowledgements.map((a) => (
-              <li key={a.userId} className="flex flex-wrap items-center gap-2 py-2 text-sm">
-                <span className="min-w-0 flex-1 truncate">
-                  {a.userName ?? a.userEmail ?? a.userId}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(a.distributedAt).toLocaleDateString(locale)}
-                </span>
-                {a.acknowledgedAt !== null ? (
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
-                    {t('distribution.acknowledged')}
+            {acknowledgements.map((a) => {
+              const pending = isPending(a);
+              const reack = pending && a.acknowledgedAt !== null;
+              const overdue = pending && a.dueAt !== null && new Date(a.dueAt).getTime() < now;
+              return (
+                <li key={a.userId} className="flex flex-wrap items-center gap-2 py-2 text-sm">
+                  <span className="min-w-0 flex-1 truncate">
+                    {a.userName ?? a.userEmail ?? a.userId}
                   </span>
-                ) : (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                    {t('distribution.pending')}
-                  </span>
-                )}
-              </li>
-            ))}
+                  {a.dueAt !== null && pending ? (
+                    <span className="text-xs text-muted-foreground">
+                      {t('distribution.dueBy', {
+                        date: new Date(a.dueAt).toLocaleDateString(locale),
+                      })}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(a.distributedAt).toLocaleDateString(locale)}
+                    </span>
+                  )}
+                  {!pending ? (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                      {t('distribution.acknowledgedVersion', { version: a.versionNumber })}
+                    </span>
+                  ) : overdue ? (
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                      {t('distribution.overdue')}
+                    </span>
+                  ) : reack ? (
+                    <span
+                      className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                      title={t('distribution.reackTitle', {
+                        version: a.acknowledgedVersion ?? 1,
+                      })}
+                    >
+                      {t('distribution.reackPending')}
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                      {t('distribution.pending')}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
         {canManage && onShareHeadsUp !== undefined ? (
-          <div className="flex justify-end pt-1">
+          <div className="flex flex-col items-end gap-1 pt-1">
             <Button
               type="button"
               size="sm"
               variant="outline"
-              disabled={sharing}
+              disabled={sharing || !isActive}
               onClick={onShareHeadsUp}
             >
               {sharing ? t('distribution.sharingHeadsUp') : t('distribution.shareHeadsUp')}
             </Button>
+            {!isActive ? (
+              <p className="text-xs text-muted-foreground">
+                {t('distribution.shareNeedsPublish')}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">{t('distribution.shareRecordsAcks')}</p>
+            )}
           </div>
         ) : null}
       </div>
@@ -140,7 +189,7 @@ export function DistributionSection({
             />
             {t('distribution.selectAll')}
           </label>
-          <div className="max-h-72 space-y-1 overflow-y-auto">
+          <div className="max-h-64 space-y-1 overflow-y-auto">
             {(usersQuery.data?.users ?? []).map((u) => (
               <label
                 key={u.id}
@@ -152,11 +201,27 @@ export function DistributionSection({
               </label>
             ))}
           </div>
+          <div className="space-y-1">
+            <Label className="text-xs">{t('distribution.dueDateLabel')}</Label>
+            <Input
+              type="date"
+              className="w-48"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">{t('distribution.dueDateHint')}</p>
+          </div>
           <DialogFooter>
             <Button
               type="button"
               disabled={selected.size === 0 || distribute.isPending}
-              onClick={() => distribute.mutate({ assessmentId, userIds: [...selected] })}
+              onClick={() =>
+                distribute.mutate({
+                  assessmentId,
+                  userIds: [...selected],
+                  dueAt: dueDate === '' ? null : new Date(`${dueDate}T23:59:59.000Z`),
+                })
+              }
             >
               {distribute.isPending ? t('distribution.sending') : t('distribution.submit')}
             </Button>

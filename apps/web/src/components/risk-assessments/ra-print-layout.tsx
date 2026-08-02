@@ -7,6 +7,7 @@
  * not a localised screen.
  */
 import type { RiskAssessmentRenderSnapshot } from '@forma360/render';
+import { bandFor, type RiskMatrixConfig } from '@forma360/shared/risk-matrix';
 
 const TIER_LABELS: Record<string, string> = {
   eliminate: 'Eliminate',
@@ -27,24 +28,19 @@ const GROUP_LABELS: Record<string, string> = {
   members_of_public: 'Members of the public',
 };
 
-function bandOf(
-  score: number,
-  matrix: { lowMax: number; mediumMax: number; highMax: number },
-): string {
-  if (score <= matrix.lowMax) return 'Low';
-  if (score <= matrix.mediumMax) return 'Medium';
-  if (score <= matrix.highMax) return 'High';
-  return 'Critical';
-}
+const BAND_LABELS: Record<string, string> = {
+  none: '—',
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  critical: 'Critical',
+};
 
-function riskCell(
-  l: number | null,
-  s: number | null,
-  matrix: { lowMax: number; mediumMax: number; highMax: number },
-): string {
+function riskCell(l: number | null, s: number | null, matrix: RiskMatrixConfig): string {
   if (l === null || s === null) return '—';
-  const score = l * s;
-  return `${score} (${bandOf(score, matrix)})`;
+  // Shared banding — severity floors included, matching the app exactly.
+  const band = bandFor(l, s, matrix);
+  return `${l * s} (${BAND_LABELS[band] ?? band})`;
 }
 
 export function RaPrintLayout({ snapshot }: { snapshot: RiskAssessmentRenderSnapshot }) {
@@ -52,6 +48,7 @@ export function RaPrintLayout({ snapshot }: { snapshot: RiskAssessmentRenderSnap
   const metaParts = [
     assessment.type === 'dynamic' ? 'Dynamic / point-of-work' : 'Standing assessment',
     assessment.status.charAt(0).toUpperCase() + assessment.status.slice(1),
+    ...(assessment.currentVersion > 0 ? [`Version ${assessment.currentVersion}`] : []),
     ...(assessment.siteName !== null ? [assessment.siteName] : []),
     ...(assessment.createdByName !== null
       ? [`Created by ${assessment.createdByName} on ${assessment.createdAt.slice(0, 10)}`]
@@ -120,7 +117,14 @@ export function RaPrintLayout({ snapshot }: { snapshot: RiskAssessmentRenderSnap
                     </p>
                   ))}
                 </td>
-                <td>{riskCell(h.residualLikelihood, h.residualSeverity, assessment.matrix)}</td>
+                <td>
+                  {riskCell(h.residualLikelihood, h.residualSeverity, assessment.matrix)}
+                  {h.residualJustification.length > 0 ? (
+                    <p className="ra-cell-p" style={{ fontStyle: 'italic' }}>
+                      {h.residualJustification}
+                    </p>
+                  ) : null}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -129,8 +133,20 @@ export function RaPrintLayout({ snapshot }: { snapshot: RiskAssessmentRenderSnap
         <p style={{ marginTop: '10px' }}>
           The assessor confirms this is a suitable and sufficient assessment of the risks of the
           activity described.
-          {assessment.createdByName !== null ? ` — ${assessment.createdByName}` : ''}
-          {assessment.publishedAt !== null ? `, ${assessment.publishedAt.slice(0, 10)}` : ''}
+          {/* M-2: attribute the sign-off to the actual signer of the
+              current version, falling back to the creator only for
+              never-published drafts. */}
+          {assessment.signedOffByName !== null
+            ? ` — Signed off by ${assessment.signedOffByName}`
+            : assessment.createdByName !== null
+              ? ` — ${assessment.createdByName}`
+              : ''}
+          {assessment.signedOffAt !== null
+            ? ` on ${assessment.signedOffAt.slice(0, 10)}`
+            : assessment.publishedAt !== null
+              ? `, ${assessment.publishedAt.slice(0, 10)}`
+              : ''}
+          {assessment.currentVersion > 0 ? ` (version ${assessment.currentVersion})` : ''}
         </p>
       </div>
     </>

@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { MatrixThresholds } from '../../lib/risk-matrix';
-import { scoreFor } from '../../lib/risk-matrix';
+import { bandFor, bandRank, scoreFor } from '../../lib/risk-matrix';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -35,6 +35,7 @@ export interface HazardWithControls {
   existingControls: string;
   residualLikelihood: number | null;
   residualSeverity: number | null;
+  residualJustification: string;
   controls: HazardControl[];
 }
 
@@ -74,12 +75,14 @@ export function HazardCard({
   const [iS, setIS] = useState(hazard.initialSeverity);
   const [rL, setRL] = useState(hazard.residualLikelihood);
   const [rS, setRS] = useState(hazard.residualSeverity);
+  const [residualNote, setResidualNote] = useState(hazard.residualJustification);
 
   // Last-saved snapshot so blur handlers only fire a mutation on real change.
   const saved = useRef({
     text: hazard.hazard,
     harm: hazard.harmDescription,
     existing: hazard.existingControls,
+    residualNote: hazard.residualJustification,
   });
 
   const [controlDesc, setControlDesc] = useState('');
@@ -140,16 +143,35 @@ export function HazardCard({
   );
   const justificationTarget = ppeControls[0];
 
+  // P-2: residual risk is "risk WITH controls" — it only becomes scorable
+  // once at least one control (structured or free-text) is recorded.
+  const hasAnyControl = hazard.controls.length > 0 || existing.trim().length > 0;
+  const initialScore = scoreFor(iL, iS);
+  const residualScore = scoreFor(rL, rS);
+  const residualAboveInitial =
+    initialScore !== null && residualScore !== null && residualScore > initialScore;
+  const initialBand = bandFor(iL, iS, matrix);
+  const residualBand = bandFor(rL, rS, matrix);
+  const hasPlannedControl = hazard.controls.some((c) => c.status === 'planned');
+  // P-2: a residual that stays high/critical needs a tolerability note
+  // unless a planned control (the further action) exists.
+  const needsResidualNote =
+    bandRank(residualBand) >= bandRank('high') &&
+    !hasPlannedControl &&
+    residualNote.trim().length === 0;
+  const showResidualNote =
+    bandRank(residualBand) >= bandRank('high') || residualNote.trim().length > 0;
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-2">
         <CardTitle className="text-base">{text}</CardTitle>
         <div className="flex items-center gap-2">
-          <RiskBandChip score={scoreFor(iL, iS)} matrix={matrix} />
+          <RiskBandChip score={initialScore} band={initialBand} matrix={matrix} />
           <span className="text-xs text-muted-foreground" aria-hidden="true">
             →
           </span>
-          <RiskBandChip score={scoreFor(rL, rS)} matrix={matrix} />
+          <RiskBandChip score={residualScore} band={residualBand} matrix={matrix} />
           {canManage && canRemove ? (
             <Button
               type="button"
@@ -293,19 +315,61 @@ export function HazardCard({
             />
             <p className="text-xs text-muted-foreground">{t('matrixHint')}</p>
           </div>
-          <MatrixPicker
-            label={t('hazards.residualRisk')}
-            likelihood={rL}
-            severity={rS}
-            matrix={matrix}
-            disabled={!canManage}
-            onPick={(l, s) => {
-              setRL(l);
-              setRS(s);
-              update.mutate({ hazardId: hazard.id, residualLikelihood: l, residualSeverity: s });
-            }}
-          />
+          <div className="space-y-1">
+            <MatrixPicker
+              label={t('hazards.residualRisk')}
+              likelihood={rL}
+              severity={rS}
+              matrix={matrix}
+              disabled={!canManage || !hasAnyControl || initialScore === null}
+              disabledHint={
+                canManage
+                  ? !hasAnyControl
+                    ? t('matrix.residualNeedsControls')
+                    : initialScore === null
+                      ? t('matrix.residualNeedsInitial')
+                      : undefined
+                  : undefined
+              }
+              maxScore={initialScore}
+              onPick={(l, s) => {
+                setRL(l);
+                setRS(s);
+                update.mutate({ hazardId: hazard.id, residualLikelihood: l, residualSeverity: s });
+              }}
+            />
+            {residualAboveInitial ? (
+              <p className="text-xs font-medium text-red-600 dark:text-red-400" role="alert">
+                {t('matrix.residualAboveInitialWarning')}
+              </p>
+            ) : null}
+          </div>
         </div>
+
+        {/* P-2: tolerability note for residuals that stay high/critical. */}
+        {showResidualNote ? (
+          <div className="space-y-1 rounded-md border border-orange-200 p-3 dark:border-orange-900">
+            {needsResidualNote ? (
+              <p className="text-xs font-medium text-orange-600 dark:text-orange-400">
+                {t('matrix.residualNoteHint')}
+              </p>
+            ) : null}
+            <Label className="text-xs">{t('matrix.residualNoteLabel')}</Label>
+            <Textarea
+              rows={2}
+              value={residualNote}
+              disabled={!canManage}
+              placeholder={t('matrix.residualNotePlaceholder')}
+              onChange={(e) => setResidualNote(e.target.value)}
+              onBlur={() => {
+                if (residualNote !== saved.current.residualNote) {
+                  saved.current.residualNote = residualNote;
+                  update.mutate({ hazardId: hazard.id, residualJustification: residualNote });
+                }
+              }}
+            />
+          </div>
+        ) : null}
 
         <div className="space-y-2 rounded-md border p-3">
           <div className="flex items-center justify-between">

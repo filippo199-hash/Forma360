@@ -470,7 +470,16 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   `if (brand === 'x')` in core logic is banned.
 - **Brand-only modules**: FreeHS ships `riskAssessments` (module B1 —
   HSE five-step editor at `packages/api/src/routers/riskAssessments.ts` +
-  `apps/web/app/[locale]/risk-assessments`) and `coshh` (module B2 —
+  `apps/web/app/[locale]/risk-assessments`; governance layer from
+  practitioner feedback round 2: shared banding + severity floors in
+  `packages/shared/src/risk-matrix.ts`, immutable publish versions with
+  first-class assessor sign-off (`risk_assessment_versions`, migration
+  0058), version-aware acknowledgements + `forma360-ra-ack-reminder`
+  daily chase worker, per-tenant matrix editor at
+  `[locale]/settings/risk-matrix`, PDF download route
+  `api/exports/risk-assessment-pdf`; edge-case IDs RA-E01..E30 in
+  `riskAssessments.test.ts`, RA-J01/J02 in `ra-ack-reminder.test.ts`,
+  RM-E01..E04 in `risk-matrix.test.ts`) and `coshh` (module B2 —
   hazardous-substance inventory at `packages/api/src/routers/coshh.ts` +
   `apps/web/app/[locale]/coshh`; domain helpers in
   `packages/shared/src/coshh.ts`, AI SDS import at
@@ -495,6 +504,7 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0008 — Rendered output strategy](./docs/adr/0008-rendered-output-strategy.md)
 - [0009 — Template content schema](./docs/adr/0009-template-content-schema.md)
 - [0010 — Multi-brand, single codebase](./docs/adr/0010-multi-brand-single-codebase.md)
+- [0011 — Risk-assessment versioning, sign-off and residual-risk coherence](./docs/adr/0011-risk-assessment-versioning-and-sign-off.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase

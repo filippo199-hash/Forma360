@@ -22,7 +22,12 @@
  *   - `risk_assessment_reviews` — append-only review log with the trigger
  *     that prompted it.
  *   - `risk_assessment_acknowledgements` — distribution + acknowledgement
- *     records, one row per (assessment, user).
+ *     records, one row per (assessment, user), version-aware: publish
+ *     re-opens them against the new version.
+ *   - `risk_assessment_versions` — immutable content snapshot per publish
+ *     with the assessor sign-off as first-class fields.
+ *   - `tenant_risk_matrix_settings` — the tenant's matrix (thresholds +
+ *     severity floors) applied to new assessments as a per-row snapshot.
  */
 import {
   boolean,
@@ -33,9 +38,12 @@ import {
   index,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import type { RiskBandLevel, RiskMatrixConfig } from '@forma360/shared/risk-matrix';
+import { DEFAULT_RISK_MATRIX } from '@forma360/shared/risk-matrix';
 import { sites } from './sites';
 import { tenants } from './tenants';
 
@@ -85,15 +93,13 @@ export const AFFECTED_GROUP_PRESETS = [
   'members_of_public',
 ] as const;
 
-/** Matrix band thresholds over likelihood × severity (1–5 each). */
-export interface RiskMatrixConfig {
-  /** Score ≤ lowMax → low; ≤ mediumMax → medium; ≤ highMax → high; else critical. */
-  lowMax: number;
-  mediumMax: number;
-  highMax: number;
-}
-
-export const DEFAULT_RISK_MATRIX: RiskMatrixConfig = { lowMax: 4, mediumMax: 9, highMax: 15 };
+/**
+ * Matrix band thresholds + optional severity floors. Canonical definition
+ * lives in `@forma360/shared/risk-matrix`; re-exported here so existing
+ * schema-side imports keep working.
+ */
+export type { RiskMatrixConfig } from '@forma360/shared/risk-matrix';
+export { DEFAULT_RISK_MATRIX } from '@forma360/shared/risk-matrix';
 
 export const riskAssessments = pgTable(
   'risk_assessments',
@@ -124,6 +130,11 @@ export const riskAssessments = pgTable(
     /** Person-specific variant support. */
     personSpecificFor: text('person_specific_for').$type<PersonSpecificKind>(),
     parentAssessmentId: varchar('parent_assessment_id', { length: 26 }),
+    /**
+     * Parent's state at fork time — a variant "drifts" once the parent's
+     * content changes after this timestamp (feedback A-4).
+     */
+    forkedFromParentAt: timestamp('forked_from_parent_at', { withTimezone: true, mode: 'date' }),
 
     /** Matrix thresholds snapshot — configurable without rescoring history. */
     matrix: jsonb('matrix')
@@ -137,7 +148,14 @@ export const riskAssessments = pgTable(
     lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true, mode: 'date' }),
     lastReviewedBy: text('last_reviewed_by'),
 
+    /** Time the CURRENT version went live (re-stamped on every publish). */
     publishedAt: timestamp('published_at', { withTimezone: true, mode: 'date' }),
+    /**
+     * Version counter — 0 until first publish; each publish snapshots the
+     * content into `risk_assessment_versions` and increments this
+     * (feedback A-1 / M-3).
+     */
+    currentVersion: integer('current_version').notNull().default(0),
     archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'date' }),
 
     createdBy: text('created_by').notNull(),
@@ -145,6 +163,14 @@ export const riskAssessments = pgTable(
       .notNull()
       .default(sql`now()`),
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+    /**
+     * Bumped only by CONTENT mutations (header text, hazards, controls) —
+     * not by review scheduling or distribution. `contentUpdatedAt` newer
+     * than the current version row ⇒ "unpublished changes" banner.
+     */
+    contentUpdatedAt: timestamp('content_updated_at', { withTimezone: true, mode: 'date' })
       .notNull()
       .default(sql`now()`),
   },
@@ -185,6 +211,12 @@ export const riskAssessmentHazards = pgTable(
     existingControls: text('existing_controls').notNull().default(''),
     residualLikelihood: integer('residual_likelihood'),
     residualSeverity: integer('residual_severity'),
+    /**
+     * Required at publish when the residual band stays high/critical and
+     * no planned control exists — "why is this tolerable / what further
+     * action is planned" (feedback P-2).
+     */
+    residualJustification: text('residual_justification').notNull().default(''),
 
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
       .notNull()
@@ -274,7 +306,22 @@ export const riskAssessmentAcknowledgements = pgTable(
     distributedAt: timestamp('distributed_at', { withTimezone: true, mode: 'date' })
       .notNull()
       .default(sql`now()`),
+    /**
+     * The version this person is being asked to acknowledge. Re-stamped
+     * to the new version on every publish so acknowledgements re-open
+     * (feedback A-1 / M-3).
+     */
+    versionNumber: integer('version_number').notNull().default(1),
     acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true, mode: 'date' }),
+    /**
+     * The version that was actually acknowledged. Pending :=
+     * acknowledgedAt IS NULL OR acknowledgedVersion < versionNumber.
+     */
+    acknowledgedVersion: integer('acknowledged_version'),
+    /** Acknowledgement deadline (feedback A-3). */
+    dueAt: timestamp('due_at', { withTimezone: true, mode: 'date' }),
+    /** Reminder dedupe stamp — see the ra-ack-reminder worker. */
+    lastReminderAt: timestamp('last_reminder_at', { withTimezone: true, mode: 'date' }),
     /** True when the row was re-distributed after a review/update. */
     redistributed: boolean('redistributed').notNull().default(false),
   },
@@ -285,6 +332,111 @@ export const riskAssessmentAcknowledgements = pgTable(
 );
 
 export type RiskAssessmentAcknowledgement = typeof riskAssessmentAcknowledgements.$inferSelect;
+
+/** One control inside a frozen version snapshot. */
+export interface RaVersionControl {
+  description: string;
+  tier: ControlTier;
+  status: ControlStatus;
+  ppeJustification: string | null;
+}
+
+/** One hazard inside a frozen version snapshot. */
+export interface RaVersionHazard {
+  hazard: string;
+  harmDescription: string;
+  affectedGroups: ReadonlyArray<string>;
+  initialLikelihood: number | null;
+  initialSeverity: number | null;
+  existingControls: string;
+  residualLikelihood: number | null;
+  residualSeverity: number | null;
+  residualJustification: string;
+  controls: RaVersionControl[];
+}
+
+/**
+ * The full content frozen at publish time — everything needed to
+ * reproduce "the assessment as in force on {date}" without touching the
+ * mutable working rows.
+ */
+export interface RaVersionContent {
+  title: string;
+  activity: string;
+  type: RiskAssessmentType;
+  siteId: string | null;
+  siteName: string | null;
+  locationText: string | null;
+  matrix: RiskMatrixConfig;
+  hazards: RaVersionHazard[];
+}
+
+/**
+ * Immutable published versions (feedback A-1 / M-2 / M-3). One row per
+ * publish; `content` is never UPDATEd after insert. Acknowledgements
+ * reference `versionNumber`, so "read & understood" is always tied to
+ * the exact content that was live — and the assessor sign-off is a
+ * first-class field, not an inference from `createdBy`.
+ */
+export const riskAssessmentVersions = pgTable(
+  'risk_assessment_versions',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    assessmentId: varchar('assessment_id', { length: 26 })
+      .notNull()
+      .references(() => riskAssessments.id, { onDelete: 'cascade' }),
+
+    versionNumber: integer('version_number').notNull(),
+    content: jsonb('content').notNull().$type<RaVersionContent>(),
+
+    /** The assessor who actively confirmed the sign-off statement (M-2). */
+    signedOffBy: text('signed_off_by').notNull(),
+    /** Name snapshot so the printed record survives user renames. */
+    signedOffByName: text('signed_off_by_name'),
+    signedOffAt: timestamp('signed_off_at', { withTimezone: true, mode: 'date' }).notNull(),
+
+    /** How many CAPA actions this publish created (audit convenience). */
+    actionsCreated: integer('actions_created').notNull().default(0),
+
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    uniqueIndex('ra_versions_assessment_version_idx').on(table.assessmentId, table.versionNumber),
+    index('ra_versions_tenant_idx').on(table.tenantId),
+  ],
+);
+
+export type RiskAssessmentVersion = typeof riskAssessmentVersions.$inferSelect;
+
+/**
+ * Per-tenant matrix configuration (feedback P-4). Applied as a snapshot
+ * to assessments at creation (and optionally pushed to open drafts);
+ * published history keeps its own snapshot so band labels never shift
+ * under an audit.
+ */
+export const tenantRiskMatrixSettings = pgTable('tenant_risk_matrix_settings', {
+  tenantId: varchar('tenant_id', { length: 26 })
+    .primaryKey()
+    .references(() => tenants.id, { onDelete: 'restrict' }),
+  lowMax: integer('low_max').notNull().default(DEFAULT_RISK_MATRIX.lowMax),
+  mediumMax: integer('medium_max').notNull().default(DEFAULT_RISK_MATRIX.mediumMax),
+  highMax: integer('high_max').notNull().default(DEFAULT_RISK_MATRIX.highMax),
+  /** Severity value ('1'…'5') → minimum band, e.g. `{"5":"high"}`. */
+  severityFloors: jsonb('severity_floors')
+    .notNull()
+    .$type<Record<string, RiskBandLevel>>()
+    .default(sql`'{}'::jsonb`),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' })
+    .notNull()
+    .default(sql`now()`),
+});
+
+export type TenantRiskMatrixSettings = typeof tenantRiskMatrixSettings.$inferSelect;
 
 export const RA_EVENT_KINDS = [
   'created',

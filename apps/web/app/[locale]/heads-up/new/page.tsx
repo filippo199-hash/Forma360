@@ -161,6 +161,10 @@ export default function NewHeadsUpPage() {
     if (qDescription !== null && qDescription.length > 0) {
       setDescription((cur) => (cur === '' ? qDescription : cur));
     }
+    const raId = sp.get('raId');
+    if (raId !== null && raId.length === 26) {
+      linkedRiskAssessmentRef.current = raId;
+    }
     const attKey = sp.get('attKey');
     const attName = sp.get('attName');
     const attSize = Number.parseInt(sp.get('attSize') ?? '', 10);
@@ -217,10 +221,27 @@ export default function NewHeadsUpPage() {
   // A scheduled publishAt is left as a draft for the schedule job to publish.
   const publishAfterCreateRef = useRef(false);
   const createdIdRef = useRef<string | null>(null);
+  // "Share via Heads Up" from a risk assessment (?raId=): once the heads-up
+  // publishes and its recipients are materialised, mirror them into the
+  // assessment's acknowledgement tracker so the share is recorded, not a
+  // silent gap (RA feedback A-2).
+  const linkedRiskAssessmentRef = useRef<string | null>(null);
+  const syncRaAcks = trpc.riskAssessments.distributeFromHeadsUp.useMutation();
 
   const publishMutation = trpc.headsUps.publish.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(t('publishedToast'));
+      if (linkedRiskAssessmentRef.current !== null && createdIdRef.current !== null) {
+        try {
+          await syncRaAcks.mutateAsync({
+            assessmentId: linkedRiskAssessmentRef.current,
+            headsUpId: createdIdRef.current,
+          });
+        } catch {
+          // Best-effort: the heads-up went out; the RA page still offers
+          // "Distribute" to record acknowledgements manually.
+        }
+      }
       if (createdIdRef.current !== null) router.push(`/${locale}/heads-up/${createdIdRef.current}`);
     },
     onError: (err) => {
