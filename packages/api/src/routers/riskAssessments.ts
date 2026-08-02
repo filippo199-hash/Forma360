@@ -408,9 +408,27 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           ctx.tenantId,
           assessment.siteId !== null ? [assessment.siteId] : [],
         );
+        // Variant drift (C-16): a person-specific variant is a fork — when
+        // the parent changed more recently than this variant, the UI warns
+        // that the two may have diverged.
+        let parentUpdatedAt: Date | null = null;
+        if (assessment.parentAssessmentId !== null) {
+          const parentRows = await ctx.db
+            .select({ updatedAt: riskAssessments.updatedAt })
+            .from(riskAssessments)
+            .where(
+              and(
+                eq(riskAssessments.id, assessment.parentAssessmentId),
+                eq(riskAssessments.tenantId, ctx.tenantId),
+              ),
+            )
+            .limit(1);
+          parentUpdatedAt = parentRows[0]?.updatedAt ?? null;
+        }
         return {
           assessment,
           siteName: assessment.siteId !== null ? (siteNames.get(assessment.siteId) ?? null) : null,
+          parentUpdatedAt,
           events,
           createdByName: creatorRows[0]?.name ?? null,
           hazards: hazards.map((h) => ({

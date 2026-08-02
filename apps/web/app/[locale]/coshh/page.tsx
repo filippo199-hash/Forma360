@@ -9,7 +9,7 @@
  * mirrors the observations module: filter row, desktop table, mobile
  * cards, one predictable primary target per row.
  */
-import { Fan, Plus } from 'lucide-react';
+import { Fan, Plus, Zap } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -134,6 +134,17 @@ export default function CoshhInventoryPage() {
             className="hidden sm:inline-flex"
           >
             {t('exportCsv')}
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            title={t('powButton')}
+            className="w-10 px-0 sm:w-auto sm:px-4"
+          >
+            <Link href={`/${locale}/coshh/point-of-work`}>
+              <Zap className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('powButton')}</span>
+            </Link>
           </Button>
           <Button
             asChild

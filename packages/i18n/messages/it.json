@@ -3853,7 +3853,8 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "La valutazione principale è cambiata dopo l’ultimo aggiornamento di questa variante: verifica eventuali divergenze."
     },
     "stats": {
       "active": "Active",
@@ -4310,7 +4311,8 @@
         "edit": "Modifica",
         "addDetail": "Aggiungi dettaglio APVR (tipo / FPA / tenuta)",
         "save": "Salva"
-      }
+      },
+      "staleBanner": "Questa valutazione è cambiata dall’ultima pubblicazione: ripubblicala e ricondividila così la squadra vede la versione corrente."
     },
     "lev": {
       "title": "Registro aspirazioni (LEV)",
@@ -4385,6 +4387,40 @@
     "share": {
       "button": "Condividi via Heads Up",
       "description": "Leggere la scheda della sostanza e la scheda di sicurezza allegata:"
+    },
+    "powButton": "Sul posto",
+    "kinds": {
+      "standing": "Permanente",
+      "point_of_work": "Sul posto"
+    },
+    "staleChip": "Modificata dopo la pubblicazione",
+    "pow": {
+      "title": "Verifica sul posto",
+      "pickHint": "Scegli il prodotto che stai per usare.",
+      "searchPlaceholder": "Cerca sostanze…",
+      "noResults": "Nessuna sostanza trovata.",
+      "changeSubstance": "Cambia",
+      "sdsLink": "Vedi scheda di sicurezza",
+      "noSds": "Nessuna scheda di sicurezza registrata: allegala dalla scheda della sostanza.",
+      "cmrBlocked": "Sostanza cancerogena/mutagena e sostituzione non ancora valutata: registra prima la decisione di sostituzione.",
+      "cmrBlockedLink": "Apri sostanza",
+      "taskLabel": "Attività di oggi",
+      "taskPlaceholder": "es. Taglio di 100 blocchi, locale B, acqua non disponibile",
+      "routesLabel": "Vie di esposizione",
+      "controlsTitle": "Misure presenti oggi",
+      "controlsCarriedHint": "Riprese dall’ultima valutazione: deseleziona ciò che oggi non è presente.",
+      "controlsEmptyHint": "Nessuna valutazione precedente: aggiungi le misure presenti.",
+      "removeAdded": "Rimuovi",
+      "tierLabel": "Livello di controllo",
+      "addControlPlaceholder": "Aggiungi un’altra misura…",
+      "addButton": "Aggiungi",
+      "justificationLabel": "Solo APVR/DPI: giustificazione richiesta",
+      "publishing": "Pubblicazione…",
+      "signPublishButton": "Firma e pubblica",
+      "doneTitle": "Verifica pubblicata",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Apri valutazione",
+      "newCheckButton": "Nuova verifica"
     }
   }
 }

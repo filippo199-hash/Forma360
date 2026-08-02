@@ -3811,7 +3811,8 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "Ocena nadrzędna zmieniła się od ostatniej aktualizacji tego wariantu — sprawdź rozbieżności."
     },
     "stats": {
       "active": "Active",
@@ -4268,7 +4269,8 @@
         "edit": "Edytuj",
         "addDetail": "Dodaj szczegóły ODO (typ / APF / dopasowanie)",
         "save": "Zapisz"
-      }
+      },
+      "staleBanner": "Ta ocena zmieniła się od ostatniej publikacji — opublikuj i udostępnij ponownie, aby zespół widział aktualną wersję."
     },
     "lev": {
       "title": "Rejestr wentylacji (LEV)",
@@ -4343,6 +4345,40 @@
     "share": {
       "button": "Udostępnij przez Heads Up",
       "description": "Proszę zapoznać się z kartą substancji i załączoną kartą charakterystyki:"
+    },
+    "powButton": "Na stanowisku",
+    "kinds": {
+      "standing": "Stała",
+      "point_of_work": "Na stanowisku"
+    },
+    "staleChip": "Zmieniona po publikacji",
+    "pow": {
+      "title": "Kontrola na stanowisku",
+      "pickHint": "Wybierz produkt, którego zaraz użyjesz.",
+      "searchPlaceholder": "Szukaj substancji…",
+      "noResults": "Nie znaleziono substancji.",
+      "changeSubstance": "Zmień",
+      "sdsLink": "Zobacz kartę charakterystyki",
+      "noSds": "Brak karty charakterystyki — załącz ją z karty substancji.",
+      "cmrBlocked": "Substancja rakotwórcza/mutagenna, a substytucja nie została jeszcze rozważona — najpierw zapisz decyzję o substytucji.",
+      "cmrBlockedLink": "Otwórz substancję",
+      "taskLabel": "Dzisiejsze zadanie",
+      "taskPlaceholder": "np. Cięcie 100 bloczków, pomieszczenie B, brak wody",
+      "routesLabel": "Drogi narażenia",
+      "controlsTitle": "Środki obecne dzisiaj",
+      "controlsCarriedHint": "Przeniesione z ostatniej oceny — odznacz to, czego dziś nie ma.",
+      "controlsEmptyHint": "Brak wcześniejszej oceny — dodaj obecne środki.",
+      "removeAdded": "Usuń",
+      "tierLabel": "Poziom środka",
+      "addControlPlaceholder": "Dodaj kolejny środek…",
+      "addButton": "Dodaj",
+      "justificationLabel": "Tylko ODO/ŚOI — wymagane uzasadnienie",
+      "publishing": "Publikowanie…",
+      "signPublishButton": "Podpisz i opublikuj",
+      "doneTitle": "Kontrola opublikowana",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Otwórz ocenę",
+      "newCheckButton": "Nowa kontrola"
     }
   }
 }

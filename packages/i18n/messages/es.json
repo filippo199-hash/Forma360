@@ -3818,7 +3818,8 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "La evaluación principal ha cambiado desde la última actualización de esta variante; revísela por posibles divergencias."
     },
     "stats": {
       "active": "Active",
@@ -4275,7 +4276,8 @@
         "edit": "Editar",
         "addDetail": "Añadir detalle de EPR (tipo / FPA / ajuste facial)",
         "save": "Guardar"
-      }
+      },
+      "staleBanner": "Esta evaluación ha cambiado desde la última publicación; vuelva a publicarla y compartirla para que el equipo vea la versión vigente."
     },
     "lev": {
       "title": "Registro de extracción (LEV)",
@@ -4350,6 +4352,40 @@
     "share": {
       "button": "Compartir por Heads Up",
       "description": "Lea la ficha de la sustancia y la ficha de datos de seguridad adjunta:"
+    },
+    "powButton": "En el puesto",
+    "kinds": {
+      "standing": "Permanente",
+      "point_of_work": "En el puesto"
+    },
+    "staleChip": "Modificada tras publicar",
+    "pow": {
+      "title": "Comprobación en el puesto",
+      "pickHint": "Elija el producto que va a usar.",
+      "searchPlaceholder": "Buscar sustancias…",
+      "noResults": "No se encontraron sustancias.",
+      "changeSubstance": "Cambiar",
+      "sdsLink": "Ver ficha de datos de seguridad",
+      "noSds": "No hay ficha de seguridad registrada; adjúntela desde la ficha de la sustancia.",
+      "cmrBlocked": "Esta sustancia es carcinógena/mutágena y la sustitución aún no se ha valorado; registre primero la decisión de sustitución.",
+      "cmrBlockedLink": "Abrir sustancia",
+      "taskLabel": "Tarea de hoy",
+      "taskPlaceholder": "p. ej. Cortar 100 bloques, sala B, sin agua disponible",
+      "routesLabel": "Vías de exposición",
+      "controlsTitle": "Controles presentes hoy",
+      "controlsCarriedHint": "Tomados de la última evaluación; desmarque lo que hoy no esté.",
+      "controlsEmptyHint": "No hay evaluación previa; añada los controles existentes.",
+      "removeAdded": "Quitar",
+      "tierLabel": "Nivel de control",
+      "addControlPlaceholder": "Añadir otro control…",
+      "addButton": "Añadir",
+      "justificationLabel": "Solo EPR/EPI: se requiere justificación",
+      "publishing": "Publicando…",
+      "signPublishButton": "Firmar y publicar",
+      "doneTitle": "Comprobación publicada",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Abrir evaluación",
+      "newCheckButton": "Nueva comprobación"
     }
   }
 }

@@ -37,6 +37,7 @@
  */
 import {
   actions,
+  COSHH_ASSESSMENT_KINDS,
   COSHH_CONTROL_STATUSES,
   COSHH_CONTROL_TIERS,
   COSHH_EXPOSED_GROUP_PRESETS,
@@ -1033,6 +1034,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         z.object({
           substanceId: z.string().length(26),
           taskDescription: z.string().min(1).max(2000),
+          kind: z.enum(COSHH_ASSESSMENT_KINDS).default('standing'),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -1050,6 +1052,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           substanceId: substance.id,
           referenceNumber,
           taskDescription: input.taskDescription,
+          kind: input.kind,
           assessorUserId: ctx.auth.userId,
           reviewFrequencyMonths: DEFAULT_ASSESSMENT_REVIEW_MONTHS,
           nextReviewAt: addMonths(new Date(), DEFAULT_ASSESSMENT_REVIEW_MONTHS),
@@ -1129,6 +1132,12 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           rpeApf: input.rpeApf ?? null,
           faceFitConfirmedAt: input.faceFitConfirmedAt ?? null,
         });
+        // Content changed — moves updatedAt past lastPublishedAt so the
+        // "changed since publish" prompt fires on active assessments.
+        await ctx.db
+          .update(coshhAssessments)
+          .set({ updatedAt: new Date() })
+          .where(eq(coshhAssessments.id, assessment.id));
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'assessment',
@@ -1178,6 +1187,10 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
               : {}),
           })
           .where(eq(coshhAssessmentControls.id, control.id));
+        await ctx.db
+          .update(coshhAssessments)
+          .set({ updatedAt: new Date() })
+          .where(eq(coshhAssessments.id, control.assessmentId));
         return { ok: true };
       }),
 
@@ -1201,6 +1214,10 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         await ctx.db
           .delete(coshhAssessmentControls)
           .where(eq(coshhAssessmentControls.id, control.id));
+        await ctx.db
+          .update(coshhAssessments)
+          .set({ updatedAt: new Date() })
+          .where(eq(coshhAssessments.id, control.assessmentId));
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'assessment',
@@ -1301,14 +1318,18 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
               .where(eq(coshhAssessmentControls.id, control.id));
             createdActionIds.push(actionId);
           }
+          const now = new Date();
           await tx
             .update(coshhAssessments)
             .set({
               status: 'active',
-              publishedAt: assessment.publishedAt ?? new Date(),
+              publishedAt: assessment.publishedAt ?? now,
               // Assessor sign-off (C-21): every publish stamps who attested.
               publishedBy: ctx.auth.userId,
-              updatedAt: new Date(),
+              // Every publish (incl. republish) — the reference point for
+              // "changed since publish" (C-15).
+              lastPublishedAt: now,
+              updatedAt: now,
             })
             .where(eq(coshhAssessments.id, assessment.id));
         });

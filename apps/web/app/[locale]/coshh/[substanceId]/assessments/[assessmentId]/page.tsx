@@ -160,6 +160,12 @@ export default function CoshhAssessmentPage() {
   const substitutionUnresolved =
     (substance.isCarcinogen || substance.isMutagen) &&
     substance.substitutionStatus === 'not_assessed';
+  // C-15: an active assessment edited after its last publish is stale for
+  // the crew who saw the published version — prompt republish + re-share.
+  const needsRepublish =
+    assessment.status === 'active' &&
+    assessment.lastPublishedAt !== null &&
+    new Date(assessment.updatedAt) > new Date(assessment.lastPublishedAt);
 
   function patch(fields: Record<string, unknown>): void {
     update.mutate({ assessmentId, ...fields } as never);
@@ -240,6 +246,11 @@ export default function CoshhAssessmentPage() {
               {assessment.referenceNumber}
             </span>
             <AssessmentStatusChip status={assessment.status} />
+            {assessment.kind === 'point_of_work' ? (
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                {tCoshh('kinds.point_of_work')}
+              </span>
+            ) : null}
           </h1>
         </div>
         {editable ? (
@@ -269,6 +280,18 @@ export default function CoshhAssessmentPage() {
               {t('substitutionBlockedLink')}
             </Link>
           </p>
+        </div>
+      ) : null}
+
+      {needsRepublish ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <p className="min-w-0 flex-1">{t('staleBanner')}</p>
+          {editable ? (
+            <Button size="sm" variant="outline" onClick={() => setSignOffOpen(true)}>
+              {t('republish')}
+            </Button>
+          ) : null}
         </div>
       ) : null}
 

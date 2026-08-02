@@ -4048,7 +4048,8 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "The parent assessment has changed since this variant was last updated — review it for drift."
     },
     "stats": {
       "active": "Active",
@@ -4505,7 +4506,8 @@
         "edit": "Edit",
         "addDetail": "Add RPE detail (type / APF / face fit)",
         "save": "Save"
-      }
+      },
+      "staleBanner": "This assessment has changed since it was last published — republish and re-share so the crew sees the current version."
     },
     "lev": {
       "title": "LEV register",
@@ -4580,6 +4582,40 @@
     "share": {
       "button": "Share via Heads Up",
       "description": "Please read the substance record and the attached safety data sheet:"
+    },
+    "powButton": "Point of work",
+    "kinds": {
+      "standing": "Standing",
+      "point_of_work": "Point of work"
+    },
+    "staleChip": "Changed since publish",
+    "pow": {
+      "title": "Point-of-work check",
+      "pickHint": "Pick the product you are about to use.",
+      "searchPlaceholder": "Search substances…",
+      "noResults": "No substances found.",
+      "changeSubstance": "Change",
+      "sdsLink": "View safety data sheet",
+      "noSds": "No safety data sheet on file — attach one from the substance record.",
+      "cmrBlocked": "This substance is a carcinogen/mutagen and substitution has not been considered yet — record the substitution decision first.",
+      "cmrBlockedLink": "Open substance",
+      "taskLabel": "Task, today",
+      "taskPlaceholder": "e.g. Cutting 100 blocks, plant room B, no water available",
+      "routesLabel": "Routes of exposure",
+      "controlsTitle": "Controls in place today",
+      "controlsCarriedHint": "Carried from the latest assessment — untick anything not in place today.",
+      "controlsEmptyHint": "No previous assessment to carry from — add the controls in place.",
+      "removeAdded": "Remove",
+      "tierLabel": "Control tier",
+      "addControlPlaceholder": "Add another control…",
+      "addButton": "Add",
+      "justificationLabel": "RPE/PPE-only — justification required",
+      "publishing": "Publishing…",
+      "signPublishButton": "Sign & publish",
+      "doneTitle": "Check published",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Open assessment",
+      "newCheckButton": "New check"
     }
   }
 }

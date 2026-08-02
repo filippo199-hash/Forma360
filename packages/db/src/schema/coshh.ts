@@ -76,6 +76,10 @@ export const COSHH_QUANTITY_UNITS = ['ml', 'l', 'g', 'kg', 'units'] as const;
 export type CoshhQuantityUnit = (typeof COSHH_QUANTITY_UNITS)[number];
 
 export const COSHH_ASSESSMENT_STATUSES = ['draft', 'active', 'archived'] as const;
+
+/** Standing (desk-built) vs point-of-work (at-the-task, mobile) assessments. */
+export const COSHH_ASSESSMENT_KINDS = ['standing', 'point_of_work'] as const;
+export type CoshhAssessmentKind = (typeof COSHH_ASSESSMENT_KINDS)[number];
 export type CoshhAssessmentStatus = (typeof COSHH_ASSESSMENT_STATUSES)[number];
 
 export const EXPOSURE_ROUTES = ['inhalation', 'skin', 'eyes', 'ingestion', 'injection'] as const;
@@ -309,6 +313,8 @@ export const coshhAssessments = pgTable(
     taskDescription: text('task_description').notNull(),
 
     status: text('status').notNull().default('draft').$type<CoshhAssessmentStatus>(),
+    /** Point-of-work assessments come from the mobile at-the-task flow. */
+    kind: text('kind').notNull().default('standing').$type<CoshhAssessmentKind>(),
 
     routesOfExposure: jsonb('routes_of_exposure')
       .notNull()
@@ -342,6 +348,12 @@ export const coshhAssessments = pgTable(
     publishedAt: timestamp('published_at', { withTimezone: true, mode: 'date' }),
     /** Assessor sign-off: who attested "suitable and sufficient" on publish. */
     publishedBy: text('published_by'),
+    /**
+     * Stamped on EVERY publish (publishedAt keeps the first). An active
+     * assessment whose updatedAt is later than this has changed since the
+     * crew last saw it — the UI prompts a republish + re-share (C-15).
+     */
+    lastPublishedAt: timestamp('last_published_at', { withTimezone: true, mode: 'date' }),
     archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'date' }),
 
     createdBy: text('created_by').notNull(),

@@ -3811,7 +3811,8 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "親アセスメントがこのバリアントの最終更新後に変更されています。差異がないか確認してください。"
     },
     "stats": {
       "active": "Active",
@@ -4268,7 +4269,8 @@
         "edit": "編集",
         "addDetail": "呼吸用保護具の詳細を追加（種類 / APF / フィット）",
         "save": "保存"
-      }
+      },
+      "staleBanner": "このアセスメントは前回の公開後に変更されています。再公開して再共有し、現場が最新版を見られるようにしてください。"
     },
     "lev": {
       "title": "局所排気装置台帳（LEV）",
@@ -4343,6 +4345,40 @@
     "share": {
       "button": "Heads Upで共有",
       "description": "物質記録と添付の安全データシートをご確認ください:"
+    },
+    "powButton": "作業現場",
+    "kinds": {
+      "standing": "常設",
+      "point_of_work": "作業現場"
+    },
+    "staleChip": "公開後に変更あり",
+    "pow": {
+      "title": "作業現場チェック",
+      "pickHint": "これから使用する製品を選択してください。",
+      "searchPlaceholder": "物質を検索…",
+      "noResults": "物質が見つかりません。",
+      "changeSubstance": "変更",
+      "sdsLink": "安全データシートを見る",
+      "noSds": "安全データシート未登録 — 物質記録から添付してください。",
+      "cmrBlocked": "この物質は発がん性/変異原性で、代替検討が未実施です。先に代替の判断を記録してください。",
+      "cmrBlockedLink": "物質を開く",
+      "taskLabel": "本日の作業",
+      "taskPlaceholder": "例: ブロック100個の切断、機械室B、水なし",
+      "routesLabel": "ばく露経路",
+      "controlsTitle": "本日実施中の管理策",
+      "controlsCarriedHint": "直近のアセスメントから引き継ぎ。本日ないものはチェックを外してください。",
+      "controlsEmptyHint": "過去のアセスメントがありません。実施中の管理策を追加してください。",
+      "removeAdded": "削除",
+      "tierLabel": "管理レベル",
+      "addControlPlaceholder": "管理策を追加…",
+      "addButton": "追加",
+      "justificationLabel": "呼吸用保護具/PPEのみ — 正当化が必要",
+      "publishing": "公開中…",
+      "signPublishButton": "署名して公開",
+      "doneTitle": "チェックを公開しました",
+      "doneRef": "{ref} — {name}",
+      "openButton": "アセスメントを開く",
+      "newCheckButton": "新しいチェック"
     }
   }
 }

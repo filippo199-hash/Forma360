@@ -3818,7 +3818,8 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "Die übergeordnete Beurteilung wurde seit der letzten Änderung dieser Variante geändert — auf Abweichungen prüfen."
     },
     "stats": {
       "active": "Active",
@@ -4275,7 +4276,8 @@
         "edit": "Bearbeiten",
         "addDetail": "Atemschutz-Details ergänzen (Typ / APF / Dichtsitz)",
         "save": "Speichern"
-      }
+      },
+      "staleBanner": "Diese Beurteilung wurde seit der letzten Veröffentlichung geändert — erneut veröffentlichen und teilen, damit das Team die aktuelle Fassung sieht."
     },
     "lev": {
       "title": "Absauganlagen (LEV)",
@@ -4350,6 +4352,40 @@
     "share": {
       "button": "Über Heads Up teilen",
       "description": "Bitte den Stoffeintrag und das beigefügte Sicherheitsdatenblatt lesen:"
+    },
+    "powButton": "Vor Ort",
+    "kinds": {
+      "standing": "Regulär",
+      "point_of_work": "Vor Ort"
+    },
+    "staleChip": "Seit Veröffentlichung geändert",
+    "pow": {
+      "title": "Vor-Ort-Prüfung",
+      "pickHint": "Produkt auswählen, das gleich verwendet wird.",
+      "searchPlaceholder": "Stoffe suchen…",
+      "noResults": "Keine Stoffe gefunden.",
+      "changeSubstance": "Ändern",
+      "sdsLink": "Sicherheitsdatenblatt ansehen",
+      "noSds": "Kein Sicherheitsdatenblatt hinterlegt — im Stoffeintrag anhängen.",
+      "cmrBlocked": "Dieser Stoff ist karzinogen/mutagen und die Substitution wurde noch nicht geprüft — zuerst die Substitutionsentscheidung erfassen.",
+      "cmrBlockedLink": "Stoff öffnen",
+      "taskLabel": "Heutige Tätigkeit",
+      "taskPlaceholder": "z. B. 100 Steine schneiden, Technikraum B, kein Wasser verfügbar",
+      "routesLabel": "Expositionswege",
+      "controlsTitle": "Heute vorhandene Maßnahmen",
+      "controlsCarriedHint": "Aus der letzten Beurteilung übernommen — abwählen, was heute nicht vorhanden ist.",
+      "controlsEmptyHint": "Keine frühere Beurteilung vorhanden — Maßnahmen hinzufügen.",
+      "removeAdded": "Entfernen",
+      "tierLabel": "Maßnahmenstufe",
+      "addControlPlaceholder": "Weitere Maßnahme hinzufügen…",
+      "addButton": "Hinzufügen",
+      "justificationLabel": "Nur Atemschutz/PSA — Begründung erforderlich",
+      "publishing": "Wird veröffentlicht…",
+      "signPublishButton": "Signieren & veröffentlichen",
+      "doneTitle": "Prüfung veröffentlicht",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Beurteilung öffnen",
+      "newCheckButton": "Neue Prüfung"
     }
   }
 }

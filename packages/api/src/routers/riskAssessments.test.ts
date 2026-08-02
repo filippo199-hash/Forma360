@@ -572,4 +572,28 @@ describe('riskAssessments router', () => {
     // Cross-tenant isolation of the underlying load is covered by RA-E10;
     // prepareHeadsUpAttachment goes through the same loadAssessment guard.
   });
+
+  it('RA-E20: a variant surfaces the parent updatedAt so drift is detectable', async () => {
+    const caller = callerFor(adminId);
+    const { assessmentId } = await createScoredAssessment(caller);
+    const { assessmentId: variantId } = await caller.riskAssessments.createPersonSpecific({
+      assessmentId,
+      kind: 'young_person',
+    });
+
+    const before = await caller.riskAssessments.get({ assessmentId: variantId });
+    expect(before.parentUpdatedAt).not.toBeNull();
+
+    // Change the parent — its updatedAt moves past the variant's.
+    await caller.riskAssessments.update({ assessmentId, title: 'Manual handling v2' });
+    const after = await caller.riskAssessments.get({ assessmentId: variantId });
+    expect(after.parentUpdatedAt).not.toBeNull();
+    expect(
+      after.parentUpdatedAt !== null && after.parentUpdatedAt > after.assessment.updatedAt,
+    ).toBe(true);
+
+    // Non-variants have no parent timestamp.
+    const parent = await caller.riskAssessments.get({ assessmentId });
+    expect(parent.parentUpdatedAt).toBeNull();
+  });
 });

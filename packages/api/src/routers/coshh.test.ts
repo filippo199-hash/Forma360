@@ -697,4 +697,84 @@ describe('coshh router', () => {
     expect(controls[0]?.rpeApf).toBe(20);
     expect(controls[0]?.faceFitConfirmedAt?.toISOString().slice(0, 10)).toBe('2026-03-01');
   });
+
+  it('CO-E28: point-of-work assessments carry their kind through the same guards', async () => {
+    const caller = callerFor(adminId);
+    const { substanceId } = await caller.coshh.substances.create({ name: 'Expanding foam' });
+    const { assessmentId } = await caller.coshh.assessments.create({
+      substanceId,
+      taskDescription: 'Sealing frames, plot 4',
+      kind: 'point_of_work',
+    });
+    await caller.coshh.assessments.update({
+      assessmentId,
+      routesOfExposure: ['inhalation', 'skin'],
+    });
+    await caller.coshh.assessments.addControl({
+      assessmentId,
+      tier: 'engineering',
+      description: 'Ventilate the room while curing',
+    });
+    await caller.coshh.assessments.publish({ assessmentId });
+
+    const detail = await caller.coshh.substances.get({ substanceId });
+    const assessment = detail.assessments.find((a) => a.id === assessmentId);
+    expect(assessment?.kind).toBe('point_of_work');
+    expect(assessment?.status).toBe('active');
+    // Default stays standing for the desktop flow.
+    const { assessmentId: standingId } = await caller.coshh.assessments.create({
+      substanceId,
+      taskDescription: 'Standing assessment',
+    });
+    const detail2 = await caller.coshh.substances.get({ substanceId });
+    expect(detail2.assessments.find((a) => a.id === standingId)?.kind).toBe('standing');
+  });
+
+  it('CO-E29: editing an active assessment flags it stale until republished', async () => {
+    const caller = callerFor(adminId);
+    const { substanceId } = await caller.coshh.substances.create({ name: 'White spirit' });
+    const { assessmentId } = await caller.coshh.assessments.create({
+      substanceId,
+      taskDescription: 'Brush cleaning',
+    });
+    await caller.coshh.assessments.update({ assessmentId, routesOfExposure: ['skin'] });
+    await caller.coshh.assessments.addControl({
+      assessmentId,
+      tier: 'administrative',
+      description: 'Lidded wash container',
+    });
+    await caller.coshh.assessments.publish({ assessmentId });
+
+    const fresh = (await caller.coshh.substances.get({ substanceId })).assessments[0];
+    expect(fresh?.lastPublishedAt).not.toBeNull();
+    // Just published: not stale.
+    expect(
+      fresh !== undefined &&
+        fresh.lastPublishedAt !== null &&
+        fresh.updatedAt > fresh.lastPublishedAt,
+    ).toBe(false);
+
+    // A control change on the ACTIVE assessment moves updatedAt forward.
+    await caller.coshh.assessments.addControl({
+      assessmentId,
+      tier: 'ppe',
+      description: 'Nitrile gloves',
+    });
+    const stale = (await caller.coshh.substances.get({ substanceId })).assessments[0];
+    expect(
+      stale !== undefined &&
+        stale.lastPublishedAt !== null &&
+        stale.updatedAt > stale.lastPublishedAt,
+    ).toBe(true);
+
+    // Republish clears it (lastPublishedAt catches up; publishedAt keeps first).
+    await caller.coshh.assessments.publish({ assessmentId });
+    const cleared = (await caller.coshh.substances.get({ substanceId })).assessments[0];
+    expect(
+      cleared !== undefined &&
+        cleared.lastPublishedAt !== null &&
+        cleared.updatedAt > cleared.lastPublishedAt,
+    ).toBe(false);
+    expect(cleared?.publishedAt?.getTime()).toBe(fresh?.publishedAt?.getTime());
+  });
 });

@@ -3811,7 +3811,8 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "母评估在此变体最后更新后已更改 — 请检查是否存在偏差。"
     },
     "stats": {
       "active": "Active",
@@ -4268,7 +4269,8 @@
         "edit": "编辑",
         "addDetail": "添加呼吸防护详情（类型 / APF / 密合度）",
         "save": "保存"
-      }
+      },
+      "staleBanner": "该评估在上次发布后已更改 — 请重新发布并再次分享，让班组看到最新版本。"
     },
     "lev": {
       "title": "局部排风台账(LEV)",
@@ -4343,6 +4345,40 @@
     "share": {
       "button": "通过 Heads Up 分享",
       "description": "请阅读物质记录及附件中的安全数据表："
+    },
+    "powButton": "作业点",
+    "kinds": {
+      "standing": "常规",
+      "point_of_work": "作业点"
+    },
+    "staleChip": "发布后已更改",
+    "pow": {
+      "title": "作业点检查",
+      "pickHint": "选择即将使用的产品。",
+      "searchPlaceholder": "搜索物质…",
+      "noResults": "未找到物质。",
+      "changeSubstance": "更换",
+      "sdsLink": "查看安全数据表",
+      "noSds": "未登记安全数据表 — 请在物质记录中附上。",
+      "cmrBlocked": "该物质为致癌/致突变物且尚未考虑替代 — 请先记录替代决定。",
+      "cmrBlockedLink": "打开物质",
+      "taskLabel": "今日作业",
+      "taskPlaceholder": "例如：切割100块砌块，机房B，无供水",
+      "routesLabel": "接触途径",
+      "controlsTitle": "今日已落实的控制措施",
+      "controlsCarriedHint": "沿用自最近一次评估 — 今日不具备的请取消勾选。",
+      "controlsEmptyHint": "暂无先前评估 — 请添加已落实的控制措施。",
+      "removeAdded": "移除",
+      "tierLabel": "控制层级",
+      "addControlPlaceholder": "添加其他控制措施…",
+      "addButton": "添加",
+      "justificationLabel": "仅呼吸防护/PPE — 需要说明理由",
+      "publishing": "发布中…",
+      "signPublishButton": "签署并发布",
+      "doneTitle": "检查已发布",
+      "doneRef": "{ref} — {name}",
+      "openButton": "打开评估",
+      "newCheckButton": "新的检查"
     }
   }
 }

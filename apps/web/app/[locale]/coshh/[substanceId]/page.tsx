@@ -415,10 +415,17 @@ export default function CoshhSubstanceDetailPage() {
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold">{t('assessments.sectionTitle')}</h2>
             {canCreate && !archived ? (
-              <Button size="sm" onClick={() => setAssessmentDialogOpen(true)}>
-                <Plus className="mr-1 h-3.5 w-3.5" />
-                {t('assessments.newButton')}
-              </Button>
+              <div className="flex gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/${locale}/coshh/point-of-work?substanceId=${substanceId}`}>
+                    {t('powButton')}
+                  </Link>
+                </Button>
+                <Button size="sm" onClick={() => setAssessmentDialogOpen(true)}>
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  {t('assessments.newButton')}
+                </Button>
+              </div>
             ) : null}
           </div>
           {assessments.length === 0 ? (
@@ -437,6 +444,18 @@ export default function CoshhSubstanceDetailPage() {
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">
                       {a.taskDescription}
                     </span>
+                    {a.kind === 'point_of_work' ? (
+                      <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                        {t('kinds.point_of_work')}
+                      </span>
+                    ) : null}
+                    {a.status === 'active' &&
+                    a.lastPublishedAt !== null &&
+                    new Date(a.updatedAt) > new Date(a.lastPublishedAt) ? (
+                      <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
+                        {t('staleChip')}
+                      </span>
+                    ) : null}
                     {a.reviewDue ? (
                       <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
                         {t('reviewDue')}

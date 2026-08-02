@@ -3811,7 +3811,8 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "De hoofdbeoordeling is gewijzigd sinds deze variant voor het laatst is bijgewerkt — controleer op afwijkingen."
     },
     "stats": {
       "active": "Active",
@@ -4268,7 +4269,8 @@
         "edit": "Bewerken",
         "addDetail": "Adembeschermingsdetails toevoegen (type / APF / fittest)",
         "save": "Opslaan"
-      }
+      },
+      "staleBanner": "Deze beoordeling is gewijzigd sinds de laatste publicatie — publiceer en deel opnieuw zodat de ploeg de actuele versie ziet."
     },
     "lev": {
       "title": "Afzuigingsregister (LEV)",
@@ -4343,6 +4345,40 @@
     "share": {
       "button": "Delen via Heads Up",
       "description": "Lees het stofrecord en het bijgevoegde veiligheidsinformatieblad:"
+    },
+    "powButton": "Op de werkplek",
+    "kinds": {
+      "standing": "Vast",
+      "point_of_work": "Op de werkplek"
+    },
+    "staleChip": "Gewijzigd na publicatie",
+    "pow": {
+      "title": "Werkplekcontrole",
+      "pickHint": "Kies het product dat u gaat gebruiken.",
+      "searchPlaceholder": "Stoffen zoeken…",
+      "noResults": "Geen stoffen gevonden.",
+      "changeSubstance": "Wijzigen",
+      "sdsLink": "Veiligheidsinformatieblad bekijken",
+      "noSds": "Geen veiligheidsinformatieblad geregistreerd — voeg het toe via het stofrecord.",
+      "cmrBlocked": "Deze stof is kankerverwekkend/mutageen en vervanging is nog niet beoordeeld — leg eerst het vervangingsbesluit vast.",
+      "cmrBlockedLink": "Stof openen",
+      "taskLabel": "Taak van vandaag",
+      "taskPlaceholder": "bijv. 100 blokken zagen, technische ruimte B, geen water beschikbaar",
+      "routesLabel": "Blootstellingsroutes",
+      "controlsTitle": "Beheersmaatregelen vandaag aanwezig",
+      "controlsCarriedHint": "Overgenomen uit de laatste beoordeling — vink uit wat er vandaag niet is.",
+      "controlsEmptyHint": "Geen eerdere beoordeling — voeg de aanwezige maatregelen toe.",
+      "removeAdded": "Verwijderen",
+      "tierLabel": "Beheersniveau",
+      "addControlPlaceholder": "Nog een maatregel toevoegen…",
+      "addButton": "Toevoegen",
+      "justificationLabel": "Alleen adembescherming/PBM — onderbouwing vereist",
+      "publishing": "Publiceren…",
+      "signPublishButton": "Ondertekenen en publiceren",
+      "doneTitle": "Controle gepubliceerd",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Beoordeling openen",
+      "newCheckButton": "Nieuwe controle"
     }
   }
 }

@@ -3818,7 +3818,8 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "L’évaluation parente a changé depuis la dernière mise à jour de cette variante — vérifiez les écarts."
     },
     "stats": {
       "active": "Active",
@@ -4275,7 +4276,8 @@
         "edit": "Modifier",
         "addDetail": "Ajouter le détail APR (type / FPA / ajustement)",
         "save": "Enregistrer"
-      }
+      },
+      "staleBanner": "Cette évaluation a changé depuis sa dernière publication — republiez et repartagez pour que l’équipe voie la version en vigueur."
     },
     "lev": {
       "title": "Registre d’aspiration (LEV)",
@@ -4350,6 +4352,40 @@
     "share": {
       "button": "Partager via Heads Up",
       "description": "Veuillez lire la fiche de la substance et la fiche de données de sécurité jointe :"
+    },
+    "powButton": "Au poste",
+    "kinds": {
+      "standing": "Permanente",
+      "point_of_work": "Au poste"
+    },
+    "staleChip": "Modifiée depuis publication",
+    "pow": {
+      "title": "Contrôle au poste",
+      "pickHint": "Choisissez le produit que vous allez utiliser.",
+      "searchPlaceholder": "Rechercher des substances…",
+      "noResults": "Aucune substance trouvée.",
+      "changeSubstance": "Changer",
+      "sdsLink": "Voir la fiche de données de sécurité",
+      "noSds": "Aucune FDS enregistrée — joignez-la depuis la fiche substance.",
+      "cmrBlocked": "Substance cancérogène/mutagène et substitution non encore étudiée — enregistrez d’abord la décision de substitution.",
+      "cmrBlockedLink": "Ouvrir la substance",
+      "taskLabel": "Tâche du jour",
+      "taskPlaceholder": "ex. Couper 100 blocs, local B, pas d’eau disponible",
+      "routesLabel": "Voies d’exposition",
+      "controlsTitle": "Mesures en place aujourd’hui",
+      "controlsCarriedHint": "Reprises de la dernière évaluation — décochez ce qui n’est pas en place aujourd’hui.",
+      "controlsEmptyHint": "Aucune évaluation antérieure — ajoutez les mesures en place.",
+      "removeAdded": "Retirer",
+      "tierLabel": "Niveau de maîtrise",
+      "addControlPlaceholder": "Ajouter une autre mesure…",
+      "addButton": "Ajouter",
+      "justificationLabel": "APR/EPI uniquement — justification requise",
+      "publishing": "Publication…",
+      "signPublishButton": "Signer et publier",
+      "doneTitle": "Contrôle publié",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Ouvrir l’évaluation",
+      "newCheckButton": "Nouveau contrôle"
     }
   }
 }

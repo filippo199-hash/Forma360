@@ -3811,7 +3811,8 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "A avaliação principal mudou desde a última atualização desta variante — verifique divergências."
     },
     "stats": {
       "active": "Active",
@@ -4268,7 +4269,8 @@
         "edit": "Editar",
         "addDetail": "Adicionar detalhes de EPR (tipo / FPA / vedação)",
         "save": "Salvar"
-      }
+      },
+      "staleBanner": "Esta avaliação mudou desde a última publicação — republique e compartilhe novamente para a equipe ver a versão atual."
     },
     "lev": {
       "title": "Registo de exaustão (LEV)",
@@ -4343,6 +4345,40 @@
     "share": {
       "button": "Compartilhar via Heads Up",
       "description": "Leia o registro da substância e a ficha de segurança anexa:"
+    },
+    "powButton": "No posto",
+    "kinds": {
+      "standing": "Permanente",
+      "point_of_work": "No posto"
+    },
+    "staleChip": "Alterada após publicar",
+    "pow": {
+      "title": "Verificação no posto",
+      "pickHint": "Escolha o produto que vai usar.",
+      "searchPlaceholder": "Buscar substâncias…",
+      "noResults": "Nenhuma substância encontrada.",
+      "changeSubstance": "Trocar",
+      "sdsLink": "Ver ficha de segurança",
+      "noSds": "Sem ficha de segurança registrada — anexe pelo registro da substância.",
+      "cmrBlocked": "Substância carcinogênica/mutagênica e a substituição ainda não foi avaliada — registre primeiro a decisão de substituição.",
+      "cmrBlockedLink": "Abrir substância",
+      "taskLabel": "Tarefa de hoje",
+      "taskPlaceholder": "ex.: Cortar 100 blocos, sala B, sem água disponível",
+      "routesLabel": "Vias de exposição",
+      "controlsTitle": "Controles presentes hoje",
+      "controlsCarriedHint": "Trazidos da última avaliação — desmarque o que não estiver presente hoje.",
+      "controlsEmptyHint": "Sem avaliação anterior — adicione os controles presentes.",
+      "removeAdded": "Remover",
+      "tierLabel": "Nível de controle",
+      "addControlPlaceholder": "Adicionar outro controle…",
+      "addButton": "Adicionar",
+      "justificationLabel": "Somente EPR/EPI — justificativa obrigatória",
+      "publishing": "Publicando…",
+      "signPublishButton": "Assinar e publicar",
+      "doneTitle": "Verificação publicada",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Abrir avaliação",
+      "newCheckButton": "Nova verificação"
     }
   }
 }

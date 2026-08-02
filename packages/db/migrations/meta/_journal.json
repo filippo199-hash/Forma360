@@ -400,6 +400,13 @@
       "when": 1780000040000,
       "tag": "0056_coshh_surveillance_signoff",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1780000050000,
+      "tag": "0057_coshh_pow_versioning",
+      "breakpoints": true
     }
   ]
 }
