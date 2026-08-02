@@ -364,7 +364,10 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             .select()
             .from(coshhSdsDocuments)
             .where(
-              and(inArray(coshhSdsDocuments.substanceId, ids), eq(coshhSdsDocuments.isCurrent, true)),
+              and(
+                inArray(coshhSdsDocuments.substanceId, ids),
+                eq(coshhSdsDocuments.isCurrent, true),
+              ),
             ),
           ctx.db
             .select({
@@ -471,7 +474,10 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         ];
         if (assessmentIds.length > 0) {
           eventConditions.push(
-            and(eq(coshhEvents.entityType, 'assessment'), inArray(coshhEvents.entityId, assessmentIds)),
+            and(
+              eq(coshhEvents.entityType, 'assessment'),
+              inArray(coshhEvents.entityId, assessmentIds),
+            ),
           );
         }
         const events = await ctx.db
@@ -504,10 +510,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
               status: coshhSubstances.status,
             })
             .from(coshhSubstanceLocations)
-            .innerJoin(
-              coshhSubstances,
-              eq(coshhSubstances.id, coshhSubstanceLocations.substanceId),
-            )
+            .innerJoin(coshhSubstances, eq(coshhSubstances.id, coshhSubstanceLocations.substanceId))
             .where(
               and(
                 eq(coshhSubstanceLocations.tenantId, ctx.tenantId),
@@ -1436,9 +1439,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             latestResult: latest?.result ?? null,
             testCount: tests.filter((t) => t.levUnitId === u.id).length,
             overdue:
-              u.status !== 'decommissioned' &&
-              u.nextTestDueAt !== null &&
-              u.nextTestDueAt <= now,
+              u.status !== 'decommissioned' && u.nextTestDueAt !== null && u.nextTestDueAt <= now,
           };
         });
       }),
@@ -1669,8 +1670,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         .from(coshhLevUnits)
         .where(eq(coshhLevUnits.tenantId, ctx.tenantId));
       const levDue = levUnits.filter(
-        (u) =>
-          u.status !== 'decommissioned' && u.nextTestDueAt !== null && u.nextTestDueAt <= now,
+        (u) => u.status !== 'decommissioned' && u.nextTestDueAt !== null && u.nextTestDueAt <= now,
       ).length;
       const levOutOfService = levUnits.filter((u) => u.status === 'out_of_service').length;
 
@@ -1714,12 +1714,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             const b = list[j];
             if (a === undefined || b === undefined) continue;
             if (a.substanceId === b.substanceId) continue;
-            if (
-              !storageClassesConflict(
-                a.storageClass as never,
-                b.storageClass as never,
-              )
-            ) {
+            if (!storageClassesConflict(a.storageClass as never, b.storageClass as never)) {
               continue;
             }
             const key = [a.substanceId, b.substanceId].sort().join(':');

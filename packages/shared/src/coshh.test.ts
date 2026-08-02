@@ -106,10 +106,7 @@ describe('exceedsWel (CO-E04)', () => {
   it('returns null on unit mismatch or missing limit — never a silent pass', () => {
     expect(exceedsWel({ value: 60, unit: 'mg/m3', period: 'twa8h' }, wel)).toBeNull();
     expect(
-      exceedsWel(
-        { value: 60, unit: 'ppm', period: 'stel15min' },
-        { ...wel, stel15min: null },
-      ),
+      exceedsWel({ value: 60, unit: 'ppm', period: 'stel15min' }, { ...wel, stel15min: null }),
     ).toBeNull();
   });
 });
