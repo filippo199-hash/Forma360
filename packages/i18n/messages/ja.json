@@ -157,7 +157,8 @@
       "training": "Training",
       "integrations": "Integrations",
       "billing": "Billing",
-      "company": "Company"
+      "company": "Company",
+      "riskMatrix": "Risk matrix"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -3658,7 +3659,8 @@
       "locationPlaceholder": "Building, area or site location",
       "submit": "Create assessment",
       "submitting": "Creating…",
-      "error": "Could not create the assessment. Try again."
+      "error": "Could not create the assessment. Try again.",
+      "cancel": "Cancel"
     },
     "steps": {
       "hazards": "1 · Identify hazards",
@@ -3745,8 +3747,16 @@
         "no-hazards": "Add at least one hazard before publishing.",
         "unscored-hazards": "Every hazard needs initial and residual likelihood × severity scores.",
         "ppe-only-needs-justification": "At least one hazard relies on PPE alone — add a justification or a higher-order control.",
-        "generic": "Could not publish. Check the assessment and try again."
-      }
+        "generic": "Could not publish. Check the assessment and try again.",
+        "residual-above-initial": "A hazard's residual risk is higher than its initial risk — controls cannot increase risk.",
+        "residual-needs-controls": "A hazard has a residual score but no controls at all — record what controls the risk first.",
+        "high-residual-needs-justification": "A hazard's residual risk stays High/Critical — add a planned control or a tolerability note.",
+        "actions-need-assignees": "Every planned control needs an owner and a due date before publishing.",
+        "invalid-assignee": "One of the action owners is not an active member of this organisation.",
+        "invalid-due-date": "Action due dates cannot be in the past."
+      },
+      "publishChanges": "Publish changes (v{version})",
+      "reackToast": "Version {version} published — everyone must read and acknowledge it again."
     },
     "review": {
       "sectionTitle": "Review",
@@ -3798,7 +3808,18 @@
       "selectAll": "Select everyone",
       "shareHeadsUp": "Share via Heads Up",
       "sharingHeadsUp": "準備中…",
-      "attachmentFailed": "PDFを添付できませんでした。添付なしで共有します。"
+      "attachmentFailed": "PDFを添付できませんでした。添付なしで共有します。",
+      "sentToast": "Distributed — recipients have been notified by email.",
+      "dueBy": "due by {date}",
+      "dueDateLabel": "Acknowledgement deadline (optional)",
+      "dueDateHint": "Recipients are emailed now and chased automatically until they confirm. The deadline shows in their notification.",
+      "acknowledgedVersion": "Acknowledged v{version}",
+      "overdue": "Overdue",
+      "reackPending": "Re-acknowledgement pending",
+      "reackTitle": "Previously acknowledged version {version}",
+      "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
+      "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -3811,7 +3832,10 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "The parent assessment has changed since this variant was created — review the differences and update this variant if needed.",
+      "driftChip": "Differs from parent",
+      "driftChipTitle": "The parent assessment changed after this variant was created."
     },
     "stats": {
       "active": "Active",
@@ -3839,7 +3863,14 @@
       "actionsIntro": "Publishing will create {count} action(s) from your planned controls:",
       "actionMeta": "Assigned to you · Medium priority · Due in 7 days",
       "confirm": "Confirm and publish",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "republishNote": "This publishes version {version}. Everyone previously asked to read this assessment will be asked to read and acknowledge the new version.",
+      "reactivateNote": "No content changes since version {version} — publishing puts the same version back in force without re-opening acknowledgements.",
+      "assignmentsHint": "Each planned control becomes an action. Choose who owns it and a realistic deadline — nothing defaults to you.",
+      "assigneeLabel": "Owner",
+      "assigneePlaceholder": "Choose an owner…",
+      "dueLabel": "Due date",
+      "assignmentsIncomplete": "Assign an owner and a due date to every planned control to continue."
     },
     "titlePrompt": {
       "title": "Name this assessment before publishing",
@@ -3866,6 +3897,52 @@
         "acknowledged": "Acknowledged",
         "variant_created": "Person-specific variant created"
       }
+    },
+    "downloadPdf": "Download PDF",
+    "matrix": {
+      "selectedSummary": "L{likelihood} × S{severity} = {score} —",
+      "aboveInitial": "above initial risk — controls cannot increase risk",
+      "notSelected": "Not scored yet — click a cell.",
+      "residualNeedsControls": "Record at least one control first — residual risk is the risk with controls in place.",
+      "residualNeedsInitial": "Score the initial risk first.",
+      "residualAboveInitialWarning": "Residual risk is higher than initial risk — controls cannot increase risk. Fix one of the two scores.",
+      "residualNoteHint": "The residual risk stays High/Critical. Add a planned control (further action) or explain why this risk is tolerable.",
+      "residualNoteLabel": "Why is this residual risk tolerable?",
+      "residualNotePlaceholder": "e.g. Short-duration permitted work with fire watch in place; further reduction not reasonably practicable."
+    },
+    "versions": {
+      "sectionTitle": "Versions",
+      "hint": "Every publish freezes an immutable copy — what people acknowledged stays retrievable exactly as it was in force.",
+      "empty": "Not published yet — the first publish creates version 1.",
+      "current": "In force",
+      "view": "View",
+      "viewerTitle": "Version {version} — as in force",
+      "signOffLine": "Signed off by {name} on {date}",
+      "actionsCreated": "{count} action(s) created",
+      "unpublishedChangesBanner": "This assessment has unpublished changes — readers still see version {version} and acknowledgements still refer to it. Publish the changes to put them in force."
+    },
+    "matrixSettings": {
+      "title": "Risk matrix",
+      "subtitle": "Align the 5×5 scoring bands with your corporate standard.",
+      "thresholdsTitle": "Band thresholds",
+      "thresholdsHint": "A score (likelihood × severity, 1–25) at or below each threshold falls in that band; anything above the High threshold is Critical.",
+      "lowMaxLabel": "Low up to",
+      "mediumMaxLabel": "Medium up to",
+      "highMaxLabel": "High up to",
+      "invalidThresholds": "Thresholds must increase: Low < Medium < High < 25.",
+      "floorsTitle": "Severity overrides",
+      "floorsHint": "Force a minimum band for a severity, regardless of likelihood — e.g. any credible fatality (severity 5) is at least High.",
+      "floorLabel": "Severity {severity} minimum",
+      "floorNone": "No override",
+      "previewTitle": "Preview",
+      "applyToDrafts": "Also apply to open drafts",
+      "applyToDraftsHint": "Published versions always keep the matrix they were signed against.",
+      "historyNote": "New assessments snapshot this matrix at creation, so past records never rescore themselves.",
+      "save": "Save matrix",
+      "saving": "Saving…",
+      "saved": "Risk matrix saved.",
+      "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
+      "saveError": "Could not save the matrix. Try again."
     }
   },
   "coshh": {
