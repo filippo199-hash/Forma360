@@ -105,3 +105,74 @@ live board / overview compute it consistently.
   `packages/shared/src/permits.test.ts`,
   `packages/api/src/routers/permits.test.ts` and
   `packages/jobs/src/workers/permit-expiry-watch.test.ts`.
+
+## Amendment (2026-08-02) — HSE practitioner review hardening
+
+Four HSE practitioners reviewed the shipped module
+(`docs/reviews/permits-hse-expert-review.md`, findings PW-1..PW-15).
+The review confirmed the architecture and found the gaps clustered on
+the highest-risk path. The decisions that changed:
+
+**1. The gas gate evaluates, it does not count (PW-1).** Permit types
+carry `gasLimits` (per-gas acceptable ranges, inclusive bounds, null =
+unbounded) and `gasTestMaxAgeMinutes` (freshness). A reading recorded
+against a limit snapshots its verdict (`withinLimits`) at record time —
+dangerous readings are still recorded (they are evidence) but the gate
+blocks. At issue AND at resume, every configured limit needs a fresh,
+in-range LATEST reading (`gasGateError`, deterministic precedence:
+missing → out-of-range → stale). Resume additionally discards readings
+taken before the suspension — only a re-test satisfies it (PW-3). The
+seeded gas-requiring types carry UK-practice defaults (O₂ 19.5–23.5 %,
+LEL < 10 %, CO < 30 ppm; confined space gets a 30-minute freshness
+window); migration 0060 backfills them into existing tenants.
+
+**2. No state can bless lapsed work.** Acceptance refuses an expired
+window (PW-2); handover refuses on an overdue permit (PW-11) — the
+remedy for overdue is extension (re-authorisation), which now must end
+in the future and re-runs the SIMOPs check over the ADDED span with an
+explicit acknowledgement (PW-4). The resume confirmation is a real,
+attested UI act — reason recap + checkbox — not a hardcoded flag
+(PW-3).
+
+**3. Separation of duties holds through handover (PW-5).** The
+authorising engineer can never become the acceptor of the permit they
+authorised — enforced server-side and filtered from the UI.
+
+**4. Recording is the competent person's act; issuing is the
+issuer's (PW-9).** Preconditions, gas readings, attachments, the gang
+list and the entry/exit log are recordable by `permits.create` holders,
+issuer authorities, and the permit's named acceptor. `permits.issue`
+remains the signature that the issuer is satisfied.
+
+**5. Issuer authority is site-scoped (PW-12).** When a permit belongs
+to a site whose team is curated (any `site_members` rows), lifecycle
+authority is limited to that team; admins bypass. Uncurated sites and
+site-less permits stay open, so tenants that don't use site teams are
+not locked out — scoping activates per site as the team is curated.
+
+**6. The permit reaches the job and points at its safe system of
+work.** A permit links its risk assessment and method statement
+(PW-7), with a per-type `requiresRiskAssessment` gate at issue; the
+`renderPermitPdf` pipeline (same chromium/R2 machinery as risk
+assessments; `/render/permit/[id]` HMAC route,
+`/api/exports/permit-pdf` download) produces the postable A4 record —
+preconditions, gas verdicts, signatures, gang, entry log, timeline
+(PW-6).
+
+**7. Who is in there is recorded, and expiry warns before it bites.**
+The gang (`workers`) and an entry/exit log live on the permit; entries
+only on ACTIVE permits; closure refuses while anyone is still inside
+(PW-8). The expiry watch gained a pre-expiry pass: parties are warned
+once when the window closes within 60 minutes (`expiry_warning_sent_at`
+stamp), and escalation still fires separately after expiry (PW-10).
+Extension clears both stamps.
+
+**Same-area matching is token-based (PW-14)** — "Bay 4, tank farm"
+matches "tank farm bay 4" and subset wording. **Reference numbering
+past PTW-9999 was verified safe (PW-13)** — `padStart` grows naturally
+(PTW-10000) and lists order by creation time, proven by PW-E34.
+**Competence (PW-15) remains a documented gap** pending the Training
+module, per the review's own register.
+
+New edge-case IDs: PW-E06..E09 (shared), PW-E25..E35 (router), PW-J03
+(worker warning pass). Migration 0060 (`permits_hse_hardening`).
