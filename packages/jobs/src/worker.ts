@@ -44,6 +44,11 @@ import {
   RA_ACK_REMINDER_CRON,
   type PendingAckReminder,
 } from './workers/ra-ack-reminder';
+import {
+  createPermitExpiryWatchHandler,
+  PERMIT_EXPIRY_WATCH_CRON,
+  type ExpiredOpenPermit,
+} from './workers/permit-expiry-watch';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -299,8 +304,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
             title: r.title,
             referenceNumber: r.referenceNumber ?? '',
             distributedDate: r.distributedAt.toISOString().slice(0, 10),
-            dueLine:
-              r.dueAt !== null ? ` (due by ${r.dueAt.toISOString().slice(0, 10)})` : '',
+            dueLine: r.dueAt !== null ? ` (due by ${r.dueAt.toISOString().slice(0, 10)})` : '',
             viewUrl,
           },
         });
@@ -315,6 +319,46 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     { name: 'ra-ack-reminder', data: {} },
   );
   logger.info({ cron: RA_ACK_REMINDER_CRON }, '[worker] registered ra-ack-reminder repeatable');
+
+  // ─── FreeHS B3 — permit expiry escalation ──────────────────────────────
+  const permitExpiryWatchWorker = new Worker(
+    QUEUE_NAMES.PERMIT_EXPIRY_WATCH,
+    createPermitExpiryWatchHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'permit-expiry-watch' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        permit: ExpiredOpenPermit,
+        recipient: { email: string; name: string },
+        viewUrl: string,
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey: 'permit-expiry-escalation',
+          variables: {
+            recipientName: recipient.name,
+            title: permit.title,
+            referenceNumber: permit.referenceNumber ?? '',
+            typeName: permit.typeName,
+            siteLine: permit.siteName !== null ? ` at ${permit.siteName}` : '',
+            expiredAt: permit.validTo.toISOString().replace('T', ' ').slice(0, 16),
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const permitExpiryWatchQueue = getQueue(QUEUE_NAMES.PERMIT_EXPIRY_WATCH, connection);
+  await permitExpiryWatchQueue.upsertJobScheduler(
+    'permit-expiry-watch',
+    { pattern: PERMIT_EXPIRY_WATCH_CRON, tz: 'UTC' },
+    { name: 'permit-expiry-watch', data: {} },
+  );
+  logger.info(
+    { cron: PERMIT_EXPIRY_WATCH_CRON },
+    '[worker] registered permit-expiry-watch repeatable',
+  );
 
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
@@ -357,6 +401,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     contractorOverstayWorker,
     observationNotifyWorker,
     raAckReminderWorker,
+    permitExpiryWatchWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {
