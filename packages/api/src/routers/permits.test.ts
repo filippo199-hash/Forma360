@@ -38,6 +38,32 @@
  *     the rest; cancelled permits are terminal
  *   - PW-E24: gas readings and attachments append with actor stamps and
  *     events; precondition check / uncheck is logged
+ *
+ * HSE-review hardening (docs/reviews/permits-hse-expert-review.md):
+ *   - PW-E25: the gas gate evaluates — an out-of-range or stale latest
+ *     reading blocks issue; readings must cover every configured limit;
+ *     an in-range fresh set passes (review PW-1)
+ *   - PW-E26: accepting an expired permit is refused (review PW-2)
+ *   - PW-E27: resuming a gas-testing permit needs a fresh in-range
+ *     reading taken after the suspension (review PW-3)
+ *   - PW-E28: extension must end in the future and re-runs SIMOPs over
+ *     the added window with explicit acknowledgement (review PW-4)
+ *   - PW-E29: handover refuses the authoriser as acceptor and refuses on
+ *     an overdue permit (review PW-5 / PW-11)
+ *   - PW-E30: competent persons (permits.create) and the named acceptor
+ *     can record checks / readings / evidence; view-only users cannot
+ *     (review PW-9)
+ *   - PW-E31: issuer authority is site-scoped once the site team is
+ *     curated; admins bypass; uncurated sites stay open (review PW-12)
+ *   - PW-E32: risk-assessment / method-statement links validate in-tenant
+ *     and a requiring type refuses issue without the RA (review PW-7)
+ *   - PW-E33: workers list + entry/exit log — entries only on active
+ *     permits, exits close them, closure refuses while anyone is still
+ *     inside (review PW-8)
+ *   - PW-E34: reference numbering continues cleanly past PTW-9999
+ *     (review PW-13)
+ *   - PW-E35: same-area conflict flag matches reordered/subset wording
+ *     (review PW-14)
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -421,11 +447,22 @@ describe('permits router', () => {
     await expect(admin.permits.issue({ permitId: hot })).rejects.toMatchObject({
       message: 'gas-test-required',
     });
+    // A free reading (no limit) does not satisfy a configured limit (PW-1).
     await admin.permits.recordGasReading({
       permitId: hot,
       substance: 'Flammable vapour',
       reading: 2,
       unit: 'percent_lel',
+    });
+    await expect(admin.permits.issue({ permitId: hot })).rejects.toMatchObject({
+      message: 'gas-test-required',
+    });
+    await admin.permits.recordGasReading({
+      permitId: hot,
+      substance: 'Flammable vapour',
+      reading: 2,
+      unit: 'percent_lel',
+      limitId: 'flammables_lel',
     });
     expect((await admin.permits.issue({ permitId: hot })).status).toBe('issued');
 
@@ -823,5 +860,506 @@ describe('permits router', () => {
     await expect(
       admin.permits.checkPrecondition({ permitId, preconditionId: 'nope', checked: true }),
     ).rejects.toMatchObject({ message: 'unknown-precondition' });
+  });
+  // ─── HSE-review hardening cases ──────────────────────────────────────────
+
+  it('PW-E25: the gas gate evaluates readings — out-of-range, coverage, staleness', async () => {
+    const admin = callerFor(adminId);
+    const { permitId } = await admin.permits.create({
+      permitTypeId: await typeId('hot_work'),
+      title: 'Cutting on the gantry',
+      siteId: siteB,
+      acceptorUserId: standardId,
+      ...window(0, 4),
+    });
+    await checkAll(permitId);
+
+    // Unknown limit and unit mismatch are refused at record time.
+    await expect(
+      admin.permits.recordGasReading({
+        permitId,
+        substance: 'O2',
+        reading: 20.9,
+        unit: 'percent_o2',
+        limitId: 'oxygen',
+      }),
+    ).rejects.toMatchObject({ message: 'unknown-gas-limit' });
+    await expect(
+      admin.permits.recordGasReading({
+        permitId,
+        substance: 'LEL',
+        reading: 2,
+        unit: 'ppm',
+        limitId: 'flammables_lel',
+      }),
+    ).rejects.toMatchObject({ message: 'gas-unit-mismatch' });
+
+    // A dangerous reading records (evidence!) but blocks issue.
+    await admin.permits.recordGasReading({
+      permitId,
+      substance: 'Flammables',
+      reading: 90,
+      unit: 'percent_lel',
+      limitId: 'flammables_lel',
+    });
+    const afterDanger = await admin.permits.get({ permitId });
+    expect(afterDanger.gasReadings[0]?.withinLimits).toBe(false);
+    await expect(admin.permits.issue({ permitId })).rejects.toMatchObject({
+      message: 'gas-test-out-of-range',
+    });
+
+    // A newer in-range reading unblocks.
+    await admin.permits.recordGasReading({
+      permitId,
+      substance: 'Flammables',
+      reading: 2,
+      unit: 'percent_lel',
+      limitId: 'flammables_lel',
+    });
+    expect((await admin.permits.issue({ permitId })).status).toBe('issued');
+
+    // Staleness: a fresh draft whose only reading is aged past the window.
+    const { permitId: staleP } = await admin.permits.create({
+      permitTypeId: await typeId('hot_work'),
+      title: 'Stale test',
+      acceptorUserId: standardId,
+      ...window(0, 4),
+    });
+    await checkAll(staleP);
+    await admin.permits.recordGasReading({
+      permitId: staleP,
+      substance: 'Flammables',
+      reading: 2,
+      unit: 'percent_lel',
+      limitId: 'flammables_lel',
+    });
+    const row = await db.select().from(schema.permits).where(eq(schema.permits.id, staleP));
+    const aged = (row[0]?.gasReadings ?? []).map((r) => ({
+      ...r,
+      takenAt: new Date(Date.now() - 2 * 3_600_000).toISOString(),
+    }));
+    await db.update(schema.permits).set({ gasReadings: aged }).where(eq(schema.permits.id, staleP));
+    await expect(admin.permits.issue({ permitId: staleP })).rejects.toMatchObject({
+      message: 'gas-test-stale',
+    });
+  });
+
+  it('PW-E26: an expired permit cannot be accepted', async () => {
+    const admin = callerFor(adminId);
+    const { permitId } = await admin.permits.create({
+      permitTypeId: await simpleTypeId(),
+      title: 'Late signer',
+      acceptorUserId: standardId,
+      ...window(0, 2),
+    });
+    await checkAll(permitId);
+    await admin.permits.issue({ permitId, acknowledgeConflicts: true });
+    await db
+      .update(schema.permits)
+      .set({ validTo: new Date(Date.now() - HOUR) })
+      .where(eq(schema.permits.id, permitId));
+    await expect(callerFor(standardId).permits.accept({ permitId })).rejects.toMatchObject({
+      message: 'window-past',
+    });
+  });
+
+  it('PW-E27: resuming a gas permit needs a fresh in-range reading after suspension', async () => {
+    const admin = callerFor(adminId);
+    const created = await admin.permits.types.create({
+      category: 'other',
+      name: 'Gas-watched task',
+      requiresGasTesting: true,
+      gasLimits: [{ id: 'oxygen', label: 'Oxygen', unit: 'percent_o2', min: 19.5, max: 23.5 }],
+      gasTestMaxAgeMinutes: 60,
+      preconditions: [{ id: 'area_ready', label: 'Area prepared' }],
+    });
+    const { permitId } = await admin.permits.create({
+      permitTypeId: created.typeId,
+      title: 'Pit inspection',
+      acceptorUserId: standardId,
+      ...window(0, 6),
+    });
+    await checkAll(permitId);
+    await admin.permits.recordGasReading({
+      permitId,
+      substance: 'O2',
+      reading: 20.9,
+      unit: 'percent_o2',
+      limitId: 'oxygen',
+    });
+    await admin.permits.issue({ permitId, acknowledgeConflicts: true });
+    await callerFor(standardId).permits.accept({ permitId });
+    await admin.permits.suspend({ permitId, reason: 'Gas alarm next door' });
+
+    // The pre-suspension reading no longer counts.
+    await expect(
+      admin.permits.resume({ permitId, confirmSafeToResume: true }),
+    ).rejects.toMatchObject({ message: 'gas-test-required' });
+
+    // A fresh but dangerous reading still refuses.
+    await admin.permits.recordGasReading({
+      permitId,
+      substance: 'O2',
+      reading: 17,
+      unit: 'percent_o2',
+      limitId: 'oxygen',
+    });
+    await expect(
+      admin.permits.resume({ permitId, confirmSafeToResume: true }),
+    ).rejects.toMatchObject({ message: 'gas-test-out-of-range' });
+
+    // A fresh in-range reading unlocks the resume.
+    await admin.permits.recordGasReading({
+      permitId,
+      substance: 'O2',
+      reading: 20.8,
+      unit: 'percent_o2',
+      limitId: 'oxygen',
+    });
+    const resumed = await admin.permits.resume({ permitId, confirmSafeToResume: true });
+    expect(resumed.status).toBe('active');
+  });
+
+  it('PW-E28: extension must end in the future and re-checks SIMOPs', async () => {
+    const admin = callerFor(adminId);
+    const permitId = await activePermit({ lengthHours: 4 });
+
+    // Overdue permit, "extended" to a time still in the past → refused.
+    await db
+      .update(schema.permits)
+      .set({ validTo: new Date(Date.now() - 2 * HOUR) })
+      .where(eq(schema.permits.id, permitId));
+    await expect(
+      admin.permits.extend({ permitId, newValidTo: new Date(Date.now() - HOUR) }),
+    ).rejects.toMatchObject({ message: 'extension-in-past' });
+
+    // A clashing open permit inside the added window → conflict unless acknowledged.
+    const { permitId: clash } = await admin.permits.create({
+      permitTypeId: await simpleTypeId(),
+      title: 'New clashing job',
+      siteId: siteA,
+      locationText: 'Bay 4',
+      acceptorUserId: standard2Id,
+      ...window(0, 3),
+    });
+    await checkAll(clash);
+    await admin.permits.issue({ permitId: clash, acknowledgeConflicts: true });
+
+    await expect(
+      admin.permits.extend({ permitId, newValidTo: new Date(Date.now() + HOUR) }),
+    ).rejects.toMatchObject({ code: 'CONFLICT', message: 'simops-conflict' });
+    const extended = await admin.permits.extend({
+      permitId,
+      newValidTo: new Date(Date.now() + HOUR),
+      acknowledgeConflicts: true,
+    });
+    expect(extended.extensionCount).toBe(1);
+  });
+
+  it('PW-E29: handover refuses the authoriser and refuses on an overdue permit', async () => {
+    const admin = callerFor(adminId);
+    const manager = callerFor(managerId);
+
+    const { permitId } = await admin.permits.create({
+      permitTypeId: await typeId('electrical'),
+      title: 'Switchroom work',
+      siteId: siteB,
+      acceptorUserId: standardId,
+      isolationCertificateRef: 'ISO-77',
+      ...window(0, 6),
+    });
+    await checkAll(permitId);
+    await manager.permits.authorise({ permitId });
+    await admin.permits.issue({ permitId });
+    await callerFor(standardId).permits.accept({ permitId });
+
+    await expect(admin.permits.handover({ permitId, toUserId: managerId })).rejects.toMatchObject({
+      message: 'acceptor-is-authoriser',
+    });
+
+    // Overdue permits cannot be handed over — extend (re-authorise) first.
+    const overdueId = await activePermit();
+    await db
+      .update(schema.permits)
+      .set({ validTo: new Date(Date.now() - HOUR) })
+      .where(eq(schema.permits.id, overdueId));
+    await expect(
+      admin.permits.handover({ permitId: overdueId, toUserId: standard2Id }),
+    ).rejects.toMatchObject({ message: 'window-past' });
+  });
+
+  it('PW-E30: competent persons and the acceptor can record; view-only users cannot', async () => {
+    const admin = callerFor(adminId);
+    const competentSetId = newId();
+    await db.insert(schema.permissionSets).values({
+      id: competentSetId,
+      tenantId,
+      name: 'Competent person',
+      permissions: ['permits.view', 'permits.create'],
+    });
+    const competentId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: competentId,
+      name: 'Gaz Tester',
+      email: `gaz-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: competentSetId,
+    });
+
+    const { permitId } = await admin.permits.create({
+      permitTypeId: await typeId('confined_space'),
+      title: 'Tank entry',
+      siteId: siteA,
+      acceptorUserId: standardId,
+      ...window(0, 4),
+    });
+
+    // The competent person records a precondition and a gas reading.
+    const detail = await admin.permits.get({ permitId });
+    const first = detail.preconditions[0];
+    if (first === undefined) throw new Error('unreachable');
+    await callerFor(competentId).permits.checkPrecondition({
+      permitId,
+      preconditionId: first.id,
+      checked: true,
+    });
+    await callerFor(competentId).permits.recordGasReading({
+      permitId,
+      substance: 'O2',
+      reading: 20.9,
+      unit: 'percent_o2',
+      limitId: 'oxygen',
+    });
+
+    // The named acceptor can record readings with view-only permissions.
+    await callerFor(standardId).permits.recordGasReading({
+      permitId,
+      substance: 'CO',
+      reading: 3,
+      unit: 'ppm',
+      limitId: 'carbon_monoxide',
+    });
+
+    // A view-only bystander cannot.
+    await expect(
+      callerFor(standard2Id).permits.recordGasReading({
+        permitId,
+        substance: 'O2',
+        reading: 20.9,
+        unit: 'percent_o2',
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      callerFor(standard2Id).permits.checkPrecondition({
+        permitId,
+        preconditionId: first.id,
+        checked: false,
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    // But the competent person cannot ISSUE — that stays the issuer's act.
+    await expect(callerFor(competentId).permits.issue({ permitId })).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
+  });
+
+  it('PW-E31: issuer authority is site-scoped once the site team is curated', async () => {
+    const admin = callerFor(adminId);
+    const manager2Id = `usr_${newId()}`;
+    const managerSet = await db
+      .select({ permissionSetId: schema.user.permissionSetId })
+      .from(schema.user)
+      .where(eq(schema.user.id, managerId));
+    const managerSetId = managerSet[0]?.permissionSetId;
+    if (managerSetId === null || managerSetId === undefined) {
+      throw new Error('manager permission set missing');
+    }
+    await db.insert(schema.user).values({
+      id: manager2Id,
+      name: 'Marta Othersite',
+      email: `marta-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: managerSetId,
+    });
+    // Curate siteA's team: manager only.
+    await db.insert(schema.siteMembers).values({ tenantId, siteId: siteA, userId: managerId });
+
+    const { permitId } = await admin.permits.create({
+      permitTypeId: await simpleTypeId(),
+      title: 'Scoped job',
+      siteId: siteA,
+      acceptorUserId: standardId,
+      ...window(0, 4),
+    });
+    await checkAll(permitId);
+
+    // A non-member issuer is refused; the site-team issuer proceeds.
+    await expect(
+      callerFor(manager2Id).permits.issue({ permitId, acknowledgeConflicts: true }),
+    ).rejects.toMatchObject({ message: 'site-scope' });
+    await callerFor(managerId).permits.issue({ permitId, acknowledgeConflicts: true });
+    await callerFor(standardId).permits.accept({ permitId });
+
+    await expect(
+      callerFor(manager2Id).permits.suspend({ permitId, reason: 'not my site' }),
+    ).rejects.toMatchObject({ message: 'site-scope' });
+    // Admins bypass site scoping.
+    await admin.permits.suspend({ permitId, reason: 'legitimate alarm' });
+
+    // Uncurated sites stay open: siteB has no team, any issuer acts.
+    const { permitId: openSite } = await admin.permits.create({
+      permitTypeId: await simpleTypeId(),
+      title: 'Uncurated site job',
+      siteId: siteB,
+      acceptorUserId: standardId,
+      ...window(0, 4),
+    });
+    await checkAll(openSite);
+    await callerFor(manager2Id).permits.issue({ permitId: openSite, acknowledgeConflicts: true });
+  });
+
+  it('PW-E32: RA / method-statement links validate; a requiring type refuses issue without the RA', async () => {
+    const admin = callerFor(adminId);
+    const raId = newId();
+    await db.insert(schema.riskAssessments).values({
+      id: raId,
+      tenantId,
+      referenceNumber: 'RA-0001',
+      title: 'Confined space entry RA',
+      status: 'active',
+      currentVersion: 1,
+      createdBy: adminId,
+    });
+
+    const simple = await simpleTypeId();
+    await admin.permits.types.update({ typeId: simple, requiresRiskAssessment: true });
+
+    const { permitId } = await admin.permits.create({
+      permitTypeId: simple,
+      title: 'RA-gated job',
+      acceptorUserId: standardId,
+      ...window(0, 4),
+    });
+    await checkAll(permitId);
+    await expect(admin.permits.issue({ permitId })).rejects.toMatchObject({
+      message: 'risk-assessment-required',
+    });
+
+    await expect(
+      admin.permits.update({ permitId, riskAssessmentId: newId() }),
+    ).rejects.toMatchObject({ message: 'unknown-risk-assessment' });
+    await expect(
+      admin.permits.update({ permitId, methodStatementDocumentId: newId() }),
+    ).rejects.toMatchObject({ message: 'unknown-document' });
+
+    await admin.permits.update({ permitId, riskAssessmentId: raId });
+    expect((await admin.permits.issue({ permitId })).status).toBe('issued');
+    const detail = await admin.permits.get({ permitId });
+    expect(detail.riskAssessment?.title).toBe('Confined space entry RA');
+
+    await admin.permits.types.update({ typeId: simple, requiresRiskAssessment: false });
+  });
+
+  it('PW-E33: workers + entry/exit log; closure refuses while anyone is inside', async () => {
+    const admin = callerFor(adminId);
+    const permitId = await activePermit();
+
+    await admin.permits.setWorkers({
+      permitId,
+      workers: [
+        { name: 'Gang One', role: 'worker' },
+        { name: 'Nina Nights', userId: standard2Id, role: 'entrant' },
+      ],
+    });
+    let detail = await admin.permits.get({ permitId });
+    expect(detail.workers).toHaveLength(2);
+    const entrant = detail.workers.find((w) => w.userId === standard2Id);
+    expect(entrant).toBeDefined();
+    if (entrant === undefined) throw new Error('unreachable');
+
+    // Entries only on ACTIVE permits.
+    const { permitId: draftOnly } = await admin.permits.create({
+      permitTypeId: await simpleTypeId(),
+      title: 'Not started',
+      ...window(0, 4),
+    });
+    await expect(
+      admin.permits.logEntry({ permitId: draftOnly, name: 'Too Early' }),
+    ).rejects.toMatchObject({ message: 'invalid-transition' });
+
+    await admin.permits.logEntry({ permitId, workerId: entrant.id });
+    await admin.permits.logEntry({ permitId, name: 'Visiting fitter' });
+    detail = await admin.permits.get({ permitId });
+    expect(detail.insideCount).toBe(2);
+
+    await expect(admin.permits.close({ permitId, checks: allChecks })).rejects.toMatchObject({
+      message: 'entrants-still-inside',
+    });
+
+    const openRows = detail.entryLog.filter((r) => r.exitedAt === null);
+    for (const row of openRows) {
+      await admin.permits.logExit({ permitId, entryId: row.id });
+    }
+    await expect(
+      admin.permits.logExit({ permitId, entryId: openRows[0]?.id ?? '' }),
+    ).rejects.toMatchObject({ message: 'already-exited' });
+    await expect(admin.permits.logExit({ permitId, entryId: 'nope' })).rejects.toMatchObject({
+      message: 'unknown-entry',
+    });
+
+    await admin.permits.close({ permitId, checks: allChecks });
+    detail = await admin.permits.get({ permitId });
+    expect(detail.status).toBe('closed');
+    expect(detail.events.map((e) => e.kind)).toEqual(
+      expect.arrayContaining(['worker_added', 'entry_logged', 'exit_logged']),
+    );
+  });
+
+  it('PW-E34: reference numbering continues cleanly past PTW-9999', async () => {
+    const admin = callerFor(adminId);
+    await db.insert(schema.referenceCounters).values({ tenantId, series: 'permit', value: 9998 });
+    const a = await admin.permits.create({
+      permitTypeId: await simpleTypeId(),
+      title: 'Ref 9999',
+      ...window(0, 4),
+    });
+    const b = await admin.permits.create({
+      permitTypeId: await simpleTypeId(),
+      title: 'Ref 10000',
+      ...window(0, 4),
+    });
+    expect(a.referenceNumber).toBe('PTW-9999');
+    expect(b.referenceNumber).toBe('PTW-10000');
+    const list = await admin.permits.list({ status: 'all' });
+    expect(list.map((r) => r.referenceNumber)).toEqual(
+      expect.arrayContaining(['PTW-9999', 'PTW-10000']),
+    );
+  });
+
+  it('PW-E35: the same-area flag matches reordered and subset wording', async () => {
+    const admin = callerFor(adminId);
+    await activePermit({ siteId: siteA, locationText: 'Bay 4, tank farm' });
+
+    const reordered = await admin.permits.checkConflicts({
+      siteId: siteA,
+      locationText: 'tank farm bay 4',
+      ...window(1, 2),
+    });
+    expect(reordered[0]?.sameArea).toBe(true);
+
+    const subset = await admin.permits.checkConflicts({
+      siteId: siteA,
+      locationText: 'bay 4',
+      ...window(1, 2),
+    });
+    expect(subset[0]?.sameArea).toBe(true);
+
+    const different = await admin.permits.checkConflicts({
+      siteId: siteA,
+      locationText: 'bay 5 compressor house',
+      ...window(1, 2),
+    });
+    expect(different).toHaveLength(1);
+    expect(different[0]?.sameArea).toBe(false);
   });
 });
