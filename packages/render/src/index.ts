@@ -15,6 +15,7 @@
 export {
   renderInspectionPdf,
   renderRiskAssessmentPdf,
+  renderPermitPdf,
   pdfObjectKey,
   type RenderDeps,
   type RenderResult,
@@ -41,6 +42,9 @@ export {
   hashInspectionSnapshot,
   loadRiskAssessmentSnapshot,
   hashRiskAssessmentSnapshot,
+  loadPermitSnapshot,
+  hashPermitSnapshot,
   type InspectionRenderSnapshot,
   type RiskAssessmentRenderSnapshot,
+  type PermitRenderSnapshot,
 } from './snapshot';

@@ -22,6 +22,8 @@ import {
   hashInspectionSnapshot,
   loadRiskAssessmentSnapshot,
   hashRiskAssessmentSnapshot,
+  loadPermitSnapshot,
+  hashPermitSnapshot,
 } from './snapshot';
 import type { Database } from '@forma360/db/client';
 import type { Storage } from '@forma360/shared/storage';
@@ -121,6 +123,37 @@ export async function renderRiskAssessmentPdf(
   const bytes = await renderPdfBytes(deps, {
     url: buildRenderUrl(deps, 'risk-assessment', snap.assessment.id),
     stubTitle: snap.assessment.title,
+  });
+
+  await uploadPdf(deps, { key, bytes });
+
+  return {
+    key,
+    bytes: bytes.length,
+    cached: false,
+    stub: isStub(bytes),
+  };
+}
+
+/**
+ * Render a permit to PDF (FreeHS module B3, HSE review PW-6) — the
+ * postable/filable record: preconditions, evidence, signatures, timeline.
+ * Same pipeline as risk assessments, different print route.
+ */
+export async function renderPermitPdf(
+  deps: RenderDeps,
+  input: { tenantId: string; permitId: string },
+): Promise<RenderResult> {
+  const snap = await loadPermitSnapshot(deps.db, input);
+  if (snap === null) {
+    throw new Error(`Permit not found: ${input.permitId}`);
+  }
+  const hash = hashPermitSnapshot(snap);
+  const key = `${input.tenantId}/permits/${input.permitId}/pdf-${hash}.pdf`;
+
+  const bytes = await renderPdfBytes(deps, {
+    url: buildRenderUrl(deps, 'permit', snap.permit.id),
+    stubTitle: snap.permit.title,
   });
 
   await uploadPdf(deps, { key, bytes });
@@ -298,7 +331,7 @@ function resolveSystemChromium(): string {
  */
 function buildRenderUrl(
   deps: RenderDeps,
-  kind: 'inspection' | 'risk-assessment',
+  kind: 'inspection' | 'risk-assessment' | 'permit',
   subjectId: string,
 ): string {
   const token = signRenderToken({
