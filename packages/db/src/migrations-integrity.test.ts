@@ -6,13 +6,19 @@
  * silently skipped them. A brand-new deployment (FreeHS) came up missing 27
  * migrations' worth of schema while every existing environment kept working.
  *
- * Three invariants, permanently enforced:
+ * Four invariants, permanently enforced:
  *   1. Every migrations/NNNN_*.sql file is registered in meta/_journal.json,
  *      in filename order, with contiguous idx values — a file without a
  *      journal entry is a migration that will never run in production.
- *   2. The full chain applies cleanly to an empty database (fresh-install
+ *   2. Journal `when` timestamps strictly increase with idx. drizzle-kit
+ *      migrate applies only entries whose `when` is NEWER than the last
+ *      applied migration's — an out-of-order timestamp is silently skipped
+ *      forever on any database that already applied a later one (the
+ *      2026-08-02 incident: 0058 merged with a `when` older than 0057's,
+ *      deploy green, schema missing, RA module 500ing in production).
+ *   3. The full chain applies cleanly to an empty database (fresh-install
  *      path — what a new brand deployment runs).
- *   3. Re-applying every migration after the last snapshot-backed one
+ *   4. Re-applying every migration after the last snapshot-backed one
  *      (0026+) onto an already-migrated database is a no-op — the
  *      journal-repair scenario, where an existing production database
  *      (Forma360) sees those files "for the first time" even though its DDL
@@ -47,13 +53,11 @@ describe('migration chain integrity', () => {
     const files = await listMigrationFiles();
     const journalRaw = await readFile(join(MIGRATIONS_DIR, 'meta', '_journal.json'), 'utf-8');
     const journal = JSON.parse(journalRaw) as {
-      entries: Array<{ idx: number; tag: string }>;
+      entries: Array<{ idx: number; tag: string; when: number }>;
     };
 
-    const journalTags = journal.entries
-      .slice()
-      .sort((a, b) => a.idx - b.idx)
-      .map((e) => e.tag);
+    const sorted = journal.entries.slice().sort((a, b) => a.idx - b.idx);
+    const journalTags = sorted.map((e) => e.tag);
     const fileTags = files.map((f) => f.replace(/\.sql$/, ''));
 
     // Exact 1:1 match — a missing entry means drizzle-kit migrate will
@@ -61,12 +65,22 @@ describe('migration chain integrity', () => {
     expect(journalTags).toEqual(fileTags);
 
     // idx values must be contiguous from 0 so ordering is unambiguous.
-    journal.entries
-      .slice()
-      .sort((a, b) => a.idx - b.idx)
-      .forEach((entry, i) => {
-        expect(entry.idx).toBe(i);
-      });
+    sorted.forEach((entry, i) => {
+      expect(entry.idx).toBe(i);
+    });
+
+    // `when` must strictly increase with idx: drizzle-kit migrate applies
+    // only entries newer than the database's last applied `created_at`, so
+    // an out-of-order timestamp is a migration that silently never runs on
+    // any already-migrated environment.
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = sorted[i - 1];
+      const curr = sorted[i];
+      expect(
+        curr !== undefined && prev !== undefined && curr.when > prev.when,
+        `journal 'when' must increase: ${prev?.tag} (${prev?.when}) → ${curr?.tag} (${curr?.when})`,
+      ).toBe(true);
+    }
   });
 
   it('applies the full chain on a fresh database, then re-applies 0026+ as a no-op', async () => {
