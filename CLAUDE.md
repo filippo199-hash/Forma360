@@ -474,7 +474,7 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   practitioner feedback round 2: shared banding + severity floors in
   `packages/shared/src/risk-matrix.ts`, immutable publish versions with
   first-class assessor sign-off (`risk_assessment_versions`, migration
-  0056), version-aware acknowledgements + `forma360-ra-ack-reminder`
+  0058), version-aware acknowledgements + `forma360-ra-ack-reminder`
   daily chase worker, per-tenant matrix editor at
   `[locale]/settings/risk-matrix`, PDF download route
   `api/exports/risk-assessment-pdf`; edge-case IDs RA-E01..E30 in

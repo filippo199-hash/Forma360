@@ -94,7 +94,7 @@ rescores itself.
 - Existing active assessments published before this ADR have
   `current_version = 0`; their first republish creates version 1
   (self-healing). Drafts lost their premature `next_review_at` in
-  migration 0056.
+  migration 0058.
 - The publish input is a breaking API change (`confirmSignOff`,
   `actionAssignments`) — accepted, since the module ships in one brand
   and the only caller is the web app.

@@ -654,6 +654,10 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           ctx.tenantId,
           assessment.siteId !== null ? [assessment.siteId] : [],
         );
+        // Variant drift (C-16 → A-4): superseded by `parentInfo.
+        // changedSinceFork` above — fork-anchored via forkedFromParentAt,
+        // so touching the CHILD never masks a parent change the way a
+        // plain updatedAt comparison would.
         return {
           assessment,
           siteName: assessment.siteId !== null ? (siteNames.get(assessment.siteId) ?? null) : null,

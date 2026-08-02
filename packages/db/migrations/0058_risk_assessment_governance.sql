@@ -1,4 +1,4 @@
--- 0056 — Risk Assessment governance (FreeHS module B1, practitioner
+-- 0058 — Risk Assessment governance (FreeHS module B1, practitioner
 -- feedback round 2).
 --   P-2  hazards gain residual_justification (tolerability note)
 --   P-4  per-tenant matrix settings (thresholds + severity floors)

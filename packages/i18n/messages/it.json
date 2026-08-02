@@ -4370,7 +4370,25 @@
         "drafting": "Scrittura…",
         "summaryError": "Impossibile scrivere la sintesi. Riprova.",
         "summaryDrafted": "Bozza pronta — rileggi e salva."
-      }
+      },
+      "signOff": {
+        "title": "Firma del valutatore",
+        "statement": "Confermo che questa è una valutazione adeguata e sufficiente dei rischi dell’attività descritta e che i controlli indicati sono (o saranno) in atto.",
+        "hint": "Nome e data vengono registrati con questa pubblicazione.",
+        "confirm": "Firma e pubblica",
+        "cancel": "Annulla"
+      },
+      "rpe": {
+        "typePlaceholder": "Tipo APVR (es. FFP3, semimaschera A2P3)",
+        "apfPlaceholder": "FPA",
+        "faceFitLabel": "Prova di tenuta confermata",
+        "apfValue": "FPA {apf}",
+        "faceFitValue": "Prova di tenuta {date}",
+        "edit": "Modifica",
+        "addDetail": "Aggiungi dettaglio APVR (tipo / FPA / tenuta)",
+        "save": "Salva"
+      },
+      "staleBanner": "Questa valutazione è cambiata dall’ultima pubblicazione: ripubblicala e ricondividila così la squadra vede la versione corrente."
     },
     "lev": {
       "title": "Registro aspirazioni (LEV)",
@@ -4415,6 +4433,70 @@
       "defectsLabel": "Difetti riscontrati",
       "failHint": "Una verifica non conforme mette l’impianto fuori servizio finché non è riparato e rimesso in servizio.",
       "testSaveButton": "Salva verifica"
+    },
+    "exportCsv": "Esporta registro (CSV)",
+    "surveillance": {
+      "sectionTitle": "Sorveglianza sanitaria",
+      "hint": "COSHH Reg 11 — chi è in sorveglianza per questa sostanza, con quale periodicità e la prossima scadenza. I record vengono chiusi, mai eliminati.",
+      "suggestedBanner": "La classificazione di questa sostanza (cancerogena / mutagena / sensibilizzante) richiede di norma la sorveglianza sanitaria — nessuno è ancora iscritto.",
+      "empty": "Nessuno è in sorveglianza per questa sostanza.",
+      "enrollButton": "Iscrivi persona",
+      "dialogTitle": "Iscrivi alla sorveglianza sanitaria",
+      "person": "Persona",
+      "interval": "Periodicità",
+      "intervalLabel": "Richiamo ogni (mesi)",
+      "intervalMonths": "{count} mesi",
+      "lastCheck": "Ultima visita",
+      "nextDue": "Prossima scadenza",
+      "due": "In scadenza",
+      "dueChip": "Sorveglianza in scadenza",
+      "recordCheck": "Registra visita",
+      "endButton": "Termina",
+      "endConfirm": "Terminare la sorveglianza per questa persona? Il record viene conservato.",
+      "ended": "Terminata",
+      "enrolling": "Iscrizione…",
+      "enrollSubmit": "Iscrivi",
+      "enrolledToast": "Iscritto alla sorveglianza sanitaria.",
+      "alreadyEnrolled": "Già in sorveglianza per questa sostanza.",
+      "checkToast": "Visita registrata — prossima scadenza aggiornata."
+    },
+    "share": {
+      "button": "Condividi via Heads Up",
+      "description": "Leggere la scheda della sostanza e la scheda di sicurezza allegata:"
+    },
+    "powButton": "Sul posto",
+    "kinds": {
+      "standing": "Permanente",
+      "point_of_work": "Sul posto"
+    },
+    "staleChip": "Modificata dopo la pubblicazione",
+    "pow": {
+      "title": "Verifica sul posto",
+      "pickHint": "Scegli il prodotto che stai per usare.",
+      "searchPlaceholder": "Cerca sostanze…",
+      "noResults": "Nessuna sostanza trovata.",
+      "changeSubstance": "Cambia",
+      "sdsLink": "Vedi scheda di sicurezza",
+      "noSds": "Nessuna scheda di sicurezza registrata: allegala dalla scheda della sostanza.",
+      "cmrBlocked": "Sostanza cancerogena/mutagena e sostituzione non ancora valutata: registra prima la decisione di sostituzione.",
+      "cmrBlockedLink": "Apri sostanza",
+      "taskLabel": "Attività di oggi",
+      "taskPlaceholder": "es. Taglio di 100 blocchi, locale B, acqua non disponibile",
+      "routesLabel": "Vie di esposizione",
+      "controlsTitle": "Misure presenti oggi",
+      "controlsCarriedHint": "Riprese dall’ultima valutazione: deseleziona ciò che oggi non è presente.",
+      "controlsEmptyHint": "Nessuna valutazione precedente: aggiungi le misure presenti.",
+      "removeAdded": "Rimuovi",
+      "tierLabel": "Livello di controllo",
+      "addControlPlaceholder": "Aggiungi un’altra misura…",
+      "addButton": "Aggiungi",
+      "justificationLabel": "Solo APVR/DPI: giustificazione richiesta",
+      "publishing": "Pubblicazione…",
+      "signPublishButton": "Firma e pubblica",
+      "doneTitle": "Verifica pubblicata",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Apri valutazione",
+      "newCheckButton": "Nuova verifica"
     }
   }
 }

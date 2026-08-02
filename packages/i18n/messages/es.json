@@ -4335,7 +4335,25 @@
         "drafting": "Redactando…",
         "summaryError": "No se pudo redactar el resumen. Inténtalo de nuevo.",
         "summaryDrafted": "Borrador listo — revísalo y guárdalo."
-      }
+      },
+      "signOff": {
+        "title": "Firma del evaluador",
+        "statement": "Confirmo que esta es una evaluación adecuada y suficiente de los riesgos de la tarea descrita y que los controles indicados están (o estarán) implantados.",
+        "hint": "Su nombre y la fecha quedan registrados con esta publicación.",
+        "confirm": "Firmar y publicar",
+        "cancel": "Cancelar"
+      },
+      "rpe": {
+        "typePlaceholder": "Tipo de EPR (p. ej. FFP3, semimáscara A2P3)",
+        "apfPlaceholder": "FPA",
+        "faceFitLabel": "Ajuste facial confirmado",
+        "apfValue": "FPA {apf}",
+        "faceFitValue": "Ajuste facial {date}",
+        "edit": "Editar",
+        "addDetail": "Añadir detalle de EPR (tipo / FPA / ajuste facial)",
+        "save": "Guardar"
+      },
+      "staleBanner": "Esta evaluación ha cambiado desde la última publicación; vuelva a publicarla y compartirla para que el equipo vea la versión vigente."
     },
     "lev": {
       "title": "Registro de extracción (LEV)",
@@ -4380,6 +4398,70 @@
       "defectsLabel": "Defectos encontrados",
       "failHint": "Una prueba no apta deja el equipo fuera de servicio hasta su reparación y reincorporación.",
       "testSaveButton": "Guardar prueba"
+    },
+    "exportCsv": "Exportar registro (CSV)",
+    "surveillance": {
+      "sectionTitle": "Vigilancia de la salud",
+      "hint": "COSHH Reg 11: quién está bajo vigilancia para esta sustancia, su intervalo y próxima cita. Los registros se cierran, nunca se eliminan.",
+      "suggestedBanner": "La clasificación de esta sustancia (carcinógena / mutágena / sensibilizante) suele requerir vigilancia de la salud; aún no hay nadie inscrito.",
+      "empty": "Nadie está bajo vigilancia para esta sustancia.",
+      "enrollButton": "Inscribir persona",
+      "dialogTitle": "Inscribir en vigilancia de la salud",
+      "person": "Persona",
+      "interval": "Intervalo",
+      "intervalLabel": "Revisión cada (meses)",
+      "intervalMonths": "{count} m",
+      "lastCheck": "Última revisión",
+      "nextDue": "Próxima",
+      "due": "Pendiente",
+      "dueChip": "Vigilancia pendiente",
+      "recordCheck": "Registrar revisión",
+      "endButton": "Finalizar",
+      "endConfirm": "¿Finalizar la vigilancia de esta persona? El registro se conserva.",
+      "ended": "Finalizada",
+      "enrolling": "Inscribiendo…",
+      "enrollSubmit": "Inscribir",
+      "enrolledToast": "Inscrito en vigilancia de la salud.",
+      "alreadyEnrolled": "Ya está bajo vigilancia para esta sustancia.",
+      "checkToast": "Revisión registrada; próxima fecha actualizada."
+    },
+    "share": {
+      "button": "Compartir por Heads Up",
+      "description": "Lea la ficha de la sustancia y la ficha de datos de seguridad adjunta:"
+    },
+    "powButton": "En el puesto",
+    "kinds": {
+      "standing": "Permanente",
+      "point_of_work": "En el puesto"
+    },
+    "staleChip": "Modificada tras publicar",
+    "pow": {
+      "title": "Comprobación en el puesto",
+      "pickHint": "Elija el producto que va a usar.",
+      "searchPlaceholder": "Buscar sustancias…",
+      "noResults": "No se encontraron sustancias.",
+      "changeSubstance": "Cambiar",
+      "sdsLink": "Ver ficha de datos de seguridad",
+      "noSds": "No hay ficha de seguridad registrada; adjúntela desde la ficha de la sustancia.",
+      "cmrBlocked": "Esta sustancia es carcinógena/mutágena y la sustitución aún no se ha valorado; registre primero la decisión de sustitución.",
+      "cmrBlockedLink": "Abrir sustancia",
+      "taskLabel": "Tarea de hoy",
+      "taskPlaceholder": "p. ej. Cortar 100 bloques, sala B, sin agua disponible",
+      "routesLabel": "Vías de exposición",
+      "controlsTitle": "Controles presentes hoy",
+      "controlsCarriedHint": "Tomados de la última evaluación; desmarque lo que hoy no esté.",
+      "controlsEmptyHint": "No hay evaluación previa; añada los controles existentes.",
+      "removeAdded": "Quitar",
+      "tierLabel": "Nivel de control",
+      "addControlPlaceholder": "Añadir otro control…",
+      "addButton": "Añadir",
+      "justificationLabel": "Solo EPR/EPI: se requiere justificación",
+      "publishing": "Publicando…",
+      "signPublishButton": "Firmar y publicar",
+      "doneTitle": "Comprobación publicada",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Abrir evaluación",
+      "newCheckButton": "Nueva comprobación"
     }
   }
 }

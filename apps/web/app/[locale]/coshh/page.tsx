@@ -9,7 +9,7 @@
  * mirrors the observations module: filter row, desktop table, mobile
  * cards, one predictable primary target per row.
  */
-import { Fan, Plus } from 'lucide-react';
+import { Fan, Plus, Zap } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -60,6 +60,65 @@ export default function CoshhInventoryPage() {
     { key: 'storageConflicts', count: overview?.storageConflicts ?? 0 },
   ].filter((a) => a.count > 0);
 
+  /**
+   * COSHH register export (C-22): the loaded rows as CSV, generated
+   * client-side — an inspector-ready substance register.
+   */
+  function exportCsv(): void {
+    const esc = (v: string | number | null | undefined): string => {
+      const s = v == null ? '' : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = [
+      'Reference',
+      'Name',
+      'Supplier',
+      'Physical form',
+      'Signal word',
+      'Carcinogen',
+      'Mutagen',
+      'Asthmagen',
+      'Biological agent',
+      'Contains lead',
+      'SDS status',
+      'WELs',
+      'Assessments',
+      'Locations',
+      'Sites',
+      'Surveillance due',
+      'Status',
+    ];
+    const lines = (rows ?? []).map((r) =>
+      [
+        esc(r.referenceNumber),
+        esc(r.name),
+        esc(r.supplier),
+        esc(r.physicalForm),
+        esc(r.signalWord),
+        r.isCarcinogen ? 'yes' : 'no',
+        r.isMutagen ? 'yes' : 'no',
+        r.isAsthmagen ? 'yes' : 'no',
+        r.isBiologicalAgent ? 'yes' : 'no',
+        r.containsLead ? 'yes' : 'no',
+        esc(r.sdsStatus),
+        r.workplaceExposureLimits.length,
+        r.assessmentCount,
+        r.locationCount,
+        esc(r.siteNames.join('; ')),
+        r.surveillanceDue ? 'yes' : 'no',
+        esc(r.status),
+      ].join(','),
+    );
+    const csv = [header.join(','), ...lines].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `coshh-register-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="mx-auto w-full max-w-[1200px] space-y-4 sm:space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -68,6 +127,25 @@ export default function CoshhInventoryPage() {
           <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            disabled={(rows ?? []).length === 0}
+            onClick={exportCsv}
+            className="hidden sm:inline-flex"
+          >
+            {t('exportCsv')}
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            title={t('powButton')}
+            className="w-10 px-0 sm:w-auto sm:px-4"
+          >
+            <Link href={`/${locale}/coshh/point-of-work`}>
+              <Zap className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('powButton')}</span>
+            </Link>
+          </Button>
           <Button
             asChild
             variant="outline"
@@ -228,6 +306,11 @@ export default function CoshhInventoryPage() {
                           {row.hasWelExceedance ? (
                             <span className="ml-1 rounded-md bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-200">
                               {t('welExceeded')}
+                            </span>
+                          ) : null}
+                          {row.surveillanceDue ? (
+                            <span className="ml-1 rounded-md bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-200">
+                              {t('surveillance.dueChip')}
                             </span>
                           ) : null}
                         </td>

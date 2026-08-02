@@ -4328,7 +4328,25 @@
         "drafting": "Opstellen…",
         "summaryError": "Samenvatting kon niet worden opgesteld. Probeer opnieuw.",
         "summaryDrafted": "Concept klaar — lees na en sla op."
-      }
+      },
+      "signOff": {
+        "title": "Ondertekening beoordelaar",
+        "statement": "Ik bevestig dat dit een passende en toereikende beoordeling is van de risico’s van de beschreven taak en dat de genoemde beheersmaatregelen (zullen) zijn getroffen.",
+        "hint": "Uw naam en de datum worden bij deze publicatie vastgelegd.",
+        "confirm": "Ondertekenen en publiceren",
+        "cancel": "Annuleren"
+      },
+      "rpe": {
+        "typePlaceholder": "Type adembescherming (bijv. FFP3, halfgelaatsmasker A2P3)",
+        "apfPlaceholder": "APF",
+        "faceFitLabel": "Fittest bevestigd",
+        "apfValue": "APF {apf}",
+        "faceFitValue": "Fittest {date}",
+        "edit": "Bewerken",
+        "addDetail": "Adembeschermingsdetails toevoegen (type / APF / fittest)",
+        "save": "Opslaan"
+      },
+      "staleBanner": "Deze beoordeling is gewijzigd sinds de laatste publicatie — publiceer en deel opnieuw zodat de ploeg de actuele versie ziet."
     },
     "lev": {
       "title": "Afzuigingsregister (LEV)",
@@ -4373,6 +4391,70 @@
       "defectsLabel": "Gevonden gebreken",
       "failHint": "Een afgekeurde installatie staat buiten bedrijf tot hij hersteld en weer vrijgegeven is.",
       "testSaveButton": "Keuring opslaan"
+    },
+    "exportCsv": "Register exporteren (CSV)",
+    "surveillance": {
+      "sectionTitle": "Gezondheidstoezicht",
+      "hint": "COSHH Reg 11 — wie voor deze stof onder toezicht staat, met welk interval en de volgende afspraak. Records worden beëindigd, nooit verwijderd.",
+      "suggestedBanner": "De indeling van deze stof (kankerverwekkend / mutageen / sensibiliserend) vereist doorgaans gezondheidstoezicht — er is nog niemand ingeschreven.",
+      "empty": "Niemand staat onder toezicht voor deze stof.",
+      "enrollButton": "Persoon inschrijven",
+      "dialogTitle": "Inschrijven voor gezondheidstoezicht",
+      "person": "Persoon",
+      "interval": "Interval",
+      "intervalLabel": "Herhaling elke (maanden)",
+      "intervalMonths": "{count} mnd",
+      "lastCheck": "Laatste controle",
+      "nextDue": "Volgende",
+      "due": "Verlopen",
+      "dueChip": "Toezicht verlopen",
+      "recordCheck": "Controle vastleggen",
+      "endButton": "Beëindigen",
+      "endConfirm": "Toezicht voor deze persoon beëindigen? Het record blijft bewaard.",
+      "ended": "Beëindigd",
+      "enrolling": "Inschrijven…",
+      "enrollSubmit": "Inschrijven",
+      "enrolledToast": "Ingeschreven voor gezondheidstoezicht.",
+      "alreadyEnrolled": "Staat al onder toezicht voor deze stof.",
+      "checkToast": "Controle vastgelegd — volgende datum bijgewerkt."
+    },
+    "share": {
+      "button": "Delen via Heads Up",
+      "description": "Lees het stofrecord en het bijgevoegde veiligheidsinformatieblad:"
+    },
+    "powButton": "Op de werkplek",
+    "kinds": {
+      "standing": "Vast",
+      "point_of_work": "Op de werkplek"
+    },
+    "staleChip": "Gewijzigd na publicatie",
+    "pow": {
+      "title": "Werkplekcontrole",
+      "pickHint": "Kies het product dat u gaat gebruiken.",
+      "searchPlaceholder": "Stoffen zoeken…",
+      "noResults": "Geen stoffen gevonden.",
+      "changeSubstance": "Wijzigen",
+      "sdsLink": "Veiligheidsinformatieblad bekijken",
+      "noSds": "Geen veiligheidsinformatieblad geregistreerd — voeg het toe via het stofrecord.",
+      "cmrBlocked": "Deze stof is kankerverwekkend/mutageen en vervanging is nog niet beoordeeld — leg eerst het vervangingsbesluit vast.",
+      "cmrBlockedLink": "Stof openen",
+      "taskLabel": "Taak van vandaag",
+      "taskPlaceholder": "bijv. 100 blokken zagen, technische ruimte B, geen water beschikbaar",
+      "routesLabel": "Blootstellingsroutes",
+      "controlsTitle": "Beheersmaatregelen vandaag aanwezig",
+      "controlsCarriedHint": "Overgenomen uit de laatste beoordeling — vink uit wat er vandaag niet is.",
+      "controlsEmptyHint": "Geen eerdere beoordeling — voeg de aanwezige maatregelen toe.",
+      "removeAdded": "Verwijderen",
+      "tierLabel": "Beheersniveau",
+      "addControlPlaceholder": "Nog een maatregel toevoegen…",
+      "addButton": "Toevoegen",
+      "justificationLabel": "Alleen adembescherming/PBM — onderbouwing vereist",
+      "publishing": "Publiceren…",
+      "signPublishButton": "Ondertekenen en publiceren",
+      "doneTitle": "Controle gepubliceerd",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Beoordeling openen",
+      "newCheckButton": "Nieuwe controle"
     }
   }
 }

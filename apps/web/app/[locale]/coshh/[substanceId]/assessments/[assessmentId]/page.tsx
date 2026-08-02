@@ -27,6 +27,13 @@ import type { CoshhRecommendation } from '../../../../../../src/server/coshh-ai'
 import { AssessmentStatusChip } from '../../../../../../src/components/coshh/chips';
 import { Button } from '../../../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../../../src/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../../../src/components/ui/dialog';
 import { Input } from '../../../../../../src/components/ui/input';
 import { Label } from '../../../../../../src/components/ui/label';
 import { Skeleton } from '../../../../../../src/components/ui/skeleton';
@@ -121,6 +128,7 @@ export default function CoshhAssessmentPage() {
   });
 
   const [customGroup, setCustomGroup] = useState('');
+  const [signOffOpen, setSignOffOpen] = useState(false);
   const [emergencyDraft, setEmergencyDraft] = useState<string | null>(null);
   const [summaryDraft, setSummaryDraft] = useState<string | null>(null);
   const [taskDraft, setTaskDraft] = useState<string | null>(null);
@@ -152,6 +160,12 @@ export default function CoshhAssessmentPage() {
   const substitutionUnresolved =
     (substance.isCarcinogen || substance.isMutagen) &&
     substance.substitutionStatus === 'not_assessed';
+  // C-15: an active assessment edited after its last publish is stale for
+  // the crew who saw the published version — prompt republish + re-share.
+  const needsRepublish =
+    assessment.status === 'active' &&
+    assessment.lastPublishedAt !== null &&
+    new Date(assessment.updatedAt) > new Date(assessment.lastPublishedAt);
 
   function patch(fields: Record<string, unknown>): void {
     update.mutate({ assessmentId, ...fields } as never);
@@ -232,6 +246,11 @@ export default function CoshhAssessmentPage() {
               {assessment.referenceNumber}
             </span>
             <AssessmentStatusChip status={assessment.status} />
+            {assessment.kind === 'point_of_work' ? (
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                {tCoshh('kinds.point_of_work')}
+              </span>
+            ) : null}
           </h1>
         </div>
         {editable ? (
@@ -245,11 +264,7 @@ export default function CoshhAssessmentPage() {
                 {t('moveToDraft')}
               </Button>
             ) : null}
-            <Button
-              size="sm"
-              disabled={publish.isPending}
-              onClick={() => publish.mutate({ assessmentId })}
-            >
+            <Button size="sm" disabled={publish.isPending} onClick={() => setSignOffOpen(true)}>
               {assessment.status === 'active' ? t('republish') : t('publish')}
             </Button>
           </div>
@@ -265,6 +280,18 @@ export default function CoshhAssessmentPage() {
               {t('substitutionBlockedLink')}
             </Link>
           </p>
+        </div>
+      ) : null}
+
+      {needsRepublish ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <p className="min-w-0 flex-1">{t('staleBanner')}</p>
+          {editable ? (
+            <Button size="sm" variant="outline" onClick={() => setSignOffOpen(true)}>
+              {t('republish')}
+            </Button>
+          ) : null}
         </div>
       ) : null}
 
@@ -516,6 +543,14 @@ export default function CoshhAssessmentPage() {
                   updateControl.mutate({ controlId: control.id, ppeJustification: justification })
                 }
                 onRemove={(control) => removeControl.mutate({ controlId: control.id })}
+                onRpeDetail={(control, d) =>
+                  updateControl.mutate({
+                    controlId: control.id,
+                    rpeType: d.rpeType,
+                    rpeApf: d.rpeApf,
+                    faceFitConfirmedAt: d.faceFitConfirmedAt,
+                  })
+                }
               />
             ))}
           </div>
@@ -680,11 +715,37 @@ export default function CoshhAssessmentPage() {
 
       {editable ? (
         <div className="flex justify-end">
-          <Button disabled={publish.isPending} onClick={() => publish.mutate({ assessmentId })}>
+          <Button disabled={publish.isPending} onClick={() => setSignOffOpen(true)}>
             {assessment.status === 'active' ? t('republish') : t('publish')}
           </Button>
         </div>
       ) : null}
+
+      {/* Assessor sign-off (C-21): every publish carries the attestation. */}
+      <Dialog open={signOffOpen} onOpenChange={setSignOffOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('signOff.title')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm">{t('signOff.statement')}</p>
+          <p className="text-xs text-muted-foreground">{t('signOff.hint')}</p>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setSignOffOpen(false)}>
+              {t('signOff.cancel')}
+            </Button>
+            <Button
+              type="button"
+              disabled={publish.isPending}
+              onClick={() => {
+                setSignOffOpen(false);
+                publish.mutate({ assessmentId });
+              }}
+            >
+              {t('signOff.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -734,7 +795,17 @@ interface ControlRow {
   description: string;
   status: string;
   ppeJustification: string | null;
+  rpeType: string | null;
+  rpeApf: number | null;
+  faceFitConfirmedAt: Date | null;
   actionId: string | null;
+}
+
+/** RPE detail patch (C-8): type, assigned protection factor, face-fit date. */
+interface RpeDetail {
+  rpeType: string | null;
+  rpeApf: number | null;
+  faceFitConfirmedAt: Date | null;
 }
 
 function TierGroup({
@@ -746,6 +817,7 @@ function TierGroup({
   onToggleStatus,
   onJustify,
   onRemove,
+  onRpeDetail,
 }: {
   tier: Tier;
   controls: ReadonlyArray<ControlRow>;
@@ -755,6 +827,7 @@ function TierGroup({
   onToggleStatus: (control: ControlRow) => void;
   onJustify: (control: ControlRow, justification: string) => void;
   onRemove: (control: ControlRow) => void;
+  onRpeDetail: (control: ControlRow, detail: RpeDetail) => void;
 }) {
   const t = useTranslations('coshh.editor');
   const tCoshh = useTranslations('coshh');
@@ -762,6 +835,30 @@ function TierGroup({
   const [text, setText] = useState('');
   const [justifying, setJustifying] = useState<string | null>(null);
   const [justificationText, setJustificationText] = useState('');
+  const [rpeEditing, setRpeEditing] = useState<string | null>(null);
+  const [rpeTypeDraft, setRpeTypeDraft] = useState('');
+  const [rpeApfDraft, setRpeApfDraft] = useState('');
+  const [rpeFitDraft, setRpeFitDraft] = useState('');
+
+  function startRpeEdit(c: ControlRow): void {
+    setRpeEditing(c.id);
+    setRpeTypeDraft(c.rpeType ?? '');
+    setRpeApfDraft(c.rpeApf !== null ? String(c.rpeApf) : '');
+    setRpeFitDraft(
+      c.faceFitConfirmedAt !== null
+        ? new Date(c.faceFitConfirmedAt).toISOString().slice(0, 10)
+        : '',
+    );
+  }
+
+  function saveRpeEdit(c: ControlRow): void {
+    onRpeDetail(c, {
+      rpeType: rpeTypeDraft.trim() === '' ? null : rpeTypeDraft.trim(),
+      rpeApf: rpeApfDraft !== '' && Number(rpeApfDraft) >= 1 ? Number(rpeApfDraft) : null,
+      faceFitConfirmedAt: rpeFitDraft === '' ? null : new Date(`${rpeFitDraft}T00:00:00.000Z`),
+    });
+    setRpeEditing(null);
+  }
 
   return (
     <div className="rounded-md border">
@@ -849,6 +946,67 @@ function TierGroup({
                     onClick={() => setJustifying(c.id)}
                   >
                     {t('justificationNeeded')}
+                  </button>
+                ) : null
+              ) : null}
+              {tier === 'rpe' ? (
+                rpeEditing === c.id ? (
+                  <div className="flex flex-wrap items-end gap-2">
+                    <Input
+                      value={rpeTypeDraft}
+                      onChange={(e) => setRpeTypeDraft(e.target.value)}
+                      placeholder={t('rpe.typePlaceholder')}
+                      className="h-8 w-44 text-xs"
+                    />
+                    <Input
+                      type="number"
+                      min={1}
+                      value={rpeApfDraft}
+                      onChange={(e) => setRpeApfDraft(e.target.value)}
+                      placeholder={t('rpe.apfPlaceholder')}
+                      className="h-8 w-24 text-xs"
+                    />
+                    <Input
+                      type="date"
+                      value={rpeFitDraft}
+                      onChange={(e) => setRpeFitDraft(e.target.value)}
+                      aria-label={t('rpe.faceFitLabel')}
+                      className="h-8 w-40 text-xs"
+                    />
+                    <Button size="sm" onClick={() => saveRpeEdit(c)}>
+                      {t('rpe.save')}
+                    </Button>
+                  </div>
+                ) : c.rpeType !== null || c.rpeApf !== null || c.faceFitConfirmedAt !== null ? (
+                  <p className="text-xs text-muted-foreground">
+                    {[
+                      ...(c.rpeType !== null ? [c.rpeType] : []),
+                      ...(c.rpeApf !== null ? [t('rpe.apfValue', { apf: c.rpeApf })] : []),
+                      ...(c.faceFitConfirmedAt !== null
+                        ? [
+                            t('rpe.faceFitValue', {
+                              date: new Date(c.faceFitConfirmedAt).toLocaleDateString(),
+                            }),
+                          ]
+                        : []),
+                    ].join(' · ')}
+                    {editable ? (
+                      <button
+                        type="button"
+                        className="ml-2 underline-offset-2 hover:underline"
+                        onClick={() => startRpeEdit(c)}
+                      >
+                        {t('rpe.edit')}
+                      </button>
+                    ) : null}
+                  </p>
+                ) : editable ? (
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                    onClick={() => startRpeEdit(c)}
+                  >
+                    {t('rpe.addDetail')}
                   </button>
                 ) : null
               ) : null}

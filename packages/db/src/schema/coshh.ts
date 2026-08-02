@@ -76,6 +76,10 @@ export const COSHH_QUANTITY_UNITS = ['ml', 'l', 'g', 'kg', 'units'] as const;
 export type CoshhQuantityUnit = (typeof COSHH_QUANTITY_UNITS)[number];
 
 export const COSHH_ASSESSMENT_STATUSES = ['draft', 'active', 'archived'] as const;
+
+/** Standing (desk-built) vs point-of-work (at-the-task, mobile) assessments. */
+export const COSHH_ASSESSMENT_KINDS = ['standing', 'point_of_work'] as const;
+export type CoshhAssessmentKind = (typeof COSHH_ASSESSMENT_KINDS)[number];
 export type CoshhAssessmentStatus = (typeof COSHH_ASSESSMENT_STATUSES)[number];
 
 export const EXPOSURE_ROUTES = ['inhalation', 'skin', 'eyes', 'ingestion', 'injection'] as const;
@@ -309,6 +313,8 @@ export const coshhAssessments = pgTable(
     taskDescription: text('task_description').notNull(),
 
     status: text('status').notNull().default('draft').$type<CoshhAssessmentStatus>(),
+    /** Point-of-work assessments come from the mobile at-the-task flow. */
+    kind: text('kind').notNull().default('standing').$type<CoshhAssessmentKind>(),
 
     routesOfExposure: jsonb('routes_of_exposure')
       .notNull()
@@ -340,6 +346,14 @@ export const coshhAssessments = pgTable(
     lastReviewedBy: text('last_reviewed_by'),
 
     publishedAt: timestamp('published_at', { withTimezone: true, mode: 'date' }),
+    /** Assessor sign-off: who attested "suitable and sufficient" on publish. */
+    publishedBy: text('published_by'),
+    /**
+     * Stamped on EVERY publish (publishedAt keeps the first). An active
+     * assessment whose updatedAt is later than this has changed since the
+     * crew last saw it — the UI prompts a republish + re-share (C-15).
+     */
+    lastPublishedAt: timestamp('last_published_at', { withTimezone: true, mode: 'date' }),
     archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'date' }),
 
     createdBy: text('created_by').notNull(),
@@ -379,6 +393,12 @@ export const coshhAssessmentControls = pgTable(
      * exposure control relying on PPE must be justified.
      */
     ppeJustification: text('ppe_justification'),
+
+    // ── RPE detail (meaningful when tier = 'rpe') — type, assigned
+    // protection factor, and the wearer face-fit evidence date.
+    rpeType: text('rpe_type'),
+    rpeApf: integer('rpe_apf'),
+    faceFitConfirmedAt: timestamp('face_fit_confirmed_at', { withTimezone: true, mode: 'date' }),
 
     /** Set when a planned control generated an action at publish. */
     actionId: varchar('action_id', { length: 26 }),
@@ -492,6 +512,51 @@ export const coshhLevTests = pgTable(
 export type CoshhLevTest = typeof coshhLevTests.$inferSelect;
 export type NewCoshhLevTest = typeof coshhLevTests.$inferInsert;
 
+/**
+ * Health surveillance register (COSHH Reg 11). One row per person per
+ * substance: who is under surveillance, on what recall interval, when
+ * they were last seen and when they are next due. Rows are ended (not
+ * deleted) so the record survives — surveillance records carry a
+ * 40-year retention duty.
+ */
+export const coshhHealthSurveillance = pgTable(
+  'coshh_health_surveillance',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    substanceId: varchar('substance_id', { length: 26 })
+      .notNull()
+      .references(() => coshhSubstances.id, { onDelete: 'cascade' }),
+
+    userId: text('user_id').notNull(),
+
+    /** Recall cadence. 12 months is the common default for LFTs/skin checks. */
+    intervalMonths: integer('interval_months').notNull().default(12),
+    startedAt: timestamp('started_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+    lastCheckAt: timestamp('last_check_at', { withTimezone: true, mode: 'date' }),
+    nextDueAt: timestamp('next_due_at', { withTimezone: true, mode: 'date' }).notNull(),
+    notes: text('notes').notNull().default(''),
+    /** Set when the person leaves surveillance; the row is never deleted. */
+    endedAt: timestamp('ended_at', { withTimezone: true, mode: 'date' }),
+
+    createdBy: text('created_by').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    index('coshh_surveillance_substance_idx').on(table.substanceId),
+    index('coshh_surveillance_tenant_due_idx').on(table.tenantId, table.nextDueAt),
+  ],
+);
+
+export type CoshhHealthSurveillance = typeof coshhHealthSurveillance.$inferSelect;
+export type NewCoshhHealthSurveillance = typeof coshhHealthSurveillance.$inferInsert;
+
 export const COSHH_EVENT_ENTITY_TYPES = ['substance', 'assessment', 'lev_unit'] as const;
 export type CoshhEventEntityType = (typeof COSHH_EVENT_ENTITY_TYPES)[number];
 
@@ -512,6 +577,9 @@ export const COSHH_EVENT_KINDS = [
   'monitoring_recorded',
   'lev_test_recorded',
   'substitution_updated',
+  'surveillance_enrolled',
+  'surveillance_check_recorded',
+  'surveillance_ended',
 ] as const;
 export type CoshhEventKind = (typeof COSHH_EVENT_KINDS)[number];
 

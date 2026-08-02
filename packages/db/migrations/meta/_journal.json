@@ -397,8 +397,22 @@
     {
       "idx": 56,
       "version": "7",
-      "when": 1780000031000,
-      "tag": "0056_risk_assessment_governance",
+      "when": 1780000040000,
+      "tag": "0056_coshh_surveillance_signoff",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1780000050000,
+      "tag": "0057_coshh_pow_versioning",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1780000033000,
+      "tag": "0058_risk_assessment_governance",
       "breakpoints": true
     }
   ]

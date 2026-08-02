@@ -4328,7 +4328,25 @@
         "drafting": "起草中…",
         "summaryError": "无法起草摘要,请重试。",
         "summaryDrafted": "草稿已就绪——请审阅并保存。"
-      }
+      },
+      "signOff": {
+        "title": "评估人签署",
+        "statement": "本人确认这是对所述作业风险的适当且充分的评估，所列控制措施已（或将）落实。",
+        "hint": "您的姓名和日期将随本次发布一并记录。",
+        "confirm": "签署并发布",
+        "cancel": "取消"
+      },
+      "rpe": {
+        "typePlaceholder": "呼吸防护类型（如 FFP3、半面罩 A2P3）",
+        "apfPlaceholder": "APF",
+        "faceFitLabel": "密合度测试已确认",
+        "apfValue": "APF {apf}",
+        "faceFitValue": "密合度测试 {date}",
+        "edit": "编辑",
+        "addDetail": "添加呼吸防护详情（类型 / APF / 密合度）",
+        "save": "保存"
+      },
+      "staleBanner": "该评估在上次发布后已更改 — 请重新发布并再次分享，让班组看到最新版本。"
     },
     "lev": {
       "title": "局部排风台账(LEV)",
@@ -4373,6 +4391,70 @@
       "defectsLabel": "发现的缺陷",
       "failHint": "检测不合格的装置将停用,直至修复并恢复使用。",
       "testSaveButton": "保存检测"
+    },
+    "exportCsv": "导出台账 (CSV)",
+    "surveillance": {
+      "sectionTitle": "健康监护",
+      "hint": "COSHH 第11条 — 谁在接受该物质的健康监护、复查间隔及下次日期。记录只会结束，不会删除。",
+      "suggestedBanner": "该物质的分类（致癌/致突变/致敏）通常需要健康监护 — 目前尚无人登记。",
+      "empty": "没有人在接受该物质的监护。",
+      "enrollButton": "登记人员",
+      "dialogTitle": "登记健康监护",
+      "person": "人员",
+      "interval": "间隔",
+      "intervalLabel": "复查间隔（月）",
+      "intervalMonths": "{count} 个月",
+      "lastCheck": "上次检查",
+      "nextDue": "下次到期",
+      "due": "到期",
+      "dueChip": "监护到期",
+      "recordCheck": "记录检查",
+      "endButton": "结束",
+      "endConfirm": "结束此人的监护？记录将保留。",
+      "ended": "已结束",
+      "enrolling": "登记中…",
+      "enrollSubmit": "登记",
+      "enrolledToast": "已登记健康监护。",
+      "alreadyEnrolled": "已在该物质的监护名单中。",
+      "checkToast": "已记录检查，下次到期日已更新。"
+    },
+    "share": {
+      "button": "通过 Heads Up 分享",
+      "description": "请阅读物质记录及附件中的安全数据表："
+    },
+    "powButton": "作业点",
+    "kinds": {
+      "standing": "常规",
+      "point_of_work": "作业点"
+    },
+    "staleChip": "发布后已更改",
+    "pow": {
+      "title": "作业点检查",
+      "pickHint": "选择即将使用的产品。",
+      "searchPlaceholder": "搜索物质…",
+      "noResults": "未找到物质。",
+      "changeSubstance": "更换",
+      "sdsLink": "查看安全数据表",
+      "noSds": "未登记安全数据表 — 请在物质记录中附上。",
+      "cmrBlocked": "该物质为致癌/致突变物且尚未考虑替代 — 请先记录替代决定。",
+      "cmrBlockedLink": "打开物质",
+      "taskLabel": "今日作业",
+      "taskPlaceholder": "例如：切割100块砌块，机房B，无供水",
+      "routesLabel": "接触途径",
+      "controlsTitle": "今日已落实的控制措施",
+      "controlsCarriedHint": "沿用自最近一次评估 — 今日不具备的请取消勾选。",
+      "controlsEmptyHint": "暂无先前评估 — 请添加已落实的控制措施。",
+      "removeAdded": "移除",
+      "tierLabel": "控制层级",
+      "addControlPlaceholder": "添加其他控制措施…",
+      "addButton": "添加",
+      "justificationLabel": "仅呼吸防护/PPE — 需要说明理由",
+      "publishing": "发布中…",
+      "signPublishButton": "签署并发布",
+      "doneTitle": "检查已发布",
+      "doneRef": "{ref} — {name}",
+      "openButton": "打开评估",
+      "newCheckButton": "新的检查"
     }
   }
 }

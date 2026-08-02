@@ -4328,7 +4328,25 @@
         "drafting": "Pisanie…",
         "summaryError": "Nie udało się napisać streszczenia. Spróbuj ponownie.",
         "summaryDrafted": "Szkic gotowy — przejrzyj i zapisz."
-      }
+      },
+      "signOff": {
+        "title": "Podpis oceniającego",
+        "statement": "Potwierdzam, że jest to odpowiednia i wystarczająca ocena ryzyka opisanego zadania, a wskazane środki kontroli są (lub będą) wdrożone.",
+        "hint": "Imię, nazwisko i data zostaną zapisane przy tej publikacji.",
+        "confirm": "Podpisz i opublikuj",
+        "cancel": "Anuluj"
+      },
+      "rpe": {
+        "typePlaceholder": "Typ ochrony dróg oddechowych (np. FFP3, półmaska A2P3)",
+        "apfPlaceholder": "APF",
+        "faceFitLabel": "Dopasowanie potwierdzone",
+        "apfValue": "APF {apf}",
+        "faceFitValue": "Test dopasowania {date}",
+        "edit": "Edytuj",
+        "addDetail": "Dodaj szczegóły ODO (typ / APF / dopasowanie)",
+        "save": "Zapisz"
+      },
+      "staleBanner": "Ta ocena zmieniła się od ostatniej publikacji — opublikuj i udostępnij ponownie, aby zespół widział aktualną wersję."
     },
     "lev": {
       "title": "Rejestr wentylacji (LEV)",
@@ -4373,6 +4391,70 @@
       "defectsLabel": "Stwierdzone usterki",
       "failHint": "Negatywny wynik wyłącza instalację z użytku do czasu naprawy i przywrócenia.",
       "testSaveButton": "Zapisz badanie"
+    },
+    "exportCsv": "Eksportuj rejestr (CSV)",
+    "surveillance": {
+      "sectionTitle": "Nadzór zdrowotny",
+      "hint": "COSHH Reg 11 — kto podlega nadzorowi dla tej substancji, z jakim interwałem i kiedy następny termin. Wpisy są zamykane, nigdy nie usuwane.",
+      "suggestedBanner": "Klasyfikacja tej substancji (rakotwórcza / mutagenna / uczulająca) zwykle wymaga nadzoru zdrowotnego — nikt nie jest jeszcze zapisany.",
+      "empty": "Nikt nie podlega nadzorowi dla tej substancji.",
+      "enrollButton": "Zapisz osobę",
+      "dialogTitle": "Zapisz do nadzoru zdrowotnego",
+      "person": "Osoba",
+      "interval": "Interwał",
+      "intervalLabel": "Kontrola co (miesięcy)",
+      "intervalMonths": "{count} mies.",
+      "lastCheck": "Ostatnia kontrola",
+      "nextDue": "Następny termin",
+      "due": "Po terminie",
+      "dueChip": "Nadzór po terminie",
+      "recordCheck": "Zarejestruj kontrolę",
+      "endButton": "Zakończ",
+      "endConfirm": "Zakończyć nadzór dla tej osoby? Wpis zostanie zachowany.",
+      "ended": "Zakończony",
+      "enrolling": "Zapisywanie…",
+      "enrollSubmit": "Zapisz",
+      "enrolledToast": "Zapisano do nadzoru zdrowotnego.",
+      "alreadyEnrolled": "Już podlega nadzorowi dla tej substancji.",
+      "checkToast": "Kontrolę zarejestrowano — zaktualizowano następny termin."
+    },
+    "share": {
+      "button": "Udostępnij przez Heads Up",
+      "description": "Proszę zapoznać się z kartą substancji i załączoną kartą charakterystyki:"
+    },
+    "powButton": "Na stanowisku",
+    "kinds": {
+      "standing": "Stała",
+      "point_of_work": "Na stanowisku"
+    },
+    "staleChip": "Zmieniona po publikacji",
+    "pow": {
+      "title": "Kontrola na stanowisku",
+      "pickHint": "Wybierz produkt, którego zaraz użyjesz.",
+      "searchPlaceholder": "Szukaj substancji…",
+      "noResults": "Nie znaleziono substancji.",
+      "changeSubstance": "Zmień",
+      "sdsLink": "Zobacz kartę charakterystyki",
+      "noSds": "Brak karty charakterystyki — załącz ją z karty substancji.",
+      "cmrBlocked": "Substancja rakotwórcza/mutagenna, a substytucja nie została jeszcze rozważona — najpierw zapisz decyzję o substytucji.",
+      "cmrBlockedLink": "Otwórz substancję",
+      "taskLabel": "Dzisiejsze zadanie",
+      "taskPlaceholder": "np. Cięcie 100 bloczków, pomieszczenie B, brak wody",
+      "routesLabel": "Drogi narażenia",
+      "controlsTitle": "Środki obecne dzisiaj",
+      "controlsCarriedHint": "Przeniesione z ostatniej oceny — odznacz to, czego dziś nie ma.",
+      "controlsEmptyHint": "Brak wcześniejszej oceny — dodaj obecne środki.",
+      "removeAdded": "Usuń",
+      "tierLabel": "Poziom środka",
+      "addControlPlaceholder": "Dodaj kolejny środek…",
+      "addButton": "Dodaj",
+      "justificationLabel": "Tylko ODO/ŚOI — wymagane uzasadnienie",
+      "publishing": "Publikowanie…",
+      "signPublishButton": "Podpisz i opublikuj",
+      "doneTitle": "Kontrola opublikowana",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Otwórz ocenę",
+      "newCheckButton": "Nowa kontrola"
     }
   }
 }

@@ -4328,7 +4328,25 @@
         "drafting": "A redigir…",
         "summaryError": "Não foi possível redigir o resumo. Tente novamente.",
         "summaryDrafted": "Rascunho pronto — reveja e guarde."
-      }
+      },
+      "signOff": {
+        "title": "Assinatura do avaliador",
+        "statement": "Confirmo que esta é uma avaliação adequada e suficiente dos riscos da tarefa descrita e que os controles indicados estão (ou estarão) implementados.",
+        "hint": "Seu nome e a data ficam registrados nesta publicação.",
+        "confirm": "Assinar e publicar",
+        "cancel": "Cancelar"
+      },
+      "rpe": {
+        "typePlaceholder": "Tipo de EPR (ex.: FFP3, semimáscara A2P3)",
+        "apfPlaceholder": "FPA",
+        "faceFitLabel": "Teste de vedação confirmado",
+        "apfValue": "FPA {apf}",
+        "faceFitValue": "Vedação {date}",
+        "edit": "Editar",
+        "addDetail": "Adicionar detalhes de EPR (tipo / FPA / vedação)",
+        "save": "Salvar"
+      },
+      "staleBanner": "Esta avaliação mudou desde a última publicação — republique e compartilhe novamente para a equipe ver a versão atual."
     },
     "lev": {
       "title": "Registo de exaustão (LEV)",
@@ -4373,6 +4391,70 @@
       "defectsLabel": "Defeitos encontrados",
       "failHint": "Um ensaio reprovado deixa o equipamento fora de serviço até ser reparado e reposto.",
       "testSaveButton": "Guardar ensaio"
+    },
+    "exportCsv": "Exportar registro (CSV)",
+    "surveillance": {
+      "sectionTitle": "Vigilância da saúde",
+      "hint": "COSHH Reg 11 — quem está sob vigilância para esta substância, o intervalo e a próxima data. Os registros são encerrados, nunca excluídos.",
+      "suggestedBanner": "A classificação desta substância (carcinogênica / mutagênica / sensibilizante) normalmente exige vigilância da saúde — ninguém está inscrito ainda.",
+      "empty": "Ninguém está sob vigilância para esta substância.",
+      "enrollButton": "Inscrever pessoa",
+      "dialogTitle": "Inscrever na vigilância da saúde",
+      "person": "Pessoa",
+      "interval": "Intervalo",
+      "intervalLabel": "Revisão a cada (meses)",
+      "intervalMonths": "{count} m",
+      "lastCheck": "Último exame",
+      "nextDue": "Próximo",
+      "due": "Vencido",
+      "dueChip": "Vigilância vencida",
+      "recordCheck": "Registrar exame",
+      "endButton": "Encerrar",
+      "endConfirm": "Encerrar a vigilância desta pessoa? O registro é mantido.",
+      "ended": "Encerrada",
+      "enrolling": "Inscrevendo…",
+      "enrollSubmit": "Inscrever",
+      "enrolledToast": "Inscrito na vigilância da saúde.",
+      "alreadyEnrolled": "Já está sob vigilância para esta substância.",
+      "checkToast": "Exame registrado — próxima data atualizada."
+    },
+    "share": {
+      "button": "Compartilhar via Heads Up",
+      "description": "Leia o registro da substância e a ficha de segurança anexa:"
+    },
+    "powButton": "No posto",
+    "kinds": {
+      "standing": "Permanente",
+      "point_of_work": "No posto"
+    },
+    "staleChip": "Alterada após publicar",
+    "pow": {
+      "title": "Verificação no posto",
+      "pickHint": "Escolha o produto que vai usar.",
+      "searchPlaceholder": "Buscar substâncias…",
+      "noResults": "Nenhuma substância encontrada.",
+      "changeSubstance": "Trocar",
+      "sdsLink": "Ver ficha de segurança",
+      "noSds": "Sem ficha de segurança registrada — anexe pelo registro da substância.",
+      "cmrBlocked": "Substância carcinogênica/mutagênica e a substituição ainda não foi avaliada — registre primeiro a decisão de substituição.",
+      "cmrBlockedLink": "Abrir substância",
+      "taskLabel": "Tarefa de hoje",
+      "taskPlaceholder": "ex.: Cortar 100 blocos, sala B, sem água disponível",
+      "routesLabel": "Vias de exposição",
+      "controlsTitle": "Controles presentes hoje",
+      "controlsCarriedHint": "Trazidos da última avaliação — desmarque o que não estiver presente hoje.",
+      "controlsEmptyHint": "Sem avaliação anterior — adicione os controles presentes.",
+      "removeAdded": "Remover",
+      "tierLabel": "Nível de controle",
+      "addControlPlaceholder": "Adicionar outro controle…",
+      "addButton": "Adicionar",
+      "justificationLabel": "Somente EPR/EPI — justificativa obrigatória",
+      "publishing": "Publicando…",
+      "signPublishButton": "Assinar e publicar",
+      "doneTitle": "Verificação publicada",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Abrir avaliação",
+      "newCheckButton": "Nova verificação"
     }
   }
 }

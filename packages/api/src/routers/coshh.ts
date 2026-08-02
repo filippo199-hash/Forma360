@@ -37,6 +37,7 @@
  */
 import {
   actions,
+  COSHH_ASSESSMENT_KINDS,
   COSHH_CONTROL_STATUSES,
   COSHH_CONTROL_TIERS,
   COSHH_EXPOSED_GROUP_PRESETS,
@@ -45,6 +46,7 @@ import {
   coshhAssessments,
   coshhEvents,
   coshhExposureMonitoring,
+  coshhHealthSurveillance,
   coshhLevTests,
   coshhLevUnits,
   coshhSdsDocuments,
@@ -59,6 +61,7 @@ import {
   SAMPLE_TYPES,
   sites,
   SUBSTITUTION_STATUSES,
+  user,
   type CoshhEventEntityType,
   type CoshhEventKind,
   type CoshhSdsDocument,
@@ -85,7 +88,7 @@ import {
 } from '@forma360/shared/coshh';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, asc, desc, eq, inArray, isNotNull, lte, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, isNull, lte, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
 import { requirePermission, tenantProcedure } from '../procedures';
@@ -297,6 +300,12 @@ const controlInput = z.object({
   description: z.string().min(1).max(1000),
   status: z.enum(COSHH_CONTROL_STATUSES).default('in_place'),
   ppeJustification: z.string().max(1000).nullable().optional(),
+  // RPE detail (C-8): respirator type, assigned protection factor, and
+  // when the wearer's face-fit was last confirmed. Meaningful for
+  // tier='rpe'; stored as given.
+  rpeType: z.string().max(200).nullable().optional(),
+  rpeApf: z.number().int().min(1).max(10_000).nullable().optional(),
+  faceFitConfirmedAt: z.coerce.date().nullable().optional(),
 });
 
 export function createCoshhRouter(deps: CoshhRouterDeps) {
@@ -352,41 +361,52 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         const ids = rows.map((r) => r.id);
         if (ids.length === 0) return [];
 
-        const [locationRows, sdsRows, assessmentRows, exceedRows] = await Promise.all([
-          ctx.db
-            .select({
-              substanceId: coshhSubstanceLocations.substanceId,
-              siteId: coshhSubstanceLocations.siteId,
-            })
-            .from(coshhSubstanceLocations)
-            .where(inArray(coshhSubstanceLocations.substanceId, ids)),
-          ctx.db
-            .select()
-            .from(coshhSdsDocuments)
-            .where(
-              and(
-                inArray(coshhSdsDocuments.substanceId, ids),
-                eq(coshhSdsDocuments.isCurrent, true),
+        const [locationRows, sdsRows, assessmentRows, exceedRows, surveillanceDueRows] =
+          await Promise.all([
+            ctx.db
+              .select({
+                substanceId: coshhSubstanceLocations.substanceId,
+                siteId: coshhSubstanceLocations.siteId,
+              })
+              .from(coshhSubstanceLocations)
+              .where(inArray(coshhSubstanceLocations.substanceId, ids)),
+            ctx.db
+              .select()
+              .from(coshhSdsDocuments)
+              .where(
+                and(
+                  inArray(coshhSdsDocuments.substanceId, ids),
+                  eq(coshhSdsDocuments.isCurrent, true),
+                ),
               ),
-            ),
-          ctx.db
-            .select({
-              substanceId: coshhAssessments.substanceId,
-              status: coshhAssessments.status,
-              nextReviewAt: coshhAssessments.nextReviewAt,
-            })
-            .from(coshhAssessments)
-            .where(inArray(coshhAssessments.substanceId, ids)),
-          ctx.db
-            .select({ substanceId: coshhExposureMonitoring.substanceId })
-            .from(coshhExposureMonitoring)
-            .where(
-              and(
-                inArray(coshhExposureMonitoring.substanceId, ids),
-                eq(coshhExposureMonitoring.exceedsWel, true),
+            ctx.db
+              .select({
+                substanceId: coshhAssessments.substanceId,
+                status: coshhAssessments.status,
+                nextReviewAt: coshhAssessments.nextReviewAt,
+              })
+              .from(coshhAssessments)
+              .where(inArray(coshhAssessments.substanceId, ids)),
+            ctx.db
+              .select({ substanceId: coshhExposureMonitoring.substanceId })
+              .from(coshhExposureMonitoring)
+              .where(
+                and(
+                  inArray(coshhExposureMonitoring.substanceId, ids),
+                  eq(coshhExposureMonitoring.exceedsWel, true),
+                ),
               ),
-            ),
-        ]);
+            ctx.db
+              .select({ substanceId: coshhHealthSurveillance.substanceId })
+              .from(coshhHealthSurveillance)
+              .where(
+                and(
+                  inArray(coshhHealthSurveillance.substanceId, ids),
+                  isNull(coshhHealthSurveillance.endedAt),
+                  lte(coshhHealthSurveillance.nextDueAt, new Date()),
+                ),
+              ),
+          ]);
 
         const siteNames = await siteNamesById(
           ctx.db,
@@ -422,6 +442,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
               (a) => a.nextReviewAt !== null && a.nextReviewAt <= now,
             ),
             hasWelExceedance: exceedRows.some((e) => e.substanceId === r.id),
+            surveillanceDue: surveillanceDueRows.some((s) => s.substanceId === r.id),
             substitutionPriority: substitutionPriority(
               flags,
               r.hStatements.map((h) => h.code),
@@ -1013,6 +1034,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         z.object({
           substanceId: z.string().length(26),
           taskDescription: z.string().min(1).max(2000),
+          kind: z.enum(COSHH_ASSESSMENT_KINDS).default('standing'),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -1030,6 +1052,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           substanceId: substance.id,
           referenceNumber,
           taskDescription: input.taskDescription,
+          kind: input.kind,
           assessorUserId: ctx.auth.userId,
           reviewFrequencyMonths: DEFAULT_ASSESSMENT_REVIEW_MONTHS,
           nextReviewAt: addMonths(new Date(), DEFAULT_ASSESSMENT_REVIEW_MONTHS),
@@ -1105,7 +1128,16 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           description: input.description,
           status: input.status,
           ppeJustification: input.ppeJustification ?? null,
+          rpeType: input.rpeType ?? null,
+          rpeApf: input.rpeApf ?? null,
+          faceFitConfirmedAt: input.faceFitConfirmedAt ?? null,
         });
+        // Content changed — moves updatedAt past lastPublishedAt so the
+        // "changed since publish" prompt fires on active assessments.
+        await ctx.db
+          .update(coshhAssessments)
+          .set({ updatedAt: new Date() })
+          .where(eq(coshhAssessments.id, assessment.id));
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'assessment',
@@ -1148,8 +1180,17 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             ...(input.ppeJustification !== undefined
               ? { ppeJustification: input.ppeJustification }
               : {}),
+            ...(input.rpeType !== undefined ? { rpeType: input.rpeType } : {}),
+            ...(input.rpeApf !== undefined ? { rpeApf: input.rpeApf } : {}),
+            ...(input.faceFitConfirmedAt !== undefined
+              ? { faceFitConfirmedAt: input.faceFitConfirmedAt }
+              : {}),
           })
           .where(eq(coshhAssessmentControls.id, control.id));
+        await ctx.db
+          .update(coshhAssessments)
+          .set({ updatedAt: new Date() })
+          .where(eq(coshhAssessments.id, control.assessmentId));
         return { ok: true };
       }),
 
@@ -1173,6 +1214,10 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         await ctx.db
           .delete(coshhAssessmentControls)
           .where(eq(coshhAssessmentControls.id, control.id));
+        await ctx.db
+          .update(coshhAssessments)
+          .set({ updatedAt: new Date() })
+          .where(eq(coshhAssessments.id, control.assessmentId));
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'assessment',
@@ -1273,12 +1318,18 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
               .where(eq(coshhAssessmentControls.id, control.id));
             createdActionIds.push(actionId);
           }
+          const now = new Date();
           await tx
             .update(coshhAssessments)
             .set({
               status: 'active',
-              publishedAt: assessment.publishedAt ?? new Date(),
-              updatedAt: new Date(),
+              publishedAt: assessment.publishedAt ?? now,
+              // Assessor sign-off (C-21): every publish stamps who attested.
+              publishedBy: ctx.auth.userId,
+              // Every publish (incl. republish) — the reference point for
+              // "changed since publish" (C-15).
+              lastPublishedAt: now,
+              updatedAt: now,
             })
             .where(eq(coshhAssessments.id, assessment.id));
         });
@@ -1620,6 +1671,170 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
       }),
   });
 
+  /**
+   * Health surveillance register (COSHH Reg 11 — C-11/C-19). Enrol the
+   * exposed person against the substance, keep the recall date, record
+   * each check. Rows end, never delete: the record must survive.
+   */
+  const surveillance = router({
+    list: tenantProcedure
+      .use(requirePermission('coshh.view'))
+      .input(z.object({ substanceId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const substance = await loadSubstance(ctx.db, ctx.tenantId, input.substanceId);
+        const rows = await ctx.db
+          .select({
+            id: coshhHealthSurveillance.id,
+            userId: coshhHealthSurveillance.userId,
+            userName: user.name,
+            intervalMonths: coshhHealthSurveillance.intervalMonths,
+            startedAt: coshhHealthSurveillance.startedAt,
+            lastCheckAt: coshhHealthSurveillance.lastCheckAt,
+            nextDueAt: coshhHealthSurveillance.nextDueAt,
+            notes: coshhHealthSurveillance.notes,
+            endedAt: coshhHealthSurveillance.endedAt,
+          })
+          .from(coshhHealthSurveillance)
+          .leftJoin(user, eq(user.id, coshhHealthSurveillance.userId))
+          .where(eq(coshhHealthSurveillance.substanceId, substance.id))
+          .orderBy(asc(coshhHealthSurveillance.nextDueAt));
+        const now = new Date();
+        return rows.map((r) => ({
+          ...r,
+          due: r.endedAt === null && r.nextDueAt <= now,
+        }));
+      }),
+
+    enroll: tenantProcedure
+      .use(requirePermission('coshh.manage'))
+      .input(
+        z.object({
+          substanceId: z.string().length(26),
+          userId: z.string().min(1),
+          intervalMonths: z.number().int().min(1).max(60).default(12),
+          notes: z.string().max(1000).default(''),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const substance = await loadSubstance(ctx.db, ctx.tenantId, input.substanceId);
+        // One live enrolment per person per substance.
+        const existing = await ctx.db
+          .select({ id: coshhHealthSurveillance.id })
+          .from(coshhHealthSurveillance)
+          .where(
+            and(
+              eq(coshhHealthSurveillance.substanceId, substance.id),
+              eq(coshhHealthSurveillance.userId, input.userId),
+              isNull(coshhHealthSurveillance.endedAt),
+            ),
+          )
+          .limit(1);
+        if (existing[0] !== undefined) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'already-enrolled' });
+        }
+        const id = newId();
+        const nextDueAt = new Date();
+        nextDueAt.setMonth(nextDueAt.getMonth() + input.intervalMonths);
+        await ctx.db.insert(coshhHealthSurveillance).values({
+          id,
+          tenantId: ctx.tenantId,
+          substanceId: substance.id,
+          userId: input.userId,
+          intervalMonths: input.intervalMonths,
+          nextDueAt,
+          notes: input.notes,
+          createdBy: ctx.auth.userId,
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'substance',
+          entityId: substance.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'surveillance_enrolled',
+          detail: input.userId,
+        });
+        return { enrolmentId: id };
+      }),
+
+    recordCheck: tenantProcedure
+      .use(requirePermission('coshh.manage'))
+      .input(
+        z.object({
+          enrolmentId: z.string().length(26),
+          checkedAt: z.coerce.date().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const rows = await ctx.db
+          .select()
+          .from(coshhHealthSurveillance)
+          .where(
+            and(
+              eq(coshhHealthSurveillance.id, input.enrolmentId),
+              eq(coshhHealthSurveillance.tenantId, ctx.tenantId),
+            ),
+          )
+          .limit(1);
+        const enrolment = rows[0];
+        if (enrolment === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (enrolment.endedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'ended' });
+        }
+        const checkedAt = input.checkedAt ?? new Date();
+        const nextDueAt = new Date(checkedAt);
+        nextDueAt.setMonth(nextDueAt.getMonth() + enrolment.intervalMonths);
+        await ctx.db
+          .update(coshhHealthSurveillance)
+          .set({ lastCheckAt: checkedAt, nextDueAt })
+          .where(eq(coshhHealthSurveillance.id, enrolment.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'substance',
+          entityId: enrolment.substanceId,
+          actorUserId: ctx.auth.userId,
+          kind: 'surveillance_check_recorded',
+          detail: enrolment.userId,
+        });
+        return { ok: true, nextDueAt };
+      }),
+
+    end: tenantProcedure
+      .use(requirePermission('coshh.manage'))
+      .input(z.object({ enrolmentId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const rows = await ctx.db
+          .select()
+          .from(coshhHealthSurveillance)
+          .where(
+            and(
+              eq(coshhHealthSurveillance.id, input.enrolmentId),
+              eq(coshhHealthSurveillance.tenantId, ctx.tenantId),
+            ),
+          )
+          .limit(1);
+        const enrolment = rows[0];
+        if (enrolment === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (enrolment.endedAt !== null) return { ok: true };
+        await ctx.db
+          .update(coshhHealthSurveillance)
+          .set({ endedAt: new Date() })
+          .where(eq(coshhHealthSurveillance.id, enrolment.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'substance',
+          entityId: enrolment.substanceId,
+          actorUserId: ctx.auth.userId,
+          kind: 'surveillance_ended',
+          detail: enrolment.userId,
+        });
+        return { ok: true };
+      }),
+  });
+
   return router({
     /** Enum vocabulary for the UI — chips, selects and hierarchy prompts. */
     presets: tenantProcedure.use(requirePermission('coshh.view')).query(() => {
@@ -1763,5 +1978,6 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
     assessments,
     monitoring,
     lev,
+    surveillance,
   });
 }

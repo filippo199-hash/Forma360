@@ -1035,4 +1035,5 @@ describe('riskAssessments router', () => {
     parent = await caller.riskAssessments.get({ assessmentId });
     expect(parent.linkedVariants[0]?.driftsFromParent).toBe(true);
   });
+
 });

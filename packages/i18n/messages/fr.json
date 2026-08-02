@@ -4335,7 +4335,25 @@
         "drafting": "Rédaction…",
         "summaryError": "Impossible de rédiger le résumé. Réessayez.",
         "summaryDrafted": "Brouillon prêt — relisez et enregistrez."
-      }
+      },
+      "signOff": {
+        "title": "Signature de l’évaluateur",
+        "statement": "Je confirme qu’il s’agit d’une évaluation appropriée et suffisante des risques de la tâche décrite et que les mesures indiquées sont (ou seront) en place.",
+        "hint": "Votre nom et la date sont enregistrés avec cette publication.",
+        "confirm": "Signer et publier",
+        "cancel": "Annuler"
+      },
+      "rpe": {
+        "typePlaceholder": "Type d’APR (ex. FFP3, demi-masque A2P3)",
+        "apfPlaceholder": "FPA",
+        "faceFitLabel": "Essai d’ajustement confirmé",
+        "apfValue": "FPA {apf}",
+        "faceFitValue": "Ajustement {date}",
+        "edit": "Modifier",
+        "addDetail": "Ajouter le détail APR (type / FPA / ajustement)",
+        "save": "Enregistrer"
+      },
+      "staleBanner": "Cette évaluation a changé depuis sa dernière publication — republiez et repartagez pour que l’équipe voie la version en vigueur."
     },
     "lev": {
       "title": "Registre d’aspiration (LEV)",
@@ -4380,6 +4398,70 @@
       "defectsLabel": "Défauts constatés",
       "failHint": "Un contrôle non conforme met l’équipement hors service jusqu’à réparation et remise en service.",
       "testSaveButton": "Enregistrer le contrôle"
+    },
+    "exportCsv": "Exporter le registre (CSV)",
+    "surveillance": {
+      "sectionTitle": "Surveillance médicale",
+      "hint": "COSHH Reg 11 — qui est sous surveillance pour cette substance, sa périodicité et sa prochaine échéance. Les dossiers sont clôturés, jamais supprimés.",
+      "suggestedBanner": "La classification de cette substance (cancérogène / mutagène / sensibilisant) exige généralement une surveillance médicale — personne n’est encore inscrit.",
+      "empty": "Personne n’est sous surveillance pour cette substance.",
+      "enrollButton": "Inscrire une personne",
+      "dialogTitle": "Inscrire à la surveillance médicale",
+      "person": "Personne",
+      "interval": "Périodicité",
+      "intervalLabel": "Rappel tous les (mois)",
+      "intervalMonths": "{count} mois",
+      "lastCheck": "Dernier examen",
+      "nextDue": "Prochaine échéance",
+      "due": "À faire",
+      "dueChip": "Surveillance due",
+      "recordCheck": "Consigner un examen",
+      "endButton": "Clôturer",
+      "endConfirm": "Clôturer la surveillance de cette personne ? Le dossier est conservé.",
+      "ended": "Clôturée",
+      "enrolling": "Inscription…",
+      "enrollSubmit": "Inscrire",
+      "enrolledToast": "Inscrit à la surveillance médicale.",
+      "alreadyEnrolled": "Déjà sous surveillance pour cette substance.",
+      "checkToast": "Examen consigné — prochaine échéance mise à jour."
+    },
+    "share": {
+      "button": "Partager via Heads Up",
+      "description": "Veuillez lire la fiche de la substance et la fiche de données de sécurité jointe :"
+    },
+    "powButton": "Au poste",
+    "kinds": {
+      "standing": "Permanente",
+      "point_of_work": "Au poste"
+    },
+    "staleChip": "Modifiée depuis publication",
+    "pow": {
+      "title": "Contrôle au poste",
+      "pickHint": "Choisissez le produit que vous allez utiliser.",
+      "searchPlaceholder": "Rechercher des substances…",
+      "noResults": "Aucune substance trouvée.",
+      "changeSubstance": "Changer",
+      "sdsLink": "Voir la fiche de données de sécurité",
+      "noSds": "Aucune FDS enregistrée — joignez-la depuis la fiche substance.",
+      "cmrBlocked": "Substance cancérogène/mutagène et substitution non encore étudiée — enregistrez d’abord la décision de substitution.",
+      "cmrBlockedLink": "Ouvrir la substance",
+      "taskLabel": "Tâche du jour",
+      "taskPlaceholder": "ex. Couper 100 blocs, local B, pas d’eau disponible",
+      "routesLabel": "Voies d’exposition",
+      "controlsTitle": "Mesures en place aujourd’hui",
+      "controlsCarriedHint": "Reprises de la dernière évaluation — décochez ce qui n’est pas en place aujourd’hui.",
+      "controlsEmptyHint": "Aucune évaluation antérieure — ajoutez les mesures en place.",
+      "removeAdded": "Retirer",
+      "tierLabel": "Niveau de maîtrise",
+      "addControlPlaceholder": "Ajouter une autre mesure…",
+      "addButton": "Ajouter",
+      "justificationLabel": "APR/EPI uniquement — justification requise",
+      "publishing": "Publication…",
+      "signPublishButton": "Signer et publier",
+      "doneTitle": "Contrôle publié",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Ouvrir l’évaluation",
+      "newCheckButton": "Nouveau contrôle"
     }
   }
 }

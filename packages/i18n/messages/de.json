@@ -4335,7 +4335,25 @@
         "drafting": "Entwirft…",
         "summaryError": "Kurzfassung konnte nicht entworfen werden. Bitte erneut versuchen.",
         "summaryDrafted": "Entwurf fertig — prüfen und speichern."
-      }
+      },
+      "signOff": {
+        "title": "Freigabe durch Beurteiler",
+        "statement": "Ich bestätige, dass dies eine geeignete und ausreichende Beurteilung der Risiken der beschriebenen Tätigkeit ist und die genannten Maßnahmen umgesetzt sind (oder werden).",
+        "hint": "Name und Datum werden zu dieser Veröffentlichung gespeichert.",
+        "confirm": "Signieren und veröffentlichen",
+        "cancel": "Abbrechen"
+      },
+      "rpe": {
+        "typePlaceholder": "Atemschutztyp (z. B. FFP3, Halbmaske A2P3)",
+        "apfPlaceholder": "APF",
+        "faceFitLabel": "Dichtsitzprüfung bestätigt",
+        "apfValue": "APF {apf}",
+        "faceFitValue": "Dichtsitz {date}",
+        "edit": "Bearbeiten",
+        "addDetail": "Atemschutz-Details ergänzen (Typ / APF / Dichtsitz)",
+        "save": "Speichern"
+      },
+      "staleBanner": "Diese Beurteilung wurde seit der letzten Veröffentlichung geändert — erneut veröffentlichen und teilen, damit das Team die aktuelle Fassung sieht."
     },
     "lev": {
       "title": "Absauganlagen (LEV)",
@@ -4380,6 +4398,70 @@
       "defectsLabel": "Festgestellte Mängel",
       "failHint": "Eine nicht bestandene Prüfung setzt die Anlage außer Betrieb, bis sie instand gesetzt ist.",
       "testSaveButton": "Prüfung speichern"
+    },
+    "exportCsv": "Verzeichnis exportieren (CSV)",
+    "surveillance": {
+      "sectionTitle": "Gesundheitsüberwachung",
+      "hint": "COSHH Reg 11 — wer für diesen Stoff überwacht wird, Wiedervorlage-Intervall und nächster Termin. Einträge werden beendet, nie gelöscht.",
+      "suggestedBanner": "Die Einstufung dieses Stoffes (karzinogen / mutagen / sensibilisierend) erfordert in der Regel Gesundheitsüberwachung — noch niemand ist erfasst.",
+      "empty": "Niemand steht für diesen Stoff unter Überwachung.",
+      "enrollButton": "Person erfassen",
+      "dialogTitle": "In Gesundheitsüberwachung aufnehmen",
+      "person": "Person",
+      "interval": "Intervall",
+      "intervalLabel": "Wiedervorlage alle (Monate)",
+      "intervalMonths": "{count} Mon.",
+      "lastCheck": "Letzte Untersuchung",
+      "nextDue": "Nächste fällig",
+      "due": "Fällig",
+      "dueChip": "Überwachung fällig",
+      "recordCheck": "Untersuchung erfassen",
+      "endButton": "Beenden",
+      "endConfirm": "Überwachung für diese Person beenden? Der Eintrag bleibt erhalten.",
+      "ended": "Beendet",
+      "enrolling": "Wird erfasst…",
+      "enrollSubmit": "Aufnehmen",
+      "enrolledToast": "In Gesundheitsüberwachung aufgenommen.",
+      "alreadyEnrolled": "Bereits für diesen Stoff unter Überwachung.",
+      "checkToast": "Untersuchung erfasst — nächster Termin aktualisiert."
+    },
+    "share": {
+      "button": "Über Heads Up teilen",
+      "description": "Bitte den Stoffeintrag und das beigefügte Sicherheitsdatenblatt lesen:"
+    },
+    "powButton": "Vor Ort",
+    "kinds": {
+      "standing": "Regulär",
+      "point_of_work": "Vor Ort"
+    },
+    "staleChip": "Seit Veröffentlichung geändert",
+    "pow": {
+      "title": "Vor-Ort-Prüfung",
+      "pickHint": "Produkt auswählen, das gleich verwendet wird.",
+      "searchPlaceholder": "Stoffe suchen…",
+      "noResults": "Keine Stoffe gefunden.",
+      "changeSubstance": "Ändern",
+      "sdsLink": "Sicherheitsdatenblatt ansehen",
+      "noSds": "Kein Sicherheitsdatenblatt hinterlegt — im Stoffeintrag anhängen.",
+      "cmrBlocked": "Dieser Stoff ist karzinogen/mutagen und die Substitution wurde noch nicht geprüft — zuerst die Substitutionsentscheidung erfassen.",
+      "cmrBlockedLink": "Stoff öffnen",
+      "taskLabel": "Heutige Tätigkeit",
+      "taskPlaceholder": "z. B. 100 Steine schneiden, Technikraum B, kein Wasser verfügbar",
+      "routesLabel": "Expositionswege",
+      "controlsTitle": "Heute vorhandene Maßnahmen",
+      "controlsCarriedHint": "Aus der letzten Beurteilung übernommen — abwählen, was heute nicht vorhanden ist.",
+      "controlsEmptyHint": "Keine frühere Beurteilung vorhanden — Maßnahmen hinzufügen.",
+      "removeAdded": "Entfernen",
+      "tierLabel": "Maßnahmenstufe",
+      "addControlPlaceholder": "Weitere Maßnahme hinzufügen…",
+      "addButton": "Hinzufügen",
+      "justificationLabel": "Nur Atemschutz/PSA — Begründung erforderlich",
+      "publishing": "Wird veröffentlicht…",
+      "signPublishButton": "Signieren & veröffentlichen",
+      "doneTitle": "Prüfung veröffentlicht",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Beurteilung öffnen",
+      "newCheckButton": "Neue Prüfung"
     }
   }
 }

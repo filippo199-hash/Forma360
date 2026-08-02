@@ -597,7 +597,6 @@ export default function RiskAssessmentDetailPage() {
             {t('personSpecific.parentLink', { title: parentInfo.title })}
           </Link>
         ) : null}
-
         <div>
           <h2 className="text-base font-semibold">{t('hazards.sectionTitle')}</h2>
           <p className="max-w-3xl text-xs text-muted-foreground">{t('hazards.sectionHint')}</p>
