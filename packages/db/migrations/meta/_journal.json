@@ -421,6 +421,13 @@
       "when": 1780000070000,
       "tag": "0059_permits",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1780000080000,
+      "tag": "0060_permits_hse_hardening",
+      "breakpoints": true
     }
   ]
 }
