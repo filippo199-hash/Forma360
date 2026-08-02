@@ -4768,7 +4768,8 @@
       "empty": "No open permits. Nothing high-risk is authorised right now.",
       "noSite": "No site assigned",
       "reference": "Ref",
-      "acceptor": "Acceptor"
+      "acceptor": "Acceptor",
+      "insideCount": "{count, plural, one {# inside} other {# inside}}"
     },
     "new": {
       "back": "Permits",
@@ -4789,7 +4790,10 @@
         "validTo": "Valid to",
         "acceptor": "Acceptor",
         "acceptorPlaceholder": "Name the person accepting the permit…",
-        "acceptorHint": "The person in charge of the work. They must digitally accept the permit before work starts."
+        "acceptorHint": "The person in charge of the work. They must digitally accept the permit before work starts.",
+        "riskAssessment": "Risk assessment",
+        "riskAssessmentPlaceholder": "Link the task risk assessment…",
+        "riskAssessmentHint": "The permit should point at the safe system of work it operates under."
       },
       "maxDuration": "Maximum duration {hours} h",
       "willRequire": "Before issue this type requires:",
@@ -4797,7 +4801,8 @@
         "authoriser": "authorising signature",
         "gasTesting": "gas test results",
         "isolationCertificate": "isolation certificate",
-        "rescuePlan": "rescue plan"
+        "rescuePlan": "rescue plan",
+        "riskAssessment": "linked risk assessment"
       },
       "preconditionCount": "{count, plural, one {# precondition to confirm before issue} other {# preconditions to confirm before issue}}",
       "conflictWarning": "{count, plural, one {# other permit is open at this site in this window} other {# other permits are open at this site in this window}}",
@@ -4847,7 +4852,13 @@
           "rescue_plan": "Rescue plan",
           "gas_test": "Gas test",
           "other": "Other"
-        }
+        },
+        "acceptableRanges": "Acceptable:",
+        "freshness": "readings older than {minutes} min don't count",
+        "withinLimits": "within limits",
+        "outOfLimits": "OUT OF LIMITS",
+        "measuredAgainst": "Measured against",
+        "freeReading": "Free reading (no limit)"
       },
       "signatures": {
         "title": "Signatures",
@@ -4888,7 +4899,13 @@
         "closeConfirm": "Close permit",
         "cancel": "Cancel permit",
         "cancelReason": "Why is the permit being cancelled?",
-        "cancelConfirm": "Cancel permit"
+        "cancelConfirm": "Cancel permit",
+        "resumeTitle": "Resume work — confirm it is safe",
+        "resumeReasonRecap": "Suspended because: {reason}",
+        "resumeGasNote": "This permit type requires a fresh in-range gas test taken after the suspension before it can resume.",
+        "resumeAttestation": "I confirm the reason for suspension is resolved and conditions are safe for work to resume.",
+        "resumeConfirm": "Resume permit",
+        "extendConflicts": "{count, plural, one {# open permit overlaps the extended window} other {# open permits overlap the extended window}}"
       },
       "closedLine": "Closed by {name} on {time}.",
       "cancelledLine": "Cancelled by {name} on {time}.",
@@ -4910,8 +4927,45 @@
           "handed_over": "Handed over",
           "cancelled": "Cancelled",
           "closed": "Closed",
-          "expiry_escalated": "Expiry escalated — permit passed its validity without closure"
+          "expiry_escalated": "Expiry escalated — permit passed its validity without closure",
+          "expiry_warning": "Expiry warning sent",
+          "worker_added": "Person added",
+          "worker_removed": "Person removed",
+          "entry_logged": "Entered",
+          "exit_logged": "Exited"
         }
+      },
+      "downloadPdf": "Download PDF",
+      "ssow": {
+        "title": "Safe system of work",
+        "requiredBeforeIssue": "risk assessment required before issue",
+        "riskAssessment": "Risk assessment",
+        "methodStatement": "Method statement",
+        "none": "Not linked"
+      },
+      "workers": {
+        "title": "People under this permit",
+        "insideCount": "{count, plural, one {# inside now} other {# inside now}}",
+        "empty": "Nobody listed yet — record the gang working under this permit.",
+        "nameLabel": "Name",
+        "namePlaceholder": "Person's name…",
+        "roleLabel": "Role",
+        "roles": {
+          "supervisor": "Supervisor",
+          "worker": "Worker",
+          "entrant": "Entrant",
+          "standby": "Standby / rescue"
+        },
+        "add": "Add person",
+        "remove": "Remove person",
+        "logEntry": "Log entry",
+        "logExit": "Log exit",
+        "inSince": "in since {time}",
+        "adhocEntryLabel": "Log someone not on the list",
+        "logTitle": "Entry / exit log",
+        "entered": "entered {time}",
+        "exited": "exited {time}",
+        "stillIn": "STILL IN"
       }
     },
     "types": {
@@ -4927,7 +4981,8 @@
         "requiresAuthoriser": "Authorising signature required",
         "requiresGasTesting": "Gas testing required",
         "requiresIsolationCertificate": "Isolation certificate required",
-        "requiresRescuePlan": "Rescue plan required"
+        "requiresRescuePlan": "Rescue plan required",
+        "requiresRiskAssessment": "Linked risk assessment required"
       },
       "maxDuration": "Maximum validity",
       "hours": "hours",
@@ -4938,7 +4993,17 @@
       "createTitle": "Add a custom permit type",
       "createHint": "For activities outside the nine standard types. Configure its requirements after creating it.",
       "createNamePlaceholder": "e.g. Diving operations",
-      "createButton": "Add type"
+      "createButton": "Add type",
+      "gasLimits": "Gas limits — the gate evaluates readings against these",
+      "noGasLimits": "No limits configured — the gate only checks a reading exists.",
+      "removeGasLimit": "Remove limit",
+      "gasLimitLabelPlaceholder": "e.g. Oxygen (O₂)…",
+      "gasLimitUnit": "Unit",
+      "gasLimitMin": "Min",
+      "gasLimitMax": "Max",
+      "addGasLimit": "Add limit",
+      "gasFreshness": "Gas test freshness",
+      "gasFreshnessUnit": "minutes"
     },
     "errors": {
       "module-disabled": "This module is not available.",
@@ -4972,7 +5037,24 @@
       "same-acceptor": "That person already holds the permit.",
       "not-allowed": "You do not have permission to do that.",
       "closure-checks-incomplete": "All four close-out checks must be confirmed to close the permit.",
-      "generic": "Something went wrong. Check the form and try again."
+      "generic": "Something went wrong. Check the form and try again.",
+      "gas-test-out-of-range": "The latest gas reading is outside the acceptable range — the atmosphere is not safe.",
+      "gas-test-stale": "The latest gas reading is too old — take a fresh test.",
+      "unknown-gas-limit": "That gas limit no longer exists on the permit type.",
+      "gas-unit-mismatch": "The reading's unit must match the limit's unit.",
+      "risk-assessment-required": "Link the task risk assessment before issuing this permit type.",
+      "unknown-risk-assessment": "That risk assessment does not exist.",
+      "unknown-document": "That document does not exist.",
+      "extension-in-past": "The new expiry must be in the future — an extension ending in the past extends nothing.",
+      "acceptor-is-authoriser": "The authorising engineer cannot become the acceptor of the permit they authorised.",
+      "site-scope": "This permit belongs to a site whose team you are not part of.",
+      "entrants-still-inside": "The entry log still shows people inside — log their exits before closing.",
+      "unknown-worker": "That person is not on the permit's list.",
+      "name-required": "Give the person's name to log the entry.",
+      "entry-log-full": "The entry log is full for this permit.",
+      "unknown-entry": "That entry-log row does not exist.",
+      "already-exited": "That person has already been logged out.",
+      "render-unavailable": "PDF rendering is not available in this environment."
     }
   }
 }

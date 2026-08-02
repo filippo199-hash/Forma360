@@ -4573,7 +4573,8 @@
       "empty": "Nessun permesso aperto. Nessuna attività ad alto rischio è autorizzata adesso.",
       "noSite": "Nessun sito assegnato",
       "reference": "Rif.",
-      "acceptor": "Accettante"
+      "acceptor": "Accettante",
+      "insideCount": "{count, plural, one {# all'interno} other {# all'interno}}"
     },
     "new": {
       "back": "Permessi",
@@ -4594,7 +4595,10 @@
         "validTo": "Valido fino al",
         "acceptor": "Accettante",
         "acceptorPlaceholder": "Indica la persona che accetta il permesso…",
-        "acceptorHint": "La persona responsabile del lavoro. Deve accettare digitalmente il permesso prima dell'inizio."
+        "acceptorHint": "La persona responsabile del lavoro. Deve accettare digitalmente il permesso prima dell'inizio.",
+        "riskAssessment": "Valutazione dei rischi",
+        "riskAssessmentPlaceholder": "Collega la valutazione dei rischi dell'attività…",
+        "riskAssessmentHint": "Il permesso deve puntare al sistema sicuro di lavoro sotto cui opera."
       },
       "maxDuration": "Durata massima {hours} h",
       "willRequire": "Prima dell'emissione questo tipo richiede:",
@@ -4602,7 +4606,8 @@
         "authoriser": "firma autorizzativa",
         "gasTesting": "risultati delle misurazioni gas",
         "isolationCertificate": "certificato di isolamento",
-        "rescuePlan": "piano di soccorso"
+        "rescuePlan": "piano di soccorso",
+        "riskAssessment": "valutazione dei rischi collegata"
       },
       "preconditionCount": "{count, plural, one {# precondizione da confermare prima dell'emissione} other {# precondizioni da confermare prima dell'emissione}}",
       "conflictWarning": "{count, plural, one {# altro permesso è aperto in questo sito in questa fascia} other {# altri permessi sono aperti in questo sito in questa fascia}}",
@@ -4652,7 +4657,13 @@
           "rescue_plan": "Piano di soccorso",
           "gas_test": "Misurazione gas",
           "other": "Altro"
-        }
+        },
+        "acceptableRanges": "Accettabile:",
+        "freshness": "le letture più vecchie di {minutes} min non contano",
+        "withinLimits": "entro i limiti",
+        "outOfLimits": "FUORI LIMITE",
+        "measuredAgainst": "Misurato rispetto a",
+        "freeReading": "Lettura libera (senza limite)"
       },
       "signatures": {
         "title": "Firme",
@@ -4693,7 +4704,13 @@
         "closeConfirm": "Chiudi permesso",
         "cancel": "Annulla permesso",
         "cancelReason": "Perché il permesso viene annullato?",
-        "cancelConfirm": "Annulla permesso"
+        "cancelConfirm": "Annulla permesso",
+        "resumeTitle": "Riprendi il lavoro — conferma che è sicuro",
+        "resumeReasonRecap": "Sospeso per: {reason}",
+        "resumeGasNote": "Questo tipo di permesso richiede una nuova misurazione gas entro i limiti, eseguita dopo la sospensione, prima di riprendere.",
+        "resumeAttestation": "Confermo che la causa della sospensione è risolta e le condizioni sono sicure per riprendere.",
+        "resumeConfirm": "Riprendi permesso",
+        "extendConflicts": "{count, plural, one {# permesso aperto si sovrappone alla finestra prorogata} other {# permessi aperti si sovrappongono alla finestra prorogata}}"
       },
       "closedLine": "Chiuso da {name} il {time}.",
       "cancelledLine": "Annullato da {name} il {time}.",
@@ -4715,8 +4732,45 @@
           "handed_over": "Passato in consegna",
           "cancelled": "Annullato",
           "closed": "Chiuso",
-          "expiry_escalated": "Scadenza segnalata — permesso scaduto senza chiusura"
+          "expiry_escalated": "Scadenza segnalata — permesso scaduto senza chiusura",
+          "expiry_warning": "Avviso di scadenza inviato",
+          "worker_added": "Persona aggiunta",
+          "worker_removed": "Persona rimossa",
+          "entry_logged": "Ingresso registrato",
+          "exit_logged": "Uscita registrata"
         }
+      },
+      "downloadPdf": "Scarica PDF",
+      "ssow": {
+        "title": "Sistema sicuro di lavoro",
+        "requiredBeforeIssue": "valutazione dei rischi richiesta prima dell'emissione",
+        "riskAssessment": "Valutazione dei rischi",
+        "methodStatement": "Procedura di lavoro",
+        "none": "Non collegato"
+      },
+      "workers": {
+        "title": "Persone sotto questo permesso",
+        "insideCount": "{count, plural, one {# all'interno ora} other {# all'interno ora}}",
+        "empty": "Nessuno registrato — registra la squadra che lavora sotto questo permesso.",
+        "nameLabel": "Nome",
+        "namePlaceholder": "Nome della persona…",
+        "roleLabel": "Ruolo",
+        "roles": {
+          "supervisor": "Supervisore",
+          "worker": "Operatore",
+          "entrant": "Entrante",
+          "standby": "Sorvegliante / soccorso"
+        },
+        "add": "Aggiungi persona",
+        "remove": "Rimuovi persona",
+        "logEntry": "Registra ingresso",
+        "logExit": "Registra uscita",
+        "inSince": "all'interno da {time}",
+        "adhocEntryLabel": "Registra una persona fuori elenco",
+        "logTitle": "Registro ingressi/uscite",
+        "entered": "entrato {time}",
+        "exited": "uscito {time}",
+        "stillIn": "ANCORA DENTRO"
       }
     },
     "types": {
@@ -4732,7 +4786,8 @@
         "requiresAuthoriser": "Firma autorizzativa richiesta",
         "requiresGasTesting": "Misurazione gas richiesta",
         "requiresIsolationCertificate": "Certificato di isolamento richiesto",
-        "requiresRescuePlan": "Piano di soccorso richiesto"
+        "requiresRescuePlan": "Piano di soccorso richiesto",
+        "requiresRiskAssessment": "Valutazione dei rischi collegata richiesta"
       },
       "maxDuration": "Validità massima",
       "hours": "ore",
@@ -4743,7 +4798,17 @@
       "createTitle": "Aggiungi un tipo di permesso personalizzato",
       "createHint": "Per attività fuori dai nove tipi standard. Configura i requisiti dopo la creazione.",
       "createNamePlaceholder": "es. Operazioni subacquee",
-      "createButton": "Aggiungi tipo"
+      "createButton": "Aggiungi tipo",
+      "gasLimits": "Limiti gas — il controllo valuta le letture rispetto a questi",
+      "noGasLimits": "Nessun limite configurato — si verifica solo che esista una lettura.",
+      "removeGasLimit": "Rimuovi limite",
+      "gasLimitLabelPlaceholder": "es. Ossigeno (O₂)…",
+      "gasLimitUnit": "Unità",
+      "gasLimitMin": "Min",
+      "gasLimitMax": "Max",
+      "addGasLimit": "Aggiungi limite",
+      "gasFreshness": "Validità della misurazione gas",
+      "gasFreshnessUnit": "minuti"
     },
     "errors": {
       "module-disabled": "Questo modulo non è disponibile.",
@@ -4777,7 +4842,24 @@
       "same-acceptor": "Quella persona ha già in carico il permesso.",
       "not-allowed": "Non hai il permesso di farlo.",
       "closure-checks-incomplete": "Tutte e quattro le verifiche di chiusura vanno confermate.",
-      "generic": "Qualcosa è andato storto. Controlla il modulo e riprova."
+      "generic": "Qualcosa è andato storto. Controlla il modulo e riprova.",
+      "gas-test-out-of-range": "L'ultima misurazione gas è fuori dall'intervallo accettabile — l'atmosfera non è sicura.",
+      "gas-test-stale": "L'ultima misurazione gas è troppo vecchia — esegui un nuovo test.",
+      "unknown-gas-limit": "Quel limite gas non esiste più sul tipo di permesso.",
+      "gas-unit-mismatch": "L'unità della lettura deve corrispondere a quella del limite.",
+      "risk-assessment-required": "Collega la valutazione dei rischi prima di emettere questo tipo di permesso.",
+      "unknown-risk-assessment": "Quella valutazione dei rischi non esiste.",
+      "unknown-document": "Quel documento non esiste.",
+      "extension-in-past": "La nuova scadenza deve essere nel futuro — una proroga che finisce nel passato non proroga nulla.",
+      "acceptor-is-authoriser": "L'ingegnere autorizzante non può diventare accettante del permesso che ha autorizzato.",
+      "site-scope": "Questo permesso appartiene a un sito del cui team non fai parte.",
+      "entrants-still-inside": "Il registro mostra ancora persone all'interno — registra le uscite prima di chiudere.",
+      "unknown-worker": "Quella persona non è nell'elenco del permesso.",
+      "name-required": "Indica il nome della persona per registrare l'ingresso.",
+      "entry-log-full": "Il registro ingressi di questo permesso è pieno.",
+      "unknown-entry": "Quella riga del registro non esiste.",
+      "already-exited": "L'uscita di quella persona è già stata registrata.",
+      "render-unavailable": "La generazione PDF non è disponibile in questo ambiente."
     }
   }
 }

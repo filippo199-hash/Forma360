@@ -4531,7 +4531,8 @@
       "empty": "Geen openstaande vergunningen. Er is nu geen risicovol werk geautoriseerd.",
       "noSite": "Geen locatie toegewezen",
       "reference": "Ref.",
-      "acceptor": "Acceptant"
+      "acceptor": "Acceptant",
+      "insideCount": "{count, plural, one {# binnen} other {# binnen}}"
     },
     "new": {
       "back": "Vergunningen",
@@ -4552,7 +4553,10 @@
         "validTo": "Geldig tot",
         "acceptor": "Acceptant",
         "acceptorPlaceholder": "Wijs de persoon aan die de vergunning accepteert…",
-        "acceptorHint": "De persoon die verantwoordelijk is voor het werk. Die moet de vergunning digitaal accepteren vóór het werk begint."
+        "acceptorHint": "De persoon die verantwoordelijk is voor het werk. Die moet de vergunning digitaal accepteren vóór het werk begint.",
+        "riskAssessment": "Risicobeoordeling",
+        "riskAssessmentPlaceholder": "Koppel de risicobeoordeling van de taak…",
+        "riskAssessmentHint": "De vergunning hoort te verwijzen naar de veilige werkwijze waaronder ze valt."
       },
       "maxDuration": "Maximale duur {hours} u",
       "willRequire": "Vóór uitgifte vereist dit type:",
@@ -4560,7 +4564,8 @@
         "authoriser": "autoriserende handtekening",
         "gasTesting": "gasmeetresultaten",
         "isolationCertificate": "veiligstellingscertificaat",
-        "rescuePlan": "reddingsplan"
+        "rescuePlan": "reddingsplan",
+        "riskAssessment": "gekoppelde risicobeoordeling"
       },
       "preconditionCount": "{count, plural, one {# voorwaarde te bevestigen vóór uitgifte} other {# voorwaarden te bevestigen vóór uitgifte}}",
       "conflictWarning": "{count, plural, one {# andere vergunning staat open op deze locatie in dit tijdvak} other {# andere vergunningen staan open op deze locatie in dit tijdvak}}",
@@ -4610,7 +4615,13 @@
           "rescue_plan": "Reddingsplan",
           "gas_test": "Gasmeting",
           "other": "Overig"
-        }
+        },
+        "acceptableRanges": "Aanvaardbaar:",
+        "freshness": "metingen ouder dan {minutes} min tellen niet",
+        "withinLimits": "binnen de grenzen",
+        "outOfLimits": "BUITEN DE GRENZEN",
+        "measuredAgainst": "Gemeten tegen",
+        "freeReading": "Vrije meting (geen grens)"
       },
       "signatures": {
         "title": "Handtekeningen",
@@ -4651,7 +4662,13 @@
         "closeConfirm": "Vergunning afsluiten",
         "cancel": "Vergunning annuleren",
         "cancelReason": "Waarom wordt de vergunning geannuleerd?",
-        "cancelConfirm": "Vergunning annuleren"
+        "cancelConfirm": "Vergunning annuleren",
+        "resumeTitle": "Werk hervatten — bevestig dat het veilig is",
+        "resumeReasonRecap": "Opgeschort wegens: {reason}",
+        "resumeGasNote": "Dit vergunningstype vereist vóór hervatting een nieuwe gasmeting binnen de grenzen, uitgevoerd ná de opschorting.",
+        "resumeAttestation": "Ik bevestig dat de reden van opschorting is opgelost en dat de omstandigheden veilig zijn om te hervatten.",
+        "resumeConfirm": "Vergunning hervatten",
+        "extendConflicts": "{count, plural, one {# openstaande vergunning overlapt het verlengde venster} other {# openstaande vergunningen overlappen het verlengde venster}}"
       },
       "closedLine": "Afgesloten door {name} op {time}.",
       "cancelledLine": "Geannuleerd door {name} op {time}.",
@@ -4673,8 +4690,45 @@
           "handed_over": "Overgedragen",
           "cancelled": "Geannuleerd",
           "closed": "Afgesloten",
-          "expiry_escalated": "Verloop geëscaleerd — vergunning verlopen zonder afsluiting"
+          "expiry_escalated": "Verloop geëscaleerd — vergunning verlopen zonder afsluiting",
+          "expiry_warning": "Verloopwaarschuwing verzonden",
+          "worker_added": "Persoon toegevoegd",
+          "worker_removed": "Persoon verwijderd",
+          "entry_logged": "Betreden",
+          "exit_logged": "Verlaten"
         }
+      },
+      "downloadPdf": "Pdf downloaden",
+      "ssow": {
+        "title": "Veilige werkwijze",
+        "requiredBeforeIssue": "risicobeoordeling vereist vóór uitgifte",
+        "riskAssessment": "Risicobeoordeling",
+        "methodStatement": "Werkmethodebeschrijving",
+        "none": "Niet gekoppeld"
+      },
+      "workers": {
+        "title": "Personen onder deze vergunning",
+        "insideCount": "{count, plural, one {# nu binnen} other {# nu binnen}}",
+        "empty": "Nog niemand vermeld — leg de ploeg vast die onder deze vergunning werkt.",
+        "nameLabel": "Naam",
+        "namePlaceholder": "Naam van de persoon…",
+        "roleLabel": "Rol",
+        "roles": {
+          "supervisor": "Toezichthouder",
+          "worker": "Medewerker",
+          "entrant": "Betreder",
+          "standby": "Mangatwacht / redding"
+        },
+        "add": "Persoon toevoegen",
+        "remove": "Persoon verwijderen",
+        "logEntry": "Betreding vastleggen",
+        "logExit": "Verlaten vastleggen",
+        "inSince": "binnen sinds {time}",
+        "adhocEntryLabel": "Iemand buiten de lijst vastleggen",
+        "logTitle": "Betreed-/verlaatlogboek",
+        "entered": "binnen {time}",
+        "exited": "buiten {time}",
+        "stillIn": "NOG BINNEN"
       }
     },
     "types": {
@@ -4690,7 +4744,8 @@
         "requiresAuthoriser": "Autoriserende handtekening vereist",
         "requiresGasTesting": "Gasmeting vereist",
         "requiresIsolationCertificate": "Veiligstellingscertificaat vereist",
-        "requiresRescuePlan": "Reddingsplan vereist"
+        "requiresRescuePlan": "Reddingsplan vereist",
+        "requiresRiskAssessment": "Gekoppelde risicobeoordeling vereist"
       },
       "maxDuration": "Maximale geldigheid",
       "hours": "uur",
@@ -4701,7 +4756,17 @@
       "createTitle": "Eigen vergunningstype toevoegen",
       "createHint": "Voor activiteiten buiten de negen standaardtypen. Stel de eisen in na het aanmaken.",
       "createNamePlaceholder": "bijv. Duikwerkzaamheden",
-      "createButton": "Type toevoegen"
+      "createButton": "Type toevoegen",
+      "gasLimits": "Gasgrenzen — de controle toetst metingen hieraan",
+      "noGasLimits": "Geen grenzen ingesteld — er wordt alleen gecontroleerd of er een meting is.",
+      "removeGasLimit": "Grens verwijderen",
+      "gasLimitLabelPlaceholder": "bijv. Zuurstof (O₂)…",
+      "gasLimitUnit": "Eenheid",
+      "gasLimitMin": "Min",
+      "gasLimitMax": "Max",
+      "addGasLimit": "Grens toevoegen",
+      "gasFreshness": "Versheid gasmeting",
+      "gasFreshnessUnit": "minuten"
     },
     "errors": {
       "module-disabled": "Deze module is niet beschikbaar.",
@@ -4735,7 +4800,24 @@
       "same-acceptor": "Die persoon heeft de vergunning al.",
       "not-allowed": "U hebt hier geen toestemming voor.",
       "closure-checks-incomplete": "Alle vier de afsluitcontroles moeten bevestigd worden.",
-      "generic": "Er ging iets mis. Controleer het formulier en probeer opnieuw."
+      "generic": "Er ging iets mis. Controleer het formulier en probeer opnieuw.",
+      "gas-test-out-of-range": "De laatste gasmeting valt buiten het aanvaardbare bereik — de atmosfeer is niet veilig.",
+      "gas-test-stale": "De laatste gasmeting is te oud — voer een nieuwe meting uit.",
+      "unknown-gas-limit": "Die gasgrens bestaat niet meer op het vergunningstype.",
+      "gas-unit-mismatch": "De eenheid van de meting moet overeenkomen met die van de grens.",
+      "risk-assessment-required": "Koppel de risicobeoordeling vóór uitgifte van dit vergunningstype.",
+      "unknown-risk-assessment": "Die risicobeoordeling bestaat niet.",
+      "unknown-document": "Dat document bestaat niet.",
+      "extension-in-past": "De nieuwe einddatum moet in de toekomst liggen — een verlenging die in het verleden eindigt verlengt niets.",
+      "acceptor-is-authoriser": "De autoriserend deskundige kan geen acceptant worden van de vergunning die hij autoriseerde.",
+      "site-scope": "Deze vergunning hoort bij een locatie waarvan u geen teamlid bent.",
+      "entrants-still-inside": "Het logboek toont nog personen binnen — leg hun vertrek vast vóór afsluiting.",
+      "unknown-worker": "Die persoon staat niet op de lijst van de vergunning.",
+      "name-required": "Geef de naam van de persoon op om de betreding vast te leggen.",
+      "entry-log-full": "Het logboek van deze vergunning is vol.",
+      "unknown-entry": "Die logboekregel bestaat niet.",
+      "already-exited": "Het vertrek van die persoon is al vastgelegd.",
+      "render-unavailable": "Pdf-generatie is in deze omgeving niet beschikbaar."
     }
   }
 }

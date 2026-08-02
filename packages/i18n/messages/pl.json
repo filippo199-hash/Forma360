@@ -4531,7 +4531,8 @@
       "empty": "Brak otwartych pozwoleń. Żadna praca wysokiego ryzyka nie jest teraz autoryzowana.",
       "noSite": "Brak przypisanej lokalizacji",
       "reference": "Nr",
-      "acceptor": "Przyjmujący"
+      "acceptor": "Przyjmujący",
+      "insideCount": "{count, plural, one {# w środku} few {# w środku} other {# w środku}}"
     },
     "new": {
       "back": "Pozwolenia",
@@ -4552,7 +4553,10 @@
         "validTo": "Ważne do",
         "acceptor": "Przyjmujący",
         "acceptorPlaceholder": "Wskaż osobę przyjmującą pozwolenie…",
-        "acceptorHint": "Osoba odpowiedzialna za prace. Musi cyfrowo przyjąć pozwolenie przed rozpoczęciem prac."
+        "acceptorHint": "Osoba odpowiedzialna za prace. Musi cyfrowo przyjąć pozwolenie przed rozpoczęciem prac.",
+        "riskAssessment": "Ocena ryzyka",
+        "riskAssessmentPlaceholder": "Powiąż ocenę ryzyka zadania…",
+        "riskAssessmentHint": "Pozwolenie powinno wskazywać bezpieczny system pracy, w ramach którego obowiązuje."
       },
       "maxDuration": "Maksymalny czas {hours} godz.",
       "willRequire": "Przed wydaniem ten typ wymaga:",
@@ -4560,7 +4564,8 @@
         "authoriser": "podpisu autoryzującego",
         "gasTesting": "wyników pomiarów gazów",
         "isolationCertificate": "świadectwa odłączenia",
-        "rescuePlan": "planu ratunkowego"
+        "rescuePlan": "planu ratunkowego",
+        "riskAssessment": "powiązana ocena ryzyka"
       },
       "preconditionCount": "{count, plural, one {# warunek wstępny do potwierdzenia przed wydaniem} few {# warunki wstępne do potwierdzenia przed wydaniem} other {# warunków wstępnych do potwierdzenia przed wydaniem}}",
       "conflictWarning": "{count, plural, one {# inne pozwolenie jest otwarte w tej lokalizacji w tym oknie} few {# inne pozwolenia są otwarte w tej lokalizacji w tym oknie} other {# innych pozwoleń jest otwartych w tej lokalizacji w tym oknie}}",
@@ -4610,7 +4615,13 @@
           "rescue_plan": "Plan ratunkowy",
           "gas_test": "Pomiar gazów",
           "other": "Inne"
-        }
+        },
+        "acceptableRanges": "Dopuszczalne:",
+        "freshness": "odczyty starsze niż {minutes} min nie są uznawane",
+        "withinLimits": "w granicach",
+        "outOfLimits": "POZA GRANICAMI",
+        "measuredAgainst": "Pomiar względem",
+        "freeReading": "Pomiar swobodny (bez limitu)"
       },
       "signatures": {
         "title": "Podpisy",
@@ -4651,7 +4662,13 @@
         "closeConfirm": "Zamknij pozwolenie",
         "cancel": "Anuluj pozwolenie",
         "cancelReason": "Dlaczego pozwolenie jest anulowane?",
-        "cancelConfirm": "Anuluj pozwolenie"
+        "cancelConfirm": "Anuluj pozwolenie",
+        "resumeTitle": "Wznów pracę — potwierdź bezpieczeństwo",
+        "resumeReasonRecap": "Zawieszono z powodu: {reason}",
+        "resumeGasNote": "Ten typ pozwolenia wymaga przed wznowieniem świeżego pomiaru gazów w granicach, wykonanego po zawieszeniu.",
+        "resumeAttestation": "Potwierdzam, że przyczyna zawieszenia została usunięta, a warunki pozwalają bezpiecznie wznowić pracę.",
+        "resumeConfirm": "Wznów pozwolenie",
+        "extendConflicts": "{count, plural, one {# otwarte pozwolenie nakłada się na przedłużone okno} few {# otwarte pozwolenia nakładają się na przedłużone okno} other {# otwartych pozwoleń nakłada się na przedłużone okno}}"
       },
       "closedLine": "Zamknięte przez {name} dnia {time}.",
       "cancelledLine": "Anulowane przez {name} dnia {time}.",
@@ -4673,8 +4690,45 @@
           "handed_over": "Przekazano",
           "cancelled": "Anulowano",
           "closed": "Zamknięto",
-          "expiry_escalated": "Eskalacja terminu — pozwolenie wygasło bez zamknięcia"
+          "expiry_escalated": "Eskalacja terminu — pozwolenie wygasło bez zamknięcia",
+          "expiry_warning": "Wysłano ostrzeżenie o terminie",
+          "worker_added": "Dodano osobę",
+          "worker_removed": "Usunięto osobę",
+          "entry_logged": "Odnotowano wejście",
+          "exit_logged": "Odnotowano wyjście"
         }
+      },
+      "downloadPdf": "Pobierz PDF",
+      "ssow": {
+        "title": "Bezpieczny system pracy",
+        "requiredBeforeIssue": "ocena ryzyka wymagana przed wydaniem",
+        "riskAssessment": "Ocena ryzyka",
+        "methodStatement": "Instrukcja wykonywania prac",
+        "none": "Niepowiązane"
+      },
+      "workers": {
+        "title": "Osoby objęte pozwoleniem",
+        "insideCount": "{count, plural, one {# obecnie w środku} few {# obecnie w środku} other {# obecnie w środku}}",
+        "empty": "Nikogo jeszcze nie wpisano — wpisz brygadę pracującą w ramach pozwolenia.",
+        "nameLabel": "Imię i nazwisko",
+        "namePlaceholder": "Imię i nazwisko…",
+        "roleLabel": "Rola",
+        "roles": {
+          "supervisor": "Nadzorujący",
+          "worker": "Pracownik",
+          "entrant": "Wchodzący",
+          "standby": "Asekurujący / ratownik"
+        },
+        "add": "Dodaj osobę",
+        "remove": "Usuń osobę",
+        "logEntry": "Odnotuj wejście",
+        "logExit": "Odnotuj wyjście",
+        "inSince": "w środku od {time}",
+        "adhocEntryLabel": "Odnotuj osobę spoza listy",
+        "logTitle": "Rejestr wejść i wyjść",
+        "entered": "wejście {time}",
+        "exited": "wyjście {time}",
+        "stillIn": "NADAL W ŚRODKU"
       }
     },
     "types": {
@@ -4690,7 +4744,8 @@
         "requiresAuthoriser": "Wymagany podpis autoryzujący",
         "requiresGasTesting": "Wymagany pomiar gazów",
         "requiresIsolationCertificate": "Wymagane świadectwo odłączenia",
-        "requiresRescuePlan": "Wymagany plan ratunkowy"
+        "requiresRescuePlan": "Wymagany plan ratunkowy",
+        "requiresRiskAssessment": "Wymagana powiązana ocena ryzyka"
       },
       "maxDuration": "Maksymalna ważność",
       "hours": "godz.",
@@ -4701,7 +4756,17 @@
       "createTitle": "Dodaj własny typ pozwolenia",
       "createHint": "Dla prac spoza dziewięciu standardowych typów. Skonfiguruj wymagania po utworzeniu.",
       "createNamePlaceholder": "np. Prace nurkowe",
-      "createButton": "Dodaj typ"
+      "createButton": "Dodaj typ",
+      "gasLimits": "Limity gazów — bramka ocenia odczyty względem nich",
+      "noGasLimits": "Brak limitów — sprawdzana jest tylko obecność odczytu.",
+      "removeGasLimit": "Usuń limit",
+      "gasLimitLabelPlaceholder": "np. Tlen (O₂)…",
+      "gasLimitUnit": "Jednostka",
+      "gasLimitMin": "Min",
+      "gasLimitMax": "Maks",
+      "addGasLimit": "Dodaj limit",
+      "gasFreshness": "Świeżość pomiaru gazów",
+      "gasFreshnessUnit": "minut"
     },
     "errors": {
       "module-disabled": "Ten moduł jest niedostępny.",
@@ -4735,7 +4800,24 @@
       "same-acceptor": "Ta osoba już posiada to pozwolenie.",
       "not-allowed": "Nie masz do tego uprawnień.",
       "closure-checks-incomplete": "Wszystkie cztery kontrole zamknięcia muszą być potwierdzone.",
-      "generic": "Coś poszło nie tak. Sprawdź formularz i spróbuj ponownie."
+      "generic": "Coś poszło nie tak. Sprawdź formularz i spróbuj ponownie.",
+      "gas-test-out-of-range": "Ostatni odczyt gazów jest poza dopuszczalnym zakresem — atmosfera nie jest bezpieczna.",
+      "gas-test-stale": "Ostatni odczyt gazów jest zbyt stary — wykonaj nowy pomiar.",
+      "unknown-gas-limit": "Ten limit gazu już nie istnieje w typie pozwolenia.",
+      "gas-unit-mismatch": "Jednostka odczytu musi odpowiadać jednostce limitu.",
+      "risk-assessment-required": "Powiąż ocenę ryzyka przed wydaniem tego typu pozwolenia.",
+      "unknown-risk-assessment": "Taka ocena ryzyka nie istnieje.",
+      "unknown-document": "Taki dokument nie istnieje.",
+      "extension-in-past": "Nowy termin musi być w przyszłości — przedłużenie kończące się w przeszłości niczego nie przedłuża.",
+      "acceptor-is-authoriser": "Inżynier autoryzujący nie może zostać przyjmującym pozwolenia, które autoryzował.",
+      "site-scope": "To pozwolenie należy do lokalizacji, do której zespołu nie należysz.",
+      "entrants-still-inside": "Rejestr nadal wskazuje osoby w środku — odnotuj ich wyjścia przed zamknięciem.",
+      "unknown-worker": "Tej osoby nie ma na liście pozwolenia.",
+      "name-required": "Podaj imię i nazwisko osoby, aby odnotować wejście.",
+      "entry-log-full": "Rejestr wejść tego pozwolenia jest pełny.",
+      "unknown-entry": "Taki wpis w rejestrze nie istnieje.",
+      "already-exited": "Wyjście tej osoby już odnotowano.",
+      "render-unavailable": "Generowanie PDF jest niedostępne w tym środowisku."
     }
   }
 }

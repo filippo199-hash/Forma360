@@ -4538,7 +4538,8 @@
       "empty": "Keine offenen Freigaben. Derzeit sind keine Hochrisikoarbeiten freigegeben.",
       "noSite": "Kein Standort zugewiesen",
       "reference": "Ref.",
-      "acceptor": "Annehmende Person"
+      "acceptor": "Annehmende Person",
+      "insideCount": "{count, plural, one {# drinnen} other {# drinnen}}"
     },
     "new": {
       "back": "Freigaben",
@@ -4559,7 +4560,10 @@
         "validTo": "Gültig bis",
         "acceptor": "Annehmende Person",
         "acceptorPlaceholder": "Person benennen, die die Freigabe annimmt…",
-        "acceptorHint": "Die für die Arbeit verantwortliche Person. Sie muss die Freigabe digital annehmen, bevor die Arbeit beginnt."
+        "acceptorHint": "Die für die Arbeit verantwortliche Person. Sie muss die Freigabe digital annehmen, bevor die Arbeit beginnt.",
+        "riskAssessment": "Gefährdungsbeurteilung",
+        "riskAssessmentPlaceholder": "Gefährdungsbeurteilung der Tätigkeit verknüpfen…",
+        "riskAssessmentHint": "Die Freigabe sollte auf das sichere Arbeitsverfahren verweisen, unter dem sie gilt."
       },
       "maxDuration": "Maximale Dauer {hours} Std.",
       "willRequire": "Vor der Ausstellung verlangt dieser Typ:",
@@ -4567,7 +4571,8 @@
         "authoriser": "freigebende Unterschrift",
         "gasTesting": "Gasmessergebnisse",
         "isolationCertificate": "Freischaltzertifikat",
-        "rescuePlan": "Rettungsplan"
+        "rescuePlan": "Rettungsplan",
+        "riskAssessment": "verknüpfte Gefährdungsbeurteilung"
       },
       "preconditionCount": "{count, plural, one {# Voraussetzung vor Ausstellung zu bestätigen} other {# Voraussetzungen vor Ausstellung zu bestätigen}}",
       "conflictWarning": "{count, plural, one {# weitere Freigabe ist an diesem Standort in diesem Zeitfenster offen} other {# weitere Freigaben sind an diesem Standort in diesem Zeitfenster offen}}",
@@ -4617,7 +4622,13 @@
           "rescue_plan": "Rettungsplan",
           "gas_test": "Gasmessung",
           "other": "Sonstiges"
-        }
+        },
+        "acceptableRanges": "Zulässig:",
+        "freshness": "Messwerte älter als {minutes} Min. zählen nicht",
+        "withinLimits": "im Grenzbereich",
+        "outOfLimits": "AUSSERHALB DER GRENZEN",
+        "measuredAgainst": "Gemessen gegen",
+        "freeReading": "Freie Messung (ohne Grenzwert)"
       },
       "signatures": {
         "title": "Unterschriften",
@@ -4658,7 +4669,13 @@
         "closeConfirm": "Freigabe abschließen",
         "cancel": "Freigabe stornieren",
         "cancelReason": "Warum wird die Freigabe storniert?",
-        "cancelConfirm": "Freigabe stornieren"
+        "cancelConfirm": "Freigabe stornieren",
+        "resumeTitle": "Arbeit fortsetzen — Sicherheit bestätigen",
+        "resumeReasonRecap": "Ausgesetzt wegen: {reason}",
+        "resumeGasNote": "Dieser Freigabetyp verlangt vor der Fortsetzung eine neue Gasmessung im Grenzbereich nach der Aussetzung.",
+        "resumeAttestation": "Ich bestätige, dass der Aussetzungsgrund behoben ist und die Bedingungen eine sichere Fortsetzung erlauben.",
+        "resumeConfirm": "Freigabe fortsetzen",
+        "extendConflicts": "{count, plural, one {# offene Freigabe überschneidet sich mit dem verlängerten Fenster} other {# offene Freigaben überschneiden sich mit dem verlängerten Fenster}}"
       },
       "closedLine": "Abgeschlossen von {name} am {time}.",
       "cancelledLine": "Storniert von {name} am {time}.",
@@ -4680,8 +4697,45 @@
           "handed_over": "Übergeben",
           "cancelled": "Storniert",
           "closed": "Abgeschlossen",
-          "expiry_escalated": "Ablauf eskaliert — Freigabe ohne Abschluss abgelaufen"
+          "expiry_escalated": "Ablauf eskaliert — Freigabe ohne Abschluss abgelaufen",
+          "expiry_warning": "Ablaufwarnung gesendet",
+          "worker_added": "Person hinzugefügt",
+          "worker_removed": "Person entfernt",
+          "entry_logged": "Eingestiegen",
+          "exit_logged": "Ausgestiegen"
         }
+      },
+      "downloadPdf": "PDF herunterladen",
+      "ssow": {
+        "title": "Sicheres Arbeitsverfahren",
+        "requiredBeforeIssue": "Gefährdungsbeurteilung vor Ausstellung erforderlich",
+        "riskAssessment": "Gefährdungsbeurteilung",
+        "methodStatement": "Arbeitsanweisung",
+        "none": "Nicht verknüpft"
+      },
+      "workers": {
+        "title": "Personen unter dieser Freigabe",
+        "insideCount": "{count, plural, one {# jetzt drinnen} other {# jetzt drinnen}}",
+        "empty": "Noch niemand erfasst — die unter dieser Freigabe arbeitende Kolonne erfassen.",
+        "nameLabel": "Name",
+        "namePlaceholder": "Name der Person…",
+        "roleLabel": "Rolle",
+        "roles": {
+          "supervisor": "Aufsicht",
+          "worker": "Arbeiter/in",
+          "entrant": "Einsteigende/r",
+          "standby": "Sicherungsposten"
+        },
+        "add": "Person hinzufügen",
+        "remove": "Person entfernen",
+        "logEntry": "Einstieg erfassen",
+        "logExit": "Ausstieg erfassen",
+        "inSince": "drinnen seit {time}",
+        "adhocEntryLabel": "Nicht gelistete Person erfassen",
+        "logTitle": "Ein-/Ausstiegsprotokoll",
+        "entered": "eingestiegen {time}",
+        "exited": "ausgestiegen {time}",
+        "stillIn": "NOCH DRINNEN"
       }
     },
     "types": {
@@ -4697,7 +4751,8 @@
         "requiresAuthoriser": "Freigebende Unterschrift erforderlich",
         "requiresGasTesting": "Gasmessung erforderlich",
         "requiresIsolationCertificate": "Freischaltzertifikat erforderlich",
-        "requiresRescuePlan": "Rettungsplan erforderlich"
+        "requiresRescuePlan": "Rettungsplan erforderlich",
+        "requiresRiskAssessment": "Verknüpfte Gefährdungsbeurteilung erforderlich"
       },
       "maxDuration": "Maximale Gültigkeit",
       "hours": "Stunden",
@@ -4708,7 +4763,17 @@
       "createTitle": "Eigenen Freigabetyp anlegen",
       "createHint": "Für Tätigkeiten außerhalb der neun Standardtypen. Anforderungen nach dem Anlegen konfigurieren.",
       "createNamePlaceholder": "z. B. Taucharbeiten",
-      "createButton": "Typ anlegen"
+      "createButton": "Typ anlegen",
+      "gasLimits": "Gasgrenzwerte — das Gate bewertet Messwerte dagegen",
+      "noGasLimits": "Keine Grenzwerte konfiguriert — es wird nur geprüft, ob ein Messwert vorliegt.",
+      "removeGasLimit": "Grenzwert entfernen",
+      "gasLimitLabelPlaceholder": "z. B. Sauerstoff (O₂)…",
+      "gasLimitUnit": "Einheit",
+      "gasLimitMin": "Min.",
+      "gasLimitMax": "Max.",
+      "addGasLimit": "Grenzwert hinzufügen",
+      "gasFreshness": "Aktualität der Gasmessung",
+      "gasFreshnessUnit": "Minuten"
     },
     "errors": {
       "module-disabled": "Dieses Modul ist nicht verfügbar.",
@@ -4742,7 +4807,24 @@
       "same-acceptor": "Diese Person hält die Freigabe bereits.",
       "not-allowed": "Sie haben dazu keine Berechtigung.",
       "closure-checks-incomplete": "Alle vier Abschlussprüfungen müssen bestätigt werden.",
-      "generic": "Etwas ist schiefgelaufen. Prüfen Sie das Formular und versuchen Sie es erneut."
+      "generic": "Etwas ist schiefgelaufen. Prüfen Sie das Formular und versuchen Sie es erneut.",
+      "gas-test-out-of-range": "Der letzte Gasmesswert liegt außerhalb des zulässigen Bereichs — die Atmosphäre ist nicht sicher.",
+      "gas-test-stale": "Der letzte Gasmesswert ist zu alt — neue Messung durchführen.",
+      "unknown-gas-limit": "Dieser Gasgrenzwert existiert am Freigabetyp nicht mehr.",
+      "gas-unit-mismatch": "Die Einheit des Messwerts muss zur Einheit des Grenzwerts passen.",
+      "risk-assessment-required": "Vor der Ausstellung dieses Typs die Gefährdungsbeurteilung verknüpfen.",
+      "unknown-risk-assessment": "Diese Gefährdungsbeurteilung existiert nicht.",
+      "unknown-document": "Dieses Dokument existiert nicht.",
+      "extension-in-past": "Das neue Ablaufdatum muss in der Zukunft liegen — eine Verlängerung in die Vergangenheit verlängert nichts.",
+      "acceptor-is-authoriser": "Die freigebende Fachkraft kann nicht Annehmende der von ihr freigegebenen Freigabe werden.",
+      "site-scope": "Diese Freigabe gehört zu einem Standort, zu dessen Team Sie nicht gehören.",
+      "entrants-still-inside": "Laut Protokoll sind noch Personen drinnen — vor dem Abschluss die Ausstiege erfassen.",
+      "unknown-worker": "Diese Person steht nicht auf der Liste der Freigabe.",
+      "name-required": "Für den Eintrag den Namen der Person angeben.",
+      "entry-log-full": "Das Protokoll dieser Freigabe ist voll.",
+      "unknown-entry": "Dieser Protokolleintrag existiert nicht.",
+      "already-exited": "Für diese Person wurde der Ausstieg bereits erfasst.",
+      "render-unavailable": "PDF-Erzeugung ist in dieser Umgebung nicht verfügbar."
     }
   }
 }
