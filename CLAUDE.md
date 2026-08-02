@@ -504,6 +504,7 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0008 — Rendered output strategy](./docs/adr/0008-rendered-output-strategy.md)
 - [0009 — Template content schema](./docs/adr/0009-template-content-schema.md)
 - [0010 — Multi-brand, single codebase](./docs/adr/0010-multi-brand-single-codebase.md)
+- [0011 — Risk-assessment versioning, sign-off and residual-risk coherence](./docs/adr/0011-risk-assessment-versioning-and-sign-off.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase
