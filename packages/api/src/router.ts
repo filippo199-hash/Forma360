@@ -48,6 +48,7 @@ import { siteMediaRouter } from './routers/siteMedia';
 import { sitePlansRouter } from './routers/sitePlans';
 import { contractorsRouter } from './routers/contractors';
 import { createCoshhRouter, type CoshhRouterDeps } from './routers/coshh';
+import { createPermitsRouter, type PermitsRouterDeps } from './routers/permits';
 import {
   createRiskAssessmentsRouter,
   type RiskAssessmentsRouterDeps,
@@ -83,6 +84,11 @@ export function buildAppRouter(deps: {
    * catalogue verdict explicitly.
    */
   coshh?: CoshhRouterDeps;
+  /**
+   * Brand-gated (ADR 0010), same contract as riskAssessments / coshh:
+   * omitting it DISABLES the module.
+   */
+  permits?: PermitsRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -121,6 +127,7 @@ export function buildAppRouter(deps: {
     aiAssistant: aiAssistantRouter,
     riskAssessments: createRiskAssessmentsRouter(deps.riskAssessments ?? { enabled: false }),
     coshh: createCoshhRouter(deps.coshh ?? { enabled: false }),
+    permits: createPermitsRouter(deps.permits ?? { enabled: false }),
   });
 }
 
@@ -264,6 +271,9 @@ export const stubRiskAssessmentsDeps: RiskAssessmentsRouterDeps = {
  * brand gating is tested by building the router with `enabled: false`. */
 export const stubCoshhDeps: CoshhRouterDeps = { enabled: true };
 
+/** Test-only permits deps — same contract as coshh. */
+export const stubPermitsDeps: PermitsRouterDeps = { enabled: true };
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
@@ -273,6 +283,7 @@ export const appRouter = buildAppRouter({
   headsUps: stubHeadsUpsDeps,
   riskAssessments: stubRiskAssessmentsDeps,
   coshh: stubCoshhDeps,
+  permits: stubPermitsDeps,
 });
 
 export type AppRouter = typeof appRouter;
