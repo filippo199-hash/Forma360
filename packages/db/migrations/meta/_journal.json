@@ -393,6 +393,13 @@
       "when": 1780000030000,
       "tag": "0055_coshh",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1780000031000,
+      "tag": "0056_risk_assessment_governance",
+      "breakpoints": true
     }
   ]
 }
