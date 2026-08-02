@@ -485,7 +485,19 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   `packages/shared/src/coshh.ts`, AI SDS import at
   `apps/web/src/server/coshh-ai.ts` + `/api/ai/coshh-*` routes; schema in
   `packages/db/src/schema/coshh.ts`, migration 0055; edge-case IDs CO-E01..E05
-  in `coshh.test.ts` (shared) and CO-E10..E24 (router)). Each router is built
+  in `coshh.test.ts` (shared) and CO-E10..E24 (router)) and `permits`
+  (module B3 — Permit to Work & High-Risk Activities at
+  `packages/api/src/routers/permits.ts` + `apps/web/app/[locale]/permits`
+  (register, new, detail, live board at `/permits/board`, type catalogue at
+  `/permits/types`); lifecycle state machine + nine seeded default types +
+  jsonb payload schemas in `packages/shared/src/permits.ts` (ADR 0012);
+  schema in `packages/db/src/schema/permits.ts`, migration 0059; issue gate
+  enforces preconditions / gas tests / isolation certificate / rescue plan /
+  authorising counter-signature, SIMOPs conflicts need explicit
+  acknowledgement; `forma360-permit-expiry-watch` worker escalates open
+  permits past `validTo` every 15 min; edge-case IDs PW-E01..E05 in
+  `permits.test.ts` (shared), PW-E10..E24 (router), PW-J01/J02 in
+  `permit-expiry-watch.test.ts`). Each router is built
   with `{ enabled }` from the brand catalogue; nav + API both gate on it.
 - **Everything internal stays `forma360`** (package scope, queue names,
   ESLint rule namespace, object keys). Users never see those.
@@ -505,6 +517,7 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0009 — Template content schema](./docs/adr/0009-template-content-schema.md)
 - [0010 — Multi-brand, single codebase](./docs/adr/0010-multi-brand-single-codebase.md)
 - [0011 — Risk-assessment versioning, sign-off and residual-risk coherence](./docs/adr/0011-risk-assessment-versioning-and-sign-off.md)
+- [0012 — Permit-to-work lifecycle, signature model and expiry escalation](./docs/adr/0012-permit-lifecycle-and-signature-model.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase
