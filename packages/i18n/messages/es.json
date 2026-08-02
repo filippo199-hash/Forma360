@@ -157,7 +157,8 @@
       "training": "Training",
       "integrations": "Integrations",
       "billing": "Billing",
-      "company": "Company"
+      "company": "Company",
+      "riskMatrix": "Risk matrix"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -1365,7 +1366,9 @@
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
-    "riskAssessments": "Risk assessments"
+    "riskAssessments": "Risk assessments",
+    "coshh": "COSHH",
+    "permits": "Permisos"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -3306,7 +3309,9 @@
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
       "deletePinConfirm": "Delete this pin?"
-    }
+    },
+    "treeExpand": "Expandir {name}",
+    "treeCollapse": "Contraer {name}"
   },
   "contractors": {
     "title": "Contractors",
@@ -3664,7 +3669,8 @@
       "locationPlaceholder": "Building, area or site location",
       "submit": "Create assessment",
       "submitting": "Creating…",
-      "error": "Could not create the assessment. Try again."
+      "error": "Could not create the assessment. Try again.",
+      "cancel": "Cancel"
     },
     "steps": {
       "hazards": "1 · Identify hazards",
@@ -3751,8 +3757,16 @@
         "no-hazards": "Add at least one hazard before publishing.",
         "unscored-hazards": "Every hazard needs initial and residual likelihood × severity scores.",
         "ppe-only-needs-justification": "At least one hazard relies on PPE alone — add a justification or a higher-order control.",
-        "generic": "Could not publish. Check the assessment and try again."
-      }
+        "generic": "Could not publish. Check the assessment and try again.",
+        "residual-above-initial": "A hazard's residual risk is higher than its initial risk — controls cannot increase risk.",
+        "residual-needs-controls": "A hazard has a residual score but no controls at all — record what controls the risk first.",
+        "high-residual-needs-justification": "A hazard's residual risk stays High/Critical — add a planned control or a tolerability note.",
+        "actions-need-assignees": "Every planned control needs an owner and a due date before publishing.",
+        "invalid-assignee": "One of the action owners is not an active member of this organisation.",
+        "invalid-due-date": "Action due dates cannot be in the past."
+      },
+      "publishChanges": "Publish changes (v{version})",
+      "reackToast": "Version {version} published — everyone must read and acknowledge it again."
     },
     "review": {
       "sectionTitle": "Review",
@@ -3804,7 +3818,18 @@
       "selectAll": "Select everyone",
       "shareHeadsUp": "Share via Heads Up",
       "sharingHeadsUp": "Preparando…",
-      "attachmentFailed": "No se pudo adjuntar el PDF; se comparte sin él."
+      "attachmentFailed": "No se pudo adjuntar el PDF; se comparte sin él.",
+      "sentToast": "Distributed — recipients have been notified by email.",
+      "dueBy": "due by {date}",
+      "dueDateLabel": "Acknowledgement deadline (optional)",
+      "dueDateHint": "Recipients are emailed now and chased automatically until they confirm. The deadline shows in their notification.",
+      "acknowledgedVersion": "Acknowledged v{version}",
+      "overdue": "Overdue",
+      "reackPending": "Re-acknowledgement pending",
+      "reackTitle": "Previously acknowledged version {version}",
+      "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
+      "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -3817,7 +3842,10 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "The parent assessment has changed since this variant was created — review the differences and update this variant if needed.",
+      "driftChip": "Differs from parent",
+      "driftChipTitle": "The parent assessment changed after this variant was created."
     },
     "stats": {
       "active": "Active",
@@ -3845,7 +3873,14 @@
       "actionsIntro": "Publishing will create {count} action(s) from your planned controls:",
       "actionMeta": "Assigned to you · Medium priority · Due in 7 days",
       "confirm": "Confirm and publish",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "republishNote": "This publishes version {version}. Everyone previously asked to read this assessment will be asked to read and acknowledge the new version.",
+      "reactivateNote": "No content changes since version {version} — publishing puts the same version back in force without re-opening acknowledgements.",
+      "assignmentsHint": "Each planned control becomes an action. Choose who owns it and a realistic deadline — nothing defaults to you.",
+      "assigneeLabel": "Owner",
+      "assigneePlaceholder": "Choose an owner…",
+      "dueLabel": "Due date",
+      "assignmentsIncomplete": "Assign an owner and a due date to every planned control to continue."
     },
     "titlePrompt": {
       "title": "Name this assessment before publishing",
@@ -3872,6 +3907,842 @@
         "acknowledged": "Acknowledged",
         "variant_created": "Person-specific variant created"
       }
+    },
+    "downloadPdf": "Download PDF",
+    "matrix": {
+      "selectedSummary": "L{likelihood} × S{severity} = {score} —",
+      "aboveInitial": "above initial risk — controls cannot increase risk",
+      "notSelected": "Not scored yet — click a cell.",
+      "residualNeedsControls": "Record at least one control first — residual risk is the risk with controls in place.",
+      "residualNeedsInitial": "Score the initial risk first.",
+      "residualAboveInitialWarning": "Residual risk is higher than initial risk — controls cannot increase risk. Fix one of the two scores.",
+      "residualNoteHint": "The residual risk stays High/Critical. Add a planned control (further action) or explain why this risk is tolerable.",
+      "residualNoteLabel": "Why is this residual risk tolerable?",
+      "residualNotePlaceholder": "e.g. Short-duration permitted work with fire watch in place; further reduction not reasonably practicable."
+    },
+    "versions": {
+      "sectionTitle": "Versions",
+      "hint": "Every publish freezes an immutable copy — what people acknowledged stays retrievable exactly as it was in force.",
+      "empty": "Not published yet — the first publish creates version 1.",
+      "current": "In force",
+      "view": "View",
+      "viewerTitle": "Version {version} — as in force",
+      "signOffLine": "Signed off by {name} on {date}",
+      "actionsCreated": "{count} action(s) created",
+      "unpublishedChangesBanner": "This assessment has unpublished changes — readers still see version {version} and acknowledgements still refer to it. Publish the changes to put them in force."
+    },
+    "matrixSettings": {
+      "title": "Risk matrix",
+      "subtitle": "Align the 5×5 scoring bands with your corporate standard.",
+      "thresholdsTitle": "Band thresholds",
+      "thresholdsHint": "A score (likelihood × severity, 1–25) at or below each threshold falls in that band; anything above the High threshold is Critical.",
+      "lowMaxLabel": "Low up to",
+      "mediumMaxLabel": "Medium up to",
+      "highMaxLabel": "High up to",
+      "invalidThresholds": "Thresholds must increase: Low < Medium < High < 25.",
+      "floorsTitle": "Severity overrides",
+      "floorsHint": "Force a minimum band for a severity, regardless of likelihood — e.g. any credible fatality (severity 5) is at least High.",
+      "floorLabel": "Severity {severity} minimum",
+      "floorNone": "No override",
+      "previewTitle": "Preview",
+      "applyToDrafts": "Also apply to open drafts",
+      "applyToDraftsHint": "Published versions always keep the matrix they were signed against.",
+      "historyNote": "New assessments snapshot this matrix at creation, so past records never rescore themselves.",
+      "save": "Save matrix",
+      "saving": "Saving…",
+      "saved": "Risk matrix saved.",
+      "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
+      "saveError": "Could not save the matrix. Try again."
+    }
+  },
+  "coshh": {
+    "title": "Sustancias peligrosas (COSHH)",
+    "subtitle": "Un inventario vivo de cada sustancia peligrosa del centro: su evaluación, sus controles y la exposición que genera.",
+    "newButton": "Añadir sustancia",
+    "levButton": "Registro de extracción",
+    "empty": "Aún no hay sustancias en el inventario. Suelta una ficha de datos de seguridad para añadir la primera.",
+    "emptyCta": "Añadir la primera sustancia",
+    "notFound": "No se encontró este registro.",
+    "backToList": "Volver a COSHH",
+    "saveError": "No se pudo guardar. Inténtalo de nuevo.",
+    "archivedToast": "Sustancia archivada.",
+    "archiveButton": "Archivar",
+    "archiveConfirm": "¿Archivar esta sustancia? Se ocultará del inventario.",
+    "welExceeded": "VLA superado",
+    "noAssessment": "Sin evaluación",
+    "assessmentCount": "{count, plural, one {# evaluación} other {# evaluaciones}}",
+    "reviewDue": "Revisión pendiente",
+    "viewOther": "Ver sustancia",
+    "storageConflictBanner": "Conflicto de almacenamiento en {site}: {mine} almacenado con {other} ({theirs}). Separa estos productos.",
+    "attention": {
+      "sdsMissing": "Fichas de seguridad ausentes",
+      "sdsDue": "Fichas por revisar",
+      "assessmentsDue": "Evaluaciones por revisar",
+      "levDue": "Pruebas de extracción pendientes",
+      "welExceedances": "VLA superados",
+      "storageConflicts": "Conflictos de almacenamiento"
+    },
+    "filters": {
+      "search": "Buscar",
+      "searchPlaceholder": "Nombre de la sustancia…",
+      "status": "Estado",
+      "active": "Activas",
+      "archived": "Archivadas",
+      "all": "Todas",
+      "allSites": "Todos"
+    },
+    "columns": {
+      "reference": "Ref",
+      "substance": "Sustancia",
+      "supplier": "Proveedor",
+      "hazards": "Peligros",
+      "sds": "Ficha",
+      "assessment": "Evaluación"
+    },
+    "pictograms": {
+      "GHS01": "Explosivo",
+      "GHS02": "Inflamable",
+      "GHS03": "Comburente",
+      "GHS04": "Gas a presión",
+      "GHS05": "Corrosivo",
+      "GHS06": "Toxicidad aguda",
+      "GHS07": "Nocivo / irritante",
+      "GHS08": "Peligro grave para la salud",
+      "GHS09": "Peligro para el medio ambiente"
+    },
+    "regimes": {
+      "carcinogen": "Cancerígeno",
+      "mutagen": "Mutágeno",
+      "asthmagen": "Asmágeno",
+      "biological": "Agente biológico",
+      "lead": "Plomo",
+      "asbestos": "Derivación a amianto"
+    },
+    "sds": {
+      "status": {
+        "missing": "Sin ficha",
+        "review_due": "Revisión pendiente",
+        "current": "Vigente"
+      },
+      "sectionTitle": "Fichas de datos de seguridad",
+      "empty": "Aún no hay ficha de datos de seguridad.",
+      "uploadButton": "Subir nueva versión",
+      "uploading": "Subiendo…",
+      "uploadError": "No se pudo subir la ficha.",
+      "confirmButton": "Sigue vigente",
+      "confirmedToast": "Registrado — fecha de revisión aplazada.",
+      "attachedToast": "Nueva versión de la ficha adjuntada.",
+      "attachedAppliedToast": "Nueva versión adjuntada y perfil de peligros actualizado desde la ficha.",
+      "applyExtractionLabel": "Actualizar el perfil de peligros desde la ficha",
+      "missingBanner": "No hay ficha de datos de seguridad. Sube una: el perfil de peligros se rellena solo.",
+      "dueBanner": "La ficha vigente ha alcanzado su antigüedad de revisión. Pide al proveedor una revisión más reciente o confirma que sigue vigente.",
+      "issued": "Emitida el {date}",
+      "reviewBy": "Revisar antes del {date}",
+      "currentChip": "Vigente"
+    },
+    "assessmentStatus": {
+      "draft": "Borrador",
+      "active": "Activa",
+      "archived": "Archivada"
+    },
+    "physicalForms": {
+      "liquid": "Líquido",
+      "solid": "Sólido",
+      "powder": "Polvo",
+      "gas": "Gas",
+      "aerosol": "Aerosol",
+      "fume": "Humo",
+      "mist": "Niebla",
+      "fibre": "Fibra",
+      "other": "Otro"
+    },
+    "signalWords": {
+      "danger": "Peligro",
+      "warning": "Atención"
+    },
+    "storageClasses": {
+      "flammable": "Inflamable",
+      "oxidiser": "Comburente",
+      "corrosive_acid": "Corrosivo — ácido",
+      "corrosive_base": "Corrosivo — base",
+      "toxic": "Tóxico",
+      "compressed_gas": "Gas comprimido",
+      "water_reactive": "Reactivo al agua",
+      "general": "General"
+    },
+    "routes": {
+      "inhalation": "Inhalación",
+      "skin": "Piel",
+      "eyes": "Ojos",
+      "ingestion": "Ingestión",
+      "injection": "Inyección / punción"
+    },
+    "exposedGroups": {
+      "employees": "Personal propio",
+      "cleaners": "Personal de limpieza",
+      "contractors": "Contratistas",
+      "maintenance_staff": "Mantenimiento",
+      "young_persons": "Menores",
+      "new_expectant_mothers": "Embarazadas y lactantes",
+      "visitors": "Visitantes",
+      "members_of_public": "Público"
+    },
+    "quantityBands": {
+      "small": "Pequeña (ml / g)",
+      "medium": "Media (litros / kg)",
+      "large": "Grande (granel)"
+    },
+    "frequencyBands": {
+      "rare": "Rara vez",
+      "monthly": "Mensual",
+      "weekly": "Semanal",
+      "daily": "Diaria",
+      "continuous": "Continua"
+    },
+    "durationBands": {
+      "under_15_min": "Menos de 15 min",
+      "15_60_min": "15–60 min",
+      "1_4_h": "1–4 horas",
+      "over_4_h": "Más de 4 horas"
+    },
+    "tiers": {
+      "elimination": "Eliminar",
+      "substitution": "Sustituir",
+      "engineering": "Ingeniería",
+      "administrative": "Organizativas",
+      "rpe": "Protección respiratoria",
+      "ppe": "Otros EPI"
+    },
+    "locations": {
+      "sectionTitle": "Dónde se guarda",
+      "addButton": "Añadir ubicación",
+      "empty": "Aún no hay ubicaciones registradas.",
+      "noSite": "Sin centro",
+      "removeAction": "Quitar ubicación",
+      "saveButton": "Guardar ubicación",
+      "unsited": "{count, plural, one {# ubicación} other {# ubicaciones}}"
+    },
+    "hazardProfile": {
+      "sectionTitle": "Perfil de peligros",
+      "empty": "Sin datos de peligros. Sube la ficha de datos de seguridad para completarlo."
+    },
+    "wel": {
+      "agent": "Agente",
+      "twa": "VLA-ED (8 h)",
+      "stel": "VLA-EC (15 min)",
+      "source": "Fuente"
+    },
+    "substitution": {
+      "requiredBanner": "Cancerígeno / mutágeno: hay que considerar la sustitución antes de poder publicar una evaluación.",
+      "advisedBanner": "La sustitución está muy recomendada para esta sustancia. Registra tu decisión.",
+      "bannerHint": "¿Podría un producto o proceso más seguro hacer este trabajo? Registra la respuesta en cualquier caso.",
+      "recordButton": "Registrar decisión de sustitución",
+      "dialogTitle": "Decisión de sustitución",
+      "dialogHint": "La sustitución es lo primero en la jerarquía de control. Registra si se valoró una alternativa más segura y qué se decidió.",
+      "statusLabel": "Decisión",
+      "notesLabel": "Notas",
+      "notesPlaceholder": "Qué se valoró, se probó o se descartó — y por qué.",
+      "saveButton": "Guardar decisión",
+      "savedToast": "Decisión de sustitución registrada.",
+      "statusLine": "Sustitución: {status}",
+      "status": {
+        "not_assessed": "Aún sin valorar",
+        "considered_rejected": "Valorada — sin alternativa viable",
+        "planned": "Sustitución planificada",
+        "substituted": "Sustituida"
+      }
+    },
+    "assessments": {
+      "sectionTitle": "Evaluaciones COSHH",
+      "newButton": "Nueva evaluación",
+      "empty": "Sin evaluación aún — toda sustancia en uso necesita una.",
+      "dialogTitle": "Nueva evaluación COSHH",
+      "taskLabel": "Tarea o actividad",
+      "taskPlaceholder": "p. ej. Desengrasar piezas mecanizadas en el banco de lavado",
+      "taskHint": "Una evaluación por tarea: el mismo producto supone riesgos distintos en trabajos distintos.",
+      "createButton": "Crear evaluación"
+    },
+    "monitoring": {
+      "sectionTitle": "Mediciones de exposición",
+      "recordButton": "Registrar resultado",
+      "empty": "Sin resultados de medición registrados.",
+      "date": "Fecha",
+      "type": "Muestra",
+      "period": "Periodo",
+      "result": "Resultado",
+      "unit": "Unidad",
+      "vsWel": "vs VLA",
+      "notComparable": "No comparable",
+      "exceeds": "Supera el VLA",
+      "withinLimit": "Dentro del límite",
+      "dialogTitle": "Registrar resultado de medición",
+      "saveButton": "Guardar resultado",
+      "recordedToast": "Resultado registrado — dentro del límite.",
+      "exceedsToast": "Resultado registrado — se supera el valor límite ambiental.",
+      "notComparableToast": "Resultado registrado — no hay límite equiparable para comparar.",
+      "types": {
+        "personal": "Personal",
+        "static": "Estática",
+        "biological": "Biológica"
+      },
+      "periods": {
+        "twa8h": "VLA-ED (8 h)",
+        "stel15min": "VLA-EC (15 min)"
+      }
+    },
+    "activity": {
+      "sectionTitle": "Actividad",
+      "kinds": {
+        "created": "Sustancia creada",
+        "updated": "Datos actualizados",
+        "archived": "Archivada",
+        "location_added": "Ubicación añadida",
+        "location_removed": "Ubicación eliminada",
+        "sds_attached": "Ficha adjuntada",
+        "sds_confirmed_current": "Ficha confirmada vigente",
+        "assessment_created": "Evaluación creada",
+        "published": "Evaluación publicada",
+        "moved_to_draft": "Devuelta a borrador",
+        "control_added": "Control añadido",
+        "control_removed": "Control eliminado",
+        "review_recorded": "Revisión registrada",
+        "monitoring_recorded": "Medición registrada",
+        "lev_test_recorded": "Prueba de extracción registrada",
+        "substitution_updated": "Decisión de sustitución actualizada"
+      }
+    },
+    "create": {
+      "title": "Añadir sustancia",
+      "pdfOnly": "Sube la ficha de datos de seguridad en PDF.",
+      "uploadError": "No se pudo subir el archivo. Inténtalo de nuevo.",
+      "readToast": "Ficha leída — revisa los datos precargados.",
+      "lowConfidence": "La ficha era difícil de leer — revisa cada campo con cuidado.",
+      "extractionFailed": "No se pudo leer la ficha automáticamente. El archivo queda adjunto — completa los datos a mano.",
+      "successToast": "{ref} añadida al inventario.",
+      "errorToast": "No se pudo crear la sustancia. Inténtalo de nuevo.",
+      "duplicateWarning": "Ya hay una sustancia con este nombre en el inventario.",
+      "duplicateConfirmHint": "Pulsa crear otra vez para añadirla igualmente como registro aparte.",
+      "alreadyInInventory": "Ya está en tu inventario.",
+      "openExisting": "Abrir {ref}",
+      "submitAnyway": "Crear de todos modos",
+      "dropTitle": "Suelta aquí la ficha de datos de seguridad",
+      "dropHint": "PDF del proveedor — la leemos y rellenamos el perfil de peligros por ti.",
+      "aiBadge": "Lectura automática con IA",
+      "manualLink": "¿Sin ficha a mano? Introduce los datos manualmente",
+      "readingTitle": "Leyendo la ficha…",
+      "readingHint": "Se extraen identidad del producto, peligros, límites de exposición y pautas de almacenamiento.",
+      "aiPrefilledBanner": "Precargado desde la ficha por IA. Comprueba cada campo contra la ficha antes de guardar — el registro es tu responsabilidad.",
+      "removeSds": "Quitar ficha",
+      "identitySection": "Producto",
+      "nameLabel": "Nombre del producto",
+      "librarySuggestions": "Productos habituales",
+      "libraryPrefilled": "Precargado desde la biblioteca de productos; revisa los datos antes de guardar.",
+      "supplierLabel": "Proveedor",
+      "identifierLabel": "Código / UFI",
+      "formLabel": "Estado físico",
+      "usageLabel": "¿Para qué se usa?",
+      "usagePlaceholder": "p. ej. Limpieza de rodillos de impresión",
+      "hazardSection": "Perfil de peligros",
+      "noHazardsRead": "No se leyeron indicaciones de peligro en la ficha.",
+      "welCount": "{count, plural, one {# límite de exposición leído de la ficha} other {# límites de exposición leídos de la ficha}}",
+      "hazardManualHint": "Sube la ficha de datos de seguridad para completar el perfil automáticamente, o añádela después desde el registro.",
+      "asbestosHint": "El amianto se gestiona con su propio régimen — aquí solo se anota la derivación.",
+      "locationSection": "¿Dónde se guarda?",
+      "whereLabel": "Ubicación",
+      "wherePlaceholder": "p. ej. Armario de inflamables, Taller B",
+      "quantityLabel": "Cantidad",
+      "unitLabel": "Unidad",
+      "storageClassLabel": "Clase de almacenamiento",
+      "storageNotesLabel": "Notas de almacenamiento",
+      "submit": "Añadir al inventario",
+      "submitting": "Añadiendo…"
+    },
+    "editor": {
+      "taskLabel": "Tarea o actividad",
+      "exposureSection": "Exposición",
+      "routesLabel": "Vías de exposición",
+      "personsLabel": "¿Quién está expuesto?",
+      "personsCustomPlaceholder": "Añadir otro grupo…",
+      "personsCountLabel": "Cuántas personas",
+      "quantityBandLabel": "Cantidad usada",
+      "frequencyBandLabel": "Frecuencia",
+      "durationBandLabel": "Duración",
+      "controlsSection": "Controles",
+      "controlsHint": "Baja por la jerarquía: sustituir antes que ingeniería, protección respiratoria al final — y justificada.",
+      "tierEmpty": "Nada en este nivel.",
+      "tierHints": {
+        "elimination": "¿Se puede hacer la tarea sin la sustancia?",
+        "substitution": "¿Existe un producto o proceso más seguro?",
+        "engineering": "Confinamiento, extracción localizada, ventilación",
+        "administrative": "Procedimientos, formación, tiempo de exposición",
+        "rpe": "Protección respiratoria — último recurso, justificada",
+        "ppe": "Guantes, gafas, ropa de protección"
+      },
+      "addControlPlaceholder": "Describe el control…",
+      "addControlSave": "Añadir",
+      "controlPlanned": "Planificado",
+      "controlInPlace": "Implantado",
+      "toggleStatusHint": "Pulsa para alternar implantado / planificado. Los planificados generan acciones al publicar.",
+      "removeControl": "Quitar control",
+      "ppeOnlyWarning": "Todos los controles son protección respiratoria/EPI. Para publicar hace falta justificar por qué no son viables controles de orden superior.",
+      "justificationLabel": "Justificación",
+      "justificationNeeded": "Añade la justificación de solo EPI…",
+      "justificationPlaceholder": "¿Por qué no son razonablemente viables la eliminación, la sustitución o los controles de ingeniería?",
+      "justificationSave": "Guardar",
+      "requirementsSection": "También necesario",
+      "requirements": {
+        "levRequired": "Extracción localizada",
+        "healthSurveillanceRequired": "Vigilancia de la salud",
+        "exposureMonitoringRequired": "Medición de exposición"
+      },
+      "emergencyLabel": "Notas de emergencia",
+      "emergencyPlaceholder": "Derrame, salpicadura, incendio — qué hacer primero.",
+      "summarySection": "Resumen en lenguaje claro",
+      "summaryHint": "Para quienes hacen la tarea — no para el expediente.",
+      "summaryPlaceholder": "Qué es, cómo puede dañarte, qué controles usar y qué hacer si algo sale mal.",
+      "summarySave": "Guardar resumen",
+      "summaryDiscard": "Descartar",
+      "reviewSection": "Revisión",
+      "reviewLine": "Última revisión {last} · próxima {next}",
+      "recordReviewButton": "Registrar revisión",
+      "reviewNoteLabel": "Nota",
+      "reviewNotePlaceholder": "p. ej. Sin cambios de uso ni de proveedor.",
+      "reviewSaveButton": "Guardar revisión",
+      "reviewRecordedToast": "Revisión registrada.",
+      "publish": "Publicar",
+      "republish": "Volver a publicar",
+      "moveToDraft": "Volver a borrador",
+      "publishedToast": "Evaluación publicada.",
+      "actionsCreated": "{count, plural, one {# acción creada desde controles planificados} other {# acciones creadas desde controles planificados}}",
+      "publishErrors": {
+        "no-routes": "Registra al menos una vía de exposición antes de publicar.",
+        "no-controls": "Añade al menos un control antes de publicar.",
+        "ppe-only-needs-justification": "Los controles de solo EPI necesitan una justificación en al menos una entrada.",
+        "substitution-not-considered": "Esta sustancia es cancerígena o mutágena — registra primero la decisión de sustitución en la sustancia.",
+        "archived": "Esta evaluación está archivada.",
+        "generic": "No se pudo publicar. Inténtalo de nuevo."
+      },
+      "substitutionBlockedBanner": "No se ha valorado la sustitución de este cancerígeno/mutágeno — la publicación queda bloqueada hasta entonces.",
+      "substitutionBlockedLink": "Registrarla en la sustancia",
+      "ai": {
+        "suggestButton": "Sugerir controles",
+        "suggesting": "Pensando…",
+        "suggestError": "No se pudieron generar sugerencias. Inténtalo de nuevo.",
+        "suggestionsTitle": "Controles sugeridos",
+        "dismiss": "Descartar",
+        "accept": "Añadir",
+        "acceptHint": "Los controles aceptados se añaden como «planificados» — márcalos implantados cuando lo estén. Revisa cada uno antes de aceptarlo.",
+        "substitutionIdea": "Idea de sustitución",
+        "suggestedChip": "Sugerencia IA",
+        "draftSummaryButton": "Redactar con IA",
+        "drafting": "Redactando…",
+        "summaryError": "No se pudo redactar el resumen. Inténtalo de nuevo.",
+        "summaryDrafted": "Borrador listo — revísalo y guárdalo."
+      },
+      "signOff": {
+        "title": "Firma del evaluador",
+        "statement": "Confirmo que esta es una evaluación adecuada y suficiente de los riesgos de la tarea descrita y que los controles indicados están (o estarán) implantados.",
+        "hint": "Su nombre y la fecha quedan registrados con esta publicación.",
+        "confirm": "Firmar y publicar",
+        "cancel": "Cancelar"
+      },
+      "rpe": {
+        "typePlaceholder": "Tipo de EPR (p. ej. FFP3, semimáscara A2P3)",
+        "apfPlaceholder": "FPA",
+        "faceFitLabel": "Ajuste facial confirmado",
+        "apfValue": "FPA {apf}",
+        "faceFitValue": "Ajuste facial {date}",
+        "edit": "Editar",
+        "addDetail": "Añadir detalle de EPR (tipo / FPA / ajuste facial)",
+        "save": "Guardar"
+      },
+      "staleBanner": "Esta evaluación ha cambiado desde la última publicación; vuelva a publicarla y compartirla para que el equipo vea la versión vigente."
+    },
+    "lev": {
+      "title": "Registro de extracción (LEV)",
+      "subtitle": "Extracción localizada y su registro de exámenes y pruebas periódicas.",
+      "addButton": "Añadir equipo",
+      "empty": "Aún no hay equipos de extracción registrados.",
+      "createdToast": "Equipo añadido.",
+      "testRecordedToast": "Prueba registrada.",
+      "overdue": "Vencida",
+      "returnToService": "Volver a servicio",
+      "recordTestButton": "Registrar prueba",
+      "intervalMonths": "{count, plural, one {Cada # mes} other {Cada # meses}}",
+      "columns": {
+        "name": "Equipo",
+        "interval": "Intervalo",
+        "lastTest": "Última prueba",
+        "nextDue": "Próxima",
+        "status": "Estado"
+      },
+      "status": {
+        "in_service": "En servicio",
+        "out_of_service": "Fuera de servicio",
+        "decommissioned": "Dado de baja"
+      },
+      "results": {
+        "pass": "Apto",
+        "pass_with_defects": "Apto con defectos",
+        "fail": "No apto"
+      },
+      "addDialogTitle": "Añadir equipo de extracción",
+      "nameLabel": "Nombre",
+      "namePlaceholder": "p. ej. Brazo de extracción del puesto de soldadura",
+      "locationLabel": "Ubicación",
+      "intervalLabel": "Intervalo de prueba (meses)",
+      "intervalHint": "El máximo legal es de 14 meses; algunos procesos requieren pruebas más frecuentes.",
+      "addSaveButton": "Añadir equipo",
+      "testDialogTitle": "Registrar examen y prueba",
+      "testDateLabel": "Fecha de la prueba",
+      "testResultLabel": "Resultado",
+      "examinerLabel": "Examinador",
+      "examinerPlaceholder": "Persona o empresa",
+      "defectsLabel": "Defectos encontrados",
+      "failHint": "Una prueba no apta deja el equipo fuera de servicio hasta su reparación y reincorporación.",
+      "testSaveButton": "Guardar prueba"
+    },
+    "exportCsv": "Exportar registro (CSV)",
+    "surveillance": {
+      "sectionTitle": "Vigilancia de la salud",
+      "hint": "COSHH Reg 11: quién está bajo vigilancia para esta sustancia, su intervalo y próxima cita. Los registros se cierran, nunca se eliminan.",
+      "suggestedBanner": "La clasificación de esta sustancia (carcinógena / mutágena / sensibilizante) suele requerir vigilancia de la salud; aún no hay nadie inscrito.",
+      "empty": "Nadie está bajo vigilancia para esta sustancia.",
+      "enrollButton": "Inscribir persona",
+      "dialogTitle": "Inscribir en vigilancia de la salud",
+      "person": "Persona",
+      "interval": "Intervalo",
+      "intervalLabel": "Revisión cada (meses)",
+      "intervalMonths": "{count} m",
+      "lastCheck": "Última revisión",
+      "nextDue": "Próxima",
+      "due": "Pendiente",
+      "dueChip": "Vigilancia pendiente",
+      "recordCheck": "Registrar revisión",
+      "endButton": "Finalizar",
+      "endConfirm": "¿Finalizar la vigilancia de esta persona? El registro se conserva.",
+      "ended": "Finalizada",
+      "enrolling": "Inscribiendo…",
+      "enrollSubmit": "Inscribir",
+      "enrolledToast": "Inscrito en vigilancia de la salud.",
+      "alreadyEnrolled": "Ya está bajo vigilancia para esta sustancia.",
+      "checkToast": "Revisión registrada; próxima fecha actualizada."
+    },
+    "share": {
+      "button": "Compartir por Heads Up",
+      "description": "Lea la ficha de la sustancia y la ficha de datos de seguridad adjunta:"
+    },
+    "powButton": "En el puesto",
+    "kinds": {
+      "standing": "Permanente",
+      "point_of_work": "En el puesto"
+    },
+    "staleChip": "Modificada tras publicar",
+    "pow": {
+      "title": "Comprobación en el puesto",
+      "pickHint": "Elija el producto que va a usar.",
+      "searchPlaceholder": "Buscar sustancias…",
+      "noResults": "No se encontraron sustancias.",
+      "changeSubstance": "Cambiar",
+      "sdsLink": "Ver ficha de datos de seguridad",
+      "noSds": "No hay ficha de seguridad registrada; adjúntela desde la ficha de la sustancia.",
+      "cmrBlocked": "Esta sustancia es carcinógena/mutágena y la sustitución aún no se ha valorado; registre primero la decisión de sustitución.",
+      "cmrBlockedLink": "Abrir sustancia",
+      "taskLabel": "Tarea de hoy",
+      "taskPlaceholder": "p. ej. Cortar 100 bloques, sala B, sin agua disponible",
+      "routesLabel": "Vías de exposición",
+      "controlsTitle": "Controles presentes hoy",
+      "controlsCarriedHint": "Tomados de la última evaluación; desmarque lo que hoy no esté.",
+      "controlsEmptyHint": "No hay evaluación previa; añada los controles existentes.",
+      "removeAdded": "Quitar",
+      "tierLabel": "Nivel de control",
+      "addControlPlaceholder": "Añadir otro control…",
+      "addButton": "Añadir",
+      "justificationLabel": "Solo EPR/EPI: se requiere justificación",
+      "publishing": "Publicando…",
+      "signPublishButton": "Firmar y publicar",
+      "doneTitle": "Comprobación publicada",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Abrir evaluación",
+      "newCheckButton": "Nueva comprobación"
+    }
+  },
+  "permits": {
+    "title": "Permisos de trabajo",
+    "subtitle": "Autorización formal, control y cierre de actividades de alto riesgo.",
+    "boardButton": "Panel en vivo",
+    "typesButton": "Tipos de permiso",
+    "newButton": "Nuevo permiso",
+    "attention": {
+      "overdue": "vencidos sin cierre",
+      "expiringSoon": "vencen en 2 horas",
+      "awaitingAcceptance": "esperando aceptación",
+      "suspended": "suspendidos",
+      "draft": "borradores en preparación"
+    },
+    "filters": {
+      "search": "Buscar",
+      "searchPlaceholder": "Título o referencia…",
+      "status": "Estado",
+      "open": "Todos los abiertos",
+      "all": "Todos",
+      "allSites": "Todos"
+    },
+    "columns": {
+      "reference": "Ref.",
+      "permit": "Permiso",
+      "type": "Tipo",
+      "window": "Validez",
+      "acceptor": "Aceptante",
+      "status": "Estado"
+    },
+    "empty": "Ningún permiso coincide con estos filtros.",
+    "emptyCta": "Crear el primer permiso",
+    "categories": {
+      "hot_work": "Trabajo en caliente",
+      "confined_space": "Espacio confinado",
+      "work_at_height": "Trabajo en altura",
+      "electrical": "Eléctrico",
+      "excavation": "Excavación",
+      "roof_work": "Trabajo en cubierta",
+      "asbestos": "Amianto",
+      "lifting": "Izado de cargas",
+      "pressure_systems": "Sistemas a presión",
+      "other": "Otro alto riesgo"
+    },
+    "status": {
+      "draft": "Borrador",
+      "issued": "Emitido",
+      "active": "Activo",
+      "suspended": "Suspendido",
+      "closed": "Cerrado",
+      "cancelled": "Cancelado"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, one {queda # h} other {quedan # h}}",
+      "remainingMinutes": "{minutes, plural, one {queda # min} other {quedan # min}}",
+      "overdueHours": "{hours, plural, one {# h de retraso} other {# h de retraso}}",
+      "overdueMinutes": "{minutes, plural, one {# min de retraso} other {# min de retraso}}"
+    },
+    "board": {
+      "backToRegister": "Registro de permisos",
+      "title": "Panel de permisos en vivo",
+      "subtitle": "Todos los permisos abiertos en todas las instalaciones, ahora mismo. Se actualiza cada minuto.",
+      "lastUpdated": "Actualizado {time}",
+      "counts": {
+        "overdue": "Vencidos — sin cerrar",
+        "active": "Activos",
+        "issued": "Esperando aceptación",
+        "suspended": "Suspendidos"
+      },
+      "empty": "No hay permisos abiertos. Ninguna actividad de alto riesgo está autorizada ahora.",
+      "noSite": "Sin sitio asignado",
+      "reference": "Ref.",
+      "acceptor": "Aceptante"
+    },
+    "new": {
+      "back": "Permisos",
+      "title": "Crear un permiso",
+      "subtitle": "El permiso empieza como borrador — las condiciones previas, evidencias y firmas van antes de la emisión.",
+      "noPermission": "No tiene permiso para crear permisos de trabajo.",
+      "fields": {
+        "type": "Tipo de permiso",
+        "typePlaceholder": "Elija la actividad…",
+        "title": "Título del trabajo",
+        "titlePlaceholder": "p. ej. Soldadura en la línea 2",
+        "description": "Descripción del trabajo",
+        "descriptionPlaceholder": "Qué se hará exactamente, con qué equipos…",
+        "noSite": "Sin sitio",
+        "location": "Zona / ubicación exacta",
+        "locationPlaceholder": "p. ej. Parque de tanques, bahía 4",
+        "validFrom": "Válido desde",
+        "validTo": "Válido hasta",
+        "acceptor": "Aceptante",
+        "acceptorPlaceholder": "Nombre a la persona que acepta el permiso…",
+        "acceptorHint": "La persona responsable del trabajo. Debe aceptar el permiso digitalmente antes de empezar."
+      },
+      "maxDuration": "Duración máxima {hours} h",
+      "willRequire": "Antes de emitir, este tipo requiere:",
+      "requirements": {
+        "authoriser": "firma autorizante",
+        "gasTesting": "resultados de medición de gases",
+        "isolationCertificate": "certificado de aislamiento",
+        "rescuePlan": "plan de rescate"
+      },
+      "preconditionCount": "{count, plural, one {# condición previa a confirmar antes de emitir} other {# condiciones previas a confirmar antes de emitir}}",
+      "conflictWarning": "{count, plural, one {# otro permiso está abierto en este sitio en esta franja} other {# otros permisos están abiertos en este sitio en esta franja}}",
+      "sameArea": "misma zona",
+      "cancel": "Cancelar",
+      "submit": "Crear borrador"
+    },
+    "detail": {
+      "back": "Permisos",
+      "fields": {
+        "site": "Sitio",
+        "location": "Zona",
+        "validFrom": "Válido desde",
+        "validTo": "Válido hasta"
+      },
+      "extensions": "{count, plural, one {(# prórroga)} other {(# prórrogas)}}",
+      "suspendedBanner": "Suspendido por {by} — las condiciones cambiaron. El trabajo no debe continuar hasta reanudarse.",
+      "overdueBanner": "Este permiso venció sin cerrarse. Confirme ahora el estado del trabajo y ciérrelo o prorróguelo.",
+      "conflicts": {
+        "title": "{count, plural, one {# otro permiso abierto se solapa con este en el mismo sitio} other {# otros permisos abiertos se solapan con este en el mismo sitio}}",
+        "sameArea": "· misma zona"
+      },
+      "preconditions": {
+        "title": "Condiciones previas",
+        "progress": "{done}/{total} confirmadas",
+        "none": "Este tipo de permiso no tiene lista de condiciones.",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "Evidencias",
+        "gasReadings": "Mediciones de gases",
+        "requiredBeforeIssue": "requerido antes de emitir",
+        "noReadings": "Aún no hay mediciones registradas.",
+        "substance": "Sustancia",
+        "reading": "Lectura",
+        "unit": "Unidad",
+        "recordReading": "Registrar",
+        "isolationCertificate": "Certificado de aislamiento",
+        "notRecorded": "Aún sin registrar.",
+        "isolationRefPlaceholder": "Referencia del certificado…",
+        "save": "Guardar",
+        "rescuePlan": "Plan de rescate",
+        "rescuePlanPlaceholder": "Cómo se rescataría a una víctima, quién y con qué equipos…",
+        "attachments": "Adjuntos",
+        "kinds": {
+          "isolation_certificate": "Certificado de aislamiento",
+          "rescue_plan": "Plan de rescate",
+          "gas_test": "Medición de gases",
+          "other": "Otro"
+        }
+      },
+      "signatures": {
+        "title": "Firmas",
+        "pending": "Sin firmar todavía",
+        "authoriser": "Ingeniero autorizante / responsable del sitio",
+        "authoriseAction": "Autorizar",
+        "issuer": "Emisor",
+        "issueAction": "Emitir permiso",
+        "acceptor": "Aceptante",
+        "acceptAction": "Aceptar permiso",
+        "acknowledgeConflicts": "He revisado los permisos que se solapan y acepto el riesgo combinado",
+        "awaitingAcceptor": "Esperando la firma del aceptante designado. Solo esa persona puede aceptar."
+      },
+      "actions": {
+        "title": "Acciones del permiso",
+        "suspend": "Suspender",
+        "suspendReason": "¿Por qué se suspende el permiso?",
+        "suspendConfirm": "Suspender permiso",
+        "resume": "Reanudar — es seguro continuar",
+        "extend": "Prorrogar",
+        "extendTo": "Nuevo vencimiento",
+        "extendHint": "Una prórroga puede añadir como máximo {hours} h.",
+        "extendReauthorisation": "Este tipo exige que prorrogue el ingeniero autorizante — la prórroga es la reautorización.",
+        "extendConfirm": "Prorrogar permiso",
+        "handover": "Traspasar",
+        "handoverTo": "Aceptante entrante",
+        "handoverHint": "El permiso vuelve a «Emitido» hasta que el aceptante entrante firme.",
+        "handoverConfirm": "Traspasar",
+        "close": "Cerrar",
+        "closeChecksTitle": "Comprobaciones de cierre — deben confirmarse las cuatro",
+        "closeChecks": {
+          "workComplete": "Trabajo terminado o detenido de forma segura",
+          "areaMadeSafe": "Zona inspeccionada y asegurada",
+          "isolationsRemoved": "Aislamientos retirados o restablecidos según lo acordado",
+          "personnelClear": "Todo el personal contabilizado y fuera de la zona"
+        },
+        "closeNotesPlaceholder": "Notas de cierre (opcional)…",
+        "closeConfirm": "Cerrar permiso",
+        "cancel": "Cancelar permiso",
+        "cancelReason": "¿Por qué se cancela el permiso?",
+        "cancelConfirm": "Cancelar permiso"
+      },
+      "closedLine": "Cerrado por {name} el {time}.",
+      "cancelledLine": "Cancelado por {name} el {time}.",
+      "timeline": {
+        "title": "Historial",
+        "kinds": {
+          "created": "Creado",
+          "updated": "Detalles actualizados",
+          "precondition_checked": "Condición previa confirmada",
+          "precondition_unchecked": "Confirmación retirada",
+          "gas_reading_recorded": "Medición de gases registrada",
+          "attachment_added": "Adjunto añadido",
+          "authorised": "Autorizado",
+          "issued": "Emitido",
+          "accepted": "Aceptado",
+          "suspended": "Suspendido",
+          "resumed": "Reanudado",
+          "extended": "Prorrogado",
+          "handed_over": "Traspasado",
+          "cancelled": "Cancelado",
+          "closed": "Cerrado",
+          "expiry_escalated": "Vencimiento escalado — el permiso venció sin cierre"
+        }
+      }
+    },
+    "types": {
+      "back": "Permisos",
+      "title": "Tipos de permiso",
+      "subtitle": "Los requisitos de control de cada tipo. Los cambios solo afectan a permisos nuevos — los vivos conservan su lista.",
+      "systemBadge": "Estándar",
+      "archivedBadge": "Archivado",
+      "openCount": "{count, plural, one {# permiso abierto} other {# permisos abiertos}}",
+      "restore": "Restaurar",
+      "archive": "Archivar",
+      "flags": {
+        "requiresAuthoriser": "Requiere firma autorizante",
+        "requiresGasTesting": "Requiere medición de gases",
+        "requiresIsolationCertificate": "Requiere certificado de aislamiento",
+        "requiresRescuePlan": "Requiere plan de rescate"
+      },
+      "maxDuration": "Validez máxima",
+      "hours": "horas",
+      "preconditions": "Lista de condiciones previas",
+      "removePrecondition": "Quitar condición",
+      "addPreconditionPlaceholder": "Nuevo punto de la lista…",
+      "addPrecondition": "Añadir",
+      "createTitle": "Añadir un tipo de permiso personalizado",
+      "createHint": "Para actividades fuera de los nueve tipos estándar. Configure sus requisitos tras crearlo.",
+      "createNamePlaceholder": "p. ej. Operaciones de buceo",
+      "createButton": "Añadir tipo"
+    },
+    "errors": {
+      "module-disabled": "Este módulo no está disponible.",
+      "unknown-site": "Ese sitio no existe.",
+      "unknown-user": "Esa persona no es miembro de esta organización.",
+      "type-archived": "Este tipo de permiso está archivado — restáurelo o elija otro.",
+      "duplicate-name": "Ya existe un tipo de permiso con ese nombre.",
+      "duplicate-precondition-id": "Los puntos de la lista deben ser únicos.",
+      "window-invalid": "La ventana de validez debe terminar después de empezar.",
+      "window-too-long": "La ventana de validez supera lo permitido por este tipo.",
+      "window-past": "La ventana de validez ya pasó — actualícela antes de emitir.",
+      "acceptor-required": "Nombre un aceptante antes de emitir.",
+      "issuer-is-acceptor": "El emisor no puede aceptar su propio permiso — nombre a otra persona.",
+      "preconditions-incomplete": "Todas las condiciones previas deben confirmarse antes de emitir.",
+      "gas-test-required": "Registre al menos una medición de gases antes de emitir.",
+      "isolation-certificate-required": "Registre el certificado de aislamiento antes de emitir.",
+      "rescue-plan-required": "Registre el plan de rescate antes de emitir.",
+      "authorisation-required": "El ingeniero autorizante debe firmar antes de la emisión.",
+      "simops-conflict": "Otros permisos se solapan con este — revíselos y confírmelos para emitir.",
+      "invalid-transition": "Esa acción no está disponible en el estado actual del permiso.",
+      "not-draft": "Solo se pueden editar los borradores.",
+      "unknown-precondition": "Ese punto de la lista ya no existe.",
+      "already-authorised": "Este permiso ya está autorizado.",
+      "authoriser-is-acceptor": "El aceptante no puede autorizar su propio permiso.",
+      "not-the-acceptor": "Solo el aceptante designado puede aceptar este permiso.",
+      "resume-confirmation-required": "Confirme que es seguro reanudar antes de continuar.",
+      "extension-not-later": "El nuevo vencimiento debe ser posterior al actual.",
+      "extension-too-long": "Una prórroga no puede superar la duración máxima del tipo.",
+      "reauthorisation-required": "Solo el ingeniero autorizante puede prorrogar este permiso.",
+      "acceptor-is-issuer": "El emisor no puede convertirse en aceptante.",
+      "same-acceptor": "Esa persona ya tiene el permiso.",
+      "not-allowed": "No tiene permiso para hacer eso.",
+      "closure-checks-incomplete": "Deben confirmarse las cuatro comprobaciones de cierre.",
+      "generic": "Algo salió mal. Revise el formulario e inténtelo de nuevo."
     }
   }
 }

@@ -17,12 +17,14 @@ import { newId, type Id } from '@forma360/shared/id';
 import { eq } from 'drizzle-orm';
 import { authDeps } from './auth-deps';
 import { db } from './db';
+import { coshhDeps } from './coshh-deps';
 import { exportsDeps } from './exports-deps';
 import { headsUpsDeps } from './heads-up-deps';
 import { inspectionsDeps } from './inspections-deps';
 import { inspectionsExportDeps } from './inspections-export-deps';
 import { issuesDeps } from './issues-deps';
 import { logger } from './logger';
+import { permitsDeps } from './permits-deps';
 import { riskAssessmentsDeps } from './risk-assessments-deps';
 import { enqueue } from './trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps,
@@ -40,6 +42,8 @@ const appRouter = buildAppRouter({
   issues: issuesDeps,
   headsUps: headsUpsDeps,
   riskAssessments: riskAssessmentsDeps,
+  coshh: coshhDeps,
+  permits: permitsDeps,
 });
 
 export type ServerCaller = ReturnType<typeof appRouter.createCaller>;

@@ -37,11 +37,13 @@ describe('loadBrandedMessages', () => {
     expect(auth.signIn.emailLabel).toBe('Email');
   });
 
+  // Sweeps all 10 full locale bundles — CPU-bound and slow under a
+  // parallel turbo run, so it gets a generous explicit timeout.
   it('ships a FreeHS override for every locale with no brand leakage', async () => {
     for (const locale of LOCALES) {
       const messages = await loadBrandedMessages('freehs', locale);
       const flat = JSON.stringify(messages);
       expect(flat, `locale ${locale} still mentions Forma360`).not.toContain('Forma360');
     }
-  });
+  }, 30_000);
 });

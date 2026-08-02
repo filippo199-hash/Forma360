@@ -6,6 +6,8 @@ import {
   Bot,
   Building2,
   ClipboardCheck,
+  FileSignature,
+  FlaskConical,
   FolderOpen,
   HardHat,
   ListChecks,
@@ -35,6 +37,8 @@ interface NavItem {
     | 'actions'
     | 'headsUp'
     | 'riskAssessments'
+    | 'coshh'
+    | 'permits'
     | 'assets'
     | 'documents'
     | 'contractors'
@@ -60,6 +64,20 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     href: `/${locale}/risk-assessments`,
     icon: ShieldAlert,
   };
+  // Brand-gated (ADR 0010): COSHH ships only where the active brand's
+  // module catalogue enables it.
+  const coshhItem: NavItem = {
+    key: 'coshh',
+    href: `/${locale}/coshh`,
+    icon: FlaskConical,
+  };
+  // Brand-gated (ADR 0010): Permit to Work ships only where the active
+  // brand's module catalogue enables it.
+  const permitsItem: NavItem = {
+    key: 'permits',
+    href: `/${locale}/permits`,
+    icon: FileSignature,
+  };
 
   const primary: NavItem[] = [
     { key: 'ai', href: `/${locale}/ai`, icon: Bot },
@@ -69,6 +87,8 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     { key: 'actions', href: `/${locale}/actions`, icon: ListChecks },
     { key: 'headsUp', href: `/${locale}/heads-up`, icon: Bell },
     ...(brandHasModule(activeBrand.id, 'riskAssessments') ? [riskAssessmentsItem] : []),
+    ...(brandHasModule(activeBrand.id, 'coshh') ? [coshhItem] : []),
+    ...(brandHasModule(activeBrand.id, 'permits') ? [permitsItem] : []),
     { key: 'assets', href: `/${locale}/assets`, icon: Wrench },
     { key: 'documents', href: `/${locale}/documents`, icon: FolderOpen },
     { key: 'contractors', href: `/${locale}/contractors`, icon: HardHat },

@@ -157,7 +157,8 @@
       "training": "Training",
       "integrations": "Integrations",
       "billing": "Billing",
-      "company": "Company"
+      "company": "Company",
+      "riskMatrix": "Risk matrix"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -1358,7 +1359,9 @@
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
-    "riskAssessments": "Risk assessments"
+    "riskAssessments": "Risk assessments",
+    "coshh": "有害物质",
+    "permits": "作业许可"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -3299,7 +3302,9 @@
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
       "deletePinConfirm": "Delete this pin?"
-    }
+    },
+    "treeExpand": "展开{name}",
+    "treeCollapse": "折叠{name}"
   },
   "contractors": {
     "title": "Contractors",
@@ -3657,7 +3662,8 @@
       "locationPlaceholder": "Building, area or site location",
       "submit": "Create assessment",
       "submitting": "Creating…",
-      "error": "Could not create the assessment. Try again."
+      "error": "Could not create the assessment. Try again.",
+      "cancel": "Cancel"
     },
     "steps": {
       "hazards": "1 · Identify hazards",
@@ -3744,8 +3750,16 @@
         "no-hazards": "Add at least one hazard before publishing.",
         "unscored-hazards": "Every hazard needs initial and residual likelihood × severity scores.",
         "ppe-only-needs-justification": "At least one hazard relies on PPE alone — add a justification or a higher-order control.",
-        "generic": "Could not publish. Check the assessment and try again."
-      }
+        "generic": "Could not publish. Check the assessment and try again.",
+        "residual-above-initial": "A hazard's residual risk is higher than its initial risk — controls cannot increase risk.",
+        "residual-needs-controls": "A hazard has a residual score but no controls at all — record what controls the risk first.",
+        "high-residual-needs-justification": "A hazard's residual risk stays High/Critical — add a planned control or a tolerability note.",
+        "actions-need-assignees": "Every planned control needs an owner and a due date before publishing.",
+        "invalid-assignee": "One of the action owners is not an active member of this organisation.",
+        "invalid-due-date": "Action due dates cannot be in the past."
+      },
+      "publishChanges": "Publish changes (v{version})",
+      "reackToast": "Version {version} published — everyone must read and acknowledge it again."
     },
     "review": {
       "sectionTitle": "Review",
@@ -3797,7 +3811,18 @@
       "selectAll": "Select everyone",
       "shareHeadsUp": "Share via Heads Up",
       "sharingHeadsUp": "正在准备…",
-      "attachmentFailed": "无法附加 PDF，将在不附加的情况下分享。"
+      "attachmentFailed": "无法附加 PDF，将在不附加的情况下分享。",
+      "sentToast": "Distributed — recipients have been notified by email.",
+      "dueBy": "due by {date}",
+      "dueDateLabel": "Acknowledgement deadline (optional)",
+      "dueDateHint": "Recipients are emailed now and chased automatically until they confirm. The deadline shows in their notification.",
+      "acknowledgedVersion": "Acknowledged v{version}",
+      "overdue": "Overdue",
+      "reackPending": "Re-acknowledgement pending",
+      "reackTitle": "Previously acknowledged version {version}",
+      "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
+      "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -3810,7 +3835,10 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "The parent assessment has changed since this variant was created — review the differences and update this variant if needed.",
+      "driftChip": "Differs from parent",
+      "driftChipTitle": "The parent assessment changed after this variant was created."
     },
     "stats": {
       "active": "Active",
@@ -3838,7 +3866,14 @@
       "actionsIntro": "Publishing will create {count} action(s) from your planned controls:",
       "actionMeta": "Assigned to you · Medium priority · Due in 7 days",
       "confirm": "Confirm and publish",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "republishNote": "This publishes version {version}. Everyone previously asked to read this assessment will be asked to read and acknowledge the new version.",
+      "reactivateNote": "No content changes since version {version} — publishing puts the same version back in force without re-opening acknowledgements.",
+      "assignmentsHint": "Each planned control becomes an action. Choose who owns it and a realistic deadline — nothing defaults to you.",
+      "assigneeLabel": "Owner",
+      "assigneePlaceholder": "Choose an owner…",
+      "dueLabel": "Due date",
+      "assignmentsIncomplete": "Assign an owner and a due date to every planned control to continue."
     },
     "titlePrompt": {
       "title": "Name this assessment before publishing",
@@ -3865,6 +3900,842 @@
         "acknowledged": "Acknowledged",
         "variant_created": "Person-specific variant created"
       }
+    },
+    "downloadPdf": "Download PDF",
+    "matrix": {
+      "selectedSummary": "L{likelihood} × S{severity} = {score} —",
+      "aboveInitial": "above initial risk — controls cannot increase risk",
+      "notSelected": "Not scored yet — click a cell.",
+      "residualNeedsControls": "Record at least one control first — residual risk is the risk with controls in place.",
+      "residualNeedsInitial": "Score the initial risk first.",
+      "residualAboveInitialWarning": "Residual risk is higher than initial risk — controls cannot increase risk. Fix one of the two scores.",
+      "residualNoteHint": "The residual risk stays High/Critical. Add a planned control (further action) or explain why this risk is tolerable.",
+      "residualNoteLabel": "Why is this residual risk tolerable?",
+      "residualNotePlaceholder": "e.g. Short-duration permitted work with fire watch in place; further reduction not reasonably practicable."
+    },
+    "versions": {
+      "sectionTitle": "Versions",
+      "hint": "Every publish freezes an immutable copy — what people acknowledged stays retrievable exactly as it was in force.",
+      "empty": "Not published yet — the first publish creates version 1.",
+      "current": "In force",
+      "view": "View",
+      "viewerTitle": "Version {version} — as in force",
+      "signOffLine": "Signed off by {name} on {date}",
+      "actionsCreated": "{count} action(s) created",
+      "unpublishedChangesBanner": "This assessment has unpublished changes — readers still see version {version} and acknowledgements still refer to it. Publish the changes to put them in force."
+    },
+    "matrixSettings": {
+      "title": "Risk matrix",
+      "subtitle": "Align the 5×5 scoring bands with your corporate standard.",
+      "thresholdsTitle": "Band thresholds",
+      "thresholdsHint": "A score (likelihood × severity, 1–25) at or below each threshold falls in that band; anything above the High threshold is Critical.",
+      "lowMaxLabel": "Low up to",
+      "mediumMaxLabel": "Medium up to",
+      "highMaxLabel": "High up to",
+      "invalidThresholds": "Thresholds must increase: Low < Medium < High < 25.",
+      "floorsTitle": "Severity overrides",
+      "floorsHint": "Force a minimum band for a severity, regardless of likelihood — e.g. any credible fatality (severity 5) is at least High.",
+      "floorLabel": "Severity {severity} minimum",
+      "floorNone": "No override",
+      "previewTitle": "Preview",
+      "applyToDrafts": "Also apply to open drafts",
+      "applyToDraftsHint": "Published versions always keep the matrix they were signed against.",
+      "historyNote": "New assessments snapshot this matrix at creation, so past records never rescore themselves.",
+      "save": "Save matrix",
+      "saving": "Saving…",
+      "saved": "Risk matrix saved.",
+      "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
+      "saveError": "Could not save the matrix. Try again."
+    }
+  },
+  "coshh": {
+    "title": "有害物质管理（COSHH）",
+    "subtitle": "现场每一种有害物质的动态台账：评估、控制措施以及所产生的接触风险。",
+    "newButton": "添加物质",
+    "levButton": "局部排风台账",
+    "empty": "台账中还没有物质。拖入一份安全数据表即可添加第一种。",
+    "emptyCta": "添加第一种物质",
+    "notFound": "未找到该记录。",
+    "backToList": "返回 COSHH",
+    "saveError": "保存失败,请重试。",
+    "archivedToast": "物质已归档。",
+    "archiveButton": "归档",
+    "archiveConfirm": "归档此物质?它将从台账中隐藏。",
+    "welExceeded": "超过接触限值",
+    "noAssessment": "无评估",
+    "assessmentCount": "{count, plural, other {#项评估}}",
+    "reviewDue": "待复查",
+    "viewOther": "查看物质",
+    "storageConflictBanner": "{site}存在贮存冲突:{mine}与{other}({theirs})存放在一起。请分开贮存。",
+    "attention": {
+      "sdsMissing": "缺少安全数据表",
+      "sdsDue": "安全数据表待复查",
+      "assessmentsDue": "评估待复查",
+      "levDue": "排风检测到期",
+      "welExceedances": "接触限值超标",
+      "storageConflicts": "贮存冲突"
+    },
+    "filters": {
+      "search": "搜索",
+      "searchPlaceholder": "物质名称…",
+      "status": "状态",
+      "active": "使用中",
+      "archived": "已归档",
+      "all": "全部",
+      "allSites": "全部"
+    },
+    "columns": {
+      "reference": "编号",
+      "substance": "物质",
+      "supplier": "供应商",
+      "hazards": "危害",
+      "sds": "安全数据表",
+      "assessment": "评估"
+    },
+    "pictograms": {
+      "GHS01": "爆炸物",
+      "GHS02": "易燃",
+      "GHS03": "氧化性",
+      "GHS04": "加压气体",
+      "GHS05": "腐蚀性",
+      "GHS06": "急性毒性",
+      "GHS07": "有害/刺激性",
+      "GHS08": "严重健康危害",
+      "GHS09": "环境危害"
+    },
+    "regimes": {
+      "carcinogen": "致癌物",
+      "mutagen": "致突变物",
+      "asthmagen": "致哮喘物",
+      "biological": "生物因子",
+      "lead": "铅",
+      "asbestos": "石棉(另行管理)"
+    },
+    "sds": {
+      "status": {
+        "missing": "无数据表",
+        "review_due": "待复查",
+        "current": "最新"
+      },
+      "sectionTitle": "安全数据表",
+      "empty": "尚未存档安全数据表。",
+      "uploadButton": "上传新版本",
+      "uploading": "上传中…",
+      "uploadError": "无法上传数据表。",
+      "confirmButton": "确认仍为最新",
+      "confirmedToast": "已记录——复查日期已顺延。",
+      "attachedToast": "已附加新版数据表。",
+      "attachedAppliedToast": "已附加新版本,并根据数据表更新了危害档案。",
+      "applyExtractionLabel": "根据数据表更新危害档案",
+      "missingBanner": "尚无安全数据表。上传一份,危害档案会自动填写。",
+      "dueBanner": "当前数据表已到复查期限。请向供应商索取更新版本,或确认其仍然有效。",
+      "issued": "发布于 {date}",
+      "reviewBy": "复查期限 {date}",
+      "currentChip": "当前"
+    },
+    "assessmentStatus": {
+      "draft": "草稿",
+      "active": "生效",
+      "archived": "已归档"
+    },
+    "physicalForms": {
+      "liquid": "液体",
+      "solid": "固体",
+      "powder": "粉末",
+      "gas": "气体",
+      "aerosol": "气雾剂",
+      "fume": "烟尘",
+      "mist": "雾",
+      "fibre": "纤维",
+      "other": "其他"
+    },
+    "signalWords": {
+      "danger": "危险",
+      "warning": "警告"
+    },
+    "storageClasses": {
+      "flammable": "易燃",
+      "oxidiser": "氧化性",
+      "corrosive_acid": "腐蚀性——酸",
+      "corrosive_base": "腐蚀性——碱",
+      "toxic": "有毒",
+      "compressed_gas": "压缩气体",
+      "water_reactive": "遇水反应",
+      "general": "一般"
+    },
+    "routes": {
+      "inhalation": "吸入",
+      "skin": "皮肤",
+      "eyes": "眼睛",
+      "ingestion": "误食",
+      "injection": "注入/刺伤"
+    },
+    "exposedGroups": {
+      "employees": "员工",
+      "cleaners": "保洁人员",
+      "contractors": "承包商",
+      "maintenance_staff": "维修人员",
+      "young_persons": "未成年工",
+      "new_expectant_mothers": "孕产妇",
+      "visitors": "访客",
+      "members_of_public": "公众"
+    },
+    "quantityBands": {
+      "small": "少量(毫升/克)",
+      "medium": "中量(升/千克)",
+      "large": "大量(散装)"
+    },
+    "frequencyBands": {
+      "rare": "偶尔",
+      "monthly": "每月",
+      "weekly": "每周",
+      "daily": "每天",
+      "continuous": "连续"
+    },
+    "durationBands": {
+      "under_15_min": "15分钟以内",
+      "15_60_min": "15–60分钟",
+      "1_4_h": "1–4小时",
+      "over_4_h": "4小时以上"
+    },
+    "tiers": {
+      "elimination": "消除",
+      "substitution": "替代",
+      "engineering": "工程控制",
+      "administrative": "管理控制",
+      "rpe": "呼吸防护",
+      "ppe": "其他个体防护"
+    },
+    "locations": {
+      "sectionTitle": "存放位置",
+      "addButton": "添加位置",
+      "empty": "尚未记录存放位置。",
+      "noSite": "无场所",
+      "removeAction": "移除位置",
+      "saveButton": "保存位置",
+      "unsited": "{count, plural, other {#处位置}}"
+    },
+    "hazardProfile": {
+      "sectionTitle": "危害档案",
+      "empty": "尚无危害数据。上传安全数据表即可自动填写。"
+    },
+    "wel": {
+      "agent": "因子",
+      "twa": "8小时时间加权",
+      "stel": "15分钟短时",
+      "source": "来源"
+    },
+    "substitution": {
+      "requiredBanner": "致癌/致突变物:必须先考虑替代,才能发布评估。",
+      "advisedBanner": "强烈建议为该物质考虑替代方案。请记录你的决定。",
+      "bannerHint": "更安全的产品或工艺能否完成这项工作?无论结论如何都请记录。",
+      "recordButton": "记录替代决定",
+      "dialogTitle": "替代决定",
+      "dialogHint": "替代在控制层级中位居首位。记录是否评估过更安全的替代方案以及最终决定。",
+      "statusLabel": "决定",
+      "notesLabel": "备注",
+      "notesPlaceholder": "考虑、试用或否决了什么——以及原因。",
+      "saveButton": "保存决定",
+      "savedToast": "替代决定已记录。",
+      "statusLine": "替代:{status}",
+      "status": {
+        "not_assessed": "尚未考虑",
+        "considered_rejected": "已考虑——无可行替代",
+        "planned": "已计划替代",
+        "substituted": "已替代"
+      }
+    },
+    "assessments": {
+      "sectionTitle": "COSHH 评估",
+      "newButton": "新建评估",
+      "empty": "尚无评估——每种在用物质都需要一份。",
+      "dialogTitle": "新建 COSHH 评估",
+      "taskLabel": "任务或活动",
+      "taskPlaceholder": "例:在清洗台为机加工件除油",
+      "taskHint": "每项任务一份评估——同一产品在不同作业中风险不同。",
+      "createButton": "创建评估"
+    },
+    "monitoring": {
+      "sectionTitle": "接触监测",
+      "recordButton": "记录结果",
+      "empty": "尚无监测结果。",
+      "date": "日期",
+      "type": "采样",
+      "period": "时段",
+      "result": "结果",
+      "unit": "单位",
+      "vsWel": "对比限值",
+      "notComparable": "无法比较",
+      "exceeds": "超过限值",
+      "withinLimit": "限值以内",
+      "dialogTitle": "记录监测结果",
+      "saveButton": "保存结果",
+      "recordedToast": "结果已记录——在限值以内。",
+      "exceedsToast": "结果已记录——已超过职业接触限值。",
+      "notComparableToast": "结果已记录——没有可比对的限值。",
+      "types": {
+        "personal": "个体",
+        "static": "定点",
+        "biological": "生物"
+      },
+      "periods": {
+        "twa8h": "8小时时间加权",
+        "stel15min": "15分钟短时"
+      }
+    },
+    "activity": {
+      "sectionTitle": "动态",
+      "kinds": {
+        "created": "创建物质",
+        "updated": "更新详情",
+        "archived": "归档",
+        "location_added": "添加位置",
+        "location_removed": "移除位置",
+        "sds_attached": "附加数据表",
+        "sds_confirmed_current": "确认数据表最新",
+        "assessment_created": "创建评估",
+        "published": "发布评估",
+        "moved_to_draft": "退回草稿",
+        "control_added": "添加控制措施",
+        "control_removed": "移除控制措施",
+        "review_recorded": "记录复查",
+        "monitoring_recorded": "记录监测结果",
+        "lev_test_recorded": "记录排风检测",
+        "substitution_updated": "更新替代决定"
+      }
+    },
+    "create": {
+      "title": "添加物质",
+      "pdfOnly": "请以 PDF 格式上传安全数据表。",
+      "uploadError": "文件上传失败,请重试。",
+      "readToast": "数据表已读取——请核对预填内容。",
+      "lowConfidence": "该数据表较难识别——请仔细核对每个字段。",
+      "extractionFailed": "自动读取失败。文件已附加——请手动填写信息。",
+      "successToast": "{ref} 已加入台账。",
+      "errorToast": "无法创建物质,请重试。",
+      "duplicateWarning": "台账中已有同名物质。",
+      "duplicateConfirmHint": "再次点击创建,可将其作为单独记录添加。",
+      "alreadyInInventory": "已在你的台账中。",
+      "openExisting": "打开 {ref}",
+      "submitAnyway": "仍然创建",
+      "dropTitle": "将安全数据表拖到这里",
+      "dropHint": "供应商提供的 PDF——我们负责读取并为你填写危害档案。",
+      "aiBadge": "AI 自动读取",
+      "manualLink": "手头没有数据表?手动录入",
+      "readingTitle": "正在读取数据表…",
+      "readingHint": "正在提取产品信息、危害、接触限值和贮存要求。",
+      "aiPrefilledBanner": "由 AI 根据数据表预填。保存前请逐项与数据表核对——记录由你负责。",
+      "removeSds": "移除数据表",
+      "identitySection": "产品",
+      "nameLabel": "产品名称",
+      "librarySuggestions": "常见产品",
+      "libraryPrefilled": "已从产品库预填，保存前请核对信息。",
+      "supplierLabel": "供应商",
+      "identifierLabel": "产品编号 / UFI",
+      "formLabel": "物理形态",
+      "usageLabel": "用途",
+      "usagePlaceholder": "例:清洗印刷辊",
+      "hazardSection": "危害档案",
+      "noHazardsRead": "未从数据表中读取到危险性说明。",
+      "welCount": "{count, plural, other {从数据表读取了#项接触限值}}",
+      "hazardManualHint": "上传安全数据表可自动填写危害档案,也可稍后在物质记录中补充。",
+      "asbestosHint": "石棉由专门制度管理——此处仅作转介记录。",
+      "locationSection": "存放在哪里?",
+      "whereLabel": "位置",
+      "wherePlaceholder": "例:易燃品柜,B车间",
+      "quantityLabel": "数量",
+      "unitLabel": "单位",
+      "storageClassLabel": "贮存类别",
+      "storageNotesLabel": "贮存备注",
+      "submit": "加入台账",
+      "submitting": "添加中…"
+    },
+    "editor": {
+      "taskLabel": "任务或活动",
+      "exposureSection": "接触情况",
+      "routesLabel": "接触途径",
+      "personsLabel": "谁会接触?",
+      "personsCustomPlaceholder": "添加其他人群…",
+      "personsCountLabel": "人数",
+      "quantityBandLabel": "使用量",
+      "frequencyBandLabel": "频率",
+      "durationBandLabel": "时长",
+      "controlsSection": "控制措施",
+      "controlsHint": "按层级递进:先替代再工程控制,呼吸防护放最后——且须说明理由。",
+      "tierEmpty": "该层级暂无措施。",
+      "tierHints": {
+        "elimination": "不用该物质能否完成任务?",
+        "substitution": "有没有更安全的产品或工艺?",
+        "engineering": "密闭、局部排风、通风",
+        "administrative": "规程、培训、接触时间",
+        "rpe": "呼吸防护——最后手段,须说明理由",
+        "ppe": "手套、护目镜、防护服"
+      },
+      "addControlPlaceholder": "描述控制措施…",
+      "addControlSave": "添加",
+      "controlPlanned": "计划中",
+      "controlInPlace": "已落实",
+      "toggleStatusHint": "点击切换已落实/计划中。计划中的措施在发布时会生成行动项。",
+      "removeControl": "移除措施",
+      "ppeOnlyWarning": "所有措施都是呼吸防护/个体防护。发布前须说明为何更高层级的措施不可合理实施。",
+      "justificationLabel": "理由",
+      "justificationNeeded": "补充仅用个体防护的理由…",
+      "justificationPlaceholder": "为什么消除、替代或工程控制不可合理实施?",
+      "justificationSave": "保存",
+      "requirementsSection": "其他要求",
+      "requirements": {
+        "levRequired": "需要局部排风",
+        "healthSurveillanceRequired": "健康监护",
+        "exposureMonitoringRequired": "接触监测"
+      },
+      "emergencyLabel": "应急备注",
+      "emergencyPlaceholder": "泄漏、飞溅、火灾——首先该做什么。",
+      "summarySection": "通俗摘要",
+      "summaryHint": "写给做这项工作的人——不是写给档案。",
+      "summaryPlaceholder": "它是什么,会怎样伤害你,要用哪些防护,出问题时怎么办。",
+      "summarySave": "保存摘要",
+      "summaryDiscard": "放弃",
+      "reviewSection": "复查",
+      "reviewLine": "上次复查 {last} · 下次 {next}",
+      "recordReviewButton": "记录复查",
+      "reviewNoteLabel": "备注",
+      "reviewNotePlaceholder": "例:用途和供应商均无变化。",
+      "reviewSaveButton": "保存复查",
+      "reviewRecordedToast": "复查已记录。",
+      "publish": "发布",
+      "republish": "重新发布",
+      "moveToDraft": "退回草稿",
+      "publishedToast": "评估已发布。",
+      "actionsCreated": "{count, plural, other {已从计划中的措施创建#项行动}}",
+      "publishErrors": {
+        "no-routes": "发布前请至少记录一种接触途径。",
+        "no-controls": "发布前请至少添加一项控制措施。",
+        "ppe-only-needs-justification": "仅个体防护的措施至少需要一条理由说明。",
+        "substitution-not-considered": "该物质为致癌或致突变物——请先在物质页记录替代决定。",
+        "archived": "该评估已归档。",
+        "generic": "发布失败,请重试。"
+      },
+      "substitutionBlockedBanner": "该致癌/致突变物尚未考虑替代——在此之前无法发布。",
+      "substitutionBlockedLink": "前往物质页记录",
+      "ai": {
+        "suggestButton": "推荐控制措施",
+        "suggesting": "思考中…",
+        "suggestError": "无法生成建议,请重试。",
+        "suggestionsTitle": "建议的控制措施",
+        "dismiss": "关闭",
+        "accept": "添加",
+        "acceptHint": "采纳的措施会以\"计划中\"加入——落实后请切换状态。采纳前请逐条审核。",
+        "substitutionIdea": "替代思路",
+        "suggestedChip": "AI 建议",
+        "draftSummaryButton": "用 AI 起草",
+        "drafting": "起草中…",
+        "summaryError": "无法起草摘要,请重试。",
+        "summaryDrafted": "草稿已就绪——请审阅并保存。"
+      },
+      "signOff": {
+        "title": "评估人签署",
+        "statement": "本人确认这是对所述作业风险的适当且充分的评估，所列控制措施已（或将）落实。",
+        "hint": "您的姓名和日期将随本次发布一并记录。",
+        "confirm": "签署并发布",
+        "cancel": "取消"
+      },
+      "rpe": {
+        "typePlaceholder": "呼吸防护类型（如 FFP3、半面罩 A2P3）",
+        "apfPlaceholder": "APF",
+        "faceFitLabel": "密合度测试已确认",
+        "apfValue": "APF {apf}",
+        "faceFitValue": "密合度测试 {date}",
+        "edit": "编辑",
+        "addDetail": "添加呼吸防护详情（类型 / APF / 密合度）",
+        "save": "保存"
+      },
+      "staleBanner": "该评估在上次发布后已更改 — 请重新发布并再次分享，让班组看到最新版本。"
+    },
+    "lev": {
+      "title": "局部排风台账(LEV)",
+      "subtitle": "局部排风装置及其定期检查与检测记录。",
+      "addButton": "添加装置",
+      "empty": "尚未登记排风装置。",
+      "createdToast": "装置已添加。",
+      "testRecordedToast": "检测已记录。",
+      "overdue": "已逾期",
+      "returnToService": "恢复使用",
+      "recordTestButton": "记录检测",
+      "intervalMonths": "{count, plural, other {每#个月}}",
+      "columns": {
+        "name": "装置",
+        "interval": "周期",
+        "lastTest": "上次检测",
+        "nextDue": "下次到期",
+        "status": "状态"
+      },
+      "status": {
+        "in_service": "使用中",
+        "out_of_service": "停用",
+        "decommissioned": "报废"
+      },
+      "results": {
+        "pass": "合格",
+        "pass_with_defects": "合格但有缺陷",
+        "fail": "不合格"
+      },
+      "addDialogTitle": "添加局部排风装置",
+      "nameLabel": "名称",
+      "namePlaceholder": "例:焊接工位排风臂",
+      "locationLabel": "位置",
+      "intervalLabel": "检测周期(月)",
+      "intervalHint": "法定上限为14个月;部分工艺需要更频繁的检测。",
+      "addSaveButton": "添加装置",
+      "testDialogTitle": "记录检查与检测",
+      "testDateLabel": "检测日期",
+      "testResultLabel": "结果",
+      "examinerLabel": "检测人",
+      "examinerPlaceholder": "个人或公司",
+      "defectsLabel": "发现的缺陷",
+      "failHint": "检测不合格的装置将停用,直至修复并恢复使用。",
+      "testSaveButton": "保存检测"
+    },
+    "exportCsv": "导出台账 (CSV)",
+    "surveillance": {
+      "sectionTitle": "健康监护",
+      "hint": "COSHH 第11条 — 谁在接受该物质的健康监护、复查间隔及下次日期。记录只会结束，不会删除。",
+      "suggestedBanner": "该物质的分类（致癌/致突变/致敏）通常需要健康监护 — 目前尚无人登记。",
+      "empty": "没有人在接受该物质的监护。",
+      "enrollButton": "登记人员",
+      "dialogTitle": "登记健康监护",
+      "person": "人员",
+      "interval": "间隔",
+      "intervalLabel": "复查间隔（月）",
+      "intervalMonths": "{count} 个月",
+      "lastCheck": "上次检查",
+      "nextDue": "下次到期",
+      "due": "到期",
+      "dueChip": "监护到期",
+      "recordCheck": "记录检查",
+      "endButton": "结束",
+      "endConfirm": "结束此人的监护？记录将保留。",
+      "ended": "已结束",
+      "enrolling": "登记中…",
+      "enrollSubmit": "登记",
+      "enrolledToast": "已登记健康监护。",
+      "alreadyEnrolled": "已在该物质的监护名单中。",
+      "checkToast": "已记录检查，下次到期日已更新。"
+    },
+    "share": {
+      "button": "通过 Heads Up 分享",
+      "description": "请阅读物质记录及附件中的安全数据表："
+    },
+    "powButton": "作业点",
+    "kinds": {
+      "standing": "常规",
+      "point_of_work": "作业点"
+    },
+    "staleChip": "发布后已更改",
+    "pow": {
+      "title": "作业点检查",
+      "pickHint": "选择即将使用的产品。",
+      "searchPlaceholder": "搜索物质…",
+      "noResults": "未找到物质。",
+      "changeSubstance": "更换",
+      "sdsLink": "查看安全数据表",
+      "noSds": "未登记安全数据表 — 请在物质记录中附上。",
+      "cmrBlocked": "该物质为致癌/致突变物且尚未考虑替代 — 请先记录替代决定。",
+      "cmrBlockedLink": "打开物质",
+      "taskLabel": "今日作业",
+      "taskPlaceholder": "例如：切割100块砌块，机房B，无供水",
+      "routesLabel": "接触途径",
+      "controlsTitle": "今日已落实的控制措施",
+      "controlsCarriedHint": "沿用自最近一次评估 — 今日不具备的请取消勾选。",
+      "controlsEmptyHint": "暂无先前评估 — 请添加已落实的控制措施。",
+      "removeAdded": "移除",
+      "tierLabel": "控制层级",
+      "addControlPlaceholder": "添加其他控制措施…",
+      "addButton": "添加",
+      "justificationLabel": "仅呼吸防护/PPE — 需要说明理由",
+      "publishing": "发布中…",
+      "signPublishButton": "签署并发布",
+      "doneTitle": "检查已发布",
+      "doneRef": "{ref} — {name}",
+      "openButton": "打开评估",
+      "newCheckButton": "新的检查"
+    }
+  },
+  "permits": {
+    "title": "作业许可",
+    "subtitle": "高风险作业的正式审批、管控与关闭。",
+    "boardButton": "实时看板",
+    "typesButton": "许可类型",
+    "newButton": "新建许可",
+    "attention": {
+      "overdue": "已过期未关闭",
+      "expiringSoon": "2小时内到期",
+      "awaitingAcceptance": "等待接收",
+      "suspended": "已暂停",
+      "draft": "准备中的草稿"
+    },
+    "filters": {
+      "search": "搜索",
+      "searchPlaceholder": "标题或编号…",
+      "status": "状态",
+      "open": "所有进行中",
+      "all": "全部",
+      "allSites": "全部"
+    },
+    "columns": {
+      "reference": "编号",
+      "permit": "许可",
+      "type": "类型",
+      "window": "有效期",
+      "acceptor": "接收人",
+      "status": "状态"
+    },
+    "empty": "没有符合筛选条件的许可。",
+    "emptyCta": "创建第一张许可",
+    "categories": {
+      "hot_work": "动火作业",
+      "confined_space": "受限空间",
+      "work_at_height": "高处作业",
+      "electrical": "电气作业",
+      "excavation": "挖掘作业",
+      "roof_work": "屋面作业",
+      "asbestos": "石棉作业",
+      "lifting": "吊装作业",
+      "pressure_systems": "压力系统",
+      "other": "其他高风险"
+    },
+    "status": {
+      "draft": "草稿",
+      "issued": "已签发",
+      "active": "生效中",
+      "suspended": "已暂停",
+      "closed": "已关闭",
+      "cancelled": "已取消"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, other {剩余#小时}}",
+      "remainingMinutes": "{minutes, plural, other {剩余#分钟}}",
+      "overdueHours": "{hours, plural, other {超时#小时}}",
+      "overdueMinutes": "{minutes, plural, other {超时#分钟}}"
+    },
+    "board": {
+      "backToRegister": "许可台账",
+      "title": "实时许可看板",
+      "subtitle": "全部场所当前进行中的每一张许可。每分钟自动刷新。",
+      "lastUpdated": "更新于 {time}",
+      "counts": {
+        "overdue": "已超时 — 未关闭",
+        "active": "生效中",
+        "issued": "等待接收",
+        "suspended": "已暂停"
+      },
+      "empty": "没有进行中的许可。当前没有获批的高风险作业。",
+      "noSite": "未指定场所",
+      "reference": "编号",
+      "acceptor": "接收人"
+    },
+    "new": {
+      "back": "作业许可",
+      "title": "创建许可",
+      "subtitle": "许可从草稿开始 — 先决条件、证据与签字在签发前完成。",
+      "noPermission": "您没有创建作业许可的权限。",
+      "fields": {
+        "type": "许可类型",
+        "typePlaceholder": "选择作业类型…",
+        "title": "作业标题",
+        "titlePlaceholder": "例如：2号线焊接",
+        "description": "作业内容",
+        "descriptionPlaceholder": "具体做什么、使用什么设备…",
+        "noSite": "无场所",
+        "location": "区域／具体位置",
+        "locationPlaceholder": "例如：罐区4号位",
+        "validFrom": "生效时间",
+        "validTo": "失效时间",
+        "acceptor": "接收人",
+        "acceptorPlaceholder": "指定接收许可的人员…",
+        "acceptorHint": "作业负责人。开工前必须在线接收该许可。"
+      },
+      "maxDuration": "最长时长 {hours} 小时",
+      "willRequire": "签发前该类型要求：",
+      "requirements": {
+        "authoriser": "审批签字",
+        "gasTesting": "气体检测结果",
+        "isolationCertificate": "隔离证书",
+        "rescuePlan": "救援方案"
+      },
+      "preconditionCount": "{count, plural, other {签发前需确认 # 项先决条件}}",
+      "conflictWarning": "{count, plural, other {该场所在此时间段还有 # 张进行中的许可}}",
+      "sameArea": "同一区域",
+      "cancel": "取消",
+      "submit": "创建草稿"
+    },
+    "detail": {
+      "back": "作业许可",
+      "fields": {
+        "site": "场所",
+        "location": "区域",
+        "validFrom": "生效时间",
+        "validTo": "失效时间"
+      },
+      "extensions": "{count, plural, other {（已延期#次）}}",
+      "suspendedBanner": "由 {by} 暂停 — 条件已变化。恢复前不得继续作业。",
+      "overdueBanner": "该许可已过期但未关闭。请立即确认作业状态，然后关闭或延期。",
+      "conflicts": {
+        "title": "{count, plural, other {同一场所有 # 张进行中的许可与本许可时间重叠}}",
+        "sameArea": "· 同一区域"
+      },
+      "preconditions": {
+        "title": "先决条件",
+        "progress": "已确认 {done}/{total}",
+        "none": "该许可类型没有检查清单。",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "证据",
+        "gasReadings": "气体检测结果",
+        "requiredBeforeIssue": "签发前必需",
+        "noReadings": "尚未记录检测值。",
+        "substance": "物质",
+        "reading": "读数",
+        "unit": "单位",
+        "recordReading": "记录",
+        "isolationCertificate": "隔离证书",
+        "notRecorded": "尚未记录。",
+        "isolationRefPlaceholder": "证书编号…",
+        "save": "保存",
+        "rescuePlan": "救援方案",
+        "rescuePlanPlaceholder": "如何救援伤员、由谁执行、使用什么装备…",
+        "attachments": "附件",
+        "kinds": {
+          "isolation_certificate": "隔离证书",
+          "rescue_plan": "救援方案",
+          "gas_test": "气体检测",
+          "other": "其他"
+        }
+      },
+      "signatures": {
+        "title": "签字",
+        "pending": "尚未签字",
+        "authoriser": "审批工程师／现场负责人",
+        "authoriseAction": "审批",
+        "issuer": "签发人",
+        "issueAction": "签发许可",
+        "acceptor": "接收人",
+        "acceptAction": "接收许可",
+        "acknowledgeConflicts": "我已查看重叠的许可并接受叠加风险",
+        "awaitingAcceptor": "等待指定接收人签字。只有本人可以接收。"
+      },
+      "actions": {
+        "title": "许可操作",
+        "suspend": "暂停",
+        "suspendReason": "暂停许可的原因？",
+        "suspendConfirm": "暂停许可",
+        "resume": "恢复 — 已确认安全",
+        "extend": "延期",
+        "extendTo": "新的失效时间",
+        "extendHint": "单次延期最多增加 {hours} 小时。",
+        "extendReauthorisation": "该类型要求由审批工程师延期 — 延期即为重新审批。",
+        "extendConfirm": "延期许可",
+        "handover": "交接",
+        "handoverTo": "接班接收人",
+        "handoverHint": "在接班接收人签字前，许可退回“已签发”状态。",
+        "handoverConfirm": "交接",
+        "close": "关闭",
+        "closeChecksTitle": "关闭检查 — 四项必须全部确认",
+        "closeChecks": {
+          "workComplete": "作业完成或已安全停止",
+          "areaMadeSafe": "区域已检查并恢复安全",
+          "isolationsRemoved": "隔离已按约定解除或恢复",
+          "personnelClear": "所有人员已清点并撤离区域"
+        },
+        "closeNotesPlaceholder": "关闭备注（可选）…",
+        "closeConfirm": "关闭许可",
+        "cancel": "取消许可",
+        "cancelReason": "取消许可的原因？",
+        "cancelConfirm": "取消许可"
+      },
+      "closedLine": "由 {name} 于 {time} 关闭。",
+      "cancelledLine": "由 {name} 于 {time} 取消。",
+      "timeline": {
+        "title": "历史记录",
+        "kinds": {
+          "created": "已创建",
+          "updated": "已更新详情",
+          "precondition_checked": "已确认先决条件",
+          "precondition_unchecked": "已撤销确认",
+          "gas_reading_recorded": "已记录气体检测",
+          "attachment_added": "已添加附件",
+          "authorised": "已审批",
+          "issued": "已签发",
+          "accepted": "已接收",
+          "suspended": "已暂停",
+          "resumed": "已恢复",
+          "extended": "已延期",
+          "handed_over": "已交接",
+          "cancelled": "已取消",
+          "closed": "已关闭",
+          "expiry_escalated": "过期升级 — 许可过期未关闭"
+        }
+      }
+    },
+    "types": {
+      "back": "作业许可",
+      "title": "许可类型",
+      "subtitle": "每种类型强制执行的管控要求。修改仅影响新许可 — 进行中的许可保留创建时的清单。",
+      "systemBadge": "标准",
+      "archivedBadge": "已归档",
+      "openCount": "{count, plural, other {# 张进行中的许可}}",
+      "restore": "恢复",
+      "archive": "归档",
+      "flags": {
+        "requiresAuthoriser": "需要审批签字",
+        "requiresGasTesting": "需要气体检测",
+        "requiresIsolationCertificate": "需要隔离证书",
+        "requiresRescuePlan": "需要救援方案"
+      },
+      "maxDuration": "最长有效期",
+      "hours": "小时",
+      "preconditions": "先决条件清单",
+      "removePrecondition": "移除条件",
+      "addPreconditionPlaceholder": "新的检查项…",
+      "addPrecondition": "添加",
+      "createTitle": "添加自定义许可类型",
+      "createHint": "用于九种标准类型之外的作业。创建后再配置其要求。",
+      "createNamePlaceholder": "例如：潜水作业",
+      "createButton": "添加类型"
+    },
+    "errors": {
+      "module-disabled": "该模块不可用。",
+      "unknown-site": "该场所不存在。",
+      "unknown-user": "该人员不属于本组织。",
+      "type-archived": "该许可类型已归档 — 请恢复或选择其他类型。",
+      "duplicate-name": "同名许可类型已存在。",
+      "duplicate-precondition-id": "检查项不能重复。",
+      "window-invalid": "有效期的结束时间必须晚于开始时间。",
+      "window-too-long": "有效期超过该类型允许的上限。",
+      "window-past": "有效期已经过去 — 签发前请先更新。",
+      "acceptor-required": "签发前请指定接收人。",
+      "issuer-is-acceptor": "签发人不能接收自己的许可 — 请指定其他人。",
+      "preconditions-incomplete": "签发前必须确认所有先决条件。",
+      "gas-test-required": "签发前请至少记录一次气体检测。",
+      "isolation-certificate-required": "签发前请记录隔离证书。",
+      "rescue-plan-required": "签发前请记录救援方案。",
+      "authorisation-required": "签发前需要审批工程师签字。",
+      "simops-conflict": "其他许可与本许可重叠 — 查看并确认后方可签发。",
+      "invalid-transition": "当前状态下无法执行该操作。",
+      "not-draft": "只能编辑草稿。",
+      "unknown-precondition": "该检查项已不存在。",
+      "already-authorised": "该许可已审批。",
+      "authoriser-is-acceptor": "接收人不能审批自己的许可。",
+      "not-the-acceptor": "只有指定接收人才能接收该许可。",
+      "resume-confirmation-required": "继续前请确认恢复作业是安全的。",
+      "extension-not-later": "新的失效时间必须晚于当前时间。",
+      "extension-too-long": "单次延期不能超过该类型的最长时长。",
+      "reauthorisation-required": "只有审批工程师才能延期该许可。",
+      "acceptor-is-issuer": "签发人不能成为接收人。",
+      "same-acceptor": "该人员已持有此许可。",
+      "not-allowed": "您没有权限执行该操作。",
+      "closure-checks-incomplete": "必须确认全部四项关闭检查才能关闭许可。",
+      "generic": "出了点问题。请检查表单后重试。"
     }
   }
 }

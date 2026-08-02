@@ -39,6 +39,8 @@ export const PERMISSION_MODULES = [
   'billing',
   'contractors',
   'riskAssessments',
+  'coshh',
+  'permits',
   'org',
 ] as const;
 
@@ -143,6 +145,21 @@ export const PERMISSION_KEYS = [
   'riskAssessments.view',
   'riskAssessments.create',
   'riskAssessments.manage',
+
+  // ─── COSHH (FreeHS module B2) ────────────────────────────────────────────
+  'coshh.view',
+  'coshh.create',
+  'coshh.manage',
+
+  // ─── Permit to work (FreeHS module B3) ───────────────────────────────────
+  // `permits.issue` is the permit-issuer authority: issue, suspend, resume,
+  // extend, hand over, cancel and close. `permits.manage` governs the
+  // permit-type catalogue. Acceptance needs no key beyond `view` — being
+  // the named acceptor is the authorisation.
+  'permits.view',
+  'permits.create',
+  'permits.issue',
+  'permits.manage',
 
   // ─── Organisation settings ───────────────────────────────────────────────
   // `org.settings` is what the S-E02 last-admin check counts: any user whose

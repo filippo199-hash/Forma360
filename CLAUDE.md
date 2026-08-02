@@ -470,8 +470,35 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   `if (brand === 'x')` in core logic is banned.
 - **Brand-only modules**: FreeHS ships `riskAssessments` (module B1 —
   HSE five-step editor at `packages/api/src/routers/riskAssessments.ts` +
-  `apps/web/app/[locale]/risk-assessments`). The router is built with
-  `{ enabled }` from the brand catalogue; nav + API both gate on it.
+  `apps/web/app/[locale]/risk-assessments`; governance layer from
+  practitioner feedback round 2: shared banding + severity floors in
+  `packages/shared/src/risk-matrix.ts`, immutable publish versions with
+  first-class assessor sign-off (`risk_assessment_versions`, migration
+  0058), version-aware acknowledgements + `forma360-ra-ack-reminder`
+  daily chase worker, per-tenant matrix editor at
+  `[locale]/settings/risk-matrix`, PDF download route
+  `api/exports/risk-assessment-pdf`; edge-case IDs RA-E01..E30 in
+  `riskAssessments.test.ts`, RA-J01/J02 in `ra-ack-reminder.test.ts`,
+  RM-E01..E04 in `risk-matrix.test.ts`) and `coshh` (module B2 —
+  hazardous-substance inventory at `packages/api/src/routers/coshh.ts` +
+  `apps/web/app/[locale]/coshh`; domain helpers in
+  `packages/shared/src/coshh.ts`, AI SDS import at
+  `apps/web/src/server/coshh-ai.ts` + `/api/ai/coshh-*` routes; schema in
+  `packages/db/src/schema/coshh.ts`, migration 0055; edge-case IDs CO-E01..E05
+  in `coshh.test.ts` (shared) and CO-E10..E24 (router)) and `permits`
+  (module B3 — Permit to Work & High-Risk Activities at
+  `packages/api/src/routers/permits.ts` + `apps/web/app/[locale]/permits`
+  (register, new, detail, live board at `/permits/board`, type catalogue at
+  `/permits/types`); lifecycle state machine + nine seeded default types +
+  jsonb payload schemas in `packages/shared/src/permits.ts` (ADR 0012);
+  schema in `packages/db/src/schema/permits.ts`, migration 0059; issue gate
+  enforces preconditions / gas tests / isolation certificate / rescue plan /
+  authorising counter-signature, SIMOPs conflicts need explicit
+  acknowledgement; `forma360-permit-expiry-watch` worker escalates open
+  permits past `validTo` every 15 min; edge-case IDs PW-E01..E05 in
+  `permits.test.ts` (shared), PW-E10..E24 (router), PW-J01/J02 in
+  `permit-expiry-watch.test.ts`). Each router is built
+  with `{ enabled }` from the brand catalogue; nav + API both gate on it.
 - **Everything internal stays `forma360`** (package scope, queue names,
   ESLint rule namespace, object keys). Users never see those.
 - Each brand gets its own Railway project, Postgres, Redis, R2, Resend
@@ -489,6 +516,8 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0008 — Rendered output strategy](./docs/adr/0008-rendered-output-strategy.md)
 - [0009 — Template content schema](./docs/adr/0009-template-content-schema.md)
 - [0010 — Multi-brand, single codebase](./docs/adr/0010-multi-brand-single-codebase.md)
+- [0011 — Risk-assessment versioning, sign-off and residual-risk coherence](./docs/adr/0011-risk-assessment-versioning-and-sign-off.md)
+- [0012 — Permit-to-work lifecycle, signature model and expiry escalation](./docs/adr/0012-permit-lifecycle-and-signature-model.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase

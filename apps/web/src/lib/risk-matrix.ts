@@ -1,41 +1,24 @@
 /**
  * Risk-matrix banding for the Risk Assessments module (FreeHS B1).
  *
- * Scores are likelihood × severity (1–5 each, so 1–25). Band thresholds
- * come from the assessment row's `matrix` snapshot so historic scores stay
- * stable if the tenant's matrix ever changes.
+ * The banding maths lives in `@forma360/shared/risk-matrix` (one canonical
+ * implementation for API, web and render — including the per-severity
+ * floors a tenant can configure). This module re-exports it and adds the
+ * web-only Tailwind chip styling.
  */
+import type { RiskBand } from '@forma360/shared/risk-matrix';
 
-export type RiskBand = 'none' | 'low' | 'medium' | 'high' | 'critical';
-
-export interface MatrixThresholds {
-  lowMax: number;
-  mediumMax: number;
-  highMax: number;
-}
-
-export function scoreFor(
-  likelihood: number | null | undefined,
-  severity: number | null | undefined,
-): number | null {
-  if (
-    likelihood === null ||
-    likelihood === undefined ||
-    severity === null ||
-    severity === undefined
-  ) {
-    return null;
-  }
-  return likelihood * severity;
-}
-
-export function bandForScore(score: number | null, m: MatrixThresholds): RiskBand {
-  if (score === null || score <= 0) return 'none';
-  if (score <= m.lowMax) return 'low';
-  if (score <= m.mediumMax) return 'medium';
-  if (score <= m.highMax) return 'high';
-  return 'critical';
-}
+export {
+  DEFAULT_RISK_MATRIX,
+  bandFor,
+  bandForScore,
+  bandRank,
+  scoreFor,
+  worstBand,
+} from '@forma360/shared/risk-matrix';
+export type { RiskBand, RiskBandLevel, RiskMatrixConfig } from '@forma360/shared/risk-matrix';
+/** Back-compat alias — pre-P-4 code imported the thresholds under this name. */
+export type { RiskMatrixConfig as MatrixThresholds } from '@forma360/shared/risk-matrix';
 
 /** Chip styling per band — readable in light and dark. */
 export function bandChipClasses(band: RiskBand): string {

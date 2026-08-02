@@ -87,7 +87,9 @@
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
-    "riskAssessments": "Risk assessments"
+    "riskAssessments": "Risk assessments",
+    "coshh": "COSHH",
+    "permits": "Permits"
   },
   "ai": {
     "emptyTitle": "How can I help?",
@@ -234,7 +236,8 @@
       "training": "Training",
       "integrations": "Integrations",
       "billing": "Billing",
-      "company": "Company"
+      "company": "Company",
+      "riskMatrix": "Risk matrix"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -3536,7 +3539,9 @@
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
       "deletePinConfirm": "Delete this pin?"
-    }
+    },
+    "treeExpand": "Expand {name}",
+    "treeCollapse": "Collapse {name}"
   },
   "contractors": {
     "title": "Contractors",
@@ -3894,7 +3899,8 @@
       "locationPlaceholder": "Building, area or site location",
       "submit": "Create assessment",
       "submitting": "Creating…",
-      "error": "Could not create the assessment. Try again."
+      "error": "Could not create the assessment. Try again.",
+      "cancel": "Cancel"
     },
     "steps": {
       "hazards": "1 · Identify hazards",
@@ -3981,8 +3987,16 @@
         "no-hazards": "Add at least one hazard before publishing.",
         "unscored-hazards": "Every hazard needs initial and residual likelihood × severity scores.",
         "ppe-only-needs-justification": "At least one hazard relies on PPE alone — add a justification or a higher-order control.",
-        "generic": "Could not publish. Check the assessment and try again."
-      }
+        "generic": "Could not publish. Check the assessment and try again.",
+        "residual-above-initial": "A hazard's residual risk is higher than its initial risk — controls cannot increase risk.",
+        "residual-needs-controls": "A hazard has a residual score but no controls at all — record what controls the risk first.",
+        "high-residual-needs-justification": "A hazard's residual risk stays High/Critical — add a planned control or a tolerability note.",
+        "actions-need-assignees": "Every planned control needs an owner and a due date before publishing.",
+        "invalid-assignee": "One of the action owners is not an active member of this organisation.",
+        "invalid-due-date": "Action due dates cannot be in the past."
+      },
+      "publishChanges": "Publish changes (v{version})",
+      "reackToast": "Version {version} published — everyone must read and acknowledge it again."
     },
     "review": {
       "sectionTitle": "Review",
@@ -4034,7 +4048,18 @@
       "selectAll": "Select everyone",
       "shareHeadsUp": "Share via Heads Up",
       "sharingHeadsUp": "Preparing…",
-      "attachmentFailed": "Couldn't attach the PDF — sharing without it."
+      "attachmentFailed": "Couldn't attach the PDF — sharing without it.",
+      "sentToast": "Distributed — recipients have been notified by email.",
+      "dueBy": "due by {date}",
+      "dueDateLabel": "Acknowledgement deadline (optional)",
+      "dueDateHint": "Recipients are emailed now and chased automatically until they confirm. The deadline shows in their notification.",
+      "acknowledgedVersion": "Acknowledged v{version}",
+      "overdue": "Overdue",
+      "reackPending": "Re-acknowledgement pending",
+      "reackTitle": "Previously acknowledged version {version}",
+      "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
+      "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -4047,7 +4072,10 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "The parent assessment has changed since this variant was created — review the differences and update this variant if needed.",
+      "driftChip": "Differs from parent",
+      "driftChipTitle": "The parent assessment changed after this variant was created."
     },
     "stats": {
       "active": "Active",
@@ -4075,7 +4103,14 @@
       "actionsIntro": "Publishing will create {count} action(s) from your planned controls:",
       "actionMeta": "Assigned to you · Medium priority · Due in 7 days",
       "confirm": "Confirm and publish",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "republishNote": "This publishes version {version}. Everyone previously asked to read this assessment will be asked to read and acknowledge the new version.",
+      "reactivateNote": "No content changes since version {version} — publishing puts the same version back in force without re-opening acknowledgements.",
+      "assignmentsHint": "Each planned control becomes an action. Choose who owns it and a realistic deadline — nothing defaults to you.",
+      "assigneeLabel": "Owner",
+      "assigneePlaceholder": "Choose an owner…",
+      "dueLabel": "Due date",
+      "assignmentsIncomplete": "Assign an owner and a due date to every planned control to continue."
     },
     "titlePrompt": {
       "title": "Name this assessment before publishing",
@@ -4102,6 +4137,842 @@
         "acknowledged": "Acknowledged",
         "variant_created": "Person-specific variant created"
       }
+    },
+    "downloadPdf": "Download PDF",
+    "matrix": {
+      "selectedSummary": "L{likelihood} × S{severity} = {score} —",
+      "aboveInitial": "above initial risk — controls cannot increase risk",
+      "notSelected": "Not scored yet — click a cell.",
+      "residualNeedsControls": "Record at least one control first — residual risk is the risk with controls in place.",
+      "residualNeedsInitial": "Score the initial risk first.",
+      "residualAboveInitialWarning": "Residual risk is higher than initial risk — controls cannot increase risk. Fix one of the two scores.",
+      "residualNoteHint": "The residual risk stays High/Critical. Add a planned control (further action) or explain why this risk is tolerable.",
+      "residualNoteLabel": "Why is this residual risk tolerable?",
+      "residualNotePlaceholder": "e.g. Short-duration permitted work with fire watch in place; further reduction not reasonably practicable."
+    },
+    "versions": {
+      "sectionTitle": "Versions",
+      "hint": "Every publish freezes an immutable copy — what people acknowledged stays retrievable exactly as it was in force.",
+      "empty": "Not published yet — the first publish creates version 1.",
+      "current": "In force",
+      "view": "View",
+      "viewerTitle": "Version {version} — as in force",
+      "signOffLine": "Signed off by {name} on {date}",
+      "actionsCreated": "{count} action(s) created",
+      "unpublishedChangesBanner": "This assessment has unpublished changes — readers still see version {version} and acknowledgements still refer to it. Publish the changes to put them in force."
+    },
+    "matrixSettings": {
+      "title": "Risk matrix",
+      "subtitle": "Align the 5×5 scoring bands with your corporate standard.",
+      "thresholdsTitle": "Band thresholds",
+      "thresholdsHint": "A score (likelihood × severity, 1–25) at or below each threshold falls in that band; anything above the High threshold is Critical.",
+      "lowMaxLabel": "Low up to",
+      "mediumMaxLabel": "Medium up to",
+      "highMaxLabel": "High up to",
+      "invalidThresholds": "Thresholds must increase: Low < Medium < High < 25.",
+      "floorsTitle": "Severity overrides",
+      "floorsHint": "Force a minimum band for a severity, regardless of likelihood — e.g. any credible fatality (severity 5) is at least High.",
+      "floorLabel": "Severity {severity} minimum",
+      "floorNone": "No override",
+      "previewTitle": "Preview",
+      "applyToDrafts": "Also apply to open drafts",
+      "applyToDraftsHint": "Published versions always keep the matrix they were signed against.",
+      "historyNote": "New assessments snapshot this matrix at creation, so past records never rescore themselves.",
+      "save": "Save matrix",
+      "saving": "Saving…",
+      "saved": "Risk matrix saved.",
+      "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
+      "saveError": "Could not save the matrix. Try again."
+    }
+  },
+  "coshh": {
+    "title": "COSHH",
+    "subtitle": "A live inventory of every hazardous substance on site, its assessment, its controls, and the exposure it creates.",
+    "newButton": "Add substance",
+    "levButton": "LEV register",
+    "empty": "No substances in the inventory yet. Drop a safety data sheet to add the first one.",
+    "emptyCta": "Add the first substance",
+    "notFound": "This record could not be found.",
+    "backToList": "Back to COSHH",
+    "saveError": "Could not save. Try again.",
+    "archivedToast": "Substance archived.",
+    "archiveButton": "Archive",
+    "archiveConfirm": "Archive this substance? It will be hidden from the inventory.",
+    "welExceeded": "WEL exceeded",
+    "noAssessment": "No assessment",
+    "assessmentCount": "{count, plural, one {# assessment} other {# assessments}}",
+    "reviewDue": "Review due",
+    "viewOther": "View substance",
+    "storageConflictBanner": "Storage conflict at {site}: {mine} stored with {other} ({theirs}). Segregate these products.",
+    "attention": {
+      "sdsMissing": "Data sheets missing",
+      "sdsDue": "Data sheets to review",
+      "assessmentsDue": "Assessments to review",
+      "levDue": "LEV tests due",
+      "welExceedances": "WEL exceedances",
+      "storageConflicts": "Storage conflicts"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Substance name…",
+      "status": "Status",
+      "active": "Active",
+      "archived": "Archived",
+      "all": "All",
+      "allSites": "All"
+    },
+    "columns": {
+      "reference": "Ref",
+      "substance": "Substance",
+      "supplier": "Supplier",
+      "hazards": "Hazards",
+      "sds": "Data sheet",
+      "assessment": "Assessment"
+    },
+    "pictograms": {
+      "GHS01": "Explosive",
+      "GHS02": "Flammable",
+      "GHS03": "Oxidising",
+      "GHS04": "Gas under pressure",
+      "GHS05": "Corrosive",
+      "GHS06": "Acute toxicity",
+      "GHS07": "Harmful / irritant",
+      "GHS08": "Serious health hazard",
+      "GHS09": "Environmental hazard"
+    },
+    "regimes": {
+      "carcinogen": "Carcinogen",
+      "mutagen": "Mutagen",
+      "asthmagen": "Asthmagen",
+      "biological": "Biological agent",
+      "lead": "Lead",
+      "asbestos": "Asbestos referral"
+    },
+    "sds": {
+      "status": {
+        "missing": "No data sheet",
+        "review_due": "Review due",
+        "current": "Current"
+      },
+      "sectionTitle": "Safety data sheets",
+      "empty": "No safety data sheet on file yet.",
+      "uploadButton": "Upload new version",
+      "uploading": "Uploading…",
+      "uploadError": "Could not upload the data sheet.",
+      "confirmButton": "Still current",
+      "confirmedToast": "Recorded — review date pushed forward.",
+      "attachedToast": "New data sheet version attached.",
+      "attachedAppliedToast": "New version attached and hazard profile updated from the sheet.",
+      "applyExtractionLabel": "Update hazard profile from the sheet",
+      "missingBanner": "No safety data sheet on file. Upload one — the hazard profile fills itself.",
+      "dueBanner": "The current data sheet has reached its review age. Check with the supplier for a newer revision, or confirm it is still current.",
+      "issued": "Issued {date}",
+      "reviewBy": "Review by {date}",
+      "currentChip": "Current"
+    },
+    "assessmentStatus": {
+      "draft": "Draft",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "physicalForms": {
+      "liquid": "Liquid",
+      "solid": "Solid",
+      "powder": "Powder",
+      "gas": "Gas",
+      "aerosol": "Aerosol",
+      "fume": "Fume",
+      "mist": "Mist",
+      "fibre": "Fibre",
+      "other": "Other"
+    },
+    "signalWords": {
+      "danger": "Danger",
+      "warning": "Warning"
+    },
+    "storageClasses": {
+      "flammable": "Flammable",
+      "oxidiser": "Oxidiser",
+      "corrosive_acid": "Corrosive — acid",
+      "corrosive_base": "Corrosive — base",
+      "toxic": "Toxic",
+      "compressed_gas": "Compressed gas",
+      "water_reactive": "Water-reactive",
+      "general": "General"
+    },
+    "routes": {
+      "inhalation": "Inhalation",
+      "skin": "Skin",
+      "eyes": "Eyes",
+      "ingestion": "Ingestion",
+      "injection": "Injection / puncture"
+    },
+    "exposedGroups": {
+      "employees": "Employees",
+      "cleaners": "Cleaners",
+      "contractors": "Contractors",
+      "maintenance_staff": "Maintenance staff",
+      "young_persons": "Young persons",
+      "new_expectant_mothers": "New & expectant mothers",
+      "visitors": "Visitors",
+      "members_of_public": "Members of the public"
+    },
+    "quantityBands": {
+      "small": "Small (ml / g)",
+      "medium": "Medium (litres / kg)",
+      "large": "Large (bulk)"
+    },
+    "frequencyBands": {
+      "rare": "Rarely",
+      "monthly": "Monthly",
+      "weekly": "Weekly",
+      "daily": "Daily",
+      "continuous": "Continuous"
+    },
+    "durationBands": {
+      "under_15_min": "Under 15 min",
+      "15_60_min": "15–60 min",
+      "1_4_h": "1–4 hours",
+      "over_4_h": "Over 4 hours"
+    },
+    "tiers": {
+      "elimination": "Eliminate",
+      "substitution": "Substitute",
+      "engineering": "Engineering",
+      "administrative": "Administrative",
+      "rpe": "RPE",
+      "ppe": "Other PPE"
+    },
+    "locations": {
+      "sectionTitle": "Where it is kept",
+      "addButton": "Add location",
+      "empty": "No locations recorded yet.",
+      "noSite": "No site",
+      "removeAction": "Remove location",
+      "saveButton": "Save location",
+      "unsited": "{count, plural, one {# location} other {# locations}}"
+    },
+    "hazardProfile": {
+      "sectionTitle": "Hazard profile",
+      "empty": "No hazard data recorded. Upload the safety data sheet to fill this in."
+    },
+    "wel": {
+      "agent": "Agent",
+      "twa": "8-hr TWA",
+      "stel": "15-min STEL",
+      "source": "Source"
+    },
+    "substitution": {
+      "requiredBanner": "Carcinogen / mutagen: substitution must be considered before an assessment can be published.",
+      "advisedBanner": "Substitution is strongly advised for this substance. Record your decision.",
+      "bannerHint": "Could a safer product or process do this job? Record the answer either way.",
+      "recordButton": "Record substitution decision",
+      "dialogTitle": "Substitution decision",
+      "dialogHint": "Substitution comes first in the hierarchy of control. Record whether a safer alternative was considered and what was decided.",
+      "statusLabel": "Decision",
+      "notesLabel": "Notes",
+      "notesPlaceholder": "What was considered, trialled or rejected — and why.",
+      "saveButton": "Save decision",
+      "savedToast": "Substitution decision recorded.",
+      "statusLine": "Substitution: {status}",
+      "status": {
+        "not_assessed": "Not yet considered",
+        "considered_rejected": "Considered — no viable alternative",
+        "planned": "Substitution planned",
+        "substituted": "Substituted"
+      }
+    },
+    "assessments": {
+      "sectionTitle": "COSHH assessments",
+      "newButton": "New assessment",
+      "empty": "No assessment yet — every substance in use needs one.",
+      "dialogTitle": "New COSHH assessment",
+      "taskLabel": "Task or activity",
+      "taskPlaceholder": "e.g. Degreasing machined parts at the wash-down bench",
+      "taskHint": "One assessment per task — the same product can carry different risks in different jobs.",
+      "createButton": "Create assessment"
+    },
+    "monitoring": {
+      "sectionTitle": "Exposure monitoring",
+      "recordButton": "Record result",
+      "empty": "No monitoring results recorded.",
+      "date": "Date",
+      "type": "Sample",
+      "period": "Period",
+      "result": "Result",
+      "unit": "Unit",
+      "vsWel": "vs WEL",
+      "notComparable": "Not comparable",
+      "exceeds": "Exceeds WEL",
+      "withinLimit": "Within limit",
+      "dialogTitle": "Record monitoring result",
+      "saveButton": "Save result",
+      "recordedToast": "Result recorded — within the limit.",
+      "exceedsToast": "Result recorded — the workplace exposure limit is exceeded.",
+      "notComparableToast": "Result recorded — no matching limit to compare against.",
+      "types": {
+        "personal": "Personal",
+        "static": "Static",
+        "biological": "Biological"
+      },
+      "periods": {
+        "twa8h": "8-hr TWA",
+        "stel15min": "15-min STEL"
+      }
+    },
+    "activity": {
+      "sectionTitle": "Activity",
+      "kinds": {
+        "created": "Substance created",
+        "updated": "Details updated",
+        "archived": "Archived",
+        "location_added": "Location added",
+        "location_removed": "Location removed",
+        "sds_attached": "Data sheet attached",
+        "sds_confirmed_current": "Data sheet confirmed current",
+        "assessment_created": "Assessment created",
+        "published": "Assessment published",
+        "moved_to_draft": "Moved to draft",
+        "control_added": "Control added",
+        "control_removed": "Control removed",
+        "review_recorded": "Review recorded",
+        "monitoring_recorded": "Monitoring result recorded",
+        "lev_test_recorded": "LEV test recorded",
+        "substitution_updated": "Substitution decision updated"
+      }
+    },
+    "create": {
+      "title": "Add substance",
+      "pdfOnly": "Upload the safety data sheet as a PDF.",
+      "uploadError": "Could not upload the file. Try again.",
+      "readToast": "Data sheet read — check the pre-filled details.",
+      "lowConfidence": "The sheet was hard to read — check every field carefully.",
+      "extractionFailed": "Could not read the sheet automatically. The file is attached — fill in the details manually.",
+      "successToast": "{ref} added to the inventory.",
+      "errorToast": "Could not create the substance. Try again.",
+      "duplicateWarning": "A substance with this name is already in your inventory.",
+      "duplicateConfirmHint": "Press create again to add it anyway as a separate record.",
+      "alreadyInInventory": "Already in your inventory.",
+      "openExisting": "Open {ref}",
+      "submitAnyway": "Create anyway",
+      "dropTitle": "Drop the safety data sheet here",
+      "dropHint": "PDF from the supplier — we read it and fill in the hazard profile for you.",
+      "aiBadge": "Read automatically with AI",
+      "manualLink": "No data sheet to hand? Enter the details manually",
+      "readingTitle": "Reading the data sheet…",
+      "readingHint": "Product identity, hazards, exposure limits and storage guidance are being extracted.",
+      "aiPrefilledBanner": "Pre-filled from the data sheet by AI. Check each field against the sheet before saving — you are responsible for the record.",
+      "removeSds": "Remove data sheet",
+      "identitySection": "Product",
+      "nameLabel": "Product name",
+      "librarySuggestions": "Common products",
+      "libraryPrefilled": "Pre-filled from the product library — check the details before saving.",
+      "supplierLabel": "Supplier",
+      "identifierLabel": "Product code / UFI",
+      "formLabel": "Physical form",
+      "usageLabel": "What is it used for?",
+      "usagePlaceholder": "e.g. Cleaning print rollers",
+      "hazardSection": "Hazard profile",
+      "noHazardsRead": "No hazard statements were read from the sheet.",
+      "welCount": "{count, plural, one {# workplace exposure limit read from the sheet} other {# workplace exposure limits read from the sheet}}",
+      "hazardManualHint": "Upload the safety data sheet to fill the hazard profile automatically, or add it later from the substance record.",
+      "asbestosHint": "Asbestos is managed under its own regime — this record only notes the referral.",
+      "locationSection": "Where is it kept?",
+      "whereLabel": "Location",
+      "wherePlaceholder": "e.g. Flammables cabinet, Workshop B",
+      "quantityLabel": "Quantity",
+      "unitLabel": "Unit",
+      "storageClassLabel": "Storage class",
+      "storageNotesLabel": "Storage notes",
+      "submit": "Add to inventory",
+      "submitting": "Adding…"
+    },
+    "editor": {
+      "taskLabel": "Task or activity",
+      "exposureSection": "Exposure",
+      "routesLabel": "Routes of exposure",
+      "personsLabel": "Who is exposed?",
+      "personsCustomPlaceholder": "Add another group…",
+      "personsCountLabel": "How many people",
+      "quantityBandLabel": "Quantity used",
+      "frequencyBandLabel": "How often",
+      "durationBandLabel": "How long",
+      "controlsSection": "Controls",
+      "controlsHint": "Work down the hierarchy: substitution before engineering, RPE last — and justified.",
+      "tierEmpty": "Nothing at this level.",
+      "tierHints": {
+        "elimination": "Can the task be done without the substance?",
+        "substitution": "Is there a safer product or process?",
+        "engineering": "Enclosure, LEV, ventilation",
+        "administrative": "Procedures, training, exposure time",
+        "rpe": "Respiratory protection — last resort, justified",
+        "ppe": "Gloves, goggles, coveralls"
+      },
+      "addControlPlaceholder": "Describe the control…",
+      "addControlSave": "Add",
+      "controlPlanned": "Planned",
+      "controlInPlace": "In place",
+      "toggleStatusHint": "Click to toggle in place / planned. Planned controls become actions on publish.",
+      "removeControl": "Remove control",
+      "ppeOnlyWarning": "All controls are RPE/PPE. Publishing needs a justification for why higher-order controls are not reasonably practicable.",
+      "justificationLabel": "Justification",
+      "justificationNeeded": "Add the PPE-only justification…",
+      "justificationPlaceholder": "Why are elimination, substitution or engineering controls not reasonably practicable?",
+      "justificationSave": "Save",
+      "requirementsSection": "Also required",
+      "requirements": {
+        "levRequired": "LEV required",
+        "healthSurveillanceRequired": "Health surveillance",
+        "exposureMonitoringRequired": "Exposure monitoring"
+      },
+      "emergencyLabel": "Emergency notes",
+      "emergencyPlaceholder": "Spill, splash, fire — what to do first.",
+      "summarySection": "Plain-language summary",
+      "summaryHint": "For the people doing the task — not the file.",
+      "summaryPlaceholder": "What it is, how it can hurt you, the controls to use, what to do if it goes wrong.",
+      "summarySave": "Save summary",
+      "summaryDiscard": "Discard",
+      "reviewSection": "Review",
+      "reviewLine": "Last reviewed {last} · next due {next}",
+      "recordReviewButton": "Record review",
+      "reviewNoteLabel": "Note",
+      "reviewNotePlaceholder": "e.g. No change in use or supplier.",
+      "reviewSaveButton": "Save review",
+      "reviewRecordedToast": "Review recorded.",
+      "publish": "Publish",
+      "republish": "Republish",
+      "moveToDraft": "Back to draft",
+      "publishedToast": "Assessment published.",
+      "actionsCreated": "{count, plural, one {# action created from planned controls} other {# actions created from planned controls}}",
+      "publishErrors": {
+        "no-routes": "Record at least one route of exposure before publishing.",
+        "no-controls": "Add at least one control before publishing.",
+        "ppe-only-needs-justification": "RPE/PPE-only controls need a justification on at least one entry.",
+        "substitution-not-considered": "This substance is a carcinogen or mutagen — record the substitution decision on the substance first.",
+        "archived": "This assessment is archived.",
+        "generic": "Could not publish. Try again."
+      },
+      "substitutionBlockedBanner": "Substitution has not been considered for this carcinogen/mutagen — publishing is blocked until it is.",
+      "substitutionBlockedLink": "Record it on the substance",
+      "ai": {
+        "suggestButton": "Suggest controls",
+        "suggesting": "Thinking…",
+        "suggestError": "Could not draft suggestions. Try again.",
+        "suggestionsTitle": "Suggested controls",
+        "dismiss": "Dismiss",
+        "accept": "Add",
+        "acceptHint": "Accepted controls are added as “planned” — mark them in place once done. Review each one before accepting.",
+        "substitutionIdea": "Substitution idea",
+        "suggestedChip": "AI suggests",
+        "draftSummaryButton": "Draft with AI",
+        "drafting": "Drafting…",
+        "summaryError": "Could not draft the summary. Try again.",
+        "summaryDrafted": "Draft ready — review and save it."
+      },
+      "signOff": {
+        "title": "Assessor sign-off",
+        "statement": "I confirm this is a suitable and sufficient assessment of the risks of the task described, and the stated controls are (or will be) in place.",
+        "hint": "Your name and the date are recorded against this publish.",
+        "confirm": "Sign and publish",
+        "cancel": "Cancel"
+      },
+      "rpe": {
+        "typePlaceholder": "RPE type (e.g. FFP3, half-mask A2P3)",
+        "apfPlaceholder": "APF",
+        "faceFitLabel": "Face fit confirmed",
+        "apfValue": "APF {apf}",
+        "faceFitValue": "Face fit {date}",
+        "edit": "Edit",
+        "addDetail": "Add RPE detail (type / APF / face fit)",
+        "save": "Save"
+      },
+      "staleBanner": "This assessment has changed since it was last published — republish and re-share so the crew sees the current version."
+    },
+    "lev": {
+      "title": "LEV register",
+      "subtitle": "Local exhaust ventilation and its thorough examination & test record.",
+      "addButton": "Add LEV unit",
+      "empty": "No LEV plant registered yet.",
+      "createdToast": "LEV unit added.",
+      "testRecordedToast": "Test recorded.",
+      "overdue": "Overdue",
+      "returnToService": "Return to service",
+      "recordTestButton": "Record test",
+      "intervalMonths": "{count, plural, one {Every # month} other {Every # months}}",
+      "columns": {
+        "name": "Unit",
+        "interval": "Interval",
+        "lastTest": "Last test",
+        "nextDue": "Next due",
+        "status": "Status"
+      },
+      "status": {
+        "in_service": "In service",
+        "out_of_service": "Out of service",
+        "decommissioned": "Decommissioned"
+      },
+      "results": {
+        "pass": "Pass",
+        "pass_with_defects": "Pass with defects",
+        "fail": "Fail"
+      },
+      "addDialogTitle": "Add LEV unit",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Welding bay extraction arm",
+      "locationLabel": "Location",
+      "intervalLabel": "Test interval (months)",
+      "intervalHint": "Statutory maximum is 14 months; some processes need more frequent testing.",
+      "addSaveButton": "Add unit",
+      "testDialogTitle": "Record thorough examination & test",
+      "testDateLabel": "Test date",
+      "testResultLabel": "Result",
+      "examinerLabel": "Examiner",
+      "examinerPlaceholder": "Person or company",
+      "defectsLabel": "Defects found",
+      "failHint": "A failed test takes the unit out of service until it is repaired and returned to service.",
+      "testSaveButton": "Save test"
+    },
+    "exportCsv": "Export register (CSV)",
+    "surveillance": {
+      "sectionTitle": "Health surveillance",
+      "hint": "COSHH Reg 11 — who is under surveillance for this substance, their recall interval and next due date. Records are ended, never deleted.",
+      "suggestedBanner": "This substance’s classification (carcinogen / mutagen / sensitiser) usually requires health surveillance — nobody is enrolled yet.",
+      "empty": "Nobody is under surveillance for this substance.",
+      "enrollButton": "Enrol person",
+      "dialogTitle": "Enrol in health surveillance",
+      "person": "Person",
+      "interval": "Recall",
+      "intervalLabel": "Recall every (months)",
+      "intervalMonths": "{count} mo",
+      "lastCheck": "Last check",
+      "nextDue": "Next due",
+      "due": "Due",
+      "dueChip": "Surveillance due",
+      "recordCheck": "Record check",
+      "endButton": "End",
+      "endConfirm": "End surveillance for this person? The record is kept.",
+      "ended": "Ended",
+      "enrolling": "Enrolling…",
+      "enrollSubmit": "Enrol",
+      "enrolledToast": "Enrolled in health surveillance.",
+      "alreadyEnrolled": "Already under surveillance for this substance.",
+      "checkToast": "Check recorded — next due date updated."
+    },
+    "share": {
+      "button": "Share via Heads Up",
+      "description": "Please read the substance record and the attached safety data sheet:"
+    },
+    "powButton": "Point of work",
+    "kinds": {
+      "standing": "Standing",
+      "point_of_work": "Point of work"
+    },
+    "staleChip": "Changed since publish",
+    "pow": {
+      "title": "Point-of-work check",
+      "pickHint": "Pick the product you are about to use.",
+      "searchPlaceholder": "Search substances…",
+      "noResults": "No substances found.",
+      "changeSubstance": "Change",
+      "sdsLink": "View safety data sheet",
+      "noSds": "No safety data sheet on file — attach one from the substance record.",
+      "cmrBlocked": "This substance is a carcinogen/mutagen and substitution has not been considered yet — record the substitution decision first.",
+      "cmrBlockedLink": "Open substance",
+      "taskLabel": "Task, today",
+      "taskPlaceholder": "e.g. Cutting 100 blocks, plant room B, no water available",
+      "routesLabel": "Routes of exposure",
+      "controlsTitle": "Controls in place today",
+      "controlsCarriedHint": "Carried from the latest assessment — untick anything not in place today.",
+      "controlsEmptyHint": "No previous assessment to carry from — add the controls in place.",
+      "removeAdded": "Remove",
+      "tierLabel": "Control tier",
+      "addControlPlaceholder": "Add another control…",
+      "addButton": "Add",
+      "justificationLabel": "RPE/PPE-only — justification required",
+      "publishing": "Publishing…",
+      "signPublishButton": "Sign & publish",
+      "doneTitle": "Check published",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Open assessment",
+      "newCheckButton": "New check"
+    }
+  },
+  "permits": {
+    "title": "Permits to work",
+    "subtitle": "Formal authorisation, control and closure of high-risk activities.",
+    "boardButton": "Live board",
+    "typesButton": "Permit types",
+    "newButton": "New permit",
+    "attention": {
+      "overdue": "past expiry without closure",
+      "expiringSoon": "expiring within 2 hours",
+      "awaitingAcceptance": "awaiting acceptance",
+      "suspended": "suspended",
+      "draft": "drafts in preparation"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Title or reference…",
+      "status": "Status",
+      "open": "All open",
+      "all": "All",
+      "allSites": "All"
+    },
+    "columns": {
+      "reference": "Ref",
+      "permit": "Permit",
+      "type": "Type",
+      "window": "Validity",
+      "acceptor": "Acceptor",
+      "status": "Status"
+    },
+    "empty": "No permits match these filters.",
+    "emptyCta": "Raise the first permit",
+    "categories": {
+      "hot_work": "Hot work",
+      "confined_space": "Confined space",
+      "work_at_height": "Work at height",
+      "electrical": "Electrical",
+      "excavation": "Excavation",
+      "roof_work": "Roof work",
+      "asbestos": "Asbestos",
+      "lifting": "Lifting",
+      "pressure_systems": "Pressure systems",
+      "other": "Other high-risk"
+    },
+    "status": {
+      "draft": "Draft",
+      "issued": "Issued",
+      "active": "Active",
+      "suspended": "Suspended",
+      "closed": "Closed",
+      "cancelled": "Cancelled"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, one {# h left} other {# h left}}",
+      "remainingMinutes": "{minutes, plural, one {# min left} other {# min left}}",
+      "overdueHours": "{hours, plural, one {# h overdue} other {# h overdue}}",
+      "overdueMinutes": "{minutes, plural, one {# min overdue} other {# min overdue}}"
+    },
+    "board": {
+      "backToRegister": "Permit register",
+      "title": "Live permit board",
+      "subtitle": "Every open permit across the estate, right now. Refreshes every minute.",
+      "lastUpdated": "Updated {time}",
+      "counts": {
+        "overdue": "Overdue — not closed",
+        "active": "Active",
+        "issued": "Awaiting acceptance",
+        "suspended": "Suspended"
+      },
+      "empty": "No open permits. Nothing high-risk is authorised right now.",
+      "noSite": "No site assigned",
+      "reference": "Ref",
+      "acceptor": "Acceptor"
+    },
+    "new": {
+      "back": "Permits",
+      "title": "Raise a permit",
+      "subtitle": "The permit starts as a draft — preconditions, evidence and signatures happen before issue.",
+      "noPermission": "You do not have permission to raise permits.",
+      "fields": {
+        "type": "Permit type",
+        "typePlaceholder": "Choose the activity…",
+        "title": "Work title",
+        "titlePlaceholder": "e.g. Welding on line 2",
+        "description": "Description of the work",
+        "descriptionPlaceholder": "What exactly will be done, with what equipment…",
+        "noSite": "No site",
+        "location": "Area / exact location",
+        "locationPlaceholder": "e.g. Tank farm, bay 4",
+        "validFrom": "Valid from",
+        "validTo": "Valid to",
+        "acceptor": "Acceptor",
+        "acceptorPlaceholder": "Name the person accepting the permit…",
+        "acceptorHint": "The person in charge of the work. They must digitally accept the permit before work starts."
+      },
+      "maxDuration": "Maximum duration {hours} h",
+      "willRequire": "Before issue this type requires:",
+      "requirements": {
+        "authoriser": "authorising signature",
+        "gasTesting": "gas test results",
+        "isolationCertificate": "isolation certificate",
+        "rescuePlan": "rescue plan"
+      },
+      "preconditionCount": "{count, plural, one {# precondition to confirm before issue} other {# preconditions to confirm before issue}}",
+      "conflictWarning": "{count, plural, one {# other permit is open at this site in this window} other {# other permits are open at this site in this window}}",
+      "sameArea": "same area",
+      "cancel": "Cancel",
+      "submit": "Create draft permit"
+    },
+    "detail": {
+      "back": "Permits",
+      "fields": {
+        "site": "Site",
+        "location": "Area",
+        "validFrom": "Valid from",
+        "validTo": "Valid to"
+      },
+      "extensions": "{count, plural, one {(# extension)} other {(# extensions)}}",
+      "suspendedBanner": "Suspended by {by} — conditions changed. Work must not continue until resumed.",
+      "overdueBanner": "This permit passed its expiry without being closed. Confirm the state of the work now, then close or extend it.",
+      "conflicts": {
+        "title": "{count, plural, one {# other open permit overlaps this one at the same site} other {# other open permits overlap this one at the same site}}",
+        "sameArea": "· same area"
+      },
+      "preconditions": {
+        "title": "Preconditions",
+        "progress": "{done}/{total} confirmed",
+        "none": "This permit type has no precondition checklist.",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "Evidence",
+        "gasReadings": "Gas test results",
+        "requiredBeforeIssue": "required before issue",
+        "noReadings": "No readings recorded yet.",
+        "substance": "Substance",
+        "reading": "Reading",
+        "unit": "Unit",
+        "recordReading": "Record",
+        "isolationCertificate": "Isolation certificate",
+        "notRecorded": "Not recorded yet.",
+        "isolationRefPlaceholder": "Certificate reference…",
+        "save": "Save",
+        "rescuePlan": "Rescue plan",
+        "rescuePlanPlaceholder": "How a casualty would be rescued, by whom, with what equipment…",
+        "attachments": "Attachments",
+        "kinds": {
+          "isolation_certificate": "Isolation certificate",
+          "rescue_plan": "Rescue plan",
+          "gas_test": "Gas test",
+          "other": "Other"
+        }
+      },
+      "signatures": {
+        "title": "Signatures",
+        "pending": "Not signed yet",
+        "authoriser": "Authorising engineer / site controller",
+        "authoriseAction": "Authorise",
+        "issuer": "Issuer",
+        "issueAction": "Issue permit",
+        "acceptor": "Acceptor",
+        "acceptAction": "Accept permit",
+        "acknowledgeConflicts": "I have reviewed the overlapping permits and accept the combined risk",
+        "awaitingAcceptor": "Waiting for the named acceptor to sign on. Only they can accept."
+      },
+      "actions": {
+        "title": "Permit actions",
+        "suspend": "Suspend",
+        "suspendReason": "Why is the permit being suspended?",
+        "suspendConfirm": "Suspend permit",
+        "resume": "Resume — safe to continue",
+        "extend": "Extend",
+        "extendTo": "New expiry",
+        "extendHint": "One extension may add at most {hours} h.",
+        "extendReauthorisation": "This type requires the authorising engineer to extend — the extension is the re-authorisation.",
+        "extendConfirm": "Extend permit",
+        "handover": "Hand over",
+        "handoverTo": "Incoming acceptor",
+        "handoverHint": "The permit returns to Issued until the incoming acceptor signs on.",
+        "handoverConfirm": "Hand over",
+        "close": "Close",
+        "closeChecksTitle": "Close-out checks — all four must be confirmed",
+        "closeChecks": {
+          "workComplete": "Work complete or stopped safely",
+          "areaMadeSafe": "Area inspected and made safe",
+          "isolationsRemoved": "Isolations removed or reinstated as agreed",
+          "personnelClear": "All personnel accounted for and clear"
+        },
+        "closeNotesPlaceholder": "Closure notes (optional)…",
+        "closeConfirm": "Close permit",
+        "cancel": "Cancel permit",
+        "cancelReason": "Why is the permit being cancelled?",
+        "cancelConfirm": "Cancel permit"
+      },
+      "closedLine": "Closed by {name} on {time}.",
+      "cancelledLine": "Cancelled by {name} on {time}.",
+      "timeline": {
+        "title": "History",
+        "kinds": {
+          "created": "Created",
+          "updated": "Details updated",
+          "precondition_checked": "Precondition confirmed",
+          "precondition_unchecked": "Precondition unconfirmed",
+          "gas_reading_recorded": "Gas reading recorded",
+          "attachment_added": "Attachment added",
+          "authorised": "Authorised",
+          "issued": "Issued",
+          "accepted": "Accepted",
+          "suspended": "Suspended",
+          "resumed": "Resumed",
+          "extended": "Extended",
+          "handed_over": "Handed over",
+          "cancelled": "Cancelled",
+          "closed": "Closed",
+          "expiry_escalated": "Expiry escalated — permit passed its validity without closure"
+        }
+      }
+    },
+    "types": {
+      "back": "Permits",
+      "title": "Permit types",
+      "subtitle": "The control requirements each permit type enforces. Changes apply to new permits only — live permits keep the checklist they were created with.",
+      "systemBadge": "Standard",
+      "archivedBadge": "Archived",
+      "openCount": "{count, plural, one {# open permit} other {# open permits}}",
+      "restore": "Restore",
+      "archive": "Archive",
+      "flags": {
+        "requiresAuthoriser": "Authorising signature required",
+        "requiresGasTesting": "Gas testing required",
+        "requiresIsolationCertificate": "Isolation certificate required",
+        "requiresRescuePlan": "Rescue plan required"
+      },
+      "maxDuration": "Maximum validity",
+      "hours": "hours",
+      "preconditions": "Precondition checklist",
+      "removePrecondition": "Remove precondition",
+      "addPreconditionPlaceholder": "New checklist item…",
+      "addPrecondition": "Add",
+      "createTitle": "Add a custom permit type",
+      "createHint": "For activities outside the nine standard types. Configure its requirements after creating it.",
+      "createNamePlaceholder": "e.g. Diving operations",
+      "createButton": "Add type"
+    },
+    "errors": {
+      "module-disabled": "This module is not available.",
+      "unknown-site": "That site does not exist.",
+      "unknown-user": "That person is not a member of this organisation.",
+      "type-archived": "This permit type is archived — restore it or pick another.",
+      "duplicate-name": "A permit type with that name already exists.",
+      "duplicate-precondition-id": "Checklist items must be unique.",
+      "window-invalid": "The validity window must end after it starts.",
+      "window-too-long": "The validity window is longer than this permit type allows.",
+      "window-past": "The validity window has already passed — update it before issuing.",
+      "acceptor-required": "Name an acceptor before issuing.",
+      "issuer-is-acceptor": "The issuer cannot accept their own permit — name a different acceptor.",
+      "preconditions-incomplete": "Every precondition must be confirmed before issue.",
+      "gas-test-required": "Record at least one gas test result before issue.",
+      "isolation-certificate-required": "Record the isolation certificate before issue.",
+      "rescue-plan-required": "Record the rescue plan before issue.",
+      "authorisation-required": "The authorising engineer must sign before issue.",
+      "simops-conflict": "Other permits overlap this one — review and acknowledge them to issue.",
+      "invalid-transition": "That action is not available in the permit's current state.",
+      "not-draft": "Only draft permits can be edited.",
+      "unknown-precondition": "That checklist item no longer exists.",
+      "already-authorised": "This permit is already authorised.",
+      "authoriser-is-acceptor": "The acceptor cannot authorise their own permit.",
+      "not-the-acceptor": "Only the named acceptor can accept this permit.",
+      "resume-confirmation-required": "Confirm it is safe to resume before continuing.",
+      "extension-not-later": "The new expiry must be after the current one.",
+      "extension-too-long": "One extension may not add more than the type's maximum duration.",
+      "reauthorisation-required": "Only the authorising engineer can extend this permit.",
+      "acceptor-is-issuer": "The issuer cannot become the acceptor.",
+      "same-acceptor": "That person already holds the permit.",
+      "not-allowed": "You do not have permission to do that.",
+      "closure-checks-incomplete": "All four close-out checks must be confirmed to close the permit.",
+      "generic": "Something went wrong. Check the form and try again."
     }
   }
 }

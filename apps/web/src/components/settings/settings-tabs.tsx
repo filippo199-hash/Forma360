@@ -1,8 +1,10 @@
 'use client';
 
+import { brandHasModule } from '@forma360/shared/brand';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { activeBrand } from '../../lib/brand';
 import { cn } from '../../lib/cn';
 
 interface SettingsTabsProps {
@@ -10,7 +12,14 @@ interface SettingsTabsProps {
   isAdmin: boolean;
 }
 
-type TabKey = 'profile' | 'company' | 'users' | 'permissions' | 'groups' | 'customFields';
+type TabKey =
+  | 'profile'
+  | 'company'
+  | 'users'
+  | 'permissions'
+  | 'groups'
+  | 'customFields'
+  | 'riskMatrix';
 
 /**
  * Folder segment for each tab. Most tabs live at a folder named after the key;
@@ -23,6 +32,7 @@ const TAB_HREF: Record<TabKey, string> = {
   permissions: 'permissions',
   groups: 'groups',
   customFields: 'custom-fields',
+  riskMatrix: 'risk-matrix',
 };
 
 /**
@@ -42,6 +52,9 @@ export function SettingsTabs({ locale, isAdmin }: SettingsTabsProps) {
     'permissions',
     'groups',
     'customFields',
+    // Brand-gated (ADR 0010): the matrix editor only exists where the
+    // risk-assessments module ships.
+    ...(brandHasModule(activeBrand.id, 'riskAssessments') ? (['riskMatrix'] as TabKey[]) : []),
   ];
   const tabs: TabKey[] = isAdmin ? allTabs : ['profile'];
 

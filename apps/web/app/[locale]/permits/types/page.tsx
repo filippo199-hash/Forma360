@@ -1,0 +1,252 @@
+'use client';
+
+/**
+ * Permit-type catalogue management. The nine seeded types (and any
+ * tenant-defined ones) with their control requirements: signature /
+ * evidence flags, duration cap, and the precondition checklist that gets
+ * snapshotted onto every new permit. Editing a type never rewrites
+ * existing permits — the checklist is copied at creation.
+ */
+import { ArrowLeft, Plus, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useState } from 'react';
+import { CategoryChip } from '../../../../src/components/permits/chips';
+import { PermitErrorText } from '../../../../src/components/permits/permit-error';
+import { Button } from '../../../../src/components/ui/button';
+import { Card, CardContent } from '../../../../src/components/ui/card';
+import { Input } from '../../../../src/components/ui/input';
+import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { Switch } from '../../../../src/components/ui/switch';
+import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { trpc } from '../../../../src/lib/trpc/client';
+
+const FLAG_KEYS = [
+  'requiresAuthoriser',
+  'requiresGasTesting',
+  'requiresIsolationCertificate',
+  'requiresRescuePlan',
+] as const;
+type FlagKey = (typeof FLAG_KEYS)[number];
+
+export default function PermitTypesPage() {
+  const t = useTranslations('permits.types');
+  const params = useParams<{ locale: string }>();
+  const locale = params.locale ?? 'en';
+  const canManage = useHasPermission('permits.manage');
+
+  const utils = trpc.useUtils();
+  const { data: types, isLoading } = trpc.permits.types.list.useQuery({ includeArchived: true });
+
+  const [error, setError] = useState<string | null>(null);
+  const [newName, setNewName] = useState('');
+  const [newPrecondition, setNewPrecondition] = useState<Record<string, string>>({});
+
+  const refresh = () => {
+    setError(null);
+    void utils.permits.types.list.invalidate();
+  };
+  const onError = (err: { message: string }) => setError(err.message);
+
+  const updateType = trpc.permits.types.update.useMutation({ onSuccess: refresh, onError });
+  const archiveType = trpc.permits.types.archive.useMutation({ onSuccess: refresh, onError });
+  const createType = trpc.permits.types.create.useMutation({
+    onSuccess: () => {
+      refresh();
+      setNewName('');
+    },
+    onError,
+  });
+
+  function toggleFlag(typeId: string, key: FlagKey, value: boolean): void {
+    updateType.mutate({ typeId, [key]: value });
+  }
+
+  function addPrecondition(
+    typeId: string,
+    existing: ReadonlyArray<{ id: string; label: string }>,
+  ): void {
+    const label = (newPrecondition[typeId] ?? '').trim();
+    if (label === '') return;
+    const slug = `${label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 40)}_${String(existing.length + 1)}`;
+    updateType.mutate({
+      typeId,
+      preconditions: [...existing, { id: slug, label }],
+    });
+    setNewPrecondition((prev) => ({ ...prev, [typeId]: '' }));
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-[900px] space-y-4 sm:space-y-6">
+      <header>
+        <Link
+          href={`/${locale}/permits`}
+          className="mb-1 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+          {t('back')}
+        </Link>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+      </header>
+
+      <PermitErrorText message={error} />
+
+      {isLoading ? (
+        <Card>
+          <CardContent className="p-4">
+            <Skeleton className="h-24 w-full" />
+          </CardContent>
+        </Card>
+      ) : (
+        (types ?? []).map((type) => {
+          const archived = type.archivedAt !== null;
+          return (
+            <Card key={type.id} className={archived ? 'opacity-60' : ''}>
+              <CardContent className="space-y-3 p-4 sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <CategoryChip category={type.category} name={type.name} />
+                    {type.isSystem ? (
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                        {t('systemBadge')}
+                      </span>
+                    ) : null}
+                    {archived ? (
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground line-through">
+                        {t('archivedBadge')}
+                      </span>
+                    ) : null}
+                    <span className="text-xs text-muted-foreground">
+                      {t('openCount', { count: type.openPermitCount })}
+                    </span>
+                  </div>
+                  {canManage ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => archiveType.mutate({ typeId: type.id, restore: archived })}
+                    >
+                      {archived ? t('restore') : t('archive')}
+                    </Button>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {FLAG_KEYS.map((key) => (
+                    <label
+                      key={key}
+                      className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
+                    >
+                      <span>{t(`flags.${key}` as never)}</span>
+                      <Switch
+                        checked={type[key]}
+                        disabled={!canManage || archived}
+                        onCheckedChange={(v) => toggleFlag(type.id, key, v)}
+                      />
+                    </label>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">{t('maxDuration')}</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={72}
+                    defaultValue={type.maxDurationHours}
+                    disabled={!canManage || archived}
+                    className="h-8 w-20"
+                    onBlur={(e) => {
+                      const v = Number(e.target.value);
+                      if (Number.isInteger(v) && v >= 1 && v <= 72 && v !== type.maxDurationHours) {
+                        updateType.mutate({ typeId: type.id, maxDurationHours: v });
+                      }
+                    }}
+                  />
+                  <span className="text-muted-foreground">{t('hours')}</span>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium">{t('preconditions')}</p>
+                  <ul className="mt-1.5 space-y-1">
+                    {type.preconditions.map((p) => (
+                      <li key={p.id} className="flex items-center justify-between gap-2 text-sm">
+                        <span>{p.label}</span>
+                        {canManage && !archived ? (
+                          <button
+                            type="button"
+                            aria-label={t('removePrecondition')}
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={() =>
+                              updateType.mutate({
+                                typeId: type.id,
+                                preconditions: type.preconditions.filter((x) => x.id !== p.id),
+                              })
+                            }
+                          >
+                            <X className="h-3.5 w-3.5" aria-hidden="true" />
+                          </button>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                  {canManage && !archived ? (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Input
+                        value={newPrecondition[type.id] ?? ''}
+                        onChange={(e) =>
+                          setNewPrecondition((prev) => ({ ...prev, [type.id]: e.target.value }))
+                        }
+                        placeholder={t('addPreconditionPlaceholder')}
+                        className="h-9 max-w-md"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={(newPrecondition[type.id] ?? '').trim() === ''}
+                        onClick={() => addPrecondition(type.id, type.preconditions)}
+                      >
+                        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('addPrecondition')}
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })
+      )}
+
+      {canManage ? (
+        <Card>
+          <CardContent className="space-y-3 p-4 sm:p-6">
+            <h2 className="font-semibold">{t('createTitle')}</h2>
+            <p className="text-sm text-muted-foreground">{t('createHint')}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder={t('createNamePlaceholder')}
+                className="h-9 max-w-md"
+              />
+              <Button
+                disabled={newName.trim() === '' || createType.isPending}
+                onClick={() => createType.mutate({ category: 'other', name: newName.trim() })}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                {t('createButton')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+    </div>
+  );
+}

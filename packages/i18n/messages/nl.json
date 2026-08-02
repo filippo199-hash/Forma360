@@ -157,7 +157,8 @@
       "training": "Training",
       "integrations": "Integrations",
       "billing": "Billing",
-      "company": "Company"
+      "company": "Company",
+      "riskMatrix": "Risk matrix"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -1358,7 +1359,9 @@
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
-    "riskAssessments": "Risk assessments"
+    "riskAssessments": "Risk assessments",
+    "coshh": "Gevaarlijke stoffen",
+    "permits": "Vergunningen"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -3299,7 +3302,9 @@
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
       "deletePinConfirm": "Delete this pin?"
-    }
+    },
+    "treeExpand": "{name} uitklappen",
+    "treeCollapse": "{name} inklappen"
   },
   "contractors": {
     "title": "Contractors",
@@ -3657,7 +3662,8 @@
       "locationPlaceholder": "Building, area or site location",
       "submit": "Create assessment",
       "submitting": "Creating…",
-      "error": "Could not create the assessment. Try again."
+      "error": "Could not create the assessment. Try again.",
+      "cancel": "Cancel"
     },
     "steps": {
       "hazards": "1 · Identify hazards",
@@ -3744,8 +3750,16 @@
         "no-hazards": "Add at least one hazard before publishing.",
         "unscored-hazards": "Every hazard needs initial and residual likelihood × severity scores.",
         "ppe-only-needs-justification": "At least one hazard relies on PPE alone — add a justification or a higher-order control.",
-        "generic": "Could not publish. Check the assessment and try again."
-      }
+        "generic": "Could not publish. Check the assessment and try again.",
+        "residual-above-initial": "A hazard's residual risk is higher than its initial risk — controls cannot increase risk.",
+        "residual-needs-controls": "A hazard has a residual score but no controls at all — record what controls the risk first.",
+        "high-residual-needs-justification": "A hazard's residual risk stays High/Critical — add a planned control or a tolerability note.",
+        "actions-need-assignees": "Every planned control needs an owner and a due date before publishing.",
+        "invalid-assignee": "One of the action owners is not an active member of this organisation.",
+        "invalid-due-date": "Action due dates cannot be in the past."
+      },
+      "publishChanges": "Publish changes (v{version})",
+      "reackToast": "Version {version} published — everyone must read and acknowledge it again."
     },
     "review": {
       "sectionTitle": "Review",
@@ -3797,7 +3811,18 @@
       "selectAll": "Select everyone",
       "shareHeadsUp": "Share via Heads Up",
       "sharingHeadsUp": "Voorbereiden…",
-      "attachmentFailed": "PDF kon niet worden bijgevoegd — delen zonder bijlage."
+      "attachmentFailed": "PDF kon niet worden bijgevoegd — delen zonder bijlage.",
+      "sentToast": "Distributed — recipients have been notified by email.",
+      "dueBy": "due by {date}",
+      "dueDateLabel": "Acknowledgement deadline (optional)",
+      "dueDateHint": "Recipients are emailed now and chased automatically until they confirm. The deadline shows in their notification.",
+      "acknowledgedVersion": "Acknowledged v{version}",
+      "overdue": "Overdue",
+      "reackPending": "Re-acknowledgement pending",
+      "reackTitle": "Previously acknowledged version {version}",
+      "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
+      "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -3810,7 +3835,10 @@
       },
       "linkedTitle": "Linked person-specific assessments",
       "parentLink": "Part of: {title}",
-      "createdToast": "Linked assessment created as a draft."
+      "createdToast": "Linked assessment created as a draft.",
+      "driftBanner": "The parent assessment has changed since this variant was created — review the differences and update this variant if needed.",
+      "driftChip": "Differs from parent",
+      "driftChipTitle": "The parent assessment changed after this variant was created."
     },
     "stats": {
       "active": "Active",
@@ -3838,7 +3866,14 @@
       "actionsIntro": "Publishing will create {count} action(s) from your planned controls:",
       "actionMeta": "Assigned to you · Medium priority · Due in 7 days",
       "confirm": "Confirm and publish",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "republishNote": "This publishes version {version}. Everyone previously asked to read this assessment will be asked to read and acknowledge the new version.",
+      "reactivateNote": "No content changes since version {version} — publishing puts the same version back in force without re-opening acknowledgements.",
+      "assignmentsHint": "Each planned control becomes an action. Choose who owns it and a realistic deadline — nothing defaults to you.",
+      "assigneeLabel": "Owner",
+      "assigneePlaceholder": "Choose an owner…",
+      "dueLabel": "Due date",
+      "assignmentsIncomplete": "Assign an owner and a due date to every planned control to continue."
     },
     "titlePrompt": {
       "title": "Name this assessment before publishing",
@@ -3865,6 +3900,842 @@
         "acknowledged": "Acknowledged",
         "variant_created": "Person-specific variant created"
       }
+    },
+    "downloadPdf": "Download PDF",
+    "matrix": {
+      "selectedSummary": "L{likelihood} × S{severity} = {score} —",
+      "aboveInitial": "above initial risk — controls cannot increase risk",
+      "notSelected": "Not scored yet — click a cell.",
+      "residualNeedsControls": "Record at least one control first — residual risk is the risk with controls in place.",
+      "residualNeedsInitial": "Score the initial risk first.",
+      "residualAboveInitialWarning": "Residual risk is higher than initial risk — controls cannot increase risk. Fix one of the two scores.",
+      "residualNoteHint": "The residual risk stays High/Critical. Add a planned control (further action) or explain why this risk is tolerable.",
+      "residualNoteLabel": "Why is this residual risk tolerable?",
+      "residualNotePlaceholder": "e.g. Short-duration permitted work with fire watch in place; further reduction not reasonably practicable."
+    },
+    "versions": {
+      "sectionTitle": "Versions",
+      "hint": "Every publish freezes an immutable copy — what people acknowledged stays retrievable exactly as it was in force.",
+      "empty": "Not published yet — the first publish creates version 1.",
+      "current": "In force",
+      "view": "View",
+      "viewerTitle": "Version {version} — as in force",
+      "signOffLine": "Signed off by {name} on {date}",
+      "actionsCreated": "{count} action(s) created",
+      "unpublishedChangesBanner": "This assessment has unpublished changes — readers still see version {version} and acknowledgements still refer to it. Publish the changes to put them in force."
+    },
+    "matrixSettings": {
+      "title": "Risk matrix",
+      "subtitle": "Align the 5×5 scoring bands with your corporate standard.",
+      "thresholdsTitle": "Band thresholds",
+      "thresholdsHint": "A score (likelihood × severity, 1–25) at or below each threshold falls in that band; anything above the High threshold is Critical.",
+      "lowMaxLabel": "Low up to",
+      "mediumMaxLabel": "Medium up to",
+      "highMaxLabel": "High up to",
+      "invalidThresholds": "Thresholds must increase: Low < Medium < High < 25.",
+      "floorsTitle": "Severity overrides",
+      "floorsHint": "Force a minimum band for a severity, regardless of likelihood — e.g. any credible fatality (severity 5) is at least High.",
+      "floorLabel": "Severity {severity} minimum",
+      "floorNone": "No override",
+      "previewTitle": "Preview",
+      "applyToDrafts": "Also apply to open drafts",
+      "applyToDraftsHint": "Published versions always keep the matrix they were signed against.",
+      "historyNote": "New assessments snapshot this matrix at creation, so past records never rescore themselves.",
+      "save": "Save matrix",
+      "saving": "Saving…",
+      "saved": "Risk matrix saved.",
+      "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
+      "saveError": "Could not save the matrix. Try again."
+    }
+  },
+  "coshh": {
+    "title": "Gevaarlijke stoffen (COSHH)",
+    "subtitle": "Een levend register van elke gevaarlijke stof op locatie: de beoordeling, de beheersmaatregelen en de blootstelling.",
+    "newButton": "Stof toevoegen",
+    "levButton": "Afzuigingsregister",
+    "empty": "Nog geen stoffen in het register. Sleep een veiligheidsinformatieblad hierheen om de eerste toe te voegen.",
+    "emptyCta": "Eerste stof toevoegen",
+    "notFound": "Dit record is niet gevonden.",
+    "backToList": "Terug naar COSHH",
+    "saveError": "Opslaan mislukt. Probeer opnieuw.",
+    "archivedToast": "Stof gearchiveerd.",
+    "archiveButton": "Archiveren",
+    "archiveConfirm": "Deze stof archiveren? Hij verdwijnt uit het register.",
+    "welExceeded": "Grenswaarde overschreden",
+    "noAssessment": "Geen beoordeling",
+    "assessmentCount": "{count, plural, one {# beoordeling} other {# beoordelingen}}",
+    "reviewDue": "Herziening nodig",
+    "viewOther": "Stof bekijken",
+    "storageConflictBanner": "Opslagconflict bij {site}: {mine} opgeslagen bij {other} ({theirs}). Scheid deze producten.",
+    "attention": {
+      "sdsMissing": "VIB’s ontbreken",
+      "sdsDue": "VIB’s te herzien",
+      "assessmentsDue": "Beoordelingen te herzien",
+      "levDue": "Afzuigingskeuringen nodig",
+      "welExceedances": "Grenswaarde-overschrijdingen",
+      "storageConflicts": "Opslagconflicten"
+    },
+    "filters": {
+      "search": "Zoeken",
+      "searchPlaceholder": "Naam van de stof…",
+      "status": "Status",
+      "active": "Actief",
+      "archived": "Gearchiveerd",
+      "all": "Alle",
+      "allSites": "Alle"
+    },
+    "columns": {
+      "reference": "Ref",
+      "substance": "Stof",
+      "supplier": "Leverancier",
+      "hazards": "Gevaren",
+      "sds": "VIB",
+      "assessment": "Beoordeling"
+    },
+    "pictograms": {
+      "GHS01": "Explosief",
+      "GHS02": "Ontvlambaar",
+      "GHS03": "Oxiderend",
+      "GHS04": "Gas onder druk",
+      "GHS05": "Corrosief",
+      "GHS06": "Acuut toxisch",
+      "GHS07": "Schadelijk / irriterend",
+      "GHS08": "Ernstig gezondheidsgevaar",
+      "GHS09": "Milieugevaarlijk"
+    },
+    "regimes": {
+      "carcinogen": "Kankerverwekkend",
+      "mutagen": "Mutageen",
+      "asthmagen": "Astma-verwekkend",
+      "biological": "Biologisch agens",
+      "lead": "Lood",
+      "asbestos": "Asbest-verwijzing"
+    },
+    "sds": {
+      "status": {
+        "missing": "Geen VIB",
+        "review_due": "Herziening nodig",
+        "current": "Actueel"
+      },
+      "sectionTitle": "Veiligheidsinformatiebladen",
+      "empty": "Nog geen veiligheidsinformatieblad vastgelegd.",
+      "uploadButton": "Nieuwe versie uploaden",
+      "uploading": "Uploaden…",
+      "uploadError": "VIB kon niet worden geüpload.",
+      "confirmButton": "Nog actueel",
+      "confirmedToast": "Vastgelegd — herzieningsdatum opgeschoven.",
+      "attachedToast": "Nieuwe VIB-versie toegevoegd.",
+      "attachedAppliedToast": "Nieuwe versie toegevoegd en gevaarprofiel bijgewerkt vanuit het blad.",
+      "applyExtractionLabel": "Gevaarprofiel bijwerken vanuit het blad",
+      "missingBanner": "Geen VIB vastgelegd. Upload er een — het gevaarprofiel vult zichzelf.",
+      "dueBanner": "Het huidige VIB heeft zijn herzieningsleeftijd bereikt. Vraag de leverancier om een nieuwere revisie of bevestig dat het nog actueel is.",
+      "issued": "Uitgegeven {date}",
+      "reviewBy": "Herzien vóór {date}",
+      "currentChip": "Actueel"
+    },
+    "assessmentStatus": {
+      "draft": "Concept",
+      "active": "Actief",
+      "archived": "Gearchiveerd"
+    },
+    "physicalForms": {
+      "liquid": "Vloeistof",
+      "solid": "Vast",
+      "powder": "Poeder",
+      "gas": "Gas",
+      "aerosol": "Aerosol",
+      "fume": "Rook",
+      "mist": "Nevel",
+      "fibre": "Vezel",
+      "other": "Anders"
+    },
+    "signalWords": {
+      "danger": "Gevaar",
+      "warning": "Waarschuwing"
+    },
+    "storageClasses": {
+      "flammable": "Ontvlambaar",
+      "oxidiser": "Oxiderend",
+      "corrosive_acid": "Corrosief — zuur",
+      "corrosive_base": "Corrosief — base",
+      "toxic": "Giftig",
+      "compressed_gas": "Gas onder druk",
+      "water_reactive": "Reageert met water",
+      "general": "Algemeen"
+    },
+    "routes": {
+      "inhalation": "Inademing",
+      "skin": "Huid",
+      "eyes": "Ogen",
+      "ingestion": "Inslikken",
+      "injection": "Injectie / prik"
+    },
+    "exposedGroups": {
+      "employees": "Medewerkers",
+      "cleaners": "Schoonmakers",
+      "contractors": "Aannemers",
+      "maintenance_staff": "Onderhoud",
+      "young_persons": "Jongeren",
+      "new_expectant_mothers": "Zwangere en pas bevallen vrouwen",
+      "visitors": "Bezoekers",
+      "members_of_public": "Publiek"
+    },
+    "quantityBands": {
+      "small": "Klein (ml / g)",
+      "medium": "Middel (liters / kg)",
+      "large": "Groot (bulk)"
+    },
+    "frequencyBands": {
+      "rare": "Zelden",
+      "monthly": "Maandelijks",
+      "weekly": "Wekelijks",
+      "daily": "Dagelijks",
+      "continuous": "Continu"
+    },
+    "durationBands": {
+      "under_15_min": "Minder dan 15 min",
+      "15_60_min": "15–60 min",
+      "1_4_h": "1–4 uur",
+      "over_4_h": "Meer dan 4 uur"
+    },
+    "tiers": {
+      "elimination": "Elimineren",
+      "substitution": "Vervangen",
+      "engineering": "Technisch",
+      "administrative": "Organisatorisch",
+      "rpe": "Adembescherming",
+      "ppe": "Overige PBM"
+    },
+    "locations": {
+      "sectionTitle": "Opslaglocaties",
+      "addButton": "Locatie toevoegen",
+      "empty": "Nog geen locaties vastgelegd.",
+      "noSite": "Geen locatie",
+      "removeAction": "Locatie verwijderen",
+      "saveButton": "Locatie opslaan",
+      "unsited": "{count, plural, one {# locatie} other {# locaties}}"
+    },
+    "hazardProfile": {
+      "sectionTitle": "Gevaarprofiel",
+      "empty": "Geen gevaargegevens vastgelegd. Upload het VIB om dit te vullen."
+    },
+    "wel": {
+      "agent": "Agens",
+      "twa": "TGG 8 uur",
+      "stel": "TGG 15 min",
+      "source": "Bron"
+    },
+    "substitution": {
+      "requiredBanner": "Kankerverwekkend / mutageen: vervanging moet zijn overwogen voordat een beoordeling gepubliceerd kan worden.",
+      "advisedBanner": "Vervanging wordt voor deze stof sterk aangeraden. Leg de beslissing vast.",
+      "bannerHint": "Kan een veiliger product of proces dit werk doen? Leg het antwoord in elk geval vast.",
+      "recordButton": "Vervangingsbeslissing vastleggen",
+      "dialogTitle": "Vervangingsbeslissing",
+      "dialogHint": "Vervanging staat bovenaan de arbeidshygiënische strategie. Leg vast of een veiliger alternatief is overwogen en wat is besloten.",
+      "statusLabel": "Beslissing",
+      "notesLabel": "Notities",
+      "notesPlaceholder": "Wat is overwogen, getest of afgewezen — en waarom.",
+      "saveButton": "Beslissing opslaan",
+      "savedToast": "Vervangingsbeslissing vastgelegd.",
+      "statusLine": "Vervanging: {status}",
+      "status": {
+        "not_assessed": "Nog niet overwogen",
+        "considered_rejected": "Overwogen — geen haalbaar alternatief",
+        "planned": "Vervanging gepland",
+        "substituted": "Vervangen"
+      }
+    },
+    "assessments": {
+      "sectionTitle": "COSHH-beoordelingen",
+      "newButton": "Nieuwe beoordeling",
+      "empty": "Nog geen beoordeling — elke gebruikte stof heeft er een nodig.",
+      "dialogTitle": "Nieuwe COSHH-beoordeling",
+      "taskLabel": "Taak of activiteit",
+      "taskPlaceholder": "bijv. Ontvetten van verspaande delen aan de wasbank",
+      "taskHint": "Eén beoordeling per taak — hetzelfde product geeft in ander werk andere risico’s.",
+      "createButton": "Beoordeling aanmaken"
+    },
+    "monitoring": {
+      "sectionTitle": "Blootstellingsmetingen",
+      "recordButton": "Resultaat vastleggen",
+      "empty": "Geen meetresultaten vastgelegd.",
+      "date": "Datum",
+      "type": "Monster",
+      "period": "Periode",
+      "result": "Resultaat",
+      "unit": "Eenheid",
+      "vsWel": "vs grenswaarde",
+      "notComparable": "Niet vergelijkbaar",
+      "exceeds": "Boven grenswaarde",
+      "withinLimit": "Binnen grenswaarde",
+      "dialogTitle": "Meetresultaat vastleggen",
+      "saveButton": "Resultaat opslaan",
+      "recordedToast": "Resultaat vastgelegd — binnen de grenswaarde.",
+      "exceedsToast": "Resultaat vastgelegd — de grenswaarde wordt overschreden.",
+      "notComparableToast": "Resultaat vastgelegd — geen passende grenswaarde om mee te vergelijken.",
+      "types": {
+        "personal": "Persoonlijk",
+        "static": "Stationair",
+        "biological": "Biologisch"
+      },
+      "periods": {
+        "twa8h": "TGG 8 uur",
+        "stel15min": "TGG 15 min"
+      }
+    },
+    "activity": {
+      "sectionTitle": "Activiteit",
+      "kinds": {
+        "created": "Stof aangemaakt",
+        "updated": "Details bijgewerkt",
+        "archived": "Gearchiveerd",
+        "location_added": "Locatie toegevoegd",
+        "location_removed": "Locatie verwijderd",
+        "sds_attached": "VIB toegevoegd",
+        "sds_confirmed_current": "VIB bevestigd als actueel",
+        "assessment_created": "Beoordeling aangemaakt",
+        "published": "Beoordeling gepubliceerd",
+        "moved_to_draft": "Terug naar concept",
+        "control_added": "Maatregel toegevoegd",
+        "control_removed": "Maatregel verwijderd",
+        "review_recorded": "Herziening vastgelegd",
+        "monitoring_recorded": "Meetresultaat vastgelegd",
+        "lev_test_recorded": "Afzuigingskeuring vastgelegd",
+        "substitution_updated": "Vervangingsbeslissing bijgewerkt"
+      }
+    },
+    "create": {
+      "title": "Stof toevoegen",
+      "pdfOnly": "Upload het veiligheidsinformatieblad als PDF.",
+      "uploadError": "Bestand kon niet worden geüpload. Probeer opnieuw.",
+      "readToast": "VIB gelezen — controleer de vooraf ingevulde gegevens.",
+      "lowConfidence": "Het blad was moeilijk leesbaar — controleer elk veld zorgvuldig.",
+      "extractionFailed": "Automatisch lezen mislukt. Het bestand is bijgevoegd — vul de gegevens handmatig in.",
+      "successToast": "{ref} toegevoegd aan het register.",
+      "errorToast": "Stof kon niet worden aangemaakt. Probeer opnieuw.",
+      "duplicateWarning": "Er staat al een stof met deze naam in het register.",
+      "duplicateConfirmHint": "Klik nogmaals op aanmaken om hem toch als apart record toe te voegen.",
+      "alreadyInInventory": "Staat al in je register.",
+      "openExisting": "{ref} openen",
+      "submitAnyway": "Toch aanmaken",
+      "dropTitle": "Sleep het veiligheidsinformatieblad hierheen",
+      "dropHint": "PDF van de leverancier — wij lezen hem en vullen het gevaarprofiel voor je in.",
+      "aiBadge": "Automatisch gelezen met AI",
+      "manualLink": "Geen VIB bij de hand? Voer de gegevens handmatig in",
+      "readingTitle": "VIB wordt gelezen…",
+      "readingHint": "Productidentiteit, gevaren, grenswaarden en opslagrichtlijnen worden uitgelezen.",
+      "aiPrefilledBanner": "Vooraf ingevuld vanuit het VIB door AI. Controleer elk veld tegen het blad voordat je opslaat — jij bent verantwoordelijk voor het record.",
+      "removeSds": "VIB verwijderen",
+      "identitySection": "Product",
+      "nameLabel": "Productnaam",
+      "librarySuggestions": "Veelgebruikte producten",
+      "libraryPrefilled": "Vooraf ingevuld vanuit de productbibliotheek — controleer de gegevens voor het opslaan.",
+      "supplierLabel": "Leverancier",
+      "identifierLabel": "Artikelnummer / UFI",
+      "formLabel": "Fysische vorm",
+      "usageLabel": "Waarvoor wordt het gebruikt?",
+      "usagePlaceholder": "bijv. Reinigen van drukrollen",
+      "hazardSection": "Gevaarprofiel",
+      "noHazardsRead": "Geen gevarenaanduidingen uit het blad gelezen.",
+      "welCount": "{count, plural, one {# grenswaarde uit het blad gelezen} other {# grenswaarden uit het blad gelezen}}",
+      "hazardManualHint": "Upload het VIB om het gevaarprofiel automatisch te vullen, of voeg het later toe vanuit het stofrecord.",
+      "asbestosHint": "Asbest valt onder een eigen regime — hier wordt alleen de verwijzing genoteerd.",
+      "locationSection": "Waar wordt het bewaard?",
+      "whereLabel": "Locatie",
+      "wherePlaceholder": "bijv. Brandveiligheidskast, Werkplaats B",
+      "quantityLabel": "Hoeveelheid",
+      "unitLabel": "Eenheid",
+      "storageClassLabel": "Opslagklasse",
+      "storageNotesLabel": "Opslagnotities",
+      "submit": "Toevoegen aan register",
+      "submitting": "Toevoegen…"
+    },
+    "editor": {
+      "taskLabel": "Taak of activiteit",
+      "exposureSection": "Blootstelling",
+      "routesLabel": "Blootstellingsroutes",
+      "personsLabel": "Wie wordt blootgesteld?",
+      "personsCustomPlaceholder": "Nog een groep toevoegen…",
+      "personsCountLabel": "Aantal personen",
+      "quantityBandLabel": "Gebruikte hoeveelheid",
+      "frequencyBandLabel": "Hoe vaak",
+      "durationBandLabel": "Hoe lang",
+      "controlsSection": "Beheersmaatregelen",
+      "controlsHint": "Werk de strategie af: vervangen vóór techniek, adembescherming als laatste — en onderbouwd.",
+      "tierEmpty": "Niets op dit niveau.",
+      "tierHints": {
+        "elimination": "Kan de taak zonder de stof?",
+        "substitution": "Is er een veiliger product of proces?",
+        "engineering": "Omkasting, bronafzuiging, ventilatie",
+        "administrative": "Procedures, instructie, blootstellingstijd",
+        "rpe": "Adembescherming — laatste redmiddel, onderbouwd",
+        "ppe": "Handschoenen, bril, beschermende kleding"
+      },
+      "addControlPlaceholder": "Beschrijf de maatregel…",
+      "addControlSave": "Toevoegen",
+      "controlPlanned": "Gepland",
+      "controlInPlace": "Aanwezig",
+      "toggleStatusHint": "Klik om te wisselen tussen aanwezig / gepland. Geplande maatregelen worden acties bij publicatie.",
+      "removeControl": "Maatregel verwijderen",
+      "ppeOnlyWarning": "Alle maatregelen zijn adembescherming/PBM. Publiceren vereist een onderbouwing waarom hogere maatregelen redelijkerwijs niet haalbaar zijn.",
+      "justificationLabel": "Onderbouwing",
+      "justificationNeeded": "Voeg de PBM-onderbouwing toe…",
+      "justificationPlaceholder": "Waarom zijn eliminatie, vervanging of technische maatregelen redelijkerwijs niet haalbaar?",
+      "justificationSave": "Opslaan",
+      "requirementsSection": "Ook vereist",
+      "requirements": {
+        "levRequired": "Bronafzuiging vereist",
+        "healthSurveillanceRequired": "Gezondheidstoezicht",
+        "exposureMonitoringRequired": "Blootstellingsmeting"
+      },
+      "emergencyLabel": "Noodinstructies",
+      "emergencyPlaceholder": "Morsen, spatten, brand — wat als eerste te doen.",
+      "summarySection": "Samenvatting in gewone taal",
+      "summaryHint": "Voor de mensen die het werk doen — niet voor het dossier.",
+      "summaryPlaceholder": "Wat het is, hoe het je kan schaden, welke maatregelen je gebruikt, wat te doen als het misgaat.",
+      "summarySave": "Samenvatting opslaan",
+      "summaryDiscard": "Verwerpen",
+      "reviewSection": "Herziening",
+      "reviewLine": "Laatst herzien {last} · volgende {next}",
+      "recordReviewButton": "Herziening vastleggen",
+      "reviewNoteLabel": "Notitie",
+      "reviewNotePlaceholder": "bijv. Geen wijziging in gebruik of leverancier.",
+      "reviewSaveButton": "Herziening opslaan",
+      "reviewRecordedToast": "Herziening vastgelegd.",
+      "publish": "Publiceren",
+      "republish": "Opnieuw publiceren",
+      "moveToDraft": "Terug naar concept",
+      "publishedToast": "Beoordeling gepubliceerd.",
+      "actionsCreated": "{count, plural, one {# actie aangemaakt uit geplande maatregelen} other {# acties aangemaakt uit geplande maatregelen}}",
+      "publishErrors": {
+        "no-routes": "Leg vóór publicatie minstens één blootstellingsroute vast.",
+        "no-controls": "Voeg vóór publicatie minstens één maatregel toe.",
+        "ppe-only-needs-justification": "Maatregelen met alleen PBM vereisen een onderbouwing bij minstens één regel.",
+        "substitution-not-considered": "Deze stof is kankerverwekkend of mutageen — leg eerst de vervangingsbeslissing bij de stof vast.",
+        "archived": "Deze beoordeling is gearchiveerd.",
+        "generic": "Publiceren mislukt. Probeer opnieuw."
+      },
+      "substitutionBlockedBanner": "Vervanging is voor deze kankerverwekkende/mutagene stof nog niet overwogen — publiceren is geblokkeerd tot dat gebeurd is.",
+      "substitutionBlockedLink": "Bij de stof vastleggen",
+      "ai": {
+        "suggestButton": "Maatregelen voorstellen",
+        "suggesting": "Denken…",
+        "suggestError": "Voorstellen konden niet worden gemaakt. Probeer opnieuw.",
+        "suggestionsTitle": "Voorgestelde maatregelen",
+        "dismiss": "Sluiten",
+        "accept": "Toevoegen",
+        "acceptHint": "Geaccepteerde maatregelen worden als “gepland” toegevoegd — zet ze op aanwezig zodra uitgevoerd. Beoordeel elke suggestie vóór acceptatie.",
+        "substitutionIdea": "Vervangingsidee",
+        "suggestedChip": "AI-suggestie",
+        "draftSummaryButton": "Opstellen met AI",
+        "drafting": "Opstellen…",
+        "summaryError": "Samenvatting kon niet worden opgesteld. Probeer opnieuw.",
+        "summaryDrafted": "Concept klaar — lees na en sla op."
+      },
+      "signOff": {
+        "title": "Ondertekening beoordelaar",
+        "statement": "Ik bevestig dat dit een passende en toereikende beoordeling is van de risico’s van de beschreven taak en dat de genoemde beheersmaatregelen (zullen) zijn getroffen.",
+        "hint": "Uw naam en de datum worden bij deze publicatie vastgelegd.",
+        "confirm": "Ondertekenen en publiceren",
+        "cancel": "Annuleren"
+      },
+      "rpe": {
+        "typePlaceholder": "Type adembescherming (bijv. FFP3, halfgelaatsmasker A2P3)",
+        "apfPlaceholder": "APF",
+        "faceFitLabel": "Fittest bevestigd",
+        "apfValue": "APF {apf}",
+        "faceFitValue": "Fittest {date}",
+        "edit": "Bewerken",
+        "addDetail": "Adembeschermingsdetails toevoegen (type / APF / fittest)",
+        "save": "Opslaan"
+      },
+      "staleBanner": "Deze beoordeling is gewijzigd sinds de laatste publicatie — publiceer en deel opnieuw zodat de ploeg de actuele versie ziet."
+    },
+    "lev": {
+      "title": "Afzuigingsregister (LEV)",
+      "subtitle": "Bronafzuiging en het register van periodieke keuringen.",
+      "addButton": "Installatie toevoegen",
+      "empty": "Nog geen afzuiginstallaties geregistreerd.",
+      "createdToast": "Installatie toegevoegd.",
+      "testRecordedToast": "Keuring vastgelegd.",
+      "overdue": "Verlopen",
+      "returnToService": "Terug in bedrijf",
+      "recordTestButton": "Keuring vastleggen",
+      "intervalMonths": "{count, plural, one {Elke # maand} other {Elke # maanden}}",
+      "columns": {
+        "name": "Installatie",
+        "interval": "Interval",
+        "lastTest": "Laatste keuring",
+        "nextDue": "Volgende",
+        "status": "Status"
+      },
+      "status": {
+        "in_service": "In bedrijf",
+        "out_of_service": "Buiten bedrijf",
+        "decommissioned": "Afgevoerd"
+      },
+      "results": {
+        "pass": "Goedgekeurd",
+        "pass_with_defects": "Goedgekeurd met gebreken",
+        "fail": "Afgekeurd"
+      },
+      "addDialogTitle": "Afzuiginstallatie toevoegen",
+      "nameLabel": "Naam",
+      "namePlaceholder": "bijv. Afzuigarm lasplek",
+      "locationLabel": "Locatie",
+      "intervalLabel": "Keuringsinterval (maanden)",
+      "intervalHint": "Het wettelijk maximum is 14 maanden; sommige processen vragen vaker keuren.",
+      "addSaveButton": "Installatie toevoegen",
+      "testDialogTitle": "Keuring vastleggen",
+      "testDateLabel": "Keuringsdatum",
+      "testResultLabel": "Resultaat",
+      "examinerLabel": "Keurder",
+      "examinerPlaceholder": "Persoon of bedrijf",
+      "defectsLabel": "Gevonden gebreken",
+      "failHint": "Een afgekeurde installatie staat buiten bedrijf tot hij hersteld en weer vrijgegeven is.",
+      "testSaveButton": "Keuring opslaan"
+    },
+    "exportCsv": "Register exporteren (CSV)",
+    "surveillance": {
+      "sectionTitle": "Gezondheidstoezicht",
+      "hint": "COSHH Reg 11 — wie voor deze stof onder toezicht staat, met welk interval en de volgende afspraak. Records worden beëindigd, nooit verwijderd.",
+      "suggestedBanner": "De indeling van deze stof (kankerverwekkend / mutageen / sensibiliserend) vereist doorgaans gezondheidstoezicht — er is nog niemand ingeschreven.",
+      "empty": "Niemand staat onder toezicht voor deze stof.",
+      "enrollButton": "Persoon inschrijven",
+      "dialogTitle": "Inschrijven voor gezondheidstoezicht",
+      "person": "Persoon",
+      "interval": "Interval",
+      "intervalLabel": "Herhaling elke (maanden)",
+      "intervalMonths": "{count} mnd",
+      "lastCheck": "Laatste controle",
+      "nextDue": "Volgende",
+      "due": "Verlopen",
+      "dueChip": "Toezicht verlopen",
+      "recordCheck": "Controle vastleggen",
+      "endButton": "Beëindigen",
+      "endConfirm": "Toezicht voor deze persoon beëindigen? Het record blijft bewaard.",
+      "ended": "Beëindigd",
+      "enrolling": "Inschrijven…",
+      "enrollSubmit": "Inschrijven",
+      "enrolledToast": "Ingeschreven voor gezondheidstoezicht.",
+      "alreadyEnrolled": "Staat al onder toezicht voor deze stof.",
+      "checkToast": "Controle vastgelegd — volgende datum bijgewerkt."
+    },
+    "share": {
+      "button": "Delen via Heads Up",
+      "description": "Lees het stofrecord en het bijgevoegde veiligheidsinformatieblad:"
+    },
+    "powButton": "Op de werkplek",
+    "kinds": {
+      "standing": "Vast",
+      "point_of_work": "Op de werkplek"
+    },
+    "staleChip": "Gewijzigd na publicatie",
+    "pow": {
+      "title": "Werkplekcontrole",
+      "pickHint": "Kies het product dat u gaat gebruiken.",
+      "searchPlaceholder": "Stoffen zoeken…",
+      "noResults": "Geen stoffen gevonden.",
+      "changeSubstance": "Wijzigen",
+      "sdsLink": "Veiligheidsinformatieblad bekijken",
+      "noSds": "Geen veiligheidsinformatieblad geregistreerd — voeg het toe via het stofrecord.",
+      "cmrBlocked": "Deze stof is kankerverwekkend/mutageen en vervanging is nog niet beoordeeld — leg eerst het vervangingsbesluit vast.",
+      "cmrBlockedLink": "Stof openen",
+      "taskLabel": "Taak van vandaag",
+      "taskPlaceholder": "bijv. 100 blokken zagen, technische ruimte B, geen water beschikbaar",
+      "routesLabel": "Blootstellingsroutes",
+      "controlsTitle": "Beheersmaatregelen vandaag aanwezig",
+      "controlsCarriedHint": "Overgenomen uit de laatste beoordeling — vink uit wat er vandaag niet is.",
+      "controlsEmptyHint": "Geen eerdere beoordeling — voeg de aanwezige maatregelen toe.",
+      "removeAdded": "Verwijderen",
+      "tierLabel": "Beheersniveau",
+      "addControlPlaceholder": "Nog een maatregel toevoegen…",
+      "addButton": "Toevoegen",
+      "justificationLabel": "Alleen adembescherming/PBM — onderbouwing vereist",
+      "publishing": "Publiceren…",
+      "signPublishButton": "Ondertekenen en publiceren",
+      "doneTitle": "Controle gepubliceerd",
+      "doneRef": "{ref} — {name}",
+      "openButton": "Beoordeling openen",
+      "newCheckButton": "Nieuwe controle"
+    }
+  },
+  "permits": {
+    "title": "Werkvergunningen",
+    "subtitle": "Formele autorisatie, beheersing en afsluiting van risicovolle activiteiten.",
+    "boardButton": "Live-overzicht",
+    "typesButton": "Vergunningstypen",
+    "newButton": "Nieuwe vergunning",
+    "attention": {
+      "overdue": "verlopen zonder afsluiting",
+      "expiringSoon": "verlopen binnen 2 uur",
+      "awaitingAcceptance": "wachten op acceptatie",
+      "suspended": "opgeschort",
+      "draft": "concepten in voorbereiding"
+    },
+    "filters": {
+      "search": "Zoeken",
+      "searchPlaceholder": "Titel of referentie…",
+      "status": "Status",
+      "open": "Alle openstaande",
+      "all": "Alle",
+      "allSites": "Alle"
+    },
+    "columns": {
+      "reference": "Ref.",
+      "permit": "Vergunning",
+      "type": "Type",
+      "window": "Geldigheid",
+      "acceptor": "Acceptant",
+      "status": "Status"
+    },
+    "empty": "Geen vergunningen voldoen aan deze filters.",
+    "emptyCta": "Maak de eerste vergunning",
+    "categories": {
+      "hot_work": "Heet werk",
+      "confined_space": "Besloten ruimte",
+      "work_at_height": "Werken op hoogte",
+      "electrical": "Elektrisch",
+      "excavation": "Graafwerk",
+      "roof_work": "Dakwerk",
+      "asbestos": "Asbest",
+      "lifting": "Hijswerk",
+      "pressure_systems": "Druksystemen",
+      "other": "Overig hoog risico"
+    },
+    "status": {
+      "draft": "Concept",
+      "issued": "Uitgegeven",
+      "active": "Actief",
+      "suspended": "Opgeschort",
+      "closed": "Afgesloten",
+      "cancelled": "Geannuleerd"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, one {nog # u} other {nog # u}}",
+      "remainingMinutes": "{minutes, plural, one {nog # min} other {nog # min}}",
+      "overdueHours": "{hours, plural, one {# u te laat} other {# u te laat}}",
+      "overdueMinutes": "{minutes, plural, one {# min te laat} other {# min te laat}}"
+    },
+    "board": {
+      "backToRegister": "Vergunningenregister",
+      "title": "Live vergunningenoverzicht",
+      "subtitle": "Elke openstaande vergunning op alle locaties, nu. Ververst elke minuut.",
+      "lastUpdated": "Bijgewerkt {time}",
+      "counts": {
+        "overdue": "Verlopen — niet afgesloten",
+        "active": "Actief",
+        "issued": "Wachten op acceptatie",
+        "suspended": "Opgeschort"
+      },
+      "empty": "Geen openstaande vergunningen. Er is nu geen risicovol werk geautoriseerd.",
+      "noSite": "Geen locatie toegewezen",
+      "reference": "Ref.",
+      "acceptor": "Acceptant"
+    },
+    "new": {
+      "back": "Vergunningen",
+      "title": "Vergunning aanmaken",
+      "subtitle": "De vergunning begint als concept — voorwaarden, bewijs en handtekeningen volgen vóór uitgifte.",
+      "noPermission": "U mag geen werkvergunningen aanmaken.",
+      "fields": {
+        "type": "Vergunningstype",
+        "typePlaceholder": "Kies de activiteit…",
+        "title": "Titel van het werk",
+        "titlePlaceholder": "bijv. Lassen aan lijn 2",
+        "description": "Omschrijving van het werk",
+        "descriptionPlaceholder": "Wat er precies gebeurt, met welk materieel…",
+        "noSite": "Geen locatie",
+        "location": "Zone / exacte plek",
+        "locationPlaceholder": "bijv. Tankpark, vak 4",
+        "validFrom": "Geldig vanaf",
+        "validTo": "Geldig tot",
+        "acceptor": "Acceptant",
+        "acceptorPlaceholder": "Wijs de persoon aan die de vergunning accepteert…",
+        "acceptorHint": "De persoon die verantwoordelijk is voor het werk. Die moet de vergunning digitaal accepteren vóór het werk begint."
+      },
+      "maxDuration": "Maximale duur {hours} u",
+      "willRequire": "Vóór uitgifte vereist dit type:",
+      "requirements": {
+        "authoriser": "autoriserende handtekening",
+        "gasTesting": "gasmeetresultaten",
+        "isolationCertificate": "veiligstellingscertificaat",
+        "rescuePlan": "reddingsplan"
+      },
+      "preconditionCount": "{count, plural, one {# voorwaarde te bevestigen vóór uitgifte} other {# voorwaarden te bevestigen vóór uitgifte}}",
+      "conflictWarning": "{count, plural, one {# andere vergunning staat open op deze locatie in dit tijdvak} other {# andere vergunningen staan open op deze locatie in dit tijdvak}}",
+      "sameArea": "zelfde zone",
+      "cancel": "Annuleren",
+      "submit": "Concept aanmaken"
+    },
+    "detail": {
+      "back": "Vergunningen",
+      "fields": {
+        "site": "Locatie",
+        "location": "Zone",
+        "validFrom": "Geldig vanaf",
+        "validTo": "Geldig tot"
+      },
+      "extensions": "{count, plural, one {(# verlenging)} other {(# verlengingen)}}",
+      "suspendedBanner": "Opgeschort door {by} — omstandigheden zijn veranderd. Het werk mag pas doorgaan na hervatting.",
+      "overdueBanner": "Deze vergunning is verlopen zonder te zijn afgesloten. Controleer nu de stand van het werk en sluit of verleng de vergunning.",
+      "conflicts": {
+        "title": "{count, plural, one {# andere openstaande vergunning overlapt deze op dezelfde locatie} other {# andere openstaande vergunningen overlappen deze op dezelfde locatie}}",
+        "sameArea": "· zelfde zone"
+      },
+      "preconditions": {
+        "title": "Voorwaarden",
+        "progress": "{done}/{total} bevestigd",
+        "none": "Dit vergunningstype heeft geen checklist.",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "Bewijs",
+        "gasReadings": "Gasmeetresultaten",
+        "requiredBeforeIssue": "vereist vóór uitgifte",
+        "noReadings": "Nog geen metingen vastgelegd.",
+        "substance": "Stof",
+        "reading": "Meetwaarde",
+        "unit": "Eenheid",
+        "recordReading": "Vastleggen",
+        "isolationCertificate": "Veiligstellingscertificaat",
+        "notRecorded": "Nog niet vastgelegd.",
+        "isolationRefPlaceholder": "Certificaatreferentie…",
+        "save": "Opslaan",
+        "rescuePlan": "Reddingsplan",
+        "rescuePlanPlaceholder": "Hoe een slachtoffer gered zou worden, door wie, met welk materieel…",
+        "attachments": "Bijlagen",
+        "kinds": {
+          "isolation_certificate": "Veiligstellingscertificaat",
+          "rescue_plan": "Reddingsplan",
+          "gas_test": "Gasmeting",
+          "other": "Overig"
+        }
+      },
+      "signatures": {
+        "title": "Handtekeningen",
+        "pending": "Nog niet ondertekend",
+        "authoriser": "Autoriserend deskundige / locatieverantwoordelijke",
+        "authoriseAction": "Autoriseren",
+        "issuer": "Uitgever",
+        "issueAction": "Vergunning uitgeven",
+        "acceptor": "Acceptant",
+        "acceptAction": "Vergunning accepteren",
+        "acknowledgeConflicts": "Ik heb de overlappende vergunningen beoordeeld en accepteer het gecombineerde risico",
+        "awaitingAcceptor": "Wachten op de aangewezen acceptant. Alleen die persoon kan accepteren."
+      },
+      "actions": {
+        "title": "Acties",
+        "suspend": "Opschorten",
+        "suspendReason": "Waarom wordt de vergunning opgeschort?",
+        "suspendConfirm": "Vergunning opschorten",
+        "resume": "Hervatten — veilig om door te gaan",
+        "extend": "Verlengen",
+        "extendTo": "Nieuwe einddatum",
+        "extendHint": "Eén verlenging mag hoogstens {hours} u toevoegen.",
+        "extendReauthorisation": "Bij dit type verlengt de autoriserend deskundige — de verlenging ís de herautorisatie.",
+        "extendConfirm": "Vergunning verlengen",
+        "handover": "Overdragen",
+        "handoverTo": "Inkomende acceptant",
+        "handoverHint": "De vergunning gaat terug naar 'Uitgegeven' tot de inkomende acceptant tekent.",
+        "handoverConfirm": "Overdragen",
+        "close": "Afsluiten",
+        "closeChecksTitle": "Afsluitcontroles — alle vier bevestigen",
+        "closeChecks": {
+          "workComplete": "Werk gereed of veilig gestopt",
+          "areaMadeSafe": "Zone geïnspecteerd en veiliggesteld",
+          "isolationsRemoved": "Veiligstellingen opgeheven of hersteld zoals afgesproken",
+          "personnelClear": "Alle personen geteld en buiten de zone"
+        },
+        "closeNotesPlaceholder": "Afsluitnotities (optioneel)…",
+        "closeConfirm": "Vergunning afsluiten",
+        "cancel": "Vergunning annuleren",
+        "cancelReason": "Waarom wordt de vergunning geannuleerd?",
+        "cancelConfirm": "Vergunning annuleren"
+      },
+      "closedLine": "Afgesloten door {name} op {time}.",
+      "cancelledLine": "Geannuleerd door {name} op {time}.",
+      "timeline": {
+        "title": "Geschiedenis",
+        "kinds": {
+          "created": "Aangemaakt",
+          "updated": "Gegevens bijgewerkt",
+          "precondition_checked": "Voorwaarde bevestigd",
+          "precondition_unchecked": "Bevestiging ingetrokken",
+          "gas_reading_recorded": "Gasmeting vastgelegd",
+          "attachment_added": "Bijlage toegevoegd",
+          "authorised": "Geautoriseerd",
+          "issued": "Uitgegeven",
+          "accepted": "Geaccepteerd",
+          "suspended": "Opgeschort",
+          "resumed": "Hervat",
+          "extended": "Verlengd",
+          "handed_over": "Overgedragen",
+          "cancelled": "Geannuleerd",
+          "closed": "Afgesloten",
+          "expiry_escalated": "Verloop geëscaleerd — vergunning verlopen zonder afsluiting"
+        }
+      }
+    },
+    "types": {
+      "back": "Vergunningen",
+      "title": "Vergunningstypen",
+      "subtitle": "De beheersingseisen per type. Wijzigingen gelden alleen voor nieuwe vergunningen — lopende houden hun checklist.",
+      "systemBadge": "Standaard",
+      "archivedBadge": "Gearchiveerd",
+      "openCount": "{count, plural, one {# openstaande vergunning} other {# openstaande vergunningen}}",
+      "restore": "Terugzetten",
+      "archive": "Archiveren",
+      "flags": {
+        "requiresAuthoriser": "Autoriserende handtekening vereist",
+        "requiresGasTesting": "Gasmeting vereist",
+        "requiresIsolationCertificate": "Veiligstellingscertificaat vereist",
+        "requiresRescuePlan": "Reddingsplan vereist"
+      },
+      "maxDuration": "Maximale geldigheid",
+      "hours": "uur",
+      "preconditions": "Voorwaardenchecklist",
+      "removePrecondition": "Voorwaarde verwijderen",
+      "addPreconditionPlaceholder": "Nieuw controlepunt…",
+      "addPrecondition": "Toevoegen",
+      "createTitle": "Eigen vergunningstype toevoegen",
+      "createHint": "Voor activiteiten buiten de negen standaardtypen. Stel de eisen in na het aanmaken.",
+      "createNamePlaceholder": "bijv. Duikwerkzaamheden",
+      "createButton": "Type toevoegen"
+    },
+    "errors": {
+      "module-disabled": "Deze module is niet beschikbaar.",
+      "unknown-site": "Die locatie bestaat niet.",
+      "unknown-user": "Die persoon is geen lid van deze organisatie.",
+      "type-archived": "Dit vergunningstype is gearchiveerd — zet het terug of kies een ander.",
+      "duplicate-name": "Er bestaat al een vergunningstype met die naam.",
+      "duplicate-precondition-id": "Controlepunten moeten uniek zijn.",
+      "window-invalid": "Het geldigheidsvenster moet eindigen na het begin.",
+      "window-too-long": "Het geldigheidsvenster is langer dan dit type toestaat.",
+      "window-past": "Het geldigheidsvenster is al voorbij — werk het bij vóór uitgifte.",
+      "acceptor-required": "Wijs een acceptant aan vóór uitgifte.",
+      "issuer-is-acceptor": "De uitgever kan de eigen vergunning niet accepteren — wijs iemand anders aan.",
+      "preconditions-incomplete": "Elke voorwaarde moet bevestigd zijn vóór uitgifte.",
+      "gas-test-required": "Leg minstens één gasmeting vast vóór uitgifte.",
+      "isolation-certificate-required": "Leg het veiligstellingscertificaat vast vóór uitgifte.",
+      "rescue-plan-required": "Leg het reddingsplan vast vóór uitgifte.",
+      "authorisation-required": "De autoriserend deskundige moet tekenen vóór uitgifte.",
+      "simops-conflict": "Andere vergunningen overlappen deze — beoordeel en bevestig ze om uit te geven.",
+      "invalid-transition": "Die actie is niet beschikbaar in de huidige status van de vergunning.",
+      "not-draft": "Alleen concepten kunnen worden bewerkt.",
+      "unknown-precondition": "Dat controlepunt bestaat niet meer.",
+      "already-authorised": "Deze vergunning is al geautoriseerd.",
+      "authoriser-is-acceptor": "De acceptant kan de eigen vergunning niet autoriseren.",
+      "not-the-acceptor": "Alleen de aangewezen acceptant kan deze vergunning accepteren.",
+      "resume-confirmation-required": "Bevestig dat hervatten veilig is voordat u doorgaat.",
+      "extension-not-later": "De nieuwe einddatum moet na de huidige liggen.",
+      "extension-too-long": "Eén verlenging mag de maximale duur van het type niet overschrijden.",
+      "reauthorisation-required": "Alleen de autoriserend deskundige kan deze vergunning verlengen.",
+      "acceptor-is-issuer": "De uitgever kan niet de acceptant worden.",
+      "same-acceptor": "Die persoon heeft de vergunning al.",
+      "not-allowed": "U hebt hier geen toestemming voor.",
+      "closure-checks-incomplete": "Alle vier de afsluitcontroles moeten bevestigd worden.",
+      "generic": "Er ging iets mis. Controleer het formulier en probeer opnieuw."
     }
   }
 }

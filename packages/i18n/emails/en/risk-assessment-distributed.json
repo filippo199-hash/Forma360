@@ -1,0 +1,8 @@
+{
+  "subject": "Please read and acknowledge: {title} ({referenceNumber})",
+  "preheader": "A risk assessment has been distributed to you on {productName}.",
+  "greeting": "Hello {recipientName},",
+  "body": "The risk assessment \"{title}\" ({referenceNumber}) has been distributed to you. Please read it and confirm you have understood it by {dueDate}.",
+  "cta": "Read and acknowledge the assessment",
+  "footer": "You are receiving this because a risk assessment on {productName} names you as someone who must read it."
+}

@@ -28,3 +28,5 @@ export * from './contractors';
 export * from './ai';
 export * from './reference-counters';
 export * from './risk-assessments';
+export * from './coshh';
+export * from './permits';
