@@ -15,21 +15,38 @@
  *     future permits are never overdue
  *   - PW-E05: precondition snapshot/completion helpers and the validity
  *     window validator (inverted and over-cap windows refused)
+ *   - PW-E06: readingWithinLimit — inclusive bounds, null sides, unit
+ *     mismatch never passes (HSE review PW-1)
+ *   - PW-E07: gasGateError — missing / out-of-range / stale precedence,
+ *     per-limit latest-reading evaluation, takenAfter re-test cut,
+ *     presence+freshness fallback for limit-less types (PW-1 / PW-3)
+ *   - PW-E08: sameAreaMatch — token reorder and subset match, negatives,
+ *     empty never matches (PW-14)
+ *   - PW-E09: seeded gas limits — gas-requiring defaults carry evaluable
+ *     limits, confined space gets the 30-minute freshness window; the
+ *     open-entry counter (PW-8)
  */
 import { describe, expect, it } from 'vitest';
 import {
   allPreconditionsChecked,
   canTransition,
   closureComplete,
+  DEFAULT_GAS_TEST_MAX_AGE_MINUTES,
   DEFAULT_PERMIT_TYPES,
+  gasGateError,
   isOpenPermitStatus,
   OPEN_PERMIT_STATUSES,
+  openEntryCount,
   overlaps,
   PERMIT_CATEGORIES,
   PERMIT_STATUSES,
   permitIsOverdue,
+  readingWithinLimit,
+  sameAreaMatch,
   snapshotPreconditions,
   validityWindowError,
+  type GasLimit,
+  type GasReading,
 } from './permits';
 
 describe('canTransition (PW-E01)', () => {
@@ -199,5 +216,221 @@ describe('preconditions + validity window (PW-E05)', () => {
         personnelClear: true,
       }),
     ).toBe(false);
+  });
+});
+
+describe('readingWithinLimit (PW-E06)', () => {
+  const o2: GasLimit = { id: 'oxygen', label: 'O₂', unit: 'percent_o2', min: 19.5, max: 23.5 };
+  const lel: GasLimit = { id: 'lel', label: 'LEL', unit: 'percent_lel', min: null, max: 10 };
+
+  it('bounds are inclusive; null sides are unbounded', () => {
+    expect(readingWithinLimit({ reading: 20.9, unit: 'percent_o2' }, o2)).toBe(true);
+    expect(readingWithinLimit({ reading: 19.5, unit: 'percent_o2' }, o2)).toBe(true);
+    expect(readingWithinLimit({ reading: 23.5, unit: 'percent_o2' }, o2)).toBe(true);
+    expect(readingWithinLimit({ reading: 19.4, unit: 'percent_o2' }, o2)).toBe(false);
+    expect(readingWithinLimit({ reading: 23.6, unit: 'percent_o2' }, o2)).toBe(false);
+    expect(readingWithinLimit({ reading: 0, unit: 'percent_lel' }, lel)).toBe(true);
+    expect(readingWithinLimit({ reading: 10, unit: 'percent_lel' }, lel)).toBe(true);
+    expect(readingWithinLimit({ reading: 90, unit: 'percent_lel' }, lel)).toBe(false);
+  });
+
+  it('a unit mismatch never passes', () => {
+    expect(readingWithinLimit({ reading: 20.9, unit: 'ppm' }, o2)).toBe(false);
+  });
+});
+
+describe('gasGateError (PW-E07)', () => {
+  const NOW = new Date('2026-08-02T12:00:00Z');
+  const o2: GasLimit = { id: 'oxygen', label: 'O₂', unit: 'percent_o2', min: 19.5, max: 23.5 };
+  const lel: GasLimit = { id: 'lel', label: 'LEL', unit: 'percent_lel', min: null, max: 10 };
+
+  function reading(patch: Partial<GasReading>): GasReading {
+    return {
+      id: 'r1',
+      substance: 'O₂',
+      reading: 20.9,
+      unit: 'percent_o2',
+      takenAt: new Date(NOW.getTime() - 5 * 60_000).toISOString(),
+      takenBy: 'usr_x',
+      takenByName: 'Tess Tester',
+      note: '',
+      limitId: 'oxygen',
+      withinLimits: true,
+      ...patch,
+    };
+  }
+
+  it('passes only when every limit has a fresh, in-range latest reading', () => {
+    const good = [
+      reading({ id: 'a' }),
+      reading({ id: 'b', limitId: 'lel', unit: 'percent_lel', reading: 2 }),
+    ];
+    expect(
+      gasGateError({
+        requiresGasTesting: true,
+        limits: [o2, lel],
+        maxAgeMinutes: 30,
+        readings: good,
+        now: NOW,
+      }),
+    ).toBeNull();
+
+    // One limit with no reading at all → required.
+    expect(
+      gasGateError({
+        requiresGasTesting: true,
+        limits: [o2, lel],
+        maxAgeMinutes: 30,
+        readings: [reading({})],
+        now: NOW,
+      }),
+    ).toBe('gas-test-required');
+  });
+
+  it('a dangerous LATEST reading blocks even if an older one was safe', () => {
+    const readings = [
+      reading({ id: 'old', takenAt: new Date(NOW.getTime() - 20 * 60_000).toISOString() }),
+      reading({
+        id: 'new',
+        reading: 17,
+        takenAt: new Date(NOW.getTime() - 2 * 60_000).toISOString(),
+      }),
+    ];
+    expect(
+      gasGateError({
+        requiresGasTesting: true,
+        limits: [o2],
+        maxAgeMinutes: 30,
+        readings,
+        now: NOW,
+      }),
+    ).toBe('gas-test-out-of-range');
+  });
+
+  it('a stale latest reading blocks; missing beats out-of-range beats stale', () => {
+    const stale = [reading({ takenAt: new Date(NOW.getTime() - 45 * 60_000).toISOString() })];
+    expect(
+      gasGateError({
+        requiresGasTesting: true,
+        limits: [o2],
+        maxAgeMinutes: 30,
+        readings: stale,
+        now: NOW,
+      }),
+    ).toBe('gas-test-stale');
+
+    // Missing on one limit + out-of-range on another → required wins.
+    expect(
+      gasGateError({
+        requiresGasTesting: true,
+        limits: [o2, lel],
+        maxAgeMinutes: 30,
+        readings: [reading({ reading: 17 })],
+        now: NOW,
+      }),
+    ).toBe('gas-test-required');
+  });
+
+  it('takenAfter discards pre-suspension readings — resume needs a re-test', () => {
+    const suspendedAt = new Date(NOW.getTime() - 10 * 60_000);
+    const before = [reading({ takenAt: new Date(NOW.getTime() - 15 * 60_000).toISOString() })];
+    expect(
+      gasGateError({
+        requiresGasTesting: true,
+        limits: [o2],
+        maxAgeMinutes: 30,
+        readings: before,
+        now: NOW,
+        takenAfter: suspendedAt,
+      }),
+    ).toBe('gas-test-required');
+
+    const after = [...before, reading({ id: 'fresh' })];
+    expect(
+      gasGateError({
+        requiresGasTesting: true,
+        limits: [o2],
+        maxAgeMinutes: 30,
+        readings: after,
+        now: NOW,
+        takenAfter: suspendedAt,
+      }),
+    ).toBeNull();
+  });
+
+  it('limit-less types need presence + freshness; non-gas types skip entirely', () => {
+    expect(
+      gasGateError({
+        requiresGasTesting: true,
+        limits: [],
+        maxAgeMinutes: 30,
+        readings: [],
+        now: NOW,
+      }),
+    ).toBe('gas-test-required');
+    expect(
+      gasGateError({
+        requiresGasTesting: true,
+        limits: [],
+        maxAgeMinutes: 30,
+        readings: [reading({ limitId: null, withinLimits: null })],
+        now: NOW,
+      }),
+    ).toBeNull();
+    expect(
+      gasGateError({
+        requiresGasTesting: false,
+        limits: [o2],
+        maxAgeMinutes: 30,
+        readings: [],
+        now: NOW,
+      }),
+    ).toBeNull();
+  });
+});
+
+describe('sameAreaMatch (PW-E08)', () => {
+  it('matches reordered wording and punctuation differences', () => {
+    expect(sameAreaMatch('Bay 4, tank farm', 'Tank farm bay 4')).toBe(true);
+    expect(sameAreaMatch('MCC Room', 'mcc room')).toBe(true);
+  });
+
+  it('matches when one description is a subset of the other', () => {
+    expect(sameAreaMatch('bay 4', 'tank farm bay 4')).toBe(true);
+  });
+
+  it('different areas and empty text do not match', () => {
+    expect(sameAreaMatch('bay 4', 'bay 5')).toBe(false);
+    expect(sameAreaMatch('', 'bay 4')).toBe(false);
+    expect(sameAreaMatch('', '')).toBe(false);
+  });
+});
+
+describe('seeded gas limits + entry counter (PW-E09)', () => {
+  it('every gas-requiring seeded type carries evaluable limits', () => {
+    for (const t of DEFAULT_PERMIT_TYPES) {
+      if (t.requiresGasTesting) {
+        expect(t.gasLimits.length, t.category).toBeGreaterThan(0);
+        const ids = t.gasLimits.map((l) => l.id);
+        expect(new Set(ids).size).toBe(ids.length);
+      }
+      expect(t.gasTestMaxAgeMinutes).toBeGreaterThan(0);
+    }
+    const confined = DEFAULT_PERMIT_TYPES.find((t) => t.category === 'confined_space');
+    expect(confined?.gasTestMaxAgeMinutes).toBe(30);
+    const hot = DEFAULT_PERMIT_TYPES.find((t) => t.category === 'hot_work');
+    expect(hot?.gasTestMaxAgeMinutes).toBe(DEFAULT_GAS_TEST_MAX_AGE_MINUTES);
+    expect(confined?.gasLimits.some((l) => l.unit === 'percent_o2' && l.min === 19.5)).toBe(true);
+  });
+
+  it('openEntryCount counts only rows without an exit', () => {
+    expect(
+      openEntryCount([
+        { exitedAt: null },
+        { exitedAt: '2026-08-02T10:00:00Z' },
+        { exitedAt: null },
+      ]),
+    ).toBe(2);
+    expect(openEntryCount([])).toBe(0);
   });
 });

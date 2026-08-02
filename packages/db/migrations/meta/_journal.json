@@ -428,6 +428,13 @@
       "when": 1780000080000,
       "tag": "0060_fire_safety",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1780000090000,
+      "tag": "0061_permits_hse_hardening",
+      "breakpoints": true
     }
   ]
 }

@@ -161,7 +161,7 @@ export const PERMISSION_KEYS = [
   'permits.create',
   'permits.issue',
   'permits.manage',
-  // ─── Fire Safety (FreeHS module B3) ──────────────────────────────────────
+  // ─── Fire Safety (FreeHS module B4) ──────────────────────────────────────
   // `record` is separate from `create` on purpose: the weekly alarm test
   // is done by whoever is on site, not by whoever writes the FRA.
   'fireSafety.view',

@@ -4538,7 +4538,8 @@
       "empty": "Aucun permis ouvert. Aucune activité à haut risque n'est autorisée en ce moment.",
       "noSite": "Aucun site attribué",
       "reference": "Réf.",
-      "acceptor": "Accepteur"
+      "acceptor": "Accepteur",
+      "insideCount": "{count, plural, one {# à l'intérieur} other {# à l'intérieur}}"
     },
     "new": {
       "back": "Permis",
@@ -4559,7 +4560,10 @@
         "validTo": "Valide jusqu'au",
         "acceptor": "Accepteur",
         "acceptorPlaceholder": "Désigner la personne qui accepte le permis…",
-        "acceptorHint": "La personne responsable des travaux. Elle doit accepter le permis numériquement avant le début des travaux."
+        "acceptorHint": "La personne responsable des travaux. Elle doit accepter le permis numériquement avant le début des travaux.",
+        "riskAssessment": "Évaluation des risques",
+        "riskAssessmentPlaceholder": "Lier l'évaluation des risques de la tâche…",
+        "riskAssessmentHint": "Le permis doit pointer vers le mode opératoire sûr sous lequel il s'exerce."
       },
       "maxDuration": "Durée maximale {hours} h",
       "willRequire": "Avant délivrance, ce type exige :",
@@ -4567,7 +4571,8 @@
         "authoriser": "signature d'autorisation",
         "gasTesting": "résultats de mesures de gaz",
         "isolationCertificate": "certificat de consignation",
-        "rescuePlan": "plan de sauvetage"
+        "rescuePlan": "plan de sauvetage",
+        "riskAssessment": "évaluation des risques liée"
       },
       "preconditionCount": "{count, plural, one {# condition préalable à confirmer avant délivrance} other {# conditions préalables à confirmer avant délivrance}}",
       "conflictWarning": "{count, plural, one {# autre permis est ouvert sur ce site sur ce créneau} other {# autres permis sont ouverts sur ce site sur ce créneau}}",
@@ -4617,7 +4622,13 @@
           "rescue_plan": "Plan de sauvetage",
           "gas_test": "Mesure de gaz",
           "other": "Autre"
-        }
+        },
+        "acceptableRanges": "Acceptable :",
+        "freshness": "les mesures de plus de {minutes} min ne comptent pas",
+        "withinLimits": "dans les limites",
+        "outOfLimits": "HORS LIMITES",
+        "measuredAgainst": "Mesuré contre",
+        "freeReading": "Mesure libre (sans limite)"
       },
       "signatures": {
         "title": "Signatures",
@@ -4658,7 +4669,13 @@
         "closeConfirm": "Clôturer le permis",
         "cancel": "Annuler le permis",
         "cancelReason": "Pourquoi le permis est-il annulé ?",
-        "cancelConfirm": "Annuler le permis"
+        "cancelConfirm": "Annuler le permis",
+        "resumeTitle": "Reprendre le travail — confirmer la sécurité",
+        "resumeReasonRecap": "Suspendu pour : {reason}",
+        "resumeGasNote": "Ce type de permis exige une nouvelle mesure de gaz dans les limites, réalisée après la suspension, avant la reprise.",
+        "resumeAttestation": "Je confirme que la cause de la suspension est résolue et que les conditions permettent une reprise en sécurité.",
+        "resumeConfirm": "Reprendre le permis",
+        "extendConflicts": "{count, plural, one {# permis ouvert chevauche la fenêtre prolongée} other {# permis ouverts chevauchent la fenêtre prolongée}}"
       },
       "closedLine": "Clôturé par {name} le {time}.",
       "cancelledLine": "Annulé par {name} le {time}.",
@@ -4680,8 +4697,45 @@
           "handed_over": "Transmis",
           "cancelled": "Annulé",
           "closed": "Clôturé",
-          "expiry_escalated": "Expiration signalée — permis expiré sans clôture"
+          "expiry_escalated": "Expiration signalée — permis expiré sans clôture",
+          "expiry_warning": "Avertissement d'expiration envoyé",
+          "worker_added": "Personne ajoutée",
+          "worker_removed": "Personne retirée",
+          "entry_logged": "Entrée consignée",
+          "exit_logged": "Sortie consignée"
         }
+      },
+      "downloadPdf": "Télécharger le PDF",
+      "ssow": {
+        "title": "Mode opératoire sûr",
+        "requiredBeforeIssue": "évaluation des risques requise avant délivrance",
+        "riskAssessment": "Évaluation des risques",
+        "methodStatement": "Mode opératoire",
+        "none": "Non lié"
+      },
+      "workers": {
+        "title": "Personnes sous ce permis",
+        "insideCount": "{count, plural, one {# à l'intérieur} other {# à l'intérieur}}",
+        "empty": "Personne encore listé — enregistrez l'équipe travaillant sous ce permis.",
+        "nameLabel": "Nom",
+        "namePlaceholder": "Nom de la personne…",
+        "roleLabel": "Rôle",
+        "roles": {
+          "supervisor": "Superviseur",
+          "worker": "Intervenant",
+          "entrant": "Entrant",
+          "standby": "Surveillant / secours"
+        },
+        "add": "Ajouter une personne",
+        "remove": "Retirer la personne",
+        "logEntry": "Consigner l'entrée",
+        "logExit": "Consigner la sortie",
+        "inSince": "à l'intérieur depuis {time}",
+        "adhocEntryLabel": "Consigner une personne hors liste",
+        "logTitle": "Journal des entrées/sorties",
+        "entered": "entré à {time}",
+        "exited": "sorti à {time}",
+        "stillIn": "TOUJOURS À L'INTÉRIEUR"
       }
     },
     "types": {
@@ -4697,7 +4751,8 @@
         "requiresAuthoriser": "Signature d'autorisation requise",
         "requiresGasTesting": "Mesures de gaz requises",
         "requiresIsolationCertificate": "Certificat de consignation requis",
-        "requiresRescuePlan": "Plan de sauvetage requis"
+        "requiresRescuePlan": "Plan de sauvetage requis",
+        "requiresRiskAssessment": "Évaluation des risques liée requise"
       },
       "maxDuration": "Validité maximale",
       "hours": "heures",
@@ -4708,7 +4763,17 @@
       "createTitle": "Ajouter un type de permis personnalisé",
       "createHint": "Pour les activités hors des neuf types standard. Configurez ses exigences après création.",
       "createNamePlaceholder": "p. ex. Opérations de plongée",
-      "createButton": "Ajouter le type"
+      "createButton": "Ajouter le type",
+      "gasLimits": "Limites de gaz — le contrôle évalue les mesures par rapport à elles",
+      "noGasLimits": "Aucune limite configurée — seul l'existence d'une mesure est vérifiée.",
+      "removeGasLimit": "Retirer la limite",
+      "gasLimitLabelPlaceholder": "p. ex. Oxygène (O₂)…",
+      "gasLimitUnit": "Unité",
+      "gasLimitMin": "Min",
+      "gasLimitMax": "Max",
+      "addGasLimit": "Ajouter la limite",
+      "gasFreshness": "Fraîcheur de la mesure de gaz",
+      "gasFreshnessUnit": "minutes"
     },
     "errors": {
       "module-disabled": "Ce module n'est pas disponible.",
@@ -4742,7 +4807,24 @@
       "same-acceptor": "Cette personne détient déjà le permis.",
       "not-allowed": "Vous n'avez pas l'autorisation de faire cela.",
       "closure-checks-incomplete": "Les quatre vérifications de clôture doivent être confirmées.",
-      "generic": "Un problème est survenu. Vérifiez le formulaire et réessayez."
+      "generic": "Un problème est survenu. Vérifiez le formulaire et réessayez.",
+      "gas-test-out-of-range": "La dernière mesure de gaz est hors de la plage acceptable — l'atmosphère n'est pas sûre.",
+      "gas-test-stale": "La dernière mesure de gaz est trop ancienne — refaites un test.",
+      "unknown-gas-limit": "Cette limite de gaz n'existe plus sur le type de permis.",
+      "gas-unit-mismatch": "L'unité de la mesure doit correspondre à celle de la limite.",
+      "risk-assessment-required": "Liez l'évaluation des risques avant de délivrer ce type de permis.",
+      "unknown-risk-assessment": "Cette évaluation des risques n'existe pas.",
+      "unknown-document": "Ce document n'existe pas.",
+      "extension-in-past": "La nouvelle échéance doit être dans le futur — une prolongation se terminant dans le passé ne prolonge rien.",
+      "acceptor-is-authoriser": "L'ingénieur autorisateur ne peut pas devenir accepteur du permis qu'il a autorisé.",
+      "site-scope": "Ce permis appartient à un site dont vous ne faites pas partie de l'équipe.",
+      "entrants-still-inside": "Le journal indique encore des personnes à l'intérieur — consignez leurs sorties avant de clôturer.",
+      "unknown-worker": "Cette personne ne figure pas sur la liste du permis.",
+      "name-required": "Indiquez le nom de la personne pour consigner l'entrée.",
+      "entry-log-full": "Le journal des entrées de ce permis est plein.",
+      "unknown-entry": "Cette ligne du journal n'existe pas.",
+      "already-exited": "La sortie de cette personne a déjà été consignée.",
+      "render-unavailable": "La génération de PDF n'est pas disponible dans cet environnement."
     }
   },
   "fireSafety": {

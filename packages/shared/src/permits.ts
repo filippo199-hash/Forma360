@@ -175,7 +175,27 @@ export function allPreconditionsChecked(
 export const GAS_READING_UNITS = ['percent_lel', 'percent_o2', 'ppm', 'mg_m3'] as const;
 export type GasReadingUnit = (typeof GAS_READING_UNITS)[number];
 
-/** One atmosphere-test result recorded on the permit (jsonb entry). */
+/**
+ * An acceptable range for one measured gas, configured on the permit type
+ * (HSE review PW-1). `min`/`max` are inclusive bounds; null = unbounded on
+ * that side. A reading recorded against the limit snapshots its verdict.
+ */
+export const gasLimitSchema = z.object({
+  id: z.string().min(1).max(40),
+  /** What is measured — "Oxygen (O₂)", "Flammables (LEL)". Tenant data. */
+  label: z.string().trim().min(1).max(120),
+  unit: z.enum(GAS_READING_UNITS),
+  min: z.number().finite().nullable(),
+  max: z.number().finite().nullable(),
+});
+export type GasLimit = z.infer<typeof gasLimitSchema>;
+
+/**
+ * One atmosphere-test result recorded on the permit (jsonb entry).
+ * `limitId` + `withinLimits` were added by the PW-1 hardening — readings
+ * recorded before it (or free readings on types without limits) carry
+ * neither, so both are optional and treated as "not evaluated".
+ */
 export const gasReadingSchema = z.object({
   id: z.string().min(1).max(40),
   substance: z.string().min(1).max(120),
@@ -185,8 +205,147 @@ export const gasReadingSchema = z.object({
   takenBy: z.string().min(1),
   takenByName: z.string().max(200),
   note: z.string().max(500),
+  /** The type gas-limit this reading was recorded against, if any. */
+  limitId: z.string().min(1).max(40).nullable().optional(),
+  /** Verdict against the limit, snapshotted at record time. */
+  withinLimits: z.boolean().nullable().optional(),
 });
 export type GasReading = z.infer<typeof gasReadingSchema>;
+
+/** Inclusive range check for one reading against one limit. */
+export function readingWithinLimit(
+  reading: Pick<GasReading, 'reading' | 'unit'>,
+  limit: GasLimit,
+): boolean {
+  if (reading.unit !== limit.unit) return false;
+  if (limit.min !== null && reading.reading < limit.min) return false;
+  if (limit.max !== null && reading.reading > limit.max) return false;
+  return true;
+}
+
+/** Default freshness window for a gas test at the point of issue/resume. */
+export const DEFAULT_GAS_TEST_MAX_AGE_MINUTES = 60;
+
+export type GasGateError = 'gas-test-required' | 'gas-test-out-of-range' | 'gas-test-stale';
+
+/**
+ * The PW-1 gas gate, shared by issue and resume. With limits configured,
+ * EVERY limit needs a reading recorded against it, the LATEST reading per
+ * limit must be in-range, and it must be fresh (within `maxAgeMinutes` of
+ * `now`). Without limits (custom types), presence + freshness of the
+ * latest reading is required. `takenAfter` restricts which readings count
+ * — resume passes the suspension time so only a re-test satisfies it.
+ *
+ * Precedence is deterministic: missing before out-of-range before stale.
+ */
+export function gasGateError(args: {
+  requiresGasTesting: boolean;
+  limits: ReadonlyArray<GasLimit>;
+  maxAgeMinutes: number;
+  readings: ReadonlyArray<GasReading>;
+  now: Date;
+  takenAfter?: Date | undefined;
+}): GasGateError | null {
+  if (!args.requiresGasTesting) return null;
+  const cutoff = args.takenAfter?.getTime();
+  const usable = args.readings.filter((r) => {
+    const t = Date.parse(r.takenAt);
+    return Number.isFinite(t) && (cutoff === undefined || t > cutoff);
+  });
+  const freshEnough = (r: GasReading): boolean =>
+    args.now.getTime() - Date.parse(r.takenAt) <= args.maxAgeMinutes * 60_000;
+  const latestOf = (list: ReadonlyArray<GasReading>): GasReading | undefined =>
+    [...list].sort((a, b) => Date.parse(a.takenAt) - Date.parse(b.takenAt)).at(-1);
+
+  if (args.limits.length === 0) {
+    const latest = latestOf(usable);
+    if (latest === undefined) return 'gas-test-required';
+    return freshEnough(latest) ? null : 'gas-test-stale';
+  }
+
+  const latestPerLimit = args.limits.map((limit) => ({
+    limit,
+    latest: latestOf(usable.filter((r) => r.limitId === limit.id)),
+  }));
+  if (latestPerLimit.some((e) => e.latest === undefined)) return 'gas-test-required';
+  if (
+    latestPerLimit.some((e) => e.latest !== undefined && !readingWithinLimit(e.latest, e.limit))
+  ) {
+    return 'gas-test-out-of-range';
+  }
+  if (latestPerLimit.some((e) => e.latest !== undefined && !freshEnough(e.latest))) {
+    return 'gas-test-stale';
+  }
+  return null;
+}
+
+// ─── Workers on the permit + entry/exit log (PW-8) ─────────────────────────
+
+export const PERMIT_WORKER_ROLES = ['supervisor', 'worker', 'entrant', 'standby'] as const;
+export type PermitWorkerRole = (typeof PERMIT_WORKER_ROLES)[number];
+
+/** One person covered by the permit — the gang, not just the acceptor. */
+export const permitWorkerSchema = z.object({
+  id: z.string().min(1).max(40),
+  name: z.string().trim().min(1).max(200),
+  /** Linked platform user, when the person has an account. */
+  userId: z.string().max(64).nullable(),
+  role: z.enum(PERMIT_WORKER_ROLES),
+});
+export type PermitWorker = z.infer<typeof permitWorkerSchema>;
+
+export const MAX_WORKERS_PER_PERMIT = 50;
+export const MAX_ENTRY_LOG_ROWS = 500;
+
+/**
+ * One entry/exit movement — "who is in the space right now" is every row
+ * with a null `exitedAt`. Timestamps are ISO strings (jsonb).
+ */
+export const permitEntryLogRowSchema = z.object({
+  id: z.string().min(1).max(40),
+  name: z.string().trim().min(1).max(200),
+  userId: z.string().max(64).nullable(),
+  enteredAt: z.string().min(1),
+  exitedAt: z.string().min(1).nullable(),
+  loggedBy: z.string().min(1),
+});
+export type PermitEntryLogRow = z.infer<typeof permitEntryLogRowSchema>;
+
+/** People currently inside under this permit (open entry-log rows). */
+export function openEntryCount(log: ReadonlyArray<Pick<PermitEntryLogRow, 'exitedAt'>>): number {
+  return log.filter((row) => row.exitedAt === null).length;
+}
+
+// ─── Same-area matching (PW-14) ─────────────────────────────────────────────
+
+/**
+ * Token-set comparison for the loudest SIMOPs signal. "Bay 4, tank farm"
+ * and "Tank farm bay 4" are the same place; so are "bay 4" within
+ * "tank farm bay 4" (one side a subset of the other). Empty text never
+ * matches — no location is not the same location.
+ */
+export function sameAreaMatch(a: string, b: string): boolean {
+  const tokens = (s: string): Set<string> =>
+    new Set(
+      s
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .filter((t) => t.length > 0),
+    );
+  const ta = tokens(a);
+  const tb = tokens(b);
+  if (ta.size === 0 || tb.size === 0) return false;
+  const [small, large] = ta.size <= tb.size ? [ta, tb] : [tb, ta];
+  for (const token of small) {
+    if (!large.has(token)) return false;
+  }
+  return true;
+}
+
+/** Minutes before expiry at which the worker warns the permit parties (PW-10). */
+export const EXPIRY_WARNING_LEAD_MINUTES = 60;
 
 // ─── Attachments ────────────────────────────────────────────────────────────
 
@@ -245,14 +404,44 @@ export interface DefaultPermitType {
   readonly requiresRescuePlan: boolean;
   readonly maxDurationHours: number;
   readonly preconditions: ReadonlyArray<PermitTypePrecondition>;
+  /** Acceptable ranges the gas gate evaluates (PW-1). Empty = presence-only. */
+  readonly gasLimits: ReadonlyArray<GasLimit>;
+  /** Freshness window for a gas test at issue/resume, minutes. */
+  readonly gasTestMaxAgeMinutes: number;
 }
+
+/**
+ * UK-practice default acceptable ranges (HSE review PW-1). O₂ 19.5–23.5 %,
+ * flammables below 10 % LEL, CO below 30 ppm (EH40 8-hour WEL). Tenant
+ * data once seeded — editable per type.
+ */
+export const DEFAULT_GAS_LIMITS: Readonly<
+  Partial<Record<Exclude<PermitCategory, 'other'>, ReadonlyArray<GasLimit>>>
+> = {
+  hot_work: [
+    { id: 'flammables_lel', label: 'Flammables (LEL)', unit: 'percent_lel', min: null, max: 10 },
+  ],
+  confined_space: [
+    { id: 'oxygen', label: 'Oxygen (O₂)', unit: 'percent_o2', min: 19.5, max: 23.5 },
+    { id: 'flammables_lel', label: 'Flammables (LEL)', unit: 'percent_lel', min: null, max: 10 },
+    { id: 'carbon_monoxide', label: 'Carbon monoxide (CO)', unit: 'ppm', min: null, max: 30 },
+  ],
+  excavation: [
+    { id: 'oxygen', label: 'Oxygen (O₂)', unit: 'percent_o2', min: 19.5, max: 23.5 },
+    { id: 'flammables_lel', label: 'Flammables (LEL)', unit: 'percent_lel', min: null, max: 10 },
+  ],
+};
 
 /**
  * The nine permit types every new tenant starts with. Seeded once per
  * tenant (idempotent) and editable thereafter — these are sensible UK
- * practice defaults, not statutory text.
+ * practice defaults, not statutory text. Gas limits and freshness are
+ * grafted from `DEFAULT_GAS_LIMITS` below (confined space gets the
+ * tighter 30-minute freshness window).
  */
-export const DEFAULT_PERMIT_TYPES: ReadonlyArray<DefaultPermitType> = [
+const DEFAULT_PERMIT_TYPE_BASES: ReadonlyArray<
+  Omit<DefaultPermitType, 'gasLimits' | 'gasTestMaxAgeMinutes'>
+> = [
   {
     category: 'hot_work',
     name: 'Hot work',
@@ -431,3 +620,12 @@ export const DEFAULT_PERMIT_TYPES: ReadonlyArray<DefaultPermitType> = [
     ],
   },
 ];
+
+export const DEFAULT_PERMIT_TYPES: ReadonlyArray<DefaultPermitType> = DEFAULT_PERMIT_TYPE_BASES.map(
+  (base) => ({
+    ...base,
+    gasLimits: DEFAULT_GAS_LIMITS[base.category] ?? [],
+    gasTestMaxAgeMinutes:
+      base.category === 'confined_space' ? 30 : DEFAULT_GAS_TEST_MAX_AGE_MINUTES,
+  }),
+);

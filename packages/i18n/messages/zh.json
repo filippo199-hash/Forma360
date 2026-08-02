@@ -4531,7 +4531,8 @@
       "empty": "没有进行中的许可。当前没有获批的高风险作业。",
       "noSite": "未指定场所",
       "reference": "编号",
-      "acceptor": "接收人"
+      "acceptor": "接收人",
+      "insideCount": "{count, plural, other {# 人在内}}"
     },
     "new": {
       "back": "作业许可",
@@ -4552,7 +4553,10 @@
         "validTo": "失效时间",
         "acceptor": "接收人",
         "acceptorPlaceholder": "指定接收许可的人员…",
-        "acceptorHint": "作业负责人。开工前必须在线接收该许可。"
+        "acceptorHint": "作业负责人。开工前必须在线接收该许可。",
+        "riskAssessment": "风险评估",
+        "riskAssessmentPlaceholder": "关联该作业的风险评估…",
+        "riskAssessmentHint": "许可应指向其所依据的安全作业系统。"
       },
       "maxDuration": "最长时长 {hours} 小时",
       "willRequire": "签发前该类型要求：",
@@ -4560,7 +4564,8 @@
         "authoriser": "审批签字",
         "gasTesting": "气体检测结果",
         "isolationCertificate": "隔离证书",
-        "rescuePlan": "救援方案"
+        "rescuePlan": "救援方案",
+        "riskAssessment": "关联的风险评估"
       },
       "preconditionCount": "{count, plural, other {签发前需确认 # 项先决条件}}",
       "conflictWarning": "{count, plural, other {该场所在此时间段还有 # 张进行中的许可}}",
@@ -4610,7 +4615,13 @@
           "rescue_plan": "救援方案",
           "gas_test": "气体检测",
           "other": "其他"
-        }
+        },
+        "acceptableRanges": "允许范围：",
+        "freshness": "超过 {minutes} 分钟的读数无效",
+        "withinLimits": "在限值内",
+        "outOfLimits": "超出限值",
+        "measuredAgainst": "对照限值",
+        "freeReading": "自由读数（无限值）"
       },
       "signatures": {
         "title": "签字",
@@ -4651,7 +4662,13 @@
         "closeConfirm": "关闭许可",
         "cancel": "取消许可",
         "cancelReason": "取消许可的原因？",
-        "cancelConfirm": "取消许可"
+        "cancelConfirm": "取消许可",
+        "resumeTitle": "恢复作业 — 确认安全",
+        "resumeReasonRecap": "暂停原因：{reason}",
+        "resumeGasNote": "该许可类型要求在恢复前，进行一次暂停之后的新的合格气体检测。",
+        "resumeAttestation": "本人确认暂停原因已消除，条件安全，可以恢复作业。",
+        "resumeConfirm": "恢复许可",
+        "extendConflicts": "{count, plural, other {有 # 张进行中的许可与延长后的时间段重叠}}"
       },
       "closedLine": "由 {name} 于 {time} 关闭。",
       "cancelledLine": "由 {name} 于 {time} 取消。",
@@ -4673,8 +4690,45 @@
           "handed_over": "已交接",
           "cancelled": "已取消",
           "closed": "已关闭",
-          "expiry_escalated": "过期升级 — 许可过期未关闭"
+          "expiry_escalated": "过期升级 — 许可过期未关闭",
+          "expiry_warning": "已发送到期预警",
+          "worker_added": "添加人员",
+          "worker_removed": "移除人员",
+          "entry_logged": "进入",
+          "exit_logged": "退出"
         }
+      },
+      "downloadPdf": "下载 PDF",
+      "ssow": {
+        "title": "安全作业系统",
+        "requiredBeforeIssue": "签发前需要风险评估",
+        "riskAssessment": "风险评估",
+        "methodStatement": "施工方案",
+        "none": "未关联"
+      },
+      "workers": {
+        "title": "本许可涵盖人员",
+        "insideCount": "{count, plural, other {当前 # 人在内}}",
+        "empty": "尚未登记 — 请登记在本许可下作业的班组。",
+        "nameLabel": "姓名",
+        "namePlaceholder": "人员姓名…",
+        "roleLabel": "角色",
+        "roles": {
+          "supervisor": "监护人",
+          "worker": "作业人员",
+          "entrant": "进入者",
+          "standby": "监护/救援"
+        },
+        "add": "添加人员",
+        "remove": "移除人员",
+        "logEntry": "记录进入",
+        "logExit": "记录退出",
+        "inSince": "自 {time} 起在内",
+        "adhocEntryLabel": "记录名单外人员",
+        "logTitle": "进出记录",
+        "entered": "进入 {time}",
+        "exited": "退出 {time}",
+        "stillIn": "仍在内"
       }
     },
     "types": {
@@ -4690,7 +4744,8 @@
         "requiresAuthoriser": "需要审批签字",
         "requiresGasTesting": "需要气体检测",
         "requiresIsolationCertificate": "需要隔离证书",
-        "requiresRescuePlan": "需要救援方案"
+        "requiresRescuePlan": "需要救援方案",
+        "requiresRiskAssessment": "需要关联风险评估"
       },
       "maxDuration": "最长有效期",
       "hours": "小时",
@@ -4701,7 +4756,17 @@
       "createTitle": "添加自定义许可类型",
       "createHint": "用于九种标准类型之外的作业。创建后再配置其要求。",
       "createNamePlaceholder": "例如：潜水作业",
-      "createButton": "添加类型"
+      "createButton": "添加类型",
+      "gasLimits": "气体限值 — 系统按此评估检测读数",
+      "noGasLimits": "未配置限值 — 仅检查是否存在读数。",
+      "removeGasLimit": "移除限值",
+      "gasLimitLabelPlaceholder": "例如：氧气（O₂）…",
+      "gasLimitUnit": "单位",
+      "gasLimitMin": "下限",
+      "gasLimitMax": "上限",
+      "addGasLimit": "添加限值",
+      "gasFreshness": "气体检测有效期",
+      "gasFreshnessUnit": "分钟"
     },
     "errors": {
       "module-disabled": "该模块不可用。",
@@ -4735,7 +4800,24 @@
       "same-acceptor": "该人员已持有此许可。",
       "not-allowed": "您没有权限执行该操作。",
       "closure-checks-incomplete": "必须确认全部四项关闭检查才能关闭许可。",
-      "generic": "出了点问题。请检查表单后重试。"
+      "generic": "出了点问题。请检查表单后重试。",
+      "gas-test-out-of-range": "最新气体读数超出允许范围 — 环境不安全。",
+      "gas-test-stale": "最新气体读数过期 — 请重新检测。",
+      "unknown-gas-limit": "该气体限值已不存在于此许可类型。",
+      "gas-unit-mismatch": "读数单位必须与限值单位一致。",
+      "risk-assessment-required": "签发此类型许可前请先关联风险评估。",
+      "unknown-risk-assessment": "该风险评估不存在。",
+      "unknown-document": "该文档不存在。",
+      "extension-in-past": "新的失效时间必须在将来 — 结束于过去的延期毫无意义。",
+      "acceptor-is-authoriser": "审批工程师不能成为其审批许可的接收人。",
+      "site-scope": "该许可所属场所的团队不包含您。",
+      "entrants-still-inside": "进出记录显示仍有人在内 — 关闭前请先记录其退出。",
+      "unknown-worker": "该人员不在许可名单中。",
+      "name-required": "记录进入需填写人员姓名。",
+      "entry-log-full": "该许可的进出记录已满。",
+      "unknown-entry": "该记录行不存在。",
+      "already-exited": "该人员已记录退出。",
+      "render-unavailable": "当前环境不支持 PDF 生成。"
     }
   },
   "fireSafety": {
