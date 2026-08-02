@@ -35,6 +35,8 @@ import observationNotification from '../../i18n/emails/en/observation-notificati
 import otp from '../../i18n/emails/en/otp.json';
 import passwordReset from '../../i18n/emails/en/password-reset.json';
 import requestToJoin from '../../i18n/emails/en/request-to-join.json';
+import riskAssessmentAckReminder from '../../i18n/emails/en/risk-assessment-ack-reminder.json';
+import riskAssessmentDistributed from '../../i18n/emails/en/risk-assessment-distributed.json';
 import scheduleReminder from '../../i18n/emails/en/schedule-reminder.json';
 import signatureWorkflowComplete from '../../i18n/emails/en/signature-workflow-complete.json';
 import signatureWorkflowRequest from '../../i18n/emails/en/signature-workflow-request.json';
@@ -54,6 +56,8 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   otp,
   'password-reset': passwordReset,
   'request-to-join': requestToJoin,
+  'risk-assessment-ack-reminder': riskAssessmentAckReminder,
+  'risk-assessment-distributed': riskAssessmentDistributed,
   'schedule-reminder': scheduleReminder,
   'signature-workflow-complete': signatureWorkflowComplete,
   'signature-workflow-request': signatureWorkflowRequest,
