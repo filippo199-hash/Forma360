@@ -10,7 +10,18 @@
  * exposes exactly the lifecycle moves the current status allows; the
  * timeline is the append-only audit trail.
  */
-import { ArrowLeft, Check, FileText, Paperclip, Wind } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  FileDown,
+  FileText,
+  LogIn,
+  LogOut,
+  Paperclip,
+  Users,
+  Wind,
+  X,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -43,7 +54,16 @@ const GAS_UNIT_LABELS: Record<string, string> = {
   mg_m3: 'mg/m³',
 };
 
-type PanelKey = 'suspend' | 'extend' | 'handover' | 'close' | 'cancel' | null;
+type PanelKey = 'suspend' | 'resume' | 'extend' | 'handover' | 'close' | 'cancel' | null;
+
+/** Human form of a gas limit's acceptable range. */
+function limitRangeLabel(limit: { min: number | null; max: number | null; unit: string }): string {
+  const unit = GAS_UNIT_LABELS[limit.unit] ?? limit.unit;
+  if (limit.min !== null && limit.max !== null) return `${limit.min}–${limit.max} ${unit}`;
+  if (limit.max !== null) return `≤ ${limit.max} ${unit}`;
+  if (limit.min !== null) return `≥ ${limit.min} ${unit}`;
+  return unit;
+}
 
 export default function PermitDetailPage() {
   const t = useTranslations('permits.detail');
@@ -52,6 +72,7 @@ export default function PermitDetailPage() {
   const permitId = params.permitId ?? '';
 
   const canIssue = useHasPermission('permits.issue');
+  const canCreate = useHasPermission('permits.create');
 
   const utils = trpc.useUtils();
   const {
@@ -60,6 +81,14 @@ export default function PermitDetailPage() {
     error: loadError,
   } = trpc.permits.get.useQuery({ permitId }, { enabled: permitId.length === 26 });
   const { data: usersPage } = trpc.users.list.useQuery({ limit: 200 });
+  const { data: riskAssessmentOptions } = trpc.riskAssessments.list.useQuery(
+    { status: 'active', type: 'all' },
+    { enabled: permit?.status === 'draft' },
+  );
+  const { data: documentOptions } = trpc.documents.list.useQuery(
+    {},
+    { enabled: permit?.status === 'draft' },
+  );
 
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<PanelKey>(null);
@@ -67,8 +96,16 @@ export default function PermitDetailPage() {
 
   // Action-panel state.
   const [reason, setReason] = useState('');
+  const [confirmResume, setConfirmResume] = useState(false);
   const [newValidTo, setNewValidTo] = useState('');
+  const [extendAcknowledge, setExtendAcknowledge] = useState(false);
   const [handoverTo, setHandoverTo] = useState('');
+  // Workers / entry-log form state.
+  const [workerName, setWorkerName] = useState('');
+  const [workerRole, setWorkerRole] = useState<'supervisor' | 'worker' | 'entrant' | 'standby'>(
+    'worker',
+  );
+  const [entryName, setEntryName] = useState('');
   const [closeChecks, setCloseChecks] = useState({
     workComplete: false,
     areaMadeSafe: false,
@@ -77,9 +114,11 @@ export default function PermitDetailPage() {
   });
   const [closeNotes, setCloseNotes] = useState('');
 
-  // Gas-reading form state.
+  // Gas-reading form state. `gasLimitId` binds the reading to one of the
+  // type's acceptable ranges — the unit follows the limit (PW-1).
   const [gasSubstance, setGasSubstance] = useState('');
   const [gasReading, setGasReading] = useState('');
+  const [gasLimitId, setGasLimitId] = useState('');
   const [gasUnit, setGasUnit] = useState<'percent_lel' | 'percent_o2' | 'ppm' | 'mg_m3'>(
     'percent_lel',
   );
@@ -89,6 +128,8 @@ export default function PermitDetailPage() {
       setError(null);
       setPanel(null);
       setReason('');
+      setConfirmResume(false);
+      setExtendAcknowledge(false);
       void utils.permits.get.invalidate({ permitId });
       void utils.permits.overview.invalidate();
     },
@@ -113,6 +154,38 @@ export default function PermitDetailPage() {
   const handover = trpc.permits.handover.useMutation(mutationOpts);
   const close = trpc.permits.close.useMutation(mutationOpts);
   const cancel = trpc.permits.cancel.useMutation(mutationOpts);
+  const updatePermit = trpc.permits.update.useMutation(mutationOpts);
+  const setWorkers = trpc.permits.setWorkers.useMutation({
+    ...mutationOpts,
+    onSuccess: () => {
+      mutationOpts.onSuccess();
+      setWorkerName('');
+    },
+  });
+  const logEntry = trpc.permits.logEntry.useMutation({
+    ...mutationOpts,
+    onSuccess: () => {
+      mutationOpts.onSuccess();
+      setEntryName('');
+    },
+  });
+  const logExit = trpc.permits.logExit.useMutation(mutationOpts);
+
+  // SIMOPs precheck for the extension's ADDED window (PW-4).
+  const extendConflictsInput =
+    permit !== undefined && newValidTo !== ''
+      ? {
+          ...(permit.siteId !== null ? { siteId: permit.siteId } : {}),
+          validFrom: new Date(permit.validTo),
+          validTo: new Date(newValidTo),
+          locationText: permit.locationText,
+          excludePermitId: permitId,
+        }
+      : null;
+  const { data: extendConflicts } = trpc.permits.checkConflicts.useQuery(
+    extendConflictsInput ?? { validFrom: new Date(0), validTo: new Date(0) },
+    { enabled: extendConflictsInput !== null && panel === 'extend' },
+  );
 
   if (isLoading || permit === undefined) {
     if (loadError !== null) return <DetailNotFound error={loadError} />;
@@ -130,7 +203,12 @@ export default function PermitDetailPage() {
   const isTerminal = permit.status === 'closed' || permit.status === 'cancelled';
   const isAcceptor =
     permit.acceptorUserId !== null && permit.acceptorUserId === permit.viewerUserId;
+  // Competent persons (create), issuer authorities and the named acceptor
+  // may record checks and evidence (PW-9) — the server enforces the same.
+  const canRecord = canIssue || canCreate || isAcceptor;
   const allChecked = permit.preconditions.every((p) => p.checked);
+  const gasLimits = permit.type.gasLimits;
+  const requiresGas = permit.type.requiresGasTesting;
 
   const fmt = (d: Date | string | null): string =>
     d === null
@@ -203,6 +281,17 @@ export default function PermitDetailPage() {
               {isOpen ? <CountdownChip validTo={permit.validTo} overdue={permit.overdue} /> : null}
             </div>
           </div>
+          {/* The postable copy for the job face (PW-6). */}
+          <Button asChild variant="outline" size="sm">
+            <a
+              href={`/api/exports/permit-pdf?permitId=${permitId}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <FileDown className="mr-1 h-4 w-4" aria-hidden="true" />
+              {t('downloadPdf')}
+            </a>
+          </Button>
         </div>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-4">
           <div>
@@ -274,6 +363,98 @@ export default function PermitDetailPage() {
 
       <PermitErrorText message={error} />
 
+      {/* Safe system of work — the RA and method statement this permit
+          works under (PW-7). */}
+      {(isDraft ||
+        permit.riskAssessment !== null ||
+        permit.methodStatement !== null ||
+        permit.type.requiresRiskAssessment) && (
+        <Card>
+          <CardContent className="space-y-3 p-4 sm:p-6">
+            <h2 className="font-semibold">
+              {t('ssow.title')}
+              {permit.type.requiresRiskAssessment ? (
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  {t('ssow.requiredBeforeIssue')}
+                </span>
+              ) : null}
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="text-sm">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t('ssow.riskAssessment')}
+                </p>
+                {isDraft && canCreate ? (
+                  <select
+                    value={permit.riskAssessmentId ?? ''}
+                    onChange={(e) =>
+                      updatePermit.mutate({
+                        permitId,
+                        riskAssessmentId: e.target.value === '' ? null : e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">{t('ssow.none')}</option>
+                    {(riskAssessmentOptions ?? []).map((ra) => (
+                      <option key={ra.id} value={ra.id}>
+                        {ra.referenceNumber !== null ? `${ra.referenceNumber} · ` : ''}
+                        {ra.title}
+                      </option>
+                    ))}
+                  </select>
+                ) : permit.riskAssessment !== null ? (
+                  <Link
+                    href={`/${locale}/risk-assessments/${permit.riskAssessment.id}`}
+                    className="mt-1 inline-block text-primary hover:underline"
+                  >
+                    {permit.riskAssessment.referenceNumber !== null
+                      ? `${permit.riskAssessment.referenceNumber} · `
+                      : ''}
+                    {permit.riskAssessment.title}
+                  </Link>
+                ) : (
+                  <p className="mt-1 text-muted-foreground">{t('ssow.none')}</p>
+                )}
+              </div>
+              <div className="text-sm">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t('ssow.methodStatement')}
+                </p>
+                {isDraft && canCreate ? (
+                  <select
+                    value={permit.methodStatementDocumentId ?? ''}
+                    onChange={(e) =>
+                      updatePermit.mutate({
+                        permitId,
+                        methodStatementDocumentId: e.target.value === '' ? null : e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">{t('ssow.none')}</option>
+                    {(documentOptions ?? []).map((doc) => (
+                      <option key={doc.id} value={doc.id}>
+                        {doc.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : permit.methodStatement !== null ? (
+                  <Link
+                    href={`/${locale}/documents`}
+                    className="mt-1 inline-block text-primary hover:underline"
+                  >
+                    {permit.methodStatement.name}
+                  </Link>
+                ) : (
+                  <p className="mt-1 text-muted-foreground">{t('ssow.none')}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Preconditions */}
       <Card>
         <CardContent className="p-4 sm:p-6">
@@ -292,7 +473,7 @@ export default function PermitDetailPage() {
             <ul className="mt-3 space-y-2.5">
               {permit.preconditions.map((p) => (
                 <li key={p.id} className="flex items-start gap-2.5">
-                  {isDraft && canIssue ? (
+                  {isDraft && canRecord ? (
                     <Checkbox
                       id={`precondition-${p.id}`}
                       checked={p.checked}
@@ -318,7 +499,7 @@ export default function PermitDetailPage() {
                     </span>
                   )}
                   <label
-                    htmlFor={isDraft && canIssue ? `precondition-${p.id}` : undefined}
+                    htmlFor={isDraft && canRecord ? `precondition-${p.id}` : undefined}
                     className="min-w-0 text-sm"
                   >
                     {p.label}
@@ -358,6 +539,14 @@ export default function PermitDetailPage() {
                     </span>
                   ) : null}
                 </h3>
+                {gasLimits.length > 0 ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t('evidence.acceptableRanges')}{' '}
+                    {gasLimits.map((l) => `${l.label} ${limitRangeLabel(l)}`).join(' · ')}
+                    {' — '}
+                    {t('evidence.freshness', { minutes: permit.type.gasTestMaxAgeMinutes })}
+                  </p>
+                ) : null}
                 {permit.gasReadings.length > 0 ? (
                   <ul className="mt-2 space-y-1 text-sm">
                     {permit.gasReadings.map((g) => (
@@ -366,6 +555,15 @@ export default function PermitDetailPage() {
                         <span>
                           {g.reading} {GAS_UNIT_LABELS[g.unit] ?? g.unit}
                         </span>
+                        {g.withinLimits === true ? (
+                          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100">
+                            {t('evidence.withinLimits')}
+                          </span>
+                        ) : g.withinLimits === false ? (
+                          <span className="rounded-md bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-200">
+                            {t('evidence.outOfLimits')}
+                          </span>
+                        ) : null}
                         <span className="text-xs text-muted-foreground">
                           {g.takenByName} · {fmt(g.takenAt)}
                           {g.note !== '' ? ` · ${g.note}` : ''}
@@ -376,8 +574,38 @@ export default function PermitDetailPage() {
                 ) : (
                   <p className="mt-2 text-sm text-muted-foreground">{t('evidence.noReadings')}</p>
                 )}
-                {(isDraft || isOpen) && canIssue ? (
+                {(isDraft || isOpen) && canRecord ? (
                   <div className="mt-2 flex flex-wrap items-end gap-2">
+                    {gasLimits.length > 0 ? (
+                      <div className="flex flex-col gap-1 text-sm">
+                        <label
+                          htmlFor="gas-limit"
+                          className="text-xs font-medium text-muted-foreground"
+                        >
+                          {t('evidence.measuredAgainst')}
+                        </label>
+                        <select
+                          id="gas-limit"
+                          value={gasLimitId}
+                          onChange={(e) => {
+                            setGasLimitId(e.target.value);
+                            const limit = gasLimits.find((l) => l.id === e.target.value);
+                            if (limit !== undefined) {
+                              setGasUnit(limit.unit);
+                              if (gasSubstance.trim() === '') setGasSubstance(limit.label);
+                            }
+                          }}
+                          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                        >
+                          <option value="">{t('evidence.freeReading')}</option>
+                          {gasLimits.map((l) => (
+                            <option key={l.id} value={l.id}>
+                              {l.label} ({limitRangeLabel(l)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : null}
                     <div className="flex flex-col gap-1 text-sm">
                       <label
                         htmlFor="gas-substance"
@@ -418,8 +646,9 @@ export default function PermitDetailPage() {
                       <select
                         id="gas-unit"
                         value={gasUnit}
+                        disabled={gasLimitId !== ''}
                         onChange={(e) => setGasUnit(e.target.value as typeof gasUnit)}
-                        className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                        className="h-9 rounded-md border border-input bg-background px-2 text-sm disabled:opacity-60"
                       >
                         {Object.entries(GAS_UNIT_LABELS).map(([value, label]) => (
                           <option key={value} value={value}>
@@ -443,6 +672,7 @@ export default function PermitDetailPage() {
                           substance: gasSubstance.trim(),
                           reading: Number(gasReading),
                           unit: gasUnit,
+                          ...(gasLimitId !== '' ? { limitId: gasLimitId } : {}),
                         })
                       }
                     >
@@ -472,7 +702,7 @@ export default function PermitDetailPage() {
                     <span className="text-muted-foreground">{t('evidence.notRecorded')}</span>
                   )}
                 </p>
-                {isDraft && canIssue ? (
+                {isDraft && canCreate ? (
                   <IsolationRefEditor
                     permitId={permitId}
                     current={permit.isolationCertificateRef}
@@ -497,7 +727,7 @@ export default function PermitDetailPage() {
                 ) : (
                   <p className="mt-1 text-sm text-muted-foreground">{t('evidence.notRecorded')}</p>
                 )}
-                {isDraft && canIssue ? (
+                {isDraft && canCreate ? (
                   <RescuePlanEditor
                     permitId={permitId}
                     current={permit.rescuePlan}
@@ -520,6 +750,210 @@ export default function PermitDetailPage() {
                       <span className="ml-2 text-xs text-muted-foreground">
                         {t(`evidence.kinds.${a.kind}` as never)}
                       </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* The gang + who is inside right now (PW-8). */}
+      {(canRecord && (isDraft || isOpen)) ||
+      permit.workers.length > 0 ||
+      permit.entryLog.length > 0 ? (
+        <Card>
+          <CardContent className="space-y-3 p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="inline-flex items-center gap-1.5 font-semibold">
+                <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                {t('workers.title')}
+              </h2>
+              {permit.insideCount > 0 ? (
+                <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-200">
+                  {t('workers.insideCount', { count: permit.insideCount })}
+                </span>
+              ) : null}
+            </div>
+
+            {permit.workers.length > 0 ? (
+              <ul className="space-y-1.5">
+                {permit.workers.map((w) => {
+                  const openEntry = permit.entryLog.find(
+                    (r) => r.exitedAt === null && (r.userId === w.userId || r.name === w.name),
+                  );
+                  return (
+                    <li key={w.id} className="flex flex-wrap items-center gap-2 text-sm">
+                      <span className="font-medium">{w.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {t(`workers.roles.${w.role}` as never)}
+                      </span>
+                      {openEntry !== undefined ? (
+                        <span className="rounded-md bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-200">
+                          {t('workers.inSince', { time: fmt(openEntry.enteredAt) })}
+                        </span>
+                      ) : null}
+                      {canRecord && permit.status === 'active' && openEntry === undefined ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          disabled={logEntry.isPending}
+                          onClick={() => logEntry.mutate({ permitId, workerId: w.id })}
+                        >
+                          <LogIn className="mr-1 h-3 w-3" aria-hidden="true" />
+                          {t('workers.logEntry')}
+                        </Button>
+                      ) : null}
+                      {canRecord && isOpen && openEntry !== undefined ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          disabled={logExit.isPending}
+                          onClick={() => logExit.mutate({ permitId, entryId: openEntry.id })}
+                        >
+                          <LogOut className="mr-1 h-3 w-3" aria-hidden="true" />
+                          {t('workers.logExit')}
+                        </Button>
+                      ) : null}
+                      {canRecord && (isDraft || isOpen) ? (
+                        <button
+                          type="button"
+                          aria-label={t('workers.remove')}
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() =>
+                            setWorkers.mutate({
+                              permitId,
+                              workers: permit.workers
+                                .filter((x) => x.id !== w.id)
+                                .map((x) => ({
+                                  id: x.id,
+                                  name: x.name,
+                                  userId: x.userId,
+                                  role: x.role,
+                                })),
+                            })
+                          }
+                        >
+                          <X className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t('workers.empty')}</p>
+            )}
+
+            {canRecord && (isDraft || isOpen) ? (
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="flex flex-col gap-1 text-sm">
+                  <label
+                    htmlFor="worker-name"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
+                    {t('workers.nameLabel')}
+                  </label>
+                  <Input
+                    id="worker-name"
+                    value={workerName}
+                    onChange={(e) => setWorkerName(e.target.value)}
+                    placeholder={t('workers.namePlaceholder')}
+                    className="h-9 w-52"
+                  />
+                </div>
+                <div className="flex flex-col gap-1 text-sm">
+                  <label
+                    htmlFor="worker-role"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
+                    {t('workers.roleLabel')}
+                  </label>
+                  <select
+                    id="worker-role"
+                    value={workerRole}
+                    onChange={(e) => setWorkerRole(e.target.value as typeof workerRole)}
+                    className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                  >
+                    {(['supervisor', 'worker', 'entrant', 'standby'] as const).map((role) => (
+                      <option key={role} value={role}>
+                        {t(`workers.roles.${role}` as never)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={workerName.trim() === '' || setWorkers.isPending}
+                  onClick={() =>
+                    setWorkers.mutate({
+                      permitId,
+                      workers: [
+                        ...permit.workers.map((x) => ({
+                          id: x.id,
+                          name: x.name,
+                          userId: x.userId,
+                          role: x.role,
+                        })),
+                        { name: workerName.trim(), role: workerRole },
+                      ],
+                    })
+                  }
+                >
+                  {t('workers.add')}
+                </Button>
+              </div>
+            ) : null}
+
+            {/* Ad-hoc entry (someone not on the list) + the full log. */}
+            {canRecord && permit.status === 'active' ? (
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="flex flex-col gap-1 text-sm">
+                  <label htmlFor="entry-name" className="text-xs font-medium text-muted-foreground">
+                    {t('workers.adhocEntryLabel')}
+                  </label>
+                  <Input
+                    id="entry-name"
+                    value={entryName}
+                    onChange={(e) => setEntryName(e.target.value)}
+                    placeholder={t('workers.namePlaceholder')}
+                    className="h-9 w-52"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={entryName.trim() === '' || logEntry.isPending}
+                  onClick={() => logEntry.mutate({ permitId, name: entryName.trim() })}
+                >
+                  <LogIn className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                  {t('workers.logEntry')}
+                </Button>
+              </div>
+            ) : null}
+
+            {permit.entryLog.length > 0 ? (
+              <div>
+                <p className="text-sm font-medium">{t('workers.logTitle')}</p>
+                <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+                  {permit.entryLog.map((row) => (
+                    <li key={row.id} className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-foreground">{row.name}</span>
+                      <span>
+                        {t('workers.entered', { time: fmt(row.enteredAt) })}
+                        {row.exitedAt !== null
+                          ? ` · ${t('workers.exited', { time: fmt(row.exitedAt) })}`
+                          : ''}
+                      </span>
+                      {row.exitedAt === null ? (
+                        <span className="rounded-md bg-red-100 px-1.5 py-0.5 font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-200">
+                          {t('workers.stillIn')}
+                        </span>
+                      ) : null}
                     </li>
                   ))}
                 </ul>
@@ -610,16 +1044,9 @@ export default function PermitDetailPage() {
               {permit.status === 'active' && canIssue
                 ? panelButton('suspend', t('actions.suspend'))
                 : null}
-              {permit.status === 'suspended' && canIssue ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={resume.isPending}
-                  onClick={() => resume.mutate({ permitId, confirmSafeToResume: true })}
-                >
-                  {t('actions.resume')}
-                </Button>
-              ) : null}
+              {permit.status === 'suspended' && canIssue
+                ? panelButton('resume', t('actions.resume'))
+                : null}
               {(permit.status === 'active' || permit.status === 'issued') && canIssue
                 ? panelButton('extend', t('actions.extend'))
                 : null}
@@ -652,6 +1079,40 @@ export default function PermitDetailPage() {
               </div>
             ) : null}
 
+            {/* Resume is a REAL confirmation (PW-3): restate why the permit
+                was suspended, require the attestation, and remind gas
+                types that a fresh in-range test is needed. */}
+            {panel === 'resume' ? (
+              <div className="space-y-2.5 rounded-md border p-3">
+                <p className="text-sm font-medium">{t('actions.resumeTitle')}</p>
+                {permit.suspensionReason !== '' ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t('actions.resumeReasonRecap', { reason: permit.suspensionReason })}
+                  </p>
+                ) : null}
+                {requiresGas ? (
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    {t('actions.resumeGasNote')}
+                  </p>
+                ) : null}
+                <label className="flex items-start gap-2 text-sm">
+                  <Checkbox
+                    checked={confirmResume}
+                    onCheckedChange={(v) => setConfirmResume(v === true)}
+                    className="mt-0.5"
+                  />
+                  {t('actions.resumeAttestation')}
+                </label>
+                <Button
+                  size="sm"
+                  disabled={!confirmResume || resume.isPending}
+                  onClick={() => resume.mutate({ permitId, confirmSafeToResume: confirmResume })}
+                >
+                  {t('actions.resumeConfirm')}
+                </Button>
+              </div>
+            ) : null}
+
             {panel === 'extend' ? (
               <div className="space-y-2 rounded-md border p-3">
                 <label htmlFor="extend-to" className="text-sm font-medium">
@@ -670,10 +1131,44 @@ export default function PermitDetailPage() {
                   onChange={(e) => setNewValidTo(e.target.value)}
                   className="w-60"
                 />
+                {/* SIMOPs over the ADDED window (PW-4): show and require
+                    acknowledgement before the extension proceeds. */}
+                {(extendConflicts ?? []).length > 0 ? (
+                  <div className="rounded-md border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+                    <p className="font-medium">
+                      {t('actions.extendConflicts', { count: (extendConflicts ?? []).length })}
+                    </p>
+                    <ul className="mt-1 space-y-0.5">
+                      {(extendConflicts ?? []).map((c) => (
+                        <li key={c.permitId}>
+                          {c.referenceNumber} · {c.title}
+                          {c.sameArea ? ` — ${t('conflicts.sameArea')}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                    <label className="mt-1.5 flex items-center gap-1.5">
+                      <Checkbox
+                        checked={extendAcknowledge}
+                        onCheckedChange={(v) => setExtendAcknowledge(v === true)}
+                      />
+                      {t('signatures.acknowledgeConflicts')}
+                    </label>
+                  </div>
+                ) : null}
                 <Button
                   size="sm"
-                  disabled={newValidTo === '' || extend.isPending}
-                  onClick={() => extend.mutate({ permitId, newValidTo: new Date(newValidTo) })}
+                  disabled={
+                    newValidTo === '' ||
+                    extend.isPending ||
+                    ((extendConflicts ?? []).length > 0 && !extendAcknowledge)
+                  }
+                  onClick={() =>
+                    extend.mutate({
+                      permitId,
+                      newValidTo: new Date(newValidTo),
+                      acknowledgeConflicts: extendAcknowledge,
+                    })
+                  }
                 >
                   {t('actions.extendConfirm')}
                 </Button>
@@ -694,7 +1189,14 @@ export default function PermitDetailPage() {
                 >
                   <option value="">—</option>
                   {(usersPage?.users ?? [])
-                    .filter((u) => u.id !== permit.acceptorUserId && u.id !== permit.issuerUserId)
+                    // Separation of duties (PW-5): never the issuer, the
+                    // current acceptor, or the authorising engineer.
+                    .filter(
+                      (u) =>
+                        u.id !== permit.acceptorUserId &&
+                        u.id !== permit.issuerUserId &&
+                        u.id !== permit.authoriserUserId,
+                    )
                     .map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.name}

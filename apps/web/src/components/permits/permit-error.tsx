@@ -40,6 +40,24 @@ const KNOWN_SLUGS = new Set([
   'same-acceptor',
   'not-allowed',
   'closure-checks-incomplete',
+  // HSE-review hardening slugs.
+  'gas-test-out-of-range',
+  'gas-test-stale',
+  'unknown-gas-limit',
+  'gas-unit-mismatch',
+  'risk-assessment-required',
+  'unknown-risk-assessment',
+  'unknown-document',
+  'extension-in-past',
+  'acceptor-is-authoriser',
+  'site-scope',
+  'entrants-still-inside',
+  'unknown-worker',
+  'name-required',
+  'entry-log-full',
+  'unknown-entry',
+  'already-exited',
+  'render-unavailable',
 ]);
 
 export function usePermitErrorText(): (message: string | null) => string | null {

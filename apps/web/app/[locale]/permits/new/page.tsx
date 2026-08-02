@@ -38,6 +38,10 @@ export default function NewPermitPage() {
   const { data: types } = trpc.permits.types.list.useQuery({});
   const { data: sites } = trpc.sites.list.useQuery();
   const { data: usersPage } = trpc.users.list.useQuery({ limit: 200 });
+  const { data: riskAssessmentOptions } = trpc.riskAssessments.list.useQuery({
+    status: 'active',
+    type: 'all',
+  });
 
   const [typeId, setTypeId] = useState('');
   const [title, setTitle] = useState('');
@@ -49,6 +53,7 @@ export default function NewPermitPage() {
     toLocalInputValue(new Date(Date.now() + 8 * 3_600_000)),
   );
   const [acceptorUserId, setAcceptorUserId] = useState('');
+  const [riskAssessmentId, setRiskAssessmentId] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const selectedType = useMemo(() => (types ?? []).find((x) => x.id === typeId), [types, typeId]);
@@ -84,6 +89,7 @@ export default function NewPermitPage() {
       validFrom: new Date(validFrom),
       validTo: new Date(validTo),
       ...(acceptorUserId !== '' ? { acceptorUserId } : {}),
+      ...(riskAssessmentId !== '' ? { riskAssessmentId } : {}),
     });
   }
 
@@ -105,6 +111,7 @@ export default function NewPermitPage() {
     if (selectedType.requiresGasTesting) requirementKeys.push('gasTesting');
     if (selectedType.requiresIsolationCertificate) requirementKeys.push('isolationCertificate');
     if (selectedType.requiresRescuePlan) requirementKeys.push('rescuePlan');
+    if (selectedType.requiresRiskAssessment) requirementKeys.push('riskAssessment');
   }
 
   return (
@@ -241,6 +248,27 @@ export default function NewPermitPage() {
                 onChange={(e) => setValidTo(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1 text-sm">
+            <label htmlFor="permit-ra" className="font-medium">
+              {t('fields.riskAssessment')}
+            </label>
+            <select
+              id="permit-ra"
+              value={riskAssessmentId}
+              onChange={(e) => setRiskAssessmentId(e.target.value)}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">{t('fields.riskAssessmentPlaceholder')}</option>
+              {(riskAssessmentOptions ?? []).map((ra) => (
+                <option key={ra.id} value={ra.id}>
+                  {ra.referenceNumber !== null ? `${ra.referenceNumber} · ` : ''}
+                  {ra.title}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">{t('fields.riskAssessmentHint')}</p>
           </div>
 
           <div className="flex flex-col gap-1 text-sm">
