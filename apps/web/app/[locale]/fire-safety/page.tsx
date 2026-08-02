@@ -1,0 +1,247 @@
+'use client';
+
+/**
+ * Fire Safety hub — the building register, and the module home.
+ *
+ * Leads with the needs-attention strip (overdue checks, doors past
+ * their inspection date, FRA reviews due, PEEP reviews due, marshal
+ * gaps) so the practitioner sees what rotted since last visit before
+ * anything else. The list itself mirrors the COSHH inventory: filter
+ * row, desktop table, mobile cards, one predictable primary target per
+ * row. Each building row carries its statutory-duty badges — the
+ * high-rise duties are structural, not remembered.
+ */
+import { CalendarClock, Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { DueStatusChip, DutyBadges } from '../../../src/components/fire-safety/chips';
+import { Button } from '../../../src/components/ui/button';
+import { Card, CardContent } from '../../../src/components/ui/card';
+import { Input } from '../../../src/components/ui/input';
+import { Skeleton } from '../../../src/components/ui/skeleton';
+import { useHasPermission } from '../../../src/lib/permissions-context';
+import { trpc } from '../../../src/lib/trpc/client';
+
+type StatusFilter = 'active' | 'archived' | 'all';
+
+export default function FireSafetyHubPage() {
+  const t = useTranslations('fireSafety');
+  const params = useParams<{ locale: string }>();
+  const locale = params.locale ?? 'en';
+  const router = useRouter();
+
+  const canCreate = useHasPermission('fireSafety.create');
+
+  const [status, setStatus] = useState<StatusFilter>('active');
+  const [search, setSearch] = useState('');
+
+  const listInput: { status: StatusFilter; search?: string } = { status };
+  if (search.trim() !== '') listInput.search = search.trim();
+
+  const { data: rows, isLoading } = trpc.fireSafety.buildings.list.useQuery(listInput);
+  const { data: overview } = trpc.fireSafety.overview.useQuery();
+
+  const attention: Array<{ key: string; count: number }> = [
+    { key: 'checksOverdue', count: overview?.checksOverdue ?? 0 },
+    { key: 'checksDueSoon', count: overview?.checksDueSoon ?? 0 },
+    { key: 'doorsOverdue', count: overview?.doorsOverdue ?? 0 },
+    { key: 'frasReviewDue', count: overview?.frasReviewDue ?? 0 },
+    { key: 'peepReviewsDue', count: overview?.peepReviewsDue ?? 0 },
+    { key: 'marshalGaps', count: overview?.marshalGaps ?? 0 },
+    { key: 'marshalsExpiringSoon', count: overview?.marshalsExpiringSoon ?? 0 },
+  ].filter((a) => a.count > 0);
+
+  return (
+    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">{t('title')}</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">{t('subtitle')}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href={`/${locale}/fire-safety/logbook`}>
+              <CalendarClock className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              {t('logbookButton')}
+            </Link>
+          </Button>
+          {canCreate ? (
+            <Button asChild>
+              <Link href={`/${locale}/fire-safety/new`}>
+                <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                {t('newBuildingButton')}
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      {attention.length > 0 ? (
+        <div className="mb-5 flex flex-wrap gap-2">
+          {attention.map((a) => (
+            <Link
+              key={a.key}
+              href={`/${locale}/fire-safety/logbook`}
+              className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-950/60"
+            >
+              <span className="rounded bg-amber-200/70 px-1.5 py-0.5 tabular-nums dark:bg-amber-900/60">
+                {a.count}
+              </span>
+              {t(`attention.${a.key}` as never)}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1 text-sm">
+          <label htmlFor="fire-search" className="text-xs font-medium text-muted-foreground">
+            {t('filters.search')}
+          </label>
+          <Input
+            id="fire-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('filters.searchPlaceholder')}
+            className="h-9 w-56"
+          />
+        </div>
+        <div className="flex flex-col gap-1 text-sm">
+          <label htmlFor="fire-status" className="text-xs font-medium text-muted-foreground">
+            {t('filters.status')}
+          </label>
+          <select
+            id="fire-status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as StatusFilter)}
+            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="active">{t('filters.active')}</option>
+            <option value="archived">{t('filters.archived')}</option>
+            <option value="all">{t('filters.all')}</option>
+          </select>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      ) : (rows ?? []).length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <p className="text-sm text-muted-foreground">{t('empty')}</p>
+            {canCreate ? (
+              <Button asChild variant="outline">
+                <Link href={`/${locale}/fire-safety/new`}>{t('emptyCta')}</Link>
+              </Button>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Table (desktop) — the mobile card list below takes over under md. */}
+          <div className="hidden overflow-x-auto rounded-lg border md:block">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
+                  <th className="px-3 py-2 font-medium">{t('columns.building')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.duties')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.checks')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.doors')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.fra')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(rows ?? []).map((b) => (
+                  <tr
+                    key={b.id}
+                    onClick={() => router.push(`/${locale}/fire-safety/${b.id}`)}
+                    className="cursor-pointer border-b last:border-b-0 hover:bg-muted/40"
+                  >
+                    <td className="px-3 py-2.5">
+                      <div className="font-medium">{b.name}</div>
+                      <div className="text-xs text-muted-foreground">{b.address}</div>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <DutyBadges duty={b.duty} />
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {b.checksOverdue > 0 ? (
+                        <span className="mr-1.5 inline-flex items-center gap-1">
+                          <DueStatusChip status="overdue" />
+                          <span className="text-xs tabular-nums">{b.checksOverdue}</span>
+                        </span>
+                      ) : null}
+                      {b.checksDueSoon > 0 ? (
+                        <span className="inline-flex items-center gap-1">
+                          <DueStatusChip status="due_soon" />
+                          <span className="text-xs tabular-nums">{b.checksDueSoon}</span>
+                        </span>
+                      ) : null}
+                      {b.checksOverdue === 0 && b.checksDueSoon === 0 ? (
+                        <DueStatusChip status="ok" />
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2.5 text-xs">
+                      {b.doorCount > 0
+                        ? b.doorsOverdue > 0
+                          ? t('doorsOverdueCount', { count: b.doorsOverdue })
+                          : t('doorsOkCount', { count: b.doorCount })
+                        : '—'}
+                    </td>
+                    <td className="px-3 py-2.5 text-xs">
+                      {b.hasActiveFra
+                        ? b.fraReviewDue
+                          ? t('fraReviewDue')
+                          : t('fraInPlace')
+                        : t('fraMissing')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Card list (mobile). */}
+          <div className="space-y-2 md:hidden">
+            {(rows ?? []).map((b) => (
+              <Link key={b.id} href={`/${locale}/fire-safety/${b.id}`} className="block">
+                <Card>
+                  <CardContent className="space-y-1.5 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-medium">{b.name}</span>
+                      <DutyBadges duty={b.duty} />
+                    </div>
+                    <div className="text-xs text-muted-foreground">{b.address}</div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                      {b.checksOverdue > 0 ? (
+                        <span className="inline-flex items-center gap-1">
+                          <DueStatusChip status="overdue" />
+                          {t('checksOverdueCount', { count: b.checksOverdue })}
+                        </span>
+                      ) : (
+                        <DueStatusChip status="ok" />
+                      )}
+                      <span>
+                        {b.hasActiveFra
+                          ? b.fraReviewDue
+                            ? t('fraReviewDue')
+                            : t('fraInPlace')
+                          : t('fraMissing')}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+    </main>
+  );
+}

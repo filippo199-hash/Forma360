@@ -48,6 +48,8 @@ const STANDARD_KEYS: ReadonlyArray<PermissionKey> = [
   'riskAssessments.view',
   'coshh.view',
   'permits.view',
+  'fireSafety.view',
+  'fireSafety.record',
 ];
 
 export interface SeededSetIds {

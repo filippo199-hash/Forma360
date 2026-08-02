@@ -7,6 +7,7 @@ import {
   Building2,
   ClipboardCheck,
   FileSignature,
+  Flame,
   FlaskConical,
   FolderOpen,
   HardHat,
@@ -39,6 +40,7 @@ interface NavItem {
     | 'riskAssessments'
     | 'coshh'
     | 'permits'
+    | 'fireSafety'
     | 'assets'
     | 'documents'
     | 'contractors'
@@ -78,6 +80,13 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     href: `/${locale}/permits`,
     icon: FileSignature,
   };
+  // Brand-gated (ADR 0010): Fire Safety ships only where the active
+  // brand's module catalogue enables it.
+  const fireSafetyItem: NavItem = {
+    key: 'fireSafety',
+    href: `/${locale}/fire-safety`,
+    icon: Flame,
+  };
 
   const primary: NavItem[] = [
     { key: 'ai', href: `/${locale}/ai`, icon: Bot },
@@ -89,6 +98,7 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     ...(brandHasModule(activeBrand.id, 'riskAssessments') ? [riskAssessmentsItem] : []),
     ...(brandHasModule(activeBrand.id, 'coshh') ? [coshhItem] : []),
     ...(brandHasModule(activeBrand.id, 'permits') ? [permitsItem] : []),
+    ...(brandHasModule(activeBrand.id, 'fireSafety') ? [fireSafetyItem] : []),
     { key: 'assets', href: `/${locale}/assets`, icon: Wrench },
     { key: 'documents', href: `/${locale}/documents`, icon: FolderOpen },
     { key: 'contractors', href: `/${locale}/contractors`, icon: HardHat },

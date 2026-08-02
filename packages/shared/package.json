@@ -68,6 +68,10 @@
       "types": "./src/coshh.ts",
       "default": "./src/coshh.ts"
     },
+    "./fire-safety": {
+      "types": "./src/fire-safety.ts",
+      "default": "./src/fire-safety.ts"
+    },
     "./actions-schema": {
       "types": "./src/actions-schema.ts",
       "default": "./src/actions-schema.ts"
