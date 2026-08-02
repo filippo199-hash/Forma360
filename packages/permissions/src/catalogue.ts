@@ -39,6 +39,7 @@ export const PERMISSION_MODULES = [
   'billing',
   'contractors',
   'riskAssessments',
+  'coshh',
   'org',
 ] as const;
 
@@ -143,6 +144,11 @@ export const PERMISSION_KEYS = [
   'riskAssessments.view',
   'riskAssessments.create',
   'riskAssessments.manage',
+
+  // ─── COSHH (FreeHS module B2) ────────────────────────────────────────────
+  'coshh.view',
+  'coshh.create',
+  'coshh.manage',
 
   // ─── Organisation settings ───────────────────────────────────────────────
   // `org.settings` is what the S-E02 last-admin check counts: any user whose
