@@ -48,6 +48,7 @@ import {
   createPermitExpiryWatchHandler,
   PERMIT_EXPIRY_WATCH_CRON,
   type ExpiredOpenPermit,
+  type PermitWatchKind,
 } from './workers/permit-expiry-watch';
 
 function buildRedis(url: string): Redis {
@@ -328,13 +329,14 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       logger: logger.child({ handler: 'permit-expiry-watch' }),
       appUrl: env.APP_URL,
       notify: async (
+        kind: PermitWatchKind,
         permit: ExpiredOpenPermit,
         recipient: { email: string; name: string },
         viewUrl: string,
       ) => {
         await sendTemplatedEmail({
           to: recipient.email,
-          templateKey: 'permit-expiry-escalation',
+          templateKey: kind === 'warning' ? 'permit-expiry-warning' : 'permit-expiry-escalation',
           variables: {
             recipientName: recipient.name,
             title: permit.title,
