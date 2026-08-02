@@ -15,11 +15,13 @@ import {
   riskAssessmentControls,
   riskAssessmentHazards,
   riskAssessments,
+  riskAssessmentVersions,
   sites,
   templateVersions,
   templates,
   user,
 } from '@forma360/db/schema';
+import type { RiskMatrixConfig } from '@forma360/shared/risk-matrix';
 import type { Database } from '@forma360/db/client';
 import { and, eq } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
@@ -232,11 +234,16 @@ export interface RiskAssessmentRenderSnapshot {
     type: string;
     status: string;
     siteName: string | null;
-    matrix: { lowMax: number; mediumMax: number; highMax: number };
+    matrix: RiskMatrixConfig;
     createdByName: string | null;
     publishedAt: string | null;
     nextReviewAt: string | null;
     createdAt: string;
+    /** Current published version + its first-class sign-off (M-2) —
+     * null until the assessment has been published. */
+    currentVersion: number;
+    signedOffByName: string | null;
+    signedOffAt: string | null;
   };
   hazards: Array<{
     id: string;
@@ -248,6 +255,7 @@ export interface RiskAssessmentRenderSnapshot {
     existingControls: string;
     residualLikelihood: number | null;
     residualSeverity: number | null;
+    residualJustification: string;
     controls: Array<{
       id: string;
       description: string;
@@ -302,6 +310,32 @@ export async function loadRiskAssessmentSnapshot(
     .where(eq(user.id, ra.createdBy))
     .limit(1);
 
+  // The sign-off belongs to the current version's signer, not the creator
+  // (M-2) — the printed record must attribute the attestation correctly.
+  let signedOffByName: string | null = null;
+  let signedOffAt: string | null = null;
+  if (ra.currentVersion > 0) {
+    const versionRows = await db
+      .select({
+        signedOffBy: riskAssessmentVersions.signedOffBy,
+        signedOffByName: riskAssessmentVersions.signedOffByName,
+        signedOffAt: riskAssessmentVersions.signedOffAt,
+      })
+      .from(riskAssessmentVersions)
+      .where(
+        and(
+          eq(riskAssessmentVersions.assessmentId, ra.id),
+          eq(riskAssessmentVersions.versionNumber, ra.currentVersion),
+        ),
+      )
+      .limit(1);
+    const version = versionRows[0];
+    if (version !== undefined) {
+      signedOffByName = version.signedOffByName ?? version.signedOffBy;
+      signedOffAt = version.signedOffAt.toISOString();
+    }
+  }
+
   return {
     assessment: {
       id: ra.id,
@@ -317,6 +351,9 @@ export async function loadRiskAssessmentSnapshot(
       publishedAt: ra.publishedAt?.toISOString() ?? null,
       nextReviewAt: ra.nextReviewAt?.toISOString() ?? null,
       createdAt: ra.createdAt.toISOString(),
+      currentVersion: ra.currentVersion,
+      signedOffByName,
+      signedOffAt,
     },
     hazards: hazardRows.map((h) => ({
       id: h.id,
@@ -328,6 +365,7 @@ export async function loadRiskAssessmentSnapshot(
       existingControls: h.existingControls,
       residualLikelihood: h.residualLikelihood,
       residualSeverity: h.residualSeverity,
+      residualJustification: h.residualJustification,
       controls: controlRows
         .filter((c) => c.hazardId === h.id)
         .map((c) => ({

@@ -5,7 +5,8 @@
  */
 import type { RiskAssessmentsRouterDeps } from '@forma360/api';
 import { renderRiskAssessmentPdf } from '@forma360/render';
-import { brandHasModule } from '@forma360/shared/brand';
+import { brandHasModule, getBrand } from '@forma360/shared/brand';
+import { createSendTemplatedEmail } from '@forma360/shared/email';
 import { activeBrand } from '../lib/brand';
 import { db } from './db';
 import { env } from './env';
@@ -13,6 +14,15 @@ import { logger } from './logger';
 import { storage } from './storage';
 
 const renderLog = logger.child({ component: 'render-ra-pdf' });
+
+const sendTemplatedEmail = createSendTemplatedEmail({
+  delivery: env.EMAIL_DELIVERY,
+  productName: getBrand(env.BRAND).name,
+  ...(env.EMAIL_DELIVERY === 'resend'
+    ? { resendApiKey: env.RESEND_API_KEY, resendFrom: env.RESEND_FROM }
+    : {}),
+  logger: logger.child({ component: 'email-templated' }),
+});
 
 export const riskAssessmentsDeps: RiskAssessmentsRouterDeps = {
   enabled: brandHasModule(activeBrand.id, 'riskAssessments'),
@@ -30,4 +40,6 @@ export const riskAssessmentsDeps: RiskAssessmentsRouterDeps = {
       },
       input,
     ),
+  sendEmail: sendTemplatedEmail,
+  appUrl: env.APP_URL,
 };
