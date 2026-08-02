@@ -75,6 +75,10 @@
     "./video-embed": {
       "types": "./src/video-embed.ts",
       "default": "./src/video-embed.ts"
+    },
+    "./risk-matrix": {
+      "types": "./src/risk-matrix.ts",
+      "default": "./src/risk-matrix.ts"
     }
   },
   "scripts": {
