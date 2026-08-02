@@ -4251,6 +4251,23 @@
         "drafting": "Pisanie…",
         "summaryError": "Nie udało się napisać streszczenia. Spróbuj ponownie.",
         "summaryDrafted": "Szkic gotowy — przejrzyj i zapisz."
+      },
+      "signOff": {
+        "title": "Podpis oceniającego",
+        "statement": "Potwierdzam, że jest to odpowiednia i wystarczająca ocena ryzyka opisanego zadania, a wskazane środki kontroli są (lub będą) wdrożone.",
+        "hint": "Imię, nazwisko i data zostaną zapisane przy tej publikacji.",
+        "confirm": "Podpisz i opublikuj",
+        "cancel": "Anuluj"
+      },
+      "rpe": {
+        "typePlaceholder": "Typ ochrony dróg oddechowych (np. FFP3, półmaska A2P3)",
+        "apfPlaceholder": "APF",
+        "faceFitLabel": "Dopasowanie potwierdzone",
+        "apfValue": "APF {apf}",
+        "faceFitValue": "Test dopasowania {date}",
+        "edit": "Edytuj",
+        "addDetail": "Dodaj szczegóły ODO (typ / APF / dopasowanie)",
+        "save": "Zapisz"
       }
     },
     "lev": {
@@ -4296,6 +4313,36 @@
       "defectsLabel": "Stwierdzone usterki",
       "failHint": "Negatywny wynik wyłącza instalację z użytku do czasu naprawy i przywrócenia.",
       "testSaveButton": "Zapisz badanie"
+    },
+    "exportCsv": "Eksportuj rejestr (CSV)",
+    "surveillance": {
+      "sectionTitle": "Nadzór zdrowotny",
+      "hint": "COSHH Reg 11 — kto podlega nadzorowi dla tej substancji, z jakim interwałem i kiedy następny termin. Wpisy są zamykane, nigdy nie usuwane.",
+      "suggestedBanner": "Klasyfikacja tej substancji (rakotwórcza / mutagenna / uczulająca) zwykle wymaga nadzoru zdrowotnego — nikt nie jest jeszcze zapisany.",
+      "empty": "Nikt nie podlega nadzorowi dla tej substancji.",
+      "enrollButton": "Zapisz osobę",
+      "dialogTitle": "Zapisz do nadzoru zdrowotnego",
+      "person": "Osoba",
+      "interval": "Interwał",
+      "intervalLabel": "Kontrola co (miesięcy)",
+      "intervalMonths": "{count} mies.",
+      "lastCheck": "Ostatnia kontrola",
+      "nextDue": "Następny termin",
+      "due": "Po terminie",
+      "dueChip": "Nadzór po terminie",
+      "recordCheck": "Zarejestruj kontrolę",
+      "endButton": "Zakończ",
+      "endConfirm": "Zakończyć nadzór dla tej osoby? Wpis zostanie zachowany.",
+      "ended": "Zakończony",
+      "enrolling": "Zapisywanie…",
+      "enrollSubmit": "Zapisz",
+      "enrolledToast": "Zapisano do nadzoru zdrowotnego.",
+      "alreadyEnrolled": "Już podlega nadzorowi dla tej substancji.",
+      "checkToast": "Kontrolę zarejestrowano — zaktualizowano następny termin."
+    },
+    "share": {
+      "button": "Udostępnij przez Heads Up",
+      "description": "Proszę zapoznać się z kartą substancji i załączoną kartą charakterystyki:"
     }
   }
 }

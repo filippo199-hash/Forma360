@@ -4251,6 +4251,23 @@
         "drafting": "作成中…",
         "summaryError": "要約を作成できませんでした。もう一度お試しください。",
         "summaryDrafted": "下書きができました。確認して保存してください。"
+      },
+      "signOff": {
+        "title": "評価者の署名",
+        "statement": "記載の作業について適切かつ十分なリスクアセスメントであり、記載の管理策が実施済み（または実施予定）であることを確認します。",
+        "hint": "この公開には氏名と日付が記録されます。",
+        "confirm": "署名して公開",
+        "cancel": "キャンセル"
+      },
+      "rpe": {
+        "typePlaceholder": "呼吸用保護具の種類（例: FFP3、半面体A2P3）",
+        "apfPlaceholder": "APF",
+        "faceFitLabel": "フィットテスト確認済み",
+        "apfValue": "APF {apf}",
+        "faceFitValue": "フィットテスト {date}",
+        "edit": "編集",
+        "addDetail": "呼吸用保護具の詳細を追加（種類 / APF / フィット）",
+        "save": "保存"
       }
     },
     "lev": {
@@ -4296,6 +4313,36 @@
       "defectsLabel": "確認された不具合",
       "failHint": "不合格の場合、修理して復帰させるまで装置は停止扱いになります。",
       "testSaveButton": "検査を保存"
+    },
+    "exportCsv": "台帳をエクスポート (CSV)",
+    "surveillance": {
+      "sectionTitle": "健康監視",
+      "hint": "COSHH 規則11 — この物質について誰が監視対象か、再検査間隔と次回予定日。記録は終了扱いになり、削除されません。",
+      "suggestedBanner": "この物質の分類（発がん性／変異原性／感作性）には通常、健康監視が必要です。まだ誰も登録されていません。",
+      "empty": "この物質の監視対象者はいません。",
+      "enrollButton": "対象者を登録",
+      "dialogTitle": "健康監視に登録",
+      "person": "対象者",
+      "interval": "間隔",
+      "intervalLabel": "再検査間隔（ヶ月）",
+      "intervalMonths": "{count}ヶ月",
+      "lastCheck": "前回検査",
+      "nextDue": "次回予定",
+      "due": "期限到来",
+      "dueChip": "健康監視期限",
+      "recordCheck": "検査を記録",
+      "endButton": "終了",
+      "endConfirm": "この方の監視を終了しますか？記録は保持されます。",
+      "ended": "終了",
+      "enrolling": "登録中…",
+      "enrollSubmit": "登録",
+      "enrolledToast": "健康監視に登録しました。",
+      "alreadyEnrolled": "すでにこの物質の監視対象です。",
+      "checkToast": "検査を記録し、次回予定日を更新しました。"
+    },
+    "share": {
+      "button": "Heads Upで共有",
+      "description": "物質記録と添付の安全データシートをご確認ください:"
     }
   }
 }

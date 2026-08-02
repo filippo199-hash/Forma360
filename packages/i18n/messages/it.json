@@ -4293,6 +4293,23 @@
         "drafting": "Scrittura…",
         "summaryError": "Impossibile scrivere la sintesi. Riprova.",
         "summaryDrafted": "Bozza pronta — rileggi e salva."
+      },
+      "signOff": {
+        "title": "Firma del valutatore",
+        "statement": "Confermo che questa è una valutazione adeguata e sufficiente dei rischi dell’attività descritta e che i controlli indicati sono (o saranno) in atto.",
+        "hint": "Nome e data vengono registrati con questa pubblicazione.",
+        "confirm": "Firma e pubblica",
+        "cancel": "Annulla"
+      },
+      "rpe": {
+        "typePlaceholder": "Tipo APVR (es. FFP3, semimaschera A2P3)",
+        "apfPlaceholder": "FPA",
+        "faceFitLabel": "Prova di tenuta confermata",
+        "apfValue": "FPA {apf}",
+        "faceFitValue": "Prova di tenuta {date}",
+        "edit": "Modifica",
+        "addDetail": "Aggiungi dettaglio APVR (tipo / FPA / tenuta)",
+        "save": "Salva"
       }
     },
     "lev": {
@@ -4338,6 +4355,36 @@
       "defectsLabel": "Difetti riscontrati",
       "failHint": "Una verifica non conforme mette l’impianto fuori servizio finché non è riparato e rimesso in servizio.",
       "testSaveButton": "Salva verifica"
+    },
+    "exportCsv": "Esporta registro (CSV)",
+    "surveillance": {
+      "sectionTitle": "Sorveglianza sanitaria",
+      "hint": "COSHH Reg 11 — chi è in sorveglianza per questa sostanza, con quale periodicità e la prossima scadenza. I record vengono chiusi, mai eliminati.",
+      "suggestedBanner": "La classificazione di questa sostanza (cancerogena / mutagena / sensibilizzante) richiede di norma la sorveglianza sanitaria — nessuno è ancora iscritto.",
+      "empty": "Nessuno è in sorveglianza per questa sostanza.",
+      "enrollButton": "Iscrivi persona",
+      "dialogTitle": "Iscrivi alla sorveglianza sanitaria",
+      "person": "Persona",
+      "interval": "Periodicità",
+      "intervalLabel": "Richiamo ogni (mesi)",
+      "intervalMonths": "{count} mesi",
+      "lastCheck": "Ultima visita",
+      "nextDue": "Prossima scadenza",
+      "due": "In scadenza",
+      "dueChip": "Sorveglianza in scadenza",
+      "recordCheck": "Registra visita",
+      "endButton": "Termina",
+      "endConfirm": "Terminare la sorveglianza per questa persona? Il record viene conservato.",
+      "ended": "Terminata",
+      "enrolling": "Iscrizione…",
+      "enrollSubmit": "Iscrivi",
+      "enrolledToast": "Iscritto alla sorveglianza sanitaria.",
+      "alreadyEnrolled": "Già in sorveglianza per questa sostanza.",
+      "checkToast": "Visita registrata — prossima scadenza aggiornata."
+    },
+    "share": {
+      "button": "Condividi via Heads Up",
+      "description": "Leggere la scheda della sostanza e la scheda di sicurezza allegata:"
     }
   }
 }

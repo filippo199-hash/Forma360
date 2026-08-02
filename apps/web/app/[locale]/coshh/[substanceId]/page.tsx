@@ -114,6 +114,36 @@ export default function CoshhSubstanceDetailPage() {
   const createAssessment = trpc.coshh.assessments.create.useMutation();
   const recordMonitoring = trpc.coshh.monitoring.record.useMutation();
 
+  // Health surveillance register (COSHH Reg 11).
+  const surveillanceQuery = trpc.coshh.surveillance.list.useQuery({ substanceId });
+  const refreshSurveillance = (): void => {
+    void utils.coshh.surveillance.list.invalidate({ substanceId });
+    void utils.coshh.substances.list.invalidate();
+  };
+  const enroll = trpc.coshh.surveillance.enroll.useMutation({
+    onSuccess: () => {
+      toast.success(t('surveillance.enrolledToast'));
+      setEnrollOpen(false);
+      setSurvUserId('');
+      refreshSurveillance();
+    },
+    onError: (err) =>
+      toast.error(
+        err.message === 'already-enrolled' ? t('surveillance.alreadyEnrolled') : t('saveError'),
+      ),
+  });
+  const recordCheck = trpc.coshh.surveillance.recordCheck.useMutation({
+    onSuccess: () => {
+      toast.success(t('surveillance.checkToast'));
+      refreshSurveillance();
+    },
+    onError,
+  });
+  const endEnrolment = trpc.coshh.surveillance.end.useMutation({
+    onSuccess: refreshSurveillance,
+    onError,
+  });
+
   // Add-location row state
   const [showAddLocation, setShowAddLocation] = useState(false);
   const [locSiteId, setLocSiteId] = useState('');
@@ -140,6 +170,10 @@ export default function CoshhSubstanceDetailPage() {
   const [substitutionOpen, setSubstitutionOpen] = useState(false);
   const [subStatus, setSubStatus] = useState('');
   const [subNotes, setSubNotes] = useState('');
+  const [enrollOpen, setEnrollOpen] = useState(false);
+  const [survUserId, setSurvUserId] = useState('');
+  const [survInterval, setSurvInterval] = useState('12');
+  const usersQuery = trpc.users.list.useQuery({ limit: 200 }, { enabled: enrollOpen });
 
   if (query.isLoading) {
     return (
@@ -172,6 +206,39 @@ export default function CoshhSubstanceDetailPage() {
   const archived = substance.archivedAt !== null;
   const substitutionUnresolved =
     substitutionPriority !== 'standard' && substance.substitutionStatus === 'not_assessed';
+  const currentSds = sdsDocuments.find((d) => d.isCurrent) ?? null;
+  const surveillanceRows = surveillanceQuery.data ?? [];
+  const activeEnrolments = surveillanceRows.filter((r) => r.endedAt === null);
+  // Sensitisers and CMRs typically need surveillance — nudge when the
+  // classification says so but nobody is enrolled yet.
+  const surveillanceSuggested =
+    (substance.isCarcinogen ||
+      substance.isMutagen ||
+      substance.isAsthmagen ||
+      assessments.some((a) => a.healthSurveillanceRequired)) &&
+    activeEnrolments.length === 0;
+
+  /**
+   * Distribution to the people doing the work (C-7): pre-fills the Heads
+   * Up composer and attaches the CURRENT safety data sheet so the SDS
+   * travels with the notice. Recipients + acknowledgement tracking ride
+   * the Heads Up machinery.
+   */
+  function shareViaHeadsUp(): void {
+    const shareTitle = `${substance.name} (${substance.referenceNumber ?? ''})`.trim();
+    const link = `${window.location.origin}/${locale}/coshh/${substanceId}`;
+    const description = `${t('share.description')}\n\n${shareTitle}\n${link}`;
+    const att =
+      currentSds !== null
+        ? `&attKey=${encodeURIComponent(currentSds.storageKey)}` +
+          `&attName=${encodeURIComponent(currentSds.filename)}` +
+          `&attSize=${currentSds.sizeBytes}` +
+          `&attMime=${encodeURIComponent(currentSds.mimeType)}`
+        : '';
+    router.push(
+      `/${locale}/heads-up/new?title=${encodeURIComponent(shareTitle)}&description=${encodeURIComponent(description)}${att}`,
+    );
+  }
 
   async function handleSdsUpload(file: File | null) {
     if (file === null || file.type !== 'application/pdf') return;
@@ -254,17 +321,22 @@ export default function CoshhSubstanceDetailPage() {
           </div>
         </div>
         {canManage && !archived ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (window.confirm(t('archiveConfirm'))) {
-                archive.mutate({ substanceId });
-              }
-            }}
-          >
-            {t('archiveButton')}
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            <Button variant="outline" size="sm" onClick={shareViaHeadsUp}>
+              {t('share.button')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (window.confirm(t('archiveConfirm'))) {
+                  archive.mutate({ substanceId });
+                }
+              }}
+            >
+              {t('archiveButton')}
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -720,6 +792,96 @@ export default function CoshhSubstanceDetailPage() {
         </CardContent>
       </Card>
 
+      {/* ── Health surveillance (COSHH Reg 11) ──────────────────────── */}
+      <Card>
+        <CardContent className="space-y-3 p-6">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold">{t('surveillance.sectionTitle')}</h2>
+            {canManage && !archived ? (
+              <Button size="sm" variant="outline" onClick={() => setEnrollOpen(true)}>
+                {t('surveillance.enrollButton')}
+              </Button>
+            ) : null}
+          </div>
+          <p className="text-xs text-muted-foreground">{t('surveillance.hint')}</p>
+          {surveillanceSuggested ? (
+            <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p className="min-w-0">{t('surveillance.suggestedBanner')}</p>
+            </div>
+          ) : null}
+          {surveillanceRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('surveillance.empty')}</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-xs text-muted-foreground">
+                  <tr>
+                    <th className="py-1.5 pr-3 font-medium">{t('surveillance.person')}</th>
+                    <th className="py-1.5 pr-3 font-medium">{t('surveillance.interval')}</th>
+                    <th className="py-1.5 pr-3 font-medium">{t('surveillance.lastCheck')}</th>
+                    <th className="py-1.5 pr-3 font-medium">{t('surveillance.nextDue')}</th>
+                    <th className="py-1.5 font-medium" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {surveillanceRows.map((r) => (
+                    <tr key={r.id} className="border-t">
+                      <td className="py-2 pr-3">
+                        {r.userName ?? r.userId}
+                        {r.endedAt !== null ? (
+                          <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                            {t('surveillance.ended')}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="py-2 pr-3 text-xs">
+                        {t('surveillance.intervalMonths', { count: r.intervalMonths })}
+                      </td>
+                      <td className="py-2 pr-3 text-xs">{formatDate(r.lastCheckAt, locale)}</td>
+                      <td className="py-2 pr-3 text-xs">
+                        {formatDate(r.nextDueAt, locale)}
+                        {r.due ? (
+                          <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                            {t('surveillance.due')}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="py-2 text-right">
+                        {canManage && r.endedAt === null ? (
+                          <div className="flex justify-end gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={recordCheck.isPending}
+                              onClick={() => recordCheck.mutate({ enrolmentId: r.id })}
+                            >
+                              {t('surveillance.recordCheck')}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={endEnrolment.isPending}
+                              onClick={() => {
+                                if (window.confirm(t('surveillance.endConfirm'))) {
+                                  endEnrolment.mutate({ enrolmentId: r.id });
+                                }
+                              }}
+                            >
+                              {t('surveillance.endButton')}
+                            </Button>
+                          </div>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* ── Activity ────────────────────────────────────────────────── */}
       {events.length > 0 ? (
         <Card>
@@ -942,6 +1104,60 @@ export default function CoshhSubstanceDetailPage() {
               }}
             >
               {t('substitution.saveButton')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Enrol a person into health surveillance. */}
+      <Dialog open={enrollOpen} onOpenChange={setEnrollOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('surveillance.dialogTitle')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="surv-user">{t('surveillance.person')}</Label>
+              <select
+                id="surv-user"
+                value={survUserId}
+                onChange={(e) => setSurvUserId(e.target.value)}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">—</option>
+                {(usersQuery.data?.users ?? []).map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="surv-interval">{t('surveillance.intervalLabel')}</Label>
+              <Input
+                id="surv-interval"
+                type="number"
+                min={1}
+                max={60}
+                className="w-28"
+                value={survInterval}
+                onChange={(e) => setSurvInterval(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              disabled={survUserId === '' || enroll.isPending}
+              onClick={() =>
+                enroll.mutate({
+                  substanceId,
+                  userId: survUserId,
+                  intervalMonths:
+                    survInterval !== '' && Number(survInterval) >= 1 ? Number(survInterval) : 12,
+                })
+              }
+            >
+              {enroll.isPending ? t('surveillance.enrolling') : t('surveillance.enrollSubmit')}
             </Button>
           </DialogFooter>
         </DialogContent>

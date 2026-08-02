@@ -4258,6 +4258,23 @@
         "drafting": "Rédaction…",
         "summaryError": "Impossible de rédiger le résumé. Réessayez.",
         "summaryDrafted": "Brouillon prêt — relisez et enregistrez."
+      },
+      "signOff": {
+        "title": "Signature de l’évaluateur",
+        "statement": "Je confirme qu’il s’agit d’une évaluation appropriée et suffisante des risques de la tâche décrite et que les mesures indiquées sont (ou seront) en place.",
+        "hint": "Votre nom et la date sont enregistrés avec cette publication.",
+        "confirm": "Signer et publier",
+        "cancel": "Annuler"
+      },
+      "rpe": {
+        "typePlaceholder": "Type d’APR (ex. FFP3, demi-masque A2P3)",
+        "apfPlaceholder": "FPA",
+        "faceFitLabel": "Essai d’ajustement confirmé",
+        "apfValue": "FPA {apf}",
+        "faceFitValue": "Ajustement {date}",
+        "edit": "Modifier",
+        "addDetail": "Ajouter le détail APR (type / FPA / ajustement)",
+        "save": "Enregistrer"
       }
     },
     "lev": {
@@ -4303,6 +4320,36 @@
       "defectsLabel": "Défauts constatés",
       "failHint": "Un contrôle non conforme met l’équipement hors service jusqu’à réparation et remise en service.",
       "testSaveButton": "Enregistrer le contrôle"
+    },
+    "exportCsv": "Exporter le registre (CSV)",
+    "surveillance": {
+      "sectionTitle": "Surveillance médicale",
+      "hint": "COSHH Reg 11 — qui est sous surveillance pour cette substance, sa périodicité et sa prochaine échéance. Les dossiers sont clôturés, jamais supprimés.",
+      "suggestedBanner": "La classification de cette substance (cancérogène / mutagène / sensibilisant) exige généralement une surveillance médicale — personne n’est encore inscrit.",
+      "empty": "Personne n’est sous surveillance pour cette substance.",
+      "enrollButton": "Inscrire une personne",
+      "dialogTitle": "Inscrire à la surveillance médicale",
+      "person": "Personne",
+      "interval": "Périodicité",
+      "intervalLabel": "Rappel tous les (mois)",
+      "intervalMonths": "{count} mois",
+      "lastCheck": "Dernier examen",
+      "nextDue": "Prochaine échéance",
+      "due": "À faire",
+      "dueChip": "Surveillance due",
+      "recordCheck": "Consigner un examen",
+      "endButton": "Clôturer",
+      "endConfirm": "Clôturer la surveillance de cette personne ? Le dossier est conservé.",
+      "ended": "Clôturée",
+      "enrolling": "Inscription…",
+      "enrollSubmit": "Inscrire",
+      "enrolledToast": "Inscrit à la surveillance médicale.",
+      "alreadyEnrolled": "Déjà sous surveillance pour cette substance.",
+      "checkToast": "Examen consigné — prochaine échéance mise à jour."
+    },
+    "share": {
+      "button": "Partager via Heads Up",
+      "description": "Veuillez lire la fiche de la substance et la fiche de données de sécurité jointe :"
     }
   }
 }

@@ -4488,6 +4488,23 @@
         "drafting": "Drafting…",
         "summaryError": "Could not draft the summary. Try again.",
         "summaryDrafted": "Draft ready — review and save it."
+      },
+      "signOff": {
+        "title": "Assessor sign-off",
+        "statement": "I confirm this is a suitable and sufficient assessment of the risks of the task described, and the stated controls are (or will be) in place.",
+        "hint": "Your name and the date are recorded against this publish.",
+        "confirm": "Sign and publish",
+        "cancel": "Cancel"
+      },
+      "rpe": {
+        "typePlaceholder": "RPE type (e.g. FFP3, half-mask A2P3)",
+        "apfPlaceholder": "APF",
+        "faceFitLabel": "Face fit confirmed",
+        "apfValue": "APF {apf}",
+        "faceFitValue": "Face fit {date}",
+        "edit": "Edit",
+        "addDetail": "Add RPE detail (type / APF / face fit)",
+        "save": "Save"
       }
     },
     "lev": {
@@ -4533,6 +4550,36 @@
       "defectsLabel": "Defects found",
       "failHint": "A failed test takes the unit out of service until it is repaired and returned to service.",
       "testSaveButton": "Save test"
+    },
+    "exportCsv": "Export register (CSV)",
+    "surveillance": {
+      "sectionTitle": "Health surveillance",
+      "hint": "COSHH Reg 11 — who is under surveillance for this substance, their recall interval and next due date. Records are ended, never deleted.",
+      "suggestedBanner": "This substance’s classification (carcinogen / mutagen / sensitiser) usually requires health surveillance — nobody is enrolled yet.",
+      "empty": "Nobody is under surveillance for this substance.",
+      "enrollButton": "Enrol person",
+      "dialogTitle": "Enrol in health surveillance",
+      "person": "Person",
+      "interval": "Recall",
+      "intervalLabel": "Recall every (months)",
+      "intervalMonths": "{count} mo",
+      "lastCheck": "Last check",
+      "nextDue": "Next due",
+      "due": "Due",
+      "dueChip": "Surveillance due",
+      "recordCheck": "Record check",
+      "endButton": "End",
+      "endConfirm": "End surveillance for this person? The record is kept.",
+      "ended": "Ended",
+      "enrolling": "Enrolling…",
+      "enrollSubmit": "Enrol",
+      "enrolledToast": "Enrolled in health surveillance.",
+      "alreadyEnrolled": "Already under surveillance for this substance.",
+      "checkToast": "Check recorded — next due date updated."
+    },
+    "share": {
+      "button": "Share via Heads Up",
+      "description": "Please read the substance record and the attached safety data sheet:"
     }
   }
 }

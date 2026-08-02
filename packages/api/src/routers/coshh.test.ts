@@ -30,6 +30,10 @@
  *     the review frequency
  *   - CO-E24: archiving a substance hides it from the default list and
  *     blocks new assessments
+ *   - CO-E25: supplierSuggestions returns distinct tenant suppliers
+ *   - CO-E26: health surveillance — enrolment, recall computation, due
+ *     flags, end-not-delete (Reg 11)
+ *   - CO-E27: publish stamps publishedBy; controls carry RPE detail
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -596,5 +600,101 @@ describe('coshh router', () => {
       }),
     );
     await expect(otherCaller.coshh.substances.supplierSuggestions()).resolves.toEqual([]);
+  });
+
+  it('CO-E26: health surveillance enrolment, recall computation, and end-not-delete', async () => {
+    const caller = callerFor(adminId);
+    const { substanceId } = await caller.coshh.substances.create({ name: 'Glutaraldehyde' });
+
+    const { enrolmentId } = await caller.coshh.surveillance.enroll({
+      substanceId,
+      userId: standardId,
+      intervalMonths: 6,
+    });
+    // Duplicate live enrolment is refused.
+    await expect(
+      caller.coshh.surveillance.enroll({ substanceId, userId: standardId }),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+
+    let rows = await caller.coshh.surveillance.list({ substanceId });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.userName).toBe('Stan Standard');
+    expect(rows[0]?.due).toBe(false);
+
+    // Recording a check moves the recall on by the interval.
+    const checkedAt = new Date('2026-01-10T00:00:00.000Z');
+    const { nextDueAt } = await caller.coshh.surveillance.recordCheck({
+      enrolmentId,
+      checkedAt,
+    });
+    expect(nextDueAt.toISOString().slice(0, 10)).toBe('2026-07-10');
+
+    // A past due date surfaces as due — on the register and on the list row.
+    await db
+      .update(schema.coshhHealthSurveillance)
+      .set({ nextDueAt: new Date('2020-01-01T00:00:00.000Z') })
+      .where(eq(schema.coshhHealthSurveillance.id, enrolmentId));
+    rows = await caller.coshh.surveillance.list({ substanceId });
+    expect(rows[0]?.due).toBe(true);
+    const list = await caller.coshh.substances.list({});
+    expect(list.find((s) => s.id === substanceId)?.surveillanceDue).toBe(true);
+
+    // Ending keeps the record (40-year retention) and clears the due flag.
+    await caller.coshh.surveillance.end({ enrolmentId });
+    rows = await caller.coshh.surveillance.list({ substanceId });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.endedAt).not.toBeNull();
+    expect(rows[0]?.due).toBe(false);
+    await expect(caller.coshh.surveillance.recordCheck({ enrolmentId })).rejects.toMatchObject({
+      message: 'ended',
+    });
+
+    const events = await db
+      .select()
+      .from(schema.coshhEvents)
+      .where(eq(schema.coshhEvents.entityId, substanceId));
+    const kinds = events.map((e) => e.kind);
+    for (const k of ['surveillance_enrolled', 'surveillance_check_recorded', 'surveillance_ended'])
+      expect(kinds).toContain(k);
+  });
+
+  it('CO-E27: publish stamps the assessor sign-off and controls carry RPE detail', async () => {
+    const caller = callerFor(adminId);
+    const { substanceId } = await caller.coshh.substances.create({ name: 'Silica dust' });
+    const { assessmentId } = await caller.coshh.assessments.create({
+      substanceId,
+      taskDescription: 'Cutting blockwork',
+    });
+    await caller.coshh.assessments.update({
+      assessmentId,
+      routesOfExposure: ['inhalation'],
+      personsExposed: ['employees'],
+    });
+    await caller.coshh.assessments.addControl({
+      assessmentId,
+      tier: 'engineering',
+      description: 'On-tool extraction',
+    });
+    const { controlId } = await caller.coshh.assessments.addControl({
+      assessmentId,
+      tier: 'rpe',
+      description: 'FFP3 respirator for residual dust',
+      rpeType: 'FFP3 disposable',
+      rpeApf: 20,
+      faceFitConfirmedAt: new Date('2026-03-01T00:00:00.000Z'),
+    });
+
+    await caller.coshh.assessments.publish({ assessmentId });
+    const detail = await caller.coshh.substances.get({ substanceId });
+    const assessment = detail.assessments.find((a) => a.id === assessmentId);
+    expect(assessment?.publishedBy).toBe(adminId);
+
+    const controls = await db
+      .select()
+      .from(schema.coshhAssessmentControls)
+      .where(eq(schema.coshhAssessmentControls.id, controlId));
+    expect(controls[0]?.rpeType).toBe('FFP3 disposable');
+    expect(controls[0]?.rpeApf).toBe(20);
+    expect(controls[0]?.faceFitConfirmedAt?.toISOString().slice(0, 10)).toBe('2026-03-01');
   });
 });

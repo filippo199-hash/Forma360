@@ -393,6 +393,13 @@
       "when": 1780000030000,
       "tag": "0055_coshh",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1780000040000,
+      "tag": "0056_coshh_surveillance_signoff",
+      "breakpoints": true
     }
   ]
 }

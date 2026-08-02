@@ -4251,6 +4251,23 @@
         "drafting": "A redigir…",
         "summaryError": "Não foi possível redigir o resumo. Tente novamente.",
         "summaryDrafted": "Rascunho pronto — reveja e guarde."
+      },
+      "signOff": {
+        "title": "Assinatura do avaliador",
+        "statement": "Confirmo que esta é uma avaliação adequada e suficiente dos riscos da tarefa descrita e que os controles indicados estão (ou estarão) implementados.",
+        "hint": "Seu nome e a data ficam registrados nesta publicação.",
+        "confirm": "Assinar e publicar",
+        "cancel": "Cancelar"
+      },
+      "rpe": {
+        "typePlaceholder": "Tipo de EPR (ex.: FFP3, semimáscara A2P3)",
+        "apfPlaceholder": "FPA",
+        "faceFitLabel": "Teste de vedação confirmado",
+        "apfValue": "FPA {apf}",
+        "faceFitValue": "Vedação {date}",
+        "edit": "Editar",
+        "addDetail": "Adicionar detalhes de EPR (tipo / FPA / vedação)",
+        "save": "Salvar"
       }
     },
     "lev": {
@@ -4296,6 +4313,36 @@
       "defectsLabel": "Defeitos encontrados",
       "failHint": "Um ensaio reprovado deixa o equipamento fora de serviço até ser reparado e reposto.",
       "testSaveButton": "Guardar ensaio"
+    },
+    "exportCsv": "Exportar registro (CSV)",
+    "surveillance": {
+      "sectionTitle": "Vigilância da saúde",
+      "hint": "COSHH Reg 11 — quem está sob vigilância para esta substância, o intervalo e a próxima data. Os registros são encerrados, nunca excluídos.",
+      "suggestedBanner": "A classificação desta substância (carcinogênica / mutagênica / sensibilizante) normalmente exige vigilância da saúde — ninguém está inscrito ainda.",
+      "empty": "Ninguém está sob vigilância para esta substância.",
+      "enrollButton": "Inscrever pessoa",
+      "dialogTitle": "Inscrever na vigilância da saúde",
+      "person": "Pessoa",
+      "interval": "Intervalo",
+      "intervalLabel": "Revisão a cada (meses)",
+      "intervalMonths": "{count} m",
+      "lastCheck": "Último exame",
+      "nextDue": "Próximo",
+      "due": "Vencido",
+      "dueChip": "Vigilância vencida",
+      "recordCheck": "Registrar exame",
+      "endButton": "Encerrar",
+      "endConfirm": "Encerrar a vigilância desta pessoa? O registro é mantido.",
+      "ended": "Encerrada",
+      "enrolling": "Inscrevendo…",
+      "enrollSubmit": "Inscrever",
+      "enrolledToast": "Inscrito na vigilância da saúde.",
+      "alreadyEnrolled": "Já está sob vigilância para esta substância.",
+      "checkToast": "Exame registrado — próxima data atualizada."
+    },
+    "share": {
+      "button": "Compartilhar via Heads Up",
+      "description": "Leia o registro da substância e a ficha de segurança anexa:"
     }
   }
 }
