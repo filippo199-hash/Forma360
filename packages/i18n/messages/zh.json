@@ -4148,6 +4148,8 @@
       "removeSds": "移除数据表",
       "identitySection": "产品",
       "nameLabel": "产品名称",
+      "librarySuggestions": "常见产品",
+      "libraryPrefilled": "已从产品库预填，保存前请核对信息。",
       "supplierLabel": "供应商",
       "identifierLabel": "产品编号 / UFI",
       "formLabel": "物理形态",

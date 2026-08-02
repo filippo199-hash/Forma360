@@ -4148,6 +4148,8 @@
       "removeSds": "SDS を削除",
       "identitySection": "製品",
       "nameLabel": "製品名",
+      "librarySuggestions": "一般的な製品",
+      "libraryPrefilled": "製品ライブラリから自動入力しました。保存前に内容を確認してください。",
       "supplierLabel": "供給者",
       "identifierLabel": "製品コード / UFI",
       "formLabel": "形状",

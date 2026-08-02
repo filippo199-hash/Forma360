@@ -29,6 +29,11 @@ import Link from 'next/link';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { PictogramChips, RegimeChips } from '../../../../src/components/coshh/chips';
+import {
+  COSHH_PRODUCT_LIBRARY,
+  searchCoshhProductLibrary,
+  type CoshhProductTemplate,
+} from '../../../../src/lib/coshh-product-library';
 import { FocusedPageShell } from '../../../../src/components/focused-page-shell';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
@@ -112,7 +117,46 @@ export default function NewCoshhSubstancePage() {
 
   const [duplicateOf, setDuplicateOf] = useState(false);
 
+  // Product-library autocomplete on the name field (mirrors the RA hazard
+  // quick-add): typing filters the curated list; picking an entry
+  // pre-fills supplier, physical form, usage and storage class.
+  const [nameOpen, setNameOpen] = useState(false);
+  const [nameHighlight, setNameHighlight] = useState(-1);
+  const nameBlurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Hidden once the SDS reader has pre-filled the form — at that point the
+  // library would only fight the sheet.
+  const libraryMatches = nameOpen && extraction === null ? searchCoshhProductLibrary(name) : [];
+
+  function closeLibrary(): void {
+    setNameOpen(false);
+    setNameHighlight(-1);
+  }
+
+  function applyProductTemplate(tpl: CoshhProductTemplate): void {
+    setName(tpl.name);
+    setSupplier(tpl.supplier);
+    setPhysicalForm(tpl.physicalForm);
+    if (usageDescription.trim() === '') setUsageDescription(tpl.usage);
+    if (storageClass === '' && tpl.storageClass !== undefined) setStorageClass(tpl.storageClass);
+    closeLibrary();
+    toast.success(t('libraryPrefilled'));
+  }
+
   const createSubstance = trpc.coshh.substances.create.useMutation();
+
+  // Suppliers this tenant has used before (DB) + the library's suppliers,
+  // deduped for the native datalist autocomplete on the supplier field.
+  const supplierSuggestions = trpc.coshh.substances.supplierSuggestions.useQuery(undefined, {
+    enabled: phase === 'form',
+  });
+  const supplierOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const s of supplierSuggestions.data ?? []) seen.set(s.toLowerCase(), s);
+    for (const p of COSHH_PRODUCT_LIBRARY) {
+      if (!seen.has(p.supplier.toLowerCase())) seen.set(p.supplier.toLowerCase(), p.supplier);
+    }
+    return [...seen.values()].sort((a, b) => a.localeCompare(b));
+  }, [supplierSuggestions.data]);
 
   // Live duplicate hint while typing (server still enforces).
   const { data: existing } = trpc.coshh.substances.list.useQuery(
@@ -341,7 +385,77 @@ export default function NewCoshhSubstancePage() {
                   {t('nameLabel')}
                   <span className="ml-1 text-destructive">*</span>
                 </Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+                <div className="relative">
+                  <Input
+                    id="name"
+                    value={name}
+                    autoComplete="off"
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      setNameOpen(true);
+                      setNameHighlight(-1);
+                    }}
+                    onFocus={() => setNameOpen(true)}
+                    onBlur={() => {
+                      // Delay so a mousedown on a suggestion wins over the blur.
+                      nameBlurTimer.current = setTimeout(closeLibrary, 150);
+                    }}
+                    onKeyDown={(e) => {
+                      if (libraryMatches.length === 0) return;
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setNameHighlight((h) => (h + 1) % libraryMatches.length);
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setNameHighlight(
+                          (h) => (h - 1 + libraryMatches.length) % libraryMatches.length,
+                        );
+                      } else if (e.key === 'Escape') {
+                        closeLibrary();
+                      } else if (e.key === 'Enter') {
+                        // Never submit while the suggestion list is open.
+                        e.preventDefault();
+                        const picked =
+                          nameHighlight >= 0 ? libraryMatches[nameHighlight] : undefined;
+                        if (picked !== undefined) applyProductTemplate(picked);
+                        else closeLibrary();
+                      }
+                    }}
+                    required
+                  />
+                  {libraryMatches.length > 0 ? (
+                    <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border bg-background shadow-md">
+                      <p className="border-b px-3 py-1.5 text-xs text-muted-foreground">
+                        {t('librarySuggestions')}
+                      </p>
+                      <ul>
+                        {libraryMatches.map((m, i) => (
+                          <li key={m.id}>
+                            <button
+                              type="button"
+                              className={`block w-full px-3 py-2 text-left text-sm transition-colors ${
+                                i === nameHighlight ? 'bg-accent' : 'hover:bg-accent'
+                              }`}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                if (nameBlurTimer.current !== null) {
+                                  clearTimeout(nameBlurTimer.current);
+                                }
+                                applyProductTemplate(m);
+                              }}
+                              onMouseEnter={() => setNameHighlight(i)}
+                            >
+                              <span className="block font-medium">{m.name}</span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {m.supplier} · {m.usage}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
                 {nameTaken !== null && !duplicateOf ? (
                   <p className="text-xs text-amber-700 dark:text-amber-300">
                     {t('alreadyInInventory')}{' '}
@@ -362,8 +476,14 @@ export default function NewCoshhSubstancePage() {
                   <Input
                     id="supplier"
                     value={supplier}
+                    list="coshh-supplier-options"
                     onChange={(e) => setSupplier(e.target.value)}
                   />
+                  <datalist id="coshh-supplier-options">
+                    {supplierOptions.map((s) => (
+                      <option key={s} value={s} />
+                    ))}
+                  </datalist>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="productIdentifier">{t('identifierLabel')}</Label>

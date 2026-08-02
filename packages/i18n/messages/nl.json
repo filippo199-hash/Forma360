@@ -4148,6 +4148,8 @@
       "removeSds": "VIB verwijderen",
       "identitySection": "Product",
       "nameLabel": "Productnaam",
+      "librarySuggestions": "Veelgebruikte producten",
+      "libraryPrefilled": "Vooraf ingevuld vanuit de productbibliotheek — controleer de gegevens voor het opslaan.",
       "supplierLabel": "Leverancier",
       "identifierLabel": "Artikelnummer / UFI",
       "formLabel": "Fysische vorm",

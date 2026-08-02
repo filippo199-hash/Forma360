@@ -4155,6 +4155,8 @@
       "removeSds": "Retirer la FDS",
       "identitySection": "Produit",
       "nameLabel": "Nom du produit",
+      "librarySuggestions": "Produits courants",
+      "libraryPrefilled": "Prérempli depuis la bibliothèque de produits — vérifiez les informations avant d'enregistrer.",
       "supplierLabel": "Fournisseur",
       "identifierLabel": "Référence / UFI",
       "formLabel": "État physique",

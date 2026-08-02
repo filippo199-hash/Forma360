@@ -4155,6 +4155,8 @@
       "removeSds": "Quitar ficha",
       "identitySection": "Producto",
       "nameLabel": "Nombre del producto",
+      "librarySuggestions": "Productos habituales",
+      "libraryPrefilled": "Precargado desde la biblioteca de productos; revisa los datos antes de guardar.",
       "supplierLabel": "Proveedor",
       "identifierLabel": "Código / UFI",
       "formLabel": "Estado físico",

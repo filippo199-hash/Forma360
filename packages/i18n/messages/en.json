@@ -4385,6 +4385,8 @@
       "removeSds": "Remove data sheet",
       "identitySection": "Product",
       "nameLabel": "Product name",
+      "librarySuggestions": "Common products",
+      "libraryPrefilled": "Pre-filled from the product library — check the details before saving.",
       "supplierLabel": "Supplier",
       "identifierLabel": "Product code / UFI",
       "formLabel": "Physical form",

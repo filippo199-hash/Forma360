@@ -4190,6 +4190,8 @@
       "removeSds": "Rimuovi scheda",
       "identitySection": "Prodotto",
       "nameLabel": "Nome del prodotto",
+      "librarySuggestions": "Prodotti comuni",
+      "libraryPrefilled": "Precompilato dalla libreria prodotti: verifica i dati prima di salvare.",
       "supplierLabel": "Fornitore",
       "identifierLabel": "Codice prodotto / UFI",
       "formLabel": "Stato fisico",

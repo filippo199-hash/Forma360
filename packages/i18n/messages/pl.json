@@ -4148,6 +4148,8 @@
       "removeSds": "Usuń kartę",
       "identitySection": "Produkt",
       "nameLabel": "Nazwa produktu",
+      "librarySuggestions": "Popularne produkty",
+      "libraryPrefilled": "Wstępnie wypełniono z biblioteki produktów — sprawdź dane przed zapisaniem.",
       "supplierLabel": "Dostawca",
       "identifierLabel": "Kod produktu / UFI",
       "formLabel": "Postać fizyczna",

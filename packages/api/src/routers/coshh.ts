@@ -430,6 +430,26 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         });
       }),
 
+    /**
+     * Distinct suppliers this tenant has already recorded, most-used
+     * first — feeds the supplier autocomplete on the add-substance form.
+     */
+    supplierSuggestions: tenantProcedure
+      .use(requirePermission('coshh.view'))
+      .query(async ({ ctx }) => {
+        assertEnabled();
+        const rows = await ctx.db
+          .select({ supplier: coshhSubstances.supplier })
+          .from(coshhSubstances)
+          .where(
+            and(eq(coshhSubstances.tenantId, ctx.tenantId), sql`${coshhSubstances.supplier} <> ''`),
+          )
+          .groupBy(coshhSubstances.supplier)
+          .orderBy(desc(sql`count(*)`), coshhSubstances.supplier)
+          .limit(50);
+        return rows.map((r) => r.supplier);
+      }),
+
     get: tenantProcedure
       .use(requirePermission('coshh.view'))
       .input(z.object({ substanceId: z.string().length(26) }))

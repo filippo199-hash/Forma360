@@ -563,4 +563,38 @@ describe('coshh router', () => {
       caller.coshh.assessments.create({ substanceId, taskDescription: 'X' }),
     ).rejects.toMatchObject({ message: 'archived' });
   });
+
+  it('CO-E25: supplierSuggestions returns distinct tenant suppliers, most-used first', async () => {
+    const caller = callerFor(adminId);
+    await caller.coshh.substances.create({ name: 'Acetone', supplier: 'ReAgent Chemicals' });
+    await caller.coshh.substances.create({ name: 'IPA', supplier: 'ReAgent Chemicals' });
+    await caller.coshh.substances.create({ name: 'White spirit', supplier: 'Bartoline' });
+    await caller.coshh.substances.create({ name: 'No supplier yet' });
+
+    const suggestions = await caller.coshh.substances.supplierSuggestions();
+    expect(suggestions).toEqual(['ReAgent Chemicals', 'Bartoline']);
+
+    // Tenant isolation: a second tenant sees only its own suppliers.
+    const otherTenant = newId();
+    await db
+      .insert(schema.tenants)
+      .values({ id: otherTenant, name: 'Rival', slug: `rival-${otherTenant}` });
+    const otherSets = await seedDefaultPermissionSets(db as never, otherTenant);
+    const otherAdmin = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: otherAdmin,
+      name: 'Oda Other',
+      email: `oda-${otherTenant}@rival.test`,
+      tenantId: otherTenant,
+      permissionSetId: otherSets.administrator,
+    });
+    const otherCaller = createCaller(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId: otherAdmin, email: 'other@x.test', tenantId: otherTenant as never },
+      }),
+    );
+    await expect(otherCaller.coshh.substances.supplierSuggestions()).resolves.toEqual([]);
+  });
 });

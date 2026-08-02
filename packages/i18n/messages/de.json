@@ -4155,6 +4155,8 @@
       "removeSds": "Datenblatt entfernen",
       "identitySection": "Produkt",
       "nameLabel": "Produktname",
+      "librarySuggestions": "Gängige Produkte",
+      "libraryPrefilled": "Aus der Produktbibliothek vorausgefüllt — Angaben vor dem Speichern prüfen.",
       "supplierLabel": "Lieferant",
       "identifierLabel": "Artikelnummer / UFI",
       "formLabel": "Aggregatzustand",
