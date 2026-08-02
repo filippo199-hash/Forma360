@@ -6,6 +6,7 @@ import {
   Bot,
   Building2,
   ClipboardCheck,
+  FileSignature,
   FlaskConical,
   FolderOpen,
   HardHat,
@@ -37,6 +38,7 @@ interface NavItem {
     | 'headsUp'
     | 'riskAssessments'
     | 'coshh'
+    | 'permits'
     | 'assets'
     | 'documents'
     | 'contractors'
@@ -69,6 +71,13 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     href: `/${locale}/coshh`,
     icon: FlaskConical,
   };
+  // Brand-gated (ADR 0010): Permit to Work ships only where the active
+  // brand's module catalogue enables it.
+  const permitsItem: NavItem = {
+    key: 'permits',
+    href: `/${locale}/permits`,
+    icon: FileSignature,
+  };
 
   const primary: NavItem[] = [
     { key: 'ai', href: `/${locale}/ai`, icon: Bot },
@@ -79,6 +88,7 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     { key: 'headsUp', href: `/${locale}/heads-up`, icon: Bell },
     ...(brandHasModule(activeBrand.id, 'riskAssessments') ? [riskAssessmentsItem] : []),
     ...(brandHasModule(activeBrand.id, 'coshh') ? [coshhItem] : []),
+    ...(brandHasModule(activeBrand.id, 'permits') ? [permitsItem] : []),
     { key: 'assets', href: `/${locale}/assets`, icon: Wrench },
     { key: 'documents', href: `/${locale}/documents`, icon: FolderOpen },
     { key: 'contractors', href: `/${locale}/contractors`, icon: HardHat },

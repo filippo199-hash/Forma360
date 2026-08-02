@@ -1360,7 +1360,8 @@
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
-    "coshh": "COSHH"
+    "coshh": "COSHH",
+    "permits": "作業許可"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -4457,6 +4458,284 @@
       "doneRef": "{ref} — {name}",
       "openButton": "アセスメントを開く",
       "newCheckButton": "新しいチェック"
+    }
+  },
+  "permits": {
+    "title": "作業許可",
+    "subtitle": "高リスク作業の正式な許可・管理・完了処理。",
+    "boardButton": "ライブボード",
+    "typesButton": "許可タイプ",
+    "newButton": "新規許可",
+    "attention": {
+      "overdue": "未完了のまま期限超過",
+      "expiringSoon": "2時間以内に期限切れ",
+      "awaitingAcceptance": "受領待ち",
+      "suspended": "一時停止中",
+      "draft": "準備中の下書き"
+    },
+    "filters": {
+      "search": "検索",
+      "searchPlaceholder": "タイトルまたは番号…",
+      "status": "ステータス",
+      "open": "オープン中すべて",
+      "all": "すべて",
+      "allSites": "すべて"
+    },
+    "columns": {
+      "reference": "番号",
+      "permit": "許可",
+      "type": "タイプ",
+      "window": "有効期間",
+      "acceptor": "受領者",
+      "status": "ステータス"
+    },
+    "empty": "条件に一致する許可はありません。",
+    "emptyCta": "最初の許可を作成",
+    "categories": {
+      "hot_work": "火気作業",
+      "confined_space": "閉所（密閉空間）",
+      "work_at_height": "高所作業",
+      "electrical": "電気作業",
+      "excavation": "掘削作業",
+      "roof_work": "屋根上作業",
+      "asbestos": "アスベスト",
+      "lifting": "揚重作業",
+      "pressure_systems": "圧力設備",
+      "other": "その他の高リスク"
+    },
+    "status": {
+      "draft": "下書き",
+      "issued": "発行済み",
+      "active": "有効",
+      "suspended": "一時停止",
+      "closed": "完了",
+      "cancelled": "取消"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, other {残り#時間}}",
+      "remainingMinutes": "{minutes, plural, other {残り#分}}",
+      "overdueHours": "{hours, plural, other {#時間超過}}",
+      "overdueMinutes": "{minutes, plural, other {#分超過}}"
+    },
+    "board": {
+      "backToRegister": "許可台帳",
+      "title": "ライブ許可ボード",
+      "subtitle": "全拠点でオープン中の許可を今すぐ表示。毎分更新されます。",
+      "lastUpdated": "更新 {time}",
+      "counts": {
+        "overdue": "期限超過 — 未完了",
+        "active": "有効",
+        "issued": "受領待ち",
+        "suspended": "一時停止"
+      },
+      "empty": "オープン中の許可はありません。現在、高リスク作業は許可されていません。",
+      "noSite": "拠点未割当",
+      "reference": "番号",
+      "acceptor": "受領者"
+    },
+    "new": {
+      "back": "作業許可",
+      "title": "許可を作成",
+      "subtitle": "許可は下書きから始まります — 事前条件・証跡・署名は発行前に行います。",
+      "noPermission": "作業許可を作成する権限がありません。",
+      "fields": {
+        "type": "許可タイプ",
+        "typePlaceholder": "作業を選択…",
+        "title": "作業タイトル",
+        "titlePlaceholder": "例：ライン2での溶接",
+        "description": "作業内容",
+        "descriptionPlaceholder": "何をどの機材で行うか…",
+        "noSite": "拠点なし",
+        "location": "エリア／正確な場所",
+        "locationPlaceholder": "例：タンクヤード ベイ4",
+        "validFrom": "有効開始",
+        "validTo": "有効終了",
+        "acceptor": "受領者",
+        "acceptorPlaceholder": "許可を受領する担当者を指定…",
+        "acceptorHint": "作業の責任者です。作業開始前に許可をデジタルで受領する必要があります。"
+      },
+      "maxDuration": "最長 {hours} 時間",
+      "willRequire": "発行前にこのタイプで必要なもの：",
+      "requirements": {
+        "authoriser": "承認署名",
+        "gasTesting": "ガス測定結果",
+        "isolationCertificate": "隔離（アイソレーション）証明書",
+        "rescuePlan": "救助計画"
+      },
+      "preconditionCount": "{count, plural, other {発行前に確認する事前条件 #件}}",
+      "conflictWarning": "{count, plural, other {この拠点・時間帯でオープン中の許可が他に#件あります}}",
+      "sameArea": "同一エリア",
+      "cancel": "キャンセル",
+      "submit": "下書きを作成"
+    },
+    "detail": {
+      "back": "作業許可",
+      "fields": {
+        "site": "拠点",
+        "location": "エリア",
+        "validFrom": "有効開始",
+        "validTo": "有効終了"
+      },
+      "extensions": "{count, plural, other {（延長#回）}}",
+      "suspendedBanner": "{by} により一時停止 — 状況が変化しました。再開まで作業を継続してはいけません。",
+      "overdueBanner": "この許可は完了処理されないまま期限を過ぎました。今すぐ作業状況を確認し、完了するか延長してください。",
+      "conflicts": {
+        "title": "{count, plural, other {同一拠点で重複するオープン中の許可が#件あります}}",
+        "sameArea": "・同一エリア"
+      },
+      "preconditions": {
+        "title": "事前条件",
+        "progress": "{done}/{total} 確認済み",
+        "none": "この許可タイプにはチェックリストがありません。",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "証跡",
+        "gasReadings": "ガス測定結果",
+        "requiredBeforeIssue": "発行前に必須",
+        "noReadings": "まだ測定値がありません。",
+        "substance": "対象物質",
+        "reading": "測定値",
+        "unit": "単位",
+        "recordReading": "記録",
+        "isolationCertificate": "隔離証明書",
+        "notRecorded": "未記録です。",
+        "isolationRefPlaceholder": "証明書番号…",
+        "save": "保存",
+        "rescuePlan": "救助計画",
+        "rescuePlanPlaceholder": "誰が、どの機材で、どのように救助するか…",
+        "attachments": "添付ファイル",
+        "kinds": {
+          "isolation_certificate": "隔離証明書",
+          "rescue_plan": "救助計画",
+          "gas_test": "ガス測定",
+          "other": "その他"
+        }
+      },
+      "signatures": {
+        "title": "署名",
+        "pending": "未署名",
+        "authoriser": "承認エンジニア／サイト管理者",
+        "authoriseAction": "承認する",
+        "issuer": "発行者",
+        "issueAction": "許可を発行",
+        "acceptor": "受領者",
+        "acceptAction": "許可を受領",
+        "acknowledgeConflicts": "重複する許可を確認し、複合リスクを了承します",
+        "awaitingAcceptor": "指定された受領者の署名待ちです。受領できるのは本人のみです。"
+      },
+      "actions": {
+        "title": "許可の操作",
+        "suspend": "一時停止",
+        "suspendReason": "一時停止の理由は？",
+        "suspendConfirm": "許可を一時停止",
+        "resume": "再開 — 安全を確認済み",
+        "extend": "延長",
+        "extendTo": "新しい期限",
+        "extendHint": "1回の延長で追加できるのは最長 {hours} 時間です。",
+        "extendReauthorisation": "このタイプは承認エンジニアによる延長が必要です — 延長が再承認になります。",
+        "extendConfirm": "許可を延長",
+        "handover": "引き継ぎ",
+        "handoverTo": "引き継ぐ受領者",
+        "handoverHint": "新しい受領者が署名するまで許可は「発行済み」に戻ります。",
+        "handoverConfirm": "引き継ぐ",
+        "close": "完了",
+        "closeChecksTitle": "完了チェック — 4項目すべての確認が必要",
+        "closeChecks": {
+          "workComplete": "作業が完了、または安全に中止された",
+          "areaMadeSafe": "エリアを点検し安全化した",
+          "isolationsRemoved": "隔離を合意どおり解除または復旧した",
+          "personnelClear": "全員の所在を確認しエリア外に退出した"
+        },
+        "closeNotesPlaceholder": "完了メモ（任意）…",
+        "closeConfirm": "許可を完了",
+        "cancel": "許可を取消",
+        "cancelReason": "取消の理由は？",
+        "cancelConfirm": "許可を取消"
+      },
+      "closedLine": "{name} が {time} に完了しました。",
+      "cancelledLine": "{name} が {time} に取り消しました。",
+      "timeline": {
+        "title": "履歴",
+        "kinds": {
+          "created": "作成",
+          "updated": "詳細を更新",
+          "precondition_checked": "事前条件を確認",
+          "precondition_unchecked": "確認を取消",
+          "gas_reading_recorded": "ガス測定を記録",
+          "attachment_added": "添付ファイルを追加",
+          "authorised": "承認",
+          "issued": "発行",
+          "accepted": "受領",
+          "suspended": "一時停止",
+          "resumed": "再開",
+          "extended": "延長",
+          "handed_over": "引き継ぎ",
+          "cancelled": "取消",
+          "closed": "完了",
+          "expiry_escalated": "期限超過をエスカレーション — 未完了のまま期限切れ"
+        }
+      }
+    },
+    "types": {
+      "back": "作業許可",
+      "title": "許可タイプ",
+      "subtitle": "各タイプが強制する管理要件。変更は新規許可のみに適用され、進行中の許可は作成時のチェックリストを保持します。",
+      "systemBadge": "標準",
+      "archivedBadge": "アーカイブ済み",
+      "openCount": "{count, plural, other {オープン中の許可 #件}}",
+      "restore": "復元",
+      "archive": "アーカイブ",
+      "flags": {
+        "requiresAuthoriser": "承認署名が必要",
+        "requiresGasTesting": "ガス測定が必要",
+        "requiresIsolationCertificate": "隔離証明書が必要",
+        "requiresRescuePlan": "救助計画が必要"
+      },
+      "maxDuration": "最長有効期間",
+      "hours": "時間",
+      "preconditions": "事前条件チェックリスト",
+      "removePrecondition": "条件を削除",
+      "addPreconditionPlaceholder": "新しいチェック項目…",
+      "addPrecondition": "追加",
+      "createTitle": "カスタム許可タイプを追加",
+      "createHint": "標準9タイプ以外の作業向け。作成後に要件を設定します。",
+      "createNamePlaceholder": "例：潜水作業",
+      "createButton": "タイプを追加"
+    },
+    "errors": {
+      "module-disabled": "このモジュールは利用できません。",
+      "unknown-site": "その拠点は存在しません。",
+      "unknown-user": "その人はこの組織のメンバーではありません。",
+      "type-archived": "この許可タイプはアーカイブ済みです — 復元するか別のタイプを選んでください。",
+      "duplicate-name": "同名の許可タイプが既に存在します。",
+      "duplicate-precondition-id": "チェック項目は重複できません。",
+      "window-invalid": "有効期間の終了は開始より後である必要があります。",
+      "window-too-long": "有効期間がこのタイプの上限を超えています。",
+      "window-past": "有効期間が既に過ぎています — 発行前に更新してください。",
+      "acceptor-required": "発行前に受領者を指定してください。",
+      "issuer-is-acceptor": "発行者は自分の許可を受領できません — 別の受領者を指定してください。",
+      "preconditions-incomplete": "発行前にすべての事前条件を確認する必要があります。",
+      "gas-test-required": "発行前に少なくとも1件のガス測定を記録してください。",
+      "isolation-certificate-required": "発行前に隔離証明書を記録してください。",
+      "rescue-plan-required": "発行前に救助計画を記録してください。",
+      "authorisation-required": "発行前に承認エンジニアの署名が必要です。",
+      "simops-conflict": "他の許可がこの許可と重複しています — 確認して了承すると発行できます。",
+      "invalid-transition": "現在の状態ではその操作はできません。",
+      "not-draft": "編集できるのは下書きのみです。",
+      "unknown-precondition": "そのチェック項目は存在しません。",
+      "already-authorised": "この許可は承認済みです。",
+      "authoriser-is-acceptor": "受領者は自分の許可を承認できません。",
+      "not-the-acceptor": "指定された受領者のみが受領できます。",
+      "resume-confirmation-required": "続行する前に、再開が安全であることを確認してください。",
+      "extension-not-later": "新しい期限は現在の期限より後である必要があります。",
+      "extension-too-long": "1回の延長でタイプの最長時間を超えることはできません。",
+      "reauthorisation-required": "この許可を延長できるのは承認エンジニアのみです。",
+      "acceptor-is-issuer": "発行者を受領者にすることはできません。",
+      "same-acceptor": "その人は既にこの許可を保持しています。",
+      "not-allowed": "その操作を行う権限がありません。",
+      "closure-checks-incomplete": "完了するには4項目すべての完了チェックが必要です。",
+      "generic": "問題が発生しました。フォームを確認してもう一度お試しください。"
     }
   }
 }

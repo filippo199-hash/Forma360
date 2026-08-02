@@ -1360,7 +1360,8 @@
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
-    "coshh": "有害物质"
+    "coshh": "有害物质",
+    "permits": "作业许可"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -4457,6 +4458,284 @@
       "doneRef": "{ref} — {name}",
       "openButton": "打开评估",
       "newCheckButton": "新的检查"
+    }
+  },
+  "permits": {
+    "title": "作业许可",
+    "subtitle": "高风险作业的正式审批、管控与关闭。",
+    "boardButton": "实时看板",
+    "typesButton": "许可类型",
+    "newButton": "新建许可",
+    "attention": {
+      "overdue": "已过期未关闭",
+      "expiringSoon": "2小时内到期",
+      "awaitingAcceptance": "等待接收",
+      "suspended": "已暂停",
+      "draft": "准备中的草稿"
+    },
+    "filters": {
+      "search": "搜索",
+      "searchPlaceholder": "标题或编号…",
+      "status": "状态",
+      "open": "所有进行中",
+      "all": "全部",
+      "allSites": "全部"
+    },
+    "columns": {
+      "reference": "编号",
+      "permit": "许可",
+      "type": "类型",
+      "window": "有效期",
+      "acceptor": "接收人",
+      "status": "状态"
+    },
+    "empty": "没有符合筛选条件的许可。",
+    "emptyCta": "创建第一张许可",
+    "categories": {
+      "hot_work": "动火作业",
+      "confined_space": "受限空间",
+      "work_at_height": "高处作业",
+      "electrical": "电气作业",
+      "excavation": "挖掘作业",
+      "roof_work": "屋面作业",
+      "asbestos": "石棉作业",
+      "lifting": "吊装作业",
+      "pressure_systems": "压力系统",
+      "other": "其他高风险"
+    },
+    "status": {
+      "draft": "草稿",
+      "issued": "已签发",
+      "active": "生效中",
+      "suspended": "已暂停",
+      "closed": "已关闭",
+      "cancelled": "已取消"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, other {剩余#小时}}",
+      "remainingMinutes": "{minutes, plural, other {剩余#分钟}}",
+      "overdueHours": "{hours, plural, other {超时#小时}}",
+      "overdueMinutes": "{minutes, plural, other {超时#分钟}}"
+    },
+    "board": {
+      "backToRegister": "许可台账",
+      "title": "实时许可看板",
+      "subtitle": "全部场所当前进行中的每一张许可。每分钟自动刷新。",
+      "lastUpdated": "更新于 {time}",
+      "counts": {
+        "overdue": "已超时 — 未关闭",
+        "active": "生效中",
+        "issued": "等待接收",
+        "suspended": "已暂停"
+      },
+      "empty": "没有进行中的许可。当前没有获批的高风险作业。",
+      "noSite": "未指定场所",
+      "reference": "编号",
+      "acceptor": "接收人"
+    },
+    "new": {
+      "back": "作业许可",
+      "title": "创建许可",
+      "subtitle": "许可从草稿开始 — 先决条件、证据与签字在签发前完成。",
+      "noPermission": "您没有创建作业许可的权限。",
+      "fields": {
+        "type": "许可类型",
+        "typePlaceholder": "选择作业类型…",
+        "title": "作业标题",
+        "titlePlaceholder": "例如：2号线焊接",
+        "description": "作业内容",
+        "descriptionPlaceholder": "具体做什么、使用什么设备…",
+        "noSite": "无场所",
+        "location": "区域／具体位置",
+        "locationPlaceholder": "例如：罐区4号位",
+        "validFrom": "生效时间",
+        "validTo": "失效时间",
+        "acceptor": "接收人",
+        "acceptorPlaceholder": "指定接收许可的人员…",
+        "acceptorHint": "作业负责人。开工前必须在线接收该许可。"
+      },
+      "maxDuration": "最长时长 {hours} 小时",
+      "willRequire": "签发前该类型要求：",
+      "requirements": {
+        "authoriser": "审批签字",
+        "gasTesting": "气体检测结果",
+        "isolationCertificate": "隔离证书",
+        "rescuePlan": "救援方案"
+      },
+      "preconditionCount": "{count, plural, other {签发前需确认 # 项先决条件}}",
+      "conflictWarning": "{count, plural, other {该场所在此时间段还有 # 张进行中的许可}}",
+      "sameArea": "同一区域",
+      "cancel": "取消",
+      "submit": "创建草稿"
+    },
+    "detail": {
+      "back": "作业许可",
+      "fields": {
+        "site": "场所",
+        "location": "区域",
+        "validFrom": "生效时间",
+        "validTo": "失效时间"
+      },
+      "extensions": "{count, plural, other {（已延期#次）}}",
+      "suspendedBanner": "由 {by} 暂停 — 条件已变化。恢复前不得继续作业。",
+      "overdueBanner": "该许可已过期但未关闭。请立即确认作业状态，然后关闭或延期。",
+      "conflicts": {
+        "title": "{count, plural, other {同一场所有 # 张进行中的许可与本许可时间重叠}}",
+        "sameArea": "· 同一区域"
+      },
+      "preconditions": {
+        "title": "先决条件",
+        "progress": "已确认 {done}/{total}",
+        "none": "该许可类型没有检查清单。",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "证据",
+        "gasReadings": "气体检测结果",
+        "requiredBeforeIssue": "签发前必需",
+        "noReadings": "尚未记录检测值。",
+        "substance": "物质",
+        "reading": "读数",
+        "unit": "单位",
+        "recordReading": "记录",
+        "isolationCertificate": "隔离证书",
+        "notRecorded": "尚未记录。",
+        "isolationRefPlaceholder": "证书编号…",
+        "save": "保存",
+        "rescuePlan": "救援方案",
+        "rescuePlanPlaceholder": "如何救援伤员、由谁执行、使用什么装备…",
+        "attachments": "附件",
+        "kinds": {
+          "isolation_certificate": "隔离证书",
+          "rescue_plan": "救援方案",
+          "gas_test": "气体检测",
+          "other": "其他"
+        }
+      },
+      "signatures": {
+        "title": "签字",
+        "pending": "尚未签字",
+        "authoriser": "审批工程师／现场负责人",
+        "authoriseAction": "审批",
+        "issuer": "签发人",
+        "issueAction": "签发许可",
+        "acceptor": "接收人",
+        "acceptAction": "接收许可",
+        "acknowledgeConflicts": "我已查看重叠的许可并接受叠加风险",
+        "awaitingAcceptor": "等待指定接收人签字。只有本人可以接收。"
+      },
+      "actions": {
+        "title": "许可操作",
+        "suspend": "暂停",
+        "suspendReason": "暂停许可的原因？",
+        "suspendConfirm": "暂停许可",
+        "resume": "恢复 — 已确认安全",
+        "extend": "延期",
+        "extendTo": "新的失效时间",
+        "extendHint": "单次延期最多增加 {hours} 小时。",
+        "extendReauthorisation": "该类型要求由审批工程师延期 — 延期即为重新审批。",
+        "extendConfirm": "延期许可",
+        "handover": "交接",
+        "handoverTo": "接班接收人",
+        "handoverHint": "在接班接收人签字前，许可退回“已签发”状态。",
+        "handoverConfirm": "交接",
+        "close": "关闭",
+        "closeChecksTitle": "关闭检查 — 四项必须全部确认",
+        "closeChecks": {
+          "workComplete": "作业完成或已安全停止",
+          "areaMadeSafe": "区域已检查并恢复安全",
+          "isolationsRemoved": "隔离已按约定解除或恢复",
+          "personnelClear": "所有人员已清点并撤离区域"
+        },
+        "closeNotesPlaceholder": "关闭备注（可选）…",
+        "closeConfirm": "关闭许可",
+        "cancel": "取消许可",
+        "cancelReason": "取消许可的原因？",
+        "cancelConfirm": "取消许可"
+      },
+      "closedLine": "由 {name} 于 {time} 关闭。",
+      "cancelledLine": "由 {name} 于 {time} 取消。",
+      "timeline": {
+        "title": "历史记录",
+        "kinds": {
+          "created": "已创建",
+          "updated": "已更新详情",
+          "precondition_checked": "已确认先决条件",
+          "precondition_unchecked": "已撤销确认",
+          "gas_reading_recorded": "已记录气体检测",
+          "attachment_added": "已添加附件",
+          "authorised": "已审批",
+          "issued": "已签发",
+          "accepted": "已接收",
+          "suspended": "已暂停",
+          "resumed": "已恢复",
+          "extended": "已延期",
+          "handed_over": "已交接",
+          "cancelled": "已取消",
+          "closed": "已关闭",
+          "expiry_escalated": "过期升级 — 许可过期未关闭"
+        }
+      }
+    },
+    "types": {
+      "back": "作业许可",
+      "title": "许可类型",
+      "subtitle": "每种类型强制执行的管控要求。修改仅影响新许可 — 进行中的许可保留创建时的清单。",
+      "systemBadge": "标准",
+      "archivedBadge": "已归档",
+      "openCount": "{count, plural, other {# 张进行中的许可}}",
+      "restore": "恢复",
+      "archive": "归档",
+      "flags": {
+        "requiresAuthoriser": "需要审批签字",
+        "requiresGasTesting": "需要气体检测",
+        "requiresIsolationCertificate": "需要隔离证书",
+        "requiresRescuePlan": "需要救援方案"
+      },
+      "maxDuration": "最长有效期",
+      "hours": "小时",
+      "preconditions": "先决条件清单",
+      "removePrecondition": "移除条件",
+      "addPreconditionPlaceholder": "新的检查项…",
+      "addPrecondition": "添加",
+      "createTitle": "添加自定义许可类型",
+      "createHint": "用于九种标准类型之外的作业。创建后再配置其要求。",
+      "createNamePlaceholder": "例如：潜水作业",
+      "createButton": "添加类型"
+    },
+    "errors": {
+      "module-disabled": "该模块不可用。",
+      "unknown-site": "该场所不存在。",
+      "unknown-user": "该人员不属于本组织。",
+      "type-archived": "该许可类型已归档 — 请恢复或选择其他类型。",
+      "duplicate-name": "同名许可类型已存在。",
+      "duplicate-precondition-id": "检查项不能重复。",
+      "window-invalid": "有效期的结束时间必须晚于开始时间。",
+      "window-too-long": "有效期超过该类型允许的上限。",
+      "window-past": "有效期已经过去 — 签发前请先更新。",
+      "acceptor-required": "签发前请指定接收人。",
+      "issuer-is-acceptor": "签发人不能接收自己的许可 — 请指定其他人。",
+      "preconditions-incomplete": "签发前必须确认所有先决条件。",
+      "gas-test-required": "签发前请至少记录一次气体检测。",
+      "isolation-certificate-required": "签发前请记录隔离证书。",
+      "rescue-plan-required": "签发前请记录救援方案。",
+      "authorisation-required": "签发前需要审批工程师签字。",
+      "simops-conflict": "其他许可与本许可重叠 — 查看并确认后方可签发。",
+      "invalid-transition": "当前状态下无法执行该操作。",
+      "not-draft": "只能编辑草稿。",
+      "unknown-precondition": "该检查项已不存在。",
+      "already-authorised": "该许可已审批。",
+      "authoriser-is-acceptor": "接收人不能审批自己的许可。",
+      "not-the-acceptor": "只有指定接收人才能接收该许可。",
+      "resume-confirmation-required": "继续前请确认恢复作业是安全的。",
+      "extension-not-later": "新的失效时间必须晚于当前时间。",
+      "extension-too-long": "单次延期不能超过该类型的最长时长。",
+      "reauthorisation-required": "只有审批工程师才能延期该许可。",
+      "acceptor-is-issuer": "签发人不能成为接收人。",
+      "same-acceptor": "该人员已持有此许可。",
+      "not-allowed": "您没有权限执行该操作。",
+      "closure-checks-incomplete": "必须确认全部四项关闭检查才能关闭许可。",
+      "generic": "出了点问题。请检查表单后重试。"
     }
   }
 }

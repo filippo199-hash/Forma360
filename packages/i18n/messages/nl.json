@@ -1360,7 +1360,8 @@
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
-    "coshh": "Gevaarlijke stoffen"
+    "coshh": "Gevaarlijke stoffen",
+    "permits": "Vergunningen"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -4457,6 +4458,284 @@
       "doneRef": "{ref} — {name}",
       "openButton": "Beoordeling openen",
       "newCheckButton": "Nieuwe controle"
+    }
+  },
+  "permits": {
+    "title": "Werkvergunningen",
+    "subtitle": "Formele autorisatie, beheersing en afsluiting van risicovolle activiteiten.",
+    "boardButton": "Live-overzicht",
+    "typesButton": "Vergunningstypen",
+    "newButton": "Nieuwe vergunning",
+    "attention": {
+      "overdue": "verlopen zonder afsluiting",
+      "expiringSoon": "verlopen binnen 2 uur",
+      "awaitingAcceptance": "wachten op acceptatie",
+      "suspended": "opgeschort",
+      "draft": "concepten in voorbereiding"
+    },
+    "filters": {
+      "search": "Zoeken",
+      "searchPlaceholder": "Titel of referentie…",
+      "status": "Status",
+      "open": "Alle openstaande",
+      "all": "Alle",
+      "allSites": "Alle"
+    },
+    "columns": {
+      "reference": "Ref.",
+      "permit": "Vergunning",
+      "type": "Type",
+      "window": "Geldigheid",
+      "acceptor": "Acceptant",
+      "status": "Status"
+    },
+    "empty": "Geen vergunningen voldoen aan deze filters.",
+    "emptyCta": "Maak de eerste vergunning",
+    "categories": {
+      "hot_work": "Heet werk",
+      "confined_space": "Besloten ruimte",
+      "work_at_height": "Werken op hoogte",
+      "electrical": "Elektrisch",
+      "excavation": "Graafwerk",
+      "roof_work": "Dakwerk",
+      "asbestos": "Asbest",
+      "lifting": "Hijswerk",
+      "pressure_systems": "Druksystemen",
+      "other": "Overig hoog risico"
+    },
+    "status": {
+      "draft": "Concept",
+      "issued": "Uitgegeven",
+      "active": "Actief",
+      "suspended": "Opgeschort",
+      "closed": "Afgesloten",
+      "cancelled": "Geannuleerd"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, one {nog # u} other {nog # u}}",
+      "remainingMinutes": "{minutes, plural, one {nog # min} other {nog # min}}",
+      "overdueHours": "{hours, plural, one {# u te laat} other {# u te laat}}",
+      "overdueMinutes": "{minutes, plural, one {# min te laat} other {# min te laat}}"
+    },
+    "board": {
+      "backToRegister": "Vergunningenregister",
+      "title": "Live vergunningenoverzicht",
+      "subtitle": "Elke openstaande vergunning op alle locaties, nu. Ververst elke minuut.",
+      "lastUpdated": "Bijgewerkt {time}",
+      "counts": {
+        "overdue": "Verlopen — niet afgesloten",
+        "active": "Actief",
+        "issued": "Wachten op acceptatie",
+        "suspended": "Opgeschort"
+      },
+      "empty": "Geen openstaande vergunningen. Er is nu geen risicovol werk geautoriseerd.",
+      "noSite": "Geen locatie toegewezen",
+      "reference": "Ref.",
+      "acceptor": "Acceptant"
+    },
+    "new": {
+      "back": "Vergunningen",
+      "title": "Vergunning aanmaken",
+      "subtitle": "De vergunning begint als concept — voorwaarden, bewijs en handtekeningen volgen vóór uitgifte.",
+      "noPermission": "U mag geen werkvergunningen aanmaken.",
+      "fields": {
+        "type": "Vergunningstype",
+        "typePlaceholder": "Kies de activiteit…",
+        "title": "Titel van het werk",
+        "titlePlaceholder": "bijv. Lassen aan lijn 2",
+        "description": "Omschrijving van het werk",
+        "descriptionPlaceholder": "Wat er precies gebeurt, met welk materieel…",
+        "noSite": "Geen locatie",
+        "location": "Zone / exacte plek",
+        "locationPlaceholder": "bijv. Tankpark, vak 4",
+        "validFrom": "Geldig vanaf",
+        "validTo": "Geldig tot",
+        "acceptor": "Acceptant",
+        "acceptorPlaceholder": "Wijs de persoon aan die de vergunning accepteert…",
+        "acceptorHint": "De persoon die verantwoordelijk is voor het werk. Die moet de vergunning digitaal accepteren vóór het werk begint."
+      },
+      "maxDuration": "Maximale duur {hours} u",
+      "willRequire": "Vóór uitgifte vereist dit type:",
+      "requirements": {
+        "authoriser": "autoriserende handtekening",
+        "gasTesting": "gasmeetresultaten",
+        "isolationCertificate": "veiligstellingscertificaat",
+        "rescuePlan": "reddingsplan"
+      },
+      "preconditionCount": "{count, plural, one {# voorwaarde te bevestigen vóór uitgifte} other {# voorwaarden te bevestigen vóór uitgifte}}",
+      "conflictWarning": "{count, plural, one {# andere vergunning staat open op deze locatie in dit tijdvak} other {# andere vergunningen staan open op deze locatie in dit tijdvak}}",
+      "sameArea": "zelfde zone",
+      "cancel": "Annuleren",
+      "submit": "Concept aanmaken"
+    },
+    "detail": {
+      "back": "Vergunningen",
+      "fields": {
+        "site": "Locatie",
+        "location": "Zone",
+        "validFrom": "Geldig vanaf",
+        "validTo": "Geldig tot"
+      },
+      "extensions": "{count, plural, one {(# verlenging)} other {(# verlengingen)}}",
+      "suspendedBanner": "Opgeschort door {by} — omstandigheden zijn veranderd. Het werk mag pas doorgaan na hervatting.",
+      "overdueBanner": "Deze vergunning is verlopen zonder te zijn afgesloten. Controleer nu de stand van het werk en sluit of verleng de vergunning.",
+      "conflicts": {
+        "title": "{count, plural, one {# andere openstaande vergunning overlapt deze op dezelfde locatie} other {# andere openstaande vergunningen overlappen deze op dezelfde locatie}}",
+        "sameArea": "· zelfde zone"
+      },
+      "preconditions": {
+        "title": "Voorwaarden",
+        "progress": "{done}/{total} bevestigd",
+        "none": "Dit vergunningstype heeft geen checklist.",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "Bewijs",
+        "gasReadings": "Gasmeetresultaten",
+        "requiredBeforeIssue": "vereist vóór uitgifte",
+        "noReadings": "Nog geen metingen vastgelegd.",
+        "substance": "Stof",
+        "reading": "Meetwaarde",
+        "unit": "Eenheid",
+        "recordReading": "Vastleggen",
+        "isolationCertificate": "Veiligstellingscertificaat",
+        "notRecorded": "Nog niet vastgelegd.",
+        "isolationRefPlaceholder": "Certificaatreferentie…",
+        "save": "Opslaan",
+        "rescuePlan": "Reddingsplan",
+        "rescuePlanPlaceholder": "Hoe een slachtoffer gered zou worden, door wie, met welk materieel…",
+        "attachments": "Bijlagen",
+        "kinds": {
+          "isolation_certificate": "Veiligstellingscertificaat",
+          "rescue_plan": "Reddingsplan",
+          "gas_test": "Gasmeting",
+          "other": "Overig"
+        }
+      },
+      "signatures": {
+        "title": "Handtekeningen",
+        "pending": "Nog niet ondertekend",
+        "authoriser": "Autoriserend deskundige / locatieverantwoordelijke",
+        "authoriseAction": "Autoriseren",
+        "issuer": "Uitgever",
+        "issueAction": "Vergunning uitgeven",
+        "acceptor": "Acceptant",
+        "acceptAction": "Vergunning accepteren",
+        "acknowledgeConflicts": "Ik heb de overlappende vergunningen beoordeeld en accepteer het gecombineerde risico",
+        "awaitingAcceptor": "Wachten op de aangewezen acceptant. Alleen die persoon kan accepteren."
+      },
+      "actions": {
+        "title": "Acties",
+        "suspend": "Opschorten",
+        "suspendReason": "Waarom wordt de vergunning opgeschort?",
+        "suspendConfirm": "Vergunning opschorten",
+        "resume": "Hervatten — veilig om door te gaan",
+        "extend": "Verlengen",
+        "extendTo": "Nieuwe einddatum",
+        "extendHint": "Eén verlenging mag hoogstens {hours} u toevoegen.",
+        "extendReauthorisation": "Bij dit type verlengt de autoriserend deskundige — de verlenging ís de herautorisatie.",
+        "extendConfirm": "Vergunning verlengen",
+        "handover": "Overdragen",
+        "handoverTo": "Inkomende acceptant",
+        "handoverHint": "De vergunning gaat terug naar 'Uitgegeven' tot de inkomende acceptant tekent.",
+        "handoverConfirm": "Overdragen",
+        "close": "Afsluiten",
+        "closeChecksTitle": "Afsluitcontroles — alle vier bevestigen",
+        "closeChecks": {
+          "workComplete": "Werk gereed of veilig gestopt",
+          "areaMadeSafe": "Zone geïnspecteerd en veiliggesteld",
+          "isolationsRemoved": "Veiligstellingen opgeheven of hersteld zoals afgesproken",
+          "personnelClear": "Alle personen geteld en buiten de zone"
+        },
+        "closeNotesPlaceholder": "Afsluitnotities (optioneel)…",
+        "closeConfirm": "Vergunning afsluiten",
+        "cancel": "Vergunning annuleren",
+        "cancelReason": "Waarom wordt de vergunning geannuleerd?",
+        "cancelConfirm": "Vergunning annuleren"
+      },
+      "closedLine": "Afgesloten door {name} op {time}.",
+      "cancelledLine": "Geannuleerd door {name} op {time}.",
+      "timeline": {
+        "title": "Geschiedenis",
+        "kinds": {
+          "created": "Aangemaakt",
+          "updated": "Gegevens bijgewerkt",
+          "precondition_checked": "Voorwaarde bevestigd",
+          "precondition_unchecked": "Bevestiging ingetrokken",
+          "gas_reading_recorded": "Gasmeting vastgelegd",
+          "attachment_added": "Bijlage toegevoegd",
+          "authorised": "Geautoriseerd",
+          "issued": "Uitgegeven",
+          "accepted": "Geaccepteerd",
+          "suspended": "Opgeschort",
+          "resumed": "Hervat",
+          "extended": "Verlengd",
+          "handed_over": "Overgedragen",
+          "cancelled": "Geannuleerd",
+          "closed": "Afgesloten",
+          "expiry_escalated": "Verloop geëscaleerd — vergunning verlopen zonder afsluiting"
+        }
+      }
+    },
+    "types": {
+      "back": "Vergunningen",
+      "title": "Vergunningstypen",
+      "subtitle": "De beheersingseisen per type. Wijzigingen gelden alleen voor nieuwe vergunningen — lopende houden hun checklist.",
+      "systemBadge": "Standaard",
+      "archivedBadge": "Gearchiveerd",
+      "openCount": "{count, plural, one {# openstaande vergunning} other {# openstaande vergunningen}}",
+      "restore": "Terugzetten",
+      "archive": "Archiveren",
+      "flags": {
+        "requiresAuthoriser": "Autoriserende handtekening vereist",
+        "requiresGasTesting": "Gasmeting vereist",
+        "requiresIsolationCertificate": "Veiligstellingscertificaat vereist",
+        "requiresRescuePlan": "Reddingsplan vereist"
+      },
+      "maxDuration": "Maximale geldigheid",
+      "hours": "uur",
+      "preconditions": "Voorwaardenchecklist",
+      "removePrecondition": "Voorwaarde verwijderen",
+      "addPreconditionPlaceholder": "Nieuw controlepunt…",
+      "addPrecondition": "Toevoegen",
+      "createTitle": "Eigen vergunningstype toevoegen",
+      "createHint": "Voor activiteiten buiten de negen standaardtypen. Stel de eisen in na het aanmaken.",
+      "createNamePlaceholder": "bijv. Duikwerkzaamheden",
+      "createButton": "Type toevoegen"
+    },
+    "errors": {
+      "module-disabled": "Deze module is niet beschikbaar.",
+      "unknown-site": "Die locatie bestaat niet.",
+      "unknown-user": "Die persoon is geen lid van deze organisatie.",
+      "type-archived": "Dit vergunningstype is gearchiveerd — zet het terug of kies een ander.",
+      "duplicate-name": "Er bestaat al een vergunningstype met die naam.",
+      "duplicate-precondition-id": "Controlepunten moeten uniek zijn.",
+      "window-invalid": "Het geldigheidsvenster moet eindigen na het begin.",
+      "window-too-long": "Het geldigheidsvenster is langer dan dit type toestaat.",
+      "window-past": "Het geldigheidsvenster is al voorbij — werk het bij vóór uitgifte.",
+      "acceptor-required": "Wijs een acceptant aan vóór uitgifte.",
+      "issuer-is-acceptor": "De uitgever kan de eigen vergunning niet accepteren — wijs iemand anders aan.",
+      "preconditions-incomplete": "Elke voorwaarde moet bevestigd zijn vóór uitgifte.",
+      "gas-test-required": "Leg minstens één gasmeting vast vóór uitgifte.",
+      "isolation-certificate-required": "Leg het veiligstellingscertificaat vast vóór uitgifte.",
+      "rescue-plan-required": "Leg het reddingsplan vast vóór uitgifte.",
+      "authorisation-required": "De autoriserend deskundige moet tekenen vóór uitgifte.",
+      "simops-conflict": "Andere vergunningen overlappen deze — beoordeel en bevestig ze om uit te geven.",
+      "invalid-transition": "Die actie is niet beschikbaar in de huidige status van de vergunning.",
+      "not-draft": "Alleen concepten kunnen worden bewerkt.",
+      "unknown-precondition": "Dat controlepunt bestaat niet meer.",
+      "already-authorised": "Deze vergunning is al geautoriseerd.",
+      "authoriser-is-acceptor": "De acceptant kan de eigen vergunning niet autoriseren.",
+      "not-the-acceptor": "Alleen de aangewezen acceptant kan deze vergunning accepteren.",
+      "resume-confirmation-required": "Bevestig dat hervatten veilig is voordat u doorgaat.",
+      "extension-not-later": "De nieuwe einddatum moet na de huidige liggen.",
+      "extension-too-long": "Eén verlenging mag de maximale duur van het type niet overschrijden.",
+      "reauthorisation-required": "Alleen de autoriserend deskundige kan deze vergunning verlengen.",
+      "acceptor-is-issuer": "De uitgever kan niet de acceptant worden.",
+      "same-acceptor": "Die persoon heeft de vergunning al.",
+      "not-allowed": "U hebt hier geen toestemming voor.",
+      "closure-checks-incomplete": "Alle vier de afsluitcontroles moeten bevestigd worden.",
+      "generic": "Er ging iets mis. Controleer het formulier en probeer opnieuw."
     }
   }
 }

@@ -1360,7 +1360,8 @@
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
-    "coshh": "Substancje niebezpieczne"
+    "coshh": "Substancje niebezpieczne",
+    "permits": "Pozwolenia"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -4457,6 +4458,284 @@
       "doneRef": "{ref} — {name}",
       "openButton": "Otwórz ocenę",
       "newCheckButton": "Nowa kontrola"
+    }
+  },
+  "permits": {
+    "title": "Pozwolenia na pracę",
+    "subtitle": "Formalna autoryzacja, nadzór i zamknięcie prac wysokiego ryzyka.",
+    "boardButton": "Tablica na żywo",
+    "typesButton": "Typy pozwoleń",
+    "newButton": "Nowe pozwolenie",
+    "attention": {
+      "overdue": "przeterminowane bez zamknięcia",
+      "expiringSoon": "wygasają w ciągu 2 godzin",
+      "awaitingAcceptance": "czekają na przyjęcie",
+      "suspended": "zawieszone",
+      "draft": "wersje robocze w przygotowaniu"
+    },
+    "filters": {
+      "search": "Szukaj",
+      "searchPlaceholder": "Tytuł lub numer…",
+      "status": "Status",
+      "open": "Wszystkie otwarte",
+      "all": "Wszystkie",
+      "allSites": "Wszystkie"
+    },
+    "columns": {
+      "reference": "Nr",
+      "permit": "Pozwolenie",
+      "type": "Typ",
+      "window": "Ważność",
+      "acceptor": "Przyjmujący",
+      "status": "Status"
+    },
+    "empty": "Żadne pozwolenie nie pasuje do tych filtrów.",
+    "emptyCta": "Utwórz pierwsze pozwolenie",
+    "categories": {
+      "hot_work": "Prace gorące",
+      "confined_space": "Przestrzeń zamknięta",
+      "work_at_height": "Praca na wysokości",
+      "electrical": "Prace elektryczne",
+      "excavation": "Wykopy",
+      "roof_work": "Prace dachowe",
+      "asbestos": "Azbest",
+      "lifting": "Prace dźwigowe",
+      "pressure_systems": "Układy ciśnieniowe",
+      "other": "Inne wysokiego ryzyka"
+    },
+    "status": {
+      "draft": "Wersja robocza",
+      "issued": "Wydane",
+      "active": "Aktywne",
+      "suspended": "Zawieszone",
+      "closed": "Zamknięte",
+      "cancelled": "Anulowane"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, one {pozostała # godz.} few {pozostały # godz.} other {pozostało # godz.}}",
+      "remainingMinutes": "{minutes, plural, one {pozostała # min} few {pozostały # min} other {pozostało # min}}",
+      "overdueHours": "{hours, plural, one {# godz. po terminie} few {# godz. po terminie} other {# godz. po terminie}}",
+      "overdueMinutes": "{minutes, plural, one {# min po terminie} few {# min po terminie} other {# min po terminie}}"
+    },
+    "board": {
+      "backToRegister": "Rejestr pozwoleń",
+      "title": "Tablica pozwoleń na żywo",
+      "subtitle": "Każde otwarte pozwolenie we wszystkich lokalizacjach, teraz. Odświeża się co minutę.",
+      "lastUpdated": "Zaktualizowano {time}",
+      "counts": {
+        "overdue": "Po terminie — niezamknięte",
+        "active": "Aktywne",
+        "issued": "Czekają na przyjęcie",
+        "suspended": "Zawieszone"
+      },
+      "empty": "Brak otwartych pozwoleń. Żadna praca wysokiego ryzyka nie jest teraz autoryzowana.",
+      "noSite": "Brak przypisanej lokalizacji",
+      "reference": "Nr",
+      "acceptor": "Przyjmujący"
+    },
+    "new": {
+      "back": "Pozwolenia",
+      "title": "Utwórz pozwolenie",
+      "subtitle": "Pozwolenie zaczyna jako wersja robocza — warunki wstępne, dowody i podpisy następują przed wydaniem.",
+      "noPermission": "Nie masz uprawnień do tworzenia pozwoleń.",
+      "fields": {
+        "type": "Typ pozwolenia",
+        "typePlaceholder": "Wybierz rodzaj prac…",
+        "title": "Tytuł prac",
+        "titlePlaceholder": "np. Spawanie na linii 2",
+        "description": "Opis prac",
+        "descriptionPlaceholder": "Co dokładnie będzie robione, jakim sprzętem…",
+        "noSite": "Brak lokalizacji",
+        "location": "Strefa / dokładne miejsce",
+        "locationPlaceholder": "np. Park zbiorników, stanowisko 4",
+        "validFrom": "Ważne od",
+        "validTo": "Ważne do",
+        "acceptor": "Przyjmujący",
+        "acceptorPlaceholder": "Wskaż osobę przyjmującą pozwolenie…",
+        "acceptorHint": "Osoba odpowiedzialna za prace. Musi cyfrowo przyjąć pozwolenie przed rozpoczęciem prac."
+      },
+      "maxDuration": "Maksymalny czas {hours} godz.",
+      "willRequire": "Przed wydaniem ten typ wymaga:",
+      "requirements": {
+        "authoriser": "podpisu autoryzującego",
+        "gasTesting": "wyników pomiarów gazów",
+        "isolationCertificate": "świadectwa odłączenia",
+        "rescuePlan": "planu ratunkowego"
+      },
+      "preconditionCount": "{count, plural, one {# warunek wstępny do potwierdzenia przed wydaniem} few {# warunki wstępne do potwierdzenia przed wydaniem} other {# warunków wstępnych do potwierdzenia przed wydaniem}}",
+      "conflictWarning": "{count, plural, one {# inne pozwolenie jest otwarte w tej lokalizacji w tym oknie} few {# inne pozwolenia są otwarte w tej lokalizacji w tym oknie} other {# innych pozwoleń jest otwartych w tej lokalizacji w tym oknie}}",
+      "sameArea": "ta sama strefa",
+      "cancel": "Anuluj",
+      "submit": "Utwórz wersję roboczą"
+    },
+    "detail": {
+      "back": "Pozwolenia",
+      "fields": {
+        "site": "Lokalizacja",
+        "location": "Strefa",
+        "validFrom": "Ważne od",
+        "validTo": "Ważne do"
+      },
+      "extensions": "{count, plural, one {(# przedłużenie)} few {(# przedłużenia)} other {(# przedłużeń)}}",
+      "suspendedBanner": "Zawieszone przez {by} — warunki się zmieniły. Prace nie mogą trwać do wznowienia.",
+      "overdueBanner": "To pozwolenie wygasło bez zamknięcia. Potwierdź teraz stan prac, a następnie zamknij je lub przedłuż.",
+      "conflicts": {
+        "title": "{count, plural, one {# inne otwarte pozwolenie nakłada się z tym w tej samej lokalizacji} few {# inne otwarte pozwolenia nakładają się z tym w tej samej lokalizacji} other {# innych otwartych pozwoleń nakłada się z tym w tej samej lokalizacji}}",
+        "sameArea": "· ta sama strefa"
+      },
+      "preconditions": {
+        "title": "Warunki wstępne",
+        "progress": "{done}/{total} potwierdzono",
+        "none": "Ten typ pozwolenia nie ma listy kontrolnej.",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "Dowody",
+        "gasReadings": "Pomiary gazów",
+        "requiredBeforeIssue": "wymagane przed wydaniem",
+        "noReadings": "Nie zarejestrowano jeszcze pomiarów.",
+        "substance": "Substancja",
+        "reading": "Odczyt",
+        "unit": "Jednostka",
+        "recordReading": "Zapisz",
+        "isolationCertificate": "Świadectwo odłączenia",
+        "notRecorded": "Jeszcze nie zarejestrowano.",
+        "isolationRefPlaceholder": "Numer świadectwa…",
+        "save": "Zapisz",
+        "rescuePlan": "Plan ratunkowy",
+        "rescuePlanPlaceholder": "Jak poszkodowany zostałby uratowany, przez kogo, jakim sprzętem…",
+        "attachments": "Załączniki",
+        "kinds": {
+          "isolation_certificate": "Świadectwo odłączenia",
+          "rescue_plan": "Plan ratunkowy",
+          "gas_test": "Pomiar gazów",
+          "other": "Inne"
+        }
+      },
+      "signatures": {
+        "title": "Podpisy",
+        "pending": "Jeszcze nie podpisano",
+        "authoriser": "Inżynier autoryzujący / kierownik obiektu",
+        "authoriseAction": "Autoryzuj",
+        "issuer": "Wydający",
+        "issueAction": "Wydaj pozwolenie",
+        "acceptor": "Przyjmujący",
+        "acceptAction": "Przyjmij pozwolenie",
+        "acknowledgeConflicts": "Przejrzałem nakładające się pozwolenia i akceptuję łączne ryzyko",
+        "awaitingAcceptor": "Oczekiwanie na podpis wyznaczonego przyjmującego. Tylko ta osoba może przyjąć."
+      },
+      "actions": {
+        "title": "Działania",
+        "suspend": "Zawieś",
+        "suspendReason": "Dlaczego pozwolenie jest zawieszane?",
+        "suspendConfirm": "Zawieś pozwolenie",
+        "resume": "Wznów — można bezpiecznie kontynuować",
+        "extend": "Przedłuż",
+        "extendTo": "Nowy termin ważności",
+        "extendHint": "Jedno przedłużenie może dodać najwyżej {hours} godz.",
+        "extendReauthorisation": "Ten typ wymaga przedłużenia przez inżyniera autoryzującego — przedłużenie jest ponowną autoryzacją.",
+        "extendConfirm": "Przedłuż pozwolenie",
+        "handover": "Przekaż",
+        "handoverTo": "Przyjmujący na kolejnej zmianie",
+        "handoverHint": "Pozwolenie wraca do stanu „Wydane”, aż nowy przyjmujący się podpisze.",
+        "handoverConfirm": "Przekaż",
+        "close": "Zamknij",
+        "closeChecksTitle": "Kontrole zamknięcia — wszystkie cztery muszą być potwierdzone",
+        "closeChecks": {
+          "workComplete": "Prace zakończone lub bezpiecznie przerwane",
+          "areaMadeSafe": "Strefa sprawdzona i zabezpieczona",
+          "isolationsRemoved": "Odłączenia zdjęte lub przywrócone zgodnie z ustaleniami",
+          "personnelClear": "Wszyscy policzeni i poza strefą"
+        },
+        "closeNotesPlaceholder": "Uwagi do zamknięcia (opcjonalnie)…",
+        "closeConfirm": "Zamknij pozwolenie",
+        "cancel": "Anuluj pozwolenie",
+        "cancelReason": "Dlaczego pozwolenie jest anulowane?",
+        "cancelConfirm": "Anuluj pozwolenie"
+      },
+      "closedLine": "Zamknięte przez {name} dnia {time}.",
+      "cancelledLine": "Anulowane przez {name} dnia {time}.",
+      "timeline": {
+        "title": "Historia",
+        "kinds": {
+          "created": "Utworzono",
+          "updated": "Zaktualizowano dane",
+          "precondition_checked": "Potwierdzono warunek wstępny",
+          "precondition_unchecked": "Wycofano potwierdzenie",
+          "gas_reading_recorded": "Zapisano pomiar gazów",
+          "attachment_added": "Dodano załącznik",
+          "authorised": "Autoryzowano",
+          "issued": "Wydano",
+          "accepted": "Przyjęto",
+          "suspended": "Zawieszono",
+          "resumed": "Wznowiono",
+          "extended": "Przedłużono",
+          "handed_over": "Przekazano",
+          "cancelled": "Anulowano",
+          "closed": "Zamknięto",
+          "expiry_escalated": "Eskalacja terminu — pozwolenie wygasło bez zamknięcia"
+        }
+      }
+    },
+    "types": {
+      "back": "Pozwolenia",
+      "title": "Typy pozwoleń",
+      "subtitle": "Wymagania kontrolne każdego typu. Zmiany dotyczą tylko nowych pozwoleń — trwające zachowują swoją listę.",
+      "systemBadge": "Standardowy",
+      "archivedBadge": "Zarchiwizowany",
+      "openCount": "{count, plural, one {# otwarte pozwolenie} few {# otwarte pozwolenia} other {# otwartych pozwoleń}}",
+      "restore": "Przywróć",
+      "archive": "Archiwizuj",
+      "flags": {
+        "requiresAuthoriser": "Wymagany podpis autoryzujący",
+        "requiresGasTesting": "Wymagany pomiar gazów",
+        "requiresIsolationCertificate": "Wymagane świadectwo odłączenia",
+        "requiresRescuePlan": "Wymagany plan ratunkowy"
+      },
+      "maxDuration": "Maksymalna ważność",
+      "hours": "godz.",
+      "preconditions": "Lista warunków wstępnych",
+      "removePrecondition": "Usuń warunek",
+      "addPreconditionPlaceholder": "Nowy punkt kontrolny…",
+      "addPrecondition": "Dodaj",
+      "createTitle": "Dodaj własny typ pozwolenia",
+      "createHint": "Dla prac spoza dziewięciu standardowych typów. Skonfiguruj wymagania po utworzeniu.",
+      "createNamePlaceholder": "np. Prace nurkowe",
+      "createButton": "Dodaj typ"
+    },
+    "errors": {
+      "module-disabled": "Ten moduł jest niedostępny.",
+      "unknown-site": "Taka lokalizacja nie istnieje.",
+      "unknown-user": "Ta osoba nie należy do tej organizacji.",
+      "type-archived": "Ten typ pozwolenia jest zarchiwizowany — przywróć go lub wybierz inny.",
+      "duplicate-name": "Typ pozwolenia o tej nazwie już istnieje.",
+      "duplicate-precondition-id": "Punkty kontrolne muszą być unikalne.",
+      "window-invalid": "Okno ważności musi kończyć się po rozpoczęciu.",
+      "window-too-long": "Okno ważności przekracza dopuszczalne dla tego typu.",
+      "window-past": "Okno ważności już minęło — zaktualizuj je przed wydaniem.",
+      "acceptor-required": "Przed wydaniem wskaż przyjmującego.",
+      "issuer-is-acceptor": "Wydający nie może przyjąć własnego pozwolenia — wskaż inną osobę.",
+      "preconditions-incomplete": "Przed wydaniem każdy warunek wstępny musi być potwierdzony.",
+      "gas-test-required": "Przed wydaniem zapisz co najmniej jeden pomiar gazów.",
+      "isolation-certificate-required": "Przed wydaniem zapisz świadectwo odłączenia.",
+      "rescue-plan-required": "Przed wydaniem zapisz plan ratunkowy.",
+      "authorisation-required": "Inżynier autoryzujący musi podpisać przed wydaniem.",
+      "simops-conflict": "Inne pozwolenia nakładają się z tym — przejrzyj je i potwierdź, aby wydać.",
+      "invalid-transition": "To działanie jest niedostępne w obecnym stanie pozwolenia.",
+      "not-draft": "Edytować można tylko wersje robocze.",
+      "unknown-precondition": "Ten punkt kontrolny już nie istnieje.",
+      "already-authorised": "To pozwolenie jest już autoryzowane.",
+      "authoriser-is-acceptor": "Przyjmujący nie może autoryzować własnego pozwolenia.",
+      "not-the-acceptor": "Tylko wyznaczony przyjmujący może przyjąć to pozwolenie.",
+      "resume-confirmation-required": "Przed kontynuowaniem potwierdź, że wznowienie jest bezpieczne.",
+      "extension-not-later": "Nowy termin musi być późniejszy od obecnego.",
+      "extension-too-long": "Jedno przedłużenie nie może przekroczyć maksymalnego czasu typu.",
+      "reauthorisation-required": "Tylko inżynier autoryzujący może przedłużyć to pozwolenie.",
+      "acceptor-is-issuer": "Wydający nie może zostać przyjmującym.",
+      "same-acceptor": "Ta osoba już posiada to pozwolenie.",
+      "not-allowed": "Nie masz do tego uprawnień.",
+      "closure-checks-incomplete": "Wszystkie cztery kontrole zamknięcia muszą być potwierdzone.",
+      "generic": "Coś poszło nie tak. Sprawdź formularz i spróbuj ponownie."
     }
   }
 }
