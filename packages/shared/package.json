@@ -64,6 +64,10 @@
       "types": "./src/issues-schema.ts",
       "default": "./src/issues-schema.ts"
     },
+    "./coshh": {
+      "types": "./src/coshh.ts",
+      "default": "./src/coshh.ts"
+    },
     "./actions-schema": {
       "types": "./src/actions-schema.ts",
       "default": "./src/actions-schema.ts"
