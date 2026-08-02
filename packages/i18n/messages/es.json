@@ -1367,7 +1367,8 @@
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
-    "coshh": "COSHH"
+    "coshh": "COSHH",
+    "permits": "Permisos"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -4464,6 +4465,284 @@
       "doneRef": "{ref} — {name}",
       "openButton": "Abrir evaluación",
       "newCheckButton": "Nueva comprobación"
+    }
+  },
+  "permits": {
+    "title": "Permisos de trabajo",
+    "subtitle": "Autorización formal, control y cierre de actividades de alto riesgo.",
+    "boardButton": "Panel en vivo",
+    "typesButton": "Tipos de permiso",
+    "newButton": "Nuevo permiso",
+    "attention": {
+      "overdue": "vencidos sin cierre",
+      "expiringSoon": "vencen en 2 horas",
+      "awaitingAcceptance": "esperando aceptación",
+      "suspended": "suspendidos",
+      "draft": "borradores en preparación"
+    },
+    "filters": {
+      "search": "Buscar",
+      "searchPlaceholder": "Título o referencia…",
+      "status": "Estado",
+      "open": "Todos los abiertos",
+      "all": "Todos",
+      "allSites": "Todos"
+    },
+    "columns": {
+      "reference": "Ref.",
+      "permit": "Permiso",
+      "type": "Tipo",
+      "window": "Validez",
+      "acceptor": "Aceptante",
+      "status": "Estado"
+    },
+    "empty": "Ningún permiso coincide con estos filtros.",
+    "emptyCta": "Crear el primer permiso",
+    "categories": {
+      "hot_work": "Trabajo en caliente",
+      "confined_space": "Espacio confinado",
+      "work_at_height": "Trabajo en altura",
+      "electrical": "Eléctrico",
+      "excavation": "Excavación",
+      "roof_work": "Trabajo en cubierta",
+      "asbestos": "Amianto",
+      "lifting": "Izado de cargas",
+      "pressure_systems": "Sistemas a presión",
+      "other": "Otro alto riesgo"
+    },
+    "status": {
+      "draft": "Borrador",
+      "issued": "Emitido",
+      "active": "Activo",
+      "suspended": "Suspendido",
+      "closed": "Cerrado",
+      "cancelled": "Cancelado"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, one {queda # h} other {quedan # h}}",
+      "remainingMinutes": "{minutes, plural, one {queda # min} other {quedan # min}}",
+      "overdueHours": "{hours, plural, one {# h de retraso} other {# h de retraso}}",
+      "overdueMinutes": "{minutes, plural, one {# min de retraso} other {# min de retraso}}"
+    },
+    "board": {
+      "backToRegister": "Registro de permisos",
+      "title": "Panel de permisos en vivo",
+      "subtitle": "Todos los permisos abiertos en todas las instalaciones, ahora mismo. Se actualiza cada minuto.",
+      "lastUpdated": "Actualizado {time}",
+      "counts": {
+        "overdue": "Vencidos — sin cerrar",
+        "active": "Activos",
+        "issued": "Esperando aceptación",
+        "suspended": "Suspendidos"
+      },
+      "empty": "No hay permisos abiertos. Ninguna actividad de alto riesgo está autorizada ahora.",
+      "noSite": "Sin sitio asignado",
+      "reference": "Ref.",
+      "acceptor": "Aceptante"
+    },
+    "new": {
+      "back": "Permisos",
+      "title": "Crear un permiso",
+      "subtitle": "El permiso empieza como borrador — las condiciones previas, evidencias y firmas van antes de la emisión.",
+      "noPermission": "No tiene permiso para crear permisos de trabajo.",
+      "fields": {
+        "type": "Tipo de permiso",
+        "typePlaceholder": "Elija la actividad…",
+        "title": "Título del trabajo",
+        "titlePlaceholder": "p. ej. Soldadura en la línea 2",
+        "description": "Descripción del trabajo",
+        "descriptionPlaceholder": "Qué se hará exactamente, con qué equipos…",
+        "noSite": "Sin sitio",
+        "location": "Zona / ubicación exacta",
+        "locationPlaceholder": "p. ej. Parque de tanques, bahía 4",
+        "validFrom": "Válido desde",
+        "validTo": "Válido hasta",
+        "acceptor": "Aceptante",
+        "acceptorPlaceholder": "Nombre a la persona que acepta el permiso…",
+        "acceptorHint": "La persona responsable del trabajo. Debe aceptar el permiso digitalmente antes de empezar."
+      },
+      "maxDuration": "Duración máxima {hours} h",
+      "willRequire": "Antes de emitir, este tipo requiere:",
+      "requirements": {
+        "authoriser": "firma autorizante",
+        "gasTesting": "resultados de medición de gases",
+        "isolationCertificate": "certificado de aislamiento",
+        "rescuePlan": "plan de rescate"
+      },
+      "preconditionCount": "{count, plural, one {# condición previa a confirmar antes de emitir} other {# condiciones previas a confirmar antes de emitir}}",
+      "conflictWarning": "{count, plural, one {# otro permiso está abierto en este sitio en esta franja} other {# otros permisos están abiertos en este sitio en esta franja}}",
+      "sameArea": "misma zona",
+      "cancel": "Cancelar",
+      "submit": "Crear borrador"
+    },
+    "detail": {
+      "back": "Permisos",
+      "fields": {
+        "site": "Sitio",
+        "location": "Zona",
+        "validFrom": "Válido desde",
+        "validTo": "Válido hasta"
+      },
+      "extensions": "{count, plural, one {(# prórroga)} other {(# prórrogas)}}",
+      "suspendedBanner": "Suspendido por {by} — las condiciones cambiaron. El trabajo no debe continuar hasta reanudarse.",
+      "overdueBanner": "Este permiso venció sin cerrarse. Confirme ahora el estado del trabajo y ciérrelo o prorróguelo.",
+      "conflicts": {
+        "title": "{count, plural, one {# otro permiso abierto se solapa con este en el mismo sitio} other {# otros permisos abiertos se solapan con este en el mismo sitio}}",
+        "sameArea": "· misma zona"
+      },
+      "preconditions": {
+        "title": "Condiciones previas",
+        "progress": "{done}/{total} confirmadas",
+        "none": "Este tipo de permiso no tiene lista de condiciones.",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "Evidencias",
+        "gasReadings": "Mediciones de gases",
+        "requiredBeforeIssue": "requerido antes de emitir",
+        "noReadings": "Aún no hay mediciones registradas.",
+        "substance": "Sustancia",
+        "reading": "Lectura",
+        "unit": "Unidad",
+        "recordReading": "Registrar",
+        "isolationCertificate": "Certificado de aislamiento",
+        "notRecorded": "Aún sin registrar.",
+        "isolationRefPlaceholder": "Referencia del certificado…",
+        "save": "Guardar",
+        "rescuePlan": "Plan de rescate",
+        "rescuePlanPlaceholder": "Cómo se rescataría a una víctima, quién y con qué equipos…",
+        "attachments": "Adjuntos",
+        "kinds": {
+          "isolation_certificate": "Certificado de aislamiento",
+          "rescue_plan": "Plan de rescate",
+          "gas_test": "Medición de gases",
+          "other": "Otro"
+        }
+      },
+      "signatures": {
+        "title": "Firmas",
+        "pending": "Sin firmar todavía",
+        "authoriser": "Ingeniero autorizante / responsable del sitio",
+        "authoriseAction": "Autorizar",
+        "issuer": "Emisor",
+        "issueAction": "Emitir permiso",
+        "acceptor": "Aceptante",
+        "acceptAction": "Aceptar permiso",
+        "acknowledgeConflicts": "He revisado los permisos que se solapan y acepto el riesgo combinado",
+        "awaitingAcceptor": "Esperando la firma del aceptante designado. Solo esa persona puede aceptar."
+      },
+      "actions": {
+        "title": "Acciones del permiso",
+        "suspend": "Suspender",
+        "suspendReason": "¿Por qué se suspende el permiso?",
+        "suspendConfirm": "Suspender permiso",
+        "resume": "Reanudar — es seguro continuar",
+        "extend": "Prorrogar",
+        "extendTo": "Nuevo vencimiento",
+        "extendHint": "Una prórroga puede añadir como máximo {hours} h.",
+        "extendReauthorisation": "Este tipo exige que prorrogue el ingeniero autorizante — la prórroga es la reautorización.",
+        "extendConfirm": "Prorrogar permiso",
+        "handover": "Traspasar",
+        "handoverTo": "Aceptante entrante",
+        "handoverHint": "El permiso vuelve a «Emitido» hasta que el aceptante entrante firme.",
+        "handoverConfirm": "Traspasar",
+        "close": "Cerrar",
+        "closeChecksTitle": "Comprobaciones de cierre — deben confirmarse las cuatro",
+        "closeChecks": {
+          "workComplete": "Trabajo terminado o detenido de forma segura",
+          "areaMadeSafe": "Zona inspeccionada y asegurada",
+          "isolationsRemoved": "Aislamientos retirados o restablecidos según lo acordado",
+          "personnelClear": "Todo el personal contabilizado y fuera de la zona"
+        },
+        "closeNotesPlaceholder": "Notas de cierre (opcional)…",
+        "closeConfirm": "Cerrar permiso",
+        "cancel": "Cancelar permiso",
+        "cancelReason": "¿Por qué se cancela el permiso?",
+        "cancelConfirm": "Cancelar permiso"
+      },
+      "closedLine": "Cerrado por {name} el {time}.",
+      "cancelledLine": "Cancelado por {name} el {time}.",
+      "timeline": {
+        "title": "Historial",
+        "kinds": {
+          "created": "Creado",
+          "updated": "Detalles actualizados",
+          "precondition_checked": "Condición previa confirmada",
+          "precondition_unchecked": "Confirmación retirada",
+          "gas_reading_recorded": "Medición de gases registrada",
+          "attachment_added": "Adjunto añadido",
+          "authorised": "Autorizado",
+          "issued": "Emitido",
+          "accepted": "Aceptado",
+          "suspended": "Suspendido",
+          "resumed": "Reanudado",
+          "extended": "Prorrogado",
+          "handed_over": "Traspasado",
+          "cancelled": "Cancelado",
+          "closed": "Cerrado",
+          "expiry_escalated": "Vencimiento escalado — el permiso venció sin cierre"
+        }
+      }
+    },
+    "types": {
+      "back": "Permisos",
+      "title": "Tipos de permiso",
+      "subtitle": "Los requisitos de control de cada tipo. Los cambios solo afectan a permisos nuevos — los vivos conservan su lista.",
+      "systemBadge": "Estándar",
+      "archivedBadge": "Archivado",
+      "openCount": "{count, plural, one {# permiso abierto} other {# permisos abiertos}}",
+      "restore": "Restaurar",
+      "archive": "Archivar",
+      "flags": {
+        "requiresAuthoriser": "Requiere firma autorizante",
+        "requiresGasTesting": "Requiere medición de gases",
+        "requiresIsolationCertificate": "Requiere certificado de aislamiento",
+        "requiresRescuePlan": "Requiere plan de rescate"
+      },
+      "maxDuration": "Validez máxima",
+      "hours": "horas",
+      "preconditions": "Lista de condiciones previas",
+      "removePrecondition": "Quitar condición",
+      "addPreconditionPlaceholder": "Nuevo punto de la lista…",
+      "addPrecondition": "Añadir",
+      "createTitle": "Añadir un tipo de permiso personalizado",
+      "createHint": "Para actividades fuera de los nueve tipos estándar. Configure sus requisitos tras crearlo.",
+      "createNamePlaceholder": "p. ej. Operaciones de buceo",
+      "createButton": "Añadir tipo"
+    },
+    "errors": {
+      "module-disabled": "Este módulo no está disponible.",
+      "unknown-site": "Ese sitio no existe.",
+      "unknown-user": "Esa persona no es miembro de esta organización.",
+      "type-archived": "Este tipo de permiso está archivado — restáurelo o elija otro.",
+      "duplicate-name": "Ya existe un tipo de permiso con ese nombre.",
+      "duplicate-precondition-id": "Los puntos de la lista deben ser únicos.",
+      "window-invalid": "La ventana de validez debe terminar después de empezar.",
+      "window-too-long": "La ventana de validez supera lo permitido por este tipo.",
+      "window-past": "La ventana de validez ya pasó — actualícela antes de emitir.",
+      "acceptor-required": "Nombre un aceptante antes de emitir.",
+      "issuer-is-acceptor": "El emisor no puede aceptar su propio permiso — nombre a otra persona.",
+      "preconditions-incomplete": "Todas las condiciones previas deben confirmarse antes de emitir.",
+      "gas-test-required": "Registre al menos una medición de gases antes de emitir.",
+      "isolation-certificate-required": "Registre el certificado de aislamiento antes de emitir.",
+      "rescue-plan-required": "Registre el plan de rescate antes de emitir.",
+      "authorisation-required": "El ingeniero autorizante debe firmar antes de la emisión.",
+      "simops-conflict": "Otros permisos se solapan con este — revíselos y confírmelos para emitir.",
+      "invalid-transition": "Esa acción no está disponible en el estado actual del permiso.",
+      "not-draft": "Solo se pueden editar los borradores.",
+      "unknown-precondition": "Ese punto de la lista ya no existe.",
+      "already-authorised": "Este permiso ya está autorizado.",
+      "authoriser-is-acceptor": "El aceptante no puede autorizar su propio permiso.",
+      "not-the-acceptor": "Solo el aceptante designado puede aceptar este permiso.",
+      "resume-confirmation-required": "Confirme que es seguro reanudar antes de continuar.",
+      "extension-not-later": "El nuevo vencimiento debe ser posterior al actual.",
+      "extension-too-long": "Una prórroga no puede superar la duración máxima del tipo.",
+      "reauthorisation-required": "Solo el ingeniero autorizante puede prorrogar este permiso.",
+      "acceptor-is-issuer": "El emisor no puede convertirse en aceptante.",
+      "same-acceptor": "Esa persona ya tiene el permiso.",
+      "not-allowed": "No tiene permiso para hacer eso.",
+      "closure-checks-incomplete": "Deben confirmarse las cuatro comprobaciones de cierre.",
+      "generic": "Algo salió mal. Revise el formulario e inténtelo de nuevo."
     }
   }
 }

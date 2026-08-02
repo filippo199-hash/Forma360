@@ -22,6 +22,7 @@ import { inspectionsExportDeps } from '../../../../src/server/inspections-export
 import { issuesDeps } from '../../../../src/server/issues-deps';
 import { riskAssessmentsDeps } from '../../../../src/server/risk-assessments-deps';
 import { coshhDeps } from '../../../../src/server/coshh-deps';
+import { permitsDeps } from '../../../../src/server/permits-deps';
 import { createContext } from '../../../../src/server/trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps.
 import '../../../../src/server/users-deps';
@@ -39,6 +40,7 @@ const appRouter = buildAppRouter({
   headsUps: headsUpsDeps,
   riskAssessments: riskAssessmentsDeps,
   coshh: coshhDeps,
+  permits: permitsDeps,
 });
 
 async function handler(req: Request): Promise<Response> {

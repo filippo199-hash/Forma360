@@ -1367,7 +1367,8 @@
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
-    "coshh": "Gefahrstoffe"
+    "coshh": "Gefahrstoffe",
+    "permits": "Freigaben"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -4464,6 +4465,284 @@
       "doneRef": "{ref} — {name}",
       "openButton": "Beurteilung öffnen",
       "newCheckButton": "Neue Prüfung"
+    }
+  },
+  "permits": {
+    "title": "Arbeitsfreigaben",
+    "subtitle": "Formelle Freigabe, Kontrolle und Abschluss von Hochrisikoarbeiten.",
+    "boardButton": "Live-Übersicht",
+    "typesButton": "Freigabetypen",
+    "newButton": "Neue Freigabe",
+    "attention": {
+      "overdue": "abgelaufen ohne Abschluss",
+      "expiringSoon": "laufen in 2 Stunden ab",
+      "awaitingAcceptance": "warten auf Annahme",
+      "suspended": "ausgesetzt",
+      "draft": "Entwürfe in Vorbereitung"
+    },
+    "filters": {
+      "search": "Suche",
+      "searchPlaceholder": "Titel oder Referenz…",
+      "status": "Status",
+      "open": "Alle offenen",
+      "all": "Alle",
+      "allSites": "Alle"
+    },
+    "columns": {
+      "reference": "Ref.",
+      "permit": "Freigabe",
+      "type": "Typ",
+      "window": "Gültigkeit",
+      "acceptor": "Annehmende Person",
+      "status": "Status"
+    },
+    "empty": "Keine Freigaben entsprechen diesen Filtern.",
+    "emptyCta": "Erste Freigabe erstellen",
+    "categories": {
+      "hot_work": "Heißarbeiten",
+      "confined_space": "Enger Raum",
+      "work_at_height": "Höhenarbeiten",
+      "electrical": "Elektrik",
+      "excavation": "Erdarbeiten",
+      "roof_work": "Dacharbeiten",
+      "asbestos": "Asbest",
+      "lifting": "Hebearbeiten",
+      "pressure_systems": "Drucksysteme",
+      "other": "Sonstiges Hochrisiko"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "issued": "Ausgestellt",
+      "active": "Aktiv",
+      "suspended": "Ausgesetzt",
+      "closed": "Abgeschlossen",
+      "cancelled": "Storniert"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, one {noch # Std.} other {noch # Std.}}",
+      "remainingMinutes": "{minutes, plural, one {noch # Min.} other {noch # Min.}}",
+      "overdueHours": "{hours, plural, one {# Std. überfällig} other {# Std. überfällig}}",
+      "overdueMinutes": "{minutes, plural, one {# Min. überfällig} other {# Min. überfällig}}"
+    },
+    "board": {
+      "backToRegister": "Freigabenregister",
+      "title": "Live-Freigabenübersicht",
+      "subtitle": "Alle offenen Freigaben im gesamten Bestand, jetzt. Aktualisiert sich jede Minute.",
+      "lastUpdated": "Aktualisiert {time}",
+      "counts": {
+        "overdue": "Überfällig — nicht abgeschlossen",
+        "active": "Aktiv",
+        "issued": "Warten auf Annahme",
+        "suspended": "Ausgesetzt"
+      },
+      "empty": "Keine offenen Freigaben. Derzeit sind keine Hochrisikoarbeiten freigegeben.",
+      "noSite": "Kein Standort zugewiesen",
+      "reference": "Ref.",
+      "acceptor": "Annehmende Person"
+    },
+    "new": {
+      "back": "Freigaben",
+      "title": "Freigabe erstellen",
+      "subtitle": "Die Freigabe beginnt als Entwurf — Voraussetzungen, Nachweise und Unterschriften folgen vor der Ausstellung.",
+      "noPermission": "Sie haben keine Berechtigung, Freigaben zu erstellen.",
+      "fields": {
+        "type": "Freigabetyp",
+        "typePlaceholder": "Tätigkeit wählen…",
+        "title": "Titel der Arbeit",
+        "titlePlaceholder": "z. B. Schweißen an Linie 2",
+        "description": "Beschreibung der Arbeit",
+        "descriptionPlaceholder": "Was genau wird gemacht, mit welcher Ausrüstung…",
+        "noSite": "Kein Standort",
+        "location": "Bereich / genauer Ort",
+        "locationPlaceholder": "z. B. Tanklager, Bucht 4",
+        "validFrom": "Gültig ab",
+        "validTo": "Gültig bis",
+        "acceptor": "Annehmende Person",
+        "acceptorPlaceholder": "Person benennen, die die Freigabe annimmt…",
+        "acceptorHint": "Die für die Arbeit verantwortliche Person. Sie muss die Freigabe digital annehmen, bevor die Arbeit beginnt."
+      },
+      "maxDuration": "Maximale Dauer {hours} Std.",
+      "willRequire": "Vor der Ausstellung verlangt dieser Typ:",
+      "requirements": {
+        "authoriser": "freigebende Unterschrift",
+        "gasTesting": "Gasmessergebnisse",
+        "isolationCertificate": "Freischaltzertifikat",
+        "rescuePlan": "Rettungsplan"
+      },
+      "preconditionCount": "{count, plural, one {# Voraussetzung vor Ausstellung zu bestätigen} other {# Voraussetzungen vor Ausstellung zu bestätigen}}",
+      "conflictWarning": "{count, plural, one {# weitere Freigabe ist an diesem Standort in diesem Zeitfenster offen} other {# weitere Freigaben sind an diesem Standort in diesem Zeitfenster offen}}",
+      "sameArea": "gleicher Bereich",
+      "cancel": "Abbrechen",
+      "submit": "Entwurf erstellen"
+    },
+    "detail": {
+      "back": "Freigaben",
+      "fields": {
+        "site": "Standort",
+        "location": "Bereich",
+        "validFrom": "Gültig ab",
+        "validTo": "Gültig bis"
+      },
+      "extensions": "{count, plural, one {(# Verlängerung)} other {(# Verlängerungen)}}",
+      "suspendedBanner": "Ausgesetzt von {by} — Bedingungen haben sich geändert. Die Arbeit darf erst nach Wiederaufnahme fortgesetzt werden.",
+      "overdueBanner": "Diese Freigabe ist abgelaufen, ohne abgeschlossen zu werden. Prüfen Sie jetzt den Stand der Arbeit und schließen oder verlängern Sie sie.",
+      "conflicts": {
+        "title": "{count, plural, one {# weitere offene Freigabe überschneidet sich am selben Standort} other {# weitere offene Freigaben überschneiden sich am selben Standort}}",
+        "sameArea": "· gleicher Bereich"
+      },
+      "preconditions": {
+        "title": "Voraussetzungen",
+        "progress": "{done}/{total} bestätigt",
+        "none": "Dieser Freigabetyp hat keine Checkliste.",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "Nachweise",
+        "gasReadings": "Gasmessergebnisse",
+        "requiredBeforeIssue": "vor Ausstellung erforderlich",
+        "noReadings": "Noch keine Messwerte erfasst.",
+        "substance": "Stoff",
+        "reading": "Messwert",
+        "unit": "Einheit",
+        "recordReading": "Erfassen",
+        "isolationCertificate": "Freischaltzertifikat",
+        "notRecorded": "Noch nicht erfasst.",
+        "isolationRefPlaceholder": "Zertifikatsreferenz…",
+        "save": "Speichern",
+        "rescuePlan": "Rettungsplan",
+        "rescuePlanPlaceholder": "Wie eine verunfallte Person gerettet würde, von wem, mit welcher Ausrüstung…",
+        "attachments": "Anhänge",
+        "kinds": {
+          "isolation_certificate": "Freischaltzertifikat",
+          "rescue_plan": "Rettungsplan",
+          "gas_test": "Gasmessung",
+          "other": "Sonstiges"
+        }
+      },
+      "signatures": {
+        "title": "Unterschriften",
+        "pending": "Noch nicht unterschrieben",
+        "authoriser": "Freigebende Fachkraft / Standortleitung",
+        "authoriseAction": "Freigeben",
+        "issuer": "Aussteller",
+        "issueAction": "Freigabe ausstellen",
+        "acceptor": "Annehmende Person",
+        "acceptAction": "Freigabe annehmen",
+        "acknowledgeConflicts": "Ich habe die überlappenden Freigaben geprüft und akzeptiere das kombinierte Risiko",
+        "awaitingAcceptor": "Warten auf die benannte annehmende Person. Nur sie kann annehmen."
+      },
+      "actions": {
+        "title": "Aktionen",
+        "suspend": "Aussetzen",
+        "suspendReason": "Warum wird die Freigabe ausgesetzt?",
+        "suspendConfirm": "Freigabe aussetzen",
+        "resume": "Fortsetzen — sicher weiterzuarbeiten",
+        "extend": "Verlängern",
+        "extendTo": "Neues Ablaufdatum",
+        "extendHint": "Eine Verlängerung darf höchstens {hours} Std. hinzufügen.",
+        "extendReauthorisation": "Dieser Typ verlangt die Verlängerung durch die freigebende Fachkraft — die Verlängerung ist die erneute Freigabe.",
+        "extendConfirm": "Freigabe verlängern",
+        "handover": "Übergeben",
+        "handoverTo": "Übernehmende Person",
+        "handoverHint": "Die Freigabe kehrt zu „Ausgestellt“ zurück, bis die übernehmende Person unterschreibt.",
+        "handoverConfirm": "Übergeben",
+        "close": "Abschließen",
+        "closeChecksTitle": "Abschlussprüfungen — alle vier müssen bestätigt werden",
+        "closeChecks": {
+          "workComplete": "Arbeit abgeschlossen oder sicher beendet",
+          "areaMadeSafe": "Bereich geprüft und gesichert",
+          "isolationsRemoved": "Freischaltungen wie vereinbart aufgehoben oder wiederhergestellt",
+          "personnelClear": "Alle Personen erfasst und außerhalb des Bereichs"
+        },
+        "closeNotesPlaceholder": "Abschlussnotizen (optional)…",
+        "closeConfirm": "Freigabe abschließen",
+        "cancel": "Freigabe stornieren",
+        "cancelReason": "Warum wird die Freigabe storniert?",
+        "cancelConfirm": "Freigabe stornieren"
+      },
+      "closedLine": "Abgeschlossen von {name} am {time}.",
+      "cancelledLine": "Storniert von {name} am {time}.",
+      "timeline": {
+        "title": "Verlauf",
+        "kinds": {
+          "created": "Erstellt",
+          "updated": "Details aktualisiert",
+          "precondition_checked": "Voraussetzung bestätigt",
+          "precondition_unchecked": "Bestätigung zurückgenommen",
+          "gas_reading_recorded": "Gasmesswert erfasst",
+          "attachment_added": "Anhang hinzugefügt",
+          "authorised": "Freigegeben",
+          "issued": "Ausgestellt",
+          "accepted": "Angenommen",
+          "suspended": "Ausgesetzt",
+          "resumed": "Fortgesetzt",
+          "extended": "Verlängert",
+          "handed_over": "Übergeben",
+          "cancelled": "Storniert",
+          "closed": "Abgeschlossen",
+          "expiry_escalated": "Ablauf eskaliert — Freigabe ohne Abschluss abgelaufen"
+        }
+      }
+    },
+    "types": {
+      "back": "Freigaben",
+      "title": "Freigabetypen",
+      "subtitle": "Die Kontrollanforderungen je Freigabetyp. Änderungen gelten nur für neue Freigaben — laufende behalten ihre Checkliste.",
+      "systemBadge": "Standard",
+      "archivedBadge": "Archiviert",
+      "openCount": "{count, plural, one {# offene Freigabe} other {# offene Freigaben}}",
+      "restore": "Wiederherstellen",
+      "archive": "Archivieren",
+      "flags": {
+        "requiresAuthoriser": "Freigebende Unterschrift erforderlich",
+        "requiresGasTesting": "Gasmessung erforderlich",
+        "requiresIsolationCertificate": "Freischaltzertifikat erforderlich",
+        "requiresRescuePlan": "Rettungsplan erforderlich"
+      },
+      "maxDuration": "Maximale Gültigkeit",
+      "hours": "Stunden",
+      "preconditions": "Voraussetzungs-Checkliste",
+      "removePrecondition": "Voraussetzung entfernen",
+      "addPreconditionPlaceholder": "Neuer Prüfpunkt…",
+      "addPrecondition": "Hinzufügen",
+      "createTitle": "Eigenen Freigabetyp anlegen",
+      "createHint": "Für Tätigkeiten außerhalb der neun Standardtypen. Anforderungen nach dem Anlegen konfigurieren.",
+      "createNamePlaceholder": "z. B. Taucharbeiten",
+      "createButton": "Typ anlegen"
+    },
+    "errors": {
+      "module-disabled": "Dieses Modul ist nicht verfügbar.",
+      "unknown-site": "Dieser Standort existiert nicht.",
+      "unknown-user": "Diese Person ist kein Mitglied dieser Organisation.",
+      "type-archived": "Dieser Freigabetyp ist archiviert — wiederherstellen oder einen anderen wählen.",
+      "duplicate-name": "Ein Freigabetyp mit diesem Namen existiert bereits.",
+      "duplicate-precondition-id": "Prüfpunkte müssen eindeutig sein.",
+      "window-invalid": "Das Gültigkeitsfenster muss nach seinem Beginn enden.",
+      "window-too-long": "Das Gültigkeitsfenster ist länger, als dieser Freigabetyp erlaubt.",
+      "window-past": "Das Gültigkeitsfenster ist bereits vorbei — vor der Ausstellung aktualisieren.",
+      "acceptor-required": "Vor der Ausstellung eine annehmende Person benennen.",
+      "issuer-is-acceptor": "Der Aussteller kann die eigene Freigabe nicht annehmen — eine andere Person benennen.",
+      "preconditions-incomplete": "Vor der Ausstellung muss jede Voraussetzung bestätigt sein.",
+      "gas-test-required": "Vor der Ausstellung mindestens ein Gasmessergebnis erfassen.",
+      "isolation-certificate-required": "Vor der Ausstellung das Freischaltzertifikat erfassen.",
+      "rescue-plan-required": "Vor der Ausstellung den Rettungsplan erfassen.",
+      "authorisation-required": "Die freigebende Fachkraft muss vor der Ausstellung unterschreiben.",
+      "simops-conflict": "Andere Freigaben überschneiden sich mit dieser — prüfen und bestätigen, um auszustellen.",
+      "invalid-transition": "Diese Aktion ist im aktuellen Zustand der Freigabe nicht verfügbar.",
+      "not-draft": "Nur Entwürfe können bearbeitet werden.",
+      "unknown-precondition": "Dieser Prüfpunkt existiert nicht mehr.",
+      "already-authorised": "Diese Freigabe ist bereits freigegeben.",
+      "authoriser-is-acceptor": "Die annehmende Person kann die eigene Freigabe nicht freigeben.",
+      "not-the-acceptor": "Nur die benannte annehmende Person kann diese Freigabe annehmen.",
+      "resume-confirmation-required": "Bestätigen Sie vor dem Fortsetzen, dass es sicher ist.",
+      "extension-not-later": "Das neue Ablaufdatum muss nach dem aktuellen liegen.",
+      "extension-too-long": "Eine Verlängerung darf die Maximaldauer des Typs nicht überschreiten.",
+      "reauthorisation-required": "Nur die freigebende Fachkraft kann diese Freigabe verlängern.",
+      "acceptor-is-issuer": "Der Aussteller kann nicht zur annehmenden Person werden.",
+      "same-acceptor": "Diese Person hält die Freigabe bereits.",
+      "not-allowed": "Sie haben dazu keine Berechtigung.",
+      "closure-checks-incomplete": "Alle vier Abschlussprüfungen müssen bestätigt werden.",
+      "generic": "Etwas ist schiefgelaufen. Prüfen Sie das Formular und versuchen Sie es erneut."
     }
   }
 }

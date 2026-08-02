@@ -1,0 +1,8 @@
+{
+  "subject": "Overdue permit — {referenceNumber} {title} passed its expiry without being closed",
+  "preheader": "An open permit on {productName} is past its validity window. Someone may still be in there.",
+  "greeting": "Hello {recipientName},",
+  "body": "The {typeName} permit \"{title}\" ({referenceNumber}){siteLine} expired at {expiredAt} UTC and has not been closed, cancelled or extended. Work may still be in progress under an expired permit. Please confirm the state of the work now, then close the permit with the close-out checks, or extend it with re-authorisation if the work must continue.",
+  "cta": "Open the permit",
+  "footer": "You are receiving this because you are a signature party (issuer, acceptor or authoriser) on this permit in {productName}."
+}

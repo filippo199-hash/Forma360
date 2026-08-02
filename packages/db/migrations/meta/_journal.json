@@ -414,6 +414,13 @@
       "when": 1780000060000,
       "tag": "0058_risk_assessment_governance",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1780000070000,
+      "tag": "0059_permits",
+      "breakpoints": true
     }
   ]
 }

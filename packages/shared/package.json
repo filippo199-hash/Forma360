@@ -79,6 +79,10 @@
     "./risk-matrix": {
       "types": "./src/risk-matrix.ts",
       "default": "./src/risk-matrix.ts"
+    },
+    "./permits": {
+      "types": "./src/permits.ts",
+      "default": "./src/permits.ts"
     }
   },
   "scripts": {

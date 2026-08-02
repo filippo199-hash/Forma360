@@ -88,7 +88,8 @@
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
-    "coshh": "COSHH"
+    "coshh": "COSHH",
+    "permits": "Permits"
   },
   "ai": {
     "emptyTitle": "How can I help?",
@@ -4694,6 +4695,284 @@
       "doneRef": "{ref} — {name}",
       "openButton": "Open assessment",
       "newCheckButton": "New check"
+    }
+  },
+  "permits": {
+    "title": "Permits to work",
+    "subtitle": "Formal authorisation, control and closure of high-risk activities.",
+    "boardButton": "Live board",
+    "typesButton": "Permit types",
+    "newButton": "New permit",
+    "attention": {
+      "overdue": "past expiry without closure",
+      "expiringSoon": "expiring within 2 hours",
+      "awaitingAcceptance": "awaiting acceptance",
+      "suspended": "suspended",
+      "draft": "drafts in preparation"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Title or reference…",
+      "status": "Status",
+      "open": "All open",
+      "all": "All",
+      "allSites": "All"
+    },
+    "columns": {
+      "reference": "Ref",
+      "permit": "Permit",
+      "type": "Type",
+      "window": "Validity",
+      "acceptor": "Acceptor",
+      "status": "Status"
+    },
+    "empty": "No permits match these filters.",
+    "emptyCta": "Raise the first permit",
+    "categories": {
+      "hot_work": "Hot work",
+      "confined_space": "Confined space",
+      "work_at_height": "Work at height",
+      "electrical": "Electrical",
+      "excavation": "Excavation",
+      "roof_work": "Roof work",
+      "asbestos": "Asbestos",
+      "lifting": "Lifting",
+      "pressure_systems": "Pressure systems",
+      "other": "Other high-risk"
+    },
+    "status": {
+      "draft": "Draft",
+      "issued": "Issued",
+      "active": "Active",
+      "suspended": "Suspended",
+      "closed": "Closed",
+      "cancelled": "Cancelled"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, one {# h left} other {# h left}}",
+      "remainingMinutes": "{minutes, plural, one {# min left} other {# min left}}",
+      "overdueHours": "{hours, plural, one {# h overdue} other {# h overdue}}",
+      "overdueMinutes": "{minutes, plural, one {# min overdue} other {# min overdue}}"
+    },
+    "board": {
+      "backToRegister": "Permit register",
+      "title": "Live permit board",
+      "subtitle": "Every open permit across the estate, right now. Refreshes every minute.",
+      "lastUpdated": "Updated {time}",
+      "counts": {
+        "overdue": "Overdue — not closed",
+        "active": "Active",
+        "issued": "Awaiting acceptance",
+        "suspended": "Suspended"
+      },
+      "empty": "No open permits. Nothing high-risk is authorised right now.",
+      "noSite": "No site assigned",
+      "reference": "Ref",
+      "acceptor": "Acceptor"
+    },
+    "new": {
+      "back": "Permits",
+      "title": "Raise a permit",
+      "subtitle": "The permit starts as a draft — preconditions, evidence and signatures happen before issue.",
+      "noPermission": "You do not have permission to raise permits.",
+      "fields": {
+        "type": "Permit type",
+        "typePlaceholder": "Choose the activity…",
+        "title": "Work title",
+        "titlePlaceholder": "e.g. Welding on line 2",
+        "description": "Description of the work",
+        "descriptionPlaceholder": "What exactly will be done, with what equipment…",
+        "noSite": "No site",
+        "location": "Area / exact location",
+        "locationPlaceholder": "e.g. Tank farm, bay 4",
+        "validFrom": "Valid from",
+        "validTo": "Valid to",
+        "acceptor": "Acceptor",
+        "acceptorPlaceholder": "Name the person accepting the permit…",
+        "acceptorHint": "The person in charge of the work. They must digitally accept the permit before work starts."
+      },
+      "maxDuration": "Maximum duration {hours} h",
+      "willRequire": "Before issue this type requires:",
+      "requirements": {
+        "authoriser": "authorising signature",
+        "gasTesting": "gas test results",
+        "isolationCertificate": "isolation certificate",
+        "rescuePlan": "rescue plan"
+      },
+      "preconditionCount": "{count, plural, one {# precondition to confirm before issue} other {# preconditions to confirm before issue}}",
+      "conflictWarning": "{count, plural, one {# other permit is open at this site in this window} other {# other permits are open at this site in this window}}",
+      "sameArea": "same area",
+      "cancel": "Cancel",
+      "submit": "Create draft permit"
+    },
+    "detail": {
+      "back": "Permits",
+      "fields": {
+        "site": "Site",
+        "location": "Area",
+        "validFrom": "Valid from",
+        "validTo": "Valid to"
+      },
+      "extensions": "{count, plural, one {(# extension)} other {(# extensions)}}",
+      "suspendedBanner": "Suspended by {by} — conditions changed. Work must not continue until resumed.",
+      "overdueBanner": "This permit passed its expiry without being closed. Confirm the state of the work now, then close or extend it.",
+      "conflicts": {
+        "title": "{count, plural, one {# other open permit overlaps this one at the same site} other {# other open permits overlap this one at the same site}}",
+        "sameArea": "· same area"
+      },
+      "preconditions": {
+        "title": "Preconditions",
+        "progress": "{done}/{total} confirmed",
+        "none": "This permit type has no precondition checklist.",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "Evidence",
+        "gasReadings": "Gas test results",
+        "requiredBeforeIssue": "required before issue",
+        "noReadings": "No readings recorded yet.",
+        "substance": "Substance",
+        "reading": "Reading",
+        "unit": "Unit",
+        "recordReading": "Record",
+        "isolationCertificate": "Isolation certificate",
+        "notRecorded": "Not recorded yet.",
+        "isolationRefPlaceholder": "Certificate reference…",
+        "save": "Save",
+        "rescuePlan": "Rescue plan",
+        "rescuePlanPlaceholder": "How a casualty would be rescued, by whom, with what equipment…",
+        "attachments": "Attachments",
+        "kinds": {
+          "isolation_certificate": "Isolation certificate",
+          "rescue_plan": "Rescue plan",
+          "gas_test": "Gas test",
+          "other": "Other"
+        }
+      },
+      "signatures": {
+        "title": "Signatures",
+        "pending": "Not signed yet",
+        "authoriser": "Authorising engineer / site controller",
+        "authoriseAction": "Authorise",
+        "issuer": "Issuer",
+        "issueAction": "Issue permit",
+        "acceptor": "Acceptor",
+        "acceptAction": "Accept permit",
+        "acknowledgeConflicts": "I have reviewed the overlapping permits and accept the combined risk",
+        "awaitingAcceptor": "Waiting for the named acceptor to sign on. Only they can accept."
+      },
+      "actions": {
+        "title": "Permit actions",
+        "suspend": "Suspend",
+        "suspendReason": "Why is the permit being suspended?",
+        "suspendConfirm": "Suspend permit",
+        "resume": "Resume — safe to continue",
+        "extend": "Extend",
+        "extendTo": "New expiry",
+        "extendHint": "One extension may add at most {hours} h.",
+        "extendReauthorisation": "This type requires the authorising engineer to extend — the extension is the re-authorisation.",
+        "extendConfirm": "Extend permit",
+        "handover": "Hand over",
+        "handoverTo": "Incoming acceptor",
+        "handoverHint": "The permit returns to Issued until the incoming acceptor signs on.",
+        "handoverConfirm": "Hand over",
+        "close": "Close",
+        "closeChecksTitle": "Close-out checks — all four must be confirmed",
+        "closeChecks": {
+          "workComplete": "Work complete or stopped safely",
+          "areaMadeSafe": "Area inspected and made safe",
+          "isolationsRemoved": "Isolations removed or reinstated as agreed",
+          "personnelClear": "All personnel accounted for and clear"
+        },
+        "closeNotesPlaceholder": "Closure notes (optional)…",
+        "closeConfirm": "Close permit",
+        "cancel": "Cancel permit",
+        "cancelReason": "Why is the permit being cancelled?",
+        "cancelConfirm": "Cancel permit"
+      },
+      "closedLine": "Closed by {name} on {time}.",
+      "cancelledLine": "Cancelled by {name} on {time}.",
+      "timeline": {
+        "title": "History",
+        "kinds": {
+          "created": "Created",
+          "updated": "Details updated",
+          "precondition_checked": "Precondition confirmed",
+          "precondition_unchecked": "Precondition unconfirmed",
+          "gas_reading_recorded": "Gas reading recorded",
+          "attachment_added": "Attachment added",
+          "authorised": "Authorised",
+          "issued": "Issued",
+          "accepted": "Accepted",
+          "suspended": "Suspended",
+          "resumed": "Resumed",
+          "extended": "Extended",
+          "handed_over": "Handed over",
+          "cancelled": "Cancelled",
+          "closed": "Closed",
+          "expiry_escalated": "Expiry escalated — permit passed its validity without closure"
+        }
+      }
+    },
+    "types": {
+      "back": "Permits",
+      "title": "Permit types",
+      "subtitle": "The control requirements each permit type enforces. Changes apply to new permits only — live permits keep the checklist they were created with.",
+      "systemBadge": "Standard",
+      "archivedBadge": "Archived",
+      "openCount": "{count, plural, one {# open permit} other {# open permits}}",
+      "restore": "Restore",
+      "archive": "Archive",
+      "flags": {
+        "requiresAuthoriser": "Authorising signature required",
+        "requiresGasTesting": "Gas testing required",
+        "requiresIsolationCertificate": "Isolation certificate required",
+        "requiresRescuePlan": "Rescue plan required"
+      },
+      "maxDuration": "Maximum validity",
+      "hours": "hours",
+      "preconditions": "Precondition checklist",
+      "removePrecondition": "Remove precondition",
+      "addPreconditionPlaceholder": "New checklist item…",
+      "addPrecondition": "Add",
+      "createTitle": "Add a custom permit type",
+      "createHint": "For activities outside the nine standard types. Configure its requirements after creating it.",
+      "createNamePlaceholder": "e.g. Diving operations",
+      "createButton": "Add type"
+    },
+    "errors": {
+      "module-disabled": "This module is not available.",
+      "unknown-site": "That site does not exist.",
+      "unknown-user": "That person is not a member of this organisation.",
+      "type-archived": "This permit type is archived — restore it or pick another.",
+      "duplicate-name": "A permit type with that name already exists.",
+      "duplicate-precondition-id": "Checklist items must be unique.",
+      "window-invalid": "The validity window must end after it starts.",
+      "window-too-long": "The validity window is longer than this permit type allows.",
+      "window-past": "The validity window has already passed — update it before issuing.",
+      "acceptor-required": "Name an acceptor before issuing.",
+      "issuer-is-acceptor": "The issuer cannot accept their own permit — name a different acceptor.",
+      "preconditions-incomplete": "Every precondition must be confirmed before issue.",
+      "gas-test-required": "Record at least one gas test result before issue.",
+      "isolation-certificate-required": "Record the isolation certificate before issue.",
+      "rescue-plan-required": "Record the rescue plan before issue.",
+      "authorisation-required": "The authorising engineer must sign before issue.",
+      "simops-conflict": "Other permits overlap this one — review and acknowledge them to issue.",
+      "invalid-transition": "That action is not available in the permit's current state.",
+      "not-draft": "Only draft permits can be edited.",
+      "unknown-precondition": "That checklist item no longer exists.",
+      "already-authorised": "This permit is already authorised.",
+      "authoriser-is-acceptor": "The acceptor cannot authorise their own permit.",
+      "not-the-acceptor": "Only the named acceptor can accept this permit.",
+      "resume-confirmation-required": "Confirm it is safe to resume before continuing.",
+      "extension-not-later": "The new expiry must be after the current one.",
+      "extension-too-long": "One extension may not add more than the type's maximum duration.",
+      "reauthorisation-required": "Only the authorising engineer can extend this permit.",
+      "acceptor-is-issuer": "The issuer cannot become the acceptor.",
+      "same-acceptor": "That person already holds the permit.",
+      "not-allowed": "You do not have permission to do that.",
+      "closure-checks-incomplete": "All four close-out checks must be confirmed to close the permit.",
+      "generic": "Something went wrong. Check the form and try again."
     }
   }
 }

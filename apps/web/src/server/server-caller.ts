@@ -24,6 +24,7 @@ import { inspectionsDeps } from './inspections-deps';
 import { inspectionsExportDeps } from './inspections-export-deps';
 import { issuesDeps } from './issues-deps';
 import { logger } from './logger';
+import { permitsDeps } from './permits-deps';
 import { riskAssessmentsDeps } from './risk-assessments-deps';
 import { enqueue } from './trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps,
@@ -42,6 +43,7 @@ const appRouter = buildAppRouter({
   headsUps: headsUpsDeps,
   riskAssessments: riskAssessmentsDeps,
   coshh: coshhDeps,
+  permits: permitsDeps,
 });
 
 export type ServerCaller = ReturnType<typeof appRouter.createCaller>;

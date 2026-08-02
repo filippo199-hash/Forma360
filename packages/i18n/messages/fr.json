@@ -1367,7 +1367,8 @@
     "sitesAndProjects": "Sites & Projects",
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
-    "coshh": "COSHH"
+    "coshh": "COSHH",
+    "permits": "Permis"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -4464,6 +4465,284 @@
       "doneRef": "{ref} — {name}",
       "openButton": "Ouvrir l’évaluation",
       "newCheckButton": "Nouveau contrôle"
+    }
+  },
+  "permits": {
+    "title": "Permis de travail",
+    "subtitle": "Autorisation formelle, contrôle et clôture des activités à haut risque.",
+    "boardButton": "Tableau en direct",
+    "typesButton": "Types de permis",
+    "newButton": "Nouveau permis",
+    "attention": {
+      "overdue": "expirés sans clôture",
+      "expiringSoon": "expirent dans 2 heures",
+      "awaitingAcceptance": "en attente d'acceptation",
+      "suspended": "suspendus",
+      "draft": "brouillons en préparation"
+    },
+    "filters": {
+      "search": "Rechercher",
+      "searchPlaceholder": "Titre ou référence…",
+      "status": "Statut",
+      "open": "Tous les ouverts",
+      "all": "Tous",
+      "allSites": "Tous"
+    },
+    "columns": {
+      "reference": "Réf.",
+      "permit": "Permis",
+      "type": "Type",
+      "window": "Validité",
+      "acceptor": "Accepteur",
+      "status": "Statut"
+    },
+    "empty": "Aucun permis ne correspond à ces filtres.",
+    "emptyCta": "Créer le premier permis",
+    "categories": {
+      "hot_work": "Travail par point chaud",
+      "confined_space": "Espace confiné",
+      "work_at_height": "Travail en hauteur",
+      "electrical": "Électrique",
+      "excavation": "Fouilles",
+      "roof_work": "Travaux en toiture",
+      "asbestos": "Amiante",
+      "lifting": "Levage",
+      "pressure_systems": "Systèmes sous pression",
+      "other": "Autre haut risque"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "issued": "Délivré",
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "closed": "Clôturé",
+      "cancelled": "Annulé"
+    },
+    "countdown": {
+      "remainingHours": "{hours, plural, one {# h restante} other {# h restantes}}",
+      "remainingMinutes": "{minutes, plural, one {# min restante} other {# min restantes}}",
+      "overdueHours": "{hours, plural, one {# h de dépassement} other {# h de dépassement}}",
+      "overdueMinutes": "{minutes, plural, one {# min de dépassement} other {# min de dépassement}}"
+    },
+    "board": {
+      "backToRegister": "Registre des permis",
+      "title": "Tableau des permis en direct",
+      "subtitle": "Tous les permis ouverts sur l'ensemble du parc, en ce moment. Actualisé chaque minute.",
+      "lastUpdated": "Mis à jour {time}",
+      "counts": {
+        "overdue": "Dépassés — non clôturés",
+        "active": "Actifs",
+        "issued": "En attente d'acceptation",
+        "suspended": "Suspendus"
+      },
+      "empty": "Aucun permis ouvert. Aucune activité à haut risque n'est autorisée en ce moment.",
+      "noSite": "Aucun site attribué",
+      "reference": "Réf.",
+      "acceptor": "Accepteur"
+    },
+    "new": {
+      "back": "Permis",
+      "title": "Créer un permis",
+      "subtitle": "Le permis démarre en brouillon — conditions préalables, preuves et signatures viennent avant la délivrance.",
+      "noPermission": "Vous n'avez pas l'autorisation de créer des permis.",
+      "fields": {
+        "type": "Type de permis",
+        "typePlaceholder": "Choisir l'activité…",
+        "title": "Titre des travaux",
+        "titlePlaceholder": "p. ex. Soudage sur la ligne 2",
+        "description": "Description des travaux",
+        "descriptionPlaceholder": "Ce qui sera fait exactement, avec quel matériel…",
+        "noSite": "Aucun site",
+        "location": "Zone / emplacement exact",
+        "locationPlaceholder": "p. ex. Parc à réservoirs, baie 4",
+        "validFrom": "Valide du",
+        "validTo": "Valide jusqu'au",
+        "acceptor": "Accepteur",
+        "acceptorPlaceholder": "Désigner la personne qui accepte le permis…",
+        "acceptorHint": "La personne responsable des travaux. Elle doit accepter le permis numériquement avant le début des travaux."
+      },
+      "maxDuration": "Durée maximale {hours} h",
+      "willRequire": "Avant délivrance, ce type exige :",
+      "requirements": {
+        "authoriser": "signature d'autorisation",
+        "gasTesting": "résultats de mesures de gaz",
+        "isolationCertificate": "certificat de consignation",
+        "rescuePlan": "plan de sauvetage"
+      },
+      "preconditionCount": "{count, plural, one {# condition préalable à confirmer avant délivrance} other {# conditions préalables à confirmer avant délivrance}}",
+      "conflictWarning": "{count, plural, one {# autre permis est ouvert sur ce site sur ce créneau} other {# autres permis sont ouverts sur ce site sur ce créneau}}",
+      "sameArea": "même zone",
+      "cancel": "Annuler",
+      "submit": "Créer le brouillon"
+    },
+    "detail": {
+      "back": "Permis",
+      "fields": {
+        "site": "Site",
+        "location": "Zone",
+        "validFrom": "Valide du",
+        "validTo": "Valide jusqu'au"
+      },
+      "extensions": "{count, plural, one {(# prolongation)} other {(# prolongations)}}",
+      "suspendedBanner": "Suspendu par {by} — les conditions ont changé. Les travaux ne doivent pas reprendre avant la reprise du permis.",
+      "overdueBanner": "Ce permis a expiré sans être clôturé. Vérifiez l'état des travaux maintenant, puis clôturez-le ou prolongez-le.",
+      "conflicts": {
+        "title": "{count, plural, one {# autre permis ouvert chevauche celui-ci sur le même site} other {# autres permis ouverts chevauchent celui-ci sur le même site}}",
+        "sameArea": "· même zone"
+      },
+      "preconditions": {
+        "title": "Conditions préalables",
+        "progress": "{done}/{total} confirmées",
+        "none": "Ce type de permis n'a pas de liste de conditions.",
+        "checkedBy": "{name} · {time}"
+      },
+      "evidence": {
+        "title": "Preuves",
+        "gasReadings": "Mesures de gaz",
+        "requiredBeforeIssue": "requis avant délivrance",
+        "noReadings": "Aucune mesure enregistrée pour l'instant.",
+        "substance": "Substance",
+        "reading": "Mesure",
+        "unit": "Unité",
+        "recordReading": "Enregistrer",
+        "isolationCertificate": "Certificat de consignation",
+        "notRecorded": "Pas encore enregistré.",
+        "isolationRefPlaceholder": "Référence du certificat…",
+        "save": "Enregistrer",
+        "rescuePlan": "Plan de sauvetage",
+        "rescuePlanPlaceholder": "Comment une victime serait secourue, par qui, avec quel matériel…",
+        "attachments": "Pièces jointes",
+        "kinds": {
+          "isolation_certificate": "Certificat de consignation",
+          "rescue_plan": "Plan de sauvetage",
+          "gas_test": "Mesure de gaz",
+          "other": "Autre"
+        }
+      },
+      "signatures": {
+        "title": "Signatures",
+        "pending": "Pas encore signé",
+        "authoriser": "Ingénieur autorisateur / responsable de site",
+        "authoriseAction": "Autoriser",
+        "issuer": "Émetteur",
+        "issueAction": "Délivrer le permis",
+        "acceptor": "Accepteur",
+        "acceptAction": "Accepter le permis",
+        "acknowledgeConflicts": "J'ai examiné les permis qui se chevauchent et j'accepte le risque combiné",
+        "awaitingAcceptor": "En attente de la signature de l'accepteur désigné. Lui seul peut accepter."
+      },
+      "actions": {
+        "title": "Actions du permis",
+        "suspend": "Suspendre",
+        "suspendReason": "Pourquoi le permis est-il suspendu ?",
+        "suspendConfirm": "Suspendre le permis",
+        "resume": "Reprendre — sûr de continuer",
+        "extend": "Prolonger",
+        "extendTo": "Nouvelle échéance",
+        "extendHint": "Une prolongation peut ajouter au plus {hours} h.",
+        "extendReauthorisation": "Ce type exige que l'ingénieur autorisateur prolonge — la prolongation vaut ré-autorisation.",
+        "extendConfirm": "Prolonger le permis",
+        "handover": "Transmettre",
+        "handoverTo": "Accepteur entrant",
+        "handoverHint": "Le permis repasse à « Délivré » jusqu'à la signature de l'accepteur entrant.",
+        "handoverConfirm": "Transmettre",
+        "close": "Clôturer",
+        "closeChecksTitle": "Vérifications de clôture — les quatre doivent être confirmées",
+        "closeChecks": {
+          "workComplete": "Travaux terminés ou arrêtés en sécurité",
+          "areaMadeSafe": "Zone inspectée et sécurisée",
+          "isolationsRemoved": "Consignations levées ou rétablies comme convenu",
+          "personnelClear": "Tout le personnel recensé et hors zone"
+        },
+        "closeNotesPlaceholder": "Notes de clôture (facultatif)…",
+        "closeConfirm": "Clôturer le permis",
+        "cancel": "Annuler le permis",
+        "cancelReason": "Pourquoi le permis est-il annulé ?",
+        "cancelConfirm": "Annuler le permis"
+      },
+      "closedLine": "Clôturé par {name} le {time}.",
+      "cancelledLine": "Annulé par {name} le {time}.",
+      "timeline": {
+        "title": "Historique",
+        "kinds": {
+          "created": "Créé",
+          "updated": "Détails mis à jour",
+          "precondition_checked": "Condition préalable confirmée",
+          "precondition_unchecked": "Confirmation retirée",
+          "gas_reading_recorded": "Mesure de gaz enregistrée",
+          "attachment_added": "Pièce jointe ajoutée",
+          "authorised": "Autorisé",
+          "issued": "Délivré",
+          "accepted": "Accepté",
+          "suspended": "Suspendu",
+          "resumed": "Repris",
+          "extended": "Prolongé",
+          "handed_over": "Transmis",
+          "cancelled": "Annulé",
+          "closed": "Clôturé",
+          "expiry_escalated": "Expiration signalée — permis expiré sans clôture"
+        }
+      }
+    },
+    "types": {
+      "back": "Permis",
+      "title": "Types de permis",
+      "subtitle": "Les exigences de contrôle de chaque type. Les changements ne concernent que les nouveaux permis — les permis en cours gardent leur liste.",
+      "systemBadge": "Standard",
+      "archivedBadge": "Archivé",
+      "openCount": "{count, plural, one {# permis ouvert} other {# permis ouverts}}",
+      "restore": "Restaurer",
+      "archive": "Archiver",
+      "flags": {
+        "requiresAuthoriser": "Signature d'autorisation requise",
+        "requiresGasTesting": "Mesures de gaz requises",
+        "requiresIsolationCertificate": "Certificat de consignation requis",
+        "requiresRescuePlan": "Plan de sauvetage requis"
+      },
+      "maxDuration": "Validité maximale",
+      "hours": "heures",
+      "preconditions": "Liste des conditions préalables",
+      "removePrecondition": "Retirer la condition",
+      "addPreconditionPlaceholder": "Nouveau point de contrôle…",
+      "addPrecondition": "Ajouter",
+      "createTitle": "Ajouter un type de permis personnalisé",
+      "createHint": "Pour les activités hors des neuf types standard. Configurez ses exigences après création.",
+      "createNamePlaceholder": "p. ex. Opérations de plongée",
+      "createButton": "Ajouter le type"
+    },
+    "errors": {
+      "module-disabled": "Ce module n'est pas disponible.",
+      "unknown-site": "Ce site n'existe pas.",
+      "unknown-user": "Cette personne n'est pas membre de cette organisation.",
+      "type-archived": "Ce type de permis est archivé — restaurez-le ou choisissez-en un autre.",
+      "duplicate-name": "Un type de permis portant ce nom existe déjà.",
+      "duplicate-precondition-id": "Les points de contrôle doivent être uniques.",
+      "window-invalid": "La fenêtre de validité doit se terminer après son début.",
+      "window-too-long": "La fenêtre de validité dépasse ce que ce type autorise.",
+      "window-past": "La fenêtre de validité est déjà passée — mettez-la à jour avant de délivrer.",
+      "acceptor-required": "Désignez un accepteur avant de délivrer.",
+      "issuer-is-acceptor": "L'émetteur ne peut pas accepter son propre permis — désignez quelqu'un d'autre.",
+      "preconditions-incomplete": "Chaque condition préalable doit être confirmée avant la délivrance.",
+      "gas-test-required": "Enregistrez au moins une mesure de gaz avant de délivrer.",
+      "isolation-certificate-required": "Enregistrez le certificat de consignation avant de délivrer.",
+      "rescue-plan-required": "Enregistrez le plan de sauvetage avant de délivrer.",
+      "authorisation-required": "L'ingénieur autorisateur doit signer avant la délivrance.",
+      "simops-conflict": "D'autres permis chevauchent celui-ci — examinez-les et confirmez pour délivrer.",
+      "invalid-transition": "Cette action n'est pas disponible dans l'état actuel du permis.",
+      "not-draft": "Seuls les brouillons peuvent être modifiés.",
+      "unknown-precondition": "Ce point de contrôle n'existe plus.",
+      "already-authorised": "Ce permis est déjà autorisé.",
+      "authoriser-is-acceptor": "L'accepteur ne peut pas autoriser son propre permis.",
+      "not-the-acceptor": "Seul l'accepteur désigné peut accepter ce permis.",
+      "resume-confirmation-required": "Confirmez que la reprise est sûre avant de continuer.",
+      "extension-not-later": "La nouvelle échéance doit être postérieure à l'actuelle.",
+      "extension-too-long": "Une prolongation ne peut pas dépasser la durée maximale du type.",
+      "reauthorisation-required": "Seul l'ingénieur autorisateur peut prolonger ce permis.",
+      "acceptor-is-issuer": "L'émetteur ne peut pas devenir l'accepteur.",
+      "same-acceptor": "Cette personne détient déjà le permis.",
+      "not-allowed": "Vous n'avez pas l'autorisation de faire cela.",
+      "closure-checks-incomplete": "Les quatre vérifications de clôture doivent être confirmées.",
+      "generic": "Un problème est survenu. Vérifiez le formulaire et réessayez."
     }
   }
 }
