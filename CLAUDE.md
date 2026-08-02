@@ -470,8 +470,14 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   `if (brand === 'x')` in core logic is banned.
 - **Brand-only modules**: FreeHS ships `riskAssessments` (module B1 —
   HSE five-step editor at `packages/api/src/routers/riskAssessments.ts` +
-  `apps/web/app/[locale]/risk-assessments`). The router is built with
-  `{ enabled }` from the brand catalogue; nav + API both gate on it.
+  `apps/web/app/[locale]/risk-assessments`) and `coshh` (module B2 —
+  hazardous-substance inventory at `packages/api/src/routers/coshh.ts` +
+  `apps/web/app/[locale]/coshh`; domain helpers in
+  `packages/shared/src/coshh.ts`, AI SDS import at
+  `apps/web/src/server/coshh-ai.ts` + `/api/ai/coshh-*` routes; schema in
+  `packages/db/src/schema/coshh.ts`, migration 0055; edge-case IDs CO-E01..E05
+  in `coshh.test.ts` (shared) and CO-E10..E24 (router)). Each router is built
+  with `{ enabled }` from the brand catalogue; nav + API both gate on it.
 - **Everything internal stays `forma360`** (package scope, queue names,
   ESLint rule namespace, object keys). Users never see those.
 - Each brand gets its own Railway project, Postgres, Redis, R2, Resend
