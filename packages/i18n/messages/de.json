@@ -4854,7 +4854,10 @@
       "frasReviewDue": "FRA reviews due",
       "peepReviewsDue": "PEEP reviews due",
       "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring"
+      "marshalsExpiringSoon": "marshal training expiring",
+      "checksFailed": "nicht bestandene Prüfungen",
+      "doorsFailed": "nicht bestandene Brandschutztüren",
+      "frasIntolerable": "Beurteilungen mit untragbarem Risiko"
     },
     "columns": {
       "building": "Building",
@@ -4910,7 +4913,8 @@
     "dueStatus": {
       "ok": "OK",
       "due_soon": "Bald fällig",
-      "overdue": "Überfällig"
+      "overdue": "Überfällig",
+      "failed": "Nicht bestanden — Nachprüfung ausstehend"
     },
     "fraStatus": {
       "draft": "Entwurf",
@@ -5038,6 +5042,18 @@
         "lastInspected": "Last inspected",
         "nextDue": "Next due",
         "status": "Status"
+      },
+      "bulk": {
+        "button": "Mehrere hinzufügen",
+        "heading": "Türen in Masse hinzufügen",
+        "intro": "Eine Tür pro Zeile: Referenz, Etage, Typ (flat / common / other). Komma- oder Tab-getrennt; Etage und Typ optional.",
+        "defaultKind": "Standardtyp",
+        "preview": "{count} Türen bereit",
+        "errors": "{count} Zeilen fehlerhaft (Zeile {lines})",
+        "submit": "{count} Türen hinzufügen",
+        "done": "{created} Türen hinzugefügt.",
+        "doneSkipped": "{created} Türen hinzugefügt, {skipped} Duplikate übersprungen.",
+        "placeholder": "FD-1-01, 1\nFD-1-02, 1\nST-0-01, G, common"
       }
     },
     "drills": {
@@ -5105,7 +5121,12 @@
       "alreadyMarshal": "Already a marshal for this building.",
       "endButton": "End",
       "endConfirm": "End this marshal assignment?",
-      "empty": "No marshals assigned."
+      "empty": "No marshals assigned.",
+      "cover": {
+        "required": "Dieses Gebäude braucht Brandschutzhelfer",
+        "target": "Mindestzahl mit gültiger Schulung",
+        "notRequiredNote": "Zählt nicht als Abdeckungslücke."
+      }
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5207,6 +5228,37 @@
         "material_change": "Material change",
         "legislation_change": "Legislation change",
         "manual": "Other"
+      },
+      "pdfButton": "PDF herunterladen",
+      "publishErrors": {
+        "noRiskRating": "Zuerst die Gesamtbewertung festlegen.",
+        "noResponsiblePerson": "Zuerst die verantwortliche Person benennen.",
+        "noFindings": "Wesentliche Feststellungen erfassen oder bestätigen, dass es keine gibt.",
+        "noPersonsAtRisk": "Gefährdete Personen erfassen.",
+        "noIgnitionSources": "Zündquellen erfassen.",
+        "noFuelSources": "Brennstoffquellen erfassen.",
+        "noOxygenSources": "Sauerstoffquellen erfassen.",
+        "noEvaluation": "Bewertung erfassen.",
+        "intolerableNeedsAction": "Ein untragbares Risiko braucht mindestens eine offene Feststellung mit Maßnahme."
+      },
+      "signOff": {
+        "title": "Beurteilung unterzeichnen & veröffentlichen",
+        "statement": "Ich bestätige, dass diese Brandschutz-Gefährdungsbeurteilung für diese Räumlichkeiten geeignet und ausreichend ist, dass die wesentlichen Feststellungen erfasst sind, und unterzeichne sie als geltende Beurteilung.",
+        "missingHeading": "Vor der Unterschrift vervollständigen:",
+        "intolerableWarning": "UNTRAGBARES Risiko: Die Nutzung sollte nicht fortgesetzt werden, bis das Risiko reduziert ist. Die Veröffentlichung alarmiert alle Brandschutzverantwortlichen.",
+        "noFindingsNote": "Keine wesentlichen Feststellungen erfasst — die Veröffentlichung bestätigt, dass es keine gibt.",
+        "actionsPreview": "{findings} Feststellungen erfasst — die Veröffentlichung erzeugt {actions} Maßnahmen.",
+        "confirmButton": "Unterzeichnen & veröffentlichen",
+        "reattestButton": "Erneut bestätigen & veröffentlichen"
+      },
+      "staleBanner": {
+        "title": "Seit der Unterschrift geändert",
+        "body": "Der Inhalt wurde nach der Unterschrift von {name} am {date} geändert. Die Unterschrift gilt für die frühere Fassung — erneut bestätigen, um die aktuelle zu unterzeichnen.",
+        "reattest": "Erneut bestätigen"
+      },
+      "intolerableBanner": {
+        "title": "Untragbares Risiko — Nutzung sollte nicht fortgesetzt werden",
+        "body": "Diese geltende Beurteilung stuft die Räumlichkeiten als untragbar ein. Maßnahmen abschließen und neu bewerten, bevor die normale Nutzung weitergeht."
       }
     },
     "info": {
@@ -5229,6 +5281,14 @@
       "intro": "Ignition-source work (welding, grinding, torch work) runs under a permit to work with a fire watch.",
       "register": "Zum Erlaubnisschein-Register",
       "startPermit": "Heißarbeits-Erlaubnis starten"
-    }
+    },
+    "checksFailedCount": "{count} nicht bestanden",
+    "fraIntolerable": "UNTRAGBAR"
+  },
+  "entitySelect": {
+    "search": "Suchen…",
+    "clearSearch": "Suche leeren",
+    "clear": "Auswahl aufheben",
+    "done": "Fertig"
   }
 }

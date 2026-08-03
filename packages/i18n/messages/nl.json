@@ -4847,7 +4847,10 @@
       "frasReviewDue": "FRA reviews due",
       "peepReviewsDue": "PEEP reviews due",
       "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring"
+      "marshalsExpiringSoon": "marshal training expiring",
+      "checksFailed": "afgekeurde controles wachten op hertest",
+      "doorsFailed": "afgekeurde branddeuren",
+      "frasIntolerable": "beoordelingen met ontoelaatbaar risico"
     },
     "columns": {
       "building": "Building",
@@ -4903,7 +4906,8 @@
     "dueStatus": {
       "ok": "OK",
       "due_soon": "Bijna verlopen",
-      "overdue": "Te laat"
+      "overdue": "Te laat",
+      "failed": "Afgekeurd — hertest vereist"
     },
     "fraStatus": {
       "draft": "Concept",
@@ -5031,6 +5035,18 @@
         "lastInspected": "Last inspected",
         "nextDue": "Next due",
         "status": "Status"
+      },
+      "bulk": {
+        "button": "Bulk toevoegen",
+        "heading": "Deuren in bulk toevoegen",
+        "intro": "Eén deur per regel: referentie, verdieping, type (flat / common / other). Komma- of tab-gescheiden; verdieping en type optioneel.",
+        "defaultKind": "Standaardtype",
+        "preview": "{count} deuren gereed",
+        "errors": "{count} regels met fouten (regel {lines})",
+        "submit": "{count} deuren toevoegen",
+        "done": "{created} deuren toegevoegd.",
+        "doneSkipped": "{created} deuren toegevoegd, {skipped} duplicaten overgeslagen.",
+        "placeholder": "FD-1-01, 1\nFD-1-02, 1\nST-0-01, G, common"
       }
     },
     "drills": {
@@ -5098,7 +5114,12 @@
       "alreadyMarshal": "Already a marshal for this building.",
       "endButton": "End",
       "endConfirm": "End this marshal assignment?",
-      "empty": "No marshals assigned."
+      "empty": "No marshals assigned.",
+      "cover": {
+        "required": "Dit gebouw heeft BHV-dekking nodig",
+        "target": "Minimum BHV’ers met geldige training",
+        "notRequiredNote": "Telt niet mee in dekkingshiaten."
+      }
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5200,6 +5221,37 @@
         "material_change": "Material change",
         "legislation_change": "Legislation change",
         "manual": "Other"
+      },
+      "pdfButton": "PDF downloaden",
+      "publishErrors": {
+        "noRiskRating": "Stel eerst de totale risicobeoordeling in.",
+        "noResponsiblePerson": "Benoem eerst de verantwoordelijke persoon.",
+        "noFindings": "Leg de belangrijke bevindingen vast of bevestig dat er geen zijn.",
+        "noPersonsAtRisk": "Leg vast wie risico loopt.",
+        "noIgnitionSources": "Leg de ontstekingsbronnen vast.",
+        "noFuelSources": "Leg de brandstofbronnen vast.",
+        "noOxygenSources": "Leg de zuurstofbronnen vast.",
+        "noEvaluation": "Leg de evaluatie vast.",
+        "intolerableNeedsAction": "Een ontoelaatbaar risico vereist minstens één open bevinding met actie."
+      },
+      "signOff": {
+        "title": "Beoordeling ondertekenen & publiceren",
+        "statement": "Ik bevestig dat deze brandrisicobeoordeling geschikt en toereikend is voor deze locatie, dat de belangrijke bevindingen zijn vastgelegd, en onderteken haar als de geldende beoordeling.",
+        "missingHeading": "Vul vóór ondertekening aan:",
+        "intolerableWarning": "ONTOELAATBAAR risico: het gebruik zou niet moeten doorgaan totdat het risico is verlaagd. Publiceren waarschuwt alle brandveiligheidsmanagers.",
+        "noFindingsNote": "Geen belangrijke bevindingen vastgelegd — publiceren bevestigt dat er geen zijn.",
+        "actionsPreview": "{findings} bevindingen vastgelegd — publiceren maakt {actions} acties aan.",
+        "confirmButton": "Ondertekenen & publiceren",
+        "reattestButton": "Opnieuw bevestigen & publiceren"
+      },
+      "staleBanner": {
+        "title": "Gewijzigd na ondertekening",
+        "body": "De inhoud is gewijzigd nadat {name} tekende op {date}. De handtekening dekt de eerdere versie — bevestig opnieuw om de huidige te ondertekenen.",
+        "reattest": "Opnieuw bevestigen"
+      },
+      "intolerableBanner": {
+        "title": "Ontoelaatbaar risico — gebruik zou niet moeten doorgaan",
+        "body": "Deze geldende beoordeling beoordeelt de locatie als ontoelaatbaar. Rond de corrigerende acties af en herbeoordeel voordat normaal gebruik hervat."
       }
     },
     "info": {
@@ -5222,6 +5274,14 @@
       "intro": "Ignition-source work (welding, grinding, torch work) runs under a permit to work with a fire watch.",
       "register": "Vergunningenregister openen",
       "startPermit": "Heetwerkvergunning starten"
-    }
+    },
+    "checksFailedCount": "{count} afgekeurd",
+    "fraIntolerable": "ONTOELAATBAAR"
+  },
+  "entitySelect": {
+    "search": "Zoeken…",
+    "clearSearch": "Zoekopdracht wissen",
+    "clear": "Selectie wissen",
+    "done": "Klaar"
   }
 }

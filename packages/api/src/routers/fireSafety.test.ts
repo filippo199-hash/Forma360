@@ -120,6 +120,19 @@ describe('fireSafety router', () => {
     await client.close();
   });
 
+  /** Satisfy the FS-4 content gate: a publishable assessment has an
+   *  assessment in it — people at risk, the fire triangle, evaluation. */
+  async function fillFraContent(caller: ReturnType<typeof callerFor>, fraId: string) {
+    await caller.fireSafety.fras.update({
+      fraId,
+      personsAtRisk: ['employees', 'visitors'],
+      ignitionSources: 'Kitchen equipment; electrical intake',
+      fuelSources: 'Packaging store; furniture',
+      oxygenSources: 'Natural ventilation',
+      evaluationNotes: 'Evaluated per PAS 79; controls adequate save the findings recorded.',
+    });
+  }
+
   async function createOffice(caller: ReturnType<typeof callerFor>) {
     return caller.fireSafety.buildings.create({
       name: 'Unit 4 Office',
@@ -288,7 +301,9 @@ describe('fireSafety router', () => {
       buildingId: building.id,
     });
 
-    // Guard chain: rating → responsible person → findings.
+    // Guard chain (FS-4): rating → responsible person → the assessment
+    // content itself (persons at risk, fire triangle, evaluation) →
+    // findings. A hollow attestation must not be signable.
     await expect(caller.fireSafety.fras.publish({ fraId: fra.id })).rejects.toMatchObject({
       message: 'no-risk-rating',
     });
@@ -297,6 +312,29 @@ describe('fireSafety router', () => {
       message: 'no-responsible-person',
     });
     await caller.fireSafety.fras.update({ fraId: fra.id, responsiblePersonName: 'Pat Owner' });
+    await expect(caller.fireSafety.fras.publish({ fraId: fra.id })).rejects.toMatchObject({
+      message: 'no-persons-at-risk',
+    });
+    await caller.fireSafety.fras.update({ fraId: fra.id, personsAtRisk: ['residents'] });
+    await expect(caller.fireSafety.fras.publish({ fraId: fra.id })).rejects.toMatchObject({
+      message: 'no-ignition-sources',
+    });
+    await caller.fireSafety.fras.update({ fraId: fra.id, ignitionSources: 'Smoking; bin store' });
+    await expect(caller.fireSafety.fras.publish({ fraId: fra.id })).rejects.toMatchObject({
+      message: 'no-fuel-sources',
+    });
+    await caller.fireSafety.fras.update({ fraId: fra.id, fuelSources: 'Communal storage' });
+    await expect(caller.fireSafety.fras.publish({ fraId: fra.id })).rejects.toMatchObject({
+      message: 'no-oxygen-sources',
+    });
+    await caller.fireSafety.fras.update({ fraId: fra.id, oxygenSources: 'Stairwell venting' });
+    await expect(caller.fireSafety.fras.publish({ fraId: fra.id })).rejects.toMatchObject({
+      message: 'no-evaluation',
+    });
+    await caller.fireSafety.fras.update({
+      fraId: fra.id,
+      evaluationNotes: 'Five-step evaluation recorded.',
+    });
     await expect(caller.fireSafety.fras.publish({ fraId: fra.id })).rejects.toMatchObject({
       message: 'no-findings',
     });
@@ -360,6 +398,7 @@ describe('fireSafety router', () => {
       riskRating: 'tolerable',
       responsiblePersonName: 'Pat Owner',
     });
+    await fillFraContent(caller, fra.id);
     await caller.fireSafety.fras.publish({
       fraId: fra.id,
       confirmNoSignificantFindings: true,
@@ -422,9 +461,10 @@ describe('fireSafety router', () => {
     const checks = await caller.fireSafety.logbook.checks({ buildingId: building.id });
     const alarm = checks.find((c) => c.checkType === 'alarm_test');
     expect(alarm?.lastDoneAt?.getTime()).toBe(performedAt.getTime());
-    // Weekly: due 7 days after the (backdated) test — i.e. already overdue.
+    // Weekly: due 7 days after the (backdated) test. The clock says
+    // overdue, but FS-1 says a fail is its own louder state.
     expect(alarm?.nextDueAt.getTime()).toBe(performedAt.getTime() + 7 * DAY_MS);
-    expect(alarm?.dueStatus).toBe('overdue');
+    expect(alarm?.dueStatus).toBe('failed');
 
     const actionRows = await db
       .select()
@@ -451,9 +491,11 @@ describe('fireSafety router', () => {
       raiseAction: false,
     });
     const checksAfter = await caller.fireSafety.logbook.checks({ buildingId: building.id });
-    expect(checksAfter.find((c) => c.checkType === 'alarm_test')?.lastDoneAt?.getTime()).toBe(
-      performedAt.getTime(),
-    );
+    const alarmAfter = checksAfter.find((c) => c.checkType === 'alarm_test');
+    expect(alarmAfter?.lastDoneAt?.getTime()).toBe(performedAt.getTime());
+    // The backdated pass is OLDER than the fail — it must not clear the
+    // failed state either.
+    expect(alarmAfter?.dueStatus).toBe('failed');
 
     const entries = await caller.fireSafety.logbook.entries({ buildingId: building.id });
     expect(entries).toHaveLength(2);
@@ -670,5 +712,378 @@ describe('fireSafety router', () => {
     const sprinklers = restored.filter((c) => c.checkType === 'sprinkler_check');
     expect(sprinklers).toHaveLength(1);
     expect(sprinklers[0]?.active).toBe(true);
+  });
+
+  it('FS-E25: a failed check stays red everywhere until a subsequent pass clears it (HSE FS-1)', async () => {
+    const caller = callerFor(adminId);
+    const building = await createOffice(caller);
+
+    // Fail TODAY: the schedule advances a week (clock would say ok) but
+    // the display state must be 'failed' — on the building checks, the
+    // tenant due list, the building register row and the overview.
+    await caller.fireSafety.logbook.recordEntry({
+      buildingId: building.id,
+      checkType: 'alarm_test',
+      result: 'fail',
+      callPointRef: 'CP-2',
+      notes: '',
+      defectsSummary: 'Panel shows fault; sounders silent',
+    });
+    const checks = await caller.fireSafety.logbook.checks({ buildingId: building.id });
+    const alarm = checks.find((c) => c.checkType === 'alarm_test');
+    expect(alarm?.dueStatus).toBe('failed');
+    expect(alarm?.nextDueAt.getTime()).toBeGreaterThan(Date.now());
+
+    const due = await caller.fireSafety.logbook.due();
+    expect(due.some((c) => c.checkType === 'alarm_test' && c.dueStatus === 'failed')).toBe(true);
+
+    const list = await caller.fireSafety.buildings.list({ status: 'active', search: '' });
+    expect(list[0]?.checksFailed).toBe(1);
+    expect(list[0]?.checksOverdue).toBe(0);
+
+    const overview = await caller.fireSafety.overview();
+    expect(overview.checksFailed).toBe(1);
+
+    // Re-test passes → the failure clears and the clock takes over.
+    await caller.fireSafety.logbook.recordEntry({
+      buildingId: building.id,
+      checkType: 'alarm_test',
+      result: 'pass',
+      callPointRef: 'CP-2',
+      notes: 'Sounder replaced, retest clean',
+      defectsSummary: '',
+    });
+    const after = await caller.fireSafety.logbook.checks({ buildingId: building.id });
+    expect(after.find((c) => c.checkType === 'alarm_test')?.dueStatus).toBe('ok');
+    expect((await caller.fireSafety.overview()).checksFailed).toBe(0);
+  });
+
+  it('FS-E26: a failed door inspection stays red until a passing re-inspection (HSE FS-1)', async () => {
+    const caller = callerFor(adminId);
+    const tower = await createTower(caller);
+    const door = await caller.fireSafety.doors.create({
+      buildingId: tower.id,
+      doorRef: 'FD-3-01',
+      locationKind: 'flat_entrance',
+      floor: '3',
+      description: '',
+      selfClosing: true,
+    });
+
+    await caller.fireSafety.doors.recordInspection({
+      doorId: door.id,
+      outcome: 'fail',
+      defectsSummary: 'Self-closer removed by resident',
+    });
+    let detail = await caller.fireSafety.buildings.get({ buildingId: tower.id });
+    expect(detail.doors.find((d) => d.id === door.id)?.dueStatus).toBe('failed');
+    expect((await caller.fireSafety.overview()).doorsFailed).toBe(1);
+    const list = await caller.fireSafety.buildings.list({ status: 'active', search: '' });
+    expect(list[0]?.doorsFailed).toBe(1);
+
+    await caller.fireSafety.doors.recordInspection({
+      doorId: door.id,
+      outcome: 'pass',
+      defectsSummary: '',
+    });
+    detail = await caller.fireSafety.buildings.get({ buildingId: tower.id });
+    expect(detail.doors.find((d) => d.id === door.id)?.dueStatus).toBe('ok');
+    expect((await caller.fireSafety.overview()).doorsFailed).toBe(0);
+  });
+
+  it('FS-E27: failed checks raise an action by default; opting out is explicit (HSE FS-2)', async () => {
+    const caller = callerFor(adminId);
+    const building = await createOffice(caller);
+
+    // No raiseAction field at all → default ON for a non-pass result.
+    const failed = await caller.fireSafety.logbook.recordEntry({
+      buildingId: building.id,
+      checkType: 'emergency_lighting_function',
+      result: 'defects_found',
+      callPointRef: '',
+      notes: '',
+      defectsSummary: 'Two luminaires dark in stair core',
+    });
+    expect(failed.actionId).not.toBeNull();
+
+    // Explicit opt-out is respected (a duplicate action may already exist).
+    const optedOut = await caller.fireSafety.logbook.recordEntry({
+      buildingId: building.id,
+      checkType: 'extinguisher_visual',
+      result: 'fail',
+      callPointRef: '',
+      notes: '',
+      defectsSummary: 'CO2 by loading bay missing',
+      raiseAction: false,
+    });
+    expect(optedOut.actionId).toBeNull();
+
+    // A pass never raises one, whatever the flag says.
+    const passed = await caller.fireSafety.logbook.recordEntry({
+      buildingId: building.id,
+      checkType: 'alarm_test',
+      result: 'pass',
+      callPointRef: 'CP-1',
+      notes: '',
+      defectsSummary: '',
+      raiseAction: true,
+    });
+    expect(passed.actionId).toBeNull();
+
+    // Doors: same default-on contract.
+    const door = await caller.fireSafety.doors.create({
+      buildingId: building.id,
+      doorRef: 'FD-G-01',
+      locationKind: 'other',
+      floor: 'G',
+      description: '',
+      selfClosing: true,
+    });
+    const doorFail = await caller.fireSafety.doors.recordInspection({
+      doorId: door.id,
+      outcome: 'fail',
+      defectsSummary: 'Gaps over 8 mm at threshold',
+    });
+    expect(doorFail.actionId).not.toBeNull();
+  });
+
+  it('FS-E28: an intolerable FRA needs an actionable finding and alerts the managers (HSE FS-6)', async () => {
+    const emails: Array<{ to: string; templateKey: string; variables: Record<string, string> }> =
+      [];
+    const custom = router({
+      fireSafety: createFireSafetyRouter({
+        enabled: true,
+        appUrl: 'https://freehs.test',
+        sendAlertEmail: async (input) => {
+          emails.push(input);
+        },
+      }),
+    });
+    const caller = createCallerFactory(custom)(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId: adminId, email: 'fire@x.test', tenantId: tenantId as never },
+      }),
+    );
+
+    const fra = await caller.fireSafety.fras.create({ title: 'Hostel FRA' });
+    await caller.fireSafety.fras.update({
+      fraId: fra.id,
+      riskRating: 'intolerable',
+      responsiblePersonName: 'Pat Owner',
+      personsAtRisk: ['sleeping_occupants'],
+      ignitionSources: 'Portable heaters in rooms',
+      fuelSources: 'Hoarded storage in escape corridor',
+      oxygenSources: 'Natural ventilation',
+      evaluationNotes: 'Escape route compromised; occupation should cease until cleared.',
+    });
+
+    // Intolerable + "no significant findings" is a contradiction — refused.
+    await expect(
+      caller.fireSafety.fras.publish({ fraId: fra.id, confirmNoSignificantFindings: true }),
+    ).rejects.toMatchObject({ message: 'intolerable-needs-action' });
+
+    // A resolved-only or no-action finding set is refused too.
+    const finding = await caller.fireSafety.fras.addFinding({
+      fraId: fra.id,
+      category: 'means_of_escape',
+      priority: 'high',
+      description: 'Escape corridor blocked by stored furniture',
+      requiresAction: false,
+    });
+    await expect(caller.fireSafety.fras.publish({ fraId: fra.id })).rejects.toMatchObject({
+      message: 'intolerable-needs-action',
+    });
+
+    await caller.fireSafety.fras.updateFinding({ findingId: finding.id, requiresAction: true });
+    const published = await caller.fireSafety.fras.publish({ fraId: fra.id });
+    expect(published.actionsCreated).toBe(1);
+
+    // Alert went to the fireSafety.manage holders (admin via org.settings;
+    // the standard user holds only view/record).
+    expect(emails.length).toBeGreaterThan(0);
+    expect(emails.every((e) => e.templateKey === 'fra-intolerable-alert')).toBe(true);
+    const recipients = emails.map((e) => e.to);
+    expect(recipients).toContain(`alice-${tenantId}@acme.test`);
+    expect(recipients).not.toContain(`stan-${tenantId}@acme.test`);
+    expect(emails[0]?.variables['viewUrl']).toBe(
+      `https://freehs.test/en/fire-safety/fra/${fra.id}`,
+    );
+
+    // The intolerable state is a first-class needs-attention item.
+    expect((await caller.fireSafety.overview()).frasIntolerable).toBe(1);
+  });
+
+  it('FS-E29: editing an active FRA marks the attestation stale; re-publishing re-signs it (HSE FS-7)', async () => {
+    const caller = callerFor(adminId);
+    const fra = await caller.fireSafety.fras.create({ title: 'Depot FRA' });
+    await caller.fireSafety.fras.update({
+      fraId: fra.id,
+      riskRating: 'moderate',
+      responsiblePersonName: 'Pat Owner',
+    });
+    await fillFraContent(caller, fra.id);
+    await caller.fireSafety.fras.addFinding({
+      fraId: fra.id,
+      category: 'management',
+      priority: 'medium',
+      description: 'No recorded evacuation drill in the last 12 months',
+      requiresAction: true,
+    });
+    await caller.fireSafety.fras.publish({ fraId: fra.id });
+
+    const signed = await caller.fireSafety.fras.get({ fraId: fra.id });
+    expect(signed.attestationStale).toBe(false);
+    expect(signed.publishedByName).toBe('Alice Admin');
+    const firstSignedAt = signed.publishedAt?.getTime() ?? 0;
+
+    // Resolving a finding is remediation, not a content change.
+    const findingId = signed.findings[0]?.id ?? '';
+    await caller.fireSafety.fras.resolveFinding({ findingId });
+    expect((await caller.fireSafety.fras.get({ fraId: fra.id })).attestationStale).toBe(false);
+
+    // Changing the assessment content under a live signature IS.
+    await caller.fireSafety.fras.update({ fraId: fra.id, evaluationNotes: 'Rewritten.' });
+    expect((await caller.fireSafety.fras.get({ fraId: fra.id })).attestationStale).toBe(true);
+
+    await new Promise((r) => setTimeout(r, 5));
+    await caller.fireSafety.fras.publish({ fraId: fra.id });
+    const resigned = await caller.fireSafety.fras.get({ fraId: fra.id });
+    expect(resigned.attestationStale).toBe(false);
+    expect(resigned.publishedAt?.getTime() ?? 0).toBeGreaterThan(firstSignedAt);
+    expect(resigned.events.some((e) => e.kind === 'reattested')).toBe(true);
+  });
+
+  it('FS-E30: fras.renderPdf refuses unwired and renders via the injected dep (HSE FS-5)', async () => {
+    const caller = callerFor(adminId);
+    const fra = await caller.fireSafety.fras.create({ title: 'Yard FRA' });
+    await expect(caller.fireSafety.fras.renderPdf({ fraId: fra.id })).rejects.toMatchObject({
+      message: 'render-unavailable',
+    });
+
+    const rendered: string[] = [];
+    const custom = router({
+      fireSafety: createFireSafetyRouter({
+        enabled: true,
+        renderPdf: async (input) => {
+          rendered.push(input.fraId);
+          return { key: `k/${input.fraId}.pdf`, bytes: 1234, cached: false, stub: true };
+        },
+      }),
+    });
+    const customCaller = createCallerFactory(custom)(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId: adminId, email: 'fire@x.test', tenantId: tenantId as never },
+      }),
+    );
+    const out = await customCaller.fireSafety.fras.renderPdf({ fraId: fra.id });
+    expect(rendered).toEqual([fra.id]);
+    expect(out.filename).toBe('FRA-0001.pdf');
+    expect(out.storageKey).toBe(`k/${fra.id}.pdf`);
+  });
+
+  it('FS-E31: bulk door import creates in one call and reports duplicates (HSE FS-12)', async () => {
+    const caller = callerFor(adminId);
+    const tower = await createTower(caller);
+    await caller.fireSafety.doors.create({
+      buildingId: tower.id,
+      doorRef: 'FD-1-01',
+      locationKind: 'flat_entrance',
+      floor: '1',
+      description: '',
+      selfClosing: true,
+    });
+
+    const result = await caller.fireSafety.doors.bulkCreate({
+      buildingId: tower.id,
+      doors: [
+        { doorRef: 'fd-1-01', floor: '1', locationKind: 'flat_entrance' }, // dup of live door
+        { doorRef: 'FD-1-02', floor: '1', locationKind: 'flat_entrance' },
+        { doorRef: 'FD-1-03', floor: '1', locationKind: 'flat_entrance' },
+        { doorRef: 'FD-1-03', floor: '1', locationKind: 'flat_entrance' }, // dup in payload
+        { doorRef: 'ST-0-01', floor: 'G', locationKind: 'common_parts' },
+      ],
+    });
+    expect(result.created).toBe(3);
+    expect(result.skipped).toEqual(['fd-1-01', 'FD-1-03']);
+
+    const detail = await caller.fireSafety.buildings.get({ buildingId: tower.id });
+    expect(detail.doors).toHaveLength(4);
+    // Regime-derived cadence applies to imported doors too: common parts
+    // quarterly in an 11m+ residential building.
+    const stair = detail.doors.find((d) => d.doorRef === 'ST-0-01');
+    expect(stair?.intervalMonths).toBe(3);
+
+    // Tenant isolation: a foreign building id is NOT_FOUND.
+    const other = callerFor(standardId);
+    await expect(
+      other.fireSafety.doors.bulkCreate({
+        buildingId: tower.id,
+        doors: [{ doorRef: 'X-1' }],
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+
+  it('FS-E32: marshal gaps respect the per-building cover flag and minimum (HSE FS-8)', async () => {
+    const caller = callerFor(adminId);
+    const office = await createOffice(caller);
+    const tower = await createTower(caller);
+
+    // Both buildings default to requiring one marshal → two gaps.
+    expect((await caller.fireSafety.overview()).marshalGaps).toBe(2);
+
+    // The substation-style building opts out — its gap disappears.
+    await caller.fireSafety.buildings.update({
+      buildingId: office.id,
+      requiresMarshalCover: false,
+    });
+    expect((await caller.fireSafety.overview()).marshalGaps).toBe(1);
+
+    // The tower needs TWO in-date marshals; one is not enough.
+    await caller.fireSafety.buildings.update({ buildingId: tower.id, marshalTarget: 2 });
+    const in12mo = new Date(Date.now() + 365 * DAY_MS);
+    await caller.fireSafety.marshals.add({
+      buildingId: tower.id,
+      userId: adminId,
+      role: 'marshal',
+      area: 'Floors 1-4',
+      trainedAt: new Date(),
+      trainingExpiresAt: in12mo,
+    });
+    expect((await caller.fireSafety.overview()).marshalGaps).toBe(1);
+
+    const coverage = await caller.fireSafety.marshals.coverage();
+    const towerRow = coverage.find((c) => c.buildingId === tower.id);
+    expect(towerRow?.gap).toBe(true);
+    expect(towerRow?.marshalTarget).toBe(2);
+    const officeRow = coverage.find((c) => c.buildingId === office.id);
+    expect(officeRow?.gap).toBe(false);
+    expect(officeRow?.requiresMarshalCover).toBe(false);
+
+    // Second marshal in date → the tower's gap closes.
+    await caller.fireSafety.marshals.add({
+      buildingId: tower.id,
+      userId: standardId,
+      role: 'deputy',
+      area: 'Floors 5-9',
+      trainedAt: new Date(),
+      trainingExpiresAt: in12mo,
+    });
+    expect((await caller.fireSafety.overview()).marshalGaps).toBe(0);
+  });
+
+  it('FS-E33: FRA references do not overflow at 10,000 (HSE FS-10)', async () => {
+    const caller = callerFor(adminId);
+    await db.insert(schema.referenceCounters).values({
+      tenantId,
+      series: 'fireRiskAssessment',
+      value: 9999,
+    });
+    const fra = await caller.fireSafety.fras.create({ title: 'Ten thousandth premises' });
+    const loaded = await caller.fireSafety.fras.get({ fraId: fra.id });
+    expect(loaded.referenceNumber).toBe('FRA-10000');
   });
 });

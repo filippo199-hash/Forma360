@@ -1,5 +1,5 @@
 /**
- * Fire Safety router (FreeHS module B3) — the fire risk assessment, the
+ * Fire Safety router (FreeHS module B4) — the fire risk assessment, the
  * fire safety arrangements, and the recurring checks that keep them true.
  *
  * Design goals from the practitioner spec:
@@ -73,9 +73,10 @@ import {
   addMonthsClamped,
   buildingDocumentSchema,
   CHECK_FREQUENCIES,
-  checkDueStatus,
+  checkDisplayStatus,
   DEFAULT_PEEP_REVIEW_MONTHS,
   doorChecklistSchema,
+  doorDisplayStatus,
   doorDueStatus,
   doorInspectionIntervalMonths,
   FIRE_CHECK_TYPE_SPECS,
@@ -91,11 +92,13 @@ import {
   nextDueDate,
   requiredCheckTypesFor,
   suggestedFraReviewMonths,
+  type CheckDisplayStatus,
   type CheckDueStatus,
   type FireBuildingProfile,
   type FireCheckType,
 } from '@forma360/shared/fire-safety';
 import { newId } from '@forma360/shared/id';
+import { usersHoldingPermission } from '@forma360/permissions/holders';
 import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, inArray, isNull, lte, ne } from 'drizzle-orm';
 import { z } from 'zod';
@@ -106,6 +109,26 @@ import { router } from '../trpc';
 export interface FireSafetyRouterDeps {
   /** Wired from the brand module catalogue (ADR 0010). */
   enabled: boolean;
+  /** Base URL for links in alert emails; absent = relative links. */
+  appUrl?: string;
+  /**
+   * FRA → PDF (HSE review FS-5). Optional: absent in non-web callers —
+   * `fras.renderPdf` refuses when unwired rather than half-rendering.
+   */
+  renderPdf?: (input: {
+    tenantId: string;
+    fraId: string;
+  }) => Promise<{ key: string; bytes: number; cached: boolean; stub: boolean }>;
+  /**
+   * Escalation email dispatch (HSE review FS-6): an intolerable FRA
+   * publish alerts every `fireSafety.manage` holder. Optional — tests
+   * stub it; the web wiring provides the real dispatcher.
+   */
+  sendAlertEmail?: (input: {
+    to: string;
+    templateKey: string;
+    variables: Record<string, string>;
+  }) => Promise<unknown>;
 }
 
 /** The statutory-duty summary every building read returns. */
@@ -291,10 +314,29 @@ async function syncAutoChecks(
   return { added, deactivated };
 }
 
+/**
+ * Stamp an FRA's content clock (HSE review FS-7). Compared against
+ * `publishedAt`: an active FRA whose content moved after sign-off is
+ * flagged attestation-stale until the RP re-attests (re-publishes).
+ */
+async function touchFraContent(db: Database, fraId: string, now: Date): Promise<void> {
+  await db
+    .update(fireRiskAssessments)
+    .set({ contentUpdatedAt: now, updatedAt: now })
+    .where(eq(fireRiskAssessments.id, fraId));
+}
+
 function checkWithStatus(check: FireLogbookCheck, now: Date) {
   return {
     ...check,
-    dueStatus: checkDueStatus(check.nextDueAt, check.frequency, now) satisfies CheckDueStatus,
+    // FS-1: the calendar never shows a failed check as green — a 'fail'
+    // holds the red state regardless of the advanced due date.
+    dueStatus: checkDisplayStatus(
+      check.nextDueAt,
+      check.frequency,
+      check.lastResult,
+      now,
+    ) satisfies CheckDisplayStatus,
   };
 }
 
@@ -363,6 +405,8 @@ const buildingUpdateInput = z.object({
   serviceRisersNotes: z.string().max(4000).optional(),
   secureInfoBoxLocation: z.string().max(500).optional(),
   infoDocuments: z.array(buildingDocumentSchema).max(50).optional(),
+  requiresMarshalCover: z.boolean().optional(),
+  marshalTarget: z.number().int().min(1).max(50).optional(),
 });
 
 const fraUpdateInput = z.object({
@@ -447,6 +491,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               id: fireRiskAssessments.id,
               buildingId: fireRiskAssessments.buildingId,
               status: fireRiskAssessments.status,
+              riskRating: fireRiskAssessments.riskRating,
               nextReviewAt: fireRiskAssessments.nextReviewAt,
             })
             .from(fireRiskAssessments)
@@ -464,12 +509,20 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           const buildingChecks = checks.filter((c) => c.buildingId === building.id);
           let checksOverdue = 0;
           let checksDueSoon = 0;
+          let checksFailed = 0;
           for (const check of buildingChecks) {
-            const status = checkDueStatus(check.nextDueAt, check.frequency, now);
-            if (status === 'overdue') checksOverdue += 1;
+            const status = checkDisplayStatus(
+              check.nextDueAt,
+              check.frequency,
+              check.lastResult,
+              now,
+            );
+            if (status === 'failed') checksFailed += 1;
+            else if (status === 'overdue') checksOverdue += 1;
             else if (status === 'due_soon') checksDueSoon += 1;
           }
           let doorsOverdue = 0;
+          let doorsFailed = 0;
           for (const door of doors.filter((d) => d.buildingId === building.id)) {
             const parent = buildingById.get(door.buildingId);
             if (parent === undefined) continue;
@@ -477,9 +530,14 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               { locationKind: door.locationKind, override: door.inspectionIntervalMonthsOverride },
               parent,
             );
-            if (doorDueStatus(door.nextInspectionDueAt, interval, now) === 'overdue') {
-              doorsOverdue += 1;
-            }
+            const status = doorDisplayStatus(
+              door.nextInspectionDueAt,
+              interval,
+              door.lastOutcome,
+              now,
+            );
+            if (status === 'failed') doorsFailed += 1;
+            else if (status === 'overdue') doorsOverdue += 1;
           }
           const buildingFras = fras.filter((f) => f.buildingId === building.id);
           const activeFra = buildingFras.find((f) => f.status === 'active');
@@ -488,9 +546,12 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             duty,
             checksOverdue,
             checksDueSoon,
+            checksFailed,
             doorsOverdue,
+            doorsFailed,
             doorCount: doors.filter((d) => d.buildingId === building.id).length,
             hasActiveFra: activeFra !== undefined,
+            activeFraRating: activeFra?.riskRating ?? null,
             fraReviewDue:
               activeFra?.nextReviewAt !== null &&
               activeFra?.nextReviewAt !== undefined &&
@@ -590,8 +651,8 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               intervalMonths: interval,
               dueStatus:
                 door.status === 'active'
-                  ? doorDueStatus(door.nextInspectionDueAt, interval, now)
-                  : ('ok' satisfies CheckDueStatus),
+                  ? doorDisplayStatus(door.nextInspectionDueAt, interval, door.lastOutcome, now)
+                  : ('ok' satisfies CheckDisplayStatus),
             };
           }),
           drills,
@@ -715,6 +776,10 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               ? { secureInfoBoxLocation: patch.secureInfoBoxLocation }
               : {}),
             ...(patch.infoDocuments !== undefined ? { infoDocuments: patch.infoDocuments } : {}),
+            ...(patch.requiresMarshalCover !== undefined
+              ? { requiresMarshalCover: patch.requiresMarshalCover }
+              : {}),
+            ...(patch.marshalTarget !== undefined ? { marshalTarget: patch.marshalTarget } : {}),
             updatedAt: now,
           })
           .where(eq(fireBuildings.id, building.id));
@@ -889,7 +954,25 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
                   .limit(1)
               )[0] ?? null)
             : null;
-        return { ...fra, building, findings, reviews, events };
+        const names = await userNamesById(
+          ctx.db,
+          ctx.tenantId,
+          [fra.publishedBy, fra.assessorUserId].filter((v): v is string => v !== null),
+        );
+        return {
+          ...fra,
+          building,
+          findings,
+          reviews,
+          events,
+          publishedByName: fra.publishedBy !== null ? (names.get(fra.publishedBy) ?? null) : null,
+          // FS-7: the signature only covers the content it signed.
+          attestationStale:
+            fra.status === 'active' &&
+            fra.publishedAt !== null &&
+            fra.contentUpdatedAt !== null &&
+            fra.contentUpdatedAt.getTime() > fra.publishedAt.getTime(),
+        };
       }),
 
     create: tenantProcedure
@@ -977,6 +1060,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             ...(patch.reviewFrequencyMonths !== undefined
               ? { reviewFrequencyMonths: patch.reviewFrequencyMonths }
               : {}),
+            contentUpdatedAt: new Date(),
             updatedAt: new Date(),
           })
           .where(eq(fireRiskAssessments.id, fra.id));
@@ -1019,6 +1103,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           description: input.description,
           requiresAction: input.requiresAction,
         });
+        await touchFraContent(ctx.db, fra.id, new Date());
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'fra',
@@ -1069,6 +1154,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             updatedAt: new Date(),
           })
           .where(eq(fireSignificantFindings.id, finding.id));
+        await touchFraContent(ctx.db, fra.id, new Date());
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'fra',
@@ -1104,6 +1190,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         await ctx.db
           .delete(fireSignificantFindings)
           .where(eq(fireSignificantFindings.id, finding.id));
+        await touchFraContent(ctx.db, finding.fraId, new Date());
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'fra',
@@ -1176,12 +1263,46 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (fra.responsiblePersonName.trim().length === 0) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-responsible-person' });
         }
+        // FS-4: "suitable and sufficient" needs an assessment behind it —
+        // people at risk, the fire triangle, and the evaluation are the
+        // assessment. A signed FRA with these blank is not defensible
+        // under Article 9 of the Fire Safety Order.
+        if (fra.personsAtRisk.length === 0) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-persons-at-risk' });
+        }
+        if (fra.ignitionSources.trim().length === 0) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-ignition-sources' });
+        }
+        if (fra.fuelSources.trim().length === 0) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-fuel-sources' });
+        }
+        if (fra.oxygenSources.trim().length === 0) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-oxygen-sources' });
+        }
+        if (fra.evaluationNotes.trim().length === 0) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-evaluation' });
+        }
         const findings = await ctx.db
           .select()
           .from(fireSignificantFindings)
           .where(eq(fireSignificantFindings.fraId, fra.id));
         if (findings.length === 0 && !input.confirmNoSignificantFindings) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-findings' });
+        }
+        // FS-6: "intolerable" means the premises should not be occupied
+        // until the risk is reduced — publishing it demands at least one
+        // unresolved finding on an action path. The loudest rating can't
+        // be the quietest publish.
+        if (fra.riskRating === 'intolerable') {
+          const actionable = findings.some(
+            (f) => f.resolvedAt === null && (f.requiresAction || f.actionId !== null),
+          );
+          if (!actionable) {
+            throw new TRPCError({
+              code: 'PRECONDITION_FAILED',
+              message: 'intolerable-needs-action',
+            });
+          }
         }
 
         const building =
@@ -1229,12 +1350,15 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           }
           const now = new Date();
           const frequency = fra.reviewFrequencyMonths ?? suggestedFraReviewMonths(fra.riskRating);
+          // FS-7: every publish is a fresh attestation — the signature
+          // covers the content as of NOW, so both clocks reset together.
           await tx
             .update(fireRiskAssessments)
             .set({
               status: 'active',
-              publishedAt: fra.publishedAt ?? now,
+              publishedAt: now,
               publishedBy: ctx.auth.userId,
+              contentUpdatedAt: now,
               reviewFrequencyMonths: frequency,
               nextReviewAt: addMonthsClamped(now, frequency),
               updatedAt: now,
@@ -1246,14 +1370,72 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           entityType: 'fra',
           entityId: fra.id,
           actorUserId: ctx.auth.userId,
-          kind: 'published',
+          kind: fra.status === 'active' ? 'reattested' : 'published',
           detail: String(createdActionIds.length),
         });
+        // FS-6: an intolerable publish alerts every fireSafety.manage
+        // holder immediately. Email failure never rolls back the publish
+        // — the record stands; the alert is best-effort and logged.
+        const sendAlertEmail = deps.sendAlertEmail;
+        if (fra.riskRating === 'intolerable' && sendAlertEmail !== undefined) {
+          try {
+            const holders = await usersHoldingPermission(ctx.db, ctx.tenantId, 'fireSafety.manage');
+            const publisherName =
+              (await userNamesById(ctx.db, ctx.tenantId, [ctx.auth.userId])).get(ctx.auth.userId) ??
+              'a colleague';
+            const viewUrl = `${deps.appUrl ?? ''}/en/fire-safety/fra/${fra.id}`;
+            await Promise.all(
+              holders.map((h) =>
+                sendAlertEmail({
+                  to: h.email,
+                  templateKey: 'fra-intolerable-alert',
+                  variables: {
+                    recipientName: h.name,
+                    title: fra.title,
+                    referenceNumber: fra.referenceNumber ?? '',
+                    buildingLine: building !== null ? ` for ${building.name}` : '',
+                    publishedByName: publisherName,
+                    viewUrl,
+                  },
+                }),
+              ),
+            );
+          } catch (err) {
+            ctx.logger.warn(
+              { fraId: fra.id, err: err instanceof Error ? err.message : String(err) },
+              '[fireSafety] intolerable alert email failed',
+            );
+          }
+        }
         ctx.logger.info(
           { fraId: fra.id, actionsCreated: createdActionIds.length },
           '[fireSafety] FRA published',
         );
         return { ok: true, actionsCreated: createdActionIds.length };
+      }),
+
+    /**
+     * The FRA as a document (HSE review FS-5) — the file the Responsible
+     * Person hands to the managing agent or the enforcing authority.
+     * Renders via the shared Puppeteer pipeline into R2; the exports
+     * route 302s to a signed URL.
+     */
+    renderPdf: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(z.object({ fraId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        if (deps.renderPdf === undefined) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'render-unavailable' });
+        }
+        const fra = await loadFra(ctx.db, ctx.tenantId, input.fraId);
+        const rendered = await deps.renderPdf({ tenantId: ctx.tenantId, fraId: fra.id });
+        return {
+          storageKey: rendered.key,
+          filename: `${fra.referenceNumber ?? 'fire-risk-assessment'}.pdf`,
+          sizeBytes: rendered.bytes,
+          stub: rendered.stub,
+        };
       }),
 
     moveToDraft: tenantProcedure
@@ -1479,7 +1661,11 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           callPointRef: z.string().max(200).default(''),
           notes: z.string().max(4000).default(''),
           defectsSummary: z.string().max(4000).default(''),
-          raiseAction: z.boolean().default(false),
+          /**
+           * FS-2: a failed safety check defaults to raising a follow-up
+           * action — silence is the opt-out, not the default.
+           */
+          raiseAction: z.boolean().default(true),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -1556,6 +1742,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               .update(fireLogbookChecks)
               .set({
                 lastDoneAt: performedAt,
+                lastResult: input.result,
                 nextDueAt: nextDueDate(performedAt, schedule.frequency),
                 updatedAt: new Date(),
               })
@@ -1735,6 +1922,83 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         return { id };
       }),
 
+    /**
+     * Bulk door register import (HSE review FS-12) — a 200-door block is
+     * one paste, not 200 form submissions. Duplicate refs (within the
+     * paste or against the live register, case-insensitive) are skipped
+     * and reported, never silently overwritten.
+     */
+    bulkCreate: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(
+        z.object({
+          buildingId: z.string().length(26),
+          doors: z
+            .array(
+              z.object({
+                doorRef: z.string().min(1).max(200),
+                floor: z.string().max(100).default(''),
+                locationKind: z.enum(FIRE_DOOR_LOCATION_KINDS).default('other'),
+                ratingMinutes: z.number().int().min(15).max(240).nullable().optional(),
+                selfClosing: z.boolean().default(true),
+              }),
+            )
+            .min(1)
+            .max(500),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        const now = new Date();
+        const existing = await ctx.db
+          .select({ doorRef: fireDoors.doorRef })
+          .from(fireDoors)
+          .where(and(eq(fireDoors.buildingId, building.id), eq(fireDoors.status, 'active')));
+        const taken = new Set(existing.map((d) => d.doorRef.toLowerCase()));
+        const values: Array<typeof fireDoors.$inferInsert> = [];
+        const skipped: string[] = [];
+        for (const row of input.doors) {
+          const key = row.doorRef.toLowerCase();
+          if (taken.has(key)) {
+            skipped.push(row.doorRef);
+            continue;
+          }
+          taken.add(key);
+          const interval = doorIntervalMonths(
+            { locationKind: row.locationKind, override: null },
+            building,
+          );
+          values.push({
+            id: newId(),
+            tenantId: ctx.tenantId,
+            buildingId: building.id,
+            doorRef: row.doorRef,
+            locationKind: row.locationKind,
+            floor: row.floor,
+            ratingMinutes: row.ratingMinutes ?? null,
+            selfClosing: row.selfClosing,
+            nextInspectionDueAt: addMonthsClamped(now, interval),
+            createdBy: ctx.auth.userId,
+          });
+        }
+        if (values.length > 0) {
+          await ctx.db.insert(fireDoors).values(values);
+        }
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'building',
+          entityId: building.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'doors_bulk_added',
+          detail: `${values.length} added, ${skipped.length} skipped`,
+        });
+        return { created: values.length, skipped };
+      }),
+
     update: tenantProcedure
       .use(requirePermission('fireSafety.create'))
       .input(
@@ -1836,7 +2100,8 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           inspectedAt: z.coerce.date().optional(),
           checklist: doorChecklistSchema.optional(),
           defectsSummary: z.string().max(4000).default(''),
-          raiseAction: z.boolean().default(false),
+          /** FS-2 — see logbook.recordEntry. */
+          raiseAction: z.boolean().default(true),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -1900,6 +2165,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               .update(fireDoors)
               .set({
                 lastInspectedAt: inspectedAt,
+                lastOutcome: input.outcome,
                 nextInspectionDueAt: addMonthsClamped(inspectedAt, interval),
                 updatedAt: new Date(),
               })
@@ -2431,7 +2697,12 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
     coverage: tenantProcedure.use(requirePermission('fireSafety.view')).query(async ({ ctx }) => {
       assertEnabled();
       const buildings = await ctx.db
-        .select({ id: fireBuildings.id, name: fireBuildings.name })
+        .select({
+          id: fireBuildings.id,
+          name: fireBuildings.name,
+          requiresMarshalCover: fireBuildings.requiresMarshalCover,
+          marshalTarget: fireBuildings.marshalTarget,
+        })
         .from(fireBuildings)
         .where(and(eq(fireBuildings.tenantId, ctx.tenantId), eq(fireBuildings.status, 'active')))
         .orderBy(asc(fireBuildings.name));
@@ -2447,10 +2718,15 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         return {
           buildingId: building.id,
           buildingName: building.name,
+          requiresMarshalCover: building.requiresMarshalCover,
+          marshalTarget: building.marshalTarget,
           marshalCount: members.length,
           inDateCount: inDate,
           expiringSoonCount: statuses.filter((s) => s === 'expiring_soon').length,
-          gap: inDate === 0,
+          // FS-8: a gap is only a gap where cover is required, and the
+          // building's own minimum is the bar — not "at least one,
+          // everywhere".
+          gap: building.requiresMarshalCover && inDate < building.marshalTarget,
         };
       });
     }),
@@ -2490,6 +2766,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             .select({
               id: fireRiskAssessments.id,
               status: fireRiskAssessments.status,
+              riskRating: fireRiskAssessments.riskRating,
               nextReviewAt: fireRiskAssessments.nextReviewAt,
             })
             .from(fireRiskAssessments)
@@ -2514,7 +2791,11 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             .from(fireMarshals)
             .where(and(eq(fireMarshals.tenantId, ctx.tenantId), isNull(fireMarshals.endedAt))),
           ctx.db
-            .select({ id: fireBuildings.id })
+            .select({
+              id: fireBuildings.id,
+              requiresMarshalCover: fireBuildings.requiresMarshalCover,
+              marshalTarget: fireBuildings.marshalTarget,
+            })
             .from(fireBuildings)
             .where(
               and(eq(fireBuildings.tenantId, ctx.tenantId), eq(fireBuildings.status, 'active')),
@@ -2523,27 +2804,35 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
 
       let checksOverdue = 0;
       let checksDueSoon = 0;
+      let checksFailed = 0;
       for (const { check } of checkRows) {
-        const status = checkDueStatus(check.nextDueAt, check.frequency, now);
-        if (status === 'overdue') checksOverdue += 1;
+        const status = checkDisplayStatus(check.nextDueAt, check.frequency, check.lastResult, now);
+        if (status === 'failed') checksFailed += 1;
+        else if (status === 'overdue') checksOverdue += 1;
         else if (status === 'due_soon') checksDueSoon += 1;
       }
 
       let doorsOverdue = 0;
+      let doorsFailed = 0;
       for (const { door, building } of doorRows) {
         const interval = doorIntervalMonths(
           { locationKind: door.locationKind, override: door.inspectionIntervalMonthsOverride },
           building,
         );
-        if (doorDueStatus(door.nextInspectionDueAt, interval, now) === 'overdue') {
-          doorsOverdue += 1;
-        }
+        const status = doorDisplayStatus(door.nextInspectionDueAt, interval, door.lastOutcome, now);
+        if (status === 'failed') doorsFailed += 1;
+        else if (status === 'overdue') doorsOverdue += 1;
       }
 
       const frasReviewDue = fraRows.filter(
         (f) => f.status === 'active' && f.nextReviewAt !== null && f.nextReviewAt <= now,
       ).length;
       const frasDraft = fraRows.filter((f) => f.status === 'draft').length;
+      // FS-6: an intolerable assessment is a needs-attention item in its
+      // own right, not a quiet row in a list.
+      const frasIntolerable = fraRows.filter(
+        (f) => f.status === 'active' && f.riskRating === 'intolerable',
+      ).length;
 
       // Marshal coverage gaps: active buildings with nobody in date.
       const marshalsByBuilding = new Map<string, number>();
@@ -2554,7 +2843,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         }
       }
       const marshalGaps = activeBuildings.filter(
-        (b) => (marshalsByBuilding.get(b.id) ?? 0) === 0,
+        (b) => b.requiresMarshalCover && (marshalsByBuilding.get(b.id) ?? 0) < b.marshalTarget,
       ).length;
       const marshalsExpiringSoon = marshalRows.filter(
         (m) => marshalTrainingStatus(m, now) === 'expiring_soon',
@@ -2563,9 +2852,12 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
       return {
         checksOverdue,
         checksDueSoon,
+        checksFailed,
         doorsOverdue,
+        doorsFailed,
         frasReviewDue,
         frasDraft,
+        frasIntolerable,
         peepReviewsDue: peepRows.length,
         marshalGaps,
         marshalsExpiringSoon,

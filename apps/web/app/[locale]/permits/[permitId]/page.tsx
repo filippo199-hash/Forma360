@@ -32,6 +32,8 @@ import {
   PermitStatusChip,
 } from '../../../../src/components/permits/chips';
 import { PermitErrorText } from '../../../../src/components/permits/permit-error';
+import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
+import { SearchSelect } from '../../../../src/components/selectors/search-select';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
@@ -80,7 +82,6 @@ export default function PermitDetailPage() {
     isLoading,
     error: loadError,
   } = trpc.permits.get.useQuery({ permitId }, { enabled: permitId.length === 26 });
-  const { data: usersPage } = trpc.users.list.useQuery({ limit: 200 });
   const { data: riskAssessmentOptions } = trpc.riskAssessments.list.useQuery(
     { status: 'active', type: 'all' },
     { enabled: permit?.status === 'draft' },
@@ -385,24 +386,17 @@ export default function PermitDetailPage() {
                   {t('ssow.riskAssessment')}
                 </p>
                 {isDraft && canCreate ? (
-                  <select
-                    value={permit.riskAssessmentId ?? ''}
-                    onChange={(e) =>
-                      updatePermit.mutate({
-                        permitId,
-                        riskAssessmentId: e.target.value === '' ? null : e.target.value,
-                      })
-                    }
-                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="">{t('ssow.none')}</option>
-                    {(riskAssessmentOptions ?? []).map((ra) => (
-                      <option key={ra.id} value={ra.id}>
-                        {ra.referenceNumber !== null ? `${ra.referenceNumber} · ` : ''}
-                        {ra.title}
-                      </option>
-                    ))}
-                  </select>
+                  <SearchSelect
+                    className="mt-1"
+                    value={permit.riskAssessmentId}
+                    onChange={(next) => updatePermit.mutate({ permitId, riskAssessmentId: next })}
+                    placeholder={t('ssow.none')}
+                    options={(riskAssessmentOptions ?? []).map((ra) => ({
+                      id: ra.id,
+                      label: ra.title,
+                      sub: ra.referenceNumber,
+                    }))}
+                  />
                 ) : permit.riskAssessment !== null ? (
                   <Link
                     href={`/${locale}/risk-assessments/${permit.riskAssessment.id}`}
@@ -422,23 +416,18 @@ export default function PermitDetailPage() {
                   {t('ssow.methodStatement')}
                 </p>
                 {isDraft && canCreate ? (
-                  <select
-                    value={permit.methodStatementDocumentId ?? ''}
-                    onChange={(e) =>
-                      updatePermit.mutate({
-                        permitId,
-                        methodStatementDocumentId: e.target.value === '' ? null : e.target.value,
-                      })
+                  <SearchSelect
+                    className="mt-1"
+                    value={permit.methodStatementDocumentId}
+                    onChange={(next) =>
+                      updatePermit.mutate({ permitId, methodStatementDocumentId: next })
                     }
-                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="">{t('ssow.none')}</option>
-                    {(documentOptions ?? []).map((doc) => (
-                      <option key={doc.id} value={doc.id}>
-                        {doc.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder={t('ssow.none')}
+                    options={(documentOptions ?? []).map((doc) => ({
+                      id: doc.id,
+                      label: doc.name,
+                    }))}
+                  />
                 ) : permit.methodStatement !== null ? (
                   <Link
                     href={`/${locale}/documents`}
@@ -1181,28 +1170,21 @@ export default function PermitDetailPage() {
                   {t('actions.handoverTo')}
                 </label>
                 <p className="text-xs text-muted-foreground">{t('actions.handoverHint')}</p>
-                <select
-                  id="handover-to"
-                  value={handoverTo}
-                  onChange={(e) => setHandoverTo(e.target.value)}
-                  className="w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">—</option>
-                  {(usersPage?.users ?? [])
-                    // Separation of duties (PW-5): never the issuer, the
-                    // current acceptor, or the authorising engineer.
-                    .filter(
-                      (u) =>
-                        u.id !== permit.acceptorUserId &&
-                        u.id !== permit.issuerUserId &&
-                        u.id !== permit.authoriserUserId,
-                    )
-                    .map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name}
-                      </option>
-                    ))}
-                </select>
+                {/* Searchable user picker; separation of duties (PW-5):
+                    never the issuer, the current acceptor, or the
+                    authorising engineer. */}
+                <GroupUserSelector
+                  mode="users"
+                  multiple={false}
+                  className="max-w-xs"
+                  value={handoverTo !== '' ? [handoverTo] : []}
+                  onChange={(next) => setHandoverTo(next[0] ?? '')}
+                  filterUser={(u) =>
+                    u.id !== permit.acceptorUserId &&
+                    u.id !== permit.issuerUserId &&
+                    u.id !== permit.authoriserUserId
+                  }
+                />
                 <Button
                   size="sm"
                   disabled={handoverTo === '' || handover.isPending}

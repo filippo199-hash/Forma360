@@ -1,0 +1,8 @@
+{
+  "subject": "INTOLERABLE fire risk published — {referenceNumber} {title}",
+  "preheader": "A fire risk assessment on {productName} was signed with an intolerable rating.",
+  "greeting": "Hello {recipientName},",
+  "body": "{publishedByName} has signed and published the fire risk assessment \"{title}\" ({referenceNumber}){buildingLine} with a taken-together rating of INTOLERABLE.\n\nUnder PAS 79 an intolerable rating means the premises should not continue to be occupied until the risk has been reduced. Remedial actions have been raised from the assessment's significant findings — review them now and decide whether occupation can continue.",
+  "cta": "Open the assessment",
+  "ctaUrl": "{viewUrl}"
+}

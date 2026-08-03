@@ -4854,7 +4854,10 @@
       "frasReviewDue": "FRA reviews due",
       "peepReviewsDue": "PEEP reviews due",
       "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring"
+      "marshalsExpiringSoon": "marshal training expiring",
+      "checksFailed": "comprobaciones fallidas pendientes de repetir",
+      "doorsFailed": "puertas cortafuego fallidas",
+      "frasIntolerable": "evaluaciones con riesgo intolerable"
     },
     "columns": {
       "building": "Building",
@@ -4910,7 +4913,8 @@
     "dueStatus": {
       "ok": "OK",
       "due_soon": "Vence pronto",
-      "overdue": "Vencida"
+      "overdue": "Vencida",
+      "failed": "Fallida — pendiente de repetir"
     },
     "fraStatus": {
       "draft": "Borrador",
@@ -5038,6 +5042,18 @@
         "lastInspected": "Last inspected",
         "nextDue": "Next due",
         "status": "Status"
+      },
+      "bulk": {
+        "button": "Añadir en bloque",
+        "heading": "Añadir puertas en bloque",
+        "intro": "Una puerta por línea: referencia, planta, tipo (flat / common / other). Separado por comas o tabuladores; planta y tipo opcionales.",
+        "defaultKind": "Tipo predeterminado",
+        "preview": "{count} puertas listas",
+        "errors": "{count} líneas con errores (línea {lines})",
+        "submit": "Añadir {count} puertas",
+        "done": "{created} puertas añadidas.",
+        "doneSkipped": "{created} puertas añadidas, {skipped} duplicadas omitidas.",
+        "placeholder": "FD-1-01, 1\nFD-1-02, 1\nST-0-01, G, common"
       }
     },
     "drills": {
@@ -5105,7 +5121,12 @@
       "alreadyMarshal": "Already a marshal for this building.",
       "endButton": "End",
       "endConfirm": "End this marshal assignment?",
-      "empty": "No marshals assigned."
+      "empty": "No marshals assigned.",
+      "cover": {
+        "required": "Este edificio necesita brigadistas",
+        "target": "Mínimo de brigadistas con formación vigente",
+        "notRequiredNote": "No cuenta en los huecos de cobertura."
+      }
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5207,6 +5228,37 @@
         "material_change": "Material change",
         "legislation_change": "Legislation change",
         "manual": "Other"
+      },
+      "pdfButton": "Descargar PDF",
+      "publishErrors": {
+        "noRiskRating": "Primero establezca la valoración global del riesgo.",
+        "noResponsiblePerson": "Primero indique la persona responsable.",
+        "noFindings": "Registre los hallazgos significativos o confirme que no hay.",
+        "noPersonsAtRisk": "Registre quién está en riesgo.",
+        "noIgnitionSources": "Registre las fuentes de ignición.",
+        "noFuelSources": "Registre las fuentes de combustible.",
+        "noOxygenSources": "Registre las fuentes de oxígeno.",
+        "noEvaluation": "Registre la evaluación.",
+        "intolerableNeedsAction": "Un riesgo intolerable exige al menos un hallazgo abierto con acción."
+      },
+      "signOff": {
+        "title": "Firmar y publicar la evaluación",
+        "statement": "Confirmo que esta evaluación de riesgo de incendio es adecuada y suficiente para estas instalaciones, que los hallazgos significativos están registrados, y la firmo como evaluación vigente.",
+        "missingHeading": "Antes de firmar, complete:",
+        "intolerableWarning": "Riesgo INTOLERABLE: la ocupación no debería continuar hasta reducir el riesgo. Publicar alerta a todos los gestores de seguridad contra incendios.",
+        "noFindingsNote": "No hay hallazgos significativos registrados — publicar confirma que no hay.",
+        "actionsPreview": "{findings} hallazgos registrados — publicar creará {actions} acciones.",
+        "confirmButton": "Firmar y publicar",
+        "reattestButton": "Reatestar y publicar"
+      },
+      "staleBanner": {
+        "title": "Modificada tras la firma",
+        "body": "El contenido cambió después de que {name} firmara el {date}. La firma cubre la versión anterior — reateste para firmar la actual.",
+        "reattest": "Reatestar"
+      },
+      "intolerableBanner": {
+        "title": "Riesgo intolerable — la ocupación no debería continuar",
+        "body": "Esta evaluación vigente califica las instalaciones como intolerables. Complete las acciones correctivas y reevalúe antes de reanudar la ocupación normal."
       }
     },
     "info": {
@@ -5229,6 +5281,14 @@
       "intro": "Ignition-source work (welding, grinding, torch work) runs under a permit to work with a fire watch.",
       "register": "Abrir registro de permisos",
       "startPermit": "Iniciar permiso de trabajo en caliente"
-    }
+    },
+    "checksFailedCount": "{count} fallidas",
+    "fraIntolerable": "INTOLERABLE"
+  },
+  "entitySelect": {
+    "search": "Buscar…",
+    "clearSearch": "Borrar búsqueda",
+    "clear": "Borrar selección",
+    "done": "Hecho"
   }
 }

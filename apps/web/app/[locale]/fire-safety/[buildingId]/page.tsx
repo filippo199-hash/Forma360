@@ -29,6 +29,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { parseDoorImport } from '@forma360/shared/fire-safety';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -124,6 +125,30 @@ export default function FireBuildingPage() {
   const [doorDefects, setDoorDefects] = useState('');
   const [doorRaiseAction, setDoorRaiseAction] = useState(true);
   const [historyDoorId, setHistoryDoorId] = useState<string | null>(null);
+
+  // FS-12: a 200-door block is one paste, not 200 form submissions.
+  const [showBulkDoors, setShowBulkDoors] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkDefaultKind, setBulkDefaultKind] = useState<
+    'common_parts' | 'flat_entrance' | 'other'
+  >('flat_entrance');
+  const bulkParse = parseDoorImport(bulkText, bulkDefaultKind);
+  const bulkCreateDoors = trpc.fireSafety.doors.bulkCreate.useMutation({
+    onSuccess: (result) => {
+      toast.success(
+        result.skipped.length > 0
+          ? t('doors.bulk.doneSkipped', {
+              created: result.created,
+              skipped: result.skipped.length,
+            })
+          : t('doors.bulk.done', { created: result.created }),
+      );
+      setShowBulkDoors(false);
+      setBulkText('');
+      invalidate();
+    },
+    onError: () => toast.error(t('saveError')),
+  });
 
   const { data: doorHistory } = trpc.fireSafety.doors.inspections.useQuery(
     { doorId: historyDoorId ?? '' },
@@ -610,11 +635,77 @@ export default function FireBuildingPage() {
               {building.duty.above11mResidential ? t('doors.regimeNote') : t('doors.defaultNote')}
             </p>
             {canCreate && !archived ? (
-              <Button variant="outline" onClick={() => setShowAddDoor((v) => !v)}>
-                {t('doors.addButton')}
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowBulkDoors((v) => !v)}>
+                  {t('doors.bulk.button')}
+                </Button>
+                <Button variant="outline" onClick={() => setShowAddDoor((v) => !v)}>
+                  {t('doors.addButton')}
+                </Button>
+              </div>
             ) : null}
           </div>
+
+          {showBulkDoors ? (
+            <Card>
+              <CardContent className="space-y-3 p-5">
+                <div>
+                  <h3 className="text-sm font-semibold">{t('doors.bulk.heading')}</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{t('doors.bulk.intro')}</p>
+                </div>
+                <Textarea
+                  value={bulkText}
+                  onChange={(e) => setBulkText(e.target.value)}
+                  rows={8}
+                  placeholder={t('doors.bulk.placeholder')}
+                  className="font-mono text-xs"
+                />
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <Label htmlFor="bulk-kind" className="text-xs">
+                    {t('doors.bulk.defaultKind')}
+                  </Label>
+                  <select
+                    id="bulk-kind"
+                    value={bulkDefaultKind}
+                    onChange={(e) => setBulkDefaultKind(e.target.value as never)}
+                    className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                  >
+                    {(['flat_entrance', 'common_parts', 'other'] as const).map((k) => (
+                      <option key={k} value={k}>
+                        {t(`doors.kinds.${k}`)}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-xs text-muted-foreground">
+                    {t('doors.bulk.preview', { count: bulkParse.rows.length })}
+                    {bulkParse.errors.length > 0
+                      ? ` — ${t('doors.bulk.errors', { count: bulkParse.errors.length, lines: bulkParse.errors.map((e) => e.line).join(', ') })}`
+                      : ''}
+                  </span>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowBulkDoors(false)}>
+                    {t('cancel')}
+                  </Button>
+                  <Button
+                    disabled={
+                      bulkParse.rows.length === 0 ||
+                      bulkParse.errors.length > 0 ||
+                      bulkCreateDoors.isPending
+                    }
+                    onClick={() =>
+                      bulkCreateDoors.mutate({
+                        buildingId,
+                        doors: bulkParse.rows.slice(0, 500),
+                      })
+                    }
+                  >
+                    {t('doors.bulk.submit', { count: bulkParse.rows.length })}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {showAddDoor ? (
             <Card>
@@ -1217,6 +1308,56 @@ export default function FireBuildingPage() {
               </Button>
             ) : null}
           </div>
+
+          {/* FS-8: cover is per-building — a lock-up substation opts out,
+              a tower states the minimum it needs. */}
+          <Card>
+            <CardContent className="flex flex-wrap items-center gap-4 p-4 text-sm">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={building.requiresMarshalCover}
+                  disabled={!canManage || archived}
+                  onChange={(e) =>
+                    updateBuilding.mutate({
+                      buildingId,
+                      requiresMarshalCover: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4"
+                />
+                {t('marshals.cover.required')}
+              </label>
+              {building.requiresMarshalCover ? (
+                <label className="flex items-center gap-2">
+                  {t('marshals.cover.target')}
+                  <Input
+                    type="number"
+                    min="1"
+                    max="50"
+                    defaultValue={building.marshalTarget}
+                    disabled={!canManage || archived}
+                    onBlur={(e) => {
+                      const v = Number(e.target.value);
+                      if (
+                        Number.isInteger(v) &&
+                        v >= 1 &&
+                        v <= 50 &&
+                        v !== building.marshalTarget
+                      ) {
+                        updateBuilding.mutate({ buildingId, marshalTarget: v });
+                      }
+                    }}
+                    className="h-8 w-20"
+                  />
+                </label>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  {t('marshals.cover.notRequiredNote')}
+                </span>
+              )}
+            </CardContent>
+          </Card>
 
           {showAddMarshal ? (
             <Card>

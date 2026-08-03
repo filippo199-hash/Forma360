@@ -23,6 +23,10 @@ import {
   templateVersions,
   templates,
   user,
+  fireBuildings,
+  fireFraReviews,
+  fireRiskAssessments,
+  fireSignificantFindings,
 } from '@forma360/db/schema';
 import type {
   GasLimit,
@@ -34,7 +38,7 @@ import type {
 } from '@forma360/shared/permits';
 import type { RiskMatrixConfig } from '@forma360/shared/risk-matrix';
 import type { Database } from '@forma360/db/client';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 
 export interface InspectionRenderSnapshot {
@@ -580,5 +584,170 @@ export async function loadPermitSnapshot(
 
 /** Stable content hash for the permit PDF cache key. */
 export function hashPermitSnapshot(snap: PermitRenderSnapshot): string {
+  return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
+}
+
+// ─── Fire risk assessment (FreeHS module B4, HSE review FS-5) ───────────────
+
+export interface FraRenderSnapshot {
+  fra: {
+    id: string;
+    tenantId: string;
+    referenceNumber: string | null;
+    title: string;
+    status: string;
+    methodology: string;
+    premisesDescription: string;
+    responsiblePersonName: string;
+    assessorName: string;
+    personsAtRisk: ReadonlyArray<string>;
+    maxOccupancy: number | null;
+    sleepingOccupants: boolean;
+    ignitionSources: string;
+    fuelSources: string;
+    oxygenSources: string;
+    evaluationNotes: string;
+    riskRating: string | null;
+    publishedAt: string | null;
+    publishedByName: string | null;
+    nextReviewAt: string | null;
+    reviewFrequencyMonths: number | null;
+    createdAt: string;
+    /** FS-7: true when content changed after the recorded sign-off. */
+    attestationStale: boolean;
+  };
+  building: {
+    name: string;
+    address: string;
+    isResidential: boolean;
+    heightMetres: number | null;
+    storeys: number | null;
+  } | null;
+  findings: Array<{
+    id: string;
+    category: string;
+    priority: string;
+    description: string;
+    requiresAction: boolean;
+    resolvedAt: string | null;
+    hasAction: boolean;
+  }>;
+  reviews: Array<{
+    trigger: string;
+    outcome: string;
+    note: string;
+    reviewedAt: string;
+    reviewedByName: string | null;
+  }>;
+}
+
+/**
+ * Load a fire risk assessment into a renderer-ready snapshot — the
+ * document the Responsible Person files or hands to the enforcing
+ * authority. Returns `null` when the FRA doesn't exist in the tenant.
+ */
+export async function loadFraSnapshot(
+  db: Database,
+  input: { tenantId: string; fraId: string },
+): Promise<FraRenderSnapshot | null> {
+  const fraRows = await db
+    .select()
+    .from(fireRiskAssessments)
+    .where(
+      and(
+        eq(fireRiskAssessments.tenantId, input.tenantId),
+        eq(fireRiskAssessments.id, input.fraId),
+      ),
+    )
+    .limit(1);
+  const fra = fraRows[0];
+  if (fra === undefined) return null;
+
+  const [findingRows, reviewRows] = await Promise.all([
+    db.select().from(fireSignificantFindings).where(eq(fireSignificantFindings.fraId, fra.id)),
+    db.select().from(fireFraReviews).where(eq(fireFraReviews.fraId, fra.id)),
+  ]);
+  findingRows.sort((a, b) => a.sortOrder - b.sortOrder || (a.createdAt < b.createdAt ? -1 : 1));
+  reviewRows.sort((a, b) => (a.reviewedAt < b.reviewedAt ? 1 : -1));
+
+  let building: FraRenderSnapshot['building'] = null;
+  if (fra.buildingId !== null) {
+    const buildingRows = await db
+      .select({
+        name: fireBuildings.name,
+        address: fireBuildings.address,
+        isResidential: fireBuildings.isResidential,
+        heightMetres: fireBuildings.heightMetres,
+        storeys: fireBuildings.storeys,
+      })
+      .from(fireBuildings)
+      .where(eq(fireBuildings.id, fra.buildingId))
+      .limit(1);
+    building = buildingRows[0] ?? null;
+  }
+
+  const nameIds = [fra.publishedBy, ...reviewRows.map((r) => r.reviewedBy)].filter(
+    (v): v is string => v !== null,
+  );
+  const nameRows =
+    nameIds.length > 0
+      ? await db
+          .select({ id: user.id, name: user.name })
+          .from(user)
+          .where(and(eq(user.tenantId, input.tenantId), inArray(user.id, nameIds)))
+      : [];
+  const names = new Map(nameRows.map((r) => [r.id, r.name]));
+
+  return {
+    fra: {
+      id: fra.id,
+      tenantId: fra.tenantId,
+      referenceNumber: fra.referenceNumber,
+      title: fra.title,
+      status: fra.status,
+      methodology: fra.methodology,
+      premisesDescription: fra.premisesDescription,
+      responsiblePersonName: fra.responsiblePersonName,
+      assessorName: fra.assessorName,
+      personsAtRisk: fra.personsAtRisk,
+      maxOccupancy: fra.maxOccupancy,
+      sleepingOccupants: fra.sleepingOccupants,
+      ignitionSources: fra.ignitionSources,
+      fuelSources: fra.fuelSources,
+      oxygenSources: fra.oxygenSources,
+      evaluationNotes: fra.evaluationNotes,
+      riskRating: fra.riskRating,
+      publishedAt: fra.publishedAt?.toISOString() ?? null,
+      publishedByName: fra.publishedBy !== null ? (names.get(fra.publishedBy) ?? null) : null,
+      nextReviewAt: fra.nextReviewAt?.toISOString() ?? null,
+      reviewFrequencyMonths: fra.reviewFrequencyMonths,
+      createdAt: fra.createdAt.toISOString(),
+      attestationStale:
+        fra.status === 'active' &&
+        fra.publishedAt !== null &&
+        fra.contentUpdatedAt !== null &&
+        fra.contentUpdatedAt.getTime() > fra.publishedAt.getTime(),
+    },
+    building,
+    findings: findingRows.map((f) => ({
+      id: f.id,
+      category: f.category,
+      priority: f.priority,
+      description: f.description,
+      requiresAction: f.requiresAction,
+      resolvedAt: f.resolvedAt?.toISOString() ?? null,
+      hasAction: f.actionId !== null,
+    })),
+    reviews: reviewRows.map((r) => ({
+      trigger: r.trigger,
+      outcome: r.outcome,
+      note: r.note,
+      reviewedAt: r.reviewedAt.toISOString(),
+      reviewedByName: names.get(r.reviewedBy) ?? null,
+    })),
+  };
+}
+
+export function hashFraSnapshot(snap: FraRenderSnapshot): string {
   return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
 }

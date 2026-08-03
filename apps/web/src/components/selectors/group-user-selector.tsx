@@ -22,6 +22,12 @@ export interface GroupUserSelectorProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /**
+   * Optional predicate to restrict which users are selectable/visible
+   * (e.g. separation-of-duties exclusions on a permit). A user filtered
+   * out here is removed from the list entirely.
+   */
+  filterUser?: (user: { id: string; name: string; sub: string | null }) => boolean;
 }
 
 interface Entity {
@@ -44,6 +50,7 @@ export function GroupUserSelector({
   placeholder,
   disabled = false,
   className,
+  filterUser,
 }: GroupUserSelectorProps) {
   const t = useTranslations('groupUserSelector');
   const placeholderText = placeholder ?? t('placeholder');
@@ -57,15 +64,14 @@ export function GroupUserSelector({
     () => (groupsQuery.data ?? []).map((g) => ({ id: g.id, name: g.name, sub: null })),
     [groupsQuery.data],
   );
-  const users = useMemo<Entity[]>(
-    () =>
-      (usersQuery.data?.users ?? []).map((u) => ({
-        id: u.id,
-        name: displayUserName(u),
-        sub: u.email,
-      })),
-    [usersQuery.data],
-  );
+  const users = useMemo<Entity[]>(() => {
+    const mapped = (usersQuery.data?.users ?? []).map((u) => ({
+      id: u.id,
+      name: displayUserName(u),
+      sub: u.email as string | null,
+    }));
+    return filterUser ? mapped.filter(filterUser) : mapped;
+  }, [usersQuery.data, filterUser]);
 
   const byId = useMemo(() => {
     const m = new Map<string, Entity>();

@@ -1,5 +1,5 @@
 /**
- * Fire Safety (FreeHS module B3) — the fire risk assessment, the fire
+ * Fire Safety (FreeHS module B4) — the fire risk assessment, the fire
  * safety arrangements, and the recurring checks that keep them true.
  *
  * Model:
@@ -103,6 +103,15 @@ export const fireBuildings = pgTable(
     serviceRisersNotes: text('service_risers_notes').notNull().default(''),
     /** Where the secure information box is, for high-rise duties. */
     secureInfoBoxLocation: text('secure_info_box_location').notNull().default(''),
+
+    /**
+     * Marshal coverage is opt-in per building (HSE review FS-8): a lock-up
+     * substation doesn't need a marshal, and flagging it forever trains
+     * people to ignore the amber. Buildings that do need cover state the
+     * minimum headcount they need in date.
+     */
+    requiresMarshalCover: boolean('requires_marshal_cover').notNull().default(true),
+    marshalTarget: integer('marshal_target').notNull().default(1),
     /** Attached plans / EWS documents; Zod-validated at the boundary. */
     infoDocuments: jsonb('info_documents')
       .notNull()
@@ -175,6 +184,13 @@ export const fireRiskAssessments = pgTable(
     riskRating: text('risk_rating').$type<FraRiskRating>(),
 
     status: text('status').notNull().default('draft').$type<FraStatus>(),
+    /**
+     * When the assessment content (narrative, occupancy, rating,
+     * findings) last changed — compared against `publishedAt` to detect
+     * an active FRA edited after sign-off (HSE review FS-7). The
+     * signature is only valid for the content it signed.
+     */
+    contentUpdatedAt: timestamp('content_updated_at', { withTimezone: true, mode: 'date' }),
     publishedAt: timestamp('published_at', { withTimezone: true, mode: 'date' }),
     /** Who attested "suitable and sufficient" on the latest publish. */
     publishedBy: text('published_by'),
@@ -307,6 +323,13 @@ export const fireLogbookChecks = pgTable(
     notes: text('notes').notNull().default(''),
 
     lastDoneAt: timestamp('last_done_at', { withTimezone: true, mode: 'date' }),
+    /**
+     * Result of the newest recorded entry (HSE review FS-1). A 'fail'
+     * here holds the check in the red "failed" display state until a
+     * subsequent pass clears it — advancing the due date never hides a
+     * failure. Null until the first entry.
+     */
+    lastResult: text('last_result').$type<FireCheckResult>(),
     /** First cycle starts from setup; recomputed on every recorded entry. */
     nextDueAt: timestamp('next_due_at', { withTimezone: true, mode: 'date' }).notNull(),
 
@@ -400,6 +423,8 @@ export const fireDoors = pgTable(
     inspectionIntervalMonthsOverride: integer('inspection_interval_months_override'),
 
     lastInspectedAt: timestamp('last_inspected_at', { withTimezone: true, mode: 'date' }),
+    /** Newest inspection outcome — 'fail' holds the door red (FS-1). */
+    lastOutcome: text('last_outcome').$type<FireDoorOutcome>(),
     nextInspectionDueAt: timestamp('next_inspection_due_at', {
       withTimezone: true,
       mode: 'date',
@@ -613,6 +638,8 @@ export const FIRE_EVENT_KINDS = [
   'peep_ended',
   'marshal_added',
   'marshal_ended',
+  'doors_bulk_added',
+  'reattested',
 ] as const;
 export type FireEventKind = (typeof FIRE_EVENT_KINDS)[number];
 

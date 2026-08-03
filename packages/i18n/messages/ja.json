@@ -4847,7 +4847,10 @@
       "frasReviewDue": "FRA reviews due",
       "peepReviewsDue": "PEEP reviews due",
       "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring"
+      "marshalsExpiringSoon": "marshal training expiring",
+      "checksFailed": "再試験待ちの不合格点検",
+      "doorsFailed": "不合格の防火扉",
+      "frasIntolerable": "許容不可評価のアセスメント"
     },
     "columns": {
       "building": "Building",
@@ -4903,7 +4906,8 @@
     "dueStatus": {
       "ok": "OK",
       "due_soon": "期限間近",
-      "overdue": "期限超過"
+      "overdue": "期限超過",
+      "failed": "不合格 — 再試験待ち"
     },
     "fraStatus": {
       "draft": "下書き",
@@ -5031,6 +5035,18 @@
         "lastInspected": "Last inspected",
         "nextDue": "Next due",
         "status": "Status"
+      },
+      "bulk": {
+        "button": "一括追加",
+        "heading": "防火扉の一括追加",
+        "intro": "1行に1枚: 参照番号、階、種別（flat / common / other）。カンマまたはタブ区切り。階と種別は省略可。",
+        "defaultKind": "既定の種別",
+        "preview": "{count}枚を追加可能",
+        "errors": "{count}行に誤り（{lines}行目）",
+        "submit": "{count}枚を追加",
+        "done": "{created}枚を追加しました。",
+        "doneSkipped": "{created}枚を追加、重複{skipped}件をスキップしました。",
+        "placeholder": "FD-1-01, 1\nFD-1-02, 1\nST-0-01, G, common"
       }
     },
     "drills": {
@@ -5098,7 +5114,12 @@
       "alreadyMarshal": "Already a marshal for this building.",
       "endButton": "End",
       "endConfirm": "End this marshal assignment?",
-      "empty": "No marshals assigned."
+      "empty": "No marshals assigned.",
+      "cover": {
+        "required": "この建物には防火担当者が必要",
+        "target": "有効な訓練を受けた最少人数",
+        "notRequiredNote": "カバレッジ不足には数えません。"
+      }
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5200,6 +5221,37 @@
         "material_change": "Material change",
         "legislation_change": "Legislation change",
         "manual": "Other"
+      },
+      "pdfButton": "PDFをダウンロード",
+      "publishErrors": {
+        "noRiskRating": "先に総合リスク評価を設定してください。",
+        "noResponsiblePerson": "先に防火管理者を記入してください。",
+        "noFindings": "重要指摘事項を記録するか、無いことを確認してください。",
+        "noPersonsAtRisk": "リスクに晒される人を記録してください。",
+        "noIgnitionSources": "着火源を記録してください。",
+        "noFuelSources": "可燃物を記録してください。",
+        "noOxygenSources": "酸素供給源を記録してください。",
+        "noEvaluation": "評価を記録してください。",
+        "intolerableNeedsAction": "許容不可の評価には、対応中の指摘事項が少なくとも1件必要です。"
+      },
+      "signOff": {
+        "title": "アセスメントに署名して公開",
+        "statement": "この火災リスクアセスメントが当該施設に対して適切かつ十分であり、重要指摘事項が記録されていることを確認し、現行の評価として署名します。",
+        "missingHeading": "署名前に完了してください:",
+        "intolerableWarning": "許容不可の評価: リスクが低減されるまで施設の使用は継続すべきではありません。公開すると全ての防火管理者に通知されます。",
+        "noFindingsNote": "重要指摘事項はありません — 公開すると「指摘なし」を確認したことになります。",
+        "actionsPreview": "{findings}件の指摘事項 — 公開により{actions}件の是正措置を作成します。",
+        "confirmButton": "署名して公開",
+        "reattestButton": "再確認して公開"
+      },
+      "staleBanner": {
+        "title": "署名後に変更あり",
+        "body": "{date}に{name}が署名した後に内容が変更されました。署名は旧版を対象としています — 再確認して現行版に署名してください。",
+        "reattest": "再確認"
+      },
+      "intolerableBanner": {
+        "title": "許容不可リスク — 使用は継続すべきではありません",
+        "body": "この現行アセスメントは施設を許容不可と評価しています。是正措置を完了し、通常使用の再開前に再評価してください。"
       }
     },
     "info": {
@@ -5222,6 +5274,14 @@
       "intro": "Ignition-source work (welding, grinding, torch work) runs under a permit to work with a fire watch.",
       "register": "許可証台帳を開く",
       "startPermit": "火気作業許可を開始"
-    }
+    },
+    "checksFailedCount": "{count}件不合格",
+    "fraIntolerable": "許容不可"
+  },
+  "entitySelect": {
+    "search": "検索…",
+    "clearSearch": "検索をクリア",
+    "clear": "選択を解除",
+    "done": "完了"
   }
 }

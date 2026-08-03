@@ -3156,7 +3156,11 @@
   },
   "entitySelect": {
     "loading": "Loading…",
-    "noResults": "No results."
+    "noResults": "No results.",
+    "search": "Search…",
+    "clearSearch": "Clear search",
+    "clear": "Clear selection",
+    "done": "Done"
   },
   "search": {
     "openLabel": "Open search",
@@ -5084,7 +5088,10 @@
       "frasReviewDue": "FRA reviews due",
       "peepReviewsDue": "PEEP reviews due",
       "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring"
+      "marshalsExpiringSoon": "marshal training expiring",
+      "checksFailed": "failed checks awaiting re-test",
+      "doorsFailed": "failed fire doors",
+      "frasIntolerable": "intolerable risk assessments"
     },
     "columns": {
       "building": "Building",
@@ -5140,7 +5147,8 @@
     "dueStatus": {
       "ok": "OK",
       "due_soon": "Due soon",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "failed": "Failed — awaiting re-test"
     },
     "fraStatus": {
       "draft": "Draft",
@@ -5268,6 +5276,18 @@
         "lastInspected": "Last inspected",
         "nextDue": "Next due",
         "status": "Status"
+      },
+      "bulk": {
+        "button": "Bulk add",
+        "heading": "Bulk add doors",
+        "intro": "One door per line: reference, floor, type (flat / common / other). Comma or tab separated; floor and type are optional.",
+        "defaultKind": "Default type",
+        "preview": "{count} doors ready",
+        "errors": "{count} lines need fixing (line {lines})",
+        "submit": "Add {count} doors",
+        "done": "{created} doors added.",
+        "doneSkipped": "{created} doors added, {skipped} duplicates skipped.",
+        "placeholder": "FD-1-01, 1\nFD-1-02, 1\nST-0-01, G, common"
       }
     },
     "drills": {
@@ -5335,7 +5355,12 @@
       "alreadyMarshal": "Already a marshal for this building.",
       "endButton": "End",
       "endConfirm": "End this marshal assignment?",
-      "empty": "No marshals assigned."
+      "empty": "No marshals assigned.",
+      "cover": {
+        "required": "This building needs marshal cover",
+        "target": "Minimum in-date marshals",
+        "notRequiredNote": "Not counted in coverage gaps."
+      }
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5437,6 +5462,37 @@
         "material_change": "Material change",
         "legislation_change": "Legislation change",
         "manual": "Other"
+      },
+      "pdfButton": "Download PDF",
+      "publishErrors": {
+        "noRiskRating": "Set the overall risk rating first.",
+        "noResponsiblePerson": "Name the Responsible Person first.",
+        "noFindings": "Record the significant findings, or confirm there are none.",
+        "noPersonsAtRisk": "Record who is at risk.",
+        "noIgnitionSources": "Record the sources of ignition.",
+        "noFuelSources": "Record the sources of fuel.",
+        "noOxygenSources": "Record the sources of oxygen.",
+        "noEvaluation": "Record the evaluation.",
+        "intolerableNeedsAction": "An intolerable rating needs at least one unresolved finding with an action."
+      },
+      "signOff": {
+        "title": "Sign & publish this assessment",
+        "statement": "I confirm this fire risk assessment is suitable and sufficient for these premises under article 9 of the Fire Safety Order, that the significant findings are recorded, and I sign it as the current assessment.",
+        "missingHeading": "Before signing, complete:",
+        "intolerableWarning": "INTOLERABLE rating: the premises should not continue to be occupied until the risk is reduced. Publishing alerts every fire-safety manager.",
+        "noFindingsNote": "No significant findings are recorded — publishing confirms there are none.",
+        "actionsPreview": "{findings} significant findings recorded — publishing will raise {actions} actions.",
+        "confirmButton": "Sign & publish",
+        "reattestButton": "Re-attest & publish"
+      },
+      "staleBanner": {
+        "title": "Changed since sign-off",
+        "body": "The content has changed since {name} signed on {date}. The signature covers the earlier version — re-attest to sign the current one.",
+        "reattest": "Re-attest"
+      },
+      "intolerableBanner": {
+        "title": "Intolerable risk — occupation should not continue",
+        "body": "This live assessment rates the premises intolerable. Complete the remedial actions and re-assess before normal occupation resumes."
       }
     },
     "info": {
@@ -5459,6 +5515,8 @@
       "intro": "Ignition-source work (welding, grinding, torch work) runs under a permit to work with a fire watch.",
       "register": "Open the permit register",
       "startPermit": "Start hot-work permit"
-    }
+    },
+    "checksFailedCount": "{count} failed",
+    "fraIntolerable": "INTOLERABLE"
   }
 }

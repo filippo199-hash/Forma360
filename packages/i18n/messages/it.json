@@ -4889,7 +4889,10 @@
       "frasReviewDue": "revisioni valutazione in scadenza",
       "peepReviewsDue": "revisioni PEEP in scadenza",
       "marshalGaps": "edifici senza addetto",
-      "marshalsExpiringSoon": "formazione addetti in scadenza"
+      "marshalsExpiringSoon": "formazione addetti in scadenza",
+      "checksFailed": "controlli non superati in attesa di riprova",
+      "doorsFailed": "porte tagliafuoco non conformi",
+      "frasIntolerable": "valutazioni con rischio intollerabile"
     },
     "columns": {
       "building": "Edificio",
@@ -4945,7 +4948,8 @@
     "dueStatus": {
       "ok": "OK",
       "due_soon": "In scadenza",
-      "overdue": "In ritardo"
+      "overdue": "In ritardo",
+      "failed": "Non superato — attesa nuova prova"
     },
     "fraStatus": {
       "draft": "Bozza",
@@ -5073,6 +5077,18 @@
         "lastInspected": "Ultima ispezione",
         "nextDue": "Prossima",
         "status": "Stato"
+      },
+      "bulk": {
+        "button": "Aggiunta multipla",
+        "heading": "Aggiungi porte in blocco",
+        "intro": "Una porta per riga: riferimento, piano, tipo (flat / common / other). Separati da virgola o tab; piano e tipo facoltativi.",
+        "defaultKind": "Tipo predefinito",
+        "preview": "{count} porte pronte",
+        "errors": "{count} righe da correggere (riga {lines})",
+        "submit": "Aggiungi {count} porte",
+        "done": "{created} porte aggiunte.",
+        "doneSkipped": "{created} porte aggiunte, {skipped} duplicati saltati.",
+        "placeholder": "FD-1-01, 1\nFD-1-02, 1\nST-0-01, G, common"
       }
     },
     "drills": {
@@ -5140,7 +5156,12 @@
       "alreadyMarshal": "Già addetto per questo edificio.",
       "endButton": "Termina",
       "endConfirm": "Terminare questo incarico?",
-      "empty": "Nessun addetto assegnato."
+      "empty": "Nessun addetto assegnato.",
+      "cover": {
+        "required": "Questo edificio richiede addetti antincendio",
+        "target": "Minimo addetti con formazione valida",
+        "notRequiredNote": "Escluso dal conteggio delle coperture mancanti."
+      }
     },
     "fra": {
       "defaultTitle": "Valutazione rischio incendio",
@@ -5242,6 +5263,37 @@
         "material_change": "Modifica sostanziale",
         "legislation_change": "Modifica normativa",
         "manual": "Altro"
+      },
+      "pdfButton": "Scarica PDF",
+      "publishErrors": {
+        "noRiskRating": "Imposta prima la valutazione complessiva del rischio.",
+        "noResponsiblePerson": "Indica prima il Responsabile.",
+        "noFindings": "Registra le criticità significative o conferma che non ce ne sono.",
+        "noPersonsAtRisk": "Registra chi è a rischio.",
+        "noIgnitionSources": "Registra le sorgenti di innesco.",
+        "noFuelSources": "Registra le fonti di combustibile.",
+        "noOxygenSources": "Registra le fonti di comburente.",
+        "noEvaluation": "Registra la valutazione.",
+        "intolerableNeedsAction": "Un rischio intollerabile richiede almeno una criticità aperta con azione."
+      },
+      "signOff": {
+        "title": "Firma e pubblica la valutazione",
+        "statement": "Confermo che questa valutazione del rischio incendio è idonea e sufficiente per questi locali, che le criticità significative sono registrate, e la firmo come valutazione vigente.",
+        "missingHeading": "Prima di firmare, completa:",
+        "intolerableWarning": "Rischio INTOLLERABILE: l’occupazione dei locali non dovrebbe proseguire finché il rischio non è ridotto. La pubblicazione avvisa tutti i responsabili antincendio.",
+        "noFindingsNote": "Nessuna criticità significativa registrata — pubblicando confermi che non ce ne sono.",
+        "actionsPreview": "{findings} criticità registrate — la pubblicazione creerà {actions} azioni.",
+        "confirmButton": "Firma e pubblica",
+        "reattestButton": "Riattesta e pubblica"
+      },
+      "staleBanner": {
+        "title": "Modificata dopo la firma",
+        "body": "Il contenuto è cambiato dopo la firma di {name} del {date}. La firma copre la versione precedente — riattesta per firmare quella attuale.",
+        "reattest": "Riattesta"
+      },
+      "intolerableBanner": {
+        "title": "Rischio intollerabile — l’occupazione non dovrebbe proseguire",
+        "body": "Questa valutazione vigente classifica i locali come intollerabili. Completa le azioni correttive e rivaluta prima di riprendere l’occupazione normale."
       }
     },
     "info": {
@@ -5264,6 +5316,14 @@
       "intro": "Saldatura, molatura e uso di fiamma si eseguono con permesso di lavoro e sorveglianza antincendio.",
       "register": "Apri il registro permessi",
       "startPermit": "Avvia permesso lavori a caldo"
-    }
+    },
+    "checksFailedCount": "{count} non superati",
+    "fraIntolerable": "INTOLLERABILE"
+  },
+  "entitySelect": {
+    "search": "Cerca…",
+    "clearSearch": "Cancella ricerca",
+    "clear": "Annulla selezione",
+    "done": "Fatto"
   }
 }
