@@ -47,6 +47,7 @@ import fireDueDigest from '../../i18n/emails/en/fire-due-digest.json';
 import fraIntolerableAlert from '../../i18n/emails/en/fra-intolerable-alert.json';
 import actionAssigned from '../../i18n/emails/en/action-assigned.json';
 import actionDueDigest from '../../i18n/emails/en/action-due-digest.json';
+import documentExpiry from '../../i18n/emails/en/document-expiry.json';
 
 const EMAIL_TEMPLATES: Record<string, unknown> = {
   'heads-up-reminder': headsUpReminder,
@@ -79,6 +80,7 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'fra-intolerable-alert': fraIntolerableAlert,
   'action-assigned': actionAssigned,
   'action-due-digest': actionDueDigest,
+  'document-expiry': documentExpiry,
 };
 
 /** Registered template keys — exported so tests can assert the registry

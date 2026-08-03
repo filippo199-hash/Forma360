@@ -62,6 +62,12 @@ import {
   createActionRemindersHandler,
   type DueActionRow,
 } from './workers/action-reminders';
+import { createHeadsUpPublishHandler, HEADS_UP_PUBLISH_CRON } from './workers/heads-up-publish';
+import {
+  createDocumentExpiryHandler,
+  DOCUMENT_EXPIRY_CRON,
+  type ExpiringDocument,
+} from './workers/document-expiry';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -449,6 +455,59 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   );
   logger.info({ cron: ACTION_REMINDERS_CRON }, '[worker] registered action-reminders repeatable');
 
+  // ─── Platform PF-15 — scheduled Heads Up publisher ────────────────────
+  const headsUpPublishWorker = new Worker(
+    QUEUE_NAMES.HEADS_UP_PUBLISH,
+    createHeadsUpPublishHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'heads-up-publish' }),
+    }),
+    workerOptions,
+  );
+  const headsUpPublishQueue = getQueue(QUEUE_NAMES.HEADS_UP_PUBLISH, connection);
+  await headsUpPublishQueue.upsertJobScheduler(
+    'heads-up-publish',
+    { pattern: HEADS_UP_PUBLISH_CRON, tz: 'UTC' },
+    { name: 'heads-up-publish', data: {} },
+  );
+  logger.info({ cron: HEADS_UP_PUBLISH_CRON }, '[worker] registered heads-up-publish repeatable');
+
+  // ─── Platform PF-16 — document expiry reminders ────────────────────────
+  const documentExpiryWorker = new Worker(
+    QUEUE_NAMES.DOCUMENT_EXPIRY,
+    createDocumentExpiryHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'document-expiry' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string },
+        doc: ExpiringDocument,
+        viewUrl: string,
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey: 'document-expiry',
+          variables: {
+            recipientName: recipient.name,
+            documentName: doc.name,
+            statusLine: doc.expired
+              ? `expired on ${doc.expiresAt.toISOString().slice(0, 10)}`
+              : `expires on ${doc.expiresAt.toISOString().slice(0, 10)}`,
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const documentExpiryQueue = getQueue(QUEUE_NAMES.DOCUMENT_EXPIRY, connection);
+  await documentExpiryQueue.upsertJobScheduler(
+    'document-expiry',
+    { pattern: DOCUMENT_EXPIRY_CRON, tz: 'UTC' },
+    { name: 'document-expiry', data: {} },
+  );
+  logger.info({ cron: DOCUMENT_EXPIRY_CRON }, '[worker] registered document-expiry repeatable');
+
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
   await scheduleTickQueue.upsertJobScheduler(
@@ -493,6 +552,8 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     permitExpiryWatchWorker,
     fireDueDigestWorker,
     actionRemindersWorker,
+    headsUpPublishWorker,
+    documentExpiryWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {

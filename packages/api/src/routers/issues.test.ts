@@ -417,6 +417,10 @@ describe('issues router (Phase 3 PR 1)', () => {
       const first = issueMails[0];
       expect(first?.variables.referenceNumber).toBe(referenceNumber);
       expect(first?.variables.categoryName).toBe('Notify');
+      // PF-12: the link must target the real /observations route (the
+      // old /en/issues/{id} URL 404ed on every notification).
+      expect(first?.variables.viewUrl).toContain('/en/observations/');
+      expect(first?.variables.viewUrl).not.toContain('/en/issues/');
     });
 
     it('nearbyCount returns issues at the site within the window', async () => {

@@ -182,7 +182,9 @@ export function createObservationNotifyHandler(deps: ObservationNotifyDeps) {
       return { sent: 0 };
     }
 
-    const viewUrl = `${deps.appUrl}/${tenantId}/observations/${issueId}`;
+    // PF-12: the first path segment is the LOCALE, not the tenant id —
+    // every notification email built here 404ed.
+    const viewUrl = `${deps.appUrl}/en/observations/${issueId}`;
     const templateKey = isCritical ? 'observation-critical-alert' : 'observation-notification';
 
     let sent = 0;

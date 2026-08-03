@@ -101,6 +101,10 @@ export const QUEUE_NAMES = {
    * assignees: due-soon warned once, overdue re-pinged weekly.
    */
   ACTION_REMINDERS: 'forma360-action-reminders',
+  /** Platform PF-15 — publishes scheduled Heads Ups when publishAt arrives. */
+  HEADS_UP_PUBLISH: 'forma360-heads-up-publish',
+  /** Platform PF-16 — document expiry reminders driven by reminderDays. */
+  DOCUMENT_EXPIRY: 'forma360-document-expiry',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -223,6 +227,14 @@ export type FireDueDigestPayload = z.infer<typeof fireDueDigestPayloadSchema>;
 export const actionRemindersPayloadSchema = z.object({}).strict();
 export type ActionRemindersPayload = z.infer<typeof actionRemindersPayloadSchema>;
 
+/** Heads-up publish tick — no payload; the worker scans publishAt. */
+export const headsUpPublishPayloadSchema = z.object({}).strict();
+export type HeadsUpPublishPayload = z.infer<typeof headsUpPublishPayloadSchema>;
+
+/** Document expiry tick — no payload; the worker scans reminderDays. */
+export const documentExpiryPayloadSchema = z.object({}).strict();
+export type DocumentExpiryPayload = z.infer<typeof documentExpiryPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -245,6 +257,8 @@ export interface QueuePayloads {
   [QUEUE_NAMES.PERMIT_EXPIRY_WATCH]: PermitExpiryWatchPayload;
   [QUEUE_NAMES.FIRE_DUE_DIGEST]: FireDueDigestPayload;
   [QUEUE_NAMES.ACTION_REMINDERS]: ActionRemindersPayload;
+  [QUEUE_NAMES.HEADS_UP_PUBLISH]: HeadsUpPublishPayload;
+  [QUEUE_NAMES.DOCUMENT_EXPIRY]: DocumentExpiryPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -266,6 +280,8 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.PERMIT_EXPIRY_WATCH]: permitExpiryWatchPayloadSchema,
   [QUEUE_NAMES.FIRE_DUE_DIGEST]: fireDueDigestPayloadSchema,
   [QUEUE_NAMES.ACTION_REMINDERS]: actionRemindersPayloadSchema,
+  [QUEUE_NAMES.HEADS_UP_PUBLISH]: headsUpPublishPayloadSchema,
+  [QUEUE_NAMES.DOCUMENT_EXPIRY]: documentExpiryPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

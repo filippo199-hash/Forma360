@@ -295,8 +295,8 @@ describe('actions router (platform review)', () => {
       status: 'open',
       reportedByUserId: adminId,
       referenceNumber: 'OBS-000001',
-      categorySnapshot: { name: 'Hazard' },
-      accessSnapshot: { groupIds: [], siteIds: [] },
+      categorySnapshot: { categoryId, name: 'Hazard', customFields: [], customQuestions: [] },
+      accessSnapshot: { groupIds: [], siteIds: [], permissions: [], snapshotAt: new Date().toISOString() },
     });
     const questionId = newId();
     const typeId = newId();

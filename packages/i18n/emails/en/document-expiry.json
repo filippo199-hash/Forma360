@@ -1,0 +1,8 @@
+{
+  "subject": "Document expiry — {documentName} {statusLine}",
+  "preheader": "A controlled document on {productName} needs renewing.",
+  "greeting": "Hello {recipientName},",
+  "body": "The document \"{documentName}\" {statusLine}.\n\nUpload the renewed version or archive the document if it is no longer required — an expired certificate that nobody notices is exactly what this reminder exists to prevent.",
+  "cta": "Open the document",
+  "footer": "You are receiving this because you uploaded this document or manage documents on {productName}."
+}

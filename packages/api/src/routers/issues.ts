@@ -748,7 +748,9 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
             reportedByName,
             recipientName: r.name,
             reportedAt,
-            viewUrl: `${appUrl}/en/issues/${args.issue.id}`,
+            // PF-12: the route is /observations — /issues never existed
+            // as a page, so every one of these emails 404ed.
+            viewUrl: `${appUrl}/en/observations/${args.issue.id}`,
           },
         });
       } catch (err) {
@@ -1280,12 +1282,32 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           kind: 'created',
           payload: { via: 'qr' },
         });
-        await notifyManagersOfNewIssue({
-          db: ctx.db,
-          tenantId: input.tenantId,
-          issue,
-          category,
-        });
+        // PF-12: the anonymous QR path used to bypass the category's
+        // configured critical-alert recipients and blast every manager —
+        // the route the public uses for the serious stuff skipped the
+        // alert list built for the serious stuff. Same fan-out as the
+        // logged-in path now.
+        if (deps.enqueueObservationNotify !== undefined) {
+          try {
+            await deps.enqueueObservationNotify({
+              tenantId: input.tenantId,
+              issueId: id,
+              isCritical: category.criticalAlerts,
+            });
+          } catch (err) {
+            deps.logger.error(
+              { err, issueId: id },
+              '[issues] failed to enqueue observation-notify (qr)',
+            );
+          }
+        } else {
+          await notifyManagersOfNewIssue({
+            db: ctx.db,
+            tenantId: input.tenantId,
+            issue,
+            category,
+          });
+        }
 
         deps.logger.info(
           { issueId: id, categoryId: category.id, via: 'qr' },
