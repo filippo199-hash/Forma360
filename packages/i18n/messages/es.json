@@ -1368,6 +1368,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "Mis inspecciones programadas ({count})",
+      "startNow": "Iniciar",
+      "startError": "No se pudo iniciar; inténtelo de nuevo.",
+      "missedBadge": "OMITIDA",
+      "overdueBadge": "Vencida",
+      "dueBadge": "Programada"
     }
   },
   "nav": {
@@ -1391,7 +1399,8 @@
     "riskAssessments": "Risk assessments",
     "coshh": "COSHH",
     "permits": "Permisos",
-    "fireSafety": "Seguridad contra incendios"
+    "fireSafety": "Seguridad contra incendios",
+    "analytics": "Panel"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2964,7 +2973,15 @@
       "observations": "Observaciones",
       "actions": "Acciones",
       "headsUp": "Avisos",
-      "documents": "Documentos"
+      "documents": "Documentos",
+      "permits": "Permisos",
+      "coshh": "Sustancias COSHH",
+      "riskAssessments": "Evaluaciones de riesgos",
+      "fireBuildings": "Edificios (incendios)",
+      "fireRiskAssessments": "Evaluaciones de incendio",
+      "contractors": "Contratistas",
+      "sites": "Sitios y proyectos",
+      "templates": "Plantillas"
     }
   },
   "ai": {
@@ -5334,5 +5351,50 @@
     "clearSearch": "Borrar búsqueda",
     "clear": "Borrar selección",
     "done": "Hecho"
+  },
+  "analytics": {
+    "title": "Panel",
+    "subtitle": "Qué requiere atención en todos los módulos y cómo evolucionan las tendencias.",
+    "tiles": {
+      "sectionLabel": "Requiere atención",
+      "myOpenActions": "Mis acciones abiertas",
+      "overdueActions": "Acciones vencidas",
+      "dueSoon": "{count} vencen en 7 días",
+      "openObservations": "Observaciones abiertas",
+      "highPriority": "{count} de alta prioridad",
+      "awaitingApproval": "Inspecciones pendientes de aprobación",
+      "inProgress": "{count} en curso",
+      "missedInspections": "Inspecciones no realizadas (30 d)",
+      "upcoming7": "{count} previstas en 7 días",
+      "pendingAcks": "Avisos por confirmar",
+      "openPermits": "Permisos abiertos",
+      "expiring48h": "{count} caducan en 48 h",
+      "raReviewOverdue": "Evaluaciones de riesgos con revisión vencida",
+      "raActive": "{count} activas",
+      "coshhReviewDue": "Revisiones COSHH vencidas",
+      "coshhSubstances": "{count} sustancias activas",
+      "fireAttention": "Seguridad contra incendios: requiere atención"
+    },
+    "trends": {
+      "sectionLabel": "Tendencias",
+      "actionsTitle": "Acciones: creadas vs completadas (8 semanas)",
+      "activityTitle": "Inspecciones y observaciones (8 semanas)",
+      "actionsCreated": "Creadas",
+      "actionsCompleted": "Completadas",
+      "inspectionsCompleted": "Inspecciones completadas",
+      "observationsRaised": "Observaciones registradas",
+      "thisWeek": "Ahora"
+    },
+    "sites": {
+      "sectionLabel": "Comparativa de sitios",
+      "title": "Sitios de un vistazo",
+      "subtitle": "Carga abierta y actividad de inspección por sitio, primero los más activos.",
+      "site": "Sitio",
+      "openActions": "Acciones abiertas",
+      "openObservations": "Observaciones abiertas",
+      "completed30": "Inspecciones (30 d)",
+      "noSite": "Sin sitio",
+      "empty": "Aún no hay sitios."
+    }
   }
 }

@@ -247,8 +247,16 @@ export default function ActionsListPage() {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [source, setSource] = useState<SourceFilter>('all');
   const [priority, setPriority] = useState<PriorityFilter>('all');
-  const [assignedToMe, setAssignedToMe] = useState(false);
-  const [overdueOnly, setOverdueOnly] = useState(false);
+  // Deep-linkable filters (the PF-5 dashboard tiles link here with
+  // ?mine=1 / ?overdue=1) — same lazy-init pattern as ?action= above.
+  const [assignedToMe, setAssignedToMe] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('mine') === '1';
+  });
+  const [overdueOnly, setOverdueOnly] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('overdue') === '1';
+  });
   const [hideClosed, setHideClosed] = useState(false);
   const [includeArchived, setIncludeArchived] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>('created');

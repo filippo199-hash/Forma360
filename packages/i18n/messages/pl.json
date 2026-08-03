@@ -1361,6 +1361,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "Moje zaplanowane inspekcje ({count})",
+      "startNow": "Rozpocznij",
+      "startError": "Nie udało się rozpocząć — spróbuj ponownie.",
+      "missedBadge": "POMINIĘTA",
+      "overdueBadge": "Po terminie",
+      "dueBadge": "Zaplanowana"
     }
   },
   "nav": {
@@ -1384,7 +1392,8 @@
     "riskAssessments": "Risk assessments",
     "coshh": "Substancje niebezpieczne",
     "permits": "Pozwolenia",
-    "fireSafety": "Ochrona ppoż."
+    "fireSafety": "Ochrona ppoż.",
+    "analytics": "Pulpit"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2957,7 +2966,15 @@
       "observations": "Obserwacje",
       "actions": "Dzialania",
       "headsUp": "Powiadomienia",
-      "documents": "Dokumenty"
+      "documents": "Dokumenty",
+      "permits": "Zezwolenia",
+      "coshh": "Substancje COSHH",
+      "riskAssessments": "Oceny ryzyka",
+      "fireBuildings": "Budynki ppoż.",
+      "fireRiskAssessments": "Oceny ryzyka pożarowego",
+      "contractors": "Wykonawcy",
+      "sites": "Obiekty i projekty",
+      "templates": "Szablony"
     }
   },
   "ai": {
@@ -5327,5 +5344,50 @@
     "clearSearch": "Wyczyść wyszukiwanie",
     "clear": "Wyczyść wybór",
     "done": "Gotowe"
+  },
+  "analytics": {
+    "title": "Pulpit",
+    "subtitle": "Co wymaga uwagi we wszystkich modułach i jak zmieniają się trendy.",
+    "tiles": {
+      "sectionLabel": "Wymaga uwagi",
+      "myOpenActions": "Moje otwarte działania",
+      "overdueActions": "Zaległe działania",
+      "dueSoon": "{count} z terminem w ciągu 7 dni",
+      "openObservations": "Otwarte obserwacje",
+      "highPriority": "{count} o wysokim priorytecie",
+      "awaitingApproval": "Inspekcje oczekujące na zatwierdzenie",
+      "inProgress": "{count} w toku",
+      "missedInspections": "Pominięte inspekcje (30 dni)",
+      "upcoming7": "{count} zaplanowanych na 7 dni",
+      "pendingAcks": "Komunikaty do potwierdzenia",
+      "openPermits": "Otwarte pozwolenia",
+      "expiring48h": "{count} wygasa w ciągu 48 godz.",
+      "raReviewOverdue": "Oceny ryzyka po terminie przeglądu",
+      "raActive": "{count} aktywnych",
+      "coshhReviewDue": "Zaległe przeglądy COSHH",
+      "coshhSubstances": "{count} aktywnych substancji",
+      "fireAttention": "Ochrona przeciwpożarowa: wymaga uwagi"
+    },
+    "trends": {
+      "sectionLabel": "Trendy",
+      "actionsTitle": "Działania — utworzone vs ukończone (8 tygodni)",
+      "activityTitle": "Inspekcje i obserwacje (8 tygodni)",
+      "actionsCreated": "Utworzone",
+      "actionsCompleted": "Ukończone",
+      "inspectionsCompleted": "Inspekcje ukończone",
+      "observationsRaised": "Zgłoszone obserwacje",
+      "thisWeek": "Teraz"
+    },
+    "sites": {
+      "sectionLabel": "Porównanie lokalizacji",
+      "title": "Lokalizacje w skrócie",
+      "subtitle": "Otwarte zadania i aktywność inspekcyjna według lokalizacji, najbardziej obciążone najpierw.",
+      "site": "Lokalizacja",
+      "openActions": "Otwarte działania",
+      "openObservations": "Otwarte obserwacje",
+      "completed30": "Inspekcje (30 dni)",
+      "noSite": "Brak lokalizacji",
+      "empty": "Brak lokalizacji."
+    }
   }
 }

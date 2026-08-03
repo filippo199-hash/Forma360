@@ -50,6 +50,7 @@ import actionDueDigest from '../../i18n/emails/en/action-due-digest.json';
 import documentExpiry from '../../i18n/emails/en/document-expiry.json';
 import inspectionApprovalPending from '../../i18n/emails/en/inspection-approval-pending.json';
 import inspectionApprovalDecided from '../../i18n/emails/en/inspection-approval-decided.json';
+import scheduleMissed from '../../i18n/emails/en/schedule-missed.json';
 
 const EMAIL_TEMPLATES: Record<string, unknown> = {
   'heads-up-reminder': headsUpReminder,
@@ -85,6 +86,7 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'document-expiry': documentExpiry,
   'inspection-approval-pending': inspectionApprovalPending,
   'inspection-approval-decided': inspectionApprovalDecided,
+  'schedule-missed': scheduleMissed,
 };
 
 /** Registered template keys — exported so tests can assert the registry

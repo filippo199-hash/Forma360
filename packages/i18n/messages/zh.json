@@ -1361,6 +1361,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "我的计划检查（{count}）",
+      "startNow": "开始",
+      "startError": "无法开始，请重试。",
+      "missedBadge": "未执行",
+      "overdueBadge": "已逾期",
+      "dueBadge": "待执行"
     }
   },
   "nav": {
@@ -1384,7 +1392,8 @@
     "riskAssessments": "Risk assessments",
     "coshh": "有害物质",
     "permits": "作业许可",
-    "fireSafety": "消防安全"
+    "fireSafety": "消防安全",
+    "analytics": "仪表盘"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2957,7 +2966,15 @@
       "observations": "观察",
       "actions": "行动",
       "headsUp": "通知",
-      "documents": "文件"
+      "documents": "文件",
+      "permits": "许可证",
+      "coshh": "COSHH 物质",
+      "riskAssessments": "风险评估",
+      "fireBuildings": "消防建筑",
+      "fireRiskAssessments": "火灾风险评估",
+      "contractors": "承包商",
+      "sites": "站点与项目",
+      "templates": "模板"
     }
   },
   "ai": {
@@ -5327,5 +5344,50 @@
     "clearSearch": "清除搜索",
     "clear": "清除选择",
     "done": "完成"
+  },
+  "analytics": {
+    "title": "仪表盘",
+    "subtitle": "一览所有模块中需要关注的事项及近期趋势。",
+    "tiles": {
+      "sectionLabel": "需要关注",
+      "myOpenActions": "我的未完成措施",
+      "overdueActions": "逾期措施",
+      "dueSoon": "7 天内到期 {count} 项",
+      "openObservations": "未关闭的观察项",
+      "highPriority": "高优先级 {count} 项",
+      "awaitingApproval": "待审批的检查",
+      "inProgress": "进行中 {count} 项",
+      "missedInspections": "未执行的检查(30 天)",
+      "upcoming7": "7 天内计划 {count} 项",
+      "pendingAcks": "待确认的通知",
+      "openPermits": "有效许可证",
+      "expiring48h": "48 小时内到期 {count} 项",
+      "raReviewOverdue": "复审逾期的风险评估",
+      "raActive": "有效 {count} 项",
+      "coshhReviewDue": "COSHH 复审逾期",
+      "coshhSubstances": "在用物质 {count} 项",
+      "fireAttention": "消防安全:需要关注"
+    },
+    "trends": {
+      "sectionLabel": "趋势",
+      "actionsTitle": "措施 — 新建与完成(8 周)",
+      "activityTitle": "检查与观察项(8 周)",
+      "actionsCreated": "新建",
+      "actionsCompleted": "完成",
+      "inspectionsCompleted": "已完成检查",
+      "observationsRaised": "上报的观察项",
+      "thisWeek": "本周"
+    },
+    "sites": {
+      "sectionLabel": "站点对比",
+      "title": "站点概览",
+      "subtitle": "各站点的未完成工作量与检查活动,按繁忙程度排序。",
+      "site": "站点",
+      "openActions": "未完成措施",
+      "openObservations": "未关闭观察项",
+      "completed30": "检查(30 天)",
+      "noSite": "无站点",
+      "empty": "暂无站点。"
+    }
   }
 }

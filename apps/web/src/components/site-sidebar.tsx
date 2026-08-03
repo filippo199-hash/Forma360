@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Bell,
   Bot,
+  ChartColumn,
   Building2,
   BadgeCheck,
   CalendarClock,
@@ -38,6 +39,7 @@ interface SiteSidebarProps {
 interface NavItem {
   key:
     | 'ai'
+    | 'analytics'
     | 'sites'
     | 'inspections'
     | 'templates'
@@ -102,6 +104,8 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
 
   const primary: NavItem[] = [
     { key: 'ai', href: `/${locale}/ai`, icon: Bot },
+    // PF-5: the cross-module dashboard — the "what needs attention" view.
+    { key: 'analytics', href: `/${locale}/analytics`, icon: ChartColumn },
     { key: 'sites', href: `/${locale}/sites`, icon: Building2 },
     { key: 'inspections', href: `/${locale}/inspections`, icon: ClipboardCheck },
     // PF-14: templates, schedules, approvals and maintenance were live,
@@ -127,6 +131,7 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
   // menu. Each entry needs its module's view permission (AI + settings
   // stay universal — settings always has "My profile").
   const NAV_PERMISSION: Partial<Record<NavItem['key'], PermissionKey>> = {
+    analytics: 'analytics.view',
     sites: 'sites.view',
     inspections: 'inspections.view',
     templates: 'templates.view',

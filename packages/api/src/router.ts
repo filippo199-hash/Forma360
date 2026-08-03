@@ -26,6 +26,7 @@ import { usersRouter } from './routers/users';
 // shim. Module-load ordering is the registration order.
 import { actionsRouter } from './routers/actions';
 import { actionTypesRouter } from './routers/actionTypes';
+import { createAnalyticsRouter } from './routers/analytics';
 import { approvalsRouter } from './routers/approvals';
 import { assetTypesRouter } from './routers/assetTypes';
 import { assetsRouter } from './routers/assets';
@@ -127,6 +128,15 @@ export function buildAppRouter(deps: {
     documents: documentsRouter,
     search: searchRouter,
     aiAssistant: aiAssistantRouter,
+    // PF-5: dashboard tiles for brand-gated modules follow the same enabled
+    // flags as the routers themselves — one source of truth (ADR 0010).
+    analytics: createAnalyticsRouter({
+      modules: {
+        riskAssessments: deps.riskAssessments?.enabled ?? false,
+        coshh: deps.coshh?.enabled ?? false,
+        permits: deps.permits?.enabled ?? false,
+      },
+    }),
     riskAssessments: createRiskAssessmentsRouter(deps.riskAssessments ?? { enabled: false }),
     coshh: createCoshhRouter(deps.coshh ?? { enabled: false }),
     permits: createPermitsRouter(deps.permits ?? { enabled: false }),

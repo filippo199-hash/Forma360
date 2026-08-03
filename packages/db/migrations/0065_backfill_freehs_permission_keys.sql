@@ -115,3 +115,12 @@ SET "permissions" = "permissions" || '["fireSafety.record"]'::jsonb
 WHERE "is_system" = true
   AND "name" IN ('Standard')
   AND NOT ("permissions" @> '["fireSafety.record"]'::jsonb);
+--> statement-breakpoint
+-- PF-5: `analytics.view` predates the dashboard (forward-declared key);
+-- tenants seeded before it entered the seed lists never received it.
+-- All three system sets hold it in the current seeder.
+UPDATE "permission_sets"
+SET "permissions" = "permissions" || '["analytics.view"]'::jsonb
+WHERE "is_system" = true
+  AND "name" IN ('Administrator', 'Manager', 'Standard')
+  AND NOT ("permissions" @> '["analytics.view"]'::jsonb);

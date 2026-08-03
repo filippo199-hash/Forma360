@@ -1368,6 +1368,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "Meine geplanten Inspektionen ({count})",
+      "startNow": "Starten",
+      "startError": "Start fehlgeschlagen — erneut versuchen.",
+      "missedBadge": "VERPASST",
+      "overdueBadge": "Überfällig",
+      "dueBadge": "Fällig"
     }
   },
   "nav": {
@@ -1391,7 +1399,8 @@
     "riskAssessments": "Risk assessments",
     "coshh": "Gefahrstoffe",
     "permits": "Freigaben",
-    "fireSafety": "Brandschutz"
+    "fireSafety": "Brandschutz",
+    "analytics": "Dashboard"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2964,7 +2973,15 @@
       "observations": "Beobachtungen",
       "actions": "Massnahmen",
       "headsUp": "Hinweise",
-      "documents": "Dokumente"
+      "documents": "Dokumente",
+      "permits": "Erlaubnisscheine",
+      "coshh": "COSHH-Stoffe",
+      "riskAssessments": "Gefährdungsbeurteilungen",
+      "fireBuildings": "Brandschutz-Gebäude",
+      "fireRiskAssessments": "Brandschutzbeurteilungen",
+      "contractors": "Auftragnehmer",
+      "sites": "Standorte & Projekte",
+      "templates": "Vorlagen"
     }
   },
   "ai": {
@@ -5334,5 +5351,50 @@
     "clearSearch": "Suche leeren",
     "clear": "Auswahl aufheben",
     "done": "Fertig"
+  },
+  "analytics": {
+    "title": "Dashboard",
+    "subtitle": "Was in allen Modulen Aufmerksamkeit braucht – und wie sich die Zahlen entwickeln.",
+    "tiles": {
+      "sectionLabel": "Braucht Aufmerksamkeit",
+      "myOpenActions": "Meine offenen Maßnahmen",
+      "overdueActions": "Überfällige Maßnahmen",
+      "dueSoon": "{count} fällig in 7 Tagen",
+      "openObservations": "Offene Beobachtungen",
+      "highPriority": "{count} mit hoher Priorität",
+      "awaitingApproval": "Inspektionen zur Freigabe",
+      "inProgress": "{count} in Bearbeitung",
+      "missedInspections": "Verpasste Inspektionen (30 T.)",
+      "upcoming7": "{count} anstehend in 7 Tagen",
+      "pendingAcks": "Zu bestätigende Mitteilungen",
+      "openPermits": "Offene Erlaubnisscheine",
+      "expiring48h": "{count} laufen in 48 h ab",
+      "raReviewOverdue": "Gefährdungsbeurteilungen überfällig",
+      "raActive": "{count} aktiv",
+      "coshhReviewDue": "COSHH-Überprüfungen überfällig",
+      "coshhSubstances": "{count} aktive Stoffe",
+      "fireAttention": "Brandschutz braucht Aufmerksamkeit"
+    },
+    "trends": {
+      "sectionLabel": "Trends",
+      "actionsTitle": "Maßnahmen – erstellt vs. abgeschlossen (8 Wochen)",
+      "activityTitle": "Inspektionen & Beobachtungen (8 Wochen)",
+      "actionsCreated": "Erstellt",
+      "actionsCompleted": "Abgeschlossen",
+      "inspectionsCompleted": "Inspektionen abgeschlossen",
+      "observationsRaised": "Beobachtungen gemeldet",
+      "thisWeek": "Jetzt"
+    },
+    "sites": {
+      "sectionLabel": "Standortvergleich",
+      "title": "Standorte im Überblick",
+      "subtitle": "Offene Aufgaben und Inspektionsaktivität je Standort, die stärksten zuerst.",
+      "site": "Standort",
+      "openActions": "Offene Maßnahmen",
+      "openObservations": "Offene Beobachtungen",
+      "completed30": "Inspektionen (30 T.)",
+      "noSite": "Kein Standort",
+      "empty": "Noch keine Standorte."
+    }
   }
 }

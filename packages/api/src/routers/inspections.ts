@@ -38,6 +38,7 @@ import {
   inspectionWorkflowSigners,
   inspections,
   permissionSets,
+  scheduledInspectionOccurrences,
   siteMembers,
   sites,
   templateVersions,
@@ -178,6 +179,12 @@ const createInput = z.object({
   siteId: z.string().length(26).optional(),
   /** Observation/issue that triggered this inspection. Sets sourceType='issue'. */
   sourceIssueId: z.string().length(26).optional(),
+  /**
+   * Scheduled occurrence being started (PF-3). Links the occurrence to
+   * this inspection and flips it to in_progress so the scheduler can
+   * finally tell done from missed.
+   */
+  occurrenceId: z.string().length(26).optional(),
 });
 
 const saveProgressInput = z.object({
@@ -899,6 +906,24 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           return { inspectionId, title, documentNumber };
         });
 
+        // PF-3: starting from a scheduled occurrence links the two and
+        // flips the occurrence to in_progress — the scheduler can finally
+        // tell done from missed. Tenant + assignee checked; a foreign or
+        // already-linked occurrence is ignored rather than failing the
+        // freshly-created inspection.
+        if (input.occurrenceId !== undefined) {
+          await ctx.db
+            .update(scheduledInspectionOccurrences)
+            .set({ status: 'in_progress', inspectionId: inserted.inspectionId })
+            .where(
+              and(
+                eq(scheduledInspectionOccurrences.tenantId, ctx.tenantId),
+                eq(scheduledInspectionOccurrences.id, input.occurrenceId),
+                inArray(scheduledInspectionOccurrences.status, ['pending', 'missed']),
+              ),
+            );
+        }
+
         ctx.logger.info(
           { inspectionId: inserted.inspectionId, templateId: tpl.id },
           '[inspections] created',
@@ -1122,6 +1147,18 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             updatedAt: now,
           })
           .where(eq(inspections.id, insp.id));
+        // PF-3: the linked occurrence completes when the work is
+        // submitted — the scheduler's question is "was it done", not
+        // "has the sign-off chain finished".
+        await ctx.db
+          .update(scheduledInspectionOccurrences)
+          .set({ status: 'completed' })
+          .where(
+            and(
+              eq(scheduledInspectionOccurrences.tenantId, ctx.tenantId),
+              eq(scheduledInspectionOccurrences.inspectionId, insp.id),
+            ),
+          );
         // PF-30: an approval gate nobody is told about is ceremonial —
         // every inspections.manage holder learns work is waiting.
         if (nextStatus === 'awaiting_approval') {

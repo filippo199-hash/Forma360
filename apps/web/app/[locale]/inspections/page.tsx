@@ -381,6 +381,10 @@ function InspectionsTab({ locale }: { locale: string }) {
 
       {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 
+      {/* PF-3: the assignee's own scheduled work — including what is
+          overdue or already flagged missed, with a one-tap late start. */}
+      <MyScheduledCard locale={locale} />
+
       {/* Search + filter row */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 max-w-sm">
@@ -960,5 +964,74 @@ function InspectionRowMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+
+/**
+ * "My scheduled inspections" (PF-3): pending + missed occurrences for
+ * the signed-in assignee, one-click start. Starting links the created
+ * inspection back to the occurrence so the scheduler records the
+ * outcome instead of losing it.
+ */
+function MyScheduledCard({ locale }: { locale: string }) {
+  const t = useTranslations('inspections.mySchedule');
+  const router = useRouter();
+  const { data } = trpc.schedules.listUpcoming.useQuery({ daysAhead: 14 });
+  const utils = trpc.useUtils();
+  const start = trpc.inspections.create.useMutation({
+    onSuccess: (res) => {
+      void utils.schedules.listUpcoming.invalidate();
+      router.push(`/${locale}/inspections/${res.inspectionId}`);
+    },
+    onError: () => toast.error(t('startError')),
+  });
+  const rows = data ?? [];
+  if (rows.length === 0) return null;
+  const now = Date.now();
+  return (
+    <Card>
+      <CardContent className="space-y-2 p-4">
+        <h2 className="text-sm font-semibold">{t('heading', { count: rows.length })}</h2>
+        <ul className="divide-y">
+          {rows.slice(0, 8).map((o) => {
+            const overdue = o.status === 'missed' || new Date(o.occurrenceAt).getTime() < now;
+            return (
+              <li key={o.id} className="flex items-center justify-between gap-2 py-2 text-sm">
+                <span className="min-w-0 truncate">
+                  <span
+                    className={
+                      overdue ? 'font-medium text-red-700 dark:text-red-300' : 'font-medium'
+                    }
+                  >
+                    {o.status === 'missed'
+                      ? t('missedBadge')
+                      : overdue
+                        ? t('overdueBadge')
+                        : t('dueBadge')}
+                  </span>{' '}
+                  <span className="text-muted-foreground">
+                    {new Date(o.occurrenceAt).toLocaleString(locale, {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })}
+                  </span>
+                </span>
+                <Button
+                  size="sm"
+                  variant={overdue ? 'default' : 'outline'}
+                  disabled={start.isPending || o.inspectionId !== null}
+                  onClick={() =>
+                    start.mutate({ templateId: o.templateId, occurrenceId: o.id })
+                  }
+                >
+                  {t('startNow')}
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }

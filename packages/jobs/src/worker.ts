@@ -68,6 +68,12 @@ import {
   DOCUMENT_EXPIRY_CRON,
   type ExpiringDocument,
 } from './workers/document-expiry';
+import {
+  createScheduleMissedSweepHandler,
+  missedLines,
+  SCHEDULE_MISSED_SWEEP_CRON,
+  type MissedOccurrence,
+} from './workers/schedule-missed-sweep';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -508,6 +514,43 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   );
   logger.info({ cron: DOCUMENT_EXPIRY_CRON }, '[worker] registered document-expiry repeatable');
 
+  // ─── Platform PF-3 — missed-occurrence sweep ──────────────────────────
+  const scheduleMissedSweepWorker = new Worker(
+    QUEUE_NAMES.SCHEDULE_MISSED_SWEEP,
+    createScheduleMissedSweepHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'schedule-missed-sweep' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string },
+        missed: MissedOccurrence[],
+        viewUrl: string,
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey: 'schedule-missed',
+          variables: {
+            recipientName: recipient.name,
+            missedCount: String(missed.length),
+            detailLines: missedLines(missed),
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const scheduleMissedSweepQueue = getQueue(QUEUE_NAMES.SCHEDULE_MISSED_SWEEP, connection);
+  await scheduleMissedSweepQueue.upsertJobScheduler(
+    'schedule-missed-sweep',
+    { pattern: SCHEDULE_MISSED_SWEEP_CRON, tz: 'UTC' },
+    { name: 'schedule-missed-sweep', data: {} },
+  );
+  logger.info(
+    { cron: SCHEDULE_MISSED_SWEEP_CRON },
+    '[worker] registered schedule-missed-sweep repeatable',
+  );
+
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
   await scheduleTickQueue.upsertJobScheduler(
@@ -554,6 +597,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     actionRemindersWorker,
     headsUpPublishWorker,
     documentExpiryWorker,
+    scheduleMissedSweepWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {

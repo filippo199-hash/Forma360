@@ -88,7 +88,7 @@ describe('heads-up-publish', () => {
       id,
       tenantId,
       title: over.title ?? 'Toolbox talk',
-      bodyRichText: 'Please read.',
+      description: 'Please read.',
       status: 'draft',
       createdByUserId: authorId,
       ...over,

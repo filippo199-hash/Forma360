@@ -16,11 +16,19 @@ import { z } from 'zod';
 import {
   actions,
   assets,
+  contractors,
+  coshhSubstances,
   documentFolders,
   documents,
+  fireBuildings,
+  fireRiskAssessments,
   headsUps,
   inspections,
   issues,
+  permits,
+  riskAssessments,
+  sites,
+  templates,
 } from '@forma360/db/schema';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import type { PermissionKey } from '@forma360/permissions/catalogue';
@@ -45,8 +53,26 @@ export const searchRouter = router({
       const has = (p: PermissionKey): boolean => perms.includes(p);
       const empty = <T>(): Promise<T[]> => Promise.resolve([]);
 
-      const [assetRows, inspectionRows, issueRows, actionRows, headsUpRows, documentRows] =
-        await Promise.all([
+      // PF-6 (platform review): the box used to cover six entities and
+      // none of the four brand modules, contractors, sites or templates —
+      // "Cmd-K for PTW-0123 or acetone: nothing". Every module the nav
+      // shows is now searchable, same permission gates as its pages.
+      const [
+        assetRows,
+        inspectionRows,
+        issueRows,
+        actionRows,
+        headsUpRows,
+        documentRows,
+        permitRows,
+        coshhRows,
+        raRows,
+        fireBuildingRows,
+        fraRows,
+        contractorRows,
+        siteRows,
+        templateRows,
+      ] = await Promise.all([
           // Assets — search name
           has('assets.view')
             ? ctx.db
@@ -178,6 +204,129 @@ export const searchRouter = router({
                 visibleToGroupIds: unknown;
                 visibleToSiteIds: unknown;
               }>(),
+          // Permits — reference or title (the PTW-0123 case).
+          has('permits.view')
+            ? ctx.db
+                .select({
+                  id: permits.id,
+                  title: permits.title,
+                  referenceNumber: permits.referenceNumber,
+                  status: permits.status,
+                })
+                .from(permits)
+                .where(
+                  and(
+                    eq(permits.tenantId, tid),
+                    or(ilike(permits.title, q), ilike(permits.referenceNumber, q)),
+                  ),
+                )
+                .orderBy(desc(permits.updatedAt))
+                .limit(MAX_PER_CATEGORY)
+            : empty<{
+                id: string;
+                title: string;
+                referenceNumber: string | null;
+                status: string;
+              }>(),
+          // COSHH — substance name (the "acetone" case).
+          has('coshh.view')
+            ? ctx.db
+                .select({ id: coshhSubstances.id, name: coshhSubstances.name })
+                .from(coshhSubstances)
+                .where(
+                  and(
+                    eq(coshhSubstances.tenantId, tid),
+                    isNull(coshhSubstances.archivedAt),
+                    ilike(coshhSubstances.name, q),
+                  ),
+                )
+                .orderBy(desc(coshhSubstances.updatedAt))
+                .limit(MAX_PER_CATEGORY)
+            : empty<{ id: string; name: string }>(),
+          // Risk assessments — reference or title.
+          has('riskAssessments.view')
+            ? ctx.db
+                .select({
+                  id: riskAssessments.id,
+                  title: riskAssessments.title,
+                  referenceNumber: riskAssessments.referenceNumber,
+                })
+                .from(riskAssessments)
+                .where(
+                  and(
+                    eq(riskAssessments.tenantId, tid),
+                    isNull(riskAssessments.archivedAt),
+                    or(ilike(riskAssessments.title, q), ilike(riskAssessments.referenceNumber, q)),
+                  ),
+                )
+                .orderBy(desc(riskAssessments.updatedAt))
+                .limit(MAX_PER_CATEGORY)
+            : empty<{ id: string; title: string; referenceNumber: string | null }>(),
+          // Fire safety — buildings…
+          has('fireSafety.view')
+            ? ctx.db
+                .select({ id: fireBuildings.id, name: fireBuildings.name })
+                .from(fireBuildings)
+                .where(and(eq(fireBuildings.tenantId, tid), ilike(fireBuildings.name, q)))
+                .orderBy(desc(fireBuildings.updatedAt))
+                .limit(MAX_PER_CATEGORY)
+            : empty<{ id: string; name: string }>(),
+          // …and FRAs by reference or title.
+          has('fireSafety.view')
+            ? ctx.db
+                .select({
+                  id: fireRiskAssessments.id,
+                  title: fireRiskAssessments.title,
+                  referenceNumber: fireRiskAssessments.referenceNumber,
+                })
+                .from(fireRiskAssessments)
+                .where(
+                  and(
+                    eq(fireRiskAssessments.tenantId, tid),
+                    or(
+                      ilike(fireRiskAssessments.title, q),
+                      ilike(fireRiskAssessments.referenceNumber, q),
+                    ),
+                  ),
+                )
+                .orderBy(desc(fireRiskAssessments.updatedAt))
+                .limit(MAX_PER_CATEGORY)
+            : empty<{ id: string; title: string; referenceNumber: string | null }>(),
+          // Contractors — company name.
+          has('contractors.view')
+            ? ctx.db
+                .select({ id: contractors.id, name: contractors.name })
+                .from(contractors)
+                .where(and(eq(contractors.tenantId, tid), ilike(contractors.name, q)))
+                .orderBy(desc(contractors.updatedAt))
+                .limit(MAX_PER_CATEGORY)
+            : empty<{ id: string; name: string }>(),
+          // Sites / projects.
+          has('sites.view')
+            ? ctx.db
+                .select({ id: sites.id, name: sites.name })
+                .from(sites)
+                .where(
+                  and(eq(sites.tenantId, tid), isNull(sites.archivedAt), ilike(sites.name, q)),
+                )
+                .orderBy(desc(sites.updatedAt))
+                .limit(MAX_PER_CATEGORY)
+            : empty<{ id: string; name: string }>(),
+          // Templates.
+          has('templates.view')
+            ? ctx.db
+                .select({ id: templates.id, name: templates.name, status: templates.status })
+                .from(templates)
+                .where(
+                  and(
+                    eq(templates.tenantId, tid),
+                    ne(templates.status, 'archived'),
+                    ilike(templates.name, q),
+                  ),
+                )
+                .orderBy(desc(templates.updatedAt))
+                .limit(MAX_PER_CATEGORY)
+            : empty<{ id: string; name: string; status: string }>(),
         ]);
 
       // Apply per-document / per-folder visibility for non-managers (managers
@@ -235,6 +384,26 @@ export const searchRouter = router({
           title: r.name,
           subtitle: r.filename,
         })),
+        permits: permitRows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          subtitle: r.referenceNumber ?? r.status,
+        })),
+        coshh: coshhRows.map((r) => ({ id: r.id, title: r.name, subtitle: null })),
+        riskAssessments: raRows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          subtitle: r.referenceNumber,
+        })),
+        fireBuildings: fireBuildingRows.map((r) => ({ id: r.id, title: r.name, subtitle: null })),
+        fireRiskAssessments: fraRows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          subtitle: r.referenceNumber,
+        })),
+        contractors: contractorRows.map((r) => ({ id: r.id, title: r.name, subtitle: null })),
+        sites: siteRows.map((r) => ({ id: r.id, title: r.name, subtitle: null })),
+        templates: templateRows.map((r) => ({ id: r.id, title: r.name, subtitle: r.status })),
       };
     }),
 });

@@ -1368,6 +1368,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "Mes inspections planifiées ({count})",
+      "startNow": "Démarrer",
+      "startError": "Démarrage impossible — réessayez.",
+      "missedBadge": "MANQUÉE",
+      "overdueBadge": "En retard",
+      "dueBadge": "À faire"
     }
   },
   "nav": {
@@ -1391,7 +1399,8 @@
     "riskAssessments": "Risk assessments",
     "coshh": "COSHH",
     "permits": "Permis",
-    "fireSafety": "Sécurité incendie"
+    "fireSafety": "Sécurité incendie",
+    "analytics": "Tableau de bord"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2964,7 +2973,15 @@
       "observations": "Observations",
       "actions": "Actions",
       "headsUp": "Alertes",
-      "documents": "Documents"
+      "documents": "Documents",
+      "permits": "Permis",
+      "coshh": "Substances COSHH",
+      "riskAssessments": "Évaluations des risques",
+      "fireBuildings": "Bâtiments (incendie)",
+      "fireRiskAssessments": "Évaluations incendie",
+      "contractors": "Sous-traitants",
+      "sites": "Sites et projets",
+      "templates": "Modèles"
     }
   },
   "ai": {
@@ -5334,5 +5351,50 @@
     "clearSearch": "Effacer la recherche",
     "clear": "Effacer la sélection",
     "done": "Terminé"
+  },
+  "analytics": {
+    "title": "Tableau de bord",
+    "subtitle": "Ce qui demande de l'attention dans tous les modules, et l'évolution des tendances.",
+    "tiles": {
+      "sectionLabel": "À traiter",
+      "myOpenActions": "Mes actions ouvertes",
+      "overdueActions": "Actions en retard",
+      "dueSoon": "{count} à échéance sous 7 jours",
+      "openObservations": "Observations ouvertes",
+      "highPriority": "{count} de priorité élevée",
+      "awaitingApproval": "Inspections en attente d'approbation",
+      "inProgress": "{count} en cours",
+      "missedInspections": "Inspections manquées (30 j)",
+      "upcoming7": "{count} à venir sous 7 jours",
+      "pendingAcks": "Notes à confirmer",
+      "openPermits": "Permis ouverts",
+      "expiring48h": "{count} expirent sous 48 h",
+      "raReviewOverdue": "Évaluations des risques à réviser",
+      "raActive": "{count} actives",
+      "coshhReviewDue": "Révisions COSHH en retard",
+      "coshhSubstances": "{count} substances actives",
+      "fireAttention": "Sécurité incendie : attention requise"
+    },
+    "trends": {
+      "sectionLabel": "Tendances",
+      "actionsTitle": "Actions — créées vs terminées (8 semaines)",
+      "activityTitle": "Inspections et observations (8 semaines)",
+      "actionsCreated": "Créées",
+      "actionsCompleted": "Terminées",
+      "inspectionsCompleted": "Inspections terminées",
+      "observationsRaised": "Observations signalées",
+      "thisWeek": "Maintenant"
+    },
+    "sites": {
+      "sectionLabel": "Comparaison des sites",
+      "title": "Sites en un coup d'œil",
+      "subtitle": "Charge ouverte et activité d'inspection par site, les plus chargés d'abord.",
+      "site": "Site",
+      "openActions": "Actions ouvertes",
+      "openObservations": "Observations ouvertes",
+      "completed30": "Inspections (30 j)",
+      "noSite": "Aucun site",
+      "empty": "Aucun site pour le moment."
+    }
   }
 }

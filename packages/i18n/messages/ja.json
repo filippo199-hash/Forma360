@@ -1361,6 +1361,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "自分の定期点検（{count}）",
+      "startNow": "開始",
+      "startError": "開始できませんでした。再試行してください。",
+      "missedBadge": "未実施",
+      "overdueBadge": "期限超過",
+      "dueBadge": "予定"
     }
   },
   "nav": {
@@ -1384,7 +1392,8 @@
     "riskAssessments": "Risk assessments",
     "coshh": "COSHH",
     "permits": "作業許可",
-    "fireSafety": "防火管理"
+    "fireSafety": "防火管理",
+    "analytics": "ダッシュボード"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2957,7 +2966,15 @@
       "observations": "観察",
       "actions": "アクション",
       "headsUp": "お知らせ",
-      "documents": "文書"
+      "documents": "文書",
+      "permits": "作業許可",
+      "coshh": "COSHH物質",
+      "riskAssessments": "リスクアセスメント",
+      "fireBuildings": "防火建物",
+      "fireRiskAssessments": "火災リスクアセスメント",
+      "contractors": "請負業者",
+      "sites": "拠点・プロジェクト",
+      "templates": "テンプレート"
     }
   },
   "ai": {
@@ -5327,5 +5344,50 @@
     "clearSearch": "検索をクリア",
     "clear": "選択を解除",
     "done": "完了"
+  },
+  "analytics": {
+    "title": "ダッシュボード",
+    "subtitle": "全モジュールで対応が必要な項目と、直近の傾向を一目で確認できます。",
+    "tiles": {
+      "sectionLabel": "要対応",
+      "myOpenActions": "自分の未完了アクション",
+      "overdueActions": "期限超過のアクション",
+      "dueSoon": "7日以内に期限 {count} 件",
+      "openObservations": "未対応の観察記録",
+      "highPriority": "高優先度 {count} 件",
+      "awaitingApproval": "承認待ちの点検",
+      "inProgress": "進行中 {count} 件",
+      "missedInspections": "未実施の点検(30日)",
+      "upcoming7": "7日以内の予定 {count} 件",
+      "pendingAcks": "確認が必要なお知らせ",
+      "openPermits": "有効な許可証",
+      "expiring48h": "48時間以内に期限切れ {count} 件",
+      "raReviewOverdue": "見直し期限超過のリスクアセスメント",
+      "raActive": "有効 {count} 件",
+      "coshhReviewDue": "COSHH 見直し期限超過",
+      "coshhSubstances": "有効な物質 {count} 件",
+      "fireAttention": "防火:要対応"
+    },
+    "trends": {
+      "sectionLabel": "傾向",
+      "actionsTitle": "アクション — 作成 vs 完了(8週間)",
+      "activityTitle": "点検と観察記録(8週間)",
+      "actionsCreated": "作成",
+      "actionsCompleted": "完了",
+      "inspectionsCompleted": "点検完了",
+      "observationsRaised": "観察記録の報告",
+      "thisWeek": "今週"
+    },
+    "sites": {
+      "sectionLabel": "拠点比較",
+      "title": "拠点の概況",
+      "subtitle": "拠点ごとの未対応の作業量と点検活動。多い順に表示します。",
+      "site": "拠点",
+      "openActions": "未完了アクション",
+      "openObservations": "未対応の観察記録",
+      "completed30": "点検(30日)",
+      "noSite": "拠点なし",
+      "empty": "拠点はまだありません。"
+    }
   }
 }

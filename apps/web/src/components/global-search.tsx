@@ -159,6 +159,56 @@ export function GlobalSearch() {
         icon: <FileText className="h-4 w-4" />,
         basePath: 'documents',
       },
+      // PF-6: the brand modules, contractors, sites and templates were
+      // invisible to Cmd-K.
+      {
+        key: 'permits',
+        labelKey: 'categories.permits',
+        icon: <FileText className="h-4 w-4" />,
+        basePath: 'permits',
+      },
+      {
+        key: 'coshh',
+        labelKey: 'categories.coshh',
+        icon: <BookOpen className="h-4 w-4" />,
+        basePath: 'coshh',
+      },
+      {
+        key: 'riskAssessments',
+        labelKey: 'categories.riskAssessments',
+        icon: <ClipboardList className="h-4 w-4" />,
+        basePath: 'risk-assessments',
+      },
+      {
+        key: 'fireBuildings',
+        labelKey: 'categories.fireBuildings',
+        icon: <AlertCircle className="h-4 w-4" />,
+        basePath: 'fire-safety',
+      },
+      {
+        key: 'fireRiskAssessments',
+        labelKey: 'categories.fireRiskAssessments',
+        icon: <AlertCircle className="h-4 w-4" />,
+        basePath: 'fire-safety/fra',
+      },
+      {
+        key: 'contractors',
+        labelKey: 'categories.contractors',
+        icon: <CheckSquare className="h-4 w-4" />,
+        basePath: 'contractors',
+      },
+      {
+        key: 'sites',
+        labelKey: 'categories.sites',
+        icon: <BookOpen className="h-4 w-4" />,
+        basePath: 'sites',
+      },
+      {
+        key: 'templates',
+        labelKey: 'categories.templates',
+        icon: <ClipboardList className="h-4 w-4" />,
+        basePath: 'templates',
+      },
     ];
 
     for (const def of categoryDefs) {

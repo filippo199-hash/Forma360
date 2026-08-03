@@ -1361,6 +1361,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "Mijn geplande inspecties ({count})",
+      "startNow": "Starten",
+      "startError": "Starten mislukt — probeer opnieuw.",
+      "missedBadge": "GEMIST",
+      "overdueBadge": "Te laat",
+      "dueBadge": "Gepland"
     }
   },
   "nav": {
@@ -1384,7 +1392,8 @@
     "riskAssessments": "Risk assessments",
     "coshh": "Gevaarlijke stoffen",
     "permits": "Vergunningen",
-    "fireSafety": "Brandveiligheid"
+    "fireSafety": "Brandveiligheid",
+    "analytics": "Dashboard"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2957,7 +2966,15 @@
       "observations": "Observaties",
       "actions": "Acties",
       "headsUp": "Berichten",
-      "documents": "Documenten"
+      "documents": "Documenten",
+      "permits": "Vergunningen",
+      "coshh": "COSHH-stoffen",
+      "riskAssessments": "Risicobeoordelingen",
+      "fireBuildings": "Brandveiligheidsgebouwen",
+      "fireRiskAssessments": "Brandrisicobeoordelingen",
+      "contractors": "Aannemers",
+      "sites": "Locaties & projecten",
+      "templates": "Sjablonen"
     }
   },
   "ai": {
@@ -5327,5 +5344,50 @@
     "clearSearch": "Zoekopdracht wissen",
     "clear": "Selectie wissen",
     "done": "Klaar"
+  },
+  "analytics": {
+    "title": "Dashboard",
+    "subtitle": "Wat aandacht nodig heeft in alle modules, en hoe de trends zich ontwikkelen.",
+    "tiles": {
+      "sectionLabel": "Vraagt aandacht",
+      "myOpenActions": "Mijn openstaande acties",
+      "overdueActions": "Achterstallige acties",
+      "dueSoon": "{count} vervallen binnen 7 dagen",
+      "openObservations": "Open observaties",
+      "highPriority": "{count} met hoge prioriteit",
+      "awaitingApproval": "Inspecties wachten op goedkeuring",
+      "inProgress": "{count} in uitvoering",
+      "missedInspections": "Gemiste inspecties (30 d)",
+      "upcoming7": "{count} gepland binnen 7 dagen",
+      "pendingAcks": "Te bevestigen meldingen",
+      "openPermits": "Open werkvergunningen",
+      "expiring48h": "{count} verlopen binnen 48 u",
+      "raReviewOverdue": "Risicobeoordelingen over de reviewdatum",
+      "raActive": "{count} actief",
+      "coshhReviewDue": "COSHH-reviews achterstallig",
+      "coshhSubstances": "{count} actieve stoffen",
+      "fireAttention": "Brandveiligheid vraagt aandacht"
+    },
+    "trends": {
+      "sectionLabel": "Trends",
+      "actionsTitle": "Acties — aangemaakt vs afgerond (8 weken)",
+      "activityTitle": "Inspecties en observaties (8 weken)",
+      "actionsCreated": "Aangemaakt",
+      "actionsCompleted": "Afgerond",
+      "inspectionsCompleted": "Inspecties afgerond",
+      "observationsRaised": "Observaties gemeld",
+      "thisWeek": "Nu"
+    },
+    "sites": {
+      "sectionLabel": "Vergelijking per locatie",
+      "title": "Locaties in één oogopslag",
+      "subtitle": "Openstaand werk en inspectieactiviteit per locatie, drukste eerst.",
+      "site": "Locatie",
+      "openActions": "Open acties",
+      "openObservations": "Open observaties",
+      "completed30": "Inspecties (30 d)",
+      "noSite": "Geen locatie",
+      "empty": "Nog geen locaties."
+    }
   }
 }

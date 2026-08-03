@@ -105,6 +105,8 @@ export const QUEUE_NAMES = {
   HEADS_UP_PUBLISH: 'forma360-heads-up-publish',
   /** Platform PF-16 — document expiry reminders driven by reminderDays. */
   DOCUMENT_EXPIRY: 'forma360-document-expiry',
+  /** Platform PF-3 — stamps 'missed' on scheduled occurrences past grace. */
+  SCHEDULE_MISSED_SWEEP: 'forma360-schedule-missed-sweep',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -235,6 +237,10 @@ export type HeadsUpPublishPayload = z.infer<typeof headsUpPublishPayloadSchema>;
 export const documentExpiryPayloadSchema = z.object({}).strict();
 export type DocumentExpiryPayload = z.infer<typeof documentExpiryPayloadSchema>;
 
+/** Missed-occurrence sweep tick — no payload. */
+export const scheduleMissedSweepPayloadSchema = z.object({}).strict();
+export type ScheduleMissedSweepPayload = z.infer<typeof scheduleMissedSweepPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -259,6 +265,7 @@ export interface QueuePayloads {
   [QUEUE_NAMES.ACTION_REMINDERS]: ActionRemindersPayload;
   [QUEUE_NAMES.HEADS_UP_PUBLISH]: HeadsUpPublishPayload;
   [QUEUE_NAMES.DOCUMENT_EXPIRY]: DocumentExpiryPayload;
+  [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: ScheduleMissedSweepPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -282,6 +289,7 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.ACTION_REMINDERS]: actionRemindersPayloadSchema,
   [QUEUE_NAMES.HEADS_UP_PUBLISH]: headsUpPublishPayloadSchema,
   [QUEUE_NAMES.DOCUMENT_EXPIRY]: documentExpiryPayloadSchema,
+  [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: scheduleMissedSweepPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

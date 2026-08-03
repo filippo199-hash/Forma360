@@ -90,7 +90,8 @@
     "riskAssessments": "Risk assessments",
     "coshh": "COSHH",
     "permits": "Permits",
-    "fireSafety": "Fire Safety"
+    "fireSafety": "Fire Safety",
+    "analytics": "Dashboard"
   },
   "ai": {
     "emptyTitle": "How can I help?",
@@ -1490,6 +1491,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "My scheduled inspections ({count})",
+      "startNow": "Start",
+      "startError": "Could not start — try again.",
+      "missedBadge": "MISSED",
+      "overdueBadge": "Overdue",
+      "dueBadge": "Due"
     }
   },
   "schedules": {
@@ -3227,7 +3236,15 @@
       "observations": "Observations",
       "actions": "Actions",
       "headsUp": "Heads Up",
-      "documents": "Documents"
+      "documents": "Documents",
+      "permits": "Permits",
+      "coshh": "COSHH substances",
+      "riskAssessments": "Risk assessments",
+      "fireBuildings": "Fire safety buildings",
+      "fireRiskAssessments": "Fire risk assessments",
+      "contractors": "Contractors",
+      "sites": "Sites & projects",
+      "templates": "Templates"
     }
   },
   "maintenancePrograms": {
@@ -5562,5 +5579,50 @@
     },
     "checksFailedCount": "{count} failed",
     "fraIntolerable": "INTOLERABLE"
+  },
+  "analytics": {
+    "title": "Dashboard",
+    "subtitle": "What needs attention across every module, and how you are trending.",
+    "tiles": {
+      "sectionLabel": "Needs attention",
+      "myOpenActions": "My open actions",
+      "overdueActions": "Overdue actions",
+      "dueSoon": "{count} due in 7 days",
+      "openObservations": "Open observations",
+      "highPriority": "{count} high priority",
+      "awaitingApproval": "Inspections awaiting approval",
+      "inProgress": "{count} in progress",
+      "missedInspections": "Missed inspections (30 d)",
+      "upcoming7": "{count} upcoming in 7 days",
+      "pendingAcks": "Heads Ups to acknowledge",
+      "openPermits": "Open permits",
+      "expiring48h": "{count} expiring in 48 h",
+      "raReviewOverdue": "Risk assessments past review",
+      "raActive": "{count} active",
+      "coshhReviewDue": "COSHH reviews overdue",
+      "coshhSubstances": "{count} active substances",
+      "fireAttention": "Fire safety needs attention"
+    },
+    "trends": {
+      "sectionLabel": "Trends",
+      "actionsTitle": "Actions — created vs completed (8 weeks)",
+      "activityTitle": "Inspections & observations (8 weeks)",
+      "actionsCreated": "Created",
+      "actionsCompleted": "Completed",
+      "inspectionsCompleted": "Inspections completed",
+      "observationsRaised": "Observations raised",
+      "thisWeek": "Now"
+    },
+    "sites": {
+      "sectionLabel": "Site comparison",
+      "title": "Sites at a glance",
+      "subtitle": "Open workload and inspection activity per site, busiest first.",
+      "site": "Site",
+      "openActions": "Open actions",
+      "openObservations": "Open observations",
+      "completed30": "Inspections (30 d)",
+      "noSite": "No site",
+      "empty": "No sites yet."
+    }
   }
 }
