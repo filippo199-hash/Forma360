@@ -5223,5 +5223,11 @@
       "register": "許可証台帳を開く",
       "startPermit": "火気作業許可を開始"
     }
+  },
+  "entitySelect": {
+    "search": "検索…",
+    "clearSearch": "検索をクリア",
+    "clear": "選択を解除",
+    "done": "完了"
   }
 }

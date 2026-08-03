@@ -5223,5 +5223,11 @@
       "register": "Otwórz rejestr zezwoleń",
       "startPermit": "Rozpocznij zezwolenie na prace gorące"
     }
+  },
+  "entitySelect": {
+    "search": "Szukaj…",
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "clear": "Wyczyść wybór",
+    "done": "Gotowe"
   }
 }

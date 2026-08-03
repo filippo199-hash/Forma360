@@ -5265,5 +5265,11 @@
       "register": "Apri il registro permessi",
       "startPermit": "Avvia permesso lavori a caldo"
     }
+  },
+  "entitySelect": {
+    "search": "Cerca…",
+    "clearSearch": "Cancella ricerca",
+    "clear": "Annulla selezione",
+    "done": "Fatto"
   }
 }

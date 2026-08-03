@@ -3156,7 +3156,11 @@
   },
   "entitySelect": {
     "loading": "Loading…",
-    "noResults": "No results."
+    "noResults": "No results.",
+    "search": "Search…",
+    "clearSearch": "Clear search",
+    "clear": "Clear selection",
+    "done": "Done"
   },
   "search": {
     "openLabel": "Open search",

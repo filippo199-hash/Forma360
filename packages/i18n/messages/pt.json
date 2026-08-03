@@ -5223,5 +5223,11 @@
       "register": "Abrir registro de permissões",
       "startPermit": "Iniciar permissão de trabalho a quente"
     }
+  },
+  "entitySelect": {
+    "search": "Pesquisar…",
+    "clearSearch": "Limpar pesquisa",
+    "clear": "Limpar seleção",
+    "done": "Concluído"
   }
 }

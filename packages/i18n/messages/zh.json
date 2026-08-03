@@ -5223,5 +5223,11 @@
       "register": "打开许可证登记册",
       "startPermit": "发起动火许可"
     }
+  },
+  "entitySelect": {
+    "search": "搜索…",
+    "clearSearch": "清除搜索",
+    "clear": "清除选择",
+    "done": "完成"
   }
 }

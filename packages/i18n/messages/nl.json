@@ -5223,5 +5223,11 @@
       "register": "Vergunningenregister openen",
       "startPermit": "Heetwerkvergunning starten"
     }
+  },
+  "entitySelect": {
+    "search": "Zoeken…",
+    "clearSearch": "Zoekopdracht wissen",
+    "clear": "Selectie wissen",
+    "done": "Klaar"
   }
 }

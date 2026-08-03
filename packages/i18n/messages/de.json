@@ -5230,5 +5230,11 @@
       "register": "Zum Erlaubnisschein-Register",
       "startPermit": "Heißarbeits-Erlaubnis starten"
     }
+  },
+  "entitySelect": {
+    "search": "Suchen…",
+    "clearSearch": "Suche leeren",
+    "clear": "Auswahl aufheben",
+    "done": "Fertig"
   }
 }

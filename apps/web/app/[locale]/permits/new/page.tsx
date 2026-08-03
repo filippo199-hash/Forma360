@@ -14,6 +14,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { CategoryChip } from '../../../../src/components/permits/chips';
 import { PermitErrorText } from '../../../../src/components/permits/permit-error';
+import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
+import { SearchSelect } from '../../../../src/components/selectors/search-select';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -36,8 +39,6 @@ export default function NewPermitPage() {
   const canCreate = useHasPermission('permits.create');
 
   const { data: types } = trpc.permits.types.list.useQuery({});
-  const { data: sites } = trpc.sites.list.useQuery();
-  const { data: usersPage } = trpc.users.list.useQuery({ limit: 200 });
   const { data: riskAssessmentOptions } = trpc.riskAssessments.list.useQuery({
     status: 'active',
     type: 'all',
@@ -195,22 +196,14 @@ export default function NewPermitPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1 text-sm">
-              <label htmlFor="permit-site" className="font-medium">
-                {placeLabel}
-              </label>
-              <select
-                id="permit-site"
-                value={siteId}
-                onChange={(e) => setSiteId(e.target.value)}
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="">{t('fields.noSite')}</option>
-                {(sites ?? []).map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+              {/* Platform-wide hierarchical site picker (search + drill-in). */}
+              <SiteSelector
+                label={placeLabel}
+                multiple={false}
+                value={siteId !== '' ? [siteId] : []}
+                onChange={(next) => setSiteId(next[0] ?? '')}
+                placeholder={t('fields.noSite')}
+              />
             </div>
             <div className="flex flex-col gap-1 text-sm">
               <label htmlFor="permit-location" className="font-medium">
@@ -251,43 +244,31 @@ export default function NewPermitPage() {
           </div>
 
           <div className="flex flex-col gap-1 text-sm">
-            <label htmlFor="permit-ra" className="font-medium">
-              {t('fields.riskAssessment')}
-            </label>
-            <select
-              id="permit-ra"
-              value={riskAssessmentId}
-              onChange={(e) => setRiskAssessmentId(e.target.value)}
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">{t('fields.riskAssessmentPlaceholder')}</option>
-              {(riskAssessmentOptions ?? []).map((ra) => (
-                <option key={ra.id} value={ra.id}>
-                  {ra.referenceNumber !== null ? `${ra.referenceNumber} · ` : ''}
-                  {ra.title}
-                </option>
-              ))}
-            </select>
+            {/* Searchable — a live tenant can hold hundreds of assessments. */}
+            <SearchSelect
+              label={t('fields.riskAssessment')}
+              value={riskAssessmentId !== '' ? riskAssessmentId : null}
+              onChange={(next) => setRiskAssessmentId(next ?? '')}
+              placeholder={t('fields.riskAssessmentPlaceholder')}
+              options={(riskAssessmentOptions ?? []).map((ra) => ({
+                id: ra.id,
+                label: ra.title,
+                sub: ra.referenceNumber,
+              }))}
+            />
             <p className="text-xs text-muted-foreground">{t('fields.riskAssessmentHint')}</p>
           </div>
 
           <div className="flex flex-col gap-1 text-sm">
-            <label htmlFor="permit-acceptor" className="font-medium">
-              {t('fields.acceptor')}
-            </label>
-            <select
-              id="permit-acceptor"
-              value={acceptorUserId}
-              onChange={(e) => setAcceptorUserId(e.target.value)}
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">{t('fields.acceptorPlaceholder')}</option>
-              {(usersPage?.users ?? []).map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
+            {/* Searchable user picker — same format as the rest of the platform. */}
+            <GroupUserSelector
+              label={t('fields.acceptor')}
+              mode="users"
+              multiple={false}
+              value={acceptorUserId !== '' ? [acceptorUserId] : []}
+              onChange={(next) => setAcceptorUserId(next[0] ?? '')}
+              placeholder={t('fields.acceptorPlaceholder')}
+            />
             <p className="text-xs text-muted-foreground">{t('fields.acceptorHint')}</p>
           </div>
 

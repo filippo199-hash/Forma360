@@ -5230,5 +5230,11 @@
       "register": "Ouvrir le registre des permis",
       "startPermit": "Démarrer un permis de feu"
     }
+  },
+  "entitySelect": {
+    "search": "Rechercher…",
+    "clearSearch": "Effacer la recherche",
+    "clear": "Effacer la sélection",
+    "done": "Terminé"
   }
 }
