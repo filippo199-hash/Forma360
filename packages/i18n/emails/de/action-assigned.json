@@ -1,0 +1,8 @@
+{
+  "subject": "Maßnahme Ihnen zugewiesen — {referenceNumber} {title}",
+  "preheader": "{assignerName} hat Ihnen auf {productName} eine Korrekturmaßnahme zugewiesen.",
+  "greeting": "Hallo {recipientName},",
+  "body": "{assignerName} hat Ihnen die Korrekturmaßnahme \"{title}\" ({referenceNumber}) zugewiesen.{dueLine}\n\nÖffnen Sie sie, um Ursprung, Details und das Ziel zu sehen.",
+  "cta": "Maßnahme öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil Ihnen auf {productName} eine Korrekturmaßnahme zugewiesen wurde."
+}

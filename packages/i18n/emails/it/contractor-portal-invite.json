@@ -1,0 +1,8 @@
+{
+  "subject": "{contractorName} ti ha invitato al portale appaltatori di {tenantName}",
+  "preheader": "Configura il tuo accesso per lavorare con {tenantName}.",
+  "greeting": "Salve,",
+  "body": "Sei stato invitato al portale appaltatori di {tenantName} per conto di {contractorName}. Usa il link qui sotto per configurare il tuo accesso: è valido per {expiresIn}. Una volta dentro potrai: {activities}.",
+  "cta": "Accetta l'invito",
+  "footer": "Se non aspettavi questo invito, puoi ignorare questo messaggio."
+}

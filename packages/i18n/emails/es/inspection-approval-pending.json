@@ -1,0 +1,8 @@
+{
+  "subject": "Aprobación pendiente — {documentNumber} {title}",
+  "preheader": "Una inspección en {productName} espera tu aprobación.",
+  "greeting": "Hola {recipientName}:",
+  "body": "La inspección \"{title}\" ({documentNumber}) fue enviada y espera aprobación. Revísala y apruébala o recházala con un comentario.",
+  "cta": "Revisar la inspección",
+  "footer": "Recibes este correo porque puedes aprobar inspecciones en {productName}."
+}

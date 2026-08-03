@@ -1,0 +1,8 @@
+{
+  "subject": "Risco de incêndio INTOLERÁVEL publicado — {referenceNumber} {title}",
+  "preheader": "Uma avaliação de risco de incêndio no {productName} foi assinada com classificação intolerável.",
+  "greeting": "Olá {recipientName},",
+  "body": "{publishedByName} assinou e publicou a avaliação de risco de incêndio \"{title}\" ({referenceNumber}){buildingLine} com classificação geral INTOLERÁVEL.\n\nSegundo a PAS 79, uma classificação intolerável significa que as instalações não devem continuar ocupadas até que o risco seja reduzido. Ações corretivas foram geradas a partir das constatações significativas — revise-as agora e decida se a ocupação pode continuar.",
+  "cta": "Abrir a avaliação",
+  "footer": "Você recebeu este e-mail porque possui permissões de gestão de incêndio no {productName}. Uma classificação intolerável alerta todos os gestores imediatamente."
+}

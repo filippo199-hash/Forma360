@@ -1,0 +1,8 @@
+{
+  "subject": "[{categoryName}] Novo registro: {issueTitle}",
+  "preheader": "{reportedByName} relatou um novo item de {categoryName}",
+  "greeting": "Olá {recipientName},",
+  "body": "{reportedByName} relatou um novo item na categoria '{categoryName}'.\n\nTítulo: {issueTitle}\nReferência: {referenceNumber}\nRelatado: {reportedAt}",
+  "cta": "Ver o registro",
+  "footer": "Você recebeu este e-mail porque tem acesso de gestão aos registros no seu espaço de trabalho."
+}

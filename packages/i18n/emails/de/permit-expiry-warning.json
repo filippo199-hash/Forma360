@@ -1,0 +1,8 @@
+{
+  "subject": "Erlaubnisschein läuft bald ab — {referenceNumber} {title} endet um {expiredAt} UTC",
+  "preheader": "Ein offener Erlaubnisschein auf {productName} erreicht binnen einer Stunde das Ende seines Gültigkeitsfensters.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Der {typeName}-Erlaubnisschein \"{title}\" ({referenceNumber}){siteLine} erreicht um {expiredAt} UTC das Ende seines Gültigkeitsfensters. Ist die Arbeit beendet, schließen Sie den Schein jetzt mit den Abschlussprüfungen. Muss sie weitergehen, verlängern Sie mit erneuter Autorisierung vor Ablauf — nach Ablauf ist die Arbeit nicht mehr autorisiert.",
+  "cta": "Erlaubnisschein öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie Unterzeichner (Aussteller, Annehmender oder Autorisierender) dieses Scheins in {productName} sind."
+}

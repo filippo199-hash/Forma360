@@ -1,0 +1,8 @@
+{
+  "subject": "Resumo de segurança contra incêndio — {failedCount} reprovados, {overdueCount} atrasados",
+  "preheader": "O calendário de incêndio do {productName} tem itens precisando de atenção.",
+  "greeting": "Olá {recipientName},",
+  "body": "O calendário de segurança contra incêndio de hoje no {productName} precisa de atenção:\n\nVerificações reprovadas aguardando novo teste: {failedCount}\nVerificações e inspeções de portas atrasadas: {overdueCount}\nA vencer: {dueSoonCount}\nRevisões de FRA devidas: {fraCount}\nRevisões de PEEP devidas: {peepCount}\nTreinamento de brigadistas vencendo ou vencido: {marshalCount}\n\n{detailLines}\n\nUma verificação reprovada permanece sinalizada até um novo teste aprovado — registre o novo teste assim que o defeito for corrigido.",
+  "cta": "Abrir o módulo de incêndio",
+  "footer": "Você recebeu este e-mail porque possui permissões de gestão de incêndio no {productName}. O resumo só chega quando algo precisa de atenção."
+}

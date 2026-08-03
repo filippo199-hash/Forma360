@@ -1,0 +1,8 @@
+{
+  "subject": "Verifica tu correo de {productName}",
+  "preheader": "Confirma tu dirección para activar la cuenta.",
+  "greeting": "Hola:",
+  "body": "Bienvenido a {productName}. Confirma tu dirección de correo haciendo clic en el enlace de abajo. El enlace es válido por 24 horas.",
+  "cta": "Verificar correo",
+  "footer": "Si no creaste una cuenta de {productName}, puedes ignorar este mensaje."
+}

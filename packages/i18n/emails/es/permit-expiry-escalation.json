@@ -1,0 +1,8 @@
+{
+  "subject": "Permiso vencido — {referenceNumber} {title} superó su expiración sin cerrarse",
+  "preheader": "Un permiso abierto en {productName} está fuera de su ventana de validez. Puede que alguien siga dentro.",
+  "greeting": "Hola {recipientName}:",
+  "body": "El permiso {typeName} \"{title}\" ({referenceNumber}){siteLine} venció a las {expiredAt} UTC y no se ha cerrado, cancelado ni prorrogado. El trabajo puede seguir en curso con un permiso vencido. Confirma ahora el estado del trabajo y cierra el permiso con las comprobaciones de cierre, o prorrógalo con reautorización si debe continuar.",
+  "cta": "Abrir el permiso",
+  "footer": "Recibes este correo porque eres parte firmante (emisor, aceptante o autorizador) de este permiso en {productName}."
+}

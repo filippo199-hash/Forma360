@@ -1,0 +1,8 @@
+{
+  "subject": "Ihre Maßnahmen — {overdueCount} überfällig, {dueSoonCount} bald fällig",
+  "preheader": "Ihnen zugewiesene Korrekturmaßnahmen auf {productName} brauchen Aufmerksamkeit.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Ihnen zugewiesene Korrekturmaßnahmen brauchen Aufmerksamkeit:\n\n{detailLines}\n\nÜberfällige Maßnahmen werden wöchentlich erinnert, bis sie abgeschlossen sind oder die Frist verschoben wird.",
+  "cta": "Ihre Maßnahmen öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil diese Korrekturmaßnahmen auf {productName} Ihnen zugewiesen sind."
+}

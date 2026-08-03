@@ -1,0 +1,8 @@
+{
+  "subject": "Bestätigen Sie Ihre {productName}-E-Mail",
+  "preheader": "Bestätigen Sie Ihre Adresse, um Ihr Konto zu aktivieren.",
+  "greeting": "Hallo,",
+  "body": "Willkommen bei {productName}. Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link unten. Der Link ist 24 Stunden gültig.",
+  "cta": "E-Mail bestätigen",
+  "footer": "Wenn Sie kein {productName}-Konto erstellt haben, können Sie diese Nachricht ignorieren."
+}

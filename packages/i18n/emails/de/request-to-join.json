@@ -1,0 +1,8 @@
+{
+  "subject": "{requesterEmail} möchte {tenantName} beitreten",
+  "preheader": "Jemand möchte Ihrem {productName}-Arbeitsbereich beitreten.",
+  "greeting": "Hallo {adminName},",
+  "body": "{requesterName} ({requesterEmail}) möchte {tenantName} auf {productName} beitreten. Um Zugang zu gewähren, laden Sie die Person unter Einstellungen → Benutzer ein.",
+  "cta": "Einstellungen öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie Administrator von {tenantName} auf {productName} sind."
+}

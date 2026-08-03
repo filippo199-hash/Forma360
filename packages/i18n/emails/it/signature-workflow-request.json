@@ -1,0 +1,8 @@
+{
+  "subject": "Azione richiesta: esamina {inspectionTitle}",
+  "preheader": "{requesterName} ha richiesto la tua firma",
+  "greeting": "Ciao {signerName},",
+  "body": "{requesterName} ha inviato '{inspectionTitle}' per revisione e ti ha chiesto di firmare. Esamina l'ispezione e aggiungi la tua firma quando sei pronto.",
+  "cta": "Esamina e firma",
+  "footer": "Se non aspettavi questa email, puoi ignorarla."
+}

@@ -1,0 +1,8 @@
+{
+  "subject": "Vencimento de documento — {documentName} {statusLine}",
+  "preheader": "Um documento controlado no {productName} precisa ser renovado.",
+  "greeting": "Olá {recipientName},",
+  "body": "O documento \"{documentName}\" {statusLine}.\n\nEnvie a versão renovada ou arquive o documento se ele não for mais necessário — um certificado vencido que ninguém percebe é exatamente o que este lembrete existe para evitar.",
+  "cta": "Abrir o documento",
+  "footer": "Você recebeu este e-mail porque enviou este documento ou administra documentos no {productName}."
+}

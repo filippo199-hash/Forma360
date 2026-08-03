@@ -1,0 +1,8 @@
+{
+  "subject": "Freigabe ausstehend — {documentNumber} {title}",
+  "preheader": "Eine Inspektion auf {productName} wartet auf Ihre Freigabe.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Die Inspektion \"{title}\" ({documentNumber}) wurde eingereicht und wartet auf Freigabe. Prüfen Sie sie und geben Sie sie frei oder lehnen Sie mit Kommentar ab.",
+  "cta": "Inspektion prüfen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie Inspektionen auf {productName} freigeben können."
+}

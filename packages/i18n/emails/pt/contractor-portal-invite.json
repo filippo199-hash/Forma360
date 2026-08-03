@@ -1,0 +1,8 @@
+{
+  "subject": "{contractorName} convidou você para o portal de contratados de {tenantName}",
+  "preheader": "Configure seu acesso para trabalhar com {tenantName}.",
+  "greeting": "Olá,",
+  "body": "Você foi convidado para o portal de contratados de {tenantName} em nome de {contractorName}. Use o link abaixo para configurar seu login — válido por {expiresIn}. Depois de entrar, você poderá: {activities}.",
+  "cta": "Aceitar convite",
+  "footer": "Se você não esperava este convite, pode ignorar esta mensagem."
+}

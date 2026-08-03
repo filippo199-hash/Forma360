@@ -1,0 +1,8 @@
+{
+  "subject": "Synthèse sécurité incendie — {failedCount} échecs, {overdueCount} en retard",
+  "preheader": "Le calendrier incendie de {productName} comporte des éléments à traiter.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Le calendrier sécurité incendie du jour sur {productName} demande votre attention :\n\nContrôles en échec en attente de nouvel essai : {failedCount}\nContrôles et inspections de portes en retard : {overdueCount}\nÀ échéance proche : {dueSoonCount}\nRévisions de FRA dues : {fraCount}\nRévisions de PEEP dues : {peepCount}\nFormations de guides-file expirant ou expirées : {marshalCount}\n\n{detailLines}\n\nUn contrôle en échec reste signalé jusqu'à un nouvel essai concluant — enregistrez-le une fois le défaut corrigé.",
+  "cta": "Ouvrir le module incendie",
+  "footer": "Vous recevez cet e-mail car vous détenez des droits de gestion incendie dans {productName}. La synthèse n'arrive que lorsque quelque chose demande votre attention."
+}

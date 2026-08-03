@@ -1,0 +1,8 @@
+{
+  "subject": "{inviterName} vous a invité à {tenantName} sur {productName}",
+  "preheader": "Acceptez l'invitation pour configurer votre compte {productName}.",
+  "greeting": "Bonjour,",
+  "body": "{inviterName} vous a invité à rejoindre {tenantName} sur {productName}. Le lien ci-dessous est valable {expiresIn}.",
+  "cta": "Accepter l'invitation",
+  "footer": "Si vous n'attendiez pas cette invitation, vous pouvez ignorer ce message."
+}

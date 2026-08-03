@@ -1,0 +1,8 @@
+{
+  "subject": "Ihr {productName}-Anmeldecode: {otp}",
+  "preheader": "Verwenden Sie den Code unten, um sich bei {productName} anzumelden.",
+  "greeting": "Hallo,",
+  "body": "Hier ist Ihr einmaliger Anmeldecode:\n\n{otp}\n\nEr läuft in 10 Minuten ab. Wenn Sie sich nicht anmelden wollten, können Sie diese Nachricht ignorieren.",
+  "cta": "Ihr Code lautet {otp}",
+  "footer": "{productName} wird Sie niemals telefonisch oder im Chat nach diesem Code fragen."
+}

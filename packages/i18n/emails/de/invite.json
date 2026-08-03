@@ -1,0 +1,8 @@
+{
+  "subject": "{inviterName} hat Sie zu {tenantName} auf {productName} eingeladen",
+  "preheader": "Nehmen Sie die Einladung an, um Ihr {productName}-Konto einzurichten.",
+  "greeting": "Hallo,",
+  "body": "{inviterName} hat Sie eingeladen, {tenantName} auf {productName} beizutreten. Der Link unten ist {expiresIn} gültig.",
+  "cta": "Einladung annehmen",
+  "footer": "Wenn Sie diese Einladung nicht erwartet haben, können Sie diese Nachricht ignorieren."
+}

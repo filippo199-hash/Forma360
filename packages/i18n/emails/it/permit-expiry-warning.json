@@ -1,0 +1,8 @@
+{
+  "subject": "Permesso in scadenza — {referenceNumber} {title} termina alle {expiredAt} UTC",
+  "preheader": "Un permesso aperto su {productName} raggiunge la fine della validità entro un'ora.",
+  "greeting": "Ciao {recipientName},",
+  "body": "Il permesso {typeName} \"{title}\" ({referenceNumber}){siteLine} raggiunge la fine della finestra di validità alle {expiredAt} UTC. Se il lavoro è terminato, chiudi il permesso ora con i controlli di chiusura. Se deve continuare, prorogalo con nuova autorizzazione prima della scadenza: una volta scaduto, il lavoro non è più autorizzato.",
+  "cta": "Apri il permesso",
+  "footer": "Ricevi questa email perché sei parte firmataria (emittente, accettante o autorizzante) di questo permesso in {productName}."
+}

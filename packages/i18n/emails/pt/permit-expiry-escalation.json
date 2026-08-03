@@ -1,0 +1,8 @@
+{
+  "subject": "Permissão vencida — {referenceNumber} {title} passou do prazo sem encerramento",
+  "preheader": "Uma permissão aberta no {productName} está além da janela de validade. Alguém pode ainda estar lá.",
+  "greeting": "Olá {recipientName},",
+  "body": "A permissão {typeName} \"{title}\" ({referenceNumber}){siteLine} venceu às {expiredAt} UTC e não foi encerrada, cancelada ou prorrogada. O trabalho pode ainda estar em andamento sob uma permissão vencida. Confirme agora o estado do trabalho e encerre a permissão com as verificações de encerramento, ou prorrogue-a com reautorização se o trabalho precisar continuar.",
+  "cta": "Abrir a permissão",
+  "footer": "Você recebeu este e-mail porque é parte signatária (emissor, aceitante ou autorizador) desta permissão no {productName}."
+}

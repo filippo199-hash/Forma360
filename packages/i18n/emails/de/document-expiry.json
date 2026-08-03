@@ -1,0 +1,8 @@
+{
+  "subject": "Dokumentablauf — {documentName} {statusLine}",
+  "preheader": "Ein kontrolliertes Dokument auf {productName} muss erneuert werden.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Das Dokument \"{documentName}\" {statusLine}.\n\nLaden Sie die erneuerte Version hoch oder archivieren Sie das Dokument, wenn es nicht mehr benötigt wird — ein abgelaufenes Zertifikat, das niemand bemerkt, ist genau das, was diese Erinnerung verhindern soll.",
+  "cta": "Dokument öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie dieses Dokument hochgeladen haben oder Dokumente auf {productName} verwalten."
+}

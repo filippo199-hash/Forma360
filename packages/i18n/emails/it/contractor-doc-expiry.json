@@ -1,0 +1,8 @@
+{
+  "subject": "Documento in scadenza: {requirementName} — {contractorName}",
+  "preheader": "{requirementName} scade il {expiresOn}.",
+  "greeting": "Salve,",
+  "body": "Il documento \"{requirementName}\" per {contractorName} scade il {expiresOn}. Carica una versione rinnovata per restare conforme: {url}",
+  "cta": "Carica un nuovo documento",
+  "footer": "Ricevi questa email perché sei il referente di questo appaltatore su {productName}."
+}

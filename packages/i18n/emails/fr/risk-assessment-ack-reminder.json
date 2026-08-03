@@ -1,0 +1,8 @@
+{
+  "subject": "Rappel — évaluation des risques en attente de votre confirmation : {title}",
+  "preheader": "Une confirmation « lu et compris » est en attente sur {productName}.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "L'évaluation des risques \"{title}\" ({referenceNumber}) vous a été distribuée le {distributedDate} et attend toujours votre confirmation{dueLine}.",
+  "cta": "Lire et confirmer l'évaluation",
+  "footer": "Vous recevez cet e-mail car une évaluation des risques sur {productName} vous désigne comme lecteur requis."
+}

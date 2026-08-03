@@ -1,0 +1,8 @@
+{
+  "subject": "Tus acciones — {overdueCount} vencidas, {dueSoonCount} por vencer",
+  "preheader": "Acciones correctivas asignadas a ti en {productName} requieren atención.",
+  "greeting": "Hola {recipientName}:",
+  "body": "Las acciones correctivas asignadas a ti requieren atención:\n\n{detailLines}\n\nLas acciones vencidas se recuerdan cada semana hasta completarse o hasta que se mueva la fecha límite.",
+  "cta": "Abrir tus acciones",
+  "footer": "Recibes este correo porque estas acciones correctivas en {productName} están asignadas a ti."
+}

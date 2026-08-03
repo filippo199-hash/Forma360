@@ -1,0 +1,8 @@
+{
+  "subject": "Seu código de acesso {productName}: {otp}",
+  "preheader": "Use o código abaixo para entrar no {productName}.",
+  "greeting": "Olá,",
+  "body": "Aqui está seu código de acesso de uso único:\n\n{otp}\n\nEle expira em 10 minutos. Se você não tentou entrar, pode ignorar esta mensagem.",
+  "cta": "Seu código é {otp}",
+  "footer": "O {productName} nunca pedirá este código por telefone ou chat."
+}

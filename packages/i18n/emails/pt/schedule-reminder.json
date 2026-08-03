@@ -1,0 +1,8 @@
+{
+  "subject": "Lembrete de inspeção próxima",
+  "preheader": "Uma inspeção está programada no {productName}.",
+  "greeting": "Olá,",
+  "body": "Este é um lembrete de que uma inspeção foi programada para você. Abra o {productName} para iniciá-la quando estiver pronto.",
+  "cta": "Abrir inspeção",
+  "footer": "Você recebeu este e-mail porque um administrador do {productName} programou uma inspeção para a sua conta."
+}

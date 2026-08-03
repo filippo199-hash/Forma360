@@ -1,0 +1,8 @@
+{
+  "subject": "Ainda no local: {who} ({contractorName})",
+  "preheader": "{contractorName} está no local há mais de 24 horas.",
+  "greeting": "Atenção,",
+  "body": "{who} de {contractorName} fez check-in em {checkedInAt} e ainda não fez check-out — mais de 24 horas. Visita: {title}{siteLine}. Confirme que ainda está no local ou registre a saída.",
+  "cta": "Abrir o painel de presença",
+  "footer": "Você recebeu este e-mail porque agendou esta visita ou administra a portaria."
+}

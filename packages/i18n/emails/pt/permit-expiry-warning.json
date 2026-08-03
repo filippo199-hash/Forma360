@@ -1,0 +1,8 @@
+{
+  "subject": "Permissão vencendo — {referenceNumber} {title} encerra às {expiredAt} UTC",
+  "preheader": "Uma permissão aberta no {productName} chega ao fim da validade dentro de uma hora.",
+  "greeting": "Olá {recipientName},",
+  "body": "A permissão {typeName} \"{title}\" ({referenceNumber}){siteLine} chega ao fim da janela de validade às {expiredAt} UTC. Se o trabalho terminou, encerre a permissão agora com as verificações de encerramento. Se precisar continuar, prorrogue com reautorização antes do vencimento — depois de vencida, o trabalho não está mais autorizado.",
+  "cta": "Abrir a permissão",
+  "footer": "Você recebeu este e-mail porque é parte signatária (emissor, aceitante ou autorizador) desta permissão no {productName}."
+}

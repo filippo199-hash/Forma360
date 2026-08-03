@@ -189,3 +189,47 @@ describe('template registry completeness (platform review PF-1)', () => {
     }
   });
 });
+
+
+describe('PF-20 locale-aware template loader', () => {
+  it('serves the translated template when the locale exists; falls back otherwise', async () => {
+    const { defaultTemplatedTemplateLoader } = await import('./email');
+    const it_ = await defaultTemplatedTemplateLoader('invite', 'it');
+    expect(it_.subject).toContain('ti ha invitato');
+    const pt = await defaultTemplatedTemplateLoader('invite', 'pt');
+    expect(pt.subject).toContain('convidou');
+    const en = await defaultTemplatedTemplateLoader('invite');
+    expect((await defaultTemplatedTemplateLoader('invite', 'xx')).subject).toBe(en.subject);
+    expect((await defaultTemplatedTemplateLoader('invite', 'ja')).subject).toBe(en.subject);
+  });
+
+  it('every translated template parses and keeps the EN placeholder vocabulary', async () => {
+    const { readdir } = await import('node:fs/promises');
+    const { join, dirname } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const { defaultTemplatedTemplateLoader } = await import('./email');
+    const emailsRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'i18n', 'emails');
+    const locales = (await readdir(emailsRoot, { withFileTypes: true }))
+      .filter((d) => d.isDirectory() && d.name !== 'en')
+      .map((d) => d.name);
+    expect(locales.length).toBeGreaterThanOrEqual(5);
+    const placeholderSet = (tpl: object): string =>
+      [...JSON.stringify(tpl).matchAll(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g)]
+        .map((m) => m[1])
+        .sort()
+        .join(',');
+    for (const locale of locales) {
+      const files = (await readdir(join(emailsRoot, locale))).filter((f) => f.endsWith('.json'));
+      expect(files.length).toBeGreaterThanOrEqual(29);
+      for (const file of files) {
+        const key = file.replace(/\.json$/, '');
+        const translated = await defaultTemplatedTemplateLoader(key, locale);
+        const english = await defaultTemplatedTemplateLoader(key);
+        // A translation must never drop or invent variables.
+        expect(placeholderSet(translated), `${locale}/${key} placeholders`).toBe(
+          placeholderSet(english),
+        );
+      }
+    }
+  });
+});

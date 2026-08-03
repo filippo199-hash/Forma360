@@ -1,0 +1,8 @@
+{
+  "subject": "Lembrete — avaliação de risco aguardando sua confirmação: {title}",
+  "preheader": "Você tem uma confirmação de \"li e entendi\" pendente no {productName}.",
+  "greeting": "Olá {recipientName},",
+  "body": "A avaliação de risco \"{title}\" ({referenceNumber}) foi distribuída a você em {distributedDate} e ainda aguarda sua confirmação{dueLine}.",
+  "cta": "Ler e confirmar a avaliação",
+  "footer": "Você recebeu este e-mail porque uma avaliação de risco no {productName} indica você como alguém que deve lê-la."
+}

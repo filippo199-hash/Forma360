@@ -1,0 +1,8 @@
+{
+  "subject": "Alle Unterschriften gesammelt: {inspectionTitle}",
+  "preheader": "{inspectionTitle} ist jetzt abgeschlossen",
+  "greeting": "Hallo {recipientName},",
+  "body": "Alle Unterzeichner haben '{inspectionTitle}' unterschrieben. Die Inspektion ist jetzt als abgeschlossen markiert.",
+  "cta": "Inspektion ansehen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie Unterzeichner dieser Inspektion waren."
+}

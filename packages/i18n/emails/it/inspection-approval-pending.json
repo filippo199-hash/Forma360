@@ -1,0 +1,8 @@
+{
+  "subject": "Approvazione in attesa — {documentNumber} {title}",
+  "preheader": "Un'ispezione su {productName} attende la tua approvazione.",
+  "greeting": "Ciao {recipientName},",
+  "body": "L'ispezione \"{title}\" ({documentNumber}) è stata inviata ed è in attesa di approvazione. Esaminala e approvala o respingila con un commento.",
+  "cta": "Esamina l'ispezione",
+  "footer": "Ricevi questa email perché puoi approvare le ispezioni su {productName}."
+}

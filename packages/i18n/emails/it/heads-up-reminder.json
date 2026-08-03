@@ -1,0 +1,8 @@
+{
+  "subject": "Promemoria: {headsUpTitle}",
+  "preheader": "Hai un avviso in attesa della tua azione.",
+  "greeting": "Ciao {recipientName},",
+  "body": "Hai un avviso che richiede la tua attenzione: \"{headsUpTitle}\". Apri {productName} per {actionRequired}.",
+  "cta": "Apri l'avviso",
+  "footer": "Ricevi questo promemoria perché un amministratore di {productName} ti ha chiesto di agire su questo messaggio."
+}

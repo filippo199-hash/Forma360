@@ -1,0 +1,8 @@
+{
+  "subject": "Notifica: {inspectionTitle}",
+  "preheader": "Una risposta segnalata è stata registrata in un'ispezione",
+  "greeting": "Salve,",
+  "body": "Una risposta dell'ispezione ha attivato una notifica. In '{inspectionTitle}', alla domanda \"{questionPrompt}\" è stato risposto \"{response}\". Apri il report per i dettagli completi.",
+  "cta": "Vedi il report",
+  "footer": "Ricevi questa email perché questo indirizzo è impostato per ricevere le notifiche di questa risposta nel modello."
+}

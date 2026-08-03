@@ -1,0 +1,8 @@
+{
+  "subject": "Inspeção {decisionLine} — {documentNumber} {title}",
+  "preheader": "Uma decisão de aprovação foi tomada no {productName}.",
+  "greeting": "Olá {recipientName},",
+  "body": "{approverName} {decisionLine}: \"{title}\" ({documentNumber}).{commentLine}",
+  "cta": "Abrir a inspeção",
+  "footer": "Você recebeu este e-mail porque enviou esta inspeção no {productName}."
+}

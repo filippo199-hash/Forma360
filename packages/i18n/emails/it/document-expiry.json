@@ -1,0 +1,8 @@
+{
+  "subject": "Scadenza documento — {documentName} {statusLine}",
+  "preheader": "Un documento controllato su {productName} va rinnovato.",
+  "greeting": "Ciao {recipientName},",
+  "body": "Il documento \"{documentName}\" {statusLine}.\n\nCarica la versione rinnovata oppure archivia il documento se non serve più: un certificato scaduto che nessuno nota è esattamente ciò che questo promemoria vuole evitare.",
+  "cta": "Apri il documento",
+  "footer": "Ricevi questa email perché hai caricato questo documento o gestisci i documenti su {productName}."
+}

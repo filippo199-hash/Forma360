@@ -1,0 +1,8 @@
+{
+  "subject": "Expiration de document — {documentName} {statusLine}",
+  "preheader": "Un document contrôlé sur {productName} doit être renouvelé.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Le document \"{documentName}\" {statusLine}.\n\nTéléversez la version renouvelée ou archivez le document s'il n'est plus nécessaire — un certificat expiré que personne ne remarque est exactement ce que ce rappel existe pour éviter.",
+  "cta": "Ouvrir le document",
+  "footer": "Vous recevez cet e-mail car vous avez téléversé ce document ou gérez les documents sur {productName}."
+}
