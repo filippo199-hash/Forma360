@@ -90,6 +90,7 @@ const MIGRATION_FILES = [
   '0050_contractor_visit_overstay.sql',
   '0051_site_fk_integrity.sql',
   '0052_reference_counters.sql',
+  '0063_action_reminders.sql',
 ];
 
 async function bootDb() {

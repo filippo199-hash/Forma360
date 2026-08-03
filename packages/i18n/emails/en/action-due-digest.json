@@ -1,0 +1,8 @@
+{
+  "subject": "Your actions — {overdueCount} overdue, {dueSoonCount} due soon",
+  "preheader": "Corrective actions assigned to you on {productName} need attention.",
+  "greeting": "Hello {recipientName},",
+  "body": "Corrective actions assigned to you need attention:\n\n{detailLines}\n\nOverdue actions repeat weekly until they are completed or the due date moves.",
+  "cta": "Open your actions",
+  "footer": "You are receiving this because these corrective actions on {productName} are assigned to you."
+}

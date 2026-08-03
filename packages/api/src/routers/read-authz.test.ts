@@ -173,7 +173,7 @@ describe('read authorization', () => {
     });
 
     // Contractor A's portal user: list shows only their own; get on others → NOT_FOUND.
-    const aIds = (await callerA.actions.list({})).map((r) => r.id);
+    const aIds = (await callerA.actions.list({})).rows.map((r) => r.id);
     expect(aIds).toContain(aAction);
     expect(aIds).not.toContain(bAction);
     expect(aIds).not.toContain(internalAction);
@@ -182,7 +182,7 @@ describe('read authorization', () => {
     await expect(callerA.actions.get({ actionId: aAction })).resolves.toBeDefined();
 
     // Internal admin is unrestricted — sees all three.
-    const adminIds = (await admin.actions.list({})).map((r) => r.id);
+    const adminIds = (await admin.actions.list({})).rows.map((r) => r.id);
     expect(adminIds).toEqual(expect.arrayContaining([aAction, bAction, internalAction]));
   });
 

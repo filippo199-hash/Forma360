@@ -42,7 +42,17 @@ import { trpc } from '../../../src/lib/trpc/client';
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type StatusFilter = 'all' | 'open' | 'in_progress' | 'completed' | 'cancelled';
-type SourceFilter = 'all' | 'standalone' | 'inspection' | 'issue';
+type SourceFilter =
+  | 'all'
+  | 'standalone'
+  | 'inspection'
+  | 'issue'
+  | 'maintenance'
+  | 'risk_assessment'
+  | 'coshh_assessment'
+  | 'fire_risk_assessment'
+  | 'fire_logbook_entry'
+  | 'fire_door_inspection';
 type PriorityFilter = 'all' | 'low' | 'medium' | 'high' | 'critical';
 type SortBy = 'created' | 'due' | 'priority' | 'updated';
 type ViewMode = 'list' | 'board';
@@ -113,7 +123,42 @@ const STATUSES: ReadonlyArray<StatusFilter> = [
   'completed',
   'cancelled',
 ];
-const SOURCES: ReadonlyArray<SourceFilter> = ['all', 'standalone', 'inspection', 'issue'];
+const SOURCES: ReadonlyArray<SourceFilter> = [
+  'all',
+  'standalone',
+  'inspection',
+  'issue',
+  'maintenance',
+  'risk_assessment',
+  'coshh_assessment',
+  'fire_risk_assessment',
+  'fire_logbook_entry',
+  'fire_door_inspection',
+];
+
+/** PF-2: one label helper — the list, board and filter share it. */
+function sourceLabelKey(sourceType: string): string {
+  switch (sourceType) {
+    case 'inspection':
+      return 'sourceInspection';
+    case 'issue':
+      return 'sourceIssue';
+    case 'maintenance':
+      return 'sourceMaintenance';
+    case 'risk_assessment':
+      return 'sourceRiskAssessment';
+    case 'coshh_assessment':
+      return 'sourceCoshhAssessment';
+    case 'fire_risk_assessment':
+      return 'sourceFireRiskAssessment';
+    case 'fire_logbook_entry':
+      return 'sourceFireLogbookEntry';
+    case 'fire_door_inspection':
+      return 'sourceFireDoorInspection';
+    default:
+      return 'sourceStandalone';
+  }
+}
 const PRIORITIES: ReadonlyArray<PriorityFilter> = ['all', 'critical', 'high', 'medium', 'low'];
 const SORT_OPTIONS: ReadonlyArray<SortBy> = ['created', 'due', 'priority', 'updated'];
 const BOARD_COLUMNS: ReadonlyArray<Exclude<StatusFilter, 'all'>> = [
@@ -413,8 +458,18 @@ export default function ActionsListPage() {
   if (siteFilter !== '') listInput.siteId = siteFilter;
   if (query.trim().length > 0) listInput.query = query.trim();
 
-  const { data: rows, isLoading, error } = trpc.actions.list.useQuery(listInput);
+  const [offset, setOffset] = useState(0);
+  // Any filter change starts back at page one — a stale offset past the
+  // filtered count would render an empty page.
+  useEffect(() => {
+    setOffset(0);
+  }, [status, source, priority, siteFilter, query, assignedToMe, overdueOnly, includeArchived, hideClosed, sortBy, view]);
+  const pagedInput = { ...listInput, offset };
+  const { data: page, isLoading, error } = trpc.actions.list.useQuery(pagedInput);
+  const { data: myCounts } = trpc.actions.myCounts.useQuery();
   const isError = error !== null && error !== undefined;
+  const rows = page?.rows;
+  const totalCount = page?.totalCount ?? 0;
   const list = useMemo(() => rows ?? [], [rows]);
 
   // Apply optimistic overrides to grouped data
@@ -476,6 +531,29 @@ export default function ActionsListPage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
             <p className="mt-0.5 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
+            {myCounts !== undefined && myCounts.openAssigned > 0 ? (
+              <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setAssignedToMe(true)}
+                  className="rounded-md border border-input bg-background px-2 py-0.5 hover:bg-accent"
+                >
+                  {t('myOpenChip', { count: myCounts.openAssigned })}
+                </button>
+                {myCounts.overdueAssigned > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAssignedToMe(true);
+                      setOverdueOnly(true);
+                    }}
+                    className="rounded-md border border-red-300 bg-red-50 px-2 py-0.5 text-red-900 hover:bg-red-100 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
+                  >
+                    {t('myOverdueChip', { count: myCounts.overdueAssigned })}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {canSettings ? (
@@ -652,13 +730,7 @@ export default function ActionsListPage() {
               >
                 {SOURCES.map((s) => (
                   <option key={s} value={s}>
-                    {s === 'all'
-                      ? t('filterSourceAll')
-                      : s === 'standalone'
-                        ? t('filterSourceStandalone')
-                        : s === 'inspection'
-                          ? t('filterSourceInspection')
-                          : t('filterSourceIssue')}
+                    {s === 'all' ? t('filterSourceAll') : t(sourceLabelKey(s) as never)}
                   </option>
                 ))}
               </select>
@@ -810,16 +882,47 @@ export default function ActionsListPage() {
           </p>
         ) : null}
         {view === 'list' ? (
-          <ListView
-            rows={list}
-            isLoading={isLoading}
-            locale={locale}
-            canCreate={canCreate}
-            onSelect={handleSelectAction}
-            tStatus={(k) => tStatus(k)}
-            tPriority={(k) => tPriority(k)}
-            t={t}
-          />
+          <>
+            <ListView
+              rows={list}
+              isLoading={isLoading}
+              locale={locale}
+              canCreate={canCreate}
+              onSelect={handleSelectAction}
+              tStatus={(k) => tStatus(k)}
+              tPriority={(k) => tPriority(k)}
+              t={t}
+            />
+            {totalCount > list.length || offset > 0 ? (
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>
+                  {t('pagerShowing', {
+                    from: totalCount === 0 ? 0 : offset + 1,
+                    to: offset + list.length,
+                    total: totalCount,
+                  })}
+                </span>
+                <span className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={offset === 0}
+                    onClick={() => setOffset(Math.max(0, offset - 100))}
+                  >
+                    {t('pagerPrev')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={offset + list.length >= totalCount}
+                    onClick={() => setOffset(offset + 100)}
+                  >
+                    {t('pagerNext')}
+                  </Button>
+                </span>
+              </div>
+            ) : null}
+          </>
         ) : (
           <DndContext
             sensors={sensors}
@@ -1121,13 +1224,7 @@ function ListView({
                           : t('noDueDate')}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
-                        {row.sourceType === 'inspection'
-                          ? t('sourceInspection')
-                          : row.sourceType === 'issue'
-                            ? t('sourceIssue')
-                            : row.sourceType === 'maintenance'
-                              ? t('sourceMaintenance')
-                              : t('sourceStandalone')}
+                        {t(sourceLabelKey(row.sourceType) as never)}
                       </td>
                     </tr>
                   );
@@ -1352,13 +1449,7 @@ function BoardCardContent({
     >
       <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
         <span className="rounded bg-muted px-1.5 py-0.5">
-          {row.sourceType === 'inspection'
-            ? t('sourceInspection')
-            : row.sourceType === 'issue'
-              ? t('sourceIssue')
-              : row.sourceType === 'maintenance'
-                ? t('sourceMaintenance')
-                : t('sourceStandalone')}
+          {t(sourceLabelKey(row.sourceType) as never)}
         </span>
         <span className="font-mono">{row.referenceNumber ?? row.id.slice(-6)}</span>
       </div>

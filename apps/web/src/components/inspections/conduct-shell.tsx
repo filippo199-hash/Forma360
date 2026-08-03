@@ -135,7 +135,7 @@ export function ConductShell() {
   const actionRaisedMap = useMemo(() => {
     const m = new Map<string, string>();
     if (existingActions !== undefined) {
-      for (const a of existingActions) {
+      for (const a of existingActions.rows) {
         if (a.sourceItemId !== null) m.set(a.sourceItemId, a.id);
       }
     }

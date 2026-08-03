@@ -663,9 +663,19 @@ function SourceCard({
   locale,
 }: {
   source: {
-    type: 'issue' | 'inspection' | 'standalone' | 'maintenance';
+    type:
+      | 'issue'
+      | 'inspection'
+      | 'standalone'
+      | 'maintenance'
+      | 'risk_assessment'
+      | 'coshh_assessment'
+      | 'fire_risk_assessment'
+      | 'fire_logbook_entry'
+      | 'fire_door_inspection';
     referenceNumber: string | null;
     title: string | null;
+    href?: string | null;
   } | null;
   sourceId: string | null;
   locale: string;
@@ -683,15 +693,19 @@ function SourceCard({
       </Card>
     );
   }
+  // PF-2: the server resolves the origin path for every source type —
+  // the old client-side guess defaulted unknown types to /inspections/.
   const href =
-    source.type === 'issue'
-      ? `/${locale}/observations/${sourceId}`
-      : `/${locale}/inspections/${sourceId}`;
+    source.href !== null && source.href !== undefined
+      ? `/${locale}${source.href}`
+      : source.type === 'issue'
+        ? `/${locale}/observations/${sourceId}`
+        : `/${locale}/inspections/${sourceId}`;
   // Prefer the real reference (ISS-000002 / INS-...). Fall back to the
   // last 6 chars of the internal id only when the source has been deleted
   // or no reference was ever assigned. The title (when present) goes on
   // a second line so the row is scannable without sacrificing detail.
-  const reference = source.referenceNumber ?? sourceId.slice(-6);
+  const reference = source.referenceNumber ?? source.title ?? sourceId.slice(-6);
   return (
     <Card>
       <CardContent className="flex items-start justify-between gap-2 p-6 text-sm">
@@ -699,7 +713,17 @@ function SourceCard({
           <p>
             {source.type === 'issue'
               ? t('sourceLinkIssue', { referenceNumber: reference })
-              : t('sourceLinkInspection', { referenceNumber: reference })}
+              : source.type === 'inspection'
+                ? t('sourceLinkInspection', { referenceNumber: reference })
+                : source.type === 'risk_assessment'
+                  ? t('sourceLinkRiskAssessment', { referenceNumber: reference })
+                  : source.type === 'coshh_assessment'
+                    ? t('sourceLinkCoshhAssessment', { referenceNumber: reference })
+                    : source.type === 'fire_risk_assessment'
+                      ? t('sourceLinkFireRiskAssessment', { referenceNumber: reference })
+                      : source.type === 'fire_logbook_entry'
+                        ? t('sourceLinkFireLogbookEntry')
+                        : t('sourceLinkFireDoorInspection')}
           </p>
           {source.title !== null && source.title.length > 0 ? (
             <p className="text-muted-foreground">{source.title}</p>

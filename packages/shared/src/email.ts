@@ -45,6 +45,8 @@ import permitExpiryWarning from '../../i18n/emails/en/permit-expiry-warning.json
 import permitExpiryEscalation from '../../i18n/emails/en/permit-expiry-escalation.json';
 import fireDueDigest from '../../i18n/emails/en/fire-due-digest.json';
 import fraIntolerableAlert from '../../i18n/emails/en/fra-intolerable-alert.json';
+import actionAssigned from '../../i18n/emails/en/action-assigned.json';
+import actionDueDigest from '../../i18n/emails/en/action-due-digest.json';
 
 const EMAIL_TEMPLATES: Record<string, unknown> = {
   'heads-up-reminder': headsUpReminder,
@@ -75,6 +77,8 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'permit-expiry-escalation': permitExpiryEscalation,
   'fire-due-digest': fireDueDigest,
   'fra-intolerable-alert': fraIntolerableAlert,
+  'action-assigned': actionAssigned,
+  'action-due-digest': actionDueDigest,
 };
 
 /** Registered template keys — exported so tests can assert the registry

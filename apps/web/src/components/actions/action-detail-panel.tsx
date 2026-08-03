@@ -675,9 +675,19 @@ function SourceCard({
   locale,
 }: {
   source: {
-    type: 'issue' | 'inspection' | 'standalone' | 'maintenance';
+    type:
+      | 'issue'
+      | 'inspection'
+      | 'standalone'
+      | 'maintenance'
+      | 'risk_assessment'
+      | 'coshh_assessment'
+      | 'fire_risk_assessment'
+      | 'fire_logbook_entry'
+      | 'fire_door_inspection';
     referenceNumber: string | null;
     title: string | null;
+    href?: string | null;
   } | null;
   sourceId: string | null;
   locale: string;
@@ -692,17 +702,30 @@ function SourceCard({
     sourceId === null
   )
     return null;
+  // PF-2: prefer the server-resolved path for every source type.
   const href =
-    source.type === 'issue'
-      ? `/${locale}/observations/${sourceId}`
-      : `/${locale}/inspections/${sourceId}`;
-  const reference = source.referenceNumber ?? sourceId.slice(-6);
+    source.href !== null && source.href !== undefined
+      ? `/${locale}${source.href}`
+      : source.type === 'issue'
+        ? `/${locale}/observations/${sourceId}`
+        : `/${locale}/inspections/${sourceId}`;
+  const reference = source.referenceNumber ?? source.title ?? sourceId.slice(-6);
   return (
     <section className="flex items-start justify-between gap-2 border-t p-5 text-sm">
       <p>
         {source.type === 'issue'
           ? t('sourceLinkIssue', { referenceNumber: reference })
-          : t('sourceLinkInspection', { referenceNumber: reference })}
+          : source.type === 'inspection'
+            ? t('sourceLinkInspection', { referenceNumber: reference })
+            : source.type === 'risk_assessment'
+              ? t('sourceLinkRiskAssessment', { referenceNumber: reference })
+              : source.type === 'coshh_assessment'
+                ? t('sourceLinkCoshhAssessment', { referenceNumber: reference })
+                : source.type === 'fire_risk_assessment'
+                  ? t('sourceLinkFireRiskAssessment', { referenceNumber: reference })
+                  : source.type === 'fire_logbook_entry'
+                    ? t('sourceLinkFireLogbookEntry')
+                    : t('sourceLinkFireDoorInspection')}
       </p>
       <Button asChild type="button" variant="outline" size="sm">
         <Link href={href} target="_blank">

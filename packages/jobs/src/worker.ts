@@ -56,6 +56,12 @@ import {
   FIRE_DUE_DIGEST_CRON,
   type FireDigest,
 } from './workers/fire-due-digest';
+import {
+  actionDigestLines,
+  ACTION_REMINDERS_CRON,
+  createActionRemindersHandler,
+  type DueActionRow,
+} from './workers/action-reminders';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -409,6 +415,40 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   );
   logger.info({ cron: FIRE_DUE_DIGEST_CRON }, '[worker] registered fire-due-digest repeatable');
 
+  // ─── Platform PF-4 — corrective-action reminder digest ────────────────
+  const actionRemindersWorker = new Worker(
+    QUEUE_NAMES.ACTION_REMINDERS,
+    createActionRemindersHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'action-reminders' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string },
+        payload: { overdue: DueActionRow[]; dueSoon: DueActionRow[]; viewUrl: string },
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey: 'action-due-digest',
+          variables: {
+            recipientName: recipient.name,
+            overdueCount: String(payload.overdue.length),
+            dueSoonCount: String(payload.dueSoon.length),
+            detailLines: actionDigestLines(payload.overdue, payload.dueSoon),
+            viewUrl: payload.viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const actionRemindersQueue = getQueue(QUEUE_NAMES.ACTION_REMINDERS, connection);
+  await actionRemindersQueue.upsertJobScheduler(
+    'action-reminders',
+    { pattern: ACTION_REMINDERS_CRON, tz: 'UTC' },
+    { name: 'action-reminders', data: {} },
+  );
+  logger.info({ cron: ACTION_REMINDERS_CRON }, '[worker] registered action-reminders repeatable');
+
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
   await scheduleTickQueue.upsertJobScheduler(
@@ -452,6 +492,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     raAckReminderWorker,
     permitExpiryWatchWorker,
     fireDueDigestWorker,
+    actionRemindersWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {

@@ -907,7 +907,7 @@ function LinkedActionsCard({
     sourceType: 'issue',
     sourceId: issueId,
   });
-  const rows = data ?? [];
+  const rows = data?.rows ?? [];
 
   return (
     <div className="space-y-3">

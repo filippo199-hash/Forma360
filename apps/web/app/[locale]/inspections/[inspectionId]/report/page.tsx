@@ -102,9 +102,9 @@ export default function InspectionReportPage() {
 
   // ── Build action map ───────────────────────────────────────────────────────
 
-  type ActionRow = NonNullable<typeof actionsQuery.data>[number];
+  type ActionRow = NonNullable<typeof actionsQuery.data>['rows'][number];
   const actionsByItemId = new Map<string, ActionRow[]>();
-  const allActions: ActionRow[] = actionsQuery.data ?? [];
+  const allActions: ActionRow[] = actionsQuery.data?.rows ?? [];
   for (const action of allActions) {
     if (action.sourceItemId !== null) {
       const list = actionsByItemId.get(action.sourceItemId) ?? [];

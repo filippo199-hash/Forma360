@@ -237,6 +237,14 @@ export const actions = pgTable(
 
     assigneeUserId: text('assignee_user_id'),
     dueAt: timestamp('due_at', { withTimezone: true, mode: 'date' }),
+    /**
+     * Reminder stamps (platform review PF-4): due-soon fires once per
+     * action; overdue re-pings weekly (the worker compares the stamp
+     * age). Cleared when the due date moves so a new deadline gets a
+     * fresh warning.
+     */
+    dueSoonRemindedAt: timestamp('due_soon_reminded_at', { withTimezone: true, mode: 'date' }),
+    overdueRemindedAt: timestamp('overdue_reminded_at', { withTimezone: true, mode: 'date' }),
 
     /** Optional site this action is associated with. */
     siteId: varchar('site_id', { length: 26 }).references(() => sites.id, {

@@ -1,0 +1,8 @@
+{
+  "subject": "Action assigned to you — {referenceNumber} {title}",
+  "preheader": "{assignerName} assigned you a corrective action on {productName}.",
+  "greeting": "Hello {recipientName},",
+  "body": "{assignerName} assigned the corrective action \"{title}\" ({referenceNumber}) to you.{dueLine}\n\nOpen it to see the source, the details and what done looks like.",
+  "cta": "Open the action",
+  "footer": "You are receiving this because a corrective action on {productName} was assigned to you."
+}

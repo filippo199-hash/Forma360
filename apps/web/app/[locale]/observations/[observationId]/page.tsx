@@ -1358,6 +1358,15 @@ function AddActionDialog({
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'' | Priority>('');
   const [dueAt, setDueAt] = useState('');
+  // PF-13: parity with the other create-action paths — an owner, a type
+  // and the type's required questions, instead of an unassigned, untyped
+  // action that skips the due-date automation.
+  const [assigneeUserId, setAssigneeUserId] = useState('');
+  const [actionTypeId, setActionTypeId] = useState('');
+  const [customResponses, setCustomResponses] = useState<Record<string, string>>({});
+  const { data: usersData } = trpc.users.list.useQuery({});
+  const { data: typesData } = trpc.actionTypes.list.useQuery({ includeArchived: false });
+  const selectedType = (typesData ?? []).find((ty) => ty.id === actionTypeId);
 
   const create = trpc.actions.createFromIssue.useMutation({
     onSuccess: () => {
@@ -1369,6 +1378,9 @@ function AddActionDialog({
       setDescription('');
       setPriority('');
       setDueAt('');
+      setAssigneeUserId('');
+      setActionTypeId('');
+      setCustomResponses({});
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -1393,10 +1405,18 @@ function AddActionDialog({
               description?: string;
               priority?: Priority;
               dueAt?: string;
+              assigneeUserId?: string;
+              actionTypeId?: string;
+              customQuestionResponses?: Record<string, string>;
             } = { issueId, title: title.trim() };
             if (description.trim().length > 0) input.description = description.trim();
             if (priority !== '') input.priority = priority;
             if (dueAt !== '') input.dueAt = new Date(dueAt).toISOString();
+            if (assigneeUserId !== '') input.assigneeUserId = assigneeUserId;
+            if (actionTypeId !== '') {
+              input.actionTypeId = actionTypeId;
+              input.customQuestionResponses = customResponses;
+            }
             create.mutate(input);
           }}
         >
@@ -1449,7 +1469,80 @@ function AddActionDialog({
                 onChange={(e) => setDueAt(e.target.value)}
               />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="act-assignee">{t('assigneeLabel')}</Label>
+              <select
+                id="act-assignee"
+                value={assigneeUserId}
+                onChange={(e) => setAssigneeUserId(e.target.value)}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t('noAssignee')}</option>
+                {(usersData?.users ?? []).map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="act-type">{t('typeLabel')}</Label>
+              <select
+                id="act-type"
+                value={actionTypeId}
+                onChange={(e) => {
+                  setActionTypeId(e.target.value);
+                  setCustomResponses({});
+                }}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t('noType')}</option>
+                {(typesData ?? []).map((ty) => (
+                  <option key={ty.id} value={ty.id}>
+                    {ty.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+          {selectedType !== undefined && selectedType.customQuestions.length > 0 ? (
+            <div className="space-y-3">
+              {selectedType.customQuestions.map((q) => (
+                <div key={q.id} className="space-y-1.5">
+                  <Label htmlFor={`act-q-${q.id}`}>
+                    {q.prompt}
+                    {q.required ? ' *' : ''}
+                  </Label>
+                  {q.type === 'multipleChoice' ? (
+                    <select
+                      id={`act-q-${q.id}`}
+                      value={customResponses[q.id] ?? ''}
+                      onChange={(e) =>
+                        setCustomResponses({ ...customResponses, [q.id]: e.target.value })
+                      }
+                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">—</option>
+                      {(q.options ?? []).map((o) => (
+                        <option key={o} value={o}>
+                          {o}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      id={`act-q-${q.id}`}
+                      type={q.type === 'number' ? 'number' : 'text'}
+                      value={customResponses[q.id] ?? ''}
+                      onChange={(e) =>
+                        setCustomResponses({ ...customResponses, [q.id]: e.target.value })
+                      }
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               {tCommon('cancel')}
@@ -1489,7 +1582,7 @@ function LinkedActionsCard({
     sourceType: 'issue',
     sourceId: issueId,
   });
-  const rows = data ?? [];
+  const rows = data?.rows ?? [];
   return (
     <Card>
       <CardContent className="space-y-4 p-6 text-sm">

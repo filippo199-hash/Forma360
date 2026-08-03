@@ -96,6 +96,11 @@ export const QUEUE_NAMES = {
    * `fireSafety.manage` holder. Quiet when the calendar is clean.
    */
   FIRE_DUE_DIGEST: 'forma360-fire-due-digest',
+  /**
+   * Platform review PF-4 — daily reminder digest for corrective-action
+   * assignees: due-soon warned once, overdue re-pinged weekly.
+   */
+  ACTION_REMINDERS: 'forma360-action-reminders',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -214,6 +219,10 @@ export type PermitExpiryWatchPayload = z.infer<typeof permitExpiryWatchPayloadSc
 export const fireDueDigestPayloadSchema = z.object({}).strict();
 export type FireDueDigestPayload = z.infer<typeof fireDueDigestPayloadSchema>;
 
+/** Action reminders tick — no payload; the worker scans due dates. */
+export const actionRemindersPayloadSchema = z.object({}).strict();
+export type ActionRemindersPayload = z.infer<typeof actionRemindersPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -235,6 +244,7 @@ export interface QueuePayloads {
   [QUEUE_NAMES.RA_ACK_REMINDER]: RaAckReminderPayload;
   [QUEUE_NAMES.PERMIT_EXPIRY_WATCH]: PermitExpiryWatchPayload;
   [QUEUE_NAMES.FIRE_DUE_DIGEST]: FireDueDigestPayload;
+  [QUEUE_NAMES.ACTION_REMINDERS]: ActionRemindersPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -255,6 +265,7 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.RA_ACK_REMINDER]: raAckReminderPayloadSchema,
   [QUEUE_NAMES.PERMIT_EXPIRY_WATCH]: permitExpiryWatchPayloadSchema,
   [QUEUE_NAMES.FIRE_DUE_DIGEST]: fireDueDigestPayloadSchema,
+  [QUEUE_NAMES.ACTION_REMINDERS]: actionRemindersPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────
