@@ -18,6 +18,8 @@
 import { execSync } from 'node:child_process';
 import { signRenderToken } from './hmac';
 import {
+  loadFraSnapshot,
+  hashFraSnapshot,
   loadInspectionSnapshot,
   hashInspectionSnapshot,
   loadRiskAssessmentSnapshot,
@@ -154,6 +156,37 @@ export async function renderPermitPdf(
   const bytes = await renderPdfBytes(deps, {
     url: buildRenderUrl(deps, 'permit', snap.permit.id),
     stubTitle: snap.permit.title,
+  });
+
+  await uploadPdf(deps, { key, bytes });
+
+  return {
+    key,
+    bytes: bytes.length,
+    cached: false,
+    stub: isStub(bytes),
+  };
+}
+
+/**
+ * Render a fire risk assessment to PDF (FreeHS module B4, HSE review
+ * FS-5) — the primary fire-safety document, exportable at last. Same
+ * pipeline as permits, different print route.
+ */
+export async function renderFraPdf(
+  deps: RenderDeps,
+  input: { tenantId: string; fraId: string },
+): Promise<RenderResult> {
+  const snap = await loadFraSnapshot(deps.db, input);
+  if (snap === null) {
+    throw new Error(`Fire risk assessment not found: ${input.fraId}`);
+  }
+  const hash = hashFraSnapshot(snap);
+  const key = `${input.tenantId}/fire-safety/${input.fraId}/pdf-${hash}.pdf`;
+
+  const bytes = await renderPdfBytes(deps, {
+    url: buildRenderUrl(deps, 'fra', snap.fra.id),
+    stubTitle: snap.fra.title,
   });
 
   await uploadPdf(deps, { key, bytes });
@@ -331,7 +364,7 @@ function resolveSystemChromium(): string {
  */
 function buildRenderUrl(
   deps: RenderDeps,
-  kind: 'inspection' | 'risk-assessment' | 'permit',
+  kind: 'inspection' | 'risk-assessment' | 'permit' | 'fra',
   subjectId: string,
 ): string {
   const token = signRenderToken({

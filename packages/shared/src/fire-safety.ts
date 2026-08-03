@@ -1,5 +1,5 @@
 /**
- * Fire Safety domain helpers (FreeHS module B3).
+ * Fire Safety domain helpers (FreeHS module B4).
  *
  * Pure data + functions shared by the DB schema, the API router and the
  * web UI:
@@ -92,6 +92,29 @@ export function checkDueStatus(
   const windowMs = DUE_SOON_DAYS[frequency] * 24 * 60 * 60 * 1000;
   if (nextDueAt.getTime() - now.getTime() <= windowMs) return 'due_soon';
   return 'ok';
+}
+
+/**
+ * What the calendar shows (HSE review FS-1). The due-date maths above is
+ * pure clock; this layer adds the safety rule: a check whose newest
+ * recorded result is a FAIL stays in a distinct red "failed" state —
+ * regardless of the next due date — until a subsequent pass clears it.
+ * Advancing the schedule must never make a failed alarm test read green.
+ *
+ * 'defects_found' does not hold the state: the measure works, defects
+ * are being remedied through the raised action (FS-2). 'fail' means the
+ * safety measure itself does not work.
+ */
+export type CheckDisplayStatus = CheckDueStatus | 'failed';
+
+export function checkDisplayStatus(
+  nextDueAt: Date,
+  frequency: CheckFrequency,
+  lastResult: 'pass' | 'defects_found' | 'fail' | null,
+  now: Date,
+): CheckDisplayStatus {
+  if (lastResult === 'fail') return 'failed';
+  return checkDueStatus(nextDueAt, frequency, now);
 }
 
 // ─── Building classification ────────────────────────────────────────────────
@@ -283,6 +306,17 @@ export function doorDueStatus(
   return checkDueStatus(nextInspectionDueAt, frequency, now);
 }
 
+/** Door display status — same FS-1 rule as checks: a failed door stays red. */
+export function doorDisplayStatus(
+  nextInspectionDueAt: Date,
+  intervalMonths: number,
+  lastOutcome: 'pass' | 'defects_found' | 'fail' | null,
+  now: Date,
+): CheckDisplayStatus {
+  if (lastOutcome === 'fail') return 'failed';
+  return doorDueStatus(nextInspectionDueAt, intervalMonths, now);
+}
+
 /**
  * The five-point fire-door check. `null` = not looked at; the router
  * stores what was actually checked, never assumes.
@@ -418,3 +452,63 @@ export const buildingDocumentSchema = z.object({
   filename: z.string().min(1).max(300),
 });
 export type BuildingDocument = z.infer<typeof buildingDocumentSchema>;
+
+// ─── Bulk door import (HSE review FS-12) ────────────────────────────────────
+
+export interface DoorImportRow {
+  doorRef: string;
+  floor: string;
+  locationKind: FireDoorLocationKind;
+}
+
+export interface DoorImportParse {
+  rows: DoorImportRow[];
+  /** 1-based line numbers that could not be parsed, with the reason. */
+  errors: Array<{ line: number; reason: 'empty-ref' | 'bad-kind' }>;
+}
+
+const DOOR_KIND_ALIASES: Record<string, FireDoorLocationKind> = {
+  flat: 'flat_entrance',
+  flat_entrance: 'flat_entrance',
+  'flat entrance': 'flat_entrance',
+  common: 'common_parts',
+  common_parts: 'common_parts',
+  'common parts': 'common_parts',
+  other: 'other',
+};
+
+/**
+ * Parse a pasted door register: one door per line,
+ * `ref[, floor[, kind]]` (comma or tab separated). A 200-door block
+ * should be one paste, not 200 form submissions. Blank lines are
+ * skipped; a line whose kind column is unrecognisable is an error (not
+ * silently defaulted) so a mis-pasted register is caught, not mangled.
+ */
+export function parseDoorImport(text: string, defaultKind: FireDoorLocationKind): DoorImportParse {
+  const rows: DoorImportRow[] = [];
+  const errors: DoorImportParse['errors'] = [];
+  const lines = text.split(/\r?\n/);
+  lines.forEach((raw, i) => {
+    const line = raw.trim();
+    if (line.length === 0) return;
+    const parts = line.split(/[\t,]/).map((c) => c.trim());
+    const doorRef = parts[0] ?? '';
+    if (doorRef.length === 0) {
+      errors.push({ line: i + 1, reason: 'empty-ref' });
+      return;
+    }
+    const floor = parts[1] ?? '';
+    const kindRaw = (parts[2] ?? '').toLowerCase();
+    let locationKind = defaultKind;
+    if (kindRaw.length > 0) {
+      const mapped = DOOR_KIND_ALIASES[kindRaw];
+      if (mapped === undefined) {
+        errors.push({ line: i + 1, reason: 'bad-kind' });
+        return;
+      }
+      locationKind = mapped;
+    }
+    rows.push({ doorRef, floor, locationKind });
+  });
+  return { rows, errors };
+}

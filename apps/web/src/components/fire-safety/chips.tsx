@@ -13,13 +13,19 @@ import { cn } from '../../lib/cn';
 const CHIP_BASE =
   'inline-flex items-center rounded-md border px-1.5 py-0.5 text-xs font-medium whitespace-nowrap';
 
-/** ok / due_soon / overdue — the calendar's traffic light. */
-export function DueStatusChip({ status }: { status: 'ok' | 'due_soon' | 'overdue' }) {
+/**
+ * failed / ok / due_soon / overdue — the calendar's traffic light.
+ * 'failed' (HSE review FS-1) is the loudest state: the last recorded
+ * result was a FAIL and only a passing re-test clears it.
+ */
+export function DueStatusChip({ status }: { status: 'ok' | 'due_soon' | 'overdue' | 'failed' }) {
   const t = useTranslations('fireSafety.dueStatus');
   return (
     <span
       className={cn(
         CHIP_BASE,
+        status === 'failed' &&
+          'border-red-600 bg-red-600 text-white dark:border-red-500 dark:bg-red-600',
         status === 'overdue' &&
           'border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200',
         status === 'due_soon' &&

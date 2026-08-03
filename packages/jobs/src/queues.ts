@@ -89,6 +89,13 @@ export const QUEUE_NAMES = {
    * issuer / acceptor / authoriser.
    */
   PERMIT_EXPIRY_WATCH: 'forma360-permit-expiry-watch',
+  /**
+   * FreeHS B4 — daily digest of the fire-safety calendar (HSE review
+   * FS-3): failed / overdue / due-soon checks, door inspections, FRA
+   * reviews, PEEP reviews and marshal-training expiry, emailed to every
+   * `fireSafety.manage` holder. Quiet when the calendar is clean.
+   */
+  FIRE_DUE_DIGEST: 'forma360-fire-due-digest',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -203,6 +210,10 @@ export type RaAckReminderPayload = z.infer<typeof raAckReminderPayloadSchema>;
 export const permitExpiryWatchPayloadSchema = z.object({}).strict();
 export type PermitExpiryWatchPayload = z.infer<typeof permitExpiryWatchPayloadSchema>;
 
+/** Fire due-digest tick — no payload; the worker scans every calendar. */
+export const fireDueDigestPayloadSchema = z.object({}).strict();
+export type FireDueDigestPayload = z.infer<typeof fireDueDigestPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -223,6 +234,7 @@ export interface QueuePayloads {
   [QUEUE_NAMES.CONTRACTOR_OVERSTAY]: ContractorOverstayPayload;
   [QUEUE_NAMES.RA_ACK_REMINDER]: RaAckReminderPayload;
   [QUEUE_NAMES.PERMIT_EXPIRY_WATCH]: PermitExpiryWatchPayload;
+  [QUEUE_NAMES.FIRE_DUE_DIGEST]: FireDueDigestPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -242,6 +254,7 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.CONTRACTOR_OVERSTAY]: contractorOverstayPayloadSchema,
   [QUEUE_NAMES.RA_ACK_REMINDER]: raAckReminderPayloadSchema,
   [QUEUE_NAMES.PERMIT_EXPIRY_WATCH]: permitExpiryWatchPayloadSchema,
+  [QUEUE_NAMES.FIRE_DUE_DIGEST]: fireDueDigestPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

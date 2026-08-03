@@ -20,6 +20,9 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  checkDisplayStatus,
+  doorDisplayStatus,
+  parseDoorImport,
   addMonthsClamped,
   checkDueStatus,
   doorInspectionIntervalMonths,
@@ -233,5 +236,55 @@ describe('marshalTrainingStatus', () => {
       'in_date',
     );
     expect(marshalTrainingStatus({ trainedAt: now, trainingExpiresAt: past }, now)).toBe('expired');
+  });
+});
+
+describe('checkDisplayStatus / doorDisplayStatus (FS-E08 — HSE review FS-1)', () => {
+  const now = new Date(Date.UTC(2026, 7, 3));
+  const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  it('a failed check stays "failed" even though the clock says ok', () => {
+    expect(checkDisplayStatus(nextWeek, 'weekly', 'fail', now)).toBe('failed');
+  });
+
+  it('failed takes precedence over overdue — the strongest signal wins', () => {
+    expect(checkDisplayStatus(yesterday, 'weekly', 'fail', now)).toBe('failed');
+  });
+
+  it('a pass (or defects-found, or no entry yet) falls back to clock status', () => {
+    expect(checkDisplayStatus(nextWeek, 'weekly', 'pass', now)).toBe('ok');
+    expect(checkDisplayStatus(nextWeek, 'weekly', 'defects_found', now)).toBe('ok');
+    expect(checkDisplayStatus(nextWeek, 'weekly', null, now)).toBe('ok');
+    expect(checkDisplayStatus(yesterday, 'weekly', 'pass', now)).toBe('overdue');
+  });
+
+  it('doors follow the same rule', () => {
+    const in6mo = new Date(Date.UTC(2027, 1, 3));
+    expect(doorDisplayStatus(in6mo, 12, 'fail', now)).toBe('failed');
+    expect(doorDisplayStatus(in6mo, 12, 'pass', now)).toBe('ok');
+    expect(doorDisplayStatus(yesterday, 3, null, now)).toBe('overdue');
+  });
+});
+
+describe('parseDoorImport (FS-E09 — HSE review FS-12)', () => {
+  it('parses ref / floor / kind lines with aliases and blank-line tolerance', () => {
+    const text = 'FD-001, G, common\nFD-002\tFirst\tflat\n\nFD-003';
+    const out = parseDoorImport(text, 'flat_entrance');
+    expect(out.errors).toHaveLength(0);
+    expect(out.rows).toEqual([
+      { doorRef: 'FD-001', floor: 'G', locationKind: 'common_parts' },
+      { doorRef: 'FD-002', floor: 'First', locationKind: 'flat_entrance' },
+      { doorRef: 'FD-003', floor: '', locationKind: 'flat_entrance' },
+    ]);
+  });
+
+  it('flags unparseable lines instead of silently defaulting', () => {
+    const out = parseDoorImport(',G\nFD-9,2,cupboard', 'other');
+    expect(out.rows).toHaveLength(0);
+    expect(out.errors).toEqual([
+      { line: 1, reason: 'empty-ref' },
+      { line: 2, reason: 'bad-kind' },
+    ]);
   });
 });

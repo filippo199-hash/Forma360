@@ -44,6 +44,9 @@ export default function FireSafetyHubPage() {
   const { data: overview } = trpc.fireSafety.overview.useQuery();
 
   const attention: Array<{ key: string; count: number }> = [
+    { key: 'checksFailed', count: overview?.checksFailed ?? 0 },
+    { key: 'doorsFailed', count: overview?.doorsFailed ?? 0 },
+    { key: 'frasIntolerable', count: overview?.frasIntolerable ?? 0 },
     { key: 'checksOverdue', count: overview?.checksOverdue ?? 0 },
     { key: 'checksDueSoon', count: overview?.checksDueSoon ?? 0 },
     { key: 'doorsOverdue', count: overview?.doorsOverdue ?? 0 },
@@ -171,6 +174,12 @@ export default function FireSafetyHubPage() {
                       <DutyBadges duty={b.duty} />
                     </td>
                     <td className="px-3 py-2.5">
+                      {b.checksFailed > 0 ? (
+                        <span className="mr-1.5 inline-flex items-center gap-1">
+                          <DueStatusChip status="failed" />
+                          <span className="text-xs tabular-nums">{b.checksFailed}</span>
+                        </span>
+                      ) : null}
                       {b.checksOverdue > 0 ? (
                         <span className="mr-1.5 inline-flex items-center gap-1">
                           <DueStatusChip status="overdue" />
@@ -183,22 +192,36 @@ export default function FireSafetyHubPage() {
                           <span className="text-xs tabular-nums">{b.checksDueSoon}</span>
                         </span>
                       ) : null}
-                      {b.checksOverdue === 0 && b.checksDueSoon === 0 ? (
+                      {b.checksFailed === 0 && b.checksOverdue === 0 && b.checksDueSoon === 0 ? (
                         <DueStatusChip status="ok" />
                       ) : null}
                     </td>
                     <td className="px-3 py-2.5 text-xs">
-                      {b.doorCount > 0
-                        ? b.doorsOverdue > 0
-                          ? t('doorsOverdueCount', { count: b.doorsOverdue })
-                          : t('doorsOkCount', { count: b.doorCount })
-                        : '—'}
+                      {b.doorCount === 0 ? (
+                        '—'
+                      ) : b.doorsFailed > 0 ? (
+                        <span className="inline-flex items-center gap-1">
+                          <DueStatusChip status="failed" />
+                          <span className="tabular-nums">{b.doorsFailed}</span>
+                        </span>
+                      ) : b.doorsOverdue > 0 ? (
+                        t('doorsOverdueCount', { count: b.doorsOverdue })
+                      ) : (
+                        t('doorsOkCount', { count: b.doorCount })
+                      )}
                     </td>
                     <td className="px-3 py-2.5 text-xs">
+                      {b.activeFraRating === 'intolerable' ? (
+                        <span className="mr-1.5 font-semibold text-red-700 dark:text-red-300">
+                          {t('fraIntolerable')}
+                        </span>
+                      ) : null}
                       {b.hasActiveFra
                         ? b.fraReviewDue
                           ? t('fraReviewDue')
-                          : t('fraInPlace')
+                          : b.activeFraRating === 'intolerable'
+                            ? ''
+                            : t('fraInPlace')
                         : t('fraMissing')}
                     </td>
                   </tr>
@@ -219,14 +242,20 @@ export default function FireSafetyHubPage() {
                     </div>
                     <div className="text-xs text-muted-foreground">{b.address}</div>
                     <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                      {b.checksFailed > 0 ? (
+                        <span className="inline-flex items-center gap-1">
+                          <DueStatusChip status="failed" />
+                          {t('checksFailedCount', { count: b.checksFailed })}
+                        </span>
+                      ) : null}
                       {b.checksOverdue > 0 ? (
                         <span className="inline-flex items-center gap-1">
                           <DueStatusChip status="overdue" />
                           {t('checksOverdueCount', { count: b.checksOverdue })}
                         </span>
-                      ) : (
+                      ) : b.checksFailed === 0 ? (
                         <DueStatusChip status="ok" />
-                      )}
+                      ) : null}
                       <span>
                         {b.hasActiveFra
                           ? b.fraReviewDue

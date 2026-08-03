@@ -4847,7 +4847,10 @@
       "frasReviewDue": "FRA reviews due",
       "peepReviewsDue": "PEEP reviews due",
       "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring"
+      "marshalsExpiringSoon": "marshal training expiring",
+      "checksFailed": "项不合格检查待复测",
+      "doorsFailed": "扇防火门不合格",
+      "frasIntolerable": "份评估为不可容忍风险"
     },
     "columns": {
       "building": "Building",
@@ -4903,7 +4906,8 @@
     "dueStatus": {
       "ok": "正常",
       "due_soon": "即将到期",
-      "overdue": "已逾期"
+      "overdue": "已逾期",
+      "failed": "不合格 — 待复测"
     },
     "fraStatus": {
       "draft": "草稿",
@@ -5031,6 +5035,18 @@
         "lastInspected": "Last inspected",
         "nextDue": "Next due",
         "status": "Status"
+      },
+      "bulk": {
+        "button": "批量添加",
+        "heading": "批量添加防火门",
+        "intro": "每行一扇门：编号、楼层、类型（flat / common / other）。逗号或制表符分隔；楼层和类型可省略。",
+        "defaultKind": "默认类型",
+        "preview": "{count} 扇门待添加",
+        "errors": "{count} 行有误（第 {lines} 行）",
+        "submit": "添加 {count} 扇门",
+        "done": "已添加 {created} 扇门。",
+        "doneSkipped": "已添加 {created} 扇门，跳过 {skipped} 个重复项。",
+        "placeholder": "FD-1-01, 1\nFD-1-02, 1\nST-0-01, G, common"
       }
     },
     "drills": {
@@ -5098,7 +5114,12 @@
       "alreadyMarshal": "Already a marshal for this building.",
       "endButton": "End",
       "endConfirm": "End this marshal assignment?",
-      "empty": "No marshals assigned."
+      "empty": "No marshals assigned.",
+      "cover": {
+        "required": "此建筑需要消防管理员",
+        "target": "有效培训的最少人数",
+        "notRequiredNote": "不计入覆盖缺口。"
+      }
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5200,6 +5221,37 @@
         "material_change": "Material change",
         "legislation_change": "Legislation change",
         "manual": "Other"
+      },
+      "pdfButton": "下载 PDF",
+      "publishErrors": {
+        "noRiskRating": "请先设置总体风险评级。",
+        "noResponsiblePerson": "请先填写责任人。",
+        "noFindings": "请记录重大发现，或确认没有。",
+        "noPersonsAtRisk": "请记录处于风险中的人员。",
+        "noIgnitionSources": "请记录点火源。",
+        "noFuelSources": "请记录可燃物。",
+        "noOxygenSources": "请记录助燃源。",
+        "noEvaluation": "请记录评估内容。",
+        "intolerableNeedsAction": "不可容忍的评级要求至少有一项未解决且带整改措施的发现。"
+      },
+      "signOff": {
+        "title": "签署并发布评估",
+        "statement": "本人确认此火灾风险评估对该场所适当且充分，重大发现已记录，并将其签署为现行评估。",
+        "missingHeading": "签署前请完成：",
+        "intolerableWarning": "不可容忍风险：在风险降低之前不应继续使用该场所。发布将通知所有消防安全管理者。",
+        "noFindingsNote": "未记录重大发现 — 发布即确认没有重大发现。",
+        "actionsPreview": "已记录 {findings} 项发现 — 发布将创建 {actions} 项整改措施。",
+        "confirmButton": "签署并发布",
+        "reattestButton": "重新确认并发布"
+      },
+      "staleBanner": {
+        "title": "签署后已修改",
+        "body": "内容在 {name} 于 {date} 签署后发生了变化。签名仅涵盖旧版本 — 请重新确认以签署当前版本。",
+        "reattest": "重新确认"
+      },
+      "intolerableBanner": {
+        "title": "不可容忍风险 — 不应继续使用",
+        "body": "这份现行评估将该场所评为不可容忍。请完成整改措施并重新评估后再恢复正常使用。"
       }
     },
     "info": {
@@ -5222,7 +5274,9 @@
       "intro": "Ignition-source work (welding, grinding, torch work) runs under a permit to work with a fire watch.",
       "register": "打开许可证登记册",
       "startPermit": "发起动火许可"
-    }
+    },
+    "checksFailedCount": "{count} 项不合格",
+    "fraIntolerable": "不可容忍"
   },
   "entitySelect": {
     "search": "搜索…",

@@ -435,6 +435,13 @@
       "when": 1780000090000,
       "tag": "0061_permits_hse_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1780000100000,
+      "tag": "0062_fire_safety_hse_review",
+      "breakpoints": true
     }
   ]
 }

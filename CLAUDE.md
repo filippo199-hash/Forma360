@@ -508,7 +508,27 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   `docs/reviews/permits-hse-expert-review.md` +
   `docs/reviews/permits-hse-review-response.md` (ADR 0012 amendment);
   edge-case IDs PW-E01..E09 in `permits.test.ts` (shared), PW-E10..E35
-  (router), PW-J01..J03 in `permit-expiry-watch.test.ts`). Each router is
+  (router), PW-J01..J03 in `permit-expiry-watch.test.ts`) and
+  `fireSafety` (module B4 — Fire Safety at
+  `packages/api/src/routers/fireSafety.ts` +
+  `apps/web/app/[locale]/fire-safety` (register, building record with
+  logbook/doors/drills/PEEPs/marshals/info tabs, tenant logbook, FRA
+  editor); domain helpers in `packages/shared/src/fire-safety.ts` —
+  BS-standard check catalogue, FSR 2022 regime classification
+  (11 m / 18 m / 7 storeys), FS-1 failed-state display status, bulk-door
+  paste parser; schema `packages/db/src/schema/fire-safety.ts`,
+  migrations 0060 + 0062; HSE review + hardening in
+  `docs/reviews/fire-safety-hse-expert-review.md`: failed checks hold a
+  red `failed` state until a pass clears them, follow-up actions
+  default-on, FRA publish gates on persons-at-risk / fire-triangle /
+  evaluation content, intolerable rating requires an actionable finding
+  and alerts `fireSafety.manage` holders (`usersHoldingPermission` at
+  `@forma360/permissions/holders`), sign-off staleness + re-attestation,
+  FRA PDF via `renderFraPdf` (`/render/fra/[id]` +
+  `/api/exports/fra-pdf`), `forma360-fire-due-digest` daily calendar
+  digest, per-building marshal-cover flag + target; edge-case IDs
+  FS-E01..E09 in `fire-safety.test.ts` (shared), FS-E10..E33 (router),
+  FS-J01/J02 in `fire-due-digest.test.ts`). Each router is
   built with `{ enabled }` from the brand catalogue; nav + API both gate on
   it.
 - **Everything internal stays `forma360`** (package scope, queue names,

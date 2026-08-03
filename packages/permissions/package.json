@@ -39,6 +39,10 @@
     "./contractor-activities": {
       "types": "./src/contractor-activities.ts",
       "default": "./src/contractor-activities.ts"
+    },
+    "./holders": {
+      "types": "./src/holders.ts",
+      "default": "./src/holders.ts"
     }
   },
   "scripts": {

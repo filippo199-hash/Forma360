@@ -50,6 +50,12 @@ import {
   type ExpiredOpenPermit,
   type PermitWatchKind,
 } from './workers/permit-expiry-watch';
+import {
+  createFireDueDigestHandler,
+  digestDetailLines,
+  FIRE_DUE_DIGEST_CRON,
+  type FireDigest,
+} from './workers/fire-due-digest';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -362,6 +368,47 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     '[worker] registered permit-expiry-watch repeatable',
   );
 
+  // ─── FreeHS B4 — fire-safety due digest (HSE review FS-3) ─────────────
+  const fireDueDigestWorker = new Worker(
+    QUEUE_NAMES.FIRE_DUE_DIGEST,
+    createFireDueDigestHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'fire-due-digest' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string },
+        digest: FireDigest,
+        viewUrl: string,
+      ) => {
+        const failed = digest.failedChecks.length + digest.failedDoors.length;
+        const overdue = digest.overdueChecks.length + digest.overdueDoors.length;
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey: 'fire-due-digest',
+          variables: {
+            recipientName: recipient.name,
+            failedCount: String(failed),
+            overdueCount: String(overdue),
+            dueSoonCount: String(digest.dueSoonChecks.length),
+            fraCount: String(digest.fraReviewsDue.length),
+            peepCount: String(digest.peepReviewsDue),
+            marshalCount: String(digest.marshalsExpiring),
+            detailLines: digestDetailLines(digest),
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const fireDueDigestQueue = getQueue(QUEUE_NAMES.FIRE_DUE_DIGEST, connection);
+  await fireDueDigestQueue.upsertJobScheduler(
+    'fire-due-digest',
+    { pattern: FIRE_DUE_DIGEST_CRON, tz: 'UTC' },
+    { name: 'fire-due-digest', data: {} },
+  );
+  logger.info({ cron: FIRE_DUE_DIGEST_CRON }, '[worker] registered fire-due-digest repeatable');
+
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
   await scheduleTickQueue.upsertJobScheduler(
@@ -404,6 +451,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     observationNotifyWorker,
     raAckReminderWorker,
     permitExpiryWatchWorker,
+    fireDueDigestWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {

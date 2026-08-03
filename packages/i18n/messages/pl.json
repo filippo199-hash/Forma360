@@ -4847,7 +4847,10 @@
       "frasReviewDue": "FRA reviews due",
       "peepReviewsDue": "PEEP reviews due",
       "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring"
+      "marshalsExpiringSoon": "marshal training expiring",
+      "checksFailed": "kontrole negatywne do powtórzenia",
+      "doorsFailed": "drzwi przeciwpożarowe z wynikiem negatywnym",
+      "frasIntolerable": "oceny z ryzykiem niedopuszczalnym"
     },
     "columns": {
       "building": "Building",
@@ -4903,7 +4906,8 @@
     "dueStatus": {
       "ok": "OK",
       "due_soon": "Wkrótce termin",
-      "overdue": "Po terminie"
+      "overdue": "Po terminie",
+      "failed": "Negatywny — oczekuje na ponowny test"
     },
     "fraStatus": {
       "draft": "Szkic",
@@ -5031,6 +5035,18 @@
         "lastInspected": "Last inspected",
         "nextDue": "Next due",
         "status": "Status"
+      },
+      "bulk": {
+        "button": "Dodaj zbiorczo",
+        "heading": "Zbiorcze dodawanie drzwi",
+        "intro": "Jedne drzwi na wiersz: oznaczenie, kondygnacja, typ (flat / common / other). Rozdzielone przecinkiem lub tabulatorem; kondygnacja i typ opcjonalne.",
+        "defaultKind": "Domyślny typ",
+        "preview": "{count} drzwi gotowych",
+        "errors": "{count} wierszy do poprawy (wiersz {lines})",
+        "submit": "Dodaj {count} drzwi",
+        "done": "Dodano {created} drzwi.",
+        "doneSkipped": "Dodano {created} drzwi, pominięto {skipped} duplikatów.",
+        "placeholder": "FD-1-01, 1\nFD-1-02, 1\nST-0-01, G, common"
       }
     },
     "drills": {
@@ -5098,7 +5114,12 @@
       "alreadyMarshal": "Already a marshal for this building.",
       "endButton": "End",
       "endConfirm": "End this marshal assignment?",
-      "empty": "No marshals assigned."
+      "empty": "No marshals assigned.",
+      "cover": {
+        "required": "Ten budynek wymaga osób wyznaczonych ppoż.",
+        "target": "Minimalna liczba z ważnym szkoleniem",
+        "notRequiredNote": "Nie liczy się do braków obsady."
+      }
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5200,6 +5221,37 @@
         "material_change": "Material change",
         "legislation_change": "Legislation change",
         "manual": "Other"
+      },
+      "pdfButton": "Pobierz PDF",
+      "publishErrors": {
+        "noRiskRating": "Najpierw ustaw ogólną ocenę ryzyka.",
+        "noResponsiblePerson": "Najpierw wskaż osobę odpowiedzialną.",
+        "noFindings": "Zapisz istotne ustalenia lub potwierdź ich brak.",
+        "noPersonsAtRisk": "Zapisz, kto jest zagrożony.",
+        "noIgnitionSources": "Zapisz źródła zapłonu.",
+        "noFuelSources": "Zapisz źródła paliwa.",
+        "noOxygenSources": "Zapisz źródła tlenu.",
+        "noEvaluation": "Zapisz ocenę.",
+        "intolerableNeedsAction": "Ryzyko niedopuszczalne wymaga co najmniej jednego otwartego ustalenia z działaniem."
+      },
+      "signOff": {
+        "title": "Podpisz i opublikuj ocenę",
+        "statement": "Potwierdzam, że ta ocena ryzyka pożarowego jest odpowiednia i wystarczająca dla tego obiektu, że istotne ustalenia zostały zapisane, i podpisuję ją jako obowiązującą.",
+        "missingHeading": "Przed podpisaniem uzupełnij:",
+        "intolerableWarning": "Ryzyko NIEDOPUSZCZALNE: użytkowanie obiektu nie powinno być kontynuowane do czasu obniżenia ryzyka. Publikacja powiadamia wszystkich zarządzających ochroną ppoż.",
+        "noFindingsNote": "Brak zapisanych istotnych ustaleń — publikacja potwierdza ich brak.",
+        "actionsPreview": "Zapisano {findings} ustaleń — publikacja utworzy {actions} działań.",
+        "confirmButton": "Podpisz i opublikuj",
+        "reattestButton": "Potwierdź ponownie i opublikuj"
+      },
+      "staleBanner": {
+        "title": "Zmieniona po podpisaniu",
+        "body": "Treść zmieniła się po podpisie {name} z dnia {date}. Podpis obejmuje wcześniejszą wersję — potwierdź ponownie, aby podpisać obecną.",
+        "reattest": "Potwierdź ponownie"
+      },
+      "intolerableBanner": {
+        "title": "Ryzyko niedopuszczalne — użytkowanie nie powinno być kontynuowane",
+        "body": "Obowiązująca ocena klasyfikuje obiekt jako niedopuszczalny. Zakończ działania naprawcze i oceń ponownie przed wznowieniem normalnego użytkowania."
       }
     },
     "info": {
@@ -5222,7 +5274,9 @@
       "intro": "Ignition-source work (welding, grinding, torch work) runs under a permit to work with a fire watch.",
       "register": "Otwórz rejestr zezwoleń",
       "startPermit": "Rozpocznij zezwolenie na prace gorące"
-    }
+    },
+    "checksFailedCount": "{count} negatywnych",
+    "fraIntolerable": "NIEDOPUSZCZALNE"
   },
   "entitySelect": {
     "search": "Szukaj…",

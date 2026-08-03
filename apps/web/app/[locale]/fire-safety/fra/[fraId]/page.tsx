@@ -27,6 +27,14 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { FraStatusChip, RiskRatingChip } from '../../../../../src/components/fire-safety/chips';
 import { Button } from '../../../../../src/components/ui/button';
+import { Checkbox } from '../../../../../src/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../../src/components/ui/dialog';
 import { Card, CardContent } from '../../../../../src/components/ui/card';
 import { Input } from '../../../../../src/components/ui/input';
 import { Label } from '../../../../../src/components/ui/label';
@@ -44,6 +52,12 @@ const PUBLISH_ERROR_KEYS: Record<string, string> = {
   'no-risk-rating': 'publishErrors.noRiskRating',
   'no-responsible-person': 'publishErrors.noResponsiblePerson',
   'no-findings': 'publishErrors.noFindings',
+  'no-persons-at-risk': 'publishErrors.noPersonsAtRisk',
+  'no-ignition-sources': 'publishErrors.noIgnitionSources',
+  'no-fuel-sources': 'publishErrors.noFuelSources',
+  'no-oxygen-sources': 'publishErrors.noOxygenSources',
+  'no-evaluation': 'publishErrors.noEvaluation',
+  'intolerable-needs-action': 'publishErrors.intolerableNeedsAction',
 };
 
 export default function FraEditorPage() {
@@ -80,8 +94,15 @@ export default function FraEditorPage() {
     },
     onError: () => toast.error(tShared('saveError')),
   });
+  // FS-9: publish is a signed act — it always goes through the sign-off
+  // dialog so the RP sees the words they are attesting and the actions
+  // the publish will raise.
+  const [signOffOpen, setSignOffOpen] = useState(false);
+  const [signOffChecked, setSignOffChecked] = useState(false);
   const publishFra = trpc.fireSafety.fras.publish.useMutation({
     onSuccess: (result) => {
+      setSignOffOpen(false);
+      setSignOffChecked(false);
       toast.success(
         result.actionsCreated > 0
           ? t('publishedWithActionsToast', { count: result.actionsCreated })
@@ -90,6 +111,8 @@ export default function FraEditorPage() {
       invalidate();
     },
     onError: (err) => {
+      setSignOffOpen(false);
+      setSignOffChecked(false);
       const key = PUBLISH_ERROR_KEYS[err.message];
       toast.error(key !== undefined ? t(key as never) : tShared('saveError'));
     },
@@ -270,19 +293,15 @@ export default function FraEditorPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canManage && !archived && fra.status === 'draft' ? (
-            <Button onClick={() => publishFra.mutate({ fraId })} disabled={publishFra.isPending}>
+            <Button onClick={() => setSignOffOpen(true)} disabled={publishFra.isPending}>
               {t('publishButton')}
             </Button>
           ) : null}
-          {canManage && !archived && fra.status === 'draft' && fra.findings.length === 0 ? (
-            <Button
-              variant="outline"
-              onClick={() => publishFra.mutate({ fraId, confirmNoSignificantFindings: true })}
-              disabled={publishFra.isPending}
-            >
-              {t('publishNoFindingsButton')}
-            </Button>
-          ) : null}
+          <Button asChild variant="outline" size="sm">
+            <a href={`/api/exports/fra-pdf?fraId=${fraId}`} target="_blank" rel="noreferrer">
+              {t('pdfButton')}
+            </a>
+          </Button>
           {canManage && !archived && fra.status === 'active' ? (
             <Button variant="outline" onClick={() => moveToDraft.mutate({ fraId })}>
               {t('moveToDraftButton')}
@@ -308,6 +327,35 @@ export default function FraEditorPage() {
             last: formatDate(fra.lastReviewedAt ?? fra.publishedAt, locale),
           })}
         </p>
+      ) : null}
+
+      {/* FS-6: an intolerable live assessment is loud, everywhere. */}
+      {fra.status === 'active' && fra.riskRating === 'intolerable' ? (
+        <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+          <p className="font-semibold">{t('intolerableBanner.title')}</p>
+          <p className="mt-0.5">{t('intolerableBanner.body')}</p>
+        </div>
+      ) : null}
+
+      {/* FS-7: the signature covers the content it signed — edits since
+          publish put the attestation in question until re-signed. */}
+      {fra.attestationStale ? (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          <div>
+            <p className="font-semibold">{t('staleBanner.title')}</p>
+            <p className="mt-0.5">
+              {t('staleBanner.body', {
+                name: fra.publishedByName ?? '—',
+                date: formatDate(fra.publishedAt, locale),
+              })}
+            </p>
+          </div>
+          {canManage ? (
+            <Button size="sm" onClick={() => setSignOffOpen(true)}>
+              {t('staleBanner.reattest')}
+            </Button>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="space-y-5">
@@ -708,6 +756,108 @@ export default function FraEditorPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* FS-9: the sign-off dialog — the words being attested, what is
+          still missing, and the actions the publish will raise. */}
+      <Dialog
+        open={signOffOpen}
+        onOpenChange={(open) => {
+          setSignOffOpen(open);
+          if (!open) setSignOffChecked(false);
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t('signOff.title')}</DialogTitle>
+          </DialogHeader>
+          {(() => {
+            const missing: string[] = [];
+            if (fra.riskRating === null) missing.push(t('publishErrors.noRiskRating'));
+            if (fra.responsiblePersonName.trim().length === 0)
+              missing.push(t('publishErrors.noResponsiblePerson'));
+            if (fra.personsAtRisk.length === 0) missing.push(t('publishErrors.noPersonsAtRisk'));
+            if (fra.ignitionSources.trim().length === 0)
+              missing.push(t('publishErrors.noIgnitionSources'));
+            if (fra.fuelSources.trim().length === 0) missing.push(t('publishErrors.noFuelSources'));
+            if (fra.oxygenSources.trim().length === 0)
+              missing.push(t('publishErrors.noOxygenSources'));
+            if (fra.evaluationNotes.trim().length === 0)
+              missing.push(t('publishErrors.noEvaluation'));
+            const pendingActions = fra.findings.filter(
+              (f) => f.requiresAction && f.actionId === null && f.resolvedAt === null,
+            ).length;
+            const intolerableBlocked =
+              fra.riskRating === 'intolerable' &&
+              !fra.findings.some(
+                (f) => f.resolvedAt === null && (f.requiresAction || f.actionId !== null),
+              );
+            return (
+              <div className="space-y-3 text-sm">
+                {fra.riskRating === 'intolerable' ? (
+                  <p className="rounded-md border border-red-300 bg-red-50 p-2 font-medium text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+                    {t('signOff.intolerableWarning')}
+                  </p>
+                ) : null}
+                {missing.length > 0 ? (
+                  <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                    <p className="font-medium">{t('signOff.missingHeading')}</p>
+                    <ul className="mt-1 list-inside list-disc">
+                      {missing.map((m) => (
+                        <li key={m}>{m}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {intolerableBlocked ? (
+                  <p className="text-red-700 dark:text-red-300">
+                    {t('publishErrors.intolerableNeedsAction')}
+                  </p>
+                ) : null}
+                <p>
+                  {fra.findings.length === 0
+                    ? t('signOff.noFindingsNote')
+                    : t('signOff.actionsPreview', {
+                        findings: fra.findings.length,
+                        actions: pendingActions,
+                      })}
+                </p>
+                <label className="flex items-start gap-2 rounded-md border p-3">
+                  <Checkbox
+                    checked={signOffChecked}
+                    onCheckedChange={(v) => setSignOffChecked(v === true)}
+                  />
+                  <span>{t('signOff.statement')}</span>
+                </label>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setSignOffOpen(false)}>
+                    {tShared('cancel')}
+                  </Button>
+                  <Button
+                    disabled={
+                      !signOffChecked ||
+                      missing.length > 0 ||
+                      intolerableBlocked ||
+                      publishFra.isPending
+                    }
+                    onClick={() =>
+                      publishFra.mutate({
+                        fraId,
+                        ...(fra.findings.length === 0
+                          ? { confirmNoSignificantFindings: true }
+                          : {}),
+                      })
+                    }
+                  >
+                    {fra.status === 'active'
+                      ? t('signOff.reattestButton')
+                      : t('signOff.confirmButton')}
+                  </Button>
+                </DialogFooter>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
