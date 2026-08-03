@@ -13,7 +13,6 @@ import * as schema from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
-import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { runRetentionSweep } from './retention-sweep';
 

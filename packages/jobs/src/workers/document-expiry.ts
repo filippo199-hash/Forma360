@@ -69,12 +69,13 @@ export async function findDocumentsNeedingReminder(
   const out: ExpiringDocument[] = [];
   for (const row of rows) {
     if (row.expiresAt === null) continue;
+    const expiresAt = row.expiresAt;
     const days = Array.isArray(row.reminderDays)
       ? row.reminderDays.filter((d): d is number => typeof d === 'number' && d > 0)
       : [];
     const thresholds = [
-      ...days.map((d) => new Date(row.expiresAt!.getTime() - d * DAY_MS)),
-      row.expiresAt,
+      ...days.map((d) => new Date(expiresAt.getTime() - d * DAY_MS)),
+      expiresAt,
     ].sort((a, b) => a.getTime() - b.getTime());
     const crossed = thresholds.filter((t) => t.getTime() <= now.getTime());
     if (crossed.length === 0) continue;
