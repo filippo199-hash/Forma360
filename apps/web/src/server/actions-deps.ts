@@ -4,20 +4,21 @@
  * `users-deps.ts`: imported once so the singleton router gets its
  * dispatcher.
  */
-import { setActionsRouterDeps } from '@forma360/api';
+import { setActionsRouterDeps, setApprovalsRouterDeps } from '@forma360/api';
 import { getBrand } from '@forma360/shared/brand';
 import { createSendTemplatedEmail } from '@forma360/shared/email';
 import { env } from './env';
 import { logger } from './logger';
 
-setActionsRouterDeps({
-  sendEmail: createSendTemplatedEmail({
-    delivery: env.EMAIL_DELIVERY,
-    productName: getBrand(env.BRAND).name,
-    ...(env.EMAIL_DELIVERY === 'resend'
-      ? { resendApiKey: env.RESEND_API_KEY, resendFrom: env.RESEND_FROM }
-      : {}),
-    logger: logger.child({ component: 'email-actions' }),
-  }),
-  appUrl: env.APP_URL,
+const sendTemplatedEmail = createSendTemplatedEmail({
+  delivery: env.EMAIL_DELIVERY,
+  productName: getBrand(env.BRAND).name,
+  ...(env.EMAIL_DELIVERY === 'resend'
+    ? { resendApiKey: env.RESEND_API_KEY, resendFrom: env.RESEND_FROM }
+    : {}),
+  logger: logger.child({ component: 'email-actions' }),
 });
+
+setApprovalsRouterDeps({ sendEmail: sendTemplatedEmail, appUrl: env.APP_URL });
+
+setActionsRouterDeps({ sendEmail: sendTemplatedEmail, appUrl: env.APP_URL });

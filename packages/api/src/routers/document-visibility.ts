@@ -10,8 +10,14 @@
  *
  * Callers with `documents.manage` bypass all of this and see everything.
  */
-import { documentFolders, groupMembers, siteGroups, siteMembers } from '@forma360/db/schema';
-import { and, eq, inArray } from 'drizzle-orm';
+import {
+  documentAccess,
+  documentFolders,
+  groupMembers,
+  siteGroups,
+  siteMembers,
+} from '@forma360/db/schema';
+import { and, eq, inArray, or } from 'drizzle-orm';
 
 export interface ViewerMemberships {
   groupIds: Set<string>;
@@ -48,6 +54,68 @@ export async function loadViewerMemberships(
   }
 
   return { groupIds, siteIds };
+}
+
+/**
+ * Explicit ACL grants for this viewer (platform review PF-26: the
+ * document_access table was written by grant/revoke and consulted by no
+ * read path). A grant on a document — or on a folder, covering its whole
+ * subtree — ADDS visibility on top of the group/site rules.
+ */
+export interface ViewerAccessGrants {
+  docIds: Set<string>;
+  folderIds: Set<string>;
+}
+
+export async function loadViewerAccessGrants(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any,
+  tenantId: string,
+  userId: string,
+  viewerGroupIds: Set<string>,
+): Promise<ViewerAccessGrants> {
+  const subjectClauses = [
+    and(eq(documentAccess.subjectType, 'user'), eq(documentAccess.subjectId, userId)),
+  ];
+  if (viewerGroupIds.size > 0) {
+    subjectClauses.push(
+      and(
+        eq(documentAccess.subjectType, 'group'),
+        inArray(documentAccess.subjectId, [...viewerGroupIds]),
+      ),
+    );
+  }
+  const rows = await db
+    .select({ documentId: documentAccess.documentId, folderId: documentAccess.folderId })
+    .from(documentAccess)
+    .where(and(eq(documentAccess.tenantId, tenantId), or(...subjectClauses)));
+  const docIds = new Set<string>();
+  const folderIds = new Set<string>();
+  for (const r of rows as Array<{ documentId: string | null; folderId: string | null }>) {
+    if (r.documentId !== null) docIds.add(r.documentId);
+    if (r.folderId !== null) folderIds.add(r.folderId);
+  }
+  return { docIds, folderIds };
+}
+
+/** True when the folder or any ancestor carries a grant for the viewer. */
+export function makeFolderGrantChecker(
+  folders: Array<{ id: string; parentId: string | null }>,
+  grants: ViewerAccessGrants,
+): (folderId: string | null) => boolean {
+  const byId = new Map(folders.map((f) => [f.id, f]));
+  const memo = new Map<string, boolean>();
+  function granted(folderId: string | null): boolean {
+    if (folderId === null) return false;
+    const cached = memo.get(folderId);
+    if (cached !== undefined) return cached;
+    memo.set(folderId, false); // cycle guard
+    const result =
+      grants.folderIds.has(folderId) || granted(byId.get(folderId)?.parentId ?? null);
+    memo.set(folderId, result);
+    return result;
+  }
+  return granted;
 }
 
 function asStringArray(v: unknown): string[] {
@@ -119,7 +187,12 @@ export async function isDocumentVisibleToUser(
   db: any,
   tenantId: string,
   userId: string,
-  doc: { folderId: string | null; visibleToGroupIds: unknown; visibleToSiteIds: unknown },
+  doc: {
+    id?: string;
+    folderId: string | null;
+    visibleToGroupIds: unknown;
+    visibleToSiteIds: unknown;
+  },
 ): Promise<boolean> {
   const [viewer, allFolders] = await Promise.all([
     loadViewerMemberships(db, tenantId, userId),
@@ -133,6 +206,12 @@ export async function isDocumentVisibleToUser(
       .from(documentFolders)
       .where(eq(documentFolders.tenantId, tenantId)),
   ]);
+  // PF-26: an explicit ACL grant (document- or folder-scoped) admits the
+  // viewer even when the group/site visibility rules would not.
+  const grants = await loadViewerAccessGrants(db, tenantId, userId, viewer.groupIds);
+  if (doc.id !== undefined && grants.docIds.has(doc.id)) return true;
+  const folderGranted = makeFolderGrantChecker(allFolders as FolderVis[], grants);
+  if (folderGranted(doc.folderId)) return true;
   const folderVisible = makeFolderVisibilityChecker(allFolders as FolderVis[], viewer);
   return (
     ownVisibilityPasses(doc.visibleToGroupIds, doc.visibleToSiteIds, viewer) &&

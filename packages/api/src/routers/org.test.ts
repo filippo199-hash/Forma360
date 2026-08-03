@@ -75,6 +75,8 @@ const MIGRATION_FILES = [
   '0051_site_fk_integrity.sql',
   '0052_reference_counters.sql',
   '0063_action_reminders.sql',
+  '0064_document_expiry_reminders.sql',
+  '0065_backfill_freehs_permission_keys.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {

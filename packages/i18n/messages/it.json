@@ -293,7 +293,11 @@
         "integrations": "Integrations",
         "billing": "Billing",
         "contractors": "Contractors",
-        "org": "Organisation"
+        "org": "Organisation",
+        "riskAssessments": "Valutazioni dei rischi",
+        "coshh": "COSHH",
+        "permits": "Permessi di lavoro",
+        "fireSafety": "Sicurezza antincendio"
       },
       "perms": {
         "users_view": "View users",
@@ -356,7 +360,21 @@
         "contractors_verifyDocs": "Verify contractor documents",
         "contractors_gate": "Gate check-in",
         "org_settings": "Manage organisation settings",
-        "org_audit_view": "View audit log"
+        "org_audit_view": "View audit log",
+        "riskAssessments_view": "Vedere le valutazioni dei rischi",
+        "riskAssessments_create": "Creare e modificare valutazioni",
+        "riskAssessments_manage": "Pubblicare, distribuire e gestire valutazioni",
+        "coshh_view": "Vedere il registro COSHH",
+        "coshh_create": "Aggiungere sostanze e valutazioni",
+        "coshh_manage": "Pubblicare e gestire valutazioni COSHH",
+        "permits_view": "Vedere i permessi",
+        "permits_create": "Richiedere e registrare sui permessi",
+        "permits_issue": "Emettere, sospendere e chiudere permessi",
+        "permits_manage": "Gestire i tipi di permesso",
+        "fireSafety_view": "Vedere la sicurezza antincendio",
+        "fireSafety_record": "Registrare controlli e ispezioni",
+        "fireSafety_create": "Creare edifici, porte e valutazioni",
+        "fireSafety_manage": "Pubblicare valutazioni e gestire il modulo"
       }
     },
     "groups": {
@@ -1036,7 +1054,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "In attesa di firme"
     },
     "table": {
       "title": "Title",
@@ -1055,7 +1074,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "In attesa di firme"
     },
     "picker": {
       "title": "Pick a template",
@@ -1174,10 +1194,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "Nota obbligatoria"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "Spiega questa risposta (obbligatorio)"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1397,7 +1419,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "Inviata da",
+    "site": "Sito"
   },
   "schedules": {
     "title": "Schedules",

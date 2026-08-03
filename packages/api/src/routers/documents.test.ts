@@ -74,6 +74,8 @@ const MIGRATION_FILES = [
   '0051_site_fk_integrity.sql',
   '0052_reference_counters.sql',
   '0063_action_reminders.sql',
+  '0064_document_expiry_reminders.sql',
+  '0065_backfill_freehs_permission_keys.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -315,6 +317,49 @@ describe('Documents router (Phase 5C)', () => {
     await caller.documents.access.revoke({ accessId });
     const afterRevoke = await caller.documents.access.list({ documentId });
     expect(afterRevoke.some((a) => a.id === accessId)).toBe(false);
+  });
+
+  it('PF-26: an ACL grant admits a viewer the group/site rules exclude — and revoke removes it', async () => {
+    const admin = createCaller(ctxFor(adminUserId));
+    // A group-restricted document the standard viewer is NOT a member of.
+    const groupId = newId();
+    await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'HR only' });
+    const { documentId } = await admin.documents.create({
+      name: 'Restricted policy',
+      storageKey: `${tenantId}/documents/restricted`,
+      filename: 'policy.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 512,
+    });
+    // Visibility lives on update (create takes the file facts only).
+    await admin.documents.update({ documentId, visibleToGroupIds: [groupId] });
+    const viewerId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: viewerId,
+      name: 'Vera Viewer',
+      email: `vera-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: seededSets.standard,
+    });
+    const viewer = createCaller(ctxFor(viewerId));
+
+    // Excluded by visibility rules.
+    await expect(viewer.documents.get({ documentId })).rejects.toThrow(/FORBIDDEN|not-visible/i);
+    expect((await viewer.documents.list({})).find((d) => d.id === documentId)).toBeUndefined();
+
+    // The write-only table now reads: a user grant admits her.
+    const { accessId } = await admin.documents.access.grant({
+      documentId,
+      subjectType: 'user',
+      subjectId: viewerId,
+      permission: 'view',
+    });
+    expect((await viewer.documents.get({ documentId })).document.id).toBe(documentId);
+    expect((await viewer.documents.list({})).find((d) => d.id === documentId)).toBeDefined();
+
+    // Revoke closes the door again.
+    await admin.documents.access.revoke({ accessId });
+    await expect(viewer.documents.get({ documentId })).rejects.toThrow(/FORBIDDEN|not-visible/i);
   });
 
   it('archives and restores a document', async () => {

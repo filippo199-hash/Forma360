@@ -61,6 +61,7 @@ type StatusFilterValue =
   | 'all'
   | 'in_progress'
   | 'awaiting_signatures'
+  | 'awaiting_signature_workflow'
   | 'awaiting_approval'
   | 'completed'
   | 'rejected';
@@ -69,6 +70,7 @@ const INSPECTION_STATUSES: ReadonlyArray<StatusFilterValue> = [
   'all',
   'in_progress',
   'awaiting_signatures',
+  'awaiting_signature_workflow',
   'awaiting_approval',
   'completed',
   'rejected',
@@ -327,6 +329,10 @@ function InspectionsTab({ locale }: { locale: string }) {
         return tFilter('inProgress');
       case 'awaiting_signatures':
         return tFilter('awaitingSignatures');
+      case 'awaiting_signature_workflow':
+        // PF-25: the workflow status used to render as raw text — three
+        // surfaces coerced it to "In progress" rather than admit it.
+        return tFilter('awaiting_signature_workflow');
       case 'awaiting_approval':
         return tFilter('awaitingApproval');
       case 'completed':
@@ -443,11 +449,13 @@ function InspectionsTab({ locale }: { locale: string }) {
                           ? 'inProgress'
                           : s === 'awaiting_signatures'
                             ? 'awaitingSignatures'
-                            : s === 'awaiting_approval'
-                              ? 'awaitingApproval'
-                              : s === 'completed'
-                                ? 'completed'
-                                : 'rejected',
+                            : s === 'awaiting_signature_workflow'
+                              ? 'awaiting_signature_workflow'
+                              : s === 'awaiting_approval'
+                                ? 'awaitingApproval'
+                                : s === 'completed'
+                                  ? 'completed'
+                                  : 'rejected',
                       )}
                 </option>
               ))}

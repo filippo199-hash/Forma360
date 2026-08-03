@@ -41,6 +41,8 @@ import {
   loadViewerMemberships,
   makeFolderVisibilityChecker,
   ownVisibilityPasses,
+  loadViewerAccessGrants,
+  makeFolderGrantChecker,
 } from './document-visibility';
 
 type Db = Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'];
@@ -54,7 +56,12 @@ type Db = Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'
  */
 async function assertDocumentVisibleOrThrow(
   ctx: { db: Db; tenantId: string; auth: { userId: string }; permissions: readonly string[] },
-  doc: { folderId: string | null; visibleToGroupIds: unknown; visibleToSiteIds: unknown },
+  doc: {
+    id?: string;
+    folderId: string | null;
+    visibleToGroupIds: unknown;
+    visibleToSiteIds: unknown;
+  },
 ): Promise<void> {
   if (ctx.permissions.includes('documents.manage')) return;
   const visible = await isDocumentVisibleToUser(ctx.db, ctx.tenantId, ctx.auth.userId, doc);
@@ -245,11 +252,21 @@ export const documentsRouter = router({
           .where(eq(documentFolders.tenantId, ctx.tenantId)),
       ]);
       const folderVisible = makeFolderVisibilityChecker(allFolders, viewer);
+      // PF-26: explicit ACL grants add visibility on top of group/site rules.
+      const grants = await loadViewerAccessGrants(
+        ctx.db,
+        ctx.tenantId,
+        ctx.auth.userId,
+        viewer.groupIds,
+      );
+      const folderGranted = makeFolderGrantChecker(allFolders, grants);
 
       return rows.filter(
         (r) =>
-          ownVisibilityPasses(r.visibleToGroupIds, r.visibleToSiteIds, viewer) &&
-          folderVisible(r.folderId),
+          grants.docIds.has(r.id) ||
+          folderGranted(r.folderId) ||
+          (ownVisibilityPasses(r.visibleToGroupIds, r.visibleToSiteIds, viewer) &&
+            folderVisible(r.folderId)),
       );
     }),
 

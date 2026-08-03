@@ -8,13 +8,97 @@
  *
  * Only legal from inspection status 'awaiting_approval'.
  */
-import { inspectionApprovals, inspections } from '@forma360/db/schema';
+import type { Database } from '@forma360/db/client';
+import { inspectionApprovals, inspections, user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
+
+/**
+ * Side-channel deps (platform review PF-30): the approval gate used to
+ * notify no one in either direction. Same pattern as the users/actions
+ * routers — the web server wires the dispatcher once at boot.
+ */
+interface ApprovalsRouterDeps {
+  sendEmail:
+    | ((input: {
+        to: string;
+        templateKey: string;
+        variables: Record<string, string>;
+      }) => Promise<unknown>)
+    | null;
+  appUrl: string;
+}
+const approvalsDeps: ApprovalsRouterDeps = { sendEmail: null, appUrl: '' };
+
+export function setApprovalsRouterDeps(deps: {
+  sendEmail: ApprovalsRouterDeps['sendEmail'];
+  appUrl: string;
+}): void {
+  approvalsDeps.sendEmail = deps.sendEmail;
+  approvalsDeps.appUrl = deps.appUrl;
+}
+
+/** Best-effort decision email to the inspection's submitter (PF-30). */
+async function notifyDecision(
+  db: Database,
+  logger: { warn: (obj: Record<string, unknown>, msg: string) => void },
+  input: {
+    tenantId: string;
+    inspectionId: string;
+    inspectionTitle: string;
+    documentNumber: string | null;
+    submitterUserId: string;
+    approverUserId: string;
+    decision: 'approved' | 'rejected';
+    comment: string | null;
+  },
+): Promise<void> {
+  const sendEmail = approvalsDeps.sendEmail;
+  if (sendEmail === null || input.submitterUserId === input.approverUserId) return;
+  try {
+    const rows = await db
+      .select({ name: user.name, email: user.email, deactivatedAt: user.deactivatedAt })
+      .from(user)
+      .where(and(eq(user.tenantId, input.tenantId), eq(user.id, input.submitterUserId)))
+      .limit(1);
+    const submitter = rows[0];
+    if (
+      submitter === undefined ||
+      submitter.deactivatedAt !== null ||
+      submitter.email.length === 0
+    ) {
+      return;
+    }
+    const approverRows = await db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, input.approverUserId))
+      .limit(1);
+    await sendEmail({
+      to: submitter.email,
+      templateKey: 'inspection-approval-decided',
+      variables: {
+        recipientName: submitter.name,
+        approverName: approverRows[0]?.name ?? 'An approver',
+        title: input.inspectionTitle,
+        documentNumber: input.documentNumber ?? '',
+        decisionLine:
+          input.decision === 'approved' ? 'APPROVED it' : `REJECTED it back to you for changes`,
+        commentLine: input.comment !== null && input.comment.length > 0 ? `\n\nComment: ${input.comment}` : '',
+        viewUrl: `${approvalsDeps.appUrl.replace(/\/$/, '')}/en/inspections/${input.inspectionId}/status`,
+      },
+    });
+  } catch (err) {
+    logger.warn(
+      { inspectionId: input.inspectionId, err: err instanceof Error ? err.message : String(err) },
+      '[approvals] decision email failed',
+    );
+  }
+}
 
 const approveInput = z.object({
   inspectionId: z.string().length(26),
@@ -47,6 +131,11 @@ export const approvalsRouter = router({
           message: `Cannot approve an inspection in status "${insp.status}"`,
         });
       }
+      // PF-30: separation of duties — the person who conducted or created
+      // the inspection cannot approve their own work.
+      if (ctx.auth.userId === insp.createdBy || ctx.auth.userId === insp.conductedBy) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'self-approval' });
+      }
       const now = new Date();
       await ctx.db.transaction(async (tx) => {
         await tx.insert(inspectionApprovals).values({
@@ -63,6 +152,16 @@ export const approvalsRouter = router({
           .update(inspections)
           .set({ status: 'completed', completedAt: now, updatedAt: now })
           .where(eq(inspections.id, insp.id));
+      });
+      await notifyDecision(ctx.db, ctx.logger, {
+        tenantId: ctx.tenantId,
+        inspectionId: insp.id,
+        inspectionTitle: insp.title,
+        documentNumber: insp.documentNumber,
+        submitterUserId: insp.conductedBy ?? insp.createdBy,
+        approverUserId: ctx.auth.userId,
+        decision: 'approved',
+        comment: input.comment ?? null,
       });
       return { ok: true as const };
     }),
@@ -108,6 +207,16 @@ export const approvalsRouter = router({
             updatedAt: now,
           })
           .where(eq(inspections.id, insp.id));
+      });
+      await notifyDecision(ctx.db, ctx.logger, {
+        tenantId: ctx.tenantId,
+        inspectionId: insp.id,
+        inspectionTitle: insp.title,
+        documentNumber: insp.documentNumber,
+        submitterUserId: insp.conductedBy ?? insp.createdBy,
+        approverUserId: ctx.auth.userId,
+        decision: 'rejected',
+        comment: input.comment,
       });
       return { ok: true as const };
     }),

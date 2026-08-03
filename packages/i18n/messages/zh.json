@@ -293,7 +293,11 @@
         "integrations": "Integrations",
         "billing": "Billing",
         "contractors": "Contractors",
-        "org": "Organisation"
+        "org": "Organisation",
+        "riskAssessments": "风险评估",
+        "coshh": "COSHH",
+        "permits": "作业许可",
+        "fireSafety": "消防安全"
       },
       "perms": {
         "users_view": "View users",
@@ -356,7 +360,21 @@
         "contractors_verifyDocs": "Verify contractor documents",
         "contractors_gate": "Gate check-in",
         "org_settings": "Manage organisation settings",
-        "org_audit_view": "View audit log"
+        "org_audit_view": "View audit log",
+        "riskAssessments_view": "查看风险评估",
+        "riskAssessments_create": "创建和编辑评估",
+        "riskAssessments_manage": "发布、分发和管理评估",
+        "coshh_view": "查看 COSHH 台账",
+        "coshh_create": "添加物质和评估",
+        "coshh_manage": "发布和管理 COSHH 评估",
+        "permits_view": "查看许可证",
+        "permits_create": "申请和记录许可证",
+        "permits_issue": "签发、暂停和关闭许可证",
+        "permits_manage": "管理许可证类型",
+        "fireSafety_view": "查看消防安全",
+        "fireSafety_record": "记录检查",
+        "fireSafety_create": "创建建筑、防火门和评估",
+        "fireSafety_manage": "发布评估并管理模块"
       }
     },
     "groups": {
@@ -1036,7 +1054,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "等待签署"
     },
     "table": {
       "title": "Title",
@@ -1055,7 +1074,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "等待签署"
     },
     "picker": {
       "title": "Pick a template",
@@ -1167,10 +1187,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "需要备注"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "请说明该回答（必填）"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1390,7 +1412,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "提交人",
+    "site": "站点"
   },
   "schedules": {
     "title": "Schedules",

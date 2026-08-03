@@ -53,10 +53,15 @@ import {
 } from '@forma360/permissions/dependents';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
+import { usersHoldingPermission } from '@forma360/permissions/holders';
 import type { Logger } from '@forma360/shared/logger';
 import { parseTemplateContent } from '@forma360/shared/template-schema';
 import type { SignatureWorkflow } from '@forma360/shared/template-schema';
-import { collectActiveTriggers, missingEvidence } from '@forma360/shared/inspection-eval';
+import {
+  collectActiveTriggers,
+  missingEvidence,
+  missingNotes,
+} from '@forma360/shared/inspection-eval';
 import { createInspectionActionIfAbsent } from './actions';
 import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
@@ -508,6 +513,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             templateName: templates.name,
             accessRuleId: templates.accessRuleId,
             conductedByName: user.name,
+            siteName: sites.name,
             openActionsCount: sql<number>`(
               SELECT COUNT(*)::int FROM actions a
               WHERE a.tenant_id = ${ctx.tenantId}
@@ -520,6 +526,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           .from(inspections)
           .leftJoin(templates, eq(templates.id, inspections.templateId))
           .leftJoin(user, eq(user.id, inspections.createdBy))
+          .leftJoin(sites, eq(sites.id, inspections.siteId))
           .where(and(...where))
           .orderBy(desc(inspections.startedAt));
 
@@ -997,6 +1004,12 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         if (evMissing.length > 0) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'evidence-required' });
         }
+        // PF-25: requireNote is a promise too — a triggering option
+        // demands an explanation before submit.
+        const noteMissing = missingNotes(version.content, responseMap);
+        if (noteMissing.length > 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'note-required' });
+        }
         // Mirror the "Site conducted" answer into inspection.siteId before the
         // submit side-effects read it (bug B4). Belt-and-suspenders with the
         // per-change sync in saveProgress.
@@ -1109,6 +1122,35 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             updatedAt: now,
           })
           .where(eq(inspections.id, insp.id));
+        // PF-30: an approval gate nobody is told about is ceremonial —
+        // every inspections.manage holder learns work is waiting.
+        if (nextStatus === 'awaiting_approval') {
+          try {
+            const approvers = await usersHoldingPermission(
+              ctx.db,
+              ctx.tenantId,
+              'inspections.manage',
+            );
+            for (const approver of approvers) {
+              if (approver.userId === ctx.auth.userId || approver.email.length === 0) continue;
+              await deps.sendEmail({
+                to: approver.email,
+                templateKey: 'inspection-approval-pending',
+                variables: {
+                  recipientName: approver.name,
+                  title: insp.title,
+                  documentNumber: insp.documentNumber ?? '',
+                  viewUrl: `${deps.appUrl.replace(/\/$/, '')}/en/approvals/${insp.id}`,
+                },
+              });
+            }
+          } catch (err) {
+            ctx.logger.warn(
+              { inspectionId: insp.id, err: err instanceof Error ? err.message : String(err) },
+              '[inspections] approval-pending email failed',
+            );
+          }
+        }
         return { status: nextStatus };
       }),
 

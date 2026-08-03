@@ -48,6 +48,8 @@ import fraIntolerableAlert from '../../i18n/emails/en/fra-intolerable-alert.json
 import actionAssigned from '../../i18n/emails/en/action-assigned.json';
 import actionDueDigest from '../../i18n/emails/en/action-due-digest.json';
 import documentExpiry from '../../i18n/emails/en/document-expiry.json';
+import inspectionApprovalPending from '../../i18n/emails/en/inspection-approval-pending.json';
+import inspectionApprovalDecided from '../../i18n/emails/en/inspection-approval-decided.json';
 
 const EMAIL_TEMPLATES: Record<string, unknown> = {
   'heads-up-reminder': headsUpReminder,
@@ -81,6 +83,8 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'action-assigned': actionAssigned,
   'action-due-digest': actionDueDigest,
   'document-expiry': documentExpiry,
+  'inspection-approval-pending': inspectionApprovalPending,
+  'inspection-approval-decided': inspectionApprovalDecided,
 };
 
 /** Registered template keys — exported so tests can assert the registry

@@ -49,7 +49,14 @@ export interface InspectionsExportDeps {
 
 const filterSchema = z.object({
   status: z
-    .enum(['in_progress', 'awaiting_signatures', 'awaiting_approval', 'completed', 'rejected'])
+    .enum([
+      'in_progress',
+      'awaiting_signatures',
+      'awaiting_signature_workflow',
+      'awaiting_approval',
+      'completed',
+      'rejected',
+    ])
     .optional(),
   templateId: z.string().length(26).optional(),
   siteId: z.string().length(26).optional(),

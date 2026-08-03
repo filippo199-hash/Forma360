@@ -293,7 +293,11 @@
         "integrations": "Integrations",
         "billing": "Billing",
         "contractors": "Contractors",
-        "org": "Organisation"
+        "org": "Organisation",
+        "riskAssessments": "Evaluaciones de riesgos",
+        "coshh": "COSHH",
+        "permits": "Permisos de trabajo",
+        "fireSafety": "Seguridad contra incendios"
       },
       "perms": {
         "users_view": "View users",
@@ -356,7 +360,21 @@
         "contractors_verifyDocs": "Verify contractor documents",
         "contractors_gate": "Gate check-in",
         "org_settings": "Manage organisation settings",
-        "org_audit_view": "View audit log"
+        "org_audit_view": "View audit log",
+        "riskAssessments_view": "Ver evaluaciones de riesgos",
+        "riskAssessments_create": "Crear y editar evaluaciones",
+        "riskAssessments_manage": "Publicar, distribuir y gestionar evaluaciones",
+        "coshh_view": "Ver el registro COSHH",
+        "coshh_create": "Añadir sustancias y evaluaciones",
+        "coshh_manage": "Publicar y gestionar evaluaciones COSHH",
+        "permits_view": "Ver permisos",
+        "permits_create": "Solicitar y registrar en permisos",
+        "permits_issue": "Emitir, suspender y cerrar permisos",
+        "permits_manage": "Gestionar tipos de permiso",
+        "fireSafety_view": "Ver seguridad contra incendios",
+        "fireSafety_record": "Registrar comprobaciones",
+        "fireSafety_create": "Crear edificios, puertas y evaluaciones",
+        "fireSafety_manage": "Publicar evaluaciones y gestionar el módulo"
       }
     },
     "groups": {
@@ -1036,7 +1054,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Pendiente de firmas"
     },
     "table": {
       "title": "Title",
@@ -1055,7 +1074,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Pendiente de firmas"
     },
     "picker": {
       "title": "Pick a template",
@@ -1174,10 +1194,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "Nota obligatoria"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "Explique esta respuesta (obligatorio)"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1397,7 +1419,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "Enviada por",
+    "site": "Sitio"
   },
   "schedules": {
     "title": "Schedules",

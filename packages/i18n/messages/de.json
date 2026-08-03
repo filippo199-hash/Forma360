@@ -293,7 +293,11 @@
         "integrations": "Integrations",
         "billing": "Billing",
         "contractors": "Contractors",
-        "org": "Organisation"
+        "org": "Organisation",
+        "riskAssessments": "Gefährdungsbeurteilungen",
+        "coshh": "COSHH",
+        "permits": "Erlaubnisscheine",
+        "fireSafety": "Brandschutz"
       },
       "perms": {
         "users_view": "View users",
@@ -356,7 +360,21 @@
         "contractors_verifyDocs": "Verify contractor documents",
         "contractors_gate": "Gate check-in",
         "org_settings": "Manage organisation settings",
-        "org_audit_view": "View audit log"
+        "org_audit_view": "View audit log",
+        "riskAssessments_view": "Gefährdungsbeurteilungen ansehen",
+        "riskAssessments_create": "Beurteilungen erstellen & bearbeiten",
+        "riskAssessments_manage": "Beurteilungen veröffentlichen & verwalten",
+        "coshh_view": "COSHH-Register ansehen",
+        "coshh_create": "Stoffe & Beurteilungen anlegen",
+        "coshh_manage": "COSHH-Beurteilungen veröffentlichen & verwalten",
+        "permits_view": "Erlaubnisscheine ansehen",
+        "permits_create": "Erlaubnisscheine anfordern & erfassen",
+        "permits_issue": "Erlaubnisscheine ausstellen & schließen",
+        "permits_manage": "Erlaubnisschein-Typen verwalten",
+        "fireSafety_view": "Brandschutz ansehen",
+        "fireSafety_record": "Prüfungen erfassen",
+        "fireSafety_create": "Gebäude, Türen & Beurteilungen anlegen",
+        "fireSafety_manage": "Beurteilungen veröffentlichen & verwalten"
       }
     },
     "groups": {
@@ -1036,7 +1054,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Wartet auf Freigabe"
     },
     "table": {
       "title": "Title",
@@ -1055,7 +1074,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Wartet auf Freigabe"
     },
     "picker": {
       "title": "Pick a template",
@@ -1174,10 +1194,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "Anmerkung erforderlich"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "Antwort erläutern (erforderlich)"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1397,7 +1419,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "Eingereicht von",
+    "site": "Standort"
   },
   "schedules": {
     "title": "Schedules",
