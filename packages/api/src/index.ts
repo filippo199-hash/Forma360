@@ -24,4 +24,5 @@ export type { CoshhRouterDeps } from './routers/coshh';
 export type { PermitsRouterDeps } from './routers/permits';
 export type { FireSafetyRouterDeps } from './routers/fireSafety';
 export type { IncidentsRouterDeps } from './routers/incidents';
+export type { RamsRouterDeps } from './routers/rams';
 export { notifyInApp, notifyInAppMany, type InAppNotification } from './notify';

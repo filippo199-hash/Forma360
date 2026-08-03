@@ -27,6 +27,7 @@ import {
   inspections,
   issues,
   permits,
+  ramsPacks,
   riskAssessments,
   sites,
   templates,
@@ -74,6 +75,7 @@ export const searchRouter = router({
         siteRows,
         templateRows,
         incidentRows,
+        ramsRows,
       ] = await Promise.all([
           // Assets — search name
           has('assets.view')
@@ -363,6 +365,35 @@ export const searchRouter = router({
                 status: string;
                 confidential: boolean;
               }>(),
+          // RAMS packs — search title, reference and client name.
+          has('rams.view')
+            ? ctx.db
+                .select({
+                  id: ramsPacks.id,
+                  title: ramsPacks.title,
+                  referenceNumber: ramsPacks.referenceNumber,
+                  status: ramsPacks.status,
+                })
+                .from(ramsPacks)
+                .where(
+                  and(
+                    eq(ramsPacks.tenantId, tid),
+                    isNull(ramsPacks.archivedAt),
+                    or(
+                      ilike(ramsPacks.title, q),
+                      ilike(ramsPacks.referenceNumber, q),
+                      ilike(ramsPacks.clientName, q),
+                    ),
+                  ),
+                )
+                .orderBy(desc(ramsPacks.updatedAt))
+                .limit(MAX_PER_CATEGORY)
+            : empty<{
+                id: string;
+                title: string;
+                referenceNumber: string | null;
+                status: string;
+              }>(),
         ]);
 
       // Apply per-document / per-folder visibility for non-managers (managers
@@ -441,6 +472,11 @@ export const searchRouter = router({
         sites: siteRows.map((r) => ({ id: r.id, title: r.name, subtitle: null })),
         templates: templateRows.map((r) => ({ id: r.id, title: r.name, subtitle: r.status })),
         incidents: incidentRows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          subtitle: r.referenceNumber,
+        })),
+        rams: ramsRows.map((r) => ({
           id: r.id,
           title: r.title,
           subtitle: r.referenceNumber,

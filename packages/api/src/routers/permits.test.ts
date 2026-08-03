@@ -74,6 +74,7 @@ import { createLogger } from '@forma360/shared/logger';
 import { newId } from '@forma360/shared/id';
 import * as schema from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
+import { emptyMethodStatementContent } from '@forma360/shared/rams';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContext } from '../context';
@@ -1361,5 +1362,173 @@ describe('permits router', () => {
     });
     expect(different).toHaveLength(1);
     expect(different[0]?.sameArea).toBe(false);
+  });
+  // ─── RS-E14 · the RAMS gate (RAMS spec §10.2) ────────────────────────────
+
+  describe('RS-E14 requiresRamsPack', () => {
+    /** A type that demands an accepted safe system of work. */
+    async function ramsTypeId(): Promise<string> {
+      const created = await callerFor(adminId).permits.types.create({
+        category: 'other',
+        name: 'RAMS-gated works',
+        maxDurationHours: 12,
+        requiresRamsPack: true,
+        preconditions: [{ id: 'area_ready', label: 'Work area prepared' }],
+      });
+      return created.typeId;
+    }
+
+    async function draftGatedPermit(links?: {
+      ramsPackVersionId?: string;
+      ramsReviewId?: string;
+    }): Promise<string> {
+      const admin = callerFor(adminId);
+      const { permitId } = await admin.permits.create({
+        permitTypeId: await ramsTypeId(),
+        title: 'Gated works',
+        siteId: siteA,
+        locationText: 'Bay 9',
+        acceptorUserId: standardId,
+        ...(links?.ramsPackVersionId !== undefined
+          ? { ramsPackVersionId: links.ramsPackVersionId }
+          : {}),
+        ...(links?.ramsReviewId !== undefined ? { ramsReviewId: links.ramsReviewId } : {}),
+        ...window(0, 6),
+      });
+      await checkAll(permitId);
+      return permitId;
+    }
+
+    /** An issued own RAMS pack, straight into the tables. */
+    async function issuedPackVersion(status: 'issued' | 'withdrawn' = 'issued'): Promise<string> {
+      const packId = newId();
+      const versionId = newId();
+      await db.insert(schema.ramsPacks).values({
+        id: packId,
+        tenantId,
+        referenceNumber: 'RAMS-000001',
+        title: 'Gated works pack',
+        status,
+        currentVersion: 1,
+        draftContent: emptyMethodStatementContent(),
+        createdBy: adminId,
+        issuedAt: new Date(),
+      });
+      await db.insert(schema.ramsPackVersions).values({
+        id: versionId,
+        tenantId,
+        packId,
+        versionNumber: 1,
+        content: {
+          jobContext: {
+            title: 'Gated works pack',
+            clientName: '',
+            siteId: null,
+            siteName: null,
+            locationText: '',
+            plannedFrom: null,
+            plannedTo: null,
+            authorName: 'Admin',
+            supervisorName: '',
+          },
+          methodStatementId: null,
+          methodStatementVersionId: null,
+          methodStatementVersionNumber: null,
+          methodStatementTitle: '',
+          content: emptyMethodStatementContent(),
+          riskAssessments: [],
+          coshh: [],
+          documents: [],
+        },
+        issuedBy: adminId,
+        issuedByName: 'Admin',
+        issuedAt: new Date(),
+      });
+      return versionId;
+    }
+
+    /** An accepted third-party review with an explicit validity window. */
+    async function acceptedReview(validTo: Date | null): Promise<string> {
+      const contractorId = newId();
+      await db.insert(schema.contractors).values({
+        id: contractorId,
+        tenantId,
+        name: 'Specialist Services Ltd',
+      });
+      const reviewId = newId();
+      await db.insert(schema.ramsReviews).values({
+        id: reviewId,
+        tenantId,
+        contractorId,
+        title: 'Their RAMS',
+        outcome: 'accepted',
+        checklist: [],
+        validFrom: new Date(Date.now() - HOUR),
+        validTo,
+        reviewerUserId: adminId,
+        reviewedAt: new Date(),
+        submittedBy: adminId,
+      });
+      return reviewId;
+    }
+
+    it('refuses issue when neither a pack nor a review is linked', async () => {
+      const permitId = await draftGatedPermit();
+      await expect(
+        callerFor(adminId).permits.issue({ permitId, acknowledgeConflicts: true }),
+      ).rejects.toThrow(/rams-pack-required/);
+    });
+
+    it('accepts an issued own pack version', async () => {
+      const permitId = await draftGatedPermit({
+        ramsPackVersionId: await issuedPackVersion(),
+      });
+      await expect(
+        callerFor(adminId).permits.issue({ permitId, acknowledgeConflicts: true }),
+      ).resolves.toBeDefined();
+    });
+
+    it('refuses a pack that has been withdrawn', async () => {
+      const permitId = await draftGatedPermit({
+        ramsPackVersionId: await issuedPackVersion('withdrawn'),
+      });
+      await expect(
+        callerFor(adminId).permits.issue({ permitId, acknowledgeConflicts: true }),
+      ).rejects.toThrow(/rams-pack-not-issued/);
+    });
+
+    it('accepts an in-date third-party acceptance', async () => {
+      const permitId = await draftGatedPermit({
+        ramsReviewId: await acceptedReview(new Date(Date.now() + 30 * 24 * HOUR)),
+      });
+      await expect(
+        callerFor(adminId).permits.issue({ permitId, acknowledgeConflicts: true }),
+      ).resolves.toBeDefined();
+    });
+
+    it('refuses an expired third-party acceptance', async () => {
+      const permitId = await draftGatedPermit({
+        ramsReviewId: await acceptedReview(new Date(Date.now() - HOUR)),
+      });
+      await expect(
+        callerFor(adminId).permits.issue({ permitId, acknowledgeConflicts: true }),
+      ).rejects.toThrow(/rams-acceptance-expired/);
+    });
+
+    it('leaves types without the flag unaffected', async () => {
+      const admin = callerFor(adminId);
+      const { permitId } = await admin.permits.create({
+        permitTypeId: await simpleTypeId(),
+        title: 'Ungated works',
+        siteId: siteA,
+        locationText: 'Bay 10',
+        acceptorUserId: standardId,
+        ...window(0, 6),
+      });
+      await checkAll(permitId);
+      await expect(
+        admin.permits.issue({ permitId, acknowledgeConflicts: true }),
+      ).resolves.toBeDefined();
+    });
   });
 });

@@ -43,6 +43,9 @@ import {
   permitEvents,
   permits,
   permitTypes,
+  ramsPacks,
+  ramsPackVersions,
+  ramsReviews,
   riskAssessments,
   siteMembers,
   sites,
@@ -51,6 +54,7 @@ import {
   type PermitEventKind,
   type PermitType,
 } from '@forma360/db/schema';
+import { reviewAcceptanceValid } from '@forma360/shared/rams';
 import type { Database } from '@forma360/db/client';
 import {
   allPreconditionsChecked,
@@ -399,6 +403,10 @@ async function ensureSeededTypes(
         requiresGasTesting: t.requiresGasTesting,
         requiresIsolationCertificate: t.requiresIsolationCertificate,
         requiresRescuePlan: t.requiresRescuePlan,
+        // `requiresRiskAssessment` and `requiresRamsPack` deliberately
+        // take the column default (false): turning either on for the
+        // seeded catalogue would change the issue gate under existing
+        // tenants. Both are opt-in per type.
         maxDurationHours: t.maxDurationHours,
         preconditions: t.preconditions,
         gasLimits: t.gasLimits,
@@ -415,6 +423,64 @@ function hasAttachmentOfKind(permit: Permit, kind: string): boolean {
   return permit.attachments.some((a) => a.kind === kind);
 }
 
+/** Why a `requiresRamsPack` type refuses to issue. RAMS spec §10.2. */
+type RamsGateError = 'rams-pack-required' | 'rams-pack-not-issued' | 'rams-acceptance-expired';
+
+/**
+ * The RAMS gate (RS-E14). A permit whose type demands an accepted safe
+ * system of work may be backed by either side of the module:
+ *   - an OWN pack: the linked `rams_pack_versions` row must belong to a
+ *     pack that is currently `issued` (a withdrawn or superseded pack
+ *     stops backing the permit);
+ *   - a THIRD-PARTY pack: the linked `rams_reviews` row must be accepted
+ *     (with or without conditions) and still inside its validity window.
+ *
+ * Returns null when the gate is satisfied.
+ */
+async function ramsPackGateError(
+  db: Database,
+  tenantId: string,
+  permit: Pick<Permit, 'ramsPackVersionId' | 'ramsReviewId'>,
+  now: Date,
+): Promise<RamsGateError | null> {
+  if (permit.ramsPackVersionId === null && permit.ramsReviewId === null) {
+    return 'rams-pack-required';
+  }
+
+  if (permit.ramsPackVersionId !== null) {
+    const rows = await db
+      .select({ status: ramsPacks.status })
+      .from(ramsPackVersions)
+      .innerJoin(ramsPacks, eq(ramsPacks.id, ramsPackVersions.packId))
+      .where(
+        and(
+          eq(ramsPackVersions.tenantId, tenantId),
+          eq(ramsPackVersions.id, permit.ramsPackVersionId),
+        ),
+      )
+      .limit(1);
+    const row = rows[0];
+    if (row === undefined) return 'rams-pack-required';
+    if (row.status !== 'issued') return 'rams-pack-not-issued';
+    return null;
+  }
+
+  const rows = await db
+    .select({
+      outcome: ramsReviews.outcome,
+      validFrom: ramsReviews.validFrom,
+      validTo: ramsReviews.validTo,
+    })
+    .from(ramsReviews)
+    .where(
+      and(eq(ramsReviews.tenantId, tenantId), eq(ramsReviews.id, permit.ramsReviewId ?? '')),
+    )
+    .limit(1);
+  const review = rows[0];
+  if (review === undefined) return 'rams-pack-required';
+  return reviewAcceptanceValid(review, now) ? null : 'rams-acceptance-expired';
+}
+
 /** The category ordering used for type lists — matches the catalogue. */
 const CATEGORY_ORDER = new Map(PERMIT_CATEGORIES.map((c, i) => [c, i] as const));
 
@@ -429,6 +495,8 @@ const typeCreateInput = z.object({
   requiresIsolationCertificate: z.boolean().default(false),
   requiresRescuePlan: z.boolean().default(false),
   requiresRiskAssessment: z.boolean().default(false),
+  /** RAMS spec §10.2 — demands an issued own pack or an accepted third-party review. */
+  requiresRamsPack: z.boolean().default(false),
   maxDurationHours: z.number().int().min(1).max(72).default(12),
   preconditions: z.array(permitTypePreconditionSchema).max(40).default([]),
   gasLimits: z.array(gasLimitSchema).max(20).default([]),
@@ -449,6 +517,7 @@ const typeUpdateInput = z.object({
   requiresIsolationCertificate: z.boolean().optional(),
   requiresRescuePlan: z.boolean().optional(),
   requiresRiskAssessment: z.boolean().optional(),
+  requiresRamsPack: z.boolean().optional(),
   maxDurationHours: z.number().int().min(1).max(72).optional(),
   preconditions: z.array(permitTypePreconditionSchema).max(40).optional(),
   gasLimits: z.array(gasLimitSchema).max(20).optional(),
@@ -486,6 +555,10 @@ const permitCreateInput = z.object({
   isolationCertificateRef: z.string().max(300).default(''),
   rescuePlan: z.string().max(5000).default(''),
   riskAssessmentId: z.string().length(26).optional(),
+  /** Preferred over the loose method-statement document link. */
+  ramsPackVersionId: z.string().length(26).optional(),
+  /** The accepted third-party review backing this permit, if any. */
+  ramsReviewId: z.string().length(26).optional(),
   methodStatementDocumentId: z.string().length(26).optional(),
 });
 
@@ -501,6 +574,8 @@ const permitUpdateInput = z.object({
   isolationCertificateRef: z.string().max(300).optional(),
   rescuePlan: z.string().max(5000).optional(),
   riskAssessmentId: z.string().length(26).nullable().optional(),
+  ramsPackVersionId: z.string().length(26).nullable().optional(),
+  ramsReviewId: z.string().length(26).nullable().optional(),
   methodStatementDocumentId: z.string().length(26).nullable().optional(),
 });
 
@@ -588,6 +663,7 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           requiresGasTesting: input.requiresGasTesting,
           requiresIsolationCertificate: input.requiresIsolationCertificate,
           requiresRescuePlan: input.requiresRescuePlan,
+          requiresRamsPack: input.requiresRamsPack,
           requiresRiskAssessment: input.requiresRiskAssessment,
           maxDurationHours: input.maxDurationHours,
           preconditions: input.preconditions,
@@ -635,6 +711,9 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
               : {}),
             ...(input.requiresIsolationCertificate !== undefined
               ? { requiresIsolationCertificate: input.requiresIsolationCertificate }
+              : {}),
+            ...(input.requiresRamsPack !== undefined
+              ? { requiresRamsPack: input.requiresRamsPack }
               : {}),
             ...(input.requiresRescuePlan !== undefined
               ? { requiresRescuePlan: input.requiresRescuePlan }
@@ -1058,6 +1137,8 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           isolationCertificateRef: input.isolationCertificateRef,
           rescuePlan: input.rescuePlan,
           riskAssessmentId: input.riskAssessmentId ?? null,
+          ramsPackVersionId: input.ramsPackVersionId ?? null,
+          ramsReviewId: input.ramsReviewId ?? null,
           methodStatementDocumentId: input.methodStatementDocumentId ?? null,
           preconditions: snapshotPreconditions(type.preconditions),
           createdBy: ctx.auth.userId,
@@ -1119,6 +1200,12 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
               ? { isolationCertificateRef: input.isolationCertificateRef }
               : {}),
             ...(input.rescuePlan !== undefined ? { rescuePlan: input.rescuePlan } : {}),
+            ...(input.ramsPackVersionId !== undefined
+              ? { ramsPackVersionId: input.ramsPackVersionId }
+              : {}),
+            ...(input.ramsReviewId !== undefined
+              ? { ramsReviewId: input.ramsReviewId }
+              : {}),
             ...(input.riskAssessmentId !== undefined
               ? { riskAssessmentId: input.riskAssessmentId }
               : {}),
@@ -1571,6 +1658,17 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
         // demands it (PW-7).
         if (type.requiresRiskAssessment && permit.riskAssessmentId === null) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'risk-assessment-required' });
+        }
+        // RAMS spec §10.2 / RS-E14: where the type demands an accepted
+        // safe system of work, the permit must carry EITHER an issued
+        // own RAMS pack version OR an in-date accepted third-party
+        // review. Both are accepted; neither is, and an expired
+        // acceptance is not.
+        if (type.requiresRamsPack) {
+          const ramsError = await ramsPackGateError(ctx.db, ctx.tenantId, permit, now);
+          if (ramsError !== null) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: ramsError });
+          }
         }
 
         const conflicts = await findConflicts(ctx.db, ctx.tenantId, {

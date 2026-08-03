@@ -35,7 +35,7 @@ import { newId } from '@forma360/shared/id';
 import * as schema from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { methodStatementContentSchema, type MethodStatementContent } from '@forma360/shared/rams';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContext } from '../context';
 import { appRouter } from '../router';
@@ -246,7 +246,6 @@ describe('rams router', () => {
       kind: 'site',
       path: siteA,
       depth: 0,
-      createdBy: adminId,
     });
   });
 
@@ -895,7 +894,6 @@ describe('rams router', () => {
         id: contractorId,
         tenantId,
         name: 'Specialist Services Ltd',
-        createdBy: adminId,
       });
       return contractorId;
     }
@@ -1018,7 +1016,6 @@ describe('rams router', () => {
         id: otherContractorId,
         tenantId: otherTenantId,
         name: 'Rival Contractor',
-        createdBy: otherTenantUserId,
       });
       await expect(
         callerFor(adminId).rams.reviews.submit({
@@ -1222,6 +1219,97 @@ describe('rams router', () => {
       expect(kinds).toEqual(
         expect.arrayContaining(['pack_created', 'ra_bound', 'pack_issued', 'pack_withdrawn']),
       );
+    });
+  });
+  // ─── RS-E17 · actions-hub integration ──────────────────────────────────
+
+  describe('RS-E17 actions raised from a pack', () => {
+    it('resolves a label and a working back-link in the actions hub', async () => {
+      const caller = callerFor(adminId);
+      const { packId } = await readyPack();
+      const raised = await caller.rams.packs.raiseAction({
+        packId,
+        title: 'Add the isolation step the client asked for',
+        priority: 'high',
+        sourceItemId: 'client-changes-requested',
+      });
+      expect(raised.created).toBe(true);
+
+      const action = await caller.actions.get({ actionId: raised.actionId });
+      expect(action.source?.type).toBe('rams');
+      expect(action.source?.href).toBe(`/rams/${packId}`);
+      expect(action.source?.referenceNumber).toBe('RAMS-000001');
+      expect(action.source?.title).toBe('AHU filter replacement — Riverside');
+    });
+
+    it('is filterable by source type on the actions list', async () => {
+      const caller = callerFor(adminId);
+      const { packId } = await readyPack();
+      await caller.rams.packs.raiseAction({
+        packId,
+        title: 'Fix it',
+        sourceItemId: 'review-fail-1',
+      });
+      const list = await caller.actions.list({ sourceType: 'rams' });
+      expect(list.rows).toHaveLength(1);
+      expect(list.rows[0]?.title).toBe('Fix it');
+    });
+
+    it('adopts rather than duplicates on replay of the same trigger', async () => {
+      const caller = callerFor(adminId);
+      const { packId } = await readyPack();
+      const first = await caller.rams.packs.raiseAction({
+        packId,
+        title: 'Once only',
+        sourceItemId: 'review-fail-1',
+      });
+      const second = await caller.rams.packs.raiseAction({
+        packId,
+        title: 'Once only',
+        sourceItemId: 'review-fail-1',
+      });
+      expect(second.created).toBe(false);
+      expect(second.actionId).toBe(first.actionId);
+      const list = await caller.actions.list({ sourceType: 'rams' });
+      expect(list.rows).toHaveLength(1);
+    });
+  });
+
+  // ─── CSV register export ───────────────────────────────────────────────
+
+  describe('CSV register export', () => {
+    it('exports one row per pack with the briefing count', async () => {
+      const caller = callerFor(adminId);
+      const { packId } = await readyPack();
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+      await caller.rams.briefings.record({
+        packId,
+        entries: [{ kind: 'named_person', name: 'Joe' }],
+      });
+
+      const { csv, rowCount } = await caller.rams.packs.exportCsv({});
+      expect(rowCount).toBe(1);
+      const lines = csv.trim().split('\n');
+      expect(lines[0]).toContain('Reference,Title,Status');
+      expect(lines[1]).toContain('RAMS-000001');
+      expect(lines[1]).toContain('issued');
+      // Title contains an em dash but no comma; the client name is plain.
+      expect(lines[1]).toContain('Riverside Estates');
+      // Briefed-on-current-version column.
+      expect(lines[1]?.split(',').at(-2)).toBe('1');
+    });
+
+    it('quotes cells containing commas', async () => {
+      const caller = callerFor(adminId);
+      await caller.rams.packs.create({
+        title: 'Works, phase 1',
+        clientName: 'Client "A"',
+        locationText: '',
+        supervisorName: '',
+      });
+      const { csv } = await caller.rams.packs.exportCsv({});
+      expect(csv).toContain('"Works, phase 1"');
+      expect(csv).toContain('"Client ""A"""');
     });
   });
 });

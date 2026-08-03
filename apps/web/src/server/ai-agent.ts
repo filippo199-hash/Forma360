@@ -469,6 +469,81 @@ async function executeTool(
       }
     }
 
+    case 'list_rams_packs': {
+      try {
+        const rawStatus = typeof input['status'] === 'string' ? input['status'] : undefined;
+        const allowed = ['draft', 'issued', 'superseded', 'withdrawn', 'cancelled'] as const;
+        const status =
+          rawStatus !== undefined && (allowed as readonly string[]).includes(rawStatus)
+            ? (rawStatus as (typeof allowed)[number])
+            : undefined;
+        const search = typeof input['search'] === 'string' ? input['search'] : undefined;
+        const rows = await caller.rams.packs.list({
+          limit,
+          ...(status !== undefined ? { status } : {}),
+          ...(search !== undefined ? { search } : {}),
+        });
+        return { ramsPacks: rows };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'get_rams_pack': {
+      try {
+        const packId = typeof input['packId'] === 'string' ? input['packId'] : '';
+        const detail = await caller.rams.packs.get({ packId });
+        // Trim to what the assistant can actually reason about — the raw
+        // detail carries signature blobs and the full event log.
+        return {
+          pack: {
+            referenceNumber: detail.pack.referenceNumber,
+            title: detail.pack.title,
+            status: detail.pack.status,
+            clientName: detail.pack.clientName,
+            site: detail.site?.name ?? null,
+            locationText: detail.pack.locationText,
+            plannedFrom: detail.pack.plannedFrom,
+            plannedTo: detail.pack.plannedTo,
+            currentVersion: detail.pack.currentVersion,
+            supervisorName: detail.pack.supervisorName,
+            scopeOfWorks: detail.pack.draftContent.scopeOfWorks,
+          },
+          steps: detail.pack.draftContent.steps.map((s) => ({
+            sequence: s.sequence,
+            title: s.title,
+            description: s.description,
+            holdPoint: s.holdPoint?.description ?? null,
+            ppe: s.ppe,
+          })),
+          emergency: detail.pack.draftContent.emergency,
+          riskAssessments: detail.riskAssessments.map((r) => ({
+            title: r.title,
+            reference: r.referenceNumber,
+            version: r.versionNumber,
+            hazardCount: r.hazards.length,
+          })),
+          coshh: detail.coshh.map((c) => ({
+            substance: c.substanceName,
+            task: c.taskDescription,
+          })),
+          briefings: detail.briefings.map((b) => ({
+            name: b.briefeeName,
+            briefedAt: b.briefedAt,
+            onCurrentVersion: b.current,
+          })),
+          clientAcceptance: detail.clientLinks.map((l) => ({
+            decision: l.decision,
+            acceptedByName: l.acceptedByName,
+            decidedAt: l.decidedAt,
+          })),
+          issueGate: detail.issueGate,
+        };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
     case 'fire_safety_overview': {
       try {
         const overview = await caller.fireSafety.overview();

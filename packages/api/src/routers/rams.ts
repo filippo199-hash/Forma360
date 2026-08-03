@@ -41,6 +41,8 @@
  * matches the navigation.
  */
 import {
+  actionPriority,
+  actions,
   contractorDocuments,
   contractors,
   coshhAssessments,
@@ -1901,6 +1903,174 @@ export function createRamsRouter(deps: RamsRouterDeps) {
         return { ok: true as const };
       }),
 
+    /**
+     * Raise a corrective action against the pack (spec §10.4). The three
+     * real triggers are a client who requested changes, a failed review
+     * item and a problem surfaced at briefing — all anchored to the pack,
+     * so the actions hub resolves the back-link to the pack page
+     * (RS-E17). Uses the existing action engine; `sourceItemId` keys the
+     * dedup index so replaying the same trigger cannot double-raise.
+     */
+    raiseAction: tenantProcedure
+      .use(requirePermission('rams.create'))
+      .input(
+        z.object({
+          packId: id26,
+          title: z.string().trim().min(1).max(300),
+          description: z.string().trim().max(2000).default(''),
+          priority: z.enum(actionPriority).default('medium'),
+          assigneeUserId: z.string().max(64).optional(),
+          dueAt: z.coerce.date().optional(),
+          /** Stable per-trigger key so a replay adopts rather than duplicates. */
+          sourceItemId: z.string().trim().max(200),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const pack = await loadPack(ctx.db, ctx.tenantId, input.packId);
+
+        const existing = await ctx.db
+          .select({ id: actions.id })
+          .from(actions)
+          .where(
+            and(
+              eq(actions.tenantId, ctx.tenantId),
+              eq(actions.sourceType, 'rams'),
+              eq(actions.sourceId, pack.id),
+              eq(actions.sourceItemId, input.sourceItemId),
+            ),
+          )
+          .limit(1);
+        const already = existing[0];
+        if (already !== undefined) return { actionId: already.id, created: false };
+
+        const at = now();
+        const actionId = newId();
+        const reference = `AC-${String(
+          await nextReferenceValue(ctx.db, ctx.tenantId, 'action'),
+        ).padStart(6, '0')}`;
+        await ctx.db.insert(actions).values({
+          id: actionId,
+          tenantId: ctx.tenantId,
+          sourceType: 'rams',
+          sourceId: pack.id,
+          sourceItemId: input.sourceItemId,
+          referenceNumber: reference,
+          title: input.title,
+          description:
+            input.description.length > 0
+              ? input.description
+              : `Raised from RAMS pack ${pack.referenceNumber ?? pack.title}.`,
+          status: 'open',
+          priority: input.priority,
+          assigneeUserId: input.assigneeUserId ?? null,
+          dueAt: input.dueAt ?? null,
+          siteId: pack.siteId,
+          createdBy: ctx.auth.userId,
+          createdAt: at,
+          updatedAt: at,
+        });
+        return { actionId, created: true };
+      }),
+
+    /**
+     * The register CSV. Returned as a string rather than a signed URL:
+     * the register is small (one row per pack) and the web route streams
+     * it straight to the browser, which keeps the export working without
+     * an R2 round-trip.
+     */
+    exportCsv: tenantProcedure
+      .use(requirePermission('rams.view'))
+      .input(z.object({ includeArchived: z.boolean().default(false) }).default({}))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const where = [eq(ramsPacks.tenantId, ctx.tenantId)];
+        if (!input.includeArchived) where.push(isNull(ramsPacks.archivedAt));
+
+        const rows = await ctx.db
+          .select({
+            referenceNumber: ramsPacks.referenceNumber,
+            title: ramsPacks.title,
+            status: ramsPacks.status,
+            clientName: ramsPacks.clientName,
+            siteName: sites.name,
+            locationText: ramsPacks.locationText,
+            plannedFrom: ramsPacks.plannedFrom,
+            plannedTo: ramsPacks.plannedTo,
+            currentVersion: ramsPacks.currentVersion,
+            issuedAt: ramsPacks.issuedAt,
+            supervisorName: ramsPacks.supervisorName,
+            createdAt: ramsPacks.createdAt,
+            packId: ramsPacks.id,
+          })
+          .from(ramsPacks)
+          .leftJoin(sites, eq(sites.id, ramsPacks.siteId))
+          .where(and(...where))
+          .orderBy(desc(ramsPacks.createdAt));
+
+        const briefedCounts = new Map<string, number>();
+        if (rows.length > 0) {
+          const counts = await ctx.db
+            .select({
+              packId: ramsBriefings.packId,
+              versionNumber: ramsBriefings.versionNumber,
+              n: sql<number>`count(*)::int`,
+            })
+            .from(ramsBriefings)
+            .where(eq(ramsBriefings.tenantId, ctx.tenantId))
+            .groupBy(ramsBriefings.packId, ramsBriefings.versionNumber);
+          const currentByPack = new Map(rows.map((r) => [r.packId, r.currentVersion]));
+          for (const c of counts) {
+            if (c.versionNumber === currentByPack.get(c.packId)) {
+              briefedCounts.set(c.packId, Number(c.n));
+            }
+          }
+        }
+
+        const iso = (d: Date | null): string => d?.toISOString() ?? '';
+        const cell = (value: string): string =>
+          /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+
+        const header = [
+          'Reference',
+          'Title',
+          'Status',
+          'Client',
+          'Site',
+          'Location',
+          'Planned from',
+          'Planned to',
+          'Version',
+          'Issued at',
+          'Supervisor',
+          'Briefed on current version',
+          'Created at',
+        ];
+        const lines = [header.join(',')];
+        for (const r of rows) {
+          lines.push(
+            [
+              r.referenceNumber ?? '',
+              r.title,
+              r.status,
+              r.clientName,
+              r.siteName ?? '',
+              r.locationText,
+              iso(r.plannedFrom),
+              iso(r.plannedTo),
+              String(r.currentVersion),
+              iso(r.issuedAt),
+              r.supervisorName,
+              String(briefedCounts.get(r.packId) ?? 0),
+              iso(r.createdAt),
+            ]
+              .map(cell)
+              .join(','),
+          );
+        }
+        return { csv: `${lines.join('\n')}\n`, rowCount: rows.length };
+      }),
+
     renderPdf: tenantProcedure
       .use(requirePermission('rams.view'))
       .input(z.object({ packId: id26, packVersionId: id26.optional() }))
@@ -1928,7 +2098,12 @@ export function createRamsRouter(deps: RamsRouterDeps) {
         if (packVersionId === undefined) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'pack-not-issued' });
         }
-        return deps.renderPdf({ tenantId: ctx.tenantId, packId: pack.id, packVersionId });
+        const rendered = await deps.renderPdf({
+          tenantId: ctx.tenantId,
+          packId: pack.id,
+          packVersionId,
+        });
+        return { storageKey: rendered.key, bytes: rendered.bytes, stub: rendered.stub };
       }),
   });
 
