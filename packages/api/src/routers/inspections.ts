@@ -55,6 +55,7 @@ import {
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
 import { usersHoldingPermission } from '@forma360/permissions/holders';
+import { notifyInApp } from '../notify';
 import type { Logger } from '@forma360/shared/logger';
 import { parseTemplateContent } from '@forma360/shared/template-schema';
 import type { SignatureWorkflow } from '@forma360/shared/template-schema';
@@ -1170,8 +1171,18 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             );
             for (const approver of approvers) {
               if (approver.userId === ctx.auth.userId || approver.email.length === 0) continue;
+              // PF-23: the in-app bell mirrors the email.
+              await notifyInApp(ctx.db, {
+                tenantId: ctx.tenantId,
+                userId: approver.userId,
+                kind: 'approval_pending',
+                title: insp.title,
+                body: insp.documentNumber ?? '',
+                href: `/approvals/${insp.id}`,
+              });
               await deps.sendEmail({
                 to: approver.email,
+                locale: approver.locale ?? undefined,
                 templateKey: 'inspection-approval-pending',
                 variables: {
                   recipientName: approver.name,

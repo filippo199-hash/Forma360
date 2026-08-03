@@ -20,6 +20,7 @@ import {
   templates,
   user,
 } from '@forma360/db/schema';
+import { notifyInApp } from '@forma360/api';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, eq, inArray, lte } from 'drizzle-orm';
@@ -73,7 +74,7 @@ export interface ScheduleMissedSweepDeps {
   logger: Logger;
   appUrl: string;
   notify: (
-    recipient: { email: string; name: string },
+    recipient: { email: string; name: string; locale?: string | null },
     missed: MissedOccurrence[],
     viewUrl: string,
   ) => Promise<void>;
@@ -116,6 +117,8 @@ export async function runScheduleMissedSweep(
       tenantId: user.tenantId,
       name: user.name,
       email: user.email,
+      locale: user.locale,
+      notificationPrefs: user.notificationPrefs,
       deactivatedAt: user.deactivatedAt,
     })
     .from(user)
@@ -132,9 +135,18 @@ export async function runScheduleMissedSweep(
     ) {
       continue;
     }
+    // PF-23: the bell always learns; the pref only silences the email.
+    await notifyInApp(deps.db, {
+      tenantId: rows[0]?.tenantId ?? '',
+      userId: recipient.id,
+      kind: 'schedule_missed',
+      title: `${rows.length} scheduled inspection(s) missed`,
+      href: '/schedules',
+    });
+    if (recipient.notificationPrefs['emailScheduleMissed'] === false) continue;
     try {
       await deps.notify(
-        { email: recipient.email, name: recipient.name },
+        { email: recipient.email, name: recipient.name, locale: recipient.locale },
         rows,
         `${deps.appUrl.replace(/\/+$/, '')}/en/schedules`,
       );

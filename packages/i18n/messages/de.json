@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Audit-Log"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -516,6 +517,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Datenaufbewahrung & Export",
+        "subtitle": "Aufbewahrung v1 entfernt Benachrichtigungen jenseits der Frist. Gesetzliche Sicherheitsaufzeichnungen bleiben unangetastet.",
+        "keepForever": "Für immer behalten",
+        "months": "{count} Monate",
+        "scopeNote": "Gilt nur für In-App-Benachrichtigungen. Inspektionen, Erlaubnisscheine, Brandschutzbuch, COSHH und Gefährdungsbeurteilungen werden immer aufbewahrt.",
+        "savedToast": "Aufbewahrungsrichtlinie gespeichert."
+      },
+      "exportData": {
+        "button": "Mandantendaten herunterladen (JSON)",
+        "hint": "Alles in einem JSON-Dokument — für Portabilität oder Offboarding. Nur Administratoren."
       }
     },
     "customFields": {
@@ -579,6 +592,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Audit-Log",
+      "subtitle": "Die Ereignisse aller Module in einem mandantenweiten, rückwärts-chronologischen Strom.",
+      "empty": "Noch keine Ereignisse.",
+      "loadMore": "Ältere laden",
+      "systemActor": "System",
+      "columns": {
+        "when": "Wann",
+        "module": "Modul",
+        "event": "Ereignis",
+        "actor": "Von",
+        "detail": "Detail"
+      },
+      "modules": {
+        "all": "Alle",
+        "actions": "Maßnahmen",
+        "observations": "Beobachtungen",
+        "permits": "Erlaubnisscheine",
+        "coshh": "COSHH",
+        "riskAssessments": "Gefährdungsbeurteilungen",
+        "fireSafety": "Brandschutz",
+        "contractors": "Auftragnehmer"
       }
     }
   },
@@ -5479,5 +5516,32 @@
     "itemsDelivered": "{count} Einträge synchronisiert",
     "itemRejected": "Ein Eintrag wurde vom Server abgelehnt — bitte prüfen und neu erfassen.",
     "queuedToast": "Keine Verbindung — in der Warteschlange gespeichert. Wird automatisch synchronisiert."
+  },
+  "notifications": {
+    "bellLabel": "Benachrichtigungen ({count} ungelesen)",
+    "title": "Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "empty": "Noch nichts — Sie sind auf dem Laufenden.",
+    "kinds": {
+      "action_assigned": "Maßnahme zugewiesen",
+      "approval_pending": "Freigabe ausstehend",
+      "approval_decided": "Freigabe entschieden",
+      "heads_up": "Mitteilung",
+      "issue_reported": "Beobachtung gemeldet",
+      "schedule_missed": "Verpasste Inspektionen",
+      "action_due": "Fällige Maßnahmen",
+      "document_expiry": "Dokumentablauf"
+    },
+    "prefs": {
+      "title": "E-Mail-Benachrichtigungen",
+      "subtitle": "Deaktivieren stummschaltet nur die E-Mail — die Glocke im Kopfbereich zeigt sie immer.",
+      "saveError": "Einstellung konnte nicht gespeichert werden.",
+      "keys": {
+        "emailActionReminders": "Erinnerungen an fällige/überfällige Maßnahmen",
+        "emailScheduleMissed": "Verpasste geplante Inspektionen",
+        "emailDocumentExpiry": "Erinnerungen an ablaufende Dokumente",
+        "emailMaintenance": "Wartungserinnerungen"
+      }
+    }
   }
 }

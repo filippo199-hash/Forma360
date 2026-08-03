@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Dziennik audytu"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -516,6 +517,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Retencja i eksport danych",
+        "subtitle": "Retencja v1 usuwa powiadomienia starsze niż polityka. Ustawowe zapisy BHP nigdy nie są naruszane.",
+        "keepForever": "Przechowuj bezterminowo",
+        "months": "{count} mies.",
+        "scopeNote": "Dotyczy wyłącznie powiadomień w aplikacji. Inspekcje, pozwolenia, dziennik ppoż., COSHH i oceny ryzyka są zawsze zachowywane.",
+        "savedToast": "Zapisano politykę retencji."
+      },
+      "exportData": {
+        "button": "Pobierz dane organizacji (JSON)",
+        "hint": "Wszystko w jednym dokumencie JSON — przenośność lub offboarding. Tylko administratorzy."
       }
     },
     "customFields": {
@@ -579,6 +592,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Dziennik audytu",
+      "subtitle": "Zdarzenia wszystkich modułów w jednym strumieniu dla całej organizacji, od najnowszych.",
+      "empty": "Brak zdarzeń.",
+      "loadMore": "Wczytaj starsze",
+      "systemActor": "System",
+      "columns": {
+        "when": "Kiedy",
+        "module": "Moduł",
+        "event": "Zdarzenie",
+        "actor": "Przez",
+        "detail": "Szczegóły"
+      },
+      "modules": {
+        "all": "Wszystkie",
+        "actions": "Działania",
+        "observations": "Obserwacje",
+        "permits": "Pozwolenia",
+        "coshh": "COSHH",
+        "riskAssessments": "Oceny ryzyka",
+        "fireSafety": "Ochrona przeciwpożarowa",
+        "contractors": "Wykonawcy"
       }
     }
   },
@@ -5472,5 +5509,32 @@
     "itemsDelivered": "Zsynchronizowano {count} z kolejki",
     "itemRejected": "Serwer odrzucił element z kolejki — sprawdź i wprowadź ponownie.",
     "queuedToast": "Brak połączenia — zapisano w kolejce. Synchronizacja nastąpi automatycznie."
+  },
+  "notifications": {
+    "bellLabel": "Powiadomienia ({count} nieprzeczytane)",
+    "title": "Powiadomienia",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "empty": "Na razie nic — wszystko aktualne.",
+    "kinds": {
+      "action_assigned": "Przypisano działanie",
+      "approval_pending": "Oczekuje na zatwierdzenie",
+      "approval_decided": "Zatwierdzenie rozstrzygnięte",
+      "heads_up": "Komunikat",
+      "issue_reported": "Zgłoszono obserwację",
+      "schedule_missed": "Pominięte inspekcje",
+      "action_due": "Działania z bliskim terminem",
+      "document_expiry": "Wygaśnięcie dokumentu"
+    },
+    "prefs": {
+      "title": "Powiadomienia e-mail",
+      "subtitle": "Wyłączenie wycisza tylko e-mail — dzwonek w nagłówku zawsze je pokazuje.",
+      "saveError": "Nie udało się zapisać preferencji.",
+      "keys": {
+        "emailActionReminders": "Przypomnienia o terminach działań",
+        "emailScheduleMissed": "Pominięte zaplanowane inspekcje",
+        "emailDocumentExpiry": "Przypomnienia o wygasających dokumentach",
+        "emailMaintenance": "Przypomnienia o konserwacji"
+      }
+    }
   }
 }

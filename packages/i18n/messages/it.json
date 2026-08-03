@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Registro attività"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -516,6 +517,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Conservazione ed esportazione dati",
+        "subtitle": "La conservazione v1 elimina le notifiche oltre la soglia. I registri di sicurezza obbligatori non vengono mai toccati.",
+        "keepForever": "Conserva per sempre",
+        "months": "{count} mesi",
+        "scopeNote": "Si applica solo alle notifiche in-app. Ispezioni, permessi, registro antincendio, COSHH e valutazioni dei rischi sono sempre conservati.",
+        "savedToast": "Politica di conservazione salvata."
+      },
+      "exportData": {
+        "button": "Scarica i dati dell'organizzazione (JSON)",
+        "hint": "Tutto in un unico documento JSON, per portabilità o offboarding. Solo amministratori."
       }
     },
     "customFields": {
@@ -579,6 +592,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Registro attività",
+      "subtitle": "Gli eventi di tutti i moduli in un unico flusso cronologico a livello di organizzazione.",
+      "empty": "Ancora nessun evento.",
+      "loadMore": "Carica precedenti",
+      "systemActor": "Sistema",
+      "columns": {
+        "when": "Quando",
+        "module": "Modulo",
+        "event": "Evento",
+        "actor": "Da",
+        "detail": "Dettaglio"
+      },
+      "modules": {
+        "all": "Tutti",
+        "actions": "Azioni",
+        "observations": "Osservazioni",
+        "permits": "Permessi",
+        "coshh": "COSHH",
+        "riskAssessments": "Valutazioni dei rischi",
+        "fireSafety": "Antincendio",
+        "contractors": "Appaltatori"
       }
     }
   },
@@ -5514,5 +5551,32 @@
     "itemsDelivered": "{count} elementi in coda sincronizzati",
     "itemRejected": "Un elemento in coda è stato rifiutato dal server: verificalo e reinseriscilo.",
     "queuedToast": "Nessuna connessione: salvato in coda. Si sincronizzerà automaticamente."
+  },
+  "notifications": {
+    "bellLabel": "Notifiche ({count} non lette)",
+    "title": "Notifiche",
+    "markAllRead": "Segna tutte come lette",
+    "empty": "Ancora nulla: sei aggiornato.",
+    "kinds": {
+      "action_assigned": "Azione assegnata",
+      "approval_pending": "Approvazione in attesa",
+      "approval_decided": "Approvazione decisa",
+      "heads_up": "Avviso",
+      "issue_reported": "Osservazione segnalata",
+      "schedule_missed": "Ispezioni mancate",
+      "action_due": "Azioni in scadenza",
+      "document_expiry": "Scadenza documento"
+    },
+    "prefs": {
+      "title": "Notifiche email",
+      "subtitle": "Disattivarne una silenzia solo l'email: la campanella nell'intestazione la mostra sempre.",
+      "saveError": "Impossibile salvare la preferenza.",
+      "keys": {
+        "emailActionReminders": "Promemoria azioni in scadenza/ritardo",
+        "emailScheduleMissed": "Ispezioni programmate mancate",
+        "emailDocumentExpiry": "Promemoria scadenza documenti",
+        "emailMaintenance": "Promemoria manutenzione"
+      }
+    }
   }
 }

@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Registro de auditoría"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -516,6 +517,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Retención y exportación de datos",
+        "subtitle": "La retención v1 elimina notificaciones más antiguas que la política. Los registros de seguridad obligatorios nunca se tocan.",
+        "keepForever": "Conservar para siempre",
+        "months": "{count} meses",
+        "scopeNote": "Aplica solo a notificaciones en la app. Inspecciones, permisos, libro de incendios, COSHH y evaluaciones de riesgos se conservan siempre.",
+        "savedToast": "Política de retención guardada."
+      },
+      "exportData": {
+        "button": "Descargar datos del inquilino (JSON)",
+        "hint": "Todo en un documento JSON, para portabilidad u offboarding. Solo administradores."
       }
     },
     "customFields": {
@@ -579,6 +592,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Registro de auditoría",
+      "subtitle": "Los eventos de todos los módulos en un único flujo cronológico inverso de toda la organización.",
+      "empty": "Aún no hay eventos.",
+      "loadMore": "Cargar anteriores",
+      "systemActor": "Sistema",
+      "columns": {
+        "when": "Cuándo",
+        "module": "Módulo",
+        "event": "Evento",
+        "actor": "Por",
+        "detail": "Detalle"
+      },
+      "modules": {
+        "all": "Todos",
+        "actions": "Acciones",
+        "observations": "Observaciones",
+        "permits": "Permisos",
+        "coshh": "COSHH",
+        "riskAssessments": "Evaluaciones de riesgos",
+        "fireSafety": "Seguridad contra incendios",
+        "contractors": "Contratistas"
       }
     }
   },
@@ -5479,5 +5516,32 @@
     "itemsDelivered": "{count} elementos sincronizados",
     "itemRejected": "El servidor rechazó un elemento en cola: revísalo y vuelve a ingresarlo.",
     "queuedToast": "Sin conexión: guardado en la cola. Se sincronizará automáticamente."
+  },
+  "notifications": {
+    "bellLabel": "Notificaciones ({count} sin leer)",
+    "title": "Notificaciones",
+    "markAllRead": "Marcar todas como leídas",
+    "empty": "Nada aún: estás al día.",
+    "kinds": {
+      "action_assigned": "Acción asignada",
+      "approval_pending": "Aprobación pendiente",
+      "approval_decided": "Aprobación decidida",
+      "heads_up": "Aviso",
+      "issue_reported": "Observación reportada",
+      "schedule_missed": "Inspecciones no realizadas",
+      "action_due": "Acciones por vencer",
+      "document_expiry": "Vencimiento de documento"
+    },
+    "prefs": {
+      "title": "Notificaciones por correo",
+      "subtitle": "Desactivar una solo silencia el correo: la campana del encabezado siempre la muestra.",
+      "saveError": "No se pudo guardar la preferencia.",
+      "keys": {
+        "emailActionReminders": "Recordatorios de acciones por vencer/vencidas",
+        "emailScheduleMissed": "Inspecciones programadas no realizadas",
+        "emailDocumentExpiry": "Recordatorios de vencimiento de documentos",
+        "emailMaintenance": "Recordatorios de mantenimiento"
+      }
+    }
   }
 }

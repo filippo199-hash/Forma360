@@ -20,7 +20,7 @@ type TabKey =
   | 'permissions'
   | 'groups'
   | 'customFields'
-  | 'riskMatrix';
+  | 'riskMatrix' | 'audit';
 
 /**
  * Folder segment for each tab. Most tabs live at a folder named after the key;
@@ -34,6 +34,7 @@ const TAB_HREF: Record<TabKey, string> = {
   groups: 'groups',
   customFields: 'custom-fields',
   riskMatrix: 'risk-matrix',
+  audit: 'audit',
 };
 
 /**
@@ -50,6 +51,7 @@ export function SettingsTabs({ locale, isAdmin }: SettingsTabsProps) {
   const canManagePermissions = useHasPermission('permissions.manage');
   const canManageGroups = useHasPermission('groups.manage');
   const canManageCustomFields = useHasPermission('users.customFields.manage');
+  const canViewAudit = useHasPermission('org.audit.view');
 
   // PF-7 (platform review): the tab bar used to gate EVERYTHING on the
   // admin-only org.settings key, so a seeded Manager — the role designed
@@ -66,6 +68,8 @@ export function SettingsTabs({ locale, isAdmin }: SettingsTabsProps) {
     ...(isAdmin && brandHasModule(activeBrand.id, 'riskAssessments')
       ? (['riskMatrix'] as TabKey[])
       : []),
+    // PF-31: the tenant-wide audit feed.
+    ...(isAdmin || canViewAudit ? (['audit'] as TabKey[]) : []),
   ];
 
   return (

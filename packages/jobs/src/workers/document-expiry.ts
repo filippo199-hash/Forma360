@@ -16,10 +16,11 @@
  */
 import type { Database } from '@forma360/db/client';
 import { documents, user } from '@forma360/db/schema';
+import { notifyInApp } from '@forma360/api';
 import type { Logger } from '@forma360/shared/logger';
 import { usersHoldingPermission } from '@forma360/permissions/holders';
 import type { Job } from 'bullmq';
-import { and, eq, isNotNull, lte, sql } from 'drizzle-orm';
+import { inArray, and, eq, isNotNull, lte, sql } from 'drizzle-orm';
 
 export const DOCUMENT_EXPIRY_CRON = '15 6 * * *'; // daily, 06:15 UTC
 const DAY_MS = 86_400_000;
@@ -100,7 +101,7 @@ export interface DocumentExpiryDeps {
   logger: Logger;
   appUrl: string;
   notify: (
-    recipient: { email: string; name: string },
+    recipient: { email: string; name: string; locale?: string | null },
     doc: ExpiringDocument,
     viewUrl: string,
   ) => Promise<void>;
@@ -118,21 +119,63 @@ export async function runDocumentExpiry(
     // Uploader + documents.manage holders, deduped by email.
     const holders = await usersHoldingPermission(deps.db, doc.tenantId, 'documents.manage');
     const uploaderRows = await deps.db
-      .select({ name: user.name, email: user.email, deactivatedAt: user.deactivatedAt })
+      .select({
+        name: user.name,
+        email: user.email,
+        locale: user.locale,
+        deactivatedAt: user.deactivatedAt,
+      })
       .from(user)
       .where(and(eq(user.tenantId, doc.tenantId), eq(user.id, doc.uploadedByUserId)))
       .limit(1);
-    const recipients = new Map<string, { email: string; name: string }>();
+    const recipients = new Map<
+      string,
+      { userId: string | null; email: string; name: string; locale?: string | null }
+    >();
     const uploader = uploaderRows[0];
     if (uploader !== undefined && uploader.deactivatedAt === null && uploader.email.length > 0) {
-      recipients.set(uploader.email, { email: uploader.email, name: uploader.name });
+      recipients.set(uploader.email, {
+        userId: doc.uploadedByUserId,
+        email: uploader.email,
+        name: uploader.name,
+        locale: uploader.locale,
+      });
     }
     for (const h of holders) {
-      if (h.email.length > 0) recipients.set(h.email, { email: h.email, name: h.name });
+      if (h.email.length > 0) {
+        recipients.set(h.email, {
+          userId: h.userId,
+          email: h.email,
+          name: h.name,
+          locale: h.locale,
+        });
+      }
     }
+    // PF-23: per-recipient email pref (bell rows are always written).
+    const recipientIds = [...recipients.values()].flatMap((r) =>
+      r.userId === null ? [] : [r.userId],
+    );
+    const prefRows =
+      recipientIds.length > 0
+        ? await deps.db
+            .select({ id: user.id, notificationPrefs: user.notificationPrefs })
+            .from(user)
+            .where(inArray(user.id, recipientIds))
+        : [];
+    const prefsById = new Map(prefRows.map((r) => [r.id, r.notificationPrefs]));
     const viewUrl = `${deps.appUrl.replace(/\/+$/, '')}/en/documents/${doc.documentId}`;
     let delivered = 0;
     for (const recipient of recipients.values()) {
+      if (recipient.userId !== null) {
+        await notifyInApp(deps.db, {
+          tenantId: doc.tenantId,
+          userId: recipient.userId,
+          kind: 'document_expiry',
+          title: doc.name,
+          href: `/documents/${doc.documentId}`,
+        });
+        if (prefsById.get(recipient.userId)?.['emailDocumentExpiry'] === false) continue;
+      }
       try {
         await deps.notify(recipient, doc, viewUrl);
         delivered += 1;

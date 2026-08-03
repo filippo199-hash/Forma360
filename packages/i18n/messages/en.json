@@ -241,7 +241,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Audit log"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -599,6 +600,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Data retention & export",
+        "subtitle": "Retention v1 trims notification-centre rows past the policy. Statutory safety records are never touched.",
+        "keepForever": "Keep forever",
+        "months": "{count} months",
+        "scopeNote": "Applies to in-app notifications only. Inspections, permits, fire logbook, COSHH and risk assessment records are always retained.",
+        "savedToast": "Retention policy saved."
+      },
+      "exportData": {
+        "button": "Download tenant data (JSON)",
+        "hint": "Everything in one JSON document — for portability or offboarding. Administrators only."
       }
     },
     "customFields": {
@@ -662,6 +675,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Audit log",
+      "subtitle": "Every module's events in one tenant-wide, reverse-chronological stream.",
+      "empty": "No events yet.",
+      "loadMore": "Load older",
+      "systemActor": "System",
+      "columns": {
+        "when": "When",
+        "module": "Module",
+        "event": "Event",
+        "actor": "By",
+        "detail": "Detail"
+      },
+      "modules": {
+        "all": "All",
+        "actions": "Actions",
+        "observations": "Observations",
+        "permits": "Permits",
+        "coshh": "COSHH",
+        "riskAssessments": "Risk assessments",
+        "fireSafety": "Fire safety",
+        "contractors": "Contractors"
       }
     }
   },
@@ -5707,5 +5744,32 @@
     "itemsDelivered": "{count} queued item(s) synced",
     "itemRejected": "A queued item was rejected by the server — please review and re-enter it.",
     "queuedToast": "No connection — saved to the queue. It will sync automatically."
+  },
+  "notifications": {
+    "bellLabel": "Notifications ({count} unread)",
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "Nothing yet — you're up to date.",
+    "kinds": {
+      "action_assigned": "Action assigned",
+      "approval_pending": "Approval waiting",
+      "approval_decided": "Approval decided",
+      "heads_up": "Heads Up",
+      "issue_reported": "Observation reported",
+      "schedule_missed": "Missed inspections",
+      "action_due": "Actions due",
+      "document_expiry": "Document expiry"
+    },
+    "prefs": {
+      "title": "Email notifications",
+      "subtitle": "Turning one off silences the email only — the bell in the header always shows it.",
+      "saveError": "Could not save the preference.",
+      "keys": {
+        "emailActionReminders": "Action due/overdue reminders",
+        "emailScheduleMissed": "Missed scheduled inspections",
+        "emailDocumentExpiry": "Document expiry reminders",
+        "emailMaintenance": "Maintenance reminders"
+      }
+    }
   }
 }

@@ -107,6 +107,7 @@ export const QUEUE_NAMES = {
   DOCUMENT_EXPIRY: 'forma360-document-expiry',
   /** Platform PF-3 — stamps 'missed' on scheduled occurrences past grace. */
   SCHEDULE_MISSED_SWEEP: 'forma360-schedule-missed-sweep',
+  RETENTION_SWEEP: 'forma360-retention-sweep',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -250,6 +251,10 @@ export type DocumentExpiryPayload = z.infer<typeof documentExpiryPayloadSchema>;
 export const scheduleMissedSweepPayloadSchema = z.object({}).strict();
 export type ScheduleMissedSweepPayload = z.infer<typeof scheduleMissedSweepPayloadSchema>;
 
+/** PF-31 retention v1 — tick payload is empty. */
+export const retentionSweepPayloadSchema = z.object({}).strict();
+export type RetentionSweepPayload = z.infer<typeof retentionSweepPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -275,6 +280,7 @@ export interface QueuePayloads {
   [QUEUE_NAMES.HEADS_UP_PUBLISH]: HeadsUpPublishPayload;
   [QUEUE_NAMES.DOCUMENT_EXPIRY]: DocumentExpiryPayload;
   [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: ScheduleMissedSweepPayload;
+  [QUEUE_NAMES.RETENTION_SWEEP]: RetentionSweepPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -299,6 +305,7 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.HEADS_UP_PUBLISH]: headsUpPublishPayloadSchema,
   [QUEUE_NAMES.DOCUMENT_EXPIRY]: documentExpiryPayloadSchema,
   [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: scheduleMissedSweepPayloadSchema,
+  [QUEUE_NAMES.RETENTION_SWEEP]: retentionSweepPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

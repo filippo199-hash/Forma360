@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Auditlogboek"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -516,6 +517,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Databewaring & export",
+        "subtitle": "Bewaring v1 verwijdert meldingen ouder dan het beleid. Wettelijke veiligheidsregistraties blijven onaangeroerd.",
+        "keepForever": "Voor altijd bewaren",
+        "months": "{count} maanden",
+        "scopeNote": "Geldt alleen voor in-app meldingen. Inspecties, vergunningen, brandlogboek, COSHH en risicobeoordelingen blijven altijd bewaard.",
+        "savedToast": "Bewaarbeleid opgeslagen."
+      },
+      "exportData": {
+        "button": "Tenantdata downloaden (JSON)",
+        "hint": "Alles in één JSON-document — voor portabiliteit of offboarding. Alleen beheerders."
       }
     },
     "customFields": {
@@ -579,6 +592,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Auditlogboek",
+      "subtitle": "De gebeurtenissen van alle modules in één omgekeerd-chronologische stroom voor de hele tenant.",
+      "empty": "Nog geen gebeurtenissen.",
+      "loadMore": "Ouder laden",
+      "systemActor": "Systeem",
+      "columns": {
+        "when": "Wanneer",
+        "module": "Module",
+        "event": "Gebeurtenis",
+        "actor": "Door",
+        "detail": "Detail"
+      },
+      "modules": {
+        "all": "Alle",
+        "actions": "Acties",
+        "observations": "Observaties",
+        "permits": "Vergunningen",
+        "coshh": "COSHH",
+        "riskAssessments": "Risicobeoordelingen",
+        "fireSafety": "Brandveiligheid",
+        "contractors": "Aannemers"
       }
     }
   },
@@ -5472,5 +5509,32 @@
     "itemsDelivered": "{count} wachtrij-items gesynchroniseerd",
     "itemRejected": "Een wachtrij-item is door de server geweigerd — controleer en voer het opnieuw in.",
     "queuedToast": "Geen verbinding — opgeslagen in de wachtrij. Synchroniseert automatisch."
+  },
+  "notifications": {
+    "bellLabel": "Meldingen ({count} ongelezen)",
+    "title": "Meldingen",
+    "markAllRead": "Alles als gelezen markeren",
+    "empty": "Nog niets — je bent bij.",
+    "kinds": {
+      "action_assigned": "Actie toegewezen",
+      "approval_pending": "Goedkeuring wacht",
+      "approval_decided": "Goedkeuring besloten",
+      "heads_up": "Melding",
+      "issue_reported": "Observatie gemeld",
+      "schedule_missed": "Gemiste inspecties",
+      "action_due": "Acties bijna verlopen",
+      "document_expiry": "Documentverloop"
+    },
+    "prefs": {
+      "title": "E-mailmeldingen",
+      "subtitle": "Uitschakelen dempt alleen de e-mail — de bel in de koptekst toont het altijd.",
+      "saveError": "Kon de voorkeur niet opslaan.",
+      "keys": {
+        "emailActionReminders": "Herinneringen voor (bijna) verlopen acties",
+        "emailScheduleMissed": "Gemiste geplande inspecties",
+        "emailDocumentExpiry": "Herinneringen documentverloop",
+        "emailMaintenance": "Onderhoudsherinneringen"
+      }
+    }
   }
 }

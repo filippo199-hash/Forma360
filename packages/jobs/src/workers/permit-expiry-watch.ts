@@ -137,6 +137,7 @@ export async function resolveEscalationRecipients(
     .select({
       id: user.id,
       email: user.email,
+      locale: user.locale,
       name: user.name,
       deactivatedAt: user.deactivatedAt,
     })

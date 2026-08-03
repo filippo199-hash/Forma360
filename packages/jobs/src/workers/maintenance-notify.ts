@@ -102,6 +102,7 @@ export function createMaintenanceNotifyHandler(deps: MaintenanceNotifyDeps) {
       try {
         await deps.sendTemplatedEmail({
           to: admin.email,
+          locale: admin.locale ?? undefined,
           templateKey: 'maintenance-reminder',
           variables: {
             assetName,

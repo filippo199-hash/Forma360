@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "审计日志"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -516,6 +517,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "数据保留与导出",
+        "subtitle": "保留 v1 会清除超出策略的通知。法定安全记录绝不受影响。",
+        "keepForever": "永久保留",
+        "months": "{count} 个月",
+        "scopeNote": "仅适用于应用内通知。检查、许可证、消防日志、COSHH 与风险评估始终保留。",
+        "savedToast": "保留策略已保存。"
+      },
+      "exportData": {
+        "button": "下载组织数据(JSON)",
+        "hint": "全部内容打包为一个 JSON 文档——用于迁移或退出。仅限管理员。"
       }
     },
     "customFields": {
@@ -579,6 +592,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "审计日志",
+      "subtitle": "将所有模块的事件汇入一个覆盖全组织、按时间倒序的流。",
+      "empty": "暂无事件。",
+      "loadMore": "加载更早",
+      "systemActor": "系统",
+      "columns": {
+        "when": "时间",
+        "module": "模块",
+        "event": "事件",
+        "actor": "执行人",
+        "detail": "详情"
+      },
+      "modules": {
+        "all": "全部",
+        "actions": "措施",
+        "observations": "观察项",
+        "permits": "许可证",
+        "coshh": "COSHH",
+        "riskAssessments": "风险评估",
+        "fireSafety": "消防安全",
+        "contractors": "承包商"
       }
     }
   },
@@ -5472,5 +5509,32 @@
     "itemsDelivered": "已同步 {count} 项排队内容",
     "itemRejected": "有一项排队内容被服务器拒绝,请检查后重新填写。",
     "queuedToast": "无网络连接 — 已存入队列,将自动同步。"
+  },
+  "notifications": {
+    "bellLabel": "通知({count} 条未读)",
+    "title": "通知",
+    "markAllRead": "全部标记为已读",
+    "empty": "暂无通知——一切都是最新的。",
+    "kinds": {
+      "action_assigned": "已分配措施",
+      "approval_pending": "待审批",
+      "approval_decided": "审批已决定",
+      "heads_up": "通知公告",
+      "issue_reported": "观察项上报",
+      "schedule_missed": "未执行的检查",
+      "action_due": "临期措施",
+      "document_expiry": "文档到期"
+    },
+    "prefs": {
+      "title": "邮件通知",
+      "subtitle": "关闭仅停止邮件——顶部铃铛始终会显示。",
+      "saveError": "无法保存偏好设置。",
+      "keys": {
+        "emailActionReminders": "措施到期/逾期提醒",
+        "emailScheduleMissed": "未执行的计划检查",
+        "emailDocumentExpiry": "文档到期提醒",
+        "emailMaintenance": "维保提醒"
+      }
+    }
   }
 }

@@ -470,6 +470,13 @@
       "when": 1780000140000,
       "tag": "0066_wave_f_field",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1780000150000,
+      "tag": "0067_wave_g_platform",
+      "breakpoints": true
     }
   ]
 }

@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "監査ログ"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -516,6 +517,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "データ保持とエクスポート",
+        "subtitle": "保持 v1 はポリシーを超えた通知を削除します。法定の安全記録には決して触れません。",
+        "keepForever": "無期限に保持",
+        "months": "{count} か月",
+        "scopeNote": "アプリ内通知のみが対象です。点検・許可証・防火記録簿・COSHH・リスクアセスメントは常に保持されます。",
+        "savedToast": "保持ポリシーを保存しました。"
+      },
+      "exportData": {
+        "button": "テナントデータをダウンロード(JSON)",
+        "hint": "すべてを 1 つの JSON にまとめます。移行やオフボーディング用。管理者のみ。"
       }
     },
     "customFields": {
@@ -579,6 +592,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "監査ログ",
+      "subtitle": "全モジュールのイベントを、テナント全体の新しい順のひとつのストリームで表示します。",
+      "empty": "イベントはまだありません。",
+      "loadMore": "さらに読み込む",
+      "systemActor": "システム",
+      "columns": {
+        "when": "日時",
+        "module": "モジュール",
+        "event": "イベント",
+        "actor": "実行者",
+        "detail": "詳細"
+      },
+      "modules": {
+        "all": "すべて",
+        "actions": "アクション",
+        "observations": "観察記録",
+        "permits": "許可証",
+        "coshh": "COSHH",
+        "riskAssessments": "リスクアセスメント",
+        "fireSafety": "防火",
+        "contractors": "請負業者"
       }
     }
   },
@@ -5472,5 +5509,32 @@
     "itemsDelivered": "キューの {count} 件を同期しました",
     "itemRejected": "キューの項目がサーバーに拒否されました。内容を確認して再入力してください。",
     "queuedToast": "接続がありません。キューに保存しました。自動的に同期されます。"
+  },
+  "notifications": {
+    "bellLabel": "通知({count} 件未読)",
+    "title": "通知",
+    "markAllRead": "すべて既読にする",
+    "empty": "まだ何もありません。最新の状態です。",
+    "kinds": {
+      "action_assigned": "アクション割り当て",
+      "approval_pending": "承認待ち",
+      "approval_decided": "承認結果",
+      "heads_up": "お知らせ",
+      "issue_reported": "観察記録の報告",
+      "schedule_missed": "未実施の点検",
+      "action_due": "期限間近のアクション",
+      "document_expiry": "文書の有効期限"
+    },
+    "prefs": {
+      "title": "メール通知",
+      "subtitle": "オフにするとメールのみ停止します。ヘッダーのベルには常に表示されます。",
+      "saveError": "設定を保存できませんでした。",
+      "keys": {
+        "emailActionReminders": "アクション期限/超過リマインダー",
+        "emailScheduleMissed": "未実施の予定点検",
+        "emailDocumentExpiry": "文書期限リマインダー",
+        "emailMaintenance": "保全リマインダー"
+      }
+    }
   }
 }

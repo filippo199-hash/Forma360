@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Journal d'audit"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -516,6 +517,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Rétention et export des données",
+        "subtitle": "La rétention v1 supprime les notifications au-delà de la politique. Les registres de sécurité réglementaires ne sont jamais touchés.",
+        "keepForever": "Conserver pour toujours",
+        "months": "{count} mois",
+        "scopeNote": "S'applique uniquement aux notifications in-app. Inspections, permis, registre incendie, COSHH et évaluations des risques sont toujours conservés.",
+        "savedToast": "Politique de rétention enregistrée."
+      },
+      "exportData": {
+        "button": "Télécharger les données du locataire (JSON)",
+        "hint": "Tout dans un seul document JSON — portabilité ou offboarding. Administrateurs uniquement."
       }
     },
     "customFields": {
@@ -579,6 +592,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Journal d'audit",
+      "subtitle": "Les événements de tous les modules dans un flux unique, antichronologique, à l'échelle du locataire.",
+      "empty": "Aucun événement pour l'instant.",
+      "loadMore": "Charger les plus anciens",
+      "systemActor": "Système",
+      "columns": {
+        "when": "Quand",
+        "module": "Module",
+        "event": "Événement",
+        "actor": "Par",
+        "detail": "Détail"
+      },
+      "modules": {
+        "all": "Tous",
+        "actions": "Actions",
+        "observations": "Observations",
+        "permits": "Permis",
+        "coshh": "COSHH",
+        "riskAssessments": "Évaluations des risques",
+        "fireSafety": "Sécurité incendie",
+        "contractors": "Sous-traitants"
       }
     }
   },
@@ -5479,5 +5516,32 @@
     "itemsDelivered": "{count} éléments synchronisés",
     "itemRejected": "Un élément en attente a été rejeté par le serveur — vérifiez et ressaisissez-le.",
     "queuedToast": "Pas de connexion — enregistré dans la file. Synchronisation automatique."
+  },
+  "notifications": {
+    "bellLabel": "Notifications ({count} non lues)",
+    "title": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "empty": "Rien pour l'instant — vous êtes à jour.",
+    "kinds": {
+      "action_assigned": "Action attribuée",
+      "approval_pending": "Approbation en attente",
+      "approval_decided": "Approbation décidée",
+      "heads_up": "Note d'information",
+      "issue_reported": "Observation signalée",
+      "schedule_missed": "Inspections manquées",
+      "action_due": "Actions à échéance",
+      "document_expiry": "Expiration de document"
+    },
+    "prefs": {
+      "title": "Notifications par e-mail",
+      "subtitle": "Désactiver n'éteint que l'e-mail — la cloche de l'en-tête l'affiche toujours.",
+      "saveError": "Impossible d'enregistrer la préférence.",
+      "keys": {
+        "emailActionReminders": "Rappels d'actions à échéance/en retard",
+        "emailScheduleMissed": "Inspections planifiées manquées",
+        "emailDocumentExpiry": "Rappels d'expiration de documents",
+        "emailMaintenance": "Rappels de maintenance"
+      }
+    }
   }
 }

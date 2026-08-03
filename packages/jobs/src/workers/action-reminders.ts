@@ -15,6 +15,7 @@
  */
 import type { Database } from '@forma360/db/client';
 import { actions, user } from '@forma360/db/schema';
+import { notifyInApp } from '@forma360/api';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm';
@@ -93,7 +94,7 @@ export interface ActionRemindersDeps {
   appUrl: string;
   /** Send one digest email to one assignee. Injected; tests fake it. */
   notify: (
-    recipient: { email: string; name: string },
+    recipient: { email: string; name: string; locale?: string | null },
     payload: {
       tenantId: string;
       overdue: DueActionRow[];
@@ -135,6 +136,8 @@ export async function runActionReminders(
       tenantId: user.tenantId,
       name: user.name,
       email: user.email,
+      locale: user.locale,
+      notificationPrefs: user.notificationPrefs,
       deactivatedAt: user.deactivatedAt,
     })
     .from(user)
@@ -154,9 +157,23 @@ export async function runActionReminders(
     }
     const overdue = rows.filter((r) => r.bucket === 'overdue');
     const dueSoon = rows.filter((r) => r.bucket === 'due_soon');
+    // PF-23: the bell always learns; the pref only silences the email.
+    await notifyInApp(deps.db, {
+      tenantId: rows[0]?.tenantId ?? '',
+      userId: recipient.id,
+      kind: 'action_due',
+      title: `${overdue.length + dueSoon.length} action(s) need attention`,
+      body: `${overdue.length} overdue, ${dueSoon.length} due soon`,
+      href: '/actions?mine=1',
+    });
+    if (recipient.notificationPrefs['emailActionReminders'] === false) {
+      reminded += rows.length;
+      await stampReminded(deps.db, overdue, dueSoon, now);
+      continue;
+    }
     try {
       await deps.notify(
-        { email: recipient.email, name: recipient.name },
+        { email: recipient.email, name: recipient.name, locale: recipient.locale },
         {
           tenantId: rows[0]?.tenantId ?? '',
           overdue,
@@ -173,23 +190,27 @@ export async function runActionReminders(
     }
     emails += 1;
     reminded += rows.length;
-    const overdueIds = overdue.map((r) => r.actionId);
-    const dueSoonIds = dueSoon.map((r) => r.actionId);
-    if (overdueIds.length > 0) {
-      await deps.db
-        .update(actions)
-        .set({ overdueRemindedAt: now })
-        .where(inArray(actions.id, overdueIds));
-    }
-    if (dueSoonIds.length > 0) {
-      await deps.db
-        .update(actions)
-        .set({ dueSoonRemindedAt: now })
-        .where(inArray(actions.id, dueSoonIds));
-    }
+    await stampReminded(deps.db, overdue, dueSoon, now);
   }
   deps.logger.info({ emails, reminded }, '[action-reminders] run complete');
   return { emails, reminded };
+}
+
+/** Stamp both reminder buckets — shared by the email and email-muted paths. */
+async function stampReminded(
+  db: Database,
+  overdue: DueActionRow[],
+  dueSoon: DueActionRow[],
+  now: Date,
+): Promise<void> {
+  const overdueIds = overdue.map((r) => r.actionId);
+  const dueSoonIds = dueSoon.map((r) => r.actionId);
+  if (overdueIds.length > 0) {
+    await db.update(actions).set({ overdueRemindedAt: now }).where(inArray(actions.id, overdueIds));
+  }
+  if (dueSoonIds.length > 0) {
+    await db.update(actions).set({ dueSoonRemindedAt: now }).where(inArray(actions.id, dueSoonIds));
+  }
 }
 
 /** Plain-text line block for the email body. */

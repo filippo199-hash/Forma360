@@ -74,6 +74,7 @@ import {
   SCHEDULE_MISSED_SWEEP_CRON,
   type MissedOccurrence,
 } from './workers/schedule-missed-sweep';
+import { createRetentionSweepHandler, RETENTION_SWEEP_CRON } from './workers/retention-sweep';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -149,6 +150,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   const userAnonymisationWorker = new Worker(
     QUEUE_NAMES.USER_ANONYMISATION,
     createUserAnonymisationHandler({
+      db: workerDb,
       logger: logger.child({ handler: 'user-anonymisation' }),
     }),
     workerOptions,
@@ -323,6 +325,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       notify: async (r: PendingAckReminder, viewUrl: string) => {
         await sendTemplatedEmail({
           to: r.email,
+          locale: r.locale ?? undefined,
           templateKey: 'risk-assessment-ack-reminder',
           variables: {
             recipientName: r.userName,
@@ -355,11 +358,12 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       notify: async (
         kind: PermitWatchKind,
         permit: ExpiredOpenPermit,
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale?: string | null },
         viewUrl: string,
       ) => {
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: kind === 'warning' ? 'permit-expiry-warning' : 'permit-expiry-escalation',
           variables: {
             recipientName: recipient.name,
@@ -394,7 +398,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       logger: logger.child({ handler: 'fire-due-digest' }),
       appUrl: env.APP_URL,
       notify: async (
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale?: string | null },
         digest: FireDigest,
         viewUrl: string,
       ) => {
@@ -402,6 +406,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
         const overdue = digest.overdueChecks.length + digest.overdueDoors.length;
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: 'fire-due-digest',
           variables: {
             recipientName: recipient.name,
@@ -435,11 +440,12 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       logger: logger.child({ handler: 'action-reminders' }),
       appUrl: env.APP_URL,
       notify: async (
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale?: string | null },
         payload: { overdue: DueActionRow[]; dueSoon: DueActionRow[]; viewUrl: string },
       ) => {
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: 'action-due-digest',
           variables: {
             recipientName: recipient.name,
@@ -486,12 +492,13 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       logger: logger.child({ handler: 'document-expiry' }),
       appUrl: env.APP_URL,
       notify: async (
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale?: string | null },
         doc: ExpiringDocument,
         viewUrl: string,
       ) => {
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: 'document-expiry',
           variables: {
             recipientName: recipient.name,
@@ -522,12 +529,13 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       logger: logger.child({ handler: 'schedule-missed-sweep' }),
       appUrl: env.APP_URL,
       notify: async (
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale?: string | null },
         missed: MissedOccurrence[],
         viewUrl: string,
       ) => {
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: 'schedule-missed',
           variables: {
             recipientName: recipient.name,
@@ -550,6 +558,23 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     { cron: SCHEDULE_MISSED_SWEEP_CRON },
     '[worker] registered schedule-missed-sweep repeatable',
   );
+
+  // ─── Platform PF-31 — retention v1 (notification centre only) ─────────
+  const retentionSweepWorker = new Worker(
+    QUEUE_NAMES.RETENTION_SWEEP,
+    createRetentionSweepHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'retention-sweep' }),
+    }),
+    workerOptions,
+  );
+  const retentionSweepQueue = getQueue(QUEUE_NAMES.RETENTION_SWEEP, connection);
+  await retentionSweepQueue.upsertJobScheduler(
+    'retention-sweep',
+    { pattern: RETENTION_SWEEP_CRON, tz: 'UTC' },
+    { name: 'retention-sweep', data: {} },
+  );
+  logger.info({ cron: RETENTION_SWEEP_CRON }, '[worker] registered retention-sweep repeatable');
 
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
@@ -598,6 +623,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     headsUpPublishWorker,
     documentExpiryWorker,
     scheduleMissedSweepWorker,
+    retentionSweepWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {

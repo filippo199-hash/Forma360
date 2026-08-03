@@ -14,6 +14,7 @@ import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { notifyInApp } from '../notify';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
@@ -26,6 +27,7 @@ interface ApprovalsRouterDeps {
   sendEmail:
     | ((input: {
         to: string;
+        locale?: string | undefined;
         templateKey: string;
         variables: Record<string, string>;
       }) => Promise<unknown>)
@@ -61,7 +63,12 @@ async function notifyDecision(
   if (sendEmail === null || input.submitterUserId === input.approverUserId) return;
   try {
     const rows = await db
-      .select({ name: user.name, email: user.email, deactivatedAt: user.deactivatedAt })
+      .select({
+        name: user.name,
+        email: user.email,
+        locale: user.locale,
+        deactivatedAt: user.deactivatedAt,
+      })
       .from(user)
       .where(and(eq(user.tenantId, input.tenantId), eq(user.id, input.submitterUserId)))
       .limit(1);
@@ -73,6 +80,15 @@ async function notifyDecision(
     ) {
       return;
     }
+    // PF-23: the in-app bell mirrors the email.
+    await notifyInApp(db, {
+      tenantId: input.tenantId,
+      userId: input.submitterUserId,
+      kind: 'approval_decided',
+      title: input.inspectionTitle,
+      body: input.decision,
+      href: `/inspections/${input.inspectionId}/status`,
+    });
     const approverRows = await db
       .select({ name: user.name })
       .from(user)
@@ -80,6 +96,7 @@ async function notifyDecision(
       .limit(1);
     await sendEmail({
       to: submitter.email,
+      locale: submitter.locale ?? undefined,
       templateKey: 'inspection-approval-decided',
       variables: {
         recipientName: submitter.name,

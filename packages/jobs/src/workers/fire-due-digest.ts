@@ -232,7 +232,7 @@ export interface FireDueDigestDeps {
   appUrl: string;
   /** Send one digest email. Injected so tests fake it. */
   notify: (
-    recipient: { email: string; name: string },
+    recipient: { email: string; name: string; locale?: string | null },
     digest: FireDigest,
     viewUrl: string,
   ) => Promise<void>;
@@ -258,7 +258,11 @@ export async function runFireDueDigest(
     for (const holder of holders) {
       if (holder.email.length === 0) continue;
       try {
-        await deps.notify({ email: holder.email, name: holder.name }, digest, viewUrl);
+        await deps.notify(
+          { email: holder.email, name: holder.name, locale: holder.locale },
+          digest,
+          viewUrl,
+        );
         emails += 1;
       } catch (err) {
         deps.logger.error(

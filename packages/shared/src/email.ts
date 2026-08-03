@@ -192,6 +192,12 @@ export interface TemplatedEmail {
   templateKey: string;
   /** Replacements for `{name}` placeholders in subject + body + cta. */
   variables: Record<string, string>;
+  /**
+   * Recipient's language (PF-20). When a translation exists at
+   * packages/i18n/emails/<locale>/<templateKey>.json it is used; anything
+   * missing falls back to English. Omit for English.
+   */
+  locale?: string | undefined;
 }
 
 export type SendTemplatedEmail = (email: TemplatedEmail) => Promise<DeliveryResult>;
@@ -203,12 +209,31 @@ export type SendTemplatedEmail = (email: TemplatedEmail) => Promise<DeliveryResu
  * but every field is allowed to contain `{var}` placeholders that the
  * dispatcher substitutes at render time.
  */
-export type TemplatedTemplateLoader = (key: string) => Promise<EmailTemplate>;
+export type TemplatedTemplateLoader = (key: string, locale?: string) => Promise<EmailTemplate>;
 
-export const defaultTemplatedTemplateLoader: TemplatedTemplateLoader = (key) => {
+/** Locales with (partial or full) email translations on disk. */
+const TEMPLATE_LOCALE_RE = /^[a-z]{2}$/;
+
+export const defaultTemplatedTemplateLoader: TemplatedTemplateLoader = async (key, locale) => {
   const tpl = EMAIL_TEMPLATES[key];
   if (tpl === undefined) {
     return Promise.reject(new Error(`Unknown email template: ${key}`));
+  }
+  // PF-20: per-recipient language. Translations are read from disk lazily
+  // (the EN registry stays statically imported so the bundler always ships
+  // it); a missing/unreadable translation falls back to English silently —
+  // a safety alert in the wrong language beats no alert.
+  if (locale !== undefined && locale !== 'en' && TEMPLATE_LOCALE_RE.test(locale)) {
+    try {
+      const { readFile } = await import('node:fs/promises');
+      const { fileURLToPath } = await import('node:url');
+      const { dirname, join } = await import('node:path');
+      const here = dirname(fileURLToPath(import.meta.url));
+      const raw = await readFile(join(here, '..', '..', 'i18n', 'emails', locale, `${key}.json`), 'utf-8');
+      return templateSchema.parse(JSON.parse(raw));
+    } catch {
+      // fall through to English
+    }
   }
   return Promise.resolve(templateSchema.parse(tpl));
 };
@@ -409,7 +434,7 @@ export function createSendTemplatedEmail(deps: TemplatedEmailDeps): SendTemplate
   }
 
   return async function sendTemplatedEmail(email): Promise<DeliveryResult> {
-    const template = await loadTemplate(email.templateKey);
+    const template = await loadTemplate(email.templateKey, email.locale);
     // productName is injected for every send; an explicit caller variable of
     // the same name wins (none exist today, but the spread order allows it).
     const { subject, text } = renderTemplatedEmail(template, {

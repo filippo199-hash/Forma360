@@ -16,6 +16,8 @@ export interface PermissionHolder {
   userId: string;
   name: string;
   email: string;
+  /** Preferred email language (PF-20); null = English. */
+  locale: string | null;
 }
 
 /**
@@ -28,7 +30,7 @@ export async function usersHoldingPermission(
   perm: PermissionKey,
 ): Promise<PermissionHolder[]> {
   const rows = await db
-    .select({ userId: user.id, name: user.name, email: user.email })
+    .select({ userId: user.id, name: user.name, email: user.email, locale: user.locale })
     .from(user)
     .innerJoin(permissionSets, eq(user.permissionSetId, permissionSets.id))
     .where(

@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { cn } from '../../lib/cn';
+import { trpc } from '../../lib/trpc/client';
 
 // Native language names — intentionally not translated.
 const LOCALE_LABELS: Record<Locale, string> = {
@@ -33,9 +34,15 @@ export function LanguageSelect() {
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
+  // PF-20: the choice used to live only in the URL — it now persists to the
+  // user record (drives email language) and the next-intl cookie (drives
+  // future sessions). Persistence is best-effort; navigation never waits.
+  const setLocale = trpc.users.setLocale.useMutation();
 
   function switchLocale(next: Locale) {
     if (next === current) return;
+    setLocale.mutate({ locale: next });
+    document.cookie = `NEXT_LOCALE=${next};path=/;max-age=31536000;samesite=lax`;
     const segments = pathname.split('/');
     if (segments.length > 1) segments[1] = next;
     const nextPath = segments.join('/') || `/${next}`;

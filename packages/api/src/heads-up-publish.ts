@@ -22,6 +22,7 @@ import {
   user,
 } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
+import { notifyInAppMany } from './notify';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -145,6 +146,22 @@ export async function publishHeadsUp(
 
   if (values.length > 0) {
     await db.insert(headsUpRecipients).values(values).onConflictDoNothing();
+    // PF-23: the bell mirrors the Heads Up fan-out.
+    const titleRows = await db
+      .select({ title: headsUps.title })
+      .from(headsUps)
+      .where(eq(headsUps.id, input.headsUpId))
+      .limit(1);
+    await notifyInAppMany(
+      db,
+      values.map((v) => v.userId),
+      {
+        tenantId: input.tenantId,
+        kind: 'heads_up',
+        title: titleRows[0]?.title ?? '',
+        href: `/heads-up/${input.headsUpId}`,
+      },
+    );
   }
 
   await db
