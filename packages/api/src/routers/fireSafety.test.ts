@@ -1086,4 +1086,76 @@ describe('fireSafety router', () => {
     const loaded = await caller.fireSafety.fras.get({ fraId: fra.id });
     expect(loaded.referenceNumber).toBe('FRA-10000');
   });
+
+
+  it('FS-E30: a check links to an asset and assetHistory joins the service history (PF-17)', async () => {
+    const caller = callerFor(adminId);
+    const { id: buildingId } = await createOffice(caller);
+    const assetId = newId();
+    await db.insert(schema.assets).values({ id: assetId, tenantId, name: 'Extinguisher #12' });
+
+    await caller.fireSafety.logbook.upsertCheck({
+      buildingId,
+      checkType: 'extinguisher_visual',
+      assetId,
+    });
+    await caller.fireSafety.logbook.recordEntry({
+      buildingId,
+      checkType: 'extinguisher_visual',
+      result: 'pass',
+      notes: 'Gauge green, pin intact',
+    });
+
+    const history = await caller.fireSafety.logbook.assetHistory({ assetId });
+    expect(history.checks).toHaveLength(1);
+    expect(history.checks[0]?.checkType).toBe('extinguisher_visual');
+    expect(history.checks[0]?.buildingName).toBe('Unit 4 Office');
+    expect(history.entries).toHaveLength(1);
+    expect(history.entries[0]?.notes).toMatch(/Gauge green/);
+
+    // Unlinking clears the join.
+    await caller.fireSafety.logbook.upsertCheck({
+      buildingId,
+      checkType: 'extinguisher_visual',
+      assetId: null,
+    });
+    const cleared = await caller.fireSafety.logbook.assetHistory({ assetId });
+    expect(cleared.checks).toHaveLength(0);
+
+    // Cross-tenant / unknown asset refused on link.
+    await expect(
+      caller.fireSafety.logbook.upsertCheck({
+        buildingId,
+        checkType: 'alarm_test',
+        assetId: newId(),
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('FS-E31: recordEntry with a clientRequestId is idempotent (PF-10)', async () => {
+    const caller = callerFor(adminId);
+    const { id: buildingId } = await createOffice(caller);
+    const clientRequestId = newId();
+
+    const first = await caller.fireSafety.logbook.recordEntry({
+      buildingId,
+      checkType: 'alarm_test',
+      result: 'pass',
+      clientRequestId,
+    });
+    const retry = await caller.fireSafety.logbook.recordEntry({
+      buildingId,
+      checkType: 'alarm_test',
+      result: 'pass',
+      clientRequestId,
+    });
+    expect(retry.id).toBe(first.id);
+    expect((retry as { deduped?: boolean }).deduped).toBe(true);
+
+    const rows = await db
+      .select()
+      .from(schema.fireLogbookEntries)
+      .where(eq(schema.fireLogbookEntries.clientRequestId, clientRequestId));
+    expect(rows).toHaveLength(1);
+  });
 });

@@ -1,0 +1,8 @@
+{
+  "subject": "⚠️ Kritischer Alarm: {referenceNumber} – {issueTitle}",
+  "preheader": "Eine kritische Beobachtung wurde gemeldet und erfordert sofortige Aufmerksamkeit.",
+  "greeting": "Kritische Beobachtung gemeldet — sofortige Aufmerksamkeit erforderlich.",
+  "body": "Referenz: {referenceNumber}\n\nTitel: {issueTitle}\n\nDiese Beobachtung wurde als kritisch markiert. Öffnen Sie {productName} sofort, um zu prüfen und zu reagieren.",
+  "cta": "Kritische Beobachtung ansehen",
+  "footer": "Sie erhalten diesen kritischen Alarm, weil Sie Empfänger dieser Beobachtungskategorie sind."
+}

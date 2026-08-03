@@ -1,0 +1,8 @@
+{
+  "subject": "Aún en el sitio: {who} ({contractorName})",
+  "preheader": "{contractorName} lleva más de 24 horas en el sitio.",
+  "greeting": "Atención:",
+  "body": "{who} de {contractorName} registró su entrada el {checkedInAt} y aún no ha salido: más de 24 horas. Visita: {title}{siteLine}. Confirma que sigue en el sitio o registra su salida.",
+  "cta": "Abrir el panel de presencia",
+  "footer": "Recibes este correo porque programaste esta visita o administras el acceso."
+}

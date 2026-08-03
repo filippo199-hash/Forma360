@@ -1,0 +1,8 @@
+{
+  "subject": "Documento por vencer: {requirementName} — {contractorName}",
+  "preheader": "{requirementName} vence el {expiresOn}.",
+  "greeting": "Hola:",
+  "body": "Tu documento \"{requirementName}\" de {contractorName} vence el {expiresOn}. Sube una versión renovada para seguir en cumplimiento: {url}",
+  "cta": "Subir un documento nuevo",
+  "footer": "Recibes este correo porque eres el contacto de este contratista en {productName}."
+}

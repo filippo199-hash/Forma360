@@ -29,6 +29,8 @@ import { AssetContractorsSection } from '../../../../src/components/contractors/
 import { cn } from '../../../../src/lib/cn';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { brandHasModule } from '@forma360/shared/brand';
+import { activeBrand } from '../../../../src/lib/brand';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type Tab =
@@ -58,6 +60,10 @@ export default function AssetDetailPage() {
   const canRecord = useHasPermission('assets.readings.record');
   const canManageMaintenance = useHasPermission('assets.maintenance.manage');
   const canViewContractors = useHasPermission('contractors.view');
+  // PF-17: the fire logbook can target this asset — show its service
+  // history here so extinguisher #12 is one page, not two systems.
+  const hasFireView = useHasPermission('fireSafety.view');
+  const canViewFire = brandHasModule(activeBrand.id, 'fireSafety') && hasFireView;
   const canLinkContractors = useHasPermission('contractors.manage');
   const { label: placeLabel, noneLabel: placeNone } = usePlaceTerms();
 
@@ -106,6 +112,16 @@ export default function AssetDetailPage() {
   } = trpc.maintenancePrograms.listForAsset.useQuery(
     { assetId },
     { enabled: tab === 'maintenance' },
+  );
+  // PF-18: time/usage maintenance PLANS for this asset (the page previously
+  // showed only programs — the second maintenance system was invisible).
+  const plansQuery = trpc.maintenancePlans.listForAsset.useQuery(
+    { assetId },
+    { enabled: assetId !== '' },
+  );
+  const fireHistory = trpc.fireSafety.logbook.assetHistory.useQuery(
+    { assetId },
+    { enabled: assetId !== '' && canViewFire },
   );
   const { data: programsListData } = trpc.maintenancePrograms.list.useQuery(undefined, {
     enabled: tab === 'maintenance' && canManageMaintenance,
@@ -602,6 +618,118 @@ export default function AssetDetailPage() {
                 >
                   {tMaintPrograms('attachProgramButton')}
                 </Button>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {/* PF-18: maintenance plans (time/usage) attached to this asset. */}
+          <Card>
+            <CardContent className="space-y-2 p-6">
+              <h2 className="text-base font-semibold">{t('plans.heading')}</h2>
+              {(plansQuery.data ?? []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t('plans.empty')}</p>
+              ) : (
+                <ul className="divide-y rounded-md border">
+                  {(plansQuery.data ?? []).map((pl) => (
+                    <li
+                      key={pl.planId}
+                      className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5"
+                    >
+                      <div>
+                        <Link
+                          href={`/${locale}/maintenance/${pl.planId}`}
+                          className="font-medium hover:underline"
+                        >
+                          {pl.planName ?? pl.planId}
+                        </Link>
+                        <p className="text-xs text-muted-foreground">
+                          {pl.planType === 'usage'
+                            ? t('plans.usageMeta', {
+                                interval: pl.intervalUsage ?? '',
+                                unit: pl.usageUnit ?? '',
+                                current: pl.latestReadingValue ?? '—',
+                              })
+                            : t('plans.timeMeta', {
+                                interval: pl.intervalDays ?? 0,
+                                last: pl.lastServiceDate ?? '—',
+                              })}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          'rounded-full px-2 py-0.5 text-xs font-medium',
+                          pl.status === 'overdue'
+                            ? 'bg-destructive/10 text-destructive'
+                            : pl.status === 'approaching'
+                              ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100'
+                              : 'bg-muted text-muted-foreground',
+                        )}
+                      >
+                        {t(`plans.status.${pl.status}` as never)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* PF-17: fire logbook history for this asset. */}
+          {canViewFire && (fireHistory.data?.checks.length ?? 0) > 0 ? (
+            <Card>
+              <CardContent className="space-y-2 p-6">
+                <h2 className="text-base font-semibold">{t('fireHistory.heading')}</h2>
+                <ul className="space-y-1 text-sm">
+                  {(fireHistory.data?.checks ?? []).map((c) => (
+                    <li key={c.id} className="text-muted-foreground">
+                      {t('fireHistory.checkLine', {
+                        type: c.checkType.replace(/_/g, ' '),
+                        building: c.buildingName,
+                      })}
+                    </li>
+                  ))}
+                </ul>
+                {(fireHistory.data?.entries ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t('fireHistory.empty')}</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="border-b bg-muted/40 text-left">
+                        <tr>
+                          <th className="px-3 py-2 font-medium">{t('fireHistory.performedAt')}</th>
+                          <th className="px-3 py-2 font-medium">{t('fireHistory.type')}</th>
+                          <th className="px-3 py-2 font-medium">{t('fireHistory.result')}</th>
+                          <th className="px-3 py-2 font-medium">{t('fireHistory.notes')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(fireHistory.data?.entries ?? []).slice(0, 20).map((e) => (
+                          <tr key={e.id} className="border-b last:border-0">
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              {new Date(e.performedAt).toLocaleDateString(locale)}
+                            </td>
+                            <td className="px-3 py-2">{e.checkType.replace(/_/g, ' ')}</td>
+                            <td className="px-3 py-2">
+                              <span
+                                className={cn(
+                                  'rounded-full px-2 py-0.5 text-xs font-medium',
+                                  e.result === 'fail'
+                                    ? 'bg-destructive/10 text-destructive'
+                                    : e.result === 'defects_found'
+                                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100'
+                                      : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
+                                )}
+                              >
+                                {e.result}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">{e.notes}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : null}

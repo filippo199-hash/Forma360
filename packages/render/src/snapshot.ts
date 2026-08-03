@@ -9,6 +9,15 @@
  * snapshot can be cached, hashed, and shipped to any renderer.
  */
 import {
+  actions,
+  incidentAbsences,
+  incidentEvents,
+  incidentEvidence,
+  incidentFindings,
+  incidentInvestigations,
+  incidentPersons,
+  incidentWitnessStatements,
+  incidents,
   inspectionApprovals,
   inspectionSignatures,
   inspections,
@@ -28,6 +37,7 @@ import {
   fireRiskAssessments,
   fireSignificantFindings,
 } from '@forma360/db/schema';
+import { totalDaysLost } from '@forma360/shared/incidents';
 import type {
   GasLimit,
   GasReading,
@@ -38,7 +48,7 @@ import type {
 } from '@forma360/shared/permits';
 import type { RiskMatrixConfig } from '@forma360/shared/risk-matrix';
 import type { Database } from '@forma360/db/client';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 
 export interface InspectionRenderSnapshot {
@@ -749,5 +759,391 @@ export async function loadFraSnapshot(
 }
 
 export function hashFraSnapshot(snap: FraRenderSnapshot): string {
+  return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
+}
+
+// ─── Incident report (FreeHS module B5) ─────────────────────────────────────
+
+export interface IncidentRenderSnapshot {
+  incident: {
+    id: string;
+    tenantId: string;
+    referenceNumber: string;
+    title: string;
+    description: string;
+    kind: string;
+    severity: string;
+    potentialSeverity: string | null;
+    status: string;
+    confidential: boolean;
+    occurredAt: string;
+    reportedAt: string;
+    reportedByName: string | null;
+    siteName: string | null;
+    locationText: string;
+    details: Record<string, unknown>;
+    investigationLevel: string | null;
+    leadInvestigatorName: string | null;
+    riddorCategory: string | null;
+    riddorDeterminationNote: string;
+    riddorScreenedByName: string | null;
+    riddorScreenedAt: string | null;
+    riddorDeadlineAt: string | null;
+    riddorSubmittedAt: string | null;
+    riddorSubmittedByName: string | null;
+    riddorSubmissionRoute: string | null;
+    riddorHseReference: string | null;
+    closedByName: string | null;
+    closedAt: string | null;
+    effectivenessDueAt: string | null;
+    effectivenessVerdict: string | null;
+    effectivenessNote: string;
+    createdAt: string;
+  };
+  persons: Array<{
+    name: string;
+    category: string;
+    injury: Record<string, unknown>;
+    ohFollowUpRequired: boolean;
+    returnedToWork: boolean;
+    onRestrictedDuties: boolean;
+    daysLost: number;
+  }>;
+  totalDaysLost: number;
+  investigations: Array<{
+    revision: number;
+    method: string | null;
+    immediateCause: string;
+    underlyingCause: string;
+    contributingFactors: ReadonlyArray<string>;
+    whyChain: ReadonlyArray<{ text: string; isRootCause: boolean }> | null;
+    causalFactors: ReadonlyArray<{ category: string; narrative: string }> | null;
+    timelineEntries: ReadonlyArray<{ at: string; text: string }>;
+    conclusionSummary: string;
+    rootCauseStatement: string;
+    recurrenceLikelihood: string | null;
+    lessonsLearned: string;
+    status: string;
+    submittedByName: string | null;
+    submittedAt: string | null;
+    approvedByName: string | null;
+    approvedAt: string | null;
+  }>;
+  findings: Array<{
+    category: string;
+    priority: string;
+    description: string;
+    requiresAction: boolean;
+    actionReference: string | null;
+    actionStatus: string | null;
+  }>;
+  evidence: Array<{
+    kind: string;
+    filename: string | null;
+    caption: string;
+    collectedByName: string | null;
+    collectedAt: string;
+  }>;
+  witnesses: Array<{
+    witnessName: string;
+    statement: string;
+    takenByName: string | null;
+    takenAt: string;
+    signed: boolean;
+  }>;
+  linkedActions: Array<{
+    referenceNumber: string | null;
+    title: string;
+    status: string;
+    assigneeName: string | null;
+    dueAt: string | null;
+  }>;
+  events: Array<{
+    id: string;
+    kind: string;
+    detail: Record<string, unknown>;
+    actorName: string | null;
+    createdAt: string;
+  }>;
+}
+
+/**
+ * Load an incident into a renderer-ready snapshot — the single-document
+ * record (incident + investigation + signatures) an insurer pack or an
+ * audit sample needs. Returns `null` when the incident doesn't exist in
+ * the requested tenant.
+ */
+export async function loadIncidentSnapshot(
+  db: Database,
+  input: { tenantId: string; incidentId: string },
+): Promise<IncidentRenderSnapshot | null> {
+  const incidentRows = await db
+    .select()
+    .from(incidents)
+    .where(and(eq(incidents.tenantId, input.tenantId), eq(incidents.id, input.incidentId)))
+    .limit(1);
+  const incident = incidentRows[0];
+  if (incident === undefined) return null;
+
+  const [
+    personRows,
+    absenceRows,
+    investigationRows,
+    findingRows,
+    evidenceRows,
+    witnessRows,
+    actionRows,
+    eventRows,
+    siteRow,
+  ] = await Promise.all([
+    db
+      .select()
+      .from(incidentPersons)
+      .where(
+        and(
+          eq(incidentPersons.tenantId, input.tenantId),
+          eq(incidentPersons.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentPersons.createdAt)),
+    db
+      .select()
+      .from(incidentAbsences)
+      .where(
+        and(
+          eq(incidentAbsences.tenantId, input.tenantId),
+          eq(incidentAbsences.incidentId, incident.id),
+        ),
+      ),
+    db
+      .select()
+      .from(incidentInvestigations)
+      .where(
+        and(
+          eq(incidentInvestigations.tenantId, input.tenantId),
+          eq(incidentInvestigations.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentInvestigations.revision)),
+    db
+      .select()
+      .from(incidentFindings)
+      .where(
+        and(
+          eq(incidentFindings.tenantId, input.tenantId),
+          eq(incidentFindings.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentFindings.createdAt)),
+    db
+      .select()
+      .from(incidentEvidence)
+      .where(
+        and(
+          eq(incidentEvidence.tenantId, input.tenantId),
+          eq(incidentEvidence.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentEvidence.createdAt)),
+    db
+      .select()
+      .from(incidentWitnessStatements)
+      .where(
+        and(
+          eq(incidentWitnessStatements.tenantId, input.tenantId),
+          eq(incidentWitnessStatements.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentWitnessStatements.createdAt)),
+    db
+      .select({
+        referenceNumber: actions.referenceNumber,
+        title: actions.title,
+        status: actions.status,
+        assigneeUserId: actions.assigneeUserId,
+        dueAt: actions.dueAt,
+        id: actions.id,
+      })
+      .from(actions)
+      .where(
+        and(
+          eq(actions.tenantId, input.tenantId),
+          eq(actions.sourceType, 'incident'),
+          eq(actions.sourceId, incident.id),
+        ),
+      )
+      .orderBy(asc(actions.createdAt)),
+    db
+      .select()
+      .from(incidentEvents)
+      .where(
+        and(
+          eq(incidentEvents.tenantId, input.tenantId),
+          eq(incidentEvents.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentEvents.createdAt))
+      .limit(300),
+    incident.siteId === null
+      ? Promise.resolve(null)
+      : db
+          .select({ name: sites.name })
+          .from(sites)
+          .where(and(eq(sites.tenantId, input.tenantId), eq(sites.id, incident.siteId)))
+          .limit(1)
+          .then((rows) => rows[0] ?? null),
+  ]);
+
+  // Resolve display names in one query.
+  const nameIds = new Set<string>([incident.reportedByUserId]);
+  if (incident.leadInvestigatorUserId !== null) nameIds.add(incident.leadInvestigatorUserId);
+  if (incident.riddorScreenedByUserId !== null) nameIds.add(incident.riddorScreenedByUserId);
+  if (incident.riddorSubmittedByUserId !== null) nameIds.add(incident.riddorSubmittedByUserId);
+  if (incident.closedByUserId !== null) nameIds.add(incident.closedByUserId);
+  for (const row of investigationRows) {
+    if (row.submittedByUserId !== null) nameIds.add(row.submittedByUserId);
+    if (row.approvedByUserId !== null) nameIds.add(row.approvedByUserId);
+  }
+  for (const row of evidenceRows) nameIds.add(row.collectedByUserId);
+  for (const row of witnessRows) nameIds.add(row.takenByUserId);
+  for (const row of eventRows) nameIds.add(row.actorUserId);
+  for (const row of actionRows) {
+    if (row.assigneeUserId !== null) nameIds.add(row.assigneeUserId);
+  }
+  const userRows =
+    nameIds.size === 0
+      ? []
+      : await db
+          .select({ id: user.id, name: user.name })
+          .from(user)
+          .where(and(eq(user.tenantId, input.tenantId), inArray(user.id, [...nameIds])));
+  const names = new Map(userRows.map((row) => [row.id, row.name]));
+  const nameOf = (id: string | null): string | null =>
+    id === null ? null : (names.get(id) ?? null);
+
+  const nowIso = new Date().toISOString().slice(0, 10);
+  const occurredIso = incident.occurredAt.toISOString().slice(0, 10);
+  const absencesByPerson = new Map<string, Array<{ fromDate: string; toDate: string | null }>>();
+  for (const row of absenceRows) {
+    const list = absencesByPerson.get(row.personId) ?? [];
+    list.push({ fromDate: row.fromDate, toDate: row.toDate });
+    absencesByPerson.set(row.personId, list);
+  }
+
+  const actionRefById = new Map(actionRows.map((row) => [row.id, row]));
+
+  return {
+    incident: {
+      id: incident.id,
+      tenantId: incident.tenantId,
+      referenceNumber: incident.referenceNumber,
+      title: incident.title,
+      description: incident.description,
+      kind: incident.kind,
+      severity: incident.severity,
+      potentialSeverity: incident.potentialSeverity,
+      status: incident.status,
+      confidential: incident.confidential,
+      occurredAt: incident.occurredAt.toISOString(),
+      reportedAt: incident.reportedAt.toISOString(),
+      reportedByName: nameOf(incident.reportedByUserId),
+      siteName: siteRow?.name ?? null,
+      locationText: incident.locationText,
+      details: incident.details,
+      investigationLevel: incident.investigationLevel,
+      leadInvestigatorName: nameOf(incident.leadInvestigatorUserId),
+      riddorCategory: incident.riddorCategory,
+      riddorDeterminationNote: incident.riddorDeterminationNote,
+      riddorScreenedByName: nameOf(incident.riddorScreenedByUserId),
+      riddorScreenedAt: incident.riddorScreenedAt?.toISOString() ?? null,
+      riddorDeadlineAt: incident.riddorDeadlineAt?.toISOString() ?? null,
+      riddorSubmittedAt: incident.riddorSubmittedAt?.toISOString() ?? null,
+      riddorSubmittedByName: nameOf(incident.riddorSubmittedByUserId),
+      riddorSubmissionRoute: incident.riddorSubmissionRoute,
+      riddorHseReference: incident.riddorHseReference,
+      closedByName: nameOf(incident.closedByUserId),
+      closedAt: incident.closedAt?.toISOString() ?? null,
+      effectivenessDueAt: incident.effectivenessDueAt?.toISOString() ?? null,
+      effectivenessVerdict: incident.effectivenessVerdict,
+      effectivenessNote: incident.effectivenessNote,
+      createdAt: incident.createdAt.toISOString(),
+    },
+    persons: personRows.map((row) => ({
+      name: row.name,
+      category: row.category,
+      injury: row.injury as Record<string, unknown>,
+      ohFollowUpRequired: row.ohFollowUpRequired,
+      returnedToWork: row.returnedToWork,
+      onRestrictedDuties: row.onRestrictedDuties,
+      daysLost: totalDaysLost(absencesByPerson.get(row.id) ?? [], occurredIso, nowIso),
+    })),
+    totalDaysLost: totalDaysLost(
+      absenceRows.map((row) => ({ fromDate: row.fromDate, toDate: row.toDate })),
+      occurredIso,
+      nowIso,
+    ),
+    investigations: investigationRows.map((row) => ({
+      revision: row.revision,
+      method: row.method,
+      immediateCause: row.immediateCause,
+      underlyingCause: row.underlyingCause,
+      contributingFactors: row.contributingFactors,
+      whyChain: row.whyChain,
+      causalFactors: row.causalFactors,
+      timelineEntries: row.timelineEntries,
+      conclusionSummary: row.conclusionSummary,
+      rootCauseStatement: row.rootCauseStatement,
+      recurrenceLikelihood: row.recurrenceLikelihood,
+      lessonsLearned: row.lessonsLearned,
+      status: row.status,
+      submittedByName: nameOf(row.submittedByUserId),
+      submittedAt: row.submittedAt?.toISOString() ?? null,
+      approvedByName: nameOf(row.approvedByUserId),
+      approvedAt: row.approvedAt?.toISOString() ?? null,
+    })),
+    findings: findingRows.map((row) => {
+      const action = row.actionId === null ? undefined : actionRefById.get(row.actionId);
+      return {
+        category: row.category,
+        priority: row.priority,
+        description: row.description,
+        requiresAction: row.requiresAction,
+        actionReference: action?.referenceNumber ?? null,
+        actionStatus: action?.status ?? null,
+      };
+    }),
+    evidence: evidenceRows.map((row) => ({
+      kind: row.kind,
+      filename: row.filename,
+      caption: row.caption,
+      collectedByName: nameOf(row.collectedByUserId),
+      collectedAt: row.collectedAt.toISOString(),
+    })),
+    witnesses: witnessRows.map((row) => ({
+      witnessName: row.witnessName,
+      statement: row.statement,
+      takenByName: nameOf(row.takenByUserId),
+      takenAt: row.takenAt.toISOString(),
+      signed: row.signatureData !== null,
+    })),
+    linkedActions: actionRows.map((row) => ({
+      referenceNumber: row.referenceNumber,
+      title: row.title,
+      status: row.status,
+      assigneeName: nameOf(row.assigneeUserId),
+      dueAt: row.dueAt?.toISOString() ?? null,
+    })),
+    events: eventRows.map((row) => ({
+      id: row.id,
+      kind: row.kind,
+      detail: row.detail,
+      actorName: row.actorUserId === 'system' ? null : nameOf(row.actorUserId),
+      createdAt: row.createdAt.toISOString(),
+    })),
+  };
+}
+
+/** Stable content hash for the incident PDF cache key. */
+export function hashIncidentSnapshot(snap: IncidentRenderSnapshot): string {
   return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
 }

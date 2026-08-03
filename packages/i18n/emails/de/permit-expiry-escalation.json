@@ -1,0 +1,8 @@
+{
+  "subject": "Überfälliger Erlaubnisschein — {referenceNumber} {title} lief ab, ohne geschlossen zu werden",
+  "preheader": "Ein offener Erlaubnisschein auf {productName} ist über sein Gültigkeitsfenster hinaus. Es könnte noch jemand drin sein.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Der {typeName}-Erlaubnisschein \"{title}\" ({referenceNumber}){siteLine} lief um {expiredAt} UTC ab und wurde weder geschlossen noch storniert oder verlängert. Die Arbeit könnte unter einem abgelaufenen Schein noch laufen. Bitte prüfen Sie jetzt den Stand der Arbeit und schließen Sie den Schein mit den Abschlussprüfungen — oder verlängern Sie ihn mit erneuter Autorisierung, wenn die Arbeit fortgesetzt werden muss.",
+  "cta": "Erlaubnisschein öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie Unterzeichner (Aussteller, Annehmender oder Autorisierender) dieses Scheins in {productName} sind."
+}

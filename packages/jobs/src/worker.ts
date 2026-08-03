@@ -56,6 +56,38 @@ import {
   FIRE_DUE_DIGEST_CRON,
   type FireDigest,
 } from './workers/fire-due-digest';
+import { createIncidentAlertHandler, type AlertIncident } from './workers/incident-alert';
+import {
+  createIncidentRiddorWatchHandler,
+  INCIDENT_RIDDOR_WATCH_CRON,
+  type RiddorWatchIncident,
+  type RiddorWatchKind,
+} from './workers/incident-riddor-watch';
+import {
+  chaseDetailLines,
+  createIncidentChaseHandler,
+  INCIDENT_CHASE_CRON,
+  type IncidentChaseDigest,
+} from './workers/incident-chase';
+import {
+  actionDigestLines,
+  ACTION_REMINDERS_CRON,
+  createActionRemindersHandler,
+  type DueActionRow,
+} from './workers/action-reminders';
+import { createHeadsUpPublishHandler, HEADS_UP_PUBLISH_CRON } from './workers/heads-up-publish';
+import {
+  createDocumentExpiryHandler,
+  DOCUMENT_EXPIRY_CRON,
+  type ExpiringDocument,
+} from './workers/document-expiry';
+import {
+  createScheduleMissedSweepHandler,
+  missedLines,
+  SCHEDULE_MISSED_SWEEP_CRON,
+  type MissedOccurrence,
+} from './workers/schedule-missed-sweep';
+import { createRetentionSweepHandler, RETENTION_SWEEP_CRON } from './workers/retention-sweep';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -131,6 +163,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   const userAnonymisationWorker = new Worker(
     QUEUE_NAMES.USER_ANONYMISATION,
     createUserAnonymisationHandler({
+      db: workerDb,
       logger: logger.child({ handler: 'user-anonymisation' }),
     }),
     workerOptions,
@@ -305,6 +338,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       notify: async (r: PendingAckReminder, viewUrl: string) => {
         await sendTemplatedEmail({
           to: r.email,
+          locale: r.locale ?? undefined,
           templateKey: 'risk-assessment-ack-reminder',
           variables: {
             recipientName: r.userName,
@@ -337,11 +371,12 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       notify: async (
         kind: PermitWatchKind,
         permit: ExpiredOpenPermit,
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale?: string | null },
         viewUrl: string,
       ) => {
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: kind === 'warning' ? 'permit-expiry-warning' : 'permit-expiry-escalation',
           variables: {
             recipientName: recipient.name,
@@ -376,7 +411,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       logger: logger.child({ handler: 'fire-due-digest' }),
       appUrl: env.APP_URL,
       notify: async (
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale?: string | null },
         digest: FireDigest,
         viewUrl: string,
       ) => {
@@ -384,6 +419,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
         const overdue = digest.overdueChecks.length + digest.overdueDoors.length;
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: 'fire-due-digest',
           variables: {
             recipientName: recipient.name,
@@ -408,6 +444,281 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     { name: 'fire-due-digest', data: {} },
   );
   logger.info({ cron: FIRE_DUE_DIGEST_CRON }, '[worker] registered fire-due-digest repeatable');
+
+  // ─── FreeHS B5 — incident immediate alert (event-driven) ───────────────
+  const kindLabels: Record<string, string> = {
+    injury: 'Injury',
+    ill_health: 'Ill health',
+    dangerous_occurrence: 'Dangerous occurrence',
+    sharps_exposure: 'Sharps / splash exposure',
+    violence_aggression: 'Violence & aggression',
+    damage: 'Damage',
+    environmental: 'Environmental',
+    near_miss: 'Near miss',
+  };
+  const incidentAlertWorker = new Worker(
+    QUEUE_NAMES.INCIDENT_ALERT,
+    createIncidentAlertHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'incident-alert' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string },
+        incident: AlertIncident,
+        viewUrl: string,
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey: 'incident-alert',
+          variables: {
+            recipientName: recipient.name,
+            referenceNumber: incident.referenceNumber,
+            kindLabel: kindLabels[incident.kind] ?? incident.kind,
+            severityLabel: incident.severity,
+            siteLine: incident.siteName ?? '—',
+            occurredAt: incident.occurredAt.toISOString().replace('T', ' ').slice(0, 16),
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+
+  // ─── FreeHS B5 — RIDDOR deadline watch ─────────────────────────────────
+  const riddorCategoryLabels: Record<string, string> = {
+    death: 'death',
+    specified_injury: 'specified injury',
+    over_7_day: 'over-7-day injury',
+    occupational_disease: 'occupational disease',
+    dangerous_occurrence: 'dangerous occurrence',
+    gas_incident: 'gas incident',
+  };
+  const incidentRiddorWatchWorker = new Worker(
+    QUEUE_NAMES.INCIDENT_RIDDOR_WATCH,
+    createIncidentRiddorWatchHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'incident-riddor-watch' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        kind: RiddorWatchKind,
+        incident: RiddorWatchIncident,
+        recipient: { email: string; name: string },
+        viewUrl: string,
+      ) => {
+        const daysLeft = Math.max(
+          0,
+          Math.ceil((incident.riddorDeadlineAt.getTime() - Date.now()) / 86_400_000),
+        );
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey:
+            kind === 'escalation' ? 'incident-riddor-escalation' : 'incident-riddor-warning',
+          variables: {
+            recipientName: recipient.name,
+            referenceNumber: incident.referenceNumber,
+            categoryLabel: riddorCategoryLabels[incident.riddorCategory] ?? incident.riddorCategory,
+            deadlineAt: incident.riddorDeadlineAt.toISOString().replace('T', ' ').slice(0, 16),
+            daysLeft: `${daysLeft} day(s)`,
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const incidentRiddorWatchQueue = getQueue(QUEUE_NAMES.INCIDENT_RIDDOR_WATCH, connection);
+  await incidentRiddorWatchQueue.upsertJobScheduler(
+    'incident-riddor-watch',
+    { pattern: INCIDENT_RIDDOR_WATCH_CRON, tz: 'UTC' },
+    { name: 'incident-riddor-watch', data: {} },
+  );
+  logger.info(
+    { cron: INCIDENT_RIDDOR_WATCH_CRON },
+    '[worker] registered incident-riddor-watch repeatable',
+  );
+
+  // ─── FreeHS B5 — incident chase digest ─────────────────────────────────
+  const incidentChaseWorker = new Worker(
+    QUEUE_NAMES.INCIDENT_CHASE,
+    createIncidentChaseHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'incident-chase' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string },
+        digest: IncidentChaseDigest,
+        viewUrl: string,
+      ) => {
+        const total =
+          digest.idleInvestigations.length +
+          digest.overdueActionIncidents.length +
+          digest.effectivenessDue.length;
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey: 'incident-chase-digest',
+          variables: {
+            recipientName: recipient.name,
+            totalCount: String(total),
+            detailLines: chaseDetailLines(digest),
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const incidentChaseQueue = getQueue(QUEUE_NAMES.INCIDENT_CHASE, connection);
+  await incidentChaseQueue.upsertJobScheduler(
+    'incident-chase',
+    { pattern: INCIDENT_CHASE_CRON, tz: 'UTC' },
+    { name: 'incident-chase', data: {} },
+  );
+  logger.info({ cron: INCIDENT_CHASE_CRON }, '[worker] registered incident-chase repeatable');
+
+  // ─── Platform PF-4 — corrective-action reminder digest ────────────────
+  const actionRemindersWorker = new Worker(
+    QUEUE_NAMES.ACTION_REMINDERS,
+    createActionRemindersHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'action-reminders' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string; locale?: string | null },
+        payload: { overdue: DueActionRow[]; dueSoon: DueActionRow[]; viewUrl: string },
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          locale: recipient.locale ?? undefined,
+          templateKey: 'action-due-digest',
+          variables: {
+            recipientName: recipient.name,
+            overdueCount: String(payload.overdue.length),
+            dueSoonCount: String(payload.dueSoon.length),
+            detailLines: actionDigestLines(payload.overdue, payload.dueSoon),
+            viewUrl: payload.viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const actionRemindersQueue = getQueue(QUEUE_NAMES.ACTION_REMINDERS, connection);
+  await actionRemindersQueue.upsertJobScheduler(
+    'action-reminders',
+    { pattern: ACTION_REMINDERS_CRON, tz: 'UTC' },
+    { name: 'action-reminders', data: {} },
+  );
+  logger.info({ cron: ACTION_REMINDERS_CRON }, '[worker] registered action-reminders repeatable');
+
+  // ─── Platform PF-15 — scheduled Heads Up publisher ────────────────────
+  const headsUpPublishWorker = new Worker(
+    QUEUE_NAMES.HEADS_UP_PUBLISH,
+    createHeadsUpPublishHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'heads-up-publish' }),
+    }),
+    workerOptions,
+  );
+  const headsUpPublishQueue = getQueue(QUEUE_NAMES.HEADS_UP_PUBLISH, connection);
+  await headsUpPublishQueue.upsertJobScheduler(
+    'heads-up-publish',
+    { pattern: HEADS_UP_PUBLISH_CRON, tz: 'UTC' },
+    { name: 'heads-up-publish', data: {} },
+  );
+  logger.info({ cron: HEADS_UP_PUBLISH_CRON }, '[worker] registered heads-up-publish repeatable');
+
+  // ─── Platform PF-16 — document expiry reminders ────────────────────────
+  const documentExpiryWorker = new Worker(
+    QUEUE_NAMES.DOCUMENT_EXPIRY,
+    createDocumentExpiryHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'document-expiry' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string; locale?: string | null },
+        doc: ExpiringDocument,
+        viewUrl: string,
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          locale: recipient.locale ?? undefined,
+          templateKey: 'document-expiry',
+          variables: {
+            recipientName: recipient.name,
+            documentName: doc.name,
+            statusLine: doc.expired
+              ? `expired on ${doc.expiresAt.toISOString().slice(0, 10)}`
+              : `expires on ${doc.expiresAt.toISOString().slice(0, 10)}`,
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const documentExpiryQueue = getQueue(QUEUE_NAMES.DOCUMENT_EXPIRY, connection);
+  await documentExpiryQueue.upsertJobScheduler(
+    'document-expiry',
+    { pattern: DOCUMENT_EXPIRY_CRON, tz: 'UTC' },
+    { name: 'document-expiry', data: {} },
+  );
+  logger.info({ cron: DOCUMENT_EXPIRY_CRON }, '[worker] registered document-expiry repeatable');
+
+  // ─── Platform PF-3 — missed-occurrence sweep ──────────────────────────
+  const scheduleMissedSweepWorker = new Worker(
+    QUEUE_NAMES.SCHEDULE_MISSED_SWEEP,
+    createScheduleMissedSweepHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'schedule-missed-sweep' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string; locale?: string | null },
+        missed: MissedOccurrence[],
+        viewUrl: string,
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          locale: recipient.locale ?? undefined,
+          templateKey: 'schedule-missed',
+          variables: {
+            recipientName: recipient.name,
+            missedCount: String(missed.length),
+            detailLines: missedLines(missed),
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const scheduleMissedSweepQueue = getQueue(QUEUE_NAMES.SCHEDULE_MISSED_SWEEP, connection);
+  await scheduleMissedSweepQueue.upsertJobScheduler(
+    'schedule-missed-sweep',
+    { pattern: SCHEDULE_MISSED_SWEEP_CRON, tz: 'UTC' },
+    { name: 'schedule-missed-sweep', data: {} },
+  );
+  logger.info(
+    { cron: SCHEDULE_MISSED_SWEEP_CRON },
+    '[worker] registered schedule-missed-sweep repeatable',
+  );
+
+  // ─── Platform PF-31 — retention v1 (notification centre only) ─────────
+  const retentionSweepWorker = new Worker(
+    QUEUE_NAMES.RETENTION_SWEEP,
+    createRetentionSweepHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'retention-sweep' }),
+    }),
+    workerOptions,
+  );
+  const retentionSweepQueue = getQueue(QUEUE_NAMES.RETENTION_SWEEP, connection);
+  await retentionSweepQueue.upsertJobScheduler(
+    'retention-sweep',
+    { pattern: RETENTION_SWEEP_CRON, tz: 'UTC' },
+    { name: 'retention-sweep', data: {} },
+  );
+  logger.info({ cron: RETENTION_SWEEP_CRON }, '[worker] registered retention-sweep repeatable');
 
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
@@ -452,6 +763,14 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     raAckReminderWorker,
     permitExpiryWatchWorker,
     fireDueDigestWorker,
+    incidentAlertWorker,
+    incidentRiddorWatchWorker,
+    incidentChaseWorker,
+    actionRemindersWorker,
+    headsUpPublishWorker,
+    documentExpiryWorker,
+    scheduleMissedSweepWorker,
+    retentionSweepWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {

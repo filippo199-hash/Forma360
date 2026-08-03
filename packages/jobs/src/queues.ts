@@ -96,6 +96,40 @@ export const QUEUE_NAMES = {
    * `fireSafety.manage` holder. Quiet when the calendar is clean.
    */
   FIRE_DUE_DIGEST: 'forma360-fire-due-digest',
+  /**
+   * FreeHS B5 — event-driven immediate alert for a newly reported /
+   * triaged incident that is serious-or-above or an always-alert kind
+   * (dangerous occurrence, sharps, violence). The worker resolves
+   * `incidents.manage` holders (site-scoped where curated), sends a
+   * confidential-safe email and stamps `alert_sent_at`.
+   */
+  INCIDENT_ALERT: 'forma360-incident-alert',
+  /**
+   * FreeHS B5 — 15-minute RIDDOR deadline watch: warnings at T-5 and
+   * T-2 days to the incident owner + `incidents.manage` holders,
+   * escalation once the statutory deadline passes unsubmitted.
+   * Notify-then-stamp: a failed send retries next tick.
+   */
+  INCIDENT_RIDDOR_WATCH: 'forma360-incident-riddor-watch',
+  /**
+   * FreeHS B5 — daily chase digest: investigations idle beyond the
+   * chase window, incidents stuck in actions_outstanding with overdue
+   * actions, and effectiveness reviews past due. One email per owner;
+   * silent when clean.
+   */
+  INCIDENT_CHASE: 'forma360-incident-chase',
+  /**
+   * Platform review PF-4 — daily reminder digest for corrective-action
+   * assignees: due-soon warned once, overdue re-pinged weekly.
+   */
+  ACTION_REMINDERS: 'forma360-action-reminders',
+  /** Platform PF-15 — publishes scheduled Heads Ups when publishAt arrives. */
+  HEADS_UP_PUBLISH: 'forma360-heads-up-publish',
+  /** Platform PF-16 — document expiry reminders driven by reminderDays. */
+  DOCUMENT_EXPIRY: 'forma360-document-expiry',
+  /** Platform PF-3 — stamps 'missed' on scheduled occurrences past grace. */
+  SCHEDULE_MISSED_SWEEP: 'forma360-schedule-missed-sweep',
+  RETENTION_SWEEP: 'forma360-retention-sweep',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -177,8 +211,17 @@ export const maintenanceNotifyPayloadSchema = z.object({
   tenantId: z.string().length(26),
   planId: z.string().length(26),
   assetId: z.string().length(26),
-  /** The computed due date for this service (YYYY-MM-DD). */
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /**
+   * Dedup key for this service cycle. Time-based plans use the computed
+   * due date (YYYY-MM-DD); usage-based plans (PF-18) use
+   * `usage:<threshold>` so one cycle notifies once however long it takes
+   * the meter to cross.
+   */
+  dueDate: z.string().min(4).max(64),
+  /** Human status line for the email (usage plans); defaults from daysBefore. */
+  statusLabel: z.string().max(200).optional(),
+  /** Human "due" label for the email (usage plans), e.g. "at 12000 km". */
+  dueLabel: z.string().max(200).optional(),
   /** How many days before due this notification is for. */
   daysBefore: z.number().int().min(0),
 });
@@ -214,6 +257,42 @@ export type PermitExpiryWatchPayload = z.infer<typeof permitExpiryWatchPayloadSc
 export const fireDueDigestPayloadSchema = z.object({}).strict();
 export type FireDueDigestPayload = z.infer<typeof fireDueDigestPayloadSchema>;
 
+/** One immediate-alert fan-out for one incident. */
+export const incidentAlertPayloadSchema = z
+  .object({
+    tenantId: z.string().length(26),
+    incidentId: z.string().length(26),
+  })
+  .strict();
+export type IncidentAlertPayload = z.infer<typeof incidentAlertPayloadSchema>;
+
+/** RIDDOR deadline-watch tick — no payload; the worker scans the clocks. */
+export const incidentRiddorWatchPayloadSchema = z.object({}).strict();
+export type IncidentRiddorWatchPayload = z.infer<typeof incidentRiddorWatchPayloadSchema>;
+
+/** Incident chase-digest tick — no payload; the worker scans open incidents. */
+export const incidentChasePayloadSchema = z.object({}).strict();
+export type IncidentChasePayload = z.infer<typeof incidentChasePayloadSchema>;
+/** Action reminders tick — no payload; the worker scans due dates. */
+export const actionRemindersPayloadSchema = z.object({}).strict();
+export type ActionRemindersPayload = z.infer<typeof actionRemindersPayloadSchema>;
+
+/** Heads-up publish tick — no payload; the worker scans publishAt. */
+export const headsUpPublishPayloadSchema = z.object({}).strict();
+export type HeadsUpPublishPayload = z.infer<typeof headsUpPublishPayloadSchema>;
+
+/** Document expiry tick — no payload; the worker scans reminderDays. */
+export const documentExpiryPayloadSchema = z.object({}).strict();
+export type DocumentExpiryPayload = z.infer<typeof documentExpiryPayloadSchema>;
+
+/** Missed-occurrence sweep tick — no payload. */
+export const scheduleMissedSweepPayloadSchema = z.object({}).strict();
+export type ScheduleMissedSweepPayload = z.infer<typeof scheduleMissedSweepPayloadSchema>;
+
+/** PF-31 retention v1 — tick payload is empty. */
+export const retentionSweepPayloadSchema = z.object({}).strict();
+export type RetentionSweepPayload = z.infer<typeof retentionSweepPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -235,6 +314,14 @@ export interface QueuePayloads {
   [QUEUE_NAMES.RA_ACK_REMINDER]: RaAckReminderPayload;
   [QUEUE_NAMES.PERMIT_EXPIRY_WATCH]: PermitExpiryWatchPayload;
   [QUEUE_NAMES.FIRE_DUE_DIGEST]: FireDueDigestPayload;
+  [QUEUE_NAMES.INCIDENT_ALERT]: IncidentAlertPayload;
+  [QUEUE_NAMES.INCIDENT_RIDDOR_WATCH]: IncidentRiddorWatchPayload;
+  [QUEUE_NAMES.INCIDENT_CHASE]: IncidentChasePayload;
+  [QUEUE_NAMES.ACTION_REMINDERS]: ActionRemindersPayload;
+  [QUEUE_NAMES.HEADS_UP_PUBLISH]: HeadsUpPublishPayload;
+  [QUEUE_NAMES.DOCUMENT_EXPIRY]: DocumentExpiryPayload;
+  [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: ScheduleMissedSweepPayload;
+  [QUEUE_NAMES.RETENTION_SWEEP]: RetentionSweepPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -255,6 +342,14 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.RA_ACK_REMINDER]: raAckReminderPayloadSchema,
   [QUEUE_NAMES.PERMIT_EXPIRY_WATCH]: permitExpiryWatchPayloadSchema,
   [QUEUE_NAMES.FIRE_DUE_DIGEST]: fireDueDigestPayloadSchema,
+  [QUEUE_NAMES.INCIDENT_ALERT]: incidentAlertPayloadSchema,
+  [QUEUE_NAMES.INCIDENT_RIDDOR_WATCH]: incidentRiddorWatchPayloadSchema,
+  [QUEUE_NAMES.INCIDENT_CHASE]: incidentChasePayloadSchema,
+  [QUEUE_NAMES.ACTION_REMINDERS]: actionRemindersPayloadSchema,
+  [QUEUE_NAMES.HEADS_UP_PUBLISH]: headsUpPublishPayloadSchema,
+  [QUEUE_NAMES.DOCUMENT_EXPIRY]: documentExpiryPayloadSchema,
+  [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: scheduleMissedSweepPayloadSchema,
+  [QUEUE_NAMES.RETENTION_SWEEP]: retentionSweepPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

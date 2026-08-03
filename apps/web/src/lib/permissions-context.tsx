@@ -21,6 +21,11 @@ export function PermissionsProvider({
   return <PermissionsContext.Provider value={value}>{children}</PermissionsContext.Provider>;
 }
 
+/** Raw permission list — for components that gate MANY keys (the nav). */
+export function usePermissionList(): readonly string[] {
+  return useContext(PermissionsContext);
+}
+
 export function useHasPermission(key: string): boolean {
   const perms = useContext(PermissionsContext);
   // Administrators (org.settings) implicitly hold every key — mirrors the

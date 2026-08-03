@@ -4,5 +4,5 @@
   "greeting": "Hello {recipientName},",
   "body": "{publishedByName} has signed and published the fire risk assessment \"{title}\" ({referenceNumber}){buildingLine} with a taken-together rating of INTOLERABLE.\n\nUnder PAS 79 an intolerable rating means the premises should not continue to be occupied until the risk has been reduced. Remedial actions have been raised from the assessment's significant findings — review them now and decide whether occupation can continue.",
   "cta": "Open the assessment",
-  "ctaUrl": "{viewUrl}"
+  "footer": "You are receiving this because you hold fire-safety management permissions in {productName}. An intolerable rating alerts every fire-safety manager immediately."
 }

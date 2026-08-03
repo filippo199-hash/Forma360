@@ -1,0 +1,8 @@
+{
+  "subject": "Aktion erforderlich: {inspectionTitle} prüfen",
+  "preheader": "{requesterName} hat Ihre Unterschrift angefordert",
+  "greeting": "Hallo {signerName},",
+  "body": "{requesterName} hat '{inspectionTitle}' zur Prüfung eingereicht und um Ihre Unterschrift gebeten. Bitte prüfen Sie die Inspektion und unterschreiben Sie, wenn Sie bereit sind.",
+  "cta": "Prüfen und unterschreiben",
+  "footer": "Wenn Sie diese E-Mail nicht erwartet haben, können Sie sie ignorieren."
+}

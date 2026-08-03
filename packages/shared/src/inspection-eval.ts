@@ -194,6 +194,50 @@ export function evidenceKey(itemId: string): string {
   return `evidence:${itemId}`;
 }
 
+/**
+ * Reserved response-map key holding the note demanded by a selected
+ * option's `requireNote` trigger (platform review PF-25 — the trigger
+ * was stored, rendered in the editor and never enforced anywhere).
+ */
+export function noteKey(itemId: string): string {
+  return `note:${itemId}`;
+}
+
+/** True when a selected option on the item carries a requireNote trigger. */
+export function noteRequired(
+  content: TemplateContent,
+  itemId: string,
+  responses: Record<string, unknown>,
+): boolean {
+  for (const active of collectActiveTriggers(content, responses)) {
+    if (active.itemId === itemId && active.trigger.kind === 'requireNote') return true;
+  }
+  return false;
+}
+
+export interface MissingNote {
+  itemId: string;
+  prompt: string;
+}
+
+/** Items whose active requireNote trigger has no note text yet. */
+export function missingNotes(
+  content: TemplateContent,
+  responses: Record<string, unknown>,
+): MissingNote[] {
+  const seen = new Set<string>();
+  const out: MissingNote[] = [];
+  for (const active of collectActiveTriggers(content, responses)) {
+    if (active.trigger.kind !== 'requireNote' || seen.has(active.itemId)) continue;
+    seen.add(active.itemId);
+    const note = responses[noteKey(active.itemId)];
+    if (typeof note !== 'string' || note.trim().length === 0) {
+      out.push({ itemId: active.itemId, prompt: active.prompt });
+    }
+  }
+  return out;
+}
+
 /** Evidence object keys captured for a question (empty when none). */
 export function getEvidenceKeys(responses: Record<string, unknown>, itemId: string): string[] {
   const v = responses[evidenceKey(itemId)];

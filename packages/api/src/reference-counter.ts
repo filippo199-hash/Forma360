@@ -5,7 +5,7 @@ import { sql } from 'drizzle-orm';
 /**
  * Reference-number series. 'issue' → OBS-, 'action' → AC-,
  * 'riskAssessment' → RA-, 'coshhSubstance' → CS-, 'coshhAssessment' → COSHH-,
- * 'permit' → PTW-, 'fireRiskAssessment' → FRA-.
+ * 'permit' → PTW-, 'fireRiskAssessment' → FRA-, 'incident' → IN-.
  */
 export type ReferenceSeries =
   | 'issue'
@@ -14,7 +14,8 @@ export type ReferenceSeries =
   | 'coshhSubstance'
   | 'coshhAssessment'
   | 'permit'
-  | 'fireRiskAssessment';
+  | 'fireRiskAssessment'
+  | 'incident';
 
 /**
  * Atomically claim the next reference number for a (tenant, series).

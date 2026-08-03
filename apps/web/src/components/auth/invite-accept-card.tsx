@@ -121,7 +121,7 @@ export function InviteAcceptCard({ token }: InviteAcceptCardProps) {
         setError(t('otpInvalidError'));
         return;
       }
-      window.location.assign(`/${locale}/templates`);
+      window.location.assign(`/${locale}/ai`);
     } catch {
       setError(t('error'));
     } finally {

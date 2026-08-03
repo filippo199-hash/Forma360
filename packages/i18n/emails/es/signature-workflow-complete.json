@@ -1,0 +1,8 @@
+{
+  "subject": "Todas las firmas recogidas: {inspectionTitle}",
+  "preheader": "{inspectionTitle} ya está completada",
+  "greeting": "Hola {recipientName}:",
+  "body": "Todos los firmantes han firmado '{inspectionTitle}'. La inspección ya está marcada como completada.",
+  "cta": "Ver inspección",
+  "footer": "Recibes este correo porque fuiste firmante de esta inspección."
+}

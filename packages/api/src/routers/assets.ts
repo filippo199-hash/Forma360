@@ -77,7 +77,9 @@ const createInput = z.object({
   typeId: z.string().length(26).optional(),
   siteId: z.string().length(26).optional(),
   parentId: z.string().length(26).optional(),
-  ownerUserId: z.string().length(26).optional(),
+  // User ids are `usr_` + ULID (30 chars), not bare 26-char ULIDs —
+  // .length(26) made the Owner picker fail Zod on every submit (PF-29).
+  ownerUserId: z.string().min(1).max(64).optional(),
   photoKey: z.string().optional(),
   customFieldValues: boundedRecord.default({}),
 });
@@ -89,7 +91,7 @@ const updateInput = z.object({
   typeId: z.string().length(26).nullable().optional(),
   siteId: z.string().length(26).nullable().optional(),
   parentId: z.string().length(26).nullable().optional(),
-  ownerUserId: z.string().length(26).nullable().optional(),
+  ownerUserId: z.string().min(1).max(64).nullable().optional(),
   photoKey: z.string().nullable().optional(),
   customFieldValues: boundedRecord.optional(),
 });

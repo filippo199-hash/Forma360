@@ -1,0 +1,8 @@
+{
+  "subject": "Permiso por vencer — {referenceNumber} {title} cierra a las {expiredAt} UTC",
+  "preheader": "Un permiso abierto en {productName} llega al final de su validez en menos de una hora.",
+  "greeting": "Hola {recipientName}:",
+  "body": "El permiso {typeName} \"{title}\" ({referenceNumber}){siteLine} llega al final de su ventana de validez a las {expiredAt} UTC. Si el trabajo terminó, cierra el permiso ahora con las comprobaciones de cierre. Si debe continuar, prorrógalo con reautorización antes del vencimiento: una vez vencido, el trabajo ya no está autorizado.",
+  "cta": "Abrir el permiso",
+  "footer": "Recibes este correo porque eres parte firmante (emisor, aceptante o autorizador) de este permiso en {productName}."
+}

@@ -33,6 +33,7 @@ describe('PERMISSION_KEYS', () => {
         'coshh',
         'permits',
         'fireSafety',
+        'incidents',
         'org',
       ]),
     );

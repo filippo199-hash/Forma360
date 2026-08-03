@@ -528,7 +528,44 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   `/api/exports/fra-pdf`), `forma360-fire-due-digest` daily calendar
   digest, per-building marshal-cover flag + target; edge-case IDs
   FS-E01..E09 in `fire-safety.test.ts` (shared), FS-E10..E33 (router),
-  FS-J01/J02 in `fire-due-digest.test.ts`). Each router is
+  FS-J01/J02 in `fire-due-digest.test.ts`) and `incidents` (module B5 —
+  Incident & Accident Management at
+  `packages/api/src/routers/incidents.ts` + `apps/web/app/[locale]/incidents`
+  (register with needs-attention strip + CSV export, mobile-first report
+  form with localStorage draft, incident page as a worked file,
+  investigation workspace); domain lib `packages/shared/src/incidents.ts`
+  (ADR 0013): strict lifecycle reported → triaged → investigating →
+  actions_outstanding → closed (⇢ reopened), per-kind jsonb details (8
+  kinds; sharps/V&A default confidential — counted-not-readable, enforced
+  on every read incl. search/AI/CSV), per-person injury blocks + the
+  RIDDOR-counting lost-time calculator with the over-7-day re-screen
+  tripwire; guided RIDDOR screening (negative determinations are records;
+  10/15-day deadlines; submission freezes the determination; closure
+  blocked until discharged); versioned investigations with separated-duty
+  sign-off (approver ≠ lead/submitter, approved revisions frozen, reopen
+  = revision n+1); findings generate actions exactly once (source unique
+  index + savepoint race adoption) with per-finding assignee/due set at
+  approval — the actions hub is extended end to end for
+  `sourceType 'incident'` (union, list filter, get resolution, web
+  chips/links); observation → incident promotion links both ways and
+  carries photos by reference; `promptReviews` pulls RA/COSHH/FRA
+  `nextReviewAt` to now with new `review_prompted` event kinds;
+  effectiveness review at +90 d (30–365) with `not_effective` → reopen;
+  workers `forma360-incident-alert` (event-driven, site-scoped manage
+  holders, confidential-safe payload), `forma360-incident-riddor-watch`
+  (*/15 — T-5/T-2 warnings + past-deadline escalation,
+  notify-then-stamp) and `forma360-incident-chase` (daily 06:30, one
+  email per owner, quiet when clean); incident PDF via
+  `renderIncidentPdf` (`/render/incident/[id]` +
+  `/api/exports/incident-pdf`); evidence upload at
+  `api/upload/incident-evidence`; schema
+  `packages/db/src/schema/incidents.ts` (8 tables incl. append-only
+  evidence/witness/events), migration 0063 incl. the PF-8 permission
+  backfill onto existing tenants' system sets; the IN-J04
+  email-registry-completeness test walks `emails/en/` (and fixed four
+  previously unregistered templates incl. both permit-expiry mails);
+  edge-case IDs IN-E01..E06 in `incidents.test.ts` (shared),
+  IN-E02..E20 (router), IN-J01..J03 in the worker tests). Each router is
   built with `{ enabled }` from the brand catalogue; nav + API both gate on
   it.
 - **Everything internal stays `forma360`** (package scope, queue names,
@@ -550,6 +587,7 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0010 — Multi-brand, single codebase](./docs/adr/0010-multi-brand-single-codebase.md)
 - [0011 — Risk-assessment versioning, sign-off and residual-risk coherence](./docs/adr/0011-risk-assessment-versioning-and-sign-off.md)
 - [0012 — Permit-to-work lifecycle, signature model and expiry escalation](./docs/adr/0012-permit-lifecycle-and-signature-model.md)
+- [0013 — Incident lifecycle, investigation model and RIDDOR deadline engine](./docs/adr/0013-incident-lifecycle-and-riddor-engine.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase

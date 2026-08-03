@@ -442,6 +442,48 @@
       "when": 1780000100000,
       "tag": "0062_fire_safety_hse_review",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1780000110000,
+      "tag": "0063_action_reminders",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1780000120000,
+      "tag": "0064_document_expiry_reminders",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1780000130000,
+      "tag": "0065_backfill_freehs_permission_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1780000140000,
+      "tag": "0066_wave_f_field",
+      "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1780000150000,
+      "tag": "0067_wave_g_platform",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1780000160000,
+      "tag": "0068_incidents",
+      "breakpoints": true
     }
   ]
 }

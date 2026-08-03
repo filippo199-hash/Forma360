@@ -1,0 +1,8 @@
+{
+  "subject": "Lembrete: {headsUpTitle}",
+  "preheader": "Você tem um aviso aguardando sua ação.",
+  "greeting": "Olá {recipientName},",
+  "body": "Você tem um aviso que requer sua atenção: \"{headsUpTitle}\". Abra o {productName} para {actionRequired}.",
+  "cta": "Abrir o aviso",
+  "footer": "Você recebeu este lembrete porque um administrador do {productName} pediu que você aja sobre esta mensagem."
+}

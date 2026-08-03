@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Dziennik audytu"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -293,7 +294,12 @@
         "integrations": "Integrations",
         "billing": "Billing",
         "contractors": "Contractors",
-        "org": "Organisation"
+        "org": "Organisation",
+        "riskAssessments": "Oceny ryzyka",
+        "coshh": "COSHH",
+        "permits": "Zezwolenia na pracę",
+        "fireSafety": "Ochrona ppoż.",
+        "incidents": "Zdarzenia"
       },
       "perms": {
         "users_view": "View users",
@@ -356,7 +362,26 @@
         "contractors_verifyDocs": "Verify contractor documents",
         "contractors_gate": "Gate check-in",
         "org_settings": "Manage organisation settings",
-        "org_audit_view": "View audit log"
+        "org_audit_view": "View audit log",
+        "riskAssessments_view": "Podgląd ocen ryzyka",
+        "riskAssessments_create": "Tworzenie i edycja ocen",
+        "riskAssessments_manage": "Publikowanie, dystrybucja i zarządzanie ocenami",
+        "coshh_view": "Podgląd rejestru COSHH",
+        "coshh_create": "Dodawanie substancji i ocen",
+        "coshh_manage": "Publikowanie i zarządzanie ocenami COSHH",
+        "permits_view": "Podgląd zezwoleń",
+        "permits_create": "Wnioskowanie i rejestrowanie na zezwoleniach",
+        "permits_issue": "Wydawanie, zawieszanie i zamykanie zezwoleń",
+        "permits_manage": "Zarządzanie typami zezwoleń",
+        "fireSafety_view": "Podgląd ochrony ppoż.",
+        "fireSafety_record": "Rejestrowanie kontroli",
+        "fireSafety_create": "Tworzenie budynków, drzwi i ocen",
+        "fireSafety_manage": "Publikowanie ocen i zarządzanie modułem",
+        "incidents_view": "Przeglądanie zdarzeń",
+        "incidents_report": "Zgłaszanie zdarzeń",
+        "incidents_investigate": "Prowadzenie dochodzeń",
+        "incidents_manage": "Zarządzanie zdarzeniami (triaż, RIDDOR, zatwierdzenia)",
+        "incidents_confidential_view": "Wgląd w zdarzenia poufne"
       }
     },
     "groups": {
@@ -498,6 +523,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Retencja i eksport danych",
+        "subtitle": "Retencja v1 usuwa powiadomienia starsze niż polityka. Ustawowe zapisy BHP nigdy nie są naruszane.",
+        "keepForever": "Przechowuj bezterminowo",
+        "months": "{count} mies.",
+        "scopeNote": "Dotyczy wyłącznie powiadomień w aplikacji. Inspekcje, pozwolenia, dziennik ppoż., COSHH i oceny ryzyka są zawsze zachowywane.",
+        "savedToast": "Zapisano politykę retencji."
+      },
+      "exportData": {
+        "button": "Pobierz dane organizacji (JSON)",
+        "hint": "Wszystko w jednym dokumencie JSON — przenośność lub offboarding. Tylko administratorzy."
       }
     },
     "customFields": {
@@ -561,6 +598,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Dziennik audytu",
+      "subtitle": "Zdarzenia wszystkich modułów w jednym strumieniu dla całej organizacji, od najnowszych.",
+      "empty": "Brak zdarzeń.",
+      "loadMore": "Wczytaj starsze",
+      "systemActor": "System",
+      "columns": {
+        "when": "Kiedy",
+        "module": "Moduł",
+        "event": "Zdarzenie",
+        "actor": "Przez",
+        "detail": "Szczegóły"
+      },
+      "modules": {
+        "all": "Wszystkie",
+        "actions": "Działania",
+        "observations": "Obserwacje",
+        "permits": "Pozwolenia",
+        "coshh": "COSHH",
+        "riskAssessments": "Oceny ryzyka",
+        "fireSafety": "Ochrona przeciwpożarowa",
+        "contractors": "Wykonawcy"
       }
     }
   },
@@ -1036,7 +1097,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Oczekuje na podpisy"
     },
     "table": {
       "title": "Title",
@@ -1055,7 +1117,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Oczekuje na podpisy"
     },
     "picker": {
       "title": "Pick a template",
@@ -1105,7 +1168,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "Nie przesłano {count} zdjęć — zachowano tutaj.",
+          "retry": "Ponów"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -1167,10 +1232,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "Wymagana notatka"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "Wyjaśnij tę odpowiedź (wymagane)"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1339,6 +1406,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "Moje zaplanowane inspekcje ({count})",
+      "startNow": "Rozpocznij",
+      "startError": "Nie udało się rozpocząć — spróbuj ponownie.",
+      "missedBadge": "POMINIĘTA",
+      "overdueBadge": "Po terminie",
+      "dueBadge": "Zaplanowana"
     }
   },
   "nav": {
@@ -1361,7 +1436,10 @@
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
     "coshh": "Substancje niebezpieczne",
-    "permits": "Pozwolenia"
+    "permits": "Pozwolenia",
+    "fireSafety": "Ochrona ppoż.",
+    "analytics": "Pulpit",
+    "incidents": "Zdarzenia"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -1389,7 +1467,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "Przesłane przez",
+    "site": "Obiekt"
   },
   "schedules": {
     "title": "Schedules",
@@ -1679,7 +1759,11 @@
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
-        "toast": "Action created."
+        "toast": "Action created.",
+        "assigneeLabel": "Przypisz do",
+        "noAssignee": "Nieprzypisane",
+        "typeLabel": "Typ działania",
+        "noType": "Brak typu"
       },
       "attachInspectionDialog": {
         "title": "Rozpocznij inspekcję",
@@ -2012,7 +2096,9 @@
       },
       "settingsButton": "Ustawienia",
       "sourceMaintenance": "Konserwacja",
-      "loadError": "Couldn't load actions. Please try again."
+      "loadError": "Couldn't load actions. Please try again.",
+      "filterSourceIncident": "Zdarzenie",
+      "sourceIncident": "Zdarzenie"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2136,7 +2222,13 @@
       },
       "autoGeneratedBadge": "Wygenerowano automatycznie",
       "autoGeneratedBy": "Wygenerowano automatycznie przez {program}",
-      "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later."
+      "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later.",
+      "sourceLinkRiskAssessment": "Utworzone przez ocenę ryzyka {referenceNumber}",
+      "sourceLinkCoshhAssessment": "Utworzone przez ocenę COSHH {referenceNumber}",
+      "sourceLinkFireRiskAssessment": "Utworzone przez ocenę ryzyka pożarowego {referenceNumber}",
+      "sourceLinkFireLogbookEntry": "Utworzone przez negatywną kontrolę ppoż.",
+      "sourceLinkFireDoorInspection": "Utworzone przez negatywną kontrolę drzwi ppoż.",
+      "sourceLinkIncident": "Ze zdarzenia {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2199,7 +2291,17 @@
     },
     "filters": {
       "removeAria": "Remove {label} filter"
-    }
+    },
+    "sourceRiskAssessment": "Ocena ryzyka",
+    "sourceCoshhAssessment": "COSHH",
+    "sourceFireRiskAssessment": "Ocena ryzyka pożarowego",
+    "sourceFireLogbookEntry": "Kontrola ppoż.",
+    "sourceFireDoorInspection": "Drzwi przeciwpożarowe",
+    "pagerShowing": "{from}–{to} z {total}",
+    "pagerPrev": "Poprzednia",
+    "pagerNext": "Następna",
+    "myOpenChip": "Przypisane do mnie: {count}",
+    "myOverdueChip": "{count} po terminie"
   },
   "actionsSettings": {
     "title": "Action settings",
@@ -2646,7 +2748,28 @@
         "startedAt": "Rozpoczęto",
         "createdAt": "Utworzono"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "Plany konserwacji",
+        "empty": "Żaden plan konserwacji nie obejmuje tego zasobu.",
+        "timeMeta": "Co {interval} dni — ostatni serwis {last}",
+        "usageMeta": "Co {interval} {unit} — licznik: {current}",
+        "status": {
+          "on_schedule": "Zgodnie z planem",
+          "approaching": "Zbliża się",
+          "overdue": "Zaległe",
+          "awaiting_first_reading": "Oczekiwanie na pierwszy odczyt"
+        }
+      },
+      "fireHistory": {
+        "heading": "Historia ochrony przeciwpożarowej",
+        "checkLine": "{type} — {building}",
+        "empty": "Brak wpisów w dzienniku przeciwpożarowym.",
+        "performedAt": "Data",
+        "type": "Kontrola",
+        "result": "Wynik",
+        "notes": "Uwagi"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -2913,7 +3036,16 @@
       "observations": "Obserwacje",
       "actions": "Dzialania",
       "headsUp": "Powiadomienia",
-      "documents": "Dokumenty"
+      "documents": "Dokumenty",
+      "permits": "Zezwolenia",
+      "coshh": "Substancje COSHH",
+      "riskAssessments": "Oceny ryzyka",
+      "fireBuildings": "Budynki ppoż.",
+      "fireRiskAssessments": "Oceny ryzyka pożarowego",
+      "contractors": "Wykonawcy",
+      "sites": "Obiekty i projekty",
+      "templates": "Szablony",
+      "incidents": "Zdarzenia"
     }
   },
   "ai": {
@@ -3450,7 +3582,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "Wykonawca niezgodny — wpisz poniżej powód odstępstwa, aby kontynuować."
     },
     "gate": {
       "navLink": "Gate",
@@ -3489,7 +3622,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "Ten wykonawca jest niezgodny — odprawa wymaga zarejestrowanego powodu odstępstwa (lub skieruj go do biura budowy).",
+      "nonCompliantChip": "Niezgodny"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3528,7 +3663,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "Instruktaż został zaktualizowany od Twojego ostatniego potwierdzenia — przeczytaj i potwierdź ponownie."
     },
     "users": {
       "heading": "Portal users",
@@ -3582,7 +3718,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "Instruktaż na obiekcie",
+      "version": "Wersja {version}",
+      "hint": "Wyświetlany każdemu użytkownikowi portalu przed wszystkim innym. Zapis zmiany podnosi wersję — wszyscy muszą potwierdzić ponownie.",
+      "placeholder": "Co każdy wykonawca musi przeczytać i potwierdzić przed pracą…",
+      "saveButton": "Zapisz instruktaż",
+      "savedToast": "Instruktaż zapisany (wersja {version})."
+    },
+    "onSitePermits": {
+      "heading": "Obecnie na obiekcie z otwartymi pozwoleniami"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4987,7 +5134,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "Powiązano z zasobem",
+      "noLinkedAsset": "Brak powiązanego zasobu",
+      "linkedAssetLine": "Zasób: {name}",
+      "assetLinkedToast": "Powiązanie zasobu zaktualizowane."
     },
     "doors": {
       "addButton": "Add door",
@@ -5283,5 +5434,686 @@
     "clearSearch": "Wyczyść wyszukiwanie",
     "clear": "Wyczyść wybór",
     "done": "Gotowe"
+  },
+  "analytics": {
+    "title": "Pulpit",
+    "subtitle": "Co wymaga uwagi we wszystkich modułach i jak zmieniają się trendy.",
+    "tiles": {
+      "sectionLabel": "Wymaga uwagi",
+      "myOpenActions": "Moje otwarte działania",
+      "overdueActions": "Zaległe działania",
+      "dueSoon": "{count} z terminem w ciągu 7 dni",
+      "openObservations": "Otwarte obserwacje",
+      "highPriority": "{count} o wysokim priorytecie",
+      "awaitingApproval": "Inspekcje oczekujące na zatwierdzenie",
+      "inProgress": "{count} w toku",
+      "missedInspections": "Pominięte inspekcje (30 dni)",
+      "upcoming7": "{count} zaplanowanych na 7 dni",
+      "pendingAcks": "Komunikaty do potwierdzenia",
+      "openPermits": "Otwarte pozwolenia",
+      "expiring48h": "{count} wygasa w ciągu 48 godz.",
+      "raReviewOverdue": "Oceny ryzyka po terminie przeglądu",
+      "raActive": "{count} aktywnych",
+      "coshhReviewDue": "Zaległe przeglądy COSHH",
+      "coshhSubstances": "{count} aktywnych substancji",
+      "fireAttention": "Ochrona przeciwpożarowa: wymaga uwagi"
+    },
+    "trends": {
+      "sectionLabel": "Trendy",
+      "actionsTitle": "Działania — utworzone vs ukończone (8 tygodni)",
+      "activityTitle": "Inspekcje i obserwacje (8 tygodni)",
+      "actionsCreated": "Utworzone",
+      "actionsCompleted": "Ukończone",
+      "inspectionsCompleted": "Inspekcje ukończone",
+      "observationsRaised": "Zgłoszone obserwacje",
+      "thisWeek": "Teraz"
+    },
+    "sites": {
+      "sectionLabel": "Porównanie lokalizacji",
+      "title": "Lokalizacje w skrócie",
+      "subtitle": "Otwarte zadania i aktywność inspekcyjna według lokalizacji, najbardziej obciążone najpierw.",
+      "site": "Lokalizacja",
+      "openActions": "Otwarte działania",
+      "openObservations": "Otwarte obserwacje",
+      "completed30": "Inspekcje (30 dni)",
+      "noSite": "Brak lokalizacji",
+      "empty": "Brak lokalizacji."
+    }
+  },
+  "scanPage": {
+    "loading": "Ładowanie…",
+    "invalidTitle": "Ten kod QR nie jest już aktywny.",
+    "invalidBody": "Zeskanowany kod QR został unieważniony lub kategoria nie przyjmuje już zgłoszeń. Skontaktuj się z administratorem obiektu.",
+    "reportObservation": "Zgłoś obserwację",
+    "titleLabel": "Tytuł",
+    "titlePlaceholder": "Krótkie podsumowanie zdarzenia",
+    "descriptionLabel": "Opis",
+    "descriptionPlaceholder": "Dodaj szczegóły, które pomogą zrozumieć obserwację.",
+    "reporterNameLabel": "Twoje imię i nazwisko",
+    "reporterNameSubtitle": "Opcjonalnie — zostaw puste, aby pozostać anonimowym.",
+    "reporterEmailLabel": "Twój e-mail",
+    "reporterEmailSubtitle": "Opcjonalnie — możemy użyć go do kontaktu.",
+    "dateOccurredLabel": "Data zdarzenia",
+    "locationAddressLabel": "Miejsce",
+    "locationAddressPlaceholder": "Budynek, piętro lub strefa",
+    "customQuestionsHeading": "Dodatkowe pytania",
+    "selectPlaceholder": "Wybierz opcję",
+    "submit": "Wyślij",
+    "submitting": "Wysyłanie…",
+    "successTitle": "Dziękujemy! Obserwacja została wysłana.",
+    "successBody": "Numer referencyjny znajduje się poniżej — zachowaj go.",
+    "successAnother": "Zgłoś kolejną",
+    "errorGeneric": "Nie udało się wysłać obserwacji. Spróbuj ponownie.",
+    "siteLabel": "Lokalizacja",
+    "siteNone": "Wybierz lokalizację",
+    "photosLabel": "Zdjęcia",
+    "photosSubtitle": "Dodaj do {max} zdjęć — obraz to połowa zgłoszenia.",
+    "photosAdd": "Dodaj zdjęcie",
+    "photosRemove": "Usuń",
+    "photoTooLarge": "To zdjęcie przekracza {maxMb} MB — wybierz mniejsze.",
+    "photoUploadFailed": "Nie udało się przesłać zdjęcia. Jest nadal załączone — wyślij ponownie, aby spróbować jeszcze raz."
+  },
+  "offline": {
+    "title": "Jesteś offline",
+    "body": "Ta strona jest niedostępna bez połączenia. Zapisane dane czekają w kolejce i zsynchronizują się automatycznie.",
+    "pendingChip": "{count} w kolejce — synchronizacja po powrocie online",
+    "itemsDelivered": "Zsynchronizowano {count} z kolejki",
+    "itemRejected": "Serwer odrzucił element z kolejki — sprawdź i wprowadź ponownie.",
+    "queuedToast": "Brak połączenia — zapisano w kolejce. Synchronizacja nastąpi automatycznie."
+  },
+  "notifications": {
+    "bellLabel": "Powiadomienia ({count} nieprzeczytane)",
+    "title": "Powiadomienia",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "empty": "Na razie nic — wszystko aktualne.",
+    "kinds": {
+      "action_assigned": "Przypisano działanie",
+      "approval_pending": "Oczekuje na zatwierdzenie",
+      "approval_decided": "Zatwierdzenie rozstrzygnięte",
+      "heads_up": "Komunikat",
+      "issue_reported": "Zgłoszono obserwację",
+      "schedule_missed": "Pominięte inspekcje",
+      "action_due": "Działania z bliskim terminem",
+      "document_expiry": "Wygaśnięcie dokumentu"
+    },
+    "prefs": {
+      "title": "Powiadomienia e-mail",
+      "subtitle": "Wyłączenie wycisza tylko e-mail — dzwonek w nagłówku zawsze je pokazuje.",
+      "saveError": "Nie udało się zapisać preferencji.",
+      "keys": {
+        "emailActionReminders": "Przypomnienia o terminach działań",
+        "emailScheduleMissed": "Pominięte zaplanowane inspekcje",
+        "emailDocumentExpiry": "Przypomnienia o wygasających dokumentach",
+        "emailMaintenance": "Przypomnienia o konserwacji"
+      }
+    }
+  },
+  "incidents": {
+    "title": "Zdarzenia",
+    "subtitle": "Zgłaszaj, badaj i zamykaj zdarzenia BHP",
+    "attention": {
+      "riddorOverdue": "RIDDOR po terminie",
+      "riddorDueSoon": "RIDDOR wkrótce",
+      "rescreenRequired": "wymagana ponowna ocena",
+      "investigating": "w toku dochodzenia",
+      "effectivenessOverdue": "przeglądy skuteczności zaległe"
+    },
+    "list": {
+      "report": "Zgłoś zdarzenie",
+      "exportCsv": "Eksport CSV",
+      "empty": "Brak zdarzeń dla tych filtrów.",
+      "searchPlaceholder": "Szukaj tytułu lub numeru…",
+      "riddorOnly": "Tylko RIDDOR",
+      "allKinds": "Wszystkie rodzaje",
+      "allSeverities": "Wszystkie ciężkości",
+      "allSites": "Wszystkie lokalizacje",
+      "lateReport": "Późne zgłoszenie",
+      "confidential": "Poufne",
+      "statusFilter": {
+        "open": "Otwarte",
+        "reported": "Zgłoszone",
+        "triaged": "Po triażu",
+        "investigating": "W dochodzeniu",
+        "actions_outstanding": "Działania w toku",
+        "closed": "Zamknięte",
+        "cancelled": "Anulowane",
+        "all": "Wszystkie"
+      },
+      "columns": {
+        "reference": "Numer",
+        "title": "Tytuł",
+        "kind": "Rodzaj",
+        "severity": "Ciężkość",
+        "status": "Status",
+        "site": "Lokalizacja",
+        "occurred": "Data zdarzenia",
+        "riddor": "RIDDOR"
+      }
+    },
+    "kinds": {
+      "injury": "Uraz",
+      "ill_health": "Choroba zawodowa",
+      "dangerous_occurrence": "Zdarzenie niebezpieczne",
+      "sharps_exposure": "Zakłucie / ochlapanie",
+      "violence_aggression": "Przemoc i agresja",
+      "damage": "Szkoda materialna",
+      "environmental": "Środowiskowe",
+      "near_miss": "Zdarzenie potencjalnie wypadkowe"
+    },
+    "severities": {
+      "negligible": "Znikoma",
+      "minor": "Lekka",
+      "moderate": "Umiarkowana",
+      "serious": "Poważna",
+      "major": "Bardzo poważna"
+    },
+    "statuses": {
+      "reported": "Zgłoszone",
+      "triaged": "Po triażu",
+      "investigating": "W dochodzeniu",
+      "actions_outstanding": "Działania w toku",
+      "closed": "Zamknięte",
+      "reopened": "Wznowione",
+      "cancelled": "Anulowane"
+    },
+    "personCategories": {
+      "employee": "Pracownik",
+      "contractor": "Wykonawca",
+      "agency": "Pracownik agencyjny",
+      "visitor": "Gość",
+      "member_of_public": "Osoba postronna",
+      "work_experience": "Praktykant"
+    },
+    "injuryKinds": {
+      "fracture": "Złamanie",
+      "dislocation": "Zwichnięcie",
+      "sprain_strain": "Skręcenie / naciągnięcie",
+      "laceration": "Rana szarpana",
+      "puncture": "Rana kłuta",
+      "abrasion": "Otarcie",
+      "bruising": "Stłuczenie",
+      "burn": "Oparzenie",
+      "scald": "Poparzenie cieczą",
+      "amputation": "Amputacja",
+      "crush": "Zgniecenie",
+      "concussion": "Wstrząśnienie mózgu",
+      "electric_shock": "Porażenie prądem",
+      "asphyxia": "Uduszenie",
+      "poisoning": "Zatrucie",
+      "other": "Inne"
+    },
+    "bodyParts": {
+      "head": "Głowa",
+      "face": "Twarz",
+      "eye": "Oko",
+      "neck": "Szyja",
+      "shoulder": "Bark",
+      "arm": "Ramię",
+      "elbow": "Łokieć",
+      "wrist": "Nadgarstek",
+      "hand": "Dłoń",
+      "finger": "Palec",
+      "trunk": "Tułów",
+      "back": "Plecy",
+      "abdomen": "Brzuch",
+      "hip": "Biodro",
+      "leg": "Noga",
+      "knee": "Kolano",
+      "ankle": "Kostka",
+      "foot": "Stopa",
+      "toe": "Palec u nogi",
+      "internal": "Narządy wewnętrzne",
+      "multiple": "Wiele"
+    },
+    "hospitalisations": {
+      "none": "Bez leczenia szpitalnego",
+      "ae": "SOR",
+      "admitted": "Hospitalizacja"
+    },
+    "causalFactors": {
+      "equipment_guarding": "Sprzęt / osłony",
+      "procedure": "Brak lub nieadekwatna procedura",
+      "training_competence": "Szkolenie / kompetencje",
+      "supervision": "Nadzór",
+      "human_factors": "Czynniki ludzkie",
+      "environment": "Otoczenie",
+      "maintenance": "Utrzymanie ruchu",
+      "management_system": "System zarządzania"
+    },
+    "priorities": {
+      "low": "Niski",
+      "medium": "Średni",
+      "high": "Wysoki",
+      "critical": "Krytyczny"
+    },
+    "evidenceKinds": {
+      "photo": "Zdjęcie",
+      "document": "Dokument",
+      "cctv_ref": "Odniesienie CCTV",
+      "physical_ref": "Dowód rzeczowy",
+      "other": "Inne"
+    },
+    "new": {
+      "title": "Zgłoś zdarzenie",
+      "whatHappened": "Co się stało?",
+      "titlePlaceholder": "Jedna linia — np. Dłoń pochwycona w strefie zgniotu",
+      "kind": "Rodzaj zdarzenia",
+      "confidentialHint": "Ten rodzaj jest rejestrowany poufnie: szczegóły widzą tylko zgłaszający, zespół dochodzeniowy i osoby z dostępem poufnym.",
+      "when": "Kiedy to się stało?",
+      "site": "Lokalizacja",
+      "sitePlaceholder": "Wybierz lokalizację…",
+      "location": "Dokładne miejsce",
+      "locationPlaceholder": "np. Warsztat, linia 2",
+      "description": "Co się stało, własnymi słowami",
+      "descriptionPlaceholder": "Opisz, co się stało, co było wykonywane i co pomogło lub pogorszyło sytuację…",
+      "sharpsHeading": "Szczegóły zakłucia / ochlapania",
+      "vaHeading": "Szczegóły przemocy i agresji",
+      "doHeading": "Szczegóły zdarzenia niebezpiecznego",
+      "damageHeading": "Szczegóły szkody",
+      "envHeading": "Szczegóły środowiskowe",
+      "peopleHeading": "Osoby poszkodowane",
+      "addPerson": "Dodaj osobę",
+      "personRequiredHint": "Dodaj osobę poszkodowaną — imię i nazwisko, kategorię i szczegóły urazu.",
+      "noPersonsHint": "Brak osób? Zostaw puste (np. zdarzenie niebezpieczne bez urazów).",
+      "personNamePlaceholder": "Imię i nazwisko",
+      "injuryDetails": "Szczegóły urazu",
+      "injuryKinds": "Rodzaj urazu",
+      "bodyParts": "Dotknięte części ciała",
+      "firstAidGiven": "Udzielono pierwszej pomocy",
+      "hospitalisation": "Leczenie szpitalne",
+      "submit": "Wyślij zgłoszenie",
+      "submitting": "Wysyłanie…",
+      "savedLocally": "Zgłoszenie zapisano na tym urządzeniu — ponów, gdy będzie zasięg.",
+      "draftRestored": "Przywrócono lokalnie zapisany szkic.",
+      "photosTitle": "Dodaj zdjęcia",
+      "photosHint": "Zdjęcie teraz jest warte dziesięciu zeznań później. Dodaj co możesz — więcej dodasz ze strony zdarzenia.",
+      "addPhotos": "Zrób lub wybierz zdjęcia",
+      "uploading": "Przesyłanie…",
+      "uploadedCount": "Załączono plików: {count}.",
+      "done": "Gotowe — otwórz zdarzenie"
+    },
+    "details": {
+      "device": "Narzędzie / ostry przedmiot",
+      "devicePlaceholder": "np. Zużyta kaniula",
+      "procedure": "Wykonywana czynność",
+      "contaminationStatus": "Status skażenia",
+      "contamination": {
+        "unknown": "Nieznany",
+        "low": "Niskie ryzyko",
+        "high": "Wysokie ryzyko"
+      },
+      "sourceKnown": "Źródło znane",
+      "sourceRiskAssessed": "Oceniono ryzyko ekspozycji",
+      "washedConfirmed": "Rana przemyta / pierwsza pomoc potwierdzona",
+      "nature": "Charakter",
+      "vaNature": {
+        "physical": "Fizyczna",
+        "verbal": "Słowna",
+        "threat": "Groźba",
+        "sexual": "Seksualna"
+      },
+      "perpetratorType": "Sprawca",
+      "perpetrator": {
+        "patient_or_service_user": "Pacjent lub podopieczny",
+        "visitor": "Gość",
+        "member_of_public": "Osoba postronna",
+        "colleague": "Współpracownik",
+        "other": "Inny"
+      },
+      "weaponInvolved": "Użyto broni",
+      "policeNotified": "Powiadomiono policję",
+      "crimeReference": "Sygnatura zgłoszenia",
+      "supportOffered": "Zaoferowano wsparcie",
+      "doCategory": "Kategoria",
+      "doCategories": {
+        "lifting_equipment_collapse": "Awaria urządzenia dźwigowego",
+        "scaffold_collapse": "Zawalenie rusztowania",
+        "electrical_fire_explosion": "Pożar / wybuch elektryczny",
+        "pressure_system_failure": "Awaria układu ciśnieniowego",
+        "accidental_release": "Niekontrolowane uwolnienie",
+        "structural_collapse": "Katastrofa budowlana",
+        "other": "Inne"
+      },
+      "otherText": "Opisz zdarzenie",
+      "whatDamaged": "Co uległo uszkodzeniu",
+      "whatReleased": "Co zostało uwolnione",
+      "estimatedCostBand": "Szacowany koszt",
+      "costBands": {
+        "unknown": "Nieznany",
+        "under_1k": "Poniżej 1 tys. £",
+        "1k_to_10k": "1–10 tys. £",
+        "10k_to_100k": "10–100 tys. £",
+        "over_100k": "Ponad 100 tys. £"
+      },
+      "mitigation": "Działanie doraźne",
+      "containment": "Ograniczenie skutków"
+    },
+    "detail": {
+      "downloadPdf": "Pobierz PDF",
+      "occurred": "Zdarzyło się",
+      "reported": "Zgłoszono",
+      "site": "Lokalizacja",
+      "potentialSeverity": "Potencjalna ciężkość",
+      "riddorOverdueBanner": "Ustawowy termin zgłoszenia RIDDOR minął bez odnotowanego zgłoszenia. Zgłoś do HSE teraz i odnotuj to tutaj.",
+      "rescreenBanner": "Łączna absencja przekroczyła 7 dni wbrew decyzji „niepodlegające zgłoszeniu” — ponów ocenę RIDDOR.",
+      "notEffectiveBanner": "Przegląd skuteczności wykazał, że środki nie zadziałały. Rozważ wznowienie zdarzenia lub nowe działanie."
+    },
+    "triage": {
+      "heading": "Triaż",
+      "open": "Wykonaj triaż",
+      "hint": "Potwierdź ciężkość, ustal poziom dochodzenia i wyznacz prowadzącego.",
+      "severity": "Ciężkość (rzeczywista)",
+      "level": "Poziom dochodzenia",
+      "levels": {
+        "basic": "Podstawowy — jeden ekran, kilka minut na telefonie",
+        "full": "Pełny — dowody, analiza przyczyn, ustalenia"
+      },
+      "leadInvestigator": "Prowadzący dochodzenie",
+      "leadPlaceholder": "Wybierz prowadzącego…",
+      "confidential": "Poufne — szczegóły tylko dla zgłaszającego, zespołu dochodzeniowego i uprawnionych",
+      "confirm": "Zatwierdź triaż"
+    },
+    "people": {
+      "heading": "Osoby i dni stracone",
+      "daysLost": "Dni stracone: {days}",
+      "none": "Nie zarejestrowano osób.",
+      "returnedToWork": "Powrót do pracy",
+      "firstAid": "Pierwsza pomoc",
+      "absence": "Absencja",
+      "ongoing": "trwa",
+      "endAbsence": "Zakończ dziś",
+      "absenceFrom": "Pierwszy dzień absencji",
+      "absenceTo": "Ostatni dzień (puste = trwa)",
+      "addAbsence": "Zarejestruj absencję",
+      "addPerson": "Dodaj osobę"
+    },
+    "riddor": {
+      "heading": "RIDDOR",
+      "screen": "Oceń teraz",
+      "rescreen": "Oceń ponownie",
+      "notScreened": "Jeszcze nie oceniono. Decyzja — także „niepodlegające zgłoszeniu” — sama w sobie jest dokumentem do obrony.",
+      "determination": "Decyzja",
+      "screenedBy": "Ocenił(a) {name} · {date}",
+      "deadline": "Termin ustawowy",
+      "submitted": "Zgłoszono",
+      "routeOnline": "Formularz online HSE",
+      "routePhone": "Telefonicznie",
+      "screenHint": "Platforma liczy termin; osąd należy do Ciebie. Wybierz kategorię i uzasadnij.",
+      "note": "Uzasadnienie",
+      "notePlaceholder": "Dlaczego taka decyzja — np. 9 dni niezdolności po wypadku, więc ponad 7 dni…",
+      "confirmScreen": "Zapisz decyzję",
+      "recordSubmission": "Odnotuj zgłoszenie do HSE",
+      "route": "Zgłoszono przez",
+      "hseReference": "Sygnatura HSE (opcjonalnie)",
+      "confirmSubmission": "Odnotuj zgłoszenie",
+      "chipNotReportable": "Niepodlegające",
+      "chipSubmitted": "RIDDOR zgłoszone",
+      "chipOverdue": "RIDDOR PO TERMINIE",
+      "chipDaysLeft": "RIDDOR: zostało {days} dni",
+      "categories": {
+        "not_reportable": "Niepodlegające zgłoszeniu",
+        "death": "Zgon",
+        "specified_injury": "Uraz wyszczególniony",
+        "over_7_day": "Niezdolność ponad 7 dni",
+        "occupational_disease": "Choroba zawodowa",
+        "dangerous_occurrence": "Zdarzenie niebezpieczne",
+        "gas_incident": "Zdarzenie gazowe"
+      },
+      "help": {
+        "not_reportable": "Żadna kategoria nie ma zastosowania. Uzasadnij — decyzja negatywna to też dokument.",
+        "death": "Osoba zmarła wskutek wypadku przy pracy. Powiadom niezwłocznie; raport w 10 dni.",
+        "specified_injury": "Złamanie (poza palcami), amputacja, utrata wzroku, zgniecenie głowy/tułowia, ciężkie oparzenia, oskalpowanie, utrata przytomności wskutek uduszenia lub hospitalizacja ponad 24 h. Raport w 10 dni.",
+        "over_7_day": "Niezdolność do pracy ponad 7 dni, nie licząc dnia wypadku. Raport w 15 dni.",
+        "occupational_disease": "Rozpoznana choroba zawodowa związana z pracą — cieśń nadgarstka, dermatoza, astma zawodowa, HAVS, zapalenie ścięgien, nowotwór zawodowy.",
+        "dangerous_occurrence": "Zdarzenie z załącznika 2 — awaria dźwignicy, zawalenie rusztowania, pożar/wybuch elektryczny, awaria ciśnieniowa, uwolnienie substancji.",
+        "gas_incident": "Zgon lub uraz związany z gazem albo niebezpieczna instalacja gazowa."
+      }
+    },
+    "investigation": {
+      "heading": "Dochodzenie",
+      "start": "Rozpocznij dochodzenie",
+      "openWorkspace": "Otwórz obszar roboczy",
+      "awaitingTriage": "Czeka na triaż — tam ustala się poziom i prowadzącego.",
+      "notStarted": "Jeszcze nie rozpoczęto.",
+      "level": "Poziom",
+      "lead": "Prowadzący",
+      "revision": "Wersja",
+      "status": "Status",
+      "statuses": {
+        "draft": "Szkic",
+        "submitted": "Czeka na zatwierdzenie",
+        "approved": "Zatwierdzone"
+      },
+      "approvedBy": "Zatwierdził(a) {name} · {date}"
+    },
+    "findings": {
+      "heading": "Ustalenia i działania korygujące",
+      "actionPending": "Działanie oczekuje — powstanie przy zatwierdzeniu.",
+      "actionStatuses": {
+        "open": "Otwarte",
+        "in_progress": "W toku",
+        "completed": "Zakończone",
+        "cancelled": "Anulowane"
+      }
+    },
+    "linked": {
+      "heading": "Powiązane rekordy",
+      "observation": "Obserwacja",
+      "permit": "Pozwolenie",
+      "contractor": "Wykonawca",
+      "asset": "Zasób",
+      "none": "Brak powiązanych rekordów."
+    },
+    "reviews": {
+      "prompted": "Przeglądy uruchomiono {date}.",
+      "skipped": "Przegląd pominięto: {reason}",
+      "stepHeading": "Uruchom przeglądy po zdarzeniu",
+      "stepHint": "Skieruj powiązane oceny ryzyka, COSHH i ppoż. do przeglądu, ze wskazaniem tego zdarzenia.",
+      "kinds": {
+        "ra": "Oceny ryzyka",
+        "coshh": "Oceny COSHH",
+        "fra": "Oceny ryzyka pożarowego"
+      },
+      "promptButton": "Uruchom wybrane",
+      "skipButton": "Pomiń z powodem…",
+      "skipReasonPlaceholder": "Dlaczego przegląd nie jest potrzebny…",
+      "confirmSkip": "Pomiń"
+    },
+    "effectiveness": {
+      "heading": "Przegląd skuteczności",
+      "due": "Termin: {date}",
+      "verdict": "Werdykt",
+      "verdicts": {
+        "effective": "Skuteczne — środki wdrożone i działają",
+        "partially_effective": "Częściowo skuteczne",
+        "not_effective": "Nieskuteczne"
+      },
+      "question": "Czy środki są wdrożone i działają? Czy było powtórzenie?",
+      "notePlaceholder": "Co sprawdzono i stwierdzono…",
+      "record": "Zapisz werdykt",
+      "open": "Zapisz werdykt skuteczności"
+    },
+    "lifecycle": {
+      "heading": "Cykl życia",
+      "close": "Zamknij zdarzenie",
+      "reopen": "Wznów",
+      "cancel": "Anuluj rekord",
+      "closeHint": "Zamknięcie wymaga wypełnionego obowiązku RIDDOR oraz zakończenia lub anulowania wszystkich powiązanych działań. Przy zamknięciu planowany jest przegląd skuteczności.",
+      "confirmClose": "Potwierdź zamknięcie",
+      "reopenReason": "Dlaczego wznawiasz?",
+      "cancelReason": "Dlaczego anulujesz? (duplikat / utworzone omyłkowo)",
+      "confirmReopen": "Potwierdź wznowienie",
+      "confirmCancel": "Potwierdź anulowanie"
+    },
+    "timeline": {
+      "heading": "Oś czasu",
+      "system": "System"
+    },
+    "events": {
+      "reported": "Zgłoszono",
+      "updated": "Zaktualizowano szczegóły",
+      "triaged": "Wykonano triaż",
+      "severity_changed": "Zmieniono ciężkość",
+      "investigator_assigned": "Wyznaczono prowadzącego",
+      "riddor_screened": "Oceniono RIDDOR",
+      "riddor_rescreen_flagged": "Oznaczono do ponownej oceny RIDDOR",
+      "riddor_submitted": "Zgłoszono RIDDOR",
+      "person_added": "Dodano osobę",
+      "person_updated": "Zaktualizowano osobę",
+      "person_removed": "Usunięto osobę",
+      "absence_added": "Zarejestrowano absencję",
+      "absence_updated": "Zaktualizowano absencję",
+      "absence_removed": "Usunięto absencję",
+      "evidence_added": "Dodano dowód",
+      "witness_statement_added": "Przyjęto zeznanie świadka",
+      "investigation_started": "Rozpoczęto dochodzenie",
+      "investigation_submitted": "Złożono dochodzenie",
+      "investigation_rejected": "Zwrócono dochodzenie do poprawy",
+      "investigation_approved": "Zatwierdzono dochodzenie",
+      "actions_generated": "Utworzono działania korygujące",
+      "reviews_prompted": "Uruchomiono przeglądy",
+      "reviews_prompt_skipped": "Pominięto przegląd",
+      "closed": "Zamknięto",
+      "reopened": "Wznowiono",
+      "cancelled": "Anulowano",
+      "effectiveness_recorded": "Zapisano werdykt skuteczności",
+      "alert_sent": "Wysłano pilny alert",
+      "riddor_warning_sent": "Wysłano ostrzeżenie o terminie RIDDOR",
+      "riddor_escalated": "Eskalowano termin RIDDOR",
+      "promoted_from_observation": "Eskalowano z obserwacji"
+    },
+    "workspace": {
+      "title": "Obszar roboczy dochodzenia",
+      "revisionOption": "Wersja {revision} ({status})",
+      "noInvestigation": "Brak dochodzenia — rozpocznij je ze strony zdarzenia.",
+      "frozenNote": "Wersja {revision} — zatwierdzona {date}. Zamrożona; wyświetlana jak w chwili zakończenia.",
+      "immediateCause": "Przyczyna bezpośrednia",
+      "underlyingCause": "Przyczyna źródłowa",
+      "signatures": "Złożył(a) {submitted} · Zatwierdził(a) {approved}",
+      "evidenceHeading": "Dowody",
+      "addFiles": "Dodaj zdjęcia / pliki",
+      "addReference": "Dodaj odniesienie",
+      "referenceKind": "Rodzaj",
+      "referenceCaption": "Odniesienie",
+      "referenceCaptionPlaceholder": "np. Kamera 4, 14:02–14:07, nagranie zachowane do 30.08",
+      "noEvidence": "Brak dowodów. Wczesne zdjęcie jest warte dziesięciu zeznań później.",
+      "witnessHeading": "Zeznania świadków",
+      "addStatement": "Przyjmij zeznanie",
+      "appendOnlyNote": "Zeznania można tylko dodawać: korekty to nowe zeznania; niczego się nie edytuje ani nie usuwa.",
+      "witnessName": "Świadek",
+      "statement": "Zeznanie",
+      "signatureCaptured": "Podpis zapisany.",
+      "saveStatement": "Zapisz zeznanie",
+      "signed": "podpisane",
+      "takenBy": "Przyjął(-ęła) {name}",
+      "rcaHeading": "Analiza przyczyn źródłowych",
+      "contributingFactors": "Czynniki współprzyczynowe",
+      "method": "Metoda",
+      "methods": {
+        "five_whys": "5 × dlaczego",
+        "causal_factors": "Czynniki przyczynowe (HSG245)",
+        "other": "Inna"
+      },
+      "whyPlaceholder": "Dlaczego…?",
+      "rootCause": "Przyczyna źródłowa",
+      "addWhy": "Dodaj „dlaczego”",
+      "factorNarrativePlaceholder": "Co się wydarzyło w tym czynniku…",
+      "addFactor": "Dodaj czynnik",
+      "timelineHeading": "Przebieg zdarzeń",
+      "timelineWhen": "Kiedy",
+      "timelineWhat": "Co się stało",
+      "addTimelineRow": "Dodaj wiersz",
+      "findingsHeading": "Ustalenia",
+      "requiresAction": "Wymaga działania",
+      "findingPlaceholder": "Co musi się zmienić…",
+      "conclusionHeading": "Wnioski i podpisy",
+      "conclusionSummary": "Wnioski",
+      "rootCauseStatement": "Sformułowanie przyczyny źródłowej",
+      "recurrenceLikelihood": "Prawdopodobieństwo powtórzenia",
+      "recurrence": {
+        "low": "Niskie",
+        "medium": "Średnie",
+        "high": "Wysokie"
+      },
+      "lessonsLearned": "Wyciągnięte wnioski",
+      "attestation": "Potwierdzam, że dochodzenie jest kompletne i rzetelne według mojej najlepszej wiedzy.",
+      "submit": "Złóż do zatwierdzenia",
+      "submittedBy": "Złożył(a) {name} — czeka na zatwierdzenie przez innego kierownika (rozdział funkcji).",
+      "approve": "Zatwierdź…",
+      "reject": "Zwróć do poprawy…",
+      "rejectNotePlaceholder": "Co wymaga poprawy…",
+      "confirmReject": "Zwróć prowadzącemu",
+      "approveHint": "Ustaw osobę odpowiedzialną i termin działania korygującego dla każdego ustalenia — powstają przy zatwierdzeniu, dokładnie raz.",
+      "assignee": "Odpowiedzialny",
+      "assigneePlaceholder": "Wybierz osobę…",
+      "dueDate": "Termin",
+      "confirmApprove": "Zatwierdź dochodzenie",
+      "approvedNote": "Zatwierdził(a) {name}. Ta wersja jest zamrożona."
+    },
+    "observationCard": {
+      "heading": "Zdarzenia",
+      "escalate": "Eskaluj do zdarzenia",
+      "escalating": "Eskalowanie…",
+      "escalated": "Utworzono zdarzenie {reference}.",
+      "escalateFailed": "Nie udało się eskalować tej obserwacji.",
+      "none": "Z tej obserwacji nie utworzono jeszcze zdarzenia.",
+      "confidential": "Zdarzenie poufne"
+    },
+    "common": {
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "saving": "Zapisywanie…"
+    },
+    "errors": {
+      "generic": "Coś poszło nie tak. Spróbuj ponownie.",
+      "module-disabled": "Ten moduł nie jest włączony dla Twojego produktu.",
+      "incident-not-found": "Nie znaleziono zdarzenia.",
+      "site-not-found": "Nie znaleziono lokalizacji.",
+      "user-not-found": "Nie znaleziono użytkownika.",
+      "permit-not-found": "Nie znaleziono pozwolenia.",
+      "contractor-not-found": "Nie znaleziono wykonawcy.",
+      "asset-not-found": "Nie znaleziono zasobu.",
+      "observation-not-found": "Nie znaleziono obserwacji.",
+      "occurred-in-future": "Czas zdarzenia nie może być w przyszłości.",
+      "invalid-details": "Szczegóły właściwe dla rodzaju są niekompletne lub błędne.",
+      "invalid-transition": "Ten krok nie jest dozwolony z bieżącego statusu.",
+      "incident-terminal": "To zdarzenie jest zamknięte lub anulowane.",
+      "not-editable": "Edytować może tylko kierownik — lub zgłaszający przed triażem.",
+      "not-allowed": "Nie możesz tego zrobić w tym zdarzeniu.",
+      "confidential": "To zdarzenie jest poufne. Widzą je tylko zgłaszający, zespół dochodzeniowy i uprawnieni.",
+      "severity-frozen": "Ciężkość jest zamrożona po zatwierdzeniu dochodzenia.",
+      "not-lead-investigator": "Może to zrobić tylko prowadzący — kierownik może najpierw zmienić przypisanie.",
+      "investigation-already-open": "Dochodzenie jest już otwarte.",
+      "investigation-not-found": "Nie znaleziono dochodzenia.",
+      "investigation-frozen": "Ta wersja dochodzenia jest zatwierdzona i zamrożona.",
+      "investigation-not-draft": "Dochodzenie nie jest szkicem.",
+      "investigation-not-submitted": "Dochodzenie nie zostało złożone.",
+      "immediate-cause-required": "Przed złożeniem zapisz przyczynę bezpośrednią.",
+      "conclusion-required": "Przed złożeniem napisz wnioski.",
+      "rca-method-required": "Pełne dochodzenie wymaga metody analizy.",
+      "why-chain-required": "Przed złożeniem dokończ łańcuch 5 × dlaczego.",
+      "causal-factors-required": "Przed złożeniem zapisz co najmniej jeden czynnik przyczynowy.",
+      "root-cause-required": "Pełne dochodzenie wymaga sformułowania przyczyny źródłowej.",
+      "approver-is-investigator": "Zatwierdzający nie może być prowadzącym ani składającym.",
+      "finding-not-found": "Nie znaleziono ustalenia.",
+      "finding-has-action": "To ustalenie ma już działanie i nie można go usunąć.",
+      "person-not-found": "Nie znaleziono osoby w tym zdarzeniu.",
+      "absence-not-found": "Nie znaleziono absencji.",
+      "absence-inverted": "Data końca jest wcześniejsza niż początku.",
+      "riddor-already-submitted": "Zgłoszenie RIDDOR już odnotowano — decyzja jest zamrożona.",
+      "riddor-not-reportable": "To zdarzenie nie zostało ocenione jako podlegające zgłoszeniu.",
+      "riddor-unscreened": "Przed zamknięciem dokończ ocenę RIDDOR.",
+      "riddor-rescreen-required": "Przed zamknięciem ponów ocenę RIDDOR — absencja przekroczyła 7 dni.",
+      "riddor-not-submitted": "Zdarzenie podlega RIDDOR — przed zamknięciem odnotuj zgłoszenie do HSE.",
+      "actions-open": "Najpierw zakończ lub anuluj wszystkie powiązane działania.",
+      "incident-not-closed": "Zdarzenie musi być najpierw zamknięte.",
+      "effectiveness-not-scheduled": "Dla tego zdarzenia nie zaplanowano przeglądu skuteczności.",
+      "invalid-storage-key": "Ten plik nie należy do tego zdarzenia.",
+      "nothing-selected": "Wybierz co najmniej jedną ocenę.",
+      "risk-assessment-not-found": "Wybrana ocena ryzyka nie istnieje lub jest nieaktywna.",
+      "coshh-assessment-not-found": "Wybrana ocena COSHH nie istnieje lub jest nieaktywna.",
+      "fra-not-found": "Wybrana ocena ppoż. nie istnieje lub jest nieaktywna.",
+      "render-unavailable": "Generowanie PDF jest niedostępne w tym wdrożeniu."
+    }
   }
 }

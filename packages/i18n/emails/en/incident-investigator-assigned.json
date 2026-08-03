@@ -1,0 +1,8 @@
+{
+  "subject": "You are the lead investigator — {incidentRef}",
+  "preheader": "An incident investigation on {productName} has been assigned to you.",
+  "greeting": "Hello {recipientName},",
+  "body": "You have been appointed lead investigator for incident {incidentRef} ({incidentTitle}) on {productName}.\n\nStart the investigation from the incident page: gather evidence and witness statements while they are fresh, work the root-cause analysis, and submit your conclusion for approval when it is defensible.",
+  "cta": "Open the incident",
+  "footer": "You are receiving this because a manager appointed you lead investigator in {productName}."
+}

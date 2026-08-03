@@ -1,0 +1,8 @@
+{
+  "subject": "Ispezioni programmate mancate — {missedCount}",
+  "preheader": "Ispezioni programmate su {productName} non completate in tempo.",
+  "greeting": "Ciao {recipientName},",
+  "body": "Le seguenti ispezioni programmate hanno superato la scadenza senza essere avviate:\n\n{detailLines}\n\nAvviale in ritardo dal tuo calendario, oppure correggi la pianificazione se non riflette più la realtà: un calendario che salta in silenzio è peggio di uno che dice \"mancata\".",
+  "cta": "Apri le pianificazioni",
+  "footer": "Ricevi questa email perché sei l'assegnatario o il proprietario della pianificazione su {productName}."
+}

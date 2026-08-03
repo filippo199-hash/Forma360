@@ -90,6 +90,10 @@ export function VisitCreateDialog({
   const [end, setEnd] = useState('');
   const [notes, setNotes] = useState('');
   const [authorize, setAuthorize] = useState(true);
+  // PF-19: set when the server refused the walk-in for compliance — the
+  // dialog then surfaces an override-reason field.
+  const [walkInBlocked, setWalkInBlocked] = useState(false);
+  const [walkInOverride, setWalkInOverride] = useState('');
 
   const reset = () => {
     setContractorId(fixedContractorId ?? '');
@@ -98,6 +102,8 @@ export function VisitCreateDialog({
     setSiteId('');
     setStart(dayAt9(defaultDay));
     setEnd('');
+    setWalkInBlocked(false);
+    setWalkInOverride('');
     setNotes('');
     setAuthorize(true);
   };
@@ -121,7 +127,15 @@ export function VisitCreateDialog({
       reset();
       onDone();
     },
-    onError: onErr,
+    // PF-19: a non-compliant contractor needs an explicit override reason.
+    onError: (err) => {
+      if (err.message === 'contractor_non_compliant') {
+        setWalkInBlocked(true);
+        toast.error(t('visits.blockedNonCompliant'));
+        return;
+      }
+      onErr(err);
+    },
   });
 
   const pending = create.isPending || createWalkIn.isPending;
@@ -133,7 +147,13 @@ export function VisitCreateDialog({
     const siteArg = siteId === '' ? {} : { siteId };
     const visitorArg = visitorName.trim() === '' ? {} : { visitorName: visitorName.trim() };
     if (walkIn) {
-      createWalkIn.mutate({ contractorId: cid, title: title.trim(), ...siteArg, ...visitorArg });
+      createWalkIn.mutate({
+        contractorId: cid,
+        title: title.trim(),
+        ...siteArg,
+        ...visitorArg,
+        ...(walkInOverride.trim() !== '' ? { overrideReason: walkInOverride.trim() } : {}),
+      });
     } else {
       create.mutate({
         contractorId: cid,
@@ -213,6 +233,21 @@ export function VisitCreateDialog({
             </select>
           </div>
 
+          {walkIn && walkInBlocked ? (
+            <div className="space-y-1.5 rounded-md border border-destructive/40 bg-destructive/5 p-3">
+              <Label htmlFor="wi-override" className="text-xs font-medium text-destructive">
+                {t('visits.blockedNonCompliant')}
+              </Label>
+              <Textarea
+                id="wi-override"
+                value={walkInOverride}
+                onChange={(e) => setWalkInOverride(e.target.value)}
+                placeholder={t('visits.overrideReasonPlaceholder')}
+                rows={2}
+                maxLength={1000}
+              />
+            </div>
+          ) : null}
           {!walkIn ? (
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -332,7 +367,15 @@ export function VisitDetailDialog({
       resetCheckIn();
       done(t('visits.checkedInToast'))();
     },
-    onError: onErr,
+    // PF-19: the server now refuses non-compliant contractors without a
+    // recorded override reason — point the user at the field.
+    onError: (err) => {
+      if (err.message === 'contractor_non_compliant') {
+        toast.error(t('visits.blockedNonCompliant'));
+        return;
+      }
+      onErr(err);
+    },
   });
   const checkOutM = trpc.contractors.visits.checkOut.useMutation({
     onSuccess: done(t('visits.checkedOutToast')),

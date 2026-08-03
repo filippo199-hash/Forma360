@@ -114,27 +114,39 @@ describe('brand substitution — {productName} (ADR 0010)', () => {
     expect(payload.subject).toBe('Verify your FreeHS email');
   });
 
-  it('every shipped template renders without leftover Forma360 literals', async () => {
-    // The base templates are brand-neutral: rendering with a non-default
-    // productName must not leak the old hardcoded brand.
+  it('IN-J04: every file in emails/en/ is registered, schema-valid and brand-neutral', async () => {
+    // Registry-completeness (platform review PF-1, made permanent by the
+    // incidents module): a template JSON that exists on disk but is not
+    // in EMAIL_TEMPLATES throws "Unknown email template" at send time —
+    // in production, silently, inside a worker. This walks the directory
+    // so a forgotten registration fails CI instead. The loader also
+    // schema-validates (all six fields required), and rendering with a
+    // non-default productName must not leak the hardcoded brand.
+    const { readdir } = await import('node:fs/promises');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
     const { defaultTemplatedTemplateLoader } = await import('./email');
-    const keys = [
-      'invite',
-      'otp',
-      'verification',
-      'password-reset',
-      'request-to-join',
-      'schedule-reminder',
-      'heads-up-reminder',
-      'observation-notification',
-      'observation-critical-alert',
-      'maintenance-reminder',
-      'contractor-doc-expiry',
-    ];
-    for (const key of keys) {
-      const tpl = await defaultTemplatedTemplateLoader(key);
+    const emailsDir = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '..',
+      '..',
+      'i18n',
+      'emails',
+      'en',
+    );
+    const files = (await readdir(emailsDir)).filter((f) => f.endsWith('.json'));
+    expect(files.length).toBeGreaterThanOrEqual(29);
+    for (const file of files) {
+      const key = file.replace(/\.json$/, '');
+      const tpl = await defaultTemplatedTemplateLoader(key).catch((err: unknown) => {
+        throw new Error(
+          `template "${key}" failed to load — register it in EMAIL_TEMPLATES: ${String(err)}`,
+        );
+      });
       const rendered = renderTemplatedEmail(tpl, { productName: 'FreeHS', url: 'https://x' });
-      expect(rendered.subject + rendered.text).not.toContain('Forma360');
+      expect(rendered.subject + rendered.text, `template "${key}" leaks the brand`).not.toContain(
+        'Forma360',
+      );
     }
   });
 });
@@ -154,5 +166,82 @@ describe('createSendEmail — resend delivery', () => {
         logger: silentLogger(),
       }),
     ).toThrow(/RESEND_FROM/);
+  });
+});
+
+describe('template registry completeness (platform review PF-1)', () => {
+  it('every template file in emails/en is registered and loadable', async () => {
+    const { readdir } = await import('node:fs/promises');
+    const { join, dirname } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const { defaultTemplatedTemplateLoader, EMAIL_TEMPLATE_KEYS } = await import('./email');
+    const dir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'i18n', 'emails', 'en');
+    const files = (await readdir(dir)).filter((f) => f.endsWith('.json'));
+    expect(files.length).toBeGreaterThanOrEqual(23);
+    for (const file of files) {
+      const key = file.replace(/\.json$/, '');
+      // Registered…
+      expect(EMAIL_TEMPLATE_KEYS, `template file ${file} is not registered`).toContain(key);
+      // …and actually loads + parses through the real loader.
+      const tpl = await defaultTemplatedTemplateLoader(key);
+      expect(tpl.subject.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('the four PF-1 safety alerts resolve through the real loader', async () => {
+    const { defaultTemplatedTemplateLoader } = await import('./email');
+    for (const key of [
+      'permit-expiry-warning',
+      'permit-expiry-escalation',
+      'fire-due-digest',
+      'fra-intolerable-alert',
+    ]) {
+      const tpl = await defaultTemplatedTemplateLoader(key);
+      expect(tpl.subject.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+
+describe('PF-20 locale-aware template loader', () => {
+  it('serves the translated template when the locale exists; falls back otherwise', async () => {
+    const { defaultTemplatedTemplateLoader } = await import('./email');
+    const it_ = await defaultTemplatedTemplateLoader('invite', 'it');
+    expect(it_.subject).toContain('ti ha invitato');
+    const pt = await defaultTemplatedTemplateLoader('invite', 'pt');
+    expect(pt.subject).toContain('convidou');
+    const en = await defaultTemplatedTemplateLoader('invite');
+    expect((await defaultTemplatedTemplateLoader('invite', 'xx')).subject).toBe(en.subject);
+    expect((await defaultTemplatedTemplateLoader('invite', 'ja')).subject).toBe(en.subject);
+  });
+
+  it('every translated template parses and keeps the EN placeholder vocabulary', async () => {
+    const { readdir } = await import('node:fs/promises');
+    const { join, dirname } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const { defaultTemplatedTemplateLoader } = await import('./email');
+    const emailsRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'i18n', 'emails');
+    const locales = (await readdir(emailsRoot, { withFileTypes: true }))
+      .filter((d) => d.isDirectory() && d.name !== 'en')
+      .map((d) => d.name);
+    expect(locales.length).toBeGreaterThanOrEqual(5);
+    const placeholderSet = (tpl: object): string =>
+      [...JSON.stringify(tpl).matchAll(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g)]
+        .map((m) => m[1])
+        .sort()
+        .join(',');
+    for (const locale of locales) {
+      const files = (await readdir(join(emailsRoot, locale))).filter((f) => f.endsWith('.json'));
+      expect(files.length).toBeGreaterThanOrEqual(29);
+      for (const file of files) {
+        const key = file.replace(/\.json$/, '');
+        const translated = await defaultTemplatedTemplateLoader(key, locale);
+        const english = await defaultTemplatedTemplateLoader(key);
+        // A translation must never drop or invent variables.
+        expect(placeholderSet(translated), `${locale}/${key} placeholders`).toBe(
+          placeholderSet(english),
+        );
+      }
+    }
   });
 });

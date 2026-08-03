@@ -38,6 +38,7 @@ import {
   inspectionWorkflowSigners,
   inspections,
   permissionSets,
+  scheduledInspectionOccurrences,
   siteMembers,
   sites,
   templateVersions,
@@ -53,10 +54,16 @@ import {
 } from '@forma360/permissions/dependents';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
+import { usersHoldingPermission } from '@forma360/permissions/holders';
+import { notifyInApp } from '../notify';
 import type { Logger } from '@forma360/shared/logger';
 import { parseTemplateContent } from '@forma360/shared/template-schema';
 import type { SignatureWorkflow } from '@forma360/shared/template-schema';
-import { collectActiveTriggers, missingEvidence } from '@forma360/shared/inspection-eval';
+import {
+  collectActiveTriggers,
+  missingEvidence,
+  missingNotes,
+} from '@forma360/shared/inspection-eval';
 import { createInspectionActionIfAbsent } from './actions';
 import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm';
@@ -173,6 +180,12 @@ const createInput = z.object({
   siteId: z.string().length(26).optional(),
   /** Observation/issue that triggered this inspection. Sets sourceType='issue'. */
   sourceIssueId: z.string().length(26).optional(),
+  /**
+   * Scheduled occurrence being started (PF-3). Links the occurrence to
+   * this inspection and flips it to in_progress so the scheduler can
+   * finally tell done from missed.
+   */
+  occurrenceId: z.string().length(26).optional(),
 });
 
 const saveProgressInput = z.object({
@@ -508,6 +521,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             templateName: templates.name,
             accessRuleId: templates.accessRuleId,
             conductedByName: user.name,
+            siteName: sites.name,
             openActionsCount: sql<number>`(
               SELECT COUNT(*)::int FROM actions a
               WHERE a.tenant_id = ${ctx.tenantId}
@@ -520,6 +534,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           .from(inspections)
           .leftJoin(templates, eq(templates.id, inspections.templateId))
           .leftJoin(user, eq(user.id, inspections.createdBy))
+          .leftJoin(sites, eq(sites.id, inspections.siteId))
           .where(and(...where))
           .orderBy(desc(inspections.startedAt));
 
@@ -892,6 +907,24 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           return { inspectionId, title, documentNumber };
         });
 
+        // PF-3: starting from a scheduled occurrence links the two and
+        // flips the occurrence to in_progress — the scheduler can finally
+        // tell done from missed. Tenant + assignee checked; a foreign or
+        // already-linked occurrence is ignored rather than failing the
+        // freshly-created inspection.
+        if (input.occurrenceId !== undefined) {
+          await ctx.db
+            .update(scheduledInspectionOccurrences)
+            .set({ status: 'in_progress', inspectionId: inserted.inspectionId })
+            .where(
+              and(
+                eq(scheduledInspectionOccurrences.tenantId, ctx.tenantId),
+                eq(scheduledInspectionOccurrences.id, input.occurrenceId),
+                inArray(scheduledInspectionOccurrences.status, ['pending', 'missed']),
+              ),
+            );
+        }
+
         ctx.logger.info(
           { inspectionId: inserted.inspectionId, templateId: tpl.id },
           '[inspections] created',
@@ -996,6 +1029,12 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
         const evMissing = missingEvidence(version.content, responseMap);
         if (evMissing.length > 0) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'evidence-required' });
+        }
+        // PF-25: requireNote is a promise too — a triggering option
+        // demands an explanation before submit.
+        const noteMissing = missingNotes(version.content, responseMap);
+        if (noteMissing.length > 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'note-required' });
         }
         // Mirror the "Site conducted" answer into inspection.siteId before the
         // submit side-effects read it (bug B4). Belt-and-suspenders with the
@@ -1109,6 +1148,57 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
             updatedAt: now,
           })
           .where(eq(inspections.id, insp.id));
+        // PF-3: the linked occurrence completes when the work is
+        // submitted — the scheduler's question is "was it done", not
+        // "has the sign-off chain finished".
+        await ctx.db
+          .update(scheduledInspectionOccurrences)
+          .set({ status: 'completed' })
+          .where(
+            and(
+              eq(scheduledInspectionOccurrences.tenantId, ctx.tenantId),
+              eq(scheduledInspectionOccurrences.inspectionId, insp.id),
+            ),
+          );
+        // PF-30: an approval gate nobody is told about is ceremonial —
+        // every inspections.manage holder learns work is waiting.
+        if (nextStatus === 'awaiting_approval') {
+          try {
+            const approvers = await usersHoldingPermission(
+              ctx.db,
+              ctx.tenantId,
+              'inspections.manage',
+            );
+            for (const approver of approvers) {
+              if (approver.userId === ctx.auth.userId || approver.email.length === 0) continue;
+              // PF-23: the in-app bell mirrors the email.
+              await notifyInApp(ctx.db, {
+                tenantId: ctx.tenantId,
+                userId: approver.userId,
+                kind: 'approval_pending',
+                title: insp.title,
+                body: insp.documentNumber ?? '',
+                href: `/approvals/${insp.id}`,
+              });
+              await deps.sendEmail({
+                to: approver.email,
+                locale: approver.locale ?? undefined,
+                templateKey: 'inspection-approval-pending',
+                variables: {
+                  recipientName: approver.name,
+                  title: insp.title,
+                  documentNumber: insp.documentNumber ?? '',
+                  viewUrl: `${deps.appUrl.replace(/\/$/, '')}/en/approvals/${insp.id}`,
+                },
+              });
+            }
+          } catch (err) {
+            ctx.logger.warn(
+              { inspectionId: insp.id, err: err instanceof Error ? err.message : String(err) },
+              '[inspections] approval-pending email failed',
+            );
+          }
+        }
         return { status: nextStatus };
       }),
 

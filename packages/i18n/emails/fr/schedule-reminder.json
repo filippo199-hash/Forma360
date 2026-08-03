@@ -1,0 +1,8 @@
+{
+  "subject": "Rappel d'inspection à venir",
+  "preheader": "Une inspection est planifiée sur {productName}.",
+  "greeting": "Bonjour,",
+  "body": "Ceci est un rappel : une inspection a été planifiée pour vous. Ouvrez {productName} pour la démarrer quand vous êtes prêt.",
+  "cta": "Ouvrir l'inspection",
+  "footer": "Vous recevez cet e-mail car un administrateur {productName} a planifié une inspection pour votre compte."
+}

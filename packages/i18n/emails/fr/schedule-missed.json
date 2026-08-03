@@ -1,0 +1,8 @@
+{
+  "subject": "Inspections planifiées manquées — {missedCount}",
+  "preheader": "Des inspections planifiées sur {productName} n'ont pas été réalisées à temps.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Les inspections planifiées suivantes ont dépassé leur échéance sans être démarrées :\n\n{detailLines}\n\nDémarrez-les en retard depuis votre planning, ou ajustez la planification si elle ne reflète plus la réalité — un calendrier qui saute en silence est pire qu'un calendrier qui dit « manquée ».",
+  "cta": "Ouvrir les plannings",
+  "footer": "Vous recevez cet e-mail car vous êtes la personne assignée ou le propriétaire du planning sur {productName}."
+}

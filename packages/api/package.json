@@ -23,6 +23,14 @@
     "./document-visibility": {
       "types": "./src/routers/document-visibility.ts",
       "default": "./src/routers/document-visibility.ts"
+    },
+    "./notify": {
+      "types": "./src/notify.ts",
+      "default": "./src/notify.ts"
+    },
+    "./heads-up-publish": {
+      "types": "./src/heads-up-publish.ts",
+      "default": "./src/heads-up-publish.ts"
     }
   },
   "scripts": {

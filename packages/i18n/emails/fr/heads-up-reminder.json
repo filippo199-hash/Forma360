@@ -1,0 +1,8 @@
+{
+  "subject": "Rappel : {headsUpTitle}",
+  "preheader": "Une note d'information attend votre action.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Une note d'information requiert votre attention : \"{headsUpTitle}\". Ouvrez {productName} pour {actionRequired}.",
+  "cta": "Ouvrir la note",
+  "footer": "Vous recevez ce rappel car un administrateur {productName} vous a demandé d'agir sur ce message."
+}

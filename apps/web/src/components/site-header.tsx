@@ -8,6 +8,7 @@ import { db } from '../server/db';
 import { NAV } from '../content/site';
 import { activeBrand } from '../lib/brand';
 import { GlobalSearch } from './global-search';
+import { NotificationBell } from './notification-bell';
 import { UserMenu } from './header/user-menu';
 import { MobileNav } from './mobile-nav';
 
@@ -66,6 +67,8 @@ function SiteHeaderInner({
         )}
         <nav aria-label={t('navigation.primary')} className="flex items-center gap-2 sm:gap-3">
           {session !== null ? <GlobalSearch /> : null}
+          {/* PF-23: the in-app notification centre. */}
+          {session !== null ? <NotificationBell /> : null}
           {session !== null ? (
             <UserMenu name={displayName} email={session.user.email} locale={locale} />
           ) : (

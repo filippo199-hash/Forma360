@@ -777,4 +777,30 @@ describe('coshh router', () => {
     ).toBe(false);
     expect(cleared?.publishedAt?.getTime()).toBe(fresh?.publishedAt?.getTime());
   });
+
+  it('CO-E25: assessments.create with a clientRequestId is idempotent (PF-10)', async () => {
+    const caller = callerFor(adminId);
+    const { substanceId } = await caller.coshh.substances.create({ name: 'Acetone' });
+    const clientRequestId = newId();
+    const first = await caller.coshh.assessments.create({
+      substanceId,
+      taskDescription: 'Point-of-work: degreasing parts',
+      kind: 'point_of_work',
+      clientRequestId,
+    });
+    const retry = await caller.coshh.assessments.create({
+      substanceId,
+      taskDescription: 'Point-of-work: degreasing parts',
+      kind: 'point_of_work',
+      clientRequestId,
+    });
+    expect(retry.assessmentId).toBe(first.assessmentId);
+    expect(retry.referenceNumber).toBe(first.referenceNumber);
+    expect((retry as { deduped?: boolean }).deduped).toBe(true);
+    const rows = await db
+      .select()
+      .from(schema.coshhAssessments)
+      .where(eq(schema.coshhAssessments.clientRequestId, clientRequestId));
+    expect(rows).toHaveLength(1);
+  });
 });

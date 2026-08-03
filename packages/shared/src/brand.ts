@@ -106,7 +106,13 @@ export function getBrand(id: BrandId): BrandConfig {
 // ─── Module catalogue (ADR 0010, place 3 of 4) ───────────────────────────────
 
 /** Modules that exist only in some brands. Core modules are not listed. */
-export const BRAND_ONLY_MODULES = ['riskAssessments', 'coshh', 'permits', 'fireSafety'] as const;
+export const BRAND_ONLY_MODULES = [
+  'riskAssessments',
+  'coshh',
+  'permits',
+  'fireSafety',
+  'incidents',
+] as const;
 
 export type BrandOnlyModule = (typeof BRAND_ONLY_MODULES)[number];
 
@@ -117,7 +123,7 @@ export type BrandOnlyModule = (typeof BRAND_ONLY_MODULES)[number];
  */
 export const BRAND_MODULES: Record<BrandId, ReadonlyArray<BrandOnlyModule>> = {
   forma360: [],
-  freehs: ['riskAssessments', 'coshh', 'permits', 'fireSafety'],
+  freehs: ['riskAssessments', 'coshh', 'permits', 'fireSafety', 'incidents'],
 };
 
 export function brandHasModule(id: BrandId, module: BrandOnlyModule): boolean {

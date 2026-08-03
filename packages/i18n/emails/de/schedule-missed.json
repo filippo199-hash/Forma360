@@ -1,0 +1,8 @@
+{
+  "subject": "Verpasste geplante Inspektionen — {missedCount}",
+  "preheader": "Geplante Inspektionen auf {productName} wurden nicht rechtzeitig abgeschlossen.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Folgende geplante Inspektionen haben ihre Fälligkeit überschritten, ohne gestartet zu werden:\n\n{detailLines}\n\nStarten Sie sie verspätet aus Ihrem Zeitplan, oder passen Sie den Plan an, wenn er die Realität nicht mehr abbildet — ein Kalender, der still überspringt, ist schlimmer als einer, der \"verpasst\" sagt.",
+  "cta": "Zeitpläne öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie auf {productName} zugewiesene Person oder Plan-Eigentümer sind."
+}

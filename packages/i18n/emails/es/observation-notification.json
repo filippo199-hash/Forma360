@@ -1,0 +1,8 @@
+{
+  "subject": "Nueva observación: {referenceNumber} – {issueTitle}",
+  "preheader": "Se reportó una nueva observación en {productName}.",
+  "greeting": "Se reportó una nueva observación.",
+  "body": "Referencia: {referenceNumber}\n\nTítulo: {issueTitle}\n\nAbre {productName} para revisarla y actuar.",
+  "cta": "Ver la observación",
+  "footer": "Recibes esta notificación porque eres destinatario de esta categoría de observaciones."
+}

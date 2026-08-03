@@ -26,6 +26,8 @@ import { usersRouter } from './routers/users';
 // shim. Module-load ordering is the registration order.
 import { actionsRouter } from './routers/actions';
 import { actionTypesRouter } from './routers/actionTypes';
+import { createAnalyticsRouter } from './routers/analytics';
+import { notificationsRouter } from './routers/notifications';
 import { approvalsRouter } from './routers/approvals';
 import { assetTypesRouter } from './routers/assetTypes';
 import { assetsRouter } from './routers/assets';
@@ -50,6 +52,7 @@ import { contractorsRouter } from './routers/contractors';
 import { createCoshhRouter, type CoshhRouterDeps } from './routers/coshh';
 import { createPermitsRouter, type PermitsRouterDeps } from './routers/permits';
 import { createFireSafetyRouter, type FireSafetyRouterDeps } from './routers/fireSafety';
+import { createIncidentsRouter, type IncidentsRouterDeps } from './routers/incidents';
 import {
   createRiskAssessmentsRouter,
   type RiskAssessmentsRouterDeps,
@@ -91,6 +94,7 @@ export function buildAppRouter(deps: {
    */
   permits?: PermitsRouterDeps;
   fireSafety?: FireSafetyRouterDeps;
+  incidents?: IncidentsRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -127,10 +131,21 @@ export function buildAppRouter(deps: {
     documents: documentsRouter,
     search: searchRouter,
     aiAssistant: aiAssistantRouter,
+    notifications: notificationsRouter,
+    // PF-5: dashboard tiles for brand-gated modules follow the same enabled
+    // flags as the routers themselves — one source of truth (ADR 0010).
+    analytics: createAnalyticsRouter({
+      modules: {
+        riskAssessments: deps.riskAssessments?.enabled ?? false,
+        coshh: deps.coshh?.enabled ?? false,
+        permits: deps.permits?.enabled ?? false,
+      },
+    }),
     riskAssessments: createRiskAssessmentsRouter(deps.riskAssessments ?? { enabled: false }),
     coshh: createCoshhRouter(deps.coshh ?? { enabled: false }),
     permits: createPermitsRouter(deps.permits ?? { enabled: false }),
     fireSafety: createFireSafetyRouter(deps.fireSafety ?? { enabled: false }),
+    incidents: createIncidentsRouter(deps.incidents ?? { enabled: false }),
   });
 }
 
@@ -281,6 +296,10 @@ export const stubPermitsDeps: PermitsRouterDeps = { enabled: true };
  * exercisable; brand gating is tested with `enabled: false`. */
 export const stubFireSafetyDeps: FireSafetyRouterDeps = { enabled: true };
 
+/** Test-only incidents deps — enabled; brand gating is tested with
+ * `enabled: false`. */
+export const stubIncidentsDeps: IncidentsRouterDeps = { enabled: true };
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
@@ -292,6 +311,7 @@ export const appRouter = buildAppRouter({
   coshh: stubCoshhDeps,
   permits: stubPermitsDeps,
   fireSafety: stubFireSafetyDeps,
+  incidents: stubIncidentsDeps,
 });
 
 export type AppRouter = typeof appRouter;

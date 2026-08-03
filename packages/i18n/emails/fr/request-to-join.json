@@ -1,0 +1,8 @@
+{
+  "subject": "{requesterEmail} souhaite rejoindre {tenantName}",
+  "preheader": "Quelqu'un a demandé à rejoindre votre espace {productName}.",
+  "greeting": "Bonjour {adminName},",
+  "body": "{requesterName} ({requesterEmail}) a demandé à rejoindre {tenantName} sur {productName}. Pour lui accorder l'accès, invitez-le depuis Paramètres → Utilisateurs.",
+  "cta": "Ouvrir les paramètres",
+  "footer": "Vous recevez cet e-mail car vous êtes administrateur de {tenantName} sur {productName}."
+}

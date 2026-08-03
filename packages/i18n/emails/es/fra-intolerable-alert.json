@@ -1,0 +1,8 @@
+{
+  "subject": "Riesgo de incendio INTOLERABLE publicado — {referenceNumber} {title}",
+  "preheader": "Una evaluación de riesgo de incendio en {productName} se firmó con calificación intolerable.",
+  "greeting": "Hola {recipientName}:",
+  "body": "{publishedByName} firmó y publicó la evaluación de riesgo de incendio \"{title}\" ({referenceNumber}){buildingLine} con una calificación global INTOLERABLE.\n\nSegún PAS 79, una calificación intolerable significa que las instalaciones no deberían seguir ocupadas hasta reducir el riesgo. Se generaron acciones correctivas a partir de los hallazgos significativos: revísalas ahora y decide si la ocupación puede continuar.",
+  "cta": "Abrir la evaluación",
+  "footer": "Recibes este correo porque tienes permisos de gestión contra incendios en {productName}. Una calificación intolerable alerta de inmediato a todos los responsables."
+}

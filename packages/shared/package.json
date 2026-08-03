@@ -87,6 +87,10 @@
     "./permits": {
       "types": "./src/permits.ts",
       "default": "./src/permits.ts"
+    },
+    "./incidents": {
+      "types": "./src/incidents.ts",
+      "default": "./src/incidents.ts"
     }
   },
   "scripts": {

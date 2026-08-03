@@ -168,3 +168,272 @@ describe('contractors gate (Phase 2b)', () => {
     await expect(pub.contractors.gate.publicByToken({ token: 'nope-nope-nope' })).rejects.toThrow();
   });
 });
+
+/**
+ * PF-19 (platform HSE review): the compliance gate + versioned induction.
+ *
+ * Edge cases:
+ *   - CG-E10: staff check-in refuses a non-compliant contractor without an
+ *     override reason; proceeds WITH one and records it on the event
+ *   - CG-E11: the kiosk hard-blocks a non-compliant contractor and the
+ *     kiosk listing carries complianceStatus
+ *   - CG-E12: walk-in passes the same gate as staff check-in
+ *   - CG-E13: a manual compliance override to compliant unblocks the gate
+ *   - CI-E01: induction is versioned — editing the text forces portal users
+ *     to re-acknowledge before contractor-scoped reads work again
+ *   - CV-E10: onSiteWithOpenPermits joins checked-in visits to open permits
+ *     held by the contractor's people
+ */
+describe('contractor compliance gate + induction (PF-19)', () => {
+  let client: PGlite;
+  let db: PgliteDatabase<typeof schema>;
+  let tenantId: string;
+  let adminUserId: string;
+  let contractorId: string;
+
+  function ctxFor(userId: string): Context {
+    return createTestContext({
+      db: db as unknown as Database,
+      logger: silentLogger(),
+      auth: { userId, email: `${userId}@x.test`, tenantId: tenantId as never },
+    });
+  }
+  function publicCtx(): Context {
+    return createTestContext({ db: db as unknown as Database, logger: silentLogger(), auth: null });
+  }
+
+  beforeEach(async () => {
+    resetDependentsRegistryForTests();
+    ({ client, db } = await bootDb());
+    tenantId = newId();
+    await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: `a-${tenantId}` });
+    const seeded = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
+    adminUserId = newId();
+    await db.insert(schema.user).values({
+      id: adminUserId,
+      name: 'Admin',
+      email: `admin-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: seeded.administrator,
+    });
+    const caller = createCaller(ctxFor(adminUserId));
+    ({ id: contractorId } = await caller.contractors.create({ name: 'Sparky Electrical' }));
+    // A blocking requirement with no verified document → non-compliant.
+    await caller.contractors.addRequirement({
+      contractorId,
+      name: 'Public liability insurance',
+      blocking: true,
+    });
+  });
+
+  afterEach(async () => {
+    await client.close();
+  });
+
+  async function scheduledVisit(): Promise<string> {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { id } = await caller.contractors.visits.create({
+      contractorId,
+      title: 'Rewire',
+      scheduledStart: new Date().toISOString(),
+      authorize: true,
+    });
+    return id;
+  }
+
+  it('CG-E10: staff check-in blocks non-compliant without a reason; records the override', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const visitId = await scheduledVisit();
+    await expect(caller.contractors.visits.checkIn({ id: visitId })).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'contractor_non_compliant',
+    });
+
+    await caller.contractors.visits.checkIn({
+      id: visitId,
+      overrideReason: 'Insurance renewal certificate sighted on paper at the gate',
+    });
+    const events = await caller.contractors.visits.events({ visitId });
+    expect(events[0]?.overrideReason).toMatch(/sighted on paper/);
+  });
+
+  it('CG-E11: kiosk hard-blocks non-compliant and shows compliance on the list', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const visitId = await scheduledVisit();
+    const { token } = await caller.contractors.gate.regenerateToken();
+    const pub = createCaller(publicCtx());
+    const listing = await pub.contractors.gate.publicByToken({ token });
+    expect(listing.visits[0]?.complianceStatus).toBe('non_compliant');
+    await expect(
+      pub.contractors.gate.selfCheckIn({ token, visitId, eventType: 'check_in' }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN', message: 'contractor_non_compliant' });
+  });
+
+  it('CG-E12: walk-in passes the same gate', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    await expect(
+      caller.contractors.visits.createWalkIn({ contractorId, title: 'Emergency callout' }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN', message: 'contractor_non_compliant' });
+    const { id } = await caller.contractors.visits.createWalkIn({
+      contractorId,
+      title: 'Emergency callout',
+      overrideReason: 'Burst main - authorised by duty manager',
+    });
+    const events = await caller.contractors.visits.events({ visitId: id });
+    expect(events[0]?.overrideReason).toMatch(/duty manager/);
+  });
+
+  it('CG-E13: a manual compliant override unblocks the gate', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    await caller.contractors.setComplianceOverride({ id: contractorId, override: 'compliant' });
+    const visitId = await scheduledVisit();
+    await caller.contractors.visits.checkIn({ id: visitId });
+    const visit = await caller.contractors.visits.get({ id: visitId });
+    expect(visit.visit.status).toBe('checked_in');
+  });
+
+  it('CI-E01: induction version bump forces re-acknowledgement server-side', async () => {
+    const admin = createCaller(ctxFor(adminUserId));
+    await admin.contractors.induction.set({ body: 'Site rules v1: hard hats everywhere.' });
+
+    // A portal user with the observations activity.
+    const portalSetId = newId();
+    await db.insert(schema.permissionSets).values({
+      id: portalSetId,
+      tenantId,
+      name: 'Portal: Sparky',
+      permissions: ['issues.view', 'issues.report'],
+    });
+    const portalUserId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: portalUserId,
+      name: 'Paula Portal',
+      email: `paula-${tenantId}@sparky.test`,
+      tenantId,
+      permissionSetId: portalSetId,
+    });
+    await db.insert(schema.contractorUsers).values({
+      id: newId(),
+      tenantId,
+      contractorId,
+      userId: portalUserId,
+      activities: ['observations'],
+    });
+    const portal = createCaller(ctxFor(portalUserId));
+
+    // Not yet acknowledged → contractor-scoped reads are refused server-side.
+    await expect(portal.issues.issues.list({})).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'induction_required',
+    });
+
+    await portal.contractors.users.acknowledge();
+    await expect(portal.issues.issues.list({})).resolves.toBeDefined();
+    const me1 = await portal.contractors.users.me();
+    expect(me1?.inductionCurrent).toBe(true);
+    expect(me1?.inductionVersion).toBe(1);
+
+    // Editing the text bumps the version → stale ack blocks again.
+    const v2 = await admin.contractors.induction.set({
+      body: 'Site rules v2: hard hats AND eye protection.',
+    });
+    expect(v2.version).toBe(2);
+    await expect(portal.issues.issues.list({})).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'induction_required',
+    });
+    const me2 = await portal.contractors.users.me();
+    expect(me2?.inductionCurrent).toBe(false);
+
+    await portal.contractors.users.acknowledge();
+    await expect(portal.issues.issues.list({})).resolves.toBeDefined();
+
+    // Saving identical text does NOT bump the version.
+    const same = await admin.contractors.induction.set({
+      body: 'Site rules v2: hard hats AND eye protection.',
+    });
+    expect(same.version).toBe(2);
+  });
+
+  it('CV-E10: onSiteWithOpenPermits joins checked-in visits to open permits', async () => {
+    const admin = createCaller(ctxFor(adminUserId));
+    await admin.contractors.setComplianceOverride({ id: contractorId, override: 'compliant' });
+
+    // Contractor person who accepted an active permit.
+    const workerId = `usr_${newId()}`;
+    const workerSetId = newId();
+    await db.insert(schema.permissionSets).values({
+      id: workerSetId,
+      tenantId,
+      name: 'Portal worker',
+      permissions: [],
+    });
+    await db.insert(schema.user).values({
+      id: workerId,
+      name: 'Wes Welder',
+      email: `wes-${tenantId}@sparky.test`,
+      tenantId,
+      permissionSetId: workerSetId,
+    });
+    await db.insert(schema.contractorUsers).values({
+      id: newId(),
+      tenantId,
+      contractorId,
+      userId: workerId,
+      activities: [],
+      acknowledgedAt: new Date(),
+      acknowledgedVersion: 1,
+    });
+    const permitTypeId = newId();
+    await db.insert(schema.permitTypes).values({
+      id: permitTypeId,
+      tenantId,
+      category: 'hot_work',
+      name: 'Hot work',
+      createdBy: adminUserId,
+    });
+    const now = Date.now();
+    await db.insert(schema.permits).values([
+      {
+        id: newId(),
+        tenantId,
+        permitTypeId,
+        referenceNumber: 'PTW-0001',
+        title: 'Roof torch-on',
+        status: 'active',
+        validFrom: new Date(now - 3_600_000),
+        validTo: new Date(now + 3_600_000),
+        acceptorUserId: workerId,
+        createdBy: adminUserId,
+      },
+      {
+        id: newId(),
+        tenantId,
+        permitTypeId,
+        referenceNumber: 'PTW-0002',
+        title: 'Old job',
+        status: 'closed',
+        validFrom: new Date(now - 7_200_000),
+        validTo: new Date(now - 3_600_000),
+        acceptorUserId: workerId,
+        createdBy: adminUserId,
+      },
+    ]);
+
+    // No visit checked in yet → empty.
+    expect(await admin.contractors.visits.onSiteWithOpenPermits()).toEqual([]);
+
+    const { id: visitId } = await admin.contractors.visits.createWalkIn({
+      contractorId,
+      title: 'Roof works',
+    });
+    const rows = await admin.contractors.visits.onSiteWithOpenPermits();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      visitId,
+      contractorName: 'Sparky Electrical',
+      permitReference: 'PTW-0001',
+      permitStatus: 'active',
+    });
+  });
+});

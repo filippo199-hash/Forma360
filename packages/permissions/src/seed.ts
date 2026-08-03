@@ -50,6 +50,10 @@ const STANDARD_KEYS: ReadonlyArray<PermissionKey> = [
   'permits.view',
   'fireSafety.view',
   'fireSafety.record',
+  // Everyone must be able to report an incident — reporting friction
+  // suppresses the statistics that make the module worthwhile.
+  'incidents.view',
+  'incidents.report',
 ];
 
 export interface SeededSetIds {

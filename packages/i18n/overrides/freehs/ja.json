@@ -1,15 +1,15 @@
 {
   "auth": {
     "signIn": {
-      "title": "Sign in to FreeHS"
+      "title": "FreeHS にサインイン"
     },
     "signUp": {
-      "subtitle": "FreeHS — operational excellence for your whole organisation."
+      "subtitle": "FreeHS — 組織全体のオペレーショナル・エクセレンスを。"
     }
   },
   "templates": {
     "create": {
-      "optImportDesc": "Upload an existing checklist and convert it into a FreeHS template."
+      "optImportDesc": "既存のチェックリストをアップロードして FreeHS テンプレートに変換します。"
     }
   }
 }

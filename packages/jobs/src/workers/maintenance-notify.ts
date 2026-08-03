@@ -8,12 +8,8 @@
  *   4. Stamp the notificationsLog to prevent re-sending on retries.
  */
 import type { Database } from '@forma360/db/client';
-import {
-  assets,
-  maintenancePlanAssets,
-  maintenancePlans,
-  user as userTable,
-} from '@forma360/db/schema';
+import { assets, maintenancePlanAssets, maintenancePlans } from '@forma360/db/schema';
+import { usersHoldingPermission } from '@forma360/permissions/holders';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
@@ -85,15 +81,20 @@ export function createMaintenanceNotifyHandler(deps: MaintenanceNotifyDeps) {
     const planName = planRows[0]?.name ?? planId;
     const assetName = assetRows[0]?.name ?? assetId;
 
-    // Find tenant admin users to notify.
-    const adminRows = await deps.db
-      .select({ email: userTable.email })
-      .from(userTable)
-      .where(and(eq(userTable.tenantId, tenantId)));
+    // PF-18: recipients are the people who can act — holders of
+    // assets.maintenance.manage (admins included via org.settings) — not
+    // every user in the tenant.
+    const adminRows = await usersHoldingPermission(
+      deps.db,
+      tenantId,
+      'assets.maintenance.manage',
+    );
 
     const status =
-      daysBefore === 0 ? 'overdue' : `due in ${daysBefore} day${daysBefore !== 1 ? 's' : ''}`;
-    const viewUrl = `${deps.appUrl}/maintenance/${planId}`;
+      job.data.statusLabel ??
+      (daysBefore === 0 ? 'overdue' : `due in ${daysBefore} day${daysBefore !== 1 ? 's' : ''}`);
+    const dueDateLabel = job.data.dueLabel ?? dueDate;
+    const viewUrl = `${deps.appUrl.replace(/\/+$/, '')}/en/maintenance/${planId}`;
 
     // Send email to each admin (swallow per-recipient errors).
     let sent = false;
@@ -101,11 +102,12 @@ export function createMaintenanceNotifyHandler(deps: MaintenanceNotifyDeps) {
       try {
         await deps.sendTemplatedEmail({
           to: admin.email,
+          locale: admin.locale ?? undefined,
           templateKey: 'maintenance-reminder',
           variables: {
             assetName,
             planName,
-            dueDate,
+            dueDate: dueDateLabel,
             status,
             viewUrl,
           },

@@ -1,0 +1,8 @@
+{
+  "subject": "Votre code de connexion {productName} : {otp}",
+  "preheader": "Utilisez le code ci-dessous pour vous connecter à {productName}.",
+  "greeting": "Bonjour,",
+  "body": "Voici votre code de connexion à usage unique :\n\n{otp}\n\nIl expire dans 10 minutes. Si vous n'avez pas tenté de vous connecter, ignorez ce message.",
+  "cta": "Votre code est {otp}",
+  "footer": "{productName} ne vous demandera jamais ce code par téléphone ou par chat."
+}

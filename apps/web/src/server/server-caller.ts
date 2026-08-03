@@ -26,11 +26,13 @@ import { inspectionsExportDeps } from './inspections-export-deps';
 import { issuesDeps } from './issues-deps';
 import { logger } from './logger';
 import { permitsDeps } from './permits-deps';
+import { incidentsDeps } from './incidents-deps';
 import { riskAssessmentsDeps } from './risk-assessments-deps';
 import { enqueue } from './trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps,
 // mirroring the HTTP entrypoint so a caller built here behaves identically.
 import './users-deps';
+import './actions-deps';
 
 // Built once with the same production deps as the HTTP tRPC route. Composing
 // already-imported routers is cheap; module-level registrations (dependent
@@ -46,6 +48,7 @@ const appRouter = buildAppRouter({
   coshh: coshhDeps,
   permits: permitsDeps,
   fireSafety: fireSafetyDeps,
+  incidents: incidentsDeps,
 });
 
 export type ServerCaller = ReturnType<typeof appRouter.createCaller>;

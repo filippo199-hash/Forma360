@@ -9,6 +9,8 @@ import { randomBytes } from 'node:crypto';
 import { DEFAULT_BRAND_ID, getBrand } from '@forma360/shared/brand';
 import type { Database } from '@forma360/db/client';
 import {
+  contractorInductionConfig,
+  permits,
   assetTypes,
   assets,
   contractorAssets,
@@ -37,6 +39,7 @@ import { aliasedTable, and, asc, between, desc, eq, inArray, isNull } from 'driz
 import { z } from 'zod';
 import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
 import { assertSitesInTenant, assertStorageKeyInTenant } from '../tenant-guards';
+import { OPEN_PERMIT_STATUSES } from '@forma360/shared/permits';
 import { router } from '../trpc';
 
 const dateStr = z
@@ -77,6 +80,56 @@ function computeStatus(
   if (blocking.length === 0) return 'no_requirements';
   const allMet = blocking.every((r) => requirementSatisfied(docsByReq.get(r.id) ?? [], t));
   return allMet ? 'compliant' : 'non_compliant';
+}
+
+/**
+ * Effective compliance for ONE contractor (PF-19): the same derivation the
+ * list/get views show — blocking requirements vs verified unexpired documents
+ * — with a manual override winning. This is what the gate consults before
+ * letting a visit check in.
+ */
+async function contractorComplianceStatus(
+  db: Database,
+  tenantId: string,
+  contractorId: string,
+): Promise<ComplianceStatus> {
+  const rows = await db
+    .select({ complianceOverride: contractors.complianceOverride })
+    .from(contractors)
+    .where(and(eq(contractors.tenantId, tenantId), eq(contractors.id, contractorId)))
+    .limit(1);
+  const contractor = rows[0];
+  if (contractor === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+  const reqs = await db
+    .select({ id: contractorRequirements.id, blocking: contractorRequirements.blocking })
+    .from(contractorRequirements)
+    .where(
+      and(
+        eq(contractorRequirements.tenantId, tenantId),
+        eq(contractorRequirements.contractorId, contractorId),
+      ),
+    );
+  const docs = await db
+    .select({
+      requirementId: contractorDocuments.requirementId,
+      status: contractorDocuments.status,
+      endDate: contractorDocuments.endDate,
+    })
+    .from(contractorDocuments)
+    .where(
+      and(
+        eq(contractorDocuments.tenantId, tenantId),
+        eq(contractorDocuments.contractorId, contractorId),
+      ),
+    );
+  const docsByReq = new Map<string, DocRow[]>();
+  for (const d of docs) {
+    const arr = docsByReq.get(d.requirementId) ?? [];
+    arr.push(d);
+    docsByReq.set(d.requirementId, arr);
+  }
+  const derived = computeStatus(reqs, docsByReq, today());
+  return (contractor.complianceOverride as ComplianceStatus | null) ?? derived;
 }
 
 /**
@@ -745,6 +798,95 @@ export const contractorsRouter = router({
         .orderBy(desc(contractorVisits.checkedInAt));
     }),
 
+    /**
+     * PF-19: the join the review found missing — "which permits are open for
+     * contractors currently on site?". Bridges checked-in visits to open
+     * permits through the contractor's portal users (acceptor / issuer /
+     * authoriser).
+     */
+    onSiteWithOpenPermits: tenantProcedure
+      .use(requirePermission('contractors.view'))
+      .query(async ({ ctx }) => {
+        const onSite = await ctx.db
+          .select({
+            visitId: contractorVisits.id,
+            visitTitle: contractorVisits.title,
+            contractorId: contractorVisits.contractorId,
+            contractorName: contractors.name,
+          })
+          .from(contractorVisits)
+          .innerJoin(contractors, eq(contractorVisits.contractorId, contractors.id))
+          .where(
+            and(
+              eq(contractorVisits.tenantId, ctx.tenantId),
+              eq(contractorVisits.status, 'checked_in'),
+              isNull(contractorVisits.archivedAt),
+            ),
+          );
+        if (onSite.length === 0) return [];
+        const contractorIds = [...new Set(onSite.map((v) => v.contractorId))];
+        const members = await ctx.db
+          .select({
+            contractorId: contractorUsers.contractorId,
+            userId: contractorUsers.userId,
+          })
+          .from(contractorUsers)
+          .where(
+            and(
+              eq(contractorUsers.tenantId, ctx.tenantId),
+              inArray(contractorUsers.contractorId, contractorIds),
+            ),
+          );
+        if (members.length === 0) return [];
+        const contractorByUser = new Map(members.map((m) => [m.userId, m.contractorId]));
+        const openPermits = await ctx.db
+          .select({
+            id: permits.id,
+            referenceNumber: permits.referenceNumber,
+            title: permits.title,
+            status: permits.status,
+            validTo: permits.validTo,
+            acceptorUserId: permits.acceptorUserId,
+            issuerUserId: permits.issuerUserId,
+            authoriserUserId: permits.authoriserUserId,
+          })
+          .from(permits)
+          .where(
+            and(
+              eq(permits.tenantId, ctx.tenantId),
+              inArray(permits.status, [...OPEN_PERMIT_STATUSES]),
+            ),
+          );
+        const byContractor = new Map<string, typeof openPermits>();
+        for (const pRow of openPermits) {
+          const holders = [pRow.acceptorUserId, pRow.issuerUserId, pRow.authoriserUserId];
+          const cids = new Set(
+            holders.flatMap((u) => {
+              const cid = u === null ? undefined : contractorByUser.get(u);
+              return cid === undefined ? [] : [cid];
+            }),
+          );
+          for (const cid of cids) {
+            const arr = byContractor.get(cid) ?? [];
+            arr.push(pRow);
+            byContractor.set(cid, arr);
+          }
+        }
+        return onSite.flatMap((v) =>
+          (byContractor.get(v.contractorId) ?? []).map((pRow) => ({
+            visitId: v.visitId,
+            visitTitle: v.visitTitle,
+            contractorId: v.contractorId,
+            contractorName: v.contractorName,
+            permitId: pRow.id,
+            permitReference: pRow.referenceNumber,
+            permitTitle: pRow.title,
+            permitStatus: pRow.status,
+            validTo: pRow.validTo,
+          })),
+        );
+      }),
+
     /** All non-archived visits for one contractor (detail page). */
     listForContractor: tenantProcedure
       .use(requirePermission('contractors.view'))
@@ -849,11 +991,21 @@ export const contractorsRouter = router({
           title: z.string().min(1).max(300),
           visitorName: z.string().max(300).nullable().optional(),
           notes: z.string().max(5000).nullable().optional(),
+          overrideReason: z.string().max(1000).optional(),
         }),
       )
       .mutation(async ({ ctx, input }) => {
         await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
         await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+        // PF-19: walk-ins pass the same compliance gate as staff check-in.
+        const compliance = await contractorComplianceStatus(
+          ctx.db,
+          ctx.tenantId,
+          input.contractorId,
+        );
+        if (compliance === 'non_compliant' && (input.overrideReason ?? '').trim() === '') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'contractor_non_compliant' });
+        }
         const now = new Date();
         const id = newId();
         await ctx.db.insert(contractorVisits).values({
@@ -878,6 +1030,7 @@ export const contractorsRouter = router({
           eventType: 'check_in',
           method: 'staff',
           actorUserId: ctx.auth.userId,
+          ...(input.overrideReason !== undefined ? { overrideReason: input.overrideReason } : {}),
         });
         return { id };
       }),
@@ -942,6 +1095,16 @@ export const contractorsRouter = router({
         const visit = await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
         if (visit.status === 'cancelled')
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit is cancelled' });
+        // PF-19: a non-compliant contractor does not walk through the gate.
+        // Staff may override — with a recorded reason.
+        const compliance = await contractorComplianceStatus(
+          ctx.db,
+          ctx.tenantId,
+          visit.contractorId,
+        );
+        if (compliance === 'non_compliant' && (input.overrideReason ?? '').trim() === '') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'contractor_non_compliant' });
+        }
         const now = new Date();
         await ctx.db
           .update(contractorVisits)
@@ -1182,6 +1345,7 @@ export const contractorsRouter = router({
         const visits = await ctx.db
           .select({
             id: contractorVisits.id,
+            contractorId: contractorVisits.contractorId,
             contractorName: contractors.name,
             title: contractorVisits.title,
             status: contractorVisits.status,
@@ -1215,7 +1379,22 @@ export const contractorsRouter = router({
           )
           .orderBy(asc(contractorGateFields.sortOrder), asc(contractorGateFields.createdAt));
 
-        return { visits, fields };
+        // PF-19: the kiosk shows compliance so a blocked check-in is not a
+        // surprise. One derivation per distinct contractor on today's list.
+        const complianceByContractor = new Map<string, ComplianceStatus>();
+        for (const cid of new Set(visits.map((v) => v.contractorId))) {
+          complianceByContractor.set(
+            cid,
+            await contractorComplianceStatus(ctx.db, tenantId, cid),
+          );
+        }
+        return {
+          visits: visits.map((v) => ({
+            ...v,
+            complianceStatus: complianceByContractor.get(v.contractorId) ?? 'no_requirements',
+          })),
+          fields,
+        };
       }),
 
     /** Public: a contractor self-checks-in / out at the kiosk. */
@@ -1259,6 +1438,16 @@ export const contractorsRouter = router({
           }
           if (visit.status === 'cancelled')
             throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit is cancelled' });
+          // PF-19: the kiosk has no override — a non-compliant contractor is
+          // sent to the site office.
+          const compliance = await contractorComplianceStatus(
+            ctx.db,
+            tenantId,
+            visit.contractorId,
+          );
+          if (compliance === 'non_compliant') {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'contractor_non_compliant' });
+          }
         } else if (visit.checkedInAt === null) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit was never checked in' });
         }
@@ -1643,6 +1832,7 @@ export const contractorsRouter = router({
           contractorName: contractors.name,
           activities: contractorUsers.activities,
           acknowledgedAt: contractorUsers.acknowledgedAt,
+          acknowledgedVersion: contractorUsers.acknowledgedVersion,
         })
         .from(contractorUsers)
         .innerJoin(contractors, eq(contractorUsers.contractorId, contractors.id))
@@ -1653,14 +1843,38 @@ export const contractorsRouter = router({
           ),
         )
         .limit(1);
-      return rows[0] ?? null;
+      const me = rows[0];
+      if (me === undefined) return null;
+      // PF-19: the portal needs the CURRENT induction text + whether this
+      // user's acknowledgement still covers it (version-aware re-ack).
+      const cfg = await ctx.db
+        .select({
+          body: contractorInductionConfig.body,
+          version: contractorInductionConfig.version,
+        })
+        .from(contractorInductionConfig)
+        .where(eq(contractorInductionConfig.tenantId, ctx.tenantId))
+        .limit(1);
+      const inductionVersion = cfg[0]?.version ?? 1;
+      const ackVersion = me.acknowledgedVersion ?? (me.acknowledgedAt !== null ? 1 : 0);
+      return {
+        ...me,
+        inductionBody: cfg[0]?.body ?? null,
+        inductionVersion,
+        inductionCurrent: ackVersion >= inductionVersion,
+      };
     }),
 
-    /** Portal: the external user completes the acknowledgement-onboarding step. */
+    /** Portal: the external user acknowledges the CURRENT induction version. */
     acknowledge: tenantProcedure.mutation(async ({ ctx }) => {
+      const cfg = await ctx.db
+        .select({ version: contractorInductionConfig.version })
+        .from(contractorInductionConfig)
+        .where(eq(contractorInductionConfig.tenantId, ctx.tenantId))
+        .limit(1);
       await ctx.db
         .update(contractorUsers)
-        .set({ acknowledgedAt: new Date() })
+        .set({ acknowledgedAt: new Date(), acknowledgedVersion: cfg[0]?.version ?? 1 })
         .where(
           and(
             eq(contractorUsers.tenantId, ctx.tenantId),
@@ -1669,5 +1883,55 @@ export const contractorsRouter = router({
         );
       return { ok: true as const };
     }),
+  }),
+
+  // ─── Versioned induction text (PF-19) ──────────────────────────────────
+  induction: router({
+    /** Any signed-in tenant user may read the current induction text. */
+    get: tenantProcedure.query(async ({ ctx }) => {
+      const rows = await ctx.db
+        .select()
+        .from(contractorInductionConfig)
+        .where(eq(contractorInductionConfig.tenantId, ctx.tenantId))
+        .limit(1);
+      return rows[0] ?? null;
+    }),
+
+    /**
+     * Set the induction text. A changed body bumps the version, which forces
+     * every portal user to re-acknowledge — so the tenant can always prove
+     * which text a contractor saw.
+     */
+    set: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ body: z.string().min(1).max(20_000) }))
+      .mutation(async ({ ctx, input }) => {
+        const existing = await ctx.db
+          .select({
+            body: contractorInductionConfig.body,
+            version: contractorInductionConfig.version,
+          })
+          .from(contractorInductionConfig)
+          .where(eq(contractorInductionConfig.tenantId, ctx.tenantId))
+          .limit(1);
+        const now = new Date();
+        if (existing[0] === undefined) {
+          await ctx.db.insert(contractorInductionConfig).values({
+            tenantId: ctx.tenantId,
+            body: input.body,
+            version: 1,
+            updatedBy: ctx.auth.userId,
+            updatedAt: now,
+          });
+          return { version: 1 };
+        }
+        if (existing[0].body === input.body) return { version: existing[0].version };
+        const version = existing[0].version + 1;
+        await ctx.db
+          .update(contractorInductionConfig)
+          .set({ body: input.body, version, updatedBy: ctx.auth.userId, updatedAt: now })
+          .where(eq(contractorInductionConfig.tenantId, ctx.tenantId));
+        return { version };
+      }),
   }),
 });

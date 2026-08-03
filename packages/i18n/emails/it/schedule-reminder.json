@@ -1,0 +1,8 @@
+{
+  "subject": "Promemoria ispezione imminente",
+  "preheader": "Un'ispezione è programmata su {productName}.",
+  "greeting": "Salve,",
+  "body": "Ti ricordiamo che è stata programmata un'ispezione per te. Apri {productName} per avviarla quando sei pronto.",
+  "cta": "Apri l'ispezione",
+  "footer": "Ricevi questa email perché un amministratore di {productName} ha programmato un'ispezione per il tuo account."
+}

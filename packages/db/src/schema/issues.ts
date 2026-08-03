@@ -69,6 +69,7 @@ export const issueActivityKinds = [
   'attachment_added',
   'attachment_removed',
   'edited',
+  'escalated_to_incident',
 ] as const;
 export type IssueActivityKind = (typeof issueActivityKinds)[number];
 
@@ -331,9 +332,10 @@ export const issueAttachments = pgTable(
     filename: text('filename').notNull(),
     mimeType: text('mime_type').notNull(),
     sizeBytes: integer('size_bytes').notNull(),
-    uploadedByUserId: text('uploaded_by_user_id')
-      .notNull()
-      .references(() => user.id, { onDelete: 'restrict' }),
+    /** Null for anonymous QR uploads (PF-11). */
+    uploadedByUserId: text('uploaded_by_user_id').references(() => user.id, {
+      onDelete: 'restrict',
+    }),
     uploadedAt: timestamp('uploaded_at', { withTimezone: true, mode: 'date' })
       .notNull()
       .default(sql`now()`),

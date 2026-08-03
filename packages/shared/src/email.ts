@@ -41,6 +41,21 @@ import scheduleReminder from '../../i18n/emails/en/schedule-reminder.json';
 import signatureWorkflowComplete from '../../i18n/emails/en/signature-workflow-complete.json';
 import signatureWorkflowRequest from '../../i18n/emails/en/signature-workflow-request.json';
 import verification from '../../i18n/emails/en/verification.json';
+import permitExpiryWarning from '../../i18n/emails/en/permit-expiry-warning.json';
+import permitExpiryEscalation from '../../i18n/emails/en/permit-expiry-escalation.json';
+import fireDueDigest from '../../i18n/emails/en/fire-due-digest.json';
+import fraIntolerableAlert from '../../i18n/emails/en/fra-intolerable-alert.json';
+import actionAssigned from '../../i18n/emails/en/action-assigned.json';
+import actionDueDigest from '../../i18n/emails/en/action-due-digest.json';
+import documentExpiry from '../../i18n/emails/en/document-expiry.json';
+import inspectionApprovalPending from '../../i18n/emails/en/inspection-approval-pending.json';
+import inspectionApprovalDecided from '../../i18n/emails/en/inspection-approval-decided.json';
+import scheduleMissed from '../../i18n/emails/en/schedule-missed.json';
+import incidentAlert from '../../i18n/emails/en/incident-alert.json';
+import incidentChaseDigest from '../../i18n/emails/en/incident-chase-digest.json';
+import incidentInvestigatorAssigned from '../../i18n/emails/en/incident-investigator-assigned.json';
+import incidentRiddorEscalation from '../../i18n/emails/en/incident-riddor-escalation.json';
+import incidentRiddorWarning from '../../i18n/emails/en/incident-riddor-warning.json';
 
 const EMAIL_TEMPLATES: Record<string, unknown> = {
   'heads-up-reminder': headsUpReminder,
@@ -62,7 +77,33 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'signature-workflow-complete': signatureWorkflowComplete,
   'signature-workflow-request': signatureWorkflowRequest,
   verification,
+  // HSE platform review PF-1: these four were on disk but never
+  // registered — every send threw "Unknown email template" and the
+  // most safety-critical alerts on the platform were silently lost.
+  // email.test.ts now asserts every file in emails/en is registered,
+  // so a template can never again exist without being sendable.
+  'permit-expiry-warning': permitExpiryWarning,
+  'permit-expiry-escalation': permitExpiryEscalation,
+  'fire-due-digest': fireDueDigest,
+  'fra-intolerable-alert': fraIntolerableAlert,
+  'action-assigned': actionAssigned,
+  'action-due-digest': actionDueDigest,
+  'document-expiry': documentExpiry,
+  'inspection-approval-pending': inspectionApprovalPending,
+  'inspection-approval-decided': inspectionApprovalDecided,
+  'schedule-missed': scheduleMissed,
+  // FreeHS B5 — incident management (registered in the same PR as the
+  // templates; the IN-J04 registry test keeps this invariant permanent).
+  'incident-alert': incidentAlert,
+  'incident-chase-digest': incidentChaseDigest,
+  'incident-investigator-assigned': incidentInvestigatorAssigned,
+  'incident-riddor-escalation': incidentRiddorEscalation,
+  'incident-riddor-warning': incidentRiddorWarning,
 };
+
+/** Registered template keys — exported so tests can assert the registry
+ * is complete against the files on disk (PF-1). */
+export const EMAIL_TEMPLATE_KEYS: readonly string[] = Object.keys(EMAIL_TEMPLATES);
 
 // ─── Public types ───────────────────────────────────────────────────────────
 
@@ -163,6 +204,12 @@ export interface TemplatedEmail {
   templateKey: string;
   /** Replacements for `{name}` placeholders in subject + body + cta. */
   variables: Record<string, string>;
+  /**
+   * Recipient's language (PF-20). When a translation exists at
+   * packages/i18n/emails/<locale>/<templateKey>.json it is used; anything
+   * missing falls back to English. Omit for English.
+   */
+  locale?: string | undefined;
 }
 
 export type SendTemplatedEmail = (email: TemplatedEmail) => Promise<DeliveryResult>;
@@ -174,12 +221,31 @@ export type SendTemplatedEmail = (email: TemplatedEmail) => Promise<DeliveryResu
  * but every field is allowed to contain `{var}` placeholders that the
  * dispatcher substitutes at render time.
  */
-export type TemplatedTemplateLoader = (key: string) => Promise<EmailTemplate>;
+export type TemplatedTemplateLoader = (key: string, locale?: string) => Promise<EmailTemplate>;
 
-export const defaultTemplatedTemplateLoader: TemplatedTemplateLoader = (key) => {
+/** Locales with (partial or full) email translations on disk. */
+const TEMPLATE_LOCALE_RE = /^[a-z]{2}$/;
+
+export const defaultTemplatedTemplateLoader: TemplatedTemplateLoader = async (key, locale) => {
   const tpl = EMAIL_TEMPLATES[key];
   if (tpl === undefined) {
     return Promise.reject(new Error(`Unknown email template: ${key}`));
+  }
+  // PF-20: per-recipient language. Translations are read from disk lazily
+  // (the EN registry stays statically imported so the bundler always ships
+  // it); a missing/unreadable translation falls back to English silently —
+  // a safety alert in the wrong language beats no alert.
+  if (locale !== undefined && locale !== 'en' && TEMPLATE_LOCALE_RE.test(locale)) {
+    try {
+      const { readFile } = await import('node:fs/promises');
+      const { fileURLToPath } = await import('node:url');
+      const { dirname, join } = await import('node:path');
+      const here = dirname(fileURLToPath(import.meta.url));
+      const raw = await readFile(join(here, '..', '..', 'i18n', 'emails', locale, `${key}.json`), 'utf-8');
+      return templateSchema.parse(JSON.parse(raw));
+    } catch {
+      // fall through to English
+    }
   }
   return Promise.resolve(templateSchema.parse(tpl));
 };
@@ -380,7 +446,7 @@ export function createSendTemplatedEmail(deps: TemplatedEmailDeps): SendTemplate
   }
 
   return async function sendTemplatedEmail(email): Promise<DeliveryResult> {
-    const template = await loadTemplate(email.templateKey);
+    const template = await loadTemplate(email.templateKey, email.locale);
     // productName is injected for every send; an explicit caller variable of
     // the same name wins (none exist today, but the spread order allows it).
     const { subject, text } = renderTemplatedEmail(template, {

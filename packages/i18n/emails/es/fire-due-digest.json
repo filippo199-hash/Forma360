@@ -1,0 +1,8 @@
+{
+  "subject": "Resumen contra incendios — {failedCount} fallidas, {overdueCount} vencidas",
+  "preheader": "El calendario contra incendios de {productName} tiene elementos que requieren atención.",
+  "greeting": "Hola {recipientName}:",
+  "body": "El calendario contra incendios de hoy en {productName} requiere atención:\n\nComprobaciones fallidas pendientes de repetición: {failedCount}\nComprobaciones e inspecciones de puertas vencidas: {overdueCount}\nPor vencer: {dueSoonCount}\nRevisiones de FRA pendientes: {fraCount}\nRevisiones de PEEP pendientes: {peepCount}\nFormación de brigadistas por vencer o vencida: {marshalCount}\n\n{detailLines}\n\nUna comprobación fallida sigue marcada hasta que una repetición aprobada la resuelva: registra la repetición cuando el defecto esté corregido.",
+  "cta": "Abrir el módulo contra incendios",
+  "footer": "Recibes este correo porque tienes permisos de gestión contra incendios en {productName}. El resumen solo llega cuando algo requiere atención."
+}

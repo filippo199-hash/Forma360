@@ -1,0 +1,8 @@
+{
+  "subject": "Missed scheduled inspections — {missedCount}",
+  "preheader": "Scheduled inspections on {productName} were not completed on time.",
+  "greeting": "Hello {recipientName},",
+  "body": "The following scheduled inspections passed their due time without being started:\n\n{detailLines}\n\nStart them late from your schedule, or adjust the schedule if it no longer reflects reality — a calendar that silently skips is worse than one that says \"missed\".",
+  "cta": "Open schedules",
+  "footer": "You are receiving this because you are the assignee or the schedule owner on {productName}."
+}

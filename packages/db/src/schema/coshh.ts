@@ -343,6 +343,9 @@ export const coshhAssessments = pgTable(
     reviewFrequencyMonths: integer('review_frequency_months'),
     nextReviewAt: timestamp('next_review_at', { withTimezone: true, mode: 'date' }),
     lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true, mode: 'date' }),
+
+    /** Offline-queue idempotency key (PF-10) — see fire_logbook_entries. */
+    clientRequestId: varchar('client_request_id', { length: 26 }),
     lastReviewedBy: text('last_reviewed_by'),
 
     publishedAt: timestamp('published_at', { withTimezone: true, mode: 'date' }),
@@ -368,6 +371,9 @@ export const coshhAssessments = pgTable(
     index('coshh_assessments_tenant_status_idx').on(table.tenantId, table.status),
     index('coshh_assessments_substance_idx').on(table.substanceId),
     index('coshh_assessments_tenant_review_idx').on(table.tenantId, table.nextReviewAt),
+    uniqueIndex('coshh_assessments_client_req_idx')
+      .on(table.tenantId, table.clientRequestId)
+      .where(sql`${table.clientRequestId} IS NOT NULL`),
   ],
 );
 
@@ -574,6 +580,7 @@ export const COSHH_EVENT_KINDS = [
   'control_added',
   'control_removed',
   'review_recorded',
+  'review_prompted',
   'monitoring_recorded',
   'lev_test_recorded',
   'substitution_updated',

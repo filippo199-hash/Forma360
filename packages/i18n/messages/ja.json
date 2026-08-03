@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "監査ログ"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -293,7 +294,12 @@
         "integrations": "Integrations",
         "billing": "Billing",
         "contractors": "Contractors",
-        "org": "Organisation"
+        "org": "Organisation",
+        "riskAssessments": "リスクアセスメント",
+        "coshh": "COSHH",
+        "permits": "作業許可",
+        "fireSafety": "防火管理",
+        "incidents": "インシデント"
       },
       "perms": {
         "users_view": "View users",
@@ -356,7 +362,26 @@
         "contractors_verifyDocs": "Verify contractor documents",
         "contractors_gate": "Gate check-in",
         "org_settings": "Manage organisation settings",
-        "org_audit_view": "View audit log"
+        "org_audit_view": "View audit log",
+        "riskAssessments_view": "リスクアセスメントの閲覧",
+        "riskAssessments_create": "アセスメントの作成・編集",
+        "riskAssessments_manage": "アセスメントの公開・配布・管理",
+        "coshh_view": "COSHH台帳の閲覧",
+        "coshh_create": "物質・評価の追加",
+        "coshh_manage": "COSHH評価の公開・管理",
+        "permits_view": "許可証の閲覧",
+        "permits_create": "許可証の申請・記録",
+        "permits_issue": "許可証の発行・停止・終了",
+        "permits_manage": "許可証タイプの管理",
+        "fireSafety_view": "防火管理の閲覧",
+        "fireSafety_record": "点検の記録",
+        "fireSafety_create": "建物・扉・アセスメントの作成",
+        "fireSafety_manage": "アセスメントの公開・モジュール管理",
+        "incidents_view": "インシデントの閲覧",
+        "incidents_report": "インシデントの報告",
+        "incidents_investigate": "調査の実施",
+        "incidents_manage": "インシデントの管理（トリアージ・RIDDOR・承認）",
+        "incidents_confidential_view": "機密インシデントの閲覧"
       }
     },
     "groups": {
@@ -498,6 +523,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "データ保持とエクスポート",
+        "subtitle": "保持 v1 はポリシーを超えた通知を削除します。法定の安全記録には決して触れません。",
+        "keepForever": "無期限に保持",
+        "months": "{count} か月",
+        "scopeNote": "アプリ内通知のみが対象です。点検・許可証・防火記録簿・COSHH・リスクアセスメントは常に保持されます。",
+        "savedToast": "保持ポリシーを保存しました。"
+      },
+      "exportData": {
+        "button": "テナントデータをダウンロード(JSON)",
+        "hint": "すべてを 1 つの JSON にまとめます。移行やオフボーディング用。管理者のみ。"
       }
     },
     "customFields": {
@@ -561,6 +598,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "監査ログ",
+      "subtitle": "全モジュールのイベントを、テナント全体の新しい順のひとつのストリームで表示します。",
+      "empty": "イベントはまだありません。",
+      "loadMore": "さらに読み込む",
+      "systemActor": "システム",
+      "columns": {
+        "when": "日時",
+        "module": "モジュール",
+        "event": "イベント",
+        "actor": "実行者",
+        "detail": "詳細"
+      },
+      "modules": {
+        "all": "すべて",
+        "actions": "アクション",
+        "observations": "観察記録",
+        "permits": "許可証",
+        "coshh": "COSHH",
+        "riskAssessments": "リスクアセスメント",
+        "fireSafety": "防火",
+        "contractors": "請負業者"
       }
     }
   },
@@ -1036,7 +1097,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "承認署名待ち"
     },
     "table": {
       "title": "Title",
@@ -1055,7 +1117,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "承認署名待ち"
     },
     "picker": {
       "title": "Pick a template",
@@ -1105,7 +1168,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} 枚の写真をアップロードできませんでした。ここに保持しています。",
+          "retry": "再試行"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -1167,10 +1232,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "説明が必要"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "この回答の説明（必須）"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1339,6 +1406,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "自分の定期点検（{count}）",
+      "startNow": "開始",
+      "startError": "開始できませんでした。再試行してください。",
+      "missedBadge": "未実施",
+      "overdueBadge": "期限超過",
+      "dueBadge": "予定"
     }
   },
   "nav": {
@@ -1361,7 +1436,10 @@
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
     "coshh": "COSHH",
-    "permits": "作業許可"
+    "permits": "作業許可",
+    "fireSafety": "防火管理",
+    "analytics": "ダッシュボード",
+    "incidents": "インシデント"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -1389,7 +1467,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "提出者",
+    "site": "拠点"
   },
   "schedules": {
     "title": "Schedules",
@@ -1679,7 +1759,11 @@
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
-        "toast": "Action created."
+        "toast": "Action created.",
+        "assigneeLabel": "担当者",
+        "noAssignee": "未割り当て",
+        "typeLabel": "是正措置タイプ",
+        "noType": "タイプなし"
       },
       "attachInspectionDialog": {
         "title": "点検を開始",
@@ -2012,7 +2096,9 @@
       },
       "settingsButton": "設定",
       "sourceMaintenance": "メンテナンス",
-      "loadError": "Couldn't load actions. Please try again."
+      "loadError": "Couldn't load actions. Please try again.",
+      "filterSourceIncident": "インシデント",
+      "sourceIncident": "インシデント"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2136,7 +2222,13 @@
       },
       "autoGeneratedBadge": "自動生成",
       "autoGeneratedBy": "{program} により自動生成",
-      "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later."
+      "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later.",
+      "sourceLinkRiskAssessment": "リスクアセスメント {referenceNumber} から作成",
+      "sourceLinkCoshhAssessment": "COSHH評価 {referenceNumber} から作成",
+      "sourceLinkFireRiskAssessment": "火災リスクアセスメント {referenceNumber} から作成",
+      "sourceLinkFireLogbookEntry": "不合格の防火点検から作成",
+      "sourceLinkFireDoorInspection": "不合格の防火扉点検から作成",
+      "sourceLinkIncident": "インシデント {referenceNumber} から作成"
     },
     "create": {
       "title": "Create action",
@@ -2199,7 +2291,17 @@
     },
     "filters": {
       "removeAria": "Remove {label} filter"
-    }
+    },
+    "sourceRiskAssessment": "リスクアセスメント",
+    "sourceCoshhAssessment": "COSHH",
+    "sourceFireRiskAssessment": "火災リスクアセスメント",
+    "sourceFireLogbookEntry": "防火点検",
+    "sourceFireDoorInspection": "防火扉",
+    "pagerShowing": "{total}件中 {from}–{to} 件を表示",
+    "pagerPrev": "前へ",
+    "pagerNext": "次へ",
+    "myOpenChip": "自分の担当: {count}",
+    "myOverdueChip": "{count}件期限超過"
   },
   "actionsSettings": {
     "title": "Action settings",
@@ -2646,7 +2748,28 @@
         "startedAt": "開始日",
         "createdAt": "作成日"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "保全計画",
+        "empty": "この資産を対象とする保全計画はありません。",
+        "timeMeta": "{interval} 日ごと — 前回整備 {last}",
+        "usageMeta": "{interval} {unit} ごと — 現在値 {current}",
+        "status": {
+          "on_schedule": "予定どおり",
+          "approaching": "間近",
+          "overdue": "期限超過",
+          "awaiting_first_reading": "初回計測待ち"
+        }
+      },
+      "fireHistory": {
+        "heading": "防火点検履歴",
+        "checkLine": "{type} — {building}",
+        "empty": "防火記録簿への記録はまだありません。",
+        "performedAt": "日付",
+        "type": "点検",
+        "result": "結果",
+        "notes": "備考"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -2913,7 +3036,16 @@
       "observations": "観察",
       "actions": "アクション",
       "headsUp": "お知らせ",
-      "documents": "文書"
+      "documents": "文書",
+      "permits": "作業許可",
+      "coshh": "COSHH物質",
+      "riskAssessments": "リスクアセスメント",
+      "fireBuildings": "防火建物",
+      "fireRiskAssessments": "火災リスクアセスメント",
+      "contractors": "請負業者",
+      "sites": "拠点・プロジェクト",
+      "templates": "テンプレート",
+      "incidents": "インシデント"
     }
   },
   "ai": {
@@ -3450,7 +3582,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "請負業者がコンプライアンス未達です。続行するには下に承認理由を入力してください。"
     },
     "gate": {
       "navLink": "Gate",
@@ -3489,7 +3622,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "この請負業者はコンプライアンス未達です。チェックインには記録付きの承認理由が必要です(または現場事務所へ案内してください)。",
+      "nonCompliantChip": "コンプライアンス未達"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3528,7 +3663,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "前回の確認以降にインダクションが更新されました。再度読み、確認してください。"
     },
     "users": {
       "heading": "Portal users",
@@ -3582,7 +3718,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "現場インダクション",
+      "version": "バージョン {version}",
+      "hint": "ポータル利用者に最初に表示されます。変更を保存するとバージョンが上がり、全員の再確認が必要になります。",
+      "placeholder": "ここで作業する前に全請負業者が読み確認すべき内容…",
+      "saveButton": "インダクションを保存",
+      "savedToast": "インダクションを保存しました(バージョン {version})。"
+    },
+    "onSitePermits": {
+      "heading": "有効な許可証を持つ在場中の請負業者"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4987,7 +5134,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "資産にリンク済み",
+      "noLinkedAsset": "リンクされた資産なし",
+      "linkedAssetLine": "資産:{name}",
+      "assetLinkedToast": "資産リンクを更新しました。"
     },
     "doors": {
       "addButton": "Add door",
@@ -5283,5 +5434,686 @@
     "clearSearch": "検索をクリア",
     "clear": "選択を解除",
     "done": "完了"
+  },
+  "analytics": {
+    "title": "ダッシュボード",
+    "subtitle": "全モジュールで対応が必要な項目と、直近の傾向を一目で確認できます。",
+    "tiles": {
+      "sectionLabel": "要対応",
+      "myOpenActions": "自分の未完了アクション",
+      "overdueActions": "期限超過のアクション",
+      "dueSoon": "7日以内に期限 {count} 件",
+      "openObservations": "未対応の観察記録",
+      "highPriority": "高優先度 {count} 件",
+      "awaitingApproval": "承認待ちの点検",
+      "inProgress": "進行中 {count} 件",
+      "missedInspections": "未実施の点検(30日)",
+      "upcoming7": "7日以内の予定 {count} 件",
+      "pendingAcks": "確認が必要なお知らせ",
+      "openPermits": "有効な許可証",
+      "expiring48h": "48時間以内に期限切れ {count} 件",
+      "raReviewOverdue": "見直し期限超過のリスクアセスメント",
+      "raActive": "有効 {count} 件",
+      "coshhReviewDue": "COSHH 見直し期限超過",
+      "coshhSubstances": "有効な物質 {count} 件",
+      "fireAttention": "防火:要対応"
+    },
+    "trends": {
+      "sectionLabel": "傾向",
+      "actionsTitle": "アクション — 作成 vs 完了(8週間)",
+      "activityTitle": "点検と観察記録(8週間)",
+      "actionsCreated": "作成",
+      "actionsCompleted": "完了",
+      "inspectionsCompleted": "点検完了",
+      "observationsRaised": "観察記録の報告",
+      "thisWeek": "今週"
+    },
+    "sites": {
+      "sectionLabel": "拠点比較",
+      "title": "拠点の概況",
+      "subtitle": "拠点ごとの未対応の作業量と点検活動。多い順に表示します。",
+      "site": "拠点",
+      "openActions": "未完了アクション",
+      "openObservations": "未対応の観察記録",
+      "completed30": "点検(30日)",
+      "noSite": "拠点なし",
+      "empty": "拠点はまだありません。"
+    }
+  },
+  "scanPage": {
+    "loading": "読み込み中…",
+    "invalidTitle": "この QR コードは無効になりました。",
+    "invalidBody": "スキャンした QR コードは取り消されたか、このカテゴリーは報告を受け付けていません。施設の管理者にお問い合わせください。",
+    "reportObservation": "観察記録を報告",
+    "titleLabel": "タイトル",
+    "titlePlaceholder": "発生した内容の簡単な要約",
+    "descriptionLabel": "説明",
+    "descriptionPlaceholder": "状況の理解に役立つ詳細を記入してください。",
+    "reporterNameLabel": "お名前",
+    "reporterNameSubtitle": "任意 — 空欄のままで匿名になります。",
+    "reporterEmailLabel": "メールアドレス",
+    "reporterEmailSubtitle": "任意 — フォローアップに使用する場合があります。",
+    "dateOccurredLabel": "発生日時",
+    "locationAddressLabel": "場所",
+    "locationAddressPlaceholder": "建物・階・エリア",
+    "customQuestionsHeading": "追加の質問",
+    "selectPlaceholder": "選択してください",
+    "submit": "送信",
+    "submitting": "送信中…",
+    "successTitle": "ありがとうございます。報告を受け付けました。",
+    "successBody": "参照番号は以下のとおりです。控えとして保管してください。",
+    "successAnother": "続けて報告する",
+    "errorGeneric": "報告を送信できませんでした。もう一度お試しください。",
+    "siteLabel": "拠点",
+    "siteNone": "拠点を選択",
+    "photosLabel": "写真",
+    "photosSubtitle": "写真を最大 {max} 枚追加できます。写真は報告の半分です。",
+    "photosAdd": "写真を追加",
+    "photosRemove": "削除",
+    "photoTooLarge": "この写真は {maxMb} MB を超えています。小さいものを選んでください。",
+    "photoUploadFailed": "写真のアップロードに失敗しました。まだ添付されています。もう一度送信してください。"
+  },
+  "offline": {
+    "title": "オフラインです",
+    "body": "接続がないためこのページは表示できません。記録した内容はキューに保存され、自動的に同期されます。",
+    "pendingChip": "{count} 件が同期待ち — オンラインで自動送信",
+    "itemsDelivered": "キューの {count} 件を同期しました",
+    "itemRejected": "キューの項目がサーバーに拒否されました。内容を確認して再入力してください。",
+    "queuedToast": "接続がありません。キューに保存しました。自動的に同期されます。"
+  },
+  "notifications": {
+    "bellLabel": "通知({count} 件未読)",
+    "title": "通知",
+    "markAllRead": "すべて既読にする",
+    "empty": "まだ何もありません。最新の状態です。",
+    "kinds": {
+      "action_assigned": "アクション割り当て",
+      "approval_pending": "承認待ち",
+      "approval_decided": "承認結果",
+      "heads_up": "お知らせ",
+      "issue_reported": "観察記録の報告",
+      "schedule_missed": "未実施の点検",
+      "action_due": "期限間近のアクション",
+      "document_expiry": "文書の有効期限"
+    },
+    "prefs": {
+      "title": "メール通知",
+      "subtitle": "オフにするとメールのみ停止します。ヘッダーのベルには常に表示されます。",
+      "saveError": "設定を保存できませんでした。",
+      "keys": {
+        "emailActionReminders": "アクション期限/超過リマインダー",
+        "emailScheduleMissed": "未実施の予定点検",
+        "emailDocumentExpiry": "文書期限リマインダー",
+        "emailMaintenance": "保全リマインダー"
+      }
+    }
+  },
+  "incidents": {
+    "title": "インシデント",
+    "subtitle": "労働安全の事象を記録し、調査し、完結させる",
+    "attention": {
+      "riddorOverdue": "RIDDOR期限超過",
+      "riddorDueSoon": "RIDDOR期限間近",
+      "rescreenRequired": "再判定が必要",
+      "investigating": "調査中",
+      "effectivenessOverdue": "有効性レビュー期限超過"
+    },
+    "list": {
+      "report": "インシデントを報告",
+      "exportCsv": "CSVエクスポート",
+      "empty": "条件に合うインシデントはありません。",
+      "searchPlaceholder": "タイトルまたは番号を検索…",
+      "riddorOnly": "RIDDORのみ",
+      "allKinds": "すべての種類",
+      "allSeverities": "すべての重大度",
+      "allSites": "すべての拠点",
+      "lateReport": "報告遅延",
+      "confidential": "機密",
+      "statusFilter": {
+        "open": "対応中",
+        "reported": "報告済み",
+        "triaged": "トリアージ済み",
+        "investigating": "調査中",
+        "actions_outstanding": "是正措置対応中",
+        "closed": "完了",
+        "cancelled": "取消",
+        "all": "すべて"
+      },
+      "columns": {
+        "reference": "番号",
+        "title": "タイトル",
+        "kind": "種類",
+        "severity": "重大度",
+        "status": "状態",
+        "site": "拠点",
+        "occurred": "発生日",
+        "riddor": "RIDDOR"
+      }
+    },
+    "kinds": {
+      "injury": "負傷",
+      "ill_health": "職業性疾病",
+      "dangerous_occurrence": "危険事象",
+      "sharps_exposure": "針刺し・飛散曝露",
+      "violence_aggression": "暴力・攻撃",
+      "damage": "物損",
+      "environmental": "環境",
+      "near_miss": "ヒヤリハット"
+    },
+    "severities": {
+      "negligible": "軽微",
+      "minor": "軽度",
+      "moderate": "中程度",
+      "serious": "重度",
+      "major": "重大"
+    },
+    "statuses": {
+      "reported": "報告済み",
+      "triaged": "トリアージ済み",
+      "investigating": "調査中",
+      "actions_outstanding": "是正措置対応中",
+      "closed": "完了",
+      "reopened": "再開",
+      "cancelled": "取消"
+    },
+    "personCategories": {
+      "employee": "従業員",
+      "contractor": "請負業者",
+      "agency": "派遣",
+      "visitor": "来訪者",
+      "member_of_public": "一般の方",
+      "work_experience": "実習生"
+    },
+    "injuryKinds": {
+      "fracture": "骨折",
+      "dislocation": "脱臼",
+      "sprain_strain": "捻挫・挫傷",
+      "laceration": "裂傷",
+      "puncture": "刺傷",
+      "abrasion": "擦過傷",
+      "bruising": "打撲",
+      "burn": "熱傷",
+      "scald": "湯水熱傷",
+      "amputation": "切断",
+      "crush": "挟圧",
+      "concussion": "脳震盪",
+      "electric_shock": "感電",
+      "asphyxia": "窒息",
+      "poisoning": "中毒",
+      "other": "その他"
+    },
+    "bodyParts": {
+      "head": "頭部",
+      "face": "顔面",
+      "eye": "眼",
+      "neck": "頸部",
+      "shoulder": "肩",
+      "arm": "腕",
+      "elbow": "肘",
+      "wrist": "手首",
+      "hand": "手",
+      "finger": "指",
+      "trunk": "体幹",
+      "back": "背部",
+      "abdomen": "腹部",
+      "hip": "股関節",
+      "leg": "脚",
+      "knee": "膝",
+      "ankle": "足首",
+      "foot": "足",
+      "toe": "足指",
+      "internal": "内臓",
+      "multiple": "複数"
+    },
+    "hospitalisations": {
+      "none": "医療機関の受診なし",
+      "ae": "救急外来",
+      "admitted": "入院"
+    },
+    "causalFactors": {
+      "equipment_guarding": "設備・防護",
+      "procedure": "手順の不備・欠如",
+      "training_competence": "教育・力量",
+      "supervision": "監督",
+      "human_factors": "ヒューマンファクター",
+      "environment": "作業環境",
+      "maintenance": "保全",
+      "management_system": "マネジメントシステム"
+    },
+    "priorities": {
+      "low": "低",
+      "medium": "中",
+      "high": "高",
+      "critical": "緊急"
+    },
+    "evidenceKinds": {
+      "photo": "写真",
+      "document": "文書",
+      "cctv_ref": "CCTV参照",
+      "physical_ref": "現物証拠",
+      "other": "その他"
+    },
+    "new": {
+      "title": "インシデントを報告",
+      "whatHappened": "何が起きましたか？",
+      "titlePlaceholder": "一行で — 例: 巻き込まれ点に手を挟まれた",
+      "kind": "事象の種類",
+      "confidentialHint": "この種類は機密として記録されます。詳細は報告者・調査チーム・機密閲覧権限者のみが見られます。",
+      "when": "いつ起きましたか？",
+      "site": "拠点",
+      "sitePlaceholder": "拠点を選択…",
+      "location": "正確な場所",
+      "locationPlaceholder": "例: 機械工場 2号ライン",
+      "description": "何が起きたか（自分の言葉で）",
+      "descriptionPlaceholder": "何が起きたか、何をしていたか、何が助けになり悪化させたかを記述…",
+      "sharpsHeading": "針刺し・飛散の詳細",
+      "vaHeading": "暴力・攻撃の詳細",
+      "doHeading": "危険事象の詳細",
+      "damageHeading": "物損の詳細",
+      "envHeading": "環境の詳細",
+      "peopleHeading": "被災者",
+      "addPerson": "人を追加",
+      "personRequiredHint": "負傷者を追加してください — 氏名・区分・負傷の詳細。",
+      "noPersonsHint": "該当者なし？空欄のままに（例: 負傷のない危険事象）。",
+      "personNamePlaceholder": "氏名",
+      "injuryDetails": "負傷の詳細",
+      "injuryKinds": "負傷の種類",
+      "bodyParts": "受傷部位",
+      "firstAidGiven": "応急処置を実施",
+      "hospitalisation": "医療機関の受診",
+      "submit": "報告を送信",
+      "submitting": "送信中…",
+      "savedLocally": "報告はこの端末に保存されています。電波が入ったら再送信してください。",
+      "draftRestored": "ローカル保存の下書きを復元しました。",
+      "photosTitle": "写真を追加",
+      "photosHint": "今の1枚は後の10の証言に勝ります。可能な範囲で追加を — 後からインシデントページでも追加できます。",
+      "addPhotos": "写真を撮る・選ぶ",
+      "uploading": "アップロード中…",
+      "uploadedCount": "{count} 件のファイルを添付。",
+      "done": "完了 — インシデントを開く"
+    },
+    "details": {
+      "device": "関与した器具・鋭利物",
+      "devicePlaceholder": "例: 使用済みカニューレ",
+      "procedure": "実施中の処置",
+      "contaminationStatus": "汚染状況",
+      "contamination": {
+        "unknown": "不明",
+        "low": "低リスク",
+        "high": "高リスク"
+      },
+      "sourceKnown": "曝露源が判明",
+      "sourceRiskAssessed": "曝露リスクを評価済み",
+      "washedConfirmed": "洗浄・応急処置を確認",
+      "nature": "性質",
+      "vaNature": {
+        "physical": "身体的",
+        "verbal": "言葉による",
+        "threat": "脅迫",
+        "sexual": "性的"
+      },
+      "perpetratorType": "加害者",
+      "perpetrator": {
+        "patient_or_service_user": "患者・利用者",
+        "visitor": "来訪者",
+        "member_of_public": "一般の方",
+        "colleague": "同僚",
+        "other": "その他"
+      },
+      "weaponInvolved": "凶器あり",
+      "policeNotified": "警察へ通報",
+      "crimeReference": "受理番号",
+      "supportOffered": "本人への支援を提供",
+      "doCategory": "区分",
+      "doCategories": {
+        "lifting_equipment_collapse": "揚重設備の崩壊",
+        "scaffold_collapse": "足場の倒壊",
+        "electrical_fire_explosion": "電気火災・爆発",
+        "pressure_system_failure": "圧力設備の破損",
+        "accidental_release": "偶発的放出",
+        "structural_collapse": "構造物の崩壊",
+        "other": "その他"
+      },
+      "otherText": "事象を記述",
+      "whatDamaged": "損傷したもの",
+      "whatReleased": "放出されたもの",
+      "estimatedCostBand": "推定費用",
+      "costBands": {
+        "unknown": "不明",
+        "under_1k": "£1,000未満",
+        "1k_to_10k": "£1,000～£10,000",
+        "10k_to_100k": "£10,000～£100,000",
+        "over_100k": "£100,000超"
+      },
+      "mitigation": "応急措置",
+      "containment": "封じ込め"
+    },
+    "detail": {
+      "downloadPdf": "PDFをダウンロード",
+      "occurred": "発生",
+      "reported": "報告",
+      "site": "拠点",
+      "potentialSeverity": "潜在重大度",
+      "riddorOverdueBanner": "RIDDORの法定報告期限を過ぎており、提出記録がありません。直ちにHSEへ報告し、ここに記録してください。",
+      "rescreenBanner": "累計休業が7日を超え、「報告不要」の判定と矛盾しています — RIDDOR判定を再実施してください。",
+      "notEffectiveBanner": "有効性レビューで対策が維持されていないことが判明しました。再開または新たな是正措置を検討してください。"
+    },
+    "triage": {
+      "heading": "トリアージ",
+      "open": "トリアージを実施",
+      "hint": "重大度を確定し、調査レベルを設定し、調査責任者を任命します。",
+      "severity": "重大度（実際）",
+      "level": "調査レベル",
+      "levels": {
+        "basic": "簡易 — 1画面、スマホで数分",
+        "full": "詳細 — 証拠・原因分析・所見"
+      },
+      "leadInvestigator": "調査責任者",
+      "leadPlaceholder": "調査者を選択…",
+      "confidential": "機密 — 詳細は報告者・調査チーム・権限者のみ",
+      "confirm": "トリアージを確定"
+    },
+    "people": {
+      "heading": "被災者と休業日数",
+      "daysLost": "休業 {days} 日",
+      "none": "登録された人はいません。",
+      "returnedToWork": "復職済み",
+      "firstAid": "応急処置",
+      "absence": "休業",
+      "ongoing": "継続中",
+      "endAbsence": "本日で終了",
+      "absenceFrom": "休業開始日",
+      "absenceTo": "休業最終日（空欄＝継続中）",
+      "addAbsence": "休業を記録",
+      "addPerson": "人を追加"
+    },
+    "riddor": {
+      "heading": "RIDDOR",
+      "screen": "今すぐ判定",
+      "rescreen": "再判定",
+      "notScreened": "未判定です。「報告不要」という判定も、それ自体が説明可能な記録になります。",
+      "determination": "判定",
+      "screenedBy": "{name} が判定 · {date}",
+      "deadline": "法定期限",
+      "submitted": "提出済み",
+      "routeOnline": "HSEオンラインフォーム",
+      "routePhone": "電話",
+      "screenHint": "期限はプラットフォームが計算します。判断はあなたのものです。該当する区分を選び、理由を記録してください。",
+      "note": "判定理由",
+      "notePlaceholder": "この判定の理由 — 例: 事故後9日間休業のため7日超に該当…",
+      "confirmScreen": "判定を記録",
+      "recordSubmission": "HSE提出を記録",
+      "route": "提出方法",
+      "hseReference": "HSE参照番号（任意）",
+      "confirmSubmission": "提出を記録",
+      "chipNotReportable": "報告不要",
+      "chipSubmitted": "RIDDOR提出済み",
+      "chipOverdue": "RIDDOR期限超過",
+      "chipDaysLeft": "RIDDOR: 残り{days}日",
+      "categories": {
+        "not_reportable": "報告不要",
+        "death": "死亡",
+        "specified_injury": "特定負傷",
+        "over_7_day": "7日超休業",
+        "occupational_disease": "職業性疾病",
+        "dangerous_occurrence": "危険事象",
+        "gas_incident": "ガス事故"
+      },
+      "help": {
+        "not_reportable": "報告対象の区分に該当しません。理由を記録してください — 否定的判定こそが記録です。",
+        "death": "労働災害により死亡。遅滞なく通報し、10日以内に報告。",
+        "specified_injury": "骨折（手足の指を除く）、切断、視力喪失、頭部・体幹の挟圧、重度熱傷、頭皮剥離、窒息による意識喪失、24時間超の入院。10日以内に報告。",
+        "over_7_day": "事故当日を除き7日を超える就業不能。事故から15日以内に報告。",
+        "occupational_disease": "業務に関連する診断された職業性疾病 — 手根管症候群、皮膚炎、職業性喘息、HAVS、腱炎、職業がん。",
+        "dangerous_occurrence": "Schedule 2の事象 — 揚重設備の崩壊、足場倒壊、電気火災・爆発、圧力設備破損、偶発的放出。",
+        "gas_incident": "ガスに関連する死亡・負傷、または危険なガス設備。"
+      }
+    },
+    "investigation": {
+      "heading": "調査",
+      "start": "調査を開始",
+      "openWorkspace": "ワークスペースを開く",
+      "awaitingTriage": "トリアージ待ち — レベルと責任者はそこで設定します。",
+      "notStarted": "未開始。",
+      "level": "レベル",
+      "lead": "責任者",
+      "revision": "版",
+      "status": "状態",
+      "statuses": {
+        "draft": "下書き",
+        "submitted": "承認待ち",
+        "approved": "承認済み"
+      },
+      "approvedBy": "{name} が承認 · {date}"
+    },
+    "findings": {
+      "heading": "所見と是正措置",
+      "actionPending": "措置は承認時に生成されます。",
+      "actionStatuses": {
+        "open": "未着手",
+        "in_progress": "対応中",
+        "completed": "完了",
+        "cancelled": "取消"
+      }
+    },
+    "linked": {
+      "heading": "関連レコード",
+      "observation": "観察",
+      "permit": "作業許可",
+      "contractor": "請負業者",
+      "asset": "設備",
+      "none": "関連レコードはありません。"
+    },
+    "reviews": {
+      "prompted": "{date} にレビューを起動しました。",
+      "skipped": "レビューを省略: {reason}",
+      "stepHeading": "事後レビューを起動",
+      "stepHint": "関係するリスクアセスメント・COSHH・防火評価を、このインシデントを引用してレビュー対象にします。",
+      "kinds": {
+        "ra": "リスクアセスメント",
+        "coshh": "COSHH評価",
+        "fra": "防火リスク評価"
+      },
+      "promptButton": "選択分を起動",
+      "skipButton": "理由を付けて省略…",
+      "skipReasonPlaceholder": "レビュー不要の理由…",
+      "confirmSkip": "省略"
+    },
+    "effectiveness": {
+      "heading": "有効性レビュー",
+      "due": "期限 {date}",
+      "verdict": "判定",
+      "verdicts": {
+        "effective": "有効 — 対策は実施され維持されている",
+        "partially_effective": "部分的に有効",
+        "not_effective": "無効"
+      },
+      "question": "対策は実施され維持されていますか？再発はありますか？",
+      "notePlaceholder": "確認した内容と結果…",
+      "record": "判定を記録",
+      "open": "有効性判定を記録"
+    },
+    "lifecycle": {
+      "heading": "ライフサイクル",
+      "close": "インシデントを完了",
+      "reopen": "再開",
+      "cancel": "記録を取消",
+      "closeHint": "完了にはRIDDOR義務の履行と、関連するすべての措置の完了または取消が必要です。完了時に有効性レビューが予定されます。",
+      "confirmClose": "完了を確定",
+      "reopenReason": "再開の理由は？",
+      "cancelReason": "取消の理由は？（重複／誤登録）",
+      "confirmReopen": "再開を確定",
+      "confirmCancel": "取消を確定"
+    },
+    "timeline": {
+      "heading": "タイムライン",
+      "system": "システム"
+    },
+    "events": {
+      "reported": "報告",
+      "updated": "詳細を更新",
+      "triaged": "トリアージ実施",
+      "severity_changed": "重大度を変更",
+      "investigator_assigned": "調査責任者を任命",
+      "riddor_screened": "RIDDOR判定",
+      "riddor_rescreen_flagged": "RIDDOR再判定を要請",
+      "riddor_submitted": "RIDDOR提出",
+      "person_added": "人を追加",
+      "person_updated": "人を更新",
+      "person_removed": "人を削除",
+      "absence_added": "休業を記録",
+      "absence_updated": "休業を更新",
+      "absence_removed": "休業を削除",
+      "evidence_added": "証拠を追加",
+      "witness_statement_added": "証言を採取",
+      "investigation_started": "調査を開始",
+      "investigation_submitted": "調査を提出",
+      "investigation_rejected": "調査を差戻し",
+      "investigation_approved": "調査を承認",
+      "actions_generated": "是正措置を生成",
+      "reviews_prompted": "レビューを起動",
+      "reviews_prompt_skipped": "レビューを省略",
+      "closed": "完了",
+      "reopened": "再開",
+      "cancelled": "取消",
+      "effectiveness_recorded": "有効性判定を記録",
+      "alert_sent": "即時アラートを送信",
+      "riddor_warning_sent": "RIDDOR期限警告を送信",
+      "riddor_escalated": "RIDDOR期限を上申",
+      "promoted_from_observation": "観察から昇格"
+    },
+    "workspace": {
+      "title": "調査ワークスペース",
+      "revisionOption": "第{revision}版（{status}）",
+      "noInvestigation": "調査はまだありません — インシデントページから開始してください。",
+      "frozenNote": "第{revision}版 — {date} 承認。凍結済み。結論時点の内容を表示。",
+      "immediateCause": "直接原因",
+      "underlyingCause": "背後要因",
+      "signatures": "提出: {submitted} · 承認: {approved}",
+      "evidenceHeading": "証拠",
+      "addFiles": "写真・ファイルを追加",
+      "addReference": "参照を追加",
+      "referenceKind": "種類",
+      "referenceCaption": "参照",
+      "referenceCaptionPlaceholder": "例: カメラ4、14:02–14:07、映像は8/30まで保存",
+      "noEvidence": "証拠はまだありません。早い1枚の写真は後の10の証言に勝ります。",
+      "witnessHeading": "証言",
+      "addStatement": "証言を採取",
+      "appendOnlyNote": "証言は追記のみ。訂正は新しい証言として記録し、編集・削除はしません。",
+      "witnessName": "証人",
+      "statement": "証言内容",
+      "signatureCaptured": "署名を取得しました。",
+      "saveStatement": "証言を保存",
+      "signed": "署名済み",
+      "takenBy": "採取者: {name}",
+      "rcaHeading": "根本原因分析",
+      "contributingFactors": "寄与要因",
+      "method": "手法",
+      "methods": {
+        "five_whys": "なぜなぜ分析",
+        "causal_factors": "原因要因分析（HSG245）",
+        "other": "その他"
+      },
+      "whyPlaceholder": "なぜ…？",
+      "rootCause": "根本原因",
+      "addWhy": "「なぜ」を追加",
+      "factorNarrativePlaceholder": "この要因で何が起きたか…",
+      "addFactor": "要因を追加",
+      "timelineHeading": "経過",
+      "timelineWhen": "いつ",
+      "timelineWhat": "何が起きたか",
+      "addTimelineRow": "行を追加",
+      "findingsHeading": "所見",
+      "requiresAction": "措置が必要",
+      "findingPlaceholder": "何を変えるべきか…",
+      "conclusionHeading": "結論と署名",
+      "conclusionSummary": "結論",
+      "rootCauseStatement": "根本原因の記述",
+      "recurrenceLikelihood": "再発可能性",
+      "recurrence": {
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      },
+      "lessonsLearned": "教訓",
+      "attestation": "本調査が知る限り完全かつ正確であることを確認します。",
+      "submit": "承認へ提出",
+      "submittedBy": "{name} が提出 — 別の管理者による承認待ち（職務分離）。",
+      "approve": "承認…",
+      "reject": "差戻し…",
+      "rejectNotePlaceholder": "修正が必要な点…",
+      "confirmReject": "調査者へ差戻す",
+      "approveHint": "各所見の是正措置の担当者と期限を設定してください — 承認時に一度だけ生成されます。",
+      "assignee": "担当者",
+      "assigneePlaceholder": "担当者を選択…",
+      "dueDate": "期限",
+      "confirmApprove": "調査を承認",
+      "approvedNote": "{name} が承認。この版は凍結されました。"
+    },
+    "observationCard": {
+      "heading": "インシデント",
+      "escalate": "インシデントに昇格",
+      "escalating": "昇格中…",
+      "escalated": "インシデント {reference} を作成しました。",
+      "escalateFailed": "この観察を昇格できませんでした。",
+      "none": "この観察からのインシデントはまだありません。",
+      "confidential": "機密インシデント"
+    },
+    "common": {
+      "cancel": "キャンセル",
+      "save": "保存",
+      "saving": "保存中…"
+    },
+    "errors": {
+      "generic": "問題が発生しました。もう一度お試しください。",
+      "module-disabled": "このモジュールはお使いの製品では有効化されていません。",
+      "incident-not-found": "インシデントが見つかりません。",
+      "site-not-found": "拠点が見つかりません。",
+      "user-not-found": "ユーザーが見つかりません。",
+      "permit-not-found": "作業許可が見つかりません。",
+      "contractor-not-found": "請負業者が見つかりません。",
+      "asset-not-found": "設備が見つかりません。",
+      "observation-not-found": "観察が見つかりません。",
+      "occurred-in-future": "発生時刻を未来にはできません。",
+      "invalid-details": "種類別の詳細が不完全または無効です。",
+      "invalid-transition": "現在の状態からその操作はできません。",
+      "incident-terminal": "このインシデントは完了または取消済みです。",
+      "not-editable": "編集できるのは管理者、またはトリアージ前の報告者のみです。",
+      "not-allowed": "このインシデントでその操作は許可されていません。",
+      "confidential": "このインシデントは機密です。報告者・調査チーム・権限者のみ閲覧できます。",
+      "severity-frozen": "調査承認後は重大度を変更できません。",
+      "not-lead-investigator": "調査責任者のみ実行できます — 管理者はまず担当を変更してください。",
+      "investigation-already-open": "調査はすでに開いています。",
+      "investigation-not-found": "調査が見つかりません。",
+      "investigation-frozen": "この調査版は承認済みで凍結されています。",
+      "investigation-not-draft": "調査が下書きではありません。",
+      "investigation-not-submitted": "調査は提出されていません。",
+      "immediate-cause-required": "提出前に直接原因を記録してください。",
+      "conclusion-required": "提出前に結論を記入してください。",
+      "rca-method-required": "詳細調査には分析手法が必要です。",
+      "why-chain-required": "提出前になぜなぜ分析を完成させてください。",
+      "causal-factors-required": "提出前に少なくとも1つの原因要因を記録してください。",
+      "root-cause-required": "詳細調査には根本原因の記述が必要です。",
+      "approver-is-investigator": "承認者は調査責任者・提出者以外である必要があります。",
+      "finding-not-found": "所見が見つかりません。",
+      "finding-has-action": "この所見は既に措置を生成済みのため削除できません。",
+      "person-not-found": "このインシデントに該当者が見つかりません。",
+      "absence-not-found": "休業が見つかりません。",
+      "absence-inverted": "終了日が開始日より前です。",
+      "riddor-already-submitted": "RIDDOR提出は記録済みです — 判定は凍結されています。",
+      "riddor-not-reportable": "このインシデントは報告対象と判定されていません。",
+      "riddor-unscreened": "完了前にRIDDOR判定を完了してください。",
+      "riddor-rescreen-required": "完了前にRIDDOR判定を再実施してください — 休業が7日を超えました。",
+      "riddor-not-submitted": "このインシデントはRIDDOR報告対象です — 完了前にHSE提出を記録してください。",
+      "actions-open": "先に関連するすべての措置を完了または取消してください。",
+      "incident-not-closed": "先にインシデントを完了してください。",
+      "effectiveness-not-scheduled": "このインシデントに有効性レビューは予定されていません。",
+      "invalid-storage-key": "そのファイルはこのインシデントのものではありません。",
+      "nothing-selected": "少なくとも1つの評価を選択してください。",
+      "risk-assessment-not-found": "選択したリスクアセスメントが存在しないか有効ではありません。",
+      "coshh-assessment-not-found": "選択したCOSHH評価が存在しないか有効ではありません。",
+      "fra-not-found": "選択した防火リスク評価が存在しないか有効ではありません。",
+      "render-unavailable": "この環境ではPDF生成を利用できません。"
+    }
   }
 }

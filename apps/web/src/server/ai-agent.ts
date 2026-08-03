@@ -22,12 +22,14 @@ import {
   aiMessages,
   assets,
   headsUps,
+  incidents,
   type InspectionStatus,
   inspections,
   type IssueStatus,
   issues,
   templateSchedules,
 } from '@forma360/db/schema';
+import type { IncidentStatus } from '@forma360/shared/incidents';
 import { newId } from '@forma360/shared/id';
 import { db } from './db';
 import { env } from './env';
@@ -46,8 +48,9 @@ import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import type { PermissionKey } from '@forma360/permissions/catalogue';
 
 const SYSTEM_PROMPT = `You are an AI assistant for ${activeBrand.name}, an operational-excellence platform.
-You have access to this company's data via tools. Always use tools to look up real data before answering questions about inspections, issues, actions, assets, documents, or heads-up items.
+You have access to this company's data via tools. Always use tools to look up real data before answering questions about inspections, issues, actions, assets, documents, heads-up items, permits, COSHH substances, risk assessments, fire safety, or contractors.
 Be concise and helpful. Format lists clearly. Always scope your responses to the data you retrieve — never invent data.
+Safety guardrail: you are an information assistant, not a competent person under health-and-safety law. Never declare an activity, workplace, substance or piece of equipment "safe", never authorise work to proceed, and never provide improvised emergency-response or first-aid instructions — in an emergency tell the user to follow their site's emergency procedures and call the local emergency number. When asked for a safety judgement, report what the company's own records (risk assessments, permits, COSHH assessments, fire safety checks) say, flag anything overdue or failed, and direct the user to the responsible competent person.
 Today's date context is provided when you call tools. Times are UTC.`;
 
 /**
@@ -91,6 +94,8 @@ const READ_TOOL_PERMISSION: Partial<Record<ToolName, PermissionKey>> = {
   list_headsup: 'headsUp.view',
   list_documents: 'documents.view',
   list_schedules: 'templates.schedules.manage',
+  list_incidents: 'incidents.view',
+  get_incident: 'incidents.view',
 };
 
 async function executeTool(
@@ -157,6 +162,74 @@ async function executeTool(
         .orderBy(desc(issues.createdAt))
         .limit(limit);
       return { total: rows.length, issues: rows };
+    }
+
+    case 'list_incidents': {
+      // Confidential incidents are counted-not-readable: without the key
+      // the assistant never sees their titles or details (IN-E14).
+      const holdsKey = ctx.permissions.includes('incidents.confidential.view');
+      const statusFilter =
+        typeof input['status'] === 'string' ? (input['status'] as IncidentStatus) : undefined;
+      const rows = await db
+        .select({
+          id: incidents.id,
+          referenceNumber: incidents.referenceNumber,
+          title: incidents.title,
+          kind: incidents.kind,
+          severity: incidents.severity,
+          status: incidents.status,
+          confidential: incidents.confidential,
+          occurredAt: incidents.occurredAt,
+          riddorCategory: incidents.riddorCategory,
+          riddorDeadlineAt: incidents.riddorDeadlineAt,
+        })
+        .from(incidents)
+        .where(
+          and(
+            eq(incidents.tenantId, tenantId),
+            statusFilter ? eq(incidents.status, statusFilter) : undefined,
+            holdsKey ? undefined : eq(incidents.confidential, false),
+          ),
+        )
+        .orderBy(desc(incidents.occurredAt))
+        .limit(limit);
+      return { total: rows.length, incidents: rows };
+    }
+
+    case 'get_incident': {
+      const incidentId = typeof input['incidentId'] === 'string' ? input['incidentId'] : '';
+      const rows = await db
+        .select({
+          id: incidents.id,
+          referenceNumber: incidents.referenceNumber,
+          title: incidents.title,
+          description: incidents.description,
+          kind: incidents.kind,
+          severity: incidents.severity,
+          status: incidents.status,
+          confidential: incidents.confidential,
+          occurredAt: incidents.occurredAt,
+          reportedAt: incidents.reportedAt,
+          locationText: incidents.locationText,
+          investigationLevel: incidents.investigationLevel,
+          riddorCategory: incidents.riddorCategory,
+          riddorDeadlineAt: incidents.riddorDeadlineAt,
+          riddorSubmittedAt: incidents.riddorSubmittedAt,
+          effectivenessDueAt: incidents.effectivenessDueAt,
+          effectivenessVerdict: incidents.effectivenessVerdict,
+        })
+        .from(incidents)
+        .where(and(eq(incidents.tenantId, tenantId), eq(incidents.id, incidentId)))
+        .limit(1);
+      const row = rows[0];
+      if (row === undefined) return { error: 'Incident not found.' };
+      if (row.confidential && !ctx.permissions.includes('incidents.confidential.view')) {
+        return {
+          error:
+            'This incident is confidential. Only the reporter, the investigation team and confidential-access holders can view it.',
+        };
+      }
+      return { incident: row };
     }
 
     case 'list_actions': {
@@ -338,6 +411,86 @@ async function executeTool(
           description: String(input['description']),
         });
         return { ok: true, ...res };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    // PF-24: brand-module reads — routed through the real routers so brand
+    // gating (FreeHS-only modules) and permission checks apply untouched.
+    case 'list_permits': {
+      try {
+        const rawStatus = typeof input['status'] === 'string' ? input['status'] : 'open';
+        const allowed = [
+          'open',
+          'draft',
+          'issued',
+          'active',
+          'suspended',
+          'closed',
+          'cancelled',
+          'all',
+        ] as const;
+        const status = (allowed as readonly string[]).includes(rawStatus)
+          ? (rawStatus as (typeof allowed)[number])
+          : 'open';
+        const rows = await caller.permits.list({
+          status,
+          ...(typeof input['search'] === 'string' && input['search'].length > 0
+            ? { search: input['search'] }
+            : {}),
+        });
+        return { permits: rows.slice(0, limit) };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'list_coshh_substances': {
+      try {
+        const rows = await caller.coshh.substances.list({});
+        return { substances: rows.slice(0, limit) };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'list_risk_assessments': {
+      try {
+        const rawStatus = typeof input['status'] === 'string' ? input['status'] : 'all';
+        const allowed = ['all', 'draft', 'active', 'archived'] as const;
+        const status = (allowed as readonly string[]).includes(rawStatus)
+          ? (rawStatus as (typeof allowed)[number])
+          : 'all';
+        const rows = await caller.riskAssessments.list({ status, type: 'all' });
+        return { riskAssessments: rows.slice(0, limit) };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'fire_safety_overview': {
+      try {
+        const overview = await caller.fireSafety.overview();
+        return overview;
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'list_contractors_on_site': {
+      try {
+        const rows = await caller.contractors.visits.onSiteNow();
+        return { contractors: rows.slice(0, limit) };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'list_sites': {
+      try {
+        const rows = await caller.sites.list();
+        return { sites: rows.slice(0, limit) };
       } catch (err) {
         return toToolError(err);
       }

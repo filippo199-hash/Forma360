@@ -1,15 +1,15 @@
 {
   "auth": {
     "signIn": {
-      "title": "Sign in to FreeHS"
+      "title": "Connectez-vous à FreeHS"
     },
     "signUp": {
-      "subtitle": "FreeHS — operational excellence for your whole organisation."
+      "subtitle": "FreeHS — l'excellence opérationnelle pour toute votre organisation."
     }
   },
   "templates": {
     "create": {
-      "optImportDesc": "Upload an existing checklist and convert it into a FreeHS template."
+      "optImportDesc": "Téléversez une liste de contrôle existante et convertissez-la en modèle FreeHS."
     }
   }
 }

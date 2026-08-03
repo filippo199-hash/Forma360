@@ -1,0 +1,8 @@
+{
+  "subject": "Action qui vous est attribuée — {referenceNumber} {title}",
+  "preheader": "{assignerName} vous a attribué une action corrective sur {productName}.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "{assignerName} vous a attribué l'action corrective \"{title}\" ({referenceNumber}).{dueLine}\n\nOuvrez-la pour voir l'origine, les détails et ce que « terminé » signifie.",
+  "cta": "Ouvrir l'action",
+  "footer": "Vous recevez cet e-mail car une action corrective sur {productName} vous a été attribuée."
+}

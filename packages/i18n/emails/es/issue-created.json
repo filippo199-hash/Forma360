@@ -1,0 +1,8 @@
+{
+  "subject": "[{categoryName}] Nuevo reporte: {issueTitle}",
+  "preheader": "{reportedByName} reportó un nuevo elemento de {categoryName}",
+  "greeting": "Hola {recipientName}:",
+  "body": "{reportedByName} reportó un nuevo elemento en la categoría '{categoryName}'.\n\nTítulo: {issueTitle}\nReferencia: {referenceNumber}\nReportado: {reportedAt}",
+  "cta": "Ver el reporte",
+  "footer": "Recibes este correo porque tienes acceso de gestión a los reportes en tu espacio de trabajo."
+}

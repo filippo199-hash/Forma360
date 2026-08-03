@@ -1,0 +1,8 @@
+{
+  "subject": "Erinnerung: {headsUpTitle}",
+  "preheader": "Eine Mitteilung wartet auf Ihre Aktion.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Eine Mitteilung erfordert Ihre Aufmerksamkeit: \"{headsUpTitle}\". Öffnen Sie {productName}, um {actionRequired}.",
+  "cta": "Mitteilung öffnen",
+  "footer": "Sie erhalten diese Erinnerung, weil ein {productName}-Administrator Sie um eine Aktion zu dieser Nachricht gebeten hat."
+}

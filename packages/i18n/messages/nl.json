@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Auditlogboek"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -293,7 +294,12 @@
         "integrations": "Integrations",
         "billing": "Billing",
         "contractors": "Contractors",
-        "org": "Organisation"
+        "org": "Organisation",
+        "riskAssessments": "Risicobeoordelingen",
+        "coshh": "COSHH",
+        "permits": "Werkvergunningen",
+        "fireSafety": "Brandveiligheid",
+        "incidents": "Incidenten"
       },
       "perms": {
         "users_view": "View users",
@@ -356,7 +362,26 @@
         "contractors_verifyDocs": "Verify contractor documents",
         "contractors_gate": "Gate check-in",
         "org_settings": "Manage organisation settings",
-        "org_audit_view": "View audit log"
+        "org_audit_view": "View audit log",
+        "riskAssessments_view": "Risicobeoordelingen bekijken",
+        "riskAssessments_create": "Beoordelingen aanmaken & bewerken",
+        "riskAssessments_manage": "Beoordelingen publiceren & beheren",
+        "coshh_view": "COSHH-register bekijken",
+        "coshh_create": "Stoffen & beoordelingen toevoegen",
+        "coshh_manage": "COSHH-beoordelingen publiceren & beheren",
+        "permits_view": "Vergunningen bekijken",
+        "permits_create": "Vergunningen aanvragen & bijwerken",
+        "permits_issue": "Vergunningen uitgeven & sluiten",
+        "permits_manage": "Vergunningstypen beheren",
+        "fireSafety_view": "Brandveiligheid bekijken",
+        "fireSafety_record": "Controles registreren",
+        "fireSafety_create": "Gebouwen, deuren & beoordelingen aanmaken",
+        "fireSafety_manage": "Beoordelingen publiceren & module beheren",
+        "incidents_view": "Incidenten bekijken",
+        "incidents_report": "Incidenten melden",
+        "incidents_investigate": "Onderzoeken uitvoeren",
+        "incidents_manage": "Incidenten beheren (triage, RIDDOR, goedkeuringen)",
+        "incidents_confidential_view": "Vertrouwelijke incidenten inzien"
       }
     },
     "groups": {
@@ -498,6 +523,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Databewaring & export",
+        "subtitle": "Bewaring v1 verwijdert meldingen ouder dan het beleid. Wettelijke veiligheidsregistraties blijven onaangeroerd.",
+        "keepForever": "Voor altijd bewaren",
+        "months": "{count} maanden",
+        "scopeNote": "Geldt alleen voor in-app meldingen. Inspecties, vergunningen, brandlogboek, COSHH en risicobeoordelingen blijven altijd bewaard.",
+        "savedToast": "Bewaarbeleid opgeslagen."
+      },
+      "exportData": {
+        "button": "Tenantdata downloaden (JSON)",
+        "hint": "Alles in één JSON-document — voor portabiliteit of offboarding. Alleen beheerders."
       }
     },
     "customFields": {
@@ -561,6 +598,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Auditlogboek",
+      "subtitle": "De gebeurtenissen van alle modules in één omgekeerd-chronologische stroom voor de hele tenant.",
+      "empty": "Nog geen gebeurtenissen.",
+      "loadMore": "Ouder laden",
+      "systemActor": "Systeem",
+      "columns": {
+        "when": "Wanneer",
+        "module": "Module",
+        "event": "Gebeurtenis",
+        "actor": "Door",
+        "detail": "Detail"
+      },
+      "modules": {
+        "all": "Alle",
+        "actions": "Acties",
+        "observations": "Observaties",
+        "permits": "Vergunningen",
+        "coshh": "COSHH",
+        "riskAssessments": "Risicobeoordelingen",
+        "fireSafety": "Brandveiligheid",
+        "contractors": "Aannemers"
       }
     }
   },
@@ -1036,7 +1097,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Wacht op ondertekening"
     },
     "table": {
       "title": "Title",
@@ -1055,7 +1117,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Wacht op ondertekening"
     },
     "picker": {
       "title": "Pick a template",
@@ -1105,7 +1168,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} foto('s) niet geüpload — hier bewaard.",
+          "retry": "Opnieuw"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -1167,10 +1232,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "Notitie verplicht"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "Licht dit antwoord toe (verplicht)"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1339,6 +1406,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "Mijn geplande inspecties ({count})",
+      "startNow": "Starten",
+      "startError": "Starten mislukt — probeer opnieuw.",
+      "missedBadge": "GEMIST",
+      "overdueBadge": "Te laat",
+      "dueBadge": "Gepland"
     }
   },
   "nav": {
@@ -1361,7 +1436,10 @@
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
     "coshh": "Gevaarlijke stoffen",
-    "permits": "Vergunningen"
+    "permits": "Vergunningen",
+    "fireSafety": "Brandveiligheid",
+    "analytics": "Dashboard",
+    "incidents": "Incidenten"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -1389,7 +1467,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "Ingediend door",
+    "site": "Locatie"
   },
   "schedules": {
     "title": "Schedules",
@@ -1679,7 +1759,11 @@
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
-        "toast": "Action created."
+        "toast": "Action created.",
+        "assigneeLabel": "Toewijzen aan",
+        "noAssignee": "Niet toegewezen",
+        "typeLabel": "Actietype",
+        "noType": "Geen type"
       },
       "attachInspectionDialog": {
         "title": "Inspectie starten",
@@ -2012,7 +2096,9 @@
       },
       "settingsButton": "Instellingen",
       "sourceMaintenance": "Onderhoud",
-      "loadError": "Couldn't load actions. Please try again."
+      "loadError": "Couldn't load actions. Please try again.",
+      "filterSourceIncident": "Incident",
+      "sourceIncident": "Incident"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2136,7 +2222,13 @@
       },
       "autoGeneratedBadge": "Automatisch gegenereerd",
       "autoGeneratedBy": "Automatisch gegenereerd door {program}",
-      "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later."
+      "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later.",
+      "sourceLinkRiskAssessment": "Aangemaakt door risicobeoordeling {referenceNumber}",
+      "sourceLinkCoshhAssessment": "Aangemaakt door COSHH-beoordeling {referenceNumber}",
+      "sourceLinkFireRiskAssessment": "Aangemaakt door brandrisicobeoordeling {referenceNumber}",
+      "sourceLinkFireLogbookEntry": "Aangemaakt door een afgekeurde brandveiligheidscontrole",
+      "sourceLinkFireDoorInspection": "Aangemaakt door een afgekeurde branddeurinspectie",
+      "sourceLinkIncident": "Voortgekomen uit incident {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2199,7 +2291,17 @@
     },
     "filters": {
       "removeAria": "Remove {label} filter"
-    }
+    },
+    "sourceRiskAssessment": "Risicobeoordeling",
+    "sourceCoshhAssessment": "COSHH",
+    "sourceFireRiskAssessment": "Brandrisicobeoordeling",
+    "sourceFireLogbookEntry": "Brandveiligheidscontrole",
+    "sourceFireDoorInspection": "Branddeur",
+    "pagerShowing": "{from}–{to} van {total}",
+    "pagerPrev": "Vorige",
+    "pagerNext": "Volgende",
+    "myOpenChip": "Aan mij toegewezen: {count}",
+    "myOverdueChip": "{count} te laat"
   },
   "actionsSettings": {
     "title": "Action settings",
@@ -2646,7 +2748,28 @@
         "startedAt": "Gestart",
         "createdAt": "Aangemaakt"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "Onderhoudsplannen",
+        "empty": "Geen onderhoudsplannen voor dit object.",
+        "timeMeta": "Elke {interval} dagen — laatste beurt {last}",
+        "usageMeta": "Elke {interval} {unit} — teller op {current}",
+        "status": {
+          "on_schedule": "Op schema",
+          "approaching": "Nadert",
+          "overdue": "Achterstallig",
+          "awaiting_first_reading": "Wacht op eerste meting"
+        }
+      },
+      "fireHistory": {
+        "heading": "Brandveiligheidshistorie",
+        "checkLine": "{type} — {building}",
+        "empty": "Nog geen registraties in het brandlogboek.",
+        "performedAt": "Datum",
+        "type": "Controle",
+        "result": "Resultaat",
+        "notes": "Notities"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -2913,7 +3036,16 @@
       "observations": "Observaties",
       "actions": "Acties",
       "headsUp": "Berichten",
-      "documents": "Documenten"
+      "documents": "Documenten",
+      "permits": "Vergunningen",
+      "coshh": "COSHH-stoffen",
+      "riskAssessments": "Risicobeoordelingen",
+      "fireBuildings": "Brandveiligheidsgebouwen",
+      "fireRiskAssessments": "Brandrisicobeoordelingen",
+      "contractors": "Aannemers",
+      "sites": "Locaties & projecten",
+      "templates": "Sjablonen",
+      "incidents": "Incidenten"
     }
   },
   "ai": {
@@ -3450,7 +3582,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "Aannemer niet compliant — vul hieronder een afwijkingsreden in om door te gaan."
     },
     "gate": {
       "navLink": "Gate",
@@ -3489,7 +3622,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "Deze aannemer is niet compliant — inchecken vereist een vastgelegde afwijkingsreden (of stuur ze naar de keet).",
+      "nonCompliantChip": "Niet compliant"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3528,7 +3663,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "De inductie is bijgewerkt sinds je laatste bevestiging — lees en bevestig opnieuw."
     },
     "users": {
       "heading": "Portal users",
@@ -3582,7 +3718,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "Locatie-inductie",
+      "version": "Versie {version}",
+      "hint": "Wordt elke portalgebruiker als eerste getoond. Een opgeslagen wijziging verhoogt de versie — iedereen moet opnieuw bevestigen.",
+      "placeholder": "Wat elke aannemer moet lezen en bevestigen vóór het werk…",
+      "saveButton": "Inductie opslaan",
+      "savedToast": "Inductie opgeslagen (versie {version})."
+    },
+    "onSitePermits": {
+      "heading": "Nu op locatie met open vergunningen"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4987,7 +5134,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "Gekoppeld aan object",
+      "noLinkedAsset": "Geen object gekoppeld",
+      "linkedAssetLine": "Object: {name}",
+      "assetLinkedToast": "Objectkoppeling bijgewerkt."
     },
     "doors": {
       "addButton": "Add door",
@@ -5283,5 +5434,686 @@
     "clearSearch": "Zoekopdracht wissen",
     "clear": "Selectie wissen",
     "done": "Klaar"
+  },
+  "analytics": {
+    "title": "Dashboard",
+    "subtitle": "Wat aandacht nodig heeft in alle modules, en hoe de trends zich ontwikkelen.",
+    "tiles": {
+      "sectionLabel": "Vraagt aandacht",
+      "myOpenActions": "Mijn openstaande acties",
+      "overdueActions": "Achterstallige acties",
+      "dueSoon": "{count} vervallen binnen 7 dagen",
+      "openObservations": "Open observaties",
+      "highPriority": "{count} met hoge prioriteit",
+      "awaitingApproval": "Inspecties wachten op goedkeuring",
+      "inProgress": "{count} in uitvoering",
+      "missedInspections": "Gemiste inspecties (30 d)",
+      "upcoming7": "{count} gepland binnen 7 dagen",
+      "pendingAcks": "Te bevestigen meldingen",
+      "openPermits": "Open werkvergunningen",
+      "expiring48h": "{count} verlopen binnen 48 u",
+      "raReviewOverdue": "Risicobeoordelingen over de reviewdatum",
+      "raActive": "{count} actief",
+      "coshhReviewDue": "COSHH-reviews achterstallig",
+      "coshhSubstances": "{count} actieve stoffen",
+      "fireAttention": "Brandveiligheid vraagt aandacht"
+    },
+    "trends": {
+      "sectionLabel": "Trends",
+      "actionsTitle": "Acties — aangemaakt vs afgerond (8 weken)",
+      "activityTitle": "Inspecties en observaties (8 weken)",
+      "actionsCreated": "Aangemaakt",
+      "actionsCompleted": "Afgerond",
+      "inspectionsCompleted": "Inspecties afgerond",
+      "observationsRaised": "Observaties gemeld",
+      "thisWeek": "Nu"
+    },
+    "sites": {
+      "sectionLabel": "Vergelijking per locatie",
+      "title": "Locaties in één oogopslag",
+      "subtitle": "Openstaand werk en inspectieactiviteit per locatie, drukste eerst.",
+      "site": "Locatie",
+      "openActions": "Open acties",
+      "openObservations": "Open observaties",
+      "completed30": "Inspecties (30 d)",
+      "noSite": "Geen locatie",
+      "empty": "Nog geen locaties."
+    }
+  },
+  "scanPage": {
+    "loading": "Laden…",
+    "invalidTitle": "Deze QR-code is niet meer actief.",
+    "invalidBody": "De gescande QR-code is ingetrokken of de categorie accepteert geen meldingen meer. Neem contact op met de locatiebeheerder.",
+    "reportObservation": "Observatie melden",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Korte samenvatting van wat er gebeurde",
+    "descriptionLabel": "Omschrijving",
+    "descriptionPlaceholder": "Voeg details toe die helpen de observatie te begrijpen.",
+    "reporterNameLabel": "Je naam",
+    "reporterNameSubtitle": "Optioneel — laat leeg om anoniem te blijven.",
+    "reporterEmailLabel": "Je e-mail",
+    "reporterEmailSubtitle": "Optioneel — voor eventuele opvolging.",
+    "dateOccurredLabel": "Datum voorval",
+    "locationAddressLabel": "Locatie",
+    "locationAddressPlaceholder": "Gebouw, verdieping of zone",
+    "customQuestionsHeading": "Aanvullende vragen",
+    "selectPlaceholder": "Kies een optie",
+    "submit": "Versturen",
+    "submitting": "Versturen…",
+    "successTitle": "Bedankt! Je observatie is verstuurd.",
+    "successBody": "Je referentienummer staat hieronder — bewaar het.",
+    "successAnother": "Nog een melden",
+    "errorGeneric": "Kon de observatie niet versturen. Probeer opnieuw.",
+    "siteLabel": "Locatie",
+    "siteNone": "Kies een locatie",
+    "photosLabel": "Foto's",
+    "photosSubtitle": "Voeg tot {max} foto's toe — een beeld is de halve melding.",
+    "photosAdd": "Foto toevoegen",
+    "photosRemove": "Verwijderen",
+    "photoTooLarge": "Deze foto is groter dan {maxMb} MB — kies een kleinere.",
+    "photoUploadFailed": "Een foto kon niet worden geüpload. Hij is hier nog bijgevoegd — verstuur opnieuw om het nogmaals te proberen."
+  },
+  "offline": {
+    "title": "Je bent offline",
+    "body": "Deze pagina is niet beschikbaar zonder verbinding. Wat je hebt vastgelegd staat in de wachtrij en synchroniseert automatisch.",
+    "pendingChip": "{count} in wachtrij — synchroniseert zodra je online bent",
+    "itemsDelivered": "{count} wachtrij-items gesynchroniseerd",
+    "itemRejected": "Een wachtrij-item is door de server geweigerd — controleer en voer het opnieuw in.",
+    "queuedToast": "Geen verbinding — opgeslagen in de wachtrij. Synchroniseert automatisch."
+  },
+  "notifications": {
+    "bellLabel": "Meldingen ({count} ongelezen)",
+    "title": "Meldingen",
+    "markAllRead": "Alles als gelezen markeren",
+    "empty": "Nog niets — je bent bij.",
+    "kinds": {
+      "action_assigned": "Actie toegewezen",
+      "approval_pending": "Goedkeuring wacht",
+      "approval_decided": "Goedkeuring besloten",
+      "heads_up": "Melding",
+      "issue_reported": "Observatie gemeld",
+      "schedule_missed": "Gemiste inspecties",
+      "action_due": "Acties bijna verlopen",
+      "document_expiry": "Documentverloop"
+    },
+    "prefs": {
+      "title": "E-mailmeldingen",
+      "subtitle": "Uitschakelen dempt alleen de e-mail — de bel in de koptekst toont het altijd.",
+      "saveError": "Kon de voorkeur niet opslaan.",
+      "keys": {
+        "emailActionReminders": "Herinneringen voor (bijna) verlopen acties",
+        "emailScheduleMissed": "Gemiste geplande inspecties",
+        "emailDocumentExpiry": "Herinneringen documentverloop",
+        "emailMaintenance": "Onderhoudsherinneringen"
+      }
+    }
+  },
+  "incidents": {
+    "title": "Incidenten",
+    "subtitle": "Werkgerelateerde veiligheidsincidenten melden, onderzoeken en afsluiten",
+    "attention": {
+      "riddorOverdue": "RIDDOR te laat",
+      "riddorDueSoon": "RIDDOR bijna verlopen",
+      "rescreenRequired": "herbeoordeling nodig",
+      "investigating": "in onderzoek",
+      "effectivenessOverdue": "effectiviteitstoetsen verlopen"
+    },
+    "list": {
+      "report": "Incident melden",
+      "exportCsv": "CSV exporteren",
+      "empty": "Geen incidenten voor deze filters.",
+      "searchPlaceholder": "Zoek op titel of referentie…",
+      "riddorOnly": "Alleen RIDDOR",
+      "allKinds": "Alle soorten",
+      "allSeverities": "Alle ernstgraden",
+      "allSites": "Alle locaties",
+      "lateReport": "Late melding",
+      "confidential": "Vertrouwelijk",
+      "statusFilter": {
+        "open": "Open",
+        "reported": "Gemeld",
+        "triaged": "Getriageerd",
+        "investigating": "In onderzoek",
+        "actions_outstanding": "Acties open",
+        "closed": "Gesloten",
+        "cancelled": "Geannuleerd",
+        "all": "Alle"
+      },
+      "columns": {
+        "reference": "Referentie",
+        "title": "Titel",
+        "kind": "Soort",
+        "severity": "Ernst",
+        "status": "Status",
+        "site": "Locatie",
+        "occurred": "Voorgevallen",
+        "riddor": "RIDDOR"
+      }
+    },
+    "kinds": {
+      "injury": "Letsel",
+      "ill_health": "Beroepsziekte",
+      "dangerous_occurrence": "Gevaarlijk voorval",
+      "sharps_exposure": "Prik- / spatincident",
+      "violence_aggression": "Geweld en agressie",
+      "damage": "Materiële schade",
+      "environmental": "Milieu",
+      "near_miss": "Bijna-ongeval"
+    },
+    "severities": {
+      "negligible": "Verwaarloosbaar",
+      "minor": "Licht",
+      "moderate": "Matig",
+      "serious": "Ernstig",
+      "major": "Zeer ernstig"
+    },
+    "statuses": {
+      "reported": "Gemeld",
+      "triaged": "Getriageerd",
+      "investigating": "In onderzoek",
+      "actions_outstanding": "Acties open",
+      "closed": "Gesloten",
+      "reopened": "Heropend",
+      "cancelled": "Geannuleerd"
+    },
+    "personCategories": {
+      "employee": "Medewerker",
+      "contractor": "Aannemer",
+      "agency": "Uitzendkracht",
+      "visitor": "Bezoeker",
+      "member_of_public": "Publiek",
+      "work_experience": "Stagiair"
+    },
+    "injuryKinds": {
+      "fracture": "Botbreuk",
+      "dislocation": "Ontwrichting",
+      "sprain_strain": "Verstuiking / verrekking",
+      "laceration": "Snijwond",
+      "puncture": "Steekwond",
+      "abrasion": "Schaafwond",
+      "bruising": "Kneuzing",
+      "burn": "Brandwond",
+      "scald": "Verbranding door hete vloeistof",
+      "amputation": "Amputatie",
+      "crush": "Beknelling",
+      "concussion": "Hersenschudding",
+      "electric_shock": "Elektrische schok",
+      "asphyxia": "Verstikking",
+      "poisoning": "Vergiftiging",
+      "other": "Overig"
+    },
+    "bodyParts": {
+      "head": "Hoofd",
+      "face": "Gezicht",
+      "eye": "Oog",
+      "neck": "Nek",
+      "shoulder": "Schouder",
+      "arm": "Arm",
+      "elbow": "Elleboog",
+      "wrist": "Pols",
+      "hand": "Hand",
+      "finger": "Vinger",
+      "trunk": "Romp",
+      "back": "Rug",
+      "abdomen": "Buik",
+      "hip": "Heup",
+      "leg": "Been",
+      "knee": "Knie",
+      "ankle": "Enkel",
+      "foot": "Voet",
+      "toe": "Teen",
+      "internal": "Inwendig",
+      "multiple": "Meerdere"
+    },
+    "hospitalisations": {
+      "none": "Geen ziekenhuisbehandeling",
+      "ae": "Spoedeisende hulp",
+      "admitted": "Opgenomen"
+    },
+    "causalFactors": {
+      "equipment_guarding": "Apparatuur / afscherming",
+      "procedure": "Procedure ontbreekt of schiet tekort",
+      "training_competence": "Opleiding / bekwaamheid",
+      "supervision": "Toezicht",
+      "human_factors": "Menselijke factoren",
+      "environment": "Omgeving",
+      "maintenance": "Onderhoud",
+      "management_system": "Managementsysteem"
+    },
+    "priorities": {
+      "low": "Laag",
+      "medium": "Middel",
+      "high": "Hoog",
+      "critical": "Kritiek"
+    },
+    "evidenceKinds": {
+      "photo": "Foto",
+      "document": "Document",
+      "cctv_ref": "CCTV-verwijzing",
+      "physical_ref": "Fysiek bewijsstuk",
+      "other": "Overig"
+    },
+    "new": {
+      "title": "Incident melden",
+      "whatHappened": "Wat is er gebeurd?",
+      "titlePlaceholder": "Eén regel — bijv. Hand bekneld in intrekpunt",
+      "kind": "Soort gebeurtenis",
+      "confidentialHint": "Dit soort wordt vertrouwelijk vastgelegd: alleen de melder, het onderzoeksteam en gemachtigden zien de details.",
+      "when": "Wanneer is het gebeurd?",
+      "site": "Locatie",
+      "sitePlaceholder": "Kies een locatie…",
+      "location": "Exacte plek",
+      "locationPlaceholder": "bijv. Werkplaats, lijn 2",
+      "description": "Wat er gebeurde, in uw eigen woorden",
+      "descriptionPlaceholder": "Beschrijf wat er gebeurde, wat men aan het doen was en wat hielp of het erger maakte…",
+      "sharpsHeading": "Details prik / spat",
+      "vaHeading": "Details geweld en agressie",
+      "doHeading": "Details gevaarlijk voorval",
+      "damageHeading": "Details schade",
+      "envHeading": "Details milieu",
+      "peopleHeading": "Betrokken personen",
+      "addPerson": "Persoon toevoegen",
+      "personRequiredHint": "Voeg de gewonde persoon toe — naam, categorie en letseldetails.",
+      "noPersonsHint": "Niemand betrokken? Laat leeg (bijv. gevaarlijk voorval zonder letsel).",
+      "personNamePlaceholder": "Volledige naam",
+      "injuryDetails": "Letseldetails",
+      "injuryKinds": "Soort letsel",
+      "bodyParts": "Getroffen lichaamsdelen",
+      "firstAidGiven": "EHBO verleend",
+      "hospitalisation": "Ziekenhuisbehandeling",
+      "submit": "Melding versturen",
+      "submitting": "Versturen…",
+      "savedLocally": "Uw melding is op dit apparaat opgeslagen — probeer opnieuw zodra u bereik hebt.",
+      "draftRestored": "Een lokaal opgeslagen concept is hersteld.",
+      "photosTitle": "Foto's toevoegen",
+      "photosHint": "Een foto nu is later tien verklaringen waard. Voeg toe wat u kunt — meer kan altijd via de incidentpagina.",
+      "addPhotos": "Foto's maken of kiezen",
+      "uploading": "Uploaden…",
+      "uploadedCount": "{count} bestand(en) bijgevoegd.",
+      "done": "Klaar — incident openen"
+    },
+    "details": {
+      "device": "Betrokken instrument / scherp voorwerp",
+      "devicePlaceholder": "bijv. Gebruikte canule",
+      "procedure": "Handeling die werd uitgevoerd",
+      "contaminationStatus": "Besmettingsstatus",
+      "contamination": {
+        "unknown": "Onbekend",
+        "low": "Laag risico",
+        "high": "Hoog risico"
+      },
+      "sourceKnown": "Bronpersoon bekend",
+      "sourceRiskAssessed": "Blootstellingsrisico beoordeeld",
+      "washedConfirmed": "Wond gespoeld / EHBO-stap bevestigd",
+      "nature": "Aard",
+      "vaNature": {
+        "physical": "Fysiek",
+        "verbal": "Verbaal",
+        "threat": "Bedreiging",
+        "sexual": "Seksueel"
+      },
+      "perpetratorType": "Dader",
+      "perpetrator": {
+        "patient_or_service_user": "Patiënt of cliënt",
+        "visitor": "Bezoeker",
+        "member_of_public": "Publiek",
+        "colleague": "Collega",
+        "other": "Overig"
+      },
+      "weaponInvolved": "Wapen betrokken",
+      "policeNotified": "Politie ingelicht",
+      "crimeReference": "Aangiftenummer",
+      "supportOffered": "Opvang aangeboden",
+      "doCategory": "Categorie",
+      "doCategories": {
+        "lifting_equipment_collapse": "Bezwijken van hijsmaterieel",
+        "scaffold_collapse": "Instorting van steiger",
+        "electrical_fire_explosion": "Elektrische brand / explosie",
+        "pressure_system_failure": "Falen van druksysteem",
+        "accidental_release": "Onbedoelde vrijzetting",
+        "structural_collapse": "Constructieve instorting",
+        "other": "Overig"
+      },
+      "otherText": "Beschrijf het voorval",
+      "whatDamaged": "Wat is beschadigd",
+      "whatReleased": "Wat is vrijgekomen",
+      "estimatedCostBand": "Geschatte kosten",
+      "costBands": {
+        "unknown": "Onbekend",
+        "under_1k": "Minder dan £1k",
+        "1k_to_10k": "£1k–£10k",
+        "10k_to_100k": "£10k–£100k",
+        "over_100k": "Meer dan £100k"
+      },
+      "mitigation": "Directe beheersmaatregel",
+      "containment": "Indamming"
+    },
+    "detail": {
+      "downloadPdf": "PDF downloaden",
+      "occurred": "Voorgevallen",
+      "reported": "Gemeld",
+      "site": "Locatie",
+      "potentialSeverity": "Potentiële ernst",
+      "riddorOverdueBanner": "De wettelijke RIDDOR-termijn is verstreken zonder geregistreerde melding. Meld nu bij de HSE en leg het hier vast.",
+      "rescreenBanner": "Het cumulatieve verzuim is boven 7 dagen gekomen tegen een besluit 'niet meldplichtig' — herbeoordeel het RIDDOR-besluit.",
+      "notEffectiveBanner": "De effectiviteitstoets wees uit dat de maatregelen niet standhielden. Overweeg heropening of een nieuwe actie."
+    },
+    "triage": {
+      "heading": "Triage",
+      "open": "Dit incident triageren",
+      "hint": "Bevestig de ernst, bepaal het onderzoeksniveau en wijs de hoofdonderzoeker aan.",
+      "severity": "Ernst (werkelijk)",
+      "level": "Onderzoeksniveau",
+      "levels": {
+        "basic": "Basis — één scherm, minuten op een telefoon",
+        "full": "Volledig — bewijs, oorzaakanalyse, bevindingen"
+      },
+      "leadInvestigator": "Hoofdonderzoeker",
+      "leadPlaceholder": "Kies de onderzoeker…",
+      "confidential": "Vertrouwelijk — details alleen voor melder, onderzoeksteam en gemachtigden",
+      "confirm": "Triage bevestigen"
+    },
+    "people": {
+      "heading": "Personen en verzuim",
+      "daysLost": "{days} verzuimdag(en)",
+      "none": "Geen personen vastgelegd.",
+      "returnedToWork": "Weer aan het werk",
+      "firstAid": "EHBO verleend",
+      "absence": "Verzuim",
+      "ongoing": "lopend",
+      "endAbsence": "Vandaag beëindigen",
+      "absenceFrom": "Eerste verzuimdag",
+      "absenceTo": "Laatste dag (leeg = lopend)",
+      "addAbsence": "Verzuim vastleggen",
+      "addPerson": "Persoon toevoegen"
+    },
+    "riddor": {
+      "heading": "RIDDOR",
+      "screen": "Nu beoordelen",
+      "rescreen": "Herbeoordelen",
+      "notScreened": "Nog niet beoordeeld. Ook het besluit 'niet meldplichtig' is op zichzelf een verdedigbaar dossier.",
+      "determination": "Besluit",
+      "screenedBy": "Beoordeeld door {name} · {date}",
+      "deadline": "Wettelijke termijn",
+      "submitted": "Gemeld",
+      "routeOnline": "HSE-onlineformulier",
+      "routePhone": "Telefonisch",
+      "screenHint": "Het platform berekent de termijn; het oordeel is aan u. Kies de categorie en motiveer.",
+      "note": "Motivering",
+      "notePlaceholder": "Waarom dit besluit — bijv. 9 dagen verzuim na het ongeval, dus meer dan 7 dagen…",
+      "confirmScreen": "Besluit vastleggen",
+      "recordSubmission": "HSE-melding vastleggen",
+      "route": "Gemeld via",
+      "hseReference": "HSE-referentie (optioneel)",
+      "confirmSubmission": "Melding vastleggen",
+      "chipNotReportable": "Niet meldplichtig",
+      "chipSubmitted": "RIDDOR gemeld",
+      "chipOverdue": "RIDDOR TE LAAT",
+      "chipDaysLeft": "RIDDOR: nog {days} d",
+      "categories": {
+        "not_reportable": "Niet meldplichtig",
+        "death": "Overlijden",
+        "specified_injury": "Gespecificeerd letsel",
+        "over_7_day": "Verzuim langer dan 7 dagen",
+        "occupational_disease": "Beroepsziekte",
+        "dangerous_occurrence": "Gevaarlijk voorval",
+        "gas_incident": "Gasincident"
+      },
+      "help": {
+        "not_reportable": "Geen meldplichtige categorie is van toepassing. Motiveer — het negatieve besluit is het dossier.",
+        "death": "Iemand is overleden door een arbeidsongeval. Direct melden; rapport binnen 10 dagen.",
+        "specified_injury": "Botbreuk (behalve vingers/tenen), amputatie, verlies van zicht, beknelling van hoofd/romp, ernstige brandwonden, scalpering, bewusteloosheid door verstikking of ziekenhuisopname langer dan 24 uur. Rapport binnen 10 dagen.",
+        "over_7_day": "Meer dan 7 dagen arbeidsongeschikt, de ongevalsdag niet meegeteld. Rapport binnen 15 dagen.",
+        "occupational_disease": "Gediagnosticeerde werkgerelateerde beroepsziekte — carpaletunnelsyndroom, dermatitis, beroepsastma, HAVS, peesontsteking, beroepskanker.",
+        "dangerous_occurrence": "Voorval uit Schedule 2 — bezwijken van hijsmaterieel, steigerinstorting, elektrische brand/explosie, drukfalen, onbedoelde vrijzetting.",
+        "gas_incident": "Gasgerelateerd overlijden of letsel, of een gevaarlijke gasinstallatie."
+      }
+    },
+    "investigation": {
+      "heading": "Onderzoek",
+      "start": "Onderzoek starten",
+      "openWorkspace": "Werkruimte openen",
+      "awaitingTriage": "Wacht op triage — daar worden niveau en onderzoeker bepaald.",
+      "notStarted": "Nog niet gestart.",
+      "level": "Niveau",
+      "lead": "Onderzoeker",
+      "revision": "Revisie",
+      "status": "Status",
+      "statuses": {
+        "draft": "Concept",
+        "submitted": "Wacht op goedkeuring",
+        "approved": "Goedgekeurd"
+      },
+      "approvedBy": "Goedgekeurd door {name} · {date}"
+    },
+    "findings": {
+      "heading": "Bevindingen en corrigerende acties",
+      "actionPending": "Actie in afwachting — wordt aangemaakt bij goedkeuring.",
+      "actionStatuses": {
+        "open": "Open",
+        "in_progress": "In uitvoering",
+        "completed": "Afgerond",
+        "cancelled": "Geannuleerd"
+      }
+    },
+    "linked": {
+      "heading": "Gekoppelde dossiers",
+      "observation": "Observatie",
+      "permit": "Vergunning",
+      "contractor": "Aannemer",
+      "asset": "Middel",
+      "none": "Geen gekoppelde dossiers."
+    },
+    "reviews": {
+      "prompted": "Herbeoordelingen gestart op {date}.",
+      "skipped": "Herbeoordeling overgeslagen: {reason}",
+      "stepHeading": "Herbeoordelingen na incident starten",
+      "stepHint": "Zet de betrokken risico-inventarisaties, COSHH- en brandbeoordelingen in de herbeoordelingsstatus, met verwijzing naar dit incident.",
+      "kinds": {
+        "ra": "Risico-inventarisaties",
+        "coshh": "COSHH-beoordelingen",
+        "fra": "Brandrisicobeoordelingen"
+      },
+      "promptButton": "Geselecteerde starten",
+      "skipButton": "Overslaan met reden…",
+      "skipReasonPlaceholder": "Waarom geen herbeoordeling nodig is…",
+      "confirmSkip": "Overslaan"
+    },
+    "effectiveness": {
+      "heading": "Effectiviteitstoets",
+      "due": "Uiterlijk {date}",
+      "verdict": "Oordeel",
+      "verdicts": {
+        "effective": "Effectief — maatregelen ingevoerd en houden stand",
+        "partially_effective": "Deels effectief",
+        "not_effective": "Niet effectief"
+      },
+      "question": "Zijn de maatregelen ingevoerd en houden ze stand? Herhaling?",
+      "notePlaceholder": "Wat u controleerde en aantrof…",
+      "record": "Oordeel vastleggen",
+      "open": "Effectiviteitsoordeel vastleggen"
+    },
+    "lifecycle": {
+      "heading": "Levenscyclus",
+      "close": "Incident sluiten",
+      "reopen": "Heropenen",
+      "cancel": "Dossier annuleren",
+      "closeHint": "Sluiten vereist een afgehandelde RIDDOR-plicht en alle gekoppelde acties afgerond of geannuleerd. De effectiviteitstoets wordt bij sluiting ingepland.",
+      "confirmClose": "Sluiting bevestigen",
+      "reopenReason": "Waarom wordt heropend?",
+      "cancelReason": "Waarom wordt geannuleerd? (duplicaat / per abuis aangemaakt)",
+      "confirmReopen": "Heropening bevestigen",
+      "confirmCancel": "Annulering bevestigen"
+    },
+    "timeline": {
+      "heading": "Tijdlijn",
+      "system": "Systeem"
+    },
+    "events": {
+      "reported": "Gemeld",
+      "updated": "Details bijgewerkt",
+      "triaged": "Getriageerd",
+      "severity_changed": "Ernst gewijzigd",
+      "investigator_assigned": "Hoofdonderzoeker aangewezen",
+      "riddor_screened": "RIDDOR beoordeeld",
+      "riddor_rescreen_flagged": "RIDDOR-herbeoordeling gemarkeerd",
+      "riddor_submitted": "RIDDOR gemeld",
+      "person_added": "Persoon toegevoegd",
+      "person_updated": "Persoon bijgewerkt",
+      "person_removed": "Persoon verwijderd",
+      "absence_added": "Verzuim vastgelegd",
+      "absence_updated": "Verzuim bijgewerkt",
+      "absence_removed": "Verzuim verwijderd",
+      "evidence_added": "Bewijs toegevoegd",
+      "witness_statement_added": "Getuigenverklaring opgenomen",
+      "investigation_started": "Onderzoek gestart",
+      "investigation_submitted": "Onderzoek ingediend",
+      "investigation_rejected": "Onderzoek teruggestuurd",
+      "investigation_approved": "Onderzoek goedgekeurd",
+      "actions_generated": "Corrigerende acties aangemaakt",
+      "reviews_prompted": "Herbeoordelingen gestart",
+      "reviews_prompt_skipped": "Herbeoordeling overgeslagen",
+      "closed": "Gesloten",
+      "reopened": "Heropend",
+      "cancelled": "Geannuleerd",
+      "effectiveness_recorded": "Effectiviteitsoordeel vastgelegd",
+      "alert_sent": "Directe waarschuwing verzonden",
+      "riddor_warning_sent": "RIDDOR-termijnwaarschuwing verzonden",
+      "riddor_escalated": "RIDDOR-termijn geëscaleerd",
+      "promoted_from_observation": "Geëscaleerd vanuit observatie"
+    },
+    "workspace": {
+      "title": "Onderzoekswerkruimte",
+      "revisionOption": "Revisie {revision} ({status})",
+      "noInvestigation": "Nog geen onderzoek — start het vanaf de incidentpagina.",
+      "frozenNote": "Revisie {revision} — goedgekeurd op {date}. Bevroren; getoond zoals afgesloten.",
+      "immediateCause": "Directe oorzaak",
+      "underlyingCause": "Achterliggende oorzaak",
+      "signatures": "Ingediend door {submitted} · Goedgekeurd door {approved}",
+      "evidenceHeading": "Bewijs",
+      "addFiles": "Foto's / bestanden toevoegen",
+      "addReference": "Verwijzing toevoegen",
+      "referenceKind": "Soort",
+      "referenceCaption": "Verwijzing",
+      "referenceCaptionPlaceholder": "bijv. Camera 4, 14:02–14:07, beeld bewaard tot 30-08",
+      "noEvidence": "Nog geen bewijs. Een vroege foto is later tien verklaringen waard.",
+      "witnessHeading": "Getuigenverklaringen",
+      "addStatement": "Verklaring opnemen",
+      "appendOnlyNote": "Verklaringen zijn alleen toe te voegen: correcties zijn nieuwe verklaringen; niets wordt bewerkt of verwijderd.",
+      "witnessName": "Getuige",
+      "statement": "Verklaring",
+      "signatureCaptured": "Handtekening vastgelegd.",
+      "saveStatement": "Verklaring opslaan",
+      "signed": "ondertekend",
+      "takenBy": "Opgenomen door {name}",
+      "rcaHeading": "Oorzaakanalyse",
+      "contributingFactors": "Bijdragende factoren",
+      "method": "Methode",
+      "methods": {
+        "five_whys": "Vijf keer waarom",
+        "causal_factors": "Causale factoren (HSG245)",
+        "other": "Anders"
+      },
+      "whyPlaceholder": "Waarom…?",
+      "rootCause": "Grondoorzaak",
+      "addWhy": "Waarom toevoegen",
+      "factorNarrativePlaceholder": "Wat er bij deze factor gebeurde…",
+      "addFactor": "Factor toevoegen",
+      "timelineHeading": "Volgorde van gebeurtenissen",
+      "timelineWhen": "Wanneer",
+      "timelineWhat": "Wat gebeurde er",
+      "addTimelineRow": "Rij toevoegen",
+      "findingsHeading": "Bevindingen",
+      "requiresAction": "Actie vereist",
+      "findingPlaceholder": "Wat moet er veranderen…",
+      "conclusionHeading": "Conclusie en ondertekening",
+      "conclusionSummary": "Conclusie",
+      "rootCauseStatement": "Formulering grondoorzaak",
+      "recurrenceLikelihood": "Kans op herhaling",
+      "recurrence": {
+        "low": "Laag",
+        "medium": "Middel",
+        "high": "Hoog"
+      },
+      "lessonsLearned": "Geleerde lessen",
+      "attestation": "Ik bevestig dat dit onderzoek naar beste weten volledig en juist is.",
+      "submit": "Indienen ter goedkeuring",
+      "submittedBy": "Ingediend door {name} — wacht op goedkeuring door een andere beheerder (functiescheiding).",
+      "approve": "Goedkeuren…",
+      "reject": "Terugsturen voor herwerk…",
+      "rejectNotePlaceholder": "Wat herwerkt moet worden…",
+      "confirmReject": "Terugsturen naar onderzoeker",
+      "approveHint": "Stel per bevinding de verantwoordelijke en einddatum van de corrigerende actie in — aangemaakt bij goedkeuring, precies één keer.",
+      "assignee": "Verantwoordelijke",
+      "assigneePlaceholder": "Kies verantwoordelijke…",
+      "dueDate": "Einddatum",
+      "confirmApprove": "Onderzoek goedkeuren",
+      "approvedNote": "Goedgekeurd door {name}. Deze revisie is bevroren."
+    },
+    "observationCard": {
+      "heading": "Incidenten",
+      "escalate": "Escaleren naar incident",
+      "escalating": "Escaleren…",
+      "escalated": "Incident {reference} aangemaakt.",
+      "escalateFailed": "Deze observatie kon niet worden geëscaleerd.",
+      "none": "Er is nog geen incident aangemaakt vanuit deze observatie.",
+      "confidential": "Vertrouwelijk incident"
+    },
+    "common": {
+      "cancel": "Annuleren",
+      "save": "Opslaan",
+      "saving": "Opslaan…"
+    },
+    "errors": {
+      "generic": "Er ging iets mis. Probeer opnieuw.",
+      "module-disabled": "Deze module is niet geactiveerd voor uw product.",
+      "incident-not-found": "Incident niet gevonden.",
+      "site-not-found": "Locatie niet gevonden.",
+      "user-not-found": "Gebruiker niet gevonden.",
+      "permit-not-found": "Vergunning niet gevonden.",
+      "contractor-not-found": "Aannemer niet gevonden.",
+      "asset-not-found": "Middel niet gevonden.",
+      "observation-not-found": "Observatie niet gevonden.",
+      "occurred-in-future": "Het tijdstip van het voorval kan niet in de toekomst liggen.",
+      "invalid-details": "De soortspecifieke details zijn onvolledig of ongeldig.",
+      "invalid-transition": "Die stap is vanuit de huidige status niet toegestaan.",
+      "incident-terminal": "Dit incident is gesloten of geannuleerd.",
+      "not-editable": "Alleen een beheerder — of de melder vóór triage — kan dit bewerken.",
+      "not-allowed": "U mag dat niet bij dit incident.",
+      "confidential": "Dit incident is vertrouwelijk. Alleen de melder, het onderzoeksteam en gemachtigden kunnen het inzien.",
+      "severity-frozen": "De ernst ligt vast zodra een onderzoek is goedgekeurd.",
+      "not-lead-investigator": "Alleen de hoofdonderzoeker kan dit — een beheerder kan de rol eerst opnieuw toewijzen.",
+      "investigation-already-open": "Er is al een onderzoek open.",
+      "investigation-not-found": "Geen onderzoek gevonden.",
+      "investigation-frozen": "Deze onderzoeksrevisie is goedgekeurd en bevroren.",
+      "investigation-not-draft": "Het onderzoek is geen concept.",
+      "investigation-not-submitted": "Het onderzoek is niet ingediend.",
+      "immediate-cause-required": "Leg eerst de directe oorzaak vast.",
+      "conclusion-required": "Schrijf eerst de conclusie.",
+      "rca-method-required": "Een volledig onderzoek vereist een analysemethode.",
+      "why-chain-required": "Maak eerst de vijf-keer-waarom-keten af.",
+      "causal-factors-required": "Leg minstens één causale factor vast.",
+      "root-cause-required": "Een volledig onderzoek vereist een grondoorzaakformulering.",
+      "approver-is-investigator": "De goedkeurder mag niet de hoofdonderzoeker of indiener zijn.",
+      "finding-not-found": "Bevinding niet gevonden.",
+      "finding-has-action": "Deze bevinding heeft al een actie en kan niet worden verwijderd.",
+      "person-not-found": "Persoon niet gevonden op dit incident.",
+      "absence-not-found": "Verzuim niet gevonden.",
+      "absence-inverted": "De einddatum ligt vóór de begindatum.",
+      "riddor-already-submitted": "De RIDDOR-melding is al vastgelegd — het besluit ligt vast.",
+      "riddor-not-reportable": "Dit incident is niet als meldplichtig beoordeeld.",
+      "riddor-unscreened": "Rond de RIDDOR-beoordeling af vóór sluiting.",
+      "riddor-rescreen-required": "Herbeoordeel het RIDDOR-besluit vóór sluiting — verzuim boven 7 dagen.",
+      "riddor-not-submitted": "Dit incident is RIDDOR-meldplichtig — leg de HSE-melding vast vóór sluiting.",
+      "actions-open": "Rond eerst alle gekoppelde acties af of annuleer ze.",
+      "incident-not-closed": "Het incident moet eerst gesloten zijn.",
+      "effectiveness-not-scheduled": "Geen effectiviteitstoets ingepland voor dit incident.",
+      "invalid-storage-key": "Dat bestand hoort niet bij dit incident.",
+      "nothing-selected": "Selecteer minstens één beoordeling.",
+      "risk-assessment-not-found": "Een geselecteerde risico-inventarisatie bestaat niet of is niet actief.",
+      "coshh-assessment-not-found": "Een geselecteerde COSHH-beoordeling bestaat niet of is niet actief.",
+      "fra-not-found": "Een geselecteerde brandrisicobeoordeling bestaat niet of is niet actief.",
+      "render-unavailable": "PDF-generatie is niet beschikbaar op deze omgeving."
+    }
   }
 }

@@ -61,6 +61,7 @@ import type {
   FraMethodology,
   FraRiskRating,
 } from '@forma360/shared/fire-safety';
+import { assets } from './assets';
 import { sites } from './sites';
 import { tenants } from './tenants';
 
@@ -322,6 +323,15 @@ export const fireLogbookChecks = pgTable(
     assignedToUserId: text('assigned_to_user_id'),
     notes: text('notes').notNull().default(''),
 
+    /**
+     * The maintained asset this check concerns (PF-17) — e.g. the
+     * extinguisher or sprinkler set that also lives in the Assets module.
+     * Optional; links the fire logbook history onto the asset page.
+     */
+    assetId: varchar('asset_id', { length: 26 }).references(() => assets.id, {
+      onDelete: 'set null',
+    }),
+
     lastDoneAt: timestamp('last_done_at', { withTimezone: true, mode: 'date' }),
     /**
      * Result of the newest recorded entry (HSE review FS-1). A 'fail'
@@ -343,6 +353,7 @@ export const fireLogbookChecks = pgTable(
   (table) => [
     uniqueIndex('fire_checks_building_type_uq').on(table.buildingId, table.checkType),
     index('fire_checks_tenant_due_idx').on(table.tenantId, table.nextDueAt),
+    index('fire_logbook_checks_tenant_asset_idx').on(table.tenantId, table.assetId),
   ],
 );
 
@@ -383,6 +394,12 @@ export const fireLogbookEntries = pgTable(
     /** Set when the failed check raised an action — once only. */
     actionId: varchar('action_id', { length: 26 }),
 
+    /**
+     * Offline-queue idempotency key (PF-10): a retried submission with the
+     * same key is a no-op, enforced by a partial unique index.
+     */
+    clientRequestId: varchar('client_request_id', { length: 26 }),
+
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
       .notNull()
       .default(sql`now()`),
@@ -390,6 +407,9 @@ export const fireLogbookEntries = pgTable(
   (table) => [
     index('fire_entries_building_time_idx').on(table.buildingId, table.performedAt),
     index('fire_entries_tenant_time_idx').on(table.tenantId, table.performedAt),
+    uniqueIndex('fire_logbook_entries_client_req_idx')
+      .on(table.tenantId, table.clientRequestId)
+      .where(sql`${table.clientRequestId} IS NOT NULL`),
   ],
 );
 
@@ -632,6 +652,7 @@ export const FIRE_EVENT_KINDS = [
   'finding_removed',
   'finding_resolved',
   'review_recorded',
+  'review_prompted',
   'inspection_recorded',
   'drill_recorded',
   'peep_review_recorded',

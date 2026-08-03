@@ -1,0 +1,8 @@
+{
+  "subject": "[{categoryName}] Nuova segnalazione: {issueTitle}",
+  "preheader": "{reportedByName} ha segnalato un nuovo elemento in {categoryName}",
+  "greeting": "Ciao {recipientName},",
+  "body": "{reportedByName} ha creato una nuova segnalazione nella categoria '{categoryName}'.\n\nTitolo: {issueTitle}\nRiferimento: {referenceNumber}\nSegnalata: {reportedAt}",
+  "cta": "Vedi la segnalazione",
+  "footer": "Ricevi questa email perché hai accesso di gestione alle segnalazioni nel tuo workspace."
+}

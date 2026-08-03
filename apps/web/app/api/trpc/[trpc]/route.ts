@@ -24,9 +24,11 @@ import { riskAssessmentsDeps } from '../../../../src/server/risk-assessments-dep
 import { coshhDeps } from '../../../../src/server/coshh-deps';
 import { permitsDeps } from '../../../../src/server/permits-deps';
 import { fireSafetyDeps } from '../../../../src/server/fire-safety-deps';
+import { incidentsDeps } from '../../../../src/server/incidents-deps';
 import { createContext } from '../../../../src/server/trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps.
 import '../../../../src/server/users-deps';
+import '../../../../src/server/actions-deps';
 
 // Build the router once with production dependencies (R2-backed
 // renderers, HMAC-signed render tokens, APP_URL-based share URLs).
@@ -43,6 +45,7 @@ const appRouter = buildAppRouter({
   coshh: coshhDeps,
   permits: permitsDeps,
   fireSafety: fireSafetyDeps,
+  incidents: incidentsDeps,
 });
 
 async function handler(req: Request): Promise<Response> {

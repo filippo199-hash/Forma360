@@ -44,6 +44,8 @@ import { SiteSelector } from '../../../../src/components/selectors/site-selector
 import { ObservationCommentComposer } from '../../../../src/components/observations/observation-comment-composer';
 import { EntityPlanMiniMap } from '../../../../src/components/sites/entity-plan-minimap';
 import { cn } from '../../../../src/lib/cn';
+import { brandHasModule } from '@forma360/shared/brand';
+import { activeBrand } from '../../../../src/lib/brand';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -594,6 +596,12 @@ export default function ObservationDetailPage() {
                 ) : null}
               </CardContent>
             </Card>
+          ) : null}
+
+          {tab === 'overview' && brandHasModule(activeBrand.id, 'incidents') ? (
+            <div className="mt-6">
+              <LinkedIncidentsCard issueId={issueId} locale={locale} />
+            </div>
           ) : null}
 
           {tab === 'actions' ? (
@@ -1358,6 +1366,15 @@ function AddActionDialog({
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'' | Priority>('');
   const [dueAt, setDueAt] = useState('');
+  // PF-13: parity with the other create-action paths — an owner, a type
+  // and the type's required questions, instead of an unassigned, untyped
+  // action that skips the due-date automation.
+  const [assigneeUserId, setAssigneeUserId] = useState('');
+  const [actionTypeId, setActionTypeId] = useState('');
+  const [customResponses, setCustomResponses] = useState<Record<string, string>>({});
+  const { data: usersData } = trpc.users.list.useQuery({});
+  const { data: typesData } = trpc.actionTypes.list.useQuery({ includeArchived: false });
+  const selectedType = (typesData ?? []).find((ty) => ty.id === actionTypeId);
 
   const create = trpc.actions.createFromIssue.useMutation({
     onSuccess: () => {
@@ -1369,6 +1386,9 @@ function AddActionDialog({
       setDescription('');
       setPriority('');
       setDueAt('');
+      setAssigneeUserId('');
+      setActionTypeId('');
+      setCustomResponses({});
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -1393,10 +1413,18 @@ function AddActionDialog({
               description?: string;
               priority?: Priority;
               dueAt?: string;
+              assigneeUserId?: string;
+              actionTypeId?: string;
+              customQuestionResponses?: Record<string, string>;
             } = { issueId, title: title.trim() };
             if (description.trim().length > 0) input.description = description.trim();
             if (priority !== '') input.priority = priority;
             if (dueAt !== '') input.dueAt = new Date(dueAt).toISOString();
+            if (assigneeUserId !== '') input.assigneeUserId = assigneeUserId;
+            if (actionTypeId !== '') {
+              input.actionTypeId = actionTypeId;
+              input.customQuestionResponses = customResponses;
+            }
             create.mutate(input);
           }}
         >
@@ -1449,7 +1477,80 @@ function AddActionDialog({
                 onChange={(e) => setDueAt(e.target.value)}
               />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="act-assignee">{t('assigneeLabel')}</Label>
+              <select
+                id="act-assignee"
+                value={assigneeUserId}
+                onChange={(e) => setAssigneeUserId(e.target.value)}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t('noAssignee')}</option>
+                {(usersData?.users ?? []).map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="act-type">{t('typeLabel')}</Label>
+              <select
+                id="act-type"
+                value={actionTypeId}
+                onChange={(e) => {
+                  setActionTypeId(e.target.value);
+                  setCustomResponses({});
+                }}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t('noType')}</option>
+                {(typesData ?? []).map((ty) => (
+                  <option key={ty.id} value={ty.id}>
+                    {ty.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+          {selectedType !== undefined && selectedType.customQuestions.length > 0 ? (
+            <div className="space-y-3">
+              {selectedType.customQuestions.map((q) => (
+                <div key={q.id} className="space-y-1.5">
+                  <Label htmlFor={`act-q-${q.id}`}>
+                    {q.prompt}
+                    {q.required ? ' *' : ''}
+                  </Label>
+                  {q.type === 'multipleChoice' ? (
+                    <select
+                      id={`act-q-${q.id}`}
+                      value={customResponses[q.id] ?? ''}
+                      onChange={(e) =>
+                        setCustomResponses({ ...customResponses, [q.id]: e.target.value })
+                      }
+                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">—</option>
+                      {(q.options ?? []).map((o) => (
+                        <option key={o} value={o}>
+                          {o}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      id={`act-q-${q.id}`}
+                      type={q.type === 'number' ? 'number' : 'text'}
+                      value={customResponses[q.id] ?? ''}
+                      onChange={(e) =>
+                        setCustomResponses({ ...customResponses, [q.id]: e.target.value })
+                      }
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               {tCommon('cancel')}
@@ -1470,6 +1571,67 @@ function AddActionDialog({
  * "+ Add action" CTA as the top toolbar so the tab is reachable from
  * either entry point.
  */
+/**
+ * Escalation bridge to the incidents module (FreeHS B5, IN-E17): shows
+ * incidents already raised from this observation and offers "escalate to
+ * incident" to reporters. Near-miss reporting stays here — this is the
+ * bridge, not a merge.
+ */
+function LinkedIncidentsCard({ issueId, locale }: { issueId: string; locale: string }) {
+  const t = useTranslations('incidents.observationCard');
+  const router = useRouter();
+  const canView = useHasPermission('incidents.view');
+  const canReport = useHasPermission('incidents.report');
+  const { data: linked } = trpc.incidents.forObservation.useQuery(
+    { observationId: issueId },
+    { enabled: canView },
+  );
+  const escalate = trpc.incidents.createFromObservation.useMutation({
+    onSuccess: (result) => {
+      toast.success(t('escalated', { reference: result.referenceNumber }));
+      router.push(`/${locale}/incidents/${result.incidentId}`);
+    },
+    onError: () => toast.error(t('escalateFailed')),
+  });
+  if (!canView) return null;
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-6 text-sm">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold">{t('heading')}</h2>
+          {canReport ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={escalate.isPending}
+              onClick={() => escalate.mutate({ observationId: issueId })}
+            >
+              {escalate.isPending ? t('escalating') : t('escalate')}
+            </Button>
+          ) : null}
+        </div>
+        {linked === undefined || linked.length === 0 ? (
+          <p className="text-muted-foreground">{t('none')}</p>
+        ) : (
+          <div className="space-y-1">
+            {linked.map((incident) => (
+              <Link
+                key={incident.id}
+                href={`/${locale}/incidents/${incident.id}`}
+                className="flex items-center gap-2 text-primary hover:underline"
+              >
+                <span className="font-mono text-xs">{incident.referenceNumber}</span>
+                <span>{incident.title ?? t('confidential')}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function LinkedActionsCard({
   issueId,
   canManage,
@@ -1489,7 +1651,7 @@ function LinkedActionsCard({
     sourceType: 'issue',
     sourceId: issueId,
   });
-  const rows = data ?? [];
+  const rows = data?.rows ?? [];
   return (
     <Card>
       <CardContent className="space-y-4 p-6 text-sm">
@@ -1535,7 +1697,7 @@ function LinkedActionsCard({
                         row.priority === 'high' ||
                         row.priority === 'critical'
                           ? tPriority(row.priority)
-                          : tCols('noDue')}
+                          : '—'}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
                         {row.dueAt !== null

@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "审计日志"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -293,7 +294,12 @@
         "integrations": "Integrations",
         "billing": "Billing",
         "contractors": "Contractors",
-        "org": "Organisation"
+        "org": "Organisation",
+        "riskAssessments": "风险评估",
+        "coshh": "COSHH",
+        "permits": "作业许可",
+        "fireSafety": "消防安全",
+        "incidents": "事故事件"
       },
       "perms": {
         "users_view": "View users",
@@ -356,7 +362,26 @@
         "contractors_verifyDocs": "Verify contractor documents",
         "contractors_gate": "Gate check-in",
         "org_settings": "Manage organisation settings",
-        "org_audit_view": "View audit log"
+        "org_audit_view": "View audit log",
+        "riskAssessments_view": "查看风险评估",
+        "riskAssessments_create": "创建和编辑评估",
+        "riskAssessments_manage": "发布、分发和管理评估",
+        "coshh_view": "查看 COSHH 台账",
+        "coshh_create": "添加物质和评估",
+        "coshh_manage": "发布和管理 COSHH 评估",
+        "permits_view": "查看许可证",
+        "permits_create": "申请和记录许可证",
+        "permits_issue": "签发、暂停和关闭许可证",
+        "permits_manage": "管理许可证类型",
+        "fireSafety_view": "查看消防安全",
+        "fireSafety_record": "记录检查",
+        "fireSafety_create": "创建建筑、防火门和评估",
+        "fireSafety_manage": "发布评估并管理模块",
+        "incidents_view": "查看事故事件",
+        "incidents_report": "报告事故事件",
+        "incidents_investigate": "开展调查",
+        "incidents_manage": "管理事故事件（分级、RIDDOR、审批）",
+        "incidents_confidential_view": "查看保密事故"
       }
     },
     "groups": {
@@ -498,6 +523,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "数据保留与导出",
+        "subtitle": "保留 v1 会清除超出策略的通知。法定安全记录绝不受影响。",
+        "keepForever": "永久保留",
+        "months": "{count} 个月",
+        "scopeNote": "仅适用于应用内通知。检查、许可证、消防日志、COSHH 与风险评估始终保留。",
+        "savedToast": "保留策略已保存。"
+      },
+      "exportData": {
+        "button": "下载组织数据(JSON)",
+        "hint": "全部内容打包为一个 JSON 文档——用于迁移或退出。仅限管理员。"
       }
     },
     "customFields": {
@@ -561,6 +598,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "审计日志",
+      "subtitle": "将所有模块的事件汇入一个覆盖全组织、按时间倒序的流。",
+      "empty": "暂无事件。",
+      "loadMore": "加载更早",
+      "systemActor": "系统",
+      "columns": {
+        "when": "时间",
+        "module": "模块",
+        "event": "事件",
+        "actor": "执行人",
+        "detail": "详情"
+      },
+      "modules": {
+        "all": "全部",
+        "actions": "措施",
+        "observations": "观察项",
+        "permits": "许可证",
+        "coshh": "COSHH",
+        "riskAssessments": "风险评估",
+        "fireSafety": "消防安全",
+        "contractors": "承包商"
       }
     }
   },
@@ -1036,7 +1097,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "等待签署"
     },
     "table": {
       "title": "Title",
@@ -1055,7 +1117,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "等待签署"
     },
     "picker": {
       "title": "Pick a template",
@@ -1105,7 +1168,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} 张照片上传失败——已保留在此。",
+          "retry": "重试"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -1167,10 +1232,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "需要备注"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "请说明该回答（必填）"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1339,6 +1406,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "我的计划检查（{count}）",
+      "startNow": "开始",
+      "startError": "无法开始，请重试。",
+      "missedBadge": "未执行",
+      "overdueBadge": "已逾期",
+      "dueBadge": "待执行"
     }
   },
   "nav": {
@@ -1361,7 +1436,10 @@
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
     "coshh": "有害物质",
-    "permits": "作业许可"
+    "permits": "作业许可",
+    "fireSafety": "消防安全",
+    "analytics": "仪表盘",
+    "incidents": "事故事件"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -1389,7 +1467,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "提交人",
+    "site": "站点"
   },
   "schedules": {
     "title": "Schedules",
@@ -1679,7 +1759,11 @@
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
-        "toast": "Action created."
+        "toast": "Action created.",
+        "assigneeLabel": "指派给",
+        "noAssignee": "未指派",
+        "typeLabel": "措施类型",
+        "noType": "无类型"
       },
       "attachInspectionDialog": {
         "title": "开始检查",
@@ -2012,7 +2096,9 @@
       },
       "settingsButton": "设置",
       "sourceMaintenance": "维护",
-      "loadError": "Couldn't load actions. Please try again."
+      "loadError": "Couldn't load actions. Please try again.",
+      "filterSourceIncident": "事故事件",
+      "sourceIncident": "事故事件"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2136,7 +2222,13 @@
       },
       "autoGeneratedBadge": "自动生成",
       "autoGeneratedBy": "由 {program} 自动生成",
-      "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later."
+      "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later.",
+      "sourceLinkRiskAssessment": "由风险评估 {referenceNumber} 创建",
+      "sourceLinkCoshhAssessment": "由 COSHH 评估 {referenceNumber} 创建",
+      "sourceLinkFireRiskAssessment": "由火灾风险评估 {referenceNumber} 创建",
+      "sourceLinkFireLogbookEntry": "由不合格的消防检查创建",
+      "sourceLinkFireDoorInspection": "由不合格的防火门检查创建",
+      "sourceLinkIncident": "由事故 {referenceNumber} 生成"
     },
     "create": {
       "title": "Create action",
@@ -2199,7 +2291,17 @@
     },
     "filters": {
       "removeAria": "Remove {label} filter"
-    }
+    },
+    "sourceRiskAssessment": "风险评估",
+    "sourceCoshhAssessment": "COSHH",
+    "sourceFireRiskAssessment": "火灾风险评估",
+    "sourceFireLogbookEntry": "消防检查",
+    "sourceFireDoorInspection": "防火门",
+    "pagerShowing": "显示第 {from}–{to} 条，共 {total} 条",
+    "pagerPrev": "上一页",
+    "pagerNext": "下一页",
+    "myOpenChip": "指派给我：{count}",
+    "myOverdueChip": "{count} 项逾期"
   },
   "actionsSettings": {
     "title": "Action settings",
@@ -2646,7 +2748,28 @@
         "startedAt": "开始时间",
         "createdAt": "创建时间"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "维保计划",
+        "empty": "没有覆盖此资产的维保计划。",
+        "timeMeta": "每 {interval} 天 — 上次保养 {last}",
+        "usageMeta": "每 {interval} {unit} — 当前读数 {current}",
+        "status": {
+          "on_schedule": "按计划",
+          "approaching": "临近",
+          "overdue": "逾期",
+          "awaiting_first_reading": "等待首次读数"
+        }
+      },
+      "fireHistory": {
+        "heading": "消防安全记录",
+        "checkLine": "{type} — {building}",
+        "empty": "消防日志暂无记录。",
+        "performedAt": "日期",
+        "type": "检查",
+        "result": "结果",
+        "notes": "备注"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -2913,7 +3036,16 @@
       "observations": "观察",
       "actions": "行动",
       "headsUp": "通知",
-      "documents": "文件"
+      "documents": "文件",
+      "permits": "许可证",
+      "coshh": "COSHH 物质",
+      "riskAssessments": "风险评估",
+      "fireBuildings": "消防建筑",
+      "fireRiskAssessments": "火灾风险评估",
+      "contractors": "承包商",
+      "sites": "站点与项目",
+      "templates": "模板",
+      "incidents": "事故事件"
     }
   },
   "ai": {
@@ -3450,7 +3582,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "承包商不合规——请在下方填写豁免原因后继续。"
     },
     "gate": {
       "navLink": "Gate",
@@ -3489,7 +3622,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "该承包商不合规——签到需要记录豁免原因(或请其前往现场办公室)。",
+      "nonCompliantChip": "不合规"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3528,7 +3663,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "自您上次确认后,入场培训已更新——请重新阅读并确认。"
     },
     "users": {
       "heading": "Portal users",
@@ -3582,7 +3718,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "现场入场培训",
+      "version": "版本 {version}",
+      "hint": "门户用户首先会看到此内容。保存修改会提升版本,所有人需重新确认。",
+      "placeholder": "每位承包商开工前必须阅读并确认的内容…",
+      "saveButton": "保存培训内容",
+      "savedToast": "培训内容已保存(版本 {version})。"
+    },
+    "onSitePermits": {
+      "heading": "当前在场且持有效许可证"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4987,7 +5134,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "已关联资产",
+      "noLinkedAsset": "未关联资产",
+      "linkedAssetLine": "资产:{name}",
+      "assetLinkedToast": "资产关联已更新。"
     },
     "doors": {
       "addButton": "Add door",
@@ -5283,5 +5434,686 @@
     "clearSearch": "清除搜索",
     "clear": "清除选择",
     "done": "完成"
+  },
+  "analytics": {
+    "title": "仪表盘",
+    "subtitle": "一览所有模块中需要关注的事项及近期趋势。",
+    "tiles": {
+      "sectionLabel": "需要关注",
+      "myOpenActions": "我的未完成措施",
+      "overdueActions": "逾期措施",
+      "dueSoon": "7 天内到期 {count} 项",
+      "openObservations": "未关闭的观察项",
+      "highPriority": "高优先级 {count} 项",
+      "awaitingApproval": "待审批的检查",
+      "inProgress": "进行中 {count} 项",
+      "missedInspections": "未执行的检查(30 天)",
+      "upcoming7": "7 天内计划 {count} 项",
+      "pendingAcks": "待确认的通知",
+      "openPermits": "有效许可证",
+      "expiring48h": "48 小时内到期 {count} 项",
+      "raReviewOverdue": "复审逾期的风险评估",
+      "raActive": "有效 {count} 项",
+      "coshhReviewDue": "COSHH 复审逾期",
+      "coshhSubstances": "在用物质 {count} 项",
+      "fireAttention": "消防安全:需要关注"
+    },
+    "trends": {
+      "sectionLabel": "趋势",
+      "actionsTitle": "措施 — 新建与完成(8 周)",
+      "activityTitle": "检查与观察项(8 周)",
+      "actionsCreated": "新建",
+      "actionsCompleted": "完成",
+      "inspectionsCompleted": "已完成检查",
+      "observationsRaised": "上报的观察项",
+      "thisWeek": "本周"
+    },
+    "sites": {
+      "sectionLabel": "站点对比",
+      "title": "站点概览",
+      "subtitle": "各站点的未完成工作量与检查活动,按繁忙程度排序。",
+      "site": "站点",
+      "openActions": "未完成措施",
+      "openObservations": "未关闭观察项",
+      "completed30": "检查(30 天)",
+      "noSite": "无站点",
+      "empty": "暂无站点。"
+    }
+  },
+  "scanPage": {
+    "loading": "加载中…",
+    "invalidTitle": "此二维码已失效。",
+    "invalidBody": "您扫描的二维码已被撤销,或该类别不再接受上报。请联系现场管理员。",
+    "reportObservation": "上报观察项",
+    "titleLabel": "标题",
+    "titlePlaceholder": "简要说明发生了什么",
+    "descriptionLabel": "描述",
+    "descriptionPlaceholder": "补充有助于理解情况的细节。",
+    "reporterNameLabel": "您的姓名",
+    "reporterNameSubtitle": "选填 — 留空即匿名。",
+    "reporterEmailLabel": "您的邮箱",
+    "reporterEmailSubtitle": "选填 — 可能用于后续跟进。",
+    "dateOccurredLabel": "发生时间",
+    "locationAddressLabel": "位置",
+    "locationAddressPlaceholder": "楼栋、楼层或区域",
+    "customQuestionsHeading": "附加问题",
+    "selectPlaceholder": "请选择",
+    "submit": "提交",
+    "submitting": "提交中…",
+    "successTitle": "感谢您!观察项已提交。",
+    "successBody": "参考编号如下,请妥善保存。",
+    "successAnother": "再提交一条",
+    "errorGeneric": "无法提交观察项,请重试。",
+    "siteLabel": "站点",
+    "siteNone": "选择站点",
+    "photosLabel": "照片",
+    "photosSubtitle": "最多可添加 {max} 张照片——照片是上报的一半。",
+    "photosAdd": "添加照片",
+    "photosRemove": "移除",
+    "photoTooLarge": "该照片超过 {maxMb} MB,请选择更小的照片。",
+    "photoUploadFailed": "有照片上传失败。它仍附在此处——再次提交即可重试。"
+  },
+  "offline": {
+    "title": "您已离线",
+    "body": "没有网络时无法访问此页面。您记录的内容已加入队列,将自动同步。",
+    "pendingChip": "{count} 项待同步 — 联网后自动发送",
+    "itemsDelivered": "已同步 {count} 项排队内容",
+    "itemRejected": "有一项排队内容被服务器拒绝,请检查后重新填写。",
+    "queuedToast": "无网络连接 — 已存入队列,将自动同步。"
+  },
+  "notifications": {
+    "bellLabel": "通知({count} 条未读)",
+    "title": "通知",
+    "markAllRead": "全部标记为已读",
+    "empty": "暂无通知——一切都是最新的。",
+    "kinds": {
+      "action_assigned": "已分配措施",
+      "approval_pending": "待审批",
+      "approval_decided": "审批已决定",
+      "heads_up": "通知公告",
+      "issue_reported": "观察项上报",
+      "schedule_missed": "未执行的检查",
+      "action_due": "临期措施",
+      "document_expiry": "文档到期"
+    },
+    "prefs": {
+      "title": "邮件通知",
+      "subtitle": "关闭仅停止邮件——顶部铃铛始终会显示。",
+      "saveError": "无法保存偏好设置。",
+      "keys": {
+        "emailActionReminders": "措施到期/逾期提醒",
+        "emailScheduleMissed": "未执行的计划检查",
+        "emailDocumentExpiry": "文档到期提醒",
+        "emailMaintenance": "维保提醒"
+      }
+    }
+  },
+  "incidents": {
+    "title": "事故事件",
+    "subtitle": "记录、调查并闭环处理工作场所安全事件",
+    "attention": {
+      "riddorOverdue": "RIDDOR已逾期",
+      "riddorDueSoon": "RIDDOR即将到期",
+      "rescreenRequired": "需重新判定",
+      "investigating": "调查中",
+      "effectivenessOverdue": "有效性复查逾期"
+    },
+    "list": {
+      "report": "报告事故",
+      "exportCsv": "导出CSV",
+      "empty": "没有符合筛选条件的事故。",
+      "searchPlaceholder": "搜索标题或编号…",
+      "riddorOnly": "仅RIDDOR",
+      "allKinds": "所有类型",
+      "allSeverities": "所有严重度",
+      "allSites": "所有站点",
+      "lateReport": "迟报",
+      "confidential": "保密",
+      "statusFilter": {
+        "open": "进行中",
+        "reported": "已报告",
+        "triaged": "已分级",
+        "investigating": "调查中",
+        "actions_outstanding": "措施待办",
+        "closed": "已关闭",
+        "cancelled": "已取消",
+        "all": "全部"
+      },
+      "columns": {
+        "reference": "编号",
+        "title": "标题",
+        "kind": "类型",
+        "severity": "严重度",
+        "status": "状态",
+        "site": "站点",
+        "occurred": "发生时间",
+        "riddor": "RIDDOR"
+      }
+    },
+    "kinds": {
+      "injury": "人身伤害",
+      "ill_health": "职业病",
+      "dangerous_occurrence": "危险事件",
+      "sharps_exposure": "针刺/飞溅暴露",
+      "violence_aggression": "暴力与攻击",
+      "damage": "财产损失",
+      "environmental": "环境事件",
+      "near_miss": "未遂事件"
+    },
+    "severities": {
+      "negligible": "可忽略",
+      "minor": "轻微",
+      "moderate": "中等",
+      "serious": "严重",
+      "major": "重大"
+    },
+    "statuses": {
+      "reported": "已报告",
+      "triaged": "已分级",
+      "investigating": "调查中",
+      "actions_outstanding": "措施待办",
+      "closed": "已关闭",
+      "reopened": "已重开",
+      "cancelled": "已取消"
+    },
+    "personCategories": {
+      "employee": "员工",
+      "contractor": "承包商",
+      "agency": "派遣人员",
+      "visitor": "访客",
+      "member_of_public": "公众",
+      "work_experience": "实习生"
+    },
+    "injuryKinds": {
+      "fracture": "骨折",
+      "dislocation": "脱臼",
+      "sprain_strain": "扭伤/拉伤",
+      "laceration": "撕裂伤",
+      "puncture": "刺伤",
+      "abrasion": "擦伤",
+      "bruising": "挫伤",
+      "burn": "烧伤",
+      "scald": "烫伤",
+      "amputation": "截肢",
+      "crush": "挤压伤",
+      "concussion": "脑震荡",
+      "electric_shock": "触电",
+      "asphyxia": "窒息",
+      "poisoning": "中毒",
+      "other": "其他"
+    },
+    "bodyParts": {
+      "head": "头部",
+      "face": "面部",
+      "eye": "眼睛",
+      "neck": "颈部",
+      "shoulder": "肩部",
+      "arm": "手臂",
+      "elbow": "肘部",
+      "wrist": "手腕",
+      "hand": "手",
+      "finger": "手指",
+      "trunk": "躯干",
+      "back": "背部",
+      "abdomen": "腹部",
+      "hip": "髋部",
+      "leg": "腿部",
+      "knee": "膝盖",
+      "ankle": "脚踝",
+      "foot": "脚",
+      "toe": "脚趾",
+      "internal": "内脏",
+      "multiple": "多处"
+    },
+    "hospitalisations": {
+      "none": "未就医",
+      "ae": "急诊",
+      "admitted": "住院"
+    },
+    "causalFactors": {
+      "equipment_guarding": "设备/防护装置",
+      "procedure": "程序缺失或不完善",
+      "training_competence": "培训/能力",
+      "supervision": "监督",
+      "human_factors": "人为因素",
+      "environment": "作业环境",
+      "maintenance": "维护保养",
+      "management_system": "管理体系"
+    },
+    "priorities": {
+      "low": "低",
+      "medium": "中",
+      "high": "高",
+      "critical": "紧急"
+    },
+    "evidenceKinds": {
+      "photo": "照片",
+      "document": "文件",
+      "cctv_ref": "监控引用",
+      "physical_ref": "实物证据",
+      "other": "其他"
+    },
+    "new": {
+      "title": "报告事故",
+      "whatHappened": "发生了什么？",
+      "titlePlaceholder": "一句话——如：手被卷入夹点",
+      "kind": "事件类型",
+      "confidentialHint": "该类型将保密记录：仅报告人、调查团队和保密权限持有者可见详情。",
+      "when": "何时发生？",
+      "site": "站点",
+      "sitePlaceholder": "选择站点…",
+      "location": "具体位置",
+      "locationPlaceholder": "如：机加工车间2号线",
+      "description": "用您自己的话描述经过",
+      "descriptionPlaceholder": "描述发生了什么、当时在做什么、哪些因素起了作用或使情况恶化…",
+      "sharpsHeading": "针刺/飞溅详情",
+      "vaHeading": "暴力与攻击详情",
+      "doHeading": "危险事件详情",
+      "damageHeading": "损失详情",
+      "envHeading": "环境详情",
+      "peopleHeading": "受影响人员",
+      "addPerson": "添加人员",
+      "personRequiredHint": "请添加受伤人员——姓名、类别及伤情详情。",
+      "noPersonsHint": "无人受影响？留空即可（如无人受伤的危险事件）。",
+      "personNamePlaceholder": "姓名",
+      "injuryDetails": "伤情详情",
+      "injuryKinds": "伤害类型",
+      "bodyParts": "受伤部位",
+      "firstAidGiven": "已实施急救",
+      "hospitalisation": "就医情况",
+      "submit": "提交报告",
+      "submitting": "提交中…",
+      "savedLocally": "报告已保存在本设备——有信号后请重试。",
+      "draftRestored": "已恢复本地保存的草稿。",
+      "photosTitle": "添加照片",
+      "photosHint": "现在的一张照片胜过日后的十份证词。尽量补充——之后也可在事故页面继续添加。",
+      "addPhotos": "拍摄或选择照片",
+      "uploading": "上传中…",
+      "uploadedCount": "已附加 {count} 个文件。",
+      "done": "完成——打开事故"
+    },
+    "details": {
+      "device": "涉及器具/锐器",
+      "devicePlaceholder": "如：用过的套管针",
+      "procedure": "当时的操作",
+      "contaminationStatus": "污染状况",
+      "contamination": {
+        "unknown": "未知",
+        "low": "低风险",
+        "high": "高风险"
+      },
+      "sourceKnown": "暴露源已知",
+      "sourceRiskAssessed": "已评估暴露风险",
+      "washedConfirmed": "已冲洗/完成急救步骤",
+      "nature": "性质",
+      "vaNature": {
+        "physical": "肢体",
+        "verbal": "言语",
+        "threat": "威胁",
+        "sexual": "性"
+      },
+      "perpetratorType": "施害者",
+      "perpetrator": {
+        "patient_or_service_user": "患者或服务对象",
+        "visitor": "访客",
+        "member_of_public": "公众",
+        "colleague": "同事",
+        "other": "其他"
+      },
+      "weaponInvolved": "涉及凶器",
+      "policeNotified": "已报警",
+      "crimeReference": "报案编号",
+      "supportOffered": "已向当事人提供支持",
+      "doCategory": "类别",
+      "doCategories": {
+        "lifting_equipment_collapse": "起重设备坍塌",
+        "scaffold_collapse": "脚手架坍塌",
+        "electrical_fire_explosion": "电气火灾/爆炸",
+        "pressure_system_failure": "压力系统失效",
+        "accidental_release": "意外泄漏",
+        "structural_collapse": "结构坍塌",
+        "other": "其他"
+      },
+      "otherText": "描述事件",
+      "whatDamaged": "受损物",
+      "whatReleased": "泄漏物",
+      "estimatedCostBand": "预估损失",
+      "costBands": {
+        "unknown": "未知",
+        "under_1k": "低于1千英镑",
+        "1k_to_10k": "1千–1万英镑",
+        "10k_to_100k": "1万–10万英镑",
+        "over_100k": "超过10万英镑"
+      },
+      "mitigation": "即时处置",
+      "containment": "围堵措施"
+    },
+    "detail": {
+      "downloadPdf": "下载PDF",
+      "occurred": "发生",
+      "reported": "报告",
+      "site": "站点",
+      "potentialSeverity": "潜在严重度",
+      "riddorOverdueBanner": "RIDDOR法定报告期限已过且无提交记录。请立即向HSE报告并在此登记。",
+      "rescreenBanner": "累计缺勤已超过7天，与“无需报告”的判定相矛盾——请重新进行RIDDOR判定。",
+      "notEffectiveBanner": "有效性复查显示控制措施未能保持。请考虑重开事故或新增措施。"
+    },
+    "triage": {
+      "heading": "分级",
+      "open": "对该事故分级",
+      "hint": "确认严重度、设定调查级别并任命调查负责人。",
+      "severity": "严重度（实际）",
+      "level": "调查级别",
+      "levels": {
+        "basic": "基础——单屏，手机几分钟完成",
+        "full": "完整——证据、根因分析、发现项"
+      },
+      "leadInvestigator": "调查负责人",
+      "leadPlaceholder": "选择调查人…",
+      "confidential": "保密——详情仅报告人、调查团队和权限持有者可见",
+      "confirm": "确认分级"
+    },
+    "people": {
+      "heading": "人员与损失工日",
+      "daysLost": "损失 {days} 个工日",
+      "none": "尚未登记人员。",
+      "returnedToWork": "已复工",
+      "firstAid": "已急救",
+      "absence": "缺勤",
+      "ongoing": "持续中",
+      "endAbsence": "今日结束",
+      "absenceFrom": "缺勤首日",
+      "absenceTo": "最后一天（留空=持续中）",
+      "addAbsence": "登记缺勤",
+      "addPerson": "添加人员"
+    },
+    "riddor": {
+      "heading": "RIDDOR",
+      "screen": "立即判定",
+      "rescreen": "重新判定",
+      "notScreened": "尚未判定。“无需报告”的判定本身也是可辩护的记录。",
+      "determination": "判定",
+      "screenedBy": "由 {name} 判定 · {date}",
+      "deadline": "法定期限",
+      "submitted": "已提交",
+      "routeOnline": "HSE在线表单",
+      "routePhone": "电话",
+      "screenHint": "平台负责计算期限；判断由您作出。选择对应类别并说明理由。",
+      "note": "判定理由",
+      "notePlaceholder": "为何作此判定——如：事故后缺勤9天，属超7天类别…",
+      "confirmScreen": "登记判定",
+      "recordSubmission": "登记HSE提交",
+      "route": "提交渠道",
+      "hseReference": "HSE编号（可选）",
+      "confirmSubmission": "登记提交",
+      "chipNotReportable": "无需报告",
+      "chipSubmitted": "RIDDOR已提交",
+      "chipOverdue": "RIDDOR已逾期",
+      "chipDaysLeft": "RIDDOR：剩余{days}天",
+      "categories": {
+        "not_reportable": "无需报告",
+        "death": "死亡",
+        "specified_injury": "特定伤害",
+        "over_7_day": "超7天伤害",
+        "occupational_disease": "职业病",
+        "dangerous_occurrence": "危险事件",
+        "gas_incident": "燃气事故"
+      },
+      "help": {
+        "not_reportable": "不符合任何应报类别。请记录理由——否定性判定本身就是记录。",
+        "death": "有人因工亡故。须立即通报，10日内提交报告。",
+        "specified_injury": "骨折（手指脚趾除外）、截肢、失明、头/躯干挤压、严重烧伤、头皮撕脱、窒息致昏迷或住院超24小时。10日内报告。",
+        "over_7_day": "不计事故当日，丧失工作能力超过7天。事故后15日内报告。",
+        "occupational_disease": "确诊的与工作相关的职业病——腕管综合征、皮炎、职业性哮喘、HAVS、肌腱炎、职业癌。",
+        "dangerous_occurrence": "附表2事件——起重设备坍塌、脚手架坍塌、电气火灾/爆炸、压力系统失效、意外泄漏。",
+        "gas_incident": "与燃气相关的死亡或伤害，或危险燃气装置。"
+      }
+    },
+    "investigation": {
+      "heading": "调查",
+      "start": "开始调查",
+      "openWorkspace": "打开工作区",
+      "awaitingTriage": "等待分级——级别与负责人在分级时设定。",
+      "notStarted": "尚未开始。",
+      "level": "级别",
+      "lead": "负责人",
+      "revision": "版本",
+      "status": "状态",
+      "statuses": {
+        "draft": "草稿",
+        "submitted": "待审批",
+        "approved": "已批准"
+      },
+      "approvedBy": "由 {name} 批准 · {date}"
+    },
+    "findings": {
+      "heading": "发现项与纠正措施",
+      "actionPending": "措施待生成——批准时创建。",
+      "actionStatuses": {
+        "open": "未开始",
+        "in_progress": "进行中",
+        "completed": "已完成",
+        "cancelled": "已取消"
+      }
+    },
+    "linked": {
+      "heading": "关联记录",
+      "observation": "观察",
+      "permit": "作业许可",
+      "contractor": "承包商",
+      "asset": "资产",
+      "none": "无关联记录。"
+    },
+    "reviews": {
+      "prompted": "已于 {date} 触发复审。",
+      "skipped": "已跳过复审：{reason}",
+      "stepHeading": "触发事后复审",
+      "stepHint": "将受影响的风险评估、COSHH评估和消防风险评估置于待复审状态，并引用本事故。",
+      "kinds": {
+        "ra": "风险评估",
+        "coshh": "COSHH评估",
+        "fra": "消防风险评估"
+      },
+      "promptButton": "触发所选项",
+      "skipButton": "说明原因后跳过…",
+      "skipReasonPlaceholder": "无需复审的原因…",
+      "confirmSkip": "跳过"
+    },
+    "effectiveness": {
+      "heading": "有效性复查",
+      "due": "截止 {date}",
+      "verdict": "结论",
+      "verdicts": {
+        "effective": "有效——措施已落实且持续有效",
+        "partially_effective": "部分有效",
+        "not_effective": "无效"
+      },
+      "question": "控制措施是否已落实并持续有效？是否复发？",
+      "notePlaceholder": "检查内容与结果…",
+      "record": "记录结论",
+      "open": "记录有效性结论"
+    },
+    "lifecycle": {
+      "heading": "生命周期",
+      "close": "关闭事故",
+      "reopen": "重开",
+      "cancel": "取消记录",
+      "closeHint": "关闭前须履行RIDDOR义务，且所有关联措施均已完成或取消。关闭时将安排有效性复查。",
+      "confirmClose": "确认关闭",
+      "reopenReason": "为何重开？",
+      "cancelReason": "为何取消？（重复/误建）",
+      "confirmReopen": "确认重开",
+      "confirmCancel": "确认取消"
+    },
+    "timeline": {
+      "heading": "时间线",
+      "system": "系统"
+    },
+    "events": {
+      "reported": "已报告",
+      "updated": "详情已更新",
+      "triaged": "已分级",
+      "severity_changed": "严重度已变更",
+      "investigator_assigned": "已任命调查负责人",
+      "riddor_screened": "已完成RIDDOR判定",
+      "riddor_rescreen_flagged": "已标记RIDDOR重判",
+      "riddor_submitted": "已提交RIDDOR",
+      "person_added": "已添加人员",
+      "person_updated": "已更新人员",
+      "person_removed": "已移除人员",
+      "absence_added": "已登记缺勤",
+      "absence_updated": "已更新缺勤",
+      "absence_removed": "已删除缺勤",
+      "evidence_added": "已添加证据",
+      "witness_statement_added": "已录取证词",
+      "investigation_started": "调查已开始",
+      "investigation_submitted": "调查已提交",
+      "investigation_rejected": "调查已退回返工",
+      "investigation_approved": "调查已批准",
+      "actions_generated": "已生成纠正措施",
+      "reviews_prompted": "已触发复审",
+      "reviews_prompt_skipped": "已跳过复审",
+      "closed": "已关闭",
+      "reopened": "已重开",
+      "cancelled": "已取消",
+      "effectiveness_recorded": "已记录有效性结论",
+      "alert_sent": "已发送即时警报",
+      "riddor_warning_sent": "已发送RIDDOR期限提醒",
+      "riddor_escalated": "RIDDOR期限已升级",
+      "promoted_from_observation": "由观察升级"
+    },
+    "workspace": {
+      "title": "调查工作区",
+      "revisionOption": "第{revision}版（{status}）",
+      "noInvestigation": "尚无调查——请从事故页面开始。",
+      "frozenNote": "第{revision}版——{date} 批准。已冻结；按结论时的内容展示。",
+      "immediateCause": "直接原因",
+      "underlyingCause": "深层原因",
+      "signatures": "提交：{submitted} · 批准：{approved}",
+      "evidenceHeading": "证据",
+      "addFiles": "添加照片/文件",
+      "addReference": "添加引用",
+      "referenceKind": "类型",
+      "referenceCaption": "引用说明",
+      "referenceCaptionPlaceholder": "如：4号摄像头，14:02–14:07，录像保存至8月30日",
+      "noEvidence": "尚无证据。早期的一张照片胜过日后的十份证词。",
+      "witnessHeading": "证人证词",
+      "addStatement": "录取证词",
+      "appendOnlyNote": "证词只可追加：更正即新证词；不可编辑或删除。",
+      "witnessName": "证人",
+      "statement": "证词",
+      "signatureCaptured": "签名已采集。",
+      "saveStatement": "保存证词",
+      "signed": "已签名",
+      "takenBy": "录取人：{name}",
+      "rcaHeading": "根本原因分析",
+      "contributingFactors": "促成因素",
+      "method": "方法",
+      "methods": {
+        "five_whys": "五个为什么",
+        "causal_factors": "因果因素（HSG245）",
+        "other": "其他"
+      },
+      "whyPlaceholder": "为什么…？",
+      "rootCause": "根本原因",
+      "addWhy": "添加“为什么”",
+      "factorNarrativePlaceholder": "该因素中发生了什么…",
+      "addFactor": "添加因素",
+      "timelineHeading": "事件经过",
+      "timelineWhen": "时间",
+      "timelineWhat": "发生了什么",
+      "addTimelineRow": "添加一行",
+      "findingsHeading": "发现项",
+      "requiresAction": "需要措施",
+      "findingPlaceholder": "需要改变什么…",
+      "conclusionHeading": "结论与签署",
+      "conclusionSummary": "结论",
+      "rootCauseStatement": "根本原因陈述",
+      "recurrenceLikelihood": "复发可能性",
+      "recurrence": {
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      },
+      "lessonsLearned": "经验教训",
+      "attestation": "本人确认此调查据本人所知完整且准确。",
+      "submit": "提交审批",
+      "submittedBy": "由 {name} 提交——待另一位管理者批准（职责分离）。",
+      "approve": "批准…",
+      "reject": "退回返工…",
+      "rejectNotePlaceholder": "需要返工的内容…",
+      "confirmReject": "退回调查人",
+      "approveHint": "为每个发现项设定纠正措施的负责人与截止日期——批准时一次性生成。",
+      "assignee": "负责人",
+      "assigneePlaceholder": "选择负责人…",
+      "dueDate": "截止日期",
+      "confirmApprove": "批准调查",
+      "approvedNote": "由 {name} 批准。该版本已冻结。"
+    },
+    "observationCard": {
+      "heading": "事故事件",
+      "escalate": "升级为事故",
+      "escalating": "升级中…",
+      "escalated": "已创建事故 {reference}。",
+      "escalateFailed": "无法升级此观察。",
+      "none": "尚未由此观察创建事故。",
+      "confidential": "保密事故"
+    },
+    "common": {
+      "cancel": "取消",
+      "save": "保存",
+      "saving": "保存中…"
+    },
+    "errors": {
+      "generic": "出了点问题，请重试。",
+      "module-disabled": "您的产品未启用此模块。",
+      "incident-not-found": "未找到事故。",
+      "site-not-found": "未找到站点。",
+      "user-not-found": "未找到用户。",
+      "permit-not-found": "未找到作业许可。",
+      "contractor-not-found": "未找到承包商。",
+      "asset-not-found": "未找到资产。",
+      "observation-not-found": "未找到观察。",
+      "occurred-in-future": "发生时间不能是将来。",
+      "invalid-details": "类型相关详情不完整或无效。",
+      "invalid-transition": "当前状态不允许该操作。",
+      "incident-terminal": "该事故已关闭或已取消。",
+      "not-editable": "仅管理者——或分级前的报告人——可编辑。",
+      "not-allowed": "您无权对该事故执行此操作。",
+      "confidential": "该事故为保密。仅报告人、调查团队和权限持有者可查看。",
+      "severity-frozen": "调查批准后严重度即被冻结。",
+      "not-lead-investigator": "仅调查负责人可执行——管理者可先重新指派。",
+      "investigation-already-open": "已有一项调查在进行。",
+      "investigation-not-found": "未找到调查。",
+      "investigation-frozen": "该调查版本已批准并冻结。",
+      "investigation-not-draft": "调查不在草稿状态。",
+      "investigation-not-submitted": "调查尚未提交。",
+      "immediate-cause-required": "提交前请填写直接原因。",
+      "conclusion-required": "提交前请填写结论。",
+      "rca-method-required": "完整调查需要选择分析方法。",
+      "why-chain-required": "提交前请完成五个为什么链条。",
+      "causal-factors-required": "提交前请至少记录一个因果因素。",
+      "root-cause-required": "完整调查需要根本原因陈述。",
+      "approver-is-investigator": "批准人不能是调查负责人或提交人。",
+      "finding-not-found": "未找到发现项。",
+      "finding-has-action": "该发现项已生成措施，无法删除。",
+      "person-not-found": "该事故中未找到此人。",
+      "absence-not-found": "未找到缺勤记录。",
+      "absence-inverted": "结束日期早于开始日期。",
+      "riddor-already-submitted": "RIDDOR提交已登记——判定已冻结。",
+      "riddor-not-reportable": "该事故未被判定为应报。",
+      "riddor-unscreened": "关闭前请完成RIDDOR判定。",
+      "riddor-rescreen-required": "关闭前请重新判定RIDDOR——缺勤已超7天。",
+      "riddor-not-submitted": "该事故属RIDDOR应报——关闭前请登记HSE提交。",
+      "actions-open": "请先完成或取消所有关联措施。",
+      "incident-not-closed": "须先关闭事故。",
+      "effectiveness-not-scheduled": "该事故未安排有效性复查。",
+      "invalid-storage-key": "该文件不属于此事故。",
+      "nothing-selected": "请至少选择一项评估。",
+      "risk-assessment-not-found": "所选风险评估不存在或未生效。",
+      "coshh-assessment-not-found": "所选COSHH评估不存在或未生效。",
+      "fra-not-found": "所选消防风险评估不存在或未生效。",
+      "render-unavailable": "此部署不支持PDF生成。"
+    }
   }
 }

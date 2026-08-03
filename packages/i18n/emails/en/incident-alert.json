@@ -1,0 +1,8 @@
+{
+  "subject": "Incident alert — {referenceNumber} ({kindLabel}, {severityLabel})",
+  "preheader": "An incident needing immediate attention was reported on {productName}.",
+  "greeting": "Hello {recipientName},",
+  "body": "An incident needing immediate attention has been reported on {productName}:\n\nReference: {referenceNumber}\nKind: {kindLabel}\nSeverity: {severityLabel}\nSite: {siteLine}\nOccurred: {occurredAt} UTC\n\nOpen the record for the details, confirm the triage and appoint the investigation. Details are withheld from this email because incident records can be confidential.",
+  "cta": "Open the incident",
+  "footer": "You are receiving this because you hold incident management permissions in {productName}."
+}

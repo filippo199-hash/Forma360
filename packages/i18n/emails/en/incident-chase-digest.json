@@ -1,0 +1,8 @@
+{
+  "subject": "Incidents needing your attention — {totalCount} item(s)",
+  "preheader": "Open incident work on {productName} is waiting on you.",
+  "greeting": "Hello {recipientName},",
+  "body": "These incidents on {productName} are waiting on you:\n\n{detailLines}\n\nIdle investigations stall the clause-10.2 loop — conclude them, chase the overdue corrective actions, and record the due effectiveness reviews so closed incidents stay closed.",
+  "cta": "Open the incident register",
+  "footer": "You are receiving this because you are the owner of these incident records in {productName}."
+}
