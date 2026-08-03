@@ -18,6 +18,10 @@ import { PermissionsProvider } from '../../src/lib/permissions-context';
 import { loadCurrentUserPermissions } from '../../src/server/load-permissions';
 import { activeBrand } from '../../src/lib/brand';
 import { isPathAllowedForExternal, loadContractorUser } from '../../src/server/contractor-portal';
+import {
+  OfflineQueueFlusher,
+  ServiceWorkerRegister,
+} from '../../src/components/offline-queue-flusher';
 import { ThemeProvider } from '../../src/components/theme-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
 import { Toaster } from '../../src/components/ui/sonner';
@@ -132,6 +136,8 @@ export default async function LocaleLayout({
                     </div>
                     {/* Floating assistant launcher on every signed-in page. */}
                     <ChatBubble />
+                    {/* PF-10: drains queued offline mutations + pending chip. */}
+                    <OfflineQueueFlusher />
                   </div>
                 </PermissionsProvider>
               ) : (
@@ -143,6 +149,7 @@ export default async function LocaleLayout({
                 </div>
               )}
               <Toaster />
+              <ServiceWorkerRegister />
             </TRPCProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

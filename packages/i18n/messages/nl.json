@@ -1125,7 +1125,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} foto('s) niet geüpload — hier bewaard.",
+          "retry": "Opnieuw"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -2699,7 +2701,28 @@
         "startedAt": "Gestart",
         "createdAt": "Aangemaakt"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "Onderhoudsplannen",
+        "empty": "Geen onderhoudsplannen voor dit object.",
+        "timeMeta": "Elke {interval} dagen — laatste beurt {last}",
+        "usageMeta": "Elke {interval} {unit} — teller op {current}",
+        "status": {
+          "on_schedule": "Op schema",
+          "approaching": "Nadert",
+          "overdue": "Achterstallig",
+          "awaiting_first_reading": "Wacht op eerste meting"
+        }
+      },
+      "fireHistory": {
+        "heading": "Brandveiligheidshistorie",
+        "checkLine": "{type} — {building}",
+        "empty": "Nog geen registraties in het brandlogboek.",
+        "performedAt": "Datum",
+        "type": "Controle",
+        "result": "Resultaat",
+        "notes": "Notities"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -3511,7 +3534,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "Aannemer niet compliant — vul hieronder een afwijkingsreden in om door te gaan."
     },
     "gate": {
       "navLink": "Gate",
@@ -3550,7 +3574,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "Deze aannemer is niet compliant — inchecken vereist een vastgelegde afwijkingsreden (of stuur ze naar de keet).",
+      "nonCompliantChip": "Niet compliant"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3589,7 +3615,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "De inductie is bijgewerkt sinds je laatste bevestiging — lees en bevestig opnieuw."
     },
     "users": {
       "heading": "Portal users",
@@ -3643,7 +3670,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "Locatie-inductie",
+      "version": "Versie {version}",
+      "hint": "Wordt elke portalgebruiker als eerste getoond. Een opgeslagen wijziging verhoogt de versie — iedereen moet opnieuw bevestigen.",
+      "placeholder": "Wat elke aannemer moet lezen en bevestigen vóór het werk…",
+      "saveButton": "Inductie opslaan",
+      "savedToast": "Inductie opgeslagen (versie {version})."
+    },
+    "onSitePermits": {
+      "heading": "Nu op locatie met open vergunningen"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5048,7 +5086,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "Gekoppeld aan object",
+      "noLinkedAsset": "Geen object gekoppeld",
+      "linkedAssetLine": "Object: {name}",
+      "assetLinkedToast": "Objectkoppeling bijgewerkt."
     },
     "doors": {
       "addButton": "Add door",
@@ -5389,5 +5431,46 @@
       "noSite": "Geen locatie",
       "empty": "Nog geen locaties."
     }
+  },
+  "scanPage": {
+    "loading": "Laden…",
+    "invalidTitle": "Deze QR-code is niet meer actief.",
+    "invalidBody": "De gescande QR-code is ingetrokken of de categorie accepteert geen meldingen meer. Neem contact op met de locatiebeheerder.",
+    "reportObservation": "Observatie melden",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Korte samenvatting van wat er gebeurde",
+    "descriptionLabel": "Omschrijving",
+    "descriptionPlaceholder": "Voeg details toe die helpen de observatie te begrijpen.",
+    "reporterNameLabel": "Je naam",
+    "reporterNameSubtitle": "Optioneel — laat leeg om anoniem te blijven.",
+    "reporterEmailLabel": "Je e-mail",
+    "reporterEmailSubtitle": "Optioneel — voor eventuele opvolging.",
+    "dateOccurredLabel": "Datum voorval",
+    "locationAddressLabel": "Locatie",
+    "locationAddressPlaceholder": "Gebouw, verdieping of zone",
+    "customQuestionsHeading": "Aanvullende vragen",
+    "selectPlaceholder": "Kies een optie",
+    "submit": "Versturen",
+    "submitting": "Versturen…",
+    "successTitle": "Bedankt! Je observatie is verstuurd.",
+    "successBody": "Je referentienummer staat hieronder — bewaar het.",
+    "successAnother": "Nog een melden",
+    "errorGeneric": "Kon de observatie niet versturen. Probeer opnieuw.",
+    "siteLabel": "Locatie",
+    "siteNone": "Kies een locatie",
+    "photosLabel": "Foto's",
+    "photosSubtitle": "Voeg tot {max} foto's toe — een beeld is de halve melding.",
+    "photosAdd": "Foto toevoegen",
+    "photosRemove": "Verwijderen",
+    "photoTooLarge": "Deze foto is groter dan {maxMb} MB — kies een kleinere.",
+    "photoUploadFailed": "Een foto kon niet worden geüpload. Hij is hier nog bijgevoegd — verstuur opnieuw om het nogmaals te proberen."
+  },
+  "offline": {
+    "title": "Je bent offline",
+    "body": "Deze pagina is niet beschikbaar zonder verbinding. Wat je hebt vastgelegd staat in de wachtrij en synchroniseert automatisch.",
+    "pendingChip": "{count} in wachtrij — synchroniseert zodra je online bent",
+    "itemsDelivered": "{count} wachtrij-items gesynchroniseerd",
+    "itemRejected": "Een wachtrij-item is door de server geweigerd — controleer en voer het opnieuw in.",
+    "queuedToast": "Geen verbinding — opgeslagen in de wachtrij. Synchroniseert automatisch."
   }
 }

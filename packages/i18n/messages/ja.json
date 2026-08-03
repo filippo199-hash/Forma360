@@ -1125,7 +1125,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} 枚の写真をアップロードできませんでした。ここに保持しています。",
+          "retry": "再試行"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -2699,7 +2701,28 @@
         "startedAt": "開始日",
         "createdAt": "作成日"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "保全計画",
+        "empty": "この資産を対象とする保全計画はありません。",
+        "timeMeta": "{interval} 日ごと — 前回整備 {last}",
+        "usageMeta": "{interval} {unit} ごと — 現在値 {current}",
+        "status": {
+          "on_schedule": "予定どおり",
+          "approaching": "間近",
+          "overdue": "期限超過",
+          "awaiting_first_reading": "初回計測待ち"
+        }
+      },
+      "fireHistory": {
+        "heading": "防火点検履歴",
+        "checkLine": "{type} — {building}",
+        "empty": "防火記録簿への記録はまだありません。",
+        "performedAt": "日付",
+        "type": "点検",
+        "result": "結果",
+        "notes": "備考"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -3511,7 +3534,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "請負業者がコンプライアンス未達です。続行するには下に承認理由を入力してください。"
     },
     "gate": {
       "navLink": "Gate",
@@ -3550,7 +3574,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "この請負業者はコンプライアンス未達です。チェックインには記録付きの承認理由が必要です(または現場事務所へ案内してください)。",
+      "nonCompliantChip": "コンプライアンス未達"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3589,7 +3615,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "前回の確認以降にインダクションが更新されました。再度読み、確認してください。"
     },
     "users": {
       "heading": "Portal users",
@@ -3643,7 +3670,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "現場インダクション",
+      "version": "バージョン {version}",
+      "hint": "ポータル利用者に最初に表示されます。変更を保存するとバージョンが上がり、全員の再確認が必要になります。",
+      "placeholder": "ここで作業する前に全請負業者が読み確認すべき内容…",
+      "saveButton": "インダクションを保存",
+      "savedToast": "インダクションを保存しました(バージョン {version})。"
+    },
+    "onSitePermits": {
+      "heading": "有効な許可証を持つ在場中の請負業者"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5048,7 +5086,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "資産にリンク済み",
+      "noLinkedAsset": "リンクされた資産なし",
+      "linkedAssetLine": "資産:{name}",
+      "assetLinkedToast": "資産リンクを更新しました。"
     },
     "doors": {
       "addButton": "Add door",
@@ -5389,5 +5431,46 @@
       "noSite": "拠点なし",
       "empty": "拠点はまだありません。"
     }
+  },
+  "scanPage": {
+    "loading": "読み込み中…",
+    "invalidTitle": "この QR コードは無効になりました。",
+    "invalidBody": "スキャンした QR コードは取り消されたか、このカテゴリーは報告を受け付けていません。施設の管理者にお問い合わせください。",
+    "reportObservation": "観察記録を報告",
+    "titleLabel": "タイトル",
+    "titlePlaceholder": "発生した内容の簡単な要約",
+    "descriptionLabel": "説明",
+    "descriptionPlaceholder": "状況の理解に役立つ詳細を記入してください。",
+    "reporterNameLabel": "お名前",
+    "reporterNameSubtitle": "任意 — 空欄のままで匿名になります。",
+    "reporterEmailLabel": "メールアドレス",
+    "reporterEmailSubtitle": "任意 — フォローアップに使用する場合があります。",
+    "dateOccurredLabel": "発生日時",
+    "locationAddressLabel": "場所",
+    "locationAddressPlaceholder": "建物・階・エリア",
+    "customQuestionsHeading": "追加の質問",
+    "selectPlaceholder": "選択してください",
+    "submit": "送信",
+    "submitting": "送信中…",
+    "successTitle": "ありがとうございます。報告を受け付けました。",
+    "successBody": "参照番号は以下のとおりです。控えとして保管してください。",
+    "successAnother": "続けて報告する",
+    "errorGeneric": "報告を送信できませんでした。もう一度お試しください。",
+    "siteLabel": "拠点",
+    "siteNone": "拠点を選択",
+    "photosLabel": "写真",
+    "photosSubtitle": "写真を最大 {max} 枚追加できます。写真は報告の半分です。",
+    "photosAdd": "写真を追加",
+    "photosRemove": "削除",
+    "photoTooLarge": "この写真は {maxMb} MB を超えています。小さいものを選んでください。",
+    "photoUploadFailed": "写真のアップロードに失敗しました。まだ添付されています。もう一度送信してください。"
+  },
+  "offline": {
+    "title": "オフラインです",
+    "body": "接続がないためこのページは表示できません。記録した内容はキューに保存され、自動的に同期されます。",
+    "pendingChip": "{count} 件が同期待ち — オンラインで自動送信",
+    "itemsDelivered": "キューの {count} 件を同期しました",
+    "itemRejected": "キューの項目がサーバーに拒否されました。内容を確認して再入力してください。",
+    "queuedToast": "接続がありません。キューに保存しました。自動的に同期されます。"
   }
 }

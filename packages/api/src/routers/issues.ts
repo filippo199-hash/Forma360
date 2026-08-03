@@ -20,6 +20,7 @@
  * injectable for tests.
  */
 import {
+  sites,
   accessRules,
   groupMembers,
   issueActivity,
@@ -233,6 +234,25 @@ const createFromShareTokenInput = z.object({
   dateOccurred: z.string().datetime().optional(),
   customFieldValues: boundedRecord.optional(),
   customQuestionResponses: boundedRecord.optional(),
+  /**
+   * PF-11: photos uploaded via /api/scan-upload/[token] before submit.
+   * Keys are validated against the token's tenant prefix server-side.
+   */
+  media: z
+    .array(
+      z.object({
+        key: z.string().min(1).max(1024),
+        filename: z.string().min(1).max(500),
+        mimeType: z.string().min(1).max(200),
+        sizeBytes: z
+          .number()
+          .int()
+          .min(0)
+          .max(20 * 1024 * 1024),
+      }),
+    )
+    .max(3)
+    .optional(),
 });
 
 const publicGetByShareTokenInput = z.object({
@@ -696,6 +716,17 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           .where(eq(tenants.id, cat.tenantId))
           .limit(1);
         const tenantName = tenantRows[0]?.name ?? '';
+        // PF-11: the category's "site" toggle renders a picker on the QR
+        // page — ship the active sites (id + name only) with the config.
+        const fields = cat.enabledBuiltInFields as readonly string[] | null;
+        const siteRows =
+          fields !== null && fields.includes('site')
+            ? await ctx.db
+                .select({ id: sites.id, name: sites.name })
+                .from(sites)
+                .where(and(eq(sites.tenantId, cat.tenantId), isNull(sites.archivedAt)))
+                .orderBy(sites.name)
+            : [];
         return {
           categoryId: cat.categoryId,
           tenantId: cat.tenantId,
@@ -703,6 +734,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           categoryName: cat.name,
           customQuestions: cat.customQuestions,
           enabledBuiltInFields: cat.enabledBuiltInFields,
+          sites: siteRows,
         };
       }),
   });
@@ -1271,6 +1303,33 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           createdAt: now,
           updatedAt: now,
         });
+
+        // PF-11: persist the pre-uploaded photos. Keys must live under the
+        // token tenant's issues prefix — an anonymous caller cannot attach
+        // another tenant's objects. Images only (stored-XSS hygiene).
+        if (input.media !== undefined && input.media.length > 0) {
+          const QR_IMAGE_MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+          for (const m of input.media) {
+            if (!m.key.startsWith(`${input.tenantId}/issues/`)) {
+              throw new TRPCError({ code: 'BAD_REQUEST', message: 'media-key-out-of-scope' });
+            }
+            if (!QR_IMAGE_MIME.has(m.mimeType)) {
+              throw new TRPCError({ code: 'BAD_REQUEST', message: 'media-type-not-allowed' });
+            }
+          }
+          await ctx.db.insert(issueAttachments).values(
+            input.media.map((m) => ({
+              id: newId(),
+              tenantId: input.tenantId,
+              issueId: id,
+              storageKey: m.key,
+              filename: m.filename,
+              mimeType: m.mimeType,
+              sizeBytes: m.sizeBytes,
+              uploadedByUserId: null,
+            })),
+          );
+        }
 
         const issue = await loadIssueOrThrow(ctx.db, input.tenantId, id);
         // Audit event — system-actor (no userId) since this is an

@@ -556,16 +556,21 @@ function MediaInput({
   const raw = state.responses[item.id];
   const keys: string[] = Array.isArray(raw) ? (raw as string[]) : [];
   const [uploading, setUploading] = useState(false);
+  // PF-10: a failed upload used to toast and DROP the photo. Failed files
+  // are now retained here with a visible Retry — losing field evidence to a
+  // dead spot is never acceptable.
+  const [failedFiles, setFailedFiles] = useState<File[]>([]);
 
   // Upload every picked file in turn (a multi-photo question shouldn't need a
   // tap-per-file). We thread the running key list through the loop rather than
   // re-reading `keys` so each dispatch builds on the last, and stop at maxCount.
   async function uploadMany(files: File[]) {
     setUploading(true);
-    try {
-      let current = keys;
-      for (const file of files) {
-        if (current.length >= item.maxCount) break;
+    const stillFailed: File[] = [];
+    let current = keys;
+    for (const file of files) {
+      if (current.length >= item.maxCount) break;
+      try {
         const form = new FormData();
         form.append('inspectionId', state.inspectionId);
         form.append('itemId', item.id);
@@ -575,12 +580,19 @@ function MediaInput({
         const body = (await res.json()) as { key: string };
         current = [...current, body.key].slice(0, item.maxCount);
         dispatch({ type: 'SET_RESPONSE', itemId: item.id, value: current });
+      } catch {
+        stillFailed.push(file);
       }
-    } catch {
-      toast.error(tConduct('uploadError'));
-    } finally {
-      setUploading(false);
     }
+    setUploading(false);
+    setFailedFiles(stillFailed);
+    if (stillFailed.length > 0) toast.error(tConduct('uploadError'));
+  }
+
+  function retryFailed() {
+    const files = failedFiles;
+    setFailedFiles([]);
+    void uploadMany(files);
   }
 
   async function onChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -618,6 +630,19 @@ function MediaInput({
         />
         <span>{uploading ? t('uploading') : t('upload')}</span>
       </label>
+      {failedFiles.length > 0 ? (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+          <span>{t('failedKept', { count: failedFiles.length })}</span>
+          <button
+            type="button"
+            onClick={retryFailed}
+            disabled={uploading}
+            className="rounded-md border border-amber-400 px-2 py-1 font-medium hover:bg-amber-100 dark:hover:bg-amber-900"
+          >
+            {t('retry')}
+          </button>
+        </div>
+      ) : null}
       {keys.length > 0 ? (
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {keys.map((k) => (

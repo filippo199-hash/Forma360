@@ -152,9 +152,25 @@ describe('read authorization', () => {
       { id: userA, name: 'Sub A', email: 'a@sub.test', tenantId, permissionSetId: portalSet },
       { id: userB, name: 'Sub B', email: 'b@sub.test', tenantId, permissionSetId: portalSet },
     ]);
+    // Induction acknowledged — this test covers data scoping, not the
+    // PF-19 induction gate (contractorGate.test.ts CI-E01 covers that).
     await db.insert(schema.contractorUsers).values([
-      { id: newId(), tenantId, contractorId: contractorA, userId: userA },
-      { id: newId(), tenantId, contractorId: contractorB, userId: userB },
+      {
+        id: newId(),
+        tenantId,
+        contractorId: contractorA,
+        userId: userA,
+        acknowledgedAt: new Date(),
+        acknowledgedVersion: 1,
+      },
+      {
+        id: newId(),
+        tenantId,
+        contractorId: contractorB,
+        userId: userB,
+        acknowledgedAt: new Date(),
+        acknowledgedVersion: 1,
+      },
     ]);
 
     // loadContractorScope: internal → null; portal user → their own contractor.

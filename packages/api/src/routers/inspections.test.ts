@@ -91,6 +91,7 @@ const MIGRATION_FILES = [
   '0063_action_reminders.sql',
   '0064_document_expiry_reminders.sql',
   '0065_backfill_freehs_permission_keys.sql',
+  '0066_wave_f_field.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {

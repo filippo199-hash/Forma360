@@ -1125,7 +1125,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} 张照片上传失败——已保留在此。",
+          "retry": "重试"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -2699,7 +2701,28 @@
         "startedAt": "开始时间",
         "createdAt": "创建时间"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "维保计划",
+        "empty": "没有覆盖此资产的维保计划。",
+        "timeMeta": "每 {interval} 天 — 上次保养 {last}",
+        "usageMeta": "每 {interval} {unit} — 当前读数 {current}",
+        "status": {
+          "on_schedule": "按计划",
+          "approaching": "临近",
+          "overdue": "逾期",
+          "awaiting_first_reading": "等待首次读数"
+        }
+      },
+      "fireHistory": {
+        "heading": "消防安全记录",
+        "checkLine": "{type} — {building}",
+        "empty": "消防日志暂无记录。",
+        "performedAt": "日期",
+        "type": "检查",
+        "result": "结果",
+        "notes": "备注"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -3511,7 +3534,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "承包商不合规——请在下方填写豁免原因后继续。"
     },
     "gate": {
       "navLink": "Gate",
@@ -3550,7 +3574,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "该承包商不合规——签到需要记录豁免原因(或请其前往现场办公室)。",
+      "nonCompliantChip": "不合规"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3589,7 +3615,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "自您上次确认后,入场培训已更新——请重新阅读并确认。"
     },
     "users": {
       "heading": "Portal users",
@@ -3643,7 +3670,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "现场入场培训",
+      "version": "版本 {version}",
+      "hint": "门户用户首先会看到此内容。保存修改会提升版本,所有人需重新确认。",
+      "placeholder": "每位承包商开工前必须阅读并确认的内容…",
+      "saveButton": "保存培训内容",
+      "savedToast": "培训内容已保存(版本 {version})。"
+    },
+    "onSitePermits": {
+      "heading": "当前在场且持有效许可证"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5048,7 +5086,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "已关联资产",
+      "noLinkedAsset": "未关联资产",
+      "linkedAssetLine": "资产:{name}",
+      "assetLinkedToast": "资产关联已更新。"
     },
     "doors": {
       "addButton": "Add door",
@@ -5389,5 +5431,46 @@
       "noSite": "无站点",
       "empty": "暂无站点。"
     }
+  },
+  "scanPage": {
+    "loading": "加载中…",
+    "invalidTitle": "此二维码已失效。",
+    "invalidBody": "您扫描的二维码已被撤销,或该类别不再接受上报。请联系现场管理员。",
+    "reportObservation": "上报观察项",
+    "titleLabel": "标题",
+    "titlePlaceholder": "简要说明发生了什么",
+    "descriptionLabel": "描述",
+    "descriptionPlaceholder": "补充有助于理解情况的细节。",
+    "reporterNameLabel": "您的姓名",
+    "reporterNameSubtitle": "选填 — 留空即匿名。",
+    "reporterEmailLabel": "您的邮箱",
+    "reporterEmailSubtitle": "选填 — 可能用于后续跟进。",
+    "dateOccurredLabel": "发生时间",
+    "locationAddressLabel": "位置",
+    "locationAddressPlaceholder": "楼栋、楼层或区域",
+    "customQuestionsHeading": "附加问题",
+    "selectPlaceholder": "请选择",
+    "submit": "提交",
+    "submitting": "提交中…",
+    "successTitle": "感谢您!观察项已提交。",
+    "successBody": "参考编号如下,请妥善保存。",
+    "successAnother": "再提交一条",
+    "errorGeneric": "无法提交观察项,请重试。",
+    "siteLabel": "站点",
+    "siteNone": "选择站点",
+    "photosLabel": "照片",
+    "photosSubtitle": "最多可添加 {max} 张照片——照片是上报的一半。",
+    "photosAdd": "添加照片",
+    "photosRemove": "移除",
+    "photoTooLarge": "该照片超过 {maxMb} MB,请选择更小的照片。",
+    "photoUploadFailed": "有照片上传失败。它仍附在此处——再次提交即可重试。"
+  },
+  "offline": {
+    "title": "您已离线",
+    "body": "没有网络时无法访问此页面。您记录的内容已加入队列,将自动同步。",
+    "pendingChip": "{count} 项待同步 — 联网后自动发送",
+    "itemsDelivered": "已同步 {count} 项排队内容",
+    "itemRejected": "有一项排队内容被服务器拒绝,请检查后重新填写。",
+    "queuedToast": "无网络连接 — 已存入队列,将自动同步。"
   }
 }

@@ -463,6 +463,13 @@
       "when": 1780000130000,
       "tag": "0065_backfill_freehs_permission_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1780000140000,
+      "tag": "0066_wave_f_field",
+      "breakpoints": true
     }
   ]
 }

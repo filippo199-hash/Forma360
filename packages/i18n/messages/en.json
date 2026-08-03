@@ -1261,7 +1261,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} photo(s) failed to upload — kept here.",
+          "retry": "Retry"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -2903,7 +2905,28 @@
         "startedAt": "Started",
         "createdAt": "Created"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "Maintenance plans",
+        "empty": "No maintenance plans cover this asset.",
+        "timeMeta": "Every {interval} days — last service {last}",
+        "usageMeta": "Every {interval} {unit} — meter at {current}",
+        "status": {
+          "on_schedule": "On schedule",
+          "approaching": "Approaching",
+          "overdue": "Overdue",
+          "awaiting_first_reading": "Awaiting first reading"
+        }
+      },
+      "fireHistory": {
+        "heading": "Fire safety history",
+        "checkLine": "{type} — {building}",
+        "empty": "No fire logbook entries yet.",
+        "performedAt": "Date",
+        "type": "Check",
+        "result": "Result",
+        "notes": "Notes"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -3752,7 +3775,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "Contractor not compliant — enter an override reason below to proceed."
     },
     "gate": {
       "navLink": "Gate",
@@ -3791,7 +3815,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "This contractor is not compliant — check-in needs a recorded override reason (or send them to the site office).",
+      "nonCompliantChip": "Not compliant"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3830,7 +3856,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "The induction has been updated since you last acknowledged it — please read and acknowledge again."
     },
     "users": {
       "heading": "Portal users",
@@ -3884,7 +3911,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "Site induction",
+      "version": "Version {version}",
+      "hint": "Shown to every portal user before anything else. Saving a change bumps the version and everyone must acknowledge again.",
+      "placeholder": "What every contractor must read and acknowledge before working here…",
+      "saveButton": "Save induction",
+      "savedToast": "Induction saved (version {version})."
+    },
+    "onSitePermits": {
+      "heading": "On site now with open permits"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5289,7 +5327,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "Linked to asset",
+      "noLinkedAsset": "No linked asset",
+      "linkedAssetLine": "Asset: {name}",
+      "assetLinkedToast": "Asset link updated."
     },
     "doors": {
       "addButton": "Add door",
@@ -5624,5 +5666,46 @@
       "noSite": "No site",
       "empty": "No sites yet."
     }
+  },
+  "scanPage": {
+    "loading": "Loading…",
+    "invalidTitle": "This QR code is no longer active.",
+    "invalidBody": "The QR code you scanned has been revoked or the category is no longer accepting reports. Please contact the site administrator.",
+    "reportObservation": "Report observation",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Short summary of what happened",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Add any details that might help us understand the observation.",
+    "reporterNameLabel": "Your name",
+    "reporterNameSubtitle": "Optional — leave blank to stay anonymous.",
+    "reporterEmailLabel": "Your email",
+    "reporterEmailSubtitle": "Optional — we may use this to follow up.",
+    "dateOccurredLabel": "Date occurred",
+    "locationAddressLabel": "Location",
+    "locationAddressPlaceholder": "Building, floor, or area",
+    "customQuestionsHeading": "Additional questions",
+    "selectPlaceholder": "Select an option",
+    "submit": "Submit",
+    "submitting": "Submitting…",
+    "successTitle": "Thanks! Your observation has been submitted.",
+    "successBody": "Your reference number is below — keep it for your records.",
+    "successAnother": "Submit another",
+    "errorGeneric": "Could not submit the observation. Please try again.",
+    "siteLabel": "Site",
+    "siteNone": "Select a site",
+    "photosLabel": "Photos",
+    "photosSubtitle": "Add up to {max} photos — a picture is half the report.",
+    "photosAdd": "Add photo",
+    "photosRemove": "Remove",
+    "photoTooLarge": "This photo is over {maxMb} MB — please pick a smaller one.",
+    "photoUploadFailed": "A photo failed to upload. It is still attached here — submit again to retry."
+  },
+  "offline": {
+    "title": "You're offline",
+    "body": "This page isn't available without a connection. Anything you recorded is queued and will sync automatically.",
+    "pendingChip": "{count} queued — will sync when online",
+    "itemsDelivered": "{count} queued item(s) synced",
+    "itemRejected": "A queued item was rejected by the server — please review and re-enter it.",
+    "queuedToast": "No connection — saved to the queue. It will sync automatically."
   }
 }

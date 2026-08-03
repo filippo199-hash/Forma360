@@ -13,11 +13,11 @@
  * values already sent. When the asset is serviced, the due date changes, so
  * the old log key is irrelevant.
  */
-import { assets, maintenancePlanAssets, maintenancePlans } from '@forma360/db/schema';
+import { assetReadings, assets, maintenancePlanAssets, maintenancePlans } from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job, ConnectionOptions } from 'bullmq';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { getQueue, QUEUE_NAMES, type MaintenanceTickPayload } from '../queues';
 
 export const MAINTENANCE_TICK_CRON = '0 7 * * *'; // 07:00 UTC daily
@@ -56,7 +56,8 @@ export function createMaintenanceTickHandler(deps: {
     const log = logger.child({ jobId: job.id, tickAt: todayIso });
     log.info('[maintenance-tick] scanning');
 
-    // Load all active time-based plan-asset links.
+    // Load ALL active plan-asset links — time AND usage based (PF-18: the
+    // 'usage' filter gap meant meter-based plans never notified anyone).
     const links = await db
       .select({
         id: maintenancePlanAssets.id,
@@ -64,7 +65,11 @@ export function createMaintenanceTickHandler(deps: {
         planId: maintenancePlanAssets.planId,
         assetId: maintenancePlanAssets.assetId,
         lastServiceDate: maintenancePlanAssets.lastServiceDate,
+        lastServiceValue: maintenancePlanAssets.lastServiceValue,
         intervalDays: maintenancePlans.intervalDays,
+        intervalUsage: maintenancePlans.intervalUsage,
+        usageField: maintenancePlans.usageField,
+        usageUnit: maintenancePlans.usageUnit,
         planType: maintenancePlans.planType,
         notificationDaysBefore: maintenancePlans.notificationDaysBefore,
         notificationsLog: maintenancePlanAssets.notificationsLog,
@@ -72,18 +77,16 @@ export function createMaintenanceTickHandler(deps: {
       .from(maintenancePlanAssets)
       .innerJoin(maintenancePlans, eq(maintenancePlans.id, maintenancePlanAssets.planId))
       .innerJoin(assets, eq(assets.id, maintenancePlanAssets.assetId))
-      .where(
-        and(
-          isNull(maintenancePlans.archivedAt),
-          isNull(assets.archivedAt),
-          eq(maintenancePlans.planType, 'time'),
-        ),
-      );
+      .where(and(isNull(maintenancePlans.archivedAt), isNull(assets.archivedAt)));
 
     log.info({ count: links.length }, '[maintenance-tick] links found');
 
     let enqueued = 0;
     for (const link of links) {
+      if (link.planType === 'usage') {
+        enqueued += await evaluateUsageLink(db, notifyQueue, link, log);
+        continue;
+      }
       const dueDate = computeDueDate(link.lastServiceDate, link.intervalDays);
       if (dueDate === null) continue;
 
@@ -122,4 +125,106 @@ export function createMaintenanceTickHandler(deps: {
 
     log.info({ enqueued }, '[maintenance-tick] done');
   };
+}
+
+/** Marker stored in the dedup log for a usage-cycle "approaching" send. */
+export const USAGE_APPROACHING_MARKER = 1;
+/** Marker for the usage-cycle "due" send. */
+export const USAGE_DUE_MARKER = 0;
+/** Fraction of the usage interval at which the early warning fires. */
+export const USAGE_APPROACHING_FRACTION = 0.9;
+
+export interface UsageLinkRow {
+  id: string;
+  tenantId: string;
+  planId: string;
+  assetId: string | null;
+  lastServiceValue: string | null;
+  intervalUsage: string | null;
+  usageField: string | null;
+  usageUnit: string;
+  notificationDaysBefore: unknown;
+  notificationsLog: unknown;
+}
+
+/**
+ * PF-18: evaluate one usage-based plan-asset link. Due when the latest
+ * reading of the plan's usage field crosses lastServiceValue + interval;
+ * an early warning fires at {@link USAGE_APPROACHING_FRACTION} of the
+ * interval. One send per cycle, deduped through the same notificationsLog
+ * mechanism time plans use, keyed `usage:<threshold>`.
+ */
+export async function evaluateUsageLink(
+  db: Database,
+  notifyQueue: { add: (name: string, payload: object, opts: object) => Promise<unknown> },
+  link: UsageLinkRow,
+  log: Logger,
+): Promise<number> {
+  if (link.assetId === null || link.usageField === null || link.intervalUsage === null) return 0;
+  const interval = Number(link.intervalUsage);
+  if (!Number.isFinite(interval) || interval <= 0) return 0;
+  const notifDays = Array.isArray(link.notificationDaysBefore)
+    ? (link.notificationDaysBefore as number[])
+    : [];
+  if (notifDays.length === 0) return 0;
+
+  const latest = await db
+    .select({ value: assetReadings.value })
+    .from(assetReadings)
+    .where(and(eq(assetReadings.assetId, link.assetId), eq(assetReadings.fieldName, link.usageField)))
+    .orderBy(desc(assetReadings.capturedAt))
+    .limit(1);
+  const current = latest[0] === undefined ? null : Number(latest[0].value);
+  if (current === null || !Number.isFinite(current)) return 0;
+
+  const base = link.lastServiceValue === null ? 0 : Number(link.lastServiceValue);
+  const threshold = base + interval;
+  const logKey = `usage:${threshold}`;
+  const rawLog = link.notificationsLog as Record<string, number[]> | null;
+  const sentRaw = rawLog !== null ? rawLog[logKey] : undefined;
+  const sent: number[] = Array.isArray(sentRaw) ? (sentRaw as number[]) : [];
+
+  const unit = link.usageUnit.length > 0 ? ` ${link.usageUnit}` : '';
+  const wanted: Array<{ marker: number; statusLabel: string }> = [];
+  if (current >= threshold && !sent.includes(USAGE_DUE_MARKER)) {
+    wanted.push({
+      marker: USAGE_DUE_MARKER,
+      statusLabel: `due — meter at ${current}${unit}, service at ${threshold}${unit}`,
+    });
+  } else if (
+    current >= base + interval * USAGE_APPROACHING_FRACTION &&
+    current < threshold &&
+    notifDays.some((d) => d > 0) &&
+    !sent.includes(USAGE_APPROACHING_MARKER) &&
+    !sent.includes(USAGE_DUE_MARKER)
+  ) {
+    wanted.push({
+      marker: USAGE_APPROACHING_MARKER,
+      statusLabel: `approaching — meter at ${current}${unit}, service at ${threshold}${unit}`,
+    });
+  }
+
+  let n = 0;
+  for (const w of wanted) {
+    await notifyQueue.add(
+      QUEUE_NAMES.MAINTENANCE_NOTIFY,
+      {
+        tenantId: link.tenantId,
+        planId: link.planId,
+        assetId: link.assetId,
+        dueDate: logKey,
+        daysBefore: w.marker,
+        statusLabel: w.statusLabel,
+        dueLabel: `at ${threshold}${unit}`,
+      },
+      {
+        jobId: `maint-notify:${link.planId}:${link.assetId}:${logKey}:${w.marker}`,
+        removeOnComplete: 100,
+        removeOnFail: 50,
+      },
+    );
+    n += 1;
+  }
+  if (n > 0) log.info({ planId: link.planId, assetId: link.assetId }, '[maintenance-tick] usage notify enqueued');
+  return n;
 }

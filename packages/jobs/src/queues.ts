@@ -188,8 +188,17 @@ export const maintenanceNotifyPayloadSchema = z.object({
   tenantId: z.string().length(26),
   planId: z.string().length(26),
   assetId: z.string().length(26),
-  /** The computed due date for this service (YYYY-MM-DD). */
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /**
+   * Dedup key for this service cycle. Time-based plans use the computed
+   * due date (YYYY-MM-DD); usage-based plans (PF-18) use
+   * `usage:<threshold>` so one cycle notifies once however long it takes
+   * the meter to cross.
+   */
+  dueDate: z.string().min(4).max(64),
+  /** Human status line for the email (usage plans); defaults from daysBefore. */
+  statusLabel: z.string().max(200).optional(),
+  /** Human "due" label for the email (usage plans), e.g. "at 12000 km". */
+  dueLabel: z.string().max(200).optional(),
   /** How many days before due this notification is for. */
   daysBefore: z.number().int().min(0),
 });

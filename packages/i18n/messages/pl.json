@@ -1125,7 +1125,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "Nie przesłano {count} zdjęć — zachowano tutaj.",
+          "retry": "Ponów"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -2699,7 +2701,28 @@
         "startedAt": "Rozpoczęto",
         "createdAt": "Utworzono"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "Plany konserwacji",
+        "empty": "Żaden plan konserwacji nie obejmuje tego zasobu.",
+        "timeMeta": "Co {interval} dni — ostatni serwis {last}",
+        "usageMeta": "Co {interval} {unit} — licznik: {current}",
+        "status": {
+          "on_schedule": "Zgodnie z planem",
+          "approaching": "Zbliża się",
+          "overdue": "Zaległe",
+          "awaiting_first_reading": "Oczekiwanie na pierwszy odczyt"
+        }
+      },
+      "fireHistory": {
+        "heading": "Historia ochrony przeciwpożarowej",
+        "checkLine": "{type} — {building}",
+        "empty": "Brak wpisów w dzienniku przeciwpożarowym.",
+        "performedAt": "Data",
+        "type": "Kontrola",
+        "result": "Wynik",
+        "notes": "Uwagi"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -3511,7 +3534,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "Wykonawca niezgodny — wpisz poniżej powód odstępstwa, aby kontynuować."
     },
     "gate": {
       "navLink": "Gate",
@@ -3550,7 +3574,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "Ten wykonawca jest niezgodny — odprawa wymaga zarejestrowanego powodu odstępstwa (lub skieruj go do biura budowy).",
+      "nonCompliantChip": "Niezgodny"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3589,7 +3615,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "Instruktaż został zaktualizowany od Twojego ostatniego potwierdzenia — przeczytaj i potwierdź ponownie."
     },
     "users": {
       "heading": "Portal users",
@@ -3643,7 +3670,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "Instruktaż na obiekcie",
+      "version": "Wersja {version}",
+      "hint": "Wyświetlany każdemu użytkownikowi portalu przed wszystkim innym. Zapis zmiany podnosi wersję — wszyscy muszą potwierdzić ponownie.",
+      "placeholder": "Co każdy wykonawca musi przeczytać i potwierdzić przed pracą…",
+      "saveButton": "Zapisz instruktaż",
+      "savedToast": "Instruktaż zapisany (wersja {version})."
+    },
+    "onSitePermits": {
+      "heading": "Obecnie na obiekcie z otwartymi pozwoleniami"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5048,7 +5086,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "Powiązano z zasobem",
+      "noLinkedAsset": "Brak powiązanego zasobu",
+      "linkedAssetLine": "Zasób: {name}",
+      "assetLinkedToast": "Powiązanie zasobu zaktualizowane."
     },
     "doors": {
       "addButton": "Add door",
@@ -5389,5 +5431,46 @@
       "noSite": "Brak lokalizacji",
       "empty": "Brak lokalizacji."
     }
+  },
+  "scanPage": {
+    "loading": "Ładowanie…",
+    "invalidTitle": "Ten kod QR nie jest już aktywny.",
+    "invalidBody": "Zeskanowany kod QR został unieważniony lub kategoria nie przyjmuje już zgłoszeń. Skontaktuj się z administratorem obiektu.",
+    "reportObservation": "Zgłoś obserwację",
+    "titleLabel": "Tytuł",
+    "titlePlaceholder": "Krótkie podsumowanie zdarzenia",
+    "descriptionLabel": "Opis",
+    "descriptionPlaceholder": "Dodaj szczegóły, które pomogą zrozumieć obserwację.",
+    "reporterNameLabel": "Twoje imię i nazwisko",
+    "reporterNameSubtitle": "Opcjonalnie — zostaw puste, aby pozostać anonimowym.",
+    "reporterEmailLabel": "Twój e-mail",
+    "reporterEmailSubtitle": "Opcjonalnie — możemy użyć go do kontaktu.",
+    "dateOccurredLabel": "Data zdarzenia",
+    "locationAddressLabel": "Miejsce",
+    "locationAddressPlaceholder": "Budynek, piętro lub strefa",
+    "customQuestionsHeading": "Dodatkowe pytania",
+    "selectPlaceholder": "Wybierz opcję",
+    "submit": "Wyślij",
+    "submitting": "Wysyłanie…",
+    "successTitle": "Dziękujemy! Obserwacja została wysłana.",
+    "successBody": "Numer referencyjny znajduje się poniżej — zachowaj go.",
+    "successAnother": "Zgłoś kolejną",
+    "errorGeneric": "Nie udało się wysłać obserwacji. Spróbuj ponownie.",
+    "siteLabel": "Lokalizacja",
+    "siteNone": "Wybierz lokalizację",
+    "photosLabel": "Zdjęcia",
+    "photosSubtitle": "Dodaj do {max} zdjęć — obraz to połowa zgłoszenia.",
+    "photosAdd": "Dodaj zdjęcie",
+    "photosRemove": "Usuń",
+    "photoTooLarge": "To zdjęcie przekracza {maxMb} MB — wybierz mniejsze.",
+    "photoUploadFailed": "Nie udało się przesłać zdjęcia. Jest nadal załączone — wyślij ponownie, aby spróbować jeszcze raz."
+  },
+  "offline": {
+    "title": "Jesteś offline",
+    "body": "Ta strona jest niedostępna bez połączenia. Zapisane dane czekają w kolejce i zsynchronizują się automatycznie.",
+    "pendingChip": "{count} w kolejce — synchronizacja po powrocie online",
+    "itemsDelivered": "Zsynchronizowano {count} z kolejki",
+    "itemRejected": "Serwer odrzucił element z kolejki — sprawdź i wprowadź ponownie.",
+    "queuedToast": "Brak połączenia — zapisano w kolejce. Synchronizacja nastąpi automatycznie."
   }
 }

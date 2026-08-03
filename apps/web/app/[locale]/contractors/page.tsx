@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from '../../../src/components/ui/dialog';
 import { Input } from '../../../src/components/ui/input';
+import { Textarea } from '../../../src/components/ui/textarea';
 import { Label } from '../../../src/components/ui/label';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { cn } from '../../../src/lib/cn';
@@ -52,6 +53,21 @@ export default function ContractorsPage() {
     onSuccess: () => {
       toast.success(t('visits.checkedOutToast'));
       void utils.contractors.visits.onSiteNow.invalidate();
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('error')),
+  });
+  // PF-19: the permits↔contractors join — who is inside with live permits.
+  const openPermits = trpc.contractors.visits.onSiteWithOpenPermits.useQuery(undefined, {
+    refetchInterval: 60_000,
+  });
+  // PF-19: versioned induction text editor (manage only).
+  const induction = trpc.contractors.induction.get.useQuery(undefined, { enabled: canManage });
+  const [inductionDraft, setInductionDraft] = useState<string | null>(null);
+  const saveInduction = trpc.contractors.induction.set.useMutation({
+    onSuccess: (res) => {
+      toast.success(t('induction.savedToast', { version: res.version }));
+      setInductionDraft(null);
+      void utils.contractors.induction.get.invalidate();
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : t('error')),
   });
@@ -256,6 +272,79 @@ export default function ContractorsPage() {
                   </ul>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* PF-19: contractors on site holding open permits — the join the
+        * review found missing. */}
+      {(openPermits.data?.length ?? 0) > 0 ? (
+        <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
+          <CardContent className="p-4">
+            <h2 className="mb-2 text-sm font-semibold">{t('onSitePermits.heading')}</h2>
+            <ul className="divide-y divide-amber-200/60 text-sm dark:divide-amber-900/40">
+              {(openPermits.data ?? []).map((r) => (
+                <li
+                  key={`${r.visitId}-${r.permitId}`}
+                  className="flex flex-wrap items-center justify-between gap-2 py-2"
+                >
+                  <span className="min-w-0 truncate">
+                    <Link
+                      href={`/${locale}/contractors/${r.contractorId}`}
+                      className="font-medium hover:underline"
+                    >
+                      {r.contractorName}
+                    </Link>
+                    <span className="text-muted-foreground"> — {r.permitTitle}</span>
+                  </span>
+                  <Link
+                    href={`/${locale}/permits/${r.permitId}`}
+                    className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 hover:underline dark:bg-amber-900/40 dark:text-amber-100"
+                  >
+                    {r.permitReference ?? r.permitId} · {r.permitStatus}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* PF-19: versioned site induction — editing bumps the version and
+        * forces every portal user to re-acknowledge. */}
+      {canManage ? (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold">{t('induction.heading')}</h2>
+              <span className="text-xs text-muted-foreground">
+                {t('induction.version', { version: induction.data?.version ?? 1 })}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">{t('induction.hint')}</p>
+            <Textarea
+              value={inductionDraft ?? induction.data?.body ?? ''}
+              onChange={(e) => setInductionDraft(e.target.value)}
+              rows={4}
+              maxLength={20_000}
+              placeholder={t('induction.placeholder')}
+            />
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                disabled={
+                  saveInduction.isPending ||
+                  inductionDraft === null ||
+                  inductionDraft.trim() === '' ||
+                  inductionDraft === (induction.data?.body ?? '')
+                }
+                onClick={() => {
+                  if (inductionDraft !== null) saveInduction.mutate({ body: inductionDraft });
+                }}
+              >
+                {t('induction.saveButton')}
+              </Button>
             </div>
           </CardContent>
         </Card>

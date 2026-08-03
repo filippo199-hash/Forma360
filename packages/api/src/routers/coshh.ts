@@ -1035,6 +1035,8 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           substanceId: z.string().length(26),
           taskDescription: z.string().min(1).max(2000),
           kind: z.enum(COSHH_ASSESSMENT_KINDS).default('standing'),
+          /** PF-10: offline-queue idempotency key (point-of-work flow). */
+          clientRequestId: z.string().length(26).optional(),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -1042,6 +1044,30 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         const substance = await loadSubstance(ctx.db, ctx.tenantId, input.substanceId);
         if (substance.archivedAt !== null) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        if (input.clientRequestId !== undefined) {
+          const dup = (
+            await ctx.db
+              .select({
+                id: coshhAssessments.id,
+                referenceNumber: coshhAssessments.referenceNumber,
+              })
+              .from(coshhAssessments)
+              .where(
+                and(
+                  eq(coshhAssessments.tenantId, ctx.tenantId),
+                  eq(coshhAssessments.clientRequestId, input.clientRequestId),
+                ),
+              )
+              .limit(1)
+          )[0];
+          if (dup !== undefined) {
+            return {
+              assessmentId: dup.id,
+              referenceNumber: dup.referenceNumber ?? '',
+              deduped: true,
+            };
+          }
         }
         const id = newId();
         const n = await nextReferenceValue(ctx.db, ctx.tenantId, 'coshhAssessment');
@@ -1053,6 +1079,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           referenceNumber,
           taskDescription: input.taskDescription,
           kind: input.kind,
+          clientRequestId: input.clientRequestId ?? null,
           assessorUserId: ctx.auth.userId,
           reviewFrequencyMonths: DEFAULT_ASSESSMENT_REVIEW_MONTHS,
           nextReviewAt: addMonths(new Date(), DEFAULT_ASSESSMENT_REVIEW_MONTHS),

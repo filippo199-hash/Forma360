@@ -17,6 +17,8 @@ type KioskVisit = {
   contractorName: string;
   title: string;
   status: string;
+  /** PF-19: derived company compliance, shown at the kiosk. */
+  complianceStatus: string;
 };
 
 export default function GateKioskPage() {
@@ -39,7 +41,14 @@ export default function GateKioskPage() {
       setDone(vars.eventType);
       void utils.contractors.gate.publicByToken.invalidate({ token });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('error')),
+    onError: (err) =>
+      toast.error(
+        err.message === 'contractor_non_compliant'
+          ? t('gate.blockedNonCompliant')
+          : err.message.length > 0
+            ? err.message
+            : t('error'),
+      ),
   });
 
   const fields = data?.fields ?? [];
@@ -135,14 +144,24 @@ export default function GateKioskPage() {
                   ))}
                 </div>
               ) : null}
-              <Button
-                className="h-14 w-full text-base"
-                disabled={checkIn.isPending || missingRequired}
-                onClick={() => submit('check_in')}
-              >
-                <LogIn className="mr-2 h-5 w-5" />
-                {t('gate.checkInButton')}
-              </Button>
+              {selected.complianceStatus === 'non_compliant' ? (
+                /* PF-19: the kiosk has no override — direct to the office. */
+                <div
+                  role="alert"
+                  className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-center text-sm font-medium text-destructive"
+                >
+                  {t('gate.blockedNonCompliant')}
+                </div>
+              ) : (
+                <Button
+                  className="h-14 w-full text-base"
+                  disabled={checkIn.isPending || missingRequired}
+                  onClick={() => submit('check_in')}
+                >
+                  <LogIn className="mr-2 h-5 w-5" />
+                  {t('gate.checkInButton')}
+                </Button>
+              )}
             </>
           ) : (
             <Button
@@ -180,6 +199,11 @@ export default function GateKioskPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{v.contractorName}</p>
                         <p className="truncate text-sm text-muted-foreground">{v.title}</p>
+                        {v.complianceStatus === 'non_compliant' ? (
+                          <span className="mt-1 inline-block rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                            {t('gate.nonCompliantChip')}
+                          </span>
+                        ) : null}
                       </div>
                       <span
                         className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${

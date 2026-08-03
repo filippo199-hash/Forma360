@@ -1125,7 +1125,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} foto(s) sin subir — conservadas aquí.",
+          "retry": "Reintentar"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -2706,7 +2708,28 @@
         "startedAt": "Iniciado",
         "createdAt": "Creado"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "Planes de mantenimiento",
+        "empty": "Ningún plan de mantenimiento cubre este activo.",
+        "timeMeta": "Cada {interval} días — último servicio {last}",
+        "usageMeta": "Cada {interval} {unit} — contador en {current}",
+        "status": {
+          "on_schedule": "En programa",
+          "approaching": "Próximo",
+          "overdue": "Vencido",
+          "awaiting_first_reading": "Esperando primera lectura"
+        }
+      },
+      "fireHistory": {
+        "heading": "Historial de seguridad contra incendios",
+        "checkLine": "{type} — {building}",
+        "empty": "Aún no hay registros en el libro de incendios.",
+        "performedAt": "Fecha",
+        "type": "Comprobación",
+        "result": "Resultado",
+        "notes": "Notas"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -3518,7 +3541,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "Contratista no conforme: ingresa un motivo de excepción abajo para continuar."
     },
     "gate": {
       "navLink": "Gate",
@@ -3557,7 +3581,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "Este contratista no es conforme: el check-in requiere un motivo de excepción registrado (o envíalo a la oficina de obra).",
+      "nonCompliantChip": "No conforme"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3596,7 +3622,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "La inducción se actualizó desde tu última confirmación: léela y confírmala de nuevo."
     },
     "users": {
       "heading": "Portal users",
@@ -3650,7 +3677,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "Inducción del sitio",
+      "version": "Versión {version}",
+      "hint": "Se muestra a cada usuario del portal antes que nada. Guardar un cambio sube la versión y todos deben confirmarla de nuevo.",
+      "placeholder": "Lo que todo contratista debe leer y confirmar antes de trabajar aquí…",
+      "saveButton": "Guardar inducción",
+      "savedToast": "Inducción guardada (versión {version})."
+    },
+    "onSitePermits": {
+      "heading": "En el sitio ahora con permisos abiertos"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5055,7 +5093,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "Vinculado al activo",
+      "noLinkedAsset": "Sin activo vinculado",
+      "linkedAssetLine": "Activo: {name}",
+      "assetLinkedToast": "Vínculo de activo actualizado."
     },
     "doors": {
       "addButton": "Add door",
@@ -5396,5 +5438,46 @@
       "noSite": "Sin sitio",
       "empty": "Aún no hay sitios."
     }
+  },
+  "scanPage": {
+    "loading": "Cargando…",
+    "invalidTitle": "Este código QR ya no está activo.",
+    "invalidBody": "El código QR escaneado fue revocado o la categoría ya no acepta reportes. Contacta al administrador del sitio.",
+    "reportObservation": "Reportar observación",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Resumen breve de lo ocurrido",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Agrega detalles que ayuden a entender la observación.",
+    "reporterNameLabel": "Tu nombre",
+    "reporterNameSubtitle": "Opcional — déjalo vacío para permanecer anónimo.",
+    "reporterEmailLabel": "Tu correo",
+    "reporterEmailSubtitle": "Opcional — podríamos usarlo para dar seguimiento.",
+    "dateOccurredLabel": "Fecha del suceso",
+    "locationAddressLabel": "Ubicación",
+    "locationAddressPlaceholder": "Edificio, piso o área",
+    "customQuestionsHeading": "Preguntas adicionales",
+    "selectPlaceholder": "Selecciona una opción",
+    "submit": "Enviar",
+    "submitting": "Enviando…",
+    "successTitle": "¡Gracias! Tu observación fue enviada.",
+    "successBody": "Tu número de referencia está abajo — consérvalo.",
+    "successAnother": "Enviar otra",
+    "errorGeneric": "No se pudo enviar la observación. Inténtalo de nuevo.",
+    "siteLabel": "Sitio",
+    "siteNone": "Selecciona un sitio",
+    "photosLabel": "Fotos",
+    "photosSubtitle": "Agrega hasta {max} fotos: una imagen es la mitad del reporte.",
+    "photosAdd": "Agregar foto",
+    "photosRemove": "Quitar",
+    "photoTooLarge": "Esta foto supera {maxMb} MB: elige una más pequeña.",
+    "photoUploadFailed": "Una foto no se pudo subir. Sigue adjunta aquí: envía de nuevo para reintentar."
+  },
+  "offline": {
+    "title": "Sin conexión",
+    "body": "Esta página no está disponible sin conexión. Lo que registraste está en cola y se sincronizará automáticamente.",
+    "pendingChip": "{count} en cola — se sincronizará al volver la conexión",
+    "itemsDelivered": "{count} elementos sincronizados",
+    "itemRejected": "El servidor rechazó un elemento en cola: revísalo y vuelve a ingresarlo.",
+    "queuedToast": "Sin conexión: guardado en la cola. Se sincronizará automáticamente."
   }
 }

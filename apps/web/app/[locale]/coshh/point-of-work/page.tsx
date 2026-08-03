@@ -23,6 +23,8 @@ import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { enqueueOffline, isNetworkError } from '../../../../src/lib/offline-queue';
+import { newId } from '@forma360/shared/id';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 const TIERS = [
@@ -57,6 +59,7 @@ export default function PointOfWorkPage() {
   const tCoshh = useTranslations('coshh');
   const tEditor = useTranslations('coshh.editor');
   const tCommon = useTranslations('common');
+  const tOffline = useTranslations('offline');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -152,11 +155,15 @@ export default function PointOfWorkPage() {
   async function submit(): Promise<void> {
     if (busy || !ready || substance === undefined) return;
     setBusy(true);
+    // PF-10: one id per submit attempt — the server dedupes the create on
+    // it, so an offline-queued replay can never double-create.
+    const clientRequestId = newId();
     try {
       const created = await createAssessment.mutateAsync({
         substanceId: substance.id,
         taskDescription: task.trim(),
         kind: 'point_of_work',
+        clientRequestId,
       });
       await updateAssessment.mutateAsync({
         assessmentId: created.assessmentId,
@@ -181,6 +188,32 @@ export default function PointOfWorkPage() {
       await publish.mutateAsync({ assessmentId: created.assessmentId });
       setDone(created);
     } catch (err) {
+      // PF-10: at-the-task assessments happen exactly where signal dies.
+      // Connectivity failure → queue the whole intent (create + routes +
+      // controls + publish); the flusher replays it when back online.
+      if (isNetworkError(err)) {
+        enqueueOffline('coshh-pow', {
+          create: {
+            substanceId: substance.id,
+            taskDescription: task.trim(),
+            kind: 'point_of_work',
+            clientRequestId,
+          },
+          routesOfExposure: routes,
+          controls: selectedControls.map((c, i) => ({
+            tier: c.tier,
+            description: c.description,
+            status: 'in_place',
+            ...(allPpe && i === 0 ? { ppeJustification: justification.trim() } : {}),
+            ...(c.rpeType !== null ? { rpeType: c.rpeType } : {}),
+            ...(c.rpeApf !== null ? { rpeApf: c.rpeApf } : {}),
+            ...(c.faceFitConfirmedAt !== null ? { faceFitConfirmedAt: c.faceFitConfirmedAt } : {}),
+          })),
+        });
+        toast.success(tOffline('queuedToast'));
+        setBusy(false);
+        return;
+      }
       const message = err instanceof Error ? err.message : '';
       const key = PUBLISH_ERRORS.has(message) ? message : 'generic';
       toast.error(tEditor(`publishErrors.${key}` as never));
