@@ -56,6 +56,19 @@ import {
   FIRE_DUE_DIGEST_CRON,
   type FireDigest,
 } from './workers/fire-due-digest';
+import { createIncidentAlertHandler, type AlertIncident } from './workers/incident-alert';
+import {
+  createIncidentRiddorWatchHandler,
+  INCIDENT_RIDDOR_WATCH_CRON,
+  type RiddorWatchIncident,
+  type RiddorWatchKind,
+} from './workers/incident-riddor-watch';
+import {
+  chaseDetailLines,
+  createIncidentChaseHandler,
+  INCIDENT_CHASE_CRON,
+  type IncidentChaseDigest,
+} from './workers/incident-chase';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -409,6 +422,137 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   );
   logger.info({ cron: FIRE_DUE_DIGEST_CRON }, '[worker] registered fire-due-digest repeatable');
 
+  // ─── FreeHS B5 — incident immediate alert (event-driven) ───────────────
+  const kindLabels: Record<string, string> = {
+    injury: 'Injury',
+    ill_health: 'Ill health',
+    dangerous_occurrence: 'Dangerous occurrence',
+    sharps_exposure: 'Sharps / splash exposure',
+    violence_aggression: 'Violence & aggression',
+    damage: 'Damage',
+    environmental: 'Environmental',
+    near_miss: 'Near miss',
+  };
+  const incidentAlertWorker = new Worker(
+    QUEUE_NAMES.INCIDENT_ALERT,
+    createIncidentAlertHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'incident-alert' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string },
+        incident: AlertIncident,
+        viewUrl: string,
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey: 'incident-alert',
+          variables: {
+            recipientName: recipient.name,
+            referenceNumber: incident.referenceNumber,
+            kindLabel: kindLabels[incident.kind] ?? incident.kind,
+            severityLabel: incident.severity,
+            siteLine: incident.siteName ?? '—',
+            occurredAt: incident.occurredAt.toISOString().replace('T', ' ').slice(0, 16),
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+
+  // ─── FreeHS B5 — RIDDOR deadline watch ─────────────────────────────────
+  const riddorCategoryLabels: Record<string, string> = {
+    death: 'death',
+    specified_injury: 'specified injury',
+    over_7_day: 'over-7-day injury',
+    occupational_disease: 'occupational disease',
+    dangerous_occurrence: 'dangerous occurrence',
+    gas_incident: 'gas incident',
+  };
+  const incidentRiddorWatchWorker = new Worker(
+    QUEUE_NAMES.INCIDENT_RIDDOR_WATCH,
+    createIncidentRiddorWatchHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'incident-riddor-watch' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        kind: RiddorWatchKind,
+        incident: RiddorWatchIncident,
+        recipient: { email: string; name: string },
+        viewUrl: string,
+      ) => {
+        const daysLeft = Math.max(
+          0,
+          Math.ceil((incident.riddorDeadlineAt.getTime() - Date.now()) / 86_400_000),
+        );
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey:
+            kind === 'escalation' ? 'incident-riddor-escalation' : 'incident-riddor-warning',
+          variables: {
+            recipientName: recipient.name,
+            referenceNumber: incident.referenceNumber,
+            categoryLabel: riddorCategoryLabels[incident.riddorCategory] ?? incident.riddorCategory,
+            deadlineAt: incident.riddorDeadlineAt.toISOString().replace('T', ' ').slice(0, 16),
+            daysLeft: `${daysLeft} day(s)`,
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const incidentRiddorWatchQueue = getQueue(QUEUE_NAMES.INCIDENT_RIDDOR_WATCH, connection);
+  await incidentRiddorWatchQueue.upsertJobScheduler(
+    'incident-riddor-watch',
+    { pattern: INCIDENT_RIDDOR_WATCH_CRON, tz: 'UTC' },
+    { name: 'incident-riddor-watch', data: {} },
+  );
+  logger.info(
+    { cron: INCIDENT_RIDDOR_WATCH_CRON },
+    '[worker] registered incident-riddor-watch repeatable',
+  );
+
+  // ─── FreeHS B5 — incident chase digest ─────────────────────────────────
+  const incidentChaseWorker = new Worker(
+    QUEUE_NAMES.INCIDENT_CHASE,
+    createIncidentChaseHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'incident-chase' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string },
+        digest: IncidentChaseDigest,
+        viewUrl: string,
+      ) => {
+        const total =
+          digest.idleInvestigations.length +
+          digest.overdueActionIncidents.length +
+          digest.effectivenessDue.length;
+        await sendTemplatedEmail({
+          to: recipient.email,
+          templateKey: 'incident-chase-digest',
+          variables: {
+            recipientName: recipient.name,
+            totalCount: String(total),
+            detailLines: chaseDetailLines(digest),
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const incidentChaseQueue = getQueue(QUEUE_NAMES.INCIDENT_CHASE, connection);
+  await incidentChaseQueue.upsertJobScheduler(
+    'incident-chase',
+    { pattern: INCIDENT_CHASE_CRON, tz: 'UTC' },
+    { name: 'incident-chase', data: {} },
+  );
+  logger.info({ cron: INCIDENT_CHASE_CRON }, '[worker] registered incident-chase repeatable');
+
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
   await scheduleTickQueue.upsertJobScheduler(
@@ -452,6 +596,9 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     raAckReminderWorker,
     permitExpiryWatchWorker,
     fireDueDigestWorker,
+    incidentAlertWorker,
+    incidentRiddorWatchWorker,
+    incidentChaseWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {

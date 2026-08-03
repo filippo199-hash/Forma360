@@ -96,6 +96,28 @@ export const QUEUE_NAMES = {
    * `fireSafety.manage` holder. Quiet when the calendar is clean.
    */
   FIRE_DUE_DIGEST: 'forma360-fire-due-digest',
+  /**
+   * FreeHS B5 — event-driven immediate alert for a newly reported /
+   * triaged incident that is serious-or-above or an always-alert kind
+   * (dangerous occurrence, sharps, violence). The worker resolves
+   * `incidents.manage` holders (site-scoped where curated), sends a
+   * confidential-safe email and stamps `alert_sent_at`.
+   */
+  INCIDENT_ALERT: 'forma360-incident-alert',
+  /**
+   * FreeHS B5 — 15-minute RIDDOR deadline watch: warnings at T-5 and
+   * T-2 days to the incident owner + `incidents.manage` holders,
+   * escalation once the statutory deadline passes unsubmitted.
+   * Notify-then-stamp: a failed send retries next tick.
+   */
+  INCIDENT_RIDDOR_WATCH: 'forma360-incident-riddor-watch',
+  /**
+   * FreeHS B5 — daily chase digest: investigations idle beyond the
+   * chase window, incidents stuck in actions_outstanding with overdue
+   * actions, and effectiveness reviews past due. One email per owner;
+   * silent when clean.
+   */
+  INCIDENT_CHASE: 'forma360-incident-chase',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -214,6 +236,23 @@ export type PermitExpiryWatchPayload = z.infer<typeof permitExpiryWatchPayloadSc
 export const fireDueDigestPayloadSchema = z.object({}).strict();
 export type FireDueDigestPayload = z.infer<typeof fireDueDigestPayloadSchema>;
 
+/** One immediate-alert fan-out for one incident. */
+export const incidentAlertPayloadSchema = z
+  .object({
+    tenantId: z.string().length(26),
+    incidentId: z.string().length(26),
+  })
+  .strict();
+export type IncidentAlertPayload = z.infer<typeof incidentAlertPayloadSchema>;
+
+/** RIDDOR deadline-watch tick — no payload; the worker scans the clocks. */
+export const incidentRiddorWatchPayloadSchema = z.object({}).strict();
+export type IncidentRiddorWatchPayload = z.infer<typeof incidentRiddorWatchPayloadSchema>;
+
+/** Incident chase-digest tick — no payload; the worker scans open incidents. */
+export const incidentChasePayloadSchema = z.object({}).strict();
+export type IncidentChasePayload = z.infer<typeof incidentChasePayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -235,6 +274,9 @@ export interface QueuePayloads {
   [QUEUE_NAMES.RA_ACK_REMINDER]: RaAckReminderPayload;
   [QUEUE_NAMES.PERMIT_EXPIRY_WATCH]: PermitExpiryWatchPayload;
   [QUEUE_NAMES.FIRE_DUE_DIGEST]: FireDueDigestPayload;
+  [QUEUE_NAMES.INCIDENT_ALERT]: IncidentAlertPayload;
+  [QUEUE_NAMES.INCIDENT_RIDDOR_WATCH]: IncidentRiddorWatchPayload;
+  [QUEUE_NAMES.INCIDENT_CHASE]: IncidentChasePayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -255,6 +297,9 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.RA_ACK_REMINDER]: raAckReminderPayloadSchema,
   [QUEUE_NAMES.PERMIT_EXPIRY_WATCH]: permitExpiryWatchPayloadSchema,
   [QUEUE_NAMES.FIRE_DUE_DIGEST]: fireDueDigestPayloadSchema,
+  [QUEUE_NAMES.INCIDENT_ALERT]: incidentAlertPayloadSchema,
+  [QUEUE_NAMES.INCIDENT_RIDDOR_WATCH]: incidentRiddorWatchPayloadSchema,
+  [QUEUE_NAMES.INCIDENT_CHASE]: incidentChasePayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

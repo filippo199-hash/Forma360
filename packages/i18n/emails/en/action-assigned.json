@@ -1,0 +1,8 @@
+{
+  "subject": "Action assigned to you — {actionTitle}",
+  "preheader": "A corrective action on {productName} has been assigned to you.",
+  "greeting": "Hello {recipientName},",
+  "body": "A corrective action on {productName} has been assigned to you:\n\n{actionTitle}\nRaised from: {sourceRef}\n\nOpen the action for the full description, priority and due date, and mark it complete when the work is done.",
+  "cta": "Open the action",
+  "footer": "You are receiving this because the action was assigned to you in {productName}."
+}

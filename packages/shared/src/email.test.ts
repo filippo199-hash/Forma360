@@ -114,27 +114,37 @@ describe('brand substitution — {productName} (ADR 0010)', () => {
     expect(payload.subject).toBe('Verify your FreeHS email');
   });
 
-  it('every shipped template renders without leftover Forma360 literals', async () => {
-    // The base templates are brand-neutral: rendering with a non-default
-    // productName must not leak the old hardcoded brand.
+  it('IN-J04: every file in emails/en/ is registered, schema-valid and brand-neutral', async () => {
+    // Registry-completeness (platform review PF-1, made permanent by the
+    // incidents module): a template JSON that exists on disk but is not
+    // in EMAIL_TEMPLATES throws "Unknown email template" at send time —
+    // in production, silently, inside a worker. This walks the directory
+    // so a forgotten registration fails CI instead. The loader also
+    // schema-validates (all six fields required), and rendering with a
+    // non-default productName must not leak the hardcoded brand.
+    const { readdir } = await import('node:fs/promises');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
     const { defaultTemplatedTemplateLoader } = await import('./email');
-    const keys = [
-      'invite',
-      'otp',
-      'verification',
-      'password-reset',
-      'request-to-join',
-      'schedule-reminder',
-      'heads-up-reminder',
-      'observation-notification',
-      'observation-critical-alert',
-      'maintenance-reminder',
-      'contractor-doc-expiry',
-    ];
-    for (const key of keys) {
-      const tpl = await defaultTemplatedTemplateLoader(key);
+    const emailsDir = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '..',
+      '..',
+      'i18n',
+      'emails',
+      'en',
+    );
+    const files = (await readdir(emailsDir)).filter((f) => f.endsWith('.json'));
+    expect(files.length).toBeGreaterThanOrEqual(29);
+    for (const file of files) {
+      const key = file.replace(/\.json$/, '');
+      const tpl = await defaultTemplatedTemplateLoader(key).catch((err: unknown) => {
+        throw new Error(`template "${key}" failed to load — register it in EMAIL_TEMPLATES: ${String(err)}`);
+      });
       const rendered = renderTemplatedEmail(tpl, { productName: 'FreeHS', url: 'https://x' });
-      expect(rendered.subject + rendered.text).not.toContain('Forma360');
+      expect(rendered.subject + rendered.text, `template "${key}" leaks the brand`).not.toContain(
+        'Forma360',
+      );
     }
   });
 });

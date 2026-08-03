@@ -1,0 +1,8 @@
+{
+  "subject": "RIDDOR deadline PASSED — {referenceNumber} is overdue",
+  "preheader": "A reportable incident on {productName} has passed its statutory reporting deadline.",
+  "greeting": "Hello {recipientName},",
+  "body": "The statutory reporting deadline for incident {referenceNumber} ({categoryLabel}) passed at {deadlineAt} UTC and no submission has been recorded.\n\nFailing to report a RIDDOR-reportable incident is an offence. Submit the report to the HSE immediately and record the submission on the incident — the record of a late submission is still better than none.",
+  "cta": "Open the incident",
+  "footer": "You are receiving this because you own this incident or hold incident management permissions in {productName}."
+}

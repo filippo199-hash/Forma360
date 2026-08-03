@@ -1,0 +1,8 @@
+{
+  "subject": "RIDDOR deadline in {daysLeft} — {referenceNumber}",
+  "preheader": "A reportable incident on {productName} has not been submitted to the HSE yet.",
+  "greeting": "Hello {recipientName},",
+  "body": "The incident {referenceNumber} was screened as RIDDOR-reportable ({categoryLabel}) and has not yet been submitted to the HSE.\n\nStatutory deadline: {deadlineAt} UTC ({daysLeft} remaining).\n\nSubmit the report via the HSE online form (or by phone for fatal and specified injuries), then record the submission on the incident so the clock stops.",
+  "cta": "Open the incident",
+  "footer": "You are receiving this because you own this incident or hold incident management permissions in {productName}."
+}

@@ -1,0 +1,170 @@
+/**
+ * Unit tests for the incident immediate alert (FreeHS module B5).
+ *
+ * Edge cases:
+ *   - IN-J02: routing — serious severity or an always-alert kind fans
+ *     out to `incidents.manage` holders; the payload is confidential-
+ *     safe (no title/description); site-curated teams narrow the
+ *     audience with a safe fallback; the stamp dedupes replays.
+ */
+import { readFile, readdir } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { PGlite } from '@electric-sql/pglite';
+import * as schema from '@forma360/db/schema';
+import { newId } from '@forma360/shared/id';
+import { createLogger } from '@forma360/shared/logger';
+import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
+import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
+import { eq } from 'drizzle-orm';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { runIncidentAlert, type AlertIncident, type IncidentAlertDeps } from './incident-alert';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const MIGRATIONS_DIR = join(__dirname, '..', '..', '..', 'db', 'migrations');
+
+async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
+  const client = new PGlite();
+  const db = drizzle(client, { schema });
+  const files = (await readdir(MIGRATIONS_DIR)).filter((f) => f.endsWith('.sql')).sort();
+  for (const file of files) {
+    const sqlText = await readFile(join(MIGRATIONS_DIR, file), 'utf-8');
+    for (const stmt of sqlText.split('--> statement-breakpoint').map((s) => s.trim())) {
+      if (stmt.length > 0) await client.exec(stmt);
+    }
+  }
+  return { client, db };
+}
+
+const logger = createLogger({ service: 'test', level: 'fatal', nodeEnv: 'test' });
+
+describe('incident-alert', () => {
+  let client: PGlite;
+  let db: PgliteDatabase<typeof schema>;
+  let tenantId: string;
+  let adminId: string;
+  let managerId: string;
+  let siteId: string;
+  let sent: Array<{ to: string; incident: AlertIncident }>;
+
+  function deps(): IncidentAlertDeps {
+    return {
+      db: db as never,
+      logger,
+      appUrl: 'https://freehs.test',
+      notify: async (recipient, incident) => {
+        sent.push({ to: recipient.email, incident });
+      },
+    };
+  }
+
+  async function seedIncident(
+    patch: Partial<typeof schema.incidents.$inferInsert> = {},
+  ): Promise<string> {
+    const id = newId();
+    await db.insert(schema.incidents).values({
+      id,
+      tenantId,
+      referenceNumber: `IN-${id.slice(-6)}`,
+      title: 'SECRET TITLE — must never appear in alert payloads',
+      kind: 'injury',
+      severity: 'serious',
+      status: 'reported',
+      occurredAt: new Date('2026-07-10T08:00:00Z'),
+      reportedByUserId: managerId,
+      siteId,
+      confidential: true,
+      ...patch,
+    });
+    return id;
+  }
+
+  beforeEach(async () => {
+    ({ client, db } = await bootDb());
+    sent = [];
+    tenantId = newId();
+    await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: `a-${tenantId}` });
+    const sets = await seedDefaultPermissionSets(db as never, tenantId);
+    adminId = `usr_${newId()}`;
+    managerId = `usr_${newId()}`;
+    await db.insert(schema.user).values([
+      {
+        id: adminId,
+        name: 'Alice Admin',
+        email: `alice-${tenantId}@acme.test`,
+        tenantId,
+        permissionSetId: sets.administrator,
+      },
+      {
+        id: managerId,
+        name: 'Mark Manager',
+        email: `mark-${tenantId}@acme.test`,
+        tenantId,
+        permissionSetId: sets.manager,
+      },
+    ]);
+    siteId = newId();
+    await db.insert(schema.sites).values({ id: siteId, tenantId, name: 'Refinery' });
+  });
+
+  afterEach(async () => {
+    await client.close();
+  });
+
+  it('IN-J02: fans out to manage holders with a confidential-safe payload', async () => {
+    const id = await seedIncident();
+    const result = await runIncidentAlert(deps(), { tenantId, incidentId: id });
+    expect(result.notified).toBe(2); // admin + manager both hold incidents.manage
+    // Confidential-safe: the AlertIncident surface has no title field at all.
+    for (const call of sent) {
+      expect(JSON.stringify(call.incident)).not.toContain('SECRET TITLE');
+      expect(call.incident.referenceNumber).toMatch(/^IN-/);
+    }
+    // Stamp + event written; a replayed job is a no-op.
+    const row = await db
+      .select({ alertSentAt: schema.incidents.alertSentAt })
+      .from(schema.incidents)
+      .where(eq(schema.incidents.id, id));
+    expect(row[0]?.alertSentAt).not.toBeNull();
+    sent = [];
+    const replay = await runIncidentAlert(deps(), { tenantId, incidentId: id });
+    expect(replay.notified).toBe(0);
+    expect(sent).toHaveLength(0);
+  });
+
+  it('IN-J02b: re-checks routing against the current row', async () => {
+    const calm = await seedIncident({ severity: 'minor', kind: 'injury' });
+    const result = await runIncidentAlert(deps(), { tenantId, incidentId: calm });
+    expect(result.notified).toBe(0);
+    // Always-alert kind fires even at negligible severity.
+    const sharps = await seedIncident({ severity: 'negligible', kind: 'sharps_exposure' });
+    const result2 = await runIncidentAlert(deps(), { tenantId, incidentId: sharps });
+    expect(result2.notified).toBe(2);
+  });
+
+  it('IN-J02c: a curated site team narrows the audience, with fallback', async () => {
+    await db.insert(schema.siteMembers).values({ tenantId, siteId, userId: managerId });
+    const id = await seedIncident();
+    await runIncidentAlert(deps(), { tenantId, incidentId: id });
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.to).toContain('mark-');
+
+    // A team with no manage-holders falls back to every holder.
+    const otherSite = newId();
+    await db.insert(schema.sites).values({ id: otherSite, tenantId, name: 'Depot' });
+    const stranger = `usr_${newId()}`;
+    const sets = await seedDefaultPermissionSets(db as never, tenantId);
+    await db.insert(schema.user).values({
+      id: stranger,
+      name: 'Standard Sam',
+      email: `sam-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: sets.standard,
+    });
+    await db.insert(schema.siteMembers).values({ tenantId, siteId: otherSite, userId: stranger });
+    sent = [];
+    const id2 = await seedIncident({ siteId: otherSite });
+    await runIncidentAlert(deps(), { tenantId, incidentId: id2 });
+    expect(sent).toHaveLength(2); // fallback: both manage holders
+  });
+});

@@ -22,7 +22,15 @@ import type { Logger } from './logger';
 // bundlers (Vite/Next) because the path escapes the package with `../../` —
 // which broke CI's vitest transform and would break the serverless bundle.
 // The template set is small + finite, so a static map is the robust choice.
+import actionAssigned from '../../i18n/emails/en/action-assigned.json';
+import fireDueDigest from '../../i18n/emails/en/fire-due-digest.json';
+import fraIntolerableAlert from '../../i18n/emails/en/fra-intolerable-alert.json';
 import headsUpReminder from '../../i18n/emails/en/heads-up-reminder.json';
+import incidentAlert from '../../i18n/emails/en/incident-alert.json';
+import incidentChaseDigest from '../../i18n/emails/en/incident-chase-digest.json';
+import incidentInvestigatorAssigned from '../../i18n/emails/en/incident-investigator-assigned.json';
+import incidentRiddorEscalation from '../../i18n/emails/en/incident-riddor-escalation.json';
+import incidentRiddorWarning from '../../i18n/emails/en/incident-riddor-warning.json';
 import inspectionNotify from '../../i18n/emails/en/inspection-notify.json';
 import invite from '../../i18n/emails/en/invite.json';
 import issueCreated from '../../i18n/emails/en/issue-created.json';
@@ -34,6 +42,8 @@ import observationCriticalAlert from '../../i18n/emails/en/observation-critical-
 import observationNotification from '../../i18n/emails/en/observation-notification.json';
 import otp from '../../i18n/emails/en/otp.json';
 import passwordReset from '../../i18n/emails/en/password-reset.json';
+import permitExpiryEscalation from '../../i18n/emails/en/permit-expiry-escalation.json';
+import permitExpiryWarning from '../../i18n/emails/en/permit-expiry-warning.json';
 import requestToJoin from '../../i18n/emails/en/request-to-join.json';
 import riskAssessmentAckReminder from '../../i18n/emails/en/risk-assessment-ack-reminder.json';
 import riskAssessmentDistributed from '../../i18n/emails/en/risk-assessment-distributed.json';
@@ -43,9 +53,19 @@ import signatureWorkflowRequest from '../../i18n/emails/en/signature-workflow-re
 import verification from '../../i18n/emails/en/verification.json';
 
 const EMAIL_TEMPLATES: Record<string, unknown> = {
+  'action-assigned': actionAssigned,
+  'fire-due-digest': fireDueDigest,
+  'fra-intolerable-alert': fraIntolerableAlert,
   'heads-up-reminder': headsUpReminder,
+  'incident-alert': incidentAlert,
+  'incident-chase-digest': incidentChaseDigest,
+  'incident-investigator-assigned': incidentInvestigatorAssigned,
+  'incident-riddor-escalation': incidentRiddorEscalation,
+  'incident-riddor-warning': incidentRiddorWarning,
   'inspection-notify': inspectionNotify,
   invite,
+  'permit-expiry-escalation': permitExpiryEscalation,
+  'permit-expiry-warning': permitExpiryWarning,
   'issue-created': issueCreated,
   'maintenance-reminder': maintenanceReminder,
   'contractor-doc-expiry': contractorDocExpiry,
