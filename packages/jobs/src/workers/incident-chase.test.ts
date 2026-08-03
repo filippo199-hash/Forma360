@@ -188,6 +188,7 @@ describe('incident-chase', () => {
     expect(lena?.digest.overdueActionIncidents).toEqual(['IN-000012 — corrective actions overdue']);
     expect(carl?.digest.effectivenessDue).toEqual(['IN-000013 — effectiveness review due']);
     expect(lena?.digest.idleInvestigations[0]).toContain('IN-000011');
-    expect(chaseDetailLines(lena!.digest)).toContain('IN-000011');
+    if (lena === undefined) throw new Error('missing lena digest');
+    expect(chaseDetailLines(lena.digest)).toContain('IN-000011');
   });
 });

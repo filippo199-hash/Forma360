@@ -55,11 +55,22 @@ const KINDS = [
 
 const SEVERITIES = ['negligible', 'minor', 'moderate', 'serious', 'major'] as const;
 
-function statusesFor(filter: StatusFilter):
-  | Array<'reported' | 'triaged' | 'investigating' | 'actions_outstanding' | 'closed' | 'reopened' | 'cancelled'>
+function statusesFor(
+  filter: StatusFilter,
+):
+  | Array<
+      | 'reported'
+      | 'triaged'
+      | 'investigating'
+      | 'actions_outstanding'
+      | 'closed'
+      | 'reopened'
+      | 'cancelled'
+    >
   | undefined {
   if (filter === 'all') return undefined;
-  if (filter === 'open') return ['reported', 'triaged', 'investigating', 'actions_outstanding', 'reopened'];
+  if (filter === 'open')
+    return ['reported', 'triaged', 'investigating', 'actions_outstanding', 'reopened'];
   if (filter === 'investigating') return ['investigating', 'reopened'];
   return [filter];
 }
@@ -128,7 +139,12 @@ export default function IncidentsPage() {
           <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" onClick={() => void exportCsv()} disabled={exporting}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void exportCsv()}
+            disabled={exporting}
+          >
             <Download className="mr-1.5 h-4 w-4" />
             {t('list.exportCsv')}
           </Button>

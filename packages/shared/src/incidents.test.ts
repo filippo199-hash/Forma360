@@ -137,7 +137,11 @@ describe('IN-E04 — lost-days calculator (RIDDOR counting rule)', () => {
   it('excludes the day of the accident and counts the weekend', () => {
     // Off from the accident day through the following Wednesday inclusive:
     // 31 Jul (excluded), 1, 2 (weekend), 3, 4, 5 Aug = 5 days lost.
-    const days = totalDaysLost([{ fromDate: '2026-07-31', toDate: '2026-08-05' }], occurred, '2026-08-31');
+    const days = totalDaysLost(
+      [{ fromDate: '2026-07-31', toDate: '2026-08-05' }],
+      occurred,
+      '2026-08-31',
+    );
     expect(days).toBe(5);
   });
 
@@ -171,16 +175,18 @@ describe('IN-E04 — lost-days calculator (RIDDOR counting rule)', () => {
   });
 
   it('ignores periods that have not started and inverted periods', () => {
-    expect(totalDaysLost([{ fromDate: '2026-09-01', toDate: null }], occurred, '2026-08-15')).toBe(0);
+    expect(totalDaysLost([{ fromDate: '2026-09-01', toDate: null }], occurred, '2026-08-15')).toBe(
+      0,
+    );
     expect(
       totalDaysLost([{ fromDate: '2026-08-10', toDate: '2026-08-05' }], occurred, '2026-08-31'),
     ).toBe(0);
   });
 
   it('rejects malformed dates loudly', () => {
-    expect(() => totalDaysLost([{ fromDate: '31/07/2026', toDate: null }], occurred, '2026-08-31')).toThrow(
-      /invalid-iso-date/,
-    );
+    expect(() =>
+      totalDaysLost([{ fromDate: '31/07/2026', toDate: null }], occurred, '2026-08-31'),
+    ).toThrow(/invalid-iso-date/);
   });
 });
 
@@ -212,7 +218,12 @@ describe('IN-E06 — RIDDOR deadline computation', () => {
   const occurred = new Date('2026-08-01T10:00:00Z');
 
   it('gives 10 days for death / specified injury / dangerous occurrence / gas', () => {
-    for (const category of ['death', 'specified_injury', 'dangerous_occurrence', 'gas_incident'] as const) {
+    for (const category of [
+      'death',
+      'specified_injury',
+      'dangerous_occurrence',
+      'gas_incident',
+    ] as const) {
       const deadline = riddorDeadlineFor(category, occurred);
       expect(deadline?.getTime()).toBe(occurred.getTime() + 10 * DAY_MS);
     }
@@ -279,9 +290,9 @@ describe('why-chain validation', () => {
         { text: 'b', isRootCause: true },
       ]),
     ).toThrow(/multiple-root-causes/);
-    expect(() =>
-      whyChainSchema.parse([{ text: 'a', isRootCause: true }, { text: 'b' }]),
-    ).toThrow(/root-cause-not-last/);
+    expect(() => whyChainSchema.parse([{ text: 'a', isRootCause: true }, { text: 'b' }])).toThrow(
+      /root-cause-not-last/,
+    );
   });
 });
 

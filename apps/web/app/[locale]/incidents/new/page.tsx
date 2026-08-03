@@ -499,8 +499,9 @@ export default function NewIncidentPage() {
               </Label>
               <Input
                 value={String(
-                  (draft.kind === 'damage' ? draft.details.whatDamaged : draft.details.whatReleased) ??
-                    '',
+                  (draft.kind === 'damage'
+                    ? draft.details.whatDamaged
+                    : draft.details.whatReleased) ?? '',
                 )}
                 onChange={(e) =>
                   patchDetails(
@@ -531,8 +532,9 @@ export default function NewIncidentPage() {
               </Label>
               <Input
                 value={String(
-                  (draft.kind === 'damage' ? draft.details.mitigation : draft.details.containment) ??
-                    '',
+                  (draft.kind === 'damage'
+                    ? draft.details.mitigation
+                    : draft.details.containment) ?? '',
                 )}
                 onChange={(e) =>
                   patchDetails(

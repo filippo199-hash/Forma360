@@ -139,7 +139,9 @@ describe('brand substitution — {productName} (ADR 0010)', () => {
     for (const file of files) {
       const key = file.replace(/\.json$/, '');
       const tpl = await defaultTemplatedTemplateLoader(key).catch((err: unknown) => {
-        throw new Error(`template "${key}" failed to load — register it in EMAIL_TEMPLATES: ${String(err)}`);
+        throw new Error(
+          `template "${key}" failed to load — register it in EMAIL_TEMPLATES: ${String(err)}`,
+        );
       });
       const rendered = renderTemplatedEmail(tpl, { productName: 'FreeHS', url: 'https://x' });
       expect(rendered.subject + rendered.text, `template "${key}" leaks the brand`).not.toContain(

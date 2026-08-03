@@ -120,7 +120,11 @@ describe('incident-riddor-watch', () => {
       riddorDeadlineAt: new Date(NOW.getTime() - 1 * DAY_MS),
     });
     // Out of scope: negative determination, already submitted, cancelled.
-    await seedIncident({ referenceNumber: 'IN-000004', riddorCategory: 'not_reportable', riddorDeadlineAt: null });
+    await seedIncident({
+      referenceNumber: 'IN-000004',
+      riddorCategory: 'not_reportable',
+      riddorDeadlineAt: null,
+    });
     await seedIncident({ referenceNumber: 'IN-000005', riddorSubmittedAt: NOW });
     await seedIncident({
       referenceNumber: 'IN-000006',

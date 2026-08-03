@@ -214,7 +214,10 @@ export const incidentPersons = pgTable(
     category: text('category').notNull().$type<PersonCategory>(),
 
     /** Per-person injury block (`personInjurySchema`). */
-    injury: jsonb('injury').notNull().$type<PersonInjury>().default(sql`'{}'::jsonb`),
+    injury: jsonb('injury')
+      .notNull()
+      .$type<PersonInjury>()
+      .default(sql`'{}'::jsonb`),
     /** Occupational-health follow-up flagged (sharps default-on lives in details). */
     ohFollowUpRequired: boolean('oh_follow_up_required').notNull().default(false),
 

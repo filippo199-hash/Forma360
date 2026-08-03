@@ -885,105 +885,114 @@ export async function loadIncidentSnapshot(
   const incident = incidentRows[0];
   if (incident === undefined) return null;
 
-  const [personRows, absenceRows, investigationRows, findingRows, evidenceRows, witnessRows, actionRows, eventRows, siteRow] =
-    await Promise.all([
-      db
-        .select()
-        .from(incidentPersons)
-        .where(
-          and(
-            eq(incidentPersons.tenantId, input.tenantId),
-            eq(incidentPersons.incidentId, incident.id),
-          ),
-        )
-        .orderBy(asc(incidentPersons.createdAt)),
-      db
-        .select()
-        .from(incidentAbsences)
-        .where(
-          and(
-            eq(incidentAbsences.tenantId, input.tenantId),
-            eq(incidentAbsences.incidentId, incident.id),
-          ),
+  const [
+    personRows,
+    absenceRows,
+    investigationRows,
+    findingRows,
+    evidenceRows,
+    witnessRows,
+    actionRows,
+    eventRows,
+    siteRow,
+  ] = await Promise.all([
+    db
+      .select()
+      .from(incidentPersons)
+      .where(
+        and(
+          eq(incidentPersons.tenantId, input.tenantId),
+          eq(incidentPersons.incidentId, incident.id),
         ),
-      db
-        .select()
-        .from(incidentInvestigations)
-        .where(
-          and(
-            eq(incidentInvestigations.tenantId, input.tenantId),
-            eq(incidentInvestigations.incidentId, incident.id),
-          ),
-        )
-        .orderBy(asc(incidentInvestigations.revision)),
-      db
-        .select()
-        .from(incidentFindings)
-        .where(
-          and(
-            eq(incidentFindings.tenantId, input.tenantId),
-            eq(incidentFindings.incidentId, incident.id),
-          ),
-        )
-        .orderBy(asc(incidentFindings.createdAt)),
-      db
-        .select()
-        .from(incidentEvidence)
-        .where(
-          and(
-            eq(incidentEvidence.tenantId, input.tenantId),
-            eq(incidentEvidence.incidentId, incident.id),
-          ),
-        )
-        .orderBy(asc(incidentEvidence.createdAt)),
-      db
-        .select()
-        .from(incidentWitnessStatements)
-        .where(
-          and(
-            eq(incidentWitnessStatements.tenantId, input.tenantId),
-            eq(incidentWitnessStatements.incidentId, incident.id),
-          ),
-        )
-        .orderBy(asc(incidentWitnessStatements.createdAt)),
-      db
-        .select({
-          referenceNumber: actions.referenceNumber,
-          title: actions.title,
-          status: actions.status,
-          assigneeUserId: actions.assigneeUserId,
-          dueAt: actions.dueAt,
-          id: actions.id,
-        })
-        .from(actions)
-        .where(
-          and(
-            eq(actions.tenantId, input.tenantId),
-            eq(actions.sourceType, 'incident'),
-            eq(actions.sourceId, incident.id),
-          ),
-        )
-        .orderBy(asc(actions.createdAt)),
-      db
-        .select()
-        .from(incidentEvents)
-        .where(
-          and(
-            eq(incidentEvents.tenantId, input.tenantId),
-            eq(incidentEvents.incidentId, incident.id),
-          ),
-        )
-        .orderBy(asc(incidentEvents.createdAt))
-        .limit(300),
-      incident.siteId === null
-        ? Promise.resolve(null)
-        : db
-            .select({ name: sites.name })
-            .from(sites)
-            .where(and(eq(sites.tenantId, input.tenantId), eq(sites.id, incident.siteId)))
-            .limit(1)
-            .then((rows) => rows[0] ?? null),
-    ]);
+      )
+      .orderBy(asc(incidentPersons.createdAt)),
+    db
+      .select()
+      .from(incidentAbsences)
+      .where(
+        and(
+          eq(incidentAbsences.tenantId, input.tenantId),
+          eq(incidentAbsences.incidentId, incident.id),
+        ),
+      ),
+    db
+      .select()
+      .from(incidentInvestigations)
+      .where(
+        and(
+          eq(incidentInvestigations.tenantId, input.tenantId),
+          eq(incidentInvestigations.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentInvestigations.revision)),
+    db
+      .select()
+      .from(incidentFindings)
+      .where(
+        and(
+          eq(incidentFindings.tenantId, input.tenantId),
+          eq(incidentFindings.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentFindings.createdAt)),
+    db
+      .select()
+      .from(incidentEvidence)
+      .where(
+        and(
+          eq(incidentEvidence.tenantId, input.tenantId),
+          eq(incidentEvidence.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentEvidence.createdAt)),
+    db
+      .select()
+      .from(incidentWitnessStatements)
+      .where(
+        and(
+          eq(incidentWitnessStatements.tenantId, input.tenantId),
+          eq(incidentWitnessStatements.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentWitnessStatements.createdAt)),
+    db
+      .select({
+        referenceNumber: actions.referenceNumber,
+        title: actions.title,
+        status: actions.status,
+        assigneeUserId: actions.assigneeUserId,
+        dueAt: actions.dueAt,
+        id: actions.id,
+      })
+      .from(actions)
+      .where(
+        and(
+          eq(actions.tenantId, input.tenantId),
+          eq(actions.sourceType, 'incident'),
+          eq(actions.sourceId, incident.id),
+        ),
+      )
+      .orderBy(asc(actions.createdAt)),
+    db
+      .select()
+      .from(incidentEvents)
+      .where(
+        and(
+          eq(incidentEvents.tenantId, input.tenantId),
+          eq(incidentEvents.incidentId, incident.id),
+        ),
+      )
+      .orderBy(asc(incidentEvents.createdAt))
+      .limit(300),
+    incident.siteId === null
+      ? Promise.resolve(null)
+      : db
+          .select({ name: sites.name })
+          .from(sites)
+          .where(and(eq(sites.tenantId, input.tenantId), eq(sites.id, incident.siteId)))
+          .limit(1)
+          .then((rows) => rows[0] ?? null),
+  ]);
 
   // Resolve display names in one query.
   const nameIds = new Set<string>([incident.reportedByUserId]);

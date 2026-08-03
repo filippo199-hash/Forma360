@@ -165,7 +165,9 @@ export default function IncidentDetailPage() {
     id === null ? '—' : (data.userNames[id] ?? id.slice(-6));
   const isTerminal = incident.status === 'closed' || incident.status === 'cancelled';
   const latestInvestigation =
-    data.investigations.length > 0 ? data.investigations[data.investigations.length - 1] : undefined;
+    data.investigations.length > 0
+      ? data.investigations[data.investigations.length - 1]
+      : undefined;
   const riddorOverdue =
     incident.riddorCategory !== null &&
     incident.riddorCategory !== 'not_reportable' &&
@@ -404,7 +406,8 @@ export default function IncidentDetailPage() {
                         </label>
                       ) : null}
                     </div>
-                    {(injury.injuryKinds?.length ?? 0) > 0 || (injury.bodyParts?.length ?? 0) > 0 ? (
+                    {(injury.injuryKinds?.length ?? 0) > 0 ||
+                    (injury.bodyParts?.length ?? 0) > 0 ? (
                       <p className="text-muted-foreground">
                         {(injury.injuryKinds ?? [])
                           .map((k) => t(`injuryKinds.${k}` as never))
@@ -433,7 +436,9 @@ export default function IncidentDetailPage() {
                                 ? fmtDate(absence.toDate, locale)
                                 : t('people.ongoing')}
                             </span>
-                            {absence.toDate === null && !isTerminal && (canManage || canInvestigate) ? (
+                            {absence.toDate === null &&
+                            !isTerminal &&
+                            (canManage || canInvestigate) ? (
                               <Button
                                 type="button"
                                 variant="outline"
@@ -623,14 +628,13 @@ export default function IncidentDetailPage() {
               {incident.riddorSubmittedAt !== null ? (
                 <p>
                   <span className="text-muted-foreground">{t('riddor.submitted')}: </span>
-                  {fmt(incident.riddorSubmittedAt, locale)} · {nameOf(incident.riddorSubmittedByUserId)}
+                  {fmt(incident.riddorSubmittedAt, locale)} ·{' '}
+                  {nameOf(incident.riddorSubmittedByUserId)}
                   {' · '}
                   {incident.riddorSubmissionRoute === 'phone'
                     ? t('riddor.routePhone')
                     : t('riddor.routeOnline')}
-                  {incident.riddorHseReference !== null
-                    ? ` · ${incident.riddorHseReference}`
-                    : ''}
+                  {incident.riddorHseReference !== null ? ` · ${incident.riddorHseReference}` : ''}
                 </p>
               ) : null}
             </div>
@@ -996,12 +1000,7 @@ export default function IncidentDetailPage() {
                     </Button>
                   </>
                 ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowSkip(true)}
-                  >
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setShowSkip(true)}>
                     {t('reviews.skipButton')}
                   </Button>
                 )}
@@ -1155,7 +1154,9 @@ export default function IncidentDetailPage() {
                 </span>
                 <span>{t(`events.${event.kind}` as never)}</span>
                 <span className="text-xs text-muted-foreground">
-                  {event.actorUserId === 'system' ? t('timeline.system') : nameOf(event.actorUserId)}
+                  {event.actorUserId === 'system'
+                    ? t('timeline.system')
+                    : nameOf(event.actorUserId)}
                 </span>
               </div>
             ))}

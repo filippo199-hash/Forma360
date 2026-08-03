@@ -195,7 +195,12 @@ export async function runIncidentChase(
   let sent = 0;
   for (const digest of digests) {
     const rows = await deps.db
-      .select({ id: user.id, name: user.name, email: user.email, deactivatedAt: user.deactivatedAt })
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        deactivatedAt: user.deactivatedAt,
+      })
       .from(user)
       .where(and(eq(user.tenantId, digest.tenantId), eq(user.id, digest.ownerUserId)))
       .limit(1);

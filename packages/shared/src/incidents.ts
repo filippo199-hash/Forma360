@@ -67,13 +67,7 @@ export function defaultConfidential(kind: IncidentKind): boolean {
 // ─── Severity ───────────────────────────────────────────────────────────────
 
 /** Actual-outcome severity, set at triage, frozen once the investigation is approved. */
-export const INCIDENT_SEVERITIES = [
-  'negligible',
-  'minor',
-  'moderate',
-  'serious',
-  'major',
-] as const;
+export const INCIDENT_SEVERITIES = ['negligible', 'minor', 'moderate', 'serious', 'major'] as const;
 export type IncidentSeverity = (typeof INCIDENT_SEVERITIES)[number];
 
 export function severityRank(severity: IncidentSeverity): number {
@@ -612,7 +606,11 @@ export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
 
 // ─── Effectiveness review (clause 10.2) ─────────────────────────────────────
 
-export const EFFECTIVENESS_VERDICTS = ['effective', 'partially_effective', 'not_effective'] as const;
+export const EFFECTIVENESS_VERDICTS = [
+  'effective',
+  'partially_effective',
+  'not_effective',
+] as const;
 export type EffectivenessVerdict = (typeof EFFECTIVENESS_VERDICTS)[number];
 
 export const DEFAULT_EFFECTIVENESS_REVIEW_DAYS = 90;

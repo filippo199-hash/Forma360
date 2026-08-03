@@ -41,11 +41,7 @@ export interface IncidentAlertDeps {
   db: Database;
   logger: Logger;
   appUrl: string;
-  notify: (
-    recipient: PermissionHolder,
-    incident: AlertIncident,
-    viewUrl: string,
-  ) => Promise<void>;
+  notify: (recipient: PermissionHolder, incident: AlertIncident, viewUrl: string) => Promise<void>;
 }
 
 /**

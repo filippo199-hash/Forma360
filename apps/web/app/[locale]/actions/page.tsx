@@ -113,7 +113,13 @@ const STATUSES: ReadonlyArray<StatusFilter> = [
   'completed',
   'cancelled',
 ];
-const SOURCES: ReadonlyArray<SourceFilter> = ['all', 'standalone', 'inspection', 'issue', 'incident'];
+const SOURCES: ReadonlyArray<SourceFilter> = [
+  'all',
+  'standalone',
+  'inspection',
+  'issue',
+  'incident',
+];
 const PRIORITIES: ReadonlyArray<PriorityFilter> = ['all', 'critical', 'high', 'medium', 'low'];
 const SORT_OPTIONS: ReadonlyArray<SortBy> = ['created', 'due', 'priority', 'updated'];
 const BOARD_COLUMNS: ReadonlyArray<Exclude<StatusFilter, 'all'>> = [

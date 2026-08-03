@@ -173,7 +173,9 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
       />
       <div className="in-print">
         <div className="in-head">
-          <span className="in-title">INCIDENT REPORT — {KIND_LABELS[incident.kind] ?? incident.kind}</span>
+          <span className="in-title">
+            INCIDENT REPORT — {KIND_LABELS[incident.kind] ?? incident.kind}
+          </span>
           <span className="in-ref">{incident.referenceNumber}</span>
         </div>
         <p>
@@ -193,7 +195,9 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
           {incident.siteName !== null ? ` · ${incident.siteName}` : ''}
           {incident.locationText.length > 0 ? ` · ${incident.locationText}` : ''}
         </p>
-        {incident.description.length > 0 ? <p className="in-quote">{incident.description}</p> : null}
+        {incident.description.length > 0 ? (
+          <p className="in-quote">{incident.description}</p>
+        ) : null}
         {detailEntries.length > 0 ? (
           <table>
             <tbody>
@@ -278,7 +282,8 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
                     (RIDDOR_LABELS[incident.riddorCategory] ?? incident.riddorCategory)
                   ) : (
                     <span className="in-danger">
-                      Reportable — {RIDDOR_LABELS[incident.riddorCategory] ?? incident.riddorCategory}
+                      Reportable —{' '}
+                      {RIDDOR_LABELS[incident.riddorCategory] ?? incident.riddorCategory}
                     </span>
                   )}
                 </td>
@@ -374,9 +379,7 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
                       <td>{String(i + 1)}</td>
                       <td>
                         {entry.text}
-                        {entry.isRootCause ? (
-                          <strong> — ROOT CAUSE</strong>
-                        ) : null}
+                        {entry.isRootCause ? <strong> — ROOT CAUSE</strong> : null}
                       </td>
                     </tr>
                   ))}

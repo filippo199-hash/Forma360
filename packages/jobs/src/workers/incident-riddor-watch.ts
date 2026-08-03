@@ -119,7 +119,13 @@ export async function findEscalationsDue(db: Database, now: Date): Promise<Riddo
   const rows = await db
     .select(watchColumns)
     .from(incidents)
-    .where(and(clockRunning(), lte(incidents.riddorDeadlineAt, now), isNull(incidents.riddorEscalatedAt)))
+    .where(
+      and(
+        clockRunning(),
+        lte(incidents.riddorDeadlineAt, now),
+        isNull(incidents.riddorEscalatedAt),
+      ),
+    )
     .limit(MAX_NOTIFICATIONS_PER_RUN);
   return mapRows(rows);
 }
@@ -134,7 +140,12 @@ export async function resolveRiddorRecipients(
   const out = new Map<string, PermissionHolder>(holders.map((h) => [h.userId, h]));
   if (!out.has(ownerId)) {
     const rows = await db
-      .select({ id: user.id, name: user.name, email: user.email, deactivatedAt: user.deactivatedAt })
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        deactivatedAt: user.deactivatedAt,
+      })
       .from(user)
       .where(and(eq(user.tenantId, incident.tenantId), eq(user.id, ownerId)))
       .limit(1);
@@ -158,12 +169,14 @@ export interface RiddorWatchDeps {
   ) => Promise<void>;
 }
 
-const STAMP_COLUMN: Record<RiddorWatchKind, 'riddorWarning5SentAt' | 'riddorWarning2SentAt' | 'riddorEscalatedAt'> =
-  {
-    warning5: 'riddorWarning5SentAt',
-    warning2: 'riddorWarning2SentAt',
-    escalation: 'riddorEscalatedAt',
-  };
+const STAMP_COLUMN: Record<
+  RiddorWatchKind,
+  'riddorWarning5SentAt' | 'riddorWarning2SentAt' | 'riddorEscalatedAt'
+> = {
+  warning5: 'riddorWarning5SentAt',
+  warning2: 'riddorWarning2SentAt',
+  escalation: 'riddorEscalatedAt',
+};
 
 async function processBucket(
   deps: RiddorWatchDeps,

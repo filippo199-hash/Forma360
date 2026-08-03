@@ -148,7 +148,10 @@ async function loadActiveActionType(
  * (low=30, medium=7, high=1, critical=1) when no row exists, mirroring
  * the actionTypesRouter.settings.get behaviour.
  */
-export async function loadPriorityDueDateDays(db: Db, tenantId: string): Promise<PriorityDueDateDays> {
+export async function loadPriorityDueDateDays(
+  db: Db,
+  tenantId: string,
+): Promise<PriorityDueDateDays> {
   const rows = await db
     .select({ days: tenantActionSettings.priorityDueDateDays })
     .from(tenantActionSettings)

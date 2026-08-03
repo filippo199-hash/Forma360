@@ -341,7 +341,10 @@ async function incidentDaysLost(db: Db, incident: Incident, now: Date): Promise<
     .select({ fromDate: incidentAbsences.fromDate, toDate: incidentAbsences.toDate })
     .from(incidentAbsences)
     .where(
-      and(eq(incidentAbsences.tenantId, incident.tenantId), eq(incidentAbsences.incidentId, incident.id)),
+      and(
+        eq(incidentAbsences.tenantId, incident.tenantId),
+        eq(incidentAbsences.incidentId, incident.id),
+      ),
     );
   return totalDaysLost(rows, isoDate(incident.occurredAt), isoDate(now));
 }
@@ -570,7 +573,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           .orderBy(desc(incidents.occurredAt))
           .limit(input.limit);
 
-        const siteIds = [...new Set(rows.flatMap((row) => (row.siteId === null ? [] : [row.siteId])))];
+        const siteIds = [
+          ...new Set(rows.flatMap((row) => (row.siteId === null ? [] : [row.siteId]))),
+        ];
         const siteRows =
           siteIds.length === 0
             ? []
@@ -623,99 +628,107 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
         assertDetailAccess(incident, ctx);
 
-        const [persons, absences, investigations, findings, evidence, witnesses, events, linkedActions] =
-          await Promise.all([
-            ctx.db
-              .select()
-              .from(incidentPersons)
-              .where(
-                and(
-                  eq(incidentPersons.tenantId, ctx.tenantId),
-                  eq(incidentPersons.incidentId, incident.id),
-                ),
-              )
-              .orderBy(asc(incidentPersons.createdAt)),
-            ctx.db
-              .select()
-              .from(incidentAbsences)
-              .where(
-                and(
-                  eq(incidentAbsences.tenantId, ctx.tenantId),
-                  eq(incidentAbsences.incidentId, incident.id),
-                ),
-              )
-              .orderBy(asc(incidentAbsences.fromDate)),
-            ctx.db
-              .select()
-              .from(incidentInvestigations)
-              .where(
-                and(
-                  eq(incidentInvestigations.tenantId, ctx.tenantId),
-                  eq(incidentInvestigations.incidentId, incident.id),
-                ),
-              )
-              .orderBy(asc(incidentInvestigations.revision)),
-            ctx.db
-              .select()
-              .from(incidentFindings)
-              .where(
-                and(
-                  eq(incidentFindings.tenantId, ctx.tenantId),
-                  eq(incidentFindings.incidentId, incident.id),
-                ),
-              )
-              .orderBy(asc(incidentFindings.createdAt)),
-            ctx.db
-              .select()
-              .from(incidentEvidence)
-              .where(
-                and(
-                  eq(incidentEvidence.tenantId, ctx.tenantId),
-                  eq(incidentEvidence.incidentId, incident.id),
-                ),
-              )
-              .orderBy(asc(incidentEvidence.createdAt)),
-            ctx.db
-              .select()
-              .from(incidentWitnessStatements)
-              .where(
-                and(
-                  eq(incidentWitnessStatements.tenantId, ctx.tenantId),
-                  eq(incidentWitnessStatements.incidentId, incident.id),
-                ),
-              )
-              .orderBy(asc(incidentWitnessStatements.createdAt)),
-            ctx.db
-              .select()
-              .from(incidentEvents)
-              .where(
-                and(
-                  eq(incidentEvents.tenantId, ctx.tenantId),
-                  eq(incidentEvents.incidentId, incident.id),
-                ),
-              )
-              .orderBy(desc(incidentEvents.createdAt))
-              .limit(200),
-            ctx.db
-              .select({
-                id: actions.id,
-                referenceNumber: actions.referenceNumber,
-                title: actions.title,
-                status: actions.status,
-                priority: actions.priority,
-                assigneeUserId: actions.assigneeUserId,
-                dueAt: actions.dueAt,
-              })
-              .from(actions)
-              .where(
-                and(
-                  eq(actions.tenantId, ctx.tenantId),
-                  eq(actions.sourceType, 'incident'),
-                  eq(actions.sourceId, incident.id),
-                ),
-              )
-              .orderBy(asc(actions.createdAt)),
-          ]);
+        const [
+          persons,
+          absences,
+          investigations,
+          findings,
+          evidence,
+          witnesses,
+          events,
+          linkedActions,
+        ] = await Promise.all([
+          ctx.db
+            .select()
+            .from(incidentPersons)
+            .where(
+              and(
+                eq(incidentPersons.tenantId, ctx.tenantId),
+                eq(incidentPersons.incidentId, incident.id),
+              ),
+            )
+            .orderBy(asc(incidentPersons.createdAt)),
+          ctx.db
+            .select()
+            .from(incidentAbsences)
+            .where(
+              and(
+                eq(incidentAbsences.tenantId, ctx.tenantId),
+                eq(incidentAbsences.incidentId, incident.id),
+              ),
+            )
+            .orderBy(asc(incidentAbsences.fromDate)),
+          ctx.db
+            .select()
+            .from(incidentInvestigations)
+            .where(
+              and(
+                eq(incidentInvestigations.tenantId, ctx.tenantId),
+                eq(incidentInvestigations.incidentId, incident.id),
+              ),
+            )
+            .orderBy(asc(incidentInvestigations.revision)),
+          ctx.db
+            .select()
+            .from(incidentFindings)
+            .where(
+              and(
+                eq(incidentFindings.tenantId, ctx.tenantId),
+                eq(incidentFindings.incidentId, incident.id),
+              ),
+            )
+            .orderBy(asc(incidentFindings.createdAt)),
+          ctx.db
+            .select()
+            .from(incidentEvidence)
+            .where(
+              and(
+                eq(incidentEvidence.tenantId, ctx.tenantId),
+                eq(incidentEvidence.incidentId, incident.id),
+              ),
+            )
+            .orderBy(asc(incidentEvidence.createdAt)),
+          ctx.db
+            .select()
+            .from(incidentWitnessStatements)
+            .where(
+              and(
+                eq(incidentWitnessStatements.tenantId, ctx.tenantId),
+                eq(incidentWitnessStatements.incidentId, incident.id),
+              ),
+            )
+            .orderBy(asc(incidentWitnessStatements.createdAt)),
+          ctx.db
+            .select()
+            .from(incidentEvents)
+            .where(
+              and(
+                eq(incidentEvents.tenantId, ctx.tenantId),
+                eq(incidentEvents.incidentId, incident.id),
+              ),
+            )
+            .orderBy(desc(incidentEvents.createdAt))
+            .limit(200),
+          ctx.db
+            .select({
+              id: actions.id,
+              referenceNumber: actions.referenceNumber,
+              title: actions.title,
+              status: actions.status,
+              priority: actions.priority,
+              assigneeUserId: actions.assigneeUserId,
+              dueAt: actions.dueAt,
+            })
+            .from(actions)
+            .where(
+              and(
+                eq(actions.tenantId, ctx.tenantId),
+                eq(actions.sourceType, 'incident'),
+                eq(actions.sourceId, incident.id),
+              ),
+            )
+            .orderBy(asc(actions.createdAt)),
+        ]);
 
         // Linked-record display names.
         const [siteRow, observationRow, permitRow, contractorRow, assetRow] = await Promise.all([
@@ -730,15 +743,25 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           incident.observationId === null
             ? Promise.resolve(null)
             : ctx.db
-                .select({ id: issues.id, referenceNumber: issues.referenceNumber, title: issues.title })
+                .select({
+                  id: issues.id,
+                  referenceNumber: issues.referenceNumber,
+                  title: issues.title,
+                })
                 .from(issues)
-                .where(and(eq(issues.tenantId, ctx.tenantId), eq(issues.id, incident.observationId)))
+                .where(
+                  and(eq(issues.tenantId, ctx.tenantId), eq(issues.id, incident.observationId)),
+                )
                 .limit(1)
                 .then((rows) => rows[0] ?? null),
           incident.permitId === null
             ? Promise.resolve(null)
             : ctx.db
-                .select({ id: permits.id, referenceNumber: permits.referenceNumber, title: permits.title })
+                .select({
+                  id: permits.id,
+                  referenceNumber: permits.referenceNumber,
+                  title: permits.title,
+                })
                 .from(permits)
                 .where(and(eq(permits.tenantId, ctx.tenantId), eq(permits.id, incident.permitId)))
                 .limit(1)
@@ -749,7 +772,10 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
                 .select({ id: contractors.id, name: contractors.name })
                 .from(contractors)
                 .where(
-                  and(eq(contractors.tenantId, ctx.tenantId), eq(contractors.id, incident.contractorId)),
+                  and(
+                    eq(contractors.tenantId, ctx.tenantId),
+                    eq(contractors.id, incident.contractorId),
+                  ),
                 )
                 .limit(1)
                 .then((rows) => rows[0] ?? null),
@@ -816,7 +842,10 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           .select()
           .from(incidents)
           .where(
-            and(eq(incidents.tenantId, ctx.tenantId), eq(incidents.observationId, input.observationId)),
+            and(
+              eq(incidents.tenantId, ctx.tenantId),
+              eq(incidents.observationId, input.observationId),
+            ),
           )
           .orderBy(desc(incidents.createdAt))
           .limit(10);
@@ -832,55 +861,60 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         });
       }),
 
-    overview: tenantProcedure
-      .use(requirePermission('incidents.view'))
-      .query(async ({ ctx }) => {
-        assertEnabled();
-        const rows = await ctx.db
-          .select({
-            status: incidents.status,
-            riddorCategory: incidents.riddorCategory,
-            riddorDeadlineAt: incidents.riddorDeadlineAt,
-            riddorSubmittedAt: incidents.riddorSubmittedAt,
-            riddorRescreenRequired: incidents.riddorRescreenRequired,
-            effectivenessDueAt: incidents.effectivenessDueAt,
-            effectivenessVerdict: incidents.effectivenessVerdict,
-          })
-          .from(incidents)
-          .where(eq(incidents.tenantId, ctx.tenantId));
-        const now = new Date();
-        const soon = new Date(now.getTime() + 5 * 86_400_000);
-        let open = 0;
-        let investigating = 0;
-        let riddorDueSoon = 0;
-        let riddorOverdue = 0;
-        let rescreenRequired = 0;
-        let effectivenessOverdue = 0;
-        for (const row of rows) {
-          if (row.status !== 'closed' && row.status !== 'cancelled') open += 1;
-          if (row.status === 'investigating') investigating += 1;
-          const clockRunning =
-            row.riddorCategory !== null &&
-            row.riddorCategory !== 'not_reportable' &&
-            row.riddorSubmittedAt === null &&
-            row.riddorDeadlineAt !== null &&
-            row.status !== 'cancelled';
-          if (clockRunning && row.riddorDeadlineAt !== null) {
-            if (row.riddorDeadlineAt <= now) riddorOverdue += 1;
-            else if (row.riddorDeadlineAt <= soon) riddorDueSoon += 1;
-          }
-          if (row.riddorRescreenRequired && row.status !== 'cancelled') rescreenRequired += 1;
-          if (
-            row.effectivenessDueAt !== null &&
-            row.effectivenessVerdict === null &&
-            row.effectivenessDueAt <= now &&
-            row.status === 'closed'
-          ) {
-            effectivenessOverdue += 1;
-          }
+    overview: tenantProcedure.use(requirePermission('incidents.view')).query(async ({ ctx }) => {
+      assertEnabled();
+      const rows = await ctx.db
+        .select({
+          status: incidents.status,
+          riddorCategory: incidents.riddorCategory,
+          riddorDeadlineAt: incidents.riddorDeadlineAt,
+          riddorSubmittedAt: incidents.riddorSubmittedAt,
+          riddorRescreenRequired: incidents.riddorRescreenRequired,
+          effectivenessDueAt: incidents.effectivenessDueAt,
+          effectivenessVerdict: incidents.effectivenessVerdict,
+        })
+        .from(incidents)
+        .where(eq(incidents.tenantId, ctx.tenantId));
+      const now = new Date();
+      const soon = new Date(now.getTime() + 5 * 86_400_000);
+      let open = 0;
+      let investigating = 0;
+      let riddorDueSoon = 0;
+      let riddorOverdue = 0;
+      let rescreenRequired = 0;
+      let effectivenessOverdue = 0;
+      for (const row of rows) {
+        if (row.status !== 'closed' && row.status !== 'cancelled') open += 1;
+        if (row.status === 'investigating') investigating += 1;
+        const clockRunning =
+          row.riddorCategory !== null &&
+          row.riddorCategory !== 'not_reportable' &&
+          row.riddorSubmittedAt === null &&
+          row.riddorDeadlineAt !== null &&
+          row.status !== 'cancelled';
+        if (clockRunning && row.riddorDeadlineAt !== null) {
+          if (row.riddorDeadlineAt <= now) riddorOverdue += 1;
+          else if (row.riddorDeadlineAt <= soon) riddorDueSoon += 1;
         }
-        return { open, investigating, riddorDueSoon, riddorOverdue, rescreenRequired, effectivenessOverdue };
-      }),
+        if (row.riddorRescreenRequired && row.status !== 'cancelled') rescreenRequired += 1;
+        if (
+          row.effectivenessDueAt !== null &&
+          row.effectivenessVerdict === null &&
+          row.effectivenessDueAt <= now &&
+          row.status === 'closed'
+        ) {
+          effectivenessOverdue += 1;
+        }
+      }
+      return {
+        open,
+        investigating,
+        riddorDueSoon,
+        riddorOverdue,
+        rescreenRequired,
+        effectivenessOverdue,
+      };
+    }),
 
     // ─── Report & amend ─────────────────────────────────────────────────────
 
@@ -1236,7 +1270,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
               : {}),
             updatedAt: new Date(),
           })
-          .where(and(eq(incidentPersons.tenantId, ctx.tenantId), eq(incidentPersons.id, input.personId)));
+          .where(
+            and(eq(incidentPersons.tenantId, ctx.tenantId), eq(incidentPersons.id, input.personId)),
+          );
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           incidentId: incident.id,
@@ -1363,7 +1399,12 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         await ctx.db
           .update(incidentAbsences)
           .set({ fromDate: nextFrom, toDate: nextTo })
-          .where(and(eq(incidentAbsences.tenantId, ctx.tenantId), eq(incidentAbsences.id, input.absenceId)));
+          .where(
+            and(
+              eq(incidentAbsences.tenantId, ctx.tenantId),
+              eq(incidentAbsences.id, input.absenceId),
+            ),
+          );
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           incidentId: incident.id,
@@ -1769,7 +1810,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
             ...(input.requiresAction !== undefined ? { requiresAction: input.requiresAction } : {}),
             updatedAt: new Date(),
           })
-          .where(and(eq(incidentFindings.tenantId, ctx.tenantId), eq(incidentFindings.id, finding.id)));
+          .where(
+            and(eq(incidentFindings.tenantId, ctx.tenantId), eq(incidentFindings.id, finding.id)),
+          );
         return { ok: true };
       }),
 
@@ -1814,7 +1857,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         }
         await ctx.db
           .delete(incidentFindings)
-          .where(and(eq(incidentFindings.tenantId, ctx.tenantId), eq(incidentFindings.id, finding.id)));
+          .where(
+            and(eq(incidentFindings.tenantId, ctx.tenantId), eq(incidentFindings.id, finding.id)),
+          );
         return { ok: true };
       }),
 
@@ -1888,7 +1933,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
 
     rejectInvestigation: tenantProcedure
       .use(requirePermission('incidents.manage'))
-      .input(z.object({ incidentId: z.string().length(26), note: z.string().trim().min(1).max(2000) }))
+      .input(
+        z.object({ incidentId: z.string().length(26), note: z.string().trim().min(1).max(2000) }),
+      )
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
         const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
@@ -1992,8 +2039,11 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           actionRefs.set(finding.id, `AC-${String(n).padStart(6, '0')}`);
         }
 
-        const generated: Array<{ actionId: string; findingId: string; assigneeUserId: string | null }> =
-          [];
+        const generated: Array<{
+          actionId: string;
+          findingId: string;
+          assigneeUserId: string | null;
+        }> = [];
         await ctx.db.transaction(async (tx) => {
           await tx
             .update(incidentInvestigations)
@@ -2051,7 +2101,10 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
                 .update(incidentFindings)
                 .set({ actionId, updatedAt: now })
                 .where(
-                  and(eq(incidentFindings.tenantId, ctx.tenantId), eq(incidentFindings.id, finding.id)),
+                  and(
+                    eq(incidentFindings.tenantId, ctx.tenantId),
+                    eq(incidentFindings.id, finding.id),
+                  ),
                 );
               generated.push({ actionId, findingId: finding.id, assigneeUserId });
             } catch (err) {
@@ -2286,7 +2339,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
               title: riskAssessments.title,
             })
             .from(riskAssessments)
-            .where(and(eq(riskAssessments.tenantId, ctx.tenantId), eq(riskAssessments.status, 'active')))
+            .where(
+              and(eq(riskAssessments.tenantId, ctx.tenantId), eq(riskAssessments.status, 'active')),
+            )
             .orderBy(asc(riskAssessments.title))
             .limit(200),
           ctx.db
@@ -2296,7 +2351,12 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
               title: coshhAssessments.taskDescription,
             })
             .from(coshhAssessments)
-            .where(and(eq(coshhAssessments.tenantId, ctx.tenantId), eq(coshhAssessments.status, 'active')))
+            .where(
+              and(
+                eq(coshhAssessments.tenantId, ctx.tenantId),
+                eq(coshhAssessments.status, 'active'),
+              ),
+            )
             .orderBy(asc(coshhAssessments.taskDescription))
             .limit(200),
           ctx.db
@@ -2320,7 +2380,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
 
     skipReviews: tenantProcedure
       .use(requirePermission('incidents.manage'))
-      .input(z.object({ incidentId: z.string().length(26), reason: z.string().trim().min(3).max(1000) }))
+      .input(
+        z.object({ incidentId: z.string().length(26), reason: z.string().trim().min(3).max(1000) }),
+      )
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
         const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
@@ -2417,7 +2479,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
 
     reopen: tenantProcedure
       .use(requirePermission('incidents.manage'))
-      .input(z.object({ incidentId: z.string().length(26), reason: z.string().trim().min(3).max(2000) }))
+      .input(
+        z.object({ incidentId: z.string().length(26), reason: z.string().trim().min(3).max(2000) }),
+      )
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
         const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
@@ -2440,7 +2504,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
 
     cancel: tenantProcedure
       .use(requirePermission('incidents.view'))
-      .input(z.object({ incidentId: z.string().length(26), reason: z.string().trim().min(3).max(2000) }))
+      .input(
+        z.object({ incidentId: z.string().length(26), reason: z.string().trim().min(3).max(2000) }),
+      )
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
         const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
@@ -2561,7 +2627,10 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           .select()
           .from(issueAttachments)
           .where(
-            and(eq(issueAttachments.tenantId, ctx.tenantId), eq(issueAttachments.issueId, issue.id)),
+            and(
+              eq(issueAttachments.tenantId, ctx.tenantId),
+              eq(issueAttachments.issueId, issue.id),
+            ),
           );
         if (attachments.length > 0) {
           await ctx.db.insert(incidentEvidence).values(
@@ -2640,7 +2709,10 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           })
           .from(incidentAbsences)
           .where(eq(incidentAbsences.tenantId, ctx.tenantId));
-        const absencesByIncident = new Map<string, Array<{ fromDate: string; toDate: string | null }>>();
+        const absencesByIncident = new Map<
+          string,
+          Array<{ fromDate: string; toDate: string | null }>
+        >();
         for (const row of absenceRows) {
           const list = absencesByIncident.get(row.incidentId) ?? [];
           list.push({ fromDate: row.fromDate, toDate: row.toDate });

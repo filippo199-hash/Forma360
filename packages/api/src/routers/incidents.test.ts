@@ -209,7 +209,9 @@ describe('incidents router', () => {
   beforeEach(async () => {
     ({ client, db } = await bootDb());
     tenantId = newId();
-    await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: `acme-${tenantId}` });
+    await db
+      .insert(schema.tenants)
+      .values({ id: tenantId, name: 'Acme', slug: `acme-${tenantId}` });
     const sets = await seedDefaultPermissionSets(db as never, tenantId);
     adminId = `usr_${newId()}`;
     managerId = `usr_${newId()}`;
@@ -313,7 +315,10 @@ describe('incidents router', () => {
       details: { device: 'Used cannula', contaminationStatus: 'high' },
     });
     const detail = await callerFor(adminId).incidents.get({ incidentId: created.incidentId });
-    expect(detail.incident.details).toMatchObject({ device: 'Used cannula', ohFollowUpRequired: true });
+    expect(detail.incident.details).toMatchObject({
+      device: 'Used cannula',
+      ohFollowUpRequired: true,
+    });
     // Sharps records default to confidential (Aisha's condition).
     expect(detail.incident.confidential).toBe(true);
   });
@@ -328,7 +333,12 @@ describe('incidents router', () => {
 
     const from = new Date(Date.now() - 11 * DAY).toISOString().slice(0, 10);
     const to = new Date(Date.now() - 3 * DAY).toISOString().slice(0, 10); // 9 days
-    await admin.incidents.addAbsence({ incidentId: id, personId: person.id, fromDate: from, toDate: to });
+    await admin.incidents.addAbsence({
+      incidentId: id,
+      personId: person.id,
+      fromDate: from,
+      toDate: to,
+    });
 
     const after = await admin.incidents.get({ incidentId: id });
     expect(after.incident.riddorRescreenRequired).toBe(true);
@@ -365,7 +375,11 @@ describe('incidents router', () => {
       }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
 
-    await admin.incidents.riddorRecordSubmission({ incidentId: id, route: 'online', hseReference: 'F2508-1' });
+    await admin.incidents.riddorRecordSubmission({
+      incidentId: id,
+      route: 'online',
+      hseReference: 'F2508-1',
+    });
     await expect(
       admin.incidents.riddorRecordSubmission({ incidentId: id, route: 'online' }),
     ).rejects.toMatchObject({ message: 'riddor-already-submitted' });
@@ -531,7 +545,9 @@ describe('incidents router', () => {
       .insert(schema.tenants)
       .values({ id: otherTenant, name: 'Rival', slug: `rival-${otherTenant}` });
     const foreignSite = newId();
-    await db.insert(schema.sites).values({ id: foreignSite, tenantId: otherTenant, name: 'Elsewhere' });
+    await db
+      .insert(schema.sites)
+      .values({ id: foreignSite, tenantId: otherTenant, name: 'Elsewhere' });
 
     const standard = callerFor(standardId);
     await expect(
@@ -646,7 +662,9 @@ describe('incidents router', () => {
     const activity = await db
       .select()
       .from(schema.issueActivity)
-      .where(and(eq(schema.issueActivity.tenantId, tenantId), eq(schema.issueActivity.issueId, issueId)));
+      .where(
+        and(eq(schema.issueActivity.tenantId, tenantId), eq(schema.issueActivity.issueId, issueId)),
+      );
     expect(activity.some((a) => a.kind === 'escalated_to_incident')).toBe(true);
     const linked = await callerFor(standardId).incidents.forObservation({ observationId: issueId });
     expect(linked).toHaveLength(1);
@@ -710,7 +728,10 @@ describe('incidents router', () => {
     expect(result.prompted).toBe(3);
 
     const now = Date.now();
-    const ra = await db.select().from(schema.riskAssessments).where(eq(schema.riskAssessments.id, raId));
+    const ra = await db
+      .select()
+      .from(schema.riskAssessments)
+      .where(eq(schema.riskAssessments.id, raId));
     const coshh = await db
       .select()
       .from(schema.coshhAssessments)
@@ -719,15 +740,17 @@ describe('incidents router', () => {
       .select()
       .from(schema.fireRiskAssessments)
       .where(eq(schema.fireRiskAssessments.id, fraId));
-    expect(ra[0]!.nextReviewAt!.getTime()).toBeLessThanOrEqual(now);
-    expect(coshh[0]!.nextReviewAt!.getTime()).toBeLessThanOrEqual(now);
-    expect(fra[0]!.nextReviewAt!.getTime()).toBeLessThanOrEqual(now);
+    expect(ra[0]?.nextReviewAt?.getTime()).toBeLessThanOrEqual(now);
+    expect(coshh[0]?.nextReviewAt?.getTime()).toBeLessThanOrEqual(now);
+    expect(fra[0]?.nextReviewAt?.getTime()).toBeLessThanOrEqual(now);
 
     const raEvents = await db
       .select()
       .from(schema.riskAssessmentEvents)
       .where(eq(schema.riskAssessmentEvents.assessmentId, raId));
-    expect(raEvents.some((e) => e.kind === 'review_prompted' && e.detail.includes('IN-'))).toBe(true);
+    expect(raEvents.some((e) => e.kind === 'review_prompted' && e.detail.includes('IN-'))).toBe(
+      true,
+    );
     const fireEvents = await db
       .select()
       .from(schema.fireEvents)
@@ -739,16 +762,19 @@ describe('incidents router', () => {
 
     // Skipping requires a reason.
     const id2 = await triagedIncident();
-    await expect(
-      admin.incidents.skipReviews({ incidentId: id2, reason: 'x' }),
-    ).rejects.toThrow();
-    await admin.incidents.skipReviews({ incidentId: id2, reason: 'No assessments cover this area' });
+    await expect(admin.incidents.skipReviews({ incidentId: id2, reason: 'x' })).rejects.toThrow();
+    await admin.incidents.skipReviews({
+      incidentId: id2,
+      reason: 'No assessments cover this area',
+    });
     const detail2 = await admin.incidents.get({ incidentId: id2 });
     expect(detail2.incident.reviewPromptSkippedReason).toBe('No assessments cover this area');
   });
 
   it('IN-E19: reference numbering continues past IN-999999', async () => {
-    await db.insert(schema.referenceCounters).values({ tenantId, series: 'incident', value: 999_999 });
+    await db
+      .insert(schema.referenceCounters)
+      .values({ tenantId, series: 'incident', value: 999_999 });
     const id = await reportIncident({ title: 'Millionth' });
     const detail = await callerFor(adminId).incidents.get({ incidentId: id });
     expect(detail.incident.referenceNumber).toBe('IN-1000000');
@@ -785,7 +811,10 @@ describe('incidents router', () => {
       callerFor(standard2Id).incidents.cancel({ incidentId: id, reason: 'duplicate report' }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
     // The reporter can cancel their own while still `reported`.
-    await callerFor(standardId).incidents.cancel({ incidentId: id, reason: 'duplicate of IN-000001' });
+    await callerFor(standardId).incidents.cancel({
+      incidentId: id,
+      reason: 'duplicate of IN-000001',
+    });
     const rows = await admin.incidents.list({ includeCancelled: true });
     expect(rows.find((r) => r.id === id)?.status).toBe('cancelled');
     // Terminal: nothing moves out of cancelled.
@@ -811,7 +840,11 @@ describe('incidents router', () => {
       }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
     await expect(
-      standard.incidents.riddorScreen({ incidentId: id, category: 'death', determinationNote: 'x' }),
+      standard.incidents.riddorScreen({
+        incidentId: id,
+        category: 'death',
+        determinationNote: 'x',
+      }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
     await expect(
       standard.incidents.addWitnessStatement({

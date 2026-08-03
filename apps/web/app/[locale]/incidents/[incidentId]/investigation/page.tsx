@@ -20,9 +20,7 @@ import {
   RCA_METHODS,
   RECURRENCE_LIKELIHOODS,
 } from '@forma360/shared/incidents';
-import {
-  IncidentErrorText,
-} from '../../../../../src/components/incidents/incident-error';
+import { IncidentErrorText } from '../../../../../src/components/incidents/incident-error';
 import { DetailNotFound } from '../../../../../src/components/detail-not-found';
 import { SignaturePad } from '../../../../../src/components/inspections/signature-pad';
 import { GroupUserSelector } from '../../../../../src/components/selectors/group-user-selector';
@@ -1047,9 +1045,7 @@ export default function InvestigationWorkspacePage() {
                   ) : null}
                   {showApprove ? (
                     <div className="space-y-3">
-                      <p className="text-xs text-muted-foreground">
-                        {t('workspace.approveHint')}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{t('workspace.approveHint')}</p>
                       {findingsForViewed
                         .filter((f) => f.requiresAction && f.actionId === null)
                         .map((finding) => {
