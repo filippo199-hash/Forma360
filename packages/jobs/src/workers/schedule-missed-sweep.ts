@@ -20,7 +20,7 @@ import {
   templates,
   user,
 } from '@forma360/db/schema';
-import { notifyInApp } from '@forma360/api';
+import { notifyInApp } from '@forma360/api/notify';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, eq, inArray, lte } from 'drizzle-orm';

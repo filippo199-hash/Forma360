@@ -7,7 +7,7 @@
  * recipient-freeze core the router uses (`publishHeadsUp` from
  * `@forma360/api`).
  */
-import { publishHeadsUp } from '@forma360/api';
+import { publishHeadsUp } from '@forma360/api/heads-up-publish';
 import type { Database } from '@forma360/db/client';
 import { headsUps } from '@forma360/db/schema';
 import type { Logger } from '@forma360/shared/logger';

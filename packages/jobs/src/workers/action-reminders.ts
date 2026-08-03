@@ -15,7 +15,7 @@
  */
 import type { Database } from '@forma360/db/client';
 import { actions, user } from '@forma360/db/schema';
-import { notifyInApp } from '@forma360/api';
+import { notifyInApp } from '@forma360/api/notify';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm';

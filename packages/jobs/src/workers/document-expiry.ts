@@ -16,7 +16,7 @@
  */
 import type { Database } from '@forma360/db/client';
 import { documents, user } from '@forma360/db/schema';
-import { notifyInApp } from '@forma360/api';
+import { notifyInApp } from '@forma360/api/notify';
 import type { Logger } from '@forma360/shared/logger';
 import { usersHoldingPermission } from '@forma360/permissions/holders';
 import type { Job } from 'bullmq';
