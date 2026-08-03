@@ -632,6 +632,7 @@ export const FIRE_EVENT_KINDS = [
   'finding_removed',
   'finding_resolved',
   'review_recorded',
+  'review_prompted',
   'inspection_recorded',
   'drill_recorded',
   'peep_review_recorded',

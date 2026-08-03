@@ -69,6 +69,7 @@ export const issueActivityKinds = [
   'attachment_added',
   'attachment_removed',
   'edited',
+  'escalated_to_incident',
 ] as const;
 export type IssueActivityKind = (typeof issueActivityKinds)[number];
 

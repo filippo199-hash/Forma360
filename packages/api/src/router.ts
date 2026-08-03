@@ -50,6 +50,7 @@ import { contractorsRouter } from './routers/contractors';
 import { createCoshhRouter, type CoshhRouterDeps } from './routers/coshh';
 import { createPermitsRouter, type PermitsRouterDeps } from './routers/permits';
 import { createFireSafetyRouter, type FireSafetyRouterDeps } from './routers/fireSafety';
+import { createIncidentsRouter, type IncidentsRouterDeps } from './routers/incidents';
 import {
   createRiskAssessmentsRouter,
   type RiskAssessmentsRouterDeps,
@@ -91,6 +92,7 @@ export function buildAppRouter(deps: {
    */
   permits?: PermitsRouterDeps;
   fireSafety?: FireSafetyRouterDeps;
+  incidents?: IncidentsRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -131,6 +133,7 @@ export function buildAppRouter(deps: {
     coshh: createCoshhRouter(deps.coshh ?? { enabled: false }),
     permits: createPermitsRouter(deps.permits ?? { enabled: false }),
     fireSafety: createFireSafetyRouter(deps.fireSafety ?? { enabled: false }),
+    incidents: createIncidentsRouter(deps.incidents ?? { enabled: false }),
   });
 }
 
@@ -281,6 +284,10 @@ export const stubPermitsDeps: PermitsRouterDeps = { enabled: true };
  * exercisable; brand gating is tested with `enabled: false`. */
 export const stubFireSafetyDeps: FireSafetyRouterDeps = { enabled: true };
 
+/** Test-only incidents deps — enabled; brand gating is tested with
+ * `enabled: false`. */
+export const stubIncidentsDeps: IncidentsRouterDeps = { enabled: true };
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
@@ -292,6 +299,7 @@ export const appRouter = buildAppRouter({
   coshh: stubCoshhDeps,
   permits: stubPermitsDeps,
   fireSafety: stubFireSafetyDeps,
+  incidents: stubIncidentsDeps,
 });
 
 export type AppRouter = typeof appRouter;

@@ -450,6 +450,7 @@ export const RA_EVENT_KINDS = [
   'control_added',
   'control_removed',
   'review_recorded',
+  'review_prompted',
   'distributed',
   'acknowledged',
   'variant_created',

@@ -60,7 +60,7 @@ export type ActionStatus = (typeof actionStatus)[number];
 export const actionPriority = ['low', 'medium', 'high', 'critical'] as const;
 export type ActionPriority = (typeof actionPriority)[number];
 
-export const actionSourceTypes = ['inspection', 'issue', 'standalone'] as const;
+export const actionSourceTypes = ['inspection', 'issue', 'standalone', 'incident'] as const;
 export type ActionSourceType = (typeof actionSourceTypes)[number];
 
 /**

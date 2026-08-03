@@ -574,6 +574,7 @@ export const COSHH_EVENT_KINDS = [
   'control_added',
   'control_removed',
   'review_recorded',
+  'review_prompted',
   'monitoring_recorded',
   'lev_test_recorded',
   'substitution_updated',

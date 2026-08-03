@@ -14,6 +14,7 @@
  */
 import {
   assets,
+  incidents,
   inspections,
   issues,
   maintenancePrograms,
@@ -147,7 +148,7 @@ async function loadActiveActionType(
  * (low=30, medium=7, high=1, critical=1) when no row exists, mirroring
  * the actionTypesRouter.settings.get behaviour.
  */
-async function loadPriorityDueDateDays(db: Db, tenantId: string): Promise<PriorityDueDateDays> {
+export async function loadPriorityDueDateDays(db: Db, tenantId: string): Promise<PriorityDueDateDays> {
   const rows = await db
     .select({ days: tenantActionSettings.priorityDueDateDays })
     .from(tenantActionSettings)
@@ -163,7 +164,7 @@ async function loadPriorityDueDateDays(db: Db, tenantId: string): Promise<Priori
  * pick a priority OR the priority's default is `null` (meaning
  * "leave the due-date empty").
  */
-function computeAutoDueAt(
+export function computeAutoDueAt(
   now: Date,
   priority: (typeof actionPriority)[number] | null | undefined,
   daysByPriority: PriorityDueDateDays,
@@ -387,7 +388,7 @@ const statusEnum = z.enum(actionStatus);
 const listInput = z
   .object({
     status: statusEnum.optional(),
-    sourceType: z.enum(['inspection', 'issue', 'standalone']).optional(),
+    sourceType: z.enum(['inspection', 'issue', 'standalone', 'incident']).optional(),
     sourceId: z.string().length(26).optional(),
     /**
      * Server-resolved "assigned to me" filter — flips to `ctx.auth.userId`
@@ -660,7 +661,7 @@ export const actionsRouter = router({
       // of the previous "Linked to observation 76X52B" (raw slice of the
       // internal id). Lazy: only fires when sourceId is set.
       let source: {
-        type: 'issue' | 'inspection' | 'standalone' | 'maintenance';
+        type: 'issue' | 'inspection' | 'standalone' | 'maintenance' | 'incident';
         referenceNumber: string | null;
         title: string | null;
       } | null = null;
@@ -718,6 +719,25 @@ export const actionsRouter = router({
           type: 'inspection',
           referenceNumber: row?.documentNumber ?? null,
           title: row?.title ?? null,
+        };
+      } else if (action.sourceType === 'incident') {
+        // Confidential incidents keep their title out of the action's
+        // source card — the reference alone is enough to navigate, and
+        // detail access is re-checked on the incident page itself.
+        const rows = await ctx.db
+          .select({
+            referenceNumber: incidents.referenceNumber,
+            title: incidents.title,
+            confidential: incidents.confidential,
+          })
+          .from(incidents)
+          .where(and(eq(incidents.tenantId, ctx.tenantId), eq(incidents.id, action.sourceId)))
+          .limit(1);
+        const row = rows[0];
+        source = {
+          type: 'incident',
+          referenceNumber: row?.referenceNumber ?? null,
+          title: row === undefined || row.confidential ? null : row.title,
         };
       }
       // Resolve the action type so the detail page can render the
