@@ -204,6 +204,20 @@ export const usersRouter = router({
    * canonical `name` in sync as "First Last" so every display surface
    * (notably "Prepared by") shows a full name (To-Do #4).
    */
+  /**
+   * PF-20: persist the user's preferred language. Called by the settings
+   * language switcher; emails and future sessions follow it.
+   */
+  setLocale: tenantProcedure
+    .input(z.object({ locale: z.string().regex(/^[a-z]{2}$/) }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(user)
+        .set({ locale: input.locale, updatedAt: new Date() })
+        .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)));
+      return { ok: true as const };
+    }),
+
   updateProfile: tenantProcedure
     .input(
       z.object({
@@ -401,8 +415,8 @@ export const usersRouter = router({
             to: emailLower,
             templateKey: 'invite',
             variables: {
-              inviterName: inviterRow?.name ?? 'A Forma360 administrator',
-              tenantName: tenantRow?.name ?? 'Forma360',
+              inviterName: inviterRow?.name ?? 'An administrator',
+              tenantName: tenantRow?.name ?? 'your organisation',
               inviteUrl,
               expiresIn: '7 days',
             },

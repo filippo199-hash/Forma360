@@ -54,8 +54,10 @@ export default function ContractorPortalPage() {
 
   const activities = data.activities.filter((a): a is Activity => a in TILES);
 
-  // Onboarding: acknowledgement must happen before the portal opens up.
-  if (data.acknowledgedAt === null) {
+  // Onboarding: acknowledgement of the CURRENT induction version must
+  // happen before the portal opens up (PF-19: version-aware — an edited
+  // induction text forces re-acknowledgement, enforced server-side too).
+  if (!data.inductionCurrent) {
     return (
       <div className="mx-auto w-full max-w-lg px-4 py-12">
         <Card>
@@ -69,8 +71,13 @@ export default function ContractorPortalPage() {
                 {t('portal.onboardingIntro', { contractor: data.contractorName })}
               </p>
             </div>
-            <p className="rounded-md bg-muted/50 p-3 text-left text-sm text-muted-foreground">
-              {t('portal.onboardingBody')}
+            {data.acknowledgedAt !== null ? (
+              <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs font-medium text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+                {t('portal.inductionUpdated')}
+              </p>
+            ) : null}
+            <p className="whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-left text-sm text-muted-foreground">
+              {data.inductionBody ?? t('portal.onboardingBody')}
             </p>
             <Button
               className="w-full"

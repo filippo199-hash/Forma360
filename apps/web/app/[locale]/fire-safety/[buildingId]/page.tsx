@@ -31,6 +31,8 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { parseDoorImport } from '@forma360/shared/fire-safety';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { enqueueOffline, isNetworkError } from '../../../../src/lib/offline-queue';
+import { newId } from '@forma360/shared/id';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type Tab = 'logbook' | 'doors' | 'drills' | 'peeps' | 'marshals' | 'fras' | 'info';
@@ -63,6 +65,7 @@ const CHECKLIST_KEYS = [
 
 export default function FireBuildingPage() {
   const t = useTranslations('fireSafety');
+  const tOffline = useTranslations('offline');
   const params = useParams<{ locale: string; buildingId: string }>();
   const locale = params.locale ?? 'en';
   const buildingId = params.buildingId ?? '';
@@ -72,6 +75,17 @@ export default function FireBuildingPage() {
   const canRecord = useHasPermission('fireSafety.record');
   const canCreate = useHasPermission('fireSafety.create');
   const canManage = useHasPermission('fireSafety.manage');
+  const canPickAssets = useHasPermission('assets.view');
+  // PF-17: link a recurring check to a maintained asset so its service
+  // history joins onto the asset page.
+  const assetsList = trpc.assets.list.useQuery({}, { enabled: canManage && canPickAssets });
+  const linkAsset = trpc.fireSafety.logbook.upsertCheck.useMutation({
+    onSuccess: () => {
+      toast.success(t('logbook.assetLinkedToast'));
+      invalidate();
+    },
+    onError: () => toast.error(t('saveError')),
+  });
 
   const [tab, setTab] = useState<Tab>('logbook');
 
@@ -107,7 +121,21 @@ export default function FireBuildingPage() {
       setEntryDefects('');
       invalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    // PF-10: a plant-room alarm test must survive a dead spot — connectivity
+    // failures queue the exact payload (clientRequestId dedupes the retry).
+    onError: (err, variables) => {
+      if (isNetworkError(err)) {
+        enqueueOffline('fire-log-entry', variables as unknown as Record<string, unknown>);
+        toast.success(tOffline('queuedToast'));
+        setRecordingType(null);
+        setEntryResult('pass');
+        setEntryCallPoint('');
+        setEntryNotes('');
+        setEntryDefects('');
+        return;
+      }
+      toast.error(t('saveError'));
+    },
   });
 
   // ── Doors state ──
@@ -340,6 +368,7 @@ export default function FireBuildingPage() {
       notes: entryNotes,
       defectsSummary: entryDefects,
       raiseAction: entryRaiseAction && entryResult !== 'pass',
+      clientRequestId: newId(),
     });
   }
 
@@ -475,6 +504,35 @@ export default function FireBuildingPage() {
                     <tr key={check.id} className="border-b align-top last:border-b-0">
                       <td className="px-3 py-2.5 font-medium">
                         {t(`checkTypes.${check.checkType}` as never)}
+                        {canManage && canPickAssets ? (
+                          <select
+                            aria-label={t('logbook.linkedAsset')}
+                            value={check.assetId ?? ''}
+                            onChange={(e) =>
+                              linkAsset.mutate({
+                                buildingId,
+                                checkType: check.checkType,
+                                assetId: e.target.value === '' ? null : e.target.value,
+                              })
+                            }
+                            className="mt-1 block w-full max-w-[180px] rounded-md border border-input bg-background px-2 py-1 text-xs text-muted-foreground"
+                          >
+                            <option value="">{t('logbook.noLinkedAsset')}</option>
+                            {(assetsList.data ?? []).map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : check.assetId !== null ? (
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {t('logbook.linkedAssetLine', {
+                              name:
+                                (assetsList.data ?? []).find((a) => a.id === check.assetId)
+                                  ?.name ?? check.assetId,
+                            })}
+                          </p>
+                        ) : null}
                       </td>
                       <td className="px-3 py-2.5">
                         {t(`frequencies.${check.frequency}` as never)}

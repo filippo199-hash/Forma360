@@ -152,9 +152,25 @@ describe('read authorization', () => {
       { id: userA, name: 'Sub A', email: 'a@sub.test', tenantId, permissionSetId: portalSet },
       { id: userB, name: 'Sub B', email: 'b@sub.test', tenantId, permissionSetId: portalSet },
     ]);
+    // Induction acknowledged — this test covers data scoping, not the
+    // PF-19 induction gate (contractorGate.test.ts CI-E01 covers that).
     await db.insert(schema.contractorUsers).values([
-      { id: newId(), tenantId, contractorId: contractorA, userId: userA },
-      { id: newId(), tenantId, contractorId: contractorB, userId: userB },
+      {
+        id: newId(),
+        tenantId,
+        contractorId: contractorA,
+        userId: userA,
+        acknowledgedAt: new Date(),
+        acknowledgedVersion: 1,
+      },
+      {
+        id: newId(),
+        tenantId,
+        contractorId: contractorB,
+        userId: userB,
+        acknowledgedAt: new Date(),
+        acknowledgedVersion: 1,
+      },
     ]);
 
     // loadContractorScope: internal → null; portal user → their own contractor.
@@ -173,7 +189,7 @@ describe('read authorization', () => {
     });
 
     // Contractor A's portal user: list shows only their own; get on others → NOT_FOUND.
-    const aIds = (await callerA.actions.list({})).map((r) => r.id);
+    const aIds = (await callerA.actions.list({})).rows.map((r) => r.id);
     expect(aIds).toContain(aAction);
     expect(aIds).not.toContain(bAction);
     expect(aIds).not.toContain(internalAction);
@@ -182,7 +198,7 @@ describe('read authorization', () => {
     await expect(callerA.actions.get({ actionId: aAction })).resolves.toBeDefined();
 
     // Internal admin is unrestricted — sees all three.
-    const adminIds = (await admin.actions.list({})).map((r) => r.id);
+    const adminIds = (await admin.actions.list({})).rows.map((r) => r.id);
     expect(adminIds).toEqual(expect.arrayContaining([aAction, bAction, internalAction]));
   });
 

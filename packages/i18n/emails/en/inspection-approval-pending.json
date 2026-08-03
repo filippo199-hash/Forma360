@@ -1,0 +1,8 @@
+{
+  "subject": "Approval waiting — {documentNumber} {title}",
+  "preheader": "An inspection on {productName} is waiting for your approval.",
+  "greeting": "Hello {recipientName},",
+  "body": "The inspection \"{title}\" ({documentNumber}) has been submitted and is waiting for approval. Review it and approve or reject with a comment.",
+  "cta": "Review the inspection",
+  "footer": "You are receiving this because you can approve inspections on {productName}."
+}

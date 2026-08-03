@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "監査ログ"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -295,9 +296,9 @@
         "contractors": "Contractors",
         "org": "Organisation",
         "riskAssessments": "リスクアセスメント",
-        "coshh": "有害物質（COSHH）",
+        "coshh": "COSHH",
         "permits": "作業許可",
-        "fireSafety": "防火安全",
+        "fireSafety": "防火管理",
         "incidents": "インシデント"
       },
       "perms": {
@@ -363,19 +364,19 @@
         "org_settings": "Manage organisation settings",
         "org_audit_view": "View audit log",
         "riskAssessments_view": "リスクアセスメントの閲覧",
-        "riskAssessments_create": "リスクアセスメントの作成",
-        "riskAssessments_manage": "リスクアセスメントの管理",
-        "coshh_view": "COSHHの閲覧",
-        "coshh_create": "COSHH記録の作成",
-        "coshh_manage": "COSHHの管理",
-        "permits_view": "作業許可の閲覧",
-        "permits_create": "作業許可の作成",
-        "permits_issue": "作業許可の発行と管理",
-        "permits_manage": "許可タイプの管理",
-        "fireSafety_view": "防火安全の閲覧",
-        "fireSafety_record": "防火点検の記録",
-        "fireSafety_create": "防火記録の作成",
-        "fireSafety_manage": "防火安全の管理",
+        "riskAssessments_create": "アセスメントの作成・編集",
+        "riskAssessments_manage": "アセスメントの公開・配布・管理",
+        "coshh_view": "COSHH台帳の閲覧",
+        "coshh_create": "物質・評価の追加",
+        "coshh_manage": "COSHH評価の公開・管理",
+        "permits_view": "許可証の閲覧",
+        "permits_create": "許可証の申請・記録",
+        "permits_issue": "許可証の発行・停止・終了",
+        "permits_manage": "許可証タイプの管理",
+        "fireSafety_view": "防火管理の閲覧",
+        "fireSafety_record": "点検の記録",
+        "fireSafety_create": "建物・扉・アセスメントの作成",
+        "fireSafety_manage": "アセスメントの公開・モジュール管理",
         "incidents_view": "インシデントの閲覧",
         "incidents_report": "インシデントの報告",
         "incidents_investigate": "調査の実施",
@@ -522,6 +523,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "データ保持とエクスポート",
+        "subtitle": "保持 v1 はポリシーを超えた通知を削除します。法定の安全記録には決して触れません。",
+        "keepForever": "無期限に保持",
+        "months": "{count} か月",
+        "scopeNote": "アプリ内通知のみが対象です。点検・許可証・防火記録簿・COSHH・リスクアセスメントは常に保持されます。",
+        "savedToast": "保持ポリシーを保存しました。"
+      },
+      "exportData": {
+        "button": "テナントデータをダウンロード(JSON)",
+        "hint": "すべてを 1 つの JSON にまとめます。移行やオフボーディング用。管理者のみ。"
       }
     },
     "customFields": {
@@ -585,6 +598,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "監査ログ",
+      "subtitle": "全モジュールのイベントを、テナント全体の新しい順のひとつのストリームで表示します。",
+      "empty": "イベントはまだありません。",
+      "loadMore": "さらに読み込む",
+      "systemActor": "システム",
+      "columns": {
+        "when": "日時",
+        "module": "モジュール",
+        "event": "イベント",
+        "actor": "実行者",
+        "detail": "詳細"
+      },
+      "modules": {
+        "all": "すべて",
+        "actions": "アクション",
+        "observations": "観察記録",
+        "permits": "許可証",
+        "coshh": "COSHH",
+        "riskAssessments": "リスクアセスメント",
+        "fireSafety": "防火",
+        "contractors": "請負業者"
       }
     }
   },
@@ -1060,7 +1097,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "承認署名待ち"
     },
     "table": {
       "title": "Title",
@@ -1079,7 +1117,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "承認署名待ち"
     },
     "picker": {
       "title": "Pick a template",
@@ -1129,7 +1168,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} 枚の写真をアップロードできませんでした。ここに保持しています。",
+          "retry": "再試行"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -1191,10 +1232,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "説明が必要"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "この回答の説明（必須）"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1363,6 +1406,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "自分の定期点検（{count}）",
+      "startNow": "開始",
+      "startError": "開始できませんでした。再試行してください。",
+      "missedBadge": "未実施",
+      "overdueBadge": "期限超過",
+      "dueBadge": "予定"
     }
   },
   "nav": {
@@ -1386,8 +1437,9 @@
     "riskAssessments": "Risk assessments",
     "coshh": "COSHH",
     "permits": "作業許可",
-    "incidents": "インシデント",
-    "fireSafety": "防火安全"
+    "fireSafety": "防火管理",
+    "analytics": "ダッシュボード",
+    "incidents": "インシデント"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -1415,7 +1467,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "提出者",
+    "site": "拠点"
   },
   "schedules": {
     "title": "Schedules",
@@ -1705,7 +1759,11 @@
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
-        "toast": "Action created."
+        "toast": "Action created.",
+        "assigneeLabel": "担当者",
+        "noAssignee": "未割り当て",
+        "typeLabel": "是正措置タイプ",
+        "noType": "タイプなし"
       },
       "attachInspectionDialog": {
         "title": "点検を開始",
@@ -2165,6 +2223,11 @@
       "autoGeneratedBadge": "自動生成",
       "autoGeneratedBy": "{program} により自動生成",
       "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later.",
+      "sourceLinkRiskAssessment": "リスクアセスメント {referenceNumber} から作成",
+      "sourceLinkCoshhAssessment": "COSHH評価 {referenceNumber} から作成",
+      "sourceLinkFireRiskAssessment": "火災リスクアセスメント {referenceNumber} から作成",
+      "sourceLinkFireLogbookEntry": "不合格の防火点検から作成",
+      "sourceLinkFireDoorInspection": "不合格の防火扉点検から作成",
       "sourceLinkIncident": "インシデント {referenceNumber} から作成"
     },
     "create": {
@@ -2228,7 +2291,17 @@
     },
     "filters": {
       "removeAria": "Remove {label} filter"
-    }
+    },
+    "sourceRiskAssessment": "リスクアセスメント",
+    "sourceCoshhAssessment": "COSHH",
+    "sourceFireRiskAssessment": "火災リスクアセスメント",
+    "sourceFireLogbookEntry": "防火点検",
+    "sourceFireDoorInspection": "防火扉",
+    "pagerShowing": "{total}件中 {from}–{to} 件を表示",
+    "pagerPrev": "前へ",
+    "pagerNext": "次へ",
+    "myOpenChip": "自分の担当: {count}",
+    "myOverdueChip": "{count}件期限超過"
   },
   "actionsSettings": {
     "title": "Action settings",
@@ -2675,7 +2748,28 @@
         "startedAt": "開始日",
         "createdAt": "作成日"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "保全計画",
+        "empty": "この資産を対象とする保全計画はありません。",
+        "timeMeta": "{interval} 日ごと — 前回整備 {last}",
+        "usageMeta": "{interval} {unit} ごと — 現在値 {current}",
+        "status": {
+          "on_schedule": "予定どおり",
+          "approaching": "間近",
+          "overdue": "期限超過",
+          "awaiting_first_reading": "初回計測待ち"
+        }
+      },
+      "fireHistory": {
+        "heading": "防火点検履歴",
+        "checkLine": "{type} — {building}",
+        "empty": "防火記録簿への記録はまだありません。",
+        "performedAt": "日付",
+        "type": "点検",
+        "result": "結果",
+        "notes": "備考"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -2943,6 +3037,14 @@
       "actions": "アクション",
       "headsUp": "お知らせ",
       "documents": "文書",
+      "permits": "作業許可",
+      "coshh": "COSHH物質",
+      "riskAssessments": "リスクアセスメント",
+      "fireBuildings": "防火建物",
+      "fireRiskAssessments": "火災リスクアセスメント",
+      "contractors": "請負業者",
+      "sites": "拠点・プロジェクト",
+      "templates": "テンプレート",
       "incidents": "インシデント"
     }
   },
@@ -3480,7 +3582,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "請負業者がコンプライアンス未達です。続行するには下に承認理由を入力してください。"
     },
     "gate": {
       "navLink": "Gate",
@@ -3519,7 +3622,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "この請負業者はコンプライアンス未達です。チェックインには記録付きの承認理由が必要です(または現場事務所へ案内してください)。",
+      "nonCompliantChip": "コンプライアンス未達"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3558,7 +3663,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "前回の確認以降にインダクションが更新されました。再度読み、確認してください。"
     },
     "users": {
       "heading": "Portal users",
@@ -3612,7 +3718,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "現場インダクション",
+      "version": "バージョン {version}",
+      "hint": "ポータル利用者に最初に表示されます。変更を保存するとバージョンが上がり、全員の再確認が必要になります。",
+      "placeholder": "ここで作業する前に全請負業者が読み確認すべき内容…",
+      "saveButton": "インダクションを保存",
+      "savedToast": "インダクションを保存しました(バージョン {version})。"
+    },
+    "onSitePermits": {
+      "heading": "有効な許可証を持つ在場中の請負業者"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5017,7 +5134,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "資産にリンク済み",
+      "noLinkedAsset": "リンクされた資産なし",
+      "linkedAssetLine": "資産:{name}",
+      "assetLinkedToast": "資産リンクを更新しました。"
     },
     "doors": {
       "addButton": "Add door",
@@ -5313,6 +5434,119 @@
     "clearSearch": "検索をクリア",
     "clear": "選択を解除",
     "done": "完了"
+  },
+  "analytics": {
+    "title": "ダッシュボード",
+    "subtitle": "全モジュールで対応が必要な項目と、直近の傾向を一目で確認できます。",
+    "tiles": {
+      "sectionLabel": "要対応",
+      "myOpenActions": "自分の未完了アクション",
+      "overdueActions": "期限超過のアクション",
+      "dueSoon": "7日以内に期限 {count} 件",
+      "openObservations": "未対応の観察記録",
+      "highPriority": "高優先度 {count} 件",
+      "awaitingApproval": "承認待ちの点検",
+      "inProgress": "進行中 {count} 件",
+      "missedInspections": "未実施の点検(30日)",
+      "upcoming7": "7日以内の予定 {count} 件",
+      "pendingAcks": "確認が必要なお知らせ",
+      "openPermits": "有効な許可証",
+      "expiring48h": "48時間以内に期限切れ {count} 件",
+      "raReviewOverdue": "見直し期限超過のリスクアセスメント",
+      "raActive": "有効 {count} 件",
+      "coshhReviewDue": "COSHH 見直し期限超過",
+      "coshhSubstances": "有効な物質 {count} 件",
+      "fireAttention": "防火:要対応"
+    },
+    "trends": {
+      "sectionLabel": "傾向",
+      "actionsTitle": "アクション — 作成 vs 完了(8週間)",
+      "activityTitle": "点検と観察記録(8週間)",
+      "actionsCreated": "作成",
+      "actionsCompleted": "完了",
+      "inspectionsCompleted": "点検完了",
+      "observationsRaised": "観察記録の報告",
+      "thisWeek": "今週"
+    },
+    "sites": {
+      "sectionLabel": "拠点比較",
+      "title": "拠点の概況",
+      "subtitle": "拠点ごとの未対応の作業量と点検活動。多い順に表示します。",
+      "site": "拠点",
+      "openActions": "未完了アクション",
+      "openObservations": "未対応の観察記録",
+      "completed30": "点検(30日)",
+      "noSite": "拠点なし",
+      "empty": "拠点はまだありません。"
+    }
+  },
+  "scanPage": {
+    "loading": "読み込み中…",
+    "invalidTitle": "この QR コードは無効になりました。",
+    "invalidBody": "スキャンした QR コードは取り消されたか、このカテゴリーは報告を受け付けていません。施設の管理者にお問い合わせください。",
+    "reportObservation": "観察記録を報告",
+    "titleLabel": "タイトル",
+    "titlePlaceholder": "発生した内容の簡単な要約",
+    "descriptionLabel": "説明",
+    "descriptionPlaceholder": "状況の理解に役立つ詳細を記入してください。",
+    "reporterNameLabel": "お名前",
+    "reporterNameSubtitle": "任意 — 空欄のままで匿名になります。",
+    "reporterEmailLabel": "メールアドレス",
+    "reporterEmailSubtitle": "任意 — フォローアップに使用する場合があります。",
+    "dateOccurredLabel": "発生日時",
+    "locationAddressLabel": "場所",
+    "locationAddressPlaceholder": "建物・階・エリア",
+    "customQuestionsHeading": "追加の質問",
+    "selectPlaceholder": "選択してください",
+    "submit": "送信",
+    "submitting": "送信中…",
+    "successTitle": "ありがとうございます。報告を受け付けました。",
+    "successBody": "参照番号は以下のとおりです。控えとして保管してください。",
+    "successAnother": "続けて報告する",
+    "errorGeneric": "報告を送信できませんでした。もう一度お試しください。",
+    "siteLabel": "拠点",
+    "siteNone": "拠点を選択",
+    "photosLabel": "写真",
+    "photosSubtitle": "写真を最大 {max} 枚追加できます。写真は報告の半分です。",
+    "photosAdd": "写真を追加",
+    "photosRemove": "削除",
+    "photoTooLarge": "この写真は {maxMb} MB を超えています。小さいものを選んでください。",
+    "photoUploadFailed": "写真のアップロードに失敗しました。まだ添付されています。もう一度送信してください。"
+  },
+  "offline": {
+    "title": "オフラインです",
+    "body": "接続がないためこのページは表示できません。記録した内容はキューに保存され、自動的に同期されます。",
+    "pendingChip": "{count} 件が同期待ち — オンラインで自動送信",
+    "itemsDelivered": "キューの {count} 件を同期しました",
+    "itemRejected": "キューの項目がサーバーに拒否されました。内容を確認して再入力してください。",
+    "queuedToast": "接続がありません。キューに保存しました。自動的に同期されます。"
+  },
+  "notifications": {
+    "bellLabel": "通知({count} 件未読)",
+    "title": "通知",
+    "markAllRead": "すべて既読にする",
+    "empty": "まだ何もありません。最新の状態です。",
+    "kinds": {
+      "action_assigned": "アクション割り当て",
+      "approval_pending": "承認待ち",
+      "approval_decided": "承認結果",
+      "heads_up": "お知らせ",
+      "issue_reported": "観察記録の報告",
+      "schedule_missed": "未実施の点検",
+      "action_due": "期限間近のアクション",
+      "document_expiry": "文書の有効期限"
+    },
+    "prefs": {
+      "title": "メール通知",
+      "subtitle": "オフにするとメールのみ停止します。ヘッダーのベルには常に表示されます。",
+      "saveError": "設定を保存できませんでした。",
+      "keys": {
+        "emailActionReminders": "アクション期限/超過リマインダー",
+        "emailScheduleMissed": "未実施の予定点検",
+        "emailDocumentExpiry": "文書期限リマインダー",
+        "emailMaintenance": "保全リマインダー"
+      }
+    }
   },
   "incidents": {
     "title": "インシデント",

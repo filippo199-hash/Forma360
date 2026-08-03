@@ -160,7 +160,7 @@ export function SignUpCard() {
         setError(t('otpInvalidError'));
         return;
       }
-      window.location.assign(`/${locale}/templates`);
+      window.location.assign(`/${locale}/ai`);
     } catch {
       setError(t('signUpError'));
     } finally {

@@ -111,7 +111,11 @@ const notifyTrigger = z.object({
       siteIds: z.array(ulid).default([]),
     })
     .optional(),
-  /** `immediate` fires when the option is selected; `onCompletion` when the inspection submits. */
+  /**
+   * Delivery timing. Both values deliver when the inspection SUBMITS —
+   * the editor only writes 'onCompletion'; 'immediate' is accepted for
+   * back-compat and treated identically (PF-25: documented, not silent).
+   */
   timing: z.enum(['immediate', 'onCompletion']).default('onCompletion'),
 });
 

@@ -31,6 +31,7 @@ import {
 } from '@forma360/db/schema';
 import { user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
+import { publishHeadsUp } from '../heads-up-publish';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, inArray, isNull } from 'drizzle-orm';
@@ -365,13 +366,17 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
           .orderBy(desc(headsUps.createdAt));
 
         const filter = input?.filter ?? 'all';
+        const now = new Date();
         const mapped = rows.map((row) => {
+          const expired = row.expiresAt !== null && row.expiresAt <= now;
+          // PF-32: an expired notice is no longer pending anyone's action.
           const pending =
-            row.engagementLevel === 'sign'
+            !expired &&
+            (row.engagementLevel === 'sign'
               ? row.signedAt === null
               : row.engagementLevel === 'acknowledge'
                 ? row.acknowledgedAt === null
-                : row.viewedAt === null;
+                : row.viewedAt === null);
           return {
             id: row.id,
             title: row.title,
@@ -384,6 +389,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             viewedAt: row.viewedAt,
             acknowledgedAt: row.acknowledgedAt,
             signedAt: row.signedAt,
+            expired,
             pending,
           };
         });
@@ -614,123 +620,16 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'heads-up-archived' });
         }
 
-        // Merge explicit input with stored recipientSpec (if no explicit IDs provided).
-        let effectiveUserIds = [...input.userIds];
-        let effectiveGroupIds = [...input.groupIds];
-        let effectiveSiteIds = [...input.siteIds];
+const result = await publishHeadsUp(ctx.db, {
+          tenantId: ctx.tenantId,
+          headsUpId: headsUp.id,
+          userIds: input.userIds,
+          groupIds: input.groupIds,
+          siteIds: input.siteIds,
+          recipientSpec: headsUp.recipientSpec,
+        });
 
-        const hasExplicit =
-          input.userIds.length > 0 || input.groupIds.length > 0 || input.siteIds.length > 0;
-
-        let broadcastToAll = false;
-
-        if (!hasExplicit && headsUp.recipientSpec !== null) {
-          const parsed = recipientSpecSchema.safeParse(
-            (() => {
-              try {
-                return JSON.parse(headsUp.recipientSpec ?? '{}') as unknown;
-              } catch {
-                return {};
-              }
-            })(),
-          );
-          if (parsed.success && parsed.data !== undefined) {
-            broadcastToAll = parsed.data.broadcastToAll;
-            effectiveUserIds = parsed.data.userIds;
-            effectiveGroupIds = parsed.data.groupIds;
-            effectiveSiteIds = parsed.data.siteIds;
-          }
-        }
-
-        // Collect all user IDs to add as recipients.
-        const recipientUserIds = new Set<string>(effectiveUserIds);
-
-        // broadcastToAll: fan out to every active (non-deactivated) user in the tenant.
-        // Also applies when the stored spec has no recipients at all (backwards-compat
-        // for heads-ups created before the audience toggle was added).
-        const resolvedEmpty =
-          !broadcastToAll &&
-          recipientUserIds.size === 0 &&
-          effectiveGroupIds.length === 0 &&
-          effectiveSiteIds.length === 0;
-        if (broadcastToAll || resolvedEmpty) {
-          const allUsers = await ctx.db
-            .select({ id: user.id })
-            .from(user)
-            .where(and(eq(user.tenantId, ctx.tenantId), isNull(user.deactivatedAt)));
-          for (const u of allUsers) recipientUserIds.add(u.id);
-        }
-
-        // Expand groups (group_members is materialised by Phase 1).
-        if (effectiveGroupIds.length > 0) {
-          const { groupMembers } = await import('@forma360/db/schema');
-          const { inArray } = await import('drizzle-orm');
-          const memberRows = await ctx.db
-            .select({ userId: groupMembers.userId })
-            .from(groupMembers)
-            .where(
-              and(
-                eq(groupMembers.tenantId, ctx.tenantId),
-                inArray(groupMembers.groupId, effectiveGroupIds),
-              ),
-            );
-          for (const r of memberRows) recipientUserIds.add(r.userId);
-        }
-
-        // Expand sites: look up users via the site_members materialised table.
-        if (effectiveSiteIds.length > 0) {
-          const { siteMembers } = await import('@forma360/db/schema');
-          const { inArray } = await import('drizzle-orm');
-          const siteUserRows = await ctx.db
-            .select({ userId: siteMembers.userId })
-            .from(siteMembers)
-            .where(
-              and(
-                eq(siteMembers.tenantId, ctx.tenantId),
-                inArray(siteMembers.siteId, effectiveSiteIds),
-              ),
-            );
-          for (const r of siteUserRows) recipientUserIds.add(r.userId);
-        }
-
-        const now = new Date();
-
-        // Restrict recipients to users that actually belong to this tenant. A
-        // client-supplied (or stored-spec) `userId` must never materialise a
-        // foreign user as a recipient — that would leak their name + email via
-        // `listRecipients`/`sendReminder`. The group/site expansions above are
-        // already tenant-scoped; this catches the direct-id path.
-        const candidateIds = [...recipientUserIds];
-        const inTenantRows =
-          candidateIds.length > 0
-            ? await ctx.db
-                .select({ id: user.id })
-                .from(user)
-                .where(and(eq(user.tenantId, ctx.tenantId), inArray(user.id, candidateIds)))
-            : [];
-        const validUserIds = new Set(inTenantRows.map((r) => r.id));
-
-        // Upsert: ignore duplicates (idempotent re-publish edge case).
-        const values = [...recipientUserIds]
-          .filter((userId) => validUserIds.has(userId))
-          .map((userId) => ({
-            id: newId(),
-            tenantId: ctx.tenantId,
-            headsUpId: headsUp.id,
-            userId,
-            createdAt: now,
-          }));
-
-        if (values.length > 0) {
-          await ctx.db.insert(headsUpRecipients).values(values).onConflictDoNothing();
-        }
-
-        await ctx.db
-          .update(headsUps)
-          .set({ status: 'published', updatedAt: now })
-          .where(eq(headsUps.id, headsUp.id));
-
-        return { ok: true as const, recipientCount: values.length };
+        return { ok: true as const, recipientCount: result.recipientCount };
       }),
 
     archive: tenantProcedure
@@ -945,8 +844,12 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
                 : headsUp.engagementLevel === 'acknowledge'
                   ? 'acknowledge'
                   : 'view';
+            // PF-15: recipients land on THEIR view page — the old link
+            // pointed at the admin detail (no locale prefix, no access).
             const viewUrl =
-              deps.appUrl !== undefined ? `${deps.appUrl}/heads-up/${input.headsUpId}` : undefined;
+              deps.appUrl !== undefined
+                ? `${deps.appUrl}/en/heads-up/${input.headsUpId}/view`
+                : undefined;
             await deps.sendEmail({
               to: r.userEmail,
               templateKey: 'heads-up-reminder',
@@ -1220,7 +1123,12 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
         .use(requirePermission('headsUp.view'))
         .input(createCommentInput)
         .mutation(async ({ ctx, input }) => {
-          await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+          const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+          // PF-32: the composer's "allow comments" switch is a promise —
+          // refuse instead of silently accepting what the author disabled.
+          if (!headsUp.allowComments) {
+            throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'comments-disabled' });
+          }
           const id = newId();
           await ctx.db.insert(headsUpComments).values({
             id,

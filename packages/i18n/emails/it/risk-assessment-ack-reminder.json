@@ -1,0 +1,8 @@
+{
+  "subject": "Promemoria — valutazione dei rischi in attesa della tua conferma: {title}",
+  "preheader": "Hai una conferma di \"letto e compreso\" in sospeso su {productName}.",
+  "greeting": "Ciao {recipientName},",
+  "body": "La valutazione dei rischi \"{title}\" ({referenceNumber}) ti è stata distribuita il {distributedDate} ed è ancora in attesa della tua conferma{dueLine}.",
+  "cta": "Leggi e conferma la valutazione",
+  "footer": "Ricevi questa email perché una valutazione dei rischi su {productName} ti indica come persona tenuta a leggerla."
+}

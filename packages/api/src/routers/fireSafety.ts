@@ -43,6 +43,7 @@
  */
 import {
   actions,
+  assets,
   FIRE_CHECK_RESULTS,
   FIRE_DOOR_OUTCOMES,
   FIRE_MARSHAL_ROLES,
@@ -1560,6 +1561,54 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         return rows.map((c) => checkWithStatus(c, now));
       }),
 
+    /**
+     * PF-17: everything the fire logbook knows about ONE maintained asset —
+     * the checks targeting it and their recorded entries. This is the join
+     * the review found missing ("service history of extinguisher #12 spans
+     * two systems that can't be joined"); the asset detail page renders it
+     * as a "Fire safety history" section.
+     */
+    assetHistory: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(z.object({ assetId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const checks = await ctx.db
+          .select({
+            check: fireLogbookChecks,
+            buildingName: fireBuildings.name,
+          })
+          .from(fireLogbookChecks)
+          .innerJoin(fireBuildings, eq(fireLogbookChecks.buildingId, fireBuildings.id))
+          .where(
+            and(
+              eq(fireLogbookChecks.tenantId, ctx.tenantId),
+              eq(fireLogbookChecks.assetId, input.assetId),
+            ),
+          );
+        if (checks.length === 0) return { checks: [], entries: [] };
+        const now = new Date();
+        const checkIds = checks.map((c) => c.check.id);
+        const entryRows = await ctx.db
+          .select()
+          .from(fireLogbookEntries)
+          .where(
+            and(
+              eq(fireLogbookEntries.tenantId, ctx.tenantId),
+              inArray(fireLogbookEntries.checkId, checkIds),
+            ),
+          )
+          .orderBy(desc(fireLogbookEntries.performedAt))
+          .limit(200);
+        return {
+          checks: checks.map((c) => ({
+            ...checkWithStatus(c.check, now),
+            buildingName: c.buildingName,
+          })),
+          entries: entryRows,
+        };
+      }),
+
     /** Add a manual check or adjust frequency / assignee / active flag. */
     upsertCheck: tenantProcedure
       .use(requirePermission('fireSafety.manage'))
@@ -1571,6 +1620,8 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           assignedToUserId: z.string().nullable().optional(),
           notes: z.string().max(2000).optional(),
           active: z.boolean().optional(),
+          /** PF-17: the maintained asset this check concerns (extinguishers…). */
+          assetId: z.string().length(26).nullable().optional(),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -1578,6 +1629,16 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
         if (building.archivedAt !== null) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        if (input.assetId != null) {
+          const assetRows = await ctx.db
+            .select({ id: assets.id })
+            .from(assets)
+            .where(and(eq(assets.tenantId, ctx.tenantId), eq(assets.id, input.assetId)))
+            .limit(1);
+          if (assetRows[0] === undefined) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'asset-not-found' });
+          }
         }
         const existing = (
           await ctx.db
@@ -1606,6 +1667,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             active: input.active ?? true,
             assignedToUserId: input.assignedToUserId ?? null,
             notes: input.notes ?? '',
+            assetId: input.assetId ?? null,
             nextDueAt: nextDueDate(now, frequency),
           });
           await logEvent(ctx.db, {
@@ -1628,6 +1690,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (input.assignedToUserId !== undefined) patch.assignedToUserId = input.assignedToUserId;
         if (input.notes !== undefined) patch.notes = input.notes;
         if (input.active !== undefined) patch.active = input.active;
+        if (input.assetId !== undefined) patch.assetId = input.assetId;
         if (Object.keys(patch).length > 0) {
           await ctx.db
             .update(fireLogbookChecks)
@@ -1666,6 +1729,12 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
            * action — silence is the opt-out, not the default.
            */
           raiseAction: z.boolean().default(true),
+          /**
+           * PF-10: offline-queue idempotency key. A retried submission with
+           * the same key returns the already-recorded entry instead of
+           * double-recording the check.
+           */
+          clientRequestId: z.string().length(26).optional(),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -1677,6 +1746,21 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         const performedAt = input.performedAt ?? new Date();
         if (performedAt.getTime() > Date.now() + 60 * 1000) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'future-date' });
+        }
+        if (input.clientRequestId !== undefined) {
+          const dup = (
+            await ctx.db
+              .select({ id: fireLogbookEntries.id, actionId: fireLogbookEntries.actionId })
+              .from(fireLogbookEntries)
+              .where(
+                and(
+                  eq(fireLogbookEntries.tenantId, ctx.tenantId),
+                  eq(fireLogbookEntries.clientRequestId, input.clientRequestId),
+                ),
+              )
+              .limit(1)
+          )[0];
+          if (dup !== undefined) return { id: dup.id, actionId: dup.actionId, deduped: true };
         }
         const schedule = (
           await ctx.db
@@ -1711,6 +1795,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             callPointRef: input.callPointRef,
             notes: input.notes,
             defectsSummary: input.defectsSummary,
+            clientRequestId: input.clientRequestId ?? null,
           });
           if (wantsAction) {
             actionId = newId();

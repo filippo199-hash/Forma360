@@ -570,8 +570,14 @@ export const schedulesRouter = router({
           and(
             eq(scheduledInspectionOccurrences.tenantId, ctx.tenantId),
             eq(scheduledInspectionOccurrences.assigneeUserId, ctx.auth.userId),
-            eq(scheduledInspectionOccurrences.status, 'pending'),
-            gte(scheduledInspectionOccurrences.occurrenceAt, now),
+            // PF-3: an overdue occurrence used to VANISH from this list
+            // (pending + >= now). Pending-past-due and missed stay
+            // visible for 30 days so the assignee sees the debt.
+            inArray(scheduledInspectionOccurrences.status, ['pending', 'missed']),
+            gte(
+              scheduledInspectionOccurrences.occurrenceAt,
+              new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+            ),
             lte(scheduledInspectionOccurrences.occurrenceAt, upper),
           ),
         )

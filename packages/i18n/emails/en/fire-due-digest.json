@@ -4,5 +4,5 @@
   "greeting": "Hello {recipientName},",
   "body": "Today's fire-safety calendar on {productName} needs attention:\n\nFailed checks awaiting re-test: {failedCount}\nOverdue checks and door inspections: {overdueCount}\nDue soon: {dueSoonCount}\nFRA reviews due: {fraCount}\nPEEP reviews due: {peepCount}\nMarshal training expiring or expired: {marshalCount}\n\n{detailLines}\n\nA failed check stays flagged until a passing re-test clears it — record the re-test once the defect is fixed.",
   "cta": "Open the fire safety module",
-  "footer": "You are receiving this because you hold fire-safety management permissions in {productName}."
+  "footer": "You are receiving this because you hold fire-safety management permissions in {productName}. The digest only arrives when something needs attention."
 }

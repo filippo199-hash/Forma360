@@ -28,6 +28,7 @@ import { incidentsDeps } from '../../../../src/server/incidents-deps';
 import { createContext } from '../../../../src/server/trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps.
 import '../../../../src/server/users-deps';
+import '../../../../src/server/actions-deps';
 
 // Build the router once with production dependencies (R2-backed
 // renderers, HMAC-signed render tokens, APP_URL-based share URLs).

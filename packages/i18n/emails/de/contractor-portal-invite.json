@@ -1,0 +1,8 @@
+{
+  "subject": "{contractorName} hat Sie zum Auftragnehmer-Portal von {tenantName} eingeladen",
+  "preheader": "Richten Sie Ihren Zugang ein, um mit {tenantName} zu arbeiten.",
+  "greeting": "Hallo,",
+  "body": "Sie wurden im Namen von {contractorName} zum Auftragnehmer-Portal von {tenantName} eingeladen. Richten Sie über den Link unten Ihren Zugang ein — gültig für {expiresIn}. Danach können Sie: {activities}.",
+  "cta": "Einladung annehmen",
+  "footer": "Wenn Sie diese Einladung nicht erwartet haben, können Sie diese Nachricht ignorieren."
+}

@@ -25,7 +25,13 @@ import { cn } from '../../lib/cn';
 import { trpc } from '../../lib/trpc/client';
 import { ActionDetailPanel } from '../actions/action-detail-panel';
 import { useConduct } from './conduct-context';
-import { missingEvidence, requiredEvidenceCount } from '@forma360/shared/inspection-eval';
+import {
+  missingEvidence,
+  missingNotes,
+  noteKey,
+  noteRequired,
+  requiredEvidenceCount,
+} from '@forma360/shared/inspection-eval';
 import {
   findInvalidNumbers,
   findUnansweredRequired,
@@ -58,6 +64,7 @@ interface PendingPayload {
 const KNOWN_STATUSES = [
   'in_progress',
   'awaiting_signatures',
+  'awaiting_signature_workflow',
   'awaiting_approval',
   'completed',
   'rejected',
@@ -135,7 +142,7 @@ export function ConductShell() {
   const actionRaisedMap = useMemo(() => {
     const m = new Map<string, string>();
     if (existingActions !== undefined) {
-      for (const a of existingActions) {
+      for (const a of existingActions.rows) {
         if (a.sourceItemId !== null) m.set(a.sourceItemId, a.id);
       }
     }
@@ -310,6 +317,10 @@ export function ConductShell() {
     () => missingEvidence(state.content, state.responses),
     [state.content, state.responses],
   );
+  const notesMissing = useMemo(
+    () => missingNotes(state.content, state.responses),
+    [state.content, state.responses],
+  );
   const invalidNumbers = useMemo(
     () => findInvalidNumbers(state.content, state.responses),
     [state.content, state.responses],
@@ -317,6 +328,7 @@ export function ConductShell() {
   const canSubmit =
     missing.length === 0 &&
     evidenceMissing.length === 0 &&
+    notesMissing.length === 0 &&
     invalidNumbers.length === 0 &&
     !readonly;
 
@@ -330,9 +342,9 @@ export function ConductShell() {
       pageId: string;
       pageIndex: number;
       prompt: string | null;
-      reason: 'answer' | 'evidence' | 'range';
+      reason: 'answer' | 'evidence' | 'range' | 'note';
     }[] = [];
-    const add = (id: string, reason: 'answer' | 'evidence' | 'range') => {
+    const add = (id: string, reason: 'answer' | 'evidence' | 'range' | 'note') => {
       const key = `${id}:${reason}`;
       if (seen.has(key)) return;
       seen.add(key);
@@ -342,8 +354,9 @@ export function ConductShell() {
     missing.forEach((id) => add(id, 'answer'));
     invalidNumbers.forEach((id) => add(id, 'range'));
     evidenceMissing.forEach((e) => add(e.itemId, 'evidence'));
+    notesMissing.forEach((n) => add(n.itemId, 'note'));
     return out.sort((a, b) => a.pageIndex - b.pageIndex);
-  }, [missing, invalidNumbers, evidenceMissing, locations]);
+  }, [missing, invalidNumbers, evidenceMissing, notesMissing, locations]);
   const blockingPageIds = useMemo(() => new Set(blocking.map((b) => b.pageId)), [blocking]);
 
   const jumpTo = useCallback(
@@ -561,6 +574,8 @@ function StatusPill({
   const colors: Record<KnownStatus, string> = {
     in_progress: 'bg-blue-100 text-blue-900 dark:bg-blue-900/40 dark:text-blue-100',
     awaiting_signatures: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
+    awaiting_signature_workflow:
+      'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
     awaiting_approval: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
     completed: 'bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100',
     rejected: 'bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100',
@@ -734,6 +749,7 @@ function ItemRow({
   const prompt = 'prompt' in item ? item.prompt : null;
   const required = 'required' in item && item.required === true;
   const evidenceNeed = requiredEvidenceCount(state.content, item.id, state.responses);
+  const needsNote = noteRequired(state.content, item.id, state.responses);
   return (
     <Card className="space-y-3 p-4">
       <div className="flex items-start justify-between gap-2">
@@ -761,6 +777,7 @@ function ItemRow({
       {evidenceNeed > 0 ? (
         <EvidenceUploader itemId={item.id} need={evidenceNeed} readonly={readonly} />
       ) : null}
+      {needsNote ? <RequiredNoteField itemId={item.id} readonly={readonly} /> : null}
       {raisedActionId !== null ? (
         <LinkedActionCard actionId={raisedActionId} onOpen={() => onOpenAction(raisedActionId)} />
       ) : null}
@@ -778,6 +795,35 @@ const ACTION_STATUS_COLORS: Record<string, string> = {
   completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
   cancelled: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
 };
+
+/**
+ * Note field demanded by a selected option's requireNote trigger
+ * (PF-25). Writes to the reserved `note:{itemId}` response key through
+ * the same update path as answers, so autosave and the offline queue
+ * cover it.
+ */
+function RequiredNoteField({ itemId, readonly }: { itemId: string; readonly: boolean }) {
+  const t = useTranslations('inspections.conduct');
+  const { state, dispatch } = useConduct();
+  const value = state.responses[noteKey(itemId)];
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium" htmlFor={`note-${itemId}`}>
+        {t('noteRequiredLabel')}
+        <span className="ml-1 text-destructive">*</span>
+      </label>
+      <Textarea
+        id={`note-${itemId}`}
+        value={typeof value === 'string' ? value : ''}
+        onChange={(e) =>
+          dispatch({ type: 'SET_RESPONSE', itemId: noteKey(itemId), value: e.target.value })
+        }
+        disabled={readonly}
+        rows={2}
+      />
+    </div>
+  );
+}
 
 /**
  * Compact card shown below a question when an action has been raised.

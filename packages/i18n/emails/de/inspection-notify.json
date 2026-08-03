@@ -1,0 +1,8 @@
+{
+  "subject": "Benachrichtigung: {inspectionTitle}",
+  "preheader": "Eine markierte Antwort wurde in einer Inspektion erfasst",
+  "greeting": "Hallo,",
+  "body": "Eine Inspektionsantwort hat eine Benachrichtigung ausgelöst. In '{inspectionTitle}' wurde die Frage \"{questionPrompt}\" mit \"{response}\" beantwortet. Öffnen Sie den Bericht für alle Details.",
+  "cta": "Bericht ansehen",
+  "footer": "Sie erhalten diese E-Mail, weil diese Adresse im Template für Benachrichtigungen zu dieser Antwort hinterlegt ist."
+}

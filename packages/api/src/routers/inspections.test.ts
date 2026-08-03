@@ -88,6 +88,11 @@ const MIGRATION_FILES = [
   '0050_contractor_visit_overstay.sql',
   '0051_site_fk_integrity.sql',
   '0052_reference_counters.sql',
+  '0063_action_reminders.sql',
+  '0064_document_expiry_reminders.sql',
+  '0065_backfill_freehs_permission_keys.sql',
+  '0066_wave_f_field.sql',
+  '0067_wave_g_platform.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -215,6 +220,7 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
   let db: PgliteDatabase<typeof schema>;
   let tenantId: string;
   let adminUserId: string;
+  let approverUserId: string;
   let seededSets: Awaited<ReturnType<typeof seedDefaultPermissionSets>>;
 
   function ctxFor(userId: string): Context {
@@ -236,13 +242,25 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
     const seeded = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
     seededSets = seeded;
     adminUserId = `usr_${newId()}`;
-    await db.insert(schema.user).values({
-      id: adminUserId,
-      name: 'Alice',
-      email: 'alice@acme.test',
-      tenantId,
-      permissionSetId: seeded.administrator,
-    });
+    approverUserId = `usr_${newId()}`;
+    await db.insert(schema.user).values([
+      {
+        id: adminUserId,
+        name: 'Alice',
+        email: 'alice@acme.test',
+        tenantId,
+        permissionSetId: seeded.administrator,
+      },
+      {
+        // PF-30: approvals are a separated duty — a second manager
+        // approves what Alice conducts.
+        id: approverUserId,
+        name: 'Astrid Approver',
+        email: 'astrid@acme.test',
+        tenantId,
+        permissionSetId: seeded.administrator,
+      },
+    ]);
   });
 
   afterEach(async () => {
@@ -697,10 +715,10 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
       expect(res.status).toBe('completed');
 
       // requireAction created exactly one action for this question.
-      const actions = await caller.actions.list({
+      const actions = (await caller.actions.list({
         sourceType: 'inspection',
         sourceId: inspectionId,
-      });
+      })).rows;
       const created = actions.filter((a) => a.sourceItemId === itemId);
       expect(created).toHaveLength(1);
       expect(created[0]?.title).toBe('Fix the issue');
@@ -718,10 +736,10 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
       const res = await caller.inspections.submit({ inspectionId });
       expect(res.status).toBe('completed');
 
-      const actions = await caller.actions.list({
+      const actions = (await caller.actions.list({
         sourceType: 'inspection',
         sourceId: inspectionId,
-      });
+      })).rows;
       expect(actions.filter((a) => a.sourceItemId === itemId)).toHaveLength(0);
     });
 
@@ -735,10 +753,10 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
         responses: { [itemId]: badId, [`evidence:${itemId}`]: ['k1'] },
       });
       await caller.inspections.submit({ inspectionId });
-      const actions = await caller.actions.list({
+      const actions = (await caller.actions.list({
         sourceType: 'inspection',
         sourceId: inspectionId,
-      });
+      })).rows;
       expect(actions.filter((a) => a.sourceItemId === itemId)).toHaveLength(1);
     });
   });
@@ -772,7 +790,13 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
       const { inspection: afterSign } = await caller.inspections.get({ inspectionId });
       expect(afterSign.status).toBe('awaiting_approval');
 
-      await caller.approvals.approve({ inspectionId, comment: 'LGTM' });
+      // PF-30: the conductor cannot bless their own work.
+      await expect(
+        caller.approvals.approve({ inspectionId, comment: 'LGTM' }),
+      ).rejects.toMatchObject({ message: 'self-approval' });
+
+      const approver = createCaller(ctxFor(approverUserId));
+      await approver.approvals.approve({ inspectionId, comment: 'LGTM' });
       const { inspection: afterApprove } = await caller.inspections.get({ inspectionId });
       expect(afterApprove.status).toBe('completed');
       expect(afterApprove.completedAt).toBeInstanceOf(Date);

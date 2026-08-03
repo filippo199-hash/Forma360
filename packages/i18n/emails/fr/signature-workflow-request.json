@@ -1,0 +1,8 @@
+{
+  "subject": "Action requise : examiner {inspectionTitle}",
+  "preheader": "{requesterName} a demandé votre signature",
+  "greeting": "Bonjour {signerName},",
+  "body": "{requesterName} a soumis '{inspectionTitle}' pour examen et demande votre signature. Examinez l'inspection et signez quand vous êtes prêt.",
+  "cta": "Examiner et signer",
+  "footer": "Si vous n'attendiez pas cet e-mail, vous pouvez l'ignorer."
+}

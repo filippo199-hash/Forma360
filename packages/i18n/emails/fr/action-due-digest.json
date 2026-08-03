@@ -1,0 +1,8 @@
+{
+  "subject": "Vos actions — {overdueCount} en retard, {dueSoonCount} à échéance",
+  "preheader": "Des actions correctives qui vous sont attribuées sur {productName} demandent votre attention.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Des actions correctives qui vous sont attribuées demandent votre attention :\n\n{detailLines}\n\nLes actions en retard sont rappelées chaque semaine jusqu'à leur clôture ou au déplacement de l'échéance.",
+  "cta": "Ouvrir vos actions",
+  "footer": "Vous recevez cet e-mail car ces actions correctives sur {productName} vous sont attribuées."
+}

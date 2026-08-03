@@ -1,0 +1,8 @@
+{
+  "subject": "{contractorName} vous a invité au portail sous-traitants de {tenantName}",
+  "preheader": "Configurez votre accès pour travailler avec {tenantName}.",
+  "greeting": "Bonjour,",
+  "body": "Vous avez été invité au portail sous-traitants de {tenantName} au nom de {contractorName}. Utilisez le lien ci-dessous pour configurer votre connexion — valable {expiresIn}. Une fois connecté, vous pourrez : {activities}.",
+  "cta": "Accepter l'invitation",
+  "footer": "Si vous n'attendiez pas cette invitation, vous pouvez ignorer ce message."
+}

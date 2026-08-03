@@ -32,6 +32,7 @@ import { enqueue } from './trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps,
 // mirroring the HTTP entrypoint so a caller built here behaves identically.
 import './users-deps';
+import './actions-deps';
 
 // Built once with the same production deps as the HTTP tRPC route. Composing
 // already-imported routers is cheap; module-level registrations (dependent

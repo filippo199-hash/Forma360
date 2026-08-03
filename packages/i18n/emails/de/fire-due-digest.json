@@ -1,0 +1,8 @@
+{
+  "subject": "Brandschutz-Digest — {failedCount} fehlgeschlagen, {overdueCount} überfällig",
+  "preheader": "Ihr {productName}-Brandschutzkalender hat Punkte, die Aufmerksamkeit brauchen.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Der heutige Brandschutzkalender auf {productName} braucht Aufmerksamkeit:\n\nFehlgeschlagene Prüfungen, Wiederholung ausstehend: {failedCount}\nÜberfällige Prüfungen und Türinspektionen: {overdueCount}\nBald fällig: {dueSoonCount}\nFällige FRA-Überprüfungen: {fraCount}\nFällige PEEP-Überprüfungen: {peepCount}\nBrandschutzhelfer-Schulung läuft ab oder abgelaufen: {marshalCount}\n\n{detailLines}\n\nEine fehlgeschlagene Prüfung bleibt markiert, bis eine bestandene Wiederholung sie aufhebt — erfassen Sie die Wiederholung, sobald der Mangel behoben ist.",
+  "cta": "Brandschutzmodul öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie Brandschutz-Verwaltungsrechte in {productName} haben. Der Digest kommt nur, wenn etwas Aufmerksamkeit braucht."
+}

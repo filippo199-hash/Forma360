@@ -1,0 +1,8 @@
+{
+  "subject": "Dokument läuft ab: {requirementName} — {contractorName}",
+  "preheader": "{requirementName} läuft am {expiresOn} ab.",
+  "greeting": "Hallo,",
+  "body": "Ihr Dokument \"{requirementName}\" für {contractorName} läuft am {expiresOn} ab. Bitte laden Sie eine erneuerte Version hoch, um konform zu bleiben: {url}",
+  "cta": "Neues Dokument hochladen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie der Ansprechpartner dieses Auftragnehmers auf {productName} sind."
+}

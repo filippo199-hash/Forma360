@@ -1,0 +1,8 @@
+{
+  "subject": "Neue Beobachtung: {referenceNumber} – {issueTitle}",
+  "preheader": "Eine neue Beobachtung wurde in {productName} gemeldet.",
+  "greeting": "Eine neue Beobachtung wurde gemeldet.",
+  "body": "Referenz: {referenceNumber}\n\nTitel: {issueTitle}\n\nÖffnen Sie {productName}, um zu prüfen und zu handeln.",
+  "cta": "Beobachtung ansehen",
+  "footer": "Sie erhalten diese Benachrichtigung, weil Sie Empfänger dieser Beobachtungskategorie sind."
+}

@@ -118,6 +118,18 @@ export const QUEUE_NAMES = {
    * silent when clean.
    */
   INCIDENT_CHASE: 'forma360-incident-chase',
+  /**
+   * Platform review PF-4 — daily reminder digest for corrective-action
+   * assignees: due-soon warned once, overdue re-pinged weekly.
+   */
+  ACTION_REMINDERS: 'forma360-action-reminders',
+  /** Platform PF-15 — publishes scheduled Heads Ups when publishAt arrives. */
+  HEADS_UP_PUBLISH: 'forma360-heads-up-publish',
+  /** Platform PF-16 — document expiry reminders driven by reminderDays. */
+  DOCUMENT_EXPIRY: 'forma360-document-expiry',
+  /** Platform PF-3 — stamps 'missed' on scheduled occurrences past grace. */
+  SCHEDULE_MISSED_SWEEP: 'forma360-schedule-missed-sweep',
+  RETENTION_SWEEP: 'forma360-retention-sweep',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -199,8 +211,17 @@ export const maintenanceNotifyPayloadSchema = z.object({
   tenantId: z.string().length(26),
   planId: z.string().length(26),
   assetId: z.string().length(26),
-  /** The computed due date for this service (YYYY-MM-DD). */
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /**
+   * Dedup key for this service cycle. Time-based plans use the computed
+   * due date (YYYY-MM-DD); usage-based plans (PF-18) use
+   * `usage:<threshold>` so one cycle notifies once however long it takes
+   * the meter to cross.
+   */
+  dueDate: z.string().min(4).max(64),
+  /** Human status line for the email (usage plans); defaults from daysBefore. */
+  statusLabel: z.string().max(200).optional(),
+  /** Human "due" label for the email (usage plans), e.g. "at 12000 km". */
+  dueLabel: z.string().max(200).optional(),
   /** How many days before due this notification is for. */
   daysBefore: z.number().int().min(0),
 });
@@ -252,6 +273,25 @@ export type IncidentRiddorWatchPayload = z.infer<typeof incidentRiddorWatchPaylo
 /** Incident chase-digest tick — no payload; the worker scans open incidents. */
 export const incidentChasePayloadSchema = z.object({}).strict();
 export type IncidentChasePayload = z.infer<typeof incidentChasePayloadSchema>;
+/** Action reminders tick — no payload; the worker scans due dates. */
+export const actionRemindersPayloadSchema = z.object({}).strict();
+export type ActionRemindersPayload = z.infer<typeof actionRemindersPayloadSchema>;
+
+/** Heads-up publish tick — no payload; the worker scans publishAt. */
+export const headsUpPublishPayloadSchema = z.object({}).strict();
+export type HeadsUpPublishPayload = z.infer<typeof headsUpPublishPayloadSchema>;
+
+/** Document expiry tick — no payload; the worker scans reminderDays. */
+export const documentExpiryPayloadSchema = z.object({}).strict();
+export type DocumentExpiryPayload = z.infer<typeof documentExpiryPayloadSchema>;
+
+/** Missed-occurrence sweep tick — no payload. */
+export const scheduleMissedSweepPayloadSchema = z.object({}).strict();
+export type ScheduleMissedSweepPayload = z.infer<typeof scheduleMissedSweepPayloadSchema>;
+
+/** PF-31 retention v1 — tick payload is empty. */
+export const retentionSweepPayloadSchema = z.object({}).strict();
+export type RetentionSweepPayload = z.infer<typeof retentionSweepPayloadSchema>;
 
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
@@ -277,6 +317,11 @@ export interface QueuePayloads {
   [QUEUE_NAMES.INCIDENT_ALERT]: IncidentAlertPayload;
   [QUEUE_NAMES.INCIDENT_RIDDOR_WATCH]: IncidentRiddorWatchPayload;
   [QUEUE_NAMES.INCIDENT_CHASE]: IncidentChasePayload;
+  [QUEUE_NAMES.ACTION_REMINDERS]: ActionRemindersPayload;
+  [QUEUE_NAMES.HEADS_UP_PUBLISH]: HeadsUpPublishPayload;
+  [QUEUE_NAMES.DOCUMENT_EXPIRY]: DocumentExpiryPayload;
+  [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: ScheduleMissedSweepPayload;
+  [QUEUE_NAMES.RETENTION_SWEEP]: RetentionSweepPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -300,6 +345,11 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.INCIDENT_ALERT]: incidentAlertPayloadSchema,
   [QUEUE_NAMES.INCIDENT_RIDDOR_WATCH]: incidentRiddorWatchPayloadSchema,
   [QUEUE_NAMES.INCIDENT_CHASE]: incidentChasePayloadSchema,
+  [QUEUE_NAMES.ACTION_REMINDERS]: actionRemindersPayloadSchema,
+  [QUEUE_NAMES.HEADS_UP_PUBLISH]: headsUpPublishPayloadSchema,
+  [QUEUE_NAMES.DOCUMENT_EXPIRY]: documentExpiryPayloadSchema,
+  [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: scheduleMissedSweepPayloadSchema,
+  [QUEUE_NAMES.RETENTION_SWEEP]: retentionSweepPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

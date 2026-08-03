@@ -28,6 +28,8 @@ export interface PendingAckReminder {
   assessmentId: string;
   userId: string;
   email: string;
+  /** Recipient's preferred email language (PF-20). */
+  locale?: string | null;
   userName: string;
   title: string;
   referenceNumber: string | null;
@@ -56,6 +58,7 @@ export async function findDueAckReminders(
       distributedAt: riskAssessmentAcknowledgements.distributedAt,
       dueAt: riskAssessmentAcknowledgements.dueAt,
       email: user.email,
+      locale: user.locale,
       userName: user.name,
       title: riskAssessments.title,
       referenceNumber: riskAssessments.referenceNumber,

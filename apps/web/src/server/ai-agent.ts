@@ -48,8 +48,9 @@ import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import type { PermissionKey } from '@forma360/permissions/catalogue';
 
 const SYSTEM_PROMPT = `You are an AI assistant for ${activeBrand.name}, an operational-excellence platform.
-You have access to this company's data via tools. Always use tools to look up real data before answering questions about inspections, issues, actions, assets, documents, or heads-up items.
+You have access to this company's data via tools. Always use tools to look up real data before answering questions about inspections, issues, actions, assets, documents, heads-up items, permits, COSHH substances, risk assessments, fire safety, or contractors.
 Be concise and helpful. Format lists clearly. Always scope your responses to the data you retrieve — never invent data.
+Safety guardrail: you are an information assistant, not a competent person under health-and-safety law. Never declare an activity, workplace, substance or piece of equipment "safe", never authorise work to proceed, and never provide improvised emergency-response or first-aid instructions — in an emergency tell the user to follow their site's emergency procedures and call the local emergency number. When asked for a safety judgement, report what the company's own records (risk assessments, permits, COSHH assessments, fire safety checks) say, flag anything overdue or failed, and direct the user to the responsible competent person.
 Today's date context is provided when you call tools. Times are UTC.`;
 
 /**
@@ -410,6 +411,86 @@ async function executeTool(
           description: String(input['description']),
         });
         return { ok: true, ...res };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    // PF-24: brand-module reads — routed through the real routers so brand
+    // gating (FreeHS-only modules) and permission checks apply untouched.
+    case 'list_permits': {
+      try {
+        const rawStatus = typeof input['status'] === 'string' ? input['status'] : 'open';
+        const allowed = [
+          'open',
+          'draft',
+          'issued',
+          'active',
+          'suspended',
+          'closed',
+          'cancelled',
+          'all',
+        ] as const;
+        const status = (allowed as readonly string[]).includes(rawStatus)
+          ? (rawStatus as (typeof allowed)[number])
+          : 'open';
+        const rows = await caller.permits.list({
+          status,
+          ...(typeof input['search'] === 'string' && input['search'].length > 0
+            ? { search: input['search'] }
+            : {}),
+        });
+        return { permits: rows.slice(0, limit) };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'list_coshh_substances': {
+      try {
+        const rows = await caller.coshh.substances.list({});
+        return { substances: rows.slice(0, limit) };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'list_risk_assessments': {
+      try {
+        const rawStatus = typeof input['status'] === 'string' ? input['status'] : 'all';
+        const allowed = ['all', 'draft', 'active', 'archived'] as const;
+        const status = (allowed as readonly string[]).includes(rawStatus)
+          ? (rawStatus as (typeof allowed)[number])
+          : 'all';
+        const rows = await caller.riskAssessments.list({ status, type: 'all' });
+        return { riskAssessments: rows.slice(0, limit) };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'fire_safety_overview': {
+      try {
+        const overview = await caller.fireSafety.overview();
+        return overview;
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'list_contractors_on_site': {
+      try {
+        const rows = await caller.contractors.visits.onSiteNow();
+        return { contractors: rows.slice(0, limit) };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'list_sites': {
+      try {
+        const rows = await caller.sites.list();
+        return { sites: rows.slice(0, limit) };
       } catch (err) {
         return toToolError(err);
       }

@@ -4,9 +4,14 @@ import {
   AlertTriangle,
   Bell,
   Bot,
+  ChartColumn,
   Building2,
+  BadgeCheck,
+  CalendarClock,
   ClipboardCheck,
   FileSignature,
+  FileStack,
+  Hammer,
   Flame,
   Siren,
   FlaskConical,
@@ -18,7 +23,9 @@ import {
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
+import { grantsAdminAccess, type PermissionKey } from '@forma360/permissions/catalogue';
 import { useTranslations } from 'next-intl';
+import { usePermissionList } from '../lib/permissions-context';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { brandHasModule } from '@forma360/shared/brand';
@@ -33,8 +40,13 @@ interface SiteSidebarProps {
 interface NavItem {
   key:
     | 'ai'
+    | 'analytics'
     | 'sites'
     | 'inspections'
+    | 'templates'
+    | 'schedules'
+    | 'approvals'
+    | 'maintenance'
     | 'issues'
     | 'incidents'
     | 'actions'
@@ -58,6 +70,8 @@ interface NavItem {
  */
 export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigate?: () => void }) {
   const t = useTranslations('nav');
+  const perms = usePermissionList();
+  const isAdmin = grantsAdminAccess(perms);
   const pathname = usePathname();
   const terminology = useTerminology();
 
@@ -100,8 +114,16 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
 
   const primary: NavItem[] = [
     { key: 'ai', href: `/${locale}/ai`, icon: Bot },
+    // PF-5: the cross-module dashboard — the "what needs attention" view.
+    { key: 'analytics', href: `/${locale}/analytics`, icon: ChartColumn },
     { key: 'sites', href: `/${locale}/sites`, icon: Building2 },
     { key: 'inspections', href: `/${locale}/inspections`, icon: ClipboardCheck },
+    // PF-14: templates, schedules, approvals and maintenance were live,
+    // working areas reachable only by typed URL. Grouped with their
+    // parent modules in the list order.
+    { key: 'templates', href: `/${locale}/templates`, icon: FileStack },
+    { key: 'schedules', href: `/${locale}/schedules`, icon: CalendarClock },
+    { key: 'approvals', href: `/${locale}/approvals`, icon: BadgeCheck },
     { key: 'issues', href: `/${locale}/observations`, icon: AlertTriangle },
     ...(brandHasModule(activeBrand.id, 'incidents') ? [incidentsItem] : []),
     { key: 'actions', href: `/${locale}/actions`, icon: ListChecks },
@@ -111,9 +133,37 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     ...(brandHasModule(activeBrand.id, 'permits') ? [permitsItem] : []),
     ...(brandHasModule(activeBrand.id, 'fireSafety') ? [fireSafetyItem] : []),
     { key: 'assets', href: `/${locale}/assets`, icon: Wrench },
+    { key: 'maintenance', href: `/${locale}/maintenance`, icon: Hammer },
     { key: 'documents', href: `/${locale}/documents`, icon: FolderOpen },
     { key: 'contractors', href: `/${locale}/contractors`, icon: HardHat },
   ];
+
+  // PF-27: a menu that shows what you cannot open erodes trust in the
+  // menu. Each entry needs its module's view permission (AI + settings
+  // stay universal — settings always has "My profile").
+  const NAV_PERMISSION: Partial<Record<NavItem['key'], PermissionKey>> = {
+    analytics: 'analytics.view',
+    sites: 'sites.view',
+    inspections: 'inspections.view',
+    templates: 'templates.view',
+    schedules: 'inspections.view',
+    approvals: 'inspections.manage',
+    issues: 'issues.view',
+    actions: 'actions.view',
+    headsUp: 'headsUp.view',
+    riskAssessments: 'riskAssessments.view',
+    coshh: 'coshh.view',
+    permits: 'permits.view',
+    fireSafety: 'fireSafety.view',
+    assets: 'assets.view',
+    maintenance: 'assets.maintenance.manage',
+    documents: 'documents.view',
+    contractors: 'contractors.view',
+  };
+  const visible = primary.filter((item) => {
+    const perm = NAV_PERMISSION[item.key];
+    return perm === undefined || perms.includes(perm) || isAdmin;
+  });
 
   const settingsItem: NavItem = {
     key: 'settings',
@@ -157,7 +207,7 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
 
   return (
     <nav aria-label={t('primaryLabel')} className="flex flex-1 flex-col gap-0.5 p-3">
-      {primary.map(renderItem)}
+      {visible.map(renderItem)}
       <div className="mt-auto pt-2">{renderItem(settingsItem)}</div>
     </nav>
   );

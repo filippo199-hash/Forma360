@@ -1,0 +1,8 @@
+{
+  "subject": "Risque incendie INTOLÉRABLE publié — {referenceNumber} {title}",
+  "preheader": "Une évaluation du risque incendie sur {productName} a été signée avec une cotation intolérable.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "{publishedByName} a signé et publié l'évaluation du risque incendie \"{title}\" ({referenceNumber}){buildingLine} avec une cotation globale INTOLÉRABLE.\n\nSelon PAS 79, une cotation intolérable signifie que les locaux ne devraient pas rester occupés tant que le risque n'a pas été réduit. Des actions correctives ont été créées à partir des constats significatifs — examinez-les maintenant et décidez si l'occupation peut continuer.",
+  "cta": "Ouvrir l'évaluation",
+  "footer": "Vous recevez cet e-mail car vous détenez des droits de gestion incendie dans {productName}. Une cotation intolérable alerte immédiatement tous les responsables incendie."
+}

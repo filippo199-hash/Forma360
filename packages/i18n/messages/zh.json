@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "审计日志"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -295,7 +296,7 @@
         "contractors": "Contractors",
         "org": "Organisation",
         "riskAssessments": "风险评估",
-        "coshh": "危险物质（COSHH）",
+        "coshh": "COSHH",
         "permits": "作业许可",
         "fireSafety": "消防安全",
         "incidents": "事故事件"
@@ -363,19 +364,19 @@
         "org_settings": "Manage organisation settings",
         "org_audit_view": "View audit log",
         "riskAssessments_view": "查看风险评估",
-        "riskAssessments_create": "创建风险评估",
-        "riskAssessments_manage": "管理风险评估",
-        "coshh_view": "查看COSHH",
-        "coshh_create": "创建COSHH记录",
-        "coshh_manage": "管理COSHH",
-        "permits_view": "查看作业许可",
-        "permits_create": "创建作业许可",
-        "permits_issue": "签发并管控作业许可",
-        "permits_manage": "管理许可类型",
+        "riskAssessments_create": "创建和编辑评估",
+        "riskAssessments_manage": "发布、分发和管理评估",
+        "coshh_view": "查看 COSHH 台账",
+        "coshh_create": "添加物质和评估",
+        "coshh_manage": "发布和管理 COSHH 评估",
+        "permits_view": "查看许可证",
+        "permits_create": "申请和记录许可证",
+        "permits_issue": "签发、暂停和关闭许可证",
+        "permits_manage": "管理许可证类型",
         "fireSafety_view": "查看消防安全",
-        "fireSafety_record": "记录消防检查",
-        "fireSafety_create": "创建消防记录",
-        "fireSafety_manage": "管理消防安全",
+        "fireSafety_record": "记录检查",
+        "fireSafety_create": "创建建筑、防火门和评估",
+        "fireSafety_manage": "发布评估并管理模块",
         "incidents_view": "查看事故事件",
         "incidents_report": "报告事故事件",
         "incidents_investigate": "开展调查",
@@ -522,6 +523,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "数据保留与导出",
+        "subtitle": "保留 v1 会清除超出策略的通知。法定安全记录绝不受影响。",
+        "keepForever": "永久保留",
+        "months": "{count} 个月",
+        "scopeNote": "仅适用于应用内通知。检查、许可证、消防日志、COSHH 与风险评估始终保留。",
+        "savedToast": "保留策略已保存。"
+      },
+      "exportData": {
+        "button": "下载组织数据(JSON)",
+        "hint": "全部内容打包为一个 JSON 文档——用于迁移或退出。仅限管理员。"
       }
     },
     "customFields": {
@@ -585,6 +598,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "审计日志",
+      "subtitle": "将所有模块的事件汇入一个覆盖全组织、按时间倒序的流。",
+      "empty": "暂无事件。",
+      "loadMore": "加载更早",
+      "systemActor": "系统",
+      "columns": {
+        "when": "时间",
+        "module": "模块",
+        "event": "事件",
+        "actor": "执行人",
+        "detail": "详情"
+      },
+      "modules": {
+        "all": "全部",
+        "actions": "措施",
+        "observations": "观察项",
+        "permits": "许可证",
+        "coshh": "COSHH",
+        "riskAssessments": "风险评估",
+        "fireSafety": "消防安全",
+        "contractors": "承包商"
       }
     }
   },
@@ -1060,7 +1097,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "等待签署"
     },
     "table": {
       "title": "Title",
@@ -1079,7 +1117,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "等待签署"
     },
     "picker": {
       "title": "Pick a template",
@@ -1129,7 +1168,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} 张照片上传失败——已保留在此。",
+          "retry": "重试"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -1191,10 +1232,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "需要备注"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "请说明该回答（必填）"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1363,6 +1406,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "我的计划检查（{count}）",
+      "startNow": "开始",
+      "startError": "无法开始，请重试。",
+      "missedBadge": "未执行",
+      "overdueBadge": "已逾期",
+      "dueBadge": "待执行"
     }
   },
   "nav": {
@@ -1386,8 +1437,9 @@
     "riskAssessments": "Risk assessments",
     "coshh": "有害物质",
     "permits": "作业许可",
-    "incidents": "事故事件",
-    "fireSafety": "消防安全"
+    "fireSafety": "消防安全",
+    "analytics": "仪表盘",
+    "incidents": "事故事件"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -1415,7 +1467,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "提交人",
+    "site": "站点"
   },
   "schedules": {
     "title": "Schedules",
@@ -1705,7 +1759,11 @@
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
-        "toast": "Action created."
+        "toast": "Action created.",
+        "assigneeLabel": "指派给",
+        "noAssignee": "未指派",
+        "typeLabel": "措施类型",
+        "noType": "无类型"
       },
       "attachInspectionDialog": {
         "title": "开始检查",
@@ -2165,6 +2223,11 @@
       "autoGeneratedBadge": "自动生成",
       "autoGeneratedBy": "由 {program} 自动生成",
       "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later.",
+      "sourceLinkRiskAssessment": "由风险评估 {referenceNumber} 创建",
+      "sourceLinkCoshhAssessment": "由 COSHH 评估 {referenceNumber} 创建",
+      "sourceLinkFireRiskAssessment": "由火灾风险评估 {referenceNumber} 创建",
+      "sourceLinkFireLogbookEntry": "由不合格的消防检查创建",
+      "sourceLinkFireDoorInspection": "由不合格的防火门检查创建",
       "sourceLinkIncident": "由事故 {referenceNumber} 生成"
     },
     "create": {
@@ -2228,7 +2291,17 @@
     },
     "filters": {
       "removeAria": "Remove {label} filter"
-    }
+    },
+    "sourceRiskAssessment": "风险评估",
+    "sourceCoshhAssessment": "COSHH",
+    "sourceFireRiskAssessment": "火灾风险评估",
+    "sourceFireLogbookEntry": "消防检查",
+    "sourceFireDoorInspection": "防火门",
+    "pagerShowing": "显示第 {from}–{to} 条，共 {total} 条",
+    "pagerPrev": "上一页",
+    "pagerNext": "下一页",
+    "myOpenChip": "指派给我：{count}",
+    "myOverdueChip": "{count} 项逾期"
   },
   "actionsSettings": {
     "title": "Action settings",
@@ -2675,7 +2748,28 @@
         "startedAt": "开始时间",
         "createdAt": "创建时间"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "维保计划",
+        "empty": "没有覆盖此资产的维保计划。",
+        "timeMeta": "每 {interval} 天 — 上次保养 {last}",
+        "usageMeta": "每 {interval} {unit} — 当前读数 {current}",
+        "status": {
+          "on_schedule": "按计划",
+          "approaching": "临近",
+          "overdue": "逾期",
+          "awaiting_first_reading": "等待首次读数"
+        }
+      },
+      "fireHistory": {
+        "heading": "消防安全记录",
+        "checkLine": "{type} — {building}",
+        "empty": "消防日志暂无记录。",
+        "performedAt": "日期",
+        "type": "检查",
+        "result": "结果",
+        "notes": "备注"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -2943,6 +3037,14 @@
       "actions": "行动",
       "headsUp": "通知",
       "documents": "文件",
+      "permits": "许可证",
+      "coshh": "COSHH 物质",
+      "riskAssessments": "风险评估",
+      "fireBuildings": "消防建筑",
+      "fireRiskAssessments": "火灾风险评估",
+      "contractors": "承包商",
+      "sites": "站点与项目",
+      "templates": "模板",
       "incidents": "事故事件"
     }
   },
@@ -3480,7 +3582,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "承包商不合规——请在下方填写豁免原因后继续。"
     },
     "gate": {
       "navLink": "Gate",
@@ -3519,7 +3622,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "该承包商不合规——签到需要记录豁免原因(或请其前往现场办公室)。",
+      "nonCompliantChip": "不合规"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3558,7 +3663,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "自您上次确认后,入场培训已更新——请重新阅读并确认。"
     },
     "users": {
       "heading": "Portal users",
@@ -3612,7 +3718,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "现场入场培训",
+      "version": "版本 {version}",
+      "hint": "门户用户首先会看到此内容。保存修改会提升版本,所有人需重新确认。",
+      "placeholder": "每位承包商开工前必须阅读并确认的内容…",
+      "saveButton": "保存培训内容",
+      "savedToast": "培训内容已保存(版本 {version})。"
+    },
+    "onSitePermits": {
+      "heading": "当前在场且持有效许可证"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5017,7 +5134,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "已关联资产",
+      "noLinkedAsset": "未关联资产",
+      "linkedAssetLine": "资产:{name}",
+      "assetLinkedToast": "资产关联已更新。"
     },
     "doors": {
       "addButton": "Add door",
@@ -5313,6 +5434,119 @@
     "clearSearch": "清除搜索",
     "clear": "清除选择",
     "done": "完成"
+  },
+  "analytics": {
+    "title": "仪表盘",
+    "subtitle": "一览所有模块中需要关注的事项及近期趋势。",
+    "tiles": {
+      "sectionLabel": "需要关注",
+      "myOpenActions": "我的未完成措施",
+      "overdueActions": "逾期措施",
+      "dueSoon": "7 天内到期 {count} 项",
+      "openObservations": "未关闭的观察项",
+      "highPriority": "高优先级 {count} 项",
+      "awaitingApproval": "待审批的检查",
+      "inProgress": "进行中 {count} 项",
+      "missedInspections": "未执行的检查(30 天)",
+      "upcoming7": "7 天内计划 {count} 项",
+      "pendingAcks": "待确认的通知",
+      "openPermits": "有效许可证",
+      "expiring48h": "48 小时内到期 {count} 项",
+      "raReviewOverdue": "复审逾期的风险评估",
+      "raActive": "有效 {count} 项",
+      "coshhReviewDue": "COSHH 复审逾期",
+      "coshhSubstances": "在用物质 {count} 项",
+      "fireAttention": "消防安全:需要关注"
+    },
+    "trends": {
+      "sectionLabel": "趋势",
+      "actionsTitle": "措施 — 新建与完成(8 周)",
+      "activityTitle": "检查与观察项(8 周)",
+      "actionsCreated": "新建",
+      "actionsCompleted": "完成",
+      "inspectionsCompleted": "已完成检查",
+      "observationsRaised": "上报的观察项",
+      "thisWeek": "本周"
+    },
+    "sites": {
+      "sectionLabel": "站点对比",
+      "title": "站点概览",
+      "subtitle": "各站点的未完成工作量与检查活动,按繁忙程度排序。",
+      "site": "站点",
+      "openActions": "未完成措施",
+      "openObservations": "未关闭观察项",
+      "completed30": "检查(30 天)",
+      "noSite": "无站点",
+      "empty": "暂无站点。"
+    }
+  },
+  "scanPage": {
+    "loading": "加载中…",
+    "invalidTitle": "此二维码已失效。",
+    "invalidBody": "您扫描的二维码已被撤销,或该类别不再接受上报。请联系现场管理员。",
+    "reportObservation": "上报观察项",
+    "titleLabel": "标题",
+    "titlePlaceholder": "简要说明发生了什么",
+    "descriptionLabel": "描述",
+    "descriptionPlaceholder": "补充有助于理解情况的细节。",
+    "reporterNameLabel": "您的姓名",
+    "reporterNameSubtitle": "选填 — 留空即匿名。",
+    "reporterEmailLabel": "您的邮箱",
+    "reporterEmailSubtitle": "选填 — 可能用于后续跟进。",
+    "dateOccurredLabel": "发生时间",
+    "locationAddressLabel": "位置",
+    "locationAddressPlaceholder": "楼栋、楼层或区域",
+    "customQuestionsHeading": "附加问题",
+    "selectPlaceholder": "请选择",
+    "submit": "提交",
+    "submitting": "提交中…",
+    "successTitle": "感谢您!观察项已提交。",
+    "successBody": "参考编号如下,请妥善保存。",
+    "successAnother": "再提交一条",
+    "errorGeneric": "无法提交观察项,请重试。",
+    "siteLabel": "站点",
+    "siteNone": "选择站点",
+    "photosLabel": "照片",
+    "photosSubtitle": "最多可添加 {max} 张照片——照片是上报的一半。",
+    "photosAdd": "添加照片",
+    "photosRemove": "移除",
+    "photoTooLarge": "该照片超过 {maxMb} MB,请选择更小的照片。",
+    "photoUploadFailed": "有照片上传失败。它仍附在此处——再次提交即可重试。"
+  },
+  "offline": {
+    "title": "您已离线",
+    "body": "没有网络时无法访问此页面。您记录的内容已加入队列,将自动同步。",
+    "pendingChip": "{count} 项待同步 — 联网后自动发送",
+    "itemsDelivered": "已同步 {count} 项排队内容",
+    "itemRejected": "有一项排队内容被服务器拒绝,请检查后重新填写。",
+    "queuedToast": "无网络连接 — 已存入队列,将自动同步。"
+  },
+  "notifications": {
+    "bellLabel": "通知({count} 条未读)",
+    "title": "通知",
+    "markAllRead": "全部标记为已读",
+    "empty": "暂无通知——一切都是最新的。",
+    "kinds": {
+      "action_assigned": "已分配措施",
+      "approval_pending": "待审批",
+      "approval_decided": "审批已决定",
+      "heads_up": "通知公告",
+      "issue_reported": "观察项上报",
+      "schedule_missed": "未执行的检查",
+      "action_due": "临期措施",
+      "document_expiry": "文档到期"
+    },
+    "prefs": {
+      "title": "邮件通知",
+      "subtitle": "关闭仅停止邮件——顶部铃铛始终会显示。",
+      "saveError": "无法保存偏好设置。",
+      "keys": {
+        "emailActionReminders": "措施到期/逾期提醒",
+        "emailScheduleMissed": "未执行的计划检查",
+        "emailDocumentExpiry": "文档到期提醒",
+        "emailMaintenance": "维保提醒"
+      }
+    }
   },
   "incidents": {
     "title": "事故事件",

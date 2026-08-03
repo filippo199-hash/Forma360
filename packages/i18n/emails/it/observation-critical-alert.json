@@ -1,0 +1,8 @@
+{
+  "subject": "⚠️ Allerta critica: {referenceNumber} – {issueTitle}",
+  "preheader": "È stata segnalata un'osservazione critica che richiede attenzione immediata.",
+  "greeting": "Osservazione critica segnalata: attenzione immediata richiesta.",
+  "body": "Riferimento: {referenceNumber}\n\nTitolo: {issueTitle}\n\nQuesta osservazione è stata contrassegnata come critica. Apri subito {productName} per esaminarla e rispondere.",
+  "cta": "Vedi l'osservazione critica",
+  "footer": "Ricevi questa allerta critica perché sei tra i destinatari di questa categoria di osservazioni."
+}

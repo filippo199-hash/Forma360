@@ -42,6 +42,8 @@ import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { enqueueOffline, isNetworkError } from '../../../../src/lib/offline-queue';
+import { toast } from 'sonner';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 /** Local-time value for <input type="datetime-local">. */
@@ -69,6 +71,7 @@ function limitRangeLabel(limit: { min: number | null; max: number | null; unit: 
 
 export default function PermitDetailPage() {
   const t = useTranslations('permits.detail');
+  const tOffline = useTranslations('offline');
   const params = useParams<{ locale: string; permitId: string }>();
   const locale = params.locale ?? 'en';
   const permitId = params.permitId ?? '';
@@ -148,7 +151,19 @@ export default function PermitDetailPage() {
   });
   const authorise = trpc.permits.authorise.useMutation(mutationOpts);
   const issue = trpc.permits.issue.useMutation(mutationOpts);
-  const accept = trpc.permits.accept.useMutation(mutationOpts);
+  // PF-10: acceptance is signed at the entry point — often a dead spot.
+  // Connectivity failure queues the accept; the flusher replays it.
+  const accept = trpc.permits.accept.useMutation({
+    ...mutationOpts,
+    onError: (err) => {
+      if (isNetworkError(err)) {
+        enqueueOffline('permit-accept', { permitId });
+        toast.success(tOffline('queuedToast'));
+        return;
+      }
+      mutationOpts.onError(err);
+    },
+  });
   const suspend = trpc.permits.suspend.useMutation(mutationOpts);
   const resume = trpc.permits.resume.useMutation(mutationOpts);
   const extend = trpc.permits.extend.useMutation(mutationOpts);

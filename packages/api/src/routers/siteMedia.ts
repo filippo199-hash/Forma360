@@ -69,7 +69,7 @@ export const siteMediaRouter = router({
     }),
 
   create: tenantProcedure
-    .use(requirePermission('sites.view'))
+    .use(requirePermission('sites.manage'))
     .input(createInput)
     .mutation(async ({ ctx, input }) => {
       await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
@@ -95,7 +95,7 @@ export const siteMediaRouter = router({
     }),
 
   updateCaption: tenantProcedure
-    .use(requirePermission('sites.view'))
+    .use(requirePermission('sites.manage'))
     .input(z.object({ id: z.string().length(26), caption: z.string().max(2000) }))
     .mutation(async ({ ctx, input }) => {
       const result = await ctx.db

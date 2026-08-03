@@ -1,0 +1,8 @@
+{
+  "subject": "Riepilogo antincendio — {failedCount} falliti, {overdueCount} in ritardo",
+  "preheader": "Il calendario antincendio di {productName} ha voci che richiedono attenzione.",
+  "greeting": "Ciao {recipientName},",
+  "body": "Il calendario antincendio di oggi su {productName} richiede attenzione:\n\nControlli falliti in attesa di ripetizione: {failedCount}\nControlli e ispezioni porte in ritardo: {overdueCount}\nIn scadenza: {dueSoonCount}\nRevisioni FRA dovute: {fraCount}\nRevisioni PEEP dovute: {peepCount}\nFormazione addetti in scadenza o scaduta: {marshalCount}\n\n{detailLines}\n\nUn controllo fallito resta segnalato finché una ripetizione con esito positivo non lo chiude: registra la ripetizione una volta corretto il difetto.",
+  "cta": "Apri il modulo antincendio",
+  "footer": "Ricevi questa email perché hai permessi di gestione antincendio in {productName}. Il riepilogo arriva solo quando qualcosa richiede attenzione."
+}

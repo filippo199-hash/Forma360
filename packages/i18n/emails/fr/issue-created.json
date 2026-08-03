@@ -1,0 +1,8 @@
+{
+  "subject": "[{categoryName}] Nouveau signalement : {issueTitle}",
+  "preheader": "{reportedByName} a signalé un nouvel élément {categoryName}",
+  "greeting": "Bonjour {recipientName},",
+  "body": "{reportedByName} a créé un signalement dans la catégorie '{categoryName}'.\n\nTitre : {issueTitle}\nRéférence : {referenceNumber}\nSignalé : {reportedAt}",
+  "cta": "Voir le signalement",
+  "footer": "Vous recevez cet e-mail car vous avez un accès de gestion aux signalements de votre espace."
+}

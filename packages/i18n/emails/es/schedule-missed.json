@@ -1,0 +1,8 @@
+{
+  "subject": "Inspecciones programadas no realizadas — {missedCount}",
+  "preheader": "Inspecciones programadas en {productName} no se completaron a tiempo.",
+  "greeting": "Hola {recipientName}:",
+  "body": "Las siguientes inspecciones programadas pasaron su hora límite sin iniciarse:\n\n{detailLines}\n\nInícialas tarde desde tu calendario, o ajusta la programación si ya no refleja la realidad: un calendario que se salta en silencio es peor que uno que dice \"no realizada\".",
+  "cta": "Abrir programaciones",
+  "footer": "Recibes este correo porque eres el asignado o el dueño de la programación en {productName}."
+}

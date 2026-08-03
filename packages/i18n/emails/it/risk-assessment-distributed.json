@@ -1,0 +1,8 @@
+{
+  "subject": "Da leggere e confermare: {title} ({referenceNumber})",
+  "preheader": "Ti è stata distribuita una valutazione dei rischi su {productName}.",
+  "greeting": "Ciao {recipientName},",
+  "body": "La valutazione dei rischi \"{title}\" ({referenceNumber}) ti è stata distribuita. Leggila e conferma di averla compresa entro il {dueDate}.",
+  "cta": "Leggi e conferma la valutazione",
+  "footer": "Ricevi questa email perché una valutazione dei rischi su {productName} ti indica come persona tenuta a leggerla."
+}

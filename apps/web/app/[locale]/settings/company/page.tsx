@@ -38,6 +38,14 @@ export default function CompanyPage() {
     },
   });
 
+  // PF-31: retention v1 (notification-centre rows only).
+  const setRetention = trpc.tenants.setRetention.useMutation({
+    onSuccess: () => {
+      toast.success(t('retention.savedToast'));
+      void utils.tenants.get.invalidate();
+    },
+    onError: () => toast.error(t('saveError')),
+  });
   const updateSettings = trpc.tenants.updateSettings.useMutation({
     onSuccess: () => {
       void utils.tenants.get.invalidate();
@@ -206,6 +214,46 @@ export default function CompanyPage() {
               })}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* PF-31: retention policy v1 + tenant data export. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('retention.title')}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t('retention.subtitle')}</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={String(tenantQuery.data?.tenant.retentionMonths ?? '')}
+              onChange={(e) =>
+                setRetention.mutate({
+                  retentionMonths: e.target.value === '' ? null : Number(e.target.value),
+                })
+              }
+              disabled={setRetention.isPending}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">{t('retention.keepForever')}</option>
+              {[6, 12, 24, 36, 60].map((m) => (
+                <option key={m} value={m}>
+                  {t('retention.months', { count: m })}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="text-xs text-muted-foreground">{t('retention.scopeNote')}</p>
+          <div className="border-t pt-3">
+            <a
+              href="/api/exports/tenant-data"
+              className="inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"
+              download
+            >
+              {t('exportData.button')}
+            </a>
+            <p className="mt-1 text-xs text-muted-foreground">{t('exportData.hint')}</p>
+          </div>
         </CardContent>
       </Card>
 

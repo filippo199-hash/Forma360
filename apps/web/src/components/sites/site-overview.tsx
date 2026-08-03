@@ -180,7 +180,7 @@ function LinkPickerDialog({
         });
     }
     if (kind === 'action') {
-      return (actQ.data ?? [])
+      return (actQ.data?.rows ?? [])
         .filter((a) => a.siteId !== siteId)
         .map((a) => ({
           id: a.id,
@@ -306,7 +306,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
     dot: statusDot(i.status),
     ...(i.documentNumber != null ? { meta: String(i.documentNumber) } : {}),
   }));
-  const actItems: PreviewItem[] = (acts.data ?? []).map((a) => ({
+  const actItems: PreviewItem[] = (acts.data?.rows ?? []).map((a) => ({
     id: a.id,
     title: a.title,
     href: `/${locale}/actions?action=${a.id}`,

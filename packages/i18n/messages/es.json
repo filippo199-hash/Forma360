@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Registro de auditoría"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -295,7 +296,7 @@
         "contractors": "Contractors",
         "org": "Organisation",
         "riskAssessments": "Evaluaciones de riesgos",
-        "coshh": "Sustancias peligrosas (COSHH)",
+        "coshh": "COSHH",
         "permits": "Permisos de trabajo",
         "fireSafety": "Seguridad contra incendios",
         "incidents": "Incidentes"
@@ -363,19 +364,19 @@
         "org_settings": "Manage organisation settings",
         "org_audit_view": "View audit log",
         "riskAssessments_view": "Ver evaluaciones de riesgos",
-        "riskAssessments_create": "Crear evaluaciones de riesgos",
-        "riskAssessments_manage": "Gestionar evaluaciones de riesgos",
-        "coshh_view": "Ver COSHH",
-        "coshh_create": "Crear registros COSHH",
-        "coshh_manage": "Gestionar COSHH",
+        "riskAssessments_create": "Crear y editar evaluaciones",
+        "riskAssessments_manage": "Publicar, distribuir y gestionar evaluaciones",
+        "coshh_view": "Ver el registro COSHH",
+        "coshh_create": "Añadir sustancias y evaluaciones",
+        "coshh_manage": "Publicar y gestionar evaluaciones COSHH",
         "permits_view": "Ver permisos",
-        "permits_create": "Crear permisos",
-        "permits_issue": "Emitir y controlar permisos",
+        "permits_create": "Solicitar y registrar en permisos",
+        "permits_issue": "Emitir, suspender y cerrar permisos",
         "permits_manage": "Gestionar tipos de permiso",
         "fireSafety_view": "Ver seguridad contra incendios",
-        "fireSafety_record": "Registrar comprobaciones de incendios",
-        "fireSafety_create": "Crear registros de incendios",
-        "fireSafety_manage": "Gestionar seguridad contra incendios",
+        "fireSafety_record": "Registrar comprobaciones",
+        "fireSafety_create": "Crear edificios, puertas y evaluaciones",
+        "fireSafety_manage": "Publicar evaluaciones y gestionar el módulo",
         "incidents_view": "Ver incidentes",
         "incidents_report": "Notificar incidentes",
         "incidents_investigate": "Realizar investigaciones",
@@ -522,6 +523,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Retención y exportación de datos",
+        "subtitle": "La retención v1 elimina notificaciones más antiguas que la política. Los registros de seguridad obligatorios nunca se tocan.",
+        "keepForever": "Conservar para siempre",
+        "months": "{count} meses",
+        "scopeNote": "Aplica solo a notificaciones en la app. Inspecciones, permisos, libro de incendios, COSHH y evaluaciones de riesgos se conservan siempre.",
+        "savedToast": "Política de retención guardada."
+      },
+      "exportData": {
+        "button": "Descargar datos del inquilino (JSON)",
+        "hint": "Todo en un documento JSON, para portabilidad u offboarding. Solo administradores."
       }
     },
     "customFields": {
@@ -585,6 +598,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Registro de auditoría",
+      "subtitle": "Los eventos de todos los módulos en un único flujo cronológico inverso de toda la organización.",
+      "empty": "Aún no hay eventos.",
+      "loadMore": "Cargar anteriores",
+      "systemActor": "Sistema",
+      "columns": {
+        "when": "Cuándo",
+        "module": "Módulo",
+        "event": "Evento",
+        "actor": "Por",
+        "detail": "Detalle"
+      },
+      "modules": {
+        "all": "Todos",
+        "actions": "Acciones",
+        "observations": "Observaciones",
+        "permits": "Permisos",
+        "coshh": "COSHH",
+        "riskAssessments": "Evaluaciones de riesgos",
+        "fireSafety": "Seguridad contra incendios",
+        "contractors": "Contratistas"
       }
     }
   },
@@ -1060,7 +1097,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Pendiente de firmas"
     },
     "table": {
       "title": "Title",
@@ -1079,7 +1117,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Pendiente de firmas"
     },
     "picker": {
       "title": "Pick a template",
@@ -1129,7 +1168,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} foto(s) sin subir — conservadas aquí.",
+          "retry": "Reintentar"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -1198,10 +1239,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "Nota obligatoria"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "Explique esta respuesta (obligatorio)"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1370,6 +1413,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "Mis inspecciones programadas ({count})",
+      "startNow": "Iniciar",
+      "startError": "No se pudo iniciar; inténtelo de nuevo.",
+      "missedBadge": "OMITIDA",
+      "overdueBadge": "Vencida",
+      "dueBadge": "Programada"
     }
   },
   "nav": {
@@ -1393,8 +1444,9 @@
     "riskAssessments": "Risk assessments",
     "coshh": "COSHH",
     "permits": "Permisos",
-    "incidents": "Incidentes",
-    "fireSafety": "Seguridad contra incendios"
+    "fireSafety": "Seguridad contra incendios",
+    "analytics": "Panel",
+    "incidents": "Incidentes"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -1422,7 +1474,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "Enviada por",
+    "site": "Sitio"
   },
   "schedules": {
     "title": "Schedules",
@@ -1712,7 +1766,11 @@
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
-        "toast": "Action created."
+        "toast": "Action created.",
+        "assigneeLabel": "Asignar a",
+        "noAssignee": "Sin asignar",
+        "typeLabel": "Tipo de acción",
+        "noType": "Sin tipo"
       },
       "attachInspectionDialog": {
         "title": "Iniciar una inspección",
@@ -2172,6 +2230,11 @@
       "autoGeneratedBadge": "Generado automáticamente",
       "autoGeneratedBy": "Generado automáticamente por {program}",
       "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later.",
+      "sourceLinkRiskAssessment": "Creada por la evaluación de riesgos {referenceNumber}",
+      "sourceLinkCoshhAssessment": "Creada por la evaluación COSHH {referenceNumber}",
+      "sourceLinkFireRiskAssessment": "Creada por la evaluación de incendio {referenceNumber}",
+      "sourceLinkFireLogbookEntry": "Creada por una comprobación contra incendios fallida",
+      "sourceLinkFireDoorInspection": "Creada por una inspección de puerta cortafuego fallida",
       "sourceLinkIncident": "Generada por el incidente {referenceNumber}"
     },
     "create": {
@@ -2235,7 +2298,17 @@
     },
     "filters": {
       "removeAria": "Remove {label} filter"
-    }
+    },
+    "sourceRiskAssessment": "Evaluación de riesgos",
+    "sourceCoshhAssessment": "COSHH",
+    "sourceFireRiskAssessment": "Evaluación de riesgo de incendio",
+    "sourceFireLogbookEntry": "Comprobación contra incendios",
+    "sourceFireDoorInspection": "Puerta cortafuego",
+    "pagerShowing": "Mostrando {from}–{to} de {total}",
+    "pagerPrev": "Anterior",
+    "pagerNext": "Siguiente",
+    "myOpenChip": "Asignadas a mí: {count}",
+    "myOverdueChip": "{count} vencidas"
   },
   "actionsSettings": {
     "title": "Action settings",
@@ -2682,7 +2755,28 @@
         "startedAt": "Iniciado",
         "createdAt": "Creado"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "Planes de mantenimiento",
+        "empty": "Ningún plan de mantenimiento cubre este activo.",
+        "timeMeta": "Cada {interval} días — último servicio {last}",
+        "usageMeta": "Cada {interval} {unit} — contador en {current}",
+        "status": {
+          "on_schedule": "En programa",
+          "approaching": "Próximo",
+          "overdue": "Vencido",
+          "awaiting_first_reading": "Esperando primera lectura"
+        }
+      },
+      "fireHistory": {
+        "heading": "Historial de seguridad contra incendios",
+        "checkLine": "{type} — {building}",
+        "empty": "Aún no hay registros en el libro de incendios.",
+        "performedAt": "Fecha",
+        "type": "Comprobación",
+        "result": "Resultado",
+        "notes": "Notas"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -2950,6 +3044,14 @@
       "actions": "Acciones",
       "headsUp": "Avisos",
       "documents": "Documentos",
+      "permits": "Permisos",
+      "coshh": "Sustancias COSHH",
+      "riskAssessments": "Evaluaciones de riesgos",
+      "fireBuildings": "Edificios (incendios)",
+      "fireRiskAssessments": "Evaluaciones de incendio",
+      "contractors": "Contratistas",
+      "sites": "Sitios y proyectos",
+      "templates": "Plantillas",
       "incidents": "Incidentes"
     }
   },
@@ -3487,7 +3589,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "Contratista no conforme: ingresa un motivo de excepción abajo para continuar."
     },
     "gate": {
       "navLink": "Gate",
@@ -3526,7 +3629,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "Este contratista no es conforme: el check-in requiere un motivo de excepción registrado (o envíalo a la oficina de obra).",
+      "nonCompliantChip": "No conforme"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3565,7 +3670,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "La inducción se actualizó desde tu última confirmación: léela y confírmala de nuevo."
     },
     "users": {
       "heading": "Portal users",
@@ -3619,7 +3725,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "Inducción del sitio",
+      "version": "Versión {version}",
+      "hint": "Se muestra a cada usuario del portal antes que nada. Guardar un cambio sube la versión y todos deben confirmarla de nuevo.",
+      "placeholder": "Lo que todo contratista debe leer y confirmar antes de trabajar aquí…",
+      "saveButton": "Guardar inducción",
+      "savedToast": "Inducción guardada (versión {version})."
+    },
+    "onSitePermits": {
+      "heading": "En el sitio ahora con permisos abiertos"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5024,7 +5141,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "Vinculado al activo",
+      "noLinkedAsset": "Sin activo vinculado",
+      "linkedAssetLine": "Activo: {name}",
+      "assetLinkedToast": "Vínculo de activo actualizado."
     },
     "doors": {
       "addButton": "Add door",
@@ -5320,6 +5441,119 @@
     "clearSearch": "Borrar búsqueda",
     "clear": "Borrar selección",
     "done": "Hecho"
+  },
+  "analytics": {
+    "title": "Panel",
+    "subtitle": "Qué requiere atención en todos los módulos y cómo evolucionan las tendencias.",
+    "tiles": {
+      "sectionLabel": "Requiere atención",
+      "myOpenActions": "Mis acciones abiertas",
+      "overdueActions": "Acciones vencidas",
+      "dueSoon": "{count} vencen en 7 días",
+      "openObservations": "Observaciones abiertas",
+      "highPriority": "{count} de alta prioridad",
+      "awaitingApproval": "Inspecciones pendientes de aprobación",
+      "inProgress": "{count} en curso",
+      "missedInspections": "Inspecciones no realizadas (30 d)",
+      "upcoming7": "{count} previstas en 7 días",
+      "pendingAcks": "Avisos por confirmar",
+      "openPermits": "Permisos abiertos",
+      "expiring48h": "{count} caducan en 48 h",
+      "raReviewOverdue": "Evaluaciones de riesgos con revisión vencida",
+      "raActive": "{count} activas",
+      "coshhReviewDue": "Revisiones COSHH vencidas",
+      "coshhSubstances": "{count} sustancias activas",
+      "fireAttention": "Seguridad contra incendios: requiere atención"
+    },
+    "trends": {
+      "sectionLabel": "Tendencias",
+      "actionsTitle": "Acciones: creadas vs completadas (8 semanas)",
+      "activityTitle": "Inspecciones y observaciones (8 semanas)",
+      "actionsCreated": "Creadas",
+      "actionsCompleted": "Completadas",
+      "inspectionsCompleted": "Inspecciones completadas",
+      "observationsRaised": "Observaciones registradas",
+      "thisWeek": "Ahora"
+    },
+    "sites": {
+      "sectionLabel": "Comparativa de sitios",
+      "title": "Sitios de un vistazo",
+      "subtitle": "Carga abierta y actividad de inspección por sitio, primero los más activos.",
+      "site": "Sitio",
+      "openActions": "Acciones abiertas",
+      "openObservations": "Observaciones abiertas",
+      "completed30": "Inspecciones (30 d)",
+      "noSite": "Sin sitio",
+      "empty": "Aún no hay sitios."
+    }
+  },
+  "scanPage": {
+    "loading": "Cargando…",
+    "invalidTitle": "Este código QR ya no está activo.",
+    "invalidBody": "El código QR escaneado fue revocado o la categoría ya no acepta reportes. Contacta al administrador del sitio.",
+    "reportObservation": "Reportar observación",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Resumen breve de lo ocurrido",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Agrega detalles que ayuden a entender la observación.",
+    "reporterNameLabel": "Tu nombre",
+    "reporterNameSubtitle": "Opcional — déjalo vacío para permanecer anónimo.",
+    "reporterEmailLabel": "Tu correo",
+    "reporterEmailSubtitle": "Opcional — podríamos usarlo para dar seguimiento.",
+    "dateOccurredLabel": "Fecha del suceso",
+    "locationAddressLabel": "Ubicación",
+    "locationAddressPlaceholder": "Edificio, piso o área",
+    "customQuestionsHeading": "Preguntas adicionales",
+    "selectPlaceholder": "Selecciona una opción",
+    "submit": "Enviar",
+    "submitting": "Enviando…",
+    "successTitle": "¡Gracias! Tu observación fue enviada.",
+    "successBody": "Tu número de referencia está abajo — consérvalo.",
+    "successAnother": "Enviar otra",
+    "errorGeneric": "No se pudo enviar la observación. Inténtalo de nuevo.",
+    "siteLabel": "Sitio",
+    "siteNone": "Selecciona un sitio",
+    "photosLabel": "Fotos",
+    "photosSubtitle": "Agrega hasta {max} fotos: una imagen es la mitad del reporte.",
+    "photosAdd": "Agregar foto",
+    "photosRemove": "Quitar",
+    "photoTooLarge": "Esta foto supera {maxMb} MB: elige una más pequeña.",
+    "photoUploadFailed": "Una foto no se pudo subir. Sigue adjunta aquí: envía de nuevo para reintentar."
+  },
+  "offline": {
+    "title": "Sin conexión",
+    "body": "Esta página no está disponible sin conexión. Lo que registraste está en cola y se sincronizará automáticamente.",
+    "pendingChip": "{count} en cola — se sincronizará al volver la conexión",
+    "itemsDelivered": "{count} elementos sincronizados",
+    "itemRejected": "El servidor rechazó un elemento en cola: revísalo y vuelve a ingresarlo.",
+    "queuedToast": "Sin conexión: guardado en la cola. Se sincronizará automáticamente."
+  },
+  "notifications": {
+    "bellLabel": "Notificaciones ({count} sin leer)",
+    "title": "Notificaciones",
+    "markAllRead": "Marcar todas como leídas",
+    "empty": "Nada aún: estás al día.",
+    "kinds": {
+      "action_assigned": "Acción asignada",
+      "approval_pending": "Aprobación pendiente",
+      "approval_decided": "Aprobación decidida",
+      "heads_up": "Aviso",
+      "issue_reported": "Observación reportada",
+      "schedule_missed": "Inspecciones no realizadas",
+      "action_due": "Acciones por vencer",
+      "document_expiry": "Vencimiento de documento"
+    },
+    "prefs": {
+      "title": "Notificaciones por correo",
+      "subtitle": "Desactivar una solo silencia el correo: la campana del encabezado siempre la muestra.",
+      "saveError": "No se pudo guardar la preferencia.",
+      "keys": {
+        "emailActionReminders": "Recordatorios de acciones por vencer/vencidas",
+        "emailScheduleMissed": "Inspecciones programadas no realizadas",
+        "emailDocumentExpiry": "Recordatorios de vencimiento de documentos",
+        "emailMaintenance": "Recordatorios de mantenimiento"
+      }
+    }
   },
   "incidents": {
     "title": "Incidentes",

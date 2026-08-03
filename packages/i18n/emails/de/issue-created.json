@@ -1,0 +1,8 @@
+{
+  "subject": "[{categoryName}] Neue Meldung: {issueTitle}",
+  "preheader": "{reportedByName} hat eine neue {categoryName}-Meldung erstellt",
+  "greeting": "Hallo {recipientName},",
+  "body": "{reportedByName} hat eine neue Meldung in der Kategorie '{categoryName}' erstellt.\n\nTitel: {issueTitle}\nReferenz: {referenceNumber}\nGemeldet: {reportedAt}",
+  "cta": "Meldung ansehen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie Verwaltungszugriff auf Meldungen in Ihrem Arbeitsbereich haben."
+}

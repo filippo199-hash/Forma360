@@ -1,0 +1,8 @@
+{
+  "subject": "UNTRAGBARES Brandrisiko veröffentlicht — {referenceNumber} {title}",
+  "preheader": "Eine Brandrisikobeurteilung auf {productName} wurde mit untragbarer Einstufung signiert.",
+  "greeting": "Hallo {recipientName},",
+  "body": "{publishedByName} hat die Brandrisikobeurteilung \"{title}\" ({referenceNumber}){buildingLine} mit der Gesamteinstufung UNTRAGBAR signiert und veröffentlicht.\n\nNach PAS 79 bedeutet eine untragbare Einstufung, dass die Räumlichkeiten nicht weiter genutzt werden sollten, bis das Risiko reduziert wurde. Aus den wesentlichen Feststellungen wurden Korrekturmaßnahmen erstellt — prüfen Sie sie jetzt und entscheiden Sie, ob die Nutzung fortgesetzt werden kann.",
+  "cta": "Beurteilung öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie Brandschutz-Verwaltungsrechte in {productName} haben. Eine untragbare Einstufung alarmiert sofort alle Brandschutzverantwortlichen."
+}

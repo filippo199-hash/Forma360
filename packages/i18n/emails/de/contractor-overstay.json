@@ -1,0 +1,8 @@
+{
+  "subject": "Noch vor Ort: {who} ({contractorName})",
+  "preheader": "{contractorName} ist seit über 24 Stunden vor Ort.",
+  "greeting": "Achtung,",
+  "body": "{who} von {contractorName} hat sich am {checkedInAt} eingecheckt und ist noch nicht ausgecheckt — mehr als 24 Stunden. Besuch: {title}{siteLine}. Bitte bestätigen Sie die Anwesenheit oder checken Sie die Person aus.",
+  "cta": "Anwesenheitsboard öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie diesen Besuch geplant haben oder das Tor verwalten."
+}

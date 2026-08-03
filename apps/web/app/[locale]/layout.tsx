@@ -14,8 +14,14 @@ import { PortalHeader } from '../../src/components/portal/portal-header';
 import { SiteFooter } from '../../src/components/site-footer';
 import { SiteHeader } from '../../src/components/site-header';
 import { SiteSidebar } from '../../src/components/site-sidebar';
+import { PermissionsProvider } from '../../src/lib/permissions-context';
+import { loadCurrentUserPermissions } from '../../src/server/load-permissions';
 import { activeBrand } from '../../src/lib/brand';
 import { isPathAllowedForExternal, loadContractorUser } from '../../src/server/contractor-portal';
+import {
+  OfflineQueueFlusher,
+  ServiceWorkerRegister,
+} from '../../src/components/offline-queue-flusher';
 import { ThemeProvider } from '../../src/components/theme-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
 import { Toaster } from '../../src/components/ui/sonner';
@@ -118,16 +124,22 @@ export default async function LocaleLayout({
                 </div>
               ) : showSidebar ? (
                 /* Signed-in app shell — full-height dark sidebar on the left,
-                 * header + content in the column to its right (Cantiere360). */
-                <div className="flex min-h-screen">
-                  <SiteSidebar locale={locale} />
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <SiteHeader showBrand={false} />
-                    <main className="flex-1">{children}</main>
+                 * header + content in the column to its right (Cantiere360).
+                 * PF-27: the shell provides the caller's permissions so the
+                 * nav can hide modules the user cannot open. */
+                <PermissionsProvider permissions={(await loadCurrentUserPermissions()).permissions}>
+                  <div className="flex min-h-screen">
+                    <SiteSidebar locale={locale} />
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <SiteHeader showBrand={false} />
+                      <main className="flex-1">{children}</main>
+                    </div>
+                    {/* Floating assistant launcher on every signed-in page. */}
+                    <ChatBubble />
+                    {/* PF-10: drains queued offline mutations + pending chip. */}
+                    <OfflineQueueFlusher />
                   </div>
-                  {/* Floating assistant launcher on every signed-in page. */}
-                  <ChatBubble />
-                </div>
+                </PermissionsProvider>
               ) : (
                 /* Public pages — header on top, marketing/legal footer below. */
                 <div className="flex min-h-screen flex-col">
@@ -137,6 +149,7 @@ export default async function LocaleLayout({
                 </div>
               )}
               <Toaster />
+              <ServiceWorkerRegister />
             </TRPCProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

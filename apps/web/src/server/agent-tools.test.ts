@@ -55,6 +55,13 @@ describe('TOOLS definitions', () => {
       'comment_on_observation',
       'record_asset_reading',
       'create_headsup',
+      // PF-24: the brand modules the platform advertises on the tin.
+      'list_permits',
+      'list_coshh_substances',
+      'list_risk_assessments',
+      'fire_safety_overview',
+      'list_contractors_on_site',
+      'list_sites',
     ];
     for (const name of expected) expect(byName.has(name), `missing tool ${name}`).toBe(true);
     expect(TOOLS).toHaveLength(expected.length);
@@ -91,6 +98,20 @@ describe('tool routing sets', () => {
     // site visibility, so it has to reuse `documents.list` (which filters for
     // non-managers) rather than a plain tenant-scoped db read (B9).
     expect(CALLER_TOOL_NAMES.has('list_documents')).toBe(true);
+  });
+
+  it('PF-24: routes every brand-module read through the caller (brand gating + permissions)', () => {
+    const brandModuleReads: ToolName[] = [
+      'list_permits',
+      'list_coshh_substances',
+      'list_risk_assessments',
+      'fire_safety_overview',
+      'list_contractors_on_site',
+      'list_sites',
+    ];
+    for (const name of brandModuleReads) {
+      expect(CALLER_TOOL_NAMES.has(name), `${name} must use the caller`).toBe(true);
+    }
   });
 });
 

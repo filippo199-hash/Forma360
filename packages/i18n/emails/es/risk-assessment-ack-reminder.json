@@ -1,0 +1,8 @@
+{
+  "subject": "Recordatorio — evaluación de riesgos pendiente de tu confirmación: {title}",
+  "preheader": "Tienes una confirmación de \"leído y comprendido\" pendiente en {productName}.",
+  "greeting": "Hola {recipientName}:",
+  "body": "La evaluación de riesgos \"{title}\" ({referenceNumber}) se te distribuyó el {distributedDate} y aún espera tu confirmación{dueLine}.",
+  "cta": "Leer y confirmar la evaluación",
+  "footer": "Recibes este correo porque una evaluación de riesgos en {productName} te señala como alguien que debe leerla."
+}

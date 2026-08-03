@@ -1,0 +1,8 @@
+{
+  "subject": "Inspeções programadas perdidas — {missedCount}",
+  "preheader": "Inspeções programadas no {productName} não foram concluídas a tempo.",
+  "greeting": "Olá {recipientName},",
+  "body": "As seguintes inspeções programadas passaram do horário sem serem iniciadas:\n\n{detailLines}\n\nInicie-as com atraso a partir da sua agenda, ou ajuste a programação se ela não refletir mais a realidade — um calendário que pula em silêncio é pior do que um que diz \"perdida\".",
+  "cta": "Abrir programações",
+  "footer": "Você recebeu este e-mail porque é o responsável designado ou o dono da programação no {productName}."
+}

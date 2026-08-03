@@ -2,6 +2,7 @@
 
 import { brandHasModule } from '@forma360/shared/brand';
 import { useTranslations } from 'next-intl';
+import { useHasPermission } from '../../lib/permissions-context';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { activeBrand } from '../../lib/brand';
@@ -19,7 +20,7 @@ type TabKey =
   | 'permissions'
   | 'groups'
   | 'customFields'
-  | 'riskMatrix';
+  | 'riskMatrix' | 'audit';
 
 /**
  * Folder segment for each tab. Most tabs live at a folder named after the key;
@@ -33,6 +34,7 @@ const TAB_HREF: Record<TabKey, string> = {
   groups: 'groups',
   customFields: 'custom-fields',
   riskMatrix: 'risk-matrix',
+  audit: 'audit',
 };
 
 /**
@@ -44,19 +46,31 @@ const TAB_HREF: Record<TabKey, string> = {
 export function SettingsTabs({ locale, isAdmin }: SettingsTabsProps) {
   const t = useTranslations('settings');
   const pathname = usePathname();
+  const canInviteUsers = useHasPermission('users.invite');
+  const canManageUsers = useHasPermission('users.manage');
+  const canManagePermissions = useHasPermission('permissions.manage');
+  const canManageGroups = useHasPermission('groups.manage');
+  const canManageCustomFields = useHasPermission('users.customFields.manage');
+  const canViewAudit = useHasPermission('org.audit.view');
 
-  const allTabs: TabKey[] = [
+  // PF-7 (platform review): the tab bar used to gate EVERYTHING on the
+  // admin-only org.settings key, so a seeded Manager — the role designed
+  // to invite the team — saw only "My profile" and had to type the URL.
+  // Each tab now shows for the permission that its page actually needs;
+  // admin keeps the full set.
+  const tabs: TabKey[] = [
     'profile',
-    'company',
-    'users',
-    'permissions',
-    'groups',
-    'customFields',
-    // Brand-gated (ADR 0010): the matrix editor only exists where the
-    // risk-assessments module ships.
-    ...(brandHasModule(activeBrand.id, 'riskAssessments') ? (['riskMatrix'] as TabKey[]) : []),
+    ...(isAdmin ? (['company'] as TabKey[]) : []),
+    ...(isAdmin || canInviteUsers || canManageUsers ? (['users'] as TabKey[]) : []),
+    ...(isAdmin || canManagePermissions ? (['permissions'] as TabKey[]) : []),
+    ...(isAdmin || canManageGroups ? (['groups'] as TabKey[]) : []),
+    ...(isAdmin || canManageCustomFields ? (['customFields'] as TabKey[]) : []),
+    ...(isAdmin && brandHasModule(activeBrand.id, 'riskAssessments')
+      ? (['riskMatrix'] as TabKey[])
+      : []),
+    // PF-31: the tenant-wide audit feed.
+    ...(isAdmin || canViewAudit ? (['audit'] as TabKey[]) : []),
   ];
-  const tabs: TabKey[] = isAdmin ? allTabs : ['profile'];
 
   return (
     <div className="border-b">

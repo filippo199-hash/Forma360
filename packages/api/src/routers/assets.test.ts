@@ -73,6 +73,11 @@ const MIGRATION_FILES = [
   '0050_contractor_visit_overstay.sql',
   '0051_site_fk_integrity.sql',
   '0052_reference_counters.sql',
+  '0063_action_reminders.sql',
+  '0064_document_expiry_reminders.sql',
+  '0065_backfill_freehs_permission_keys.sql',
+  '0066_wave_f_field.sql',
+  '0067_wave_g_platform.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -113,7 +118,9 @@ describe('Assets router (Phase 5B)', () => {
     tenantId = newId();
     await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
     const seeded = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
-    adminUserId = newId();
+    // Production user ids are `usr_` + ULID (30 chars) — PF-29 regression:
+    // the owner picker must accept them.
+    adminUserId = `usr_${newId()}`;
     await db.insert(schema.user).values({
       id: adminUserId,
       name: 'Admin',

@@ -1,0 +1,8 @@
+{
+  "subject": "Acción necesaria: revisar {inspectionTitle}",
+  "preheader": "{requesterName} solicitó tu firma",
+  "greeting": "Hola {signerName}:",
+  "body": "{requesterName} envió '{inspectionTitle}' a revisión y pidió tu firma. Revisa la inspección y firma cuando estés listo.",
+  "cta": "Revisar y firmar",
+  "footer": "Si no esperabas este correo, puedes ignorarlo."
+}

@@ -1,4 +1,4 @@
--- 0063 — Incident & Accident Management (FreeHS module B5).
+-- 0068 — Incident & Accident Management (FreeHS module B5).
 -- Incident header with per-kind jsonb details, RIDDOR duty columns and
 -- worker dedup stamps; affected persons + lost-time absences; versioned
 -- investigations with separated-duty signatures; findings that generate

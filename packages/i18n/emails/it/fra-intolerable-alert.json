@@ -1,0 +1,8 @@
+{
+  "subject": "Rischio incendio INTOLLERABILE pubblicato — {referenceNumber} {title}",
+  "preheader": "Una valutazione del rischio incendio su {productName} è stata firmata con esito intollerabile.",
+  "greeting": "Ciao {recipientName},",
+  "body": "{publishedByName} ha firmato e pubblicato la valutazione del rischio incendio \"{title}\" ({referenceNumber}){buildingLine} con una valutazione complessiva INTOLLERABILE.\n\nSecondo PAS 79 un esito intollerabile significa che i locali non dovrebbero continuare a essere occupati finché il rischio non è stato ridotto. Dalle risultanze significative della valutazione sono state generate azioni correttive: esaminale subito e decidi se l'occupazione può continuare.",
+  "cta": "Apri la valutazione",
+  "footer": "Ricevi questa email perché hai permessi di gestione antincendio in {productName}. Un esito intollerabile avvisa immediatamente tutti i responsabili antincendio."
+}

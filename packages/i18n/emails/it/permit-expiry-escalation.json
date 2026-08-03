@@ -1,0 +1,8 @@
+{
+  "subject": "Permesso scaduto — {referenceNumber} {title} ha superato la scadenza senza chiusura",
+  "preheader": "Un permesso aperto su {productName} è oltre la finestra di validità. Qualcuno potrebbe essere ancora al lavoro.",
+  "greeting": "Ciao {recipientName},",
+  "body": "Il permesso {typeName} \"{title}\" ({referenceNumber}){siteLine} è scaduto alle {expiredAt} UTC e non è stato chiuso, annullato o prorogato. Il lavoro potrebbe essere ancora in corso con un permesso scaduto. Verifica subito lo stato dei lavori, poi chiudi il permesso con i controlli di chiusura oppure prorogalo con nuova autorizzazione se il lavoro deve continuare.",
+  "cta": "Apri il permesso",
+  "footer": "Ricevi questa email perché sei parte firmataria (emittente, accettante o autorizzante) di questo permesso in {productName}."
+}

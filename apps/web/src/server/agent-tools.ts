@@ -27,7 +27,13 @@ export type ToolName =
   | 'comment_on_action'
   | 'comment_on_observation'
   | 'record_asset_reading'
-  | 'create_headsup';
+  | 'create_headsup'
+  | 'list_permits'
+  | 'list_coshh_substances'
+  | 'list_risk_assessments'
+  | 'fire_safety_overview'
+  | 'list_contractors_on_site'
+  | 'list_sites';
 
 /**
  * Tools that go through the tRPC caller (writes + the reads backed by
@@ -40,6 +46,14 @@ export type ToolName =
  * db directly.
  */
 export const CALLER_TOOL_NAMES = new Set<ToolName>([
+  // PF-24: the four brand modules + contractors + sites — routed through
+  // the real routers so brand gating and permissions apply untouched.
+  'list_permits',
+  'list_coshh_substances',
+  'list_risk_assessments',
+  'fire_safety_overview',
+  'list_contractors_on_site',
+  'list_sites',
   'list_observation_categories',
   'list_users',
   'list_documents',
@@ -365,5 +379,56 @@ export const TOOLS: Anthropic.Tool[] = [
       },
       required: ['title', 'description'],
     },
+  },
+  {
+    name: 'list_permits',
+    description:
+      'List permits to work (hot work, confined space, working at height, …). Answers "which permits are open / expiring", "find PTW-0123".',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['open', 'all'],
+          description: 'open (default) = currently live permits; all includes closed/cancelled',
+        },
+        search: { type: 'string', description: 'Match on title or reference (e.g. PTW-0123)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'list_coshh_substances',
+    description:
+      'List hazardous substances on the COSHH register, with assessment status. Answers "do we hold acetone", "which substances need assessment review".',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'list_risk_assessments',
+    description:
+      'List risk assessments with status and review dates. Answers "which risk assessments are due for review", "find the manual handling RA".',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        status: { type: 'string', enum: ['all', 'draft', 'active', 'archived'] },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'fire_safety_overview',
+    description:
+      'Fire safety needs-attention summary: failed checks awaiting re-test, overdue checks and door inspections, FRA reviews due, PEEP reviews due, marshal gaps.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'list_contractors_on_site',
+    description: 'Contractors currently checked in on site right now.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'list_sites',
+    description: 'List the company sites / projects.',
+    input_schema: { type: 'object' as const, properties: {}, required: [] },
   },
 ];

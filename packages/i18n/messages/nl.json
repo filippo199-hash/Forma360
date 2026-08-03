@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Auditlogboek"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -294,8 +295,8 @@
         "billing": "Billing",
         "contractors": "Contractors",
         "org": "Organisation",
-        "riskAssessments": "Risico-inventarisaties",
-        "coshh": "Gevaarlijke stoffen (COSHH)",
+        "riskAssessments": "Risicobeoordelingen",
+        "coshh": "COSHH",
         "permits": "Werkvergunningen",
         "fireSafety": "Brandveiligheid",
         "incidents": "Incidenten"
@@ -362,20 +363,20 @@
         "contractors_gate": "Gate check-in",
         "org_settings": "Manage organisation settings",
         "org_audit_view": "View audit log",
-        "riskAssessments_view": "Risico-inventarisaties bekijken",
-        "riskAssessments_create": "Risico-inventarisaties aanmaken",
-        "riskAssessments_manage": "Risico-inventarisaties beheren",
-        "coshh_view": "COSHH bekijken",
-        "coshh_create": "COSHH-registraties aanmaken",
-        "coshh_manage": "COSHH beheren",
+        "riskAssessments_view": "Risicobeoordelingen bekijken",
+        "riskAssessments_create": "Beoordelingen aanmaken & bewerken",
+        "riskAssessments_manage": "Beoordelingen publiceren & beheren",
+        "coshh_view": "COSHH-register bekijken",
+        "coshh_create": "Stoffen & beoordelingen toevoegen",
+        "coshh_manage": "COSHH-beoordelingen publiceren & beheren",
         "permits_view": "Vergunningen bekijken",
-        "permits_create": "Vergunningen aanmaken",
-        "permits_issue": "Vergunningen uitgeven en beheren",
+        "permits_create": "Vergunningen aanvragen & bijwerken",
+        "permits_issue": "Vergunningen uitgeven & sluiten",
         "permits_manage": "Vergunningstypen beheren",
         "fireSafety_view": "Brandveiligheid bekijken",
-        "fireSafety_record": "Brandcontroles vastleggen",
-        "fireSafety_create": "Branddossiers aanmaken",
-        "fireSafety_manage": "Brandveiligheid beheren",
+        "fireSafety_record": "Controles registreren",
+        "fireSafety_create": "Gebouwen, deuren & beoordelingen aanmaken",
+        "fireSafety_manage": "Beoordelingen publiceren & module beheren",
         "incidents_view": "Incidenten bekijken",
         "incidents_report": "Incidenten melden",
         "incidents_investigate": "Onderzoeken uitvoeren",
@@ -522,6 +523,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Databewaring & export",
+        "subtitle": "Bewaring v1 verwijdert meldingen ouder dan het beleid. Wettelijke veiligheidsregistraties blijven onaangeroerd.",
+        "keepForever": "Voor altijd bewaren",
+        "months": "{count} maanden",
+        "scopeNote": "Geldt alleen voor in-app meldingen. Inspecties, vergunningen, brandlogboek, COSHH en risicobeoordelingen blijven altijd bewaard.",
+        "savedToast": "Bewaarbeleid opgeslagen."
+      },
+      "exportData": {
+        "button": "Tenantdata downloaden (JSON)",
+        "hint": "Alles in één JSON-document — voor portabiliteit of offboarding. Alleen beheerders."
       }
     },
     "customFields": {
@@ -585,6 +598,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Auditlogboek",
+      "subtitle": "De gebeurtenissen van alle modules in één omgekeerd-chronologische stroom voor de hele tenant.",
+      "empty": "Nog geen gebeurtenissen.",
+      "loadMore": "Ouder laden",
+      "systemActor": "Systeem",
+      "columns": {
+        "when": "Wanneer",
+        "module": "Module",
+        "event": "Gebeurtenis",
+        "actor": "Door",
+        "detail": "Detail"
+      },
+      "modules": {
+        "all": "Alle",
+        "actions": "Acties",
+        "observations": "Observaties",
+        "permits": "Vergunningen",
+        "coshh": "COSHH",
+        "riskAssessments": "Risicobeoordelingen",
+        "fireSafety": "Brandveiligheid",
+        "contractors": "Aannemers"
       }
     }
   },
@@ -1060,7 +1097,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Wacht op ondertekening"
     },
     "table": {
       "title": "Title",
@@ -1079,7 +1117,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Wacht op ondertekening"
     },
     "picker": {
       "title": "Pick a template",
@@ -1129,7 +1168,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} foto('s) niet geüpload — hier bewaard.",
+          "retry": "Opnieuw"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -1191,10 +1232,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "Notitie verplicht"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "Licht dit antwoord toe (verplicht)"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1363,6 +1406,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "Mijn geplande inspecties ({count})",
+      "startNow": "Starten",
+      "startError": "Starten mislukt — probeer opnieuw.",
+      "missedBadge": "GEMIST",
+      "overdueBadge": "Te laat",
+      "dueBadge": "Gepland"
     }
   },
   "nav": {
@@ -1386,8 +1437,9 @@
     "riskAssessments": "Risk assessments",
     "coshh": "Gevaarlijke stoffen",
     "permits": "Vergunningen",
-    "incidents": "Incidenten",
-    "fireSafety": "Brandveiligheid"
+    "fireSafety": "Brandveiligheid",
+    "analytics": "Dashboard",
+    "incidents": "Incidenten"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -1415,7 +1467,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "Ingediend door",
+    "site": "Locatie"
   },
   "schedules": {
     "title": "Schedules",
@@ -1705,7 +1759,11 @@
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
-        "toast": "Action created."
+        "toast": "Action created.",
+        "assigneeLabel": "Toewijzen aan",
+        "noAssignee": "Niet toegewezen",
+        "typeLabel": "Actietype",
+        "noType": "Geen type"
       },
       "attachInspectionDialog": {
         "title": "Inspectie starten",
@@ -2165,6 +2223,11 @@
       "autoGeneratedBadge": "Automatisch gegenereerd",
       "autoGeneratedBy": "Automatisch gegenereerd door {program}",
       "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later.",
+      "sourceLinkRiskAssessment": "Aangemaakt door risicobeoordeling {referenceNumber}",
+      "sourceLinkCoshhAssessment": "Aangemaakt door COSHH-beoordeling {referenceNumber}",
+      "sourceLinkFireRiskAssessment": "Aangemaakt door brandrisicobeoordeling {referenceNumber}",
+      "sourceLinkFireLogbookEntry": "Aangemaakt door een afgekeurde brandveiligheidscontrole",
+      "sourceLinkFireDoorInspection": "Aangemaakt door een afgekeurde branddeurinspectie",
       "sourceLinkIncident": "Voortgekomen uit incident {referenceNumber}"
     },
     "create": {
@@ -2228,7 +2291,17 @@
     },
     "filters": {
       "removeAria": "Remove {label} filter"
-    }
+    },
+    "sourceRiskAssessment": "Risicobeoordeling",
+    "sourceCoshhAssessment": "COSHH",
+    "sourceFireRiskAssessment": "Brandrisicobeoordeling",
+    "sourceFireLogbookEntry": "Brandveiligheidscontrole",
+    "sourceFireDoorInspection": "Branddeur",
+    "pagerShowing": "{from}–{to} van {total}",
+    "pagerPrev": "Vorige",
+    "pagerNext": "Volgende",
+    "myOpenChip": "Aan mij toegewezen: {count}",
+    "myOverdueChip": "{count} te laat"
   },
   "actionsSettings": {
     "title": "Action settings",
@@ -2675,7 +2748,28 @@
         "startedAt": "Gestart",
         "createdAt": "Aangemaakt"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "Onderhoudsplannen",
+        "empty": "Geen onderhoudsplannen voor dit object.",
+        "timeMeta": "Elke {interval} dagen — laatste beurt {last}",
+        "usageMeta": "Elke {interval} {unit} — teller op {current}",
+        "status": {
+          "on_schedule": "Op schema",
+          "approaching": "Nadert",
+          "overdue": "Achterstallig",
+          "awaiting_first_reading": "Wacht op eerste meting"
+        }
+      },
+      "fireHistory": {
+        "heading": "Brandveiligheidshistorie",
+        "checkLine": "{type} — {building}",
+        "empty": "Nog geen registraties in het brandlogboek.",
+        "performedAt": "Datum",
+        "type": "Controle",
+        "result": "Resultaat",
+        "notes": "Notities"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -2943,6 +3037,14 @@
       "actions": "Acties",
       "headsUp": "Berichten",
       "documents": "Documenten",
+      "permits": "Vergunningen",
+      "coshh": "COSHH-stoffen",
+      "riskAssessments": "Risicobeoordelingen",
+      "fireBuildings": "Brandveiligheidsgebouwen",
+      "fireRiskAssessments": "Brandrisicobeoordelingen",
+      "contractors": "Aannemers",
+      "sites": "Locaties & projecten",
+      "templates": "Sjablonen",
       "incidents": "Incidenten"
     }
   },
@@ -3480,7 +3582,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "Aannemer niet compliant — vul hieronder een afwijkingsreden in om door te gaan."
     },
     "gate": {
       "navLink": "Gate",
@@ -3519,7 +3622,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "Deze aannemer is niet compliant — inchecken vereist een vastgelegde afwijkingsreden (of stuur ze naar de keet).",
+      "nonCompliantChip": "Niet compliant"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3558,7 +3663,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "De inductie is bijgewerkt sinds je laatste bevestiging — lees en bevestig opnieuw."
     },
     "users": {
       "heading": "Portal users",
@@ -3612,7 +3718,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "Locatie-inductie",
+      "version": "Versie {version}",
+      "hint": "Wordt elke portalgebruiker als eerste getoond. Een opgeslagen wijziging verhoogt de versie — iedereen moet opnieuw bevestigen.",
+      "placeholder": "Wat elke aannemer moet lezen en bevestigen vóór het werk…",
+      "saveButton": "Inductie opslaan",
+      "savedToast": "Inductie opgeslagen (versie {version})."
+    },
+    "onSitePermits": {
+      "heading": "Nu op locatie met open vergunningen"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5017,7 +5134,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "Gekoppeld aan object",
+      "noLinkedAsset": "Geen object gekoppeld",
+      "linkedAssetLine": "Object: {name}",
+      "assetLinkedToast": "Objectkoppeling bijgewerkt."
     },
     "doors": {
       "addButton": "Add door",
@@ -5313,6 +5434,119 @@
     "clearSearch": "Zoekopdracht wissen",
     "clear": "Selectie wissen",
     "done": "Klaar"
+  },
+  "analytics": {
+    "title": "Dashboard",
+    "subtitle": "Wat aandacht nodig heeft in alle modules, en hoe de trends zich ontwikkelen.",
+    "tiles": {
+      "sectionLabel": "Vraagt aandacht",
+      "myOpenActions": "Mijn openstaande acties",
+      "overdueActions": "Achterstallige acties",
+      "dueSoon": "{count} vervallen binnen 7 dagen",
+      "openObservations": "Open observaties",
+      "highPriority": "{count} met hoge prioriteit",
+      "awaitingApproval": "Inspecties wachten op goedkeuring",
+      "inProgress": "{count} in uitvoering",
+      "missedInspections": "Gemiste inspecties (30 d)",
+      "upcoming7": "{count} gepland binnen 7 dagen",
+      "pendingAcks": "Te bevestigen meldingen",
+      "openPermits": "Open werkvergunningen",
+      "expiring48h": "{count} verlopen binnen 48 u",
+      "raReviewOverdue": "Risicobeoordelingen over de reviewdatum",
+      "raActive": "{count} actief",
+      "coshhReviewDue": "COSHH-reviews achterstallig",
+      "coshhSubstances": "{count} actieve stoffen",
+      "fireAttention": "Brandveiligheid vraagt aandacht"
+    },
+    "trends": {
+      "sectionLabel": "Trends",
+      "actionsTitle": "Acties — aangemaakt vs afgerond (8 weken)",
+      "activityTitle": "Inspecties en observaties (8 weken)",
+      "actionsCreated": "Aangemaakt",
+      "actionsCompleted": "Afgerond",
+      "inspectionsCompleted": "Inspecties afgerond",
+      "observationsRaised": "Observaties gemeld",
+      "thisWeek": "Nu"
+    },
+    "sites": {
+      "sectionLabel": "Vergelijking per locatie",
+      "title": "Locaties in één oogopslag",
+      "subtitle": "Openstaand werk en inspectieactiviteit per locatie, drukste eerst.",
+      "site": "Locatie",
+      "openActions": "Open acties",
+      "openObservations": "Open observaties",
+      "completed30": "Inspecties (30 d)",
+      "noSite": "Geen locatie",
+      "empty": "Nog geen locaties."
+    }
+  },
+  "scanPage": {
+    "loading": "Laden…",
+    "invalidTitle": "Deze QR-code is niet meer actief.",
+    "invalidBody": "De gescande QR-code is ingetrokken of de categorie accepteert geen meldingen meer. Neem contact op met de locatiebeheerder.",
+    "reportObservation": "Observatie melden",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Korte samenvatting van wat er gebeurde",
+    "descriptionLabel": "Omschrijving",
+    "descriptionPlaceholder": "Voeg details toe die helpen de observatie te begrijpen.",
+    "reporterNameLabel": "Je naam",
+    "reporterNameSubtitle": "Optioneel — laat leeg om anoniem te blijven.",
+    "reporterEmailLabel": "Je e-mail",
+    "reporterEmailSubtitle": "Optioneel — voor eventuele opvolging.",
+    "dateOccurredLabel": "Datum voorval",
+    "locationAddressLabel": "Locatie",
+    "locationAddressPlaceholder": "Gebouw, verdieping of zone",
+    "customQuestionsHeading": "Aanvullende vragen",
+    "selectPlaceholder": "Kies een optie",
+    "submit": "Versturen",
+    "submitting": "Versturen…",
+    "successTitle": "Bedankt! Je observatie is verstuurd.",
+    "successBody": "Je referentienummer staat hieronder — bewaar het.",
+    "successAnother": "Nog een melden",
+    "errorGeneric": "Kon de observatie niet versturen. Probeer opnieuw.",
+    "siteLabel": "Locatie",
+    "siteNone": "Kies een locatie",
+    "photosLabel": "Foto's",
+    "photosSubtitle": "Voeg tot {max} foto's toe — een beeld is de halve melding.",
+    "photosAdd": "Foto toevoegen",
+    "photosRemove": "Verwijderen",
+    "photoTooLarge": "Deze foto is groter dan {maxMb} MB — kies een kleinere.",
+    "photoUploadFailed": "Een foto kon niet worden geüpload. Hij is hier nog bijgevoegd — verstuur opnieuw om het nogmaals te proberen."
+  },
+  "offline": {
+    "title": "Je bent offline",
+    "body": "Deze pagina is niet beschikbaar zonder verbinding. Wat je hebt vastgelegd staat in de wachtrij en synchroniseert automatisch.",
+    "pendingChip": "{count} in wachtrij — synchroniseert zodra je online bent",
+    "itemsDelivered": "{count} wachtrij-items gesynchroniseerd",
+    "itemRejected": "Een wachtrij-item is door de server geweigerd — controleer en voer het opnieuw in.",
+    "queuedToast": "Geen verbinding — opgeslagen in de wachtrij. Synchroniseert automatisch."
+  },
+  "notifications": {
+    "bellLabel": "Meldingen ({count} ongelezen)",
+    "title": "Meldingen",
+    "markAllRead": "Alles als gelezen markeren",
+    "empty": "Nog niets — je bent bij.",
+    "kinds": {
+      "action_assigned": "Actie toegewezen",
+      "approval_pending": "Goedkeuring wacht",
+      "approval_decided": "Goedkeuring besloten",
+      "heads_up": "Melding",
+      "issue_reported": "Observatie gemeld",
+      "schedule_missed": "Gemiste inspecties",
+      "action_due": "Acties bijna verlopen",
+      "document_expiry": "Documentverloop"
+    },
+    "prefs": {
+      "title": "E-mailmeldingen",
+      "subtitle": "Uitschakelen dempt alleen de e-mail — de bel in de koptekst toont het altijd.",
+      "saveError": "Kon de voorkeur niet opslaan.",
+      "keys": {
+        "emailActionReminders": "Herinneringen voor (bijna) verlopen acties",
+        "emailScheduleMissed": "Gemiste geplande inspecties",
+        "emailDocumentExpiry": "Herinneringen documentverloop",
+        "emailMaintenance": "Onderhoudsherinneringen"
+      }
+    }
   },
   "incidents": {
     "title": "Incidenten",

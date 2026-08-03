@@ -49,19 +49,21 @@ export default function ApprovalsPage() {
                   <tr>
                     <th className="px-3 py-2 font-medium">{tInsp('table.title')}</th>
                     <th className="px-3 py-2 font-medium">{tInsp('table.documentNumber')}</th>
+                    <th className="px-3 py-2 font-medium">{t('submitter')}</th>
+                    <th className="px-3 py-2 font-medium">{t('site')}</th>
                     <th className="px-3 py-2 font-medium">{t('submittedAt')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan={3} className="p-4">
+                      <td colSpan={5} className="p-4">
                         <Skeleton className="h-4 w-full" />
                       </td>
                     </tr>
                   ) : (data ?? []).length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
                         {t('empty')}
                       </td>
                     </tr>
@@ -79,6 +81,10 @@ export default function ApprovalsPage() {
                         <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
                           {r.documentNumber ?? '—'}
                         </td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {r.conductedByName ?? '—'}
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">{r.siteName ?? '—'}</td>
                         <td className="px-3 py-2 text-muted-foreground">
                           {r.submittedAt !== null ? relativeTime(r.submittedAt, locale) : '—'}
                         </td>

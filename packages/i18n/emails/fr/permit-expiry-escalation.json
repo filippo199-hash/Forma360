@@ -1,0 +1,8 @@
+{
+  "subject": "Permis en dépassement — {referenceNumber} {title} a expiré sans être clôturé",
+  "preheader": "Un permis ouvert sur {productName} a dépassé sa fenêtre de validité. Quelqu'un est peut-être encore à l'œuvre.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Le permis {typeName} \"{title}\" ({referenceNumber}){siteLine} a expiré à {expiredAt} UTC et n'a été ni clôturé, ni annulé, ni prolongé. Des travaux sont peut-être encore en cours sous un permis expiré. Vérifiez immédiatement l'état des travaux, puis clôturez le permis avec les contrôles de clôture, ou prolongez-le avec une nouvelle autorisation si les travaux doivent continuer.",
+  "cta": "Ouvrir le permis",
+  "footer": "Vous recevez cet e-mail car vous êtes partie signataire (émetteur, accepteur ou autorisateur) de ce permis dans {productName}."
+}

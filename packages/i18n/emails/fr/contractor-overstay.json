@@ -1,0 +1,8 @@
+{
+  "subject": "Toujours sur site : {who} ({contractorName})",
+  "preheader": "{contractorName} est sur site depuis plus de 24 heures.",
+  "greeting": "Attention,",
+  "body": "{who} de {contractorName} a pointé le {checkedInAt} et n'est toujours pas sorti — plus de 24 heures. Visite : {title}{siteLine}. Confirmez sa présence ou enregistrez sa sortie.",
+  "cta": "Ouvrir le tableau de présence",
+  "footer": "Vous recevez cet e-mail car vous avez planifié cette visite ou gérez l'accès."
+}

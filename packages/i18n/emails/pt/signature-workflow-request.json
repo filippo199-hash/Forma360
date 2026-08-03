@@ -1,0 +1,8 @@
+{
+  "subject": "Ação necessária: revisar {inspectionTitle}",
+  "preheader": "{requesterName} solicitou sua assinatura",
+  "greeting": "Olá {signerName},",
+  "body": "{requesterName} enviou '{inspectionTitle}' para revisão e pediu sua assinatura. Revise a inspeção e assine quando estiver pronto.",
+  "cta": "Revisar e assinar",
+  "footer": "Se você não esperava este e-mail, pode ignorá-lo."
+}

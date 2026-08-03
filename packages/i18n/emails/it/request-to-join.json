@@ -1,0 +1,8 @@
+{
+  "subject": "{requesterEmail} vuole unirsi a {tenantName}",
+  "preheader": "Qualcuno ha chiesto di unirsi al tuo workspace {productName}.",
+  "greeting": "Ciao {adminName},",
+  "body": "{requesterName} ({requesterEmail}) ha chiesto di unirsi a {tenantName} su {productName}. Se vuoi concedergli l'accesso, invitalo da Impostazioni → Utenti.",
+  "cta": "Apri le impostazioni",
+  "footer": "Ricevi questa email perché sei amministratore di {tenantName} su {productName}."
+}

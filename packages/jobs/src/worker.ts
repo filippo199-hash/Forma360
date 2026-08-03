@@ -69,6 +69,25 @@ import {
   INCIDENT_CHASE_CRON,
   type IncidentChaseDigest,
 } from './workers/incident-chase';
+import {
+  actionDigestLines,
+  ACTION_REMINDERS_CRON,
+  createActionRemindersHandler,
+  type DueActionRow,
+} from './workers/action-reminders';
+import { createHeadsUpPublishHandler, HEADS_UP_PUBLISH_CRON } from './workers/heads-up-publish';
+import {
+  createDocumentExpiryHandler,
+  DOCUMENT_EXPIRY_CRON,
+  type ExpiringDocument,
+} from './workers/document-expiry';
+import {
+  createScheduleMissedSweepHandler,
+  missedLines,
+  SCHEDULE_MISSED_SWEEP_CRON,
+  type MissedOccurrence,
+} from './workers/schedule-missed-sweep';
+import { createRetentionSweepHandler, RETENTION_SWEEP_CRON } from './workers/retention-sweep';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -144,6 +163,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   const userAnonymisationWorker = new Worker(
     QUEUE_NAMES.USER_ANONYMISATION,
     createUserAnonymisationHandler({
+      db: workerDb,
       logger: logger.child({ handler: 'user-anonymisation' }),
     }),
     workerOptions,
@@ -318,6 +338,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       notify: async (r: PendingAckReminder, viewUrl: string) => {
         await sendTemplatedEmail({
           to: r.email,
+          locale: r.locale ?? undefined,
           templateKey: 'risk-assessment-ack-reminder',
           variables: {
             recipientName: r.userName,
@@ -350,11 +371,12 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       notify: async (
         kind: PermitWatchKind,
         permit: ExpiredOpenPermit,
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale?: string | null },
         viewUrl: string,
       ) => {
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: kind === 'warning' ? 'permit-expiry-warning' : 'permit-expiry-escalation',
           variables: {
             recipientName: recipient.name,
@@ -389,7 +411,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       logger: logger.child({ handler: 'fire-due-digest' }),
       appUrl: env.APP_URL,
       notify: async (
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale?: string | null },
         digest: FireDigest,
         viewUrl: string,
       ) => {
@@ -397,6 +419,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
         const overdue = digest.overdueChecks.length + digest.overdueDoors.length;
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: 'fire-due-digest',
           variables: {
             recipientName: recipient.name,
@@ -553,6 +576,150 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   );
   logger.info({ cron: INCIDENT_CHASE_CRON }, '[worker] registered incident-chase repeatable');
 
+  // ─── Platform PF-4 — corrective-action reminder digest ────────────────
+  const actionRemindersWorker = new Worker(
+    QUEUE_NAMES.ACTION_REMINDERS,
+    createActionRemindersHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'action-reminders' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string; locale?: string | null },
+        payload: { overdue: DueActionRow[]; dueSoon: DueActionRow[]; viewUrl: string },
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          locale: recipient.locale ?? undefined,
+          templateKey: 'action-due-digest',
+          variables: {
+            recipientName: recipient.name,
+            overdueCount: String(payload.overdue.length),
+            dueSoonCount: String(payload.dueSoon.length),
+            detailLines: actionDigestLines(payload.overdue, payload.dueSoon),
+            viewUrl: payload.viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const actionRemindersQueue = getQueue(QUEUE_NAMES.ACTION_REMINDERS, connection);
+  await actionRemindersQueue.upsertJobScheduler(
+    'action-reminders',
+    { pattern: ACTION_REMINDERS_CRON, tz: 'UTC' },
+    { name: 'action-reminders', data: {} },
+  );
+  logger.info({ cron: ACTION_REMINDERS_CRON }, '[worker] registered action-reminders repeatable');
+
+  // ─── Platform PF-15 — scheduled Heads Up publisher ────────────────────
+  const headsUpPublishWorker = new Worker(
+    QUEUE_NAMES.HEADS_UP_PUBLISH,
+    createHeadsUpPublishHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'heads-up-publish' }),
+    }),
+    workerOptions,
+  );
+  const headsUpPublishQueue = getQueue(QUEUE_NAMES.HEADS_UP_PUBLISH, connection);
+  await headsUpPublishQueue.upsertJobScheduler(
+    'heads-up-publish',
+    { pattern: HEADS_UP_PUBLISH_CRON, tz: 'UTC' },
+    { name: 'heads-up-publish', data: {} },
+  );
+  logger.info({ cron: HEADS_UP_PUBLISH_CRON }, '[worker] registered heads-up-publish repeatable');
+
+  // ─── Platform PF-16 — document expiry reminders ────────────────────────
+  const documentExpiryWorker = new Worker(
+    QUEUE_NAMES.DOCUMENT_EXPIRY,
+    createDocumentExpiryHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'document-expiry' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string; locale?: string | null },
+        doc: ExpiringDocument,
+        viewUrl: string,
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          locale: recipient.locale ?? undefined,
+          templateKey: 'document-expiry',
+          variables: {
+            recipientName: recipient.name,
+            documentName: doc.name,
+            statusLine: doc.expired
+              ? `expired on ${doc.expiresAt.toISOString().slice(0, 10)}`
+              : `expires on ${doc.expiresAt.toISOString().slice(0, 10)}`,
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const documentExpiryQueue = getQueue(QUEUE_NAMES.DOCUMENT_EXPIRY, connection);
+  await documentExpiryQueue.upsertJobScheduler(
+    'document-expiry',
+    { pattern: DOCUMENT_EXPIRY_CRON, tz: 'UTC' },
+    { name: 'document-expiry', data: {} },
+  );
+  logger.info({ cron: DOCUMENT_EXPIRY_CRON }, '[worker] registered document-expiry repeatable');
+
+  // ─── Platform PF-3 — missed-occurrence sweep ──────────────────────────
+  const scheduleMissedSweepWorker = new Worker(
+    QUEUE_NAMES.SCHEDULE_MISSED_SWEEP,
+    createScheduleMissedSweepHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'schedule-missed-sweep' }),
+      appUrl: env.APP_URL,
+      notify: async (
+        recipient: { email: string; name: string; locale?: string | null },
+        missed: MissedOccurrence[],
+        viewUrl: string,
+      ) => {
+        await sendTemplatedEmail({
+          to: recipient.email,
+          locale: recipient.locale ?? undefined,
+          templateKey: 'schedule-missed',
+          variables: {
+            recipientName: recipient.name,
+            missedCount: String(missed.length),
+            detailLines: missedLines(missed),
+            viewUrl,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const scheduleMissedSweepQueue = getQueue(QUEUE_NAMES.SCHEDULE_MISSED_SWEEP, connection);
+  await scheduleMissedSweepQueue.upsertJobScheduler(
+    'schedule-missed-sweep',
+    { pattern: SCHEDULE_MISSED_SWEEP_CRON, tz: 'UTC' },
+    { name: 'schedule-missed-sweep', data: {} },
+  );
+  logger.info(
+    { cron: SCHEDULE_MISSED_SWEEP_CRON },
+    '[worker] registered schedule-missed-sweep repeatable',
+  );
+
+  // ─── Platform PF-31 — retention v1 (notification centre only) ─────────
+  const retentionSweepWorker = new Worker(
+    QUEUE_NAMES.RETENTION_SWEEP,
+    createRetentionSweepHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'retention-sweep' }),
+    }),
+    workerOptions,
+  );
+  const retentionSweepQueue = getQueue(QUEUE_NAMES.RETENTION_SWEEP, connection);
+  await retentionSweepQueue.upsertJobScheduler(
+    'retention-sweep',
+    { pattern: RETENTION_SWEEP_CRON, tz: 'UTC' },
+    { name: 'retention-sweep', data: {} },
+  );
+  logger.info({ cron: RETENTION_SWEEP_CRON }, '[worker] registered retention-sweep repeatable');
+
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
   await scheduleTickQueue.upsertJobScheduler(
@@ -599,6 +766,11 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     incidentAlertWorker,
     incidentRiddorWatchWorker,
     incidentChaseWorker,
+    actionRemindersWorker,
+    headsUpPublishWorker,
+    documentExpiryWorker,
+    scheduleMissedSweepWorker,
+    retentionSweepWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {

@@ -1,0 +1,8 @@
+{
+  "subject": "Permis bientôt expiré — {referenceNumber} {title} se termine à {expiredAt} UTC",
+  "preheader": "Un permis ouvert sur {productName} atteint la fin de sa validité dans l'heure.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Le permis {typeName} \"{title}\" ({referenceNumber}){siteLine} atteint la fin de sa fenêtre de validité à {expiredAt} UTC. Si les travaux sont terminés, clôturez le permis maintenant avec les contrôles de clôture. S'ils doivent continuer, prolongez-le avec une nouvelle autorisation avant l'échéance — une fois expiré, les travaux ne sont plus autorisés.",
+  "cta": "Ouvrir le permis",
+  "footer": "Vous recevez cet e-mail car vous êtes partie signataire (émetteur, accepteur ou autorisateur) de ce permis dans {productName}."
+}

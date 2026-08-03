@@ -46,6 +46,7 @@ export const tenantsRouter = router({
         createdAt: tenants.createdAt,
         updatedAt: tenants.updatedAt,
         archivedAt: tenants.archivedAt,
+        retentionMonths: tenants.retentionMonths,
         settings: tenants.settings,
       })
       .from(tenants)
@@ -99,6 +100,22 @@ export const tenantsRouter = router({
    * keys over the existing settings so unrelated flags (e.g. `siteLabels`)
    * are preserved. Currently exposes only `terminology`.
    */
+  /**
+   * PF-31 retention v1: months to keep notification-centre rows. Null =
+   * keep forever. Deliberately narrow — statutory safety records are
+   * never in scope; widening retention is a per-module product decision.
+   */
+  setRetention: tenantProcedure
+    .use(requirePermission('org.settings'))
+    .input(z.object({ retentionMonths: z.number().int().min(1).max(120).nullable() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(tenants)
+        .set({ retentionMonths: input.retentionMonths, updatedAt: new Date() })
+        .where(eq(tenants.id, ctx.tenantId));
+      return { ok: true as const };
+    }),
+
   updateSettings: tenantProcedure
     .use(requirePermission('org.settings'))
     .input(updateSettingsInput)

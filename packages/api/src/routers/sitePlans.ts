@@ -216,7 +216,7 @@ export const sitePlansRouter = router({
     }),
 
   createPin: tenantProcedure
-    .use(requirePermission('sites.view'))
+    .use(requirePermission('sites.manage'))
     .input(createPinInput)
     .mutation(async ({ ctx, input }) => {
       const planRows = await ctx.db
@@ -243,7 +243,7 @@ export const sitePlansRouter = router({
     }),
 
   updatePin: tenantProcedure
-    .use(requirePermission('sites.view'))
+    .use(requirePermission('sites.manage'))
     .input(
       z.object({
         id: z.string().length(26),
@@ -267,7 +267,7 @@ export const sitePlansRouter = router({
     }),
 
   archivePin: tenantProcedure
-    .use(requirePermission('sites.view'))
+    .use(requirePermission('sites.manage'))
     .input(z.object({ id: z.string().length(26) }))
     .mutation(async ({ ctx, input }) => {
       const res = await ctx.db

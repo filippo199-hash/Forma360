@@ -898,8 +898,8 @@ describe('incidents router', () => {
     expect(action.action.siteId).toBe(siteA);
 
     const filtered = await admin.actions.list({ sourceType: 'incident', sourceId: incidentId });
-    expect(filtered.length).toBeGreaterThan(0);
-    expect(filtered.every((row) => row.sourceType === 'incident')).toBe(true);
+    expect(filtered.rows.length).toBeGreaterThan(0);
+    expect(filtered.rows.every((row) => row.sourceType === 'incident')).toBe(true);
   });
 
   it('immediate alerts enqueue for alert kinds and serious severity', async () => {

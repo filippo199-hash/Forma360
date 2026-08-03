@@ -7,7 +7,7 @@
  * supply a tenant id directly. See ADR 0002.
  */
 import { sql } from 'drizzle-orm';
-import { jsonb, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { integer, jsonb, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 
 /**
  * Tenant-level settings envelope. Shape stays intentionally loose so Phase N
@@ -83,6 +83,11 @@ export const tenants = pgTable('tenants', {
    * remain historically queryable.
    */
   archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'date' }),
+  /**
+   * Retention policy v1 (PF-31): months to keep notifications and event/audit
+   * rows. Null = keep forever. Statutory safety records are NEVER covered.
+   */
+  retentionMonths: integer('retention_months'),
 });
 
 export type Tenant = typeof tenants.$inferSelect;

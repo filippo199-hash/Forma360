@@ -144,6 +144,7 @@ export async function resolveRiddorRecipients(
         id: user.id,
         name: user.name,
         email: user.email,
+        locale: user.locale,
         deactivatedAt: user.deactivatedAt,
       })
       .from(user)
@@ -151,7 +152,12 @@ export async function resolveRiddorRecipients(
       .limit(1);
     const owner = rows[0];
     if (owner !== undefined && owner.deactivatedAt === null && owner.email !== '') {
-      out.set(owner.id, { userId: owner.id, name: owner.name, email: owner.email });
+      out.set(owner.id, {
+        userId: owner.id,
+        name: owner.name,
+        email: owner.email,
+        locale: owner.locale,
+      });
     }
   }
   return [...out.values()];

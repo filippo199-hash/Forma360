@@ -101,6 +101,11 @@ const MIGRATION_FILES = [
   '0050_contractor_visit_overstay.sql',
   '0051_site_fk_integrity.sql',
   '0052_reference_counters.sql',
+  '0063_action_reminders.sql',
+  '0064_document_expiry_reminders.sql',
+  '0065_backfill_freehs_permission_keys.sql',
+  '0066_wave_f_field.sql',
+  '0067_wave_g_platform.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -416,6 +421,10 @@ describe('issues router (Phase 3 PR 1)', () => {
       const first = issueMails[0];
       expect(first?.variables.referenceNumber).toBe(referenceNumber);
       expect(first?.variables.categoryName).toBe('Notify');
+      // PF-12: the link must target the real /observations route (the
+      // old /en/issues/{id} URL 404ed on every notification).
+      expect(first?.variables.viewUrl).toContain('/en/observations/');
+      expect(first?.variables.viewUrl).not.toContain('/en/issues/');
     });
 
     it('nearbyCount returns issues at the site within the window', async () => {
@@ -537,6 +546,79 @@ describe('issues router (Phase 3 PR 1)', () => {
       await expect(
         publicCaller.issues.issues.createFromShareToken({ token, tenantId, title: 'Nope' }),
       ).rejects.toThrow(/token-not-found|NOT_FOUND/);
+    });
+    it('PF-11: QR submit carries a site + photos; config lists sites; scope enforced', async () => {
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      const { categoryId } = await adminCaller.issues.categories.create({ name: 'QRMedia' });
+      const { token } = await adminCaller.issues.categories.generateShareToken({ categoryId });
+      const siteId = newId();
+      await db.insert(schema.sites).values({ id: siteId, tenantId, name: 'Depot' });
+
+      // The public config carries the site picker options.
+      const publicCaller = createCaller(publicCtx());
+      const config = await publicCaller.issues.categories.publicGetByShareToken({ token });
+      expect(config?.sites.map((s) => s.name)).toContain('Depot');
+
+      const media = [
+        {
+          key: `${tenantId}/issues/${newId()}/photo.jpg`,
+          filename: 'photo.jpg',
+          mimeType: 'image/jpeg',
+          sizeBytes: 12_345,
+        },
+      ];
+      const result = await publicCaller.issues.issues.createFromShareToken({
+        token,
+        tenantId,
+        title: 'Blocked exit',
+        siteId,
+        media,
+      });
+      const row = (
+        await db.select().from(schema.issues).where(eq(schema.issues.id, result.issueId))
+      )[0];
+      expect(row?.siteId).toBe(siteId);
+      const attachments = await db
+        .select()
+        .from(schema.issueAttachments)
+        .where(eq(schema.issueAttachments.issueId, result.issueId));
+      expect(attachments).toHaveLength(1);
+      expect(attachments[0]?.uploadedByUserId).toBeNull();
+      expect(attachments[0]?.storageKey).toBe(media[0]?.key);
+
+      // A key outside the token tenant's prefix is refused.
+      await expect(
+        publicCaller.issues.issues.createFromShareToken({
+          token,
+          tenantId,
+          title: 'Sneaky',
+          media: [
+            {
+              key: `${newId()}/issues/${newId()}/other.jpg`,
+              filename: 'other.jpg',
+              mimeType: 'image/jpeg',
+              sizeBytes: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow(/media-key-out-of-scope/);
+
+      // Non-image mime is refused.
+      await expect(
+        publicCaller.issues.issues.createFromShareToken({
+          token,
+          tenantId,
+          title: 'Sneaky 2',
+          media: [
+            {
+              key: `${tenantId}/issues/${newId()}/x.svg`,
+              filename: 'x.svg',
+              mimeType: 'image/svg+xml',
+              sizeBytes: 1,
+            },
+          ],
+        }),
+      ).rejects.toThrow(/media-type-not-allowed/);
     });
   });
 

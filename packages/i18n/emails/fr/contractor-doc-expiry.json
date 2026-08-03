@@ -1,0 +1,8 @@
+{
+  "subject": "Document expirant : {requirementName} — {contractorName}",
+  "preheader": "{requirementName} expire le {expiresOn}.",
+  "greeting": "Bonjour,",
+  "body": "Votre document \"{requirementName}\" pour {contractorName} expire le {expiresOn}. Téléversez une version renouvelée pour rester conforme : {url}",
+  "cta": "Téléverser un nouveau document",
+  "footer": "Vous recevez cet e-mail car vous êtes le contact de ce sous-traitant sur {productName}."
+}

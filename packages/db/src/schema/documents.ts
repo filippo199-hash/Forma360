@@ -142,6 +142,8 @@ export const documents = pgTable(
      * Example: [7, 30] → notify 30 days before and again 7 days before.
      */
     reminderDays: jsonb('reminder_days').notNull().default([]),
+    /** When the expiry worker last reminded about this document (PF-16). */
+    lastExpiryReminderAt: timestamp('last_expiry_reminder_at', { withTimezone: true }),
     currentVersion: integer('current_version').notNull().default(1),
     uploadedByUserId: text('uploaded_by_user_id')
       .notNull()

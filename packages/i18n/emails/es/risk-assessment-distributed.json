@@ -1,0 +1,8 @@
+{
+  "subject": "Lee y confirma: {title} ({referenceNumber})",
+  "preheader": "Se te distribuyó una evaluación de riesgos en {productName}.",
+  "greeting": "Hola {recipientName}:",
+  "body": "La evaluación de riesgos \"{title}\" ({referenceNumber}) se te ha distribuido. Léela y confirma que la comprendiste antes del {dueDate}.",
+  "cta": "Leer y confirmar la evaluación",
+  "footer": "Recibes este correo porque una evaluación de riesgos en {productName} te señala como alguien que debe leerla."
+}

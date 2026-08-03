@@ -1,0 +1,8 @@
+{
+  "subject": "Bitte lesen und bestätigen: {title} ({referenceNumber})",
+  "preheader": "Eine Gefährdungsbeurteilung wurde Ihnen auf {productName} zugestellt.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Die Gefährdungsbeurteilung \"{title}\" ({referenceNumber}) wurde Ihnen zugestellt. Bitte lesen Sie sie und bestätigen Sie Ihr Verständnis bis {dueDate}.",
+  "cta": "Beurteilung lesen und bestätigen",
+  "footer": "Sie erhalten diese E-Mail, weil eine Gefährdungsbeurteilung auf {productName} Sie als Leser benennt."
+}

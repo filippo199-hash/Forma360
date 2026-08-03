@@ -104,7 +104,7 @@ import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
-import { computeAutoDueAt, loadPriorityDueDateDays } from './actions';
+import { computeAutoDueAt, loadPriorityDueDateDays, notifyAssignment } from './actions';
 
 export interface IncidentsRouterDeps {
   /** Wired from the brand module catalogue (ADR 0010). */
@@ -2043,6 +2043,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           actionId: string;
           findingId: string;
           assigneeUserId: string | null;
+          referenceNumber: string | null;
+          title: string;
+          dueAt: Date | null;
         }> = [];
         await ctx.db.transaction(async (tx) => {
           await tx
@@ -2074,6 +2077,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
               assignment?.dueAt?.toISOString() ?? null,
             );
             const actionId = newId();
+            const actionTitle = `Incident finding: ${finding.description.slice(0, 200)}`;
             try {
               // Nested tx = SAVEPOINT: a unique violation rolls back to
               // it instead of aborting the whole approval transaction.
@@ -2085,7 +2089,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
                   sourceId: incident.id,
                   sourceItemId: finding.id,
                   referenceNumber: actionRefs.get(finding.id) ?? null,
-                  title: `Incident finding: ${finding.description.slice(0, 200)}`,
+                  title: actionTitle,
                   description: `Raised by incident ${incident.referenceNumber} — category: ${finding.category}.`,
                   status: 'open',
                   priority: finding.priority,
@@ -2106,7 +2110,14 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
                     eq(incidentFindings.id, finding.id),
                   ),
                 );
-              generated.push({ actionId, findingId: finding.id, assigneeUserId });
+              generated.push({
+                actionId,
+                findingId: finding.id,
+                assigneeUserId,
+                referenceNumber: actionRefs.get(finding.id) ?? null,
+                title: actionTitle,
+                dueAt,
+              });
             } catch (err) {
               if (!isUniqueViolation(err)) throw err;
               // Once-only race: another approval already inserted this
@@ -2155,19 +2166,19 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
             detail: { count: generated.length },
           });
         }
-        // Assignment emails (best-effort, after commit).
+        // Assignment notifications (best-effort, after commit) — the shared
+        // actions-hub helper handles locale, the in-app bell, deactivated
+        // assignees and the self-assignment skip.
         for (const item of generated) {
-          if (item.assigneeUserId === null || item.assigneeUserId === ctx.auth.userId) continue;
-          const assignee = await loadUserInTenant(ctx.db, ctx.tenantId, item.assigneeUserId);
-          await sendBestEffort(ctx, {
-            to: assignee.email,
-            templateKey: 'action-assigned',
-            variables: {
-              recipientName: assignee.name,
-              actionTitle: `Incident finding action (${incident.referenceNumber})`,
-              sourceRef: incident.referenceNumber,
-              viewUrl: `${deps.appUrl ?? ''}/en/actions/${item.actionId}`,
-            },
+          if (item.assigneeUserId === null) continue;
+          await notifyAssignment(ctx.db, ctx.logger, {
+            tenantId: ctx.tenantId,
+            actionId: item.actionId,
+            referenceNumber: item.referenceNumber,
+            title: item.title,
+            dueAt: item.dueAt,
+            assigneeUserId: item.assigneeUserId,
+            actorUserId: ctx.auth.userId,
           });
         }
         return { generatedActionIds: generated.map((g) => g.actionId) };

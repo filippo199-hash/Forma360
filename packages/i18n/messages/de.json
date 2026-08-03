@@ -158,7 +158,8 @@
       "integrations": "Integrations",
       "billing": "Billing",
       "company": "Company",
-      "riskMatrix": "Risk matrix"
+      "riskMatrix": "Risk matrix",
+      "audit": "Audit-Log"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -295,7 +296,7 @@
         "contractors": "Contractors",
         "org": "Organisation",
         "riskAssessments": "Gefährdungsbeurteilungen",
-        "coshh": "Gefahrstoffe (COSHH)",
+        "coshh": "COSHH",
         "permits": "Erlaubnisscheine",
         "fireSafety": "Brandschutz",
         "incidents": "Vorfälle"
@@ -363,19 +364,19 @@
         "org_settings": "Manage organisation settings",
         "org_audit_view": "View audit log",
         "riskAssessments_view": "Gefährdungsbeurteilungen ansehen",
-        "riskAssessments_create": "Gefährdungsbeurteilungen erstellen",
-        "riskAssessments_manage": "Gefährdungsbeurteilungen verwalten",
-        "coshh_view": "COSHH ansehen",
-        "coshh_create": "COSHH-Einträge erstellen",
-        "coshh_manage": "COSHH verwalten",
+        "riskAssessments_create": "Beurteilungen erstellen & bearbeiten",
+        "riskAssessments_manage": "Beurteilungen veröffentlichen & verwalten",
+        "coshh_view": "COSHH-Register ansehen",
+        "coshh_create": "Stoffe & Beurteilungen anlegen",
+        "coshh_manage": "COSHH-Beurteilungen veröffentlichen & verwalten",
         "permits_view": "Erlaubnisscheine ansehen",
-        "permits_create": "Erlaubnisscheine anlegen",
-        "permits_issue": "Erlaubnisscheine ausstellen und steuern",
-        "permits_manage": "Scheinarten verwalten",
+        "permits_create": "Erlaubnisscheine anfordern & erfassen",
+        "permits_issue": "Erlaubnisscheine ausstellen & schließen",
+        "permits_manage": "Erlaubnisschein-Typen verwalten",
         "fireSafety_view": "Brandschutz ansehen",
-        "fireSafety_record": "Brandschutzprüfungen erfassen",
-        "fireSafety_create": "Brandschutzeinträge erstellen",
-        "fireSafety_manage": "Brandschutz verwalten",
+        "fireSafety_record": "Prüfungen erfassen",
+        "fireSafety_create": "Gebäude, Türen & Beurteilungen anlegen",
+        "fireSafety_manage": "Beurteilungen veröffentlichen & verwalten",
         "incidents_view": "Vorfälle ansehen",
         "incidents_report": "Vorfälle melden",
         "incidents_investigate": "Untersuchungen durchführen",
@@ -522,6 +523,18 @@
         "saving": "Saving…",
         "saved": "Branding updated.",
         "noLogo": "No logo"
+      },
+      "retention": {
+        "title": "Datenaufbewahrung & Export",
+        "subtitle": "Aufbewahrung v1 entfernt Benachrichtigungen jenseits der Frist. Gesetzliche Sicherheitsaufzeichnungen bleiben unangetastet.",
+        "keepForever": "Für immer behalten",
+        "months": "{count} Monate",
+        "scopeNote": "Gilt nur für In-App-Benachrichtigungen. Inspektionen, Erlaubnisscheine, Brandschutzbuch, COSHH und Gefährdungsbeurteilungen werden immer aufbewahrt.",
+        "savedToast": "Aufbewahrungsrichtlinie gespeichert."
+      },
+      "exportData": {
+        "button": "Mandantendaten herunterladen (JSON)",
+        "hint": "Alles in einem JSON-Dokument — für Portabilität oder Offboarding. Nur Administratoren."
       }
     },
     "customFields": {
@@ -585,6 +598,30 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      }
+    },
+    "audit": {
+      "title": "Audit-Log",
+      "subtitle": "Die Ereignisse aller Module in einem mandantenweiten, rückwärts-chronologischen Strom.",
+      "empty": "Noch keine Ereignisse.",
+      "loadMore": "Ältere laden",
+      "systemActor": "System",
+      "columns": {
+        "when": "Wann",
+        "module": "Modul",
+        "event": "Ereignis",
+        "actor": "Von",
+        "detail": "Detail"
+      },
+      "modules": {
+        "all": "Alle",
+        "actions": "Maßnahmen",
+        "observations": "Beobachtungen",
+        "permits": "Erlaubnisscheine",
+        "coshh": "COSHH",
+        "riskAssessments": "Gefährdungsbeurteilungen",
+        "fireSafety": "Brandschutz",
+        "contractors": "Auftragnehmer"
       }
     }
   },
@@ -1060,7 +1097,8 @@
       "awaitingSignatures": "Awaiting signatures",
       "awaitingApproval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Wartet auf Freigabe"
     },
     "table": {
       "title": "Title",
@@ -1079,7 +1117,8 @@
       "awaiting_signatures": "Awaiting signatures",
       "awaiting_approval": "Awaiting approval",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "awaiting_signature_workflow": "Wartet auf Freigabe"
     },
     "picker": {
       "title": "Pick a template",
@@ -1129,7 +1168,9 @@
           "upload": "Add photo",
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
-          "remove": "Remove"
+          "remove": "Remove",
+          "failedKept": "{count} Foto(s) nicht hochgeladen — hier behalten.",
+          "retry": "Erneut versuchen"
         },
         "signature": {
           "signed": "Signed by {name}",
@@ -1198,10 +1239,12 @@
       "blockReason": {
         "answer": "needs an answer",
         "evidence": "needs evidence",
-        "range": "out of range"
+        "range": "out of range",
+        "note": "Anmerkung erforderlich"
       },
       "skippedTooltip": "Skipped by an answer above",
-      "pageIncomplete": "Has items still to complete"
+      "pageIncomplete": "Has items still to complete",
+      "noteRequiredLabel": "Antwort erläutern (erforderlich)"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1370,6 +1413,14 @@
     },
     "shareLinks": {
       "revokeConfirm": "Revoke this share link? Anyone with the URL will lose access."
+    },
+    "mySchedule": {
+      "heading": "Meine geplanten Inspektionen ({count})",
+      "startNow": "Starten",
+      "startError": "Start fehlgeschlagen — erneut versuchen.",
+      "missedBadge": "VERPASST",
+      "overdueBadge": "Überfällig",
+      "dueBadge": "Fällig"
     }
   },
   "nav": {
@@ -1393,8 +1444,9 @@
     "riskAssessments": "Risk assessments",
     "coshh": "Gefahrstoffe",
     "permits": "Freigaben",
-    "incidents": "Vorfälle",
-    "fireSafety": "Brandschutz"
+    "fireSafety": "Brandschutz",
+    "analytics": "Dashboard",
+    "incidents": "Vorfälle"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -1422,7 +1474,9 @@
     "notAwaiting": "This inspection is {status}; no decision can be taken here.",
     "review": {
       "empty": "No answer"
-    }
+    },
+    "submitter": "Eingereicht von",
+    "site": "Standort"
   },
   "schedules": {
     "title": "Schedules",
@@ -1712,7 +1766,11 @@
         "noPriority": "No priority",
         "dueDateLabel": "Due date",
         "saveButton": "Create action",
-        "toast": "Action created."
+        "toast": "Action created.",
+        "assigneeLabel": "Zuweisen an",
+        "noAssignee": "Nicht zugewiesen",
+        "typeLabel": "Maßnahmentyp",
+        "noType": "Kein Typ"
       },
       "attachInspectionDialog": {
         "title": "Inspektion starten",
@@ -2172,6 +2230,11 @@
       "autoGeneratedBadge": "Automatisch erstellt",
       "autoGeneratedBy": "Automatisch erstellt durch {program}",
       "archiveConfirm": "Archive this action? It will be hidden from the active list. You can restore it later.",
+      "sourceLinkRiskAssessment": "Erstellt aus Gefährdungsbeurteilung {referenceNumber}",
+      "sourceLinkCoshhAssessment": "Erstellt aus COSHH-Beurteilung {referenceNumber}",
+      "sourceLinkFireRiskAssessment": "Erstellt aus Brandschutzbeurteilung {referenceNumber}",
+      "sourceLinkFireLogbookEntry": "Erstellt aus nicht bestandener Brandschutzprüfung",
+      "sourceLinkFireDoorInspection": "Erstellt aus nicht bestandener Türprüfung",
       "sourceLinkIncident": "Aus Vorfall {referenceNumber}"
     },
     "create": {
@@ -2235,7 +2298,17 @@
     },
     "filters": {
       "removeAria": "Remove {label} filter"
-    }
+    },
+    "sourceRiskAssessment": "Gefährdungsbeurteilung",
+    "sourceCoshhAssessment": "COSHH",
+    "sourceFireRiskAssessment": "Brandschutzbeurteilung",
+    "sourceFireLogbookEntry": "Brandschutzprüfung",
+    "sourceFireDoorInspection": "Brandschutztür",
+    "pagerShowing": "{from}–{to} von {total}",
+    "pagerPrev": "Zurück",
+    "pagerNext": "Weiter",
+    "myOpenChip": "Mir zugewiesen: {count}",
+    "myOverdueChip": "{count} überfällig"
   },
   "actionsSettings": {
     "title": "Action settings",
@@ -2682,7 +2755,28 @@
         "startedAt": "Gestartet",
         "createdAt": "Erstellt"
       },
-      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later."
+      "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
+      "plans": {
+        "heading": "Wartungspläne",
+        "empty": "Keine Wartungspläne für dieses Objekt.",
+        "timeMeta": "Alle {interval} Tage — letzter Service {last}",
+        "usageMeta": "Alle {interval} {unit} — Zähler bei {current}",
+        "status": {
+          "on_schedule": "Im Plan",
+          "approaching": "Bald fällig",
+          "overdue": "Überfällig",
+          "awaiting_first_reading": "Erste Ablesung ausstehend"
+        }
+      },
+      "fireHistory": {
+        "heading": "Brandschutz-Historie",
+        "checkLine": "{type} — {building}",
+        "empty": "Noch keine Einträge im Brandschutzbuch.",
+        "performedAt": "Datum",
+        "type": "Prüfung",
+        "result": "Ergebnis",
+        "notes": "Notizen"
+      }
     },
     "settings": {
       "title": "Settings",
@@ -2950,6 +3044,14 @@
       "actions": "Massnahmen",
       "headsUp": "Hinweise",
       "documents": "Dokumente",
+      "permits": "Erlaubnisscheine",
+      "coshh": "COSHH-Stoffe",
+      "riskAssessments": "Gefährdungsbeurteilungen",
+      "fireBuildings": "Brandschutz-Gebäude",
+      "fireRiskAssessments": "Brandschutzbeurteilungen",
+      "contractors": "Auftragnehmer",
+      "sites": "Standorte & Projekte",
+      "templates": "Vorlagen",
       "incidents": "Vorfälle"
     }
   },
@@ -3487,7 +3589,8 @@
       "calendarLoadError": "Couldn't load the visit calendar. Please try again.",
       "cancelConfirm": "Cancel this visit?",
       "noShowConfirm": "Mark this visit as a no-show?",
-      "noVisitsThisMonth": "No visits scheduled this month."
+      "noVisitsThisMonth": "No visits scheduled this month.",
+      "blockedNonCompliant": "Auftragnehmer nicht konform — unten einen Override-Grund eingeben, um fortzufahren."
     },
     "gate": {
       "navLink": "Gate",
@@ -3526,7 +3629,9 @@
       "backToList": "Back",
       "yes": "Yes",
       "no": "No",
-      "removeFieldConfirm": "Remove this capture field?"
+      "removeFieldConfirm": "Remove this capture field?",
+      "blockedNonCompliant": "Dieser Auftragnehmer ist nicht konform — Check-in erfordert einen dokumentierten Override-Grund (oder zur Bauleitung schicken).",
+      "nonCompliantChip": "Nicht konform"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3565,7 +3670,8 @@
       "activityHint_inspections": "Complete assigned inspections",
       "activityHint_observations": "Report an issue you’ve spotted",
       "activityHint_actions": "Follow up on assigned actions",
-      "activityHint_documents": "Read shared documents & policies"
+      "activityHint_documents": "Read shared documents & policies",
+      "inductionUpdated": "Die Einweisung wurde seit Ihrer letzten Bestätigung aktualisiert — bitte erneut lesen und bestätigen."
     },
     "users": {
       "heading": "Portal users",
@@ -3619,7 +3725,18 @@
     "loadError": "Couldn't load contractors. Please try again.",
     "rejectReasonLabel": "Reason for rejection",
     "rejectReasonPlaceholder": "Explain why this document is being rejected…",
-    "rejectSubmit": "Reject document"
+    "rejectSubmit": "Reject document",
+    "induction": {
+      "heading": "Standort-Einweisung",
+      "version": "Version {version}",
+      "hint": "Wird jedem Portalnutzer zuerst angezeigt. Eine gespeicherte Änderung erhöht die Version — alle müssen erneut bestätigen.",
+      "placeholder": "Was jeder Auftragnehmer vor Arbeitsbeginn lesen und bestätigen muss…",
+      "saveButton": "Einweisung speichern",
+      "savedToast": "Einweisung gespeichert (Version {version})."
+    },
+    "onSitePermits": {
+      "heading": "Jetzt vor Ort mit offenen Erlaubnisscheinen"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5024,7 +5141,11 @@
         "nextDue": "Next due",
         "result": "Result",
         "status": "Status"
-      }
+      },
+      "linkedAsset": "Mit Objekt verknüpft",
+      "noLinkedAsset": "Kein Objekt verknüpft",
+      "linkedAssetLine": "Objekt: {name}",
+      "assetLinkedToast": "Objektverknüpfung aktualisiert."
     },
     "doors": {
       "addButton": "Add door",
@@ -5320,6 +5441,119 @@
     "clearSearch": "Suche leeren",
     "clear": "Auswahl aufheben",
     "done": "Fertig"
+  },
+  "analytics": {
+    "title": "Dashboard",
+    "subtitle": "Was in allen Modulen Aufmerksamkeit braucht – und wie sich die Zahlen entwickeln.",
+    "tiles": {
+      "sectionLabel": "Braucht Aufmerksamkeit",
+      "myOpenActions": "Meine offenen Maßnahmen",
+      "overdueActions": "Überfällige Maßnahmen",
+      "dueSoon": "{count} fällig in 7 Tagen",
+      "openObservations": "Offene Beobachtungen",
+      "highPriority": "{count} mit hoher Priorität",
+      "awaitingApproval": "Inspektionen zur Freigabe",
+      "inProgress": "{count} in Bearbeitung",
+      "missedInspections": "Verpasste Inspektionen (30 T.)",
+      "upcoming7": "{count} anstehend in 7 Tagen",
+      "pendingAcks": "Zu bestätigende Mitteilungen",
+      "openPermits": "Offene Erlaubnisscheine",
+      "expiring48h": "{count} laufen in 48 h ab",
+      "raReviewOverdue": "Gefährdungsbeurteilungen überfällig",
+      "raActive": "{count} aktiv",
+      "coshhReviewDue": "COSHH-Überprüfungen überfällig",
+      "coshhSubstances": "{count} aktive Stoffe",
+      "fireAttention": "Brandschutz braucht Aufmerksamkeit"
+    },
+    "trends": {
+      "sectionLabel": "Trends",
+      "actionsTitle": "Maßnahmen – erstellt vs. abgeschlossen (8 Wochen)",
+      "activityTitle": "Inspektionen & Beobachtungen (8 Wochen)",
+      "actionsCreated": "Erstellt",
+      "actionsCompleted": "Abgeschlossen",
+      "inspectionsCompleted": "Inspektionen abgeschlossen",
+      "observationsRaised": "Beobachtungen gemeldet",
+      "thisWeek": "Jetzt"
+    },
+    "sites": {
+      "sectionLabel": "Standortvergleich",
+      "title": "Standorte im Überblick",
+      "subtitle": "Offene Aufgaben und Inspektionsaktivität je Standort, die stärksten zuerst.",
+      "site": "Standort",
+      "openActions": "Offene Maßnahmen",
+      "openObservations": "Offene Beobachtungen",
+      "completed30": "Inspektionen (30 T.)",
+      "noSite": "Kein Standort",
+      "empty": "Noch keine Standorte."
+    }
+  },
+  "scanPage": {
+    "loading": "Wird geladen…",
+    "invalidTitle": "Dieser QR-Code ist nicht mehr aktiv.",
+    "invalidBody": "Der gescannte QR-Code wurde widerrufen oder die Kategorie nimmt keine Meldungen mehr an. Bitte wenden Sie sich an die Standortverwaltung.",
+    "reportObservation": "Beobachtung melden",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Kurze Zusammenfassung des Vorfalls",
+    "descriptionLabel": "Beschreibung",
+    "descriptionPlaceholder": "Fügen Sie Details hinzu, die uns beim Verständnis helfen.",
+    "reporterNameLabel": "Ihr Name",
+    "reporterNameSubtitle": "Optional — leer lassen, um anonym zu bleiben.",
+    "reporterEmailLabel": "Ihre E-Mail",
+    "reporterEmailSubtitle": "Optional — für eventuelle Rückfragen.",
+    "dateOccurredLabel": "Datum des Vorfalls",
+    "locationAddressLabel": "Ort",
+    "locationAddressPlaceholder": "Gebäude, Etage oder Bereich",
+    "customQuestionsHeading": "Zusätzliche Fragen",
+    "selectPlaceholder": "Option wählen",
+    "submit": "Absenden",
+    "submitting": "Wird gesendet…",
+    "successTitle": "Danke! Ihre Beobachtung wurde übermittelt.",
+    "successBody": "Ihre Referenznummer steht unten — bitte aufbewahren.",
+    "successAnother": "Weitere melden",
+    "errorGeneric": "Die Beobachtung konnte nicht übermittelt werden. Bitte erneut versuchen.",
+    "siteLabel": "Standort",
+    "siteNone": "Standort wählen",
+    "photosLabel": "Fotos",
+    "photosSubtitle": "Bis zu {max} Fotos hinzufügen — ein Bild ist die halbe Meldung.",
+    "photosAdd": "Foto hinzufügen",
+    "photosRemove": "Entfernen",
+    "photoTooLarge": "Dieses Foto ist größer als {maxMb} MB — bitte ein kleineres wählen.",
+    "photoUploadFailed": "Ein Foto konnte nicht hochgeladen werden. Es bleibt hier angehängt — erneut absenden, um es noch einmal zu versuchen."
+  },
+  "offline": {
+    "title": "Sie sind offline",
+    "body": "Diese Seite ist ohne Verbindung nicht verfügbar. Ihre Einträge sind in der Warteschlange und werden automatisch synchronisiert.",
+    "pendingChip": "{count} in Warteschlange — Sync bei Verbindung",
+    "itemsDelivered": "{count} Einträge synchronisiert",
+    "itemRejected": "Ein Eintrag wurde vom Server abgelehnt — bitte prüfen und neu erfassen.",
+    "queuedToast": "Keine Verbindung — in der Warteschlange gespeichert. Wird automatisch synchronisiert."
+  },
+  "notifications": {
+    "bellLabel": "Benachrichtigungen ({count} ungelesen)",
+    "title": "Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "empty": "Noch nichts — Sie sind auf dem Laufenden.",
+    "kinds": {
+      "action_assigned": "Maßnahme zugewiesen",
+      "approval_pending": "Freigabe ausstehend",
+      "approval_decided": "Freigabe entschieden",
+      "heads_up": "Mitteilung",
+      "issue_reported": "Beobachtung gemeldet",
+      "schedule_missed": "Verpasste Inspektionen",
+      "action_due": "Fällige Maßnahmen",
+      "document_expiry": "Dokumentablauf"
+    },
+    "prefs": {
+      "title": "E-Mail-Benachrichtigungen",
+      "subtitle": "Deaktivieren stummschaltet nur die E-Mail — die Glocke im Kopfbereich zeigt sie immer.",
+      "saveError": "Einstellung konnte nicht gespeichert werden.",
+      "keys": {
+        "emailActionReminders": "Erinnerungen an fällige/überfällige Maßnahmen",
+        "emailScheduleMissed": "Verpasste geplante Inspektionen",
+        "emailDocumentExpiry": "Erinnerungen an ablaufende Dokumente",
+        "emailMaintenance": "Wartungserinnerungen"
+      }
+    }
   },
   "incidents": {
     "title": "Vorfälle",

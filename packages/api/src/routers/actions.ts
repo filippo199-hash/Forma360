@@ -36,6 +36,7 @@ import {
   type ActionType,
 } from '@forma360/db/schema';
 import { type DependentResolverDeps } from '@forma360/permissions';
+import type { Database } from '@forma360/db/client';
 import { newId } from '@forma360/shared/id';
 import {
   DEFAULT_PRIORITY_DUE_DATE_DAYS,
@@ -61,9 +62,20 @@ import {
   sql,
 } from 'drizzle-orm';
 import { loadContractorScope } from '../contractor-scope';
+import {
+  coshhAssessments,
+  coshhSubstances,
+  fireBuildings,
+  fireDoorInspections,
+  fireDoors,
+  fireLogbookEntries,
+  fireRiskAssessments,
+  riskAssessments,
+} from '@forma360/db/schema';
 import { nextReferenceValue } from '../reference-counter';
 import { z } from 'zod';
 import { boundedRecord } from '../bounded-json';
+import { notifyInApp } from '../notify';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertAssetsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
@@ -148,10 +160,7 @@ async function loadActiveActionType(
  * (low=30, medium=7, high=1, critical=1) when no row exists, mirroring
  * the actionTypesRouter.settings.get behaviour.
  */
-export async function loadPriorityDueDateDays(
-  db: Db,
-  tenantId: string,
-): Promise<PriorityDueDateDays> {
+export async function loadPriorityDueDateDays(db: Db, tenantId: string): Promise<PriorityDueDateDays> {
   const rows = await db
     .select({ days: tenantActionSettings.priorityDueDateDays })
     .from(tenantActionSettings)
@@ -391,7 +400,20 @@ const statusEnum = z.enum(actionStatus);
 const listInput = z
   .object({
     status: statusEnum.optional(),
-    sourceType: z.enum(['inspection', 'issue', 'standalone', 'incident']).optional(),
+    sourceType: z
+      .enum([
+        'inspection',
+        'issue',
+        'standalone',
+        'maintenance',
+        'risk_assessment',
+        'coshh_assessment',
+        'fire_risk_assessment',
+        'fire_logbook_entry',
+        'fire_door_inspection',
+        'incident',
+      ])
+      .optional(),
     sourceId: z.string().length(26).optional(),
     /**
      * Server-resolved "assigned to me" filter — flips to `ctx.auth.userId`
@@ -423,6 +445,12 @@ const listInput = z
     sortBy: z.enum(['created', 'due', 'priority', 'updated']).default('created'),
     /** Caller-bounded; default sorts by createdAt desc. */
     limit: z.number().int().min(1).max(ACTION_LIST_LIMIT).default(ACTION_LIST_LIMIT),
+    /**
+     * PF-9: the list used to hard-stop at 100, newest first — precisely
+     * the oldest, most-overdue actions fell off the end with no way to
+     * reach them. Offset + total count make every action reachable.
+     */
+    offset: z.number().int().min(0).max(100_000).default(0),
   })
   .default({
     assignedToMe: false,
@@ -472,6 +500,9 @@ const createFromIssueInput = z.object({
   title: z.string().min(1).max(500),
   description: z.string().max(20_000).optional(),
   priority: priorityEnum.optional(),
+  /** PF-13: parity with the other create paths. */
+  actionTypeId: z.string().length(26).optional(),
+  customQuestionResponses: boundedRecord.optional(),
   assigneeUserId: z.string().optional(),
   dueAt: z.string().datetime().optional(),
   siteId: z.string().length(26).optional(),
@@ -525,6 +556,103 @@ const listActivityInput = z.object({
 const listCommentsInput = z.object({
   actionId: z.string().length(26),
 });
+
+/**
+ * Side-channel deps (PF-4 — the Actions hub was the one module that
+ * never told anyone anything). Same pattern as the users router: the
+ * web server calls `setActionsRouterDeps` once at boot; tests inject a
+ * capture. Null deps = silent no-op (worker/CLI callers).
+ */
+interface ActionsRouterDeps {
+  sendEmail:
+    | ((input: {
+        to: string;
+        locale?: string | undefined;
+        templateKey: string;
+        variables: Record<string, string>;
+      }) => Promise<unknown>)
+    | null;
+  appUrl: string;
+}
+const actionsDeps: ActionsRouterDeps = { sendEmail: null, appUrl: '' };
+
+export function setActionsRouterDeps(deps: {
+  sendEmail: ActionsRouterDeps['sendEmail'];
+  appUrl: string;
+}): void {
+  actionsDeps.sendEmail = deps.sendEmail;
+  actionsDeps.appUrl = deps.appUrl;
+}
+
+/**
+ * Email the assignee that an action landed on their plate. Best-effort:
+ * a failed send never rolls back the mutation. Self-assignment is not
+ * notified — you know what you just did.
+ */
+export async function notifyAssignment(
+  db: Database,
+  logger: { warn: (obj: Record<string, unknown>, msg: string) => void },
+  input: {
+    tenantId: string;
+    actionId: string;
+    referenceNumber: string | null;
+    title: string;
+    dueAt: Date | null;
+    assigneeUserId: string;
+    actorUserId: string;
+  },
+): Promise<void> {
+  const sendEmail = actionsDeps.sendEmail;
+  if (sendEmail === null || input.assigneeUserId === input.actorUserId) return;
+  try {
+    const rows = await db
+      .select({
+        name: user.name,
+        email: user.email,
+        locale: user.locale,
+        deactivatedAt: user.deactivatedAt,
+      })
+      .from(user)
+      .where(and(eq(user.tenantId, input.tenantId), eq(user.id, input.assigneeUserId)))
+      .limit(1);
+    const assignee = rows[0];
+    if (assignee === undefined || assignee.deactivatedAt !== null || assignee.email.length === 0) {
+      return;
+    }
+    // PF-23: the in-app bell mirrors the email.
+    await notifyInApp(db, {
+      tenantId: input.tenantId,
+      userId: input.assigneeUserId,
+      kind: 'action_assigned',
+      title: input.title,
+      body: input.referenceNumber ?? '',
+      href: `/actions/${input.actionId}`,
+    });
+    const actorRows = await db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, input.actorUserId))
+      .limit(1);
+    await sendEmail({
+      to: assignee.email,
+      locale: assignee.locale ?? undefined,
+      templateKey: 'action-assigned',
+      variables: {
+        recipientName: assignee.name,
+        assignerName: actorRows[0]?.name ?? 'A colleague',
+        title: input.title,
+        referenceNumber: input.referenceNumber ?? '',
+        dueLine: input.dueAt !== null ? ` It is due by ${input.dueAt.toISOString().slice(0, 10)}.` : '',
+        viewUrl: `${actionsDeps.appUrl.replace(/\/$/, '')}/en/actions/${input.actionId}`,
+      },
+    });
+  } catch (err) {
+    logger.warn(
+      { actionId: input.actionId, err: err instanceof Error ? err.message : String(err) },
+      '[actions] assignment email failed',
+    );
+  }
+}
 
 export const actionsRouter = router({
   list: tenantProcedure
@@ -625,9 +753,38 @@ export const actionsRouter = router({
         .leftJoin(actionTypes, eq(actionTypes.id, actions.actionTypeId))
         .where(and(...where))
         .orderBy(...sortOrder)
-        .limit(input.limit);
-      return rows;
+        .limit(input.limit)
+        .offset(input.offset);
+      const countRows = await ctx.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(actions)
+        .where(and(...where));
+      return { rows, totalCount: countRows[0]?.count ?? 0 };
     }),
+
+  /**
+   * The caller's own workload — the number the header badge shows so an
+   * operative can see "you own 3, 1 overdue" without opening a filter
+   * (PF-9).
+   */
+  myCounts: tenantProcedure.use(requirePermission('actions.view')).query(async ({ ctx }) => {
+    const now = new Date();
+    const rows = await ctx.db
+      .select({ status: actions.status, dueAt: actions.dueAt })
+      .from(actions)
+      .where(
+        and(
+          eq(actions.tenantId, ctx.tenantId),
+          eq(actions.assigneeUserId, ctx.auth.userId),
+          isNull(actions.archivedAt),
+          inArray(actions.status, ['open', 'in_progress']),
+        ),
+      );
+    return {
+      openAssigned: rows.length,
+      overdueAssigned: rows.filter((r) => r.dueAt !== null && r.dueAt < now).length,
+    };
+  }),
 
   get: tenantProcedure
     .use(requirePermission('actions.view'))
@@ -663,10 +820,24 @@ export const actionsRouter = router({
       // observation ISS-000002 — Wet floor near loading dock" instead
       // of the previous "Linked to observation 76X52B" (raw slice of the
       // internal id). Lazy: only fires when sourceId is set.
+      // PF-2: every writer's source type resolves to a labelled,
+      // linkable origin — the golden thread an auditor pulls. `href` is
+      // the locale-less app path; the client prefixes the locale.
       let source: {
-        type: 'issue' | 'inspection' | 'standalone' | 'maintenance' | 'incident';
+        type:
+          | 'issue'
+          | 'inspection'
+          | 'standalone'
+          | 'maintenance'
+          | 'risk_assessment'
+          | 'coshh_assessment'
+          | 'fire_risk_assessment'
+          | 'fire_logbook_entry'
+          | 'fire_door_inspection'
+          | 'incident';
         referenceNumber: string | null;
         title: string | null;
+        href: string | null;
       } | null = null;
       if (action.sourceType === 'maintenance' && action.sourceId !== null) {
         // Resolve the owning maintenance program name (via the trigger) so
@@ -696,32 +867,120 @@ export const actionsRouter = router({
             .limit(1);
           programName = pRows[0]?.name ?? null;
         }
-        source = { type: 'maintenance', referenceNumber: null, title: programName };
+        source = { type: 'maintenance', referenceNumber: null, title: programName, href: null };
       } else if (action.sourceType === 'standalone' || action.sourceId === null) {
-        source = { type: 'standalone', referenceNumber: null, title: null };
-      } else if (action.sourceType === 'issue') {
+        source = { type: 'standalone', referenceNumber: null, title: null, href: null };
+      } else if (action.sourceType === 'risk_assessment') {
         const rows = await ctx.db
-          .select({ referenceNumber: issues.referenceNumber, title: issues.title })
-          .from(issues)
-          .where(and(eq(issues.tenantId, ctx.tenantId), eq(issues.id, action.sourceId)))
+          .select({ referenceNumber: riskAssessments.referenceNumber, title: riskAssessments.title })
+          .from(riskAssessments)
+          .where(
+            and(eq(riskAssessments.tenantId, ctx.tenantId), eq(riskAssessments.id, action.sourceId)),
+          )
           .limit(1);
-        const row = rows[0];
         source = {
-          type: 'issue',
-          referenceNumber: row?.referenceNumber ?? null,
-          title: row?.title ?? null,
+          type: 'risk_assessment',
+          referenceNumber: rows[0]?.referenceNumber ?? null,
+          title: rows[0]?.title ?? null,
+          href: `/risk-assessments/${action.sourceId}`,
         };
-      } else if (action.sourceType === 'inspection') {
+      } else if (action.sourceType === 'coshh_assessment') {
         const rows = await ctx.db
-          .select({ documentNumber: inspections.documentNumber, title: inspections.title })
-          .from(inspections)
-          .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, action.sourceId)))
+          .select({
+            referenceNumber: coshhAssessments.referenceNumber,
+            taskDescription: coshhAssessments.taskDescription,
+            substanceId: coshhAssessments.substanceId,
+            substanceName: coshhSubstances.name,
+          })
+          .from(coshhAssessments)
+          .leftJoin(coshhSubstances, eq(coshhSubstances.id, coshhAssessments.substanceId))
+          .where(
+            and(eq(coshhAssessments.tenantId, ctx.tenantId), eq(coshhAssessments.id, action.sourceId)),
+          )
           .limit(1);
         const row = rows[0];
         source = {
-          type: 'inspection',
-          referenceNumber: row?.documentNumber ?? null,
-          title: row?.title ?? null,
+          type: 'coshh_assessment',
+          referenceNumber: row?.referenceNumber ?? null,
+          title:
+            row !== undefined
+              ? [row.substanceName, row.taskDescription].filter((v) => v !== null).join(' — ')
+              : null,
+          href: row !== undefined ? `/coshh/${row.substanceId}` : null,
+        };
+      } else if (action.sourceType === 'fire_risk_assessment') {
+        const rows = await ctx.db
+          .select({
+            referenceNumber: fireRiskAssessments.referenceNumber,
+            title: fireRiskAssessments.title,
+          })
+          .from(fireRiskAssessments)
+          .where(
+            and(
+              eq(fireRiskAssessments.tenantId, ctx.tenantId),
+              eq(fireRiskAssessments.id, action.sourceId),
+            ),
+          )
+          .limit(1);
+        source = {
+          type: 'fire_risk_assessment',
+          referenceNumber: rows[0]?.referenceNumber ?? null,
+          title: rows[0]?.title ?? null,
+          href: `/fire-safety/fra/${action.sourceId}`,
+        };
+      } else if (action.sourceType === 'fire_logbook_entry') {
+        const rows = await ctx.db
+          .select({
+            checkType: fireLogbookEntries.checkType,
+            buildingId: fireLogbookEntries.buildingId,
+            buildingName: fireBuildings.name,
+          })
+          .from(fireLogbookEntries)
+          .leftJoin(fireBuildings, eq(fireBuildings.id, fireLogbookEntries.buildingId))
+          .where(
+            and(
+              eq(fireLogbookEntries.tenantId, ctx.tenantId),
+              eq(fireLogbookEntries.id, action.sourceId),
+            ),
+          )
+          .limit(1);
+        const row = rows[0];
+        source = {
+          type: 'fire_logbook_entry',
+          referenceNumber: null,
+          title:
+            row !== undefined
+              ? `${row.checkType.replace(/_/g, ' ')}${row.buildingName !== null ? ` — ${row.buildingName}` : ''}`
+              : null,
+          href: row !== undefined ? `/fire-safety/${row.buildingId}` : null,
+        };
+      } else if (action.sourceType === 'fire_door_inspection') {
+        const rows = await ctx.db
+          .select({
+            doorId: fireDoorInspections.doorId,
+            doorRef: fireDoors.doorRef,
+            buildingId: fireDoors.buildingId,
+            buildingName: fireBuildings.name,
+          })
+          .from(fireDoorInspections)
+          .leftJoin(fireDoors, eq(fireDoors.id, fireDoorInspections.doorId))
+          .leftJoin(fireBuildings, eq(fireBuildings.id, fireDoors.buildingId))
+          .where(
+            and(
+              eq(fireDoorInspections.tenantId, ctx.tenantId),
+              eq(fireDoorInspections.id, action.sourceId),
+            ),
+          )
+          .limit(1);
+        const row = rows[0];
+        source = {
+          type: 'fire_door_inspection',
+          referenceNumber: null,
+          title:
+            row !== undefined && row.doorRef !== null
+              ? `${row.doorRef}${row.buildingName !== null ? ` — ${row.buildingName}` : ''}`
+              : null,
+          href: row?.buildingId != null ? `/fire-safety/${row.buildingId}` : null,
         };
       } else if (action.sourceType === 'incident') {
         // Confidential incidents keep their title out of the action's
@@ -741,6 +1000,33 @@ export const actionsRouter = router({
           type: 'incident',
           referenceNumber: row?.referenceNumber ?? null,
           title: row === undefined || row.confidential ? null : row.title,
+          href: `/incidents/${action.sourceId}`,
+        };
+      } else if (action.sourceType === 'issue') {
+        const rows = await ctx.db
+          .select({ referenceNumber: issues.referenceNumber, title: issues.title })
+          .from(issues)
+          .where(and(eq(issues.tenantId, ctx.tenantId), eq(issues.id, action.sourceId)))
+          .limit(1);
+        const row = rows[0];
+        source = {
+          type: 'issue',
+          referenceNumber: row?.referenceNumber ?? null,
+          title: row?.title ?? null,
+          href: `/observations/${action.sourceId}`,
+        };
+      } else if (action.sourceType === 'inspection') {
+        const rows = await ctx.db
+          .select({ documentNumber: inspections.documentNumber, title: inspections.title })
+          .from(inspections)
+          .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, action.sourceId)))
+          .limit(1);
+        const row = rows[0];
+        source = {
+          type: 'inspection',
+          referenceNumber: row?.documentNumber ?? null,
+          title: row?.title ?? null,
+          href: `/inspections/${action.sourceId}`,
         };
       }
       // Resolve the action type so the detail page can render the
@@ -857,6 +1143,17 @@ export const actionsRouter = router({
           )
           .onConflictDoNothing();
       }
+      if (input.assigneeUserId !== undefined) {
+        await notifyAssignment(ctx.db, ctx.logger, {
+          tenantId: ctx.tenantId,
+          actionId: id,
+          referenceNumber,
+          title: input.title,
+          dueAt,
+          assigneeUserId: input.assigneeUserId,
+          actorUserId: ctx.auth.userId,
+        });
+      }
       return { actionId: id, referenceNumber };
     }),
 
@@ -960,6 +1257,17 @@ export const actionsRouter = router({
         kind: 'created',
         payload: { sourceType: 'inspection', sourceId: input.inspectionId },
       });
+      if (input.assigneeUserId !== undefined) {
+        await notifyAssignment(ctx.db, ctx.logger, {
+          tenantId: ctx.tenantId,
+          actionId: id,
+          referenceNumber,
+          title: input.title,
+          dueAt: input.dueAt !== undefined ? new Date(input.dueAt) : null,
+          assigneeUserId: input.assigneeUserId,
+          actorUserId: ctx.auth.userId,
+        });
+      }
       return { actionId: id, referenceNumber, created: true as const };
     }),
 
@@ -973,9 +1281,29 @@ export const actionsRouter = router({
       await assertUsersInTenant(ctx.db, ctx.tenantId, [input.assigneeUserId]);
       await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
 
+      // PF-13: same contract as createStandalone — type validation with
+      // required custom questions, and the priority → due-date automation
+      // instead of silently dropping both.
+      let type: ActionType | null = null;
+      if (input.actionTypeId !== undefined) {
+        type = await loadActiveActionType(ctx.db, ctx.tenantId, input.actionTypeId);
+        if (type === null) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'action-type-not-found-or-archived',
+          });
+        }
+      }
+      const cleanedResponses =
+        type !== null
+          ? validateCustomResponses(type.customQuestions, input.customQuestionResponses ?? {})
+          : {};
+      const daysByPriority = await loadPriorityDueDateDays(ctx.db, ctx.tenantId);
+      const now = new Date();
+      const dueAt = computeAutoDueAt(now, input.priority ?? null, daysByPriority, input.dueAt);
+
       const id = newId();
       const referenceNumber = await nextActionReferenceNumber(ctx.db, ctx.tenantId);
-      const now = new Date();
       await ctx.db.insert(actions).values({
         id,
         tenantId: ctx.tenantId,
@@ -989,8 +1317,10 @@ export const actionsRouter = router({
         priority: input.priority ?? null,
         label: input.label ?? null,
         assigneeUserId: input.assigneeUserId ?? null,
-        dueAt: input.dueAt !== undefined ? new Date(input.dueAt) : null,
+        dueAt,
         siteId: input.siteId ?? null,
+        actionTypeId: type?.id ?? null,
+        customQuestionResponses: cleanedResponses,
         createdBy: ctx.auth.userId,
         createdAt: now,
         updatedAt: now,
@@ -1002,6 +1332,17 @@ export const actionsRouter = router({
         kind: 'created',
         payload: { sourceType: 'issue', sourceId: input.issueId },
       });
+      if (input.assigneeUserId !== undefined) {
+        await notifyAssignment(ctx.db, ctx.logger, {
+          tenantId: ctx.tenantId,
+          actionId: id,
+          referenceNumber,
+          title: input.title,
+          dueAt,
+          assigneeUserId: input.assigneeUserId,
+          actorUserId: ctx.auth.userId,
+        });
+      }
       return { actionId: id, referenceNumber };
     }),
 
@@ -1065,6 +1406,9 @@ export const actionsRouter = router({
               to: nextDate?.toISOString() ?? null,
             },
           });
+          // A moved deadline earns fresh reminders (PF-4).
+          updates.dueSoonRemindedAt = null;
+          updates.overdueRemindedAt = null;
         }
       }
       if (input.assigneeUserId !== undefined) {
@@ -1163,6 +1507,23 @@ export const actionsRouter = router({
           actorUserId: ctx.auth.userId,
           kind: ev.kind,
           payload: ev.payload,
+        });
+      }
+      // PF-4: a reassignment tells the new owner. The activity loop above
+      // recorded the change; this delivers it.
+      if (
+        input.assigneeUserId !== undefined &&
+        input.assigneeUserId !== null &&
+        input.assigneeUserId !== action.assigneeUserId
+      ) {
+        await notifyAssignment(ctx.db, ctx.logger, {
+          tenantId: ctx.tenantId,
+          actionId: action.id,
+          referenceNumber: action.referenceNumber,
+          title: updates.title ?? action.title,
+          dueAt: updates.dueAt !== undefined ? updates.dueAt : action.dueAt,
+          assigneeUserId: input.assigneeUserId,
+          actorUserId: ctx.auth.userId,
         });
       }
       if (input.assetIds !== undefined) {

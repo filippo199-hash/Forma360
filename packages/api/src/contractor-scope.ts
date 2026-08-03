@@ -12,7 +12,8 @@
  * Closes the gap `contractor-activities.ts` flagged as "a later refinement".
  */
 import type { Database } from '@forma360/db/client';
-import { contractorUsers } from '@forma360/db/schema';
+import { contractorInductionConfig, contractorUsers } from '@forma360/db/schema';
+import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 
 export interface ContractorScope {
@@ -24,7 +25,14 @@ export interface ContractorScope {
 /**
  * Resolve the caller's contractor scope, or `null` if they are an internal user.
  * One indexed lookup on `contractor_users.userId` for the common (internal)
- * case; a second query only when the caller is actually a portal user.
+ * case; further queries only when the caller is actually a portal user.
+ *
+ * PF-19: this is also the server-side induction gate. The portal previously
+ * hid its tiles until the user acknowledged the induction — client-side only,
+ * so a deep link walked straight past it. Every contractor-scoped read runs
+ * through here, so an un-acknowledged (or stale-version) portal user now gets
+ * a FORBIDDEN with the `induction_required` marker the portal shell redirects
+ * on. Legacy rows with `acknowledgedAt` set but no version count as version 1.
  */
 export async function loadContractorScope(
   db: Database,
@@ -32,12 +40,27 @@ export async function loadContractorScope(
   userId: string,
 ): Promise<ContractorScope | null> {
   const meRows = await db
-    .select({ contractorId: contractorUsers.contractorId })
+    .select({
+      contractorId: contractorUsers.contractorId,
+      acknowledgedAt: contractorUsers.acknowledgedAt,
+      acknowledgedVersion: contractorUsers.acknowledgedVersion,
+    })
     .from(contractorUsers)
     .where(and(eq(contractorUsers.tenantId, tenantId), eq(contractorUsers.userId, userId)))
     .limit(1);
   const me = meRows[0];
   if (me === undefined) return null;
+
+  const cfgRows = await db
+    .select({ version: contractorInductionConfig.version })
+    .from(contractorInductionConfig)
+    .where(eq(contractorInductionConfig.tenantId, tenantId))
+    .limit(1);
+  const currentVersion = cfgRows[0]?.version ?? 1;
+  const ackVersion = me.acknowledgedVersion ?? (me.acknowledgedAt !== null ? 1 : 0);
+  if (ackVersion < currentVersion) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'induction_required' });
+  }
 
   const userRows = await db
     .select({ userId: contractorUsers.userId })

@@ -365,6 +365,11 @@ export const contractorUsers = pgTable(
     activities: jsonb('activities').$type<string[]>().notNull().default([]),
     /** Stamped when the user completes the acknowledgement-onboarding step. */
     acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true, mode: 'date' }),
+    /**
+     * Which induction version the acknowledgement covers (PF-19). Null on
+     * legacy rows — treated as version 1 when `acknowledgedAt` is set.
+     */
+    acknowledgedVersion: integer('acknowledged_version'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -372,5 +377,23 @@ export const contractorUsers = pgTable(
     index('contractor_users_contractor_idx').on(t.tenantId, t.contractorId),
   ],
 );
+
+/**
+ * Tenant-level contractor induction text, versioned (PF-19). Editing the body
+ * bumps `version`; portal users whose `acknowledgedVersion` is older must
+ * re-acknowledge before the contractor-scoped surfaces open up again — so the
+ * tenant can always prove WHICH text was acknowledged.
+ */
+export const contractorInductionConfig = pgTable('contractor_induction_config', {
+  tenantId: varchar('tenant_id', { length: 26 })
+    .primaryKey()
+    .references(() => tenants.id, { onDelete: 'restrict' }),
+  body: text('body').notNull(),
+  version: integer('version').notNull().default(1),
+  updatedBy: text('updated_by'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type ContractorInductionConfig = typeof contractorInductionConfig.$inferSelect;
 
 export type ContractorUser = typeof contractorUsers.$inferSelect;

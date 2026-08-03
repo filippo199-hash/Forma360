@@ -103,3 +103,41 @@ export const userCustomFieldValues = pgTable(
 
 export type UserCustomFieldValue = typeof userCustomFieldValues.$inferSelect;
 export type NewUserCustomFieldValue = typeof userCustomFieldValues.$inferInsert;
+
+/**
+ * In-app notification centre rows (PF-23). One row per (user, event);
+ * written by the same code paths that send the emails so the bell and the
+ * inbox never disagree. `readAt` drives the unread badge; retention v1
+ * (PF-31) trims rows past the tenant's policy.
+ */
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    userId: text('user_id').notNull(),
+    /** Machine kind, e.g. 'action_assigned', 'approval_decided'. */
+    kind: text('kind').notNull(),
+    title: text('title').notNull(),
+    body: text('body').notNull().default(''),
+    /** Locale-relative in-app target, e.g. '/actions/01H…'. */
+    href: text('href'),
+    readAt: timestamp('read_at', { withTimezone: true, mode: 'date' }),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    index('notifications_user_unread_idx').on(
+      table.tenantId,
+      table.userId,
+      table.readAt,
+      table.createdAt,
+    ),
+  ],
+);
+
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
