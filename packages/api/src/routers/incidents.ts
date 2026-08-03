@@ -2269,6 +2269,55 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         return { prompted: total };
       }),
 
+    /**
+     * Active assessments the prompt-reviews step can push into their
+     * due-review state. Served from here so the UI needs no knowledge of
+     * three other routers' shapes.
+     */
+    reviewPromptCandidates: tenantProcedure
+      .use(requirePermission('incidents.manage'))
+      .query(async ({ ctx }) => {
+        assertEnabled();
+        const [ras, coshh, fras] = await Promise.all([
+          ctx.db
+            .select({
+              id: riskAssessments.id,
+              referenceNumber: riskAssessments.referenceNumber,
+              title: riskAssessments.title,
+            })
+            .from(riskAssessments)
+            .where(and(eq(riskAssessments.tenantId, ctx.tenantId), eq(riskAssessments.status, 'active')))
+            .orderBy(asc(riskAssessments.title))
+            .limit(200),
+          ctx.db
+            .select({
+              id: coshhAssessments.id,
+              referenceNumber: coshhAssessments.referenceNumber,
+              title: coshhAssessments.taskDescription,
+            })
+            .from(coshhAssessments)
+            .where(and(eq(coshhAssessments.tenantId, ctx.tenantId), eq(coshhAssessments.status, 'active')))
+            .orderBy(asc(coshhAssessments.taskDescription))
+            .limit(200),
+          ctx.db
+            .select({
+              id: fireRiskAssessments.id,
+              referenceNumber: fireRiskAssessments.referenceNumber,
+              title: fireRiskAssessments.title,
+            })
+            .from(fireRiskAssessments)
+            .where(
+              and(
+                eq(fireRiskAssessments.tenantId, ctx.tenantId),
+                eq(fireRiskAssessments.status, 'active'),
+              ),
+            )
+            .orderBy(asc(fireRiskAssessments.title))
+            .limit(200),
+        ]);
+        return { riskAssessments: ras, coshhAssessments: coshh, fras };
+      }),
+
     skipReviews: tenantProcedure
       .use(requirePermission('incidents.manage'))
       .input(z.object({ incidentId: z.string().length(26), reason: z.string().trim().min(3).max(1000) }))

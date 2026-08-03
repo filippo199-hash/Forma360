@@ -44,6 +44,8 @@ import { SiteSelector } from '../../../../src/components/selectors/site-selector
 import { ObservationCommentComposer } from '../../../../src/components/observations/observation-comment-composer';
 import { EntityPlanMiniMap } from '../../../../src/components/sites/entity-plan-minimap';
 import { cn } from '../../../../src/lib/cn';
+import { brandHasModule } from '@forma360/shared/brand';
+import { activeBrand } from '../../../../src/lib/brand';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -594,6 +596,12 @@ export default function ObservationDetailPage() {
                 ) : null}
               </CardContent>
             </Card>
+          ) : null}
+
+          {tab === 'overview' && brandHasModule(activeBrand.id, 'incidents') ? (
+            <div className="mt-6">
+              <LinkedIncidentsCard issueId={issueId} locale={locale} />
+            </div>
           ) : null}
 
           {tab === 'actions' ? (
@@ -1470,6 +1478,67 @@ function AddActionDialog({
  * "+ Add action" CTA as the top toolbar so the tab is reachable from
  * either entry point.
  */
+/**
+ * Escalation bridge to the incidents module (FreeHS B5, IN-E17): shows
+ * incidents already raised from this observation and offers "escalate to
+ * incident" to reporters. Near-miss reporting stays here — this is the
+ * bridge, not a merge.
+ */
+function LinkedIncidentsCard({ issueId, locale }: { issueId: string; locale: string }) {
+  const t = useTranslations('incidents.observationCard');
+  const router = useRouter();
+  const canView = useHasPermission('incidents.view');
+  const canReport = useHasPermission('incidents.report');
+  const { data: linked } = trpc.incidents.forObservation.useQuery(
+    { observationId: issueId },
+    { enabled: canView },
+  );
+  const escalate = trpc.incidents.createFromObservation.useMutation({
+    onSuccess: (result) => {
+      toast.success(t('escalated', { reference: result.referenceNumber }));
+      router.push(`/${locale}/incidents/${result.incidentId}`);
+    },
+    onError: () => toast.error(t('escalateFailed')),
+  });
+  if (!canView) return null;
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-6 text-sm">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold">{t('heading')}</h2>
+          {canReport ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={escalate.isPending}
+              onClick={() => escalate.mutate({ observationId: issueId })}
+            >
+              {escalate.isPending ? t('escalating') : t('escalate')}
+            </Button>
+          ) : null}
+        </div>
+        {linked === undefined || linked.length === 0 ? (
+          <p className="text-muted-foreground">{t('none')}</p>
+        ) : (
+          <div className="space-y-1">
+            {linked.map((incident) => (
+              <Link
+                key={incident.id}
+                href={`/${locale}/incidents/${incident.id}`}
+                className="flex items-center gap-2 text-primary hover:underline"
+              >
+                <span className="font-mono text-xs">{incident.referenceNumber}</span>
+                <span>{incident.title ?? t('confidential')}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function LinkedActionsCard({
   issueId,
   canManage,

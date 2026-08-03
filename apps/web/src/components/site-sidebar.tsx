@@ -8,6 +8,7 @@ import {
   ClipboardCheck,
   FileSignature,
   Flame,
+  Siren,
   FlaskConical,
   FolderOpen,
   HardHat,
@@ -35,6 +36,7 @@ interface NavItem {
     | 'sites'
     | 'inspections'
     | 'issues'
+    | 'incidents'
     | 'actions'
     | 'headsUp'
     | 'riskAssessments'
@@ -80,6 +82,14 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     href: `/${locale}/permits`,
     icon: FileSignature,
   };
+  // Brand-gated (ADR 0010): Incidents ships only where the active
+  // brand's module catalogue enables it. Sits between Observations and
+  // Actions — the found → recorded → fixed reading order.
+  const incidentsItem: NavItem = {
+    key: 'incidents',
+    href: `/${locale}/incidents`,
+    icon: Siren,
+  };
   // Brand-gated (ADR 0010): Fire Safety ships only where the active
   // brand's module catalogue enables it.
   const fireSafetyItem: NavItem = {
@@ -93,6 +103,7 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     { key: 'sites', href: `/${locale}/sites`, icon: Building2 },
     { key: 'inspections', href: `/${locale}/inspections`, icon: ClipboardCheck },
     { key: 'issues', href: `/${locale}/observations`, icon: AlertTriangle },
+    ...(brandHasModule(activeBrand.id, 'incidents') ? [incidentsItem] : []),
     { key: 'actions', href: `/${locale}/actions`, icon: ListChecks },
     { key: 'headsUp', href: `/${locale}/heads-up`, icon: Bell },
     ...(brandHasModule(activeBrand.id, 'riskAssessments') ? [riskAssessmentsItem] : []),
