@@ -484,6 +484,13 @@
       "when": 1780000160000,
       "tag": "0068_incidents",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1780000170000,
+      "tag": "0069_rams",
+      "breakpoints": true
     }
   ]
 }

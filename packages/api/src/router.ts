@@ -53,6 +53,7 @@ import { createCoshhRouter, type CoshhRouterDeps } from './routers/coshh';
 import { createPermitsRouter, type PermitsRouterDeps } from './routers/permits';
 import { createFireSafetyRouter, type FireSafetyRouterDeps } from './routers/fireSafety';
 import { createIncidentsRouter, type IncidentsRouterDeps } from './routers/incidents';
+import { createRamsRouter, type RamsRouterDeps } from './routers/rams';
 import {
   createRiskAssessmentsRouter,
   type RiskAssessmentsRouterDeps,
@@ -95,6 +96,11 @@ export function buildAppRouter(deps: {
   permits?: PermitsRouterDeps;
   fireSafety?: FireSafetyRouterDeps;
   incidents?: IncidentsRouterDeps;
+  /**
+   * Brand-gated (ADR 0010), same contract as the other B-modules:
+   * omitting it DISABLES the module.
+   */
+  rams?: RamsRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -146,6 +152,7 @@ export function buildAppRouter(deps: {
     permits: createPermitsRouter(deps.permits ?? { enabled: false }),
     fireSafety: createFireSafetyRouter(deps.fireSafety ?? { enabled: false }),
     incidents: createIncidentsRouter(deps.incidents ?? { enabled: false }),
+    rams: createRamsRouter(deps.rams ?? { enabled: false }),
   });
 }
 
@@ -300,6 +307,19 @@ export const stubFireSafetyDeps: FireSafetyRouterDeps = { enabled: true };
  * `enabled: false`. */
 export const stubIncidentsDeps: IncidentsRouterDeps = { enabled: true };
 
+/**
+ * Test-only RAMS deps — enabled; brand gating is tested with
+ * `enabled: false`. Share-link helpers are deterministic so the
+ * client-acceptance tests can assert on the token they get back.
+ */
+let __ramsShareTokenSeq = 0;
+export const stubRamsDeps: RamsRouterDeps = {
+  enabled: true,
+  generateShareToken: () => `rams-stub-token-${(__ramsShareTokenSeq += 1)}`,
+  buildShareUrl: (token) => `http://localhost:3000/s/${token}`,
+  appUrl: 'http://localhost:3000',
+};
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
@@ -312,6 +332,7 @@ export const appRouter = buildAppRouter({
   permits: stubPermitsDeps,
   fireSafety: stubFireSafetyDeps,
   incidents: stubIncidentsDeps,
+  rams: stubRamsDeps,
 });
 
 export type AppRouter = typeof appRouter;

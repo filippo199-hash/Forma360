@@ -91,6 +91,10 @@
     "./incidents": {
       "types": "./src/incidents.ts",
       "default": "./src/incidents.ts"
+    },
+    "./rams": {
+      "types": "./src/rams.ts",
+      "default": "./src/rams.ts"
     }
   },
   "scripts": {

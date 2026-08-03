@@ -43,6 +43,7 @@ export const PERMISSION_MODULES = [
   'permits',
   'fireSafety',
   'incidents',
+  'rams',
   'org',
 ] as const;
 
@@ -182,6 +183,20 @@ export const PERMISSION_KEYS = [
   'incidents.investigate',
   'incidents.manage',
   'incidents.confidential.view',
+
+  // ─── RAMS (FreeHS module B6) ─────────────────────────────────────────────
+  // `rams.brief` is separate on purpose: a working supervisor briefs the
+  // crew at the point of work without holding authoring rights (the same
+  // lesson `fireSafety.record` and the permits competent-person split
+  // encode). `rams.issue` is the attestation authority — issue, re-issue
+  // and withdraw. `rams.review` is the client-side receive workflow over
+  // contractors' packs, which a reviewer may hold without authoring any.
+  'rams.view',
+  'rams.create',
+  'rams.issue',
+  'rams.brief',
+  'rams.review',
+  'rams.manage',
 
   // ─── Organisation settings ───────────────────────────────────────────────
   // `org.settings` is what the S-E02 last-admin check counts: any user whose
