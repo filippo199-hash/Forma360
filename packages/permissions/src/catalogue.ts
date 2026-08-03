@@ -42,6 +42,7 @@ export const PERMISSION_MODULES = [
   'coshh',
   'permits',
   'fireSafety',
+  'incidents',
   'org',
 ] as const;
 
@@ -168,6 +169,19 @@ export const PERMISSION_KEYS = [
   'fireSafety.record',
   'fireSafety.create',
   'fireSafety.manage',
+
+  // ─── Incidents (FreeHS module B5) ────────────────────────────────────────
+  // `report` is deliberately universal (reporting friction suppresses the
+  // statistics that make the module worthwhile). `investigate` is the
+  // competent-person key (evidence, statements, RCA, submit conclusion) —
+  // separate from `manage` (triage, RIDDOR, approvals, closure).
+  // `confidential.view` gates detail access to confidential records
+  // (sharps / violence): counted for everyone, readable by few.
+  'incidents.view',
+  'incidents.report',
+  'incidents.investigate',
+  'incidents.manage',
+  'incidents.confidential.view',
 
   // ─── Organisation settings ───────────────────────────────────────────────
   // `org.settings` is what the S-E02 last-admin check counts: any user whose
