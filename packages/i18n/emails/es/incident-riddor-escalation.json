@@ -1,0 +1,8 @@
+{
+  "subject": "Plazo RIDDOR VENCIDO — {referenceNumber} está atrasado",
+  "preheader": "Un incidente notificable en {productName} ha superado su plazo legal de notificación.",
+  "greeting": "Hola {recipientName}:",
+  "body": "El plazo legal de notificación del incidente {referenceNumber} ({categoryLabel}) venció el {deadlineAt} UTC y no se ha registrado ninguna presentación.\n\nNo notificar un incidente notificable bajo RIDDOR constituye un delito. Presente el informe a la HSE de inmediato y registre la presentación en el incidente: el registro de una presentación tardía sigue siendo mejor que ninguno.",
+  "cta": "Abrir el incidente",
+  "footer": "Recibe este mensaje porque este incidente es suyo o posee permisos de gestión de incidentes en {productName}."
+}

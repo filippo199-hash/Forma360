@@ -1,0 +1,8 @@
+{
+  "subject": "É o investigador principal — {incidentRef}",
+  "preheader": "Foi-lhe atribuída uma investigação de incidente em {productName}.",
+  "greeting": "Olá, {recipientName},",
+  "body": "Foi nomeado investigador principal do incidente {incidentRef} ({incidentTitle}) em {productName}.\n\nInicie a investigação a partir da página do incidente: reúna provas e depoimentos de testemunhas enquanto estão recentes, conduza a análise de causa raiz e submeta a sua conclusão para aprovação quando for defensável.",
+  "cta": "Abrir o incidente",
+  "footer": "Está a receber esta mensagem porque um gestor o nomeou investigador principal em {productName}."
+}

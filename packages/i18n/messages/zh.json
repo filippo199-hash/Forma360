@@ -5556,7 +5556,8 @@
       "riddorDueSoon": "RIDDOR即将到期",
       "rescreenRequired": "需重新判定",
       "investigating": "调查中",
-      "effectivenessOverdue": "有效性复查逾期"
+      "effectivenessOverdue": "有效性复查逾期",
+      "untriaged": "待分诊"
     },
     "list": {
       "report": "报告事故",
@@ -5588,7 +5589,8 @@
         "site": "站点",
         "occurred": "发生时间",
         "riddor": "RIDDOR"
-      }
+      },
+      "exportFailed": "导出失败——请重试。"
     },
     "kinds": {
       "injury": "人身伤害",
@@ -5730,7 +5732,12 @@
       "addPhotos": "拍摄或选择照片",
       "uploading": "上传中…",
       "uploadedCount": "已附加 {count} 个文件。",
-      "done": "完成——打开事故"
+      "done": "完成——打开事故",
+      "severity": "后果有多严重？",
+      "severityHint": "可选——若能判断请选择。住院会自动提高严重度，最终值由分诊确定。",
+      "uploadFailed": "上传失败：{files}。文件未附加——请检查大小（最大 25 MB）和类型后重试。",
+      "noPermission": "您没有报告事件的权限。请联系管理员授予报告者角色。",
+      "backToRegister": "返回登记册"
     },
     "details": {
       "device": "涉及器具/锐器",
@@ -5796,7 +5803,12 @@
       "potentialSeverity": "潜在严重度",
       "riddorOverdueBanner": "RIDDOR法定报告期限已过且无提交记录。请立即向HSE报告并在此登记。",
       "rescreenBanner": "累计缺勤已超过7天，与“无需报告”的判定相矛盾——请重新进行RIDDOR判定。",
-      "notEffectiveBanner": "有效性复查显示控制措施未能保持。请考虑重开事故或新增措施。"
+      "notEffectiveBanner": "有效性复查显示控制措施未能保持。请考虑重开事故或新增措施。",
+      "edit": "编辑详情",
+      "editHeading": "更正记录",
+      "change": "更改",
+      "severityHeading": "严重度",
+      "severityHint": "更正会记录在时间线上。调查获批后严重度将被冻结。"
     },
     "triage": {
       "heading": "分级",
@@ -5811,7 +5823,8 @@
       "leadInvestigator": "调查负责人",
       "leadPlaceholder": "选择调查人…",
       "confidential": "保密——详情仅报告人、调查团队和权限持有者可见",
-      "confirm": "确认分级"
+      "confirm": "确认分级",
+      "levelFloorHint": "严重及以上的严重度（或需报告的 RIDDOR 判定）必须进行完整调查。"
     },
     "people": {
       "heading": "人员与损失工日",
@@ -5825,7 +5838,9 @@
       "absenceFrom": "缺勤首日",
       "absenceTo": "最后一天（留空=持续中）",
       "addAbsence": "登记缺勤",
-      "addPerson": "添加人员"
+      "addPerson": "添加人员",
+      "removeConfirm": "将此人从事件中移除？其受伤和缺勤记录将被删除；移除操作会被记录。",
+      "removeAbsenceConfirm": "删除此缺勤时段？损失工时与 RIDDOR 计数将重新计算。"
     },
     "riddor": {
       "heading": "RIDDOR",
@@ -5884,7 +5899,9 @@
         "submitted": "待审批",
         "approved": "已批准"
       },
-      "approvedBy": "由 {name} 批准 · {date}"
+      "approvedBy": "由 {name} 批准 · {date}",
+      "upgradeLevel": "升级为完整调查",
+      "reassignLead": "重新指派主任调查员"
     },
     "findings": {
       "heading": "发现项与纠正措施",
@@ -5947,7 +5964,11 @@
     },
     "timeline": {
       "heading": "时间线",
-      "system": "系统"
+      "system": "系统",
+      "revision": "修订 {revision}",
+      "soleManagerOverride": "唯一管理者特例",
+      "actionCount": "已生成 {count} 项行动",
+      "notifiedCount": "已通知 {count} 位接收人"
     },
     "events": {
       "reported": "已报告",
@@ -5980,7 +6001,8 @@
       "alert_sent": "已发送即时警报",
       "riddor_warning_sent": "已发送RIDDOR期限提醒",
       "riddor_escalated": "RIDDOR期限已升级",
-      "promoted_from_observation": "由观察升级"
+      "promoted_from_observation": "由观察升级",
+      "investigation_level_changed": "调查级别已更改"
     },
     "workspace": {
       "title": "调查工作区",
@@ -6048,7 +6070,15 @@
       "assigneePlaceholder": "选择负责人…",
       "dueDate": "截止日期",
       "confirmApprove": "批准调查",
-      "approvedNote": "由 {name} 批准。该版本已冻结。"
+      "approvedNote": "由 {name} 批准。该版本已冻结。",
+      "uploadFailed": "上传失败：{files}。文件未附加——请检查大小（最大 25 MB）和类型后重试。",
+      "whyChainHeading": "连问为什么",
+      "causalFactorsHeading": "致因因素",
+      "rootCauseMark": "根本原因",
+      "assignAllHint": "在批准之前，每条需要行动的发现都必须指定负责人。",
+      "dueDateAutoHint": "留空时，截止日期按发现的优先级自动确定。",
+      "soleManagerNotice": "您是本次调查的主任调查员或提交人。只有当组织中没有其他人持有事件管理权限时，才允许批准自己的工作——请记录您单独签署的原因。该特例将被永久记录。",
+      "soleManagerPlaceholder": "为何不存在独立批准人……"
     },
     "observationCard": {
       "heading": "事故事件",
@@ -6113,7 +6143,19 @@
       "risk-assessment-not-found": "所选风险评估不存在或未生效。",
       "coshh-assessment-not-found": "所选COSHH评估不存在或未生效。",
       "fra-not-found": "所选消防风险评估不存在或未生效。",
-      "render-unavailable": "此部署不支持PDF生成。"
+      "render-unavailable": "此部署不支持PDF生成。",
+      "investigation-level-below-floor": "严重度（或 RIDDOR 判定）要求完整调查——级别不能低于该下限。",
+      "not-triaged": "请先对事件进行分诊。",
+      "investigation-content-exists": "一旦存在调查工作，级别便不能降级。",
+      "finding-assignee-required": "批准前，每条需要行动的发现都必须指定负责人。",
+      "finding-due-date-required": "请为每项生成的行动设置截止日期。",
+      "sole-manager-justification-required": "请记录您批准自己调查的原因——由于不存在独立批准人，必须提供理由。"
+    },
+    "evidence": {
+      "heading": "证据与陈述",
+      "addFiles": "添加照片/文件",
+      "none": "尚无证据。现场拍摄的照片会显示在这里。",
+      "witness": "证人"
     }
   }
 }

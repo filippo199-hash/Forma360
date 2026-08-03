@@ -148,6 +148,20 @@ describe('brand substitution — {productName} (ADR 0010)', () => {
         'Forma360',
       );
     }
+    // IN-A14: exact 1:1 both directions — a registry entry whose file was
+    // deleted is as broken as an unregistered file, and a weak count
+    // floor would miss it.
+    const { EMAIL_TEMPLATE_KEYS } = await import('./email');
+    const fileKeys = new Set(files.map((f) => f.replace(/\.json$/, '')));
+    const registryKeys = new Set(EMAIL_TEMPLATE_KEYS);
+    expect(
+      [...registryKeys].filter((k) => !fileKeys.has(k)),
+      'registered but no file',
+    ).toEqual([]);
+    expect(
+      [...fileKeys].filter((k) => !registryKeys.has(k)),
+      'file but not registered',
+    ).toEqual([]);
   });
 });
 
@@ -201,7 +215,6 @@ describe('template registry completeness (platform review PF-1)', () => {
     }
   });
 });
-
 
 describe('PF-20 locale-aware template loader', () => {
   it('serves the translated template when the locale exists; falls back otherwise', async () => {

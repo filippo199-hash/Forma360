@@ -93,6 +93,29 @@ export function needsImmediateAlert(kind: IncidentKind, severity: IncidentSeveri
   return ALERT_KINDS.includes(kind) || isSeriousOrAbove(severity);
 }
 
+/**
+ * Provisional severity at report time (HSE review IN-A2). The reporter
+ * may offer a severity judgement; independently, the hospitalisation
+ * facts collected per person floor it — a hospital admission means at
+ * least `serious`, an A&E attendance at least `moderate` — so the
+ * immediate-alert predicate can fire from the facts on the form even
+ * when the reporter skipped the judgement. Triage still owns the
+ * definitive severity; this only stops a serious injury sitting
+ * invisible under a default "minor" chip until someone opens it.
+ */
+export function provisionalSeverity(
+  reported: IncidentSeverity | undefined,
+  hospitalisations: readonly Hospitalisation[],
+): IncidentSeverity {
+  const base: IncidentSeverity = reported ?? 'minor';
+  const floor: IncidentSeverity | null = hospitalisations.includes('admitted')
+    ? 'serious'
+    : hospitalisations.includes('ae')
+      ? 'moderate'
+      : null;
+  return floor !== null && severityRank(floor) > severityRank(base) ? floor : base;
+}
+
 // ─── Lifecycle ──────────────────────────────────────────────────────────────
 
 export const INCIDENT_STATUSES = [

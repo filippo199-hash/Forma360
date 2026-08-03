@@ -1,0 +1,8 @@
+{
+  "subject": "Échéance RIDDOR dans {daysLeft} — {referenceNumber}",
+  "preheader": "Un incident à déclarer sur {productName} n'a pas encore été soumis à la HSE.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "L'incident {referenceNumber} a été évalué comme relevant de RIDDOR ({categoryLabel}) et n'a pas encore été soumis à la HSE.\n\nDélai légal : {deadlineAt} UTC (reste {daysLeft}).\n\nSoumettez la déclaration via le formulaire en ligne de la HSE (ou par téléphone pour les blessures mortelles et spécifiées), puis enregistrez la soumission sur l'incident pour arrêter le décompte.",
+  "cta": "Ouvrir l'incident",
+  "footer": "Vous recevez ce message car cet incident vous appartient ou vous détenez des permissions de gestion des incidents dans {productName}."
+}

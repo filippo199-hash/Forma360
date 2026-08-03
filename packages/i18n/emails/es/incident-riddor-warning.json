@@ -1,0 +1,8 @@
+{
+  "subject": "Plazo RIDDOR en {daysLeft} — {referenceNumber}",
+  "preheader": "Un incidente notificable en {productName} aún no se ha presentado a la HSE.",
+  "greeting": "Hola {recipientName}:",
+  "body": "El incidente {referenceNumber} fue clasificado como notificable bajo RIDDOR ({categoryLabel}) y aún no se ha presentado a la HSE.\n\nPlazo legal: {deadlineAt} UTC (quedan {daysLeft}).\n\nPresente el informe mediante el formulario en línea de la HSE (o por teléfono para lesiones mortales y especificadas) y registre después la presentación en el incidente para detener el reloj.",
+  "cta": "Abrir el incidente",
+  "footer": "Recibe este mensaje porque este incidente es suyo o posee permisos de gestión de incidentes en {productName}."
+}

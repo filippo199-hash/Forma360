@@ -1,0 +1,8 @@
+{
+  "subject": "Sei l'investigatore capo — {incidentRef}",
+  "preheader": "Ti è stata assegnata un'indagine su un incidente in {productName}.",
+  "greeting": "Ciao {recipientName},",
+  "body": "Sei stato nominato investigatore capo per l'incidente {incidentRef} ({incidentTitle}) su {productName}.\n\nAvvia l'indagine dalla pagina dell'incidente: raccogli prove e dichiarazioni dei testimoni finché sono fresche, sviluppa l'analisi delle cause profonde e invia la tua conclusione per l'approvazione quando è difendibile.",
+  "cta": "Apri l'incidente",
+  "footer": "Ricevi questo messaggio perché un responsabile ti ha nominato investigatore capo in {productName}."
+}

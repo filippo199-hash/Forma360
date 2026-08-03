@@ -3,18 +3,20 @@
 /**
  * Incident register — the module home.
  *
- * Leads with the needs-attention strip (RIDDOR clocks running / overdue,
- * re-screens required, open investigations, overdue effectiveness
- * reviews) so the practitioner sees the statutory state first. The list
- * mirrors the permits register: filter row, desktop table, mobile
- * cards. Confidential rows render minimal (reference + chips, no title)
- * for callers without access — counted, not readable.
+ * Leads with the needs-attention strip (untriaged reports first —
+ * IN-A2 — then RIDDOR clocks running / overdue, re-screens required,
+ * open investigations, overdue effectiveness reviews) so the
+ * practitioner sees the statutory state first. Each chip applies the
+ * matching filter on click (IN-A13). The list mirrors the permits
+ * register: filter row, desktop table, mobile cards. Confidential rows
+ * render minimal (reference + chips, no title) for callers without
+ * access — counted, not readable.
  */
 import { Download, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ConfidentialChip,
   IncidentStatusChip,
@@ -90,6 +92,15 @@ export default function IncidentsPage() {
   const [riddorOnly, setRiddorOnly] = useState(false);
   const [search, setSearch] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(false);
+
+  // IN-A13: debounce free-text search so the register doesn't refetch
+  // on every keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(handle);
+  }, [search]);
 
   const listInput = {
     ...(statusesFor(status) !== undefined ? { status: statusesFor(status) } : {}),
@@ -97,7 +108,7 @@ export default function IncidentsPage() {
     ...(severity !== '' ? { severity: [severity as (typeof SEVERITIES)[number]] } : {}),
     ...(siteId !== '' ? { siteId } : {}),
     riddorOnly,
-    ...(search.trim() !== '' ? { query: search.trim() } : {}),
+    ...(debouncedSearch.trim() !== '' ? { query: debouncedSearch.trim() } : {}),
     includeCancelled: status === 'cancelled' || status === 'all',
     limit: 200,
   };
@@ -107,16 +118,67 @@ export default function IncidentsPage() {
   const { data: sites } = trpc.sites.list.useQuery();
   const utils = trpc.useUtils();
 
-  const attention: Array<{ key: string; count: number; alarm?: boolean }> = [
-    { key: 'riddorOverdue', count: overview?.riddorOverdue ?? 0, alarm: true },
-    { key: 'riddorDueSoon', count: overview?.riddorDueSoon ?? 0 },
-    { key: 'rescreenRequired', count: overview?.rescreenRequired ?? 0 },
-    { key: 'investigating', count: overview?.investigating ?? 0 },
-    { key: 'effectivenessOverdue', count: overview?.effectivenessOverdue ?? 0 },
+  // Clicking a chip applies the matching register filter (IN-A13).
+  const attention: Array<{
+    key: string;
+    count: number;
+    alarm?: boolean;
+    apply: () => void;
+  }> = [
+    {
+      key: 'untriaged',
+      count: overview?.untriaged ?? 0,
+      apply: () => {
+        setStatus('reported');
+        setRiddorOnly(false);
+      },
+    },
+    {
+      key: 'riddorOverdue',
+      count: overview?.riddorOverdue ?? 0,
+      alarm: true,
+      apply: () => {
+        setStatus('open');
+        setRiddorOnly(true);
+      },
+    },
+    {
+      key: 'riddorDueSoon',
+      count: overview?.riddorDueSoon ?? 0,
+      apply: () => {
+        setStatus('open');
+        setRiddorOnly(true);
+      },
+    },
+    {
+      key: 'rescreenRequired',
+      count: overview?.rescreenRequired ?? 0,
+      apply: () => {
+        setStatus('open');
+        setRiddorOnly(true);
+      },
+    },
+    {
+      key: 'investigating',
+      count: overview?.investigating ?? 0,
+      apply: () => {
+        setStatus('investigating');
+        setRiddorOnly(false);
+      },
+    },
+    {
+      key: 'effectivenessOverdue',
+      count: overview?.effectivenessOverdue ?? 0,
+      apply: () => {
+        setStatus('closed');
+        setRiddorOnly(false);
+      },
+    },
   ].filter((a) => a.count > 0);
 
   async function exportCsv(): Promise<void> {
     setExporting(true);
+    setExportError(false);
     try {
       const result = await utils.client.incidents.exportCsv.mutate(listInput);
       const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8' });
@@ -126,6 +188,10 @@ export default function IncidentsPage() {
       a.download = 'incident-register.csv';
       a.click();
       URL.revokeObjectURL(url);
+    } catch {
+      // IN-A13: a failed export must say so rather than end the spinner
+      // in silence.
+      setExportError(true);
     } finally {
       setExporting(false);
     }
@@ -162,19 +228,24 @@ export default function IncidentsPage() {
       {attention.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {attention.map((a) => (
-            <span
+            <button
               key={a.key}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm ${
+              type="button"
+              onClick={a.apply}
+              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-colors ${
                 a.alarm === true
-                  ? 'border-red-300 bg-red-50 text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200'
-                  : 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200'
+                  ? 'border-red-300 bg-red-50 text-red-900 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-950/70'
+                  : 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-950/70'
               }`}
             >
               <span className="font-semibold tabular-nums">{a.count}</span>
               {t(`attention.${a.key}` as never)}
-            </span>
+            </button>
           ))}
         </div>
+      ) : null}
+      {exportError ? (
+        <p className="text-sm text-red-600 dark:text-red-400">{t('list.exportFailed')}</p>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
@@ -275,7 +346,13 @@ export default function IncidentsPage() {
                 {rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="cursor-pointer border-t hover:bg-muted/40"
+                    // IN-A13: restricted rows are counted-not-readable —
+                    // they must not pretend to be clickable.
+                    className={
+                      row.restricted
+                        ? 'border-t opacity-75'
+                        : 'cursor-pointer border-t hover:bg-muted/40'
+                    }
                     onClick={() => {
                       if (!row.restricted) router.push(`/${locale}/incidents/${row.id}`);
                     }}
@@ -338,7 +415,10 @@ export default function IncidentsPage() {
                   {row.restricted ? (
                     <ConfidentialChip />
                   ) : (
-                    <p className="font-medium">{row.title}</p>
+                    <p className="flex items-center gap-1.5 font-medium">
+                      {row.title}
+                      {row.confidential ? <ConfidentialChip /> : null}
+                    </p>
                   )}
                   <div className="flex flex-wrap items-center gap-1.5">
                     <KindChip kind={row.kind} />

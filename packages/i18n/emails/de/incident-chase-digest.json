@@ -1,0 +1,8 @@
+{
+  "subject": "Vorfälle, die Ihre Aufmerksamkeit brauchen — {totalCount} Punkt(e)",
+  "preheader": "Offene Vorfallsarbeit auf {productName} wartet auf Sie.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Diese Vorfälle auf {productName} warten auf Sie:\n\n{detailLines}\n\nSichten Sie zuerst neue Meldungen — ein ungesichteter Vorfall ist für jede andere Schutzmaßnahme unsichtbar. Ruhende Untersuchungen blockieren den 10.2-Regelkreis — schließen Sie sie ab, mahnen Sie überfällige Korrekturmaßnahmen an und erfassen Sie fällige Wirksamkeitsprüfungen, damit geschlossene Vorfälle geschlossen bleiben.",
+  "cta": "Vorfallsregister öffnen",
+  "footer": "Sie erhalten diese Nachricht, weil Sie diese Vorfallsdatensätze in {productName} besitzen oder verwalten."
+}

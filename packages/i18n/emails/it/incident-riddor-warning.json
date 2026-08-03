@@ -1,0 +1,8 @@
+{
+  "subject": "Scadenza RIDDOR tra {daysLeft} — {referenceNumber}",
+  "preheader": "Un incidente soggetto a notifica su {productName} non è ancora stato inviato alla HSE.",
+  "greeting": "Ciao {recipientName},",
+  "body": "L'incidente {referenceNumber} è stato valutato come soggetto a RIDDOR ({categoryLabel}) e non è ancora stato inviato alla HSE.\n\nTermine legale: {deadlineAt} UTC (mancano {daysLeft}).\n\nInvia la segnalazione tramite il modulo online della HSE (o per telefono per lesioni mortali e specificate), quindi registra l'invio sull'incidente per fermare l'orologio.",
+  "cta": "Apri l'incidente",
+  "footer": "Ricevi questo messaggio perché questo incidente è tuo o possiedi permessi di gestione degli incidenti in {productName}."
+}

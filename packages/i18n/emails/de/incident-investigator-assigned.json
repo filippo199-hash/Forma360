@@ -1,0 +1,8 @@
+{
+  "subject": "Sie sind leitende(r) Ermittler(in) — {incidentRef}",
+  "preheader": "Ihnen wurde auf {productName} eine Vorfallsuntersuchung zugewiesen.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Sie wurden zur leitenden Ermittlerin / zum leitenden Ermittler für den Vorfall {incidentRef} ({incidentTitle}) auf {productName} ernannt.\n\nStarten Sie die Untersuchung von der Vorfallseite aus: Sichern Sie Beweise und Zeugenaussagen, solange sie frisch sind, arbeiten Sie die Ursachenanalyse durch und reichen Sie Ihre Schlussfolgerung zur Freigabe ein, sobald sie belastbar ist.",
+  "cta": "Vorfall öffnen",
+  "footer": "Sie erhalten diese Nachricht, weil eine Führungskraft Sie in {productName} zur leitenden Ermittlerin / zum leitenden Ermittler ernannt hat."
+}

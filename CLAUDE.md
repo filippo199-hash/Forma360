@@ -563,9 +563,27 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   evidence/witness/events), migration 0063 incl. the PF-8 permission
   backfill onto existing tenants' system sets; the IN-J04
   email-registry-completeness test walks `emails/en/` (and fixed four
-  previously unregistered templates incl. both permit-expiry mails);
+  previously unregistered templates incl. both permit-expiry mails; now
+  exact 1:1 both directions); HSE review + hardening in
+  `docs/reviews/incidents-hse-expert-review.md` +
+  `docs/reviews/incidents-hse-review-response.md` (ADR 0013 amendment,
+  decisions 9–10): alert worker is truly notify-then-stamp with BullMQ
+  retries (IN-A1), `provisionalSeverity` at create from hospitalisation
+  + optional reporter judgement with an untriaged overview counter and
+  48 h chase bucket (IN-A2), the investigation-level floor is enforced
+  at triage/change/screen/submit with `setInvestigationLevel` upgrades
+  and auto-raise (IN-A3/A3b), approval demands per-finding assignee +
+  due date (IN-A6), sole-manager approval override with logged
+  justification when no independent approver exists (IN-A8),
+  correction UI for update/setSeverity/assignInvestigator/removePerson/
+  removeAbsence/updateFinding (IN-A7), evidence visible pre-
+  investigation + full frozen-revision rendering (IN-A9/A9b),
+  translated incident emails ×5 locales with locale-aware sends
+  (IN-A10), timeline detail payloads rendered (IN-A11); offline items
+  IN-A2b/IN-A12 deferred to the next stage;
   edge-case IDs IN-E01..E06 in `incidents.test.ts` (shared),
-  IN-E02..E20 (router), IN-J01..J03 in the worker tests). Each router is
+  IN-E02..E20 + IN-A2..A8 (router), IN-J01..J03 + IN-J02d/e + IN-J03c
+  in the worker tests). Each router is
   built with `{ enabled }` from the brand catalogue; nav + API both gate on
   it.
 - **Everything internal stays `forma360`** (package scope, queue names,

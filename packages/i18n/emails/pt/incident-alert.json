@@ -1,0 +1,8 @@
+{
+  "subject": "Alerta de incidente — {referenceNumber} ({kindLabel}, {severityLabel})",
+  "preheader": "Foi comunicado em {productName} um incidente que exige atenção imediata.",
+  "greeting": "Olá, {recipientName},",
+  "body": "Foi comunicado em {productName} um incidente que exige atenção imediata:\n\nReferência: {referenceNumber}\nTipo: {kindLabel}\nGravidade: {severityLabel}\nLocal: {siteLine}\nOcorrido: {occurredAt} UTC\n\nAbra o registo para ver os detalhes, confirme a triagem e nomeie a investigação. Os detalhes são omitidos deste e-mail porque os registos de incidentes podem ser confidenciais.",
+  "cta": "Abrir o incidente",
+  "footer": "Está a receber esta mensagem porque possui permissões de gestão de incidentes em {productName}."
+}

@@ -1,0 +1,8 @@
+{
+  "subject": "Scadenza RIDDOR SUPERATA — {referenceNumber} è in ritardo",
+  "preheader": "Un incidente soggetto a notifica su {productName} ha superato il termine legale di segnalazione.",
+  "greeting": "Ciao {recipientName},",
+  "body": "Il termine legale di segnalazione per l'incidente {referenceNumber} ({categoryLabel}) è scaduto il {deadlineAt} UTC e non è stata registrata alcuna presentazione.\n\nOmettere la segnalazione di un incidente soggetto a RIDDOR è un reato. Invia subito la segnalazione alla HSE e registra l'invio sull'incidente — la traccia di una segnalazione tardiva è comunque meglio di nessuna.",
+  "cta": "Apri l'incidente",
+  "footer": "Ricevi questo messaggio perché questo incidente è tuo o possiedi permessi di gestione degli incidenti in {productName}."
+}

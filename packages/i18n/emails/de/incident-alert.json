@@ -1,0 +1,8 @@
+{
+  "subject": "Vorfall-Alarm — {referenceNumber} ({kindLabel}, {severityLabel})",
+  "preheader": "Auf {productName} wurde ein Vorfall gemeldet, der sofortige Aufmerksamkeit erfordert.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Auf {productName} wurde ein Vorfall gemeldet, der sofortige Aufmerksamkeit erfordert:\n\nReferenz: {referenceNumber}\nArt: {kindLabel}\nSchweregrad: {severityLabel}\nStandort: {siteLine}\nEreigniszeitpunkt: {occurredAt} UTC\n\nÖffnen Sie den Datensatz für die Einzelheiten, bestätigen Sie die Ersteinschätzung und benennen Sie die Untersuchung. Details werden in dieser E-Mail zurückgehalten, da Vorfallsdatensätze vertraulich sein können.",
+  "cta": "Vorfall öffnen",
+  "footer": "Sie erhalten diese Nachricht, weil Sie in {productName} Berechtigungen für das Vorfallmanagement besitzen."
+}

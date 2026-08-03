@@ -5563,7 +5563,8 @@
       "riddorDueSoon": "RIDDOR bald fällig",
       "rescreenRequired": "Neubewertung nötig",
       "investigating": "in Untersuchung",
-      "effectivenessOverdue": "Wirksamkeitsprüfungen fällig"
+      "effectivenessOverdue": "Wirksamkeitsprüfungen fällig",
+      "untriaged": "warten auf Sichtung"
     },
     "list": {
       "report": "Vorfall melden",
@@ -5595,7 +5596,8 @@
         "site": "Standort",
         "occurred": "Ereignet",
         "riddor": "RIDDOR"
-      }
+      },
+      "exportFailed": "Export fehlgeschlagen — bitte erneut versuchen."
     },
     "kinds": {
       "injury": "Verletzung",
@@ -5737,7 +5739,12 @@
       "addPhotos": "Fotos aufnehmen oder wählen",
       "uploading": "Wird hochgeladen…",
       "uploadedCount": "{count} Datei(en) angehängt.",
-      "done": "Fertig — Vorfall öffnen"
+      "done": "Fertig — Vorfall öffnen",
+      "severity": "Wie schwer war die Folge?",
+      "severityHint": "Optional — wählen Sie, wenn Sie es einschätzen können. Eine Krankenhausaufnahme hebt den Wert automatisch an; die Sichtung legt den endgültigen Wert fest.",
+      "uploadFailed": "Hochladen fehlgeschlagen für: {files}. Die Dateien sind NICHT angehängt — prüfen Sie Größe (max. 25 MB) und Typ und versuchen Sie es erneut.",
+      "noPermission": "Sie haben keine Berechtigung, Vorfälle zu melden. Bitten Sie eine:n Administrator:in um die Melderolle.",
+      "backToRegister": "Zurück zum Register"
     },
     "details": {
       "device": "Beteiligtes Gerät / scharfer Gegenstand",
@@ -5803,7 +5810,12 @@
       "potentialSeverity": "Potenzieller Schweregrad",
       "riddorOverdueBanner": "Die gesetzliche RIDDOR-Meldefrist ist verstrichen, ohne dass eine Meldung erfasst wurde. Jetzt an die HSE melden und hier dokumentieren.",
       "rescreenBanner": "Die kumulierte Abwesenheit hat 7 Tage überschritten — die RIDDOR-Entscheidung neu bewerten.",
-      "notEffectiveBanner": "Die Wirksamkeitsprüfung ergab, dass die Maßnahmen nicht gehalten haben. Wiedereröffnung oder neue Maßnahme erwägen."
+      "notEffectiveBanner": "Die Wirksamkeitsprüfung ergab, dass die Maßnahmen nicht gehalten haben. Wiedereröffnung oder neue Maßnahme erwägen.",
+      "edit": "Details bearbeiten",
+      "editHeading": "Datensatz berichtigen",
+      "change": "Ändern",
+      "severityHeading": "Schweregrad",
+      "severityHint": "Berichtigungen werden in der Chronik protokolliert. Der Schweregrad wird mit Freigabe einer Untersuchung eingefroren."
     },
     "triage": {
       "heading": "Triage",
@@ -5818,7 +5830,8 @@
       "leadInvestigator": "Untersuchungsleitung",
       "leadPlaceholder": "Person wählen…",
       "confidential": "Vertraulich — Details nur für meldende Person, Untersuchungsteam und Berechtigte",
-      "confirm": "Triage bestätigen"
+      "confirm": "Triage bestätigen",
+      "levelFloorHint": "Ab Schweregrad „schwer“ (oder bei meldepflichtiger RIDDOR-Einstufung) ist eine vollständige Untersuchung verpflichtend."
     },
     "people": {
       "heading": "Personen & Ausfallzeit",
@@ -5832,7 +5845,9 @@
       "absenceFrom": "Erster Fehltag",
       "absenceTo": "Letzter Fehltag (leer = andauernd)",
       "addAbsence": "Abwesenheit erfassen",
-      "addPerson": "Person hinzufügen"
+      "addPerson": "Person hinzufügen",
+      "removeConfirm": "Diese Person aus dem Vorfall entfernen? Ihre Verletzungs- und Abwesenheitsdaten werden gelöscht; die Entfernung wird protokolliert.",
+      "removeAbsenceConfirm": "Diesen Abwesenheitszeitraum entfernen? Ausfallzeit- und RIDDOR-Zählung werden neu berechnet."
     },
     "riddor": {
       "heading": "RIDDOR",
@@ -5891,7 +5906,9 @@
         "submitted": "Wartet auf Freigabe",
         "approved": "Freigegeben"
       },
-      "approvedBy": "Freigegeben von {name} · {date}"
+      "approvedBy": "Freigegeben von {name} · {date}",
+      "upgradeLevel": "Auf vollständig hochstufen",
+      "reassignLead": "Leitende:n Ermittler:in neu zuweisen"
     },
     "findings": {
       "heading": "Feststellungen & Korrekturmaßnahmen",
@@ -5954,7 +5971,11 @@
     },
     "timeline": {
       "heading": "Verlauf",
-      "system": "System"
+      "system": "System",
+      "revision": "Revision {revision}",
+      "soleManagerOverride": "Ausnahme: einzige Führungskraft",
+      "actionCount": "{count} Maßnahme(n) erzeugt",
+      "notifiedCount": "{count} Empfänger:in(nen) benachrichtigt"
     },
     "events": {
       "reported": "Gemeldet",
@@ -5987,7 +6008,8 @@
       "alert_sent": "Sofortalarm gesendet",
       "riddor_warning_sent": "RIDDOR-Fristwarnung gesendet",
       "riddor_escalated": "RIDDOR-Frist eskaliert",
-      "promoted_from_observation": "Aus Beobachtung eskaliert"
+      "promoted_from_observation": "Aus Beobachtung eskaliert",
+      "investigation_level_changed": "Untersuchungstiefe geändert"
     },
     "workspace": {
       "title": "Untersuchungs-Arbeitsbereich",
@@ -6055,7 +6077,15 @@
       "assigneePlaceholder": "Person wählen…",
       "dueDate": "Frist",
       "confirmApprove": "Untersuchung freigeben",
-      "approvedNote": "Freigegeben von {name}. Diese Revision ist eingefroren."
+      "approvedNote": "Freigegeben von {name}. Diese Revision ist eingefroren.",
+      "uploadFailed": "Hochladen fehlgeschlagen für: {files}. Die Dateien sind NICHT angehängt — prüfen Sie Größe (max. 25 MB) und Typ und versuchen Sie es erneut.",
+      "whyChainHeading": "Warum-Kette",
+      "causalFactorsHeading": "Ursachenfaktoren",
+      "rootCauseMark": "Grundursache",
+      "assignAllHint": "Jede maßnahmenpflichtige Feststellung braucht eine:n Verantwortliche:n, bevor Sie freigeben können.",
+      "dueDateAutoHint": "Bleibt das Feld leer, folgt die Frist der Priorität der Feststellung.",
+      "soleManagerNotice": "Sie sind leitende:r Ermittler:in oder Einreicher:in dieser Untersuchung. Die Freigabe der eigenen Arbeit ist nur zulässig, wenn niemand sonst in der Organisation die Vorfallmanagement-Berechtigung besitzt — begründen Sie, warum Sie allein unterschreiben. Die Ausnahme wird dauerhaft protokolliert.",
+      "soleManagerPlaceholder": "Warum es keine unabhängige Freigabeinstanz gibt …"
     },
     "observationCard": {
       "heading": "Vorfälle",
@@ -6120,7 +6150,19 @@
       "risk-assessment-not-found": "Eine gewählte Gefährdungsbeurteilung wurde nicht gefunden oder ist nicht aktiv.",
       "coshh-assessment-not-found": "Eine gewählte COSHH-Bewertung wurde nicht gefunden oder ist nicht aktiv.",
       "fra-not-found": "Eine gewählte Brandschutzbewertung wurde nicht gefunden oder ist nicht aktiv.",
-      "render-unavailable": "PDF-Erzeugung ist auf dieser Umgebung nicht verfügbar."
+      "render-unavailable": "PDF-Erzeugung ist auf dieser Umgebung nicht verfügbar.",
+      "investigation-level-below-floor": "Der Schweregrad (oder die RIDDOR-Einstufung) verlangt eine vollständige Untersuchung — die Tiefe darf diese Untergrenze nicht unterschreiten.",
+      "not-triaged": "Sichten Sie den Vorfall zuerst.",
+      "investigation-content-exists": "Die Tiefe kann nicht gesenkt werden, sobald Untersuchungsarbeit vorliegt.",
+      "finding-assignee-required": "Jede maßnahmenpflichtige Feststellung braucht vor der Freigabe eine:n Verantwortliche:n.",
+      "finding-due-date-required": "Setzen Sie für jede erzeugte Maßnahme eine Frist.",
+      "sole-manager-justification-required": "Begründen Sie, warum Sie Ihre eigene Untersuchung freigeben — die Begründung ist erforderlich, weil keine unabhängige Freigabeinstanz existiert."
+    },
+    "evidence": {
+      "heading": "Beweise & Aussagen",
+      "addFiles": "Fotos / Dateien hinzufügen",
+      "none": "Noch keine Beweise. Am Ort aufgenommene Fotos erscheinen hier.",
+      "witness": "Zeuge/Zeugin"
     }
   }
 }

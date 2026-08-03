@@ -5556,7 +5556,8 @@
       "riddorDueSoon": "RIDDOR bijna verlopen",
       "rescreenRequired": "herbeoordeling nodig",
       "investigating": "in onderzoek",
-      "effectivenessOverdue": "effectiviteitstoetsen verlopen"
+      "effectivenessOverdue": "effectiviteitstoetsen verlopen",
+      "untriaged": "wachten op triage"
     },
     "list": {
       "report": "Incident melden",
@@ -5588,7 +5589,8 @@
         "site": "Locatie",
         "occurred": "Voorgevallen",
         "riddor": "RIDDOR"
-      }
+      },
+      "exportFailed": "Exporteren mislukt — probeer opnieuw."
     },
     "kinds": {
       "injury": "Letsel",
@@ -5730,7 +5732,12 @@
       "addPhotos": "Foto's maken of kiezen",
       "uploading": "Uploaden…",
       "uploadedCount": "{count} bestand(en) bijgevoegd.",
-      "done": "Klaar — incident openen"
+      "done": "Klaar — incident openen",
+      "severity": "Hoe ernstig was de afloop?",
+      "severityHint": "Optioneel — kies er een als u het kunt inschatten. Een ziekenhuisopname verhoogt het automatisch; triage bepaalt de definitieve waarde.",
+      "uploadFailed": "Uploaden mislukt voor: {files}. De bestanden zijn NIET bijgevoegd — controleer grootte (max. 25 MB) en type en probeer opnieuw.",
+      "noPermission": "U heeft geen toestemming om incidenten te melden. Vraag een beheerder om de melderrol.",
+      "backToRegister": "Terug naar het register"
     },
     "details": {
       "device": "Betrokken instrument / scherp voorwerp",
@@ -5796,7 +5803,12 @@
       "potentialSeverity": "Potentiële ernst",
       "riddorOverdueBanner": "De wettelijke RIDDOR-termijn is verstreken zonder geregistreerde melding. Meld nu bij de HSE en leg het hier vast.",
       "rescreenBanner": "Het cumulatieve verzuim is boven 7 dagen gekomen tegen een besluit 'niet meldplichtig' — herbeoordeel het RIDDOR-besluit.",
-      "notEffectiveBanner": "De effectiviteitstoets wees uit dat de maatregelen niet standhielden. Overweeg heropening of een nieuwe actie."
+      "notEffectiveBanner": "De effectiviteitstoets wees uit dat de maatregelen niet standhielden. Overweeg heropening of een nieuwe actie.",
+      "edit": "Details bewerken",
+      "editHeading": "Het dossier corrigeren",
+      "change": "Wijzigen",
+      "severityHeading": "Ernst",
+      "severityHint": "Correcties worden gelogd op de tijdlijn. De ernst wordt bevroren zodra een onderzoek is goedgekeurd."
     },
     "triage": {
       "heading": "Triage",
@@ -5811,7 +5823,8 @@
       "leadInvestigator": "Hoofdonderzoeker",
       "leadPlaceholder": "Kies de onderzoeker…",
       "confidential": "Vertrouwelijk — details alleen voor melder, onderzoeksteam en gemachtigden",
-      "confirm": "Triage bevestigen"
+      "confirm": "Triage bevestigen",
+      "levelFloorHint": "Ernst 'ernstig' of hoger (of een meldingsplichtige RIDDOR-bepaling) vereist een volledig onderzoek."
     },
     "people": {
       "heading": "Personen en verzuim",
@@ -5825,7 +5838,9 @@
       "absenceFrom": "Eerste verzuimdag",
       "absenceTo": "Laatste dag (leeg = lopend)",
       "addAbsence": "Verzuim vastleggen",
-      "addPerson": "Persoon toevoegen"
+      "addPerson": "Persoon toevoegen",
+      "removeConfirm": "Deze persoon uit het incident verwijderen? De letsel- en verzuimgegevens worden verwijderd; de verwijdering wordt gelogd.",
+      "removeAbsenceConfirm": "Deze verzuimperiode verwijderen? De verzuim- en RIDDOR-telling wordt herberekend."
     },
     "riddor": {
       "heading": "RIDDOR",
@@ -5884,7 +5899,9 @@
         "submitted": "Wacht op goedkeuring",
         "approved": "Goedgekeurd"
       },
-      "approvedBy": "Goedgekeurd door {name} · {date}"
+      "approvedBy": "Goedgekeurd door {name} · {date}",
+      "upgradeLevel": "Opwaarderen naar volledig",
+      "reassignLead": "Hoofdonderzoeker opnieuw toewijzen"
     },
     "findings": {
       "heading": "Bevindingen en corrigerende acties",
@@ -5947,7 +5964,11 @@
     },
     "timeline": {
       "heading": "Tijdlijn",
-      "system": "Systeem"
+      "system": "Systeem",
+      "revision": "revisie {revision}",
+      "soleManagerOverride": "uitzondering enige beheerder",
+      "actionCount": "{count} actie(s) aangemaakt",
+      "notifiedCount": "{count} ontvanger(s) geïnformeerd"
     },
     "events": {
       "reported": "Gemeld",
@@ -5980,7 +6001,8 @@
       "alert_sent": "Directe waarschuwing verzonden",
       "riddor_warning_sent": "RIDDOR-termijnwaarschuwing verzonden",
       "riddor_escalated": "RIDDOR-termijn geëscaleerd",
-      "promoted_from_observation": "Geëscaleerd vanuit observatie"
+      "promoted_from_observation": "Geëscaleerd vanuit observatie",
+      "investigation_level_changed": "Onderzoeksniveau gewijzigd"
     },
     "workspace": {
       "title": "Onderzoekswerkruimte",
@@ -6048,7 +6070,15 @@
       "assigneePlaceholder": "Kies verantwoordelijke…",
       "dueDate": "Einddatum",
       "confirmApprove": "Onderzoek goedkeuren",
-      "approvedNote": "Goedgekeurd door {name}. Deze revisie is bevroren."
+      "approvedNote": "Goedgekeurd door {name}. Deze revisie is bevroren.",
+      "uploadFailed": "Uploaden mislukt voor: {files}. De bestanden zijn NIET bijgevoegd — controleer grootte (max. 25 MB) en type en probeer opnieuw.",
+      "whyChainHeading": "Waarom-keten",
+      "causalFactorsHeading": "Oorzakelijke factoren",
+      "rootCauseMark": "kernoorzaak",
+      "assignAllHint": "Elke bevinding met een actie heeft een verantwoordelijke nodig voordat u kunt goedkeuren.",
+      "dueDateAutoHint": "Leeg gelaten volgt de vervaldatum de prioriteit van de bevinding.",
+      "soleManagerNotice": "U bent de hoofdonderzoeker of indiener van dit onderzoek. Uw eigen werk goedkeuren mag alleen als niemand anders in de organisatie de incidentbeheer-toestemming heeft — leg vast waarom u alleen tekent. De uitzondering wordt permanent gelogd.",
+      "soleManagerPlaceholder": "Waarom er geen onafhankelijke goedkeurder is…"
     },
     "observationCard": {
       "heading": "Incidenten",
@@ -6113,7 +6143,19 @@
       "risk-assessment-not-found": "Een geselecteerde risico-inventarisatie bestaat niet of is niet actief.",
       "coshh-assessment-not-found": "Een geselecteerde COSHH-beoordeling bestaat niet of is niet actief.",
       "fra-not-found": "Een geselecteerde brandrisicobeoordeling bestaat niet of is niet actief.",
-      "render-unavailable": "PDF-generatie is niet beschikbaar op deze omgeving."
+      "render-unavailable": "PDF-generatie is niet beschikbaar op deze omgeving.",
+      "investigation-level-below-floor": "De ernst (of RIDDOR-bepaling) vereist een volledig onderzoek — het niveau kan niet onder die ondergrens.",
+      "not-triaged": "Triageer het incident eerst.",
+      "investigation-content-exists": "Het niveau kan niet worden verlaagd zodra er onderzoekswerk bestaat.",
+      "finding-assignee-required": "Elke bevinding met een actie heeft vóór goedkeuring een verantwoordelijke nodig.",
+      "finding-due-date-required": "Stel voor elke aangemaakte actie een vervaldatum in.",
+      "sole-manager-justification-required": "Leg vast waarom u uw eigen onderzoek goedkeurt — de motivering is verplicht omdat er geen onafhankelijke goedkeurder is."
+    },
+    "evidence": {
+      "heading": "Bewijs & verklaringen",
+      "addFiles": "Foto's / bestanden toevoegen",
+      "none": "Nog geen bewijs. Foto's van de locatie verschijnen hier.",
+      "witness": "Getuige"
     }
   }
 }

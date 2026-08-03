@@ -1,0 +1,8 @@
+{
+  "subject": "RIDDOR-Frist in {daysLeft} — {referenceNumber}",
+  "preheader": "Ein meldepflichtiger Vorfall auf {productName} wurde noch nicht an die HSE übermittelt.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Der Vorfall {referenceNumber} wurde als RIDDOR-meldepflichtig eingestuft ({categoryLabel}) und noch nicht an die HSE übermittelt.\n\nGesetzliche Frist: {deadlineAt} UTC (noch {daysLeft}).\n\nReichen Sie die Meldung über das Online-Formular der HSE ein (bei tödlichen und bestimmten schweren Verletzungen telefonisch) und erfassen Sie anschließend die Einreichung am Vorfall, damit die Uhr stoppt.",
+  "cta": "Vorfall öffnen",
+  "footer": "Sie erhalten diese Nachricht, weil Ihnen dieser Vorfall gehört oder Sie in {productName} Berechtigungen für das Vorfallmanagement besitzen."
+}

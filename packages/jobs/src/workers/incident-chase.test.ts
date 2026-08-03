@@ -5,6 +5,9 @@
  *   - IN-J03: quiet when clean; idle investigations, overdue-action
  *     incidents and due effectiveness reviews bucket per owner; one
  *     email per owner.
+ *   - IN-J03c (HSE review IN-A2): a report still untriaged after
+ *     UNTRIAGED_CHASE_HOURS is chased to the manage holders; fresh
+ *     reports are left alone; untriaged lines lead the digest.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -190,5 +193,43 @@ describe('incident-chase', () => {
     expect(lena?.digest.idleInvestigations[0]).toContain('IN-000011');
     if (lena === undefined) throw new Error('missing lena digest');
     expect(chaseDetailLines(lena.digest)).toContain('IN-000011');
+  });
+
+  it('IN-J03c: untriaged reports chase the manage holders after the grace window (IN-A2)', async () => {
+    // Three days untriaged → chased. One hour old → left alone.
+    await seedIncident({
+      referenceNumber: 'IN-000021',
+      status: 'reported',
+      reportedAt: new Date(NOW.getTime() - 3 * DAY_MS),
+    });
+    await seedIncident({
+      referenceNumber: 'IN-000022',
+      status: 'reported',
+      reportedAt: new Date(NOW.getTime() - 3_600_000),
+    });
+    // An idle investigation for Lena too, so ordering is observable.
+    const idle = await seedIncident({ referenceNumber: 'IN-000023' });
+    await db.insert(schema.incidentInvestigations).values({
+      id: newId(),
+      tenantId,
+      incidentId: idle,
+      revision: 1,
+      status: 'draft',
+      updatedAt: new Date(NOW.getTime() - 20 * DAY_MS),
+    });
+
+    const result = await runIncidentChase(deps(), NOW);
+    // Both managers hold incidents.manage → both get the untriaged line.
+    expect(result.sent).toBe(2);
+    const lena = sent.find((s) => s.to.startsWith('lena-'));
+    const carl = sent.find((s) => s.to.startsWith('carl-'));
+    expect(lena?.digest.untriagedIncidents).toEqual(['IN-000021 — awaiting triage 3 day(s)']);
+    expect(carl?.digest.untriagedIncidents).toEqual(['IN-000021 — awaiting triage 3 day(s)']);
+    expect(JSON.stringify(sent)).not.toContain('IN-000022');
+    // Untriaged leads the rendered digest — it is the most urgent bucket.
+    if (lena === undefined) throw new Error('missing lena digest');
+    const lines = chaseDetailLines(lena.digest);
+    expect(lines.startsWith('IN-000021')).toBe(true);
+    expect(lines).toContain('IN-000023');
   });
 });

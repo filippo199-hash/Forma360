@@ -152,3 +152,51 @@ due effectiveness reviews — one email per owner, silent when clean.
   view+report because *everyone must be able to report*.
 - Severity freezes once an investigation is approved; `potentialSeverity`
   captures "nearly much worse" separately.
+
+## Amendment (3 Aug 2026) — practitioner-review hardening (IN-A findings)
+
+The four-practitioner review of the shipped module
+(`docs/reviews/incidents-hse-expert-review.md`) drove two decisions
+significant enough to live here; the full disposition is in
+`docs/reviews/incidents-hse-review-response.md`.
+
+### Decision 9 — Investigation depth binds to severity, both directions
+
+`defaultInvestigationLevel(severity, riddorReportable)` is now an
+enforced **floor**, not advice: triage refuses a level below it,
+submission re-checks it, and the level is no longer write-once —
+`setInvestigationLevel` upgrades any time before terminal status, and
+raising the severity or recording a reportable RIDDOR determination
+**auto-raises** a `basic` level to `full` (event-logged as
+`investigation_level_changed`). Downgrades are only possible while no
+investigation revision exists and never below the floor. Rationale: the
+depth of inquiry must not be discretionary at exactly the moments it
+matters (a fatality investigated at `basic` with no recorded root cause
+was possible before this).
+
+### Decision 10 — Separation of duties with a sole-manager escape hatch
+
+The approver still may not be the lead investigator or submitter — but
+when the server can prove no other active `incidents.manage` (or admin)
+holder exists in the tenant, the conflicted approver may proceed with a
+**mandatory justification**, recorded permanently on the
+`investigation_approved` event (`soleManagerOverride: true` + text) and
+printed in the PDF signature block. Rationale: a 40-person firm with one
+safety advisor otherwise deadlocks in `investigating`, which also blocks
+closure and the RIDDOR discharge; an audited, server-verified exception
+is honest where an unusable rule would be routed around. The eligibility
+check runs server-side against the live permission holders — the moment
+a second manager exists, the escape hatch closes itself.
+
+### Also locked in by the same review
+
+- The immediate alert is **notify-then-stamp with retries**: total
+  delivery failure throws (BullMQ backoff, 5 attempts) instead of
+  stamping `alertSentAt` over a lost fan-out (IN-A1 — the PF-1 failure
+  mode, eliminated in the one worker that cannot self-heal).
+- `create` derives a provisional severity from reporter judgement +
+  per-person hospitalisation (`provisionalSeverity`), so a serious
+  injury alerts at report time; untriaged reports get an overview
+  counter and a 48-hour chase to the manage holders.
+- The IN-J04 registry test asserts exact 1:1 between the template
+  directory and `EMAIL_TEMPLATES` in both directions.

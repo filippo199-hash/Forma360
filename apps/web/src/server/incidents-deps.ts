@@ -59,6 +59,13 @@ export const incidentsDeps: IncidentsRouterDeps = {
     ),
   sendEmail: sendTemplatedEmail,
   enqueueIncidentAlert: async (payload) => {
-    await getAlertQueue().add(QUEUE_NAMES.INCIDENT_ALERT, payload);
+    // IN-A1: the alert worker throws on total delivery failure so the
+    // fan-out is never silently lost — give BullMQ real retries.
+    // 5 attempts × exponential backoff from 60s ≈ 31 minutes of cover
+    // for a mail-provider outage.
+    await getAlertQueue().add(QUEUE_NAMES.INCIDENT_ALERT, payload, {
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 60_000 },
+    });
   },
 };

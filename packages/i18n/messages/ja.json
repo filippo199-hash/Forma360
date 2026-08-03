@@ -5556,7 +5556,8 @@
       "riddorDueSoon": "RIDDOR期限間近",
       "rescreenRequired": "再判定が必要",
       "investigating": "調査中",
-      "effectivenessOverdue": "有効性レビュー期限超過"
+      "effectivenessOverdue": "有効性レビュー期限超過",
+      "untriaged": "トリアージ待ち"
     },
     "list": {
       "report": "インシデントを報告",
@@ -5588,7 +5589,8 @@
         "site": "拠点",
         "occurred": "発生日",
         "riddor": "RIDDOR"
-      }
+      },
+      "exportFailed": "エクスポートに失敗しました。もう一度お試しください。"
     },
     "kinds": {
       "injury": "負傷",
@@ -5730,7 +5732,12 @@
       "addPhotos": "写真を撮る・選ぶ",
       "uploading": "アップロード中…",
       "uploadedCount": "{count} 件のファイルを添付。",
-      "done": "完了 — インシデントを開く"
+      "done": "完了 — インシデントを開く",
+      "severity": "結果の重大度は？",
+      "severityHint": "任意 — 判断できる場合に選択してください。入院があれば自動的に引き上げられ、最終値はトリアージで確定します。",
+      "uploadFailed": "アップロードに失敗しました: {files}。ファイルは添付されていません。サイズ（最大25MB）と形式を確認して再試行してください。",
+      "noPermission": "インシデントを報告する権限がありません。管理者に報告者ロールの付与を依頼してください。",
+      "backToRegister": "登録簿に戻る"
     },
     "details": {
       "device": "関与した器具・鋭利物",
@@ -5796,7 +5803,12 @@
       "potentialSeverity": "潜在重大度",
       "riddorOverdueBanner": "RIDDORの法定報告期限を過ぎており、提出記録がありません。直ちにHSEへ報告し、ここに記録してください。",
       "rescreenBanner": "累計休業が7日を超え、「報告不要」の判定と矛盾しています — RIDDOR判定を再実施してください。",
-      "notEffectiveBanner": "有効性レビューで対策が維持されていないことが判明しました。再開または新たな是正措置を検討してください。"
+      "notEffectiveBanner": "有効性レビューで対策が維持されていないことが判明しました。再開または新たな是正措置を検討してください。",
+      "edit": "詳細を編集",
+      "editHeading": "記録を修正",
+      "change": "変更",
+      "severityHeading": "重大度",
+      "severityHint": "修正はタイムラインに記録されます。調査が承認されると重大度は固定されます。"
     },
     "triage": {
       "heading": "トリアージ",
@@ -5811,7 +5823,8 @@
       "leadInvestigator": "調査責任者",
       "leadPlaceholder": "調査者を選択…",
       "confidential": "機密 — 詳細は報告者・調査チーム・権限者のみ",
-      "confirm": "トリアージを確定"
+      "confirm": "トリアージを確定",
+      "levelFloorHint": "重大以上の重大度（または報告対象のRIDDOR判定）の場合、完全調査が必須です。"
     },
     "people": {
       "heading": "被災者と休業日数",
@@ -5825,7 +5838,9 @@
       "absenceFrom": "休業開始日",
       "absenceTo": "休業最終日（空欄＝継続中）",
       "addAbsence": "休業を記録",
-      "addPerson": "人を追加"
+      "addPerson": "人を追加",
+      "removeConfirm": "この人物をインシデントから削除しますか？負傷・欠勤記録は削除され、削除操作は記録されます。",
+      "removeAbsenceConfirm": "この欠勤期間を削除しますか？休業日数とRIDDORの計算がやり直されます。"
     },
     "riddor": {
       "heading": "RIDDOR",
@@ -5884,7 +5899,9 @@
         "submitted": "承認待ち",
         "approved": "承認済み"
       },
-      "approvedBy": "{name} が承認 · {date}"
+      "approvedBy": "{name} が承認 · {date}",
+      "upgradeLevel": "完全調査へ引き上げ",
+      "reassignLead": "主任調査者を再割り当て"
     },
     "findings": {
       "heading": "所見と是正措置",
@@ -5947,7 +5964,11 @@
     },
     "timeline": {
       "heading": "タイムライン",
-      "system": "システム"
+      "system": "システム",
+      "revision": "リビジョン {revision}",
+      "soleManagerOverride": "単独管理者の特例",
+      "actionCount": "{count} 件のアクションを生成",
+      "notifiedCount": "{count} 名に通知"
     },
     "events": {
       "reported": "報告",
@@ -5980,7 +6001,8 @@
       "alert_sent": "即時アラートを送信",
       "riddor_warning_sent": "RIDDOR期限警告を送信",
       "riddor_escalated": "RIDDOR期限を上申",
-      "promoted_from_observation": "観察から昇格"
+      "promoted_from_observation": "観察から昇格",
+      "investigation_level_changed": "調査レベルを変更"
     },
     "workspace": {
       "title": "調査ワークスペース",
@@ -6048,7 +6070,15 @@
       "assigneePlaceholder": "担当者を選択…",
       "dueDate": "期限",
       "confirmApprove": "調査を承認",
-      "approvedNote": "{name} が承認。この版は凍結されました。"
+      "approvedNote": "{name} が承認。この版は凍結されました。",
+      "uploadFailed": "アップロードに失敗しました: {files}。ファイルは添付されていません。サイズ（最大25MB）と形式を確認して再試行してください。",
+      "whyChainHeading": "なぜなぜ分析",
+      "causalFactorsHeading": "原因要因",
+      "rootCauseMark": "根本原因",
+      "assignAllHint": "承認する前に、対応が必要なすべての所見に担当者を割り当ててください。",
+      "dueDateAutoHint": "空欄の場合、期限は所見の優先度に従います。",
+      "soleManagerNotice": "あなたはこの調査の主任調査者または提出者です。組織内に他にインシデント管理権限を持つ人がいない場合に限り、自身の調査を承認できます。単独で署名する理由を記録してください。この特例は恒久的に記録されます。",
+      "soleManagerPlaceholder": "独立した承認者がいない理由…"
     },
     "observationCard": {
       "heading": "インシデント",
@@ -6113,7 +6143,19 @@
       "risk-assessment-not-found": "選択したリスクアセスメントが存在しないか有効ではありません。",
       "coshh-assessment-not-found": "選択したCOSHH評価が存在しないか有効ではありません。",
       "fra-not-found": "選択した防火リスク評価が存在しないか有効ではありません。",
-      "render-unavailable": "この環境ではPDF生成を利用できません。"
+      "render-unavailable": "この環境ではPDF生成を利用できません。",
+      "investigation-level-below-floor": "重大度（またはRIDDOR判定）により完全調査が必須です。レベルをその下限より下げることはできません。",
+      "not-triaged": "先にインシデントのトリアージを行ってください。",
+      "investigation-content-exists": "調査作業が存在する場合、レベルを引き下げることはできません。",
+      "finding-assignee-required": "承認前に、対応が必要なすべての所見へ担当者を割り当ててください。",
+      "finding-due-date-required": "生成される各アクションに期限を設定してください。",
+      "sole-manager-justification-required": "自身の調査を承認する理由を記録してください。独立した承認者が存在しないため、理由の記載が必須です。"
+    },
+    "evidence": {
+      "heading": "証拠・供述",
+      "addFiles": "写真・ファイルを追加",
+      "none": "まだ証拠がありません。現場で撮影した写真がここに表示されます。",
+      "witness": "証人"
     }
   }
 }

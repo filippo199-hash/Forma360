@@ -171,14 +171,10 @@ describe('incidents router', () => {
       requiresAction: true,
     });
     await manager.incidents.submitInvestigation({ incidentId: id });
+    // IN-A6: every action-bearing finding needs an owner at approval.
     const result = await callerFor(adminId).incidents.approveInvestigation({
       incidentId: id,
-      assignments: [
-        {
-          findingId: finding.findingId,
-          ...(assignee !== undefined ? { assigneeUserId: assignee } : {}),
-        },
-      ],
+      assignments: [{ findingId: finding.findingId, assigneeUserId: assignee ?? standardId }],
     });
     const actionId = result.generatedActionIds[0];
     if (actionId === undefined) throw new Error('no action generated');
@@ -442,7 +438,10 @@ describe('incidents router', () => {
       createdBy: adminId,
     });
 
-    await callerFor(adminId).incidents.approveInvestigation({ incidentId: id, assignments: [] });
+    await callerFor(adminId).incidents.approveInvestigation({
+      incidentId: id,
+      assignments: [{ findingId: finding.findingId, assigneeUserId: standardId }],
+    });
     const rows = await db
       .select({ id: schema.actions.id })
       .from(schema.actions)
@@ -467,6 +466,85 @@ describe('incidents router', () => {
     ).rejects.toMatchObject({ message: 'approver-is-investigator' });
     // A different manage-holder can approve.
     await callerFor(adminId).incidents.approveInvestigation({ incidentId: id, assignments: [] });
+  });
+
+  it('IN-A6: approval refuses action-bearing findings without an owner or due date', async () => {
+    const id = await investigatedIncident();
+    const manager = callerFor(managerId);
+    const finding = await manager.incidents.addFinding({
+      incidentId: id,
+      category: 'procedure',
+      priority: 'medium',
+      description: 'Rewrite the isolation procedure',
+      requiresAction: true,
+    });
+    await manager.incidents.submitInvestigation({ incidentId: id });
+    // Untouched findings (scrolled past in the dialog) refuse the whole
+    // approval — no orphan actions the chase digest can never chase.
+    await expect(
+      callerFor(adminId).incidents.approveInvestigation({ incidentId: id, assignments: [] }),
+    ).rejects.toMatchObject({ message: 'finding-assignee-required' });
+    await expect(
+      callerFor(adminId).incidents.approveInvestigation({
+        incidentId: id,
+        assignments: [{ findingId: finding.findingId }],
+      }),
+    ).rejects.toMatchObject({ message: 'finding-assignee-required' });
+    // Complete assignment goes through and the action carries both.
+    const approved = await callerFor(adminId).incidents.approveInvestigation({
+      incidentId: id,
+      assignments: [{ findingId: finding.findingId, assigneeUserId: standardId }],
+    });
+    expect(approved.generatedActionIds).toHaveLength(1);
+    const action = await callerFor(adminId).actions.get({
+      actionId: approved.generatedActionIds[0] ?? '',
+    });
+    expect(action.action.assigneeUserId).toBe(standardId);
+    expect(action.action.dueAt).not.toBeNull();
+  });
+
+  it('IN-A8: a sole-manager tenant approves with a logged justification', async () => {
+    const id = await investigatedIncident();
+    const manager = callerFor(managerId);
+    const finding = await manager.incidents.addFinding({
+      incidentId: id,
+      category: 'equipment_guarding',
+      priority: 'high',
+      description: 'Fit interlock monitoring',
+      requiresAction: true,
+    });
+    await manager.incidents.submitInvestigation({ incidentId: id });
+    const assignments = [{ findingId: finding.findingId, assigneeUserId: standardId }];
+    // While an independent manage-holder exists (the admin), the
+    // conflicted manager stays refused — justification or not.
+    await expect(
+      manager.incidents.approveInvestigation({
+        incidentId: id,
+        assignments,
+        soleManagerJustification: 'Only manager on site.',
+      }),
+    ).rejects.toMatchObject({ message: 'approver-is-investigator' });
+    // Remove the alternative: deactivate the admin → manager is the
+    // tenant's only active incidents.manage holder.
+    await db
+      .update(schema.user)
+      .set({ deactivatedAt: new Date() })
+      .where(eq(schema.user.id, adminId));
+    // The override demands a justification…
+    await expect(
+      manager.incidents.approveInvestigation({ incidentId: id, assignments }),
+    ).rejects.toMatchObject({ message: 'sole-manager-justification-required' });
+    // …and with one, the approval completes and the record shows it.
+    await manager.incidents.approveInvestigation({
+      incidentId: id,
+      assignments,
+      soleManagerJustification:
+        'Sole incidents manager in this firm; no independent approver exists.',
+    });
+    const detail = await manager.incidents.get({ incidentId: id });
+    expect(detail.incident.status).toBe('actions_outstanding');
+    const approval = detail.events.find((e) => e.kind === 'investigation_approved');
+    expect(approval?.detail).toMatchObject({ soleManagerOverride: true });
   });
 
   it('IN-E12b: only the lead investigator submits', async () => {
@@ -862,6 +940,66 @@ describe('incidents router', () => {
     ).rejects.toMatchObject({ message: 'severity-frozen' });
   });
 
+  it('IN-A3: triage refuses a basic level below the severity floor', async () => {
+    const id = await reportIncident();
+    await expect(
+      callerFor(adminId).incidents.triage({
+        incidentId: id,
+        severity: 'serious',
+        investigationLevel: 'basic',
+        leadInvestigatorUserId: managerId,
+      }),
+    ).rejects.toMatchObject({ message: 'investigation-level-below-floor' });
+    // Same judgement with the mandated level goes through.
+    await callerFor(adminId).incidents.triage({
+      incidentId: id,
+      severity: 'serious',
+      investigationLevel: 'full',
+      leadInvestigatorUserId: managerId,
+    });
+  });
+
+  it('IN-A3b: raising severity or a reportable screening auto-raises a basic level', async () => {
+    const admin = callerFor(adminId);
+    // Severity path.
+    const bySeverity = await triagedIncident({ severity: 'minor', level: 'basic' });
+    await admin.incidents.setSeverity({ incidentId: bySeverity, severity: 'major' });
+    const afterSeverity = await admin.incidents.get({ incidentId: bySeverity });
+    expect(afterSeverity.incident.investigationLevel).toBe('full');
+    // RIDDOR path.
+    const byRiddor = await triagedIncident({ severity: 'minor', level: 'basic' });
+    await admin.incidents.riddorScreen({
+      incidentId: byRiddor,
+      category: 'over_7_day',
+      determinationNote: 'Nine days lost — reportable.',
+    });
+    const afterScreen = await admin.incidents.get({ incidentId: byRiddor });
+    expect(afterScreen.incident.investigationLevel).toBe('full');
+    // The level-change events are on the record.
+    const kinds = afterScreen.events.map((e) => e.kind);
+    expect(kinds).toContain('investigation_level_changed');
+  });
+
+  it('IN-A3b: explicit level change — upgrade freely, downgrade only clean and above floor', async () => {
+    const admin = callerFor(adminId);
+    const id = await triagedIncident({ severity: 'minor', level: 'basic' });
+    // Upgrade any time.
+    await admin.incidents.setInvestigationLevel({ incidentId: id, level: 'full' });
+    // Downgrade while nothing has been written and the floor allows it.
+    await admin.incidents.setInvestigationLevel({ incidentId: id, level: 'basic' });
+    // Once investigation content exists, no downgrade.
+    await admin.incidents.setInvestigationLevel({ incidentId: id, level: 'full' });
+    await callerFor(managerId).incidents.startInvestigation({ incidentId: id });
+    await expect(
+      admin.incidents.setInvestigationLevel({ incidentId: id, level: 'basic' }),
+    ).rejects.toMatchObject({ message: 'investigation-content-exists' });
+    // And never below the floor: a serious incident refuses basic outright.
+    const serious = await triagedIncident({ severity: 'serious', level: 'full' });
+    await expect(
+      admin.incidents.setInvestigationLevel({ incidentId: serious, level: 'basic' }),
+    ).rejects.toMatchObject({ message: 'investigation-level-below-floor' });
+  });
+
   it('full-level investigations demand an RCA method and root cause at submit', async () => {
     const id = await triagedIncident({ severity: 'serious', level: 'full' });
     const manager = callerFor(managerId);
@@ -941,6 +1079,59 @@ describe('incidents router', () => {
       leadInvestigatorUserId: managerId,
     });
     expect(enqueued).toHaveLength(2);
+
+    // IN-A2: a hospital admission on the report floors the provisional
+    // severity at serious → the alert fires at create, before triage.
+    const admitted = await caller.incidents.create({
+      title: 'Fall from ladder',
+      kind: 'injury',
+      occurredAt: occurredYesterday(),
+      persons: [
+        {
+          name: 'Paul Painter',
+          category: 'employee',
+          injury: { bodyParts: ['head'], injuryKinds: ['fracture'], hospitalisation: 'admitted' },
+        },
+      ],
+    });
+    expect(enqueued).toHaveLength(3);
+    const admittedRow = await caller.incidents.get({ incidentId: admitted.incidentId });
+    expect(admittedRow.incident.severity).toBe('serious');
+
+    // Reporter's explicit judgement also arms the alert.
+    await caller.incidents.create({
+      title: 'Amputation at press',
+      kind: 'injury',
+      occurredAt: occurredYesterday(),
+      severity: 'major',
+    });
+    expect(enqueued).toHaveLength(4);
+
+    // A&E floors moderate — visible, but not alert-worthy on its own.
+    const ae = await caller.incidents.create({
+      title: 'Sprained wrist',
+      kind: 'injury',
+      occurredAt: occurredYesterday(),
+      persons: [{ name: 'Wes Worker', category: 'employee', injury: { hospitalisation: 'ae' } }],
+    });
+    expect(enqueued).toHaveLength(4);
+    const aeRow = await caller.incidents.get({ incidentId: ae.incidentId });
+    expect(aeRow.incident.severity).toBe('moderate');
+  });
+
+  it('IN-A2: overview counts untriaged reports separately', async () => {
+    await reportIncident({ title: 'Untriaged one' });
+    await reportIncident({ title: 'Untriaged two' });
+    const triaged = await reportIncident({ title: 'Triaged' });
+    await callerFor(adminId).incidents.triage({
+      incidentId: triaged,
+      severity: 'minor',
+      investigationLevel: 'basic',
+      leadInvestigatorUserId: managerId,
+    });
+    const overview = await callerFor(adminId).incidents.overview();
+    expect(overview.untriaged).toBe(2);
+    expect(overview.open).toBe(3);
   });
 
   it('csv export redacts confidential rows and counts days lost', async () => {

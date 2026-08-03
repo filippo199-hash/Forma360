@@ -1,0 +1,8 @@
+{
+  "subject": "Prazo RIDDOR ULTRAPASSADO — {referenceNumber} está em atraso",
+  "preheader": "Um incidente de comunicação obrigatória em {productName} ultrapassou o prazo legal de comunicação.",
+  "greeting": "Olá, {recipientName},",
+  "body": "O prazo legal de comunicação do incidente {referenceNumber} ({categoryLabel}) terminou em {deadlineAt} UTC e não foi registada nenhuma submissão.\n\nNão comunicar um incidente abrangido pelo RIDDOR constitui uma infração. Submeta a comunicação à HSE imediatamente e registe a submissão no incidente — o registo de uma comunicação tardia continua a ser melhor do que nenhum.",
+  "cta": "Abrir o incidente",
+  "footer": "Está a receber esta mensagem porque este incidente é seu ou possui permissões de gestão de incidentes em {productName}."
+}

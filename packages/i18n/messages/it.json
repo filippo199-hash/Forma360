@@ -5598,7 +5598,8 @@
       "riddorDueSoon": "RIDDOR in scadenza",
       "rescreenRequired": "rivalutazione necessaria",
       "investigating": "in indagine",
-      "effectivenessOverdue": "verifiche di efficacia dovute"
+      "effectivenessOverdue": "verifiche di efficacia dovute",
+      "untriaged": "in attesa di triage"
     },
     "list": {
       "report": "Segnala incidente",
@@ -5630,7 +5631,8 @@
         "site": "Sito",
         "occurred": "Avvenuto",
         "riddor": "RIDDOR"
-      }
+      },
+      "exportFailed": "Esportazione non riuscita — riprova."
     },
     "kinds": {
       "injury": "Infortunio",
@@ -5772,7 +5774,12 @@
       "addPhotos": "Scatta o scegli foto",
       "uploading": "Caricamento…",
       "uploadedCount": "{count} file allegato/i.",
-      "done": "Fatto — apri l'incidente"
+      "done": "Fatto — apri l'incidente",
+      "severity": "Quanto è stato grave l'esito?",
+      "severityHint": "Facoltativo — scegli se sai valutarlo. Un ricovero la alza automaticamente e il triage fissa il valore definitivo.",
+      "uploadFailed": "Caricamento non riuscito per: {files}. I file NON sono allegati — controlla dimensione (max 25 MB) e tipo, poi riprova.",
+      "noPermission": "Non hai il permesso di segnalare incidenti. Chiedi a un amministratore il ruolo di segnalatore.",
+      "backToRegister": "Torna al registro"
     },
     "details": {
       "device": "Dispositivo / oggetto tagliente",
@@ -5838,7 +5845,12 @@
       "potentialSeverity": "Gravità potenziale",
       "riddorOverdueBanner": "Il termine di legge RIDDOR è scaduto senza che risulti l'invio. Notifica subito all'HSE e registralo qui.",
       "rescreenBanner": "L'assenza cumulata ha superato i 7 giorni contro una decisione «non notificabile» — rivaluta la decisione RIDDOR.",
-      "notEffectiveBanner": "La verifica di efficacia mostra che i controlli non hanno tenuto. Valuta la riapertura o una nuova azione."
+      "notEffectiveBanner": "La verifica di efficacia mostra che i controlli non hanno tenuto. Valuta la riapertura o una nuova azione.",
+      "edit": "Modifica dettagli",
+      "editHeading": "Correggi la scheda",
+      "change": "Cambia",
+      "severityHeading": "Gravità",
+      "severityHint": "Le correzioni sono registrate nella cronologia. La gravità si blocca all'approvazione di un'indagine."
     },
     "triage": {
       "heading": "Triage",
@@ -5853,7 +5865,8 @@
       "leadInvestigator": "Responsabile dell'indagine",
       "leadPlaceholder": "Scegli il responsabile…",
       "confidential": "Riservato — dettagli visibili solo a chi segnala, al team d'indagine e agli autorizzati",
-      "confirm": "Conferma triage"
+      "confirm": "Conferma triage",
+      "levelFloorHint": "Una gravità seria o superiore (o una determinazione RIDDOR soggetta a notifica) impone un'indagine completa."
     },
     "people": {
       "heading": "Persone e giorni persi",
@@ -5867,7 +5880,9 @@
       "absenceFrom": "Primo giorno di assenza",
       "absenceTo": "Ultimo giorno (vuoto = in corso)",
       "addAbsence": "Registra assenza",
-      "addPerson": "Aggiungi persona"
+      "addPerson": "Aggiungi persona",
+      "removeConfirm": "Rimuovere questa persona dall'incidente? I suoi dati di lesione e assenza saranno eliminati; la rimozione è registrata.",
+      "removeAbsenceConfirm": "Rimuovere questo periodo di assenza? Il conteggio dei giorni persi e RIDDOR sarà ricalcolato."
     },
     "riddor": {
       "heading": "RIDDOR",
@@ -5926,7 +5941,9 @@
         "submitted": "In attesa di approvazione",
         "approved": "Approvata"
       },
-      "approvedBy": "Approvata da {name} · {date}"
+      "approvedBy": "Approvata da {name} · {date}",
+      "upgradeLevel": "Passa a completa",
+      "reassignLead": "Riassegna investigatore capo"
     },
     "findings": {
       "heading": "Rilievi e azioni correttive",
@@ -5989,7 +6006,11 @@
     },
     "timeline": {
       "heading": "Cronologia",
-      "system": "Sistema"
+      "system": "Sistema",
+      "revision": "revisione {revision}",
+      "soleManagerOverride": "deroga gestore unico",
+      "actionCount": "{count} azione/i generate",
+      "notifiedCount": "{count} destinatario/i avvisati"
     },
     "events": {
       "reported": "Segnalato",
@@ -6022,7 +6043,8 @@
       "alert_sent": "Allerta immediata inviata",
       "riddor_warning_sent": "Avviso scadenza RIDDOR inviato",
       "riddor_escalated": "Scadenza RIDDOR escalata",
-      "promoted_from_observation": "Escalato da osservazione"
+      "promoted_from_observation": "Escalato da osservazione",
+      "investigation_level_changed": "Livello d'indagine modificato"
     },
     "workspace": {
       "title": "Area di lavoro dell'indagine",
@@ -6090,7 +6112,15 @@
       "assigneePlaceholder": "Scegli l'assegnatario…",
       "dueDate": "Scadenza",
       "confirmApprove": "Approva indagine",
-      "approvedNote": "Approvata da {name}. Questa revisione è congelata."
+      "approvedNote": "Approvata da {name}. Questa revisione è congelata.",
+      "uploadFailed": "Caricamento non riuscito per: {files}. I file NON sono allegati — controlla dimensione (max 25 MB) e tipo, poi riprova.",
+      "whyChainHeading": "Catena dei perché",
+      "causalFactorsHeading": "Fattori causali",
+      "rootCauseMark": "causa radice",
+      "assignAllHint": "Ogni rilievo che genera un'azione richiede un assegnatario prima dell'approvazione.",
+      "dueDateAutoHint": "Se lasciata vuota, la scadenza segue la priorità del rilievo.",
+      "soleManagerNotice": "Sei l'investigatore capo o chi ha inviato questa indagine. Approvare il proprio lavoro è consentito solo quando nessun altro nell'organizzazione possiede il permesso di gestione degli incidenti — spiega perché firmi da solo. La deroga è registrata in modo permanente.",
+      "soleManagerPlaceholder": "Perché non esiste un approvatore indipendente…"
     },
     "observationCard": {
       "heading": "Incidenti",
@@ -6155,7 +6185,19 @@
       "risk-assessment-not-found": "Una valutazione dei rischi selezionata non esiste o non è attiva.",
       "coshh-assessment-not-found": "Una valutazione COSHH selezionata non esiste o non è attiva.",
       "fra-not-found": "Una valutazione antincendio selezionata non esiste o non è attiva.",
-      "render-unavailable": "La generazione PDF non è disponibile su questa installazione."
+      "render-unavailable": "La generazione PDF non è disponibile su questa installazione.",
+      "investigation-level-below-floor": "La gravità (o la determinazione RIDDOR) impone un'indagine completa — il livello non può scendere sotto quella soglia.",
+      "not-triaged": "Esegui prima il triage dell'incidente.",
+      "investigation-content-exists": "Il livello non può essere abbassato una volta che esiste lavoro d'indagine.",
+      "finding-assignee-required": "Ogni rilievo che genera un'azione richiede un assegnatario prima dell'approvazione.",
+      "finding-due-date-required": "Imposta una scadenza per ogni azione generata.",
+      "sole-manager-justification-required": "Spiega perché stai approvando la tua stessa indagine — la giustificazione è obbligatoria perché non esiste un approvatore indipendente."
+    },
+    "evidence": {
+      "heading": "Prove e dichiarazioni",
+      "addFiles": "Aggiungi foto / file",
+      "none": "Ancora nessuna prova. Le foto scattate sul posto compaiono qui.",
+      "witness": "Testimone"
     }
   }
 }

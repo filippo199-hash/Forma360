@@ -5556,7 +5556,8 @@
       "riddorDueSoon": "RIDDOR wkrótce",
       "rescreenRequired": "wymagana ponowna ocena",
       "investigating": "w toku dochodzenia",
-      "effectivenessOverdue": "przeglądy skuteczności zaległe"
+      "effectivenessOverdue": "przeglądy skuteczności zaległe",
+      "untriaged": "oczekują na ocenę"
     },
     "list": {
       "report": "Zgłoś zdarzenie",
@@ -5588,7 +5589,8 @@
         "site": "Lokalizacja",
         "occurred": "Data zdarzenia",
         "riddor": "RIDDOR"
-      }
+      },
+      "exportFailed": "Eksport nie powiódł się — spróbuj ponownie."
     },
     "kinds": {
       "injury": "Uraz",
@@ -5730,7 +5732,12 @@
       "addPhotos": "Zrób lub wybierz zdjęcia",
       "uploading": "Przesyłanie…",
       "uploadedCount": "Załączono plików: {count}.",
-      "done": "Gotowe — otwórz zdarzenie"
+      "done": "Gotowe — otwórz zdarzenie",
+      "severity": "Jak poważny był skutek?",
+      "severityHint": "Opcjonalnie — wybierz, jeśli potrafisz ocenić. Przyjęcie do szpitala podnosi ją automatycznie, a ocena ustala wartość ostateczną.",
+      "uploadFailed": "Przesyłanie nie powiodło się dla: {files}. Pliki NIE zostały dołączone — sprawdź rozmiar (maks. 25 MB) i typ, po czym spróbuj ponownie.",
+      "noPermission": "Nie masz uprawnień do zgłaszania zdarzeń. Poproś administratora o rolę zgłaszającego.",
+      "backToRegister": "Wróć do rejestru"
     },
     "details": {
       "device": "Narzędzie / ostry przedmiot",
@@ -5796,7 +5803,12 @@
       "potentialSeverity": "Potencjalna ciężkość",
       "riddorOverdueBanner": "Ustawowy termin zgłoszenia RIDDOR minął bez odnotowanego zgłoszenia. Zgłoś do HSE teraz i odnotuj to tutaj.",
       "rescreenBanner": "Łączna absencja przekroczyła 7 dni wbrew decyzji „niepodlegające zgłoszeniu” — ponów ocenę RIDDOR.",
-      "notEffectiveBanner": "Przegląd skuteczności wykazał, że środki nie zadziałały. Rozważ wznowienie zdarzenia lub nowe działanie."
+      "notEffectiveBanner": "Przegląd skuteczności wykazał, że środki nie zadziałały. Rozważ wznowienie zdarzenia lub nowe działanie.",
+      "edit": "Edytuj szczegóły",
+      "editHeading": "Popraw zapis",
+      "change": "Zmień",
+      "severityHeading": "Powaga",
+      "severityHint": "Poprawki są zapisywane na osi czasu. Powaga zostaje zamrożona po zatwierdzeniu postępowania."
     },
     "triage": {
       "heading": "Triaż",
@@ -5811,7 +5823,8 @@
       "leadInvestigator": "Prowadzący dochodzenie",
       "leadPlaceholder": "Wybierz prowadzącego…",
       "confidential": "Poufne — szczegóły tylko dla zgłaszającego, zespołu dochodzeniowego i uprawnionych",
-      "confirm": "Zatwierdź triaż"
+      "confirm": "Zatwierdź triaż",
+      "levelFloorHint": "Powaga „poważna” lub wyższa (lub podlegające zgłoszeniu ustalenie RIDDOR) wymaga pełnego postępowania."
     },
     "people": {
       "heading": "Osoby i dni stracone",
@@ -5825,7 +5838,9 @@
       "absenceFrom": "Pierwszy dzień absencji",
       "absenceTo": "Ostatni dzień (puste = trwa)",
       "addAbsence": "Zarejestruj absencję",
-      "addPerson": "Dodaj osobę"
+      "addPerson": "Dodaj osobę",
+      "removeConfirm": "Usunąć tę osobę ze zdarzenia? Jej dane o urazie i nieobecnościach zostaną usunięte; usunięcie jest rejestrowane.",
+      "removeAbsenceConfirm": "Usunąć ten okres nieobecności? Liczenie dni straconych i RIDDOR zostanie przeliczone."
     },
     "riddor": {
       "heading": "RIDDOR",
@@ -5884,7 +5899,9 @@
         "submitted": "Czeka na zatwierdzenie",
         "approved": "Zatwierdzone"
       },
-      "approvedBy": "Zatwierdził(a) {name} · {date}"
+      "approvedBy": "Zatwierdził(a) {name} · {date}",
+      "upgradeLevel": "Podnieś do pełnego",
+      "reassignLead": "Zmień głównego badającego"
     },
     "findings": {
       "heading": "Ustalenia i działania korygujące",
@@ -5947,7 +5964,11 @@
     },
     "timeline": {
       "heading": "Oś czasu",
-      "system": "System"
+      "system": "System",
+      "revision": "wersja {revision}",
+      "soleManagerOverride": "odstępstwo jedynego zarządzającego",
+      "actionCount": "wygenerowano {count} działanie/działań",
+      "notifiedCount": "powiadomiono {count} odbiorcę/odbiorców"
     },
     "events": {
       "reported": "Zgłoszono",
@@ -5980,7 +6001,8 @@
       "alert_sent": "Wysłano pilny alert",
       "riddor_warning_sent": "Wysłano ostrzeżenie o terminie RIDDOR",
       "riddor_escalated": "Eskalowano termin RIDDOR",
-      "promoted_from_observation": "Eskalowano z obserwacji"
+      "promoted_from_observation": "Eskalowano z obserwacji",
+      "investigation_level_changed": "Zmieniono poziom postępowania"
     },
     "workspace": {
       "title": "Obszar roboczy dochodzenia",
@@ -6048,7 +6070,15 @@
       "assigneePlaceholder": "Wybierz osobę…",
       "dueDate": "Termin",
       "confirmApprove": "Zatwierdź dochodzenie",
-      "approvedNote": "Zatwierdził(a) {name}. Ta wersja jest zamrożona."
+      "approvedNote": "Zatwierdził(a) {name}. Ta wersja jest zamrożona.",
+      "uploadFailed": "Przesyłanie nie powiodło się dla: {files}. Pliki NIE zostały dołączone — sprawdź rozmiar (maks. 25 MB) i typ, po czym spróbuj ponownie.",
+      "whyChainHeading": "Łańcuch pytań „dlaczego”",
+      "causalFactorsHeading": "Czynniki przyczynowe",
+      "rootCauseMark": "przyczyna źródłowa",
+      "assignAllHint": "Każde ustalenie generujące działanie wymaga osoby odpowiedzialnej przed zatwierdzeniem.",
+      "dueDateAutoHint": "Pozostawiona pusta data wynika z priorytetu ustalenia.",
+      "soleManagerNotice": "Jesteś głównym badającym lub osobą, która złożyła to postępowanie. Zatwierdzenie własnej pracy jest dozwolone tylko wtedy, gdy nikt inny w organizacji nie ma uprawnień do zarządzania zdarzeniami — zapisz, dlaczego podpisujesz samodzielnie. Odstępstwo jest trwale rejestrowane.",
+      "soleManagerPlaceholder": "Dlaczego nie ma niezależnego zatwierdzającego…"
     },
     "observationCard": {
       "heading": "Zdarzenia",
@@ -6113,7 +6143,19 @@
       "risk-assessment-not-found": "Wybrana ocena ryzyka nie istnieje lub jest nieaktywna.",
       "coshh-assessment-not-found": "Wybrana ocena COSHH nie istnieje lub jest nieaktywna.",
       "fra-not-found": "Wybrana ocena ppoż. nie istnieje lub jest nieaktywna.",
-      "render-unavailable": "Generowanie PDF jest niedostępne w tym wdrożeniu."
+      "render-unavailable": "Generowanie PDF jest niedostępne w tym wdrożeniu.",
+      "investigation-level-below-floor": "Powaga (lub ustalenie RIDDOR) wymaga pełnego postępowania — poziom nie może zejść poniżej tego progu.",
+      "not-triaged": "Najpierw wykonaj ocenę zdarzenia.",
+      "investigation-content-exists": "Poziomu nie można obniżyć, gdy istnieje już praca dochodzeniowa.",
+      "finding-assignee-required": "Każde ustalenie generujące działanie wymaga osoby odpowiedzialnej przed zatwierdzeniem.",
+      "finding-due-date-required": "Ustaw termin dla każdego wygenerowanego działania.",
+      "sole-manager-justification-required": "Zapisz, dlaczego zatwierdzasz własne postępowanie — uzasadnienie jest wymagane, bo nie ma niezależnego zatwierdzającego."
+    },
+    "evidence": {
+      "heading": "Dowody i zeznania",
+      "addFiles": "Dodaj zdjęcia / pliki",
+      "none": "Brak dowodów. Zdjęcia z miejsca zdarzenia pojawią się tutaj.",
+      "witness": "Świadek"
     }
   }
 }

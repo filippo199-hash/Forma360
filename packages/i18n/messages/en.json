@@ -5791,7 +5791,8 @@
       "riddorDueSoon": "RIDDOR due soon",
       "rescreenRequired": "re-screen needed",
       "investigating": "under investigation",
-      "effectivenessOverdue": "effectiveness reviews due"
+      "effectivenessOverdue": "effectiveness reviews due",
+      "untriaged": "awaiting triage"
     },
     "list": {
       "report": "Report incident",
@@ -5823,7 +5824,8 @@
         "site": "Site",
         "occurred": "Occurred",
         "riddor": "RIDDOR"
-      }
+      },
+      "exportFailed": "Export failed — try again."
     },
     "kinds": {
       "injury": "Injury",
@@ -5965,7 +5967,12 @@
       "addPhotos": "Take or choose photos",
       "uploading": "Uploading…",
       "uploadedCount": "{count} file(s) attached.",
-      "done": "Done — open the incident"
+      "done": "Done — open the incident",
+      "severity": "How serious was the outcome?",
+      "severityHint": "Optional — pick one if you can judge it. A hospital admission raises it automatically, and triage still sets the final value.",
+      "uploadFailed": "Upload failed for: {files}. The files are NOT attached — check the size (max 25 MB) and type, then try again.",
+      "noPermission": "You don't have permission to report incidents. Ask an administrator to grant the reporter role.",
+      "backToRegister": "Back to the register"
     },
     "details": {
       "device": "Device / sharp involved",
@@ -6031,7 +6038,12 @@
       "potentialSeverity": "Potential severity",
       "riddorOverdueBanner": "The statutory RIDDOR reporting deadline has passed and no submission has been recorded. Submit to the HSE now and record it here.",
       "rescreenBanner": "Accumulated absence has crossed 7 days against a not-reportable determination — re-screen the RIDDOR decision.",
-      "notEffectiveBanner": "The effectiveness review found the controls did not hold. Consider reopening the incident or raising a new action."
+      "notEffectiveBanner": "The effectiveness review found the controls did not hold. Consider reopening the incident or raising a new action.",
+      "edit": "Edit details",
+      "editHeading": "Correct the record",
+      "change": "Change",
+      "severityHeading": "Severity",
+      "severityHint": "Corrections are logged on the timeline. Severity freezes once an investigation is approved."
     },
     "triage": {
       "heading": "Triage",
@@ -6046,7 +6058,8 @@
       "leadInvestigator": "Lead investigator",
       "leadPlaceholder": "Choose the investigator…",
       "confidential": "Confidential — detail restricted to the reporter, the investigation team and confidential-access holders",
-      "confirm": "Confirm triage"
+      "confirm": "Confirm triage",
+      "levelFloorHint": "Serious-or-above severity (or a reportable RIDDOR determination) mandates a full investigation."
     },
     "people": {
       "heading": "People & lost time",
@@ -6060,7 +6073,9 @@
       "absenceFrom": "First day off",
       "absenceTo": "Last day off (empty = ongoing)",
       "addAbsence": "Record absence",
-      "addPerson": "Add person"
+      "addPerson": "Add person",
+      "removeConfirm": "Remove this person from the incident? Their injury and absence records will be deleted; the removal is logged.",
+      "removeAbsenceConfirm": "Remove this absence period? Lost-time and RIDDOR counting will be recalculated."
     },
     "riddor": {
       "heading": "RIDDOR",
@@ -6119,7 +6134,9 @@
         "submitted": "Awaiting approval",
         "approved": "Approved"
       },
-      "approvedBy": "Approved by {name} · {date}"
+      "approvedBy": "Approved by {name} · {date}",
+      "upgradeLevel": "Upgrade to full",
+      "reassignLead": "Reassign lead investigator"
     },
     "findings": {
       "heading": "Findings & corrective actions",
@@ -6182,7 +6199,11 @@
     },
     "timeline": {
       "heading": "Timeline",
-      "system": "System"
+      "system": "System",
+      "revision": "revision {revision}",
+      "soleManagerOverride": "sole-manager override",
+      "actionCount": "{count} action(s) generated",
+      "notifiedCount": "{count} recipient(s) notified"
     },
     "events": {
       "reported": "Reported",
@@ -6215,7 +6236,8 @@
       "alert_sent": "Immediate alert sent",
       "riddor_warning_sent": "RIDDOR deadline warning sent",
       "riddor_escalated": "RIDDOR deadline escalated",
-      "promoted_from_observation": "Escalated from observation"
+      "promoted_from_observation": "Escalated from observation",
+      "investigation_level_changed": "Investigation level changed"
     },
     "workspace": {
       "title": "Investigation workspace",
@@ -6283,7 +6305,15 @@
       "assigneePlaceholder": "Choose assignee…",
       "dueDate": "Due date",
       "confirmApprove": "Approve investigation",
-      "approvedNote": "Approved by {name}. This revision is frozen."
+      "approvedNote": "Approved by {name}. This revision is frozen.",
+      "uploadFailed": "Upload failed for: {files}. The files are NOT attached — check the size (max 25 MB) and type, then try again.",
+      "whyChainHeading": "Why chain",
+      "causalFactorsHeading": "Causal factors",
+      "rootCauseMark": "root cause",
+      "assignAllHint": "Every action-bearing finding needs an assignee before you can approve.",
+      "dueDateAutoHint": "Left empty, the due date follows the finding's priority.",
+      "soleManagerNotice": "You are the lead investigator or submitter of this investigation. Approving your own work is only permitted when nobody else in the organisation holds incident-management permission — record why you are signing alone. The override is logged permanently.",
+      "soleManagerPlaceholder": "Why no independent approver exists…"
     },
     "observationCard": {
       "heading": "Incidents",
@@ -6348,7 +6378,19 @@
       "risk-assessment-not-found": "A selected risk assessment was not found or is not active.",
       "coshh-assessment-not-found": "A selected COSHH assessment was not found or is not active.",
       "fra-not-found": "A selected fire risk assessment was not found or is not active.",
-      "render-unavailable": "PDF rendering is not available on this deployment."
+      "render-unavailable": "PDF rendering is not available on this deployment.",
+      "investigation-level-below-floor": "The severity (or RIDDOR determination) mandates a full-level investigation — the level cannot go below that floor.",
+      "not-triaged": "Triage the incident first.",
+      "investigation-content-exists": "The level cannot be downgraded once investigation work exists.",
+      "finding-assignee-required": "Every action-bearing finding needs an assignee before approval.",
+      "finding-due-date-required": "Set a due date for every generated action.",
+      "sole-manager-justification-required": "Record why you are approving your own investigation — the justification is required because no independent approver exists."
+    },
+    "evidence": {
+      "heading": "Evidence & statements",
+      "addFiles": "Add photos / files",
+      "none": "No evidence yet. Photos taken at the scene land here.",
+      "witness": "Witness"
     }
   }
 }
