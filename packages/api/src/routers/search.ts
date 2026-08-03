@@ -19,6 +19,7 @@ import {
   documentFolders,
   documents,
   headsUps,
+  incidents,
   inspections,
   issues,
 } from '@forma360/db/schema';
@@ -45,7 +46,7 @@ export const searchRouter = router({
       const has = (p: PermissionKey): boolean => perms.includes(p);
       const empty = <T>(): Promise<T[]> => Promise.resolve([]);
 
-      const [assetRows, inspectionRows, issueRows, actionRows, headsUpRows, documentRows] =
+      const [assetRows, inspectionRows, issueRows, actionRows, headsUpRows, documentRows, incidentRows] =
         await Promise.all([
           // Assets — search name
           has('assets.view')
@@ -178,6 +179,41 @@ export const searchRouter = router({
                 visibleToGroupIds: unknown;
                 visibleToSiteIds: unknown;
               }>(),
+
+          // Incidents — search title and reference. Confidential records
+          // are excluded entirely for callers without the key (IN-E14:
+          // counted on the register, never surfaced by search).
+          has('incidents.view')
+            ? ctx.db
+                .select({
+                  id: incidents.id,
+                  title: incidents.title,
+                  referenceNumber: incidents.referenceNumber,
+                  status: incidents.status,
+                  confidential: incidents.confidential,
+                })
+                .from(incidents)
+                .where(
+                  and(
+                    eq(incidents.tenantId, tid),
+                    ne(incidents.status, 'cancelled'),
+                    has('incidents.confidential.view')
+                      ? or(ilike(incidents.title, q), ilike(incidents.referenceNumber, q))
+                      : and(
+                          eq(incidents.confidential, false),
+                          or(ilike(incidents.title, q), ilike(incidents.referenceNumber, q)),
+                        ),
+                  ),
+                )
+                .orderBy(desc(incidents.occurredAt))
+                .limit(MAX_PER_CATEGORY)
+            : empty<{
+                id: string;
+                title: string;
+                referenceNumber: string;
+                status: string;
+                confidential: boolean;
+              }>(),
         ]);
 
       // Apply per-document / per-folder visibility for non-managers (managers
@@ -234,6 +270,11 @@ export const searchRouter = router({
           id: r.id,
           title: r.name,
           subtitle: r.filename,
+        })),
+        incidents: incidentRows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          subtitle: r.referenceNumber,
         })),
       };
     }),

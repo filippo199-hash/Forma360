@@ -20,6 +20,8 @@ import { signRenderToken } from './hmac';
 import {
   loadFraSnapshot,
   hashFraSnapshot,
+  loadIncidentSnapshot,
+  hashIncidentSnapshot,
   loadInspectionSnapshot,
   hashInspectionSnapshot,
   loadRiskAssessmentSnapshot,
@@ -199,6 +201,37 @@ export async function renderFraPdf(
   };
 }
 
+/**
+ * Render an incident report to PDF (FreeHS module B5) — the full record
+ * + investigation + signatures in one document: the insurer pack and
+ * the auditor's clause-10.2 sample. Same pipeline as permits/FRAs.
+ */
+export async function renderIncidentPdf(
+  deps: RenderDeps,
+  input: { tenantId: string; incidentId: string },
+): Promise<RenderResult> {
+  const snap = await loadIncidentSnapshot(deps.db, input);
+  if (snap === null) {
+    throw new Error(`Incident not found: ${input.incidentId}`);
+  }
+  const hash = hashIncidentSnapshot(snap);
+  const key = `${input.tenantId}/incidents/${input.incidentId}/pdf-${hash}.pdf`;
+
+  const bytes = await renderPdfBytes(deps, {
+    url: buildRenderUrl(deps, 'incident', snap.incident.id),
+    stubTitle: snap.incident.title,
+  });
+
+  await uploadPdf(deps, { key, bytes });
+
+  return {
+    key,
+    bytes: bytes.length,
+    cached: false,
+    stub: isStub(bytes),
+  };
+}
+
 /** Build the R2 object key for a given inspection + content hash. */
 export function pdfObjectKey(tenantId: string, inspectionId: string, hash: string): string {
   return `${tenantId}/inspections/${inspectionId}/pdf-${hash}.pdf`;
@@ -364,7 +397,7 @@ function resolveSystemChromium(): string {
  */
 function buildRenderUrl(
   deps: RenderDeps,
-  kind: 'inspection' | 'risk-assessment' | 'permit' | 'fra',
+  kind: 'inspection' | 'risk-assessment' | 'permit' | 'fra' | 'incident',
   subjectId: string,
 ): string {
   const token = signRenderToken({

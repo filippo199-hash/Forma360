@@ -42,7 +42,7 @@ import { trpc } from '../../../src/lib/trpc/client';
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type StatusFilter = 'all' | 'open' | 'in_progress' | 'completed' | 'cancelled';
-type SourceFilter = 'all' | 'standalone' | 'inspection' | 'issue';
+type SourceFilter = 'all' | 'standalone' | 'inspection' | 'issue' | 'incident';
 type PriorityFilter = 'all' | 'low' | 'medium' | 'high' | 'critical';
 type SortBy = 'created' | 'due' | 'priority' | 'updated';
 type ViewMode = 'list' | 'board';
@@ -113,7 +113,7 @@ const STATUSES: ReadonlyArray<StatusFilter> = [
   'completed',
   'cancelled',
 ];
-const SOURCES: ReadonlyArray<SourceFilter> = ['all', 'standalone', 'inspection', 'issue'];
+const SOURCES: ReadonlyArray<SourceFilter> = ['all', 'standalone', 'inspection', 'issue', 'incident'];
 const PRIORITIES: ReadonlyArray<PriorityFilter> = ['all', 'critical', 'high', 'medium', 'low'];
 const SORT_OPTIONS: ReadonlyArray<SortBy> = ['created', 'due', 'priority', 'updated'];
 const BOARD_COLUMNS: ReadonlyArray<Exclude<StatusFilter, 'all'>> = [
@@ -658,7 +658,9 @@ export default function ActionsListPage() {
                         ? t('filterSourceStandalone')
                         : s === 'inspection'
                           ? t('filterSourceInspection')
-                          : t('filterSourceIssue')}
+                          : s === 'incident'
+                            ? t('filterSourceIncident')
+                            : t('filterSourceIssue')}
                   </option>
                 ))}
               </select>
@@ -1127,7 +1129,9 @@ function ListView({
                             ? t('sourceIssue')
                             : row.sourceType === 'maintenance'
                               ? t('sourceMaintenance')
-                              : t('sourceStandalone')}
+                              : row.sourceType === 'incident'
+                                ? t('sourceIncident')
+                                : t('sourceStandalone')}
                       </td>
                     </tr>
                   );
@@ -1358,7 +1362,9 @@ function BoardCardContent({
               ? t('sourceIssue')
               : row.sourceType === 'maintenance'
                 ? t('sourceMaintenance')
-                : t('sourceStandalone')}
+                : row.sourceType === 'incident'
+                  ? t('sourceIncident')
+                  : t('sourceStandalone')}
         </span>
         <span className="font-mono">{row.referenceNumber ?? row.id.slice(-6)}</span>
       </div>

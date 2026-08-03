@@ -47,6 +47,8 @@ describe('TOOLS definitions', () => {
       'list_schedules',
       'list_observation_categories',
       'list_users',
+      'list_incidents',
+      'get_incident',
       'create_observation',
       'create_action',
       'comment_on_action',

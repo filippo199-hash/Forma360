@@ -22,12 +22,14 @@ import {
   aiMessages,
   assets,
   headsUps,
+  incidents,
   type InspectionStatus,
   inspections,
   type IssueStatus,
   issues,
   templateSchedules,
 } from '@forma360/db/schema';
+import type { IncidentStatus } from '@forma360/shared/incidents';
 import { newId } from '@forma360/shared/id';
 import { db } from './db';
 import { env } from './env';
@@ -91,6 +93,8 @@ const READ_TOOL_PERMISSION: Partial<Record<ToolName, PermissionKey>> = {
   list_headsup: 'headsUp.view',
   list_documents: 'documents.view',
   list_schedules: 'templates.schedules.manage',
+  list_incidents: 'incidents.view',
+  get_incident: 'incidents.view',
 };
 
 async function executeTool(
@@ -157,6 +161,74 @@ async function executeTool(
         .orderBy(desc(issues.createdAt))
         .limit(limit);
       return { total: rows.length, issues: rows };
+    }
+
+    case 'list_incidents': {
+      // Confidential incidents are counted-not-readable: without the key
+      // the assistant never sees their titles or details (IN-E14).
+      const holdsKey = ctx.permissions.includes('incidents.confidential.view');
+      const statusFilter =
+        typeof input['status'] === 'string' ? (input['status'] as IncidentStatus) : undefined;
+      const rows = await db
+        .select({
+          id: incidents.id,
+          referenceNumber: incidents.referenceNumber,
+          title: incidents.title,
+          kind: incidents.kind,
+          severity: incidents.severity,
+          status: incidents.status,
+          confidential: incidents.confidential,
+          occurredAt: incidents.occurredAt,
+          riddorCategory: incidents.riddorCategory,
+          riddorDeadlineAt: incidents.riddorDeadlineAt,
+        })
+        .from(incidents)
+        .where(
+          and(
+            eq(incidents.tenantId, tenantId),
+            statusFilter ? eq(incidents.status, statusFilter) : undefined,
+            holdsKey ? undefined : eq(incidents.confidential, false),
+          ),
+        )
+        .orderBy(desc(incidents.occurredAt))
+        .limit(limit);
+      return { total: rows.length, incidents: rows };
+    }
+
+    case 'get_incident': {
+      const incidentId = typeof input['incidentId'] === 'string' ? input['incidentId'] : '';
+      const rows = await db
+        .select({
+          id: incidents.id,
+          referenceNumber: incidents.referenceNumber,
+          title: incidents.title,
+          description: incidents.description,
+          kind: incidents.kind,
+          severity: incidents.severity,
+          status: incidents.status,
+          confidential: incidents.confidential,
+          occurredAt: incidents.occurredAt,
+          reportedAt: incidents.reportedAt,
+          locationText: incidents.locationText,
+          investigationLevel: incidents.investigationLevel,
+          riddorCategory: incidents.riddorCategory,
+          riddorDeadlineAt: incidents.riddorDeadlineAt,
+          riddorSubmittedAt: incidents.riddorSubmittedAt,
+          effectivenessDueAt: incidents.effectivenessDueAt,
+          effectivenessVerdict: incidents.effectivenessVerdict,
+        })
+        .from(incidents)
+        .where(and(eq(incidents.tenantId, tenantId), eq(incidents.id, incidentId)))
+        .limit(1);
+      const row = rows[0];
+      if (row === undefined) return { error: 'Incident not found.' };
+      if (row.confidential && !ctx.permissions.includes('incidents.confidential.view')) {
+        return {
+          error:
+            'This incident is confidential. Only the reporter, the investigation team and confidential-access holders can view it.',
+        };
+      }
+      return { incident: row };
     }
 
     case 'list_actions': {

@@ -675,7 +675,7 @@ function SourceCard({
   locale,
 }: {
   source: {
-    type: 'issue' | 'inspection' | 'standalone' | 'maintenance';
+    type: 'issue' | 'inspection' | 'standalone' | 'maintenance' | 'incident';
     referenceNumber: string | null;
     title: string | null;
   } | null;
@@ -695,14 +695,18 @@ function SourceCard({
   const href =
     source.type === 'issue'
       ? `/${locale}/observations/${sourceId}`
-      : `/${locale}/inspections/${sourceId}`;
+      : source.type === 'incident'
+        ? `/${locale}/incidents/${sourceId}`
+        : `/${locale}/inspections/${sourceId}`;
   const reference = source.referenceNumber ?? sourceId.slice(-6);
   return (
     <section className="flex items-start justify-between gap-2 border-t p-5 text-sm">
       <p>
         {source.type === 'issue'
           ? t('sourceLinkIssue', { referenceNumber: reference })
-          : t('sourceLinkInspection', { referenceNumber: reference })}
+          : source.type === 'incident'
+            ? t('sourceLinkIncident', { referenceNumber: reference })
+            : t('sourceLinkInspection', { referenceNumber: reference })}
       </p>
       <Button asChild type="button" variant="outline" size="sm">
         <Link href={href} target="_blank">

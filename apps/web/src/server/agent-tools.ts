@@ -20,6 +20,8 @@ export type ToolName =
   | 'list_schedules'
   | 'list_observation_categories'
   | 'list_users'
+  | 'list_incidents'
+  | 'get_incident'
   | 'create_observation'
   | 'create_action'
   | 'comment_on_action'
@@ -157,6 +159,43 @@ export const TOOLS: Anthropic.Tool[] = [
         },
       },
       required: [],
+    },
+  },
+  {
+    name: 'list_incidents',
+    description:
+      'List recent workplace safety incidents (injuries, dangerous occurrences, near misses). Confidential records are excluded unless the user holds the confidential-access permission.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
+        status: {
+          type: 'string',
+          enum: [
+            'reported',
+            'triaged',
+            'investigating',
+            'actions_outstanding',
+            'closed',
+            'reopened',
+            'cancelled',
+          ],
+          description: 'Filter by lifecycle status',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_incident',
+    description:
+      'Get one incident by id: record, RIDDOR determination and deadline, investigation state. Confidential records require the confidential-access permission.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        incidentId: { type: 'string', description: 'The incident id (26-char ULID)' },
+      },
+      required: ['incidentId'],
     },
   },
   {

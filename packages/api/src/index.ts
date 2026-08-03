@@ -20,3 +20,4 @@ export type { RiskAssessmentsRouterDeps } from './routers/riskAssessments';
 export type { CoshhRouterDeps } from './routers/coshh';
 export type { PermitsRouterDeps } from './routers/permits';
 export type { FireSafetyRouterDeps } from './routers/fireSafety';
+export type { IncidentsRouterDeps } from './routers/incidents';

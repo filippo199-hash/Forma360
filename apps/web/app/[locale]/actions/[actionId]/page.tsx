@@ -663,7 +663,7 @@ function SourceCard({
   locale,
 }: {
   source: {
-    type: 'issue' | 'inspection' | 'standalone' | 'maintenance';
+    type: 'issue' | 'inspection' | 'standalone' | 'maintenance' | 'incident';
     referenceNumber: string | null;
     title: string | null;
   } | null;
@@ -686,7 +686,9 @@ function SourceCard({
   const href =
     source.type === 'issue'
       ? `/${locale}/observations/${sourceId}`
-      : `/${locale}/inspections/${sourceId}`;
+      : source.type === 'incident'
+        ? `/${locale}/incidents/${sourceId}`
+        : `/${locale}/inspections/${sourceId}`;
   // Prefer the real reference (ISS-000002 / INS-...). Fall back to the
   // last 6 chars of the internal id only when the source has been deleted
   // or no reference was ever assigned. The title (when present) goes on
@@ -699,7 +701,9 @@ function SourceCard({
           <p>
             {source.type === 'issue'
               ? t('sourceLinkIssue', { referenceNumber: reference })
-              : t('sourceLinkInspection', { referenceNumber: reference })}
+              : source.type === 'incident'
+                ? t('sourceLinkIncident', { referenceNumber: reference })
+                : t('sourceLinkInspection', { referenceNumber: reference })}
           </p>
           {source.title !== null && source.title.length > 0 ? (
             <p className="text-muted-foreground">{source.title}</p>

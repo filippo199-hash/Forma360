@@ -22,6 +22,7 @@ import {
   FileText,
   Loader2,
   Search,
+  Siren,
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -158,6 +159,12 @@ export function GlobalSearch() {
         labelKey: 'categories.documents',
         icon: <FileText className="h-4 w-4" />,
         basePath: 'documents',
+      },
+      {
+        key: 'incidents',
+        labelKey: 'categories.incidents',
+        icon: <Siren className="h-4 w-4" />,
+        basePath: 'incidents',
       },
     ];
 
