@@ -62,6 +62,8 @@ describe('TOOLS definitions', () => {
       'fire_safety_overview',
       'list_contractors_on_site',
       'list_sites',
+      'list_rams_packs',
+      'get_rams_pack',
     ];
     for (const name of expected) expect(byName.has(name), `missing tool ${name}`).toBe(true);
     expect(TOOLS).toHaveLength(expected.length);
@@ -108,6 +110,8 @@ describe('tool routing sets', () => {
       'fire_safety_overview',
       'list_contractors_on_site',
       'list_sites',
+      'list_rams_packs',
+      'get_rams_pack',
     ];
     for (const name of brandModuleReads) {
       expect(CALLER_TOOL_NAMES.has(name), `${name} must use the caller`).toBe(true);

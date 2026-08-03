@@ -86,6 +86,7 @@ import {
   METHOD_STATEMENT_STATUSES,
   METHOD_STATEMENT_TRADES,
   methodStatementContentSchema,
+  RAMS_AUTHOR_ATTESTATION,
   RAMS_PACK_STATUSES,
   REVIEW_ITEM_VERDICTS,
   REVIEW_OUTCOMES,
@@ -130,18 +131,6 @@ export interface RamsRouterDeps {
   /** Injectable clock so expiry / validity tests stay deterministic. */
   now?: () => Date;
 }
-
-/**
- * The attestation the author confirms at issue. Snapshotted onto the
- * version row so the printed record carries the exact wording that was
- * agreed to — the RA module's M-2 lesson: the attestation appears on
- * EVERY issue, not only when something else triggered a dialog.
- */
-export const RAMS_AUTHOR_ATTESTATION =
-  'I confirm that I have prepared or reviewed this risk assessment and method statement, ' +
-  'that it is suitable and sufficient for the work described, that the sequence of work and ' +
-  'the control measures are those that will actually be followed, and that it will be briefed ' +
-  'to everyone carrying out the work before they start.';
 
 // ─── Input schemas ──────────────────────────────────────────────────────────
 
@@ -373,7 +362,9 @@ export function createRamsRouter(deps: RamsRouterDeps) {
         if (input.status !== undefined) where.push(eq(methodStatements.status, input.status));
         if (!input.includeArchived) where.push(isNull(methodStatements.archivedAt));
         if (input.search !== undefined && input.search.length > 0) {
-          where.push(sql`lower(${methodStatements.title}) like ${`%${input.search.toLowerCase()}%`}`);
+          where.push(
+            sql`lower(${methodStatements.title}) like ${`%${input.search.toLowerCase()}%`}`,
+          );
         }
         const rows = await ctx.db
           .select({
@@ -557,9 +548,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
               : {}),
             updatedAt: now(),
           })
-          .where(
-            and(eq(methodStatements.tenantId, ctx.tenantId), eq(methodStatements.id, ms.id)),
-          );
+          .where(and(eq(methodStatements.tenantId, ctx.tenantId), eq(methodStatements.id, ms.id)));
         return { ok: true as const };
       }),
 
@@ -594,7 +583,12 @@ export function createRamsRouter(deps: RamsRouterDeps) {
         });
         await ctx.db
           .update(methodStatements)
-          .set({ status: 'published', currentVersion: versionNumber, publishedAt: at, updatedAt: at })
+          .set({
+            status: 'published',
+            currentVersion: versionNumber,
+            publishedAt: at,
+            updatedAt: at,
+          })
           .where(and(eq(methodStatements.tenantId, ctx.tenantId), eq(methodStatements.id, ms.id)));
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
@@ -637,72 +631,70 @@ export function createRamsRouter(deps: RamsRouterDeps) {
      * from any new-tenant flow, and safely again from the UI's "restore
      * starter templates" affordance.
      */
-    seedLibrary: tenantProcedure
-      .use(requirePermission('rams.manage'))
-      .mutation(async ({ ctx }) => {
-        assertEnabled();
-        const existing = await ctx.db
-          .select({ id: methodStatements.id })
-          .from(methodStatements)
-          .where(
-            and(eq(methodStatements.tenantId, ctx.tenantId), eq(methodStatements.isSeeded, true)),
-          )
-          .limit(1);
-        if (existing.length > 0) return { seeded: 0 };
+    seedLibrary: tenantProcedure.use(requirePermission('rams.manage')).mutation(async ({ ctx }) => {
+      assertEnabled();
+      const existing = await ctx.db
+        .select({ id: methodStatements.id })
+        .from(methodStatements)
+        .where(
+          and(eq(methodStatements.tenantId, ctx.tenantId), eq(methodStatements.isSeeded, true)),
+        )
+        .limit(1);
+      if (existing.length > 0) return { seeded: 0 };
 
-        const at = now();
-        let seeded = 0;
-        for (const template of DEFAULT_METHOD_STATEMENT_TEMPLATES) {
-          const content = methodStatementContentSchema.parse({
-            scopeOfWorks: template.scopeOfWorks,
-            steps: template.steps.map((s, index) => ({
-              id: `seed-${index + 1}`,
-              sequence: index + 1,
-              title: s.title,
-              description: s.description,
-              ppe: s.ppe,
-              ...(s.holdPoint !== undefined
-                ? { holdPoint: { kind: s.holdPoint.kind, description: s.holdPoint.description } }
-                : {}),
-            })),
-            emergency: template.emergency,
-            logistics: template.logistics,
-          });
-          const id = newId();
-          const reference = formatMethodStatementReference(
-            await nextReferenceValue(ctx.db, ctx.tenantId, 'methodStatement'),
-          );
-          await ctx.db.insert(methodStatements).values({
-            id,
-            tenantId: ctx.tenantId,
-            referenceNumber: reference,
-            title: template.title,
-            trade: template.trade,
-            // Seeded starters land published so a pack can be built from
-            // them immediately — the whole point is zero setup.
-            status: 'published',
-            isTemplate: true,
-            isSeeded: true,
-            ownerUserId: ctx.auth.userId,
-            draftContent: content,
-            currentVersion: 1,
-            publishedAt: at,
-            createdBy: ctx.auth.userId,
-          });
-          await ctx.db.insert(methodStatementVersions).values({
-            id: newId(),
-            tenantId: ctx.tenantId,
-            methodStatementId: id,
-            versionNumber: 1,
-            content,
-            publishedBy: ctx.auth.userId,
-            publishedByName: 'System',
-            publishedAt: at,
-          });
-          seeded += 1;
-        }
-        return { seeded };
-      }),
+      const at = now();
+      let seeded = 0;
+      for (const template of DEFAULT_METHOD_STATEMENT_TEMPLATES) {
+        const content = methodStatementContentSchema.parse({
+          scopeOfWorks: template.scopeOfWorks,
+          steps: template.steps.map((s, index) => ({
+            id: `seed-${index + 1}`,
+            sequence: index + 1,
+            title: s.title,
+            description: s.description,
+            ppe: s.ppe,
+            ...(s.holdPoint !== undefined
+              ? { holdPoint: { kind: s.holdPoint.kind, description: s.holdPoint.description } }
+              : {}),
+          })),
+          emergency: template.emergency,
+          logistics: template.logistics,
+        });
+        const id = newId();
+        const reference = formatMethodStatementReference(
+          await nextReferenceValue(ctx.db, ctx.tenantId, 'methodStatement'),
+        );
+        await ctx.db.insert(methodStatements).values({
+          id,
+          tenantId: ctx.tenantId,
+          referenceNumber: reference,
+          title: template.title,
+          trade: template.trade,
+          // Seeded starters land published so a pack can be built from
+          // them immediately — the whole point is zero setup.
+          status: 'published',
+          isTemplate: true,
+          isSeeded: true,
+          ownerUserId: ctx.auth.userId,
+          draftContent: content,
+          currentVersion: 1,
+          publishedAt: at,
+          createdBy: ctx.auth.userId,
+        });
+        await ctx.db.insert(methodStatementVersions).values({
+          id: newId(),
+          tenantId: ctx.tenantId,
+          methodStatementId: id,
+          versionNumber: 1,
+          content,
+          publishedBy: ctx.auth.userId,
+          publishedByName: 'System',
+          publishedAt: at,
+        });
+        seeded += 1;
+      }
+      return { seeded };
+    }),
   });
 
   // ─── Packs ────────────────────────────────────────────────────────────────
@@ -772,10 +764,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
             })
             .from(ramsBriefings)
             .where(
-              and(
-                eq(ramsBriefings.tenantId, ctx.tenantId),
-                inArray(ramsBriefings.packId, packIds),
-              ),
+              and(eq(ramsBriefings.tenantId, ctx.tenantId), inArray(ramsBriefings.packId, packIds)),
             )
             .groupBy(ramsBriefings.packId, ramsBriefings.versionNumber);
           const currentByPack = new Map(rows.map((r) => [r.id, r.currentVersion]));
@@ -795,96 +784,92 @@ export function createRamsRouter(deps: RamsRouterDeps) {
      * nobody briefed on the current version, client acceptances still
      * pending, and third-party reviews awaiting a decision or expiring.
      */
-    overview: tenantProcedure
-      .use(requirePermission('rams.view'))
-      .query(async ({ ctx }) => {
-        assertEnabled();
-        const at = now();
-        const soon = new Date(at.getTime() + 30 * 86_400_000);
+    overview: tenantProcedure.use(requirePermission('rams.view')).query(async ({ ctx }) => {
+      assertEnabled();
+      const at = now();
+      const soon = new Date(at.getTime() + 30 * 86_400_000);
 
-        const [draftRow] = await ctx.db
-          .select({ n: sql<number>`count(*)::int` })
-          .from(ramsPacks)
+      const [draftRow] = await ctx.db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(ramsPacks)
+        .where(
+          and(
+            eq(ramsPacks.tenantId, ctx.tenantId),
+            eq(ramsPacks.status, 'draft'),
+            isNull(ramsPacks.archivedAt),
+          ),
+        );
+
+      const issued = await ctx.db
+        .select({ id: ramsPacks.id, currentVersion: ramsPacks.currentVersion })
+        .from(ramsPacks)
+        .where(
+          and(
+            eq(ramsPacks.tenantId, ctx.tenantId),
+            eq(ramsPacks.status, 'issued'),
+            isNull(ramsPacks.archivedAt),
+          ),
+        );
+      let awaitingBriefing = 0;
+      if (issued.length > 0) {
+        const counts = await ctx.db
+          .select({
+            packId: ramsBriefings.packId,
+            versionNumber: ramsBriefings.versionNumber,
+            n: sql<number>`count(*)::int`,
+          })
+          .from(ramsBriefings)
           .where(
             and(
-              eq(ramsPacks.tenantId, ctx.tenantId),
-              eq(ramsPacks.status, 'draft'),
-              isNull(ramsPacks.archivedAt),
-            ),
-          );
-
-        const issued = await ctx.db
-          .select({ id: ramsPacks.id, currentVersion: ramsPacks.currentVersion })
-          .from(ramsPacks)
-          .where(
-            and(
-              eq(ramsPacks.tenantId, ctx.tenantId),
-              eq(ramsPacks.status, 'issued'),
-              isNull(ramsPacks.archivedAt),
-            ),
-          );
-        let awaitingBriefing = 0;
-        if (issued.length > 0) {
-          const counts = await ctx.db
-            .select({
-              packId: ramsBriefings.packId,
-              versionNumber: ramsBriefings.versionNumber,
-              n: sql<number>`count(*)::int`,
-            })
-            .from(ramsBriefings)
-            .where(
-              and(
-                eq(ramsBriefings.tenantId, ctx.tenantId),
-                inArray(
-                  ramsBriefings.packId,
-                  issued.map((p) => p.id),
-                ),
+              eq(ramsBriefings.tenantId, ctx.tenantId),
+              inArray(
+                ramsBriefings.packId,
+                issued.map((p) => p.id),
               ),
-            )
-            .groupBy(ramsBriefings.packId, ramsBriefings.versionNumber);
-          const key = (p: string, v: number): string => `${p}:${v}`;
-          const have = new Set(counts.map((c) => key(c.packId, c.versionNumber)));
-          awaitingBriefing = issued.filter(
-            (p) => !have.has(key(p.id, p.currentVersion)),
-          ).length;
-        }
-
-        const [pendingAcceptance] = await ctx.db
-          .select({ n: sql<number>`count(*)::int` })
-          .from(ramsClientLinks)
-          .where(
-            and(
-              eq(ramsClientLinks.tenantId, ctx.tenantId),
-              eq(ramsClientLinks.decision, 'pending'),
-              isNull(ramsClientLinks.revokedAt),
             ),
-          );
+          )
+          .groupBy(ramsBriefings.packId, ramsBriefings.versionNumber);
+        const key = (p: string, v: number): string => `${p}:${v}`;
+        const have = new Set(counts.map((c) => key(c.packId, c.versionNumber)));
+        awaitingBriefing = issued.filter((p) => !have.has(key(p.id, p.currentVersion))).length;
+      }
 
-        const [pendingReviews] = await ctx.db
-          .select({ n: sql<number>`count(*)::int` })
-          .from(ramsReviews)
-          .where(and(eq(ramsReviews.tenantId, ctx.tenantId), eq(ramsReviews.outcome, 'pending')));
+      const [pendingAcceptance] = await ctx.db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(ramsClientLinks)
+        .where(
+          and(
+            eq(ramsClientLinks.tenantId, ctx.tenantId),
+            eq(ramsClientLinks.decision, 'pending'),
+            isNull(ramsClientLinks.revokedAt),
+          ),
+        );
 
-        const [expiringReviews] = await ctx.db
-          .select({ n: sql<number>`count(*)::int` })
-          .from(ramsReviews)
-          .where(
-            and(
-              eq(ramsReviews.tenantId, ctx.tenantId),
-              inArray(ramsReviews.outcome, ['accepted', 'accepted_with_conditions']),
-              isNotNull(ramsReviews.validTo),
-              sql`${ramsReviews.validTo} <= ${soon}`,
-            ),
-          );
+      const [pendingReviews] = await ctx.db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(ramsReviews)
+        .where(and(eq(ramsReviews.tenantId, ctx.tenantId), eq(ramsReviews.outcome, 'pending')));
 
-        return {
-          draftPacks: Number(draftRow?.n ?? 0),
-          awaitingBriefing,
-          pendingClientAcceptance: Number(pendingAcceptance?.n ?? 0),
-          pendingReviews: Number(pendingReviews?.n ?? 0),
-          expiringReviews: Number(expiringReviews?.n ?? 0),
-        };
-      }),
+      const [expiringReviews] = await ctx.db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(ramsReviews)
+        .where(
+          and(
+            eq(ramsReviews.tenantId, ctx.tenantId),
+            inArray(ramsReviews.outcome, ['accepted', 'accepted_with_conditions']),
+            isNotNull(ramsReviews.validTo),
+            sql`${ramsReviews.validTo} <= ${soon}`,
+          ),
+        );
+
+      return {
+        draftPacks: Number(draftRow?.n ?? 0),
+        awaitingBriefing,
+        pendingClientAcceptance: Number(pendingAcceptance?.n ?? 0),
+        pendingReviews: Number(pendingReviews?.n ?? 0),
+        expiringReviews: Number(expiringReviews?.n ?? 0),
+      };
+    }),
 
     get: tenantProcedure
       .use(requirePermission('rams.view'))
@@ -920,9 +905,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
           .from(ramsPackCoshh)
           .innerJoin(coshhAssessments, eq(coshhAssessments.id, ramsPackCoshh.coshhAssessmentId))
           .leftJoin(coshhSubstances, eq(coshhSubstances.id, ramsPackCoshh.substanceId))
-          .where(
-            and(eq(ramsPackCoshh.tenantId, ctx.tenantId), eq(ramsPackCoshh.packId, pack.id)),
-          )
+          .where(and(eq(ramsPackCoshh.tenantId, ctx.tenantId), eq(ramsPackCoshh.packId, pack.id)))
           .orderBy(asc(ramsPackCoshh.sortOrder));
 
         const docRows = await ctx.db
@@ -1203,9 +1186,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
             ...(input.supervisorUserId !== undefined
               ? { supervisorUserId: input.supervisorUserId }
               : {}),
-            ...(input.supervisorName !== undefined
-              ? { supervisorName: input.supervisorName }
-              : {}),
+            ...(input.supervisorName !== undefined ? { supervisorName: input.supervisorName } : {}),
             updatedAt: now(),
           })
           .where(and(eq(ramsPacks.tenantId, ctx.tenantId), eq(ramsPacks.id, pack.id)));
@@ -1252,7 +1233,10 @@ export function createRamsRouter(deps: RamsRouterDeps) {
           })
           .from(riskAssessments)
           .where(
-            and(eq(riskAssessments.tenantId, ctx.tenantId), eq(riskAssessments.id, input.assessmentId)),
+            and(
+              eq(riskAssessments.tenantId, ctx.tenantId),
+              eq(riskAssessments.id, input.assessmentId),
+            ),
           )
           .limit(1);
         const ra = raRows[0];
@@ -1362,9 +1346,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
         const [maxOrder] = await ctx.db
           .select({ n: sql<number>`coalesce(max(${ramsPackCoshh.sortOrder}), -1)::int` })
           .from(ramsPackCoshh)
-          .where(
-            and(eq(ramsPackCoshh.tenantId, ctx.tenantId), eq(ramsPackCoshh.packId, pack.id)),
-          );
+          .where(and(eq(ramsPackCoshh.tenantId, ctx.tenantId), eq(ramsPackCoshh.packId, pack.id)));
 
         await ctx.db
           .insert(ramsPackCoshh)
@@ -1582,10 +1564,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
               .select({ id: ramsPackCoshh.coshhAssessmentId })
               .from(ramsPackCoshh)
               .where(
-                and(
-                  eq(ramsPackCoshh.tenantId, ctx.tenantId),
-                  eq(ramsPackCoshh.packId, pack.id),
-                ),
+                and(eq(ramsPackCoshh.tenantId, ctx.tenantId), eq(ramsPackCoshh.packId, pack.id)),
               )
           ).map((r) => r.id),
         );
@@ -2332,7 +2311,8 @@ export function createRamsRouter(deps: RamsRouterDeps) {
           )
           .limit(1);
         const link = rows[0];
-        if (link === undefined) throw new TRPCError({ code: 'NOT_FOUND', message: 'link-not-found' });
+        if (link === undefined)
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'link-not-found' });
         await ctx.db
           .update(ramsClientLinks)
           .set({ revokedAt: now(), revokedBy: ctx.auth.userId })

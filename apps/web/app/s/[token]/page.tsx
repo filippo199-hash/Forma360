@@ -15,18 +15,21 @@ import {
   validateShareToken,
   validateHeadsUpShareToken,
   loadInspectionSnapshot,
+  loadRamsSnapshot,
 } from '@forma360/render';
 import {
   documents,
   headsUpAttachments,
   headsUpDocuments,
   headsUps,
+  ramsClientLinks,
   user,
 } from '@forma360/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { PrintLayout } from '../../../src/components/print-layout';
 import { HeadsUpPublicView } from '../../../src/components/heads-up/public-view';
+import { RamsClientAcceptanceView } from '../../../src/components/rams/client-acceptance-view';
 import { db } from '../../../src/server/db';
 import { fetchLogoUrl } from '../../../src/server/storage';
 
@@ -58,7 +61,45 @@ export default async function SharedInspectionPage({ params }: Props) {
     );
   }
 
-  // Not an inspection link — try heads-ups (only published resolve).
+  // Not an inspection link — try a RAMS client link. Revoked and expired
+  // links 404 rather than rendering a stale pack: a client must never be
+  // shown a version that has been withdrawn or superseded out from under
+  // them (RS-E12).
+  const ramsLinkRows = await db
+    .select({
+      tenantId: ramsClientLinks.tenantId,
+      packVersionId: ramsClientLinks.packVersionId,
+      expiresAt: ramsClientLinks.expiresAt,
+      revokedAt: ramsClientLinks.revokedAt,
+      decision: ramsClientLinks.decision,
+      acceptedByName: ramsClientLinks.acceptedByName,
+    })
+    .from(ramsClientLinks)
+    .where(eq(ramsClientLinks.token, token))
+    .limit(1);
+  const ramsLink = ramsLinkRows[0];
+  if (ramsLink !== undefined) {
+    if (ramsLink.revokedAt !== null) notFound();
+    if (ramsLink.expiresAt !== null && ramsLink.expiresAt.getTime() < Date.now()) notFound();
+    const ramsSnapshot = await loadRamsSnapshot(db, {
+      tenantId: ramsLink.tenantId,
+      packVersionId: ramsLink.packVersionId,
+    });
+    if (ramsSnapshot === null) notFound();
+    return (
+      <RamsClientAcceptanceView
+        snapshot={ramsSnapshot}
+        token={token}
+        alreadyDecided={
+          ramsLink.decision === 'pending'
+            ? null
+            : { decision: ramsLink.decision, acceptedByName: ramsLink.acceptedByName }
+        }
+      />
+    );
+  }
+
+  // Not a RAMS link either — try heads-ups (only published resolve).
   const headsUp = await validateHeadsUpShareToken(db, token);
   if (headsUp === null) notFound();
 

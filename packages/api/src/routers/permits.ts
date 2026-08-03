@@ -472,9 +472,7 @@ async function ramsPackGateError(
       validTo: ramsReviews.validTo,
     })
     .from(ramsReviews)
-    .where(
-      and(eq(ramsReviews.tenantId, tenantId), eq(ramsReviews.id, permit.ramsReviewId ?? '')),
-    )
+    .where(and(eq(ramsReviews.tenantId, tenantId), eq(ramsReviews.id, permit.ramsReviewId ?? '')))
     .limit(1);
   const review = rows[0];
   if (review === undefined) return 'rams-pack-required';
@@ -1203,9 +1201,7 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
             ...(input.ramsPackVersionId !== undefined
               ? { ramsPackVersionId: input.ramsPackVersionId }
               : {}),
-            ...(input.ramsReviewId !== undefined
-              ? { ramsReviewId: input.ramsReviewId }
-              : {}),
+            ...(input.ramsReviewId !== undefined ? { ramsReviewId: input.ramsReviewId } : {}),
             ...(input.riskAssessmentId !== undefined
               ? { riskAssessmentId: input.riskAssessmentId }
               : {}),

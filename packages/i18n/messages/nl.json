@@ -299,7 +299,8 @@
         "coshh": "COSHH",
         "permits": "Werkvergunningen",
         "fireSafety": "Brandveiligheid",
-        "incidents": "Incidenten"
+        "incidents": "Incidenten",
+        "rams": "RAMS"
       },
       "perms": {
         "users_view": "View users",
@@ -381,7 +382,13 @@
         "incidents_report": "Incidenten melden",
         "incidents_investigate": "Onderzoeken uitvoeren",
         "incidents_manage": "Incidenten beheren (triage, RIDDOR, goedkeuringen)",
-        "incidents_confidential_view": "Vertrouwelijke incidenten inzien"
+        "incidents_confidential_view": "Vertrouwelijke incidenten inzien",
+        "rams_view": "RAMS-pakketten bekijken",
+        "rams_create": "Werkmethoden en concepten opstellen",
+        "rams_issue": "Pakketten uitgeven, opnieuw uitgeven en intrekken",
+        "rams_brief": "Toolbox-registraties vastleggen",
+        "rams_review": "RAMS van onderaannemers beoordelen",
+        "rams_manage": "Bibliotheek met werkmethoden beheren"
       }
     },
     "groups": {
@@ -1439,7 +1446,8 @@
     "permits": "Vergunningen",
     "fireSafety": "Brandveiligheid",
     "analytics": "Dashboard",
-    "incidents": "Incidenten"
+    "incidents": "Incidenten",
+    "rams": "RAMS"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6156,6 +6164,291 @@
       "addFiles": "Foto's / bestanden toevoegen",
       "none": "Nog geen bewijs. Foto's van de locatie verschijnen hier.",
       "witness": "Getuige"
+    }
+  },
+  "rams": {
+    "title": "RAMS",
+    "subtitle": "Risico-inventarisaties en werkmethoden — uitgegeven, besproken en geaccepteerd.",
+    "needsAttention": "Vraagt aandacht",
+    "newPack": "Nieuw RAMS-pakket",
+    "exportCsv": "CSV exporteren",
+    "searchPlaceholder": "Zoek op referentie, titel of opdrachtgever",
+    "empty": "Nog geen RAMS-pakketten.",
+    "versionLabel": "v{version}",
+    "briefedCount": "{count} ingelicht over v{version}",
+    "holdPoint": "Stoppunt",
+    "openBuilder": "Editor openen",
+    "issuePack": "Pakket uitgeven",
+    "reissuePack": "Opnieuw uitgeven",
+    "withdrawPack": "Intrekken",
+    "withdrawReason": "Reden voor intrekking",
+    "confirmWithdraw": "Intrekking bevestigen",
+    "withdrawnBanner": "Dit pakket is ingetrokken — er mag niet op basis hiervan worden gewerkt.",
+    "downloadPdf": "PDF downloaden",
+    "attention": {
+      "draftPacks": "{count} in concept",
+      "awaitingBriefing": "{count} wachten op toolbox",
+      "pendingClientAcceptance": "{count} wachten op akkoord van de opdrachtgever",
+      "pendingReviews": "{count} pakketten van onderaannemers te beoordelen",
+      "expiringReviews": "{count} acceptaties verlopen binnenkort"
+    },
+    "filters": {
+      "all": "Alle"
+    },
+    "columns": {
+      "reference": "Referentie",
+      "title": "Titel",
+      "client": "Opdrachtgever",
+      "site": "Locatie",
+      "planned": "Gepland",
+      "status": "Status",
+      "briefing": "Toolbox"
+    },
+    "status": {
+      "draft": "Concept",
+      "issued": "Uitgegeven",
+      "superseded": "Vervangen",
+      "withdrawn": "Ingetrokken",
+      "cancelled": "Geannuleerd"
+    },
+    "fields": {
+      "title": "Werkomschrijving",
+      "titlePlaceholder": "bijv. Filtervervanging LBK — Riverside",
+      "client": "Opdrachtgever",
+      "site": "Locatie",
+      "noSite": "Geen locatie",
+      "location": "Plaats / gebied",
+      "plannedFrom": "Gepland vanaf",
+      "plannedTo": "Gepland tot",
+      "supervisor": "Verantwoordelijke uitvoerder",
+      "scopeOfWorks": "Omvang van de werkzaamheden"
+    },
+    "new": {
+      "title": "RAMS-pakket aanmaken",
+      "subtitle": "Begin met een sjabloon, kopieer een eerdere klus of start blanco.",
+      "fromLibrary": "Uit de bibliotheek",
+      "fromLibraryHint": "Vooringevulde stappen voor een gangbaar vak",
+      "duplicate": "Eerder pakket kopiëren",
+      "duplicateHint": "Zoals de vorige klus, met alle koppelingen",
+      "blank": "Blanco",
+      "blankHint": "Helemaal zelf schrijven",
+      "pickTemplate": "Kies een werkmethode",
+      "pickPack": "Kies het pakket om te kopiëren",
+      "noPreviousPacks": "Nog geen eerdere pakketten om te kopiëren.",
+      "stepCount": "{count} stappen",
+      "createAndBuild": "Aanmaken en editor openen"
+    },
+    "gate": {
+      "title": "Voordat u kunt uitgeven",
+      "allClear": "Alles wat nodig is om dit pakket uit te geven is aanwezig.",
+      "unreferencedTitle": "Hoge risico's die geen enkele stap afdekt",
+      "attestationTitle": "Verklaring van de opsteller",
+      "attestationConfirm": "Ik bevestig bovenstaande verklaring."
+    },
+    "errors": {
+      "no-steps": "Voeg minstens één stap toe aan de werkmethode.",
+      "step-missing-title": "Elke stap heeft een titel nodig.",
+      "step-missing-description": "Elke stap moet beschrijven wat er werkelijk gebeurt.",
+      "no-risk-assessment": "Koppel minstens één risico-inventarisatie.",
+      "risk-assessment-not-published": "Een gekoppelde risico-inventarisatie is niet gepubliceerd — publiceer die eerst.",
+      "emergency-block-incomplete": "Vul de EHBO- en noodmaatregelen aan.",
+      "high-risk-hazard-unreferenced": "Een hoog risico wordt door geen enkele stap afgedekt.",
+      "attestation-not-confirmed": "Bevestig de verklaring van de opsteller."
+    },
+    "band": {
+      "low": "Laag",
+      "medium": "Middel",
+      "high": "Hoog",
+      "critical": "Kritiek"
+    },
+    "bindings": {
+      "title": "Risico-inventarisaties en stoffen",
+      "noRas": "Nog geen risico-inventarisatie gekoppeld.",
+      "coshh": "Gevaarlijke stoffen",
+      "hazardCount": "{count} gevaren",
+      "suggested": "Voorgesteld voor deze klus",
+      "suggestedCoshh": "Voorgestelde stoffen",
+      "unbind": "Verwijderen"
+    },
+    "steps": {
+      "title": "Werkvolgorde",
+      "none": "Nog geen stappen.",
+      "add": "Stap toevoegen",
+      "titlePlaceholder": "Wat er in deze stap gebeurt",
+      "description": "Wat er werkelijk gedaan wordt",
+      "hazardsAddressed": "Gevaren die deze stap afdekt",
+      "controlNotes": "Maatregelen bij deze stap",
+      "ppe": "PBM",
+      "holdPoint": "Het werk stopt hier tot een controle is afgetekend",
+      "holdPointPlaceholder": "Wat moet kloppen voordat er verder gewerkt wordt",
+      "moveUp": "Omhoog",
+      "moveDown": "Omlaag",
+      "remove": "Stap verwijderen",
+      "expand": "Bewerken",
+      "collapse": "Sluiten"
+    },
+    "emergency": {
+      "title": "Noodmaatregelen",
+      "firstAid": "EHBO",
+      "procedure": "Noodprocedure",
+      "rescuePlan": "Reddingsplan"
+    },
+    "logistics": {
+      "welfare": "Voorzieningen",
+      "accessEgress": "Toegang en vluchtwegen"
+    },
+    "builder": {
+      "saving": "Opslaan…",
+      "saved": "Alle wijzigingen opgeslagen",
+      "backToPack": "Terug naar het pakket"
+    },
+    "briefing": {
+      "title": "Toolbox",
+      "open": "Ploeg inlichten",
+      "onSuperseded": "{count} ingelicht over een oudere versie",
+      "notIssued": "Dit pakket moet eerst worden uitgegeven voordat iemand kan worden ingelicht.",
+      "readThis": "Dit bespreken",
+      "signHere": "Toolbox bevestigen",
+      "name": "Naam",
+      "category": "Deze persoon is",
+      "organisation": "Bedrijf",
+      "questions": "Gestelde vragen (optioneel)",
+      "understoodStatement": "Met deze bevestiging verklaart deze persoon over dit pakket te zijn ingelicht en het te hebben begrepen.",
+      "confirm": "Bevestigen: ingelicht en begrepen",
+      "recorded": "Vastgelegd",
+      "register": "Wie is ingelicht",
+      "nobodyYet": "Nog niemand ingelicht.",
+      "briefedSoFar": "{count} ingelicht",
+      "needsRebrief": "Opnieuw inlichten",
+      "queued": "{count} toolbox(en) wachten op synchronisatie",
+      "retry": "Nu opnieuw proberen"
+    },
+    "briefeeCategory": {
+      "employee": "Medewerker",
+      "subcontractor": "Onderaannemer",
+      "agency": "Uitzendkracht",
+      "visitor": "Bezoeker",
+      "client_representative": "Vertegenwoordiger opdrachtgever",
+      "other": "Overig"
+    },
+    "client": {
+      "title": "Uitgeven aan de opdrachtgever",
+      "issuedTo": "Contactpersoon opdrachtgever",
+      "createLink": "Deellink maken",
+      "unnamed": "Naamloze ontvanger",
+      "revoked": "ingetrokken"
+    },
+    "clientDecision": {
+      "pending": "Wacht op opdrachtgever",
+      "accepted": "Geaccepteerd",
+      "changes_requested": "Wijzigingen gevraagd"
+    },
+    "versions": {
+      "title": "Versiegeschiedenis",
+      "superseded": "vervangen"
+    },
+    "timeline": {
+      "title": "Tijdlijn"
+    },
+    "library": {
+      "title": "Bibliotheek met werkmethoden",
+      "subtitle": "Herbruikbare werkmethoden — dupliceer en pas aan in plaats van blanco te beginnen.",
+      "backToRegister": "Terug naar RAMS",
+      "restoreStarters": "Startsjablonen herstellen",
+      "starter": "Startsjabloon",
+      "startPack": "Pakket aanmaken",
+      "duplicate": "Dupliceren",
+      "copySuffix": "kopie",
+      "empty": "Nog geen werkmethoden."
+    },
+    "reviews": {
+      "title": "Beoordeling RAMS onderaannemers",
+      "subtitle": "Beoordeel en accepteer de pakketten die uw onderaannemers aanleveren.",
+      "empty": "Geen pakketten van onderaannemers ter beoordeling.",
+      "selectPrompt": "Kies een pakket om te beoordelen.",
+      "outcome": "Beslissing",
+      "conditions": "Voorwaarden",
+      "comments": "Terugkoppeling aan de onderaannemer",
+      "validTo": "Geaccepteerd tot",
+      "recordDecision": "Beslissing vastleggen",
+      "itemComment": "Wat klopt hier niet?",
+      "expired": "Verlopen"
+    },
+    "reviewOutcome": {
+      "pending": "Wacht op beoordeling",
+      "accepted": "Geaccepteerd",
+      "accepted_with_conditions": "Geaccepteerd met voorwaarden",
+      "rejected": "Afgewezen"
+    },
+    "reviewVerdict": {
+      "pass": "Voldoet",
+      "fail": "Voldoet niet",
+      "na": "N.v.t."
+    },
+    "trade": {
+      "mechanical": "Werktuigbouw",
+      "electrical": "Elektrotechniek",
+      "work_at_height": "Werken op hoogte",
+      "groundworks": "Grondwerk",
+      "hot_works": "Heet werk",
+      "confined_space": "Besloten ruimte",
+      "lifting": "Hijswerk",
+      "maintenance": "Onderhoud",
+      "cleaning": "Schoonmaak",
+      "demolition": "Sloop",
+      "roofing": "Dakwerk",
+      "other": "Overig"
+    },
+    "holdPointKind": {
+      "isolation_proved": "Vrijschakeling aangetoond",
+      "permit_issued": "Werkvergunning afgegeven",
+      "inspection_passed": "Keuring akkoord",
+      "atmosphere_tested": "Atmosfeer gemeten",
+      "client_approval": "Akkoord opdrachtgever",
+      "supervisor_check": "Controle uitvoerder",
+      "other": "Overig"
+    },
+    "ppe": {
+      "safety_helmet": "Helm",
+      "safety_footwear": "Veiligheidsschoenen",
+      "hi_vis": "Signalering",
+      "eye_protection": "Oogbescherming",
+      "hearing_protection": "Gehoorbescherming",
+      "gloves": "Handschoenen",
+      "respiratory_protection": "Adembescherming",
+      "fall_arrest_harness": "Valharnas",
+      "face_shield": "Gelaatsscherm",
+      "coveralls": "Overall",
+      "chemical_apron": "Chemieschort",
+      "welding_ppe": "Las-PBM",
+      "cut_resistant_gloves": "Snijbestendige handschoenen",
+      "knee_pads": "Kniebeschermers",
+      "life_jacket": "Reddingsvest"
+    },
+    "events": {
+      "pack_created": "Pakket aangemaakt",
+      "pack_updated": "Pakket bijgewerkt",
+      "pack_issued": "Pakket uitgegeven",
+      "pack_reissued": "Pakket opnieuw uitgegeven",
+      "pack_withdrawn": "Pakket ingetrokken",
+      "pack_cancelled": "Pakket geannuleerd",
+      "ra_bound": "Risico-inventarisatie gekoppeld",
+      "ra_unbound": "Risico-inventarisatie verwijderd",
+      "coshh_bound": "Stoffenbeoordeling gekoppeld",
+      "coshh_unbound": "Stoffenbeoordeling verwijderd",
+      "document_added": "Document toegevoegd",
+      "document_removed": "Document verwijderd",
+      "briefing_recorded": "Toolbox vastgelegd",
+      "client_link_created": "Deellink aangemaakt",
+      "client_link_revoked": "Deellink ingetrokken",
+      "client_accepted": "Opdrachtgever akkoord",
+      "client_changes_requested": "Opdrachtgever vraagt wijzigingen",
+      "method_statement_created": "Werkmethode aangemaakt",
+      "method_statement_published": "Werkmethode gepubliceerd",
+      "method_statement_archived": "Werkmethode gearchiveerd",
+      "method_statement_duplicated": "Werkmethode gedupliceerd",
+      "review_submitted": "Pakket onderaannemer ter beoordeling aangeboden",
+      "review_decided": "Beoordelingsbeslissing vastgelegd"
     }
   }
 }

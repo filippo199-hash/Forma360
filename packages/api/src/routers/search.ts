@@ -77,324 +77,322 @@ export const searchRouter = router({
         incidentRows,
         ramsRows,
       ] = await Promise.all([
-          // Assets — search name
-          has('assets.view')
-            ? ctx.db
-                .select({ id: assets.id, name: assets.name, description: assets.description })
-                .from(assets)
-                .where(
-                  and(eq(assets.tenantId, tid), isNull(assets.archivedAt), ilike(assets.name, q)),
-                )
-                .orderBy(desc(assets.updatedAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{ id: string; name: string; description: string | null }>(),
+        // Assets — search name
+        has('assets.view')
+          ? ctx.db
+              .select({ id: assets.id, name: assets.name, description: assets.description })
+              .from(assets)
+              .where(
+                and(eq(assets.tenantId, tid), isNull(assets.archivedAt), ilike(assets.name, q)),
+              )
+              .orderBy(desc(assets.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; name: string; description: string | null }>(),
 
-          // Inspections — search title and document number
-          has('inspections.view')
-            ? ctx.db
-                .select({
-                  id: inspections.id,
-                  title: inspections.title,
-                  documentNumber: inspections.documentNumber,
-                  status: inspections.status,
-                })
-                .from(inspections)
-                .where(
-                  and(
-                    eq(inspections.tenantId, tid),
-                    isNull(inspections.archivedAt),
-                    or(ilike(inspections.title, q), ilike(inspections.documentNumber, q)),
-                  ),
-                )
-                .orderBy(desc(inspections.createdAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{
-                id: string;
-                title: string;
-                documentNumber: string | null;
-                status: string;
-              }>(),
+        // Inspections — search title and document number
+        has('inspections.view')
+          ? ctx.db
+              .select({
+                id: inspections.id,
+                title: inspections.title,
+                documentNumber: inspections.documentNumber,
+                status: inspections.status,
+              })
+              .from(inspections)
+              .where(
+                and(
+                  eq(inspections.tenantId, tid),
+                  isNull(inspections.archivedAt),
+                  or(ilike(inspections.title, q), ilike(inspections.documentNumber, q)),
+                ),
+              )
+              .orderBy(desc(inspections.createdAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{
+              id: string;
+              title: string;
+              documentNumber: string | null;
+              status: string;
+            }>(),
 
-          // Observations (issues) — search title and reference number
-          has('issues.view')
-            ? ctx.db
-                .select({
-                  id: issues.id,
-                  title: issues.title,
-                  referenceNumber: issues.referenceNumber,
-                  status: issues.status,
-                })
-                .from(issues)
-                .where(
-                  and(
-                    eq(issues.tenantId, tid),
-                    isNull(issues.archivedAt),
-                    or(ilike(issues.title, q), ilike(issues.referenceNumber, q)),
-                  ),
-                )
-                .orderBy(desc(issues.createdAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{ id: string; title: string; referenceNumber: string; status: string }>(),
+        // Observations (issues) — search title and reference number
+        has('issues.view')
+          ? ctx.db
+              .select({
+                id: issues.id,
+                title: issues.title,
+                referenceNumber: issues.referenceNumber,
+                status: issues.status,
+              })
+              .from(issues)
+              .where(
+                and(
+                  eq(issues.tenantId, tid),
+                  isNull(issues.archivedAt),
+                  or(ilike(issues.title, q), ilike(issues.referenceNumber, q)),
+                ),
+              )
+              .orderBy(desc(issues.createdAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; title: string; referenceNumber: string; status: string }>(),
 
-          // Actions — search title and reference number
-          has('actions.view')
-            ? ctx.db
-                .select({
-                  id: actions.id,
-                  title: actions.title,
-                  referenceNumber: actions.referenceNumber,
-                  status: actions.status,
-                })
-                .from(actions)
-                .where(
-                  and(
-                    eq(actions.tenantId, tid),
-                    isNull(actions.archivedAt),
-                    or(ilike(actions.title, q), ilike(actions.referenceNumber, q)),
-                  ),
-                )
-                .orderBy(desc(actions.createdAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{
-                id: string;
-                title: string;
-                referenceNumber: string | null;
-                status: string;
-              }>(),
+        // Actions — search title and reference number
+        has('actions.view')
+          ? ctx.db
+              .select({
+                id: actions.id,
+                title: actions.title,
+                referenceNumber: actions.referenceNumber,
+                status: actions.status,
+              })
+              .from(actions)
+              .where(
+                and(
+                  eq(actions.tenantId, tid),
+                  isNull(actions.archivedAt),
+                  or(ilike(actions.title, q), ilike(actions.referenceNumber, q)),
+                ),
+              )
+              .orderBy(desc(actions.createdAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{
+              id: string;
+              title: string;
+              referenceNumber: string | null;
+              status: string;
+            }>(),
 
-          // Heads Up — search title and description, exclude archived
-          has('headsUp.view')
-            ? ctx.db
-                .select({ id: headsUps.id, title: headsUps.title, status: headsUps.status })
-                .from(headsUps)
-                .where(
-                  and(
-                    eq(headsUps.tenantId, tid),
-                    ne(headsUps.status, 'archived'),
-                    or(ilike(headsUps.title, q), ilike(headsUps.description, q)),
-                  ),
-                )
-                .orderBy(desc(headsUps.createdAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{ id: string; title: string; status: string }>(),
+        // Heads Up — search title and description, exclude archived
+        has('headsUp.view')
+          ? ctx.db
+              .select({ id: headsUps.id, title: headsUps.title, status: headsUps.status })
+              .from(headsUps)
+              .where(
+                and(
+                  eq(headsUps.tenantId, tid),
+                  ne(headsUps.status, 'archived'),
+                  or(ilike(headsUps.title, q), ilike(headsUps.description, q)),
+                ),
+              )
+              .orderBy(desc(headsUps.createdAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; title: string; status: string }>(),
 
-          // Documents — search name and filename. Fetch a wider slice so the
-          // post-visibility filter below can still surface up to 5 visible hits.
-          has('documents.view')
-            ? ctx.db
-                .select({
-                  id: documents.id,
-                  name: documents.name,
-                  filename: documents.filename,
-                  folderId: documents.folderId,
-                  visibleToGroupIds: documents.visibleToGroupIds,
-                  visibleToSiteIds: documents.visibleToSiteIds,
-                })
-                .from(documents)
-                .where(
-                  and(
-                    eq(documents.tenantId, tid),
-                    isNull(documents.archivedAt),
-                    or(ilike(documents.name, q), ilike(documents.filename, q)),
+        // Documents — search name and filename. Fetch a wider slice so the
+        // post-visibility filter below can still surface up to 5 visible hits.
+        has('documents.view')
+          ? ctx.db
+              .select({
+                id: documents.id,
+                name: documents.name,
+                filename: documents.filename,
+                folderId: documents.folderId,
+                visibleToGroupIds: documents.visibleToGroupIds,
+                visibleToSiteIds: documents.visibleToSiteIds,
+              })
+              .from(documents)
+              .where(
+                and(
+                  eq(documents.tenantId, tid),
+                  isNull(documents.archivedAt),
+                  or(ilike(documents.name, q), ilike(documents.filename, q)),
+                ),
+              )
+              .orderBy(desc(documents.updatedAt))
+              .limit(MAX_PER_CATEGORY * 5)
+          : empty<{
+              id: string;
+              name: string;
+              filename: string;
+              folderId: string | null;
+              visibleToGroupIds: unknown;
+              visibleToSiteIds: unknown;
+            }>(),
+        // Permits — reference or title (the PTW-0123 case).
+        has('permits.view')
+          ? ctx.db
+              .select({
+                id: permits.id,
+                title: permits.title,
+                referenceNumber: permits.referenceNumber,
+                status: permits.status,
+              })
+              .from(permits)
+              .where(
+                and(
+                  eq(permits.tenantId, tid),
+                  or(ilike(permits.title, q), ilike(permits.referenceNumber, q)),
+                ),
+              )
+              .orderBy(desc(permits.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{
+              id: string;
+              title: string;
+              referenceNumber: string | null;
+              status: string;
+            }>(),
+        // COSHH — substance name (the "acetone" case).
+        has('coshh.view')
+          ? ctx.db
+              .select({ id: coshhSubstances.id, name: coshhSubstances.name })
+              .from(coshhSubstances)
+              .where(
+                and(
+                  eq(coshhSubstances.tenantId, tid),
+                  isNull(coshhSubstances.archivedAt),
+                  ilike(coshhSubstances.name, q),
+                ),
+              )
+              .orderBy(desc(coshhSubstances.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; name: string }>(),
+        // Risk assessments — reference or title.
+        has('riskAssessments.view')
+          ? ctx.db
+              .select({
+                id: riskAssessments.id,
+                title: riskAssessments.title,
+                referenceNumber: riskAssessments.referenceNumber,
+              })
+              .from(riskAssessments)
+              .where(
+                and(
+                  eq(riskAssessments.tenantId, tid),
+                  isNull(riskAssessments.archivedAt),
+                  or(ilike(riskAssessments.title, q), ilike(riskAssessments.referenceNumber, q)),
+                ),
+              )
+              .orderBy(desc(riskAssessments.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; title: string; referenceNumber: string | null }>(),
+        // Fire safety — buildings…
+        has('fireSafety.view')
+          ? ctx.db
+              .select({ id: fireBuildings.id, name: fireBuildings.name })
+              .from(fireBuildings)
+              .where(and(eq(fireBuildings.tenantId, tid), ilike(fireBuildings.name, q)))
+              .orderBy(desc(fireBuildings.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; name: string }>(),
+        // …and FRAs by reference or title.
+        has('fireSafety.view')
+          ? ctx.db
+              .select({
+                id: fireRiskAssessments.id,
+                title: fireRiskAssessments.title,
+                referenceNumber: fireRiskAssessments.referenceNumber,
+              })
+              .from(fireRiskAssessments)
+              .where(
+                and(
+                  eq(fireRiskAssessments.tenantId, tid),
+                  or(
+                    ilike(fireRiskAssessments.title, q),
+                    ilike(fireRiskAssessments.referenceNumber, q),
                   ),
-                )
-                .orderBy(desc(documents.updatedAt))
-                .limit(MAX_PER_CATEGORY * 5)
-            : empty<{
-                id: string;
-                name: string;
-                filename: string;
-                folderId: string | null;
-                visibleToGroupIds: unknown;
-                visibleToSiteIds: unknown;
-              }>(),
-          // Permits — reference or title (the PTW-0123 case).
-          has('permits.view')
-            ? ctx.db
-                .select({
-                  id: permits.id,
-                  title: permits.title,
-                  referenceNumber: permits.referenceNumber,
-                  status: permits.status,
-                })
-                .from(permits)
-                .where(
-                  and(
-                    eq(permits.tenantId, tid),
-                    or(ilike(permits.title, q), ilike(permits.referenceNumber, q)),
+                ),
+              )
+              .orderBy(desc(fireRiskAssessments.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; title: string; referenceNumber: string | null }>(),
+        // Contractors — company name.
+        has('contractors.view')
+          ? ctx.db
+              .select({ id: contractors.id, name: contractors.name })
+              .from(contractors)
+              .where(and(eq(contractors.tenantId, tid), ilike(contractors.name, q)))
+              .orderBy(desc(contractors.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; name: string }>(),
+        // Sites / projects.
+        has('sites.view')
+          ? ctx.db
+              .select({ id: sites.id, name: sites.name })
+              .from(sites)
+              .where(and(eq(sites.tenantId, tid), isNull(sites.archivedAt), ilike(sites.name, q)))
+              .orderBy(desc(sites.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; name: string }>(),
+        // Templates.
+        has('templates.view')
+          ? ctx.db
+              .select({ id: templates.id, name: templates.name, status: templates.status })
+              .from(templates)
+              .where(
+                and(
+                  eq(templates.tenantId, tid),
+                  ne(templates.status, 'archived'),
+                  ilike(templates.name, q),
+                ),
+              )
+              .orderBy(desc(templates.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; name: string; status: string }>(),
+        // Incidents — search title and reference. Confidential records
+        // are excluded entirely for callers without the key (IN-E14:
+        // counted on the register, never surfaced by search).
+        has('incidents.view')
+          ? ctx.db
+              .select({
+                id: incidents.id,
+                title: incidents.title,
+                referenceNumber: incidents.referenceNumber,
+                status: incidents.status,
+                confidential: incidents.confidential,
+              })
+              .from(incidents)
+              .where(
+                and(
+                  eq(incidents.tenantId, tid),
+                  ne(incidents.status, 'cancelled'),
+                  has('incidents.confidential.view')
+                    ? or(ilike(incidents.title, q), ilike(incidents.referenceNumber, q))
+                    : and(
+                        eq(incidents.confidential, false),
+                        or(ilike(incidents.title, q), ilike(incidents.referenceNumber, q)),
+                      ),
+                ),
+              )
+              .orderBy(desc(incidents.occurredAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{
+              id: string;
+              title: string;
+              referenceNumber: string;
+              status: string;
+              confidential: boolean;
+            }>(),
+        // RAMS packs — search title, reference and client name.
+        has('rams.view')
+          ? ctx.db
+              .select({
+                id: ramsPacks.id,
+                title: ramsPacks.title,
+                referenceNumber: ramsPacks.referenceNumber,
+                status: ramsPacks.status,
+              })
+              .from(ramsPacks)
+              .where(
+                and(
+                  eq(ramsPacks.tenantId, tid),
+                  isNull(ramsPacks.archivedAt),
+                  or(
+                    ilike(ramsPacks.title, q),
+                    ilike(ramsPacks.referenceNumber, q),
+                    ilike(ramsPacks.clientName, q),
                   ),
-                )
-                .orderBy(desc(permits.updatedAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{
-                id: string;
-                title: string;
-                referenceNumber: string | null;
-                status: string;
-              }>(),
-          // COSHH — substance name (the "acetone" case).
-          has('coshh.view')
-            ? ctx.db
-                .select({ id: coshhSubstances.id, name: coshhSubstances.name })
-                .from(coshhSubstances)
-                .where(
-                  and(
-                    eq(coshhSubstances.tenantId, tid),
-                    isNull(coshhSubstances.archivedAt),
-                    ilike(coshhSubstances.name, q),
-                  ),
-                )
-                .orderBy(desc(coshhSubstances.updatedAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{ id: string; name: string }>(),
-          // Risk assessments — reference or title.
-          has('riskAssessments.view')
-            ? ctx.db
-                .select({
-                  id: riskAssessments.id,
-                  title: riskAssessments.title,
-                  referenceNumber: riskAssessments.referenceNumber,
-                })
-                .from(riskAssessments)
-                .where(
-                  and(
-                    eq(riskAssessments.tenantId, tid),
-                    isNull(riskAssessments.archivedAt),
-                    or(ilike(riskAssessments.title, q), ilike(riskAssessments.referenceNumber, q)),
-                  ),
-                )
-                .orderBy(desc(riskAssessments.updatedAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{ id: string; title: string; referenceNumber: string | null }>(),
-          // Fire safety — buildings…
-          has('fireSafety.view')
-            ? ctx.db
-                .select({ id: fireBuildings.id, name: fireBuildings.name })
-                .from(fireBuildings)
-                .where(and(eq(fireBuildings.tenantId, tid), ilike(fireBuildings.name, q)))
-                .orderBy(desc(fireBuildings.updatedAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{ id: string; name: string }>(),
-          // …and FRAs by reference or title.
-          has('fireSafety.view')
-            ? ctx.db
-                .select({
-                  id: fireRiskAssessments.id,
-                  title: fireRiskAssessments.title,
-                  referenceNumber: fireRiskAssessments.referenceNumber,
-                })
-                .from(fireRiskAssessments)
-                .where(
-                  and(
-                    eq(fireRiskAssessments.tenantId, tid),
-                    or(
-                      ilike(fireRiskAssessments.title, q),
-                      ilike(fireRiskAssessments.referenceNumber, q),
-                    ),
-                  ),
-                )
-                .orderBy(desc(fireRiskAssessments.updatedAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{ id: string; title: string; referenceNumber: string | null }>(),
-          // Contractors — company name.
-          has('contractors.view')
-            ? ctx.db
-                .select({ id: contractors.id, name: contractors.name })
-                .from(contractors)
-                .where(and(eq(contractors.tenantId, tid), ilike(contractors.name, q)))
-                .orderBy(desc(contractors.updatedAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{ id: string; name: string }>(),
-          // Sites / projects.
-          has('sites.view')
-            ? ctx.db
-                .select({ id: sites.id, name: sites.name })
-                .from(sites)
-                .where(
-                  and(eq(sites.tenantId, tid), isNull(sites.archivedAt), ilike(sites.name, q)),
-                )
-                .orderBy(desc(sites.updatedAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{ id: string; name: string }>(),
-          // Templates.
-          has('templates.view')
-            ? ctx.db
-                .select({ id: templates.id, name: templates.name, status: templates.status })
-                .from(templates)
-                .where(
-                  and(
-                    eq(templates.tenantId, tid),
-                    ne(templates.status, 'archived'),
-                    ilike(templates.name, q),
-                  ),
-                )
-                .orderBy(desc(templates.updatedAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{ id: string; name: string; status: string }>(),
-          // Incidents — search title and reference. Confidential records
-          // are excluded entirely for callers without the key (IN-E14:
-          // counted on the register, never surfaced by search).
-          has('incidents.view')
-            ? ctx.db
-                .select({
-                  id: incidents.id,
-                  title: incidents.title,
-                  referenceNumber: incidents.referenceNumber,
-                  status: incidents.status,
-                  confidential: incidents.confidential,
-                })
-                .from(incidents)
-                .where(
-                  and(
-                    eq(incidents.tenantId, tid),
-                    ne(incidents.status, 'cancelled'),
-                    has('incidents.confidential.view')
-                      ? or(ilike(incidents.title, q), ilike(incidents.referenceNumber, q))
-                      : and(
-                          eq(incidents.confidential, false),
-                          or(ilike(incidents.title, q), ilike(incidents.referenceNumber, q)),
-                        ),
-                  ),
-                )
-                .orderBy(desc(incidents.occurredAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{
-                id: string;
-                title: string;
-                referenceNumber: string;
-                status: string;
-                confidential: boolean;
-              }>(),
-          // RAMS packs — search title, reference and client name.
-          has('rams.view')
-            ? ctx.db
-                .select({
-                  id: ramsPacks.id,
-                  title: ramsPacks.title,
-                  referenceNumber: ramsPacks.referenceNumber,
-                  status: ramsPacks.status,
-                })
-                .from(ramsPacks)
-                .where(
-                  and(
-                    eq(ramsPacks.tenantId, tid),
-                    isNull(ramsPacks.archivedAt),
-                    or(
-                      ilike(ramsPacks.title, q),
-                      ilike(ramsPacks.referenceNumber, q),
-                      ilike(ramsPacks.clientName, q),
-                    ),
-                  ),
-                )
-                .orderBy(desc(ramsPacks.updatedAt))
-                .limit(MAX_PER_CATEGORY)
-            : empty<{
-                id: string;
-                title: string;
-                referenceNumber: string | null;
-                status: string;
-              }>(),
-        ]);
+                ),
+              )
+              .orderBy(desc(ramsPacks.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{
+              id: string;
+              title: string;
+              referenceNumber: string | null;
+              status: string;
+            }>(),
+      ]);
 
       // Apply per-document / per-folder visibility for non-managers (managers
       // see everything, mirroring documents.list).

@@ -145,6 +145,7 @@ export function buildAppRouter(deps: {
         riskAssessments: deps.riskAssessments?.enabled ?? false,
         coshh: deps.coshh?.enabled ?? false,
         permits: deps.permits?.enabled ?? false,
+        rams: deps.rams?.enabled ?? false,
       },
     }),
     riskAssessments: createRiskAssessmentsRouter(deps.riskAssessments ?? { enabled: false }),

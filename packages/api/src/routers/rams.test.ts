@@ -145,7 +145,10 @@ describe('rams router', () => {
   }
 
   /** Content with one step, complete emergency block. */
-  function goodContent(hazardRef?: { raVersionId: string; hazardIndex: number }): MethodStatementContent {
+  function goodContent(hazardRef?: {
+    raVersionId: string;
+    hazardIndex: number;
+  }): MethodStatementContent {
     return methodStatementContentSchema.parse({
       scopeOfWorks: 'Replace AHU filters in the plant room.',
       steps: [
@@ -274,7 +277,12 @@ describe('rams router', () => {
       const caller = callerFor(standardId);
       await expect(caller.rams.packs.list({})).resolves.toEqual([]);
       await expect(
-        caller.rams.packs.create({ title: 'Nope', clientName: '', locationText: '', supervisorName: '' }),
+        caller.rams.packs.create({
+          title: 'Nope',
+          clientName: '',
+          locationText: '',
+          supervisorName: '',
+        }),
       ).rejects.toThrow();
     });
 
@@ -399,7 +407,10 @@ describe('rams router', () => {
   describe('RS-E03 issue gate — steps', () => {
     it('refuses a pack with no steps', async () => {
       const caller = callerFor(adminId);
-      const { assessmentId } = await makeRiskAssessment({ residualLikelihood: 1, residualSeverity: 1 });
+      const { assessmentId } = await makeRiskAssessment({
+        residualLikelihood: 1,
+        residualSeverity: 1,
+      });
       const { packId } = await caller.rams.packs.create({
         title: 'Empty',
         clientName: '',
@@ -407,9 +418,9 @@ describe('rams router', () => {
         supervisorName: '',
       });
       await caller.rams.packs.bindRiskAssessment({ packId, assessmentId });
-      await expect(
-        caller.rams.packs.issue({ packId, confirmAttestation: true }),
-      ).rejects.toThrow(/no-steps/);
+      await expect(caller.rams.packs.issue({ packId, confirmAttestation: true })).rejects.toThrow(
+        /no-steps/,
+      );
     });
 
     it('refuses a step with no description', async () => {
@@ -436,9 +447,9 @@ describe('rams router', () => {
         }),
       });
       void versionId;
-      await expect(
-        caller.rams.packs.issue({ packId, confirmAttestation: true }),
-      ).rejects.toThrow(/step-missing-description/);
+      await expect(caller.rams.packs.issue({ packId, confirmAttestation: true })).rejects.toThrow(
+        /step-missing-description/,
+      );
     });
 
     it('refuses issue without the attestation', async () => {
@@ -457,9 +468,9 @@ describe('rams router', () => {
         supervisorName: '',
       });
       await caller.rams.packs.saveDraft({ packId, content: goodContent() });
-      await expect(
-        caller.rams.packs.issue({ packId, confirmAttestation: true }),
-      ).rejects.toThrow(/no-risk-assessment/);
+      await expect(caller.rams.packs.issue({ packId, confirmAttestation: true })).rejects.toThrow(
+        /no-risk-assessment/,
+      );
     });
   });
 
@@ -476,9 +487,9 @@ describe('rams router', () => {
       const bound = await caller.rams.packs.bindRiskAssessment({ packId, assessmentId });
       expect(bound.published).toBe(false);
       await caller.rams.packs.saveDraft({ packId, content: goodContent() });
-      await expect(
-        caller.rams.packs.issue({ packId, confirmAttestation: true }),
-      ).rejects.toThrow(/risk-assessment-not-published/);
+      await expect(caller.rams.packs.issue({ packId, confirmAttestation: true })).rejects.toThrow(
+        /risk-assessment-not-published/,
+      );
     });
 
     it('refuses binding an archived risk assessment', async () => {
@@ -494,9 +505,9 @@ describe('rams router', () => {
         locationText: '',
         supervisorName: '',
       });
-      await expect(
-        caller.rams.packs.bindRiskAssessment({ packId, assessmentId }),
-      ).rejects.toThrow(/risk-assessment-archived/);
+      await expect(caller.rams.packs.bindRiskAssessment({ packId, assessmentId })).rejects.toThrow(
+        /risk-assessment-archived/,
+      );
     });
   });
 
@@ -550,9 +561,9 @@ describe('rams router', () => {
           ],
         }),
       });
-      await expect(
-        caller.rams.packs.issue({ packId, confirmAttestation: true }),
-      ).rejects.toThrow(/emergency-block-incomplete/);
+      await expect(caller.rams.packs.issue({ packId, confirmAttestation: true })).rejects.toThrow(
+        /emergency-block-incomplete/,
+      );
     });
   });
 
@@ -781,16 +792,16 @@ describe('rams router', () => {
       expect(detail.pack.withdrawnReason).toBe('Scope changed materially');
       expect(detail.clientLinks[0]?.revokedAt).not.toBeNull();
 
-      await expect(
-        callerFor(adminId).rams.client.publicGet({ token: link.token }),
-      ).rejects.toThrow(/link-revoked/);
+      await expect(callerFor(adminId).rams.client.publicGet({ token: link.token })).rejects.toThrow(
+        /link-revoked/,
+      );
     });
 
     it('refuses to withdraw a pack that was never issued', async () => {
       const { packId } = await readyPack();
-      await expect(
-        callerFor(adminId).rams.packs.withdraw({ packId, reason: 'x' }),
-      ).rejects.toThrow(/illegal-transition/);
+      await expect(callerFor(adminId).rams.packs.withdraw({ packId, reason: 'x' })).rejects.toThrow(
+        /illegal-transition/,
+      );
     });
   });
 

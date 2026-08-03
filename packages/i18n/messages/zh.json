@@ -299,7 +299,8 @@
         "coshh": "COSHH",
         "permits": "作业许可",
         "fireSafety": "消防安全",
-        "incidents": "事故事件"
+        "incidents": "事故事件",
+        "rams": "RAMS"
       },
       "perms": {
         "users_view": "View users",
@@ -381,7 +382,13 @@
         "incidents_report": "报告事故事件",
         "incidents_investigate": "开展调查",
         "incidents_manage": "管理事故事件（分级、RIDDOR、审批）",
-        "incidents_confidential_view": "查看保密事故"
+        "incidents_confidential_view": "查看保密事故",
+        "rams_view": "查看 RAMS 文件包",
+        "rams_create": "编写作业方法说明与草稿",
+        "rams_issue": "签发、重新签发和撤回文件包",
+        "rams_brief": "记录班前交底",
+        "rams_review": "审查承包商的 RAMS",
+        "rams_manage": "管理作业方法说明库"
       }
     },
     "groups": {
@@ -1439,7 +1446,8 @@
     "permits": "作业许可",
     "fireSafety": "消防安全",
     "analytics": "仪表盘",
-    "incidents": "事故事件"
+    "incidents": "事故事件",
+    "rams": "RAMS"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6156,6 +6164,291 @@
       "addFiles": "添加照片/文件",
       "none": "尚无证据。现场拍摄的照片会显示在这里。",
       "witness": "证人"
+    }
+  },
+  "rams": {
+    "title": "RAMS",
+    "subtitle": "风险评估与作业方法说明——签发、交底、验收一体化管理。",
+    "needsAttention": "需要处理",
+    "newPack": "新建 RAMS 文件包",
+    "exportCsv": "导出 CSV",
+    "searchPlaceholder": "按编号、名称或客户搜索",
+    "empty": "暂无 RAMS 文件包。",
+    "versionLabel": "第 {version} 版",
+    "briefedCount": "第 {version} 版已交底 {count} 人",
+    "holdPoint": "停工待检点",
+    "openBuilder": "打开编辑器",
+    "issuePack": "签发文件包",
+    "reissuePack": "重新签发",
+    "withdrawPack": "撤回",
+    "withdrawReason": "撤回原因",
+    "confirmWithdraw": "确认撤回",
+    "withdrawnBanner": "该文件包已撤回——不得据此继续作业。",
+    "downloadPdf": "下载 PDF",
+    "attention": {
+      "draftPacks": "{count} 个草稿",
+      "awaitingBriefing": "{count} 个待交底",
+      "pendingClientAcceptance": "{count} 个待客户确认",
+      "pendingReviews": "{count} 个承包商文件包待审查",
+      "expiringReviews": "{count} 个验收即将到期"
+    },
+    "filters": {
+      "all": "全部"
+    },
+    "columns": {
+      "reference": "编号",
+      "title": "名称",
+      "client": "客户",
+      "site": "场所",
+      "planned": "计划时间",
+      "status": "状态",
+      "briefing": "交底"
+    },
+    "status": {
+      "draft": "草稿",
+      "issued": "已签发",
+      "superseded": "已被替代",
+      "withdrawn": "已撤回",
+      "cancelled": "已取消"
+    },
+    "fields": {
+      "title": "作业名称",
+      "titlePlaceholder": "例如：空调机组滤网更换 — Riverside",
+      "client": "客户",
+      "site": "场所",
+      "noSite": "无场所",
+      "location": "位置／区域",
+      "plannedFrom": "计划开始",
+      "plannedTo": "计划结束",
+      "supervisor": "负责监护人",
+      "scopeOfWorks": "作业范围"
+    },
+    "new": {
+      "title": "新建 RAMS 文件包",
+      "subtitle": "从模板开始、复制以往作业，或从空白创建。",
+      "fromLibrary": "从模板库",
+      "fromLibraryHint": "常见工种的步骤已预填",
+      "duplicate": "复制以往文件包",
+      "duplicateHint": "与上次作业相同，含全部关联",
+      "blank": "空白",
+      "blankHint": "从头编写",
+      "pickTemplate": "选择作业方法说明",
+      "pickPack": "选择要复制的文件包",
+      "noPreviousPacks": "暂无可复制的历史文件包。",
+      "stepCount": "{count} 个步骤",
+      "createAndBuild": "创建并打开编辑器"
+    },
+    "gate": {
+      "title": "签发前须完成",
+      "allClear": "签发该文件包所需内容均已齐备。",
+      "unreferencedTitle": "无任何步骤应对的高风险",
+      "attestationTitle": "编制人声明",
+      "attestationConfirm": "我确认以上声明。"
+    },
+    "errors": {
+      "no-steps": "请为作业方法说明添加至少一个步骤。",
+      "step-missing-title": "每个步骤都需要名称。",
+      "step-missing-description": "每个步骤都需要说明实际作业内容。",
+      "no-risk-assessment": "请至少关联一份风险评估。",
+      "risk-assessment-not-published": "关联的风险评估尚未发布——请先发布。",
+      "emergency-block-incomplete": "请补充急救与应急处置安排。",
+      "high-risk-hazard-unreferenced": "存在无任何步骤应对的高风险危害。",
+      "attestation-not-confirmed": "请确认编制人声明。"
+    },
+    "band": {
+      "low": "低",
+      "medium": "中",
+      "high": "高",
+      "critical": "极高"
+    },
+    "bindings": {
+      "title": "风险评估与化学品",
+      "noRas": "尚未关联风险评估。",
+      "coshh": "危险化学品",
+      "hazardCount": "{count} 项危害",
+      "suggested": "针对本作业的建议",
+      "suggestedCoshh": "建议关联的化学品",
+      "unbind": "移除"
+    },
+    "steps": {
+      "title": "作业顺序",
+      "none": "暂无步骤。",
+      "add": "添加步骤",
+      "titlePlaceholder": "本步骤要做什么",
+      "description": "实际如何操作",
+      "hazardsAddressed": "本步骤应对的危害",
+      "controlNotes": "本步骤专属措施",
+      "ppe": "个人防护装备",
+      "holdPoint": "须经检查签认后方可继续作业",
+      "holdPointPlaceholder": "继续作业前必须满足的条件",
+      "moveUp": "上移",
+      "moveDown": "下移",
+      "remove": "删除步骤",
+      "expand": "编辑",
+      "collapse": "收起"
+    },
+    "emergency": {
+      "title": "应急处置",
+      "firstAid": "急救",
+      "procedure": "应急程序",
+      "rescuePlan": "救援方案"
+    },
+    "logistics": {
+      "welfare": "生活设施",
+      "accessEgress": "进出与疏散通道"
+    },
+    "builder": {
+      "saving": "保存中…",
+      "saved": "所有更改已保存",
+      "backToPack": "返回文件包"
+    },
+    "briefing": {
+      "title": "交底",
+      "open": "向班组交底",
+      "onSuperseded": "{count} 人按旧版本交底",
+      "notIssued": "文件包须先签发才能进行交底。",
+      "readThis": "交底内容",
+      "signHere": "确认交底",
+      "name": "姓名",
+      "category": "人员类别",
+      "organisation": "所属单位",
+      "questions": "提出的问题（可选）",
+      "understoodStatement": "确认即表示本人已接受该文件包的交底并已理解其内容。",
+      "confirm": "确认已交底并理解",
+      "recorded": "已记录",
+      "register": "已交底人员",
+      "nobodyYet": "尚无人接受交底。",
+      "briefedSoFar": "已交底 {count} 人",
+      "needsRebrief": "需重新交底",
+      "queued": "{count} 条交底待同步",
+      "retry": "立即重试"
+    },
+    "briefeeCategory": {
+      "employee": "本公司员工",
+      "subcontractor": "分包单位",
+      "agency": "劳务派遣人员",
+      "visitor": "来访人员",
+      "client_representative": "客户代表",
+      "other": "其他"
+    },
+    "client": {
+      "title": "签发给客户",
+      "issuedTo": "客户联系人",
+      "createLink": "创建分享链接",
+      "unnamed": "未填写收件人",
+      "revoked": "已失效"
+    },
+    "clientDecision": {
+      "pending": "待客户确认",
+      "accepted": "已确认",
+      "changes_requested": "要求修改"
+    },
+    "versions": {
+      "title": "版本记录",
+      "superseded": "已被替代"
+    },
+    "timeline": {
+      "title": "时间线"
+    },
+    "library": {
+      "title": "作业方法说明库",
+      "subtitle": "可复用的作业方法说明——复制后修改，无需从空白开始。",
+      "backToRegister": "返回 RAMS",
+      "restoreStarters": "恢复初始模板",
+      "starter": "初始模板",
+      "startPack": "创建文件包",
+      "duplicate": "复制",
+      "copySuffix": "副本",
+      "empty": "暂无作业方法说明。"
+    },
+    "reviews": {
+      "title": "承包商 RAMS 审查",
+      "subtitle": "审查并受理承包商提交的文件包。",
+      "empty": "暂无待审查的承包商文件包。",
+      "selectPrompt": "请选择要审查的文件包。",
+      "outcome": "审查结论",
+      "conditions": "附加条件",
+      "comments": "反馈给承包商的意见",
+      "validTo": "受理有效期至",
+      "recordDecision": "记录审查结论",
+      "itemComment": "该项存在什么问题？",
+      "expired": "已过期"
+    },
+    "reviewOutcome": {
+      "pending": "待审查",
+      "accepted": "已受理",
+      "accepted_with_conditions": "附条件受理",
+      "rejected": "不予受理"
+    },
+    "reviewVerdict": {
+      "pass": "符合",
+      "fail": "不符合",
+      "na": "不适用"
+    },
+    "trade": {
+      "mechanical": "机械",
+      "electrical": "电气",
+      "work_at_height": "高处作业",
+      "groundworks": "土方工程",
+      "hot_works": "动火作业",
+      "confined_space": "受限空间",
+      "lifting": "起重吊装",
+      "maintenance": "维护保养",
+      "cleaning": "保洁",
+      "demolition": "拆除",
+      "roofing": "屋面工程",
+      "other": "其他"
+    },
+    "holdPointKind": {
+      "isolation_proved": "隔离验电确认",
+      "permit_issued": "作业许可已签发",
+      "inspection_passed": "检查合格",
+      "atmosphere_tested": "气体检测完成",
+      "client_approval": "客户批准",
+      "supervisor_check": "监护人检查",
+      "other": "其他"
+    },
+    "ppe": {
+      "safety_helmet": "安全帽",
+      "safety_footwear": "安全鞋",
+      "hi_vis": "高可视警示服",
+      "eye_protection": "护目镜",
+      "hearing_protection": "听力护具",
+      "gloves": "手套",
+      "respiratory_protection": "呼吸防护",
+      "fall_arrest_harness": "安全带",
+      "face_shield": "面屏",
+      "coveralls": "连体工作服",
+      "chemical_apron": "防化围裙",
+      "welding_ppe": "焊接防护装备",
+      "cut_resistant_gloves": "防割手套",
+      "knee_pads": "护膝",
+      "life_jacket": "救生衣"
+    },
+    "events": {
+      "pack_created": "创建文件包",
+      "pack_updated": "更新文件包",
+      "pack_issued": "签发文件包",
+      "pack_reissued": "重新签发文件包",
+      "pack_withdrawn": "撤回文件包",
+      "pack_cancelled": "取消文件包",
+      "ra_bound": "关联风险评估",
+      "ra_unbound": "移除风险评估",
+      "coshh_bound": "关联化学品评估",
+      "coshh_unbound": "移除化学品评估",
+      "document_added": "添加文件",
+      "document_removed": "移除文件",
+      "briefing_recorded": "记录交底",
+      "client_link_created": "创建分享链接",
+      "client_link_revoked": "分享链接失效",
+      "client_accepted": "客户已确认",
+      "client_changes_requested": "客户要求修改",
+      "method_statement_created": "创建作业方法说明",
+      "method_statement_published": "发布作业方法说明",
+      "method_statement_archived": "归档作业方法说明",
+      "method_statement_duplicated": "复制作业方法说明",
+      "review_submitted": "承包商文件包提交审查",
+      "review_decided": "记录审查结论"
     }
   }
 }

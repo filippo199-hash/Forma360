@@ -55,6 +55,7 @@ interface NavItem {
     | 'coshh'
     | 'permits'
     | 'fireSafety'
+    | 'rams'
     | 'assets'
     | 'documents'
     | 'contractors'
@@ -104,6 +105,14 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     href: `/${locale}/incidents`,
     icon: Siren,
   };
+  // Brand-gated (ADR 0010): RAMS ships only where the active brand's
+  // module catalogue enables it. Sits next to Permits — both are "do the
+  // work safely" surfaces, and a permit type can demand a RAMS pack.
+  const ramsItem: NavItem = {
+    key: 'rams',
+    href: `/${locale}/rams`,
+    icon: FileSignature,
+  };
   // Brand-gated (ADR 0010): Fire Safety ships only where the active
   // brand's module catalogue enables it.
   const fireSafetyItem: NavItem = {
@@ -131,6 +140,7 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     ...(brandHasModule(activeBrand.id, 'riskAssessments') ? [riskAssessmentsItem] : []),
     ...(brandHasModule(activeBrand.id, 'coshh') ? [coshhItem] : []),
     ...(brandHasModule(activeBrand.id, 'permits') ? [permitsItem] : []),
+    ...(brandHasModule(activeBrand.id, 'rams') ? [ramsItem] : []),
     ...(brandHasModule(activeBrand.id, 'fireSafety') ? [fireSafetyItem] : []),
     { key: 'assets', href: `/${locale}/assets`, icon: Wrench },
     { key: 'maintenance', href: `/${locale}/maintenance`, icon: Hammer },
@@ -155,6 +165,7 @@ export function SiteNavItems({ locale, onNavigate }: { locale: string; onNavigat
     coshh: 'coshh.view',
     permits: 'permits.view',
     fireSafety: 'fireSafety.view',
+    rams: 'rams.view',
     assets: 'assets.view',
     maintenance: 'assets.maintenance.manage',
     documents: 'documents.view',

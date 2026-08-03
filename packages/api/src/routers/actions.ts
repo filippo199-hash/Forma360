@@ -161,7 +161,10 @@ async function loadActiveActionType(
  * (low=30, medium=7, high=1, critical=1) when no row exists, mirroring
  * the actionTypesRouter.settings.get behaviour.
  */
-export async function loadPriorityDueDateDays(db: Db, tenantId: string): Promise<PriorityDueDateDays> {
+export async function loadPriorityDueDateDays(
+  db: Db,
+  tenantId: string,
+): Promise<PriorityDueDateDays> {
   const rows = await db
     .select({ days: tenantActionSettings.priorityDueDateDays })
     .from(tenantActionSettings)
@@ -644,7 +647,8 @@ export async function notifyAssignment(
         assignerName: actorRows[0]?.name ?? 'A colleague',
         title: input.title,
         referenceNumber: input.referenceNumber ?? '',
-        dueLine: input.dueAt !== null ? ` It is due by ${input.dueAt.toISOString().slice(0, 10)}.` : '',
+        dueLine:
+          input.dueAt !== null ? ` It is due by ${input.dueAt.toISOString().slice(0, 10)}.` : '',
         viewUrl: `${actionsDeps.appUrl.replace(/\/$/, '')}/en/actions/${input.actionId}`,
       },
     });
@@ -875,10 +879,16 @@ export const actionsRouter = router({
         source = { type: 'standalone', referenceNumber: null, title: null, href: null };
       } else if (action.sourceType === 'risk_assessment') {
         const rows = await ctx.db
-          .select({ referenceNumber: riskAssessments.referenceNumber, title: riskAssessments.title })
+          .select({
+            referenceNumber: riskAssessments.referenceNumber,
+            title: riskAssessments.title,
+          })
           .from(riskAssessments)
           .where(
-            and(eq(riskAssessments.tenantId, ctx.tenantId), eq(riskAssessments.id, action.sourceId)),
+            and(
+              eq(riskAssessments.tenantId, ctx.tenantId),
+              eq(riskAssessments.id, action.sourceId),
+            ),
           )
           .limit(1);
         source = {
@@ -898,7 +908,10 @@ export const actionsRouter = router({
           .from(coshhAssessments)
           .leftJoin(coshhSubstances, eq(coshhSubstances.id, coshhAssessments.substanceId))
           .where(
-            and(eq(coshhAssessments.tenantId, ctx.tenantId), eq(coshhAssessments.id, action.sourceId)),
+            and(
+              eq(coshhAssessments.tenantId, ctx.tenantId),
+              eq(coshhAssessments.id, action.sourceId),
+            ),
           )
           .limit(1);
         const row = rows[0];

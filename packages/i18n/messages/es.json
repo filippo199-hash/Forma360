@@ -299,7 +299,8 @@
         "coshh": "COSHH",
         "permits": "Permisos de trabajo",
         "fireSafety": "Seguridad contra incendios",
-        "incidents": "Incidentes"
+        "incidents": "Incidentes",
+        "rams": "RAMS"
       },
       "perms": {
         "users_view": "View users",
@@ -381,7 +382,13 @@
         "incidents_report": "Notificar incidentes",
         "incidents_investigate": "Realizar investigaciones",
         "incidents_manage": "Gestionar incidentes (triaje, RIDDOR, aprobaciones)",
-        "incidents_confidential_view": "Ver incidentes confidenciales"
+        "incidents_confidential_view": "Ver incidentes confidenciales",
+        "rams_view": "Ver paquetes RAMS",
+        "rams_create": "Redactar procedimientos de trabajo y borradores",
+        "rams_issue": "Emitir, reemitir y retirar paquetes",
+        "rams_brief": "Registrar sesiones informativas",
+        "rams_review": "Revisar los RAMS de los contratistas",
+        "rams_manage": "Gestionar la biblioteca de procedimientos"
       }
     },
     "groups": {
@@ -1446,7 +1453,8 @@
     "permits": "Permisos",
     "fireSafety": "Seguridad contra incendios",
     "analytics": "Panel",
-    "incidents": "Incidentes"
+    "incidents": "Incidentes",
+    "rams": "RAMS"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6163,6 +6171,291 @@
       "addFiles": "Añadir fotos / archivos",
       "none": "Aún no hay pruebas. Las fotos tomadas en el lugar aparecen aquí.",
       "witness": "Testigo"
+    }
+  },
+  "rams": {
+    "title": "RAMS",
+    "subtitle": "Evaluaciones de riesgos y procedimientos de trabajo — emitidos, divulgados y aceptados.",
+    "needsAttention": "Requiere atención",
+    "newPack": "Nuevo paquete RAMS",
+    "exportCsv": "Exportar CSV",
+    "searchPlaceholder": "Buscar por referencia, título o cliente",
+    "empty": "Todavía no hay paquetes RAMS.",
+    "versionLabel": "v{version}",
+    "briefedCount": "{count} informados de la v{version}",
+    "holdPoint": "Punto de parada",
+    "openBuilder": "Abrir el editor",
+    "issuePack": "Emitir paquete",
+    "reissuePack": "Reemitir",
+    "withdrawPack": "Retirar",
+    "withdrawReason": "Motivo de la retirada",
+    "confirmWithdraw": "Confirmar retirada",
+    "withdrawnBanner": "Este paquete ha sido retirado — los trabajos no deben realizarse con él.",
+    "downloadPdf": "Descargar PDF",
+    "attention": {
+      "draftPacks": "{count} en borrador",
+      "awaitingBriefing": "{count} pendientes de divulgación",
+      "pendingClientAcceptance": "{count} pendientes de aceptación del cliente",
+      "pendingReviews": "{count} paquetes de contratistas por revisar",
+      "expiringReviews": "{count} aceptaciones por caducar"
+    },
+    "filters": {
+      "all": "Todos"
+    },
+    "columns": {
+      "reference": "Referencia",
+      "title": "Título",
+      "client": "Cliente",
+      "site": "Emplazamiento",
+      "planned": "Planificado",
+      "status": "Estado",
+      "briefing": "Divulgación"
+    },
+    "status": {
+      "draft": "Borrador",
+      "issued": "Emitido",
+      "superseded": "Sustituido",
+      "withdrawn": "Retirado",
+      "cancelled": "Cancelado"
+    },
+    "fields": {
+      "title": "Título del trabajo",
+      "titlePlaceholder": "p. ej. Cambio de filtros UTA — Riverside",
+      "client": "Cliente",
+      "site": "Emplazamiento",
+      "noSite": "Sin emplazamiento",
+      "location": "Ubicación / zona",
+      "plannedFrom": "Planificado desde",
+      "plannedTo": "Planificado hasta",
+      "supervisor": "Responsable del trabajo",
+      "scopeOfWorks": "Alcance de los trabajos"
+    },
+    "new": {
+      "title": "Crear un paquete RAMS",
+      "subtitle": "Empiece desde una plantilla, copie un trabajo anterior o comience en blanco.",
+      "fromLibrary": "Desde la biblioteca",
+      "fromLibraryHint": "Pasos precargados para un oficio habitual",
+      "duplicate": "Copiar un paquete anterior",
+      "duplicateHint": "Igual que el último trabajo, con sus vínculos",
+      "blank": "En blanco",
+      "blankHint": "Redactarlo desde cero",
+      "pickTemplate": "Elija un procedimiento de trabajo",
+      "pickPack": "Elija el paquete a copiar",
+      "noPreviousPacks": "Todavía no hay paquetes anteriores que copiar.",
+      "stepCount": "{count} pasos",
+      "createAndBuild": "Crear y abrir el editor"
+    },
+    "gate": {
+      "title": "Antes de poder emitir",
+      "allClear": "Está todo lo necesario para emitir este paquete.",
+      "unreferencedTitle": "Riesgos altos que ningún paso aborda",
+      "attestationTitle": "Declaración del redactor",
+      "attestationConfirm": "Confirmo la declaración anterior."
+    },
+    "errors": {
+      "no-steps": "Añada al menos un paso al procedimiento de trabajo.",
+      "step-missing-title": "Todos los pasos necesitan un título.",
+      "step-missing-description": "Todos los pasos necesitan describir lo que realmente se hace.",
+      "no-risk-assessment": "Vincule al menos una evaluación de riesgos.",
+      "risk-assessment-not-published": "Una evaluación de riesgos vinculada no está publicada — publíquela primero.",
+      "emergency-block-incomplete": "Complete los primeros auxilios y las medidas de emergencia.",
+      "high-risk-hazard-unreferenced": "Ningún paso aborda un riesgo alto.",
+      "attestation-not-confirmed": "Confirme la declaración del redactor."
+    },
+    "band": {
+      "low": "Bajo",
+      "medium": "Medio",
+      "high": "Alto",
+      "critical": "Crítico"
+    },
+    "bindings": {
+      "title": "Evaluaciones de riesgos y sustancias",
+      "noRas": "Todavía no hay evaluaciones de riesgos vinculadas.",
+      "coshh": "Sustancias peligrosas",
+      "hazardCount": "{count} peligros",
+      "suggested": "Sugerido para este trabajo",
+      "suggestedCoshh": "Sustancias sugeridas",
+      "unbind": "Quitar"
+    },
+    "steps": {
+      "title": "Secuencia de trabajos",
+      "none": "Todavía no hay pasos.",
+      "add": "Añadir paso",
+      "titlePlaceholder": "Qué ocurre en este paso",
+      "description": "Qué se hace realmente",
+      "hazardsAddressed": "Peligros que aborda este paso",
+      "controlNotes": "Medidas propias del paso",
+      "ppe": "EPI",
+      "holdPoint": "El trabajo se detiene aquí hasta que se valide una comprobación",
+      "holdPointPlaceholder": "Qué debe cumplirse antes de continuar",
+      "moveUp": "Subir",
+      "moveDown": "Bajar",
+      "remove": "Eliminar paso",
+      "expand": "Editar",
+      "collapse": "Cerrar"
+    },
+    "emergency": {
+      "title": "Medidas de emergencia",
+      "firstAid": "Primeros auxilios",
+      "procedure": "Procedimiento de emergencia",
+      "rescuePlan": "Plan de rescate"
+    },
+    "logistics": {
+      "welfare": "Instalaciones de bienestar",
+      "accessEgress": "Acceso y evacuación"
+    },
+    "builder": {
+      "saving": "Guardando…",
+      "saved": "Todos los cambios guardados",
+      "backToPack": "Volver al paquete"
+    },
+    "briefing": {
+      "title": "Divulgación",
+      "open": "Informar al equipo",
+      "onSuperseded": "{count} informados de una versión anterior",
+      "notIssued": "Este paquete debe emitirse antes de poder informar a nadie.",
+      "readThis": "Contenido a divulgar",
+      "signHere": "Confirmar la divulgación",
+      "name": "Nombre",
+      "category": "Esta persona es",
+      "organisation": "Empresa",
+      "questions": "Dudas planteadas (opcional)",
+      "understoodStatement": "Al confirmar, esta persona declara que ha sido informada de este paquete y que lo ha entendido.",
+      "confirm": "Confirmar informado y entendido",
+      "recorded": "Registrado",
+      "register": "Personas informadas",
+      "nobodyYet": "Todavía no se ha informado a nadie.",
+      "briefedSoFar": "{count} informados",
+      "needsRebrief": "Requiere nueva divulgación",
+      "queued": "{count} divulgación(es) pendientes de sincronizar",
+      "retry": "Reintentar ahora"
+    },
+    "briefeeCategory": {
+      "employee": "Empleado",
+      "subcontractor": "Subcontratista",
+      "agency": "Trabajador de ETT",
+      "visitor": "Visitante",
+      "client_representative": "Representante del cliente",
+      "other": "Otro"
+    },
+    "client": {
+      "title": "Emitir al cliente",
+      "issuedTo": "Contacto del cliente",
+      "createLink": "Crear enlace para compartir",
+      "unnamed": "Destinatario sin nombre",
+      "revoked": "revocado"
+    },
+    "clientDecision": {
+      "pending": "Pendiente del cliente",
+      "accepted": "Aceptado",
+      "changes_requested": "Cambios solicitados"
+    },
+    "versions": {
+      "title": "Historial de versiones",
+      "superseded": "sustituida"
+    },
+    "timeline": {
+      "title": "Cronología"
+    },
+    "library": {
+      "title": "Biblioteca de procedimientos",
+      "subtitle": "Procedimientos reutilizables — duplicar y adaptar en lugar de empezar en blanco.",
+      "backToRegister": "Volver a RAMS",
+      "restoreStarters": "Restaurar plantillas iniciales",
+      "starter": "Plantilla inicial",
+      "startPack": "Crear un paquete",
+      "duplicate": "Duplicar",
+      "copySuffix": "copia",
+      "empty": "Todavía no hay procedimientos."
+    },
+    "reviews": {
+      "title": "Revisión de RAMS de contratistas",
+      "subtitle": "Revise y acepte los paquetes que le envían sus contratistas.",
+      "empty": "No hay paquetes de contratistas pendientes de revisión.",
+      "selectPrompt": "Seleccione un paquete para revisarlo.",
+      "outcome": "Decisión",
+      "conditions": "Condiciones",
+      "comments": "Comentarios devueltos al contratista",
+      "validTo": "Aceptado hasta",
+      "recordDecision": "Registrar decisión",
+      "itemComment": "¿Qué falla en este punto?",
+      "expired": "Caducado"
+    },
+    "reviewOutcome": {
+      "pending": "Pendiente de revisión",
+      "accepted": "Aceptado",
+      "accepted_with_conditions": "Aceptado con condiciones",
+      "rejected": "Rechazado"
+    },
+    "reviewVerdict": {
+      "pass": "Correcto",
+      "fail": "Incorrecto",
+      "na": "N/A"
+    },
+    "trade": {
+      "mechanical": "Mecánica",
+      "electrical": "Electricidad",
+      "work_at_height": "Trabajo en altura",
+      "groundworks": "Movimiento de tierras",
+      "hot_works": "Trabajos en caliente",
+      "confined_space": "Espacio confinado",
+      "lifting": "Izado",
+      "maintenance": "Mantenimiento",
+      "cleaning": "Limpieza",
+      "demolition": "Demolición",
+      "roofing": "Cubiertas",
+      "other": "Otro"
+    },
+    "holdPointKind": {
+      "isolation_proved": "Bloqueo comprobado",
+      "permit_issued": "Permiso emitido",
+      "inspection_passed": "Inspección superada",
+      "atmosphere_tested": "Atmósfera medida",
+      "client_approval": "Aprobación del cliente",
+      "supervisor_check": "Comprobación del responsable",
+      "other": "Otro"
+    },
+    "ppe": {
+      "safety_helmet": "Casco",
+      "safety_footwear": "Calzado de seguridad",
+      "hi_vis": "Alta visibilidad",
+      "eye_protection": "Protección ocular",
+      "hearing_protection": "Protección auditiva",
+      "gloves": "Guantes",
+      "respiratory_protection": "Protección respiratoria",
+      "fall_arrest_harness": "Arnés anticaídas",
+      "face_shield": "Pantalla facial",
+      "coveralls": "Buzo",
+      "chemical_apron": "Delantal químico",
+      "welding_ppe": "EPI de soldadura",
+      "cut_resistant_gloves": "Guantes anticorte",
+      "knee_pads": "Rodilleras",
+      "life_jacket": "Chaleco salvavidas"
+    },
+    "events": {
+      "pack_created": "Paquete creado",
+      "pack_updated": "Paquete actualizado",
+      "pack_issued": "Paquete emitido",
+      "pack_reissued": "Paquete reemitido",
+      "pack_withdrawn": "Paquete retirado",
+      "pack_cancelled": "Paquete cancelado",
+      "ra_bound": "Evaluación de riesgos vinculada",
+      "ra_unbound": "Evaluación de riesgos retirada",
+      "coshh_bound": "Evaluación de sustancias vinculada",
+      "coshh_unbound": "Evaluación de sustancias retirada",
+      "document_added": "Documento añadido",
+      "document_removed": "Documento retirado",
+      "briefing_recorded": "Divulgación registrada",
+      "client_link_created": "Enlace de compartición creado",
+      "client_link_revoked": "Enlace de compartición revocado",
+      "client_accepted": "El cliente ha aceptado",
+      "client_changes_requested": "El cliente ha solicitado cambios",
+      "method_statement_created": "Procedimiento creado",
+      "method_statement_published": "Procedimiento publicado",
+      "method_statement_archived": "Procedimiento archivado",
+      "method_statement_duplicated": "Procedimiento duplicado",
+      "review_submitted": "Paquete de contratista enviado a revisión",
+      "review_decided": "Decisión de revisión registrada"
     }
   }
 }

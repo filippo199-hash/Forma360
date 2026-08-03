@@ -166,7 +166,9 @@ describe('RS-E02 step content schema', () => {
           sequence: 1,
           title: 'Isolate and prove dead',
           description: 'Lock off and prove dead at the point of work.',
-          hazardRefs: [{ raVersionId: RA_VERSION_ID, hazardIndex: 0, hazardLabel: 'Electrocution' }],
+          hazardRefs: [
+            { raVersionId: RA_VERSION_ID, hazardIndex: 0, hazardLabel: 'Electrocution' },
+          ],
           controlNotes: 'Use a proving unit before and after.',
           plant: [{ name: 'Voltage indicator', assetId: null, note: 'Calibrated' }],
           substanceRefs: [],
@@ -384,9 +386,13 @@ describe('RS-E06 issue gate — emergency block', () => {
   });
 
   it('treats whitespace-only arrangements as missing', () => {
-    expect(emergencyBlockComplete({ ...emptyMethodStatementContent().emergency, firstAid: '   ', emergencyProcedure: '  ' })).toBe(
-      false,
-    );
+    expect(
+      emergencyBlockComplete({
+        ...emptyMethodStatementContent().emergency,
+        firstAid: '   ',
+        emergencyProcedure: '  ',
+      }),
+    ).toBe(false);
   });
 
   it('accepts a block with both arrangements present', () => {
@@ -437,7 +443,9 @@ describe('RS-E05 high-residual hazards must be addressed by a step', () => {
   it('honours a lower threshold when the tenant configures one', () => {
     const medium = boundRa({
       // 3 × 3 = 9 → medium under the default matrix.
-      hazards: [{ index: 0, hazard: 'Manual handling', residualLikelihood: 3, residualSeverity: 3 }],
+      hazards: [
+        { index: 0, hazard: 'Manual handling', residualLikelihood: 3, residualSeverity: 3 },
+      ],
     });
     expect(unreferencedHighRiskHazards(contentWith([step()]), [medium], 'high')).toEqual([]);
     expect(unreferencedHighRiskHazards(contentWith([step()]), [medium], 'medium')).toHaveLength(1);
@@ -447,7 +455,9 @@ describe('RS-E05 high-residual hazards must be addressed by a step', () => {
     // 1 × 5 = 5 → medium on thresholds alone, but the floor lifts it to high.
     const floored = boundRa({
       matrix: { ...DEFAULT_RISK_MATRIX, severityFloors: { '5': 'high' } },
-      hazards: [{ index: 0, hazard: 'Fatality potential', residualLikelihood: 1, residualSeverity: 5 }],
+      hazards: [
+        { index: 0, hazard: 'Fatality potential', residualLikelihood: 1, residualSeverity: 5 },
+      ],
     });
     const flagged = unreferencedHighRiskHazards(contentWith([step()]), [floored]);
     expect(flagged).toHaveLength(1);
@@ -541,9 +551,9 @@ describe('RS-E13 third-party review helpers', () => {
   });
 
   it('treats an unbounded acceptance as valid', () => {
-    expect(reviewAcceptanceValid({ outcome: 'accepted', validFrom: null, validTo: null }, now)).toBe(
-      true,
-    );
+    expect(
+      reviewAcceptanceValid({ outcome: 'accepted', validFrom: null, validTo: null }, now),
+    ).toBe(true);
   });
 
   it('accepts an accepted-with-conditions review', () => {
@@ -556,9 +566,9 @@ describe('RS-E13 third-party review helpers', () => {
   });
 
   it('never treats a rejected or pending review as valid', () => {
-    expect(reviewAcceptanceValid({ outcome: 'rejected', validFrom: null, validTo: null }, now)).toBe(
-      false,
-    );
+    expect(
+      reviewAcceptanceValid({ outcome: 'rejected', validFrom: null, validTo: null }, now),
+    ).toBe(false);
     expect(reviewAcceptanceValid({ outcome: 'pending', validFrom: null, validTo: null }, now)).toBe(
       false,
     );

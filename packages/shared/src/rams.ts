@@ -355,9 +355,7 @@ export function emptyMethodStatementContent(): MethodStatementContent {
  * builder calls this on every mutation so the content schema's density
  * rule can never be violated by a UI action.
  */
-export function resequenceSteps(
-  steps: ReadonlyArray<MethodStatementStep>,
-): MethodStatementStep[] {
+export function resequenceSteps(steps: ReadonlyArray<MethodStatementStep>): MethodStatementStep[] {
   return steps.map((step, index) => ({ ...step, sequence: index + 1 }));
 }
 
@@ -621,6 +619,25 @@ export function reviewAcceptanceValid(
   return true;
 }
 
+// ─── Author attestation ─────────────────────────────────────────────────────
+
+/**
+ * The declaration the author actively confirms at issue, shown in full
+ * before signing (the RA module's M-2 lesson: the attestation appears on
+ * EVERY issue, not only when something else triggered a dialog). The
+ * router snapshots this onto the version row, so the printed record
+ * carries the exact wording that was agreed to.
+ *
+ * Deliberately untranslated: it is a legal declaration a named person
+ * signs, stored verbatim and printed on the PDF, so it must be the same
+ * text everywhere rather than whatever locale the author was using.
+ */
+export const RAMS_AUTHOR_ATTESTATION =
+  'I confirm that I have prepared or reviewed this risk assessment and method statement, ' +
+  'that it is suitable and sufficient for the work described, that the sequence of work and ' +
+  'the control measures are those that will actually be followed, and that it will be briefed ' +
+  'to everyone carrying out the work before they start.';
+
 // ─── Reference formatters ───────────────────────────────────────────────────
 
 export const METHOD_STATEMENT_REFERENCE_PREFIX = 'MS-';
@@ -714,7 +731,8 @@ export const DEFAULT_METHOD_STATEMENT_TEMPLATES: ReadonlyArray<DefaultMethodStat
         ppe: BASE_PPE,
         holdPoint: {
           kind: 'supervisor_check',
-          description: 'Supervisor confirms plant is running correctly before the area is handed back.',
+          description:
+            'Supervisor confirms plant is running correctly before the area is handed back.',
         },
       },
       {
@@ -884,7 +902,8 @@ export const DEFAULT_METHOD_STATEMENT_TEMPLATES: ReadonlyArray<DefaultMethodStat
     logistics: {
       welfare: 'Site welfare facilities used by arrangement with the site contact.',
       environmental: 'Debris netting used where required. All waste lowered, never dropped.',
-      accessEgress: 'Roof access via the agreed hatch or stair. Access kept locked when unattended.',
+      accessEgress:
+        'Roof access via the agreed hatch or stair. Access kept locked when unattended.',
       competence:
         'Operatives hold current work-at-height, tower (PASMA) or MEWP (IPAF) training appropriate to the equipment used.',
     },
@@ -1049,7 +1068,8 @@ export const DEFAULT_METHOD_STATEMENT_TEMPLATES: ReadonlyArray<DefaultMethodStat
       environmental:
         'Fume controlled at source. Gas cylinders returned to a secure external store at the end of each shift.',
       permitsRequired: 'Hot work permit required. Confined-space permit if applicable.',
-      competence: 'Operatives hold current welding / cutting competence appropriate to the process.',
+      competence:
+        'Operatives hold current welding / cutting competence appropriate to the process.',
     },
   },
   {
@@ -1132,7 +1152,8 @@ export const DEFAULT_METHOD_STATEMENT_TEMPLATES: ReadonlyArray<DefaultMethodStat
       },
     ],
     emergency: {
-      firstAid: 'Crew first aider at the entry point. Oxygen resuscitation available where provided.',
+      firstAid:
+        'Crew first aider at the entry point. Oxygen resuscitation available where provided.',
       emergencyProcedure:
         'On an alarm, all entrants evacuate immediately. The standby person never enters the space. Raise the alarm, call 999 stating a confined-space rescue is required, and attempt non-entry retrieval using the tripod and winch.',
       rescuePlan:
@@ -1205,8 +1226,7 @@ export const DEFAULT_METHOD_STATEMENT_TEMPLATES: ReadonlyArray<DefaultMethodStat
       },
       {
         title: 'Hand back and record the lift',
-        description:
-          'Record the lift, hand the area back to the site contact and sign out.',
+        description: 'Record the lift, hand the area back to the site contact and sign out.',
         ppe: BASE_PPE,
       },
     ],
@@ -1277,13 +1297,15 @@ export const DEFAULT_METHOD_STATEMENT_TEMPLATES: ReadonlyArray<DefaultMethodStat
       },
     ],
     emergency: {
-      firstAid: 'Crew first aider carries a first-aid kit. Site first-aid arrangements taken at induction.',
+      firstAid:
+        'Crew first aider carries a first-aid kit. Site first-aid arrangements taken at induction.',
       emergencyProcedure:
         'Follow the site emergency procedure taken at induction. On the alarm, stop work, make the area safe and evacuate to the site muster point.',
     },
     logistics: {
       welfare: 'Site welfare facilities used by arrangement with the site contact.',
-      environmental: 'All waste removed from site under the company waste route. No waste left in occupied areas.',
+      environmental:
+        'All waste removed from site under the company waste route. No waste left in occupied areas.',
       accessEgress: 'Access via the agreed route. Fire exits and escape routes never obstructed.',
     },
   },

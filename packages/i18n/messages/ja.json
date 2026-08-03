@@ -299,7 +299,8 @@
         "coshh": "COSHH",
         "permits": "作業許可",
         "fireSafety": "防火管理",
-        "incidents": "インシデント"
+        "incidents": "インシデント",
+        "rams": "RAMS"
       },
       "perms": {
         "users_view": "View users",
@@ -381,7 +382,13 @@
         "incidents_report": "インシデントの報告",
         "incidents_investigate": "調査の実施",
         "incidents_manage": "インシデントの管理（トリアージ・RIDDOR・承認）",
-        "incidents_confidential_view": "機密インシデントの閲覧"
+        "incidents_confidential_view": "機密インシデントの閲覧",
+        "rams_view": "RAMS パックの閲覧",
+        "rams_create": "作業手順書と下書きの作成",
+        "rams_issue": "パックの発行・再発行・撤回",
+        "rams_brief": "周知記録の登録",
+        "rams_review": "協力会社の RAMS の審査",
+        "rams_manage": "作業手順書ライブラリの管理"
       }
     },
     "groups": {
@@ -1439,7 +1446,8 @@
     "permits": "作業許可",
     "fireSafety": "防火管理",
     "analytics": "ダッシュボード",
-    "incidents": "インシデント"
+    "incidents": "インシデント",
+    "rams": "RAMS"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6156,6 +6164,291 @@
       "addFiles": "写真・ファイルを追加",
       "none": "まだ証拠がありません。現場で撮影した写真がここに表示されます。",
       "witness": "証人"
+    }
+  },
+  "rams": {
+    "title": "RAMS",
+    "subtitle": "リスクアセスメントと作業手順書 — 発行・周知・承諾までを一貫して管理します。",
+    "needsAttention": "対応が必要",
+    "newPack": "新規 RAMS パック",
+    "exportCsv": "CSV をエクスポート",
+    "searchPlaceholder": "整理番号・件名・顧客名で検索",
+    "empty": "RAMS パックはまだありません。",
+    "versionLabel": "第{version}版",
+    "briefedCount": "第{version}版で{count}名に周知済み",
+    "holdPoint": "ホールドポイント",
+    "openBuilder": "エディタを開く",
+    "issuePack": "パックを発行",
+    "reissuePack": "再発行",
+    "withdrawPack": "撤回",
+    "withdrawReason": "撤回の理由",
+    "confirmWithdraw": "撤回を確定",
+    "withdrawnBanner": "このパックは撤回されました。これに基づいて作業を行わないでください。",
+    "downloadPdf": "PDF をダウンロード",
+    "attention": {
+      "draftPacks": "下書き {count} 件",
+      "awaitingBriefing": "周知待ち {count} 件",
+      "pendingClientAcceptance": "顧客承諾待ち {count} 件",
+      "pendingReviews": "協力会社パックの審査待ち {count} 件",
+      "expiringReviews": "承諾の期限切れ間近 {count} 件"
+    },
+    "filters": {
+      "all": "すべて"
+    },
+    "columns": {
+      "reference": "整理番号",
+      "title": "件名",
+      "client": "顧客",
+      "site": "現場",
+      "planned": "予定",
+      "status": "状態",
+      "briefing": "周知"
+    },
+    "status": {
+      "draft": "下書き",
+      "issued": "発行済み",
+      "superseded": "差し替え済み",
+      "withdrawn": "撤回済み",
+      "cancelled": "取消"
+    },
+    "fields": {
+      "title": "作業件名",
+      "titlePlaceholder": "例：空調機フィルター交換 — Riverside",
+      "client": "顧客",
+      "site": "現場",
+      "noSite": "現場なし",
+      "location": "場所・区域",
+      "plannedFrom": "開始予定",
+      "plannedTo": "終了予定",
+      "supervisor": "作業責任者",
+      "scopeOfWorks": "作業範囲"
+    },
+    "new": {
+      "title": "RAMS パックを作成",
+      "subtitle": "テンプレートから始める、過去の案件を複製する、または白紙から作成します。",
+      "fromLibrary": "ライブラリから",
+      "fromLibraryHint": "主要な工種の手順があらかじめ入力されます",
+      "duplicate": "過去のパックを複製",
+      "duplicateHint": "前回の案件と同じ内容・関連付けごと",
+      "blank": "白紙",
+      "blankHint": "一から作成する",
+      "pickTemplate": "作業手順書を選択",
+      "pickPack": "複製するパックを選択",
+      "noPreviousPacks": "複製できる過去のパックはまだありません。",
+      "stepCount": "{count} 手順",
+      "createAndBuild": "作成してエディタを開く"
+    },
+    "gate": {
+      "title": "発行前の確認",
+      "allClear": "このパックを発行するために必要なものはすべて揃っています。",
+      "unreferencedTitle": "どの手順でも対応されていない高リスク",
+      "attestationTitle": "作成者の宣誓",
+      "attestationConfirm": "上記の宣誓内容を確認しました。"
+    },
+    "errors": {
+      "no-steps": "作業手順書に少なくとも 1 つの手順を追加してください。",
+      "step-missing-title": "すべての手順に件名が必要です。",
+      "step-missing-description": "すべての手順に実際の作業内容の記載が必要です。",
+      "no-risk-assessment": "リスクアセスメントを少なくとも 1 件関連付けてください。",
+      "risk-assessment-not-published": "関連付けたリスクアセスメントが未公開です。先に公開してください。",
+      "emergency-block-incomplete": "救急処置と緊急時対応を記入してください。",
+      "high-risk-hazard-unreferenced": "高リスクの危険源がどの手順でも対応されていません。",
+      "attestation-not-confirmed": "作成者の宣誓を確認してください。"
+    },
+    "band": {
+      "low": "低",
+      "medium": "中",
+      "high": "高",
+      "critical": "重大"
+    },
+    "bindings": {
+      "title": "リスクアセスメントと化学物質",
+      "noRas": "リスクアセスメントはまだ関連付けられていません。",
+      "coshh": "有害物質",
+      "hazardCount": "危険源 {count} 件",
+      "suggested": "この作業への推奨",
+      "suggestedCoshh": "推奨される物質",
+      "unbind": "解除"
+    },
+    "steps": {
+      "title": "作業手順",
+      "none": "手順がまだありません。",
+      "add": "手順を追加",
+      "titlePlaceholder": "この手順で行うこと",
+      "description": "実際に行う作業内容",
+      "hazardsAddressed": "この手順が対応する危険源",
+      "controlNotes": "この手順固有の対策",
+      "ppe": "保護具",
+      "holdPoint": "確認が承認されるまで作業を停止する",
+      "holdPointPlaceholder": "作業を続ける前に満たすべき条件",
+      "moveUp": "上へ",
+      "moveDown": "下へ",
+      "remove": "手順を削除",
+      "expand": "編集",
+      "collapse": "閉じる"
+    },
+    "emergency": {
+      "title": "緊急時対応",
+      "firstAid": "救急処置",
+      "procedure": "緊急時の手順",
+      "rescuePlan": "救助計画"
+    },
+    "logistics": {
+      "welfare": "福利厚生設備",
+      "accessEgress": "出入りと避難経路"
+    },
+    "builder": {
+      "saving": "保存中…",
+      "saved": "すべての変更を保存しました",
+      "backToPack": "パックに戻る"
+    },
+    "briefing": {
+      "title": "周知",
+      "open": "作業班へ周知",
+      "onSuperseded": "旧版で周知済み {count} 名",
+      "notIssued": "周知の前にこのパックを発行する必要があります。",
+      "readThis": "周知する内容",
+      "signHere": "周知を確認",
+      "name": "氏名",
+      "category": "この方の区分",
+      "organisation": "所属会社",
+      "questions": "出された質問（任意）",
+      "understoodStatement": "確認することで、この方はこのパックの周知を受け、内容を理解したことを表明します。",
+      "confirm": "周知を受け理解したことを確認",
+      "recorded": "記録しました",
+      "register": "周知を受けた方",
+      "nobodyYet": "まだ誰も周知を受けていません。",
+      "briefedSoFar": "{count} 名に周知済み",
+      "needsRebrief": "再周知が必要",
+      "queued": "{count} 件の周知が同期待ちです",
+      "retry": "今すぐ再試行"
+    },
+    "briefeeCategory": {
+      "employee": "自社社員",
+      "subcontractor": "協力会社",
+      "agency": "派遣社員",
+      "visitor": "来訪者",
+      "client_representative": "顧客担当者",
+      "other": "その他"
+    },
+    "client": {
+      "title": "顧客へ発行",
+      "issuedTo": "顧客担当者名",
+      "createLink": "共有リンクを作成",
+      "unnamed": "宛先未設定",
+      "revoked": "失効"
+    },
+    "clientDecision": {
+      "pending": "顧客の回答待ち",
+      "accepted": "承諾",
+      "changes_requested": "修正依頼"
+    },
+    "versions": {
+      "title": "版の履歴",
+      "superseded": "差し替え済み"
+    },
+    "timeline": {
+      "title": "経過"
+    },
+    "library": {
+      "title": "作業手順書ライブラリ",
+      "subtitle": "再利用できる作業手順書 — 白紙から書かず、複製して手直しします。",
+      "backToRegister": "RAMS 一覧に戻る",
+      "restoreStarters": "初期テンプレートを復元",
+      "starter": "初期テンプレート",
+      "startPack": "パックを作成",
+      "duplicate": "複製",
+      "copySuffix": "コピー",
+      "empty": "作業手順書がまだありません。"
+    },
+    "reviews": {
+      "title": "協力会社 RAMS の審査",
+      "subtitle": "協力会社から提出されたパックを審査し承諾します。",
+      "empty": "審査待ちの協力会社パックはありません。",
+      "selectPrompt": "審査するパックを選択してください。",
+      "outcome": "判定",
+      "conditions": "条件",
+      "comments": "協力会社への回答",
+      "validTo": "承諾期限",
+      "recordDecision": "判定を記録",
+      "itemComment": "どこに問題がありますか？",
+      "expired": "期限切れ"
+    },
+    "reviewOutcome": {
+      "pending": "審査待ち",
+      "accepted": "承諾",
+      "accepted_with_conditions": "条件付き承諾",
+      "rejected": "不承諾"
+    },
+    "reviewVerdict": {
+      "pass": "適合",
+      "fail": "不適合",
+      "na": "該当なし"
+    },
+    "trade": {
+      "mechanical": "機械",
+      "electrical": "電気",
+      "work_at_height": "高所作業",
+      "groundworks": "土工事",
+      "hot_works": "火気作業",
+      "confined_space": "閉所作業",
+      "lifting": "揚重作業",
+      "maintenance": "保全",
+      "cleaning": "清掃",
+      "demolition": "解体",
+      "roofing": "屋根工事",
+      "other": "その他"
+    },
+    "holdPointKind": {
+      "isolation_proved": "停電・遮断の確認",
+      "permit_issued": "作業許可の発行",
+      "inspection_passed": "点検合格",
+      "atmosphere_tested": "雰囲気測定",
+      "client_approval": "顧客承認",
+      "supervisor_check": "作業責任者の確認",
+      "other": "その他"
+    },
+    "ppe": {
+      "safety_helmet": "保護帽",
+      "safety_footwear": "安全靴",
+      "hi_vis": "高視認性衣服",
+      "eye_protection": "保護眼鏡",
+      "hearing_protection": "聴覚保護具",
+      "gloves": "手袋",
+      "respiratory_protection": "呼吸用保護具",
+      "fall_arrest_harness": "墜落制止用器具",
+      "face_shield": "防護面",
+      "coveralls": "保護服",
+      "chemical_apron": "耐薬品エプロン",
+      "welding_ppe": "溶接用保護具",
+      "cut_resistant_gloves": "耐切創手袋",
+      "knee_pads": "膝当て",
+      "life_jacket": "救命胴衣"
+    },
+    "events": {
+      "pack_created": "パックを作成",
+      "pack_updated": "パックを更新",
+      "pack_issued": "パックを発行",
+      "pack_reissued": "パックを再発行",
+      "pack_withdrawn": "パックを撤回",
+      "pack_cancelled": "パックを取消",
+      "ra_bound": "リスクアセスメントを関連付け",
+      "ra_unbound": "リスクアセスメントを解除",
+      "coshh_bound": "有害物質評価を関連付け",
+      "coshh_unbound": "有害物質評価を解除",
+      "document_added": "書類を追加",
+      "document_removed": "書類を削除",
+      "briefing_recorded": "周知を記録",
+      "client_link_created": "共有リンクを作成",
+      "client_link_revoked": "共有リンクを失効",
+      "client_accepted": "顧客が承諾",
+      "client_changes_requested": "顧客が修正を依頼",
+      "method_statement_created": "作業手順書を作成",
+      "method_statement_published": "作業手順書を公開",
+      "method_statement_archived": "作業手順書を保管",
+      "method_statement_duplicated": "作業手順書を複製",
+      "review_submitted": "協力会社パックを審査に提出",
+      "review_decided": "審査判定を記録"
     }
   }
 }

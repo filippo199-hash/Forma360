@@ -23,7 +23,9 @@ function formatDate(value: string | null): string {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ breakInside: 'avoid' }}>
-      <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.6, color: '#64748b' }}>
+      <div
+        style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.6, color: '#64748b' }}
+      >
         {label}
       </div>
       <div style={{ fontSize: 12, color: '#0f172a' }}>{value.length > 0 ? value : '—'}</div>
@@ -149,7 +151,9 @@ export function RamsPrintLayout({ snapshot }: { snapshot: RamsRenderSnapshot }) 
                   <td style={{ padding: 5 }}>{ra.title}</td>
                   <td style={{ padding: 5 }}>v{ra.versionNumber}</td>
                   <td style={{ padding: 5 }}>{ra.hazardCount}</td>
-                  <td style={{ padding: 5, textTransform: 'capitalize' }}>{ra.worstResidualBand}</td>
+                  <td style={{ padding: 5, textTransform: 'capitalize' }}>
+                    {ra.worstResidualBand}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -256,7 +260,9 @@ export function RamsPrintLayout({ snapshot }: { snapshot: RamsRenderSnapshot }) 
                 <div>
                   <strong>Hazards addressed:</strong>{' '}
                   {step.hazardRefs
-                    .map((h) => (h.hazardLabel.length > 0 ? h.hazardLabel : `#${h.hazardIndex + 1}`))
+                    .map((h) =>
+                      h.hazardLabel.length > 0 ? h.hazardLabel : `#${h.hazardIndex + 1}`,
+                    )
                     .join(', ')}
                 </div>
               ) : null}

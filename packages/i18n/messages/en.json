@@ -92,7 +92,8 @@
     "permits": "Permits",
     "fireSafety": "Fire Safety",
     "analytics": "Dashboard",
-    "incidents": "Incidents"
+    "incidents": "Incidents",
+    "rams": "RAMS"
   },
   "ai": {
     "emptyTitle": "How can I help?",
@@ -383,7 +384,8 @@
         "coshh": "COSHH",
         "permits": "Permits",
         "fireSafety": "Fire Safety",
-        "incidents": "Incidents"
+        "incidents": "Incidents",
+        "rams": "RAMS"
       },
       "perms": {
         "users_view": "View users",
@@ -465,7 +467,13 @@
         "incidents_report": "Report incidents",
         "incidents_investigate": "Run investigations",
         "incidents_manage": "Manage incidents (triage, RIDDOR, approvals)",
-        "incidents_confidential_view": "View confidential incidents"
+        "incidents_confidential_view": "View confidential incidents",
+        "rams_view": "View RAMS packs",
+        "rams_create": "Author method statements and draft packs",
+        "rams_issue": "Issue, re-issue and withdraw packs",
+        "rams_brief": "Record briefings",
+        "rams_review": "Review contractors' RAMS",
+        "rams_manage": "Manage the method statement library"
       }
     },
     "groups": {
@@ -6391,6 +6399,291 @@
       "addFiles": "Add photos / files",
       "none": "No evidence yet. Photos taken at the scene land here.",
       "witness": "Witness"
+    }
+  },
+  "rams": {
+    "title": "RAMS",
+    "subtitle": "Risk assessments and method statements — issued, briefed and accepted.",
+    "needsAttention": "Needs attention",
+    "newPack": "New RAMS pack",
+    "exportCsv": "Export CSV",
+    "searchPlaceholder": "Search reference, title or client",
+    "empty": "No RAMS packs yet.",
+    "versionLabel": "v{version}",
+    "briefedCount": "{count} briefed on v{version}",
+    "holdPoint": "Hold point",
+    "openBuilder": "Open the builder",
+    "issuePack": "Issue pack",
+    "reissuePack": "Re-issue",
+    "withdrawPack": "Withdraw",
+    "withdrawReason": "Reason for withdrawal",
+    "confirmWithdraw": "Confirm withdrawal",
+    "withdrawnBanner": "This pack has been withdrawn — work must not proceed under it.",
+    "downloadPdf": "Download PDF",
+    "attention": {
+      "draftPacks": "{count} in draft",
+      "awaitingBriefing": "{count} awaiting briefing",
+      "pendingClientAcceptance": "{count} awaiting client acceptance",
+      "pendingReviews": "{count} contractor packs to review",
+      "expiringReviews": "{count} acceptances expiring"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "columns": {
+      "reference": "Reference",
+      "title": "Title",
+      "client": "Client",
+      "site": "Site",
+      "planned": "Planned",
+      "status": "Status",
+      "briefing": "Briefing"
+    },
+    "status": {
+      "draft": "Draft",
+      "issued": "Issued",
+      "superseded": "Superseded",
+      "withdrawn": "Withdrawn",
+      "cancelled": "Cancelled"
+    },
+    "fields": {
+      "title": "Job title",
+      "titlePlaceholder": "e.g. AHU filter replacement — Riverside",
+      "client": "Client",
+      "site": "Site",
+      "noSite": "No site",
+      "location": "Location / area",
+      "plannedFrom": "Planned from",
+      "plannedTo": "Planned to",
+      "supervisor": "Supervisor in charge",
+      "scopeOfWorks": "Scope of works"
+    },
+    "new": {
+      "title": "Start a RAMS pack",
+      "subtitle": "Start from a template, copy a previous job, or begin blank.",
+      "fromLibrary": "From the library",
+      "fromLibraryHint": "Pre-filled steps for a common trade",
+      "duplicate": "Copy a previous pack",
+      "duplicateHint": "Same as the last job, with its bindings",
+      "blank": "Blank",
+      "blankHint": "Write it from scratch",
+      "pickTemplate": "Pick a method statement",
+      "pickPack": "Pick a pack to copy",
+      "noPreviousPacks": "No previous packs to copy yet.",
+      "stepCount": "{count} steps",
+      "createAndBuild": "Create and open the builder"
+    },
+    "gate": {
+      "title": "Before you can issue",
+      "allClear": "Everything needed to issue this pack is in place.",
+      "unreferencedTitle": "High-risk hazards no step addresses",
+      "attestationTitle": "Author declaration",
+      "attestationConfirm": "I confirm the declaration above."
+    },
+    "errors": {
+      "no-steps": "Add at least one step to the method statement.",
+      "step-missing-title": "Every step needs a title.",
+      "step-missing-description": "Every step needs a description of what is actually done.",
+      "no-risk-assessment": "Bind at least one risk assessment.",
+      "risk-assessment-not-published": "A bound risk assessment has not been published — publish it first.",
+      "emergency-block-incomplete": "Complete the first-aid and emergency arrangements.",
+      "high-risk-hazard-unreferenced": "A high-risk hazard is not addressed by any step.",
+      "attestation-not-confirmed": "Confirm the author declaration."
+    },
+    "band": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "bindings": {
+      "title": "Risk assessments and substances",
+      "noRas": "No risk assessments bound yet.",
+      "coshh": "Hazardous substances",
+      "hazardCount": "{count} hazards",
+      "suggested": "Suggested for this job",
+      "suggestedCoshh": "Suggested substances",
+      "unbind": "Remove"
+    },
+    "steps": {
+      "title": "Sequence of works",
+      "none": "No steps yet.",
+      "add": "Add step",
+      "titlePlaceholder": "What happens at this step",
+      "description": "What is actually done",
+      "hazardsAddressed": "Hazards this step addresses",
+      "controlNotes": "Step-specific controls",
+      "ppe": "PPE",
+      "holdPoint": "Work stops here until a check is signed off",
+      "holdPointPlaceholder": "What must be true before work continues",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove step",
+      "expand": "Edit",
+      "collapse": "Close"
+    },
+    "emergency": {
+      "title": "Emergency arrangements",
+      "firstAid": "First aid",
+      "procedure": "Emergency procedure",
+      "rescuePlan": "Rescue plan"
+    },
+    "logistics": {
+      "welfare": "Welfare",
+      "accessEgress": "Access and egress"
+    },
+    "builder": {
+      "saving": "Saving…",
+      "saved": "All changes saved",
+      "backToPack": "Back to the pack"
+    },
+    "briefing": {
+      "title": "Briefing",
+      "open": "Brief the crew",
+      "onSuperseded": "{count} briefed on an older version",
+      "notIssued": "This pack must be issued before anyone can be briefed.",
+      "readThis": "Brief this",
+      "signHere": "Confirm the briefing",
+      "name": "Name",
+      "category": "They are a",
+      "organisation": "Organisation",
+      "questions": "Questions raised (optional)",
+      "understoodStatement": "By confirming, this person states they have been briefed on this pack and understand it.",
+      "confirm": "Confirm briefed and understood",
+      "recorded": "Recorded",
+      "register": "Who has been briefed",
+      "nobodyYet": "Nobody has been briefed yet.",
+      "briefedSoFar": "{count} briefed",
+      "needsRebrief": "Needs re-briefing",
+      "queued": "{count} briefing(s) waiting to sync",
+      "retry": "Retry now"
+    },
+    "briefeeCategory": {
+      "employee": "Employee",
+      "subcontractor": "Subcontractor",
+      "agency": "Agency worker",
+      "visitor": "Visitor",
+      "client_representative": "Client representative",
+      "other": "Other"
+    },
+    "client": {
+      "title": "Issue to the client",
+      "issuedTo": "Client contact name",
+      "createLink": "Create share link",
+      "unnamed": "Unnamed recipient",
+      "revoked": "revoked"
+    },
+    "clientDecision": {
+      "pending": "Awaiting client",
+      "accepted": "Accepted",
+      "changes_requested": "Changes requested"
+    },
+    "versions": {
+      "title": "Version history",
+      "superseded": "superseded"
+    },
+    "timeline": {
+      "title": "Timeline"
+    },
+    "library": {
+      "title": "Method statement library",
+      "subtitle": "Reusable method statements — duplicate and tailor rather than starting blank.",
+      "backToRegister": "Back to RAMS",
+      "restoreStarters": "Restore starter templates",
+      "starter": "Starter",
+      "startPack": "Start a pack",
+      "duplicate": "Duplicate",
+      "copySuffix": "copy",
+      "empty": "No method statements yet."
+    },
+    "reviews": {
+      "title": "Contractor RAMS review",
+      "subtitle": "Review and accept the packs your contractors send you.",
+      "empty": "No contractor packs awaiting review.",
+      "selectPrompt": "Select a pack to review.",
+      "outcome": "Decision",
+      "conditions": "Conditions",
+      "comments": "Comments returned to the contractor",
+      "validTo": "Accepted until",
+      "recordDecision": "Record decision",
+      "itemComment": "What is wrong with this?",
+      "expired": "Expired"
+    },
+    "reviewOutcome": {
+      "pending": "Awaiting review",
+      "accepted": "Accepted",
+      "accepted_with_conditions": "Accepted with conditions",
+      "rejected": "Rejected"
+    },
+    "reviewVerdict": {
+      "pass": "Pass",
+      "fail": "Fail",
+      "na": "N/A"
+    },
+    "trade": {
+      "mechanical": "Mechanical",
+      "electrical": "Electrical",
+      "work_at_height": "Work at height",
+      "groundworks": "Groundworks",
+      "hot_works": "Hot works",
+      "confined_space": "Confined space",
+      "lifting": "Lifting",
+      "maintenance": "Maintenance",
+      "cleaning": "Cleaning",
+      "demolition": "Demolition",
+      "roofing": "Roofing",
+      "other": "Other"
+    },
+    "holdPointKind": {
+      "isolation_proved": "Isolation proved",
+      "permit_issued": "Permit issued",
+      "inspection_passed": "Inspection passed",
+      "atmosphere_tested": "Atmosphere tested",
+      "client_approval": "Client approval",
+      "supervisor_check": "Supervisor check",
+      "other": "Other"
+    },
+    "ppe": {
+      "safety_helmet": "Helmet",
+      "safety_footwear": "Safety boots",
+      "hi_vis": "Hi-vis",
+      "eye_protection": "Eye protection",
+      "hearing_protection": "Hearing protection",
+      "gloves": "Gloves",
+      "respiratory_protection": "RPE",
+      "fall_arrest_harness": "Harness",
+      "face_shield": "Face shield",
+      "coveralls": "Coveralls",
+      "chemical_apron": "Chemical apron",
+      "welding_ppe": "Welding PPE",
+      "cut_resistant_gloves": "Cut-resistant gloves",
+      "knee_pads": "Knee pads",
+      "life_jacket": "Life jacket"
+    },
+    "events": {
+      "pack_created": "Pack created",
+      "pack_updated": "Pack updated",
+      "pack_issued": "Pack issued",
+      "pack_reissued": "Pack re-issued",
+      "pack_withdrawn": "Pack withdrawn",
+      "pack_cancelled": "Pack cancelled",
+      "ra_bound": "Risk assessment bound",
+      "ra_unbound": "Risk assessment removed",
+      "coshh_bound": "COSHH assessment bound",
+      "coshh_unbound": "COSHH assessment removed",
+      "document_added": "Document added",
+      "document_removed": "Document removed",
+      "briefing_recorded": "Briefing recorded",
+      "client_link_created": "Share link created",
+      "client_link_revoked": "Share link revoked",
+      "client_accepted": "Client accepted",
+      "client_changes_requested": "Client requested changes",
+      "method_statement_created": "Method statement created",
+      "method_statement_published": "Method statement published",
+      "method_statement_archived": "Method statement archived",
+      "method_statement_duplicated": "Method statement duplicated",
+      "review_submitted": "Contractor pack submitted for review",
+      "review_decided": "Review decision recorded"
     }
   }
 }
