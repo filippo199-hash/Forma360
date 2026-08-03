@@ -1,0 +1,420 @@
+/**
+ * Fire Safety domain helpers (FreeHS module B3).
+ *
+ * Pure data + functions shared by the DB schema, the API router and the
+ * web UI:
+ *   - the fire-safety check catalogue (the logbook calendar): every
+ *     recurring check type with its conventional statutory / BS-standard
+ *     frequency and the building profile that makes it applicable;
+ *   - due-date arithmetic for check frequencies (calendar-month based,
+ *     month-end clamped) and the ok / due-soon / overdue status maths;
+ *   - building classification under the Fire Safety (England)
+ *     Regulations 2022: high-rise residential (≥ 18 m or ≥ 7 storeys)
+ *     and the above-11-metre residential regime;
+ *   - the fire-door inspection regime (quarterly common-parts and annual
+ *     flat-entrance checks in relevant residential buildings above
+ *     eleven metres; six-monthly best practice elsewhere);
+ *   - fire-risk-assessment vocabulary (methodology, PAS 79-style
+ *     five-band risk rating, significant-finding categories) and the
+ *     review-cadence suggestion derived from the rating.
+ *
+ * Everything here is deterministic and side-effect free so both the tRPC
+ * layer and client components can import it.
+ */
+import { z } from 'zod';
+
+// ─── Check frequencies ──────────────────────────────────────────────────────
+
+export const CHECK_FREQUENCIES = [
+  'weekly',
+  'monthly',
+  'quarterly',
+  'six_monthly',
+  'annual',
+] as const;
+export type CheckFrequency = (typeof CHECK_FREQUENCIES)[number];
+
+const FREQUENCY_MONTHS: Record<Exclude<CheckFrequency, 'weekly'>, number> = {
+  monthly: 1,
+  quarterly: 3,
+  six_monthly: 6,
+  annual: 12,
+};
+
+/**
+ * Add calendar months, clamping to the last day of the target month —
+ * 31 January + 1 month is 28/29 February, never 2/3 March. A logbook
+ * that silently drifts into the next month teaches people to distrust
+ * its dates.
+ */
+export function addMonthsClamped(base: Date, months: number): Date {
+  const out = new Date(base);
+  const day = out.getUTCDate();
+  out.setUTCDate(1);
+  out.setUTCMonth(out.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(out.getUTCFullYear(), out.getUTCMonth() + 1, 0)).getUTCDate();
+  out.setUTCDate(Math.min(day, lastDay));
+  return out;
+}
+
+/** Next due date for a check performed (or scheduled from) `from`. */
+export function nextDueDate(from: Date, frequency: CheckFrequency): Date {
+  if (frequency === 'weekly') {
+    const out = new Date(from);
+    out.setUTCDate(out.getUTCDate() + 7);
+    return out;
+  }
+  return addMonthsClamped(from, FREQUENCY_MONTHS[frequency]);
+}
+
+/**
+ * How close to the due date the module starts flagging "due soon".
+ * Scaled to the cadence: two days of warning is right for a weekly
+ * alarm test, useless for an annual extinguisher service.
+ */
+export const DUE_SOON_DAYS: Record<CheckFrequency, number> = {
+  weekly: 2,
+  monthly: 7,
+  quarterly: 14,
+  six_monthly: 21,
+  annual: 30,
+};
+
+export type CheckDueStatus = 'ok' | 'due_soon' | 'overdue';
+
+/** Classify a due date against now. Boundary rule: due exactly now = overdue. */
+export function checkDueStatus(
+  nextDueAt: Date,
+  frequency: CheckFrequency,
+  now: Date,
+): CheckDueStatus {
+  if (nextDueAt.getTime() <= now.getTime()) return 'overdue';
+  const windowMs = DUE_SOON_DAYS[frequency] * 24 * 60 * 60 * 1000;
+  if (nextDueAt.getTime() - now.getTime() <= windowMs) return 'due_soon';
+  return 'ok';
+}
+
+// ─── Building classification ────────────────────────────────────────────────
+
+/** The subset of a building record the classification helpers read. */
+export interface FireBuildingProfile {
+  isResidential: boolean;
+  /** Height of the top occupied storey above ground, metres; null = unknown. */
+  heightMetres: number | null;
+  storeys: number | null;
+  hasFireAlarm: boolean;
+  hasEmergencyLighting: boolean;
+  hasSprinklers: boolean;
+  hasDampers: boolean;
+  hasRisers: boolean;
+}
+
+/**
+ * High-rise residential per the Fire Safety (England) Regulations 2022:
+ * a residential building at least 18 metres tall OR with at least
+ * 7 storeys. Triggers the secure information box, external wall system
+ * information, floor plans for the fire and rescue service, monthly
+ * firefighting-lift/equipment checks and wayfinding signage duties.
+ */
+export function isHighRiseResidential(profile: FireBuildingProfile): boolean {
+  if (!profile.isResidential) return false;
+  return (
+    (profile.heightMetres !== null && profile.heightMetres >= 18) ||
+    (profile.storeys !== null && profile.storeys >= 7)
+  );
+}
+
+/**
+ * The above-11-metre residential regime (Regulation 10): quarterly checks
+ * of fire doors in common parts and annual checks of flat entrance doors.
+ * Strictly *above* 11 m — an 11.0 m building is out. A building that
+ * qualifies as high-rise by storey count qualifies here too even when its
+ * height is unrecorded (18 m ⊃ 11 m).
+ */
+export function isAbove11mResidential(profile: FireBuildingProfile): boolean {
+  if (!profile.isResidential) return false;
+  if (profile.heightMetres !== null && profile.heightMetres > 11) return true;
+  return isHighRiseResidential(profile);
+}
+
+// ─── The check catalogue (the logbook calendar) ─────────────────────────────
+
+/**
+ * Recurring fire-safety checks the logbook carries. Fire-door checks are
+ * NOT in this catalogue — doors are inspectable assets with per-door due
+ * dates (see {@link doorInspectionIntervalMonths}); the overview merges
+ * both calendars.
+ */
+export const FIRE_CHECK_TYPES = [
+  'alarm_test',
+  'detection_service',
+  'emergency_lighting_function',
+  'emergency_lighting_duration',
+  'extinguisher_visual',
+  'extinguisher_service',
+  'sprinkler_check',
+  'riser_service',
+  'damper_test',
+  'fire_drill',
+  'lift_firefighting_check',
+  'secure_info_box_check',
+  'wayfinding_signage_check',
+] as const;
+export type FireCheckType = (typeof FIRE_CHECK_TYPES)[number];
+
+const FIRE_CHECK_TYPE_SET: ReadonlySet<string> = new Set(FIRE_CHECK_TYPES);
+
+export function isFireCheckType(value: unknown): value is FireCheckType {
+  return typeof value === 'string' && FIRE_CHECK_TYPE_SET.has(value);
+}
+
+/** What makes a catalogue check applicable to a building. */
+export type CheckApplicability =
+  | 'always'
+  | 'fire_alarm'
+  | 'emergency_lighting'
+  | 'sprinklers'
+  | 'dampers'
+  | 'risers'
+  | 'high_rise_residential';
+
+export interface FireCheckTypeSpec {
+  /**
+   * Conventional frequency: weekly alarm test (BS 5839-1), monthly
+   * emergency-lighting function test + annual duration test (BS 5266-1),
+   * monthly extinguisher visual + annual service (BS 5306-3), weekly
+   * sprinkler checks (BS EN 12845), six-monthly riser service (BS 9990),
+   * annual damper test (BS 9999), and the monthly high-rise duties from
+   * the Fire Safety (England) Regulations 2022.
+   */
+  defaultFrequency: CheckFrequency;
+  appliesWhen: CheckApplicability;
+}
+
+export const FIRE_CHECK_TYPE_SPECS: Record<FireCheckType, FireCheckTypeSpec> = {
+  alarm_test: { defaultFrequency: 'weekly', appliesWhen: 'fire_alarm' },
+  detection_service: { defaultFrequency: 'six_monthly', appliesWhen: 'fire_alarm' },
+  emergency_lighting_function: { defaultFrequency: 'monthly', appliesWhen: 'emergency_lighting' },
+  emergency_lighting_duration: { defaultFrequency: 'annual', appliesWhen: 'emergency_lighting' },
+  extinguisher_visual: { defaultFrequency: 'monthly', appliesWhen: 'always' },
+  extinguisher_service: { defaultFrequency: 'annual', appliesWhen: 'always' },
+  sprinkler_check: { defaultFrequency: 'weekly', appliesWhen: 'sprinklers' },
+  riser_service: { defaultFrequency: 'six_monthly', appliesWhen: 'risers' },
+  damper_test: { defaultFrequency: 'annual', appliesWhen: 'dampers' },
+  fire_drill: { defaultFrequency: 'six_monthly', appliesWhen: 'always' },
+  lift_firefighting_check: { defaultFrequency: 'monthly', appliesWhen: 'high_rise_residential' },
+  secure_info_box_check: { defaultFrequency: 'monthly', appliesWhen: 'high_rise_residential' },
+  wayfinding_signage_check: { defaultFrequency: 'monthly', appliesWhen: 'high_rise_residential' },
+};
+
+/**
+ * The check types a building's profile makes applicable — what
+ * `setupChecks` seeds. Statutory-or-conventional only; any catalogue
+ * check can still be added manually to any building.
+ */
+export function requiredCheckTypesFor(profile: FireBuildingProfile): FireCheckType[] {
+  const highRise = isHighRiseResidential(profile);
+  return FIRE_CHECK_TYPES.filter((type) => {
+    const spec = FIRE_CHECK_TYPE_SPECS[type];
+    switch (spec.appliesWhen) {
+      case 'always':
+        return true;
+      case 'fire_alarm':
+        return profile.hasFireAlarm;
+      case 'emergency_lighting':
+        return profile.hasEmergencyLighting;
+      case 'sprinklers':
+        return profile.hasSprinklers;
+      case 'dampers':
+        return profile.hasDampers;
+      case 'risers':
+        return profile.hasRisers;
+      case 'high_rise_residential':
+        return highRise;
+    }
+  });
+}
+
+// ─── Fire doors ─────────────────────────────────────────────────────────────
+
+export const FIRE_DOOR_LOCATION_KINDS = ['common_parts', 'flat_entrance', 'other'] as const;
+export type FireDoorLocationKind = (typeof FIRE_DOOR_LOCATION_KINDS)[number];
+
+/**
+ * Best-practice interval where no statutory regime applies (BS 9999
+ * recommends six-monthly fire-door inspection).
+ */
+export const DEFAULT_DOOR_INSPECTION_MONTHS = 6;
+
+/**
+ * Inspection cadence for a door. In residential buildings above 11 m,
+ * Regulation 10 of the Fire Safety (England) Regulations 2022 requires
+ * quarterly checks of fire doors in common parts and annual (best
+ * endeavours) checks of flat entrance doors. A per-door override wins
+ * everywhere — some doors earn closer attention than their regime.
+ */
+export function doorInspectionIntervalMonths(
+  locationKind: FireDoorLocationKind,
+  profile: FireBuildingProfile,
+  overrideMonths?: number | null,
+): number {
+  if (overrideMonths !== undefined && overrideMonths !== null) return overrideMonths;
+  if (isAbove11mResidential(profile)) {
+    if (locationKind === 'common_parts') return 3;
+    if (locationKind === 'flat_entrance') return 12;
+  }
+  return DEFAULT_DOOR_INSPECTION_MONTHS;
+}
+
+/** Due-soon window for a door given its interval, reusing the check bands. */
+export function doorDueStatus(
+  nextInspectionDueAt: Date,
+  intervalMonths: number,
+  now: Date,
+): CheckDueStatus {
+  const frequency: CheckFrequency =
+    intervalMonths <= 1
+      ? 'monthly'
+      : intervalMonths <= 3
+        ? 'quarterly'
+        : intervalMonths <= 6
+          ? 'six_monthly'
+          : 'annual';
+  return checkDueStatus(nextInspectionDueAt, frequency, now);
+}
+
+/**
+ * The five-point fire-door check. `null` = not looked at; the router
+ * stores what was actually checked, never assumes.
+ */
+export const doorChecklistSchema = z.object({
+  /** Gaps ≤ 4 mm around the frame, ≤ 8 mm under the door. */
+  gapsOk: z.boolean().nullable().default(null),
+  /** Intumescent strips / smoke seals intact and unpainted. */
+  sealsOk: z.boolean().nullable().default(null),
+  /** Self-closer shuts the door fully onto the latch from any angle. */
+  closerOk: z.boolean().nullable().default(null),
+  /** Glazing / vision panels intact, fire-rated. */
+  glazingOk: z.boolean().nullable().default(null),
+  /** Hinges firm, three or more, CE/UKCA-marked. */
+  hingesOk: z.boolean().nullable().default(null),
+  /** Signage present ("Fire door keep shut" / keep locked). */
+  signageOk: z.boolean().nullable().default(null),
+});
+export type DoorChecklist = z.infer<typeof doorChecklistSchema>;
+
+// ─── Fire risk assessment vocabulary ────────────────────────────────────────
+
+export const FRA_METHODOLOGIES = ['pas79', 'hse_five_step', 'other'] as const;
+export type FraMethodology = (typeof FRA_METHODOLOGIES)[number];
+
+/** PAS 79-style five-band taken-together risk rating. */
+export const FRA_RISK_RATINGS = [
+  'trivial',
+  'tolerable',
+  'moderate',
+  'substantial',
+  'intolerable',
+] as const;
+export type FraRiskRating = (typeof FRA_RISK_RATINGS)[number];
+
+export const FRA_FINDING_CATEGORIES = [
+  'ignition_sources',
+  'fuel_storage',
+  'dangerous_substances',
+  'means_of_escape',
+  'detection_warning',
+  'emergency_lighting',
+  'compartmentation',
+  'fire_doors',
+  'external_walls',
+  'firefighting_equipment',
+  'management',
+  'training_drills',
+  'signage',
+  'arson_security',
+  'other',
+] as const;
+export type FraFindingCategory = (typeof FRA_FINDING_CATEGORIES)[number];
+
+export const FRA_FINDING_PRIORITIES = ['low', 'medium', 'high'] as const;
+export type FraFindingPriority = (typeof FRA_FINDING_PRIORITIES)[number];
+
+/** Preset "people at risk" groups; free-text extras are allowed too. */
+export const FRA_PERSONS_AT_RISK_PRESETS = [
+  'employees',
+  'residents',
+  'sleeping_occupants',
+  'visitors',
+  'contractors',
+  'young_persons',
+  'persons_requiring_assistance',
+  'lone_workers',
+  'members_of_public',
+] as const;
+
+/** Default review cycle — annual is the accepted practitioner baseline. */
+export const DEFAULT_FRA_REVIEW_MONTHS = 12;
+
+/**
+ * Suggested review cadence from the taken-together risk rating: annual
+ * as the floor, tightened when the assessment itself says the risk is
+ * not yet controlled.
+ */
+export function suggestedFraReviewMonths(rating: FraRiskRating | null): number {
+  if (rating === 'intolerable') return 3;
+  if (rating === 'substantial') return 6;
+  return DEFAULT_FRA_REVIEW_MONTHS;
+}
+
+// ─── Drills, PEEPs, marshals ────────────────────────────────────────────────
+
+/** Default PEEP review cycle (practitioner default, editable per plan). */
+export const DEFAULT_PEEP_REVIEW_MONTHS = 12;
+
+/** How far ahead marshal-training expiry counts as "expiring soon". */
+export const MARSHAL_EXPIRY_SOON_DAYS = 60;
+
+export type MarshalTrainingStatus = 'not_trained' | 'in_date' | 'expiring_soon' | 'expired';
+
+/**
+ * Training state for one marshal. No `trainedAt` = never trained; an
+ * expiry in the past = expired; within {@link MARSHAL_EXPIRY_SOON_DAYS}
+ * = expiring soon; a missing expiry on recorded training = in date
+ * (non-expiring qualification).
+ */
+export function marshalTrainingStatus(
+  marshal: { trainedAt: Date | null; trainingExpiresAt: Date | null },
+  now: Date,
+): MarshalTrainingStatus {
+  if (marshal.trainedAt === null) return 'not_trained';
+  if (marshal.trainingExpiresAt === null) return 'in_date';
+  if (marshal.trainingExpiresAt.getTime() <= now.getTime()) return 'expired';
+  const soonMs = MARSHAL_EXPIRY_SOON_DAYS * 24 * 60 * 60 * 1000;
+  if (marshal.trainingExpiresAt.getTime() - now.getTime() <= soonMs) return 'expiring_soon';
+  return 'in_date';
+}
+
+// ─── Building information documents ─────────────────────────────────────────
+
+export const BUILDING_DOCUMENT_KINDS = [
+  'floor_plans',
+  'building_plan',
+  'external_wall_system',
+  'fra_report',
+  'emergency_plan',
+  'other',
+] as const;
+export type BuildingDocumentKind = (typeof BUILDING_DOCUMENT_KINDS)[number];
+
+/**
+ * A reference to an uploaded building-information document (floor plans,
+ * single-page building plan, external wall system information, …).
+ * Stored as jsonb on the building row; validated at the tRPC boundary.
+ */
+export const buildingDocumentSchema = z.object({
+  kind: z.enum(BUILDING_DOCUMENT_KINDS),
+  storageKey: z.string().min(1).max(500),
+  filename: z.string().min(1).max(300),
+});
+export type BuildingDocument = z.infer<typeof buildingDocumentSchema>;

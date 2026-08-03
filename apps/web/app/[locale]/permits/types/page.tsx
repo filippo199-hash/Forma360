@@ -27,8 +27,25 @@ const FLAG_KEYS = [
   'requiresGasTesting',
   'requiresIsolationCertificate',
   'requiresRescuePlan',
+  'requiresRiskAssessment',
 ] as const;
 type FlagKey = (typeof FLAG_KEYS)[number];
+
+const GAS_UNITS = ['percent_lel', 'percent_o2', 'ppm', 'mg_m3'] as const;
+const GAS_UNIT_LABELS: Record<string, string> = {
+  percent_lel: '% LEL',
+  percent_o2: '% O₂',
+  ppm: 'ppm',
+  mg_m3: 'mg/m³',
+};
+
+function rangeLabel(min: number | null, max: number | null, unit: string): string {
+  const u = GAS_UNIT_LABELS[unit] ?? unit;
+  if (min !== null && max !== null) return `${min}–${max} ${u}`;
+  if (max !== null) return `≤ ${max} ${u}`;
+  if (min !== null) return `≥ ${min} ${u}`;
+  return u;
+}
 
 export default function PermitTypesPage() {
   const t = useTranslations('permits.types');
@@ -42,6 +59,10 @@ export default function PermitTypesPage() {
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [newPrecondition, setNewPrecondition] = useState<Record<string, string>>({});
+  // Per-type draft state for the add-gas-limit row (PW-1).
+  const [newLimit, setNewLimit] = useState<
+    Record<string, { label: string; unit: (typeof GAS_UNITS)[number]; min: string; max: string }>
+  >({});
 
   const refresh = () => {
     setError(null);
@@ -61,6 +82,46 @@ export default function PermitTypesPage() {
 
   function toggleFlag(typeId: string, key: FlagKey, value: boolean): void {
     updateType.mutate({ typeId, [key]: value });
+  }
+
+  function addGasLimit(
+    typeId: string,
+    existing: ReadonlyArray<{
+      id: string;
+      label: string;
+      unit: string;
+      min: number | null;
+      max: number | null;
+    }>,
+  ): void {
+    const draft = newLimit[typeId];
+    if (draft === undefined || draft.label.trim() === '') return;
+    const min = draft.min.trim() === '' ? null : Number(draft.min);
+    const max = draft.max.trim() === '' ? null : Number(draft.max);
+    if ((min !== null && Number.isNaN(min)) || (max !== null && Number.isNaN(max))) return;
+    if (min === null && max === null) return;
+    const slug = `${draft.label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 30)}_${String(existing.length + 1)}`;
+    updateType.mutate({
+      typeId,
+      gasLimits: [
+        ...existing.map((l) => ({
+          id: l.id,
+          label: l.label,
+          unit: l.unit as (typeof GAS_UNITS)[number],
+          min: l.min,
+          max: l.max,
+        })),
+        { id: slug, label: draft.label.trim(), unit: draft.unit, min, max },
+      ],
+    });
+    setNewLimit((prev) => ({
+      ...prev,
+      [typeId]: { label: '', unit: 'percent_lel', min: '', max: '' },
+    }));
   }
 
   function addPrecondition(
@@ -171,6 +232,162 @@ export default function PermitTypesPage() {
                   />
                   <span className="text-muted-foreground">{t('hours')}</span>
                 </div>
+
+                {/* Gas limits (PW-1): the acceptable ranges the gas gate
+                    evaluates readings against, plus the freshness window. */}
+                {type.requiresGasTesting || type.gasLimits.length > 0 ? (
+                  <div>
+                    <p className="text-sm font-medium">{t('gasLimits')}</p>
+                    <ul className="mt-1.5 space-y-1">
+                      {type.gasLimits.map((l) => (
+                        <li key={l.id} className="flex items-center justify-between gap-2 text-sm">
+                          <span>
+                            {l.label}{' '}
+                            <span className="text-muted-foreground">
+                              {rangeLabel(l.min, l.max, l.unit)}
+                            </span>
+                          </span>
+                          {canManage && !archived ? (
+                            <button
+                              type="button"
+                              aria-label={t('removeGasLimit')}
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() =>
+                                updateType.mutate({
+                                  typeId: type.id,
+                                  gasLimits: type.gasLimits
+                                    .filter((x) => x.id !== l.id)
+                                    .map((x) => ({
+                                      id: x.id,
+                                      label: x.label,
+                                      unit: x.unit,
+                                      min: x.min,
+                                      max: x.max,
+                                    })),
+                                })
+                              }
+                            >
+                              <X className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                          ) : null}
+                        </li>
+                      ))}
+                      {type.gasLimits.length === 0 ? (
+                        <li className="text-sm text-muted-foreground">{t('noGasLimits')}</li>
+                      ) : null}
+                    </ul>
+                    {canManage && !archived ? (
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Input
+                          value={newLimit[type.id]?.label ?? ''}
+                          onChange={(e) =>
+                            setNewLimit((prev) => ({
+                              ...prev,
+                              [type.id]: {
+                                label: e.target.value,
+                                unit: prev[type.id]?.unit ?? 'percent_lel',
+                                min: prev[type.id]?.min ?? '',
+                                max: prev[type.id]?.max ?? '',
+                              },
+                            }))
+                          }
+                          placeholder={t('gasLimitLabelPlaceholder')}
+                          className="h-9 w-40"
+                        />
+                        <select
+                          aria-label={t('gasLimitUnit')}
+                          value={newLimit[type.id]?.unit ?? 'percent_lel'}
+                          onChange={(e) =>
+                            setNewLimit((prev) => ({
+                              ...prev,
+                              [type.id]: {
+                                label: prev[type.id]?.label ?? '',
+                                unit: e.target.value as (typeof GAS_UNITS)[number],
+                                min: prev[type.id]?.min ?? '',
+                                max: prev[type.id]?.max ?? '',
+                              },
+                            }))
+                          }
+                          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                        >
+                          {GAS_UNITS.map((u) => (
+                            <option key={u} value={u}>
+                              {GAS_UNIT_LABELS[u]}
+                            </option>
+                          ))}
+                        </select>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={newLimit[type.id]?.min ?? ''}
+                          onChange={(e) =>
+                            setNewLimit((prev) => ({
+                              ...prev,
+                              [type.id]: {
+                                label: prev[type.id]?.label ?? '',
+                                unit: prev[type.id]?.unit ?? 'percent_lel',
+                                min: e.target.value,
+                                max: prev[type.id]?.max ?? '',
+                              },
+                            }))
+                          }
+                          placeholder={t('gasLimitMin')}
+                          className="h-9 w-24"
+                        />
+                        <Input
+                          type="number"
+                          step="any"
+                          value={newLimit[type.id]?.max ?? ''}
+                          onChange={(e) =>
+                            setNewLimit((prev) => ({
+                              ...prev,
+                              [type.id]: {
+                                label: prev[type.id]?.label ?? '',
+                                unit: prev[type.id]?.unit ?? 'percent_lel',
+                                min: prev[type.id]?.min ?? '',
+                                max: e.target.value,
+                              },
+                            }))
+                          }
+                          placeholder={t('gasLimitMax')}
+                          className="h-9 w-24"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={(newLimit[type.id]?.label ?? '').trim() === ''}
+                          onClick={() => addGasLimit(type.id, type.gasLimits)}
+                        >
+                          <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                          {t('addGasLimit')}
+                        </Button>
+                      </div>
+                    ) : null}
+                    <div className="mt-2 flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">{t('gasFreshness')}</span>
+                      <Input
+                        type="number"
+                        min={5}
+                        max={1440}
+                        defaultValue={type.gasTestMaxAgeMinutes}
+                        disabled={!canManage || archived}
+                        className="h-8 w-20"
+                        onBlur={(e) => {
+                          const v = Number(e.target.value);
+                          if (
+                            Number.isInteger(v) &&
+                            v >= 5 &&
+                            v <= 1440 &&
+                            v !== type.gasTestMaxAgeMinutes
+                          ) {
+                            updateType.mutate({ typeId: type.id, gasTestMaxAgeMinutes: v });
+                          }
+                        }}
+                      />
+                      <span className="text-muted-foreground">{t('gasFreshnessUnit')}</span>
+                    </div>
+                  </div>
+                ) : null}
 
                 <div>
                   <p className="text-sm font-medium">{t('preconditions')}</p>

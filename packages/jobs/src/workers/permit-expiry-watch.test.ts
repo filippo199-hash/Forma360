@@ -19,7 +19,11 @@ import { createLogger } from '@forma360/shared/logger';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { and, eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { runPermitExpiryWatch, type ExpiredOpenPermit } from './permit-expiry-watch';
+import {
+  runPermitExpiryWatch,
+  type ExpiredOpenPermit,
+  type PermitWatchKind,
+} from './permit-expiry-watch';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = join(__dirname, '..', '..', '..', 'db', 'migrations');
@@ -116,21 +120,26 @@ describe('permit-expiry-watch', () => {
     await client.close();
   });
 
-  function run(sentInto: Array<{ permit: ExpiredOpenPermit; email: string }>, failFor?: string) {
+  function run(
+    sentInto: Array<{ kind: PermitWatchKind; permit: ExpiredOpenPermit; email: string }>,
+    failFor?: string,
+  ) {
     return runPermitExpiryWatch({
       db: db as never,
       logger,
       appUrl: 'https://app.test',
-      notify: (permit, recipient) => {
+      notify: (kind, permit, recipient) => {
         if (failFor !== undefined && recipient.email.startsWith(failFor)) {
           return Promise.reject(new Error('smtp down'));
         }
-        sentInto.push({ permit, email: recipient.email });
+        sentInto.push({ kind, permit, email: recipient.email });
         return Promise.resolve();
       },
       now: () => NOW,
     });
   }
+
+  type Sent = Array<{ kind: PermitWatchKind; permit: ExpiredOpenPermit; email: string }>;
 
   it('PW-J01: escalates open permits past validTo once, notifying every party', async () => {
     const expired = await seedPermit();
@@ -139,12 +148,12 @@ describe('permit-expiry-watch', () => {
     await seedPermit({ status: 'draft' }); // draft → never
     await seedPermit({ validTo: hoursAhead(2) }); // still valid → never
 
-    const sent: Array<{ permit: ExpiredOpenPermit; email: string }> = [];
-    const escalated = await run(sent);
+    const sent: Sent = [];
+    const { escalated } = await run(sent);
     expect(escalated).toBe(1);
     // Issuer + acceptor + authoriser, all distinct.
     expect(sent).toHaveLength(3);
-    expect(sent.every((s) => s.permit.permitId === expired)).toBe(true);
+    expect(sent.every((s) => s.permit.permitId === expired && s.kind === 'escalation')).toBe(true);
 
     const row = await db.select().from(schema.permits).where(eq(schema.permits.id, expired));
     expect(row[0]?.expiryEscalatedAt).not.toBeNull();
@@ -173,26 +182,79 @@ describe('permit-expiry-watch', () => {
       authoriserUserId: issuerId,
     });
 
-    const sent: Array<{ permit: ExpiredOpenPermit; email: string }> = [];
+    const sent: Sent = [];
     const first = await run(sent);
-    expect(first).toBe(1);
+    expect(first.escalated).toBe(1);
     // Ghost is deactivated; issuer==authoriser dedupes → exactly one email.
     expect(sent).toHaveLength(1);
     expect(sent[0]?.permit.permitId).toBe(suspendedPermit);
 
     // Second run: nothing new — the stamp holds.
-    const sentAgain: Array<{ permit: ExpiredOpenPermit; email: string }> = [];
-    expect(await run(sentAgain)).toBe(0);
+    const sentAgain: Sent = [];
+    expect((await run(sentAgain)).escalated).toBe(0);
     expect(sentAgain).toHaveLength(0);
 
     // A notify failure must not block the stamp (no re-escalation loop).
     const failing = await seedPermit({ title: 'Roof edge work' });
-    const sentWithFailure: Array<{ permit: ExpiredOpenPermit; email: string }> = [];
-    const escalated = await run(sentWithFailure, 'ivy');
+    const sentWithFailure: Sent = [];
+    const { escalated } = await run(sentWithFailure, 'ivy');
     expect(escalated).toBe(1);
     const row = await db.select().from(schema.permits).where(eq(schema.permits.id, failing));
     expect(row[0]?.expiryEscalatedAt).not.toBeNull();
     // The other two parties still got their email.
     expect(sentWithFailure.filter((s) => s.permit.permitId === failing)).toHaveLength(2);
+  });
+
+  it('PW-J03: warns once inside the lead window; a warned permit still escalates later', async () => {
+    // Closes in 30 min → inside the 60-min lead window.
+    const closingSoon = await seedPermit({
+      validTo: new Date(NOW.getTime() + 30 * 60_000),
+    });
+    // Closes in 2 h → outside the lead window, untouched.
+    await seedPermit({ validTo: hoursAhead(2) });
+    // Already overdue → escalation, never a warning.
+    const overdue = await seedPermit({ validTo: hoursAgo(1) });
+
+    const sent: Sent = [];
+    const first = await run(sent);
+    expect(first.warned).toBe(1);
+    expect(first.escalated).toBe(1);
+    const warnings = sent.filter((s) => s.kind === 'warning');
+    expect(warnings).toHaveLength(3); // issuer + acceptor + authoriser
+    expect(warnings.every((s) => s.permit.permitId === closingSoon)).toBe(true);
+    expect(
+      sent.filter((s) => s.kind === 'escalation').every((s) => s.permit.permitId === overdue),
+    ).toBe(true);
+
+    const row = await db.select().from(schema.permits).where(eq(schema.permits.id, closingSoon));
+    expect(row[0]?.expiryWarningSentAt).not.toBeNull();
+    const events = await db
+      .select()
+      .from(schema.permitEvents)
+      .where(
+        and(
+          eq(schema.permitEvents.permitId, closingSoon),
+          eq(schema.permitEvents.kind, 'expiry_warning'),
+        ),
+      );
+    expect(events).toHaveLength(1);
+
+    // Second run: warning stamp holds, nothing new.
+    const sentAgain: Sent = [];
+    const second = await run(sentAgain);
+    expect(second.warned).toBe(0);
+    expect(sentAgain.filter((s) => s.kind === 'warning')).toHaveLength(0);
+
+    // Once the warned permit lapses, the escalation still fires (its own stamp).
+    await db
+      .update(schema.permits)
+      .set({ validTo: hoursAgo(1) })
+      .where(eq(schema.permits.id, closingSoon));
+    const sentThird: Sent = [];
+    const third = await run(sentThird);
+    expect(third.escalated).toBe(1);
+    expect(
+      sentThird.filter((s) => s.kind === 'escalation' && s.permit.permitId === closingSoon),
+    ).toHaveLength(3);
   });
 });

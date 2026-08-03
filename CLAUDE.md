@@ -491,14 +491,26 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   (register, new, detail, live board at `/permits/board`, type catalogue at
   `/permits/types`); lifecycle state machine + nine seeded default types +
   jsonb payload schemas in `packages/shared/src/permits.ts` (ADR 0012);
-  schema in `packages/db/src/schema/permits.ts`, migration 0059; issue gate
-  enforces preconditions / gas tests / isolation certificate / rescue plan /
-  authorising counter-signature, SIMOPs conflicts need explicit
-  acknowledgement; `forma360-permit-expiry-watch` worker escalates open
-  permits past `validTo` every 15 min; edge-case IDs PW-E01..E05 in
-  `permits.test.ts` (shared), PW-E10..E24 (router), PW-J01/J02 in
-  `permit-expiry-watch.test.ts`). Each router is built
-  with `{ enabled }` from the brand catalogue; nav + API both gate on it.
+  schema in `packages/db/src/schema/permits.ts`, migrations 0059 + 0060; issue
+  gate enforces preconditions / EVALUATED gas tests (per-type `gasLimits` +
+  freshness, verdict snapshotted per reading) / isolation certificate /
+  rescue plan / authorising counter-signature / linked RA where required,
+  SIMOPs conflicts need explicit acknowledgement (also re-checked on
+  extension); accept/handover refuse lapsed windows; resume needs a real
+  attestation + fresh in-range gas re-test; handover can never target the
+  authoriser; recording (checks/readings/evidence/gang/entry-log) is open
+  to `permits.create` + the named acceptor while lifecycle authority is
+  site-scoped via curated `site_members`; workers + entry/exit log with
+  closure blocked while anyone is inside; permit PDF via
+  `renderPermitPdf` (`/render/permit/[id]` + `/api/exports/permit-pdf`);
+  `forma360-permit-expiry-watch` warns 60 min before expiry and escalates
+  after it, every 15 min; HSE review + disposition in
+  `docs/reviews/permits-hse-expert-review.md` +
+  `docs/reviews/permits-hse-review-response.md` (ADR 0012 amendment);
+  edge-case IDs PW-E01..E09 in `permits.test.ts` (shared), PW-E10..E35
+  (router), PW-J01..J03 in `permit-expiry-watch.test.ts`). Each router is
+  built with `{ enabled }` from the brand catalogue; nav + API both gate on
+  it.
 - **Everything internal stays `forma360`** (package scope, queue names,
   ESLint rule namespace, object keys). Users never see those.
 - Each brand gets its own Railway project, Postgres, Redis, R2, Resend

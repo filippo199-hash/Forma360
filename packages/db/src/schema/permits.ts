@@ -40,13 +40,18 @@ import {
 import { sql } from 'drizzle-orm';
 import type {
   ClosureChecks,
+  GasLimit,
   GasReading,
   PermitAttachment,
   PermitCategory,
+  PermitEntryLogRow,
   PermitPreconditionState,
   PermitStatus,
   PermitTypePrecondition,
+  PermitWorker,
 } from '@forma360/shared/permits';
+import { documents } from './documents';
+import { riskAssessments } from './risk-assessments';
 import { sites } from './sites';
 import { tenants } from './tenants';
 
@@ -82,6 +87,19 @@ export const permitTypes = pgTable(
       .notNull()
       .$type<ReadonlyArray<PermitTypePrecondition>>()
       .default(sql`'[]'::jsonb`),
+
+    /**
+     * Acceptable ranges the gas gate evaluates at issue/resume (HSE
+     * review PW-1). Empty = presence-only check (custom types).
+     */
+    gasLimits: jsonb('gas_limits')
+      .notNull()
+      .$type<ReadonlyArray<GasLimit>>()
+      .default(sql`'[]'::jsonb`),
+    /** Freshness window for a gas test at the issue/resume gate, minutes. */
+    gasTestMaxAgeMinutes: integer('gas_test_max_age_minutes').notNull().default(60),
+    /** Issue requires a linked risk assessment (HSE review PW-7). */
+    requiresRiskAssessment: boolean('requires_risk_assessment').notNull().default(false),
 
     /** True for the seeded defaults — the UI labels them, both stay editable. */
     isSystem: boolean('is_system').notNull().default(false),
@@ -124,6 +142,17 @@ export const permits = pgTable(
     /** Specific area within the site; drives the same-area conflict flag. */
     locationText: text('location_text').notNull().default(''),
 
+    // ── Safe system of work links (HSE review PW-7) ──
+    /** The task risk assessment this permit works under. */
+    riskAssessmentId: varchar('risk_assessment_id', { length: 26 }).references(
+      () => riskAssessments.id,
+      { onDelete: 'set null' },
+    ),
+    /** The method statement / safe system of work document. */
+    methodStatementDocumentId: varchar('method_statement_document_id', {
+      length: 26,
+    }).references(() => documents.id, { onDelete: 'set null' }),
+
     status: text('status').notNull().default('draft').$type<PermitStatus>(),
 
     validFrom: timestamp('valid_from', { withTimezone: true, mode: 'date' }).notNull(),
@@ -159,6 +188,18 @@ export const permits = pgTable(
     isolationCertificateRef: text('isolation_certificate_ref').notNull().default(''),
     rescuePlan: text('rescue_plan').notNull().default(''),
 
+    // ── The gang + entry/exit log (HSE review PW-8) ──
+    /** Everyone covered by the permit, not just the acceptor. */
+    workers: jsonb('workers')
+      .notNull()
+      .$type<ReadonlyArray<PermitWorker>>()
+      .default(sql`'[]'::jsonb`),
+    /** Who is (or was) in the space and when — rows never deleted. */
+    entryLog: jsonb('entry_log')
+      .notNull()
+      .$type<ReadonlyArray<PermitEntryLogRow>>()
+      .default(sql`'[]'::jsonb`),
+
     // ── Suspension ──
     suspendedAt: timestamp('suspended_at', { withTimezone: true, mode: 'date' }),
     suspendedBy: text('suspended_by'),
@@ -178,6 +219,8 @@ export const permits = pgTable(
 
     /** Stamped once by the expiry-watch worker; dedupes the escalation. */
     expiryEscalatedAt: timestamp('expiry_escalated_at', { withTimezone: true, mode: 'date' }),
+    /** Stamped once by the pre-expiry warning pass (PW-10); extension clears it. */
+    expiryWarningSentAt: timestamp('expiry_warning_sent_at', { withTimezone: true, mode: 'date' }),
 
     createdBy: text('created_by').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
@@ -215,6 +258,11 @@ export const PERMIT_EVENT_KINDS = [
   'cancelled',
   'closed',
   'expiry_escalated',
+  'expiry_warning',
+  'worker_added',
+  'worker_removed',
+  'entry_logged',
+  'exit_logged',
 ] as const;
 export type PermitEventKind = (typeof PERMIT_EVENT_KINDS)[number];
 

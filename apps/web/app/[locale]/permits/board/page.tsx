@@ -139,6 +139,11 @@ export default function PermitBoardPage() {
                       <div className="flex flex-wrap items-center gap-1.5">
                         <CategoryChip category={row.category} name={row.typeName} />
                         <CountdownChip validTo={row.validTo} overdue={row.overdue} />
+                        {row.insideCount > 0 ? (
+                          <span className="rounded-md bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-200">
+                            {t('insideCount', { count: row.insideCount })}
+                          </span>
+                        ) : null}
                       </div>
                       <dl className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                         <div>

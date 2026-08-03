@@ -12,6 +12,9 @@ import {
   inspectionApprovals,
   inspectionSignatures,
   inspections,
+  permitEvents,
+  permits,
+  permitTypes,
   riskAssessmentControls,
   riskAssessmentHazards,
   riskAssessments,
@@ -21,6 +24,14 @@ import {
   templates,
   user,
 } from '@forma360/db/schema';
+import type {
+  GasLimit,
+  GasReading,
+  PermitAttachment,
+  PermitEntryLogRow,
+  PermitPreconditionState,
+  PermitWorker,
+} from '@forma360/shared/permits';
 import type { RiskMatrixConfig } from '@forma360/shared/risk-matrix';
 import type { Database } from '@forma360/db/client';
 import { and, eq } from 'drizzle-orm';
@@ -381,5 +392,193 @@ export async function loadRiskAssessmentSnapshot(
 
 /** Stable content hash for the risk-assessment PDF cache key. */
 export function hashRiskAssessmentSnapshot(snap: RiskAssessmentRenderSnapshot): string {
+  return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
+}
+
+// ─── Permits (FreeHS module B3, HSE review PW-6) ────────────────────────────
+
+export interface PermitRenderSnapshot {
+  permit: {
+    id: string;
+    tenantId: string;
+    referenceNumber: string | null;
+    title: string;
+    workDescription: string;
+    status: string;
+    siteName: string | null;
+    locationText: string;
+    validFrom: string;
+    validTo: string;
+    extensionCount: number;
+    typeName: string;
+    typeCategory: string;
+    isolationCertificateRef: string;
+    rescuePlan: string;
+    riskAssessmentRef: string | null;
+    methodStatementName: string | null;
+    suspensionReason: string;
+    closureNotes: string;
+    closureChecks: Record<string, boolean> | null;
+    cancellationReason: string;
+    createdAt: string;
+  };
+  parties: {
+    issuerName: string | null;
+    issuedAt: string | null;
+    acceptorName: string | null;
+    acceptedAt: string | null;
+    authoriserName: string | null;
+    authorisedAt: string | null;
+    closedByName: string | null;
+    closedAt: string | null;
+    cancelledByName: string | null;
+    cancelledAt: string | null;
+  };
+  preconditions: ReadonlyArray<PermitPreconditionState>;
+  gasLimits: ReadonlyArray<GasLimit>;
+  gasReadings: ReadonlyArray<GasReading>;
+  attachments: ReadonlyArray<PermitAttachment>;
+  workers: ReadonlyArray<PermitWorker>;
+  entryLog: ReadonlyArray<PermitEntryLogRow>;
+  events: Array<{
+    id: string;
+    kind: string;
+    detail: string;
+    actorName: string | null;
+    createdAt: string;
+  }>;
+}
+
+/**
+ * Load a permit into a renderer-ready snapshot — the fixed record the
+ * printed permit and the audit bundle carry. Returns `null` when the
+ * permit doesn't exist in the requested tenant.
+ */
+export async function loadPermitSnapshot(
+  db: Database,
+  input: { tenantId: string; permitId: string },
+): Promise<PermitRenderSnapshot | null> {
+  const permitRows = await db
+    .select()
+    .from(permits)
+    .where(and(eq(permits.tenantId, input.tenantId), eq(permits.id, input.permitId)))
+    .limit(1);
+  const permit = permitRows[0];
+  if (permit === undefined) return null;
+
+  const typeRows = await db
+    .select({
+      name: permitTypes.name,
+      category: permitTypes.category,
+      gasLimits: permitTypes.gasLimits,
+    })
+    .from(permitTypes)
+    .where(eq(permitTypes.id, permit.permitTypeId))
+    .limit(1);
+  const type = typeRows[0];
+
+  let siteName: string | null = null;
+  if (permit.siteId !== null) {
+    const siteRows = await db
+      .select({ name: sites.name })
+      .from(sites)
+      .where(eq(sites.id, permit.siteId))
+      .limit(1);
+    siteName = siteRows[0]?.name ?? null;
+  }
+
+  let riskAssessmentRef: string | null = null;
+  if (permit.riskAssessmentId !== null) {
+    const raRows = await db
+      .select({ title: riskAssessments.title, referenceNumber: riskAssessments.referenceNumber })
+      .from(riskAssessments)
+      .where(eq(riskAssessments.id, permit.riskAssessmentId))
+      .limit(1);
+    const ra = raRows[0];
+    if (ra !== undefined) {
+      riskAssessmentRef =
+        ra.referenceNumber !== null ? `${ra.referenceNumber} — ${ra.title}` : ra.title;
+    }
+  }
+
+  const eventRows = await db
+    .select()
+    .from(permitEvents)
+    .where(and(eq(permitEvents.tenantId, input.tenantId), eq(permitEvents.permitId, permit.id)))
+    .orderBy(permitEvents.createdAt);
+
+  const nameIds = [
+    permit.issuerUserId,
+    permit.acceptorUserId,
+    permit.authoriserUserId,
+    permit.closedBy,
+    permit.cancelledBy,
+    ...eventRows.map((e) => e.actorUserId),
+  ].filter((v): v is string => v !== null && v !== 'system');
+  const nameMap = new Map<string, string>();
+  for (const id of [...new Set(nameIds)]) {
+    const rows = await db.select({ name: user.name }).from(user).where(eq(user.id, id)).limit(1);
+    const found = rows[0];
+    if (found !== undefined) nameMap.set(id, found.name);
+  }
+  const nameOf = (id: string | null): string | null =>
+    id === null ? null : (nameMap.get(id) ?? null);
+  const iso = (d: Date | null): string | null => (d === null ? null : d.toISOString());
+
+  return {
+    permit: {
+      id: permit.id,
+      tenantId: permit.tenantId,
+      referenceNumber: permit.referenceNumber,
+      title: permit.title,
+      workDescription: permit.workDescription,
+      status: permit.status,
+      siteName,
+      locationText: permit.locationText,
+      validFrom: permit.validFrom.toISOString(),
+      validTo: permit.validTo.toISOString(),
+      extensionCount: permit.extensionCount,
+      typeName: type?.name ?? '',
+      typeCategory: type?.category ?? 'other',
+      isolationCertificateRef: permit.isolationCertificateRef,
+      rescuePlan: permit.rescuePlan,
+      riskAssessmentRef,
+      methodStatementName: null,
+      suspensionReason: permit.suspensionReason,
+      closureNotes: permit.closureNotes,
+      closureChecks: permit.closureChecks,
+      cancellationReason: permit.cancellationReason,
+      createdAt: permit.createdAt.toISOString(),
+    },
+    parties: {
+      issuerName: nameOf(permit.issuerUserId),
+      issuedAt: iso(permit.issuedAt),
+      acceptorName: nameOf(permit.acceptorUserId),
+      acceptedAt: iso(permit.acceptedAt),
+      authoriserName: nameOf(permit.authoriserUserId),
+      authorisedAt: iso(permit.authorisedAt),
+      closedByName: nameOf(permit.closedBy),
+      closedAt: iso(permit.closedAt),
+      cancelledByName: nameOf(permit.cancelledBy),
+      cancelledAt: iso(permit.cancelledAt),
+    },
+    preconditions: permit.preconditions,
+    gasLimits: type?.gasLimits ?? [],
+    gasReadings: permit.gasReadings,
+    attachments: permit.attachments,
+    workers: permit.workers,
+    entryLog: permit.entryLog,
+    events: eventRows.map((e) => ({
+      id: e.id,
+      kind: e.kind,
+      detail: e.detail,
+      actorName: e.actorUserId === 'system' ? null : (nameMap.get(e.actorUserId) ?? null),
+      createdAt: e.createdAt.toISOString(),
+    })),
+  };
+}
+
+/** Stable content hash for the permit PDF cache key. */
+export function hashPermitSnapshot(snap: PermitRenderSnapshot): string {
   return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
 }

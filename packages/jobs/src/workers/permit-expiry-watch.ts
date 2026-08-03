@@ -1,21 +1,29 @@
 /**
  * Handler for `forma360-permit-expiry-watch` (FreeHS module B3).
  *
- * Runs every 15 minutes. A permit that passes its validity end while
- * still open (issued / active / suspended) means someone may still be in
- * there — this worker stamps `expiry_escalated_at` (so a permit is
- * escalated exactly once per window), appends an `expiry_escalated`
- * event, and emails every signature party on the permit: issuer,
- * acceptor and authoriser. Extension clears the stamp, so a re-authorised
- * window gets a fresh watch.
+ * Runs every 15 minutes, two passes:
+ *   1. WARNING (HSE review PW-10) — open permits whose window closes
+ *      within the next `EXPIRY_WARNING_LEAD_MINUTES` get one heads-up to
+ *      every signature party, stamped on `expiry_warning_sent_at`, so
+ *      the team can close out or extend BEFORE the permit lapses.
+ *   2. ESCALATION — a permit past its validity end while still open
+ *      (issued / active / suspended) means someone may still be in
+ *      there: stamp `expiry_escalated_at`, append the event, email
+ *      issuer, acceptor and authoriser.
+ * Both stamps fire exactly once per window; extension clears both, so a
+ * re-authorised window gets a fresh watch.
  */
 import type { Database } from '@forma360/db/client';
 import { permitEvents, permits, permitTypes, sites, user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import type { Logger } from '@forma360/shared/logger';
-import { OPEN_PERMIT_STATUSES, type PermitStatus } from '@forma360/shared/permits';
+import {
+  EXPIRY_WARNING_LEAD_MINUTES,
+  OPEN_PERMIT_STATUSES,
+  type PermitStatus,
+} from '@forma360/shared/permits';
 import type { Job } from 'bullmq';
-import { and, eq, inArray, isNull, lte } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNull, lte } from 'drizzle-orm';
 
 export const PERMIT_EXPIRY_WATCH_CRON = '*/15 * * * *'; // every 15 minutes
 /** Per-run cap — a huge backlog drains across a few ticks instead of one burst. */
@@ -72,6 +80,44 @@ export async function findExpiredOpenPermits(
 }
 
 /**
+ * Open permits whose window closes within the warning lead time and have
+ * not been warned yet (PW-10). Pure — the handler and tests share it.
+ */
+export async function findExpiringOpenPermits(
+  db: Database,
+  now: Date,
+): Promise<ExpiredOpenPermit[]> {
+  const leadCutoff = new Date(now.getTime() + EXPIRY_WARNING_LEAD_MINUTES * 60_000);
+  const rows = await db
+    .select({
+      permitId: permits.id,
+      tenantId: permits.tenantId,
+      referenceNumber: permits.referenceNumber,
+      title: permits.title,
+      status: permits.status,
+      validTo: permits.validTo,
+      issuerUserId: permits.issuerUserId,
+      acceptorUserId: permits.acceptorUserId,
+      authoriserUserId: permits.authoriserUserId,
+      typeName: permitTypes.name,
+      siteName: sites.name,
+    })
+    .from(permits)
+    .innerJoin(permitTypes, eq(permitTypes.id, permits.permitTypeId))
+    .leftJoin(sites, eq(sites.id, permits.siteId))
+    .where(
+      and(
+        inArray(permits.status, [...OPEN_PERMIT_STATUSES]),
+        gt(permits.validTo, now),
+        lte(permits.validTo, leadCutoff),
+        isNull(permits.expiryWarningSentAt),
+      ),
+    )
+    .limit(MAX_ESCALATIONS_PER_RUN);
+  return rows.map((r) => ({ ...r, siteName: r.siteName ?? null }));
+}
+
+/**
  * The distinct, still-active recipients for one escalation: issuer,
  * acceptor and authoriser. Deactivated users and empty emails are skipped.
  */
@@ -101,12 +147,19 @@ export async function resolveEscalationRecipients(
     .map((r) => ({ userId: r.id, email: r.email, name: r.name }));
 }
 
+export type PermitWatchKind = 'warning' | 'escalation';
+
 export interface PermitExpiryWatchDeps {
   db: Database;
   logger: Logger;
   appUrl: string;
-  /** Send one escalation. Injected so the worker uses templated email; tests fake it. */
+  /**
+   * Send one notification — `kind` picks the template (pre-expiry
+   * warning vs post-expiry escalation). Injected so the worker uses
+   * templated email; tests fake it.
+   */
   notify: (
+    kind: PermitWatchKind,
     permit: ExpiredOpenPermit,
     recipient: { email: string; name: string },
     viewUrl: string,
@@ -116,15 +169,53 @@ export interface PermitExpiryWatchDeps {
 }
 
 /**
- * Pure run: find expired open permits, stamp, log, notify every party.
- * The stamp goes on BEFORE the notifies so a failing email provider can
- * never cause a permit to escalate twice; failures are logged and land
- * in Sentry via the worker's failed-job hook on the next tick.
+ * Pure run, two passes: warn permits closing within the lead window
+ * (PW-10), escalate permits already past their end. Each stamp goes on
+ * BEFORE the notifies so a failing email provider can never cause a
+ * permit to warn or escalate twice; failures are logged and land in
+ * Sentry via the worker's failed-job hook on the next tick.
  */
-export async function runPermitExpiryWatch(deps: PermitExpiryWatchDeps): Promise<number> {
+export async function runPermitExpiryWatch(
+  deps: PermitExpiryWatchDeps,
+): Promise<{ warned: number; escalated: number }> {
   const now = deps.now?.() ?? new Date();
-  const expired = await findExpiredOpenPermits(deps.db, now);
+
+  const notifyAll = async (kind: PermitWatchKind, permit: ExpiredOpenPermit): Promise<void> => {
+    const recipients = await resolveEscalationRecipients(deps.db, permit);
+    const viewUrl = `${deps.appUrl}/en/permits/${permit.permitId}`;
+    for (const recipient of recipients) {
+      try {
+        await deps.notify(kind, permit, recipient, viewUrl);
+      } catch (err) {
+        deps.logger.error(
+          { err, permitId: permit.permitId, to: recipient.userId, kind },
+          '[permit-expiry-watch] notify failed',
+        );
+      }
+    }
+  };
+
+  let warned = 0;
+  const expiring = await findExpiringOpenPermits(deps.db, now);
+  for (const permit of expiring) {
+    await deps.db
+      .update(permits)
+      .set({ expiryWarningSentAt: now })
+      .where(eq(permits.id, permit.permitId));
+    await deps.db.insert(permitEvents).values({
+      id: newId(),
+      tenantId: permit.tenantId,
+      permitId: permit.permitId,
+      actorUserId: 'system',
+      kind: 'expiry_warning',
+      detail: `window closes ${permit.validTo.toISOString()}`,
+    });
+    await notifyAll('warning', permit);
+    warned += 1;
+  }
+
   let escalated = 0;
+  const expired = await findExpiredOpenPermits(deps.db, now);
   for (const permit of expired) {
     await deps.db
       .update(permits)
@@ -138,27 +229,16 @@ export async function runPermitExpiryWatch(deps: PermitExpiryWatchDeps): Promise
       kind: 'expiry_escalated',
       detail: `expired ${permit.validTo.toISOString()} without closure`,
     });
-    const recipients = await resolveEscalationRecipients(deps.db, permit);
-    const viewUrl = `${deps.appUrl}/en/permits/${permit.permitId}`;
-    for (const recipient of recipients) {
-      try {
-        await deps.notify(permit, recipient, viewUrl);
-      } catch (err) {
-        deps.logger.error(
-          { err, permitId: permit.permitId, to: recipient.userId },
-          '[permit-expiry-watch] notify failed',
-        );
-      }
-    }
+    await notifyAll('escalation', permit);
     escalated += 1;
   }
-  deps.logger.info({ escalated }, '[permit-expiry-watch] done');
-  return escalated;
+
+  deps.logger.info({ warned, escalated }, '[permit-expiry-watch] done');
+  return { warned, escalated };
 }
 
 export function createPermitExpiryWatchHandler(deps: PermitExpiryWatchDeps) {
-  return async function handler(_job: Job): Promise<{ escalated: number }> {
-    const escalated = await runPermitExpiryWatch(deps);
-    return { escalated };
+  return async function handler(_job: Job): Promise<{ warned: number; escalated: number }> {
+    return runPermitExpiryWatch(deps);
   };
 }

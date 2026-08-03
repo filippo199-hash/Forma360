@@ -1,0 +1,2585 @@
+/**
+ * Fire Safety router (FreeHS module B3) — the fire risk assessment, the
+ * fire safety arrangements, and the recurring checks that keep them true.
+ *
+ * Design goals from the practitioner spec:
+ *   - fire is where the practitioner is most likely to be the named
+ *     Responsible Person, so the FRA is reviewable rather than
+ *     rewritable: publish stamps who attested it, reviews append to an
+ *     immutable log with the trigger that prompted them, and every
+ *     content change lands in the event log;
+ *   - the module carries the relentless calendar: each building's
+ *     profile (residential, height, storeys, installed systems) seeds
+ *     the statutory check schedule — weekly alarm tests, monthly
+ *     emergency lighting, extinguisher servicing, sprinkler / damper /
+ *     riser regimes — and the high-rise duties from the Fire Safety
+ *     (England) Regulations 2022 (secure information box, firefighting
+ *     lift, wayfinding signage);
+ *   - fire doors are inspectable assets: quarterly common-parts and
+ *     annual flat-entrance cadences apply automatically in residential
+ *     buildings above eleven metres;
+ *   - significant findings that need remedial work generate actions at
+ *     publish, exactly once; failed logbook checks and defective door
+ *     inspections can raise actions the same way;
+ *   - drills record evacuation times, muster rolls and lessons learned,
+ *     and satisfy the drill schedule in the same stroke;
+ *   - PEEPs and marshal rows are ended, never deleted — the record of
+ *     who was covered, and when, survives;
+ *   - every meaningful mutation appends to `fire_events` — evidence,
+ *     not state.
+ *
+ * Brand gating (ADR 0010): built with `{ enabled }` wired from the active
+ * brand's module catalogue; every procedure refuses when disabled.
+ *
+ * Deliberate v1 gaps (documented, not accidental): the hot-work /
+ * ignition-source permit interface lands with the permits module (this
+ * module holds no permit state to avoid a second source of truth);
+ * marshal cover vs shifts and leave links to the Training module in
+ * Phase 10 (training dates are carried locally until then); no email
+ * digests for due checks (the in-app overview + due list carry the
+ * prompts; a worker digest is scheduled with the notifications work);
+ * and no dependents-registry resolver (the registry's module union is
+ * closed — same status as risk assessments and COSHH).
+ */
+import {
+  actions,
+  FIRE_CHECK_RESULTS,
+  FIRE_DOOR_OUTCOMES,
+  FIRE_MARSHAL_ROLES,
+  FRA_REVIEW_OUTCOMES,
+  FRA_REVIEW_TRIGGERS,
+  FRA_STATUSES,
+  fireBuildings,
+  fireDoorInspections,
+  fireDoors,
+  fireDrills,
+  fireEvents,
+  fireFraReviews,
+  fireLogbookChecks,
+  fireLogbookEntries,
+  fireMarshals,
+  firePeeps,
+  fireRiskAssessments,
+  fireSignificantFindings,
+  sites,
+  user,
+  type FireBuilding,
+  type FireEventEntityType,
+  type FireEventKind,
+  type FireLogbookCheck,
+} from '@forma360/db/schema';
+import type { Database } from '@forma360/db/client';
+import {
+  addMonthsClamped,
+  buildingDocumentSchema,
+  CHECK_FREQUENCIES,
+  checkDueStatus,
+  DEFAULT_PEEP_REVIEW_MONTHS,
+  doorChecklistSchema,
+  doorDueStatus,
+  doorInspectionIntervalMonths,
+  FIRE_CHECK_TYPE_SPECS,
+  FIRE_CHECK_TYPES,
+  FIRE_DOOR_LOCATION_KINDS,
+  FRA_FINDING_CATEGORIES,
+  FRA_FINDING_PRIORITIES,
+  FRA_METHODOLOGIES,
+  FRA_RISK_RATINGS,
+  isAbove11mResidential,
+  isHighRiseResidential,
+  marshalTrainingStatus,
+  nextDueDate,
+  requiredCheckTypesFor,
+  suggestedFraReviewMonths,
+  type CheckDueStatus,
+  type FireBuildingProfile,
+  type FireCheckType,
+} from '@forma360/shared/fire-safety';
+import { newId } from '@forma360/shared/id';
+import { TRPCError } from '@trpc/server';
+import { and, asc, desc, eq, inArray, isNull, lte, ne } from 'drizzle-orm';
+import { z } from 'zod';
+import { nextReferenceValue } from '../reference-counter';
+import { requirePermission, tenantProcedure } from '../procedures';
+import { router } from '../trpc';
+
+export interface FireSafetyRouterDeps {
+  /** Wired from the brand module catalogue (ADR 0010). */
+  enabled: boolean;
+}
+
+/** The statutory-duty summary every building read returns. */
+export interface FireDutyProfile {
+  highRiseResidential: boolean;
+  above11mResidential: boolean;
+  requiredCheckTypes: FireCheckType[];
+}
+
+function profileOf(building: FireBuilding): FireBuildingProfile {
+  return {
+    isResidential: building.isResidential,
+    heightMetres: building.heightMetres,
+    storeys: building.storeys,
+    hasFireAlarm: building.hasFireAlarm,
+    hasEmergencyLighting: building.hasEmergencyLighting,
+    hasSprinklers: building.hasSprinklers,
+    hasDampers: building.hasDampers,
+    hasRisers: building.hasRisers,
+  };
+}
+
+function dutyProfileOf(building: FireBuilding): FireDutyProfile {
+  const profile = profileOf(building);
+  return {
+    highRiseResidential: isHighRiseResidential(profile),
+    above11mResidential: isAbove11mResidential(profile),
+    requiredCheckTypes: requiredCheckTypesFor(profile),
+  };
+}
+
+/** Load a building scoped to the tenant or throw NOT_FOUND. */
+async function loadBuilding(db: Database, tenantId: string, buildingId: string) {
+  const rows = await db
+    .select()
+    .from(fireBuildings)
+    .where(and(eq(fireBuildings.id, buildingId), eq(fireBuildings.tenantId, tenantId)))
+    .limit(1);
+  const building = rows[0];
+  if (building === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+  return building;
+}
+
+/** Load an FRA scoped to the tenant or throw NOT_FOUND. */
+async function loadFra(db: Database, tenantId: string, fraId: string) {
+  const rows = await db
+    .select()
+    .from(fireRiskAssessments)
+    .where(and(eq(fireRiskAssessments.id, fraId), eq(fireRiskAssessments.tenantId, tenantId)))
+    .limit(1);
+  const fra = rows[0];
+  if (fra === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+  return fra;
+}
+
+/** Load a door scoped to the tenant or throw NOT_FOUND. */
+async function loadDoor(db: Database, tenantId: string, doorId: string) {
+  const rows = await db
+    .select()
+    .from(fireDoors)
+    .where(and(eq(fireDoors.id, doorId), eq(fireDoors.tenantId, tenantId)))
+    .limit(1);
+  const door = rows[0];
+  if (door === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+  return door;
+}
+
+/** Load a PEEP scoped to the tenant or throw NOT_FOUND. */
+async function loadPeep(db: Database, tenantId: string, peepId: string) {
+  const rows = await db
+    .select()
+    .from(firePeeps)
+    .where(and(eq(firePeeps.id, peepId), eq(firePeeps.tenantId, tenantId)))
+    .limit(1);
+  const peep = rows[0];
+  if (peep === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+  return peep;
+}
+
+/**
+ * Load a site scoped to the tenant or throw. The FK alone only proves the
+ * site exists — this is what stops a crafted request linking a building to
+ * another tenant's site.
+ */
+async function loadSiteInTenant(db: Database, tenantId: string, siteId: string) {
+  const rows = await db
+    .select({ id: sites.id, name: sites.name })
+    .from(sites)
+    .where(and(eq(sites.id, siteId), eq(sites.tenantId, tenantId)))
+    .limit(1);
+  const site = rows[0];
+  if (site === undefined) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'unknown-site' });
+  }
+  return site;
+}
+
+/** Append one immutable change-log row. Never updated or deleted. */
+async function logEvent(
+  db: Database,
+  entry: {
+    tenantId: string;
+    entityType: FireEventEntityType;
+    entityId: string;
+    actorUserId: string;
+    kind: FireEventKind;
+    detail?: string;
+  },
+): Promise<void> {
+  await db.insert(fireEvents).values({
+    id: newId(),
+    tenantId: entry.tenantId,
+    entityType: entry.entityType,
+    entityId: entry.entityId,
+    actorUserId: entry.actorUserId,
+    kind: entry.kind,
+    detail: entry.detail ?? '',
+  });
+}
+
+/**
+ * Reconcile a building's auto-seeded check schedule with its current
+ * profile. Adds missing applicable checks, re-activates auto checks that
+ * became applicable again, deactivates auto checks that no longer apply.
+ * Manual checks are never touched. Idempotent.
+ */
+async function syncAutoChecks(
+  db: Database,
+  tenantId: string,
+  building: FireBuilding,
+  now: Date,
+): Promise<{ added: number; deactivated: number }> {
+  const required = new Set<FireCheckType>(requiredCheckTypesFor(profileOf(building)));
+  const existing = await db
+    .select()
+    .from(fireLogbookChecks)
+    .where(eq(fireLogbookChecks.buildingId, building.id));
+  const byType = new Map(existing.map((c) => [c.checkType, c]));
+
+  let added = 0;
+  let deactivated = 0;
+
+  for (const type of required) {
+    const current = byType.get(type);
+    if (current === undefined) {
+      const frequency = FIRE_CHECK_TYPE_SPECS[type].defaultFrequency;
+      await db.insert(fireLogbookChecks).values({
+        id: newId(),
+        tenantId,
+        buildingId: building.id,
+        checkType: type,
+        frequency,
+        source: 'auto',
+        active: true,
+        // The first cycle starts from setup — the calendar begins when
+        // the logbook does.
+        nextDueAt: nextDueDate(now, frequency),
+      });
+      added += 1;
+    } else if (!current.active && current.source === 'auto') {
+      await db
+        .update(fireLogbookChecks)
+        .set({
+          active: true,
+          nextDueAt: nextDueDate(current.lastDoneAt ?? now, current.frequency),
+          updatedAt: now,
+        })
+        .where(eq(fireLogbookChecks.id, current.id));
+      added += 1;
+    }
+  }
+
+  for (const check of existing) {
+    if (check.source === 'auto' && check.active && !required.has(check.checkType)) {
+      await db
+        .update(fireLogbookChecks)
+        .set({ active: false, updatedAt: now })
+        .where(eq(fireLogbookChecks.id, check.id));
+      deactivated += 1;
+    }
+  }
+
+  return { added, deactivated };
+}
+
+function checkWithStatus(check: FireLogbookCheck, now: Date) {
+  return {
+    ...check,
+    dueStatus: checkDueStatus(check.nextDueAt, check.frequency, now) satisfies CheckDueStatus,
+  };
+}
+
+/** Door interval, months — regime-derived unless the door overrides it. */
+function doorIntervalMonths(
+  door: { locationKind: (typeof FIRE_DOOR_LOCATION_KINDS)[number]; override: number | null },
+  building: FireBuilding,
+): number {
+  return doorInspectionIntervalMonths(door.locationKind, profileOf(building), door.override);
+}
+
+async function userNamesById(
+  db: Database,
+  tenantId: string,
+  userIds: ReadonlyArray<string>,
+): Promise<Map<string, string>> {
+  const distinct = [...new Set(userIds)].filter((v) => v.length > 0);
+  if (distinct.length === 0) return new Map();
+  const rows = await db
+    .select({ id: user.id, name: user.name })
+    .from(user)
+    .where(and(eq(user.tenantId, tenantId), inArray(user.id, distinct)));
+  return new Map(rows.map((r) => [r.id, r.name]));
+}
+
+// ─── Zod inputs ─────────────────────────────────────────────────────────────
+
+const buildingFieldsInput = {
+  name: z.string().min(1).max(300),
+  siteId: z.string().length(26).nullable().optional(),
+  address: z.string().max(1000).default(''),
+  useDescription: z.string().max(2000).default(''),
+  isResidential: z.boolean().default(false),
+  heightMetres: z.number().positive().max(1000).nullable().optional(),
+  storeys: z.number().int().min(1).max(200).nullable().optional(),
+  hasFireAlarm: z.boolean().default(true),
+  hasEmergencyLighting: z.boolean().default(true),
+  hasSprinklers: z.boolean().default(false),
+  hasDampers: z.boolean().default(false),
+  hasRisers: z.boolean().default(false),
+  externalWallSystem: z.string().max(4000).default(''),
+  compartmentationNotes: z.string().max(4000).default(''),
+  meansOfEscapeNotes: z.string().max(4000).default(''),
+  serviceRisersNotes: z.string().max(4000).default(''),
+  secureInfoBoxLocation: z.string().max(500).default(''),
+  infoDocuments: z.array(buildingDocumentSchema).max(50).default([]),
+};
+
+const buildingUpdateInput = z.object({
+  buildingId: z.string().length(26),
+  name: z.string().min(1).max(300).optional(),
+  siteId: z.string().length(26).nullable().optional(),
+  address: z.string().max(1000).optional(),
+  useDescription: z.string().max(2000).optional(),
+  isResidential: z.boolean().optional(),
+  heightMetres: z.number().positive().max(1000).nullable().optional(),
+  storeys: z.number().int().min(1).max(200).nullable().optional(),
+  hasFireAlarm: z.boolean().optional(),
+  hasEmergencyLighting: z.boolean().optional(),
+  hasSprinklers: z.boolean().optional(),
+  hasDampers: z.boolean().optional(),
+  hasRisers: z.boolean().optional(),
+  externalWallSystem: z.string().max(4000).optional(),
+  compartmentationNotes: z.string().max(4000).optional(),
+  meansOfEscapeNotes: z.string().max(4000).optional(),
+  serviceRisersNotes: z.string().max(4000).optional(),
+  secureInfoBoxLocation: z.string().max(500).optional(),
+  infoDocuments: z.array(buildingDocumentSchema).max(50).optional(),
+});
+
+const fraUpdateInput = z.object({
+  fraId: z.string().length(26),
+  title: z.string().min(1).max(300).optional(),
+  buildingId: z.string().length(26).nullable().optional(),
+  premisesDescription: z.string().max(4000).optional(),
+  methodology: z.enum(FRA_METHODOLOGIES).optional(),
+  responsiblePersonName: z.string().max(300).optional(),
+  assessorUserId: z.string().nullable().optional(),
+  assessorName: z.string().max(300).optional(),
+  personsAtRisk: z.array(z.string().min(1).max(100)).max(20).optional(),
+  maxOccupancy: z.number().int().min(0).max(1_000_000).nullable().optional(),
+  sleepingOccupants: z.boolean().optional(),
+  ignitionSources: z.string().max(8000).optional(),
+  fuelSources: z.string().max(8000).optional(),
+  oxygenSources: z.string().max(8000).optional(),
+  evaluationNotes: z.string().max(8000).optional(),
+  riskRating: z.enum(FRA_RISK_RATINGS).nullable().optional(),
+  reviewFrequencyMonths: z.number().int().min(1).max(60).nullable().optional(),
+});
+
+const findingInput = z.object({
+  fraId: z.string().length(26),
+  category: z.enum(FRA_FINDING_CATEGORIES),
+  priority: z.enum(FRA_FINDING_PRIORITIES).default('medium'),
+  description: z.string().min(1).max(4000),
+  requiresAction: z.boolean().default(true),
+});
+
+export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
+  function assertEnabled(): void {
+    if (!deps.enabled) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'module-disabled' });
+    }
+  }
+
+  const buildings = router({
+    list: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(
+        z
+          .object({
+            status: z.enum(['active', 'archived', 'all']).default('active'),
+            search: z.string().max(200).optional(),
+          })
+          .default({ status: 'active' }),
+      )
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const conditions = [eq(fireBuildings.tenantId, ctx.tenantId)];
+        if (input.status !== 'all') {
+          conditions.push(eq(fireBuildings.status, input.status));
+        }
+        const rows = await ctx.db
+          .select()
+          .from(fireBuildings)
+          .where(and(...conditions))
+          .orderBy(asc(fireBuildings.name));
+        const search = input.search?.trim().toLowerCase();
+        const filtered =
+          search !== undefined && search.length > 0
+            ? rows.filter((r) => r.name.toLowerCase().includes(search))
+            : rows;
+        const ids = filtered.map((r) => r.id);
+        if (ids.length === 0) return [];
+
+        const now = new Date();
+        const [checks, doors, fras] = await Promise.all([
+          ctx.db
+            .select()
+            .from(fireLogbookChecks)
+            .where(
+              and(inArray(fireLogbookChecks.buildingId, ids), eq(fireLogbookChecks.active, true)),
+            ),
+          ctx.db
+            .select()
+            .from(fireDoors)
+            .where(and(inArray(fireDoors.buildingId, ids), eq(fireDoors.status, 'active'))),
+          ctx.db
+            .select({
+              id: fireRiskAssessments.id,
+              buildingId: fireRiskAssessments.buildingId,
+              status: fireRiskAssessments.status,
+              nextReviewAt: fireRiskAssessments.nextReviewAt,
+            })
+            .from(fireRiskAssessments)
+            .where(
+              and(
+                eq(fireRiskAssessments.tenantId, ctx.tenantId),
+                inArray(fireRiskAssessments.buildingId, ids),
+              ),
+            ),
+        ]);
+
+        const buildingById = new Map(filtered.map((b) => [b.id, b]));
+        return filtered.map((building) => {
+          const duty = dutyProfileOf(building);
+          const buildingChecks = checks.filter((c) => c.buildingId === building.id);
+          let checksOverdue = 0;
+          let checksDueSoon = 0;
+          for (const check of buildingChecks) {
+            const status = checkDueStatus(check.nextDueAt, check.frequency, now);
+            if (status === 'overdue') checksOverdue += 1;
+            else if (status === 'due_soon') checksDueSoon += 1;
+          }
+          let doorsOverdue = 0;
+          for (const door of doors.filter((d) => d.buildingId === building.id)) {
+            const parent = buildingById.get(door.buildingId);
+            if (parent === undefined) continue;
+            const interval = doorIntervalMonths(
+              { locationKind: door.locationKind, override: door.inspectionIntervalMonthsOverride },
+              parent,
+            );
+            if (doorDueStatus(door.nextInspectionDueAt, interval, now) === 'overdue') {
+              doorsOverdue += 1;
+            }
+          }
+          const buildingFras = fras.filter((f) => f.buildingId === building.id);
+          const activeFra = buildingFras.find((f) => f.status === 'active');
+          return {
+            ...building,
+            duty,
+            checksOverdue,
+            checksDueSoon,
+            doorsOverdue,
+            doorCount: doors.filter((d) => d.buildingId === building.id).length,
+            hasActiveFra: activeFra !== undefined,
+            fraReviewDue:
+              activeFra?.nextReviewAt !== null &&
+              activeFra?.nextReviewAt !== undefined &&
+              activeFra.nextReviewAt <= now,
+          };
+        });
+      }),
+
+    get: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(z.object({ buildingId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        const now = new Date();
+
+        const [checks, doors, drills, peeps, marshals, fras, entries, events] = await Promise.all([
+          ctx.db
+            .select()
+            .from(fireLogbookChecks)
+            .where(eq(fireLogbookChecks.buildingId, building.id))
+            .orderBy(asc(fireLogbookChecks.nextDueAt)),
+          ctx.db
+            .select()
+            .from(fireDoors)
+            .where(eq(fireDoors.buildingId, building.id))
+            .orderBy(asc(fireDoors.doorRef)),
+          ctx.db
+            .select()
+            .from(fireDrills)
+            .where(eq(fireDrills.buildingId, building.id))
+            .orderBy(desc(fireDrills.conductedAt))
+            .limit(20),
+          ctx.db
+            .select()
+            .from(firePeeps)
+            .where(eq(firePeeps.buildingId, building.id))
+            .orderBy(asc(firePeeps.personName)),
+          ctx.db
+            .select()
+            .from(fireMarshals)
+            .where(eq(fireMarshals.buildingId, building.id))
+            .orderBy(asc(fireMarshals.createdAt)),
+          ctx.db
+            .select()
+            .from(fireRiskAssessments)
+            .where(eq(fireRiskAssessments.buildingId, building.id))
+            .orderBy(desc(fireRiskAssessments.updatedAt)),
+          ctx.db
+            .select()
+            .from(fireLogbookEntries)
+            .where(eq(fireLogbookEntries.buildingId, building.id))
+            .orderBy(desc(fireLogbookEntries.performedAt))
+            .limit(30),
+          ctx.db
+            .select()
+            .from(fireEvents)
+            .where(
+              and(
+                eq(fireEvents.tenantId, ctx.tenantId),
+                eq(fireEvents.entityType, 'building'),
+                eq(fireEvents.entityId, building.id),
+              ),
+            )
+            .orderBy(desc(fireEvents.createdAt))
+            .limit(50),
+        ]);
+
+        const siteName =
+          building.siteId !== null
+            ? ((
+                await ctx.db
+                  .select({ name: sites.name })
+                  .from(sites)
+                  .where(and(eq(sites.id, building.siteId), eq(sites.tenantId, ctx.tenantId)))
+                  .limit(1)
+              )[0]?.name ?? null)
+            : null;
+
+        const names = await userNamesById(ctx.db, ctx.tenantId, [
+          ...marshals.map((m) => m.userId),
+          ...entries.map((e) => e.performedBy),
+        ]);
+
+        return {
+          ...building,
+          siteName,
+          duty: dutyProfileOf(building),
+          checks: checks.map((c) => checkWithStatus(c, now)),
+          doors: doors.map((door) => {
+            const interval = doorIntervalMonths(
+              { locationKind: door.locationKind, override: door.inspectionIntervalMonthsOverride },
+              building,
+            );
+            return {
+              ...door,
+              intervalMonths: interval,
+              dueStatus:
+                door.status === 'active'
+                  ? doorDueStatus(door.nextInspectionDueAt, interval, now)
+                  : ('ok' satisfies CheckDueStatus),
+            };
+          }),
+          drills,
+          peeps,
+          marshals: marshals.map((m) => ({
+            ...m,
+            userName: names.get(m.userId) ?? null,
+            trainingStatus: marshalTrainingStatus(m, now),
+          })),
+          fras,
+          recentEntries: entries.map((e) => ({
+            ...e,
+            performedByName: names.get(e.performedBy) ?? null,
+          })),
+          events,
+        };
+      }),
+
+    create: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(z.object(buildingFieldsInput))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        if (input.siteId !== null && input.siteId !== undefined) {
+          await loadSiteInTenant(ctx.db, ctx.tenantId, input.siteId);
+        }
+        const id = newId();
+        const now = new Date();
+        await ctx.db.insert(fireBuildings).values({
+          id,
+          tenantId: ctx.tenantId,
+          name: input.name,
+          siteId: input.siteId ?? null,
+          address: input.address,
+          useDescription: input.useDescription,
+          isResidential: input.isResidential,
+          heightMetres: input.heightMetres ?? null,
+          storeys: input.storeys ?? null,
+          hasFireAlarm: input.hasFireAlarm,
+          hasEmergencyLighting: input.hasEmergencyLighting,
+          hasSprinklers: input.hasSprinklers,
+          hasDampers: input.hasDampers,
+          hasRisers: input.hasRisers,
+          externalWallSystem: input.externalWallSystem,
+          compartmentationNotes: input.compartmentationNotes,
+          meansOfEscapeNotes: input.meansOfEscapeNotes,
+          serviceRisersNotes: input.serviceRisersNotes,
+          secureInfoBoxLocation: input.secureInfoBoxLocation,
+          infoDocuments: input.infoDocuments,
+          createdBy: ctx.auth.userId,
+        });
+        const building = await loadBuilding(ctx.db, ctx.tenantId, id);
+        const seeded = await syncAutoChecks(ctx.db, ctx.tenantId, building, now);
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'building',
+          entityId: id,
+          actorUserId: ctx.auth.userId,
+          kind: 'created',
+          detail: building.name,
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'building',
+          entityId: id,
+          actorUserId: ctx.auth.userId,
+          kind: 'checks_seeded',
+          detail: String(seeded.added),
+        });
+        ctx.logger.info(
+          { buildingId: id, checksSeeded: seeded.added },
+          '[fireSafety] building created',
+        );
+        return { id, checksSeeded: seeded.added };
+      }),
+
+    update: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(buildingUpdateInput)
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        if (input.siteId !== null && input.siteId !== undefined) {
+          await loadSiteInTenant(ctx.db, ctx.tenantId, input.siteId);
+        }
+        const patch = input;
+        const now = new Date();
+        await ctx.db
+          .update(fireBuildings)
+          .set({
+            ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+            ...(patch.siteId !== undefined ? { siteId: patch.siteId } : {}),
+            ...(patch.address !== undefined ? { address: patch.address } : {}),
+            ...(patch.useDescription !== undefined ? { useDescription: patch.useDescription } : {}),
+            ...(patch.isResidential !== undefined ? { isResidential: patch.isResidential } : {}),
+            ...(patch.heightMetres !== undefined ? { heightMetres: patch.heightMetres } : {}),
+            ...(patch.storeys !== undefined ? { storeys: patch.storeys } : {}),
+            ...(patch.hasFireAlarm !== undefined ? { hasFireAlarm: patch.hasFireAlarm } : {}),
+            ...(patch.hasEmergencyLighting !== undefined
+              ? { hasEmergencyLighting: patch.hasEmergencyLighting }
+              : {}),
+            ...(patch.hasSprinklers !== undefined ? { hasSprinklers: patch.hasSprinklers } : {}),
+            ...(patch.hasDampers !== undefined ? { hasDampers: patch.hasDampers } : {}),
+            ...(patch.hasRisers !== undefined ? { hasRisers: patch.hasRisers } : {}),
+            ...(patch.externalWallSystem !== undefined
+              ? { externalWallSystem: patch.externalWallSystem }
+              : {}),
+            ...(patch.compartmentationNotes !== undefined
+              ? { compartmentationNotes: patch.compartmentationNotes }
+              : {}),
+            ...(patch.meansOfEscapeNotes !== undefined
+              ? { meansOfEscapeNotes: patch.meansOfEscapeNotes }
+              : {}),
+            ...(patch.serviceRisersNotes !== undefined
+              ? { serviceRisersNotes: patch.serviceRisersNotes }
+              : {}),
+            ...(patch.secureInfoBoxLocation !== undefined
+              ? { secureInfoBoxLocation: patch.secureInfoBoxLocation }
+              : {}),
+            ...(patch.infoDocuments !== undefined ? { infoDocuments: patch.infoDocuments } : {}),
+            updatedAt: now,
+          })
+          .where(eq(fireBuildings.id, building.id));
+        // Profile changes move statutory duties — reconcile the calendar
+        // in the same stroke.
+        const updated = await loadBuilding(ctx.db, ctx.tenantId, building.id);
+        const synced = await syncAutoChecks(ctx.db, ctx.tenantId, updated, now);
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'building',
+          entityId: building.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'updated',
+        });
+        return { ok: true, checksAdded: synced.added, checksDeactivated: synced.deactivated };
+      }),
+
+    /** Re-sync the auto-seeded calendar with the current profile. */
+    setupChecks: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(z.object({ buildingId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        const result = await syncAutoChecks(ctx.db, ctx.tenantId, building, new Date());
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'building',
+          entityId: building.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'checks_seeded',
+          detail: String(result.added),
+        });
+        return result;
+      }),
+
+    archive: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(z.object({ buildingId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) return { ok: true };
+        const now = new Date();
+        await ctx.db.transaction(async (tx) => {
+          await tx
+            .update(fireBuildings)
+            .set({ status: 'archived', archivedAt: now, updatedAt: now })
+            .where(eq(fireBuildings.id, building.id));
+          // The calendar stops with the building; history stays readable.
+          await tx
+            .update(fireLogbookChecks)
+            .set({ active: false, updatedAt: now })
+            .where(eq(fireLogbookChecks.buildingId, building.id));
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'building',
+          entityId: building.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'archived',
+        });
+        return { ok: true };
+      }),
+  });
+
+  const fras = router({
+    list: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(
+        z
+          .object({
+            status: z.enum([...FRA_STATUSES, 'all'] as const).default('all'),
+            buildingId: z.string().length(26).optional(),
+          })
+          .default({ status: 'all' }),
+      )
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const conditions = [eq(fireRiskAssessments.tenantId, ctx.tenantId)];
+        if (input.status !== 'all') {
+          conditions.push(eq(fireRiskAssessments.status, input.status));
+        }
+        if (input.buildingId !== undefined) {
+          conditions.push(eq(fireRiskAssessments.buildingId, input.buildingId));
+        }
+        const rows = await ctx.db
+          .select()
+          .from(fireRiskAssessments)
+          .where(and(...conditions))
+          .orderBy(desc(fireRiskAssessments.updatedAt));
+        const ids = rows.map((r) => r.id);
+        if (ids.length === 0) return [];
+        const findings = await ctx.db
+          .select({
+            id: fireSignificantFindings.id,
+            fraId: fireSignificantFindings.fraId,
+            resolvedAt: fireSignificantFindings.resolvedAt,
+          })
+          .from(fireSignificantFindings)
+          .where(inArray(fireSignificantFindings.fraId, ids));
+        const buildingIds = rows.map((r) => r.buildingId).filter((v): v is string => v !== null);
+        const buildingNames =
+          buildingIds.length > 0
+            ? new Map(
+                (
+                  await ctx.db
+                    .select({ id: fireBuildings.id, name: fireBuildings.name })
+                    .from(fireBuildings)
+                    .where(inArray(fireBuildings.id, [...new Set(buildingIds)]))
+                ).map((b) => [b.id, b.name]),
+              )
+            : new Map<string, string>();
+        const now = new Date();
+        return rows.map((fra) => {
+          const fraFindings = findings.filter((f) => f.fraId === fra.id);
+          return {
+            ...fra,
+            buildingName:
+              fra.buildingId !== null ? (buildingNames.get(fra.buildingId) ?? null) : null,
+            findingCount: fraFindings.length,
+            openFindingCount: fraFindings.filter((f) => f.resolvedAt === null).length,
+            reviewDue:
+              fra.status === 'active' && fra.nextReviewAt !== null && fra.nextReviewAt <= now,
+          };
+        });
+      }),
+
+    get: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(z.object({ fraId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const fra = await loadFra(ctx.db, ctx.tenantId, input.fraId);
+        const [findings, reviews, events] = await Promise.all([
+          ctx.db
+            .select()
+            .from(fireSignificantFindings)
+            .where(eq(fireSignificantFindings.fraId, fra.id))
+            .orderBy(
+              asc(fireSignificantFindings.sortOrder),
+              asc(fireSignificantFindings.createdAt),
+            ),
+          ctx.db
+            .select()
+            .from(fireFraReviews)
+            .where(eq(fireFraReviews.fraId, fra.id))
+            .orderBy(desc(fireFraReviews.reviewedAt)),
+          ctx.db
+            .select()
+            .from(fireEvents)
+            .where(
+              and(
+                eq(fireEvents.tenantId, ctx.tenantId),
+                eq(fireEvents.entityType, 'fra'),
+                eq(fireEvents.entityId, fra.id),
+              ),
+            )
+            .orderBy(desc(fireEvents.createdAt))
+            .limit(50),
+        ]);
+        const building =
+          fra.buildingId !== null
+            ? ((
+                await ctx.db
+                  .select({ id: fireBuildings.id, name: fireBuildings.name })
+                  .from(fireBuildings)
+                  .where(eq(fireBuildings.id, fra.buildingId))
+                  .limit(1)
+              )[0] ?? null)
+            : null;
+        return { ...fra, building, findings, reviews, events };
+      }),
+
+    create: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(
+        z.object({
+          title: z.string().min(1).max(300),
+          buildingId: z.string().length(26).nullable().optional(),
+          methodology: z.enum(FRA_METHODOLOGIES).default('pas79'),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        if (input.buildingId !== null && input.buildingId !== undefined) {
+          await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        }
+        const n = await nextReferenceValue(ctx.db, ctx.tenantId, 'fireRiskAssessment');
+        const id = newId();
+        await ctx.db.insert(fireRiskAssessments).values({
+          id,
+          tenantId: ctx.tenantId,
+          buildingId: input.buildingId ?? null,
+          referenceNumber: `FRA-${String(n).padStart(4, '0')}`,
+          title: input.title,
+          methodology: input.methodology,
+          assessorUserId: ctx.auth.userId,
+          createdBy: ctx.auth.userId,
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'fra',
+          entityId: id,
+          actorUserId: ctx.auth.userId,
+          kind: 'created',
+          detail: input.title,
+        });
+        return { id };
+      }),
+
+    update: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(fraUpdateInput)
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const fra = await loadFra(ctx.db, ctx.tenantId, input.fraId);
+        if (fra.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        if (input.buildingId !== null && input.buildingId !== undefined) {
+          await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        }
+        const patch = input;
+        const changed = Object.entries(patch)
+          .filter(([key, value]) => key !== 'fraId' && value !== undefined)
+          .map(([key]) => key)
+          .sort();
+        await ctx.db
+          .update(fireRiskAssessments)
+          .set({
+            ...(patch.title !== undefined ? { title: patch.title.trim() } : {}),
+            ...(patch.buildingId !== undefined ? { buildingId: patch.buildingId } : {}),
+            ...(patch.premisesDescription !== undefined
+              ? { premisesDescription: patch.premisesDescription }
+              : {}),
+            ...(patch.methodology !== undefined ? { methodology: patch.methodology } : {}),
+            ...(patch.responsiblePersonName !== undefined
+              ? { responsiblePersonName: patch.responsiblePersonName }
+              : {}),
+            ...(patch.assessorUserId !== undefined ? { assessorUserId: patch.assessorUserId } : {}),
+            ...(patch.assessorName !== undefined ? { assessorName: patch.assessorName } : {}),
+            ...(patch.personsAtRisk !== undefined ? { personsAtRisk: patch.personsAtRisk } : {}),
+            ...(patch.maxOccupancy !== undefined ? { maxOccupancy: patch.maxOccupancy } : {}),
+            ...(patch.sleepingOccupants !== undefined
+              ? { sleepingOccupants: patch.sleepingOccupants }
+              : {}),
+            ...(patch.ignitionSources !== undefined
+              ? { ignitionSources: patch.ignitionSources }
+              : {}),
+            ...(patch.fuelSources !== undefined ? { fuelSources: patch.fuelSources } : {}),
+            ...(patch.oxygenSources !== undefined ? { oxygenSources: patch.oxygenSources } : {}),
+            ...(patch.evaluationNotes !== undefined
+              ? { evaluationNotes: patch.evaluationNotes }
+              : {}),
+            ...(patch.riskRating !== undefined ? { riskRating: patch.riskRating } : {}),
+            ...(patch.reviewFrequencyMonths !== undefined
+              ? { reviewFrequencyMonths: patch.reviewFrequencyMonths }
+              : {}),
+            updatedAt: new Date(),
+          })
+          .where(eq(fireRiskAssessments.id, fra.id));
+        if (changed.length > 0) {
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            entityType: 'fra',
+            entityId: fra.id,
+            actorUserId: ctx.auth.userId,
+            kind: 'updated',
+            detail: changed.join(','),
+          });
+        }
+        return { ok: true };
+      }),
+
+    addFinding: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(findingInput)
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const fra = await loadFra(ctx.db, ctx.tenantId, input.fraId);
+        if (fra.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        const existing = await ctx.db
+          .select({ sortOrder: fireSignificantFindings.sortOrder })
+          .from(fireSignificantFindings)
+          .where(eq(fireSignificantFindings.fraId, fra.id))
+          .orderBy(desc(fireSignificantFindings.sortOrder))
+          .limit(1);
+        const id = newId();
+        await ctx.db.insert(fireSignificantFindings).values({
+          id,
+          tenantId: ctx.tenantId,
+          fraId: fra.id,
+          sortOrder: (existing[0]?.sortOrder ?? -1) + 1,
+          category: input.category,
+          priority: input.priority,
+          description: input.description,
+          requiresAction: input.requiresAction,
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'fra',
+          entityId: fra.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'finding_added',
+          detail: input.category,
+        });
+        return { id };
+      }),
+
+    updateFinding: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(
+        z.object({
+          findingId: z.string().length(26),
+          category: z.enum(FRA_FINDING_CATEGORIES).optional(),
+          priority: z.enum(FRA_FINDING_PRIORITIES).optional(),
+          description: z.string().min(1).max(4000).optional(),
+          requiresAction: z.boolean().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const rows = await ctx.db
+          .select()
+          .from(fireSignificantFindings)
+          .where(
+            and(
+              eq(fireSignificantFindings.id, input.findingId),
+              eq(fireSignificantFindings.tenantId, ctx.tenantId),
+            ),
+          )
+          .limit(1);
+        const finding = rows[0];
+        if (finding === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        const fra = await loadFra(ctx.db, ctx.tenantId, finding.fraId);
+        if (fra.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        await ctx.db
+          .update(fireSignificantFindings)
+          .set({
+            ...(input.category !== undefined ? { category: input.category } : {}),
+            ...(input.priority !== undefined ? { priority: input.priority } : {}),
+            ...(input.description !== undefined ? { description: input.description } : {}),
+            ...(input.requiresAction !== undefined ? { requiresAction: input.requiresAction } : {}),
+            updatedAt: new Date(),
+          })
+          .where(eq(fireSignificantFindings.id, finding.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'fra',
+          entityId: fra.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'finding_updated',
+        });
+        return { ok: true };
+      }),
+
+    removeFinding: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(z.object({ findingId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const rows = await ctx.db
+          .select()
+          .from(fireSignificantFindings)
+          .where(
+            and(
+              eq(fireSignificantFindings.id, input.findingId),
+              eq(fireSignificantFindings.tenantId, ctx.tenantId),
+            ),
+          )
+          .limit(1);
+        const finding = rows[0];
+        if (finding === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        // A finding that already generated an action is evidence — it can
+        // be resolved but not removed.
+        if (finding.actionId !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'has-action' });
+        }
+        await ctx.db
+          .delete(fireSignificantFindings)
+          .where(eq(fireSignificantFindings.id, finding.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'fra',
+          entityId: finding.fraId,
+          actorUserId: ctx.auth.userId,
+          kind: 'finding_removed',
+          detail: finding.category,
+        });
+        return { ok: true };
+      }),
+
+    resolveFinding: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(z.object({ findingId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const rows = await ctx.db
+          .select()
+          .from(fireSignificantFindings)
+          .where(
+            and(
+              eq(fireSignificantFindings.id, input.findingId),
+              eq(fireSignificantFindings.tenantId, ctx.tenantId),
+            ),
+          )
+          .limit(1);
+        const finding = rows[0];
+        if (finding === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (finding.resolvedAt !== null) return { ok: true };
+        const now = new Date();
+        await ctx.db
+          .update(fireSignificantFindings)
+          .set({ resolvedAt: now, resolvedBy: ctx.auth.userId, updatedAt: now })
+          .where(eq(fireSignificantFindings.id, finding.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'fra',
+          entityId: finding.fraId,
+          actorUserId: ctx.auth.userId,
+          kind: 'finding_resolved',
+          detail: finding.category,
+        });
+        return { ok: true };
+      }),
+
+    /**
+     * Publish = the Responsible Person attests the assessment is
+     * suitable and sufficient. Requires the evaluation to be complete
+     * (risk rating + named RP) and either recorded significant findings
+     * or an explicit "no significant findings" confirmation. Findings
+     * needing remedial work generate actions here, exactly once.
+     */
+    publish: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(
+        z.object({
+          fraId: z.string().length(26),
+          confirmNoSignificantFindings: z.boolean().default(false),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const fra = await loadFra(ctx.db, ctx.tenantId, input.fraId);
+        if (fra.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        if (fra.riskRating === null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-risk-rating' });
+        }
+        if (fra.responsiblePersonName.trim().length === 0) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-responsible-person' });
+        }
+        const findings = await ctx.db
+          .select()
+          .from(fireSignificantFindings)
+          .where(eq(fireSignificantFindings.fraId, fra.id));
+        if (findings.length === 0 && !input.confirmNoSignificantFindings) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-findings' });
+        }
+
+        const building =
+          fra.buildingId !== null ? await loadBuilding(ctx.db, ctx.tenantId, fra.buildingId) : null;
+
+        // Claim action reference numbers before the tx (a rolled-back
+        // publish wastes a few numbers, which is fine — references are
+        // labels, not invariants).
+        const pending = findings.filter(
+          (f) => f.requiresAction && f.actionId === null && f.resolvedAt === null,
+        );
+        const actionRefs = new Map<string, string>();
+        for (const finding of pending) {
+          const n = await nextReferenceValue(ctx.db, ctx.tenantId, 'action');
+          actionRefs.set(finding.id, `AC-${String(n).padStart(6, '0')}`);
+        }
+
+        const createdActionIds: string[] = [];
+        await ctx.db.transaction(async (tx) => {
+          for (const finding of pending) {
+            const actionId = newId();
+            await tx.insert(actions).values({
+              id: actionId,
+              tenantId: ctx.tenantId,
+              sourceType: 'fire_risk_assessment',
+              sourceId: fra.id,
+              sourceItemId: finding.id,
+              referenceNumber: actionRefs.get(finding.id) ?? null,
+              title: `Fire safety finding: ${finding.description.slice(0, 200)}`,
+              description: `Raised by fire risk assessment ${fra.referenceNumber ?? fra.id}${building !== null ? ` for ${building.name}` : ''} — category: ${finding.category}.`,
+              status: 'open',
+              assigneeUserId: ctx.auth.userId,
+              priority: finding.priority,
+              dueAt: new Date(
+                Date.now() + (finding.priority === 'high' ? 7 : 30) * 24 * 60 * 60 * 1000,
+              ),
+              siteId: building?.siteId ?? null,
+              createdBy: ctx.auth.userId,
+            });
+            await tx
+              .update(fireSignificantFindings)
+              .set({ actionId })
+              .where(eq(fireSignificantFindings.id, finding.id));
+            createdActionIds.push(actionId);
+          }
+          const now = new Date();
+          const frequency = fra.reviewFrequencyMonths ?? suggestedFraReviewMonths(fra.riskRating);
+          await tx
+            .update(fireRiskAssessments)
+            .set({
+              status: 'active',
+              publishedAt: fra.publishedAt ?? now,
+              publishedBy: ctx.auth.userId,
+              reviewFrequencyMonths: frequency,
+              nextReviewAt: addMonthsClamped(now, frequency),
+              updatedAt: now,
+            })
+            .where(eq(fireRiskAssessments.id, fra.id));
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'fra',
+          entityId: fra.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'published',
+          detail: String(createdActionIds.length),
+        });
+        ctx.logger.info(
+          { fraId: fra.id, actionsCreated: createdActionIds.length },
+          '[fireSafety] FRA published',
+        );
+        return { ok: true, actionsCreated: createdActionIds.length };
+      }),
+
+    moveToDraft: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(z.object({ fraId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const fra = await loadFra(ctx.db, ctx.tenantId, input.fraId);
+        if (fra.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        await ctx.db
+          .update(fireRiskAssessments)
+          .set({ status: 'draft', updatedAt: new Date() })
+          .where(eq(fireRiskAssessments.id, fra.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'fra',
+          entityId: fra.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'moved_to_draft',
+        });
+        return { ok: true };
+      }),
+
+    archive: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(z.object({ fraId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const fra = await loadFra(ctx.db, ctx.tenantId, input.fraId);
+        if (fra.archivedAt !== null) return { ok: true };
+        const now = new Date();
+        await ctx.db
+          .update(fireRiskAssessments)
+          .set({ status: 'archived', archivedAt: now, updatedAt: now })
+          .where(eq(fireRiskAssessments.id, fra.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'fra',
+          entityId: fra.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'archived',
+        });
+        return { ok: true };
+      }),
+
+    /**
+     * The step-5 spine: reviews append, they never rewrite. `confirmed`
+     * re-attests the assessment as-is; `updated` records that content
+     * was revised (the edits themselves flow through `update`, each one
+     * event-logged).
+     */
+    recordReview: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(
+        z.object({
+          fraId: z.string().length(26),
+          trigger: z.enum(FRA_REVIEW_TRIGGERS),
+          outcome: z.enum(FRA_REVIEW_OUTCOMES),
+          note: z.string().max(4000).default(''),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const fra = await loadFra(ctx.db, ctx.tenantId, input.fraId);
+        if (fra.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        if (fra.status !== 'active') {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'not-active' });
+        }
+        const now = new Date();
+        const frequency = fra.reviewFrequencyMonths ?? suggestedFraReviewMonths(fra.riskRating);
+        await ctx.db.transaction(async (tx) => {
+          await tx.insert(fireFraReviews).values({
+            id: newId(),
+            tenantId: ctx.tenantId,
+            fraId: fra.id,
+            trigger: input.trigger,
+            outcome: input.outcome,
+            note: input.note,
+            reviewedBy: ctx.auth.userId,
+            reviewedAt: now,
+          });
+          await tx
+            .update(fireRiskAssessments)
+            .set({
+              lastReviewedAt: now,
+              lastReviewedBy: ctx.auth.userId,
+              nextReviewAt: addMonthsClamped(now, frequency),
+              updatedAt: now,
+            })
+            .where(eq(fireRiskAssessments.id, fra.id));
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'fra',
+          entityId: fra.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'review_recorded',
+          detail: `${input.trigger}:${input.outcome}`,
+        });
+        return { ok: true };
+      }),
+  });
+
+  const logbook = router({
+    /** The building's calendar with live due status. */
+    checks: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(z.object({ buildingId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        const rows = await ctx.db
+          .select()
+          .from(fireLogbookChecks)
+          .where(eq(fireLogbookChecks.buildingId, building.id))
+          .orderBy(asc(fireLogbookChecks.nextDueAt));
+        const now = new Date();
+        return rows.map((c) => checkWithStatus(c, now));
+      }),
+
+    /** Add a manual check or adjust frequency / assignee / active flag. */
+    upsertCheck: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(
+        z.object({
+          buildingId: z.string().length(26),
+          checkType: z.enum(FIRE_CHECK_TYPES),
+          frequency: z.enum(CHECK_FREQUENCIES).optional(),
+          assignedToUserId: z.string().nullable().optional(),
+          notes: z.string().max(2000).optional(),
+          active: z.boolean().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        const existing = (
+          await ctx.db
+            .select()
+            .from(fireLogbookChecks)
+            .where(
+              and(
+                eq(fireLogbookChecks.buildingId, building.id),
+                eq(fireLogbookChecks.checkType, input.checkType),
+              ),
+            )
+            .limit(1)
+        )[0];
+        const now = new Date();
+        if (existing === undefined) {
+          const frequency =
+            input.frequency ?? FIRE_CHECK_TYPE_SPECS[input.checkType].defaultFrequency;
+          const id = newId();
+          await ctx.db.insert(fireLogbookChecks).values({
+            id,
+            tenantId: ctx.tenantId,
+            buildingId: building.id,
+            checkType: input.checkType,
+            frequency,
+            source: 'manual',
+            active: input.active ?? true,
+            assignedToUserId: input.assignedToUserId ?? null,
+            notes: input.notes ?? '',
+            nextDueAt: nextDueDate(now, frequency),
+          });
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            entityType: 'logbook_check',
+            entityId: id,
+            actorUserId: ctx.auth.userId,
+            kind: 'created',
+            detail: input.checkType,
+          });
+          return { id, created: true };
+        }
+        const patch: Partial<typeof existing> = {};
+        if (input.frequency !== undefined && input.frequency !== existing.frequency) {
+          patch.frequency = input.frequency;
+          // Rebase the cycle on the last completed check, not on today —
+          // changing cadence must not silently grant an extension.
+          patch.nextDueAt = nextDueDate(existing.lastDoneAt ?? now, input.frequency);
+        }
+        if (input.assignedToUserId !== undefined) patch.assignedToUserId = input.assignedToUserId;
+        if (input.notes !== undefined) patch.notes = input.notes;
+        if (input.active !== undefined) patch.active = input.active;
+        if (Object.keys(patch).length > 0) {
+          await ctx.db
+            .update(fireLogbookChecks)
+            .set({ ...patch, updatedAt: now })
+            .where(eq(fireLogbookChecks.id, existing.id));
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            entityType: 'logbook_check',
+            entityId: existing.id,
+            actorUserId: ctx.auth.userId,
+            kind: 'check_updated',
+            detail: input.checkType,
+          });
+        }
+        return { id: existing.id, created: false };
+      }),
+
+    /**
+     * Record a performed check — the logbook's whole purpose. Appends
+     * the evidence row, advances the schedule, and (optionally) raises
+     * an action when the check found problems.
+     */
+    recordEntry: tenantProcedure
+      .use(requirePermission('fireSafety.record'))
+      .input(
+        z.object({
+          buildingId: z.string().length(26),
+          checkType: z.enum(FIRE_CHECK_TYPES),
+          result: z.enum(FIRE_CHECK_RESULTS),
+          performedAt: z.coerce.date().optional(),
+          callPointRef: z.string().max(200).default(''),
+          notes: z.string().max(4000).default(''),
+          defectsSummary: z.string().max(4000).default(''),
+          raiseAction: z.boolean().default(false),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        const performedAt = input.performedAt ?? new Date();
+        if (performedAt.getTime() > Date.now() + 60 * 1000) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'future-date' });
+        }
+        const schedule = (
+          await ctx.db
+            .select()
+            .from(fireLogbookChecks)
+            .where(
+              and(
+                eq(fireLogbookChecks.buildingId, building.id),
+                eq(fireLogbookChecks.checkType, input.checkType),
+              ),
+            )
+            .limit(1)
+        )[0];
+
+        const wantsAction = input.raiseAction && input.result !== 'pass';
+        const actionRef = wantsAction
+          ? `AC-${String(await nextReferenceValue(ctx.db, ctx.tenantId, 'action')).padStart(6, '0')}`
+          : null;
+
+        const entryId = newId();
+        let actionId: string | null = null;
+        await ctx.db.transaction(async (tx) => {
+          await tx.insert(fireLogbookEntries).values({
+            id: entryId,
+            tenantId: ctx.tenantId,
+            buildingId: building.id,
+            checkId: schedule?.id ?? null,
+            checkType: input.checkType,
+            performedAt,
+            performedBy: ctx.auth.userId,
+            result: input.result,
+            callPointRef: input.callPointRef,
+            notes: input.notes,
+            defectsSummary: input.defectsSummary,
+          });
+          if (wantsAction) {
+            actionId = newId();
+            await tx.insert(actions).values({
+              id: actionId,
+              tenantId: ctx.tenantId,
+              sourceType: 'fire_logbook_entry',
+              sourceId: entryId,
+              referenceNumber: actionRef,
+              title: `Fire safety check defect: ${input.checkType.replace(/_/g, ' ')} — ${building.name}`,
+              description: input.defectsSummary.length > 0 ? input.defectsSummary : input.notes,
+              status: 'open',
+              assigneeUserId: ctx.auth.userId,
+              priority: input.result === 'fail' ? 'high' : 'medium',
+              dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              siteId: building.siteId,
+              createdBy: ctx.auth.userId,
+            });
+            await tx
+              .update(fireLogbookEntries)
+              .set({ actionId })
+              .where(eq(fireLogbookEntries.id, entryId));
+          }
+          if (
+            schedule !== undefined &&
+            (schedule.lastDoneAt === null || schedule.lastDoneAt < performedAt)
+          ) {
+            await tx
+              .update(fireLogbookChecks)
+              .set({
+                lastDoneAt: performedAt,
+                nextDueAt: nextDueDate(performedAt, schedule.frequency),
+                updatedAt: new Date(),
+              })
+              .where(eq(fireLogbookChecks.id, schedule.id));
+          }
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'building',
+          entityId: building.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'check_recorded',
+          detail: `${input.checkType}:${input.result}`,
+        });
+        return { id: entryId, actionId };
+      }),
+
+    /** The logbook evidence view — filterable, newest first. */
+    entries: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(
+        z
+          .object({
+            buildingId: z.string().length(26).optional(),
+            checkType: z.enum(FIRE_CHECK_TYPES).optional(),
+            limit: z.number().int().min(1).max(500).default(200),
+          })
+          .default({ limit: 200 }),
+      )
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const conditions = [eq(fireLogbookEntries.tenantId, ctx.tenantId)];
+        if (input.buildingId !== undefined) {
+          conditions.push(eq(fireLogbookEntries.buildingId, input.buildingId));
+        }
+        if (input.checkType !== undefined) {
+          conditions.push(eq(fireLogbookEntries.checkType, input.checkType));
+        }
+        const rows = await ctx.db
+          .select()
+          .from(fireLogbookEntries)
+          .where(and(...conditions))
+          .orderBy(desc(fireLogbookEntries.performedAt))
+          .limit(input.limit);
+        const names = await userNamesById(
+          ctx.db,
+          ctx.tenantId,
+          rows.map((r) => r.performedBy),
+        );
+        const buildingNames = new Map(
+          (
+            await ctx.db
+              .select({ id: fireBuildings.id, name: fireBuildings.name })
+              .from(fireBuildings)
+              .where(eq(fireBuildings.tenantId, ctx.tenantId))
+          ).map((b) => [b.id, b.name]),
+        );
+        return rows.map((r) => ({
+          ...r,
+          performedByName: names.get(r.performedBy) ?? null,
+          buildingName: buildingNames.get(r.buildingId) ?? null,
+        }));
+      }),
+
+    /**
+     * The tenant-wide "what needs doing" list: every active check on a
+     * live building that is due soon or overdue, soonest first.
+     */
+    due: tenantProcedure.use(requirePermission('fireSafety.view')).query(async ({ ctx }) => {
+      assertEnabled();
+      const rows = await ctx.db
+        .select({
+          check: fireLogbookChecks,
+          buildingName: fireBuildings.name,
+          buildingStatus: fireBuildings.status,
+        })
+        .from(fireLogbookChecks)
+        .innerJoin(fireBuildings, eq(fireLogbookChecks.buildingId, fireBuildings.id))
+        .where(
+          and(
+            eq(fireLogbookChecks.tenantId, ctx.tenantId),
+            eq(fireLogbookChecks.active, true),
+            eq(fireBuildings.status, 'active'),
+          ),
+        )
+        .orderBy(asc(fireLogbookChecks.nextDueAt));
+      const now = new Date();
+      return rows
+        .map(({ check, buildingName }) => ({
+          ...checkWithStatus(check, now),
+          buildingName,
+        }))
+        .filter((c) => c.dueStatus !== 'ok');
+    }),
+  });
+
+  const doors = router({
+    list: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(z.object({ buildingId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        const rows = await ctx.db
+          .select()
+          .from(fireDoors)
+          .where(eq(fireDoors.buildingId, building.id))
+          .orderBy(asc(fireDoors.doorRef));
+        const now = new Date();
+        return rows.map((door) => {
+          const interval = doorIntervalMonths(
+            { locationKind: door.locationKind, override: door.inspectionIntervalMonthsOverride },
+            building,
+          );
+          return {
+            ...door,
+            intervalMonths: interval,
+            dueStatus:
+              door.status === 'active'
+                ? doorDueStatus(door.nextInspectionDueAt, interval, now)
+                : ('ok' satisfies CheckDueStatus),
+          };
+        });
+      }),
+
+    create: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(
+        z.object({
+          buildingId: z.string().length(26),
+          doorRef: z.string().min(1).max(200),
+          locationKind: z.enum(FIRE_DOOR_LOCATION_KINDS).default('other'),
+          floor: z.string().max(100).default(''),
+          description: z.string().max(1000).default(''),
+          ratingMinutes: z.number().int().min(15).max(240).nullable().optional(),
+          selfClosing: z.boolean().default(true),
+          inspectionIntervalMonthsOverride: z.number().int().min(1).max(24).nullable().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        const now = new Date();
+        const interval = doorIntervalMonths(
+          {
+            locationKind: input.locationKind,
+            override: input.inspectionIntervalMonthsOverride ?? null,
+          },
+          building,
+        );
+        const id = newId();
+        await ctx.db.insert(fireDoors).values({
+          id,
+          tenantId: ctx.tenantId,
+          buildingId: building.id,
+          doorRef: input.doorRef,
+          locationKind: input.locationKind,
+          floor: input.floor,
+          description: input.description,
+          ratingMinutes: input.ratingMinutes ?? null,
+          selfClosing: input.selfClosing,
+          inspectionIntervalMonthsOverride: input.inspectionIntervalMonthsOverride ?? null,
+          nextInspectionDueAt: addMonthsClamped(now, interval),
+          createdBy: ctx.auth.userId,
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'door',
+          entityId: id,
+          actorUserId: ctx.auth.userId,
+          kind: 'created',
+          detail: input.doorRef,
+        });
+        return { id };
+      }),
+
+    update: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(
+        z.object({
+          doorId: z.string().length(26),
+          doorRef: z.string().min(1).max(200).optional(),
+          locationKind: z.enum(FIRE_DOOR_LOCATION_KINDS).optional(),
+          floor: z.string().max(100).optional(),
+          description: z.string().max(1000).optional(),
+          ratingMinutes: z.number().int().min(15).max(240).nullable().optional(),
+          selfClosing: z.boolean().optional(),
+          inspectionIntervalMonthsOverride: z.number().int().min(1).max(24).nullable().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const door = await loadDoor(ctx.db, ctx.tenantId, input.doorId);
+        if (door.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        const building = await loadBuilding(ctx.db, ctx.tenantId, door.buildingId);
+        const now = new Date();
+        // A regime-relevant change (location kind or override) moves the
+        // cadence — recompute from the last inspection, not from today.
+        const regimeChanged =
+          (input.locationKind !== undefined && input.locationKind !== door.locationKind) ||
+          (input.inspectionIntervalMonthsOverride !== undefined &&
+            input.inspectionIntervalMonthsOverride !== door.inspectionIntervalMonthsOverride);
+        const rebasedDue = regimeChanged
+          ? addMonthsClamped(
+              door.lastInspectedAt ?? now,
+              doorIntervalMonths(
+                {
+                  locationKind: input.locationKind ?? door.locationKind,
+                  override:
+                    input.inspectionIntervalMonthsOverride !== undefined
+                      ? input.inspectionIntervalMonthsOverride
+                      : door.inspectionIntervalMonthsOverride,
+                },
+                building,
+              ),
+            )
+          : null;
+        await ctx.db
+          .update(fireDoors)
+          .set({
+            ...(input.doorRef !== undefined ? { doorRef: input.doorRef.trim() } : {}),
+            ...(input.locationKind !== undefined ? { locationKind: input.locationKind } : {}),
+            ...(input.floor !== undefined ? { floor: input.floor } : {}),
+            ...(input.description !== undefined ? { description: input.description } : {}),
+            ...(input.ratingMinutes !== undefined ? { ratingMinutes: input.ratingMinutes } : {}),
+            ...(input.selfClosing !== undefined ? { selfClosing: input.selfClosing } : {}),
+            ...(input.inspectionIntervalMonthsOverride !== undefined
+              ? { inspectionIntervalMonthsOverride: input.inspectionIntervalMonthsOverride }
+              : {}),
+            ...(rebasedDue !== null ? { nextInspectionDueAt: rebasedDue } : {}),
+            updatedAt: now,
+          })
+          .where(eq(fireDoors.id, door.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'door',
+          entityId: door.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'updated',
+        });
+        return { ok: true };
+      }),
+
+    archive: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(z.object({ doorId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const door = await loadDoor(ctx.db, ctx.tenantId, input.doorId);
+        if (door.archivedAt !== null) return { ok: true };
+        const now = new Date();
+        await ctx.db
+          .update(fireDoors)
+          .set({ status: 'archived', archivedAt: now, updatedAt: now })
+          .where(eq(fireDoors.id, door.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'door',
+          entityId: door.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'archived',
+          detail: door.doorRef,
+        });
+        return { ok: true };
+      }),
+
+    recordInspection: tenantProcedure
+      .use(requirePermission('fireSafety.record'))
+      .input(
+        z.object({
+          doorId: z.string().length(26),
+          outcome: z.enum(FIRE_DOOR_OUTCOMES),
+          inspectedAt: z.coerce.date().optional(),
+          checklist: doorChecklistSchema.optional(),
+          defectsSummary: z.string().max(4000).default(''),
+          raiseAction: z.boolean().default(false),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const door = await loadDoor(ctx.db, ctx.tenantId, input.doorId);
+        if (door.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        const building = await loadBuilding(ctx.db, ctx.tenantId, door.buildingId);
+        const inspectedAt = input.inspectedAt ?? new Date();
+        if (inspectedAt.getTime() > Date.now() + 60 * 1000) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'future-date' });
+        }
+
+        const wantsAction = input.raiseAction && input.outcome !== 'pass';
+        const actionRef = wantsAction
+          ? `AC-${String(await nextReferenceValue(ctx.db, ctx.tenantId, 'action')).padStart(6, '0')}`
+          : null;
+
+        const inspectionId = newId();
+        let actionId: string | null = null;
+        const interval = doorIntervalMonths(
+          { locationKind: door.locationKind, override: door.inspectionIntervalMonthsOverride },
+          building,
+        );
+        await ctx.db.transaction(async (tx) => {
+          await tx.insert(fireDoorInspections).values({
+            id: inspectionId,
+            tenantId: ctx.tenantId,
+            doorId: door.id,
+            inspectedAt,
+            inspectedBy: ctx.auth.userId,
+            outcome: input.outcome,
+            checklist: input.checklist ?? null,
+            defectsSummary: input.defectsSummary,
+          });
+          if (wantsAction) {
+            actionId = newId();
+            await tx.insert(actions).values({
+              id: actionId,
+              tenantId: ctx.tenantId,
+              sourceType: 'fire_door_inspection',
+              sourceId: inspectionId,
+              referenceNumber: actionRef,
+              title: `Fire door defect: ${door.doorRef} — ${building.name}`,
+              description: input.defectsSummary,
+              status: 'open',
+              assigneeUserId: ctx.auth.userId,
+              priority: input.outcome === 'fail' ? 'high' : 'medium',
+              dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              siteId: building.siteId,
+              createdBy: ctx.auth.userId,
+            });
+            await tx
+              .update(fireDoorInspections)
+              .set({ actionId })
+              .where(eq(fireDoorInspections.id, inspectionId));
+          }
+          if (door.lastInspectedAt === null || door.lastInspectedAt < inspectedAt) {
+            await tx
+              .update(fireDoors)
+              .set({
+                lastInspectedAt: inspectedAt,
+                nextInspectionDueAt: addMonthsClamped(inspectedAt, interval),
+                updatedAt: new Date(),
+              })
+              .where(eq(fireDoors.id, door.id));
+          }
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'door',
+          entityId: door.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'inspection_recorded',
+          detail: `${door.doorRef}:${input.outcome}`,
+        });
+        return { id: inspectionId, actionId };
+      }),
+
+    inspections: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(z.object({ doorId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const door = await loadDoor(ctx.db, ctx.tenantId, input.doorId);
+        const rows = await ctx.db
+          .select()
+          .from(fireDoorInspections)
+          .where(eq(fireDoorInspections.doorId, door.id))
+          .orderBy(desc(fireDoorInspections.inspectedAt));
+        const names = await userNamesById(
+          ctx.db,
+          ctx.tenantId,
+          rows.map((r) => r.inspectedBy),
+        );
+        return rows.map((r) => ({ ...r, inspectedByName: names.get(r.inspectedBy) ?? null }));
+      }),
+  });
+
+  const drills = router({
+    list: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(z.object({ buildingId: z.string().length(26).optional() }).default({}))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const conditions = [eq(fireDrills.tenantId, ctx.tenantId)];
+        if (input.buildingId !== undefined) {
+          conditions.push(eq(fireDrills.buildingId, input.buildingId));
+        }
+        const rows = await ctx.db
+          .select({ drill: fireDrills, buildingName: fireBuildings.name })
+          .from(fireDrills)
+          .innerJoin(fireBuildings, eq(fireDrills.buildingId, fireBuildings.id))
+          .where(and(...conditions))
+          .orderBy(desc(fireDrills.conductedAt))
+          .limit(200);
+        const names = await userNamesById(
+          ctx.db,
+          ctx.tenantId,
+          rows.map((r) => r.drill.conductedBy),
+        );
+        return rows.map(({ drill, buildingName }) => ({
+          ...drill,
+          buildingName,
+          conductedByName: names.get(drill.conductedBy) ?? null,
+        }));
+      }),
+
+    /** Record a drill — and satisfy the drill schedule in the same stroke. */
+    record: tenantProcedure
+      .use(requirePermission('fireSafety.record'))
+      .input(
+        z.object({
+          buildingId: z.string().length(26),
+          conductedAt: z.coerce.date().optional(),
+          evacuationSeconds: z
+            .number()
+            .int()
+            .min(0)
+            .max(24 * 60 * 60)
+            .nullable()
+            .optional(),
+          peoplePresent: z.number().int().min(0).max(1_000_000).nullable().optional(),
+          peopleAccountedFor: z.number().int().min(0).max(1_000_000).nullable().optional(),
+          rollComplete: z.boolean().default(false),
+          notes: z.string().max(4000).default(''),
+          lessonsLearned: z.string().max(4000).default(''),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        const conductedAt = input.conductedAt ?? new Date();
+        if (conductedAt.getTime() > Date.now() + 60 * 1000) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'future-date' });
+        }
+        if (
+          input.peoplePresent !== null &&
+          input.peoplePresent !== undefined &&
+          input.peopleAccountedFor !== null &&
+          input.peopleAccountedFor !== undefined &&
+          input.peopleAccountedFor > input.peoplePresent
+        ) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'roll-exceeds-present' });
+        }
+        const id = newId();
+        await ctx.db.transaction(async (tx) => {
+          await tx.insert(fireDrills).values({
+            id,
+            tenantId: ctx.tenantId,
+            buildingId: building.id,
+            conductedAt,
+            conductedBy: ctx.auth.userId,
+            evacuationSeconds: input.evacuationSeconds ?? null,
+            peoplePresent: input.peoplePresent ?? null,
+            peopleAccountedFor: input.peopleAccountedFor ?? null,
+            rollComplete: input.rollComplete,
+            notes: input.notes,
+            lessonsLearned: input.lessonsLearned,
+          });
+          const schedule = (
+            await tx
+              .select()
+              .from(fireLogbookChecks)
+              .where(
+                and(
+                  eq(fireLogbookChecks.buildingId, building.id),
+                  eq(fireLogbookChecks.checkType, 'fire_drill'),
+                ),
+              )
+              .limit(1)
+          )[0];
+          if (
+            schedule !== undefined &&
+            (schedule.lastDoneAt === null || schedule.lastDoneAt < conductedAt)
+          ) {
+            await tx
+              .update(fireLogbookChecks)
+              .set({
+                lastDoneAt: conductedAt,
+                nextDueAt: nextDueDate(conductedAt, schedule.frequency),
+                updatedAt: new Date(),
+              })
+              .where(eq(fireLogbookChecks.id, schedule.id));
+          }
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'drill',
+          entityId: id,
+          actorUserId: ctx.auth.userId,
+          kind: 'drill_recorded',
+          detail: input.evacuationSeconds !== null ? String(input.evacuationSeconds ?? '') : '',
+        });
+        return { id };
+      }),
+  });
+
+  const peeps = router({
+    list: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(
+        z
+          .object({
+            buildingId: z.string().length(26).optional(),
+            includeEnded: z.boolean().default(false),
+          })
+          .default({ includeEnded: false }),
+      )
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const conditions = [eq(firePeeps.tenantId, ctx.tenantId)];
+        if (input.buildingId !== undefined) {
+          conditions.push(eq(firePeeps.buildingId, input.buildingId));
+        }
+        if (!input.includeEnded) {
+          conditions.push(isNull(firePeeps.endedAt));
+        }
+        const rows = await ctx.db
+          .select()
+          .from(firePeeps)
+          .where(and(...conditions))
+          .orderBy(asc(firePeeps.personName));
+        const now = new Date();
+        return rows.map((p) => ({
+          ...p,
+          reviewDue: p.endedAt === null && p.nextReviewAt <= now,
+        }));
+      }),
+
+    create: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(
+        z.object({
+          buildingId: z.string().length(26).nullable().optional(),
+          userId: z.string().nullable().optional(),
+          personName: z.string().min(1).max(300),
+          assistanceNeeds: z.string().max(4000).default(''),
+          planSummary: z.string().max(8000).default(''),
+          buddyName: z.string().max(300).default(''),
+          equipmentNeeded: z.string().max(2000).default(''),
+          reviewFrequencyMonths: z
+            .number()
+            .int()
+            .min(1)
+            .max(60)
+            .default(DEFAULT_PEEP_REVIEW_MONTHS),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        if (input.buildingId !== null && input.buildingId !== undefined) {
+          await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        }
+        const id = newId();
+        const now = new Date();
+        await ctx.db.insert(firePeeps).values({
+          id,
+          tenantId: ctx.tenantId,
+          buildingId: input.buildingId ?? null,
+          userId: input.userId ?? null,
+          personName: input.personName,
+          assistanceNeeds: input.assistanceNeeds,
+          planSummary: input.planSummary,
+          buddyName: input.buddyName,
+          equipmentNeeded: input.equipmentNeeded,
+          reviewFrequencyMonths: input.reviewFrequencyMonths,
+          nextReviewAt: addMonthsClamped(now, input.reviewFrequencyMonths),
+          createdBy: ctx.auth.userId,
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'peep',
+          entityId: id,
+          actorUserId: ctx.auth.userId,
+          kind: 'created',
+          detail: input.personName,
+        });
+        return { id };
+      }),
+
+    update: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(
+        z.object({
+          peepId: z.string().length(26),
+          buildingId: z.string().length(26).nullable().optional(),
+          personName: z.string().min(1).max(300).optional(),
+          assistanceNeeds: z.string().max(4000).optional(),
+          planSummary: z.string().max(8000).optional(),
+          buddyName: z.string().max(300).optional(),
+          equipmentNeeded: z.string().max(2000).optional(),
+          reviewFrequencyMonths: z.number().int().min(1).max(60).optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const peep = await loadPeep(ctx.db, ctx.tenantId, input.peepId);
+        if (peep.endedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'ended' });
+        }
+        if (input.buildingId !== null && input.buildingId !== undefined) {
+          await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        }
+        await ctx.db
+          .update(firePeeps)
+          .set({
+            ...(input.buildingId !== undefined ? { buildingId: input.buildingId } : {}),
+            ...(input.personName !== undefined ? { personName: input.personName.trim() } : {}),
+            ...(input.assistanceNeeds !== undefined
+              ? { assistanceNeeds: input.assistanceNeeds }
+              : {}),
+            ...(input.planSummary !== undefined ? { planSummary: input.planSummary } : {}),
+            ...(input.buddyName !== undefined ? { buddyName: input.buddyName } : {}),
+            ...(input.equipmentNeeded !== undefined
+              ? { equipmentNeeded: input.equipmentNeeded }
+              : {}),
+            ...(input.reviewFrequencyMonths !== undefined
+              ? { reviewFrequencyMonths: input.reviewFrequencyMonths }
+              : {}),
+            updatedAt: new Date(),
+          })
+          .where(eq(firePeeps.id, peep.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'peep',
+          entityId: peep.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'updated',
+        });
+        return { ok: true };
+      }),
+
+    recordReview: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(z.object({ peepId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const peep = await loadPeep(ctx.db, ctx.tenantId, input.peepId);
+        if (peep.endedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'ended' });
+        }
+        const now = new Date();
+        await ctx.db
+          .update(firePeeps)
+          .set({
+            lastReviewedAt: now,
+            nextReviewAt: addMonthsClamped(now, peep.reviewFrequencyMonths),
+            updatedAt: now,
+          })
+          .where(eq(firePeeps.id, peep.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'peep',
+          entityId: peep.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'peep_review_recorded',
+        });
+        return { ok: true };
+      }),
+
+    /** End (never delete) — the record of who was covered survives. */
+    end: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(z.object({ peepId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const peep = await loadPeep(ctx.db, ctx.tenantId, input.peepId);
+        if (peep.endedAt !== null) return { ok: true };
+        const now = new Date();
+        await ctx.db
+          .update(firePeeps)
+          .set({ endedAt: now, updatedAt: now })
+          .where(eq(firePeeps.id, peep.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'peep',
+          entityId: peep.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'peep_ended',
+          detail: peep.personName,
+        });
+        return { ok: true };
+      }),
+  });
+
+  const marshals = router({
+    list: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(
+        z
+          .object({
+            buildingId: z.string().length(26).optional(),
+            includeEnded: z.boolean().default(false),
+          })
+          .default({ includeEnded: false }),
+      )
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const conditions = [eq(fireMarshals.tenantId, ctx.tenantId)];
+        if (input.buildingId !== undefined) {
+          conditions.push(eq(fireMarshals.buildingId, input.buildingId));
+        }
+        if (!input.includeEnded) {
+          conditions.push(isNull(fireMarshals.endedAt));
+        }
+        const rows = await ctx.db
+          .select()
+          .from(fireMarshals)
+          .where(and(...conditions))
+          .orderBy(asc(fireMarshals.createdAt));
+        const names = await userNamesById(
+          ctx.db,
+          ctx.tenantId,
+          rows.map((r) => r.userId),
+        );
+        const now = new Date();
+        return rows.map((m) => ({
+          ...m,
+          userName: names.get(m.userId) ?? null,
+          trainingStatus: marshalTrainingStatus(m, now),
+        }));
+      }),
+
+    add: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(
+        z.object({
+          buildingId: z.string().length(26),
+          userId: z.string().min(1),
+          role: z.enum(FIRE_MARSHAL_ROLES).default('marshal'),
+          area: z.string().max(300).default(''),
+          trainedAt: z.coerce.date().nullable().optional(),
+          trainingExpiresAt: z.coerce.date().nullable().optional(),
+          notes: z.string().max(2000).default(''),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        // The user must be a member of this tenant.
+        const member = (
+          await ctx.db
+            .select({ id: user.id })
+            .from(user)
+            .where(and(eq(user.id, input.userId), eq(user.tenantId, ctx.tenantId)))
+            .limit(1)
+        )[0];
+        if (member === undefined) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'unknown-user' });
+        }
+        // One active row per person per building — end the old one first.
+        const active = (
+          await ctx.db
+            .select({ id: fireMarshals.id })
+            .from(fireMarshals)
+            .where(
+              and(
+                eq(fireMarshals.buildingId, building.id),
+                eq(fireMarshals.userId, input.userId),
+                isNull(fireMarshals.endedAt),
+              ),
+            )
+            .limit(1)
+        )[0];
+        if (active !== undefined) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'already-marshal' });
+        }
+        const id = newId();
+        await ctx.db.insert(fireMarshals).values({
+          id,
+          tenantId: ctx.tenantId,
+          buildingId: building.id,
+          userId: input.userId,
+          role: input.role,
+          area: input.area,
+          trainedAt: input.trainedAt ?? null,
+          trainingExpiresAt: input.trainingExpiresAt ?? null,
+          notes: input.notes,
+          createdBy: ctx.auth.userId,
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'marshal',
+          entityId: id,
+          actorUserId: ctx.auth.userId,
+          kind: 'marshal_added',
+        });
+        return { id };
+      }),
+
+    update: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(
+        z.object({
+          marshalId: z.string().length(26),
+          role: z.enum(FIRE_MARSHAL_ROLES).optional(),
+          area: z.string().max(300).optional(),
+          trainedAt: z.coerce.date().nullable().optional(),
+          trainingExpiresAt: z.coerce.date().nullable().optional(),
+          notes: z.string().max(2000).optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const rows = await ctx.db
+          .select()
+          .from(fireMarshals)
+          .where(and(eq(fireMarshals.id, input.marshalId), eq(fireMarshals.tenantId, ctx.tenantId)))
+          .limit(1);
+        const marshal = rows[0];
+        if (marshal === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (marshal.endedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'ended' });
+        }
+        await ctx.db
+          .update(fireMarshals)
+          .set({
+            ...(input.role !== undefined ? { role: input.role } : {}),
+            ...(input.area !== undefined ? { area: input.area } : {}),
+            ...(input.trainedAt !== undefined ? { trainedAt: input.trainedAt } : {}),
+            ...(input.trainingExpiresAt !== undefined
+              ? { trainingExpiresAt: input.trainingExpiresAt }
+              : {}),
+            ...(input.notes !== undefined ? { notes: input.notes } : {}),
+            updatedAt: new Date(),
+          })
+          .where(eq(fireMarshals.id, marshal.id));
+        return { ok: true };
+      }),
+
+    end: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(z.object({ marshalId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const rows = await ctx.db
+          .select()
+          .from(fireMarshals)
+          .where(and(eq(fireMarshals.id, input.marshalId), eq(fireMarshals.tenantId, ctx.tenantId)))
+          .limit(1);
+        const marshal = rows[0];
+        if (marshal === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (marshal.endedAt !== null) return { ok: true };
+        const now = new Date();
+        await ctx.db
+          .update(fireMarshals)
+          .set({ endedAt: now, updatedAt: now })
+          .where(eq(fireMarshals.id, marshal.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'marshal',
+          entityId: marshal.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'marshal_ended',
+        });
+        return { ok: true };
+      }),
+
+    /**
+     * Coverage per active building: how many marshals are in date, who
+     * is expiring soon, and which buildings have nobody — the gap the
+     * practitioner has to fill before the next shift.
+     */
+    coverage: tenantProcedure.use(requirePermission('fireSafety.view')).query(async ({ ctx }) => {
+      assertEnabled();
+      const buildings = await ctx.db
+        .select({ id: fireBuildings.id, name: fireBuildings.name })
+        .from(fireBuildings)
+        .where(and(eq(fireBuildings.tenantId, ctx.tenantId), eq(fireBuildings.status, 'active')))
+        .orderBy(asc(fireBuildings.name));
+      const rows = await ctx.db
+        .select()
+        .from(fireMarshals)
+        .where(and(eq(fireMarshals.tenantId, ctx.tenantId), isNull(fireMarshals.endedAt)));
+      const now = new Date();
+      return buildings.map((building) => {
+        const members = rows.filter((m) => m.buildingId === building.id);
+        const statuses = members.map((m) => marshalTrainingStatus(m, now));
+        const inDate = statuses.filter((s) => s === 'in_date' || s === 'expiring_soon').length;
+        return {
+          buildingId: building.id,
+          buildingName: building.name,
+          marshalCount: members.length,
+          inDateCount: inDate,
+          expiringSoonCount: statuses.filter((s) => s === 'expiring_soon').length,
+          gap: inDate === 0,
+        };
+      });
+    }),
+  });
+
+  /** The needs-attention strip: everything that rotted since last visit. */
+  const overview = tenantProcedure
+    .use(requirePermission('fireSafety.view'))
+    .query(async ({ ctx }) => {
+      assertEnabled();
+      const now = new Date();
+      const [checkRows, doorRows, fraRows, peepRows, marshalRows, activeBuildings] =
+        await Promise.all([
+          ctx.db
+            .select({ check: fireLogbookChecks, buildingStatus: fireBuildings.status })
+            .from(fireLogbookChecks)
+            .innerJoin(fireBuildings, eq(fireLogbookChecks.buildingId, fireBuildings.id))
+            .where(
+              and(
+                eq(fireLogbookChecks.tenantId, ctx.tenantId),
+                eq(fireLogbookChecks.active, true),
+                eq(fireBuildings.status, 'active'),
+              ),
+            ),
+          ctx.db
+            .select({ door: fireDoors, building: fireBuildings })
+            .from(fireDoors)
+            .innerJoin(fireBuildings, eq(fireDoors.buildingId, fireBuildings.id))
+            .where(
+              and(
+                eq(fireDoors.tenantId, ctx.tenantId),
+                eq(fireDoors.status, 'active'),
+                eq(fireBuildings.status, 'active'),
+              ),
+            ),
+          ctx.db
+            .select({
+              id: fireRiskAssessments.id,
+              status: fireRiskAssessments.status,
+              nextReviewAt: fireRiskAssessments.nextReviewAt,
+            })
+            .from(fireRiskAssessments)
+            .where(
+              and(
+                eq(fireRiskAssessments.tenantId, ctx.tenantId),
+                ne(fireRiskAssessments.status, 'archived'),
+              ),
+            ),
+          ctx.db
+            .select({ nextReviewAt: firePeeps.nextReviewAt })
+            .from(firePeeps)
+            .where(
+              and(
+                eq(firePeeps.tenantId, ctx.tenantId),
+                isNull(firePeeps.endedAt),
+                lte(firePeeps.nextReviewAt, now),
+              ),
+            ),
+          ctx.db
+            .select()
+            .from(fireMarshals)
+            .where(and(eq(fireMarshals.tenantId, ctx.tenantId), isNull(fireMarshals.endedAt))),
+          ctx.db
+            .select({ id: fireBuildings.id })
+            .from(fireBuildings)
+            .where(
+              and(eq(fireBuildings.tenantId, ctx.tenantId), eq(fireBuildings.status, 'active')),
+            ),
+        ]);
+
+      let checksOverdue = 0;
+      let checksDueSoon = 0;
+      for (const { check } of checkRows) {
+        const status = checkDueStatus(check.nextDueAt, check.frequency, now);
+        if (status === 'overdue') checksOverdue += 1;
+        else if (status === 'due_soon') checksDueSoon += 1;
+      }
+
+      let doorsOverdue = 0;
+      for (const { door, building } of doorRows) {
+        const interval = doorIntervalMonths(
+          { locationKind: door.locationKind, override: door.inspectionIntervalMonthsOverride },
+          building,
+        );
+        if (doorDueStatus(door.nextInspectionDueAt, interval, now) === 'overdue') {
+          doorsOverdue += 1;
+        }
+      }
+
+      const frasReviewDue = fraRows.filter(
+        (f) => f.status === 'active' && f.nextReviewAt !== null && f.nextReviewAt <= now,
+      ).length;
+      const frasDraft = fraRows.filter((f) => f.status === 'draft').length;
+
+      // Marshal coverage gaps: active buildings with nobody in date.
+      const marshalsByBuilding = new Map<string, number>();
+      for (const m of marshalRows) {
+        const status = marshalTrainingStatus(m, now);
+        if (status === 'in_date' || status === 'expiring_soon') {
+          marshalsByBuilding.set(m.buildingId, (marshalsByBuilding.get(m.buildingId) ?? 0) + 1);
+        }
+      }
+      const marshalGaps = activeBuildings.filter(
+        (b) => (marshalsByBuilding.get(b.id) ?? 0) === 0,
+      ).length;
+      const marshalsExpiringSoon = marshalRows.filter(
+        (m) => marshalTrainingStatus(m, now) === 'expiring_soon',
+      ).length;
+
+      return {
+        checksOverdue,
+        checksDueSoon,
+        doorsOverdue,
+        frasReviewDue,
+        frasDraft,
+        peepReviewsDue: peepRows.length,
+        marshalGaps,
+        marshalsExpiringSoon,
+      };
+    });
+
+  return router({
+    buildings,
+    fras,
+    logbook,
+    doors,
+    drills,
+    peeps,
+    marshals,
+    overview,
+  });
+}

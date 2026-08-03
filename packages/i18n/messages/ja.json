@@ -4531,7 +4531,8 @@
       "empty": "オープン中の許可はありません。現在、高リスク作業は許可されていません。",
       "noSite": "拠点未割当",
       "reference": "番号",
-      "acceptor": "受領者"
+      "acceptor": "受領者",
+      "insideCount": "{count, plural, other {#名入場中}}"
     },
     "new": {
       "back": "作業許可",
@@ -4552,7 +4553,10 @@
         "validTo": "有効終了",
         "acceptor": "受領者",
         "acceptorPlaceholder": "許可を受領する担当者を指定…",
-        "acceptorHint": "作業の責任者です。作業開始前に許可をデジタルで受領する必要があります。"
+        "acceptorHint": "作業の責任者です。作業開始前に許可をデジタルで受領する必要があります。",
+        "riskAssessment": "リスクアセスメント",
+        "riskAssessmentPlaceholder": "作業のリスクアセスメントをリンク…",
+        "riskAssessmentHint": "許可は、その根拠となる安全作業システムを参照してください。"
       },
       "maxDuration": "最長 {hours} 時間",
       "willRequire": "発行前にこのタイプで必要なもの：",
@@ -4560,7 +4564,8 @@
         "authoriser": "承認署名",
         "gasTesting": "ガス測定結果",
         "isolationCertificate": "隔離（アイソレーション）証明書",
-        "rescuePlan": "救助計画"
+        "rescuePlan": "救助計画",
+        "riskAssessment": "リスクアセスメントのリンク"
       },
       "preconditionCount": "{count, plural, other {発行前に確認する事前条件 #件}}",
       "conflictWarning": "{count, plural, other {この拠点・時間帯でオープン中の許可が他に#件あります}}",
@@ -4610,7 +4615,13 @@
           "rescue_plan": "救助計画",
           "gas_test": "ガス測定",
           "other": "その他"
-        }
+        },
+        "acceptableRanges": "許容範囲：",
+        "freshness": "{minutes}分より古い測定値は無効",
+        "withinLimits": "基準内",
+        "outOfLimits": "基準外",
+        "measuredAgainst": "対象基準",
+        "freeReading": "自由測定（基準なし）"
       },
       "signatures": {
         "title": "署名",
@@ -4651,7 +4662,13 @@
         "closeConfirm": "許可を完了",
         "cancel": "許可を取消",
         "cancelReason": "取消の理由は？",
-        "cancelConfirm": "許可を取消"
+        "cancelConfirm": "許可を取消",
+        "resumeTitle": "作業再開 — 安全を確認",
+        "resumeReasonRecap": "停止理由：{reason}",
+        "resumeGasNote": "このタイプは再開前に、停止後に実施した基準内の新しいガス測定が必要です。",
+        "resumeAttestation": "停止の原因が解消され、作業を安全に再開できる状態であることを確認します。",
+        "resumeConfirm": "許可を再開",
+        "extendConflicts": "{count, plural, other {延長後の時間帯と重複する許可が#件あります}}"
       },
       "closedLine": "{name} が {time} に完了しました。",
       "cancelledLine": "{name} が {time} に取り消しました。",
@@ -4673,8 +4690,45 @@
           "handed_over": "引き継ぎ",
           "cancelled": "取消",
           "closed": "完了",
-          "expiry_escalated": "期限超過をエスカレーション — 未完了のまま期限切れ"
+          "expiry_escalated": "期限超過をエスカレーション — 未完了のまま期限切れ",
+          "expiry_warning": "期限警告を送信",
+          "worker_added": "対象者を追加",
+          "worker_removed": "対象者を削除",
+          "entry_logged": "入場",
+          "exit_logged": "退場"
         }
+      },
+      "downloadPdf": "PDFをダウンロード",
+      "ssow": {
+        "title": "安全作業システム",
+        "requiredBeforeIssue": "発行前にリスクアセスメントが必要",
+        "riskAssessment": "リスクアセスメント",
+        "methodStatement": "作業手順書",
+        "none": "未リンク"
+      },
+      "workers": {
+        "title": "この許可の対象者",
+        "insideCount": "{count, plural, other {現在#名入場中}}",
+        "empty": "まだ登録がありません — この許可の下で作業する班を登録してください。",
+        "nameLabel": "氏名",
+        "namePlaceholder": "氏名…",
+        "roleLabel": "役割",
+        "roles": {
+          "supervisor": "監督者",
+          "worker": "作業者",
+          "entrant": "入場者",
+          "standby": "監視・救助要員"
+        },
+        "add": "追加",
+        "remove": "削除",
+        "logEntry": "入場を記録",
+        "logExit": "退場を記録",
+        "inSince": "{time}から入場中",
+        "adhocEntryLabel": "リスト外の人を記録",
+        "logTitle": "入退場記録",
+        "entered": "入場 {time}",
+        "exited": "退場 {time}",
+        "stillIn": "入場中"
       }
     },
     "types": {
@@ -4690,7 +4744,8 @@
         "requiresAuthoriser": "承認署名が必要",
         "requiresGasTesting": "ガス測定が必要",
         "requiresIsolationCertificate": "隔離証明書が必要",
-        "requiresRescuePlan": "救助計画が必要"
+        "requiresRescuePlan": "救助計画が必要",
+        "requiresRiskAssessment": "リスクアセスメントのリンクが必要"
       },
       "maxDuration": "最長有効期間",
       "hours": "時間",
@@ -4701,7 +4756,17 @@
       "createTitle": "カスタム許可タイプを追加",
       "createHint": "標準9タイプ以外の作業向け。作成後に要件を設定します。",
       "createNamePlaceholder": "例：潜水作業",
-      "createButton": "タイプを追加"
+      "createButton": "タイプを追加",
+      "gasLimits": "ガス限界値 — 測定値はこの基準で判定されます",
+      "noGasLimits": "限界値が未設定 — 測定値の有無のみ確認します。",
+      "removeGasLimit": "限界値を削除",
+      "gasLimitLabelPlaceholder": "例：酸素（O₂）…",
+      "gasLimitUnit": "単位",
+      "gasLimitMin": "下限",
+      "gasLimitMax": "上限",
+      "addGasLimit": "限界値を追加",
+      "gasFreshness": "ガス測定の有効時間",
+      "gasFreshnessUnit": "分"
     },
     "errors": {
       "module-disabled": "このモジュールは利用できません。",
@@ -4735,7 +4800,428 @@
       "same-acceptor": "その人は既にこの許可を保持しています。",
       "not-allowed": "その操作を行う権限がありません。",
       "closure-checks-incomplete": "完了するには4項目すべての完了チェックが必要です。",
-      "generic": "問題が発生しました。フォームを確認してもう一度お試しください。"
+      "generic": "問題が発生しました。フォームを確認してもう一度お試しください。",
+      "gas-test-out-of-range": "最新のガス測定値が許容範囲外です — 雰囲気は安全ではありません。",
+      "gas-test-stale": "最新のガス測定値が古すぎます — 再測定してください。",
+      "unknown-gas-limit": "そのガス限界値は許可タイプに存在しません。",
+      "gas-unit-mismatch": "測定値の単位は限界値の単位と一致させてください。",
+      "risk-assessment-required": "このタイプの発行前にリスクアセスメントをリンクしてください。",
+      "unknown-risk-assessment": "そのリスクアセスメントは存在しません。",
+      "unknown-document": "その文書は存在しません。",
+      "extension-in-past": "新しい期限は未来である必要があります — 過去に終わる延長は無意味です。",
+      "acceptor-is-authoriser": "承認エンジニアは自ら承認した許可の受領者にはなれません。",
+      "site-scope": "この許可は、あなたがチームに属していない拠点のものです。",
+      "entrants-still-inside": "入退場記録に入場中の人がいます — 完了前に退場を記録してください。",
+      "unknown-worker": "その人は許可の名簿にありません。",
+      "name-required": "入場を記録するには氏名を入力してください。",
+      "entry-log-full": "この許可の入退場記録が上限に達しました。",
+      "unknown-entry": "その記録行は存在しません。",
+      "already-exited": "その人の退場は既に記録済みです。",
+      "render-unavailable": "この環境ではPDF生成を利用できません。"
+    }
+  },
+  "fireSafety": {
+    "title": "防火管理",
+    "subtitle": "火災リスクアセスメント、防火管理台帳、定期点検をまとめて管理します。",
+    "backToList": "Fire safety",
+    "cancel": "キャンセル",
+    "saveError": "保存できませんでした。再試行してください。",
+    "notFound": "見つかりません。",
+    "empty": "建物がまだありません。管理対象の建物を追加してください。",
+    "emptyCta": "建物を追加",
+    "newBuildingButton": "建物を追加",
+    "logbookButton": "台帳",
+    "archiveButton": "アーカイブ",
+    "archiveConfirm": "この建物をアーカイブしますか？記録は保持されます。",
+    "archivedToast": "建物をアーカイブしました。",
+    "checksOverdueCount": "{count}件期限超過",
+    "doorsOkCount": "{count}枚",
+    "doorsOverdueCount": "{count}件期限超過",
+    "fraInPlace": "アセスメントあり",
+    "fraMissing": "火災リスクアセスメント未実施",
+    "fraReviewDue": "見直し期限",
+    "attention": {
+      "checksOverdue": "checks overdue",
+      "checksDueSoon": "checks due soon",
+      "doorsOverdue": "door inspections overdue",
+      "frasReviewDue": "FRA reviews due",
+      "peepReviewsDue": "PEEP reviews due",
+      "marshalGaps": "buildings without a marshal",
+      "marshalsExpiringSoon": "marshal training expiring"
+    },
+    "columns": {
+      "building": "Building",
+      "checks": "Checks",
+      "doors": "Fire doors",
+      "duties": "Duties",
+      "fra": "Fire risk assessment"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search buildings…",
+      "status": "Status",
+      "active": "Active",
+      "archived": "Archived",
+      "all": "All"
+    },
+    "tabs": {
+      "logbook": "台帳",
+      "doors": "防火扉",
+      "drills": "避難訓練",
+      "peeps": "PEEP",
+      "marshals": "防火担当者",
+      "fras": "アセスメント",
+      "info": "建物情報"
+    },
+    "checkTypes": {
+      "alarm_test": "Fire alarm call-point test",
+      "detection_service": "Detection system service",
+      "emergency_lighting_function": "Emergency lighting function test",
+      "emergency_lighting_duration": "Emergency lighting duration test",
+      "extinguisher_visual": "Extinguisher visual check",
+      "extinguisher_service": "Extinguisher service",
+      "sprinkler_check": "Sprinkler check",
+      "riser_service": "Riser service",
+      "damper_test": "Fire damper test",
+      "fire_drill": "Fire drill",
+      "lift_firefighting_check": "Firefighting lift check",
+      "secure_info_box_check": "Secure information box check",
+      "wayfinding_signage_check": "Wayfinding signage check"
+    },
+    "frequencies": {
+      "weekly": "毎週",
+      "monthly": "毎月",
+      "quarterly": "四半期",
+      "six_monthly": "半年ごと",
+      "annual": "毎年"
+    },
+    "results": {
+      "pass": "合格",
+      "defects_found": "不備あり",
+      "fail": "不合格"
+    },
+    "dueStatus": {
+      "ok": "OK",
+      "due_soon": "期限間近",
+      "overdue": "期限超過"
+    },
+    "fraStatus": {
+      "draft": "下書き",
+      "active": "有効",
+      "archived": "アーカイブ"
+    },
+    "duty": {
+      "above11m": "Residential 11 m+",
+      "highRise": "High-rise 18 m+"
+    },
+    "trainingStatus": {
+      "not_trained": "Not trained",
+      "in_date": "In date",
+      "expiring_soon": "Expiring soon",
+      "expired": "Expired"
+    },
+    "riskRatings": {
+      "trivial": "Trivial",
+      "tolerable": "Tolerable",
+      "moderate": "Moderate",
+      "substantial": "Substantial",
+      "intolerable": "Intolerable"
+    },
+    "create": {
+      "title": "Add building",
+      "name": "Building name",
+      "namePlaceholder": "e.g. Head office, Block A",
+      "address": "Address",
+      "useDescription": "Use of the building",
+      "useDescriptionPlaceholder": "e.g. Offices over ground-floor retail",
+      "heightMetres": "Height (m)",
+      "storeys": "Storeys",
+      "isResidential": "Residential building",
+      "profileHeading": "Systems in the building",
+      "seedPreview": "These checks will be scheduled:",
+      "submit": "Create building",
+      "createdToast": "Building created — logbook checks scheduled.",
+      "flags": {
+        "hasFireAlarm": "Fire alarm system",
+        "hasEmergencyLighting": "Emergency lighting",
+        "hasSprinklers": "Sprinklers",
+        "hasDampers": "Fire dampers",
+        "hasRisers": "Dry / wet risers"
+      }
+    },
+    "logbook": {
+      "title": "Fire safety logbook",
+      "subtitle": "Every test and inspection, in one auditable place.",
+      "dueHeading": "Due now",
+      "nothingDue": "Nothing due — the logbook is up to date.",
+      "recordButton": "Record",
+      "recordHeading": "Record check",
+      "performedAt": "Date performed",
+      "result": "Result",
+      "notes": "Notes",
+      "defects": "Defects found",
+      "callPoint": "Call point / zone tested",
+      "callPointPlaceholder": "e.g. CP-3, stairwell B",
+      "saveEntry": "Save entry",
+      "recordedToast": "Recorded — next due date updated.",
+      "raiseAction": "Raise an action for the defects",
+      "entriesHeading": "Logbook entries",
+      "recentHeading": "Recent entries",
+      "noEntries": "No entries yet.",
+      "exportButton": "Export CSV",
+      "allBuildings": "All buildings",
+      "allChecks": "All checks",
+      "filterBuilding": "Building",
+      "filterCheck": "Check",
+      "columns": {
+        "building": "Building",
+        "check": "Check",
+        "date": "Date",
+        "detail": "Detail",
+        "frequency": "Frequency",
+        "lastDone": "Last done",
+        "nextDue": "Next due",
+        "result": "Result",
+        "status": "Status"
+      }
+    },
+    "doors": {
+      "addButton": "Add door",
+      "addedToast": "Door added.",
+      "ref": "Door reference",
+      "refPlaceholder": "e.g. FD-012",
+      "floor": "Floor",
+      "floorLabel": "Floor / location",
+      "locationKind": "Door type",
+      "kinds": {
+        "common_parts": "Common parts",
+        "flat_entrance": "Flat entrance",
+        "other": "Other"
+      },
+      "rating": "Fire rating",
+      "selfClosing": "Self-closing",
+      "everyMonths": "every {count} months",
+      "regimeNote": "Residential 11 m+: common parts quarterly, flat entrance doors annually.",
+      "saveDoor": "Save door",
+      "empty": "No fire doors registered.",
+      "inspectButton": "Inspect",
+      "inspectHeading": "Record door inspection",
+      "outcome": "Outcome",
+      "defects": "Defects",
+      "defaultNote": "Checklist complete",
+      "saveInspection": "Save inspection",
+      "inspectedToast": "Inspection recorded.",
+      "historyButton": "History",
+      "historyHeading": "Inspection history",
+      "noInspections": "No inspections yet.",
+      "removeButton": "Remove",
+      "removeConfirm": "Remove this door from the register? Its history is kept.",
+      "checklist": {
+        "gapsOk": "Gaps within tolerance",
+        "sealsOk": "Intumescent seals intact",
+        "closerOk": "Closer shuts the door fully",
+        "glazingOk": "Glazing intact",
+        "hingesOk": "Hinges firm and complete",
+        "signageOk": "Signage in place"
+      },
+      "columns": {
+        "ref": "Door",
+        "kind": "Type",
+        "interval": "Interval",
+        "lastInspected": "Last inspected",
+        "nextDue": "Next due",
+        "status": "Status"
+      }
+    },
+    "drills": {
+      "recordHeading": "Record drill",
+      "conductedAt": "Date held",
+      "evacuationTime": "Evacuation time",
+      "minutes": "min",
+      "seconds": "sec",
+      "present": "People present",
+      "accounted": "Accounted for at muster",
+      "roll": "Muster roll",
+      "rollSummary": "{accounted}/{present} accounted for",
+      "rollComplete": "Everyone accounted for",
+      "rollCompleteShort": "All accounted",
+      "rollExceedsPresent": "Accounted cannot exceed present.",
+      "lessons": "Lessons learned",
+      "notes": "Notes",
+      "saveDrill": "Save drill",
+      "recordedToast": "Drill recorded.",
+      "empty": "No drills recorded yet.",
+      "columns": {
+        "date": "Date",
+        "time": "Evacuation",
+        "roll": "Muster roll",
+        "lessons": "Lessons"
+      }
+    },
+    "peeps": {
+      "intro": "Personal emergency evacuation plans for anyone who needs assistance to evacuate.",
+      "addButton": "Add PEEP",
+      "personName": "Person",
+      "assistanceNeeds": "Assistance needs",
+      "equipment": "Equipment",
+      "equipmentPlaceholder": "e.g. Evac chair, stairwell B",
+      "buddy": "Buddy / assistants",
+      "planSummary": "Plan summary",
+      "reviewMonths": "Review every (months)",
+      "nextReview": "Next review",
+      "savePeep": "Save PEEP",
+      "addedToast": "PEEP saved.",
+      "reviewButton": "Record review",
+      "reviewedToast": "Review recorded.",
+      "endButton": "End",
+      "endConfirm": "End this PEEP? The record is kept.",
+      "empty": "No PEEPs recorded."
+    },
+    "marshals": {
+      "intro": "Who covers each area, their training, and when it expires.",
+      "addButton": "Add marshal",
+      "user": "Person",
+      "selectUser": "Select a person",
+      "role": "Role",
+      "roles": {
+        "marshal": "Fire marshal",
+        "deputy": "Deputy"
+      },
+      "area": "Area covered",
+      "areaPlaceholder": "e.g. Floor 2, east wing",
+      "trainedAt": "Trained on",
+      "expiresAt": "Training expires",
+      "expires": "Expires",
+      "noExpiry": "No expiry set",
+      "saveMarshal": "Save marshal",
+      "addedToast": "Marshal added.",
+      "alreadyMarshal": "Already a marshal for this building.",
+      "endButton": "End",
+      "endConfirm": "End this marshal assignment?",
+      "empty": "No marshals assigned."
+    },
+    "fra": {
+      "defaultTitle": "Fire risk assessment",
+      "empty": "No fire risk assessment yet.",
+      "intro": "The reviewable record: significant findings, actions, and the review trail.",
+      "newButton": "New assessment",
+      "nextReview": "Next review",
+      "notPublished": "Not yet published",
+      "detailsHeading": "Assessment details",
+      "responsiblePerson": "Responsible Person",
+      "responsiblePersonPlaceholder": "Named Responsible Person",
+      "assessorName": "Assessor",
+      "assessorPlaceholder": "Who carried out the assessment",
+      "methodology": "Methodology",
+      "methodologies": {
+        "pas79": "PAS 79",
+        "hse_five_step": "HSE five-step",
+        "other": "Other"
+      },
+      "premisesDescription": "Premises description",
+      "occupancyHeading": "Occupancy",
+      "maxOccupancy": "Maximum occupancy",
+      "sleepingOccupants": "Sleeping occupants",
+      "personsAtRisk": {
+        "employees": "Employees",
+        "residents": "Residents",
+        "sleeping_occupants": "Sleeping occupants",
+        "visitors": "Visitors",
+        "contractors": "Contractors",
+        "young_persons": "Young persons",
+        "persons_requiring_assistance": "Persons requiring assistance",
+        "lone_workers": "Lone workers",
+        "members_of_public": "Members of the public"
+      },
+      "riskRating": "Overall risk rating",
+      "riskRatingUnset": "Not rated yet",
+      "hazardsHeading": "Persons at risk",
+      "findingsHeading": "Significant findings",
+      "noFindings": "No findings recorded yet.",
+      "addFindingHeading": "Add significant finding",
+      "addFindingButton": "Add finding",
+      "findingCategory": "Category",
+      "findingDescription": "Finding",
+      "findingPriority": "Priority",
+      "findingPriorities": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "findingRequiresAction": "Requires an action",
+      "findingHasAction": "An action will be created for the owner on publish.",
+      "findingHasActionChip": "Action raised",
+      "findingResolved": "Resolved",
+      "resolveButton": "Resolve",
+      "removeButton": "Remove",
+      "findingCategories": {
+        "ignition_sources": "Ignition sources",
+        "fuel_storage": "Fuel storage",
+        "dangerous_substances": "Dangerous substances",
+        "means_of_escape": "Means of escape",
+        "detection_warning": "Detection & warning",
+        "emergency_lighting": "Emergency lighting",
+        "compartmentation": "Compartmentation",
+        "fire_doors": "Fire doors",
+        "external_walls": "External walls",
+        "firefighting_equipment": "Firefighting equipment",
+        "management": "Management",
+        "training_drills": "Training & drills",
+        "signage": "Signage",
+        "arson_security": "Arson & security",
+        "other": "Other"
+      },
+      "publishButton": "Sign & publish",
+      "publishNoFindingsButton": "Publish (no findings)",
+      "publishedToast": "Assessment published.",
+      "publishedWithActionsToast": "{count} actions created from findings.",
+      "moveToDraftButton": "Move to draft",
+      "archiveConfirm": "Archive this assessment? The record is kept.",
+      "archivedToast": "Assessment archived.",
+      "saveButton": "Save",
+      "savedToast": "Saved.",
+      "reviewMonths": "Review every (months)",
+      "reviewMonthsSuggestion": "Annual review is the convention; shorten it for higher-risk premises.",
+      "reviewsHeading": "Review history",
+      "noReviews": "No reviews recorded yet.",
+      "recordReviewButton": "Record review",
+      "reviewTrigger": "Trigger",
+      "reviewOutcome": "Outcome",
+      "reviewNote": "Note",
+      "reviewLine": "{date} — {trigger}, {outcome}",
+      "reviewOutcomes": {
+        "confirmed": "Confirmed suitable",
+        "updated": "Updated"
+      },
+      "reviewRecordedToast": "Review recorded — next review date updated.",
+      "reviewTriggers": {
+        "scheduled": "Scheduled",
+        "post_incident": "After an incident",
+        "material_change": "Material change",
+        "legislation_change": "Legislation change",
+        "manual": "Other"
+      }
+    },
+    "info": {
+      "profileHeading": "Building profile",
+      "compartmentation": "Compartmentation",
+      "externalWallSystem": "External wall system",
+      "meansOfEscape": "Means of escape",
+      "serviceRisers": "Service risers",
+      "secureInfoBox": "Secure information box location",
+      "secureInfoBoxRequired": "Required for high-rise residential buildings (18 m+ / 7 storeys): keep the box stocked with floor plans and building information for the fire and rescue service.",
+      "frsHeading": "Fire & rescue service information",
+      "frsIntro": "What the fire service needs on arrival — kept current here, mirrored in the secure information box.",
+      "resyncNote": "Changing height, storeys or residential use re-plans the required checks.",
+      "saveButton": "Save building information",
+      "savedToast": "Building information saved.",
+      "savedResyncToast": "Saved — required checks re-planned."
+    },
+    "hotWork": {
+      "title": "火気作業",
+      "intro": "Ignition-source work (welding, grinding, torch work) runs under a permit to work with a fire watch.",
+      "register": "許可証台帳を開く",
+      "startPermit": "火気作業許可を開始"
     }
   }
 }

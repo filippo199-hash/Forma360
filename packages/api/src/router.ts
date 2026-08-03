@@ -49,6 +49,7 @@ import { sitePlansRouter } from './routers/sitePlans';
 import { contractorsRouter } from './routers/contractors';
 import { createCoshhRouter, type CoshhRouterDeps } from './routers/coshh';
 import { createPermitsRouter, type PermitsRouterDeps } from './routers/permits';
+import { createFireSafetyRouter, type FireSafetyRouterDeps } from './routers/fireSafety';
 import {
   createRiskAssessmentsRouter,
   type RiskAssessmentsRouterDeps,
@@ -89,6 +90,7 @@ export function buildAppRouter(deps: {
    * omitting it DISABLES the module.
    */
   permits?: PermitsRouterDeps;
+  fireSafety?: FireSafetyRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -128,6 +130,7 @@ export function buildAppRouter(deps: {
     riskAssessments: createRiskAssessmentsRouter(deps.riskAssessments ?? { enabled: false }),
     coshh: createCoshhRouter(deps.coshh ?? { enabled: false }),
     permits: createPermitsRouter(deps.permits ?? { enabled: false }),
+    fireSafety: createFireSafetyRouter(deps.fireSafety ?? { enabled: false }),
   });
 }
 
@@ -274,6 +277,10 @@ export const stubCoshhDeps: CoshhRouterDeps = { enabled: true };
 /** Test-only permits deps — same contract as coshh. */
 export const stubPermitsDeps: PermitsRouterDeps = { enabled: true };
 
+/** Test-only fire-safety deps — enabled, so the full surface is
+ * exercisable; brand gating is tested with `enabled: false`. */
+export const stubFireSafetyDeps: FireSafetyRouterDeps = { enabled: true };
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
@@ -284,6 +291,7 @@ export const appRouter = buildAppRouter({
   riskAssessments: stubRiskAssessmentsDeps,
   coshh: stubCoshhDeps,
   permits: stubPermitsDeps,
+  fireSafety: stubFireSafetyDeps,
 });
 
 export type AppRouter = typeof appRouter;

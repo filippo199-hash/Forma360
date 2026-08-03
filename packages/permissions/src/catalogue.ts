@@ -41,6 +41,7 @@ export const PERMISSION_MODULES = [
   'riskAssessments',
   'coshh',
   'permits',
+  'fireSafety',
   'org',
 ] as const;
 
@@ -160,6 +161,13 @@ export const PERMISSION_KEYS = [
   'permits.create',
   'permits.issue',
   'permits.manage',
+  // ─── Fire Safety (FreeHS module B4) ──────────────────────────────────────
+  // `record` is separate from `create` on purpose: the weekly alarm test
+  // is done by whoever is on site, not by whoever writes the FRA.
+  'fireSafety.view',
+  'fireSafety.record',
+  'fireSafety.create',
+  'fireSafety.manage',
 
   // ─── Organisation settings ───────────────────────────────────────────────
   // `org.settings` is what the S-E02 last-admin check counts: any user whose

@@ -1,0 +1,8 @@
+{
+  "subject": "Permit expiring soon — {referenceNumber} {title} closes at {expiredAt} UTC",
+  "preheader": "An open permit on {productName} reaches the end of its validity window within the hour.",
+  "greeting": "Hello {recipientName},",
+  "body": "The {typeName} permit \"{title}\" ({referenceNumber}){siteLine} reaches the end of its validity window at {expiredAt} UTC. If the work is finished, close the permit with the close-out checks now. If it must continue, extend it with re-authorisation before the window lapses — once it expires, work is no longer authorised.",
+  "cta": "Open the permit",
+  "footer": "You are receiving this because you are a signature party (issuer, acceptor or authoriser) on this permit in {productName}."
+}

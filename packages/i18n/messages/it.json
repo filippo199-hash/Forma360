@@ -4573,7 +4573,8 @@
       "empty": "Nessun permesso aperto. Nessuna attività ad alto rischio è autorizzata adesso.",
       "noSite": "Nessun sito assegnato",
       "reference": "Rif.",
-      "acceptor": "Accettante"
+      "acceptor": "Accettante",
+      "insideCount": "{count, plural, one {# all'interno} other {# all'interno}}"
     },
     "new": {
       "back": "Permessi",
@@ -4594,7 +4595,10 @@
         "validTo": "Valido fino al",
         "acceptor": "Accettante",
         "acceptorPlaceholder": "Indica la persona che accetta il permesso…",
-        "acceptorHint": "La persona responsabile del lavoro. Deve accettare digitalmente il permesso prima dell'inizio."
+        "acceptorHint": "La persona responsabile del lavoro. Deve accettare digitalmente il permesso prima dell'inizio.",
+        "riskAssessment": "Valutazione dei rischi",
+        "riskAssessmentPlaceholder": "Collega la valutazione dei rischi dell'attività…",
+        "riskAssessmentHint": "Il permesso deve puntare al sistema sicuro di lavoro sotto cui opera."
       },
       "maxDuration": "Durata massima {hours} h",
       "willRequire": "Prima dell'emissione questo tipo richiede:",
@@ -4602,7 +4606,8 @@
         "authoriser": "firma autorizzativa",
         "gasTesting": "risultati delle misurazioni gas",
         "isolationCertificate": "certificato di isolamento",
-        "rescuePlan": "piano di soccorso"
+        "rescuePlan": "piano di soccorso",
+        "riskAssessment": "valutazione dei rischi collegata"
       },
       "preconditionCount": "{count, plural, one {# precondizione da confermare prima dell'emissione} other {# precondizioni da confermare prima dell'emissione}}",
       "conflictWarning": "{count, plural, one {# altro permesso è aperto in questo sito in questa fascia} other {# altri permessi sono aperti in questo sito in questa fascia}}",
@@ -4652,7 +4657,13 @@
           "rescue_plan": "Piano di soccorso",
           "gas_test": "Misurazione gas",
           "other": "Altro"
-        }
+        },
+        "acceptableRanges": "Accettabile:",
+        "freshness": "le letture più vecchie di {minutes} min non contano",
+        "withinLimits": "entro i limiti",
+        "outOfLimits": "FUORI LIMITE",
+        "measuredAgainst": "Misurato rispetto a",
+        "freeReading": "Lettura libera (senza limite)"
       },
       "signatures": {
         "title": "Firme",
@@ -4693,7 +4704,13 @@
         "closeConfirm": "Chiudi permesso",
         "cancel": "Annulla permesso",
         "cancelReason": "Perché il permesso viene annullato?",
-        "cancelConfirm": "Annulla permesso"
+        "cancelConfirm": "Annulla permesso",
+        "resumeTitle": "Riprendi il lavoro — conferma che è sicuro",
+        "resumeReasonRecap": "Sospeso per: {reason}",
+        "resumeGasNote": "Questo tipo di permesso richiede una nuova misurazione gas entro i limiti, eseguita dopo la sospensione, prima di riprendere.",
+        "resumeAttestation": "Confermo che la causa della sospensione è risolta e le condizioni sono sicure per riprendere.",
+        "resumeConfirm": "Riprendi permesso",
+        "extendConflicts": "{count, plural, one {# permesso aperto si sovrappone alla finestra prorogata} other {# permessi aperti si sovrappongono alla finestra prorogata}}"
       },
       "closedLine": "Chiuso da {name} il {time}.",
       "cancelledLine": "Annullato da {name} il {time}.",
@@ -4715,8 +4732,45 @@
           "handed_over": "Passato in consegna",
           "cancelled": "Annullato",
           "closed": "Chiuso",
-          "expiry_escalated": "Scadenza segnalata — permesso scaduto senza chiusura"
+          "expiry_escalated": "Scadenza segnalata — permesso scaduto senza chiusura",
+          "expiry_warning": "Avviso di scadenza inviato",
+          "worker_added": "Persona aggiunta",
+          "worker_removed": "Persona rimossa",
+          "entry_logged": "Ingresso registrato",
+          "exit_logged": "Uscita registrata"
         }
+      },
+      "downloadPdf": "Scarica PDF",
+      "ssow": {
+        "title": "Sistema sicuro di lavoro",
+        "requiredBeforeIssue": "valutazione dei rischi richiesta prima dell'emissione",
+        "riskAssessment": "Valutazione dei rischi",
+        "methodStatement": "Procedura di lavoro",
+        "none": "Non collegato"
+      },
+      "workers": {
+        "title": "Persone sotto questo permesso",
+        "insideCount": "{count, plural, one {# all'interno ora} other {# all'interno ora}}",
+        "empty": "Nessuno registrato — registra la squadra che lavora sotto questo permesso.",
+        "nameLabel": "Nome",
+        "namePlaceholder": "Nome della persona…",
+        "roleLabel": "Ruolo",
+        "roles": {
+          "supervisor": "Supervisore",
+          "worker": "Operatore",
+          "entrant": "Entrante",
+          "standby": "Sorvegliante / soccorso"
+        },
+        "add": "Aggiungi persona",
+        "remove": "Rimuovi persona",
+        "logEntry": "Registra ingresso",
+        "logExit": "Registra uscita",
+        "inSince": "all'interno da {time}",
+        "adhocEntryLabel": "Registra una persona fuori elenco",
+        "logTitle": "Registro ingressi/uscite",
+        "entered": "entrato {time}",
+        "exited": "uscito {time}",
+        "stillIn": "ANCORA DENTRO"
       }
     },
     "types": {
@@ -4732,7 +4786,8 @@
         "requiresAuthoriser": "Firma autorizzativa richiesta",
         "requiresGasTesting": "Misurazione gas richiesta",
         "requiresIsolationCertificate": "Certificato di isolamento richiesto",
-        "requiresRescuePlan": "Piano di soccorso richiesto"
+        "requiresRescuePlan": "Piano di soccorso richiesto",
+        "requiresRiskAssessment": "Valutazione dei rischi collegata richiesta"
       },
       "maxDuration": "Validità massima",
       "hours": "ore",
@@ -4743,7 +4798,17 @@
       "createTitle": "Aggiungi un tipo di permesso personalizzato",
       "createHint": "Per attività fuori dai nove tipi standard. Configura i requisiti dopo la creazione.",
       "createNamePlaceholder": "es. Operazioni subacquee",
-      "createButton": "Aggiungi tipo"
+      "createButton": "Aggiungi tipo",
+      "gasLimits": "Limiti gas — il controllo valuta le letture rispetto a questi",
+      "noGasLimits": "Nessun limite configurato — si verifica solo che esista una lettura.",
+      "removeGasLimit": "Rimuovi limite",
+      "gasLimitLabelPlaceholder": "es. Ossigeno (O₂)…",
+      "gasLimitUnit": "Unità",
+      "gasLimitMin": "Min",
+      "gasLimitMax": "Max",
+      "addGasLimit": "Aggiungi limite",
+      "gasFreshness": "Validità della misurazione gas",
+      "gasFreshnessUnit": "minuti"
     },
     "errors": {
       "module-disabled": "Questo modulo non è disponibile.",
@@ -4777,7 +4842,428 @@
       "same-acceptor": "Quella persona ha già in carico il permesso.",
       "not-allowed": "Non hai il permesso di farlo.",
       "closure-checks-incomplete": "Tutte e quattro le verifiche di chiusura vanno confermate.",
-      "generic": "Qualcosa è andato storto. Controlla il modulo e riprova."
+      "generic": "Qualcosa è andato storto. Controlla il modulo e riprova.",
+      "gas-test-out-of-range": "L'ultima misurazione gas è fuori dall'intervallo accettabile — l'atmosfera non è sicura.",
+      "gas-test-stale": "L'ultima misurazione gas è troppo vecchia — esegui un nuovo test.",
+      "unknown-gas-limit": "Quel limite gas non esiste più sul tipo di permesso.",
+      "gas-unit-mismatch": "L'unità della lettura deve corrispondere a quella del limite.",
+      "risk-assessment-required": "Collega la valutazione dei rischi prima di emettere questo tipo di permesso.",
+      "unknown-risk-assessment": "Quella valutazione dei rischi non esiste.",
+      "unknown-document": "Quel documento non esiste.",
+      "extension-in-past": "La nuova scadenza deve essere nel futuro — una proroga che finisce nel passato non proroga nulla.",
+      "acceptor-is-authoriser": "L'ingegnere autorizzante non può diventare accettante del permesso che ha autorizzato.",
+      "site-scope": "Questo permesso appartiene a un sito del cui team non fai parte.",
+      "entrants-still-inside": "Il registro mostra ancora persone all'interno — registra le uscite prima di chiudere.",
+      "unknown-worker": "Quella persona non è nell'elenco del permesso.",
+      "name-required": "Indica il nome della persona per registrare l'ingresso.",
+      "entry-log-full": "Il registro ingressi di questo permesso è pieno.",
+      "unknown-entry": "Quella riga del registro non esiste.",
+      "already-exited": "L'uscita di quella persona è già stata registrata.",
+      "render-unavailable": "La generazione PDF non è disponibile in questo ambiente."
+    }
+  },
+  "fireSafety": {
+    "title": "Sicurezza antincendio",
+    "subtitle": "La valutazione del rischio incendio, il registro e i controlli ricorrenti che li tengono aggiornati.",
+    "backToList": "Sicurezza antincendio",
+    "cancel": "Annulla",
+    "saveError": "Salvataggio non riuscito — riprova.",
+    "notFound": "Non trovato.",
+    "empty": "Nessun edificio. Aggiungi l’edificio di cui sei responsabile.",
+    "emptyCta": "Aggiungi edificio",
+    "newBuildingButton": "Aggiungi edificio",
+    "logbookButton": "Registro",
+    "archiveButton": "Archivia",
+    "archiveConfirm": "Archiviare questo edificio? I record vengono conservati.",
+    "archivedToast": "Edificio archiviato.",
+    "checksOverdueCount": "{count} in ritardo",
+    "doorsOkCount": "{count} porte",
+    "doorsOverdueCount": "{count} in ritardo",
+    "fraInPlace": "Valutazione presente",
+    "fraMissing": "Nessuna valutazione incendio",
+    "fraReviewDue": "Revisione valutazione in scadenza",
+    "attention": {
+      "checksOverdue": "controlli in ritardo",
+      "checksDueSoon": "controlli in scadenza",
+      "doorsOverdue": "ispezioni porte in ritardo",
+      "frasReviewDue": "revisioni valutazione in scadenza",
+      "peepReviewsDue": "revisioni PEEP in scadenza",
+      "marshalGaps": "edifici senza addetto",
+      "marshalsExpiringSoon": "formazione addetti in scadenza"
+    },
+    "columns": {
+      "building": "Edificio",
+      "checks": "Controlli",
+      "doors": "Porte tagliafuoco",
+      "duties": "Obblighi",
+      "fra": "Valutazione rischio incendio"
+    },
+    "filters": {
+      "search": "Cerca",
+      "searchPlaceholder": "Cerca edifici…",
+      "status": "Stato",
+      "active": "Attivi",
+      "archived": "Archiviati",
+      "all": "Tutti"
+    },
+    "tabs": {
+      "logbook": "Registro",
+      "doors": "Porte tagliafuoco",
+      "drills": "Prove di evacuazione",
+      "peeps": "PEEP",
+      "marshals": "Addetti",
+      "fras": "Valutazioni",
+      "info": "Informazioni edificio"
+    },
+    "checkTypes": {
+      "alarm_test": "Prova pulsante allarme",
+      "detection_service": "Manutenzione rivelazione",
+      "emergency_lighting_function": "Prova funzionale luci emergenza",
+      "emergency_lighting_duration": "Prova di durata luci emergenza",
+      "extinguisher_visual": "Controllo visivo estintori",
+      "extinguisher_service": "Manutenzione estintori",
+      "sprinkler_check": "Controllo sprinkler",
+      "riser_service": "Manutenzione colonne idriche",
+      "damper_test": "Prova serrande tagliafuoco",
+      "fire_drill": "Prova di evacuazione",
+      "lift_firefighting_check": "Controllo ascensore antincendio",
+      "secure_info_box_check": "Controllo cassetta informazioni",
+      "wayfinding_signage_check": "Controllo segnaletica"
+    },
+    "frequencies": {
+      "weekly": "Settimanale",
+      "monthly": "Mensile",
+      "quarterly": "Trimestrale",
+      "six_monthly": "Semestrale",
+      "annual": "Annuale"
+    },
+    "results": {
+      "pass": "Conforme",
+      "defects_found": "Difetti rilevati",
+      "fail": "Non conforme"
+    },
+    "dueStatus": {
+      "ok": "OK",
+      "due_soon": "In scadenza",
+      "overdue": "In ritardo"
+    },
+    "fraStatus": {
+      "draft": "Bozza",
+      "active": "Attiva",
+      "archived": "Archiviata"
+    },
+    "duty": {
+      "above11m": "Residenziale 11 m+",
+      "highRise": "Grattacielo 18 m+"
+    },
+    "trainingStatus": {
+      "not_trained": "Non formato",
+      "in_date": "In corso di validità",
+      "expiring_soon": "In scadenza",
+      "expired": "Scaduta"
+    },
+    "riskRatings": {
+      "trivial": "Trascurabile",
+      "tolerable": "Tollerabile",
+      "moderate": "Moderato",
+      "substantial": "Rilevante",
+      "intolerable": "Intollerabile"
+    },
+    "create": {
+      "title": "Aggiungi edificio",
+      "name": "Nome edificio",
+      "namePlaceholder": "es. Sede centrale, Blocco A",
+      "address": "Indirizzo",
+      "useDescription": "Uso dell’edificio",
+      "useDescriptionPlaceholder": "es. Uffici sopra negozi al piano terra",
+      "heightMetres": "Altezza (m)",
+      "storeys": "Piani",
+      "isResidential": "Edificio residenziale",
+      "profileHeading": "Impianti presenti",
+      "seedPreview": "Verranno pianificati questi controlli:",
+      "submit": "Crea edificio",
+      "createdToast": "Edificio creato — controlli pianificati.",
+      "flags": {
+        "hasFireAlarm": "Impianto di allarme",
+        "hasEmergencyLighting": "Luci di emergenza",
+        "hasSprinklers": "Sprinkler",
+        "hasDampers": "Serrande tagliafuoco",
+        "hasRisers": "Colonne idriche"
+      }
+    },
+    "logbook": {
+      "title": "Registro antincendio",
+      "subtitle": "Ogni prova e ispezione, in un unico posto verificabile.",
+      "dueHeading": "Da fare ora",
+      "nothingDue": "Niente in scadenza — registro aggiornato.",
+      "recordButton": "Registra",
+      "recordHeading": "Registra controllo",
+      "performedAt": "Data esecuzione",
+      "result": "Esito",
+      "notes": "Note",
+      "defects": "Difetti rilevati",
+      "callPoint": "Pulsante / zona provata",
+      "callPointPlaceholder": "es. CP-3, scala B",
+      "saveEntry": "Salva voce",
+      "recordedToast": "Registrato — prossima scadenza aggiornata.",
+      "raiseAction": "Crea un’azione per i difetti",
+      "entriesHeading": "Voci di registro",
+      "recentHeading": "Voci recenti",
+      "noEntries": "Nessuna voce.",
+      "exportButton": "Esporta CSV",
+      "allBuildings": "Tutti gli edifici",
+      "allChecks": "Tutti i controlli",
+      "filterBuilding": "Edificio",
+      "filterCheck": "Controllo",
+      "columns": {
+        "building": "Edificio",
+        "check": "Controllo",
+        "date": "Data",
+        "detail": "Dettaglio",
+        "frequency": "Frequenza",
+        "lastDone": "Ultimo",
+        "nextDue": "Prossimo",
+        "result": "Esito",
+        "status": "Stato"
+      }
+    },
+    "doors": {
+      "addButton": "Aggiungi porta",
+      "addedToast": "Porta aggiunta.",
+      "ref": "Riferimento porta",
+      "refPlaceholder": "es. FD-012",
+      "floor": "Piano",
+      "floorLabel": "Piano / posizione",
+      "locationKind": "Tipo di porta",
+      "kinds": {
+        "common_parts": "Parti comuni",
+        "flat_entrance": "Ingresso appartamento",
+        "other": "Altro"
+      },
+      "rating": "Classe di resistenza",
+      "selfClosing": "Autochiudente",
+      "everyMonths": "ogni {count} mesi",
+      "regimeNote": "Residenziale 11 m+: parti comuni trimestrale, porte appartamento annuale.",
+      "saveDoor": "Salva porta",
+      "empty": "Nessuna porta registrata.",
+      "inspectButton": "Ispeziona",
+      "inspectHeading": "Registra ispezione porta",
+      "outcome": "Esito",
+      "defects": "Difetti",
+      "defaultNote": "Checklist completata",
+      "saveInspection": "Salva ispezione",
+      "inspectedToast": "Ispezione registrata.",
+      "historyButton": "Storico",
+      "historyHeading": "Storico ispezioni",
+      "noInspections": "Nessuna ispezione.",
+      "removeButton": "Rimuovi",
+      "removeConfirm": "Rimuovere questa porta dal registro? Lo storico viene conservato.",
+      "checklist": {
+        "gapsOk": "Giochi entro tolleranza",
+        "sealsOk": "Guarnizioni intumescenti integre",
+        "closerOk": "Il chiudiporta chiude completamente",
+        "glazingOk": "Vetri integri",
+        "hingesOk": "Cerniere salde e complete",
+        "signageOk": "Segnaletica presente"
+      },
+      "columns": {
+        "ref": "Porta",
+        "kind": "Tipo",
+        "interval": "Intervallo",
+        "lastInspected": "Ultima ispezione",
+        "nextDue": "Prossima",
+        "status": "Stato"
+      }
+    },
+    "drills": {
+      "recordHeading": "Registra prova di evacuazione",
+      "conductedAt": "Data",
+      "evacuationTime": "Tempo di evacuazione",
+      "minutes": "min",
+      "seconds": "sec",
+      "present": "Presenti",
+      "accounted": "Contati al punto di raccolta",
+      "roll": "Appello",
+      "rollSummary": "{accounted}/{present} contati",
+      "rollComplete": "Tutti contati",
+      "rollCompleteShort": "Tutti contati",
+      "rollExceedsPresent": "I contati non possono superare i presenti.",
+      "lessons": "Lezioni apprese",
+      "notes": "Note",
+      "saveDrill": "Salva prova",
+      "recordedToast": "Prova registrata.",
+      "empty": "Nessuna prova registrata.",
+      "columns": {
+        "date": "Data",
+        "time": "Evacuazione",
+        "roll": "Appello",
+        "lessons": "Lezioni"
+      }
+    },
+    "peeps": {
+      "intro": "Piani di evacuazione personalizzati per chi ha bisogno di assistenza.",
+      "addButton": "Aggiungi PEEP",
+      "personName": "Persona",
+      "assistanceNeeds": "Necessità di assistenza",
+      "equipment": "Attrezzatura",
+      "equipmentPlaceholder": "es. Sedia di evacuazione, scala B",
+      "buddy": "Accompagnatori",
+      "planSummary": "Sintesi del piano",
+      "reviewMonths": "Revisione ogni (mesi)",
+      "nextReview": "Prossima revisione",
+      "savePeep": "Salva PEEP",
+      "addedToast": "PEEP salvato.",
+      "reviewButton": "Registra revisione",
+      "reviewedToast": "Revisione registrata.",
+      "endButton": "Termina",
+      "endConfirm": "Terminare questo PEEP? Il record viene conservato.",
+      "empty": "Nessun PEEP registrato."
+    },
+    "marshals": {
+      "intro": "Chi copre ogni area, la formazione e la relativa scadenza.",
+      "addButton": "Aggiungi addetto",
+      "user": "Persona",
+      "selectUser": "Seleziona una persona",
+      "role": "Ruolo",
+      "roles": {
+        "marshal": "Addetto antincendio",
+        "deputy": "Sostituto"
+      },
+      "area": "Area coperta",
+      "areaPlaceholder": "es. Piano 2, ala est",
+      "trainedAt": "Formato il",
+      "expiresAt": "Scadenza formazione",
+      "expires": "Scade",
+      "noExpiry": "Nessuna scadenza",
+      "saveMarshal": "Salva addetto",
+      "addedToast": "Addetto aggiunto.",
+      "alreadyMarshal": "Già addetto per questo edificio.",
+      "endButton": "Termina",
+      "endConfirm": "Terminare questo incarico?",
+      "empty": "Nessun addetto assegnato."
+    },
+    "fra": {
+      "defaultTitle": "Valutazione rischio incendio",
+      "empty": "Nessuna valutazione ancora.",
+      "intro": "Il documento revisionabile: criticità significative, azioni e storico delle revisioni.",
+      "newButton": "Nuova valutazione",
+      "nextReview": "Prossima revisione",
+      "notPublished": "Non ancora pubblicata",
+      "detailsHeading": "Dettagli valutazione",
+      "responsiblePerson": "Responsabile",
+      "responsiblePersonPlaceholder": "Responsabile designato",
+      "assessorName": "Valutatore",
+      "assessorPlaceholder": "Chi ha svolto la valutazione",
+      "methodology": "Metodologia",
+      "methodologies": {
+        "pas79": "PAS 79",
+        "hse_five_step": "HSE cinque fasi",
+        "other": "Altra"
+      },
+      "premisesDescription": "Descrizione dei locali",
+      "occupancyHeading": "Occupazione",
+      "maxOccupancy": "Occupazione massima",
+      "sleepingOccupants": "Occupanti che pernottano",
+      "personsAtRisk": {
+        "employees": "Dipendenti",
+        "residents": "Residenti",
+        "sleeping_occupants": "Occupanti che pernottano",
+        "visitors": "Visitatori",
+        "contractors": "Appaltatori",
+        "young_persons": "Giovani",
+        "persons_requiring_assistance": "Persone che necessitano assistenza",
+        "lone_workers": "Lavoratori isolati",
+        "members_of_public": "Pubblico"
+      },
+      "riskRating": "Valutazione complessiva",
+      "riskRatingUnset": "Non ancora valutato",
+      "hazardsHeading": "Persone a rischio",
+      "findingsHeading": "Criticità significative",
+      "noFindings": "Nessuna criticità registrata.",
+      "addFindingHeading": "Aggiungi criticità",
+      "addFindingButton": "Aggiungi criticità",
+      "findingCategory": "Categoria",
+      "findingDescription": "Criticità",
+      "findingPriority": "Priorità",
+      "findingPriorities": {
+        "low": "Bassa",
+        "medium": "Media",
+        "high": "Alta"
+      },
+      "findingRequiresAction": "Richiede un’azione",
+      "findingHasAction": "Alla pubblicazione verrà creata un’azione per il responsabile.",
+      "findingHasActionChip": "Azione creata",
+      "findingResolved": "Risolta",
+      "resolveButton": "Risolvi",
+      "removeButton": "Rimuovi",
+      "findingCategories": {
+        "ignition_sources": "Sorgenti di innesco",
+        "fuel_storage": "Depositi di combustibile",
+        "dangerous_substances": "Sostanze pericolose",
+        "means_of_escape": "Vie di esodo",
+        "detection_warning": "Rivelazione e allarme",
+        "emergency_lighting": "Luci di emergenza",
+        "compartmentation": "Compartimentazione",
+        "fire_doors": "Porte tagliafuoco",
+        "external_walls": "Pareti esterne",
+        "firefighting_equipment": "Attrezzature antincendio",
+        "management": "Gestione",
+        "training_drills": "Formazione e prove",
+        "signage": "Segnaletica",
+        "arson_security": "Incendio doloso e sicurezza",
+        "other": "Altro"
+      },
+      "publishButton": "Firma e pubblica",
+      "publishNoFindingsButton": "Pubblica (senza criticità)",
+      "publishedToast": "Valutazione pubblicata.",
+      "publishedWithActionsToast": "{count} azioni create dalle criticità.",
+      "moveToDraftButton": "Riporta in bozza",
+      "archiveConfirm": "Archiviare questa valutazione? Il record viene conservato.",
+      "archivedToast": "Valutazione archiviata.",
+      "saveButton": "Salva",
+      "savedToast": "Salvato.",
+      "reviewMonths": "Revisione ogni (mesi)",
+      "reviewMonthsSuggestion": "La revisione annuale è la prassi; riducila per locali a rischio più alto.",
+      "reviewsHeading": "Storico revisioni",
+      "noReviews": "Nessuna revisione registrata.",
+      "recordReviewButton": "Registra revisione",
+      "reviewTrigger": "Motivo",
+      "reviewOutcome": "Esito",
+      "reviewNote": "Nota",
+      "reviewLine": "{date} — {trigger}, {outcome}",
+      "reviewOutcomes": {
+        "confirmed": "Confermata idonea",
+        "updated": "Aggiornata"
+      },
+      "reviewRecordedToast": "Revisione registrata — prossima scadenza aggiornata.",
+      "reviewTriggers": {
+        "scheduled": "Programmata",
+        "post_incident": "Dopo un incidente",
+        "material_change": "Modifica sostanziale",
+        "legislation_change": "Modifica normativa",
+        "manual": "Altro"
+      }
+    },
+    "info": {
+      "profileHeading": "Profilo edificio",
+      "compartmentation": "Compartimentazione",
+      "externalWallSystem": "Sistema di facciata",
+      "meansOfEscape": "Vie di esodo",
+      "serviceRisers": "Cavedi impianti",
+      "secureInfoBox": "Posizione cassetta informazioni",
+      "secureInfoBoxRequired": "Obbligatoria per edifici residenziali alti (18 m+ / 7 piani): tienila fornita di planimetrie e informazioni per i vigili del fuoco.",
+      "frsHeading": "Informazioni per i vigili del fuoco",
+      "frsIntro": "Ciò che serve ai soccorsi all’arrivo — aggiornato qui, replicato nella cassetta.",
+      "resyncNote": "Modificare altezza, piani o uso residenziale ripianifica i controlli richiesti.",
+      "saveButton": "Salva informazioni edificio",
+      "savedToast": "Informazioni salvate.",
+      "savedResyncToast": "Salvato — controlli richiesti ripianificati."
+    },
+    "hotWork": {
+      "title": "Lavori a caldo",
+      "intro": "Saldatura, molatura e uso di fiamma si eseguono con permesso di lavoro e sorveglianza antincendio.",
+      "register": "Apri il registro permessi",
+      "startPermit": "Avvia permesso lavori a caldo"
     }
   }
 }
