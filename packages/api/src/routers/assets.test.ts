@@ -113,7 +113,9 @@ describe('Assets router (Phase 5B)', () => {
     tenantId = newId();
     await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
     const seeded = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
-    adminUserId = newId();
+    // Production user ids are `usr_` + ULID (30 chars) — PF-29 regression:
+    // the owner picker must accept them.
+    adminUserId = `usr_${newId()}`;
     await db.insert(schema.user).values({
       id: adminUserId,
       name: 'Admin',

@@ -365,13 +365,17 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
           .orderBy(desc(headsUps.createdAt));
 
         const filter = input?.filter ?? 'all';
+        const now = new Date();
         const mapped = rows.map((row) => {
+          const expired = row.expiresAt !== null && row.expiresAt <= now;
+          // PF-32: an expired notice is no longer pending anyone's action.
           const pending =
-            row.engagementLevel === 'sign'
+            !expired &&
+            (row.engagementLevel === 'sign'
               ? row.signedAt === null
               : row.engagementLevel === 'acknowledge'
                 ? row.acknowledgedAt === null
-                : row.viewedAt === null;
+                : row.viewedAt === null);
           return {
             id: row.id,
             title: row.title,
@@ -384,6 +388,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             viewedAt: row.viewedAt,
             acknowledgedAt: row.acknowledgedAt,
             signedAt: row.signedAt,
+            expired,
             pending,
           };
         });
@@ -1220,7 +1225,12 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
         .use(requirePermission('headsUp.view'))
         .input(createCommentInput)
         .mutation(async ({ ctx, input }) => {
-          await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+          const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+          // PF-32: the composer's "allow comments" switch is a promise —
+          // refuse instead of silently accepting what the author disabled.
+          if (!headsUp.allowComments) {
+            throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'comments-disabled' });
+          }
           const id = newId();
           await ctx.db.insert(headsUpComments).values({
             id,

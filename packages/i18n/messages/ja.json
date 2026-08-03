@@ -1361,7 +1361,8 @@
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
     "coshh": "COSHH",
-    "permits": "作業許可"
+    "permits": "作業許可",
+    "fireSafety": "防火管理"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

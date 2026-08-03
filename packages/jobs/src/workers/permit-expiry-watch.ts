@@ -180,12 +180,25 @@ export async function runPermitExpiryWatch(
 ): Promise<{ warned: number; escalated: number }> {
   const now = deps.now?.() ?? new Date();
 
-  const notifyAll = async (kind: PermitWatchKind, permit: ExpiredOpenPermit): Promise<void> => {
+  /**
+   * Attempt every notify; report how many were attempted vs delivered.
+   * PF-1 (platform review): the stamp is one-shot, so it must never be
+   * written when NOTHING was delivered — a broken template or provider
+   * would otherwise mark the permit warned/escalated while nobody was
+   * told, permanently. Total failure → no stamp → the next 15-minute
+   * tick retries. Partial success stamps (no duplicate sends).
+   */
+  const notifyAll = async (
+    kind: PermitWatchKind,
+    permit: ExpiredOpenPermit,
+  ): Promise<{ attempted: number; delivered: number }> => {
     const recipients = await resolveEscalationRecipients(deps.db, permit);
     const viewUrl = `${deps.appUrl}/en/permits/${permit.permitId}`;
+    let delivered = 0;
     for (const recipient of recipients) {
       try {
         await deps.notify(kind, permit, recipient, viewUrl);
+        delivered += 1;
       } catch (err) {
         deps.logger.error(
           { err, permitId: permit.permitId, to: recipient.userId, kind },
@@ -193,11 +206,20 @@ export async function runPermitExpiryWatch(
         );
       }
     }
+    return { attempted: recipients.length, delivered };
   };
 
   let warned = 0;
   const expiring = await findExpiringOpenPermits(deps.db, now);
   for (const permit of expiring) {
+    const outcome = await notifyAll('warning', permit);
+    if (outcome.attempted > 0 && outcome.delivered === 0) {
+      deps.logger.error(
+        { permitId: permit.permitId },
+        '[permit-expiry-watch] warning undelivered — stamp withheld for retry',
+      );
+      continue;
+    }
     await deps.db
       .update(permits)
       .set({ expiryWarningSentAt: now })
@@ -210,13 +232,20 @@ export async function runPermitExpiryWatch(
       kind: 'expiry_warning',
       detail: `window closes ${permit.validTo.toISOString()}`,
     });
-    await notifyAll('warning', permit);
     warned += 1;
   }
 
   let escalated = 0;
   const expired = await findExpiredOpenPermits(deps.db, now);
   for (const permit of expired) {
+    const outcome = await notifyAll('escalation', permit);
+    if (outcome.attempted > 0 && outcome.delivered === 0) {
+      deps.logger.error(
+        { permitId: permit.permitId },
+        '[permit-expiry-watch] escalation undelivered — stamp withheld for retry',
+      );
+      continue;
+    }
     await deps.db
       .update(permits)
       .set({ expiryEscalatedAt: now })
@@ -229,7 +258,6 @@ export async function runPermitExpiryWatch(
       kind: 'expiry_escalated',
       detail: `expired ${permit.validTo.toISOString()} without closure`,
     });
-    await notifyAll('escalation', permit);
     escalated += 1;
   }
 

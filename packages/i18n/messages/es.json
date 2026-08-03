@@ -1368,7 +1368,8 @@
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
     "coshh": "COSHH",
-    "permits": "Permisos"
+    "permits": "Permisos",
+    "fireSafety": "Seguridad contra incendios"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

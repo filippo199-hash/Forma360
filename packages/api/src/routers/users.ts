@@ -401,8 +401,8 @@ export const usersRouter = router({
             to: emailLower,
             templateKey: 'invite',
             variables: {
-              inviterName: inviterRow?.name ?? 'A Forma360 administrator',
-              tenantName: tenantRow?.name ?? 'Forma360',
+              inviterName: inviterRow?.name ?? 'An administrator',
+              tenantName: tenantRow?.name ?? 'your organisation',
               inviteUrl,
               expiresIn: '7 days',
             },

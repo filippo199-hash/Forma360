@@ -156,3 +156,36 @@ describe('createSendEmail — resend delivery', () => {
     ).toThrow(/RESEND_FROM/);
   });
 });
+
+describe('template registry completeness (platform review PF-1)', () => {
+  it('every template file in emails/en is registered and loadable', async () => {
+    const { readdir } = await import('node:fs/promises');
+    const { join, dirname } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const { defaultTemplatedTemplateLoader, EMAIL_TEMPLATE_KEYS } = await import('./email');
+    const dir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'i18n', 'emails', 'en');
+    const files = (await readdir(dir)).filter((f) => f.endsWith('.json'));
+    expect(files.length).toBeGreaterThanOrEqual(23);
+    for (const file of files) {
+      const key = file.replace(/\.json$/, '');
+      // Registered…
+      expect(EMAIL_TEMPLATE_KEYS, `template file ${file} is not registered`).toContain(key);
+      // …and actually loads + parses through the real loader.
+      const tpl = await defaultTemplatedTemplateLoader(key);
+      expect(tpl.subject.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('the four PF-1 safety alerts resolve through the real loader', async () => {
+    const { defaultTemplatedTemplateLoader } = await import('./email');
+    for (const key of [
+      'permit-expiry-warning',
+      'permit-expiry-escalation',
+      'fire-due-digest',
+      'fra-intolerable-alert',
+    ]) {
+      const tpl = await defaultTemplatedTemplateLoader(key);
+      expect(tpl.subject.length).toBeGreaterThan(0);
+    }
+  });
+});

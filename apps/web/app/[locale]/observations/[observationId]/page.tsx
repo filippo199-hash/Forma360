@@ -1535,7 +1535,7 @@ function LinkedActionsCard({
                         row.priority === 'high' ||
                         row.priority === 'critical'
                           ? tPriority(row.priority)
-                          : tCols('noDue')}
+                          : '—'}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
                         {row.dueAt !== null

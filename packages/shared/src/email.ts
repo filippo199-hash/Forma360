@@ -41,6 +41,10 @@ import scheduleReminder from '../../i18n/emails/en/schedule-reminder.json';
 import signatureWorkflowComplete from '../../i18n/emails/en/signature-workflow-complete.json';
 import signatureWorkflowRequest from '../../i18n/emails/en/signature-workflow-request.json';
 import verification from '../../i18n/emails/en/verification.json';
+import permitExpiryWarning from '../../i18n/emails/en/permit-expiry-warning.json';
+import permitExpiryEscalation from '../../i18n/emails/en/permit-expiry-escalation.json';
+import fireDueDigest from '../../i18n/emails/en/fire-due-digest.json';
+import fraIntolerableAlert from '../../i18n/emails/en/fra-intolerable-alert.json';
 
 const EMAIL_TEMPLATES: Record<string, unknown> = {
   'heads-up-reminder': headsUpReminder,
@@ -62,7 +66,20 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'signature-workflow-complete': signatureWorkflowComplete,
   'signature-workflow-request': signatureWorkflowRequest,
   verification,
+  // HSE platform review PF-1: these four were on disk but never
+  // registered — every send threw "Unknown email template" and the
+  // most safety-critical alerts on the platform were silently lost.
+  // email.test.ts now asserts every file in emails/en is registered,
+  // so a template can never again exist without being sendable.
+  'permit-expiry-warning': permitExpiryWarning,
+  'permit-expiry-escalation': permitExpiryEscalation,
+  'fire-due-digest': fireDueDigest,
+  'fra-intolerable-alert': fraIntolerableAlert,
 };
+
+/** Registered template keys — exported so tests can assert the registry
+ * is complete against the files on disk (PF-1). */
+export const EMAIL_TEMPLATE_KEYS: readonly string[] = Object.keys(EMAIL_TEMPLATES);
 
 // ─── Public types ───────────────────────────────────────────────────────────
 

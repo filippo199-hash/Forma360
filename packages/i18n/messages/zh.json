@@ -1361,7 +1361,8 @@
     "contractors": "Contractors",
     "riskAssessments": "Risk assessments",
     "coshh": "有害物质",
-    "permits": "作业许可"
+    "permits": "作业许可",
+    "fireSafety": "消防安全"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

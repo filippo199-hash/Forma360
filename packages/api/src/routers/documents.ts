@@ -165,7 +165,9 @@ const grantAccessInput = z.object({
   documentId: z.string().length(26).optional(),
   folderId: z.string().length(26).optional(),
   subjectType: z.enum(['user', 'group']),
-  subjectId: z.string().length(26),
+  // Group ids are 26-char ULIDs but user ids are 30 (`usr_` + ULID) —
+  // .length(26) rejected every user-scoped grant (PF-29).
+  subjectId: z.string().min(1).max(64),
   permission: z.enum(['view', 'edit', 'manage']),
 });
 

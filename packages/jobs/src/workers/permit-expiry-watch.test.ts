@@ -6,6 +6,9 @@
  *     event-logged, and every distinct party (issuer, acceptor,
  *     authoriser) notified; closed / cancelled / draft / future permits
  *     never escalate
+ *   - PW-J04: TOTAL notify failure withholds the one-shot stamp so the
+ *     next tick retries — an alert is never marked sent when nobody was
+ *     told (platform review PF-1)
  *   - PW-J02: the stamp dedupes the next run; deactivated parties are
  *     skipped; a notify failure still stamps (no double escalation)
  */
@@ -256,5 +259,38 @@ describe('permit-expiry-watch', () => {
     expect(
       sentThird.filter((s) => s.kind === 'escalation' && s.permit.permitId === closingSoon),
     ).toHaveLength(3);
+  });
+
+  it('PW-J04: total notify failure withholds the stamp; the next tick delivers (PF-1)', async () => {
+    // Every recipient email starts with a distinct prefix; failing all
+    // three simulates a dead provider or an unregistered template.
+    const doomed = await seedPermit({ title: 'Tank entry' });
+
+    const sentNone: Sent = [];
+    const first = await runPermitExpiryWatch({
+      db: db as never,
+      logger,
+      appUrl: 'https://app.test',
+      notify: () => Promise.reject(new Error('unknown email template')),
+      now: () => NOW,
+    });
+    expect(first.escalated).toBe(0);
+    expect(sentNone).toHaveLength(0);
+    let row = await db.select().from(schema.permits).where(eq(schema.permits.id, doomed));
+    // Stamp withheld — the alert is NOT marked sent.
+    expect(row[0]?.expiryEscalatedAt).toBeNull();
+    const events = await db
+      .select()
+      .from(schema.permitEvents)
+      .where(eq(schema.permitEvents.permitId, doomed));
+    expect(events).toHaveLength(0);
+
+    // Provider recovers → the next tick delivers and stamps.
+    const sent: Sent = [];
+    const second = await run(sent);
+    expect(second.escalated).toBe(1);
+    expect(sent.filter((s) => s.permit.permitId === doomed)).toHaveLength(3);
+    row = await db.select().from(schema.permits).where(eq(schema.permits.id, doomed));
+    expect(row[0]?.expiryEscalatedAt).not.toBeNull();
   });
 });

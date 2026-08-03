@@ -299,7 +299,8 @@ describe('Documents router (Phase 5C)', () => {
       sizeBytes: 1000,
     });
 
-    const granteeId = newId();
+    // PF-29 regression: real user ids are 30 chars (usr_ + ULID).
+    const granteeId = `usr_${newId()}`;
     const { accessId } = await caller.documents.access.grant({
       documentId,
       subjectType: 'user',
