@@ -1446,7 +1446,30 @@
     "permits": "Permessi",
     "fireSafety": "Sicurezza antincendio",
     "analytics": "Dashboard",
-    "incidents": "Incidenti"
+    "incidents": "Incidenti",
+    "myWork": "Le mie attività",
+    "more": "Altro",
+    "quickLabel": "Navigazione rapida",
+    "collapseMenu": "Comprimi menu",
+    "expandMenu": "Espandi menu",
+    "groupRisk": "Rischio e controllo",
+    "groupVerify": "Ispeziona e verifica",
+    "groupRespond": "Segnala e risolvi",
+    "groupOrg": "Organizzazione",
+    "child": {
+      "schedulesCalendar": "Calendario",
+      "permitsBoard": "Bacheca live",
+      "permitsTypes": "Tipi di permesso",
+      "coshhPointOfWork": "Punto di lavoro",
+      "coshhLev": "Registro LEV",
+      "fireLogbook": "Registro",
+      "issuesQrCodes": "Codici QR",
+      "issuesCategories": "Categorie",
+      "actionsCategories": "Categorie",
+      "assetsCategories": "Categorie",
+      "contractorsGate": "Ingresso cantiere",
+      "contractorsCalendar": "Calendario"
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6198,6 +6221,30 @@
       "addFiles": "Aggiungi foto / file",
       "none": "Ancora nessuna prova. Le foto scattate sul posto compaiono qui.",
       "witness": "Testimone"
+    }
+  },
+  "myWork": {
+    "title": "Le mie attività",
+    "subtitle": "Tutto ciò che attende te, prima le scadenze superate.",
+    "filterLabel": "Filtra per tipo",
+    "overdueOn": "Scadenza {date}",
+    "tiles": {
+      "overdue": "In ritardo",
+      "actions": "Azioni aperte",
+      "acknowledgements": "Da confermare",
+      "drafts": "Ispezioni non concluse"
+    },
+    "kinds": {
+      "all": "Tutto",
+      "action": "Azione",
+      "acknowledgement": "Conferma di presa visione",
+      "signature": "Firma",
+      "inspection": "Ispezione",
+      "approval": "Approvazione"
+    },
+    "empty": {
+      "title": "Nulla in attesa",
+      "body": "Le nuove attività assegnate a te compaiono qui."
     }
   }
 }

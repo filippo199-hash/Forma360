@@ -606,6 +606,7 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0011 — Risk-assessment versioning, sign-off and residual-risk coherence](./docs/adr/0011-risk-assessment-versioning-and-sign-off.md)
 - [0012 — Permit-to-work lifecycle, signature model and expiry escalation](./docs/adr/0012-permit-lifecycle-and-signature-model.md)
 - [0013 — Incident lifecycle, investigation model and RIDDOR deadline engine](./docs/adr/0013-incident-lifecycle-and-riddor-engine.md)
+- [0014 — Navigation information architecture](./docs/adr/0014-navigation-information-architecture.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase

@@ -1439,7 +1439,30 @@
     "permits": "作业许可",
     "fireSafety": "消防安全",
     "analytics": "仪表盘",
-    "incidents": "事故事件"
+    "incidents": "事故事件",
+    "myWork": "我的工作",
+    "more": "更多",
+    "quickLabel": "快速导航",
+    "collapseMenu": "收起菜单",
+    "expandMenu": "展开菜单",
+    "groupRisk": "风险与控制",
+    "groupVerify": "检查与验证",
+    "groupRespond": "上报与整改",
+    "groupOrg": "组织",
+    "child": {
+      "schedulesCalendar": "日历",
+      "permitsBoard": "实时看板",
+      "permitsTypes": "许可类型",
+      "coshhPointOfWork": "作业点",
+      "coshhLev": "LEV 登记册",
+      "fireLogbook": "记录本",
+      "issuesQrCodes": "二维码",
+      "issuesCategories": "类别",
+      "actionsCategories": "类别",
+      "assetsCategories": "类别",
+      "contractorsGate": "工地门禁",
+      "contractorsCalendar": "日历"
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6156,6 +6179,30 @@
       "addFiles": "添加照片/文件",
       "none": "尚无证据。现场拍摄的照片会显示在这里。",
       "witness": "证人"
+    }
+  },
+  "myWork": {
+    "title": "我的工作",
+    "subtitle": "所有等待您处理的事项，逾期优先。",
+    "filterLabel": "按类型筛选",
+    "overdueOn": "截止 {date}",
+    "tiles": {
+      "overdue": "已逾期",
+      "actions": "未完成的措施",
+      "acknowledgements": "待确认",
+      "drafts": "未完成的检查"
+    },
+    "kinds": {
+      "all": "全部",
+      "action": "措施",
+      "acknowledgement": "确认",
+      "signature": "签名",
+      "inspection": "检查",
+      "approval": "审批"
+    },
+    "empty": {
+      "title": "没有待处理事项",
+      "body": "分配给您的新工作会显示在这里。"
     }
   }
 }

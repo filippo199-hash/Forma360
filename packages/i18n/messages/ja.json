@@ -1439,7 +1439,30 @@
     "permits": "作業許可",
     "fireSafety": "防火管理",
     "analytics": "ダッシュボード",
-    "incidents": "インシデント"
+    "incidents": "インシデント",
+    "myWork": "マイタスク",
+    "more": "その他",
+    "quickLabel": "クイックナビゲーション",
+    "collapseMenu": "メニューを折りたたむ",
+    "expandMenu": "メニューを展開",
+    "groupRisk": "リスクと管理",
+    "groupVerify": "点検と検証",
+    "groupRespond": "報告と是正",
+    "groupOrg": "組織",
+    "child": {
+      "schedulesCalendar": "カレンダー",
+      "permitsBoard": "ライブボード",
+      "permitsTypes": "許可証の種類",
+      "coshhPointOfWork": "作業場所",
+      "coshhLev": "LEV 登録簿",
+      "fireLogbook": "記録簿",
+      "issuesQrCodes": "QR コード",
+      "issuesCategories": "カテゴリ",
+      "actionsCategories": "カテゴリ",
+      "assetsCategories": "カテゴリ",
+      "contractorsGate": "現場ゲート",
+      "contractorsCalendar": "カレンダー"
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6156,6 +6179,30 @@
       "addFiles": "写真・ファイルを追加",
       "none": "まだ証拠がありません。現場で撮影した写真がここに表示されます。",
       "witness": "証人"
+    }
+  },
+  "myWork": {
+    "title": "マイタスク",
+    "subtitle": "あなたを待っているすべての作業。期限超過を最初に表示します。",
+    "filterLabel": "種類で絞り込む",
+    "overdueOn": "期限 {date}",
+    "tiles": {
+      "overdue": "期限超過",
+      "actions": "未完了の是正処置",
+      "acknowledgements": "確認待ち",
+      "drafts": "未完了の点検"
+    },
+    "kinds": {
+      "all": "すべて",
+      "action": "是正処置",
+      "acknowledgement": "確認",
+      "signature": "署名",
+      "inspection": "点検",
+      "approval": "承認"
+    },
+    "empty": {
+      "title": "待機中の作業はありません",
+      "body": "新しく割り当てられた作業はここに表示されます。"
     }
   }
 }

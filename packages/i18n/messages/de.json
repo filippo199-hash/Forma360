@@ -1446,7 +1446,30 @@
     "permits": "Freigaben",
     "fireSafety": "Brandschutz",
     "analytics": "Dashboard",
-    "incidents": "Vorfälle"
+    "incidents": "Vorfälle",
+    "myWork": "Meine Aufgaben",
+    "more": "Mehr",
+    "quickLabel": "Schnellnavigation",
+    "collapseMenu": "Menü einklappen",
+    "expandMenu": "Menü ausklappen",
+    "groupRisk": "Risiko & Kontrolle",
+    "groupVerify": "Prüfen & verifizieren",
+    "groupRespond": "Melden & beheben",
+    "groupOrg": "Organisation",
+    "child": {
+      "schedulesCalendar": "Kalender",
+      "permitsBoard": "Live-Tafel",
+      "permitsTypes": "Erlaubnisarten",
+      "coshhPointOfWork": "Arbeitsplatz",
+      "coshhLev": "LEV-Register",
+      "fireLogbook": "Prüfbuch",
+      "issuesQrCodes": "QR-Codes",
+      "issuesCategories": "Kategorien",
+      "actionsCategories": "Kategorien",
+      "assetsCategories": "Kategorien",
+      "contractorsGate": "Baustellentor",
+      "contractorsCalendar": "Kalender"
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6163,6 +6186,30 @@
       "addFiles": "Fotos / Dateien hinzufügen",
       "none": "Noch keine Beweise. Am Ort aufgenommene Fotos erscheinen hier.",
       "witness": "Zeuge/Zeugin"
+    }
+  },
+  "myWork": {
+    "title": "Meine Aufgaben",
+    "subtitle": "Alles, was auf Sie wartet — Überfälliges zuerst.",
+    "filterLabel": "Nach Typ filtern",
+    "overdueOn": "Fällig {date}",
+    "tiles": {
+      "overdue": "Überfällig",
+      "actions": "Offene Maßnahmen",
+      "acknowledgements": "Zu bestätigen",
+      "drafts": "Unfertige Prüfungen"
+    },
+    "kinds": {
+      "all": "Alle",
+      "action": "Maßnahme",
+      "acknowledgement": "Kenntnisnahme",
+      "signature": "Unterschrift",
+      "inspection": "Prüfung",
+      "approval": "Freigabe"
+    },
+    "empty": {
+      "title": "Nichts wartet auf Sie",
+      "body": "Neu zugewiesene Aufgaben erscheinen hier."
     }
   }
 }

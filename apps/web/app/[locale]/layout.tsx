@@ -13,6 +13,7 @@ import { ChatBubble } from '../../src/components/ai/chat-bubble';
 import { PortalHeader } from '../../src/components/portal/portal-header';
 import { SiteFooter } from '../../src/components/site-footer';
 import { SiteHeader } from '../../src/components/site-header';
+import { MobileTabBar } from '../../src/components/mobile-tab-bar';
 import { SiteSidebar } from '../../src/components/site-sidebar';
 import { PermissionsProvider } from '../../src/lib/permissions-context';
 import { loadCurrentUserPermissions } from '../../src/server/load-permissions';
@@ -132,12 +133,16 @@ export default async function LocaleLayout({
                     <SiteSidebar locale={locale} />
                     <div className="flex min-w-0 flex-1 flex-col">
                       <SiteHeader showBrand={false} />
-                      <main className="flex-1">{children}</main>
+                      {/* ADR 0014: the phone tab bar is fixed to the bottom,
+                       * so content reserves its height below `md`. */}
+                      <main className="flex-1 pb-16 md:pb-0">{children}</main>
                     </div>
                     {/* Floating assistant launcher on every signed-in page. */}
                     <ChatBubble />
                     {/* PF-10: drains queued offline mutations + pending chip. */}
                     <OfflineQueueFlusher />
+                    {/* ADR 0014: thumb-reachable navigation on phones. */}
+                    <MobileTabBar locale={locale} />
                   </div>
                 </PermissionsProvider>
               ) : (
