@@ -940,8 +940,30 @@ export function createRamsRouter(deps: RamsRouterDeps) {
           .where(and(eq(ramsBriefings.tenantId, ctx.tenantId), eq(ramsBriefings.packId, pack.id)))
           .orderBy(desc(ramsBriefings.briefedAt));
 
+        // RS-A3: projected deliberately — `token` is a bearer credential
+        // for the public share route, and `packs.get` needs only
+        // `rams.view` while minting a link needs `rams.issue`. Returning
+        // the row whole handed every viewer a re-shareable link to every
+        // client pack. The caller gets everything it renders and nothing
+        // it can authenticate with.
         const clientLinks = await ctx.db
-          .select()
+          .select({
+            id: ramsClientLinks.id,
+            packVersionId: ramsClientLinks.packVersionId,
+            versionNumber: ramsClientLinks.versionNumber,
+            issuedToName: ramsClientLinks.issuedToName,
+            issuedToEmail: ramsClientLinks.issuedToEmail,
+            issuedBy: ramsClientLinks.issuedBy,
+            expiresAt: ramsClientLinks.expiresAt,
+            revokedAt: ramsClientLinks.revokedAt,
+            revokedBy: ramsClientLinks.revokedBy,
+            decision: ramsClientLinks.decision,
+            decidedAt: ramsClientLinks.decidedAt,
+            acceptedByName: ramsClientLinks.acceptedByName,
+            acceptedByOrganisation: ramsClientLinks.acceptedByOrganisation,
+            decisionComment: ramsClientLinks.decisionComment,
+            createdAt: ramsClientLinks.createdAt,
+          })
           .from(ramsClientLinks)
           .where(
             and(eq(ramsClientLinks.tenantId, ctx.tenantId), eq(ramsClientLinks.packId, pack.id)),
@@ -1872,6 +1894,19 @@ export function createRamsRouter(deps: RamsRouterDeps) {
             updatedAt: at,
           })
           .where(and(eq(ramsPacks.tenantId, ctx.tenantId), eq(ramsPacks.id, pack.id)));
+        // RS-A10: cancelling must kill the client links too. `withdraw`
+        // always did; `cancel` did not, so a cancelled pack stayed
+        // acceptable through any link already in a client's inbox.
+        await ctx.db
+          .update(ramsClientLinks)
+          .set({ revokedAt: at, revokedBy: ctx.auth.userId })
+          .where(
+            and(
+              eq(ramsClientLinks.tenantId, ctx.tenantId),
+              eq(ramsClientLinks.packId, pack.id),
+              isNull(ramsClientLinks.revokedAt),
+            ),
+          );
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           actorUserId: ctx.auth.userId,
@@ -2370,7 +2405,11 @@ export function createRamsRouter(deps: RamsRouterDeps) {
         if (link.expiresAt !== null && link.expiresAt.getTime() < now().getTime()) {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'link-expired' });
         }
-        return link;
+        // RS-A14: `tenantId` is needed for the guards above but is
+        // nobody's business on an unauthenticated payload — an external
+        // recipient should not be handed an internal identifier.
+        const { tenantId: _tenantId, ...publicView } = link;
+        return publicView;
       }),
 
     /** The client's decision — accept, or request changes. */
@@ -2394,8 +2433,11 @@ export function createRamsRouter(deps: RamsRouterDeps) {
             versionNumber: ramsClientLinks.versionNumber,
             expiresAt: ramsClientLinks.expiresAt,
             revokedAt: ramsClientLinks.revokedAt,
+            decision: ramsClientLinks.decision,
+            packStatus: ramsPacks.status,
           })
           .from(ramsClientLinks)
+          .innerJoin(ramsPacks, eq(ramsPacks.id, ramsClientLinks.packId))
           .where(eq(ramsClientLinks.token, input.token))
           .limit(1);
         const link = rows[0];
@@ -2405,6 +2447,20 @@ export function createRamsRouter(deps: RamsRouterDeps) {
         const at = now();
         if (link.expiresAt !== null && link.expiresAt.getTime() < at.getTime()) {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'link-expired' });
+        }
+        // RS-A10: an acceptance is a record, not a toggle. Without this
+        // the endpoint — public, unauthenticated — let anyone holding the
+        // link flip accepted → changes-requested → accepted forever,
+        // overwriting the acceptor's name and timestamp each pass. One
+        // decision per link; a client who changes their mind gets a new
+        // link from the contractor, which is the auditable path.
+        if (link.decision !== 'pending') {
+          throw new TRPCError({ code: 'CONFLICT', message: 'link-already-decided' });
+        }
+        // …and a pack that is no longer issued cannot be accepted at all
+        // (withdrawn revokes its links; cancelled now does too).
+        if (link.packStatus !== 'issued') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'pack-not-issued' });
         }
 
         await ctx.db
@@ -2416,7 +2472,9 @@ export function createRamsRouter(deps: RamsRouterDeps) {
             acceptedByOrganisation: input.acceptedByOrganisation,
             decisionComment: input.comment,
           })
-          .where(eq(ramsClientLinks.id, link.id));
+          // Re-assert "still pending" in the WHERE so two simultaneous
+          // submissions cannot both win.
+          .where(and(eq(ramsClientLinks.id, link.id), eq(ramsClientLinks.decision, 'pending')));
 
         await logEvent(ctx.db, {
           tenantId: link.tenantId,

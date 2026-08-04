@@ -16,8 +16,7 @@
  * print layouts.
  */
 import { useState } from 'react';
-import type { RamsRenderSnapshot } from '@forma360/render';
-import { RamsPrintLayout } from './rams-print-layout';
+import { RamsPrintLayout, type PrintableRamsSnapshot } from './rams-print-layout';
 import { trpc } from '../../lib/trpc/client';
 
 export function RamsClientAcceptanceView({
@@ -25,7 +24,9 @@ export function RamsClientAcceptanceView({
   token,
   alreadyDecided,
 }: {
-  snapshot: RamsRenderSnapshot;
+  // RS-A14: the tenant id is typed away, so the page cannot serialise
+  // an internal identifier into a payload an external client can read.
+  snapshot: PrintableRamsSnapshot;
   token: string;
   alreadyDecided: { decision: string; acceptedByName: string } | null;
 }) {

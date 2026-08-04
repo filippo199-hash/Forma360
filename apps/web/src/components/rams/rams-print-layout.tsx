@@ -57,7 +57,18 @@ const H2: React.CSSProperties = {
   color: '#0f172a',
 };
 
-export function RamsPrintLayout({ snapshot }: { snapshot: RamsRenderSnapshot }) {
+/**
+ * The layout renders a pack; it has no use for the tenant id, so it
+ * asks for a snapshot without one (RS-A14). A full `RamsRenderSnapshot`
+ * still satisfies this — the PDF path passes one unchanged — while the
+ * public share view can pass a sanitised snapshot and be type-checked
+ * on it rather than trusted.
+ */
+export type PrintableRamsSnapshot = Omit<RamsRenderSnapshot, 'pack'> & {
+  pack: Omit<RamsRenderSnapshot['pack'], 'tenantId'>;
+};
+
+export function RamsPrintLayout({ snapshot }: { snapshot: PrintableRamsSnapshot }) {
   const { pack, version, briefings, acceptance } = snapshot;
   const { content, jobContext } = version.content;
 
