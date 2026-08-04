@@ -6365,7 +6365,9 @@
       "allClear": "C'è tutto il necessario per emettere questo pacchetto.",
       "unreferencedTitle": "Rischi elevati che nessuna fase affronta",
       "attestationTitle": "Dichiarazione del redattore",
-      "attestationConfirm": "Confermo la dichiarazione qui sopra."
+      "attestationConfirm": "Confermo la dichiarazione qui sopra.",
+      "attestationText": "Confermo di aver redatto o verificato questa valutazione dei rischi e procedura operativa, che è idonea e sufficiente per il lavoro descritto, che la sequenza di lavoro e le misure di controllo sono quelle che verranno effettivamente seguite, e che sarà illustrata a tutti gli esecutori prima dell'inizio.",
+      "attestationCanonical": "Fa fede il testo inglese: viene registrato alla lettera e stampato sul PDF."
     },
     "errors": {
       "no-steps": "Aggiungi almeno una fase alla procedura operativa.",
@@ -6494,7 +6496,18 @@
       "validTo": "Accettato fino al",
       "recordDecision": "Registra la decisione",
       "itemComment": "Che cosa non va in questo punto?",
-      "expired": "Scaduto"
+      "expired": "Scaduto",
+      "logReceived": "Registra un pacchetto ricevuto",
+      "logReceivedHint": "Un appaltatore ti ha inviato un RAMS — via e-mail, portale o cartaceo. Registralo qui per esaminarlo.",
+      "contractor": "Appaltatore",
+      "contractorPlaceholder": "Cerca appaltatori…",
+      "packTitle": "Titolo del pacchetto",
+      "packTitlePlaceholder": "es. Sostituzione impianto in copertura — RAMS rev. B",
+      "site": "Sito (facoltativo)",
+      "sitePlaceholder": "Dove si svolgerà il lavoro",
+      "workDescription": "In cosa consiste il lavoro (facoltativo)",
+      "workDescriptionPlaceholder": "Ciò che il revisore deve sapere prima di aprire la checklist",
+      "logAndOpen": "Registra e apri la checklist"
     },
     "reviewOutcome": {
       "pending": "In attesa di esame",
@@ -6571,6 +6584,26 @@
       "method_statement_duplicated": "Procedura operativa duplicata",
       "review_submitted": "Pacchetto appaltatore inviato all'esame",
       "review_decided": "Decisione di esame registrata"
+    },
+    "common": {
+      "cancel": "Annulla"
+    },
+    "reissue": {
+      "title": "Riemetti questo pacchetto",
+      "invalidatesWarning": "Questo crea una nuova versione. I {count} briefing sulla versione attuale non valgono più — tutti devono essere ri-briefati prima di proseguire.",
+      "note": "Perché riemetti? (facoltativo)",
+      "notePlaceholder": "es. Sequenza modificata dopo il sopralluogo con il cliente",
+      "confirm": "Firma e riemetti"
+    },
+    "reviewChecklist": {
+      "scope_matches": "L'ambito dei lavori corrisponde a quanto commissionato",
+      "hazards_credible": "Pericoli identificati e misure credibili per il lavoro",
+      "sequence_holdpoints": "La sequenza include hold point di sezionamento / permesso",
+      "emergency_present": "Disposizioni di emergenza e primo soccorso presenti",
+      "competence_evidence": "Evidenze di competenza e formazione allegate",
+      "coshh_covered": "Sostanze pericolose coperte dove utilizzate",
+      "plant_certified": "Certificazioni di macchine e attrezzature in corso di validità",
+      "insurance_current": "Assicurazione in corso e adeguata al lavoro"
     }
   },
   "reportChooser": {

@@ -6330,7 +6330,9 @@
       "allClear": "Está todo lo necesario para emitir este paquete.",
       "unreferencedTitle": "Riesgos altos que ningún paso aborda",
       "attestationTitle": "Declaración del redactor",
-      "attestationConfirm": "Confirmo la declaración anterior."
+      "attestationConfirm": "Confirmo la declaración anterior.",
+      "attestationText": "Confirmo que he elaborado o revisado esta evaluación de riesgos y procedimiento de trabajo, que es adecuada y suficiente para el trabajo descrito, que la secuencia de trabajo y las medidas de control son las que realmente se seguirán, y que se informará a todas las personas que ejecuten el trabajo antes de comenzar.",
+      "attestationCanonical": "La versión inglesa es la vinculante: se registra literalmente y se imprime en el PDF."
     },
     "errors": {
       "no-steps": "Añada al menos un paso al procedimiento de trabajo.",
@@ -6459,7 +6461,18 @@
       "validTo": "Aceptado hasta",
       "recordDecision": "Registrar decisión",
       "itemComment": "¿Qué falla en este punto?",
-      "expired": "Caducado"
+      "expired": "Caducado",
+      "logReceived": "Registrar un paquete recibido",
+      "logReceivedHint": "Un contratista le envió un RAMS por correo, portal o papel. Regístrelo aquí para revisarlo.",
+      "contractor": "Contratista",
+      "contractorPlaceholder": "Buscar contratistas…",
+      "packTitle": "Título del paquete",
+      "packTitlePlaceholder": "p. ej. Sustitución de equipo en cubierta — RAMS rev. B",
+      "site": "Centro (opcional)",
+      "sitePlaceholder": "Dónde se realizará el trabajo",
+      "workDescription": "En qué consiste el trabajo (opcional)",
+      "workDescriptionPlaceholder": "Lo que el revisor necesita saber antes de abrir la lista",
+      "logAndOpen": "Registrar y abrir la lista"
     },
     "reviewOutcome": {
       "pending": "Pendiente de revisión",
@@ -6536,6 +6549,26 @@
       "method_statement_duplicated": "Procedimiento duplicado",
       "review_submitted": "Paquete de contratista enviado a revisión",
       "review_decided": "Decisión de revisión registrada"
+    },
+    "common": {
+      "cancel": "Cancelar"
+    },
+    "reissue": {
+      "title": "Reemitir este paquete",
+      "invalidatesWarning": "Esto crea una nueva versión. Los {count} briefing(s) de la versión actual dejan de contar: hay que volver a informar a todos antes de continuar.",
+      "note": "¿Por qué reemite? (opcional)",
+      "notePlaceholder": "p. ej. Secuencia modificada tras la visita con el cliente",
+      "confirm": "Firmar y reemitir"
+    },
+    "reviewChecklist": {
+      "scope_matches": "El alcance coincide con el trabajo que hemos encargado",
+      "hazards_credible": "Peligros identificados y controles creíbles para el trabajo",
+      "sequence_holdpoints": "La secuencia incluye puntos de parada de aislamiento / permiso",
+      "emergency_present": "Disposiciones de emergencia y primeros auxilios presentes",
+      "competence_evidence": "Evidencias de competencia y formación adjuntas",
+      "coshh_covered": "Sustancias peligrosas cubiertas cuando se usan",
+      "plant_certified": "Certificación de equipos y maquinaria en vigor",
+      "insurance_current": "Seguro vigente y adecuado para el trabajo"
     }
   },
   "reportChooser": {

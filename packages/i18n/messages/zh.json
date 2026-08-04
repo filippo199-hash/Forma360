@@ -6323,7 +6323,9 @@
       "allClear": "签发该文件包所需内容均已齐备。",
       "unreferencedTitle": "无任何步骤应对的高风险",
       "attestationTitle": "编制人声明",
-      "attestationConfirm": "我确认以上声明。"
+      "attestationConfirm": "我确认以上声明。",
+      "attestationText": "本人确认已编制或审核本风险评估与作业方法说明，其对所述作业适当且充分，作业顺序与控制措施为实际将遵循的内容，并将在开工前向所有作业人员进行交底。",
+      "attestationCanonical": "以英文原文为准：系统按原文记录并打印在 PDF 上。"
     },
     "errors": {
       "no-steps": "请为作业方法说明添加至少一个步骤。",
@@ -6452,7 +6454,18 @@
       "validTo": "受理有效期至",
       "recordDecision": "记录审查结论",
       "itemComment": "该项存在什么问题？",
-      "expired": "已过期"
+      "expired": "已过期",
+      "logReceived": "登记收到的作业包",
+      "logReceivedHint": "承包商通过邮件、门户或纸质方式发来了 RAMS。在此登记以便审查。",
+      "contractor": "承包商",
+      "contractorPlaceholder": "搜索承包商…",
+      "packTitle": "作业包标题",
+      "packTitlePlaceholder": "例如：屋面设备更换 — RAMS 修订B",
+      "site": "场所（可选）",
+      "sitePlaceholder": "作业发生地点",
+      "workDescription": "作业内容（可选）",
+      "workDescriptionPlaceholder": "审查人在打开检查表前需要了解的信息",
+      "logAndOpen": "登记并打开检查表"
     },
     "reviewOutcome": {
       "pending": "待审查",
@@ -6529,6 +6542,26 @@
       "method_statement_duplicated": "复制作业方法说明",
       "review_submitted": "承包商文件包提交审查",
       "review_decided": "记录审查结论"
+    },
+    "common": {
+      "cancel": "取消"
+    },
+    "reissue": {
+      "title": "重新签发本作业包",
+      "invalidatesWarning": "这会创建新版本。针对当前版本的 {count} 次交底将失效——继续作业前必须重新交底。",
+      "note": "重新签发原因（可选）",
+      "notePlaceholder": "例如：客户巡场后调整了作业顺序",
+      "confirm": "签署并重新签发"
+    },
+    "reviewChecklist": {
+      "scope_matches": "作业范围与我方委托内容一致",
+      "hazards_credible": "已识别危险源，控制措施对该作业可信",
+      "sequence_holdpoints": "作业顺序包含隔离/许可的停止点",
+      "emergency_present": "已包含应急与急救安排",
+      "competence_evidence": "已附能力与培训证明",
+      "coshh_covered": "涉及使用的有害物质（COSHH）已覆盖",
+      "plant_certified": "设备与机具的检验证明在有效期内",
+      "insurance_current": "保险有效且与作业相匹配"
     }
   },
   "reportChooser": {

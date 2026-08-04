@@ -6323,7 +6323,9 @@
       "allClear": "このパックを発行するために必要なものはすべて揃っています。",
       "unreferencedTitle": "どの手順でも対応されていない高リスク",
       "attestationTitle": "作成者の宣誓",
-      "attestationConfirm": "上記の宣誓内容を確認しました。"
+      "attestationConfirm": "上記の宣誓内容を確認しました。",
+      "attestationText": "本リスクアセスメントおよび作業手順書を作成または確認したこと、記載された作業に対して適切かつ十分であること、作業手順と管理措置が実際に順守されるものであること、そして作業開始前に全作業者へ周知することを確認します。",
+      "attestationCanonical": "法的効力を持つのは英語原文です。英文がそのまま記録され、PDFに印刷されます。"
     },
     "errors": {
       "no-steps": "作業手順書に少なくとも 1 つの手順を追加してください。",
@@ -6452,7 +6454,18 @@
       "validTo": "承諾期限",
       "recordDecision": "判定を記録",
       "itemComment": "どこに問題がありますか？",
-      "expired": "期限切れ"
+      "expired": "期限切れ",
+      "logReceived": "受領したパックを登録",
+      "logReceivedHint": "協力会社からRAMSが届きました（メール・ポータル・紙）。審査するためにここで登録します。",
+      "contractor": "協力会社",
+      "contractorPlaceholder": "協力会社を検索…",
+      "packTitle": "パックのタイトル",
+      "packTitlePlaceholder": "例: 屋上設備交換 — RAMS 改訂B",
+      "site": "サイト（任意）",
+      "sitePlaceholder": "作業が行われる場所",
+      "workDescription": "作業内容（任意）",
+      "workDescriptionPlaceholder": "チェックリストを開く前に審査者が知っておくべきこと",
+      "logAndOpen": "登録してチェックリストを開く"
     },
     "reviewOutcome": {
       "pending": "審査待ち",
@@ -6529,6 +6542,26 @@
       "method_statement_duplicated": "作業手順書を複製",
       "review_submitted": "協力会社パックを審査に提出",
       "review_decided": "審査判定を記録"
+    },
+    "common": {
+      "cancel": "キャンセル"
+    },
+    "reissue": {
+      "title": "このパックを再発行",
+      "invalidatesWarning": "新しいバージョンが作成されます。現行バージョンに対する {count} 件の周知は無効となり、作業再開前に全員へ再周知が必要です。",
+      "note": "再発行の理由（任意）",
+      "notePlaceholder": "例: 客先立会後に手順を変更",
+      "confirm": "署名して再発行"
+    },
+    "reviewChecklist": {
+      "scope_matches": "作業範囲が発注内容と一致している",
+      "hazards_credible": "危険源が特定され、管理措置が作業に妥当である",
+      "sequence_holdpoints": "手順に隔離・許可のホールドポイントが含まれている",
+      "emergency_present": "緊急時および応急手当の取り決めがある",
+      "competence_evidence": "力量および教育訓練の証跡が添付されている",
+      "coshh_covered": "使用する有害物質（COSHH）が網羅されている",
+      "plant_certified": "機械・設備の検査証が有効期限内である",
+      "insurance_current": "保険が有効で作業に十分である"
     }
   },
   "reportChooser": {

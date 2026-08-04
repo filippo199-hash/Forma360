@@ -50,6 +50,18 @@ export default function RamsPackPage() {
   const [attested, setAttested] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState('');
   const [showWithdraw, setShowWithdraw] = useState(false);
+  // RS-A5: re-issue is a signing event, not a button.
+  const [showReissue, setShowReissue] = useState(false);
+  const [reissueAttested, setReissueAttested] = useState(false);
+  const [reissueNote, setReissueNote] = useState('');
+
+  // RS-A13: the author reads the declaration in their own language.
+  // The canonical English wording is still what the router snapshots
+  // onto the version and what the PDF prints, so the record is identical
+  // everywhere (ADR 0015) — the translation is for comprehension, and a
+  // non-English author is told so explicitly.
+  const attestationText = t('gate.attestationText');
+  const attestationIsTranslated = attestationText !== RAMS_AUTHOR_ATTESTATION;
   const [clientName, setClientName] = useState('');
   const [shareUrl, setShareUrl] = useState<string | null>(null);
 
@@ -176,7 +188,12 @@ export default function RamsPackPage() {
             {canIssue && readyToIssue ? (
               <div className="mt-4 border-t pt-4">
                 <p className="mb-2 text-sm font-medium">{t('gate.attestationTitle')}</p>
-                <p className="text-muted-foreground mb-2 text-sm">{RAMS_AUTHOR_ATTESTATION}</p>
+                <p className="text-muted-foreground mb-2 text-sm">{attestationText}</p>
+                {attestationIsTranslated ? (
+                  <p className="text-muted-foreground mb-2 text-xs">
+                    {t('gate.attestationCanonical')}
+                  </p>
+                ) : null}
                 <label className="flex items-start gap-2 text-sm">
                   <input
                     type="checkbox"
@@ -237,8 +254,7 @@ export default function RamsPackPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={issue.isPending}
-                    onClick={() => issue.mutate({ packId, confirmAttestation: true })}
+                    onClick={() => setShowReissue((v) => !v)}
                   >
                     {t('reissuePack')}
                   </Button>
@@ -253,6 +269,63 @@ export default function RamsPackPage() {
                 </>
               ) : null}
             </div>
+
+            {/* RS-A5: re-issue signs the author's declaration exactly as
+                the first issue does — the text in full and an explicit
+                tick. It previously fired the mutation with
+                confirmAttestation hardcoded true, so the record claimed a
+                named person had attested a declaration they were never
+                shown. It also warns what version n+1 costs: every
+                briefing against the current version stops counting. */}
+            {showReissue ? (
+              <div className="mt-3 space-y-2 border-t pt-3">
+                <p className="text-sm font-medium">{t('reissue.title')}</p>
+                <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                  {t('reissue.invalidatesWarning', { count: briefedOnCurrent })}
+                </p>
+                <div className="space-y-1.5">
+                  <Label htmlFor="reissue-note">{t('reissue.note')}</Label>
+                  <Textarea
+                    id="reissue-note"
+                    rows={2}
+                    value={reissueNote}
+                    onChange={(e) => setReissueNote(e.target.value)}
+                    placeholder={t('reissue.notePlaceholder')}
+                  />
+                </div>
+                <p className="text-sm font-medium">{t('gate.attestationTitle')}</p>
+                <p className="text-muted-foreground text-sm">{attestationText}</p>
+                {attestationIsTranslated ? (
+                  <p className="text-muted-foreground text-xs">{t('gate.attestationCanonical')}</p>
+                ) : null}
+                <label className="flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={reissueAttested}
+                    onChange={(e) => setReissueAttested(e.target.checked)}
+                  />
+                  <span>{t('gate.attestationConfirm')}</span>
+                </label>
+                {issue.error !== null ? (
+                  <p className="text-destructive text-sm">{issue.error.message}</p>
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!reissueAttested || issue.isPending}
+                  onClick={() =>
+                    issue.mutate({
+                      packId,
+                      confirmAttestation: true,
+                      ...(reissueNote.trim() !== '' ? { reissueNote: reissueNote.trim() } : {}),
+                    })
+                  }
+                >
+                  {t('reissue.confirm')}
+                </Button>
+              </div>
+            ) : null}
 
             {showWithdraw ? (
               <div className="mt-3 border-t pt-3">

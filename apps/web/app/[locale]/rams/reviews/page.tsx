@@ -11,8 +11,15 @@
  * List and review workspace on one screen: selecting a row opens its
  * checklist beside the list, so a reviewer working through a queue never
  * loses their place.
+ *
+ * The intake form (RS-A4) is what feeds it. The decision workspace
+ * shipped without one, so `reviews.submit` had no caller and the queue
+ * rendered its empty state permanently — an entire half of the module
+ * with a UI and no door. A receive-only organisation (estates, an NHS
+ * trust) never authors a pack; logging one that arrived by email is
+ * their whole interaction with this module.
  */
-import { ShieldCheck } from 'lucide-react';
+import { Plus, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -23,6 +30,8 @@ import {
   type ReviewItemVerdict,
 } from '@forma360/shared/rams';
 import { ReviewOutcomeChip } from '../../../../src/components/rams/chips';
+import { SearchSelect } from '../../../../src/components/selectors/search-select';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -48,8 +57,17 @@ export default function RamsReviewsPage() {
   const [reviewComments, setReviewComments] = useState('');
   const [validTo, setValidTo] = useState('');
 
+  // RS-A4: intake — "a contractor sent us a pack, log it for review".
+  const [showIntake, setShowIntake] = useState(false);
+  const [intakeContractor, setIntakeContractor] = useState<string | null>(null);
+  const [intakeTitle, setIntakeTitle] = useState('');
+  const [intakeWork, setIntakeWork] = useState('');
+  const [intakeSite, setIntakeSite] = useState('');
+  const [intakeError, setIntakeError] = useState<string | null>(null);
+
   const utils = trpc.useUtils();
   const list = trpc.rams.reviews.list.useQuery({});
+  const contractors = trpc.contractors.list.useQuery(undefined, { enabled: canReview });
   const detail = trpc.rams.reviews.get.useQuery(
     { reviewId: selected ?? '' },
     { enabled: selected !== null },
@@ -77,6 +95,22 @@ export default function RamsReviewsPage() {
     },
   });
 
+  const submitIntake = trpc.rams.reviews.submit.useMutation({
+    onSuccess: (result) => {
+      setIntakeError(null);
+      setShowIntake(false);
+      setIntakeContractor(null);
+      setIntakeTitle('');
+      setIntakeWork('');
+      setIntakeSite('');
+      void utils.rams.reviews.list.invalidate();
+      // Open what was just logged — the reviewer's next move is always
+      // to work its checklist.
+      setSelected(result.reviewId);
+    },
+    onError: (err) => setIntakeError(err.message),
+  });
+
   const rows = list.data ?? [];
 
   return (
@@ -89,10 +123,91 @@ export default function RamsReviewsPage() {
           </h1>
           <p className="text-muted-foreground text-sm">{t('reviews.subtitle')}</p>
         </div>
-        <Button asChild type="button" variant="outline" size="sm">
-          <Link href={`/${locale}/rams`}>{t('library.backToRegister')}</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          {canReview ? (
+            <Button type="button" size="sm" onClick={() => setShowIntake(!showIntake)}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t('reviews.logReceived')}
+            </Button>
+          ) : null}
+          <Button asChild type="button" variant="outline" size="sm">
+            <Link href={`/${locale}/rams`}>{t('library.backToRegister')}</Link>
+          </Button>
+        </div>
       </header>
+
+      {/* RS-A4: the intake the decision workspace never had. */}
+      {showIntake ? (
+        <Card className="mb-4">
+          <CardContent className="space-y-3 py-4">
+            <div>
+              <h2 className="font-semibold">{t('reviews.logReceived')}</h2>
+              <p className="text-muted-foreground text-sm">{t('reviews.logReceivedHint')}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SearchSelect
+                value={intakeContractor}
+                onChange={setIntakeContractor}
+                options={(contractors.data ?? []).map((c) => ({ id: c.id, label: c.name }))}
+                label={t('reviews.contractor')}
+                placeholder={t('reviews.contractorPlaceholder')}
+              />
+              <div className="space-y-1.5">
+                <Label htmlFor="intake-title">{t('reviews.packTitle')}</Label>
+                <Input
+                  id="intake-title"
+                  value={intakeTitle}
+                  onChange={(e) => setIntakeTitle(e.target.value)}
+                  placeholder={t('reviews.packTitlePlaceholder')}
+                  maxLength={200}
+                />
+              </div>
+            </div>
+            <SiteSelector
+              value={intakeSite === '' ? [] : [intakeSite]}
+              onChange={(next) => setIntakeSite(next[0] ?? '')}
+              multiple={false}
+              label={t('reviews.site')}
+              placeholder={t('reviews.sitePlaceholder')}
+            />
+            <div className="space-y-1.5">
+              <Label htmlFor="intake-work">{t('reviews.workDescription')}</Label>
+              <Textarea
+                id="intake-work"
+                value={intakeWork}
+                onChange={(e) => setIntakeWork(e.target.value)}
+                placeholder={t('reviews.workDescriptionPlaceholder')}
+                rows={2}
+              />
+            </div>
+            {intakeError !== null ? (
+              <p className="text-destructive text-sm">{intakeError}</p>
+            ) : null}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                disabled={
+                  intakeContractor === null || intakeTitle.trim() === '' || submitIntake.isPending
+                }
+                onClick={() => {
+                  if (intakeContractor === null) return;
+                  submitIntake.mutate({
+                    contractorId: intakeContractor,
+                    title: intakeTitle.trim(),
+                    workDescription: intakeWork.trim(),
+                    ...(intakeSite !== '' ? { siteId: intakeSite } : {}),
+                  });
+                }}
+              >
+                {t('reviews.logAndOpen')}
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setShowIntake(false)}>
+                {t('common.cancel')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section>
@@ -159,7 +274,11 @@ export default function RamsReviewsPage() {
                 <div className="space-y-2">
                   {RAMS_REVIEW_CHECKLIST.map((item) => (
                     <div key={item.id} className="rounded-md border p-2">
-                      <p className="mb-1 text-sm">{item.label}</p>
+                      {/* RS-A13: the constant's own comment said these ids
+                          "key the i18n labels" — the indirection was
+                          designed and never built, so eight English
+                          strings rendered inside a localised page. */}
+                      <p className="mb-1 text-sm">{t(`reviewChecklist.${item.id}` as never)}</p>
                       <div className="flex flex-wrap items-center gap-1">
                         {REVIEW_ITEM_VERDICTS.map((v) => (
                           <button

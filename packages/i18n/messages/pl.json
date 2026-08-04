@@ -6323,7 +6323,9 @@
       "allClear": "Wszystko, co potrzebne do wydania tego pakietu, jest gotowe.",
       "unreferencedTitle": "Wysokie ryzyka, których żaden krok nie obejmuje",
       "attestationTitle": "Oświadczenie autora",
-      "attestationConfirm": "Potwierdzam powyższe oświadczenie."
+      "attestationConfirm": "Potwierdzam powyższe oświadczenie.",
+      "attestationText": "Potwierdzam, że opracowałem lub zweryfikowałem tę ocenę ryzyka i instrukcję roboczą, że jest odpowiednia i wystarczająca dla opisanych prac, że kolejność prac i środki kontroli będą faktycznie stosowane, oraz że zostanie ona omówiona ze wszystkimi wykonawcami przed rozpoczęciem.",
+      "attestationCanonical": "Wiążący jest tekst angielski — zapisywany dosłownie i drukowany na PDF."
     },
     "errors": {
       "no-steps": "Dodaj co najmniej jeden krok do instrukcji roboczej.",
@@ -6452,7 +6454,18 @@
       "validTo": "Zaakceptowany do",
       "recordDecision": "Zapisz decyzję",
       "itemComment": "Co jest tu nie tak?",
-      "expired": "Wygasł"
+      "expired": "Wygasł",
+      "logReceived": "Zarejestruj otrzymany pakiet",
+      "logReceivedHint": "Podwykonawca przesłał RAMS — e-mailem, przez portal lub papierowo. Zarejestruj go tutaj, aby ocenić.",
+      "contractor": "Podwykonawca",
+      "contractorPlaceholder": "Szukaj podwykonawców…",
+      "packTitle": "Tytuł pakietu",
+      "packTitlePlaceholder": "np. Wymiana urządzeń na dachu — RAMS rew. B",
+      "site": "Obiekt (opcjonalnie)",
+      "sitePlaceholder": "Gdzie będą prowadzone prace",
+      "workDescription": "Na czym polega praca (opcjonalnie)",
+      "workDescriptionPlaceholder": "Co oceniający powinien wiedzieć przed otwarciem listy",
+      "logAndOpen": "Zarejestruj i otwórz listę"
     },
     "reviewOutcome": {
       "pending": "Oczekuje na ocenę",
@@ -6529,6 +6542,26 @@
       "method_statement_duplicated": "Powielono instrukcję roboczą",
       "review_submitted": "Przesłano pakiet podwykonawcy do oceny",
       "review_decided": "Zapisano decyzję oceny"
+    },
+    "common": {
+      "cancel": "Anuluj"
+    },
+    "reissue": {
+      "title": "Wydaj pakiet ponownie",
+      "invalidatesWarning": "To tworzy nową wersję. Wszystkie odprawy ({count}) dla obecnej wersji tracą ważność — przed wznowieniem prac trzeba je powtórzyć.",
+      "note": "Dlaczego wydajesz ponownie? (opcjonalnie)",
+      "notePlaceholder": "np. Zmieniono kolejność po obchodzie z klientem",
+      "confirm": "Podpisz i wydaj ponownie"
+    },
+    "reviewChecklist": {
+      "scope_matches": "Zakres prac odpowiada zleconym pracom",
+      "hazards_credible": "Zagrożenia zidentyfikowane, a środki kontroli wiarygodne",
+      "sequence_holdpoints": "Kolejność zawiera punkty wstrzymania: odcięcie / zezwolenie",
+      "emergency_present": "Ustalenia awaryjne i pierwszej pomocy obecne",
+      "competence_evidence": "Załączono dowody kompetencji i szkoleń",
+      "coshh_covered": "Substancje niebezpieczne ujęte tam, gdzie są używane",
+      "plant_certified": "Certyfikaty maszyn i sprzętu aktualne",
+      "insurance_current": "Ubezpieczenie aktualne i adekwatne do prac"
     }
   },
   "reportChooser": {

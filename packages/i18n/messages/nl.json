@@ -6323,7 +6323,9 @@
       "allClear": "Alles wat nodig is om dit pakket uit te geven is aanwezig.",
       "unreferencedTitle": "Hoge risico's die geen enkele stap afdekt",
       "attestationTitle": "Verklaring van de opsteller",
-      "attestationConfirm": "Ik bevestig bovenstaande verklaring."
+      "attestationConfirm": "Ik bevestig bovenstaande verklaring.",
+      "attestationText": "Ik bevestig dat ik deze risicobeoordeling en werkmethode heb opgesteld of beoordeeld, dat deze geschikt en toereikend is voor het beschreven werk, dat de werkvolgorde en de beheersmaatregelen daadwerkelijk zullen worden gevolgd, en dat iedereen die het werk uitvoert vooraf wordt geïnstrueerd.",
+      "attestationCanonical": "De Engelse tekst is bindend: die wordt letterlijk vastgelegd en op de pdf afgedrukt."
     },
     "errors": {
       "no-steps": "Voeg minstens één stap toe aan de werkmethode.",
@@ -6452,7 +6454,18 @@
       "validTo": "Geaccepteerd tot",
       "recordDecision": "Beslissing vastleggen",
       "itemComment": "Wat klopt hier niet?",
-      "expired": "Verlopen"
+      "expired": "Verlopen",
+      "logReceived": "Ontvangen pakket vastleggen",
+      "logReceivedHint": "Een aannemer stuurde u een RAMS — per e-mail, portaal of op papier. Leg het hier vast om het te beoordelen.",
+      "contractor": "Aannemer",
+      "contractorPlaceholder": "Aannemers zoeken…",
+      "packTitle": "Titel van het pakket",
+      "packTitlePlaceholder": "bijv. Vervanging dakinstallatie — RAMS rev. B",
+      "site": "Locatie (optioneel)",
+      "sitePlaceholder": "Waar het werk plaatsvindt",
+      "workDescription": "Wat het werk inhoudt (optioneel)",
+      "workDescriptionPlaceholder": "Wat de beoordelaar moet weten voordat de checklist opengaat",
+      "logAndOpen": "Vastleggen en checklist openen"
     },
     "reviewOutcome": {
       "pending": "Wacht op beoordeling",
@@ -6529,6 +6542,26 @@
       "method_statement_duplicated": "Werkmethode gedupliceerd",
       "review_submitted": "Pakket onderaannemer ter beoordeling aangeboden",
       "review_decided": "Beoordelingsbeslissing vastgelegd"
+    },
+    "common": {
+      "cancel": "Annuleren"
+    },
+    "reissue": {
+      "title": "Dit pakket opnieuw uitgeven",
+      "invalidatesWarning": "Dit maakt een nieuwe versie. Alle {count} briefing(s) op de huidige versie vervallen — iedereen moet opnieuw worden geïnstrueerd voordat het werk doorgaat.",
+      "note": "Waarom opnieuw uitgeven? (optioneel)",
+      "notePlaceholder": "bijv. Volgorde gewijzigd na de rondgang met de klant",
+      "confirm": "Ondertekenen en opnieuw uitgeven"
+    },
+    "reviewChecklist": {
+      "scope_matches": "Werkomvang komt overeen met de opdracht",
+      "hazards_credible": "Gevaren geïdentificeerd en beheersmaatregelen geloofwaardig",
+      "sequence_holdpoints": "Volgorde bevat stoppunten voor isolatie / vergunning",
+      "emergency_present": "Nood- en EHBO-regelingen aanwezig",
+      "competence_evidence": "Bewijs van bekwaamheid en opleiding bijgevoegd",
+      "coshh_covered": "Gevaarlijke stoffen gedekt waar gebruikt",
+      "plant_certified": "Certificering van materieel en gereedschap geldig",
+      "insurance_current": "Verzekering actueel en toereikend voor het werk"
     }
   },
   "reportChooser": {

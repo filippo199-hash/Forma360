@@ -6558,7 +6558,9 @@
       "allClear": "Everything needed to issue this pack is in place.",
       "unreferencedTitle": "High-risk hazards no step addresses",
       "attestationTitle": "Author declaration",
-      "attestationConfirm": "I confirm the declaration above."
+      "attestationConfirm": "I confirm the declaration above.",
+      "attestationText": "I confirm that I have prepared or reviewed this risk assessment and method statement, that it is suitable and sufficient for the work described, that the sequence of work and the control measures are those that will actually be followed, and that it will be briefed to everyone carrying out the work before they start.",
+      "attestationCanonical": ""
     },
     "errors": {
       "no-steps": "Add at least one step to the method statement.",
@@ -6687,7 +6689,18 @@
       "validTo": "Accepted until",
       "recordDecision": "Record decision",
       "itemComment": "What is wrong with this?",
-      "expired": "Expired"
+      "expired": "Expired",
+      "logReceived": "Log a received pack",
+      "logReceivedHint": "A contractor sent you a RAMS — by email, portal or on paper. Log it here to review it.",
+      "contractor": "Contractor",
+      "contractorPlaceholder": "Search contractors…",
+      "packTitle": "Pack title",
+      "packTitlePlaceholder": "e.g. Roof plant replacement — RAMS rev B",
+      "site": "Site (optional)",
+      "sitePlaceholder": "Where the work will happen",
+      "workDescription": "What the work is (optional)",
+      "workDescriptionPlaceholder": "Anything the reviewer needs to know before opening the checklist",
+      "logAndOpen": "Log and open the checklist"
     },
     "reviewOutcome": {
       "pending": "Awaiting review",
@@ -6764,6 +6777,26 @@
       "method_statement_duplicated": "Method statement duplicated",
       "review_submitted": "Contractor pack submitted for review",
       "review_decided": "Review decision recorded"
+    },
+    "common": {
+      "cancel": "Cancel"
+    },
+    "reissue": {
+      "title": "Re-issue this pack",
+      "invalidatesWarning": "This creates a new version. All {count} briefing(s) against the current version stop counting — everyone must be re-briefed before work continues.",
+      "note": "Why are you re-issuing? (optional)",
+      "notePlaceholder": "e.g. Sequence changed after the client walk-round",
+      "confirm": "Sign and re-issue"
+    },
+    "reviewChecklist": {
+      "scope_matches": "Scope of works matches the work we have instructed",
+      "hazards_credible": "Hazards identified and controls credible for the work",
+      "sequence_holdpoints": "Sequence includes isolation / permit hold points",
+      "emergency_present": "Emergency and first-aid arrangements present",
+      "competence_evidence": "Competence and training evidence attached",
+      "coshh_covered": "COSHH / substances covered where used",
+      "plant_certified": "Plant and equipment certification in date",
+      "insurance_current": "Insurance current and adequate for the work"
     }
   },
   "reportChooser": {

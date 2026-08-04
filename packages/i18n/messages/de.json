@@ -6330,7 +6330,9 @@
       "allClear": "Alles Nötige für die Ausgabe dieses Pakets liegt vor.",
       "unreferencedTitle": "Hohe Risiken, die kein Schritt abdeckt",
       "attestationTitle": "Erklärung des Erstellers",
-      "attestationConfirm": "Ich bestätige die obige Erklärung."
+      "attestationConfirm": "Ich bestätige die obige Erklärung.",
+      "attestationText": "Ich bestätige, dass ich diese Gefährdungsbeurteilung und Arbeitsanweisung erstellt oder geprüft habe, dass sie für die beschriebene Arbeit geeignet und ausreichend ist, dass der Arbeitsablauf und die Schutzmaßnahmen tatsächlich so eingehalten werden, und dass sie allen Ausführenden vor Arbeitsbeginn unterwiesen wird.",
+      "attestationCanonical": "Rechtsverbindlich ist der englische Wortlaut; er wird unverändert gespeichert und auf dem PDF gedruckt."
     },
     "errors": {
       "no-steps": "Fügen Sie der Arbeitsanweisung mindestens einen Schritt hinzu.",
@@ -6459,7 +6461,18 @@
       "validTo": "Angenommen bis",
       "recordDecision": "Entscheidung erfassen",
       "itemComment": "Was ist hier nicht in Ordnung?",
-      "expired": "Abgelaufen"
+      "expired": "Abgelaufen",
+      "logReceived": "Erhaltenes Paket erfassen",
+      "logReceivedHint": "Ein Nachunternehmer hat Ihnen ein RAMS geschickt — per E-Mail, Portal oder auf Papier. Hier erfassen, um es zu prüfen.",
+      "contractor": "Nachunternehmer",
+      "contractorPlaceholder": "Nachunternehmer suchen…",
+      "packTitle": "Titel des Pakets",
+      "packTitlePlaceholder": "z. B. Austausch Dachanlage — RAMS Rev. B",
+      "site": "Standort (optional)",
+      "sitePlaceholder": "Wo die Arbeit stattfindet",
+      "workDescription": "Worum es bei der Arbeit geht (optional)",
+      "workDescriptionPlaceholder": "Alles, was der Prüfer vor der Checkliste wissen muss",
+      "logAndOpen": "Erfassen und Checkliste öffnen"
     },
     "reviewOutcome": {
       "pending": "Prüfung ausstehend",
@@ -6536,6 +6549,26 @@
       "method_statement_duplicated": "Arbeitsanweisung dupliziert",
       "review_submitted": "Nachunternehmer-Paket zur Prüfung eingereicht",
       "review_decided": "Prüfentscheidung erfasst"
+    },
+    "common": {
+      "cancel": "Abbrechen"
+    },
+    "reissue": {
+      "title": "Paket neu ausgeben",
+      "invalidatesWarning": "Dies erzeugt eine neue Version. Alle {count} Unterweisung(en) zur aktuellen Version verlieren ihre Gültigkeit — alle müssen vor Fortsetzung der Arbeit erneut unterwiesen werden.",
+      "note": "Warum wird neu ausgegeben? (optional)",
+      "notePlaceholder": "z. B. Ablauf nach der Begehung mit dem Kunden geändert",
+      "confirm": "Unterschreiben und neu ausgeben"
+    },
+    "reviewChecklist": {
+      "scope_matches": "Arbeitsumfang entspricht dem von uns beauftragten Werk",
+      "hazards_credible": "Gefährdungen ermittelt und Schutzmaßnahmen plausibel",
+      "sequence_holdpoints": "Ablauf enthält Freischalt-/Erlaubnis-Haltepunkte",
+      "emergency_present": "Notfall- und Erste-Hilfe-Regelungen vorhanden",
+      "competence_evidence": "Nachweise zu Befähigung und Schulung beigefügt",
+      "coshh_covered": "Gefahrstoffe abgedeckt, wo verwendet",
+      "plant_certified": "Prüfnachweise für Anlagen und Geräte gültig",
+      "insurance_current": "Versicherung aktuell und für die Arbeit ausreichend"
     }
   },
   "reportChooser": {

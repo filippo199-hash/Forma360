@@ -6323,7 +6323,9 @@
       "allClear": "Está reunido tudo o que é necessário para emitir este pacote.",
       "unreferencedTitle": "Riscos elevados que nenhum passo aborda",
       "attestationTitle": "Declaração do autor",
-      "attestationConfirm": "Confirmo a declaração acima."
+      "attestationConfirm": "Confirmo a declaração acima.",
+      "attestationText": "Confirmo que elaborei ou revi esta avaliação de riscos e procedimento de trabalho, que é adequada e suficiente para o trabalho descrito, que a sequência de trabalho e as medidas de controlo são as que serão efetivamente seguidas, e que será transmitida a todos os executantes antes do início.",
+      "attestationCanonical": "O texto inglês é o vinculativo: é registado literalmente e impresso no PDF."
     },
     "errors": {
       "no-steps": "Adicione pelo menos um passo ao procedimento de trabalho.",
@@ -6452,7 +6454,18 @@
       "validTo": "Aceite até",
       "recordDecision": "Registar decisão",
       "itemComment": "O que está mal neste ponto?",
-      "expired": "Expirado"
+      "expired": "Expirado",
+      "logReceived": "Registar um dossiê recebido",
+      "logReceivedHint": "Um empreiteiro enviou-lhe um RAMS — por e-mail, portal ou em papel. Registe-o aqui para o analisar.",
+      "contractor": "Empreiteiro",
+      "contractorPlaceholder": "Procurar empreiteiros…",
+      "packTitle": "Título do dossiê",
+      "packTitlePlaceholder": "ex. Substituição de equipamento na cobertura — RAMS rev. B",
+      "site": "Local (opcional)",
+      "sitePlaceholder": "Onde o trabalho vai decorrer",
+      "workDescription": "Em que consiste o trabalho (opcional)",
+      "workDescriptionPlaceholder": "O que o analista precisa de saber antes de abrir a lista",
+      "logAndOpen": "Registar e abrir a lista"
     },
     "reviewOutcome": {
       "pending": "A aguardar análise",
@@ -6529,6 +6542,26 @@
       "method_statement_duplicated": "Procedimento duplicado",
       "review_submitted": "Pacote de empreiteiro submetido a análise",
       "review_decided": "Decisão de análise registada"
+    },
+    "common": {
+      "cancel": "Cancelar"
+    },
+    "reissue": {
+      "title": "Reemitir este dossiê",
+      "invalidatesWarning": "Isto cria uma nova versão. Todos os {count} briefings da versão atual deixam de contar — todos têm de ser reinformados antes de o trabalho continuar.",
+      "note": "Porque está a reemitir? (opcional)",
+      "notePlaceholder": "ex. Sequência alterada após a visita com o cliente",
+      "confirm": "Assinar e reemitir"
+    },
+    "reviewChecklist": {
+      "scope_matches": "O âmbito corresponde ao trabalho que encomendámos",
+      "hazards_credible": "Perigos identificados e controlos credíveis para o trabalho",
+      "sequence_holdpoints": "A sequência inclui pontos de paragem de isolamento / permissão",
+      "emergency_present": "Disposições de emergência e primeiros socorros presentes",
+      "competence_evidence": "Evidências de competência e formação anexadas",
+      "coshh_covered": "Substâncias perigosas cobertas onde são usadas",
+      "plant_certified": "Certificação de equipamentos e máquinas dentro da validade",
+      "insurance_current": "Seguro em vigor e adequado ao trabalho"
     }
   },
   "reportChooser": {

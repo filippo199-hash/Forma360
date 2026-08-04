@@ -6330,7 +6330,9 @@
       "allClear": "Tout ce qui est nécessaire à l'émission est en place.",
       "unreferencedTitle": "Risques élevés qu'aucune étape ne traite",
       "attestationTitle": "Déclaration du rédacteur",
-      "attestationConfirm": "Je confirme la déclaration ci-dessus."
+      "attestationConfirm": "Je confirme la déclaration ci-dessus.",
+      "attestationText": "Je confirme avoir rédigé ou vérifié cette évaluation des risques et ce mode opératoire, qu'ils sont appropriés et suffisants pour les travaux décrits, que la séquence de travail et les mesures de maîtrise sont celles qui seront réellement suivies, et qu'ils seront communiqués à toutes les personnes réalisant les travaux avant leur démarrage.",
+      "attestationCanonical": "La version anglaise fait foi : elle est enregistrée telle quelle et imprimée sur le PDF."
     },
     "errors": {
       "no-steps": "Ajoutez au moins une étape au mode opératoire.",
@@ -6459,7 +6461,18 @@
       "validTo": "Accepté jusqu'au",
       "recordDecision": "Enregistrer la décision",
       "itemComment": "Qu'est-ce qui ne convient pas ?",
-      "expired": "Échu"
+      "expired": "Échu",
+      "logReceived": "Enregistrer un dossier reçu",
+      "logReceivedHint": "Un sous-traitant vous a envoyé un RAMS — par e-mail, portail ou papier. Enregistrez-le ici pour l'examiner.",
+      "contractor": "Sous-traitant",
+      "contractorPlaceholder": "Rechercher un sous-traitant…",
+      "packTitle": "Titre du dossier",
+      "packTitlePlaceholder": "p. ex. Remplacement d'équipement en toiture — RAMS rév. B",
+      "site": "Site (facultatif)",
+      "sitePlaceholder": "Où les travaux auront lieu",
+      "workDescription": "Nature des travaux (facultatif)",
+      "workDescriptionPlaceholder": "Ce que l'examinateur doit savoir avant d'ouvrir la checklist",
+      "logAndOpen": "Enregistrer et ouvrir la checklist"
     },
     "reviewOutcome": {
       "pending": "En attente d'examen",
@@ -6536,6 +6549,26 @@
       "method_statement_duplicated": "Mode opératoire dupliqué",
       "review_submitted": "Dossier sous-traitant soumis à examen",
       "review_decided": "Décision d'examen enregistrée"
+    },
+    "common": {
+      "cancel": "Annuler"
+    },
+    "reissue": {
+      "title": "Rééditer ce dossier",
+      "invalidatesWarning": "Cela crée une nouvelle version. Les {count} briefing(s) sur la version actuelle cessent de compter — tout le monde doit être re-briefé avant la reprise des travaux.",
+      "note": "Pourquoi rééditer ? (facultatif)",
+      "notePlaceholder": "p. ex. Séquence modifiée après la visite avec le client",
+      "confirm": "Signer et rééditer"
+    },
+    "reviewChecklist": {
+      "scope_matches": "L'étendue des travaux correspond à ce que nous avons commandé",
+      "hazards_credible": "Dangers identifiés et mesures de maîtrise crédibles",
+      "sequence_holdpoints": "La séquence inclut les points d'arrêt consignation / permis",
+      "emergency_present": "Dispositions d'urgence et de premiers secours présentes",
+      "competence_evidence": "Preuves de compétence et de formation jointes",
+      "coshh_covered": "Substances dangereuses couvertes le cas échéant",
+      "plant_certified": "Certifications des engins et équipements en cours de validité",
+      "insurance_current": "Assurance en cours et adaptée aux travaux"
     }
   },
   "reportChooser": {
