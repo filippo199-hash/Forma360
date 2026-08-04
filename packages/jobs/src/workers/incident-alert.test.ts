@@ -6,6 +6,9 @@
  *     out to `incidents.manage` holders; the payload is confidential-
  *     safe (no title/description); site-curated teams narrow the
  *     audience with a safe fallback; the stamp dedupes replays.
+ *   - IN-J02d (HSE review IN-A1): total delivery failure leaves the
+ *     stamp clear and throws (BullMQ retries); the retry that succeeds
+ *     stamps; partial delivery stamps rather than duplicating.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -166,5 +169,59 @@ describe('incident-alert', () => {
     const id2 = await seedIncident({ siteId: otherSite });
     await runIncidentAlert(deps(), { tenantId, incidentId: id2 });
     expect(sent).toHaveLength(2); // fallback: both manage holders
+  });
+
+  it('IN-J02d: total delivery failure never stamps — the retry delivers (IN-A1)', async () => {
+    const id = await seedIncident();
+    const failing: IncidentAlertDeps = {
+      ...deps(),
+      notify: async () => {
+        throw new Error('smtp 451 temporarily unavailable');
+      },
+    };
+    // Every send fails → the run throws (so BullMQ retries) and the
+    // stamp + event stay unwritten.
+    await expect(runIncidentAlert(failing, { tenantId, incidentId: id })).rejects.toThrow(
+      /all 2 deliveries failed/,
+    );
+    const after = await db
+      .select({ alertSentAt: schema.incidents.alertSentAt })
+      .from(schema.incidents)
+      .where(eq(schema.incidents.id, id));
+    expect(after[0]?.alertSentAt).toBeNull();
+    const events = await db
+      .select({ kind: schema.incidentEvents.kind })
+      .from(schema.incidentEvents)
+      .where(eq(schema.incidentEvents.incidentId, id));
+    expect(events.filter((e) => e.kind === 'alert_sent')).toHaveLength(0);
+
+    // The retry (working transport) fans out and stamps exactly once.
+    const result = await runIncidentAlert(deps(), { tenantId, incidentId: id });
+    expect(result.notified).toBe(2);
+    const stamped = await db
+      .select({ alertSentAt: schema.incidents.alertSentAt })
+      .from(schema.incidents)
+      .where(eq(schema.incidents.id, id));
+    expect(stamped[0]?.alertSentAt).not.toBeNull();
+  });
+
+  it('IN-J02e: partial delivery stamps — a re-send would duplicate for the delivered', async () => {
+    const id = await seedIncident();
+    let calls = 0;
+    const flaky: IncidentAlertDeps = {
+      ...deps(),
+      notify: async (recipient, incident) => {
+        calls += 1;
+        if (calls === 1) throw new Error('one mailbox bounced');
+        sent.push({ to: recipient.email, incident });
+      },
+    };
+    const result = await runIncidentAlert(flaky, { tenantId, incidentId: id });
+    expect(result.notified).toBe(1);
+    const row = await db
+      .select({ alertSentAt: schema.incidents.alertSentAt })
+      .from(schema.incidents)
+      .where(eq(schema.incidents.id, id));
+    expect(row[0]?.alertSentAt).not.toBeNull();
   });
 });

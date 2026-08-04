@@ -1,0 +1,8 @@
+{
+  "subject": "Échéance RIDDOR DÉPASSÉE — {referenceNumber} est en retard",
+  "preheader": "Un incident à déclarer sur {productName} a dépassé son délai légal de déclaration.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Le délai légal de déclaration de l'incident {referenceNumber} ({categoryLabel}) a expiré le {deadlineAt} UTC et aucune déclaration n'a été enregistrée.\n\nNe pas déclarer un incident relevant de RIDDOR constitue une infraction. Soumettez la déclaration à la HSE immédiatement et enregistrez la soumission sur l'incident — la trace d'une déclaration tardive vaut toujours mieux que rien.",
+  "cta": "Ouvrir l'incident",
+  "footer": "Vous recevez ce message car cet incident vous appartient ou vous détenez des permissions de gestion des incidents dans {productName}."
+}

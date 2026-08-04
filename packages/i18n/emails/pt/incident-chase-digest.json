@@ -1,0 +1,8 @@
+{
+  "subject": "Incidentes que precisam da sua atenção — {totalCount} item(ns)",
+  "preheader": "Há trabalho de incidentes pendente em {productName} à sua espera.",
+  "greeting": "Olá, {recipientName},",
+  "body": "Estes incidentes em {productName} estão à sua espera:\n\n{detailLines}\n\nFaça primeiro a triagem das novas comunicações — um incidente sem triagem é invisível para todas as outras salvaguardas. As investigações paradas travam o ciclo da cláusula 10.2: conclua-as, cobre as ações corretivas em atraso e registe as revisões de eficácia devidas para que os incidentes fechados permaneçam fechados.",
+  "cta": "Abrir o registo de incidentes",
+  "footer": "Está a receber esta mensagem porque é proprietário ou gestor destes registos de incidentes em {productName}."
+}

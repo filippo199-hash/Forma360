@@ -9,11 +9,11 @@
  * Everything the auditor follows from event → determination →
  * investigation → actions → effectiveness on one screen (S4).
  */
-import { ChevronLeft, ExternalLink, FileDown, Microscope } from 'lucide-react';
+import { ChevronLeft, ExternalLink, FileDown, Microscope, Pencil, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   INCIDENT_SEVERITIES,
   INVESTIGATION_LEVELS,
@@ -31,6 +31,7 @@ import {
 import { IncidentErrorText } from '../../../../src/components/incidents/incident-error';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -69,7 +70,16 @@ export default function IncidentDetailPage() {
 
   const [actionError, setActionError] = useState<unknown>(null);
   const [panel, setPanel] = useState<
-    'none' | 'triage' | 'screen' | 'submitRiddor' | 'close' | 'reopen' | 'cancel' | 'effectiveness'
+    | 'none'
+    | 'triage'
+    | 'screen'
+    | 'submitRiddor'
+    | 'close'
+    | 'reopen'
+    | 'cancel'
+    | 'effectiveness'
+    | 'edit'
+    | 'severity'
   >('none');
 
   const invalidate = async (): Promise<void> => {
@@ -108,6 +118,14 @@ export default function IncidentDetailPage() {
   const updateAbsenceMutation = trpc.incidents.updateAbsence.useMutation(mutationOpts);
   const promptReviewsMutation = trpc.incidents.promptReviews.useMutation(mutationOpts);
   const skipReviewsMutation = trpc.incidents.skipReviews.useMutation(mutationOpts);
+  // IN-A7: the correction surface — records must be correctable, with
+  // every change on the event log.
+  const updateMutation = trpc.incidents.update.useMutation(mutationOpts);
+  const setSeverityMutation = trpc.incidents.setSeverity.useMutation(mutationOpts);
+  const setLevelMutation = trpc.incidents.setInvestigationLevel.useMutation(mutationOpts);
+  const assignInvestigatorMutation = trpc.incidents.assignInvestigator.useMutation(mutationOpts);
+  const removePersonMutation = trpc.incidents.removePerson.useMutation(mutationOpts);
+  const removeAbsenceMutation = trpc.incidents.removeAbsence.useMutation(mutationOpts);
 
   // Triage form state.
   const [triSeverity, setTriSeverity] = useState('moderate');
@@ -138,6 +156,20 @@ export default function IncidentDetailPage() {
   const [selectedFras, setSelectedFras] = useState<string[]>([]);
   const [skipReason, setSkipReason] = useState('');
   const [showSkip, setShowSkip] = useState(false);
+  // IN-A7: edit-details dialog state.
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editOccurredAt, setEditOccurredAt] = useState('');
+  const [editSiteId, setEditSiteId] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  // IN-A7: severity correction + lead reassignment.
+  const [sevValue, setSevValue] = useState('');
+  const [leadValue, setLeadValue] = useState<string[]>([]);
+  const [showReassign, setShowReassign] = useState(false);
+  // IN-A9: scene evidence upload from the incident page.
+  const evidenceInputRef = useRef<HTMLInputElement | null>(null);
+  const [evidenceUploading, setEvidenceUploading] = useState(false);
+  const [evidenceUploadErrors, setEvidenceUploadErrors] = useState<string[]>([]);
 
   const { data: candidates } = trpc.incidents.reviewPromptCandidates.useQuery(undefined, {
     enabled: canManage && data !== undefined,
@@ -163,6 +195,109 @@ export default function IncidentDetailPage() {
   const { incident } = data;
   const nameOf = (id: string | null): string =>
     id === null ? '—' : (data.userNames[id] ?? id.slice(-6));
+
+  // IN-A11: surface the event payload — the why behind a reopen /
+  // cancellation / skip, who was assigned, what changed — instead of
+  // label-only rows the auditor has to chase into the database.
+  const describeEvent = (kind: string, rawDetail: unknown): string | null => {
+    if (rawDetail === null || typeof rawDetail !== 'object') return null;
+    // jsonb boundary: proven an object above; every value is shape-
+    // checked before use.
+    const detail = rawDetail as Record<string, unknown>;
+    const str = (key: string): string | null => {
+      const value = detail[key];
+      return typeof value === 'string' && value !== '' ? value : null;
+    };
+    const num = (key: string): number | null => {
+      const value = detail[key];
+      return typeof value === 'number' ? value : null;
+    };
+    const parts: string[] = [];
+    switch (kind) {
+      case 'triaged': {
+        const severity = str('severity');
+        const level = str('level');
+        if (severity !== null) parts.push(t(`severities.${severity}` as never));
+        if (level !== null) parts.push(t(`triage.levels.${level}` as never));
+        break;
+      }
+      case 'severity_changed': {
+        const from = str('from');
+        const to = str('to');
+        if (from !== null && to !== null) {
+          parts.push(`${t(`severities.${from}` as never)} → ${t(`severities.${to}` as never)}`);
+        }
+        break;
+      }
+      case 'investigation_level_changed': {
+        const from = str('from');
+        const to = str('to');
+        if (from !== null && to !== null) {
+          parts.push(
+            `${t(`triage.levels.${from}` as never)} → ${t(`triage.levels.${to}` as never)}`,
+          );
+        }
+        break;
+      }
+      case 'investigator_assigned': {
+        const userId = str('userId');
+        if (userId !== null) parts.push(nameOf(userId));
+        break;
+      }
+      case 'riddor_screened': {
+        const category = str('category');
+        if (category !== null) parts.push(t(`riddor.categories.${category}` as never));
+        break;
+      }
+      case 'riddor_submitted': {
+        const route = str('route');
+        if (route === 'online') parts.push(t('riddor.routeOnline'));
+        if (route === 'phone') parts.push(t('riddor.routePhone'));
+        const ref = str('hseReference');
+        if (ref !== null) parts.push(ref);
+        break;
+      }
+      case 'investigation_started':
+      case 'investigation_submitted':
+      case 'investigation_rejected':
+      case 'investigation_approved': {
+        const revision = num('revision');
+        if (revision !== null) parts.push(t('timeline.revision', { revision }));
+        if (detail.soleManagerOverride === true) parts.push(t('timeline.soleManagerOverride'));
+        break;
+      }
+      case 'actions_generated': {
+        const count = num('count');
+        if (count !== null) parts.push(t('timeline.actionCount', { count }));
+        break;
+      }
+      case 'alert_sent': {
+        const notified = num('notified');
+        if (notified !== null) parts.push(t('timeline.notifiedCount', { count: notified }));
+        break;
+      }
+      case 'effectiveness_recorded': {
+        const verdict = str('verdict');
+        if (verdict !== null) parts.push(t(`effectiveness.verdicts.${verdict}` as never));
+        break;
+      }
+      case 'witness_statement_added': {
+        const witnessName = str('witnessName');
+        if (witnessName !== null) parts.push(witnessName);
+        break;
+      }
+      default:
+        break;
+    }
+    // Free-text "why" fields, on whichever kind carries them.
+    const reason = str('reason');
+    if (reason !== null) parts.push(reason);
+    const note = str('note');
+    if (note !== null) parts.push(note);
+    const justification = str('justification');
+    if (justification !== null) parts.push(justification);
+    return parts.length > 0 ? parts.join(' · ') : null;
+  };
   const isTerminal = incident.status === 'closed' || incident.status === 'cancelled';
   const latestInvestigation =
     data.investigations.length > 0
@@ -198,6 +333,18 @@ export default function IncidentDetailPage() {
           <div className="flex flex-wrap items-center gap-1.5">
             <KindChip kind={incident.kind} />
             <SeverityChip severity={incident.severity} />
+            {canManage && !isTerminal ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSevValue(incident.severity);
+                  setPanel(panel === 'severity' ? 'none' : 'severity');
+                }}
+                className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+              >
+                {t('detail.change')}
+              </button>
+            ) : null}
             <IncidentStatusChip status={incident.status} />
             <RiddorChip
               category={incident.riddorCategory}
@@ -209,6 +356,28 @@ export default function IncidentDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {(canManage ||
+            (incident.reportedByUserId === data.viewerUserId && incident.status === 'reported')) &&
+          !isTerminal ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditTitle(incident.title);
+                setEditDescription(incident.description);
+                const occurred = new Date(incident.occurredAt);
+                occurred.setMinutes(occurred.getMinutes() - occurred.getTimezoneOffset());
+                setEditOccurredAt(occurred.toISOString().slice(0, 16));
+                setEditSiteId(incident.siteId ?? '');
+                setEditLocation(incident.locationText);
+                setPanel(panel === 'edit' ? 'none' : 'edit');
+              }}
+            >
+              <Pencil className="mr-1.5 h-4 w-4" />
+              {t('detail.edit')}
+            </Button>
+          ) : null}
           <Button asChild variant="outline" size="sm">
             <a href={`/api/exports/incident-pdf?incidentId=${incident.id}`} target="_blank">
               <FileDown className="mr-1.5 h-4 w-4" />
@@ -217,6 +386,113 @@ export default function IncidentDetailPage() {
           </Button>
         </div>
       </div>
+
+      {/* ── IN-A7: severity correction ── */}
+      {panel === 'severity' ? (
+        <Card>
+          <CardContent className="flex flex-wrap items-end gap-2 p-4">
+            <div className="space-y-1.5">
+              <Label>{t('detail.severityHeading')}</Label>
+              <select
+                value={sevValue}
+                onChange={(e) => setSevValue(e.target.value)}
+                className="h-9 rounded-md border bg-background px-2 text-sm"
+              >
+                {INCIDENT_SEVERITIES.map((s) => (
+                  <option key={s} value={s}>
+                    {t(`severities.${s}` as never)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              disabled={sevValue === incident.severity || setSeverityMutation.isPending}
+              onClick={() =>
+                setSeverityMutation.mutate({ incidentId, severity: sevValue as never })
+              }
+            >
+              {t('common.save')}
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setPanel('none')}>
+              {t('common.cancel')}
+            </Button>
+            <p className="w-full text-xs text-muted-foreground">{t('detail.severityHint')}</p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* ── IN-A7: edit details ── */}
+      {panel === 'edit' ? (
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <h2 className="text-sm font-semibold">{t('detail.editHeading')}</h2>
+            <div className="space-y-1.5">
+              <Label>{t('new.whatHappened')}</Label>
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                maxLength={300}
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>{t('new.when')}</Label>
+                <Input
+                  type="datetime-local"
+                  value={editOccurredAt}
+                  onChange={(e) => setEditOccurredAt(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t('new.location')}</Label>
+                <Input
+                  value={editLocation}
+                  onChange={(e) => setEditLocation(e.target.value)}
+                  maxLength={500}
+                />
+              </div>
+            </div>
+            <SiteSelector
+              value={editSiteId === '' ? [] : [editSiteId]}
+              onChange={(next) => setEditSiteId(next[0] ?? '')}
+              multiple={false}
+              label={t('new.site')}
+              placeholder={t('new.sitePlaceholder')}
+            />
+            <div className="space-y-1.5">
+              <Label>{t('new.description')}</Label>
+              <Textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                disabled={editTitle.trim() === '' || updateMutation.isPending}
+                onClick={() =>
+                  updateMutation.mutate({
+                    incidentId,
+                    title: editTitle.trim(),
+                    description: editDescription,
+                    occurredAt: new Date(editOccurredAt),
+                    siteId: editSiteId === '' ? null : editSiteId,
+                    locationText: editLocation,
+                  })
+                }
+              >
+                {t('common.save')}
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setPanel('none')}>
+                {t('common.cancel')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* ── Banners ── */}
       {riddorOverdue ? (
@@ -283,36 +559,57 @@ export default function IncidentDetailPage() {
             </div>
             {panel === 'triage' ? (
               <div className="space-y-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label>{t('triage.severity')}</Label>
-                    <select
-                      value={triSeverity}
-                      onChange={(e) => setTriSeverity(e.target.value)}
-                      className="h-9 w-full rounded-md border bg-background px-2 text-sm"
-                    >
-                      {INCIDENT_SEVERITIES.map((s) => (
-                        <option key={s} value={s}>
-                          {t(`severities.${s}` as never)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>{t('triage.level')}</Label>
-                    <select
-                      value={triLevel}
-                      onChange={(e) => setTriLevel(e.target.value)}
-                      className="h-9 w-full rounded-md border bg-background px-2 text-sm"
-                    >
-                      {INVESTIGATION_LEVELS.map((l) => (
-                        <option key={l} value={l}>
-                          {t(`triage.levels.${l}` as never)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                {(() => {
+                  // IN-A3: the level floor follows the severity pick (and
+                  // any existing reportable screening) live in the dialog.
+                  const floorFull =
+                    triSeverity === 'serious' ||
+                    triSeverity === 'major' ||
+                    (incident.riddorCategory !== null &&
+                      isRiddorReportable(incident.riddorCategory));
+                  return (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label>{t('triage.severity')}</Label>
+                        <select
+                          value={triSeverity}
+                          onChange={(e) => {
+                            setTriSeverity(e.target.value);
+                            if (e.target.value === 'serious' || e.target.value === 'major') {
+                              setTriLevel('full');
+                            }
+                          }}
+                          className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        >
+                          {INCIDENT_SEVERITIES.map((s) => (
+                            <option key={s} value={s}>
+                              {t(`severities.${s}` as never)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>{t('triage.level')}</Label>
+                        <select
+                          value={floorFull ? 'full' : triLevel}
+                          onChange={(e) => setTriLevel(e.target.value)}
+                          className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        >
+                          {INVESTIGATION_LEVELS.map((l) => (
+                            <option key={l} value={l} disabled={floorFull && l === 'basic'}>
+                              {t(`triage.levels.${l}` as never)}
+                            </option>
+                          ))}
+                        </select>
+                        {floorFull ? (
+                          <p className="text-xs text-muted-foreground">
+                            {t('triage.levelFloorHint')}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <GroupUserSelector
                   value={triLead}
                   onChange={setTriLead}
@@ -338,7 +635,13 @@ export default function IncidentDetailPage() {
                       triageMutation.mutate({
                         incidentId,
                         severity: triSeverity as never,
-                        investigationLevel: triLevel as never,
+                        // IN-A3: send the floored level, matching the UI.
+                        investigationLevel: (triSeverity === 'serious' ||
+                        triSeverity === 'major' ||
+                        (incident.riddorCategory !== null &&
+                          isRiddorReportable(incident.riddorCategory))
+                          ? 'full'
+                          : triLevel) as never,
                         leadInvestigatorUserId: triLead[0] ?? '',
                         ...(triConfidential !== null ? { confidential: triConfidential } : {}),
                       })
@@ -389,21 +692,43 @@ export default function IncidentDetailPage() {
                         </span>
                       </p>
                       {!isTerminal && (canManage || canInvestigate) ? (
-                        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
-                          <input
-                            type="checkbox"
-                            className="h-3.5 w-3.5"
-                            checked={person.returnedToWork}
-                            onChange={(e) =>
-                              updatePersonMutation.mutate({
-                                incidentId,
-                                personId: person.id,
-                                returnedToWork: e.target.checked,
-                              })
-                            }
-                          />
-                          {t('people.returnedToWork')}
-                        </label>
+                        <div className="flex items-center gap-2">
+                          <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
+                            <input
+                              type="checkbox"
+                              className="h-3.5 w-3.5"
+                              checked={person.returnedToWork}
+                              onChange={(e) =>
+                                updatePersonMutation.mutate({
+                                  incidentId,
+                                  personId: person.id,
+                                  returnedToWork: e.target.checked,
+                                })
+                              }
+                            />
+                            {t('people.returnedToWork')}
+                          </label>
+                          {canManage ? (
+                            /* IN-A7: personal-injury data added by mistake
+                               must be removable; the event log keeps the
+                               audit trail. */
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (window.confirm(t('people.removeConfirm'))) {
+                                  removePersonMutation.mutate({
+                                    incidentId,
+                                    personId: person.id,
+                                  });
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          ) : null}
+                        </div>
                       ) : null}
                     </div>
                     {(injury.injuryKinds?.length ?? 0) > 0 ||
@@ -436,24 +761,45 @@ export default function IncidentDetailPage() {
                                 ? fmtDate(absence.toDate, locale)
                                 : t('people.ongoing')}
                             </span>
-                            {absence.toDate === null &&
-                            !isTerminal &&
-                            (canManage || canInvestigate) ? (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  updateAbsenceMutation.mutate({
-                                    incidentId,
-                                    absenceId: absence.id,
-                                    toDate: new Date().toISOString().slice(0, 10),
-                                  })
-                                }
-                              >
-                                {t('people.endAbsence')}
-                              </Button>
-                            ) : null}
+                            <span className="flex items-center gap-1">
+                              {absence.toDate === null &&
+                              !isTerminal &&
+                              (canManage || canInvestigate) ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    updateAbsenceMutation.mutate({
+                                      incidentId,
+                                      absenceId: absence.id,
+                                      toDate: new Date().toISOString().slice(0, 10),
+                                    })
+                                  }
+                                >
+                                  {t('people.endAbsence')}
+                                </Button>
+                              ) : null}
+                              {!isTerminal && canManage ? (
+                                /* IN-A7: a mistyped absence drives the
+                                   RIDDOR re-screen — it must be removable. */
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (window.confirm(t('people.removeAbsenceConfirm'))) {
+                                      removeAbsenceMutation.mutate({
+                                        incidentId,
+                                        absenceId: absence.id,
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              ) : null}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -570,6 +916,113 @@ export default function IncidentDetailPage() {
               </Button>
             </div>
           ) : null}
+        </CardContent>
+      </Card>
+
+      {/* ── IN-A9: evidence & statements — visible from the moment they
+             exist, not only once an investigation starts. OH needs the
+             sharps photos immediately. ── */}
+      <Card>
+        <CardContent className="space-y-3 p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold">{t('evidence.heading')}</h2>
+            {!isTerminal && (canManage || canInvestigate) ? (
+              <div>
+                <input
+                  ref={evidenceInputRef}
+                  type="file"
+                  accept="image/*,video/mp4,video/quicktime,video/webm,application/pdf"
+                  capture="environment"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (files === null || files.length === 0) return;
+                    void (async () => {
+                      setEvidenceUploading(true);
+                      const failed: string[] = [];
+                      try {
+                        for (const file of Array.from(files)) {
+                          try {
+                            const form = new FormData();
+                            form.append('incidentId', incidentId);
+                            form.append('file', file);
+                            const res = await fetch('/api/upload/incident-evidence', {
+                              method: 'POST',
+                              body: form,
+                            });
+                            if (!res.ok) {
+                              failed.push(file.name);
+                              continue;
+                            }
+                            const body = (await res.json()) as {
+                              storageKey: string;
+                              filename: string;
+                            };
+                            await utils.client.incidents.addEvidence.mutate({
+                              incidentId,
+                              kind: file.type.startsWith('image/') ? 'photo' : 'document',
+                              storageKey: body.storageKey,
+                              filename: body.filename,
+                            });
+                          } catch {
+                            failed.push(file.name);
+                          }
+                        }
+                        await invalidate();
+                      } finally {
+                        setEvidenceUploading(false);
+                        setEvidenceUploadErrors(failed);
+                      }
+                    })();
+                    e.target.value = '';
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={evidenceUploading}
+                  onClick={() => evidenceInputRef.current?.click()}
+                >
+                  {evidenceUploading ? t('new.uploading') : t('evidence.addFiles')}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+          {evidenceUploadErrors.length > 0 ? (
+            <p className="rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+              {t('new.uploadFailed', { files: evidenceUploadErrors.join(', ') })}
+            </p>
+          ) : null}
+          {data.evidence.length === 0 && data.witnesses.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('evidence.none')}</p>
+          ) : (
+            <div className="space-y-1">
+              {data.evidence.map((item) => (
+                <div key={item.id} className="flex items-baseline gap-2 text-sm">
+                  <span className="rounded-full border px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {t(`evidenceKinds.${item.kind}` as never)}
+                  </span>
+                  <span>{item.filename ?? item.caption}</span>
+                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                    {nameOf(item.collectedByUserId)}
+                  </span>
+                </div>
+              ))}
+              {data.witnesses.map((witness) => (
+                <div key={witness.id} className="flex items-baseline gap-2 text-sm">
+                  <span className="rounded-full border px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {t('evidence.witness')}
+                  </span>
+                  <span>{witness.witnessName}</span>
+                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                    {nameOf(witness.takenByUserId)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -787,15 +1240,83 @@ export default function IncidentDetailPage() {
             </p>
           ) : (
             <div className="space-y-1 text-sm">
-              <p>
+              <p className="flex flex-wrap items-center gap-x-1.5">
                 <span className="text-muted-foreground">{t('investigation.level')}: </span>
                 {incident.investigationLevel !== null
                   ? t(`triage.levels.${incident.investigationLevel}` as never)
                   : '—'}
-                {' · '}
-                <span className="text-muted-foreground">{t('investigation.lead')}: </span>
+                {/* IN-A3b: upgrade path — basic can always step up. */}
+                {canManage && !isTerminal && incident.investigationLevel === 'basic' ? (
+                  <button
+                    type="button"
+                    disabled={setLevelMutation.isPending}
+                    onClick={() => setLevelMutation.mutate({ incidentId, level: 'full' })}
+                    className="text-xs text-primary underline-offset-2 hover:underline"
+                  >
+                    {t('investigation.upgradeLevel')}
+                  </button>
+                ) : null}
+                <span className="text-muted-foreground"> · {t('investigation.lead')}: </span>
                 {nameOf(incident.leadInvestigatorUserId)}
+                {/* IN-A7: the lead can be reassigned any time — leave on
+                    holiday must not strand the incident. */}
+                {canManage && !isTerminal ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLeadValue(
+                        incident.leadInvestigatorUserId === null
+                          ? []
+                          : [incident.leadInvestigatorUserId],
+                      );
+                      setShowReassign(!showReassign);
+                    }}
+                    className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  >
+                    {t('detail.change')}
+                  </button>
+                ) : null}
               </p>
+              {showReassign ? (
+                <div className="flex flex-wrap items-end gap-2 rounded-md border p-3">
+                  <div className="min-w-56 flex-1">
+                    <GroupUserSelector
+                      value={leadValue}
+                      onChange={setLeadValue}
+                      mode="users"
+                      multiple={false}
+                      label={t('investigation.reassignLead')}
+                      placeholder={t('triage.leadPlaceholder')}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={
+                      leadValue[0] === undefined ||
+                      leadValue[0] === incident.leadInvestigatorUserId ||
+                      assignInvestigatorMutation.isPending
+                    }
+                    onClick={() => {
+                      assignInvestigatorMutation.mutate({
+                        incidentId,
+                        userId: leadValue[0] ?? '',
+                      });
+                      setShowReassign(false);
+                    }}
+                  >
+                    {t('common.save')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowReassign(false)}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                </div>
+              ) : null}
               <p>
                 <span className="text-muted-foreground">{t('investigation.revision')}: </span>
                 {latestInvestigation.revision}
@@ -833,7 +1354,8 @@ export default function IncidentDetailPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-medium">{finding.description}</p>
                     <span className="text-xs text-muted-foreground">
-                      {t(`causalFactors.${finding.category}` as never)} · {finding.priority}
+                      {t(`causalFactors.${finding.category}` as never)} ·{' '}
+                      {t(`priorities.${finding.priority}` as never)}
                     </span>
                   </div>
                   {action !== undefined ? (
@@ -1147,19 +1669,27 @@ export default function IncidentDetailPage() {
         <CardContent className="space-y-2 p-4">
           <h2 className="text-sm font-semibold">{t('timeline.heading')}</h2>
           <div className="space-y-1.5">
-            {data.events.map((event) => (
-              <div key={event.id} className="flex items-baseline gap-2 text-sm">
-                <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                  {fmt(event.createdAt, locale)}
-                </span>
-                <span>{t(`events.${event.kind}` as never)}</span>
-                <span className="text-xs text-muted-foreground">
-                  {event.actorUserId === 'system'
-                    ? t('timeline.system')
-                    : nameOf(event.actorUserId)}
-                </span>
-              </div>
-            ))}
+            {data.events.map((event) => {
+              const detailLine = describeEvent(event.kind, event.detail);
+              return (
+                <div key={event.id} className="text-sm">
+                  <div className="flex items-baseline gap-2">
+                    <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                      {fmt(event.createdAt, locale)}
+                    </span>
+                    <span>{t(`events.${event.kind}` as never)}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {event.actorUserId === 'system'
+                        ? t('timeline.system')
+                        : nameOf(event.actorUserId)}
+                    </span>
+                  </div>
+                  {detailLine !== null ? (
+                    <p className="pl-4 text-xs text-muted-foreground">{detailLine}</p>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

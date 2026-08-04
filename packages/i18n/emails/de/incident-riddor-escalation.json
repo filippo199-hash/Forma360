@@ -1,0 +1,8 @@
+{
+  "subject": "RIDDOR-Frist ÜBERSCHRITTEN — {referenceNumber} ist überfällig",
+  "preheader": "Ein meldepflichtiger Vorfall auf {productName} hat seine gesetzliche Meldefrist überschritten.",
+  "greeting": "Hallo {recipientName},",
+  "body": "Die gesetzliche Meldefrist für den Vorfall {referenceNumber} ({categoryLabel}) ist am {deadlineAt} UTC abgelaufen, und es wurde keine Meldung erfasst.\n\nDie unterlassene Meldung eines RIDDOR-meldepflichtigen Vorfalls ist eine Straftat. Reichen Sie die Meldung unverzüglich bei der HSE ein und erfassen Sie die Einreichung am Vorfall — der Nachweis einer verspäteten Meldung ist immer noch besser als keiner.",
+  "cta": "Vorfall öffnen",
+  "footer": "Sie erhalten diese Nachricht, weil Ihnen dieser Vorfall gehört oder Sie in {productName} Berechtigungen für das Vorfallmanagement besitzen."
+}

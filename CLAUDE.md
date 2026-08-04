@@ -563,9 +563,61 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   evidence/witness/events), migration 0063 incl. the PF-8 permission
   backfill onto existing tenants' system sets; the IN-J04
   email-registry-completeness test walks `emails/en/` (and fixed four
-  previously unregistered templates incl. both permit-expiry mails);
+  previously unregistered templates incl. both permit-expiry mails; now
+  exact 1:1 both directions); HSE review + hardening in
+  `docs/reviews/incidents-hse-expert-review.md` +
+  `docs/reviews/incidents-hse-review-response.md` (ADR 0013 amendment,
+  decisions 9–10): alert worker is truly notify-then-stamp with BullMQ
+  retries (IN-A1), `provisionalSeverity` at create from hospitalisation
+  + optional reporter judgement with an untriaged overview counter and
+  48 h chase bucket (IN-A2), the investigation-level floor is enforced
+  at triage/change/screen/submit with `setInvestigationLevel` upgrades
+  and auto-raise (IN-A3/A3b), approval demands per-finding assignee +
+  due date (IN-A6), sole-manager approval override with logged
+  justification when no independent approver exists (IN-A8),
+  correction UI for update/setSeverity/assignInvestigator/removePerson/
+  removeAbsence/updateFinding (IN-A7), evidence visible pre-
+  investigation + full frozen-revision rendering (IN-A9/A9b),
+  translated incident emails ×5 locales with locale-aware sends
+  (IN-A10), timeline detail payloads rendered (IN-A11); offline items
+  IN-A2b/IN-A12 deferred to the next stage;
   edge-case IDs IN-E01..E06 in `incidents.test.ts` (shared),
-  IN-E02..E20 (router), IN-J01..J03 in the worker tests). Each router is
+  IN-E02..E20 + IN-A2..A8 (router), IN-J01..J03 + IN-J02d/e + IN-J03c
+  in the worker tests) and `rams` (module B6 — Risk Assessment & Method
+  Statement at `packages/api/src/routers/rams.ts` +
+  `apps/web/app/[locale]/rams` (register with needs-attention strip + CSV,
+  three-motion start screen, pack page, builder, mobile offline briefing,
+  method-statement library, contractor-review workspace); domain lib
+  `packages/shared/src/rams.ts` (ADR 0015): two lifecycles with explicit
+  self-transitions for republish / re-issue, the step content model where
+  steps **reference** hazards in bound RA versions rather than restating
+  them (dense 1..n sequencing enforced), the issue gate — whose headline
+  rule `unreferencedHighRiskHazards` refuses a pack where a high-residual
+  bound hazard is addressed by no step — plus PPE / trade / personnel /
+  hold-point vocabularies, the review checklist, `RAMS_AUTHOR_ATTESTATION`
+  (untranslated by design; snapshotted onto every issued version) and the
+  `MS-` / `RAMS-` 6-digit reference formatters; eight seeded starter
+  templates carry the authoring-effort load. Binding is by RA **version**,
+  and issue freezes a full snapshot (ADR 0007) so a later RA revision
+  never alters an issued pack; re-issue writes version n+1 and leaves
+  version n's briefings readable-but-not-current, which is what answers
+  "what was in force on the day". Briefings are append-only, version-
+  anchored, batched for group capture and offline-queued with **surfaced**
+  sync failures (the incidents IN-A4 / IN-A12 lesson). Client issue rides
+  the existing opaque-share-token family (`/s/[token]`) with an acceptance
+  decision recorded against the exact version; the receive side
+  (`rams_reviews`) reviews contractors' packs over the existing
+  `contractor_documents` record. Permits gain `requiresRamsPack` + the two
+  links that satisfy it (own issued pack version / in-date accepted
+  review) — seeded types keep the column default so existing tenants are
+  unaffected. Pack PDF via `renderRamsPdf` (`/render/rams/[packVersionId]`
+  + `/api/exports/rams-pdf`); `suggestBindings` ranks the tenant's own
+  published RAs and COSHH records against the job deterministically (a
+  rule, not a model — §12 of the spec); schema
+  `packages/db/src/schema/rams.ts` (11 tables), migration 0069 incl. the
+  PF-8 rams.* permission backfill; edge-case IDs RS-E01..E06/E13/E16 in
+  `rams.test.ts` (shared), RS-E03..E12/E15/E17/E18 (router), RS-E14 in
+  `permits.test.ts`). Each router is
   built with `{ enabled }` from the brand catalogue; nav + API both gate on
   it.
 - **Everything internal stays `forma360`** (package scope, queue names,
@@ -588,6 +640,8 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0011 — Risk-assessment versioning, sign-off and residual-risk coherence](./docs/adr/0011-risk-assessment-versioning-and-sign-off.md)
 - [0012 — Permit-to-work lifecycle, signature model and expiry escalation](./docs/adr/0012-permit-lifecycle-and-signature-model.md)
 - [0013 — Incident lifecycle, investigation model and RIDDOR deadline engine](./docs/adr/0013-incident-lifecycle-and-riddor-engine.md)
+- [0014 — Navigation information architecture](./docs/adr/0014-navigation-information-architecture.md)
+- [0015 — Method-statement content model, RAMS pack versioning and briefing records](./docs/adr/0015-rams-method-statement-and-pack-model.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase

@@ -20,6 +20,7 @@ import {
   CONTAMINATION_STATUSES,
   DANGEROUS_OCCURRENCE_CATEGORIES,
   INCIDENT_KINDS,
+  INCIDENT_SEVERITIES,
   INJURY_KINDS,
   PERPETRATOR_TYPES,
   PERSON_CATEGORIES,
@@ -33,6 +34,7 @@ import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 const DRAFT_KEY = 'forma360:incident:draft:new';
@@ -49,6 +51,8 @@ interface PersonDraft {
 interface FormDraft {
   title: string;
   kind: IncidentKind;
+  /** IN-A2: optional reporter severity judgement ('' = unsure/skip). */
+  severity: string;
   occurredAt: string; // datetime-local value
   siteId: string;
   locationText: string;
@@ -67,6 +71,7 @@ function emptyDraft(): FormDraft {
   return {
     title: '',
     kind: 'injury',
+    severity: '',
     occurredAt: nowLocalValue(),
     siteId: '',
     locationText: '',
@@ -110,12 +115,14 @@ export default function NewIncidentPage() {
   const locale = params.locale ?? 'en';
   const router = useRouter();
 
+  const canReport = useHasPermission('incidents.report');
   const [draft, setDraft] = useState<FormDraft>(emptyDraft);
   const [restored, setRestored] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedCount, setUploadedCount] = useState(0);
+  const [uploadErrors, setUploadErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const utils = trpc.useUtils();
 
@@ -151,9 +158,13 @@ export default function NewIncidentPage() {
 
   function submit(): void {
     setSubmitError(null);
+    // Validated lookup (not a cast): a stale/hand-edited localStorage
+    // draft with a junk severity degrades to "not stated".
+    const severity = INCIDENT_SEVERITIES.find((s) => s === draft.severity);
     createMutation.mutate({
       title: draft.title,
       kind: draft.kind,
+      ...(severity !== undefined ? { severity } : {}),
       occurredAt: new Date(draft.occurredAt),
       ...(draft.siteId !== '' ? { siteId: draft.siteId } : {}),
       locationText: draft.locationText,
@@ -178,28 +189,58 @@ export default function NewIncidentPage() {
   async function uploadFiles(files: FileList): Promise<void> {
     if (createdId === null) return;
     setUploading(true);
+    // IN-A4: a dropped photo must never look like a success — collect
+    // per-file failures and say so, loudly, on the one screen whose own
+    // copy says photos are worth ten statements.
+    const failed: string[] = [];
     try {
       for (const file of Array.from(files)) {
-        const form = new FormData();
-        form.append('incidentId', createdId);
-        form.append('file', file);
-        const res = await fetch('/api/upload/incident-evidence', { method: 'POST', body: form });
-        if (!res.ok) continue;
-        const body = (await res.json()) as { storageKey: string; filename: string };
-        await utils.client.incidents.addEvidence.mutate({
-          incidentId: createdId,
-          kind: file.type.startsWith('image/') ? 'photo' : 'document',
-          storageKey: body.storageKey,
-          filename: body.filename,
-        });
-        setUploadedCount((n) => n + 1);
+        try {
+          const form = new FormData();
+          form.append('incidentId', createdId);
+          form.append('file', file);
+          const res = await fetch('/api/upload/incident-evidence', { method: 'POST', body: form });
+          if (!res.ok) {
+            failed.push(file.name);
+            continue;
+          }
+          const body = (await res.json()) as { storageKey: string; filename: string };
+          await utils.client.incidents.addEvidence.mutate({
+            incidentId: createdId,
+            kind: file.type.startsWith('image/') ? 'photo' : 'document',
+            storageKey: body.storageKey,
+            filename: body.filename,
+          });
+          setUploadedCount((n) => n + 1);
+        } catch {
+          failed.push(file.name);
+        }
       }
     } finally {
       setUploading(false);
+      setUploadErrors(failed);
     }
   }
 
   const needsPersonBlock = draft.kind === 'injury' || draft.kind === 'ill_health';
+
+  // IN-A14: gate the page on incidents.report up front — nobody fills a
+  // whole form only to fail at submit.
+  if (!canReport) {
+    return (
+      <div className="mx-auto w-full max-w-xl space-y-4 p-4 md:p-6">
+        <h1 className="text-xl font-semibold">{t('new.title')}</h1>
+        <Card>
+          <CardContent className="space-y-3 p-6 text-sm text-muted-foreground">
+            <p>{t('new.noPermission')}</p>
+            <Button asChild variant="outline">
+              <Link href={`/${locale}/incidents`}>{t('new.backToRegister')}</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // ── Post-create photo step ────────────────────────────────────────────────
   if (createdId !== null) {
@@ -210,7 +251,7 @@ export default function NewIncidentPage() {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*,application/pdf"
+          accept="image/*,video/mp4,video/quicktime,video/webm,application/pdf"
           capture="environment"
           multiple
           className="hidden"
@@ -231,6 +272,11 @@ export default function NewIncidentPage() {
           <Camera className="mr-1.5 h-4 w-4" />
           {uploading ? t('new.uploading') : t('new.addPhotos')}
         </Button>
+        {uploadErrors.length > 0 ? (
+          <p className="rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+            {t('new.uploadFailed', { files: uploadErrors.join(', ') })}
+          </p>
+        ) : null}
         {uploadedCount > 0 ? (
           <p className="text-sm text-muted-foreground">
             {t('new.uploadedCount', { count: uploadedCount })}
@@ -295,6 +341,28 @@ export default function NewIncidentPage() {
             {draft.kind === 'sharps_exposure' || draft.kind === 'violence_aggression' ? (
               <p className="text-xs text-muted-foreground">{t('new.confidentialHint')}</p>
             ) : null}
+          </div>
+          {/* IN-A2: optional severity judgement — a serious pick alerts
+              managers immediately instead of waiting for triage. */}
+          <div className="space-y-1.5">
+            <Label>{t('new.severity')}</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {INCIDENT_SEVERITIES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => patch({ severity: draft.severity === s ? '' : s })}
+                  className={`min-h-11 rounded-md border px-3 py-2 text-sm ${
+                    draft.severity === s
+                      ? 'border-primary bg-primary/10 font-medium'
+                      : 'hover:bg-muted/50'
+                  }`}
+                >
+                  {t(`severities.${s}` as never)}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">{t('new.severityHint')}</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="incident-occurred">{t('new.when')}</Label>
@@ -648,7 +716,7 @@ export default function NewIncidentPage() {
                             };
                             patch({ persons });
                           }}
-                          className={`rounded-full border px-2 py-0.5 text-xs ${
+                          className={`min-h-11 rounded-full border px-3 py-2 text-sm ${
                             person.injuryKinds.includes(kind)
                               ? 'border-primary bg-primary/10 font-medium'
                               : 'text-muted-foreground'
@@ -677,7 +745,7 @@ export default function NewIncidentPage() {
                             };
                             patch({ persons });
                           }}
-                          className={`rounded-full border px-2 py-0.5 text-xs ${
+                          className={`min-h-11 rounded-full border px-3 py-2 text-sm ${
                             person.bodyParts.includes(part)
                               ? 'border-primary bg-primary/10 font-medium'
                               : 'text-muted-foreground'

@@ -21,6 +21,8 @@ import {
   loadFraSnapshot,
   hashFraSnapshot,
   loadIncidentSnapshot,
+  loadRamsSnapshot,
+  hashRamsSnapshot,
   hashIncidentSnapshot,
   loadInspectionSnapshot,
   hashInspectionSnapshot,
@@ -232,6 +234,45 @@ export async function renderIncidentPdf(
   };
 }
 
+/**
+ * Render a RAMS pack version to PDF (FreeHS module B6) — the combined
+ * artefact the client receives and the crew is briefed from: job
+ * context, the sequenced method statement with its hold points, the
+ * bound risk assessments and COSHH records, supporting documents, the
+ * author attestation and the briefing register.
+ *
+ * Renders the FROZEN version row, so a pack issued at v1 always prints
+ * as it was issued (RS-E07). Same pipeline as permits / FRAs / incidents.
+ */
+export async function renderRamsPdf(
+  deps: RenderDeps,
+  input: { tenantId: string; packId: string; packVersionId: string },
+): Promise<RenderResult> {
+  const snap = await loadRamsSnapshot(deps.db, {
+    tenantId: input.tenantId,
+    packVersionId: input.packVersionId,
+  });
+  if (snap === null) {
+    throw new Error(`RAMS pack version not found: ${input.packVersionId}`);
+  }
+  const hash = hashRamsSnapshot(snap);
+  const key = `${input.tenantId}/rams/${input.packId}/pdf-v${snap.version.versionNumber}-${hash}.pdf`;
+
+  const bytes = await renderPdfBytes(deps, {
+    url: buildRenderUrl(deps, 'rams', snap.version.id),
+    stubTitle: snap.pack.title,
+  });
+
+  await uploadPdf(deps, { key, bytes });
+
+  return {
+    key,
+    bytes: bytes.length,
+    cached: false,
+    stub: isStub(bytes),
+  };
+}
+
 /** Build the R2 object key for a given inspection + content hash. */
 export function pdfObjectKey(tenantId: string, inspectionId: string, hash: string): string {
   return `${tenantId}/inspections/${inspectionId}/pdf-${hash}.pdf`;
@@ -397,7 +438,7 @@ function resolveSystemChromium(): string {
  */
 function buildRenderUrl(
   deps: RenderDeps,
-  kind: 'inspection' | 'risk-assessment' | 'permit' | 'fra' | 'incident',
+  kind: 'inspection' | 'risk-assessment' | 'permit' | 'fra' | 'incident' | 'rams',
   subjectId: string,
 ): string {
   const token = signRenderToken({

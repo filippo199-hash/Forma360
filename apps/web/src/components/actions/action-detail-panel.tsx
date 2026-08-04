@@ -685,7 +685,8 @@ function SourceCard({
       | 'fire_risk_assessment'
       | 'fire_logbook_entry'
       | 'fire_door_inspection'
-      | 'incident';
+      | 'incident'
+      | 'rams';
     referenceNumber: string | null;
     title: string | null;
     href?: string | null;
@@ -728,7 +729,9 @@ function SourceCard({
                     ? t('sourceLinkFireRiskAssessment', { referenceNumber: reference })
                     : source.type === 'fire_logbook_entry'
                       ? t('sourceLinkFireLogbookEntry')
-                      : t('sourceLinkFireDoorInspection')}
+                      : source.type === 'rams'
+                        ? t('sourceLinkRams', { referenceNumber: reference })
+                        : t('sourceLinkFireDoorInspection')}
       </p>
       <Button asChild type="button" variant="outline" size="sm">
         <Link href={href} target="_blank">

@@ -1,0 +1,8 @@
+{
+  "subject": "Incidents nécessitant votre attention — {totalCount} élément(s)",
+  "preheader": "Du travail sur les incidents vous attend sur {productName}.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Ces incidents sur {productName} vous attendent :\n\n{detailLines}\n\nTriez d'abord les nouveaux signalements — un incident non trié est invisible pour toutes les autres protections. Les enquêtes au point mort bloquent la boucle 10.2 : concluez-les, relancez les actions correctives en retard et enregistrez les revues d'efficacité dues pour que les incidents clos restent clos.",
+  "cta": "Ouvrir le registre des incidents",
+  "footer": "Vous recevez ce message car vous possédez ou gérez ces dossiers d'incident dans {productName}."
+}

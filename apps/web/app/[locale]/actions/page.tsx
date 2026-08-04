@@ -475,7 +475,19 @@ export default function ActionsListPage() {
   // filtered count would render an empty page.
   useEffect(() => {
     setOffset(0);
-  }, [status, source, priority, siteFilter, query, assignedToMe, overdueOnly, includeArchived, hideClosed, sortBy, view]);
+  }, [
+    status,
+    source,
+    priority,
+    siteFilter,
+    query,
+    assignedToMe,
+    overdueOnly,
+    includeArchived,
+    hideClosed,
+    sortBy,
+    view,
+  ]);
   const pagedInput = { ...listInput, offset };
   const { data: page, isLoading, error } = trpc.actions.list.useQuery(pagedInput);
   const { data: myCounts } = trpc.actions.myCounts.useQuery();

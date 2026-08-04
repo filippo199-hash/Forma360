@@ -1,0 +1,303 @@
+'use client';
+
+/**
+ * Start a RAMS pack.
+ *
+ * Three motions, all of which exist to avoid a blank page — the whole
+ * adoption risk for this module is authoring effort:
+ *   1. from a library method statement (pre-fills six to ten sequenced
+ *      steps, hold points, emergency block);
+ *   2. by cloning a previous pack wholesale — bindings, COSHH,
+ *      documents and tailored steps — which is the commonest real
+ *      motion ("same as the Riverside job");
+ *   3. blank, for the rare job that fits neither.
+ *
+ * Everything is on one screen: pick a source, fill the job context, and
+ * one button lands you in the builder. The library is seeded on first
+ * visit if the tenant has never used it, so option 1 is never empty.
+ */
+import { ArrowRight, Copy, FileStack, FilePlus2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Button } from '../../../../src/components/ui/button';
+import { Card, CardContent } from '../../../../src/components/ui/card';
+import { Input } from '../../../../src/components/ui/input';
+import { Label } from '../../../../src/components/ui/label';
+import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { Textarea } from '../../../../src/components/ui/textarea';
+import { trpc } from '../../../../src/lib/trpc/client';
+
+type Source = 'library' | 'duplicate' | 'blank';
+
+export default function NewRamsPackPage() {
+  const t = useTranslations('rams');
+  const params = useParams<{ locale: string }>();
+  const locale = params.locale;
+  const router = useRouter();
+
+  const [source, setSource] = useState<Source>('library');
+  const [methodStatementId, setMethodStatementId] = useState<string | null>(null);
+  const [fromPackId, setFromPackId] = useState<string | null>(null);
+  const [title, setTitle] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [siteId, setSiteId] = useState<string>('');
+  const [locationText, setLocationText] = useState('');
+  const [supervisorName, setSupervisorName] = useState('');
+  const [plannedFrom, setPlannedFrom] = useState('');
+  const [plannedTo, setPlannedTo] = useState('');
+
+  const utils = trpc.useUtils();
+  const templates = trpc.rams.methodStatements.list.useQuery({ templatesOnly: true });
+  const previous = trpc.rams.packs.list.useQuery({ limit: 25 });
+  const sites = trpc.sites.list.useQuery();
+  const seedLibrary = trpc.rams.methodStatements.seedLibrary.useMutation({
+    onSuccess: () => {
+      void utils.rams.methodStatements.list.invalidate();
+    },
+  });
+
+  // Seed the starter library the first time someone opens this screen on
+  // an empty tenant, so "start from a template" is never an empty list.
+  const templateCount = templates.data?.length;
+  useEffect(() => {
+    if (templateCount === 0 && !seedLibrary.isPending && seedLibrary.isIdle) {
+      seedLibrary.mutate();
+    }
+  }, [templateCount, seedLibrary]);
+
+  const create = trpc.rams.packs.create.useMutation({
+    onSuccess: (result) => {
+      router.push(`/${locale}/rams/${result.packId}/build`);
+    },
+  });
+
+  const canSubmit =
+    title.trim().length > 0 &&
+    (source === 'blank' ||
+      (source === 'library' && methodStatementId !== null) ||
+      (source === 'duplicate' && fromPackId !== null));
+
+  function submit(): void {
+    create.mutate({
+      title: title.trim(),
+      clientName: clientName.trim(),
+      locationText: locationText.trim(),
+      supervisorName: supervisorName.trim(),
+      ...(siteId.length > 0 ? { siteId } : {}),
+      ...(plannedFrom.length > 0 ? { plannedFrom: new Date(plannedFrom) } : {}),
+      ...(plannedTo.length > 0 ? { plannedTo: new Date(plannedTo) } : {}),
+      ...(source === 'library' && methodStatementId !== null ? { methodStatementId } : {}),
+      ...(source === 'duplicate' && fromPackId !== null ? { fromPackId } : {}),
+    });
+  }
+
+  const SOURCES: ReadonlyArray<{
+    key: Source;
+    icon: typeof FileStack;
+    label: string;
+    hint: string;
+  }> = [
+    {
+      key: 'library',
+      icon: FileStack,
+      label: t('new.fromLibrary'),
+      hint: t('new.fromLibraryHint'),
+    },
+    {
+      key: 'duplicate',
+      icon: Copy,
+      label: t('new.duplicate'),
+      hint: t('new.duplicateHint'),
+    },
+    { key: 'blank', icon: FilePlus2, label: t('new.blank'), hint: t('new.blankHint') },
+  ];
+
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-6">
+      <h1 className="mb-1 text-2xl font-semibold">{t('new.title')}</h1>
+      <p className="text-muted-foreground mb-5 text-sm">{t('new.subtitle')}</p>
+
+      <section className="mb-5">
+        <div className="grid gap-2 sm:grid-cols-3">
+          {SOURCES.map((s) => {
+            const Icon = s.icon;
+            const active = source === s.key;
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setSource(s.key)}
+                className={`rounded-lg border p-3 text-left transition ${
+                  active ? 'border-foreground bg-muted' : 'hover:bg-muted/50'
+                }`}
+              >
+                <Icon className="mb-1 h-5 w-5" aria-hidden />
+                <div className="font-medium">{s.label}</div>
+                <div className="text-muted-foreground text-xs">{s.hint}</div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {source === 'library' ? (
+        <Card className="mb-5">
+          <CardContent className="py-4">
+            <Label className="mb-2 block">{t('new.pickTemplate')}</Label>
+            {templates.isPending || seedLibrary.isPending ? (
+              <div className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(templates.data ?? []).map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => {
+                      setMethodStatementId(tpl.id);
+                      if (title.trim().length === 0) setTitle(tpl.title);
+                    }}
+                    className={`rounded-md border p-2 text-left text-sm transition ${
+                      methodStatementId === tpl.id
+                        ? 'border-foreground bg-muted'
+                        : 'hover:bg-muted/50'
+                    }`}
+                  >
+                    <div className="font-medium">{tpl.title}</div>
+                    <div className="text-muted-foreground text-xs">
+                      {t('new.stepCount', { count: tpl.stepCount })}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {source === 'duplicate' ? (
+        <Card className="mb-5">
+          <CardContent className="py-4">
+            <Label className="mb-2 block">{t('new.pickPack')}</Label>
+            {previous.isPending ? (
+              <Skeleton className="h-10 w-full" />
+            ) : (previous.data ?? []).length === 0 ? (
+              <p className="text-muted-foreground text-sm">{t('new.noPreviousPacks')}</p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(previous.data ?? []).map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      setFromPackId(p.id);
+                      if (title.trim().length === 0) setTitle(p.title);
+                      if (clientName.trim().length === 0) setClientName(p.clientName);
+                    }}
+                    className={`rounded-md border p-2 text-left text-sm transition ${
+                      fromPackId === p.id ? 'border-foreground bg-muted' : 'hover:bg-muted/50'
+                    }`}
+                  >
+                    <div className="font-medium">{p.title}</div>
+                    <div className="text-muted-foreground text-xs">
+                      {p.referenceNumber ?? ''} · {p.clientName}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Card>
+        <CardContent className="space-y-4 py-4">
+          <div>
+            <Label htmlFor="rams-title">{t('fields.title')}</Label>
+            <Input
+              id="rams-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t('fields.titlePlaceholder')}
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="rams-client">{t('fields.client')}</Label>
+              <Input
+                id="rams-client"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="rams-site">{t('fields.site')}</Label>
+              <select
+                id="rams-site"
+                value={siteId}
+                onChange={(e) => setSiteId(e.target.value)}
+                className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+              >
+                <option value="">{t('fields.noSite')}</option>
+                {(sites.data ?? []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="rams-location">{t('fields.location')}</Label>
+            <Textarea
+              id="rams-location"
+              rows={2}
+              value={locationText}
+              onChange={(e) => setLocationText(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <Label htmlFor="rams-from">{t('fields.plannedFrom')}</Label>
+              <Input
+                id="rams-from"
+                type="date"
+                value={plannedFrom}
+                onChange={(e) => setPlannedFrom(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="rams-to">{t('fields.plannedTo')}</Label>
+              <Input
+                id="rams-to"
+                type="date"
+                value={plannedTo}
+                onChange={(e) => setPlannedTo(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="rams-supervisor">{t('fields.supervisor')}</Label>
+              <Input
+                id="rams-supervisor"
+                value={supervisorName}
+                onChange={(e) => setSupervisorName(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {create.error !== null ? (
+            <p className="text-destructive text-sm">{create.error.message}</p>
+          ) : null}
+
+          <Button type="button" disabled={!canSubmit || create.isPending} onClick={submit}>
+            {t('new.createAndBuild')}
+            <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden />
+          </Button>
+        </CardContent>
+      </Card>
+    </main>
+  );
+}

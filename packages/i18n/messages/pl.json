@@ -299,7 +299,8 @@
         "coshh": "COSHH",
         "permits": "Zezwolenia na pracę",
         "fireSafety": "Ochrona ppoż.",
-        "incidents": "Zdarzenia"
+        "incidents": "Zdarzenia",
+        "rams": "RAMS"
       },
       "perms": {
         "users_view": "View users",
@@ -381,7 +382,13 @@
         "incidents_report": "Zgłaszanie zdarzeń",
         "incidents_investigate": "Prowadzenie dochodzeń",
         "incidents_manage": "Zarządzanie zdarzeniami (triaż, RIDDOR, zatwierdzenia)",
-        "incidents_confidential_view": "Wgląd w zdarzenia poufne"
+        "incidents_confidential_view": "Wgląd w zdarzenia poufne",
+        "rams_view": "Podgląd pakietów RAMS",
+        "rams_create": "Tworzenie instrukcji roboczych i wersji roboczych",
+        "rams_issue": "Wydawanie, ponowne wydawanie i wycofywanie pakietów",
+        "rams_brief": "Rejestrowanie instruktaży",
+        "rams_review": "Ocena RAMS podwykonawców",
+        "rams_manage": "Zarządzanie biblioteką instrukcji roboczych"
       }
     },
     "groups": {
@@ -1439,7 +1446,33 @@
     "permits": "Pozwolenia",
     "fireSafety": "Ochrona ppoż.",
     "analytics": "Pulpit",
-    "incidents": "Zdarzenia"
+    "incidents": "Zdarzenia",
+    "myWork": "Moje zadania",
+    "more": "Więcej",
+    "quickLabel": "Szybka nawigacja",
+    "collapseMenu": "Zwiń menu",
+    "expandMenu": "Rozwiń menu",
+    "groupRisk": "Ryzyko i kontrola",
+    "groupVerify": "Inspekcje i weryfikacja",
+    "groupRespond": "Zgłoś i napraw",
+    "groupOrg": "Organizacja",
+    "child": {
+      "schedulesCalendar": "Kalendarz",
+      "permitsBoard": "Tablica na żywo",
+      "permitsTypes": "Typy zezwoleń",
+      "coshhPointOfWork": "Stanowisko pracy",
+      "coshhLev": "Rejestr LEV",
+      "fireLogbook": "Dziennik",
+      "issuesQrCodes": "Kody QR",
+      "issuesCategories": "Kategorie",
+      "actionsCategories": "Kategorie",
+      "assetsCategories": "Kategorie",
+      "contractorsGate": "Brama budowy",
+      "contractorsCalendar": "Kalendarz",
+      "ramsLibrary": "Biblioteka instrukcji roboczych",
+      "ramsReviews": "Ocena RAMS podwykonawców"
+    },
+    "rams": "RAMS"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -5556,7 +5589,8 @@
       "riddorDueSoon": "RIDDOR wkrótce",
       "rescreenRequired": "wymagana ponowna ocena",
       "investigating": "w toku dochodzenia",
-      "effectivenessOverdue": "przeglądy skuteczności zaległe"
+      "effectivenessOverdue": "przeglądy skuteczności zaległe",
+      "untriaged": "oczekują na ocenę"
     },
     "list": {
       "report": "Zgłoś zdarzenie",
@@ -5588,7 +5622,8 @@
         "site": "Lokalizacja",
         "occurred": "Data zdarzenia",
         "riddor": "RIDDOR"
-      }
+      },
+      "exportFailed": "Eksport nie powiódł się — spróbuj ponownie."
     },
     "kinds": {
       "injury": "Uraz",
@@ -5730,7 +5765,12 @@
       "addPhotos": "Zrób lub wybierz zdjęcia",
       "uploading": "Przesyłanie…",
       "uploadedCount": "Załączono plików: {count}.",
-      "done": "Gotowe — otwórz zdarzenie"
+      "done": "Gotowe — otwórz zdarzenie",
+      "severity": "Jak poważny był skutek?",
+      "severityHint": "Opcjonalnie — wybierz, jeśli potrafisz ocenić. Przyjęcie do szpitala podnosi ją automatycznie, a ocena ustala wartość ostateczną.",
+      "uploadFailed": "Przesyłanie nie powiodło się dla: {files}. Pliki NIE zostały dołączone — sprawdź rozmiar (maks. 25 MB) i typ, po czym spróbuj ponownie.",
+      "noPermission": "Nie masz uprawnień do zgłaszania zdarzeń. Poproś administratora o rolę zgłaszającego.",
+      "backToRegister": "Wróć do rejestru"
     },
     "details": {
       "device": "Narzędzie / ostry przedmiot",
@@ -5796,7 +5836,12 @@
       "potentialSeverity": "Potencjalna ciężkość",
       "riddorOverdueBanner": "Ustawowy termin zgłoszenia RIDDOR minął bez odnotowanego zgłoszenia. Zgłoś do HSE teraz i odnotuj to tutaj.",
       "rescreenBanner": "Łączna absencja przekroczyła 7 dni wbrew decyzji „niepodlegające zgłoszeniu” — ponów ocenę RIDDOR.",
-      "notEffectiveBanner": "Przegląd skuteczności wykazał, że środki nie zadziałały. Rozważ wznowienie zdarzenia lub nowe działanie."
+      "notEffectiveBanner": "Przegląd skuteczności wykazał, że środki nie zadziałały. Rozważ wznowienie zdarzenia lub nowe działanie.",
+      "edit": "Edytuj szczegóły",
+      "editHeading": "Popraw zapis",
+      "change": "Zmień",
+      "severityHeading": "Powaga",
+      "severityHint": "Poprawki są zapisywane na osi czasu. Powaga zostaje zamrożona po zatwierdzeniu postępowania."
     },
     "triage": {
       "heading": "Triaż",
@@ -5811,7 +5856,8 @@
       "leadInvestigator": "Prowadzący dochodzenie",
       "leadPlaceholder": "Wybierz prowadzącego…",
       "confidential": "Poufne — szczegóły tylko dla zgłaszającego, zespołu dochodzeniowego i uprawnionych",
-      "confirm": "Zatwierdź triaż"
+      "confirm": "Zatwierdź triaż",
+      "levelFloorHint": "Powaga „poważna” lub wyższa (lub podlegające zgłoszeniu ustalenie RIDDOR) wymaga pełnego postępowania."
     },
     "people": {
       "heading": "Osoby i dni stracone",
@@ -5825,7 +5871,9 @@
       "absenceFrom": "Pierwszy dzień absencji",
       "absenceTo": "Ostatni dzień (puste = trwa)",
       "addAbsence": "Zarejestruj absencję",
-      "addPerson": "Dodaj osobę"
+      "addPerson": "Dodaj osobę",
+      "removeConfirm": "Usunąć tę osobę ze zdarzenia? Jej dane o urazie i nieobecnościach zostaną usunięte; usunięcie jest rejestrowane.",
+      "removeAbsenceConfirm": "Usunąć ten okres nieobecności? Liczenie dni straconych i RIDDOR zostanie przeliczone."
     },
     "riddor": {
       "heading": "RIDDOR",
@@ -5884,7 +5932,9 @@
         "submitted": "Czeka na zatwierdzenie",
         "approved": "Zatwierdzone"
       },
-      "approvedBy": "Zatwierdził(a) {name} · {date}"
+      "approvedBy": "Zatwierdził(a) {name} · {date}",
+      "upgradeLevel": "Podnieś do pełnego",
+      "reassignLead": "Zmień głównego badającego"
     },
     "findings": {
       "heading": "Ustalenia i działania korygujące",
@@ -5947,7 +5997,11 @@
     },
     "timeline": {
       "heading": "Oś czasu",
-      "system": "System"
+      "system": "System",
+      "revision": "wersja {revision}",
+      "soleManagerOverride": "odstępstwo jedynego zarządzającego",
+      "actionCount": "wygenerowano {count} działanie/działań",
+      "notifiedCount": "powiadomiono {count} odbiorcę/odbiorców"
     },
     "events": {
       "reported": "Zgłoszono",
@@ -5980,7 +6034,8 @@
       "alert_sent": "Wysłano pilny alert",
       "riddor_warning_sent": "Wysłano ostrzeżenie o terminie RIDDOR",
       "riddor_escalated": "Eskalowano termin RIDDOR",
-      "promoted_from_observation": "Eskalowano z obserwacji"
+      "promoted_from_observation": "Eskalowano z obserwacji",
+      "investigation_level_changed": "Zmieniono poziom postępowania"
     },
     "workspace": {
       "title": "Obszar roboczy dochodzenia",
@@ -6048,7 +6103,15 @@
       "assigneePlaceholder": "Wybierz osobę…",
       "dueDate": "Termin",
       "confirmApprove": "Zatwierdź dochodzenie",
-      "approvedNote": "Zatwierdził(a) {name}. Ta wersja jest zamrożona."
+      "approvedNote": "Zatwierdził(a) {name}. Ta wersja jest zamrożona.",
+      "uploadFailed": "Przesyłanie nie powiodło się dla: {files}. Pliki NIE zostały dołączone — sprawdź rozmiar (maks. 25 MB) i typ, po czym spróbuj ponownie.",
+      "whyChainHeading": "Łańcuch pytań „dlaczego”",
+      "causalFactorsHeading": "Czynniki przyczynowe",
+      "rootCauseMark": "przyczyna źródłowa",
+      "assignAllHint": "Każde ustalenie generujące działanie wymaga osoby odpowiedzialnej przed zatwierdzeniem.",
+      "dueDateAutoHint": "Pozostawiona pusta data wynika z priorytetu ustalenia.",
+      "soleManagerNotice": "Jesteś głównym badającym lub osobą, która złożyła to postępowanie. Zatwierdzenie własnej pracy jest dozwolone tylko wtedy, gdy nikt inny w organizacji nie ma uprawnień do zarządzania zdarzeniami — zapisz, dlaczego podpisujesz samodzielnie. Odstępstwo jest trwale rejestrowane.",
+      "soleManagerPlaceholder": "Dlaczego nie ma niezależnego zatwierdzającego…"
     },
     "observationCard": {
       "heading": "Zdarzenia",
@@ -6113,7 +6176,328 @@
       "risk-assessment-not-found": "Wybrana ocena ryzyka nie istnieje lub jest nieaktywna.",
       "coshh-assessment-not-found": "Wybrana ocena COSHH nie istnieje lub jest nieaktywna.",
       "fra-not-found": "Wybrana ocena ppoż. nie istnieje lub jest nieaktywna.",
-      "render-unavailable": "Generowanie PDF jest niedostępne w tym wdrożeniu."
+      "render-unavailable": "Generowanie PDF jest niedostępne w tym wdrożeniu.",
+      "investigation-level-below-floor": "Powaga (lub ustalenie RIDDOR) wymaga pełnego postępowania — poziom nie może zejść poniżej tego progu.",
+      "not-triaged": "Najpierw wykonaj ocenę zdarzenia.",
+      "investigation-content-exists": "Poziomu nie można obniżyć, gdy istnieje już praca dochodzeniowa.",
+      "finding-assignee-required": "Każde ustalenie generujące działanie wymaga osoby odpowiedzialnej przed zatwierdzeniem.",
+      "finding-due-date-required": "Ustaw termin dla każdego wygenerowanego działania.",
+      "sole-manager-justification-required": "Zapisz, dlaczego zatwierdzasz własne postępowanie — uzasadnienie jest wymagane, bo nie ma niezależnego zatwierdzającego."
+    },
+    "evidence": {
+      "heading": "Dowody i zeznania",
+      "addFiles": "Dodaj zdjęcia / pliki",
+      "none": "Brak dowodów. Zdjęcia z miejsca zdarzenia pojawią się tutaj.",
+      "witness": "Świadek"
+    }
+  },
+  "myWork": {
+    "title": "Moje zadania",
+    "subtitle": "Wszystko, co na Ciebie czeka — najpierw zaległe.",
+    "filterLabel": "Filtruj według typu",
+    "overdueOn": "Termin {date}",
+    "tiles": {
+      "overdue": "Zaległe",
+      "actions": "Otwarte działania",
+      "acknowledgements": "Do potwierdzenia",
+      "drafts": "Niedokończone inspekcje"
+    },
+    "kinds": {
+      "all": "Wszystko",
+      "action": "Działanie",
+      "acknowledgement": "Potwierdzenie zapoznania",
+      "signature": "Podpis",
+      "inspection": "Inspekcja",
+      "approval": "Zatwierdzenie"
+    },
+    "empty": {
+      "title": "Nic na Ciebie nie czeka",
+      "body": "Nowe zadania przypisane Tobie pojawią się tutaj."
+    }
+  },
+  "rams": {
+    "title": "RAMS",
+    "subtitle": "Oceny ryzyka i instrukcje robocze — wydane, omówione i zaakceptowane.",
+    "needsAttention": "Wymaga uwagi",
+    "newPack": "Nowy pakiet RAMS",
+    "exportCsv": "Eksportuj CSV",
+    "searchPlaceholder": "Szukaj po numerze, tytule lub kliencie",
+    "empty": "Brak pakietów RAMS.",
+    "versionLabel": "w{version}",
+    "briefedCount": "{count} poinstruowanych z w{version}",
+    "holdPoint": "Punkt wstrzymania",
+    "openBuilder": "Otwórz edytor",
+    "issuePack": "Wydaj pakiet",
+    "reissuePack": "Wydaj ponownie",
+    "withdrawPack": "Wycofaj",
+    "withdrawReason": "Powód wycofania",
+    "confirmWithdraw": "Potwierdź wycofanie",
+    "withdrawnBanner": "Ten pakiet został wycofany — prac nie wolno prowadzić na jego podstawie.",
+    "downloadPdf": "Pobierz PDF",
+    "attention": {
+      "draftPacks": "{count} w wersji roboczej",
+      "awaitingBriefing": "{count} oczekuje na instruktaż",
+      "pendingClientAcceptance": "{count} oczekuje na akceptację klienta",
+      "pendingReviews": "{count} pakietów podwykonawców do oceny",
+      "expiringReviews": "{count} akceptacji wygasa"
+    },
+    "filters": {
+      "all": "Wszystkie"
+    },
+    "columns": {
+      "reference": "Numer",
+      "title": "Tytuł",
+      "client": "Klient",
+      "site": "Obiekt",
+      "planned": "Planowane",
+      "status": "Status",
+      "briefing": "Instruktaż"
+    },
+    "status": {
+      "draft": "Wersja robocza",
+      "issued": "Wydany",
+      "superseded": "Zastąpiony",
+      "withdrawn": "Wycofany",
+      "cancelled": "Anulowany"
+    },
+    "fields": {
+      "title": "Nazwa zadania",
+      "titlePlaceholder": "np. Wymiana filtrów centrali — Riverside",
+      "client": "Klient",
+      "site": "Obiekt",
+      "noSite": "Brak obiektu",
+      "location": "Miejsce / strefa",
+      "plannedFrom": "Planowane od",
+      "plannedTo": "Planowane do",
+      "supervisor": "Odpowiedzialny nadzór",
+      "scopeOfWorks": "Zakres prac"
+    },
+    "new": {
+      "title": "Utwórz pakiet RAMS",
+      "subtitle": "Zacznij od szablonu, skopiuj poprzednie zadanie lub zacznij od pustego.",
+      "fromLibrary": "Z biblioteki",
+      "fromLibraryHint": "Gotowe kroki dla typowej branży",
+      "duplicate": "Skopiuj poprzedni pakiet",
+      "duplicateHint": "Tak jak ostatnie zadanie, z powiązaniami",
+      "blank": "Pusty",
+      "blankHint": "Napisz od zera",
+      "pickTemplate": "Wybierz instrukcję roboczą",
+      "pickPack": "Wybierz pakiet do skopiowania",
+      "noPreviousPacks": "Brak wcześniejszych pakietów do skopiowania.",
+      "stepCount": "{count} kroków",
+      "createAndBuild": "Utwórz i otwórz edytor"
+    },
+    "gate": {
+      "title": "Zanim wydasz",
+      "allClear": "Wszystko, co potrzebne do wydania tego pakietu, jest gotowe.",
+      "unreferencedTitle": "Wysokie ryzyka, których żaden krok nie obejmuje",
+      "attestationTitle": "Oświadczenie autora",
+      "attestationConfirm": "Potwierdzam powyższe oświadczenie."
+    },
+    "errors": {
+      "no-steps": "Dodaj co najmniej jeden krok do instrukcji roboczej.",
+      "step-missing-title": "Każdy krok musi mieć tytuł.",
+      "step-missing-description": "Każdy krok musi opisywać, co faktycznie jest robione.",
+      "no-risk-assessment": "Powiąż co najmniej jedną ocenę ryzyka.",
+      "risk-assessment-not-published": "Powiązana ocena ryzyka nie została opublikowana — najpierw ją opublikuj.",
+      "emergency-block-incomplete": "Uzupełnij pierwszą pomoc i procedury awaryjne.",
+      "high-risk-hazard-unreferenced": "Żaden krok nie obejmuje zagrożenia o wysokim ryzyku.",
+      "attestation-not-confirmed": "Potwierdź oświadczenie autora."
+    },
+    "band": {
+      "low": "Niskie",
+      "medium": "Średnie",
+      "high": "Wysokie",
+      "critical": "Krytyczne"
+    },
+    "bindings": {
+      "title": "Oceny ryzyka i substancje",
+      "noRas": "Brak powiązanych ocen ryzyka.",
+      "coshh": "Substancje niebezpieczne",
+      "hazardCount": "{count} zagrożeń",
+      "suggested": "Sugerowane dla tego zadania",
+      "suggestedCoshh": "Sugerowane substancje",
+      "unbind": "Usuń"
+    },
+    "steps": {
+      "title": "Kolejność prac",
+      "none": "Brak kroków.",
+      "add": "Dodaj krok",
+      "titlePlaceholder": "Co dzieje się w tym kroku",
+      "description": "Co jest faktycznie robione",
+      "hazardsAddressed": "Zagrożenia objęte tym krokiem",
+      "controlNotes": "Środki dla tego kroku",
+      "ppe": "ŚOI",
+      "holdPoint": "Praca zatrzymuje się tu do czasu zatwierdzenia kontroli",
+      "holdPointPlaceholder": "Co musi być spełnione przed dalszą pracą",
+      "moveUp": "W górę",
+      "moveDown": "W dół",
+      "remove": "Usuń krok",
+      "expand": "Edytuj",
+      "collapse": "Zamknij"
+    },
+    "emergency": {
+      "title": "Procedury awaryjne",
+      "firstAid": "Pierwsza pomoc",
+      "procedure": "Procedura awaryjna",
+      "rescuePlan": "Plan ratunkowy"
+    },
+    "logistics": {
+      "welfare": "Zaplecze socjalne",
+      "accessEgress": "Dojście i ewakuacja"
+    },
+    "builder": {
+      "saving": "Zapisywanie…",
+      "saved": "Wszystkie zmiany zapisane",
+      "backToPack": "Wróć do pakietu"
+    },
+    "briefing": {
+      "title": "Instruktaż",
+      "open": "Poinstruuj brygadę",
+      "onSuperseded": "{count} poinstruowanych ze starszej wersji",
+      "notIssued": "Pakiet musi zostać wydany, zanim będzie można kogokolwiek poinstruować.",
+      "readThis": "Treść instruktażu",
+      "signHere": "Potwierdź instruktaż",
+      "name": "Imię i nazwisko",
+      "category": "Ta osoba to",
+      "organisation": "Firma",
+      "questions": "Zgłoszone pytania (opcjonalnie)",
+      "understoodStatement": "Potwierdzając, ta osoba oświadcza, że została poinstruowana o tym pakiecie i go zrozumiała.",
+      "confirm": "Potwierdź: poinstruowany i zrozumiał",
+      "recorded": "Zarejestrowano",
+      "register": "Kto został poinstruowany",
+      "nobodyYet": "Nikt jeszcze nie został poinstruowany.",
+      "briefedSoFar": "{count} poinstruowanych",
+      "needsRebrief": "Wymaga ponownego instruktażu",
+      "queued": "{count} instruktaż(y) czeka na synchronizację",
+      "retry": "Spróbuj ponownie"
+    },
+    "briefeeCategory": {
+      "employee": "Pracownik",
+      "subcontractor": "Podwykonawca",
+      "agency": "Pracownik agencyjny",
+      "visitor": "Gość",
+      "client_representative": "Przedstawiciel klienta",
+      "other": "Inny"
+    },
+    "client": {
+      "title": "Wydaj klientowi",
+      "issuedTo": "Osoba kontaktowa u klienta",
+      "createLink": "Utwórz link do udostępnienia",
+      "unnamed": "Odbiorca bez nazwy",
+      "revoked": "unieważniony"
+    },
+    "clientDecision": {
+      "pending": "Oczekuje na klienta",
+      "accepted": "Zaakceptowany",
+      "changes_requested": "Zgłoszono uwagi"
+    },
+    "versions": {
+      "title": "Historia wersji",
+      "superseded": "zastąpiona"
+    },
+    "timeline": {
+      "title": "Oś czasu"
+    },
+    "library": {
+      "title": "Biblioteka instrukcji roboczych",
+      "subtitle": "Instrukcje wielokrotnego użytku — powielaj i dostosowuj zamiast zaczynać od zera.",
+      "backToRegister": "Wróć do RAMS",
+      "restoreStarters": "Przywróć szablony startowe",
+      "starter": "Szablon startowy",
+      "startPack": "Utwórz pakiet",
+      "duplicate": "Powiel",
+      "copySuffix": "kopia",
+      "empty": "Brak instrukcji roboczych."
+    },
+    "reviews": {
+      "title": "Ocena RAMS podwykonawców",
+      "subtitle": "Oceniaj i akceptuj pakiety przesyłane przez podwykonawców.",
+      "empty": "Brak pakietów podwykonawców do oceny.",
+      "selectPrompt": "Wybierz pakiet do oceny.",
+      "outcome": "Decyzja",
+      "conditions": "Warunki",
+      "comments": "Uwagi przekazane podwykonawcy",
+      "validTo": "Zaakceptowany do",
+      "recordDecision": "Zapisz decyzję",
+      "itemComment": "Co jest tu nie tak?",
+      "expired": "Wygasł"
+    },
+    "reviewOutcome": {
+      "pending": "Oczekuje na ocenę",
+      "accepted": "Zaakceptowany",
+      "accepted_with_conditions": "Zaakceptowany warunkowo",
+      "rejected": "Odrzucony"
+    },
+    "reviewVerdict": {
+      "pass": "Spełnia",
+      "fail": "Nie spełnia",
+      "na": "Nie dotyczy"
+    },
+    "trade": {
+      "mechanical": "Mechanika",
+      "electrical": "Elektryka",
+      "work_at_height": "Praca na wysokości",
+      "groundworks": "Roboty ziemne",
+      "hot_works": "Prace gorące",
+      "confined_space": "Przestrzeń zamknięta",
+      "lifting": "Prace dźwigowe",
+      "maintenance": "Utrzymanie ruchu",
+      "cleaning": "Sprzątanie",
+      "demolition": "Rozbiórka",
+      "roofing": "Prace dekarskie",
+      "other": "Inne"
+    },
+    "holdPointKind": {
+      "isolation_proved": "Potwierdzone odłączenie",
+      "permit_issued": "Wydane zezwolenie",
+      "inspection_passed": "Kontrola zaliczona",
+      "atmosphere_tested": "Zbadana atmosfera",
+      "client_approval": "Zgoda klienta",
+      "supervisor_check": "Kontrola nadzoru",
+      "other": "Inne"
+    },
+    "ppe": {
+      "safety_helmet": "Hełm",
+      "safety_footwear": "Obuwie ochronne",
+      "hi_vis": "Odzież ostrzegawcza",
+      "eye_protection": "Ochrona oczu",
+      "hearing_protection": "Ochrona słuchu",
+      "gloves": "Rękawice",
+      "respiratory_protection": "Ochrona dróg oddechowych",
+      "fall_arrest_harness": "Szelki bezpieczeństwa",
+      "face_shield": "Przyłbica",
+      "coveralls": "Kombinezon",
+      "chemical_apron": "Fartuch chemoodporny",
+      "welding_ppe": "ŚOI spawalnicze",
+      "cut_resistant_gloves": "Rękawice antyprzecięciowe",
+      "knee_pads": "Nakolanniki",
+      "life_jacket": "Kamizelka ratunkowa"
+    },
+    "events": {
+      "pack_created": "Utworzono pakiet",
+      "pack_updated": "Zaktualizowano pakiet",
+      "pack_issued": "Wydano pakiet",
+      "pack_reissued": "Ponownie wydano pakiet",
+      "pack_withdrawn": "Wycofano pakiet",
+      "pack_cancelled": "Anulowano pakiet",
+      "ra_bound": "Powiązano ocenę ryzyka",
+      "ra_unbound": "Usunięto ocenę ryzyka",
+      "coshh_bound": "Powiązano ocenę substancji",
+      "coshh_unbound": "Usunięto ocenę substancji",
+      "document_added": "Dodano dokument",
+      "document_removed": "Usunięto dokument",
+      "briefing_recorded": "Zarejestrowano instruktaż",
+      "client_link_created": "Utworzono link do udostępnienia",
+      "client_link_revoked": "Unieważniono link do udostępnienia",
+      "client_accepted": "Klient zaakceptował",
+      "client_changes_requested": "Klient zgłosił uwagi",
+      "method_statement_created": "Utworzono instrukcję roboczą",
+      "method_statement_published": "Opublikowano instrukcję roboczą",
+      "method_statement_archived": "Zarchiwizowano instrukcję roboczą",
+      "method_statement_duplicated": "Powielono instrukcję roboczą",
+      "review_submitted": "Przesłano pakiet podwykonawcy do oceny",
+      "review_decided": "Zapisano decyzję oceny"
     }
   }
 }

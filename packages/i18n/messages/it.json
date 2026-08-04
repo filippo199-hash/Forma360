@@ -299,7 +299,8 @@
         "coshh": "COSHH",
         "permits": "Permessi di lavoro",
         "fireSafety": "Sicurezza antincendio",
-        "incidents": "Incidenti"
+        "incidents": "Incidenti",
+        "rams": "RAMS"
       },
       "perms": {
         "users_view": "View users",
@@ -381,7 +382,13 @@
         "incidents_report": "Segnalare incidenti",
         "incidents_investigate": "Condurre le indagini",
         "incidents_manage": "Gestire gli incidenti (triage, RIDDOR, approvazioni)",
-        "incidents_confidential_view": "Vedere gli incidenti riservati"
+        "incidents_confidential_view": "Vedere gli incidenti riservati",
+        "rams_view": "Visualizzare i pacchetti RAMS",
+        "rams_create": "Redigere procedure operative e bozze",
+        "rams_issue": "Emettere, riemettere e ritirare i pacchetti",
+        "rams_brief": "Registrare le informative",
+        "rams_review": "Esaminare i RAMS degli appaltatori",
+        "rams_manage": "Gestire la libreria delle procedure"
       }
     },
     "groups": {
@@ -1446,7 +1453,33 @@
     "permits": "Permessi",
     "fireSafety": "Sicurezza antincendio",
     "analytics": "Dashboard",
-    "incidents": "Incidenti"
+    "incidents": "Incidenti",
+    "myWork": "Le mie attività",
+    "more": "Altro",
+    "quickLabel": "Navigazione rapida",
+    "collapseMenu": "Comprimi menu",
+    "expandMenu": "Espandi menu",
+    "groupRisk": "Rischio e controllo",
+    "groupVerify": "Ispeziona e verifica",
+    "groupRespond": "Segnala e risolvi",
+    "groupOrg": "Organizzazione",
+    "child": {
+      "schedulesCalendar": "Calendario",
+      "permitsBoard": "Bacheca live",
+      "permitsTypes": "Tipi di permesso",
+      "coshhPointOfWork": "Punto di lavoro",
+      "coshhLev": "Registro LEV",
+      "fireLogbook": "Registro",
+      "issuesQrCodes": "Codici QR",
+      "issuesCategories": "Categorie",
+      "actionsCategories": "Categorie",
+      "assetsCategories": "Categorie",
+      "contractorsGate": "Ingresso cantiere",
+      "contractorsCalendar": "Calendario",
+      "ramsLibrary": "Libreria delle procedure operative",
+      "ramsReviews": "Esame dei RAMS degli appaltatori"
+    },
+    "rams": "RAMS"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -5598,7 +5631,8 @@
       "riddorDueSoon": "RIDDOR in scadenza",
       "rescreenRequired": "rivalutazione necessaria",
       "investigating": "in indagine",
-      "effectivenessOverdue": "verifiche di efficacia dovute"
+      "effectivenessOverdue": "verifiche di efficacia dovute",
+      "untriaged": "in attesa di triage"
     },
     "list": {
       "report": "Segnala incidente",
@@ -5630,7 +5664,8 @@
         "site": "Sito",
         "occurred": "Avvenuto",
         "riddor": "RIDDOR"
-      }
+      },
+      "exportFailed": "Esportazione non riuscita — riprova."
     },
     "kinds": {
       "injury": "Infortunio",
@@ -5772,7 +5807,12 @@
       "addPhotos": "Scatta o scegli foto",
       "uploading": "Caricamento…",
       "uploadedCount": "{count} file allegato/i.",
-      "done": "Fatto — apri l'incidente"
+      "done": "Fatto — apri l'incidente",
+      "severity": "Quanto è stato grave l'esito?",
+      "severityHint": "Facoltativo — scegli se sai valutarlo. Un ricovero la alza automaticamente e il triage fissa il valore definitivo.",
+      "uploadFailed": "Caricamento non riuscito per: {files}. I file NON sono allegati — controlla dimensione (max 25 MB) e tipo, poi riprova.",
+      "noPermission": "Non hai il permesso di segnalare incidenti. Chiedi a un amministratore il ruolo di segnalatore.",
+      "backToRegister": "Torna al registro"
     },
     "details": {
       "device": "Dispositivo / oggetto tagliente",
@@ -5838,7 +5878,12 @@
       "potentialSeverity": "Gravità potenziale",
       "riddorOverdueBanner": "Il termine di legge RIDDOR è scaduto senza che risulti l'invio. Notifica subito all'HSE e registralo qui.",
       "rescreenBanner": "L'assenza cumulata ha superato i 7 giorni contro una decisione «non notificabile» — rivaluta la decisione RIDDOR.",
-      "notEffectiveBanner": "La verifica di efficacia mostra che i controlli non hanno tenuto. Valuta la riapertura o una nuova azione."
+      "notEffectiveBanner": "La verifica di efficacia mostra che i controlli non hanno tenuto. Valuta la riapertura o una nuova azione.",
+      "edit": "Modifica dettagli",
+      "editHeading": "Correggi la scheda",
+      "change": "Cambia",
+      "severityHeading": "Gravità",
+      "severityHint": "Le correzioni sono registrate nella cronologia. La gravità si blocca all'approvazione di un'indagine."
     },
     "triage": {
       "heading": "Triage",
@@ -5853,7 +5898,8 @@
       "leadInvestigator": "Responsabile dell'indagine",
       "leadPlaceholder": "Scegli il responsabile…",
       "confidential": "Riservato — dettagli visibili solo a chi segnala, al team d'indagine e agli autorizzati",
-      "confirm": "Conferma triage"
+      "confirm": "Conferma triage",
+      "levelFloorHint": "Una gravità seria o superiore (o una determinazione RIDDOR soggetta a notifica) impone un'indagine completa."
     },
     "people": {
       "heading": "Persone e giorni persi",
@@ -5867,7 +5913,9 @@
       "absenceFrom": "Primo giorno di assenza",
       "absenceTo": "Ultimo giorno (vuoto = in corso)",
       "addAbsence": "Registra assenza",
-      "addPerson": "Aggiungi persona"
+      "addPerson": "Aggiungi persona",
+      "removeConfirm": "Rimuovere questa persona dall'incidente? I suoi dati di lesione e assenza saranno eliminati; la rimozione è registrata.",
+      "removeAbsenceConfirm": "Rimuovere questo periodo di assenza? Il conteggio dei giorni persi e RIDDOR sarà ricalcolato."
     },
     "riddor": {
       "heading": "RIDDOR",
@@ -5926,7 +5974,9 @@
         "submitted": "In attesa di approvazione",
         "approved": "Approvata"
       },
-      "approvedBy": "Approvata da {name} · {date}"
+      "approvedBy": "Approvata da {name} · {date}",
+      "upgradeLevel": "Passa a completa",
+      "reassignLead": "Riassegna investigatore capo"
     },
     "findings": {
       "heading": "Rilievi e azioni correttive",
@@ -5989,7 +6039,11 @@
     },
     "timeline": {
       "heading": "Cronologia",
-      "system": "Sistema"
+      "system": "Sistema",
+      "revision": "revisione {revision}",
+      "soleManagerOverride": "deroga gestore unico",
+      "actionCount": "{count} azione/i generate",
+      "notifiedCount": "{count} destinatario/i avvisati"
     },
     "events": {
       "reported": "Segnalato",
@@ -6022,7 +6076,8 @@
       "alert_sent": "Allerta immediata inviata",
       "riddor_warning_sent": "Avviso scadenza RIDDOR inviato",
       "riddor_escalated": "Scadenza RIDDOR escalata",
-      "promoted_from_observation": "Escalato da osservazione"
+      "promoted_from_observation": "Escalato da osservazione",
+      "investigation_level_changed": "Livello d'indagine modificato"
     },
     "workspace": {
       "title": "Area di lavoro dell'indagine",
@@ -6090,7 +6145,15 @@
       "assigneePlaceholder": "Scegli l'assegnatario…",
       "dueDate": "Scadenza",
       "confirmApprove": "Approva indagine",
-      "approvedNote": "Approvata da {name}. Questa revisione è congelata."
+      "approvedNote": "Approvata da {name}. Questa revisione è congelata.",
+      "uploadFailed": "Caricamento non riuscito per: {files}. I file NON sono allegati — controlla dimensione (max 25 MB) e tipo, poi riprova.",
+      "whyChainHeading": "Catena dei perché",
+      "causalFactorsHeading": "Fattori causali",
+      "rootCauseMark": "causa radice",
+      "assignAllHint": "Ogni rilievo che genera un'azione richiede un assegnatario prima dell'approvazione.",
+      "dueDateAutoHint": "Se lasciata vuota, la scadenza segue la priorità del rilievo.",
+      "soleManagerNotice": "Sei l'investigatore capo o chi ha inviato questa indagine. Approvare il proprio lavoro è consentito solo quando nessun altro nell'organizzazione possiede il permesso di gestione degli incidenti — spiega perché firmi da solo. La deroga è registrata in modo permanente.",
+      "soleManagerPlaceholder": "Perché non esiste un approvatore indipendente…"
     },
     "observationCard": {
       "heading": "Incidenti",
@@ -6155,7 +6218,328 @@
       "risk-assessment-not-found": "Una valutazione dei rischi selezionata non esiste o non è attiva.",
       "coshh-assessment-not-found": "Una valutazione COSHH selezionata non esiste o non è attiva.",
       "fra-not-found": "Una valutazione antincendio selezionata non esiste o non è attiva.",
-      "render-unavailable": "La generazione PDF non è disponibile su questa installazione."
+      "render-unavailable": "La generazione PDF non è disponibile su questa installazione.",
+      "investigation-level-below-floor": "La gravità (o la determinazione RIDDOR) impone un'indagine completa — il livello non può scendere sotto quella soglia.",
+      "not-triaged": "Esegui prima il triage dell'incidente.",
+      "investigation-content-exists": "Il livello non può essere abbassato una volta che esiste lavoro d'indagine.",
+      "finding-assignee-required": "Ogni rilievo che genera un'azione richiede un assegnatario prima dell'approvazione.",
+      "finding-due-date-required": "Imposta una scadenza per ogni azione generata.",
+      "sole-manager-justification-required": "Spiega perché stai approvando la tua stessa indagine — la giustificazione è obbligatoria perché non esiste un approvatore indipendente."
+    },
+    "evidence": {
+      "heading": "Prove e dichiarazioni",
+      "addFiles": "Aggiungi foto / file",
+      "none": "Ancora nessuna prova. Le foto scattate sul posto compaiono qui.",
+      "witness": "Testimone"
+    }
+  },
+  "myWork": {
+    "title": "Le mie attività",
+    "subtitle": "Tutto ciò che attende te, prima le scadenze superate.",
+    "filterLabel": "Filtra per tipo",
+    "overdueOn": "Scadenza {date}",
+    "tiles": {
+      "overdue": "In ritardo",
+      "actions": "Azioni aperte",
+      "acknowledgements": "Da confermare",
+      "drafts": "Ispezioni non concluse"
+    },
+    "kinds": {
+      "all": "Tutto",
+      "action": "Azione",
+      "acknowledgement": "Conferma di presa visione",
+      "signature": "Firma",
+      "inspection": "Ispezione",
+      "approval": "Approvazione"
+    },
+    "empty": {
+      "title": "Nulla in attesa",
+      "body": "Le nuove attività assegnate a te compaiono qui."
+    }
+  },
+  "rams": {
+    "title": "RAMS",
+    "subtitle": "Valutazioni dei rischi e procedure operative — emesse, condivise e accettate.",
+    "needsAttention": "Richiede attenzione",
+    "newPack": "Nuovo pacchetto RAMS",
+    "exportCsv": "Esporta CSV",
+    "searchPlaceholder": "Cerca per riferimento, titolo o cliente",
+    "empty": "Nessun pacchetto RAMS.",
+    "versionLabel": "v{version}",
+    "briefedCount": "{count} informati sulla v{version}",
+    "holdPoint": "Punto di fermo",
+    "openBuilder": "Apri l'editor",
+    "issuePack": "Emetti pacchetto",
+    "reissuePack": "Riemetti",
+    "withdrawPack": "Ritira",
+    "withdrawReason": "Motivo del ritiro",
+    "confirmWithdraw": "Conferma il ritiro",
+    "withdrawnBanner": "Questo pacchetto è stato ritirato — i lavori non devono proseguire su questa base.",
+    "downloadPdf": "Scarica il PDF",
+    "attention": {
+      "draftPacks": "{count} in bozza",
+      "awaitingBriefing": "{count} in attesa di informativa",
+      "pendingClientAcceptance": "{count} in attesa di accettazione del cliente",
+      "pendingReviews": "{count} pacchetti appaltatori da esaminare",
+      "expiringReviews": "{count} accettazioni in scadenza"
+    },
+    "filters": {
+      "all": "Tutti"
+    },
+    "columns": {
+      "reference": "Riferimento",
+      "title": "Titolo",
+      "client": "Cliente",
+      "site": "Sito",
+      "planned": "Pianificato",
+      "status": "Stato",
+      "briefing": "Informativa"
+    },
+    "status": {
+      "draft": "Bozza",
+      "issued": "Emesso",
+      "superseded": "Sostituito",
+      "withdrawn": "Ritirato",
+      "cancelled": "Annullato"
+    },
+    "fields": {
+      "title": "Titolo del lavoro",
+      "titlePlaceholder": "es. Sostituzione filtri UTA — Riverside",
+      "client": "Cliente",
+      "site": "Sito",
+      "noSite": "Nessun sito",
+      "location": "Luogo / area",
+      "plannedFrom": "Pianificato dal",
+      "plannedTo": "Pianificato al",
+      "supervisor": "Preposto responsabile",
+      "scopeOfWorks": "Ambito dei lavori"
+    },
+    "new": {
+      "title": "Crea un pacchetto RAMS",
+      "subtitle": "Parti da un modello, copia un lavoro precedente o inizia da zero.",
+      "fromLibrary": "Dalla libreria",
+      "fromLibraryHint": "Fasi precompilate per una lavorazione comune",
+      "duplicate": "Copia un pacchetto precedente",
+      "duplicateHint": "Come l'ultimo lavoro, con i suoi collegamenti",
+      "blank": "Vuoto",
+      "blankHint": "Scrivilo da zero",
+      "pickTemplate": "Scegli una procedura operativa",
+      "pickPack": "Scegli il pacchetto da copiare",
+      "noPreviousPacks": "Nessun pacchetto precedente da copiare.",
+      "stepCount": "{count} fasi",
+      "createAndBuild": "Crea e apri l'editor"
+    },
+    "gate": {
+      "title": "Prima di poter emettere",
+      "allClear": "C'è tutto il necessario per emettere questo pacchetto.",
+      "unreferencedTitle": "Rischi elevati che nessuna fase affronta",
+      "attestationTitle": "Dichiarazione del redattore",
+      "attestationConfirm": "Confermo la dichiarazione qui sopra."
+    },
+    "errors": {
+      "no-steps": "Aggiungi almeno una fase alla procedura operativa.",
+      "step-missing-title": "Ogni fase deve avere un titolo.",
+      "step-missing-description": "Ogni fase deve descrivere ciò che viene effettivamente fatto.",
+      "no-risk-assessment": "Collega almeno una valutazione dei rischi.",
+      "risk-assessment-not-published": "Una valutazione dei rischi collegata non è pubblicata — pubblicala prima.",
+      "emergency-block-incomplete": "Completa il primo soccorso e le misure di emergenza.",
+      "high-risk-hazard-unreferenced": "Un rischio elevato non è affrontato da nessuna fase.",
+      "attestation-not-confirmed": "Conferma la dichiarazione del redattore."
+    },
+    "band": {
+      "low": "Basso",
+      "medium": "Medio",
+      "high": "Alto",
+      "critical": "Critico"
+    },
+    "bindings": {
+      "title": "Valutazioni dei rischi e sostanze",
+      "noRas": "Nessuna valutazione dei rischi collegata.",
+      "coshh": "Sostanze pericolose",
+      "hazardCount": "{count} pericoli",
+      "suggested": "Suggerito per questo lavoro",
+      "suggestedCoshh": "Sostanze suggerite",
+      "unbind": "Rimuovi"
+    },
+    "steps": {
+      "title": "Sequenza dei lavori",
+      "none": "Nessuna fase.",
+      "add": "Aggiungi fase",
+      "titlePlaceholder": "Cosa succede in questa fase",
+      "description": "Cosa viene effettivamente fatto",
+      "hazardsAddressed": "Pericoli affrontati da questa fase",
+      "controlNotes": "Misure specifiche della fase",
+      "ppe": "DPI",
+      "holdPoint": "I lavori si fermano qui fino alla validazione di un controllo",
+      "holdPointPlaceholder": "Cosa deve essere verificato prima di proseguire",
+      "moveUp": "Sposta su",
+      "moveDown": "Sposta giù",
+      "remove": "Elimina fase",
+      "expand": "Modifica",
+      "collapse": "Chiudi"
+    },
+    "emergency": {
+      "title": "Misure di emergenza",
+      "firstAid": "Primo soccorso",
+      "procedure": "Procedura di emergenza",
+      "rescuePlan": "Piano di salvataggio"
+    },
+    "logistics": {
+      "welfare": "Servizi igienico-assistenziali",
+      "accessEgress": "Accesso ed esodo"
+    },
+    "builder": {
+      "saving": "Salvataggio…",
+      "saved": "Tutte le modifiche salvate",
+      "backToPack": "Torna al pacchetto"
+    },
+    "briefing": {
+      "title": "Informativa",
+      "open": "Informa la squadra",
+      "onSuperseded": "{count} informati su una versione precedente",
+      "notIssued": "Questo pacchetto deve essere emesso prima di poter informare qualcuno.",
+      "readThis": "Contenuto da illustrare",
+      "signHere": "Conferma l'informativa",
+      "name": "Nome",
+      "category": "Questa persona è",
+      "organisation": "Azienda",
+      "questions": "Domande sollevate (facoltativo)",
+      "understoodStatement": "Confermando, questa persona dichiara di essere stata informata su questo pacchetto e di averlo compreso.",
+      "confirm": "Conferma: informato e compreso",
+      "recorded": "Registrato",
+      "register": "Chi è stato informato",
+      "nobodyYet": "Nessuno è ancora stato informato.",
+      "briefedSoFar": "{count} informati",
+      "needsRebrief": "Richiede nuova informativa",
+      "queued": "{count} informativa/e in attesa di sincronizzazione",
+      "retry": "Riprova ora"
+    },
+    "briefeeCategory": {
+      "employee": "Dipendente",
+      "subcontractor": "Subappaltatore",
+      "agency": "Lavoratore somministrato",
+      "visitor": "Visitatore",
+      "client_representative": "Referente del cliente",
+      "other": "Altro"
+    },
+    "client": {
+      "title": "Emetti al cliente",
+      "issuedTo": "Referente del cliente",
+      "createLink": "Crea link di condivisione",
+      "unnamed": "Destinatario senza nome",
+      "revoked": "revocato"
+    },
+    "clientDecision": {
+      "pending": "In attesa del cliente",
+      "accepted": "Accettato",
+      "changes_requested": "Modifiche richieste"
+    },
+    "versions": {
+      "title": "Cronologia versioni",
+      "superseded": "sostituita"
+    },
+    "timeline": {
+      "title": "Cronologia"
+    },
+    "library": {
+      "title": "Libreria delle procedure operative",
+      "subtitle": "Procedure riutilizzabili — duplica e adatta invece di partire da zero.",
+      "backToRegister": "Torna a RAMS",
+      "restoreStarters": "Ripristina i modelli iniziali",
+      "starter": "Modello iniziale",
+      "startPack": "Crea un pacchetto",
+      "duplicate": "Duplica",
+      "copySuffix": "copia",
+      "empty": "Nessuna procedura operativa."
+    },
+    "reviews": {
+      "title": "Esame dei RAMS degli appaltatori",
+      "subtitle": "Esamina e accetta i pacchetti che ti inviano gli appaltatori.",
+      "empty": "Nessun pacchetto di appaltatori in attesa di esame.",
+      "selectPrompt": "Seleziona un pacchetto da esaminare.",
+      "outcome": "Decisione",
+      "conditions": "Condizioni",
+      "comments": "Osservazioni restituite all'appaltatore",
+      "validTo": "Accettato fino al",
+      "recordDecision": "Registra la decisione",
+      "itemComment": "Che cosa non va in questo punto?",
+      "expired": "Scaduto"
+    },
+    "reviewOutcome": {
+      "pending": "In attesa di esame",
+      "accepted": "Accettato",
+      "accepted_with_conditions": "Accettato con condizioni",
+      "rejected": "Respinto"
+    },
+    "reviewVerdict": {
+      "pass": "Conforme",
+      "fail": "Non conforme",
+      "na": "N/D"
+    },
+    "trade": {
+      "mechanical": "Meccanica",
+      "electrical": "Elettrico",
+      "work_at_height": "Lavori in quota",
+      "groundworks": "Movimento terra",
+      "hot_works": "Lavori a caldo",
+      "confined_space": "Spazio confinato",
+      "lifting": "Sollevamento",
+      "maintenance": "Manutenzione",
+      "cleaning": "Pulizie",
+      "demolition": "Demolizione",
+      "roofing": "Coperture",
+      "other": "Altro"
+    },
+    "holdPointKind": {
+      "isolation_proved": "Sezionamento verificato",
+      "permit_issued": "Permesso emesso",
+      "inspection_passed": "Verifica superata",
+      "atmosphere_tested": "Atmosfera misurata",
+      "client_approval": "Approvazione del cliente",
+      "supervisor_check": "Controllo del preposto",
+      "other": "Altro"
+    },
+    "ppe": {
+      "safety_helmet": "Elmetto",
+      "safety_footwear": "Calzature di sicurezza",
+      "hi_vis": "Alta visibilità",
+      "eye_protection": "Protezione occhi",
+      "hearing_protection": "Protezione udito",
+      "gloves": "Guanti",
+      "respiratory_protection": "Protezione vie respiratorie",
+      "fall_arrest_harness": "Imbracatura anticaduta",
+      "face_shield": "Visiera",
+      "coveralls": "Tuta",
+      "chemical_apron": "Grembiule chimico",
+      "welding_ppe": "DPI per saldatura",
+      "cut_resistant_gloves": "Guanti antitaglio",
+      "knee_pads": "Ginocchiere",
+      "life_jacket": "Giubbotto di salvataggio"
+    },
+    "events": {
+      "pack_created": "Pacchetto creato",
+      "pack_updated": "Pacchetto aggiornato",
+      "pack_issued": "Pacchetto emesso",
+      "pack_reissued": "Pacchetto riemesso",
+      "pack_withdrawn": "Pacchetto ritirato",
+      "pack_cancelled": "Pacchetto annullato",
+      "ra_bound": "Valutazione dei rischi collegata",
+      "ra_unbound": "Valutazione dei rischi rimossa",
+      "coshh_bound": "Valutazione sostanze collegata",
+      "coshh_unbound": "Valutazione sostanze rimossa",
+      "document_added": "Documento aggiunto",
+      "document_removed": "Documento rimosso",
+      "briefing_recorded": "Informativa registrata",
+      "client_link_created": "Link di condivisione creato",
+      "client_link_revoked": "Link di condivisione revocato",
+      "client_accepted": "Il cliente ha accettato",
+      "client_changes_requested": "Il cliente ha richiesto modifiche",
+      "method_statement_created": "Procedura operativa creata",
+      "method_statement_published": "Procedura operativa pubblicata",
+      "method_statement_archived": "Procedura operativa archiviata",
+      "method_statement_duplicated": "Procedura operativa duplicata",
+      "review_submitted": "Pacchetto appaltatore inviato all'esame",
+      "review_decided": "Decisione di esame registrata"
     }
   }
 }

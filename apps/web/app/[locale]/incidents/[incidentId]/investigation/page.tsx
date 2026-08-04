@@ -94,6 +94,7 @@ export default function InvestigationWorkspacePage() {
   // Evidence forms.
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadErrors, setUploadErrors] = useState<string[]>([]);
   const [refKind, setRefKind] = useState<'cctv_ref' | 'physical_ref' | 'other'>('cctv_ref');
   const [refCaption, setRefCaption] = useState('');
   const [showRefForm, setShowRefForm] = useState(false);
@@ -106,6 +107,17 @@ export default function InvestigationWorkspacePage() {
   const [rejectNote, setRejectNote] = useState('');
   const [showReject, setShowReject] = useState(false);
   const [attested, setAttested] = useState(false);
+  // IN-A8: justification for the sole-manager override.
+  const [soleJustification, setSoleJustification] = useState('');
+
+  // IN-A7: inline finding editing (pre-approval only).
+  const [editingFindingId, setEditingFindingId] = useState<string | null>(null);
+  const [editFinding, setEditFinding] = useState<{
+    category: string;
+    priority: string;
+    description: string;
+    requiresAction: boolean;
+  }>({ category: 'procedure', priority: 'medium', description: '', requiresAction: true });
 
   const latest =
     data !== undefined && data.investigations.length > 0
@@ -129,6 +141,65 @@ export default function InvestigationWorkspacePage() {
     setLessons(latest.lessonsLearned);
     setDirty(false);
   }, [latest, loadedRevisionId]);
+
+  // IN-A5: a full write-up must survive a stray gesture. While the form
+  // is dirty, warn on tab close / navigation…
+  useEffect(() => {
+    if (!dirty) return undefined;
+    const handler = (e: BeforeUnloadEvent): void => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
+
+  function buildSavePayload() {
+    return {
+      incidentId,
+      method: method === '' ? null : (method as never),
+      immediateCause,
+      underlyingCause,
+      contributingFactors: contributing as never,
+      whyChain: whys.length >= 2 ? (whys as never) : null,
+      causalFactors: factors.length > 0 ? (factors as never) : null,
+      timelineEntries: timeline as never,
+      conclusionSummary,
+      rootCauseStatement,
+      recurrenceLikelihood: recurrence === '' ? null : (recurrence as never),
+      lessonsLearned: lessons,
+    };
+  }
+
+  // …and autosave 30s after the last edit while a draft is open to the
+  // viewer (same condition as the Save button; the server re-checks).
+  const draftEditable =
+    latest !== undefined &&
+    latest.status === 'draft' &&
+    ((data !== undefined && data.incident.leadInvestigatorUserId === data.viewerUserId) ||
+      canManage) &&
+    canInvestigate;
+  useEffect(() => {
+    if (!dirty || !draftEditable) return undefined;
+    const timer = setTimeout(() => {
+      if (!saveMutation.isPending) saveMutation.mutate(buildSavePayload());
+    }, 30_000);
+    return () => clearTimeout(timer);
+    // Re-arm on any content edit — saves land 30s after typing stops.
+  }, [
+    dirty,
+    draftEditable,
+    method,
+    immediateCause,
+    underlyingCause,
+    contributing,
+    whys,
+    factors,
+    timeline,
+    conclusionSummary,
+    rootCauseStatement,
+    recurrence,
+    lessons,
+  ]);
 
   const invalidate = async (): Promise<void> => {
     await utils.incidents.get.invalidate({ incidentId });
@@ -169,6 +240,14 @@ export default function InvestigationWorkspacePage() {
   });
   const addFindingMutation = trpc.incidents.addFinding.useMutation(mutationOpts);
   const removeFindingMutation = trpc.incidents.removeFinding.useMutation(mutationOpts);
+  const updateFindingMutation = trpc.incidents.updateFinding.useMutation({
+    onSuccess: async () => {
+      setActionError(null);
+      setEditingFindingId(null);
+      await invalidate();
+    },
+    onError: (err: unknown) => setActionError(err),
+  });
   const addWitnessMutation = trpc.incidents.addWitnessStatement.useMutation({
     onSuccess: async () => {
       setActionError(null);
@@ -226,42 +305,41 @@ export default function InvestigationWorkspacePage() {
 
   async function uploadFiles(files: FileList): Promise<void> {
     setUploading(true);
+    // IN-A4: collect per-file failures — a dropped photo must never
+    // look like a success. Failed names are surfaced next to the
+    // button and the files stay on the device to re-attach.
+    const failed: string[] = [];
     try {
       for (const file of Array.from(files)) {
-        const form = new FormData();
-        form.append('incidentId', incidentId);
-        form.append('file', file);
-        const res = await fetch('/api/upload/incident-evidence', { method: 'POST', body: form });
-        if (!res.ok) continue;
-        const body = (await res.json()) as { storageKey: string; filename: string };
-        await utils.client.incidents.addEvidence.mutate({
-          incidentId,
-          kind: file.type.startsWith('image/') ? 'photo' : 'document',
-          storageKey: body.storageKey,
-          filename: body.filename,
-        });
+        try {
+          const form = new FormData();
+          form.append('incidentId', incidentId);
+          form.append('file', file);
+          const res = await fetch('/api/upload/incident-evidence', { method: 'POST', body: form });
+          if (!res.ok) {
+            failed.push(file.name);
+            continue;
+          }
+          const body = (await res.json()) as { storageKey: string; filename: string };
+          await utils.client.incidents.addEvidence.mutate({
+            incidentId,
+            kind: file.type.startsWith('image/') ? 'photo' : 'document',
+            storageKey: body.storageKey,
+            filename: body.filename,
+          });
+        } catch {
+          failed.push(file.name);
+        }
       }
       await invalidate();
     } finally {
       setUploading(false);
+      setUploadErrors(failed);
     }
   }
 
   function save(): void {
-    saveMutation.mutate({
-      incidentId,
-      method: method === '' ? null : (method as never),
-      immediateCause,
-      underlyingCause,
-      contributingFactors: contributing as never,
-      whyChain: whys.length >= 2 ? (whys as never) : null,
-      causalFactors: factors.length > 0 ? (factors as never) : null,
-      timelineEntries: timeline as never,
-      conclusionSummary,
-      rootCauseStatement,
-      recurrenceLikelihood: recurrence === '' ? null : (recurrence as never),
-      lessonsLearned: lessons,
-    });
+    saveMutation.mutate(buildSavePayload());
   }
 
   return (
@@ -292,7 +370,11 @@ export default function InvestigationWorkspacePage() {
           >
             {data.investigations.map((inv) => (
               <option key={inv.id} value={inv.revision}>
-                {t('workspace.revisionOption', { revision: inv.revision, status: inv.status })}
+                {t('workspace.revisionOption', {
+                  revision: inv.revision,
+                  // IN-A14: translated status, not the raw enum.
+                  status: t(`investigation.statuses.${inv.status}` as never),
+                })}
               </option>
             ))}
           </select>
@@ -308,10 +390,12 @@ export default function InvestigationWorkspacePage() {
         </Card>
       ) : null}
 
-      {/* ── Frozen revision (read-only) ── */}
+      {/* ── Frozen revision — rendered in FULL (IN-A9b): the approved
+             analysis is the legally significant artefact, so nothing the
+             PDF prints is hidden on screen. ── */}
       {viewed !== undefined && viewingFrozen ? (
         <Card>
-          <CardContent className="space-y-2 p-4 text-sm">
+          <CardContent className="space-y-3 p-4 text-sm">
             <p className="text-xs font-medium text-muted-foreground">
               {t('workspace.frozenNote', {
                 revision: viewed.revision,
@@ -321,6 +405,12 @@ export default function InvestigationWorkspacePage() {
                     : '—',
               })}
             </p>
+            {viewed.method !== null ? (
+              <p>
+                <span className="text-muted-foreground">{t('workspace.method')}: </span>
+                {t(`workspace.methods.${viewed.method}` as never)}
+              </p>
+            ) : null}
             <p>
               <span className="text-muted-foreground">{t('workspace.immediateCause')}: </span>
               {viewed.immediateCause || '—'}
@@ -329,10 +419,102 @@ export default function InvestigationWorkspacePage() {
               <span className="text-muted-foreground">{t('workspace.underlyingCause')}: </span>
               {viewed.underlyingCause || '—'}
             </p>
-            {viewed.conclusionSummary !== '' ? (
-              <p className="whitespace-pre-wrap border-l-2 pl-3">{viewed.conclusionSummary}</p>
+            {viewed.contributingFactors.length > 0 ? (
+              <p>
+                <span className="text-muted-foreground">
+                  {t('workspace.contributingFactors')}:{' '}
+                </span>
+                {viewed.contributingFactors
+                  .map((c) => t(`causalFactors.${c}` as never))
+                  .join(' · ')}
+              </p>
             ) : null}
-            <p className="text-xs text-muted-foreground">
+            {viewed.whyChain !== null && viewed.whyChain.length > 0 ? (
+              <div>
+                <p className="text-muted-foreground">{t('workspace.whyChainHeading')}</p>
+                <ol className="ml-4 list-decimal space-y-0.5">
+                  {viewed.whyChain.map((w, i) => (
+                    <li key={i} className={w.isRootCause ? 'font-medium' : ''}>
+                      {w.text}
+                      {w.isRootCause ? ` — ${t('workspace.rootCauseMark')}` : ''}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
+            {viewed.causalFactors !== null && viewed.causalFactors.length > 0 ? (
+              <div>
+                <p className="text-muted-foreground">{t('workspace.causalFactorsHeading')}</p>
+                <ul className="ml-4 list-disc space-y-0.5">
+                  {viewed.causalFactors.map((f, i) => (
+                    <li key={i}>
+                      <span className="font-medium">
+                        {t(`causalFactors.${f.category}` as never)}
+                      </span>
+                      : {f.narrative}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {viewed.timelineEntries.length > 0 ? (
+              <div>
+                <p className="text-muted-foreground">{t('workspace.timelineHeading')}</p>
+                <ul className="ml-4 list-disc space-y-0.5">
+                  {viewed.timelineEntries.map((entry, i) => (
+                    <li key={i}>
+                      {entry.at !== '' ? `${entry.at} — ` : ''}
+                      {entry.text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {viewed.conclusionSummary !== '' ? (
+              <div>
+                <p className="text-muted-foreground">{t('workspace.conclusionSummary')}</p>
+                <p className="whitespace-pre-wrap border-l-2 pl-3">{viewed.conclusionSummary}</p>
+              </div>
+            ) : null}
+            {viewed.rootCauseStatement !== '' ? (
+              <p>
+                <span className="text-muted-foreground">{t('workspace.rootCauseStatement')}: </span>
+                {viewed.rootCauseStatement}
+              </p>
+            ) : null}
+            {viewed.recurrenceLikelihood !== null ? (
+              <p>
+                <span className="text-muted-foreground">
+                  {t('workspace.recurrenceLikelihood')}:{' '}
+                </span>
+                {t(`workspace.recurrence.${viewed.recurrenceLikelihood}` as never)}
+              </p>
+            ) : null}
+            {viewed.lessonsLearned !== '' ? (
+              <p>
+                <span className="text-muted-foreground">{t('workspace.lessonsLearned')}: </span>
+                {viewed.lessonsLearned}
+              </p>
+            ) : null}
+            {findingsForViewed.length > 0 ? (
+              <div>
+                <p className="text-muted-foreground">{t('workspace.findingsHeading')}</p>
+                <ul className="ml-4 list-disc space-y-0.5">
+                  {findingsForViewed.map((finding) => (
+                    <li key={finding.id}>
+                      {finding.description}
+                      <span className="text-xs text-muted-foreground">
+                        {' '}
+                        · {t(`causalFactors.${finding.category}` as never)} ·{' '}
+                        {t(`priorities.${finding.priority}` as never)}
+                        {finding.requiresAction ? ` · ${t('workspace.requiresAction')}` : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <p className="border-t pt-2 text-xs text-muted-foreground">
               {t('workspace.signatures', {
                 submitted: nameOf(viewed.submittedByUserId),
                 approved: nameOf(viewed.approvedByUserId),
@@ -355,7 +537,7 @@ export default function InvestigationWorkspacePage() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/*,application/pdf"
+                      accept="image/*,video/mp4,video/quicktime,video/webm,application/pdf"
                       capture="environment"
                       multiple
                       className="hidden"
@@ -387,6 +569,11 @@ export default function InvestigationWorkspacePage() {
                   </div>
                 ) : null}
               </div>
+              {uploadErrors.length > 0 ? (
+                <p className="rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                  {t('workspace.uploadFailed', { files: uploadErrors.join(', ') })}
+                </p>
+              ) : null}
               {showRefForm ? (
                 <div className="flex flex-wrap items-end gap-2 rounded-md border p-3">
                   <div className="space-y-1">
@@ -815,32 +1002,131 @@ export default function InvestigationWorkspacePage() {
           <Card>
             <CardContent className="space-y-3 p-4">
               <h2 className="text-sm font-semibold">{t('workspace.findingsHeading')}</h2>
-              {findingsForViewed.map((finding) => (
-                <div
-                  key={finding.id}
-                  className="flex items-start justify-between gap-2 rounded-md border p-3 text-sm"
-                >
-                  <div>
-                    <p className="font-medium">{finding.description}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {t(`causalFactors.${finding.category}` as never)} · {finding.priority}
-                      {finding.requiresAction ? ` · ${t('workspace.requiresAction')}` : ''}
-                    </p>
+              {findingsForViewed.map((finding) =>
+                editingFindingId === finding.id ? (
+                  /* IN-A7: pre-approval finding correction. */
+                  <div key={finding.id} className="space-y-2 rounded-md border p-3">
+                    <div className="flex flex-wrap gap-2">
+                      <select
+                        value={editFinding.category}
+                        onChange={(e) =>
+                          setEditFinding({ ...editFinding, category: e.target.value })
+                        }
+                        className="h-9 rounded-md border bg-background px-2 text-sm"
+                      >
+                        {CAUSAL_FACTOR_CATEGORIES.map((c) => (
+                          <option key={c} value={c}>
+                            {t(`causalFactors.${c}` as never)}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={editFinding.priority}
+                        onChange={(e) =>
+                          setEditFinding({ ...editFinding, priority: e.target.value })
+                        }
+                        className="h-9 rounded-md border bg-background px-2 text-sm"
+                      >
+                        {FINDING_PRIORITIES.map((p) => (
+                          <option key={p} value={p}>
+                            {t(`priorities.${p}` as never)}
+                          </option>
+                        ))}
+                      </select>
+                      <label className="flex cursor-pointer items-center gap-1.5 text-sm">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4"
+                          checked={editFinding.requiresAction}
+                          onChange={(e) =>
+                            setEditFinding({ ...editFinding, requiresAction: e.target.checked })
+                          }
+                        />
+                        {t('workspace.requiresAction')}
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={editFinding.description}
+                        onChange={(e) =>
+                          setEditFinding({ ...editFinding, description: e.target.value })
+                        }
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={
+                          editFinding.description.trim() === '' || updateFindingMutation.isPending
+                        }
+                        onClick={() =>
+                          updateFindingMutation.mutate({
+                            incidentId,
+                            findingId: finding.id,
+                            category: editFinding.category as never,
+                            priority: editFinding.priority as never,
+                            description: editFinding.description.trim(),
+                            requiresAction: editFinding.requiresAction,
+                          })
+                        }
+                      >
+                        {t('common.save')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingFindingId(null)}
+                      >
+                        {t('common.cancel')}
+                      </Button>
+                    </div>
                   </div>
-                  {editable && finding.actionId === null ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        removeFindingMutation.mutate({ incidentId, findingId: finding.id })
-                      }
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  ) : null}
-                </div>
-              ))}
+                ) : (
+                  <div
+                    key={finding.id}
+                    className="flex items-start justify-between gap-2 rounded-md border p-3 text-sm"
+                  >
+                    <div>
+                      <p className="font-medium">{finding.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t(`causalFactors.${finding.category}` as never)} ·{' '}
+                        {t(`priorities.${finding.priority}` as never)}
+                        {finding.requiresAction ? ` · ${t('workspace.requiresAction')}` : ''}
+                      </p>
+                    </div>
+                    {editable && finding.actionId === null ? (
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingFindingId(finding.id);
+                            setEditFinding({
+                              category: finding.category,
+                              priority: finding.priority,
+                              description: finding.description,
+                              requiresAction: finding.requiresAction,
+                            });
+                          }}
+                        >
+                          {t('common.edit')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            removeFindingMutation.mutate({ incidentId, findingId: finding.id })
+                          }
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                ),
+              )}
               {editable ? (
                 <div className="space-y-2 rounded-md border p-3">
                   <div className="flex flex-wrap gap-2">
@@ -1043,74 +1329,120 @@ export default function InvestigationWorkspacePage() {
                       </Button>
                     </div>
                   ) : null}
-                  {showApprove ? (
-                    <div className="space-y-3">
-                      <p className="text-xs text-muted-foreground">{t('workspace.approveHint')}</p>
-                      {findingsForViewed
-                        .filter((f) => f.requiresAction && f.actionId === null)
-                        .map((finding) => {
-                          const assignment = assignments[finding.id] ?? {
-                            assignee: [],
-                            dueAt: '',
-                          };
-                          return (
-                            <div key={finding.id} className="space-y-2 rounded-md border p-3">
-                              <p className="text-sm font-medium">{finding.description}</p>
-                              <div className="grid gap-2 sm:grid-cols-2">
-                                <GroupUserSelector
-                                  value={assignment.assignee}
-                                  onChange={(next) =>
-                                    setAssignments({
-                                      ...assignments,
-                                      [finding.id]: { ...assignment, assignee: next },
-                                    })
-                                  }
-                                  mode="users"
-                                  multiple={false}
-                                  label={t('workspace.assignee')}
-                                  placeholder={t('workspace.assigneePlaceholder')}
-                                />
-                                <div className="space-y-1.5">
-                                  <Label>{t('workspace.dueDate')}</Label>
-                                  <Input
-                                    type="date"
-                                    value={assignment.dueAt}
-                                    onChange={(e) =>
-                                      setAssignments({
-                                        ...assignments,
-                                        [finding.id]: { ...assignment, dueAt: e.target.value },
-                                      })
-                                    }
-                                  />
+                  {showApprove
+                    ? (() => {
+                        // IN-A6: every action-bearing finding needs an
+                        // owner before the confirm button unlocks — an
+                        // unassigned action can never be chased.
+                        const pendingFindings = findingsForViewed.filter(
+                          (f) => f.requiresAction && f.actionId === null,
+                        );
+                        const allAssigned = pendingFindings.every(
+                          (f) => assignments[f.id]?.assignee[0] !== undefined,
+                        );
+                        // IN-A8: the conflicted approver path — server
+                        // permits it only when nobody independent exists.
+                        const viewerConflicted =
+                          data.viewerUserId === incident.leadInvestigatorUserId ||
+                          data.viewerUserId === latest.submittedByUserId;
+                        return (
+                          <div className="space-y-3">
+                            <p className="text-xs text-muted-foreground">
+                              {t('workspace.approveHint')}
+                            </p>
+                            {pendingFindings.map((finding) => {
+                              const assignment = assignments[finding.id] ?? {
+                                assignee: [],
+                                dueAt: '',
+                              };
+                              return (
+                                <div key={finding.id} className="space-y-2 rounded-md border p-3">
+                                  <p className="text-sm font-medium">{finding.description}</p>
+                                  <div className="grid gap-2 sm:grid-cols-2">
+                                    <GroupUserSelector
+                                      value={assignment.assignee}
+                                      onChange={(next) =>
+                                        setAssignments({
+                                          ...assignments,
+                                          [finding.id]: { ...assignment, assignee: next },
+                                        })
+                                      }
+                                      mode="users"
+                                      multiple={false}
+                                      label={`${t('workspace.assignee')} *`}
+                                      placeholder={t('workspace.assigneePlaceholder')}
+                                    />
+                                    <div className="space-y-1.5">
+                                      <Label>{t('workspace.dueDate')}</Label>
+                                      <Input
+                                        type="date"
+                                        value={assignment.dueAt}
+                                        onChange={(e) =>
+                                          setAssignments({
+                                            ...assignments,
+                                            [finding.id]: { ...assignment, dueAt: e.target.value },
+                                          })
+                                        }
+                                      />
+                                      <p className="text-xs text-muted-foreground">
+                                        {t('workspace.dueDateAutoHint')}
+                                      </p>
+                                    </div>
+                                  </div>
                                 </div>
+                              );
+                            })}
+                            {!allAssigned ? (
+                              <p className="text-xs text-amber-700 dark:text-amber-300">
+                                {t('workspace.assignAllHint')}
+                              </p>
+                            ) : null}
+                            {viewerConflicted ? (
+                              <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/40">
+                                <p className="text-xs text-amber-900 dark:text-amber-200">
+                                  {t('workspace.soleManagerNotice')}
+                                </p>
+                                <Textarea
+                                  value={soleJustification}
+                                  onChange={(e) => setSoleJustification(e.target.value)}
+                                  placeholder={t('workspace.soleManagerPlaceholder')}
+                                  rows={2}
+                                />
                               </div>
-                            </div>
-                          );
-                        })}
-                      <Button
-                        type="button"
-                        disabled={approveMutation.isPending}
-                        onClick={() =>
-                          approveMutation.mutate({
-                            incidentId,
-                            assignments: Object.entries(assignments).map(
-                              ([findingId, assignment]) => ({
-                                findingId,
-                                ...(assignment.assignee[0] !== undefined
-                                  ? { assigneeUserId: assignment.assignee[0] }
-                                  : {}),
-                                ...(assignment.dueAt !== ''
-                                  ? { dueAt: new Date(assignment.dueAt) }
-                                  : {}),
-                              }),
-                            ),
-                          })
-                        }
-                      >
-                        {t('workspace.confirmApprove')}
-                      </Button>
-                    </div>
-                  ) : null}
+                            ) : null}
+                            <Button
+                              type="button"
+                              disabled={
+                                approveMutation.isPending ||
+                                !allAssigned ||
+                                (viewerConflicted && soleJustification.trim() === '')
+                              }
+                              onClick={() =>
+                                approveMutation.mutate({
+                                  incidentId,
+                                  assignments: Object.entries(assignments).map(
+                                    ([findingId, assignment]) => ({
+                                      findingId,
+                                      ...(assignment.assignee[0] !== undefined
+                                        ? { assigneeUserId: assignment.assignee[0] }
+                                        : {}),
+                                      ...(assignment.dueAt !== ''
+                                        ? { dueAt: new Date(assignment.dueAt) }
+                                        : {}),
+                                    }),
+                                  ),
+                                  ...(viewerConflicted && soleJustification.trim() !== ''
+                                    ? { soleManagerJustification: soleJustification.trim() }
+                                    : {}),
+                                })
+                              }
+                            >
+                              {t('workspace.confirmApprove')}
+                            </Button>
+                          </div>
+                        );
+                      })()
+                    : null}
                 </div>
               ) : null}
 

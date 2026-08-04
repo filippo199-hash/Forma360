@@ -19,6 +19,7 @@ import {
   issues,
   maintenancePrograms,
   maintenanceProgramTriggers,
+  ramsPacks,
   user,
 } from '@forma360/db/schema';
 import {
@@ -160,7 +161,10 @@ async function loadActiveActionType(
  * (low=30, medium=7, high=1, critical=1) when no row exists, mirroring
  * the actionTypesRouter.settings.get behaviour.
  */
-export async function loadPriorityDueDateDays(db: Db, tenantId: string): Promise<PriorityDueDateDays> {
+export async function loadPriorityDueDateDays(
+  db: Db,
+  tenantId: string,
+): Promise<PriorityDueDateDays> {
   const rows = await db
     .select({ days: tenantActionSettings.priorityDueDateDays })
     .from(tenantActionSettings)
@@ -412,6 +416,7 @@ const listInput = z
         'fire_logbook_entry',
         'fire_door_inspection',
         'incident',
+        'rams',
       ])
       .optional(),
     sourceId: z.string().length(26).optional(),
@@ -642,7 +647,8 @@ export async function notifyAssignment(
         assignerName: actorRows[0]?.name ?? 'A colleague',
         title: input.title,
         referenceNumber: input.referenceNumber ?? '',
-        dueLine: input.dueAt !== null ? ` It is due by ${input.dueAt.toISOString().slice(0, 10)}.` : '',
+        dueLine:
+          input.dueAt !== null ? ` It is due by ${input.dueAt.toISOString().slice(0, 10)}.` : '',
         viewUrl: `${actionsDeps.appUrl.replace(/\/$/, '')}/en/actions/${input.actionId}`,
       },
     });
@@ -834,7 +840,8 @@ export const actionsRouter = router({
           | 'fire_risk_assessment'
           | 'fire_logbook_entry'
           | 'fire_door_inspection'
-          | 'incident';
+          | 'incident'
+          | 'rams';
         referenceNumber: string | null;
         title: string | null;
         href: string | null;
@@ -872,10 +879,16 @@ export const actionsRouter = router({
         source = { type: 'standalone', referenceNumber: null, title: null, href: null };
       } else if (action.sourceType === 'risk_assessment') {
         const rows = await ctx.db
-          .select({ referenceNumber: riskAssessments.referenceNumber, title: riskAssessments.title })
+          .select({
+            referenceNumber: riskAssessments.referenceNumber,
+            title: riskAssessments.title,
+          })
           .from(riskAssessments)
           .where(
-            and(eq(riskAssessments.tenantId, ctx.tenantId), eq(riskAssessments.id, action.sourceId)),
+            and(
+              eq(riskAssessments.tenantId, ctx.tenantId),
+              eq(riskAssessments.id, action.sourceId),
+            ),
           )
           .limit(1);
         source = {
@@ -895,7 +908,10 @@ export const actionsRouter = router({
           .from(coshhAssessments)
           .leftJoin(coshhSubstances, eq(coshhSubstances.id, coshhAssessments.substanceId))
           .where(
-            and(eq(coshhAssessments.tenantId, ctx.tenantId), eq(coshhAssessments.id, action.sourceId)),
+            and(
+              eq(coshhAssessments.tenantId, ctx.tenantId),
+              eq(coshhAssessments.id, action.sourceId),
+            ),
           )
           .limit(1);
         const row = rows[0];
@@ -1001,6 +1017,22 @@ export const actionsRouter = router({
           referenceNumber: row?.referenceNumber ?? null,
           title: row === undefined || row.confidential ? null : row.title,
           href: `/incidents/${action.sourceId}`,
+        };
+      } else if (action.sourceType === 'rams') {
+        // A RAMS action comes from a rejected client acceptance, a failed
+        // review item or a problem raised at briefing — all anchored to
+        // the pack, so the back-link is the pack page (RS-E17).
+        const rows = await ctx.db
+          .select({ referenceNumber: ramsPacks.referenceNumber, title: ramsPacks.title })
+          .from(ramsPacks)
+          .where(and(eq(ramsPacks.tenantId, ctx.tenantId), eq(ramsPacks.id, action.sourceId)))
+          .limit(1);
+        const row = rows[0];
+        source = {
+          type: 'rams',
+          referenceNumber: row?.referenceNumber ?? null,
+          title: row?.title ?? null,
+          href: `/rams/${action.sourceId}`,
         };
       } else if (action.sourceType === 'issue') {
         const rows = await ctx.db

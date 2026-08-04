@@ -32,6 +32,9 @@ import {
   inspections,
   issues,
   permits,
+  ramsBriefings,
+  ramsPacks,
+  ramsReviews,
   riskAssessments,
   scheduledInspectionOccurrences,
   sites,
@@ -51,6 +54,7 @@ export interface AnalyticsRouterDeps {
     riskAssessments: boolean;
     coshh: boolean;
     permits: boolean;
+    rams: boolean;
   };
   /** Injectable clock for deterministic tests. */
   now?: () => Date;
@@ -157,14 +161,12 @@ export function createAnalyticsRouter(deps: AnalyticsRouterDeps) {
         ]);
 
       // Brand-gated tiles — one aggregate each, only when the module ships.
-      const [permitCounts, raCounts, coshhCounts] = await Promise.all([
+      const [permitCounts, raCounts, coshhCounts, ramsCounts] = await Promise.all([
         deps.modules.permits
           ? ctx.db
               .select({
                 open: count(),
-                expiring48h: count(
-                  sql`CASE WHEN ${permits.validTo} <= ${in48h} THEN 1 END`,
-                ),
+                expiring48h: count(sql`CASE WHEN ${permits.validTo} <= ${in48h} THEN 1 END`),
               })
               .from(permits)
               .where(
@@ -184,7 +186,10 @@ export function createAnalyticsRouter(deps: AnalyticsRouterDeps) {
               })
               .from(riskAssessments)
               .where(
-                and(eq(riskAssessments.tenantId, ctx.tenantId), eq(riskAssessments.status, 'active')),
+                and(
+                  eq(riskAssessments.tenantId, ctx.tenantId),
+                  eq(riskAssessments.status, 'active'),
+                ),
               )
           : Promise.resolve(null),
         deps.modules.coshh
@@ -207,6 +212,44 @@ export function createAnalyticsRouter(deps: AnalyticsRouterDeps) {
                     eq(coshhAssessments.status, 'active'),
                     lte(coshhAssessments.nextReviewAt, at),
                   ),
+                ),
+            ])
+          : Promise.resolve(null),
+        // RAMS: live packs, and how many of those nobody has been briefed
+        // on at their CURRENT version — the number that means work may be
+        // about to start without a briefing.
+        deps.modules.rams
+          ? Promise.all([
+              ctx.db
+                .select({ n: count() })
+                .from(ramsPacks)
+                .where(
+                  and(
+                    eq(ramsPacks.tenantId, ctx.tenantId),
+                    eq(ramsPacks.status, 'issued'),
+                    isNull(ramsPacks.archivedAt),
+                  ),
+                ),
+              ctx.db
+                .select({ n: count() })
+                .from(ramsPacks)
+                .where(
+                  and(
+                    eq(ramsPacks.tenantId, ctx.tenantId),
+                    eq(ramsPacks.status, 'issued'),
+                    isNull(ramsPacks.archivedAt),
+                    sql`NOT EXISTS (
+                      SELECT 1 FROM ${ramsBriefings}
+                      WHERE ${ramsBriefings.packId} = ${ramsPacks.id}
+                        AND ${ramsBriefings.versionNumber} = ${ramsPacks.currentVersion}
+                    )`,
+                  ),
+                ),
+              ctx.db
+                .select({ n: count() })
+                .from(ramsReviews)
+                .where(
+                  and(eq(ramsReviews.tenantId, ctx.tenantId), eq(ramsReviews.outcome, 'pending')),
                 ),
             ])
           : Promise.resolve(null),
@@ -254,97 +297,103 @@ export function createAnalyticsRouter(deps: AnalyticsRouterDeps) {
                 substancesActive: coshhCounts[0][0]?.n ?? 0,
                 assessmentsReviewOverdue: coshhCounts[1][0]?.n ?? 0,
               },
+        rams:
+          ramsCounts === null
+            ? null
+            : {
+                issued: ramsCounts[0][0]?.n ?? 0,
+                awaitingBriefing: ramsCounts[1][0]?.n ?? 0,
+                reviewsPending: ramsCounts[2][0]?.n ?? 0,
+              },
       };
     });
 
-  const trends = tenantProcedure
-    .use(requirePermission('analytics.view'))
-    .query(async ({ ctx }) => {
-      const at = now();
-      // Window starts at the top of the week TREND_WEEKS-1 weeks back so the
-      // newest bucket is the current (partial) week.
-      const windowStart = new Date(at.getTime() - (TREND_WEEKS - 1) * WEEK_MS);
+  const trends = tenantProcedure.use(requirePermission('analytics.view')).query(async ({ ctx }) => {
+    const at = now();
+    // Window starts at the top of the week TREND_WEEKS-1 weeks back so the
+    // newest bucket is the current (partial) week.
+    const windowStart = new Date(at.getTime() - (TREND_WEEKS - 1) * WEEK_MS);
 
-      const [actionRows, inspectionRows, issueRows] = await Promise.all([
-        ctx.db
-          .select({
-            createdAt: actions.createdAt,
-            status: actions.status,
-            closedAt: actions.closedAt,
-          })
-          .from(actions)
-          .where(
-            and(
-              eq(actions.tenantId, ctx.tenantId),
-              isNull(actions.archivedAt),
-              gte(actions.createdAt, windowStart),
-            ),
-          ),
-        ctx.db
-          .select({ completedAt: inspections.completedAt })
-          .from(inspections)
-          .where(
-            and(
-              eq(inspections.tenantId, ctx.tenantId),
-              eq(inspections.status, 'completed'),
-              isNull(inspections.archivedAt),
-              gte(inspections.completedAt, windowStart),
-            ),
-          ),
-        ctx.db
-          .select({ createdAt: issues.createdAt })
-          .from(issues)
-          .where(
-            and(
-              eq(issues.tenantId, ctx.tenantId),
-              isNull(issues.archivedAt),
-              gte(issues.createdAt, windowStart),
-            ),
-          ),
-      ]);
-
-      // Completed actions can predate the window on createdAt — fetch those
-      // separately so completions in-window are counted regardless of age.
-      const completedInWindow = await ctx.db
-        .select({ closedAt: actions.closedAt })
+    const [actionRows, inspectionRows, issueRows] = await Promise.all([
+      ctx.db
+        .select({
+          createdAt: actions.createdAt,
+          status: actions.status,
+          closedAt: actions.closedAt,
+        })
         .from(actions)
         .where(
           and(
             eq(actions.tenantId, ctx.tenantId),
             isNull(actions.archivedAt),
-            eq(actions.status, 'completed'),
-            gte(actions.closedAt, windowStart),
-            lt(actions.createdAt, windowStart),
+            gte(actions.createdAt, windowStart),
           ),
-        );
+        ),
+      ctx.db
+        .select({ completedAt: inspections.completedAt })
+        .from(inspections)
+        .where(
+          and(
+            eq(inspections.tenantId, ctx.tenantId),
+            eq(inspections.status, 'completed'),
+            isNull(inspections.archivedAt),
+            gte(inspections.completedAt, windowStart),
+          ),
+        ),
+      ctx.db
+        .select({ createdAt: issues.createdAt })
+        .from(issues)
+        .where(
+          and(
+            eq(issues.tenantId, ctx.tenantId),
+            isNull(issues.archivedAt),
+            gte(issues.createdAt, windowStart),
+          ),
+        ),
+    ]);
 
-      const empty = (): number[] => Array.from({ length: TREND_WEEKS }, () => 0);
-      const actionsCreated = empty();
-      const actionsCompleted = empty();
-      const inspectionsCompleted = empty();
-      const observationsRaised = empty();
-      const bump = (arr: number[], atDate: Date | null): void => {
-        if (atDate === null) return;
-        const i = weekIndex(atDate, windowStart);
-        if (i >= 0 && i < TREND_WEEKS) arr[i] = (arr[i] ?? 0) + 1;
-      };
-      for (const r of actionRows) {
-        bump(actionsCreated, r.createdAt);
-        if (r.status === 'completed') bump(actionsCompleted, r.closedAt);
-      }
-      for (const r of completedInWindow) bump(actionsCompleted, r.closedAt);
-      for (const r of inspectionRows) bump(inspectionsCompleted, r.completedAt);
-      for (const r of issueRows) bump(observationsRaised, r.createdAt);
+    // Completed actions can predate the window on createdAt — fetch those
+    // separately so completions in-window are counted regardless of age.
+    const completedInWindow = await ctx.db
+      .select({ closedAt: actions.closedAt })
+      .from(actions)
+      .where(
+        and(
+          eq(actions.tenantId, ctx.tenantId),
+          isNull(actions.archivedAt),
+          eq(actions.status, 'completed'),
+          gte(actions.closedAt, windowStart),
+          lt(actions.createdAt, windowStart),
+        ),
+      );
 
-      return {
-        windowStart,
-        weeks: TREND_WEEKS,
-        actionsCreated,
-        actionsCompleted,
-        inspectionsCompleted,
-        observationsRaised,
-      };
-    });
+    const empty = (): number[] => Array.from({ length: TREND_WEEKS }, () => 0);
+    const actionsCreated = empty();
+    const actionsCompleted = empty();
+    const inspectionsCompleted = empty();
+    const observationsRaised = empty();
+    const bump = (arr: number[], atDate: Date | null): void => {
+      if (atDate === null) return;
+      const i = weekIndex(atDate, windowStart);
+      if (i >= 0 && i < TREND_WEEKS) arr[i] = (arr[i] ?? 0) + 1;
+    };
+    for (const r of actionRows) {
+      bump(actionsCreated, r.createdAt);
+      if (r.status === 'completed') bump(actionsCompleted, r.closedAt);
+    }
+    for (const r of completedInWindow) bump(actionsCompleted, r.closedAt);
+    for (const r of inspectionRows) bump(inspectionsCompleted, r.completedAt);
+    for (const r of issueRows) bump(observationsRaised, r.createdAt);
+
+    return {
+      windowStart,
+      weeks: TREND_WEEKS,
+      actionsCreated,
+      actionsCompleted,
+      inspectionsCompleted,
+      observationsRaised,
+    };
+  });
 
   const siteComparison = tenantProcedure
     .use(requirePermission('analytics.view'))

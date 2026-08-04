@@ -33,7 +33,9 @@ export type ToolName =
   | 'list_risk_assessments'
   | 'fire_safety_overview'
   | 'list_contractors_on_site'
-  | 'list_sites';
+  | 'list_sites'
+  | 'list_rams_packs'
+  | 'get_rams_pack';
 
 /**
  * Tools that go through the tRPC caller (writes + the reads backed by
@@ -54,6 +56,8 @@ export const CALLER_TOOL_NAMES = new Set<ToolName>([
   'fire_safety_overview',
   'list_contractors_on_site',
   'list_sites',
+  'list_rams_packs',
+  'get_rams_pack',
   'list_observation_categories',
   'list_users',
   'list_documents',
@@ -430,5 +434,35 @@ export const TOOLS: Anthropic.Tool[] = [
     name: 'list_sites',
     description: 'List the company sites / projects.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'list_rams_packs',
+    description:
+      'List RAMS packs (risk assessment & method statement) with status, client, planned dates and how many people have been briefed on the current version. Answers "which RAMS are still in draft", "what did we issue for the Riverside job", "who still needs briefing".',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['draft', 'issued', 'superseded', 'withdrawn', 'cancelled'],
+          description: 'Filter by lifecycle status',
+        },
+        search: { type: 'string', description: 'Match title, reference or client name' },
+        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_rams_pack',
+    description:
+      'Read one RAMS pack in full: job context, the sequenced method statement with hold points, bound risk assessments and COSHH records, briefing status, client acceptance and the outstanding issue-gate checklist. Use after list_rams_packs to answer questions about a specific pack.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        packId: { type: 'string', description: 'The pack id (26-char ULID)' },
+      },
+      required: ['packId'],
+    },
   },
 ];

@@ -463,12 +463,13 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       logger: logger.child({ handler: 'incident-alert' }),
       appUrl: env.APP_URL,
       notify: async (
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale: string | null },
         incident: AlertIncident,
         viewUrl: string,
       ) => {
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: 'incident-alert',
           variables: {
             recipientName: recipient.name,
@@ -503,7 +504,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       notify: async (
         kind: RiddorWatchKind,
         incident: RiddorWatchIncident,
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale: string | null },
         viewUrl: string,
       ) => {
         const daysLeft = Math.max(
@@ -512,6 +513,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
         );
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey:
             kind === 'escalation' ? 'incident-riddor-escalation' : 'incident-riddor-warning',
           variables: {
@@ -546,16 +548,18 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       logger: logger.child({ handler: 'incident-chase' }),
       appUrl: env.APP_URL,
       notify: async (
-        recipient: { email: string; name: string },
+        recipient: { email: string; name: string; locale: string | null },
         digest: IncidentChaseDigest,
         viewUrl: string,
       ) => {
         const total =
+          digest.untriagedIncidents.length +
           digest.idleInvestigations.length +
           digest.overdueActionIncidents.length +
           digest.effectivenessDue.length;
         await sendTemplatedEmail({
           to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: 'incident-chase-digest',
           variables: {
             recipientName: recipient.name,

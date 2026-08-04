@@ -27,6 +27,7 @@ import { usersRouter } from './routers/users';
 import { actionsRouter } from './routers/actions';
 import { actionTypesRouter } from './routers/actionTypes';
 import { createAnalyticsRouter } from './routers/analytics';
+import { createMyWorkRouter } from './routers/myWork';
 import { notificationsRouter } from './routers/notifications';
 import { approvalsRouter } from './routers/approvals';
 import { assetTypesRouter } from './routers/assetTypes';
@@ -53,6 +54,7 @@ import { createCoshhRouter, type CoshhRouterDeps } from './routers/coshh';
 import { createPermitsRouter, type PermitsRouterDeps } from './routers/permits';
 import { createFireSafetyRouter, type FireSafetyRouterDeps } from './routers/fireSafety';
 import { createIncidentsRouter, type IncidentsRouterDeps } from './routers/incidents';
+import { createRamsRouter, type RamsRouterDeps } from './routers/rams';
 import {
   createRiskAssessmentsRouter,
   type RiskAssessmentsRouterDeps,
@@ -95,6 +97,11 @@ export function buildAppRouter(deps: {
   permits?: PermitsRouterDeps;
   fireSafety?: FireSafetyRouterDeps;
   incidents?: IncidentsRouterDeps;
+  /**
+   * Brand-gated (ADR 0010), same contract as the other B-modules:
+   * omitting it DISABLES the module.
+   */
+  rams?: RamsRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -132,6 +139,9 @@ export function buildAppRouter(deps: {
     search: searchRouter,
     aiAssistant: aiAssistantRouter,
     notifications: notificationsRouter,
+    // ADR 0014: the caller's own queue. Ungated on purpose — it can only
+    // ever return rows assigned to the caller.
+    myWork: createMyWorkRouter(),
     // PF-5: dashboard tiles for brand-gated modules follow the same enabled
     // flags as the routers themselves — one source of truth (ADR 0010).
     analytics: createAnalyticsRouter({
@@ -139,6 +149,7 @@ export function buildAppRouter(deps: {
         riskAssessments: deps.riskAssessments?.enabled ?? false,
         coshh: deps.coshh?.enabled ?? false,
         permits: deps.permits?.enabled ?? false,
+        rams: deps.rams?.enabled ?? false,
       },
     }),
     riskAssessments: createRiskAssessmentsRouter(deps.riskAssessments ?? { enabled: false }),
@@ -146,6 +157,7 @@ export function buildAppRouter(deps: {
     permits: createPermitsRouter(deps.permits ?? { enabled: false }),
     fireSafety: createFireSafetyRouter(deps.fireSafety ?? { enabled: false }),
     incidents: createIncidentsRouter(deps.incidents ?? { enabled: false }),
+    rams: createRamsRouter(deps.rams ?? { enabled: false }),
   });
 }
 
@@ -300,6 +312,19 @@ export const stubFireSafetyDeps: FireSafetyRouterDeps = { enabled: true };
  * `enabled: false`. */
 export const stubIncidentsDeps: IncidentsRouterDeps = { enabled: true };
 
+/**
+ * Test-only RAMS deps — enabled; brand gating is tested with
+ * `enabled: false`. Share-link helpers are deterministic so the
+ * client-acceptance tests can assert on the token they get back.
+ */
+let __ramsShareTokenSeq = 0;
+export const stubRamsDeps: RamsRouterDeps = {
+  enabled: true,
+  generateShareToken: () => `rams-stub-token-${(__ramsShareTokenSeq += 1)}`,
+  buildShareUrl: (token) => `http://localhost:3000/s/${token}`,
+  appUrl: 'http://localhost:3000',
+};
+
 export const appRouter = buildAppRouter({
   exports: stubExportsDeps,
   inspectionsExport: stubInspectionsExportDeps,
@@ -312,6 +337,7 @@ export const appRouter = buildAppRouter({
   permits: stubPermitsDeps,
   fireSafety: stubFireSafetyDeps,
   incidents: stubIncidentsDeps,
+  rams: stubRamsDeps,
 });
 
 export type AppRouter = typeof appRouter;

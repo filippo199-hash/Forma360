@@ -14,7 +14,11 @@
  *      site — never the title, description or names;
  *   4. stamps `alert_sent_at` and appends the `alert_sent` event.
  *
- * Notify-then-stamp: a crashed run re-sends rather than going silent;
+ * Notify-then-stamp (IN-A1): the stamp is written only after at least
+ * one delivery succeeded (or there was genuinely nobody to tell). Total
+ * delivery failure leaves the stamp clear and THROWS so BullMQ retries
+ * the job with backoff — the serious-incident fan-out is the one
+ * notification that must never be lost to a transient mail outage.
  * `alert_sent_at` also dedupes re-enqueues (create + triage both fire).
  */
 import type { Database } from '@forma360/db/client';
@@ -113,8 +117,10 @@ export async function runIncidentAlert(
   };
   const viewUrl = `${deps.appUrl}/en/incidents/${row.id}`;
   let notified = 0;
+  let attempted = 0;
   for (const recipient of recipients) {
     if (recipient.email === '') continue;
+    attempted += 1;
     try {
       await deps.notify(recipient, incident, viewUrl);
       notified += 1;
@@ -126,7 +132,18 @@ export async function runIncidentAlert(
     }
   }
 
-  // Notify-then-stamp; stamp even at zero recipients so an empty
+  // IN-A1 guard (same rule as the RIDDOR watch): zero deliveries while
+  // there was someone to tell means the fan-out did NOT happen — leave
+  // the stamp clear and throw so BullMQ retries with backoff. Partial
+  // delivery stamps: someone was told, and a blanket re-send would
+  // duplicate for the recipients that succeeded.
+  if (attempted > 0 && notified === 0) {
+    throw new Error(
+      `[incident-alert] all ${String(attempted)} deliveries failed for incident ${row.id} — not stamping, job will retry`,
+    );
+  }
+
+  // Notify-then-stamp; stamp at zero addressable recipients so an empty
   // holder list doesn't re-fire forever.
   const now = new Date();
   await deps.db

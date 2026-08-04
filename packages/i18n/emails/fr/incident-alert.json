@@ -1,0 +1,8 @@
+{
+  "subject": "Alerte incident — {referenceNumber} ({kindLabel}, {severityLabel})",
+  "preheader": "Un incident nécessitant une attention immédiate a été signalé sur {productName}.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Un incident nécessitant une attention immédiate a été signalé sur {productName} :\n\nRéférence : {referenceNumber}\nType : {kindLabel}\nGravité : {severityLabel}\nSite : {siteLine}\nSurvenu : {occurredAt} UTC\n\nOuvrez le dossier pour les détails, confirmez le tri et désignez l'enquête. Les détails sont omis de cet e-mail car les dossiers d'incident peuvent être confidentiels.",
+  "cta": "Ouvrir l'incident",
+  "footer": "Vous recevez ce message car vous détenez des permissions de gestion des incidents dans {productName}."
+}

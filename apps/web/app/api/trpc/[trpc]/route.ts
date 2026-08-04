@@ -25,6 +25,7 @@ import { coshhDeps } from '../../../../src/server/coshh-deps';
 import { permitsDeps } from '../../../../src/server/permits-deps';
 import { fireSafetyDeps } from '../../../../src/server/fire-safety-deps';
 import { incidentsDeps } from '../../../../src/server/incidents-deps';
+import { ramsDeps } from '../../../../src/server/rams-deps';
 import { createContext } from '../../../../src/server/trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps.
 import '../../../../src/server/users-deps';
@@ -46,6 +47,7 @@ const appRouter = buildAppRouter({
   permits: permitsDeps,
   fireSafety: fireSafetyDeps,
   incidents: incidentsDeps,
+  rams: ramsDeps,
 });
 
 async function handler(req: Request): Promise<Response> {

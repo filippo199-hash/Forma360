@@ -68,6 +68,7 @@ import {
   canTransition,
   CAUSAL_FACTOR_CATEGORIES,
   defaultConfidential,
+  defaultInvestigationLevel,
   effectivenessDueAt,
   EFFECTIVENESS_VERDICTS,
   EVIDENCE_KINDS,
@@ -85,6 +86,7 @@ import {
   parseIncidentDetails,
   PERSON_CATEGORIES,
   personInjurySchema,
+  provisionalSeverity,
   RCA_METHODS,
   RECURRENCE_LIKELIHOODS,
   RIDDOR_CATEGORIES,
@@ -93,9 +95,12 @@ import {
   timelineEntriesSchema,
   totalDaysLost,
   whyChainSchema,
+  type IncidentSeverity,
   type IncidentStatus,
+  type InvestigationLevel,
 } from '@forma360/shared/incidents';
 import { grantsAdminAccess } from '@forma360/permissions/catalogue';
+import { usersHoldingPermission } from '@forma360/permissions/holders';
 import { newId } from '@forma360/shared/id';
 import { toCsv } from '@forma360/shared/csv';
 import { TRPCError } from '@trpc/server';
@@ -402,6 +407,21 @@ function isUniqueViolation(err: unknown): boolean {
   return visit(err);
 }
 
+/**
+ * IN-A3: the investigation-depth floor. `full` is mandatory when the
+ * severity is serious-or-above or the RIDDOR screening says reportable.
+ * The router binds to this at triage, at every severity/level change,
+ * at screening and again at submission — depth of inquiry is not
+ * discretionary at exactly the moments it matters.
+ */
+function investigationLevelFloor(
+  severity: IncidentSeverity,
+  riddorCategory: Incident['riddorCategory'],
+): InvestigationLevel {
+  const reportable = riddorCategory !== null && isRiddorReportable(riddorCategory);
+  return defaultInvestigationLevel(severity, reportable);
+}
+
 // ─── Input schemas ──────────────────────────────────────────────────────────
 
 const idInput = z.object({ incidentId: z.string().length(26) });
@@ -423,6 +443,9 @@ const createInput = z.object({
   locationText: z.string().trim().max(500).default(''),
   details: z.record(z.unknown()).default({}),
   persons: z.array(personInput).max(50).default([]),
+  // IN-A2: the reporter may offer a severity judgement at the scene.
+  // Optional — triage still owns the definitive value.
+  severity: z.enum(INCIDENT_SEVERITIES).optional(),
   potentialSeverity: z.enum(INCIDENT_SEVERITIES).optional(),
   permitId: z.string().length(26).optional(),
   contractorId: z.string().length(26).optional(),
@@ -878,6 +901,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
       const now = new Date();
       const soon = new Date(now.getTime() + 5 * 86_400_000);
       let open = 0;
+      let untriaged = 0;
       let investigating = 0;
       let riddorDueSoon = 0;
       let riddorOverdue = 0;
@@ -885,6 +909,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
       let effectivenessOverdue = 0;
       for (const row of rows) {
         if (row.status !== 'closed' && row.status !== 'cancelled') open += 1;
+        // IN-A2: an incident nobody has triaged is the one most likely
+        // to be invisible — count it separately so the register shouts.
+        if (row.status === 'reported') untriaged += 1;
         if (row.status === 'investigating') investigating += 1;
         const clockRunning =
           row.riddorCategory !== null &&
@@ -908,6 +935,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
       }
       return {
         open,
+        untriaged,
         investigating,
         riddorDueSoon,
         riddorOverdue,
@@ -946,6 +974,13 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         const id = newId();
         const refValue = await nextReferenceValue(ctx.db, ctx.tenantId, 'incident');
         const referenceNumber = formatIncidentReference(refValue);
+        // IN-A2: derive the provisional severity from the reporter's
+        // judgement and the hospitalisation facts, so a serious injury
+        // alerts at create rather than sitting silent until triage.
+        const severity = provisionalSeverity(
+          input.severity,
+          input.persons.map((p) => p.injury.hospitalisation),
+        );
         await ctx.db.insert(incidents).values({
           id,
           tenantId: ctx.tenantId,
@@ -953,7 +988,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           title: input.title,
           description: input.description,
           kind: input.kind,
-          severity: 'minor',
+          severity,
           potentialSeverity: input.potentialSeverity ?? null,
           status: 'reported',
           confidential: defaultConfidential(input.kind),
@@ -1071,6 +1106,13 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
         assertDetailAccess(incident, ctx);
         assertTransition(incident.status, 'triaged');
+        // IN-A3: the level must meet the floor the triage severity (and
+        // any existing RIDDOR determination) demands. Refused, not
+        // silently corrected — the triager owns the judgement.
+        const floor = investigationLevelFloor(input.severity, incident.riddorCategory);
+        if (floor === 'full' && input.investigationLevel !== 'full') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'investigation-level-below-floor' });
+        }
         const investigator = await loadUserInTenant(
           ctx.db,
           ctx.tenantId,
@@ -1148,8 +1190,82 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           kind: 'severity_changed',
           detail: { from: incident.severity, to: input.severity },
         });
+        // IN-A3b: a raised severity drags the investigation depth with
+        // it — severity could always go up while the level was
+        // write-once, which produced severity=major / level=basic rows.
+        if (
+          investigationLevelFloor(input.severity, incident.riddorCategory) === 'full' &&
+          incident.investigationLevel === 'basic'
+        ) {
+          await ctx.db
+            .update(incidents)
+            .set({ investigationLevel: 'full', updatedAt: now })
+            .where(and(eq(incidents.tenantId, ctx.tenantId), eq(incidents.id, incident.id)));
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            incidentId: incident.id,
+            actorUserId: ctx.auth.userId,
+            kind: 'investigation_level_changed',
+            detail: { from: 'basic', to: 'full', reason: 'severity' },
+          });
+        }
         const updated = await loadIncident(ctx.db, ctx.tenantId, incident.id);
         await maybeEnqueueAlert(ctx, updated);
+        return { ok: true };
+      }),
+
+    /**
+     * IN-A3b: the explicit level-change path. Upgrades are allowed any
+     * time before the incident is terminal; a downgrade must stay at or
+     * above the floor and is only possible while no investigation
+     * content exists at all.
+     */
+    setInvestigationLevel: tenantProcedure
+      .use(requirePermission('incidents.manage'))
+      .input(z.object({ incidentId: z.string().length(26), level: z.enum(INVESTIGATION_LEVELS) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
+        assertDetailAccess(incident, ctx);
+        if (incident.status === 'closed' || incident.status === 'cancelled') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'incident-terminal' });
+        }
+        if (incident.investigationLevel === null) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'not-triaged' });
+        }
+        if (incident.investigationLevel === input.level) return { ok: true };
+        if (input.level === 'basic') {
+          if (investigationLevelFloor(incident.severity, incident.riddorCategory) === 'full') {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'investigation-level-below-floor',
+            });
+          }
+          const revisions = await ctx.db
+            .select({ id: incidentInvestigations.id })
+            .from(incidentInvestigations)
+            .where(
+              and(
+                eq(incidentInvestigations.tenantId, ctx.tenantId),
+                eq(incidentInvestigations.incidentId, incident.id),
+              ),
+            )
+            .limit(1);
+          if (revisions.length > 0) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'investigation-content-exists' });
+          }
+        }
+        await ctx.db
+          .update(incidents)
+          .set({ investigationLevel: input.level, updatedAt: new Date() })
+          .where(and(eq(incidents.tenantId, ctx.tenantId), eq(incidents.id, incident.id)));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          incidentId: incident.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'investigation_level_changed',
+          detail: { from: incident.investigationLevel, to: input.level },
+        });
         return { ok: true };
       }),
 
@@ -1488,6 +1604,22 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           kind: 'riddor_screened',
           detail: { category: input.category, deadlineAt: deadline?.toISOString() ?? null },
         });
+        // IN-A3: a reportable determination makes the full level
+        // mandatory — the screening is a statement of fact, so the
+        // consequence follows automatically rather than being refused.
+        if (isRiddorReportable(input.category) && incident.investigationLevel === 'basic') {
+          await ctx.db
+            .update(incidents)
+            .set({ investigationLevel: 'full', updatedAt: now })
+            .where(and(eq(incidents.tenantId, ctx.tenantId), eq(incidents.id, incident.id)));
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            incidentId: incident.id,
+            actorUserId: ctx.auth.userId,
+            kind: 'investigation_level_changed',
+            detail: { from: 'basic', to: 'full', reason: 'riddor' },
+          });
+        }
         return { deadlineAt: deadline };
       }),
 
@@ -1885,6 +2017,16 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         if (investigation.status !== 'draft') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'investigation-not-draft' });
         }
+        // IN-A3 belt-and-braces: re-check the floor at submission. Every
+        // severity / screening path auto-raises, so this only fires if a
+        // future code path forgets — a proportionality breach must never
+        // reach sign-off.
+        if (
+          investigationLevelFloor(incident.severity, incident.riddorCategory) === 'full' &&
+          incident.investigationLevel !== 'full'
+        ) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'investigation-level-below-floor' });
+        }
         // Level-proportionate completeness gate.
         if (investigation.immediateCause.trim() === '') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'immediate-cause-required' });
@@ -1979,6 +2121,9 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
             )
             .max(100)
             .default([]),
+          // IN-A8: mandatory when (and only when) the approver is the
+          // lead/submitter AND the tenant has no other eligible approver.
+          soleManagerJustification: z.string().trim().max(2000).optional(),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -1992,11 +2137,33 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         }
         // Separation of duties: the approver must not be the lead
         // investigator or the submitter (Marcus's condition, M-2/C-6).
-        if (
+        // IN-A8: a single-manager tenant would deadlock here — when the
+        // server can prove nobody else in the tenant could approve
+        // (no other active incidents.manage / admin holder besides the
+        // lead and submitter), the conflicted approver may proceed with
+        // a mandatory justification, recorded on the approval event.
+        let soleManagerOverride = false;
+        const isConflicted =
           ctx.auth.userId === incident.leadInvestigatorUserId ||
-          ctx.auth.userId === investigation.submittedByUserId
-        ) {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'approver-is-investigator' });
+          ctx.auth.userId === investigation.submittedByUserId;
+        if (isConflicted) {
+          const holders = await usersHoldingPermission(ctx.db, ctx.tenantId, 'incidents.manage');
+          const independent = holders.filter(
+            (h) =>
+              h.userId !== incident.leadInvestigatorUserId &&
+              h.userId !== investigation.submittedByUserId,
+          );
+          if (independent.length > 0) {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'approver-is-investigator' });
+          }
+          const justification = input.soleManagerJustification?.trim() ?? '';
+          if (justification === '') {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'sole-manager-justification-required',
+            });
+          }
+          soleManagerOverride = true;
         }
 
         const findings = await ctx.db
@@ -2029,6 +2196,26 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         const pending = findings.filter((f) => f.requiresAction && f.actionId === null);
         const daysByPriority = await loadPriorityDueDateDays(ctx.db, ctx.tenantId);
         const now = new Date();
+
+        // IN-A6: every action-bearing finding leaves approval with an
+        // owner and a due date — an unassigned or undated corrective
+        // action is one the chase digest can never chase. The dialog
+        // sends them; the server refuses a partial set.
+        for (const finding of pending) {
+          const assignment = assignmentByFinding.get(finding.id);
+          if (assignment?.assigneeUserId === undefined) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'finding-assignee-required' });
+          }
+          const resolvedDue = computeAutoDueAt(
+            now,
+            finding.priority,
+            daysByPriority,
+            assignment.dueAt?.toISOString() ?? null,
+          );
+          if (resolvedDue === null) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'finding-due-date-required' });
+          }
+        }
 
         // Pre-claim references outside the tx (the counter upsert
         // serialises on its own row; a rolled-back claim just skips a
@@ -2155,7 +2342,17 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           incidentId: incident.id,
           actorUserId: ctx.auth.userId,
           kind: 'investigation_approved',
-          detail: { revision: investigation.revision },
+          detail: {
+            revision: investigation.revision,
+            // IN-A8: the override is part of the permanent record — the
+            // auditor sees who signed alone and why it was permitted.
+            ...(soleManagerOverride
+              ? {
+                  soleManagerOverride: true,
+                  justification: input.soleManagerJustification?.trim() ?? '',
+                }
+              : {}),
+          },
         });
         if (generated.length > 0) {
           await logEvent(ctx.db, {

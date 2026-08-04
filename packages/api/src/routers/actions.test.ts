@@ -296,7 +296,12 @@ describe('actions router (platform review)', () => {
       reportedByUserId: adminId,
       referenceNumber: 'OBS-000001',
       categorySnapshot: { categoryId, name: 'Hazard', customFields: [], customQuestions: [] },
-      accessSnapshot: { groupIds: [], siteIds: [], permissions: [], snapshotAt: new Date().toISOString() },
+      accessSnapshot: {
+        groupIds: [],
+        siteIds: [],
+        permissions: [],
+        snapshotAt: new Date().toISOString(),
+      },
     });
     const questionId = newId();
     const typeId = newId();
@@ -304,9 +309,7 @@ describe('actions router (platform review)', () => {
       id: typeId,
       tenantId,
       name: 'Corrective',
-      customQuestions: [
-        { id: questionId, prompt: 'Root cause', type: 'text', required: true },
-      ],
+      customQuestions: [{ id: questionId, prompt: 'Root cause', type: 'text', required: true }],
       createdBy: adminId,
     });
 
@@ -329,9 +332,7 @@ describe('actions router (platform review)', () => {
     });
     const detail = await caller.actions.get({ actionId: created.actionId });
     // medium → +7 days from the tenant default table.
-    const days = Math.round(
-      ((detail.action.dueAt?.getTime() ?? 0) - Date.now()) / DAY_MS,
-    );
+    const days = Math.round(((detail.action.dueAt?.getTime() ?? 0) - Date.now()) / DAY_MS);
     expect(days).toBe(7);
     expect(detail.action.actionTypeId).toBe(typeId);
   });
@@ -352,9 +353,7 @@ describe('actions router (platform review)', () => {
     expect(sentEmails).toHaveLength(1);
     expect(sentEmails[0]?.templateKey).toBe('action-assigned');
     expect(sentEmails[0]?.to).toBe(`carl-${tenantId}@acme.test`);
-    expect(sentEmails[0]?.variables['viewUrl']).toBe(
-      `https://freehs.test/en/actions/${actionId}`,
-    );
+    expect(sentEmails[0]?.variables['viewUrl']).toBe(`https://freehs.test/en/actions/${actionId}`);
 
     // Reassigning back to me (actor=admin, assignee=admin) → silent;
     // reassigning to the colleague again → email.

@@ -36,6 +36,10 @@ import {
   fireFraReviews,
   fireRiskAssessments,
   fireSignificantFindings,
+  ramsBriefings,
+  ramsClientLinks,
+  ramsPacks,
+  ramsPackVersions,
 } from '@forma360/db/schema';
 import { totalDaysLost } from '@forma360/shared/incidents';
 import type {
@@ -47,8 +51,9 @@ import type {
   PermitWorker,
 } from '@forma360/shared/permits';
 import type { RiskMatrixConfig } from '@forma360/shared/risk-matrix';
+import type { RamsPackVersionContent } from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 
 export interface InspectionRenderSnapshot {
@@ -1145,5 +1150,154 @@ export async function loadIncidentSnapshot(
 
 /** Stable content hash for the incident PDF cache key. */
 export function hashIncidentSnapshot(snap: IncidentRenderSnapshot): string {
+  return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
+}
+
+// ─── RAMS pack (FreeHS module B6) ───────────────────────────────────────────
+
+export interface RamsRenderSnapshot {
+  pack: {
+    id: string;
+    tenantId: string;
+    referenceNumber: string | null;
+    title: string;
+    status: string;
+    withdrawnReason: string;
+  };
+  version: {
+    id: string;
+    versionNumber: number;
+    issuedAt: string;
+    issuedByName: string | null;
+    attestationText: string;
+    supersededAt: string | null;
+    /** The frozen snapshot — job context, steps, bindings, documents. */
+    content: RamsPackVersionContent;
+  };
+  /** Briefings against THIS version — the "who was briefed" page. */
+  briefings: Array<{
+    name: string;
+    organisation: string;
+    category: string;
+    briefedByName: string;
+    briefedAt: string;
+    hasSignature: boolean;
+    questionsNote: string;
+  }>;
+  /** Client acceptance recorded against this version, if any. */
+  acceptance: {
+    decision: string;
+    acceptedByName: string;
+    acceptedByOrganisation: string;
+    decidedAt: string | null;
+    comment: string;
+  } | null;
+}
+
+/**
+ * Load everything the RAMS pack PDF prints. Reads the FROZEN version
+ * row, never the mutable pack content — a pack issued at v1 always
+ * renders as it was issued (ADR 0007 / RS-E07). Returns null when the
+ * version does not exist in this tenant.
+ */
+export async function loadRamsSnapshot(
+  db: Database,
+  input: { tenantId: string; packVersionId: string },
+): Promise<RamsRenderSnapshot | null> {
+  const rows = await db
+    .select({
+      packId: ramsPacks.id,
+      tenantId: ramsPacks.tenantId,
+      referenceNumber: ramsPacks.referenceNumber,
+      title: ramsPacks.title,
+      status: ramsPacks.status,
+      withdrawnReason: ramsPacks.withdrawnReason,
+      versionId: ramsPackVersions.id,
+      versionNumber: ramsPackVersions.versionNumber,
+      issuedAt: ramsPackVersions.issuedAt,
+      issuedByName: ramsPackVersions.issuedByName,
+      attestationText: ramsPackVersions.attestationText,
+      supersededAt: ramsPackVersions.supersededAt,
+      content: ramsPackVersions.content,
+    })
+    .from(ramsPackVersions)
+    .innerJoin(ramsPacks, eq(ramsPacks.id, ramsPackVersions.packId))
+    .where(
+      and(
+        eq(ramsPackVersions.tenantId, input.tenantId),
+        eq(ramsPackVersions.id, input.packVersionId),
+      ),
+    )
+    .limit(1);
+  const row = rows[0];
+  if (row === undefined) return null;
+
+  const [briefingRows, linkRows] = await Promise.all([
+    db
+      .select()
+      .from(ramsBriefings)
+      .where(
+        and(
+          eq(ramsBriefings.tenantId, input.tenantId),
+          eq(ramsBriefings.packVersionId, row.versionId),
+        ),
+      )
+      .orderBy(asc(ramsBriefings.briefedAt)),
+    db
+      .select()
+      .from(ramsClientLinks)
+      .where(
+        and(
+          eq(ramsClientLinks.tenantId, input.tenantId),
+          eq(ramsClientLinks.packVersionId, row.versionId),
+        ),
+      )
+      .orderBy(desc(ramsClientLinks.decidedAt)),
+  ]);
+
+  const decided = linkRows.find((l) => l.decision !== 'pending');
+
+  return {
+    pack: {
+      id: row.packId,
+      tenantId: row.tenantId,
+      referenceNumber: row.referenceNumber,
+      title: row.title,
+      status: row.status,
+      withdrawnReason: row.withdrawnReason,
+    },
+    version: {
+      id: row.versionId,
+      versionNumber: row.versionNumber,
+      issuedAt: row.issuedAt.toISOString(),
+      issuedByName: row.issuedByName,
+      attestationText: row.attestationText,
+      supersededAt: row.supersededAt?.toISOString() ?? null,
+      content: row.content,
+    },
+    briefings: briefingRows.map((b) => ({
+      name: b.briefeeName,
+      organisation: b.briefeeOrganisation,
+      category: b.briefeeCategory,
+      briefedByName: b.briefedByName,
+      briefedAt: b.briefedAt.toISOString(),
+      hasSignature: b.signatureData !== null && b.signatureData.length > 0,
+      questionsNote: b.questionsNote,
+    })),
+    acceptance:
+      decided === undefined
+        ? null
+        : {
+            decision: decided.decision,
+            acceptedByName: decided.acceptedByName,
+            acceptedByOrganisation: decided.acceptedByOrganisation,
+            decidedAt: decided.decidedAt?.toISOString() ?? null,
+            comment: decided.decisionComment,
+          },
+  };
+}
+
+/** Stable content hash for the RAMS pack PDF cache key. */
+export function hashRamsSnapshot(snap: RamsRenderSnapshot): string {
   return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
 }

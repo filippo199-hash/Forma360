@@ -1,0 +1,8 @@
+{
+  "subject": "Prazo RIDDOR em {daysLeft} — {referenceNumber}",
+  "preheader": "Um incidente de comunicação obrigatória em {productName} ainda não foi submetido à HSE.",
+  "greeting": "Olá, {recipientName},",
+  "body": "O incidente {referenceNumber} foi classificado como abrangido pelo RIDDOR ({categoryLabel}) e ainda não foi submetido à HSE.\n\nPrazo legal: {deadlineAt} UTC (faltam {daysLeft}).\n\nSubmeta a comunicação através do formulário online da HSE (ou por telefone para lesões mortais e especificadas) e registe depois a submissão no incidente para parar o relógio.",
+  "cta": "Abrir o incidente",
+  "footer": "Está a receber esta mensagem porque este incidente é seu ou possui permissões de gestão de incidentes em {productName}."
+}

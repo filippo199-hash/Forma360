@@ -60,7 +60,7 @@ function SiteHeaderInner({
         ) : (
           <div className="flex items-center gap-1.5">
             {session !== null ? <MobileNav locale={locale} /> : null}
-            <Link href={`/${locale}/ai`} className="font-semibold tracking-tight md:hidden">
+            <Link href={`/${locale}/my-work`} className="font-semibold tracking-tight md:hidden">
               {activeBrand.name}
             </Link>
           </div>

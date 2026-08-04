@@ -460,6 +460,29 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
                 </tr>
               </tbody>
             </table>
+            {(() => {
+              // IN-A8: a sole-manager override is part of the signature
+              // record — the auditor sees who signed alone and why.
+              const approval = snapshot.events.find(
+                (event) =>
+                  event.kind === 'investigation_approved' &&
+                  event.detail.revision === inv.revision &&
+                  event.detail.soleManagerOverride === true,
+              );
+              if (approval === undefined) return null;
+              const justification =
+                typeof approval.detail.justification === 'string'
+                  ? approval.detail.justification
+                  : '';
+              return (
+                <p>
+                  <strong>Sole-manager override:</strong> approved by the lead investigator — no
+                  independent approver held the incidents-manage permission in this organisation at
+                  the time.
+                  {justification !== '' ? ` Justification: ${justification}` : ''}
+                </p>
+              );
+            })()}
           </div>
         ))}
 
@@ -585,9 +608,12 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
           </tbody>
         </table>
         <p>
-          Rendered {dt(new Date().toISOString())} · {incident.referenceNumber} · Closed{' '}
-          {dt(incident.closedAt)}
-          {incident.closedByName !== null ? ` by ${incident.closedByName}` : ''}
+          Rendered {dt(new Date().toISOString())} · {incident.referenceNumber}
+          {incident.closedAt !== null
+            ? ` · Closed ${dt(incident.closedAt)}${
+                incident.closedByName !== null ? ` by ${incident.closedByName}` : ''
+              }`
+            : ''}
         </p>
       </div>
     </>

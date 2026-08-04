@@ -299,7 +299,8 @@
         "coshh": "COSHH",
         "permits": "Werkvergunningen",
         "fireSafety": "Brandveiligheid",
-        "incidents": "Incidenten"
+        "incidents": "Incidenten",
+        "rams": "RAMS"
       },
       "perms": {
         "users_view": "View users",
@@ -381,7 +382,13 @@
         "incidents_report": "Incidenten melden",
         "incidents_investigate": "Onderzoeken uitvoeren",
         "incidents_manage": "Incidenten beheren (triage, RIDDOR, goedkeuringen)",
-        "incidents_confidential_view": "Vertrouwelijke incidenten inzien"
+        "incidents_confidential_view": "Vertrouwelijke incidenten inzien",
+        "rams_view": "RAMS-pakketten bekijken",
+        "rams_create": "Werkmethoden en concepten opstellen",
+        "rams_issue": "Pakketten uitgeven, opnieuw uitgeven en intrekken",
+        "rams_brief": "Toolbox-registraties vastleggen",
+        "rams_review": "RAMS van onderaannemers beoordelen",
+        "rams_manage": "Bibliotheek met werkmethoden beheren"
       }
     },
     "groups": {
@@ -1439,7 +1446,33 @@
     "permits": "Vergunningen",
     "fireSafety": "Brandveiligheid",
     "analytics": "Dashboard",
-    "incidents": "Incidenten"
+    "incidents": "Incidenten",
+    "myWork": "Mijn werk",
+    "more": "Meer",
+    "quickLabel": "Snelle navigatie",
+    "collapseMenu": "Menu inklappen",
+    "expandMenu": "Menu uitklappen",
+    "groupRisk": "Risico en beheersing",
+    "groupVerify": "Inspecteren en verifiëren",
+    "groupRespond": "Melden en oplossen",
+    "groupOrg": "Organisatie",
+    "child": {
+      "schedulesCalendar": "Agenda",
+      "permitsBoard": "Live-bord",
+      "permitsTypes": "Vergunningstypen",
+      "coshhPointOfWork": "Werkplek",
+      "coshhLev": "LEV-register",
+      "fireLogbook": "Logboek",
+      "issuesQrCodes": "QR-codes",
+      "issuesCategories": "Categorieën",
+      "actionsCategories": "Categorieën",
+      "assetsCategories": "Categorieën",
+      "contractorsGate": "Bouwplaatspoort",
+      "contractorsCalendar": "Agenda",
+      "ramsLibrary": "Bibliotheek met werkmethoden",
+      "ramsReviews": "Beoordeling RAMS onderaannemers"
+    },
+    "rams": "RAMS"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -5556,7 +5589,8 @@
       "riddorDueSoon": "RIDDOR bijna verlopen",
       "rescreenRequired": "herbeoordeling nodig",
       "investigating": "in onderzoek",
-      "effectivenessOverdue": "effectiviteitstoetsen verlopen"
+      "effectivenessOverdue": "effectiviteitstoetsen verlopen",
+      "untriaged": "wachten op triage"
     },
     "list": {
       "report": "Incident melden",
@@ -5588,7 +5622,8 @@
         "site": "Locatie",
         "occurred": "Voorgevallen",
         "riddor": "RIDDOR"
-      }
+      },
+      "exportFailed": "Exporteren mislukt — probeer opnieuw."
     },
     "kinds": {
       "injury": "Letsel",
@@ -5730,7 +5765,12 @@
       "addPhotos": "Foto's maken of kiezen",
       "uploading": "Uploaden…",
       "uploadedCount": "{count} bestand(en) bijgevoegd.",
-      "done": "Klaar — incident openen"
+      "done": "Klaar — incident openen",
+      "severity": "Hoe ernstig was de afloop?",
+      "severityHint": "Optioneel — kies er een als u het kunt inschatten. Een ziekenhuisopname verhoogt het automatisch; triage bepaalt de definitieve waarde.",
+      "uploadFailed": "Uploaden mislukt voor: {files}. De bestanden zijn NIET bijgevoegd — controleer grootte (max. 25 MB) en type en probeer opnieuw.",
+      "noPermission": "U heeft geen toestemming om incidenten te melden. Vraag een beheerder om de melderrol.",
+      "backToRegister": "Terug naar het register"
     },
     "details": {
       "device": "Betrokken instrument / scherp voorwerp",
@@ -5796,7 +5836,12 @@
       "potentialSeverity": "Potentiële ernst",
       "riddorOverdueBanner": "De wettelijke RIDDOR-termijn is verstreken zonder geregistreerde melding. Meld nu bij de HSE en leg het hier vast.",
       "rescreenBanner": "Het cumulatieve verzuim is boven 7 dagen gekomen tegen een besluit 'niet meldplichtig' — herbeoordeel het RIDDOR-besluit.",
-      "notEffectiveBanner": "De effectiviteitstoets wees uit dat de maatregelen niet standhielden. Overweeg heropening of een nieuwe actie."
+      "notEffectiveBanner": "De effectiviteitstoets wees uit dat de maatregelen niet standhielden. Overweeg heropening of een nieuwe actie.",
+      "edit": "Details bewerken",
+      "editHeading": "Het dossier corrigeren",
+      "change": "Wijzigen",
+      "severityHeading": "Ernst",
+      "severityHint": "Correcties worden gelogd op de tijdlijn. De ernst wordt bevroren zodra een onderzoek is goedgekeurd."
     },
     "triage": {
       "heading": "Triage",
@@ -5811,7 +5856,8 @@
       "leadInvestigator": "Hoofdonderzoeker",
       "leadPlaceholder": "Kies de onderzoeker…",
       "confidential": "Vertrouwelijk — details alleen voor melder, onderzoeksteam en gemachtigden",
-      "confirm": "Triage bevestigen"
+      "confirm": "Triage bevestigen",
+      "levelFloorHint": "Ernst 'ernstig' of hoger (of een meldingsplichtige RIDDOR-bepaling) vereist een volledig onderzoek."
     },
     "people": {
       "heading": "Personen en verzuim",
@@ -5825,7 +5871,9 @@
       "absenceFrom": "Eerste verzuimdag",
       "absenceTo": "Laatste dag (leeg = lopend)",
       "addAbsence": "Verzuim vastleggen",
-      "addPerson": "Persoon toevoegen"
+      "addPerson": "Persoon toevoegen",
+      "removeConfirm": "Deze persoon uit het incident verwijderen? De letsel- en verzuimgegevens worden verwijderd; de verwijdering wordt gelogd.",
+      "removeAbsenceConfirm": "Deze verzuimperiode verwijderen? De verzuim- en RIDDOR-telling wordt herberekend."
     },
     "riddor": {
       "heading": "RIDDOR",
@@ -5884,7 +5932,9 @@
         "submitted": "Wacht op goedkeuring",
         "approved": "Goedgekeurd"
       },
-      "approvedBy": "Goedgekeurd door {name} · {date}"
+      "approvedBy": "Goedgekeurd door {name} · {date}",
+      "upgradeLevel": "Opwaarderen naar volledig",
+      "reassignLead": "Hoofdonderzoeker opnieuw toewijzen"
     },
     "findings": {
       "heading": "Bevindingen en corrigerende acties",
@@ -5947,7 +5997,11 @@
     },
     "timeline": {
       "heading": "Tijdlijn",
-      "system": "Systeem"
+      "system": "Systeem",
+      "revision": "revisie {revision}",
+      "soleManagerOverride": "uitzondering enige beheerder",
+      "actionCount": "{count} actie(s) aangemaakt",
+      "notifiedCount": "{count} ontvanger(s) geïnformeerd"
     },
     "events": {
       "reported": "Gemeld",
@@ -5980,7 +6034,8 @@
       "alert_sent": "Directe waarschuwing verzonden",
       "riddor_warning_sent": "RIDDOR-termijnwaarschuwing verzonden",
       "riddor_escalated": "RIDDOR-termijn geëscaleerd",
-      "promoted_from_observation": "Geëscaleerd vanuit observatie"
+      "promoted_from_observation": "Geëscaleerd vanuit observatie",
+      "investigation_level_changed": "Onderzoeksniveau gewijzigd"
     },
     "workspace": {
       "title": "Onderzoekswerkruimte",
@@ -6048,7 +6103,15 @@
       "assigneePlaceholder": "Kies verantwoordelijke…",
       "dueDate": "Einddatum",
       "confirmApprove": "Onderzoek goedkeuren",
-      "approvedNote": "Goedgekeurd door {name}. Deze revisie is bevroren."
+      "approvedNote": "Goedgekeurd door {name}. Deze revisie is bevroren.",
+      "uploadFailed": "Uploaden mislukt voor: {files}. De bestanden zijn NIET bijgevoegd — controleer grootte (max. 25 MB) en type en probeer opnieuw.",
+      "whyChainHeading": "Waarom-keten",
+      "causalFactorsHeading": "Oorzakelijke factoren",
+      "rootCauseMark": "kernoorzaak",
+      "assignAllHint": "Elke bevinding met een actie heeft een verantwoordelijke nodig voordat u kunt goedkeuren.",
+      "dueDateAutoHint": "Leeg gelaten volgt de vervaldatum de prioriteit van de bevinding.",
+      "soleManagerNotice": "U bent de hoofdonderzoeker of indiener van dit onderzoek. Uw eigen werk goedkeuren mag alleen als niemand anders in de organisatie de incidentbeheer-toestemming heeft — leg vast waarom u alleen tekent. De uitzondering wordt permanent gelogd.",
+      "soleManagerPlaceholder": "Waarom er geen onafhankelijke goedkeurder is…"
     },
     "observationCard": {
       "heading": "Incidenten",
@@ -6113,7 +6176,328 @@
       "risk-assessment-not-found": "Een geselecteerde risico-inventarisatie bestaat niet of is niet actief.",
       "coshh-assessment-not-found": "Een geselecteerde COSHH-beoordeling bestaat niet of is niet actief.",
       "fra-not-found": "Een geselecteerde brandrisicobeoordeling bestaat niet of is niet actief.",
-      "render-unavailable": "PDF-generatie is niet beschikbaar op deze omgeving."
+      "render-unavailable": "PDF-generatie is niet beschikbaar op deze omgeving.",
+      "investigation-level-below-floor": "De ernst (of RIDDOR-bepaling) vereist een volledig onderzoek — het niveau kan niet onder die ondergrens.",
+      "not-triaged": "Triageer het incident eerst.",
+      "investigation-content-exists": "Het niveau kan niet worden verlaagd zodra er onderzoekswerk bestaat.",
+      "finding-assignee-required": "Elke bevinding met een actie heeft vóór goedkeuring een verantwoordelijke nodig.",
+      "finding-due-date-required": "Stel voor elke aangemaakte actie een vervaldatum in.",
+      "sole-manager-justification-required": "Leg vast waarom u uw eigen onderzoek goedkeurt — de motivering is verplicht omdat er geen onafhankelijke goedkeurder is."
+    },
+    "evidence": {
+      "heading": "Bewijs & verklaringen",
+      "addFiles": "Foto's / bestanden toevoegen",
+      "none": "Nog geen bewijs. Foto's van de locatie verschijnen hier.",
+      "witness": "Getuige"
+    }
+  },
+  "myWork": {
+    "title": "Mijn werk",
+    "subtitle": "Alles wat op u wacht, achterstallig eerst.",
+    "filterLabel": "Filteren op type",
+    "overdueOn": "Vervalt {date}",
+    "tiles": {
+      "overdue": "Achterstallig",
+      "actions": "Openstaande acties",
+      "acknowledgements": "Te bevestigen",
+      "drafts": "Onafgeronde inspecties"
+    },
+    "kinds": {
+      "all": "Alles",
+      "action": "Actie",
+      "acknowledgement": "Bevestiging",
+      "signature": "Handtekening",
+      "inspection": "Inspectie",
+      "approval": "Goedkeuring"
+    },
+    "empty": {
+      "title": "Er wacht niets op u",
+      "body": "Nieuw aan u toegewezen werk verschijnt hier."
+    }
+  },
+  "rams": {
+    "title": "RAMS",
+    "subtitle": "Risico-inventarisaties en werkmethoden — uitgegeven, besproken en geaccepteerd.",
+    "needsAttention": "Vraagt aandacht",
+    "newPack": "Nieuw RAMS-pakket",
+    "exportCsv": "CSV exporteren",
+    "searchPlaceholder": "Zoek op referentie, titel of opdrachtgever",
+    "empty": "Nog geen RAMS-pakketten.",
+    "versionLabel": "v{version}",
+    "briefedCount": "{count} ingelicht over v{version}",
+    "holdPoint": "Stoppunt",
+    "openBuilder": "Editor openen",
+    "issuePack": "Pakket uitgeven",
+    "reissuePack": "Opnieuw uitgeven",
+    "withdrawPack": "Intrekken",
+    "withdrawReason": "Reden voor intrekking",
+    "confirmWithdraw": "Intrekking bevestigen",
+    "withdrawnBanner": "Dit pakket is ingetrokken — er mag niet op basis hiervan worden gewerkt.",
+    "downloadPdf": "PDF downloaden",
+    "attention": {
+      "draftPacks": "{count} in concept",
+      "awaitingBriefing": "{count} wachten op toolbox",
+      "pendingClientAcceptance": "{count} wachten op akkoord van de opdrachtgever",
+      "pendingReviews": "{count} pakketten van onderaannemers te beoordelen",
+      "expiringReviews": "{count} acceptaties verlopen binnenkort"
+    },
+    "filters": {
+      "all": "Alle"
+    },
+    "columns": {
+      "reference": "Referentie",
+      "title": "Titel",
+      "client": "Opdrachtgever",
+      "site": "Locatie",
+      "planned": "Gepland",
+      "status": "Status",
+      "briefing": "Toolbox"
+    },
+    "status": {
+      "draft": "Concept",
+      "issued": "Uitgegeven",
+      "superseded": "Vervangen",
+      "withdrawn": "Ingetrokken",
+      "cancelled": "Geannuleerd"
+    },
+    "fields": {
+      "title": "Werkomschrijving",
+      "titlePlaceholder": "bijv. Filtervervanging LBK — Riverside",
+      "client": "Opdrachtgever",
+      "site": "Locatie",
+      "noSite": "Geen locatie",
+      "location": "Plaats / gebied",
+      "plannedFrom": "Gepland vanaf",
+      "plannedTo": "Gepland tot",
+      "supervisor": "Verantwoordelijke uitvoerder",
+      "scopeOfWorks": "Omvang van de werkzaamheden"
+    },
+    "new": {
+      "title": "RAMS-pakket aanmaken",
+      "subtitle": "Begin met een sjabloon, kopieer een eerdere klus of start blanco.",
+      "fromLibrary": "Uit de bibliotheek",
+      "fromLibraryHint": "Vooringevulde stappen voor een gangbaar vak",
+      "duplicate": "Eerder pakket kopiëren",
+      "duplicateHint": "Zoals de vorige klus, met alle koppelingen",
+      "blank": "Blanco",
+      "blankHint": "Helemaal zelf schrijven",
+      "pickTemplate": "Kies een werkmethode",
+      "pickPack": "Kies het pakket om te kopiëren",
+      "noPreviousPacks": "Nog geen eerdere pakketten om te kopiëren.",
+      "stepCount": "{count} stappen",
+      "createAndBuild": "Aanmaken en editor openen"
+    },
+    "gate": {
+      "title": "Voordat u kunt uitgeven",
+      "allClear": "Alles wat nodig is om dit pakket uit te geven is aanwezig.",
+      "unreferencedTitle": "Hoge risico's die geen enkele stap afdekt",
+      "attestationTitle": "Verklaring van de opsteller",
+      "attestationConfirm": "Ik bevestig bovenstaande verklaring."
+    },
+    "errors": {
+      "no-steps": "Voeg minstens één stap toe aan de werkmethode.",
+      "step-missing-title": "Elke stap heeft een titel nodig.",
+      "step-missing-description": "Elke stap moet beschrijven wat er werkelijk gebeurt.",
+      "no-risk-assessment": "Koppel minstens één risico-inventarisatie.",
+      "risk-assessment-not-published": "Een gekoppelde risico-inventarisatie is niet gepubliceerd — publiceer die eerst.",
+      "emergency-block-incomplete": "Vul de EHBO- en noodmaatregelen aan.",
+      "high-risk-hazard-unreferenced": "Een hoog risico wordt door geen enkele stap afgedekt.",
+      "attestation-not-confirmed": "Bevestig de verklaring van de opsteller."
+    },
+    "band": {
+      "low": "Laag",
+      "medium": "Middel",
+      "high": "Hoog",
+      "critical": "Kritiek"
+    },
+    "bindings": {
+      "title": "Risico-inventarisaties en stoffen",
+      "noRas": "Nog geen risico-inventarisatie gekoppeld.",
+      "coshh": "Gevaarlijke stoffen",
+      "hazardCount": "{count} gevaren",
+      "suggested": "Voorgesteld voor deze klus",
+      "suggestedCoshh": "Voorgestelde stoffen",
+      "unbind": "Verwijderen"
+    },
+    "steps": {
+      "title": "Werkvolgorde",
+      "none": "Nog geen stappen.",
+      "add": "Stap toevoegen",
+      "titlePlaceholder": "Wat er in deze stap gebeurt",
+      "description": "Wat er werkelijk gedaan wordt",
+      "hazardsAddressed": "Gevaren die deze stap afdekt",
+      "controlNotes": "Maatregelen bij deze stap",
+      "ppe": "PBM",
+      "holdPoint": "Het werk stopt hier tot een controle is afgetekend",
+      "holdPointPlaceholder": "Wat moet kloppen voordat er verder gewerkt wordt",
+      "moveUp": "Omhoog",
+      "moveDown": "Omlaag",
+      "remove": "Stap verwijderen",
+      "expand": "Bewerken",
+      "collapse": "Sluiten"
+    },
+    "emergency": {
+      "title": "Noodmaatregelen",
+      "firstAid": "EHBO",
+      "procedure": "Noodprocedure",
+      "rescuePlan": "Reddingsplan"
+    },
+    "logistics": {
+      "welfare": "Voorzieningen",
+      "accessEgress": "Toegang en vluchtwegen"
+    },
+    "builder": {
+      "saving": "Opslaan…",
+      "saved": "Alle wijzigingen opgeslagen",
+      "backToPack": "Terug naar het pakket"
+    },
+    "briefing": {
+      "title": "Toolbox",
+      "open": "Ploeg inlichten",
+      "onSuperseded": "{count} ingelicht over een oudere versie",
+      "notIssued": "Dit pakket moet eerst worden uitgegeven voordat iemand kan worden ingelicht.",
+      "readThis": "Dit bespreken",
+      "signHere": "Toolbox bevestigen",
+      "name": "Naam",
+      "category": "Deze persoon is",
+      "organisation": "Bedrijf",
+      "questions": "Gestelde vragen (optioneel)",
+      "understoodStatement": "Met deze bevestiging verklaart deze persoon over dit pakket te zijn ingelicht en het te hebben begrepen.",
+      "confirm": "Bevestigen: ingelicht en begrepen",
+      "recorded": "Vastgelegd",
+      "register": "Wie is ingelicht",
+      "nobodyYet": "Nog niemand ingelicht.",
+      "briefedSoFar": "{count} ingelicht",
+      "needsRebrief": "Opnieuw inlichten",
+      "queued": "{count} toolbox(en) wachten op synchronisatie",
+      "retry": "Nu opnieuw proberen"
+    },
+    "briefeeCategory": {
+      "employee": "Medewerker",
+      "subcontractor": "Onderaannemer",
+      "agency": "Uitzendkracht",
+      "visitor": "Bezoeker",
+      "client_representative": "Vertegenwoordiger opdrachtgever",
+      "other": "Overig"
+    },
+    "client": {
+      "title": "Uitgeven aan de opdrachtgever",
+      "issuedTo": "Contactpersoon opdrachtgever",
+      "createLink": "Deellink maken",
+      "unnamed": "Naamloze ontvanger",
+      "revoked": "ingetrokken"
+    },
+    "clientDecision": {
+      "pending": "Wacht op opdrachtgever",
+      "accepted": "Geaccepteerd",
+      "changes_requested": "Wijzigingen gevraagd"
+    },
+    "versions": {
+      "title": "Versiegeschiedenis",
+      "superseded": "vervangen"
+    },
+    "timeline": {
+      "title": "Tijdlijn"
+    },
+    "library": {
+      "title": "Bibliotheek met werkmethoden",
+      "subtitle": "Herbruikbare werkmethoden — dupliceer en pas aan in plaats van blanco te beginnen.",
+      "backToRegister": "Terug naar RAMS",
+      "restoreStarters": "Startsjablonen herstellen",
+      "starter": "Startsjabloon",
+      "startPack": "Pakket aanmaken",
+      "duplicate": "Dupliceren",
+      "copySuffix": "kopie",
+      "empty": "Nog geen werkmethoden."
+    },
+    "reviews": {
+      "title": "Beoordeling RAMS onderaannemers",
+      "subtitle": "Beoordeel en accepteer de pakketten die uw onderaannemers aanleveren.",
+      "empty": "Geen pakketten van onderaannemers ter beoordeling.",
+      "selectPrompt": "Kies een pakket om te beoordelen.",
+      "outcome": "Beslissing",
+      "conditions": "Voorwaarden",
+      "comments": "Terugkoppeling aan de onderaannemer",
+      "validTo": "Geaccepteerd tot",
+      "recordDecision": "Beslissing vastleggen",
+      "itemComment": "Wat klopt hier niet?",
+      "expired": "Verlopen"
+    },
+    "reviewOutcome": {
+      "pending": "Wacht op beoordeling",
+      "accepted": "Geaccepteerd",
+      "accepted_with_conditions": "Geaccepteerd met voorwaarden",
+      "rejected": "Afgewezen"
+    },
+    "reviewVerdict": {
+      "pass": "Voldoet",
+      "fail": "Voldoet niet",
+      "na": "N.v.t."
+    },
+    "trade": {
+      "mechanical": "Werktuigbouw",
+      "electrical": "Elektrotechniek",
+      "work_at_height": "Werken op hoogte",
+      "groundworks": "Grondwerk",
+      "hot_works": "Heet werk",
+      "confined_space": "Besloten ruimte",
+      "lifting": "Hijswerk",
+      "maintenance": "Onderhoud",
+      "cleaning": "Schoonmaak",
+      "demolition": "Sloop",
+      "roofing": "Dakwerk",
+      "other": "Overig"
+    },
+    "holdPointKind": {
+      "isolation_proved": "Vrijschakeling aangetoond",
+      "permit_issued": "Werkvergunning afgegeven",
+      "inspection_passed": "Keuring akkoord",
+      "atmosphere_tested": "Atmosfeer gemeten",
+      "client_approval": "Akkoord opdrachtgever",
+      "supervisor_check": "Controle uitvoerder",
+      "other": "Overig"
+    },
+    "ppe": {
+      "safety_helmet": "Helm",
+      "safety_footwear": "Veiligheidsschoenen",
+      "hi_vis": "Signalering",
+      "eye_protection": "Oogbescherming",
+      "hearing_protection": "Gehoorbescherming",
+      "gloves": "Handschoenen",
+      "respiratory_protection": "Adembescherming",
+      "fall_arrest_harness": "Valharnas",
+      "face_shield": "Gelaatsscherm",
+      "coveralls": "Overall",
+      "chemical_apron": "Chemieschort",
+      "welding_ppe": "Las-PBM",
+      "cut_resistant_gloves": "Snijbestendige handschoenen",
+      "knee_pads": "Kniebeschermers",
+      "life_jacket": "Reddingsvest"
+    },
+    "events": {
+      "pack_created": "Pakket aangemaakt",
+      "pack_updated": "Pakket bijgewerkt",
+      "pack_issued": "Pakket uitgegeven",
+      "pack_reissued": "Pakket opnieuw uitgegeven",
+      "pack_withdrawn": "Pakket ingetrokken",
+      "pack_cancelled": "Pakket geannuleerd",
+      "ra_bound": "Risico-inventarisatie gekoppeld",
+      "ra_unbound": "Risico-inventarisatie verwijderd",
+      "coshh_bound": "Stoffenbeoordeling gekoppeld",
+      "coshh_unbound": "Stoffenbeoordeling verwijderd",
+      "document_added": "Document toegevoegd",
+      "document_removed": "Document verwijderd",
+      "briefing_recorded": "Toolbox vastgelegd",
+      "client_link_created": "Deellink aangemaakt",
+      "client_link_revoked": "Deellink ingetrokken",
+      "client_accepted": "Opdrachtgever akkoord",
+      "client_changes_requested": "Opdrachtgever vraagt wijzigingen",
+      "method_statement_created": "Werkmethode aangemaakt",
+      "method_statement_published": "Werkmethode gepubliceerd",
+      "method_statement_archived": "Werkmethode gearchiveerd",
+      "method_statement_duplicated": "Werkmethode gedupliceerd",
+      "review_submitted": "Pakket onderaannemer ter beoordeling aangeboden",
+      "review_decided": "Beoordelingsbeslissing vastgelegd"
     }
   }
 }

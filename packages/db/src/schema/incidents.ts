@@ -451,6 +451,7 @@ export const INCIDENT_EVENT_KINDS = [
   'investigation_submitted',
   'investigation_rejected',
   'investigation_approved',
+  'investigation_level_changed',
   'actions_generated',
   'reviews_prompted',
   'reviews_prompt_skipped',

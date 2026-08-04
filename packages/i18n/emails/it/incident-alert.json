@@ -1,0 +1,8 @@
+{
+  "subject": "Allarme incidente — {referenceNumber} ({kindLabel}, {severityLabel})",
+  "preheader": "Su {productName} è stato segnalato un incidente che richiede attenzione immediata.",
+  "greeting": "Ciao {recipientName},",
+  "body": "Su {productName} è stato segnalato un incidente che richiede attenzione immediata:\n\nRiferimento: {referenceNumber}\nTipo: {kindLabel}\nGravità: {severityLabel}\nSito: {siteLine}\nAvvenuto: {occurredAt} UTC\n\nApri la scheda per i dettagli, conferma il triage e nomina l'indagine. I dettagli sono omessi da questa e-mail perché le schede degli incidenti possono essere riservate.",
+  "cta": "Apri l'incidente",
+  "footer": "Ricevi questo messaggio perché possiedi permessi di gestione degli incidenti in {productName}."
+}

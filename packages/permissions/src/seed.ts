@@ -54,6 +54,10 @@ const STANDARD_KEYS: ReadonlyArray<PermissionKey> = [
   // suppresses the statistics that make the module worthwhile.
   'incidents.view',
   'incidents.report',
+  // A working supervisor must be able to brief the crew on a RAMS pack
+  // without holding authoring rights.
+  'rams.view',
+  'rams.brief',
 ];
 
 export interface SeededSetIds {

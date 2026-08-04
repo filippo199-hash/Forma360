@@ -1,0 +1,8 @@
+{
+  "subject": "Vous êtes l'enquêteur principal — {incidentRef}",
+  "preheader": "Une enquête d'incident sur {productName} vous a été confiée.",
+  "greeting": "Bonjour {recipientName},",
+  "body": "Vous avez été désigné enquêteur principal pour l'incident {incidentRef} ({incidentTitle}) sur {productName}.\n\nDémarrez l'enquête depuis la page de l'incident : rassemblez les preuves et les témoignages tant qu'ils sont frais, menez l'analyse des causes racines et soumettez votre conclusion pour approbation lorsqu'elle est défendable.",
+  "cta": "Ouvrir l'incident",
+  "footer": "Vous recevez ce message car un responsable vous a désigné enquêteur principal dans {productName}."
+}

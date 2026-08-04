@@ -673,7 +673,8 @@ function SourceCard({
       | 'fire_risk_assessment'
       | 'fire_logbook_entry'
       | 'fire_door_inspection'
-      | 'incident';
+      | 'incident'
+      | 'rams';
     referenceNumber: string | null;
     title: string | null;
     href?: string | null;

@@ -18,6 +18,7 @@ import {
   overSevenDayTripwire,
   parseIncidentDetails,
   personInjurySchema,
+  provisionalSeverity,
   riddorDeadlineFor,
   totalDaysLost,
   whyChainSchema,
@@ -272,6 +273,28 @@ describe('investigation level defaults', () => {
     expect(defaultInvestigationLevel('serious', false)).toBe('full');
     expect(defaultInvestigationLevel('minor', true)).toBe('full');
     expect(defaultInvestigationLevel('minor', false)).toBe('basic');
+  });
+});
+
+describe('IN-A2 — provisional severity at report', () => {
+  it('hospital admission floors severity at serious; A&E at moderate', () => {
+    expect(provisionalSeverity(undefined, ['admitted'])).toBe('serious');
+    expect(provisionalSeverity(undefined, ['ae'])).toBe('moderate');
+    expect(provisionalSeverity(undefined, ['none', 'ae', 'admitted'])).toBe('serious');
+    expect(provisionalSeverity(undefined, [])).toBe('minor');
+  });
+
+  it('keeps the reporter judgement when it is already the higher signal', () => {
+    expect(provisionalSeverity('major', ['ae'])).toBe('major');
+    expect(provisionalSeverity('serious', ['none'])).toBe('serious');
+    // The floor only lifts — it never lowers an explicit judgement.
+    expect(provisionalSeverity('negligible', ['admitted'])).toBe('serious');
+    expect(provisionalSeverity('moderate', [])).toBe('moderate');
+  });
+
+  it('an admitted person makes the report itself alert-worthy', () => {
+    expect(needsImmediateAlert('injury', provisionalSeverity(undefined, ['admitted']))).toBe(true);
+    expect(needsImmediateAlert('injury', provisionalSeverity(undefined, ['ae']))).toBe(false);
   });
 });
 

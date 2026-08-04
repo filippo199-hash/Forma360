@@ -51,6 +51,7 @@ import type {
   PermitWorker,
 } from '@forma360/shared/permits';
 import { documents } from './documents';
+import { ramsPackVersions, ramsReviews } from './rams';
 import { riskAssessments } from './risk-assessments';
 import { sites } from './sites';
 import { tenants } from './tenants';
@@ -78,6 +79,13 @@ export const permitTypes = pgTable(
       .default(false),
     /** Requires a rescue plan (text or attachment) before issue. */
     requiresRescuePlan: boolean('requires_rescue_plan').notNull().default(false),
+    /**
+     * Requires an accepted safe system of work before issue (RAMS spec
+     * §10.2): either an ISSUED own RAMS pack version or an in-date
+     * ACCEPTED third-party review. Defaults false so existing types are
+     * unaffected by the module landing.
+     */
+    requiresRamsPack: boolean('requires_rams_pack').notNull().default(false),
 
     /** Longest validity window a single issue may cover. */
     maxDurationHours: integer('max_duration_hours').notNull().default(12),
@@ -148,10 +156,32 @@ export const permits = pgTable(
       () => riskAssessments.id,
       { onDelete: 'set null' },
     ),
-    /** The method statement / safe system of work document. */
+    /**
+     * The method statement / safe system of work document. Legacy loose
+     * link — `ramsPackVersionId` is preferred where the tenant authors
+     * its RAMS in the platform (RAMS spec §10.2).
+     */
     methodStatementDocumentId: varchar('method_statement_document_id', {
       length: 26,
     }).references(() => documents.id, { onDelete: 'set null' }),
+    /**
+     * The issued RAMS pack version this permit works under. Preferred
+     * over `methodStatementDocumentId`; satisfies a type's
+     * `requiresRamsPack` gate.
+     */
+    ramsPackVersionId: varchar('rams_pack_version_id', { length: 26 }).references(
+      () => ramsPackVersions.id,
+      { onDelete: 'set null' },
+    ),
+    /**
+     * The accepted third-party RAMS review this permit works under — the
+     * client-side equivalent when the contractor authored the pack
+     * elsewhere. Also satisfies `requiresRamsPack`, but only while the
+     * acceptance is in date (RS-E13).
+     */
+    ramsReviewId: varchar('rams_review_id', { length: 26 }).references(() => ramsReviews.id, {
+      onDelete: 'set null',
+    }),
 
     status: text('status').notNull().default('draft').$type<PermitStatus>(),
 

@@ -1,0 +1,8 @@
+{
+  "subject": "Incidenti che richiedono la tua attenzione — {totalCount} elemento/i",
+  "preheader": "Su {productName} c'è lavoro sugli incidenti in attesa.",
+  "greeting": "Ciao {recipientName},",
+  "body": "Questi incidenti su {productName} ti stanno aspettando:\n\n{detailLines}\n\nEsegui prima il triage delle nuove segnalazioni — un incidente senza triage è invisibile a ogni altra salvaguardia. Le indagini ferme bloccano il ciclo della clausola 10.2: concludile, sollecita le azioni correttive scadute e registra le revisioni di efficacia dovute, così gli incidenti chiusi restano chiusi.",
+  "cta": "Apri il registro incidenti",
+  "footer": "Ricevi questo messaggio perché sei proprietario o gestore di queste schede incidente in {productName}."
+}
