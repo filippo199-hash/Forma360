@@ -4843,7 +4843,8 @@
         "acceptor": "接收人",
         "acceptAction": "接收许可",
         "acknowledgeConflicts": "我已查看重叠的许可并接受叠加风险",
-        "awaitingAcceptor": "等待指定接收人签字。只有本人可以接收。"
+        "awaitingAcceptor": "等待指定接收人签字。只有本人可以接收。",
+        "ramsBlocked": "在满足 RAMS 要求之前无法签发。"
       },
       "actions": {
         "title": "许可操作",
@@ -4914,7 +4915,13 @@
         "requiredBeforeIssue": "签发前需要风险评估",
         "riskAssessment": "风险评估",
         "methodStatement": "施工方案",
-        "none": "未关联"
+        "none": "未关联",
+        "ramsRequired": "此许可类型需要 RAMS 工作包",
+        "ramsSatisfied": "已关联已签发的工作包或在有效期内的已接受评审。",
+        "ramsMissing": "尚未关联 RAMS 工作包或已接受的承包商评审。",
+        "ramsNotIssued": "关联的工作包当前未签发 — 请先签发或重新签发。",
+        "ramsExpired": "关联的承包商评审未被接受，或有效期已过。",
+        "ramsOpenModule": "打开 RAMS"
       },
       "workers": {
         "title": "本许可涵盖人员",
@@ -6370,17 +6377,25 @@
       "moveDown": "下移",
       "remove": "删除步骤",
       "expand": "编辑",
-      "collapse": "收起"
+      "collapse": "收起",
+      "untitled": "未命名步骤",
+      "holdPointBadge": "停工点",
+      "noHoldPoint": "无停工点"
     },
     "emergency": {
       "title": "应急处置",
       "firstAid": "急救",
       "procedure": "应急程序",
-      "rescuePlan": "救援方案"
+      "rescuePlan": "救援方案",
+      "nearestHospital": "最近的急诊科"
     },
     "logistics": {
       "welfare": "生活设施",
-      "accessEgress": "进出与疏散通道"
+      "accessEgress": "进出与疏散通道",
+      "title": "现场后勤",
+      "environmental": "环境控制措施",
+      "permitsRequired": "预计所需许可",
+      "competence": "能力与培训"
     },
     "builder": {
       "saving": "保存中…",
@@ -6449,7 +6464,9 @@
       "startPack": "创建文件包",
       "duplicate": "复制",
       "copySuffix": "副本",
-      "empty": "暂无作业方法说明。"
+      "empty": "暂无作业方法说明。",
+      "edit": "编辑",
+      "backToLibrary": "返回资料库"
     },
     "reviews": {
       "title": "承包商 RAMS 审查",
@@ -6570,6 +6587,21 @@
       "coshh_covered": "涉及使用的有害物质（COSHH）已覆盖",
       "plant_certified": "设备与机具的检验证明在有效期内",
       "insurance_current": "保险有效且与作业相匹配"
+    },
+    "editor": {
+      "titleLabel": "施工方法说明标题",
+      "tradeLabel": "工种",
+      "publish": "发布版本",
+      "saved": "已保存",
+      "neverPublished": "从未发布",
+      "saveFailed": "未保存：{message}",
+      "publishFailed": "无法发布：{message}",
+      "archived": "此施工方法说明已归档，无法编辑。",
+      "unpublishedChanges": "有些更改尚未包含在已发布版本中。发布后新工作包才能使用。",
+      "scopeLabel": "工作范围",
+      "scopePlaceholder": "用一段话说明这项工作究竟是什么。",
+      "versionsTitle": "已发布版本",
+      "publishedBy": "由 {name} 于 {date} 发布"
     }
   },
   "reportChooser": {

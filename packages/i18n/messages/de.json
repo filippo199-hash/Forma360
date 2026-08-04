@@ -4850,7 +4850,8 @@
         "acceptor": "Annehmende Person",
         "acceptAction": "Freigabe annehmen",
         "acknowledgeConflicts": "Ich habe die überlappenden Freigaben geprüft und akzeptiere das kombinierte Risiko",
-        "awaitingAcceptor": "Warten auf die benannte annehmende Person. Nur sie kann annehmen."
+        "awaitingAcceptor": "Warten auf die benannte annehmende Person. Nur sie kann annehmen.",
+        "ramsBlocked": "Die Ausstellung ist blockiert, bis die RAMS-Anforderung erfüllt ist."
       },
       "actions": {
         "title": "Aktionen",
@@ -4921,7 +4922,13 @@
         "requiredBeforeIssue": "Gefährdungsbeurteilung vor Ausstellung erforderlich",
         "riskAssessment": "Gefährdungsbeurteilung",
         "methodStatement": "Arbeitsanweisung",
-        "none": "Nicht verknüpft"
+        "none": "Nicht verknüpft",
+        "ramsRequired": "Diese Erlaubnisart erfordert ein RAMS-Paket",
+        "ramsSatisfied": "Ein ausgestelltes Paket oder eine gültige akzeptierte Prüfung ist verknüpft.",
+        "ramsMissing": "Es ist noch kein RAMS-Paket und keine akzeptierte Auftragnehmerprüfung verknüpft.",
+        "ramsNotIssued": "Das verknüpfte Paket ist derzeit nicht ausgestellt — bitte zuerst ausstellen oder neu ausstellen.",
+        "ramsExpired": "Die verknüpfte Auftragnehmerprüfung ist nicht akzeptiert oder ihre Gültigkeit ist abgelaufen.",
+        "ramsOpenModule": "RAMS öffnen"
       },
       "workers": {
         "title": "Personen unter dieser Freigabe",
@@ -6377,17 +6384,25 @@
       "moveDown": "Nach unten",
       "remove": "Schritt entfernen",
       "expand": "Bearbeiten",
-      "collapse": "Schließen"
+      "collapse": "Schließen",
+      "untitled": "Unbenannter Schritt",
+      "holdPointBadge": "Haltepunkt",
+      "noHoldPoint": "Kein Haltepunkt"
     },
     "emergency": {
       "title": "Notfallmaßnahmen",
       "firstAid": "Erste Hilfe",
       "procedure": "Notfallablauf",
-      "rescuePlan": "Rettungskonzept"
+      "rescuePlan": "Rettungskonzept",
+      "nearestHospital": "Nächste Notaufnahme"
     },
     "logistics": {
       "welfare": "Sozialeinrichtungen",
-      "accessEgress": "Zu- und Abgang"
+      "accessEgress": "Zu- und Abgang",
+      "title": "Baustellenlogistik",
+      "environmental": "Umweltschutzmaßnahmen",
+      "permitsRequired": "Erwartete Erlaubnisscheine",
+      "competence": "Qualifikation und Schulung"
     },
     "builder": {
       "saving": "Wird gespeichert …",
@@ -6456,7 +6471,9 @@
       "startPack": "Paket anlegen",
       "duplicate": "Duplizieren",
       "copySuffix": "Kopie",
-      "empty": "Noch keine Arbeitsanweisungen."
+      "empty": "Noch keine Arbeitsanweisungen.",
+      "edit": "Bearbeiten",
+      "backToLibrary": "Zurück zur Bibliothek"
     },
     "reviews": {
       "title": "Prüfung von Nachunternehmer-RAMS",
@@ -6577,6 +6594,21 @@
       "coshh_covered": "Gefahrstoffe abgedeckt, wo verwendet",
       "plant_certified": "Prüfnachweise für Anlagen und Geräte gültig",
       "insurance_current": "Versicherung aktuell und für die Arbeit ausreichend"
+    },
+    "editor": {
+      "titleLabel": "Titel der Arbeitsanweisung",
+      "tradeLabel": "Gewerk",
+      "publish": "Version veröffentlichen",
+      "saved": "Gespeichert",
+      "neverPublished": "Nie veröffentlicht",
+      "saveFailed": "Nicht gespeichert: {message}",
+      "publishFailed": "Veröffentlichen fehlgeschlagen: {message}",
+      "archived": "Diese Arbeitsanweisung ist archiviert und kann nicht bearbeitet werden.",
+      "unpublishedChanges": "Es gibt Änderungen, die noch nicht in der veröffentlichten Version enthalten sind. Veröffentlichen Sie sie, damit neue Pakete sie nutzen können.",
+      "scopeLabel": "Leistungsumfang",
+      "scopePlaceholder": "Was die Arbeit tatsächlich ist, in einem Absatz.",
+      "versionsTitle": "Veröffentlichte Versionen",
+      "publishedBy": "von {name} am {date}"
     }
   },
   "reportChooser": {

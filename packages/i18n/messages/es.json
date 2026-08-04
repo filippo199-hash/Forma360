@@ -4850,7 +4850,8 @@
         "acceptor": "Aceptante",
         "acceptAction": "Aceptar permiso",
         "acknowledgeConflicts": "He revisado los permisos que se solapan y acepto el riesgo combinado",
-        "awaitingAcceptor": "Esperando la firma del aceptante designado. Solo esa persona puede aceptar."
+        "awaitingAcceptor": "Esperando la firma del aceptante designado. Solo esa persona puede aceptar.",
+        "ramsBlocked": "La emisión está bloqueada hasta cumplir el requisito RAMS."
       },
       "actions": {
         "title": "Acciones del permiso",
@@ -4921,7 +4922,13 @@
         "requiredBeforeIssue": "evaluación de riesgos requerida antes de emitir",
         "riskAssessment": "Evaluación de riesgos",
         "methodStatement": "Procedimiento de trabajo",
-        "none": "Sin vincular"
+        "none": "Sin vincular",
+        "ramsRequired": "Este tipo de permiso requiere un paquete RAMS",
+        "ramsSatisfied": "Hay un paquete emitido o una revisión aceptada vigente vinculada.",
+        "ramsMissing": "Aún no hay ningún paquete RAMS ni revisión de contratista aceptada vinculada.",
+        "ramsNotIssued": "El paquete vinculado no está emitido actualmente: emítelo o vuelve a emitirlo primero.",
+        "ramsExpired": "La revisión de contratista vinculada no está aceptada o su validez ha caducado.",
+        "ramsOpenModule": "Abrir RAMS"
       },
       "workers": {
         "title": "Personas bajo este permiso",
@@ -6377,17 +6384,25 @@
       "moveDown": "Bajar",
       "remove": "Eliminar paso",
       "expand": "Editar",
-      "collapse": "Cerrar"
+      "collapse": "Cerrar",
+      "untitled": "Paso sin título",
+      "holdPointBadge": "Punto de parada",
+      "noHoldPoint": "Sin punto de parada"
     },
     "emergency": {
       "title": "Medidas de emergencia",
       "firstAid": "Primeros auxilios",
       "procedure": "Procedimiento de emergencia",
-      "rescuePlan": "Plan de rescate"
+      "rescuePlan": "Plan de rescate",
+      "nearestHospital": "Urgencias más cercanas"
     },
     "logistics": {
       "welfare": "Instalaciones de bienestar",
-      "accessEgress": "Acceso y evacuación"
+      "accessEgress": "Acceso y evacuación",
+      "title": "Logística de obra",
+      "environmental": "Controles ambientales",
+      "permitsRequired": "Permisos previstos",
+      "competence": "Competencia y formación"
     },
     "builder": {
       "saving": "Guardando…",
@@ -6456,7 +6471,9 @@
       "startPack": "Crear un paquete",
       "duplicate": "Duplicar",
       "copySuffix": "copia",
-      "empty": "Todavía no hay procedimientos."
+      "empty": "Todavía no hay procedimientos.",
+      "edit": "Editar",
+      "backToLibrary": "Volver a la biblioteca"
     },
     "reviews": {
       "title": "Revisión de RAMS de contratistas",
@@ -6577,6 +6594,21 @@
       "coshh_covered": "Sustancias peligrosas cubiertas cuando se usan",
       "plant_certified": "Certificación de equipos y maquinaria en vigor",
       "insurance_current": "Seguro vigente y adecuado para el trabajo"
+    },
+    "editor": {
+      "titleLabel": "Título del procedimiento de trabajo",
+      "tradeLabel": "Oficio",
+      "publish": "Publicar versión",
+      "saved": "Guardado",
+      "neverPublished": "Nunca publicado",
+      "saveFailed": "No guardado: {message}",
+      "publishFailed": "No se pudo publicar: {message}",
+      "archived": "Este procedimiento está archivado y no se puede editar.",
+      "unpublishedChanges": "Tienes cambios que aún no están en la versión publicada. Publica para que los nuevos paquetes puedan usarlos.",
+      "scopeLabel": "Alcance de los trabajos",
+      "scopePlaceholder": "En qué consiste realmente el trabajo, en un párrafo.",
+      "versionsTitle": "Versiones publicadas",
+      "publishedBy": "por {name} el {date}"
     }
   },
   "reportChooser": {

@@ -25,6 +25,9 @@
  *   - PW-E09: seeded gas limits — gas-requiring defaults carry evaluable
  *     limits, confined space gets the 30-minute freshness window; the
  *     open-entry counter (PW-8)
+ *   - PW-E11: ramsGateError — own-pack status, third-party acceptance
+ *     outcome and validity window, and the no-link case; pure so the
+ *     permit page previews the blocker before Issue (RS-A11)
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -41,12 +44,14 @@ import {
   PERMIT_CATEGORIES,
   PERMIT_STATUSES,
   permitIsOverdue,
+  ramsGateError,
   readingWithinLimit,
   sameAreaMatch,
   snapshotPreconditions,
   validityWindowError,
   type GasLimit,
   type GasReading,
+  type PermitRamsLink,
 } from './permits';
 
 describe('canTransition (PW-E01)', () => {
@@ -432,5 +437,55 @@ describe('seeded gas limits + entry counter (PW-E09)', () => {
       ]),
     ).toBe(2);
     expect(openEntryCount([])).toBe(0);
+  });
+});
+
+describe('ramsGateError (PW-E11 / RS-A11)', () => {
+  const now = new Date('2026-08-04T10:00:00Z');
+  const gate = (link: PermitRamsLink, requiresRamsPack = true) =>
+    ramsGateError({ requiresRamsPack, link, now });
+
+  it('never blocks a type that does not require a pack', () => {
+    expect(gate(null, false)).toBeNull();
+    expect(gate({ kind: 'own_pack', packStatus: 'draft' }, false)).toBeNull();
+  });
+
+  it('demands a link when the type requires one', () => {
+    expect(gate(null)).toBe('rams-pack-required');
+  });
+
+  it('accepts an own pack only while it is issued', () => {
+    expect(gate({ kind: 'own_pack', packStatus: 'issued' })).toBeNull();
+    for (const status of ['draft', 'ready', 'withdrawn', 'superseded', 'archived']) {
+      expect(gate({ kind: 'own_pack', packStatus: status }), status).toBe('rams-pack-not-issued');
+    }
+  });
+
+  it('accepts a third-party review on either accepted outcome', () => {
+    const base = { kind: 'third_party_review', validFrom: null, validTo: null } as const;
+    expect(gate({ ...base, outcome: 'accepted' })).toBeNull();
+    expect(gate({ ...base, outcome: 'accepted_with_conditions' })).toBeNull();
+    expect(gate({ ...base, outcome: 'pending' })).toBe('rams-acceptance-expired');
+    expect(gate({ ...base, outcome: 'rejected' })).toBe('rams-acceptance-expired');
+  });
+
+  it('refuses an acceptance outside its validity window (RS-E13)', () => {
+    const accepted = { kind: 'third_party_review', outcome: 'accepted' } as const;
+    // Not yet in force.
+    expect(gate({ ...accepted, validFrom: new Date('2026-08-05T00:00:00Z'), validTo: null })).toBe(
+      'rams-acceptance-expired',
+    );
+    // Lapsed.
+    expect(gate({ ...accepted, validFrom: null, validTo: new Date('2026-08-03T00:00:00Z') })).toBe(
+      'rams-acceptance-expired',
+    );
+    // Inside the window.
+    expect(
+      gate({
+        ...accepted,
+        validFrom: new Date('2026-08-01T00:00:00Z'),
+        validTo: new Date('2026-08-31T00:00:00Z'),
+      }),
+    ).toBeNull();
   });
 });

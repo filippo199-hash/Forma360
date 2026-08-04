@@ -4843,7 +4843,8 @@
         "acceptor": "Przyjmujący",
         "acceptAction": "Przyjmij pozwolenie",
         "acknowledgeConflicts": "Przejrzałem nakładające się pozwolenia i akceptuję łączne ryzyko",
-        "awaitingAcceptor": "Oczekiwanie na podpis wyznaczonego przyjmującego. Tylko ta osoba może przyjąć."
+        "awaitingAcceptor": "Oczekiwanie na podpis wyznaczonego przyjmującego. Tylko ta osoba może przyjąć.",
+        "ramsBlocked": "Wydanie jest zablokowane do czasu spełnienia wymogu RAMS."
       },
       "actions": {
         "title": "Działania",
@@ -4914,7 +4915,13 @@
         "requiredBeforeIssue": "ocena ryzyka wymagana przed wydaniem",
         "riskAssessment": "Ocena ryzyka",
         "methodStatement": "Instrukcja wykonywania prac",
-        "none": "Niepowiązane"
+        "none": "Niepowiązane",
+        "ramsRequired": "Ten typ zezwolenia wymaga pakietu RAMS",
+        "ramsSatisfied": "Powiązano wydany pakiet lub ważną zaakceptowaną ocenę.",
+        "ramsMissing": "Nie powiązano jeszcze pakietu RAMS ani zaakceptowanej oceny wykonawcy.",
+        "ramsNotIssued": "Powiązany pakiet nie jest obecnie wydany — najpierw go wydaj lub wydaj ponownie.",
+        "ramsExpired": "Powiązana ocena wykonawcy nie jest zaakceptowana albo jej ważność wygasła.",
+        "ramsOpenModule": "Otwórz RAMS"
       },
       "workers": {
         "title": "Osoby objęte pozwoleniem",
@@ -6370,17 +6377,25 @@
       "moveDown": "W dół",
       "remove": "Usuń krok",
       "expand": "Edytuj",
-      "collapse": "Zamknij"
+      "collapse": "Zamknij",
+      "untitled": "Krok bez tytułu",
+      "holdPointBadge": "Punkt wstrzymania",
+      "noHoldPoint": "Brak punktu wstrzymania"
     },
     "emergency": {
       "title": "Procedury awaryjne",
       "firstAid": "Pierwsza pomoc",
       "procedure": "Procedura awaryjna",
-      "rescuePlan": "Plan ratunkowy"
+      "rescuePlan": "Plan ratunkowy",
+      "nearestHospital": "Najbliższy SOR"
     },
     "logistics": {
       "welfare": "Zaplecze socjalne",
-      "accessEgress": "Dojście i ewakuacja"
+      "accessEgress": "Dojście i ewakuacja",
+      "title": "Logistyka budowy",
+      "environmental": "Środki ochrony środowiska",
+      "permitsRequired": "Przewidywane zezwolenia",
+      "competence": "Kompetencje i szkolenia"
     },
     "builder": {
       "saving": "Zapisywanie…",
@@ -6449,7 +6464,9 @@
       "startPack": "Utwórz pakiet",
       "duplicate": "Powiel",
       "copySuffix": "kopia",
-      "empty": "Brak instrukcji roboczych."
+      "empty": "Brak instrukcji roboczych.",
+      "edit": "Edytuj",
+      "backToLibrary": "Powrót do biblioteki"
     },
     "reviews": {
       "title": "Ocena RAMS podwykonawców",
@@ -6570,6 +6587,21 @@
       "coshh_covered": "Substancje niebezpieczne ujęte tam, gdzie są używane",
       "plant_certified": "Certyfikaty maszyn i sprzętu aktualne",
       "insurance_current": "Ubezpieczenie aktualne i adekwatne do prac"
+    },
+    "editor": {
+      "titleLabel": "Tytuł instrukcji wykonania",
+      "tradeLabel": "Branża",
+      "publish": "Opublikuj wersję",
+      "saved": "Zapisano",
+      "neverPublished": "Nigdy nieopublikowane",
+      "saveFailed": "Nie zapisano: {message}",
+      "publishFailed": "Nie udało się opublikować: {message}",
+      "archived": "Ta instrukcja jest zarchiwizowana i nie można jej edytować.",
+      "unpublishedChanges": "Masz zmiany, których nie ma jeszcze w opublikowanej wersji. Opublikuj, aby były dostępne dla nowych pakietów.",
+      "scopeLabel": "Zakres prac",
+      "scopePlaceholder": "Na czym naprawdę polega praca — w jednym akapicie.",
+      "versionsTitle": "Opublikowane wersje",
+      "publishedBy": "przez {name} dnia {date}"
     }
   },
   "reportChooser": {

@@ -18,7 +18,7 @@
  */
 import { ArrowRight, Copy, FileStack, FilePlus2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
@@ -35,10 +35,20 @@ export default function NewRamsPackPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const router = useRouter();
+  // RS-A12: the library's "Start pack" arrives with the chosen template in
+  // the query string. Reading it here is what stops the selection being
+  // silently dropped on a blank picker.
+  const searchParams = useSearchParams();
+  const preselectedMethodStatementId = searchParams.get('methodStatementId');
+  const preselectedPackId = searchParams.get('fromPackId');
 
-  const [source, setSource] = useState<Source>('library');
-  const [methodStatementId, setMethodStatementId] = useState<string | null>(null);
-  const [fromPackId, setFromPackId] = useState<string | null>(null);
+  const [source, setSource] = useState<Source>(
+    preselectedPackId !== null ? 'duplicate' : 'library',
+  );
+  const [methodStatementId, setMethodStatementId] = useState<string | null>(
+    preselectedMethodStatementId,
+  );
+  const [fromPackId, setFromPackId] = useState<string | null>(preselectedPackId);
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
   const [siteId, setSiteId] = useState<string>('');

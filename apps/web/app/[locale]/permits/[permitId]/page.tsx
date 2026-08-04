@@ -455,6 +455,30 @@ export default function PermitDetailPage() {
                 )}
               </div>
             </div>
+            {/* RS-A11: the RAMS gate is previewed here rather than only
+                failing at Issue, when the issuer is standing at the job. */}
+            {permit.type.requiresRamsPack ? (
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950/40">
+                <p className="font-medium">{t('ssow.ramsRequired')}</p>
+                <p className="mt-1 text-muted-foreground">
+                  {permit.ramsGate === null
+                    ? t('ssow.ramsSatisfied')
+                    : permit.ramsGate === 'rams-pack-required'
+                      ? t('ssow.ramsMissing')
+                      : permit.ramsGate === 'rams-pack-not-issued'
+                        ? t('ssow.ramsNotIssued')
+                        : t('ssow.ramsExpired')}
+                </p>
+                {permit.ramsGate !== null ? (
+                  <Link
+                    href={`/${locale}/rams`}
+                    className="mt-1 inline-block text-primary hover:underline"
+                  >
+                    {t('ssow.ramsOpenModule')}
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       )}
@@ -1004,11 +1028,17 @@ export default function PermitDetailPage() {
                       {t('signatures.acknowledgeConflicts')}
                     </label>
                   ) : null}
+                  {permit.ramsGate !== null ? (
+                    <p className="max-w-xs text-right text-xs text-amber-700 dark:text-amber-400">
+                      {t('signatures.ramsBlocked')}
+                    </p>
+                  ) : null}
                   <Button
                     size="sm"
                     disabled={
                       issue.isPending ||
                       !allChecked ||
+                      permit.ramsGate !== null ||
                       (permit.conflicts.length > 0 && !acknowledgeConflicts)
                     }
                     onClick={() => issue.mutate({ permitId, acknowledgeConflicts })}

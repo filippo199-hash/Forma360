@@ -4850,7 +4850,8 @@
         "acceptor": "Accepteur",
         "acceptAction": "Accepter le permis",
         "acknowledgeConflicts": "J'ai examiné les permis qui se chevauchent et j'accepte le risque combiné",
-        "awaitingAcceptor": "En attente de la signature de l'accepteur désigné. Lui seul peut accepter."
+        "awaitingAcceptor": "En attente de la signature de l'accepteur désigné. Lui seul peut accepter.",
+        "ramsBlocked": "L'émission est bloquée tant que l'exigence RAMS n'est pas satisfaite."
       },
       "actions": {
         "title": "Actions du permis",
@@ -4921,7 +4922,13 @@
         "requiredBeforeIssue": "évaluation des risques requise avant délivrance",
         "riskAssessment": "Évaluation des risques",
         "methodStatement": "Mode opératoire",
-        "none": "Non lié"
+        "none": "Non lié",
+        "ramsRequired": "Ce type de permis exige un dossier RAMS",
+        "ramsSatisfied": "Un dossier émis ou une revue acceptée en cours de validité est lié.",
+        "ramsMissing": "Aucun dossier RAMS ni revue de sous-traitant acceptée n'est encore lié.",
+        "ramsNotIssued": "Le dossier lié n'est pas émis actuellement — émettez-le ou rééditez-le d'abord.",
+        "ramsExpired": "La revue de sous-traitant liée n'est pas acceptée ou sa validité a expiré.",
+        "ramsOpenModule": "Ouvrir RAMS"
       },
       "workers": {
         "title": "Personnes sous ce permis",
@@ -6377,17 +6384,25 @@
       "moveDown": "Descendre",
       "remove": "Supprimer l'étape",
       "expand": "Modifier",
-      "collapse": "Fermer"
+      "collapse": "Fermer",
+      "untitled": "Étape sans titre",
+      "holdPointBadge": "Point d'arrêt",
+      "noHoldPoint": "Aucun point d'arrêt"
     },
     "emergency": {
       "title": "Consignes d'urgence",
       "firstAid": "Premiers secours",
       "procedure": "Procédure d'urgence",
-      "rescuePlan": "Plan de secours"
+      "rescuePlan": "Plan de secours",
+      "nearestHospital": "Urgences les plus proches"
     },
     "logistics": {
       "welfare": "Installations sanitaires",
-      "accessEgress": "Accès et évacuation"
+      "accessEgress": "Accès et évacuation",
+      "title": "Logistique de chantier",
+      "environmental": "Mesures environnementales",
+      "permitsRequired": "Permis attendus",
+      "competence": "Compétence et formation"
     },
     "builder": {
       "saving": "Enregistrement…",
@@ -6456,7 +6471,9 @@
       "startPack": "Créer un dossier",
       "duplicate": "Dupliquer",
       "copySuffix": "copie",
-      "empty": "Aucun mode opératoire."
+      "empty": "Aucun mode opératoire.",
+      "edit": "Modifier",
+      "backToLibrary": "Retour à la bibliothèque"
     },
     "reviews": {
       "title": "Examen des RAMS sous-traitants",
@@ -6577,6 +6594,21 @@
       "coshh_covered": "Substances dangereuses couvertes le cas échéant",
       "plant_certified": "Certifications des engins et équipements en cours de validité",
       "insurance_current": "Assurance en cours et adaptée aux travaux"
+    },
+    "editor": {
+      "titleLabel": "Titre du mode opératoire",
+      "tradeLabel": "Corps de métier",
+      "publish": "Publier la version",
+      "saved": "Enregistré",
+      "neverPublished": "Jamais publié",
+      "saveFailed": "Non enregistré : {message}",
+      "publishFailed": "Publication impossible : {message}",
+      "archived": "Ce mode opératoire est archivé et ne peut pas être modifié.",
+      "unpublishedChanges": "Des modifications ne figurent pas encore dans la version publiée. Publiez-les pour que les nouveaux dossiers puissent les utiliser.",
+      "scopeLabel": "Étendue des travaux",
+      "scopePlaceholder": "En quoi consiste réellement le travail, en un paragraphe.",
+      "versionsTitle": "Versions publiées",
+      "publishedBy": "par {name} le {date}"
     }
   },
   "reportChooser": {

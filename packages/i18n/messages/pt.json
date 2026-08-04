@@ -4843,7 +4843,8 @@
         "acceptor": "Aceitante",
         "acceptAction": "Aceitar permissão",
         "acknowledgeConflicts": "Revi as permissões sobrepostas e aceito o risco combinado",
-        "awaitingAcceptor": "A aguardar a assinatura do aceitante designado. Só essa pessoa pode aceitar."
+        "awaitingAcceptor": "A aguardar a assinatura do aceitante designado. Só essa pessoa pode aceitar.",
+        "ramsBlocked": "A emissão está bloqueada até o requisito RAMS ser cumprido."
       },
       "actions": {
         "title": "Ações da permissão",
@@ -4914,7 +4915,13 @@
         "requiredBeforeIssue": "avaliação de riscos obrigatória antes da emissão",
         "riskAssessment": "Avaliação de riscos",
         "methodStatement": "Procedimento de trabalho",
-        "none": "Não associado"
+        "none": "Não associado",
+        "ramsRequired": "Este tipo de permissão exige um pacote RAMS",
+        "ramsSatisfied": "Há um pacote emitido ou uma revisão aceite dentro da validade associada.",
+        "ramsMissing": "Ainda não há pacote RAMS nem revisão de empreiteiro aceite associada.",
+        "ramsNotIssued": "O pacote associado não está emitido — emita-o ou reemita-o primeiro.",
+        "ramsExpired": "A revisão de empreiteiro associada não está aceite ou a validade expirou.",
+        "ramsOpenModule": "Abrir RAMS"
       },
       "workers": {
         "title": "Pessoas ao abrigo desta permissão",
@@ -6370,17 +6377,25 @@
       "moveDown": "Descer",
       "remove": "Eliminar passo",
       "expand": "Editar",
-      "collapse": "Fechar"
+      "collapse": "Fechar",
+      "untitled": "Passo sem título",
+      "holdPointBadge": "Ponto de paragem",
+      "noHoldPoint": "Sem ponto de paragem"
     },
     "emergency": {
       "title": "Medidas de emergência",
       "firstAid": "Primeiros socorros",
       "procedure": "Procedimento de emergência",
-      "rescuePlan": "Plano de salvamento"
+      "rescuePlan": "Plano de salvamento",
+      "nearestHospital": "Urgências mais próximas"
     },
     "logistics": {
       "welfare": "Instalações sociais",
-      "accessEgress": "Acessos e saídas"
+      "accessEgress": "Acessos e saídas",
+      "title": "Logística de obra",
+      "environmental": "Controlos ambientais",
+      "permitsRequired": "Permissões previstas",
+      "competence": "Competência e formação"
     },
     "builder": {
       "saving": "A guardar…",
@@ -6449,7 +6464,9 @@
       "startPack": "Criar um pacote",
       "duplicate": "Duplicar",
       "copySuffix": "cópia",
-      "empty": "Ainda não há procedimentos."
+      "empty": "Ainda não há procedimentos.",
+      "edit": "Editar",
+      "backToLibrary": "Voltar à biblioteca"
     },
     "reviews": {
       "title": "Análise de RAMS de empreiteiros",
@@ -6570,6 +6587,21 @@
       "coshh_covered": "Substâncias perigosas cobertas onde são usadas",
       "plant_certified": "Certificação de equipamentos e máquinas dentro da validade",
       "insurance_current": "Seguro em vigor e adequado ao trabalho"
+    },
+    "editor": {
+      "titleLabel": "Título do procedimento de trabalho",
+      "tradeLabel": "Especialidade",
+      "publish": "Publicar versão",
+      "saved": "Guardado",
+      "neverPublished": "Nunca publicado",
+      "saveFailed": "Não guardado: {message}",
+      "publishFailed": "Não foi possível publicar: {message}",
+      "archived": "Este procedimento está arquivado e não pode ser editado.",
+      "unpublishedChanges": "Há alterações que ainda não estão na versão publicada. Publique para as disponibilizar a novos pacotes.",
+      "scopeLabel": "Âmbito dos trabalhos",
+      "scopePlaceholder": "Em que consiste realmente o trabalho, num parágrafo.",
+      "versionsTitle": "Versões publicadas",
+      "publishedBy": "por {name} em {date}"
     }
   },
   "reportChooser": {

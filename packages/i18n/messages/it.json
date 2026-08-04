@@ -4885,7 +4885,8 @@
         "acceptor": "Accettante",
         "acceptAction": "Accetta permesso",
         "acknowledgeConflicts": "Ho esaminato i permessi sovrapposti e accetto il rischio combinato",
-        "awaitingAcceptor": "In attesa della firma dell'accettante designato. Solo quella persona può accettare."
+        "awaitingAcceptor": "In attesa della firma dell'accettante designato. Solo quella persona può accettare.",
+        "ramsBlocked": "L'emissione è bloccata finché il requisito RAMS non è soddisfatto."
       },
       "actions": {
         "title": "Azioni sul permesso",
@@ -4956,7 +4957,13 @@
         "requiredBeforeIssue": "valutazione dei rischi richiesta prima dell'emissione",
         "riskAssessment": "Valutazione dei rischi",
         "methodStatement": "Procedura di lavoro",
-        "none": "Non collegato"
+        "none": "Non collegato",
+        "ramsRequired": "Questo tipo di permesso richiede un pacchetto RAMS",
+        "ramsSatisfied": "È collegato un pacchetto emesso o una revisione accettata ancora valida.",
+        "ramsMissing": "Non è ancora collegato alcun pacchetto RAMS né revisione appaltatore accettata.",
+        "ramsNotIssued": "Il pacchetto collegato non è attualmente emesso: emettilo o riemettilo prima.",
+        "ramsExpired": "La revisione appaltatore collegata non è accettata oppure la validità è scaduta.",
+        "ramsOpenModule": "Apri RAMS"
       },
       "workers": {
         "title": "Persone sotto questo permesso",
@@ -6412,17 +6419,25 @@
       "moveDown": "Sposta giù",
       "remove": "Elimina fase",
       "expand": "Modifica",
-      "collapse": "Chiudi"
+      "collapse": "Chiudi",
+      "untitled": "Fase senza titolo",
+      "holdPointBadge": "Punto di fermo",
+      "noHoldPoint": "Nessun punto di fermo"
     },
     "emergency": {
       "title": "Misure di emergenza",
       "firstAid": "Primo soccorso",
       "procedure": "Procedura di emergenza",
-      "rescuePlan": "Piano di salvataggio"
+      "rescuePlan": "Piano di salvataggio",
+      "nearestHospital": "Pronto soccorso più vicino"
     },
     "logistics": {
       "welfare": "Servizi igienico-assistenziali",
-      "accessEgress": "Accesso ed esodo"
+      "accessEgress": "Accesso ed esodo",
+      "title": "Logistica di cantiere",
+      "environmental": "Controlli ambientali",
+      "permitsRequired": "Permessi previsti",
+      "competence": "Competenza e formazione"
     },
     "builder": {
       "saving": "Salvataggio…",
@@ -6491,7 +6506,9 @@
       "startPack": "Crea un pacchetto",
       "duplicate": "Duplica",
       "copySuffix": "copia",
-      "empty": "Nessuna procedura operativa."
+      "empty": "Nessuna procedura operativa.",
+      "edit": "Modifica",
+      "backToLibrary": "Torna alla libreria"
     },
     "reviews": {
       "title": "Esame dei RAMS degli appaltatori",
@@ -6612,6 +6629,21 @@
       "coshh_covered": "Sostanze pericolose coperte dove utilizzate",
       "plant_certified": "Certificazioni di macchine e attrezzature in corso di validità",
       "insurance_current": "Assicurazione in corso e adeguata al lavoro"
+    },
+    "editor": {
+      "titleLabel": "Titolo della procedura operativa",
+      "tradeLabel": "Categoria",
+      "publish": "Pubblica versione",
+      "saved": "Salvato",
+      "neverPublished": "Mai pubblicato",
+      "saveFailed": "Non salvato: {message}",
+      "publishFailed": "Pubblicazione non riuscita: {message}",
+      "archived": "Questa procedura è archiviata e non può essere modificata.",
+      "unpublishedChanges": "Ci sono modifiche non ancora presenti nella versione pubblicata. Pubblicale per renderle disponibili ai nuovi pacchetti.",
+      "scopeLabel": "Ambito dei lavori",
+      "scopePlaceholder": "In cosa consiste davvero il lavoro, in un paragrafo.",
+      "versionsTitle": "Versioni pubblicate",
+      "publishedBy": "da {name} il {date}"
     }
   },
   "reportChooser": {

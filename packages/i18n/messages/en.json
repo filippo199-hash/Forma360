@@ -5084,7 +5084,8 @@
         "acceptor": "Acceptor",
         "acceptAction": "Accept permit",
         "acknowledgeConflicts": "I have reviewed the overlapping permits and accept the combined risk",
-        "awaitingAcceptor": "Waiting for the named acceptor to sign on. Only they can accept."
+        "awaitingAcceptor": "Waiting for the named acceptor to sign on. Only they can accept.",
+        "ramsBlocked": "Issue is blocked until the RAMS requirement is met."
       },
       "actions": {
         "title": "Permit actions",
@@ -5155,7 +5156,13 @@
         "requiredBeforeIssue": "risk assessment required before issue",
         "riskAssessment": "Risk assessment",
         "methodStatement": "Method statement",
-        "none": "Not linked"
+        "none": "Not linked",
+        "ramsRequired": "This permit type requires a RAMS pack",
+        "ramsSatisfied": "An issued pack or an in-date accepted review is linked.",
+        "ramsMissing": "No RAMS pack or accepted contractor review is linked yet.",
+        "ramsNotIssued": "The linked pack is not currently issued — issue or re-issue it first.",
+        "ramsExpired": "The linked contractor review is not accepted, or its validity has lapsed.",
+        "ramsOpenModule": "Open RAMS"
       },
       "workers": {
         "title": "People under this permit",
@@ -6605,17 +6612,25 @@
       "moveDown": "Move down",
       "remove": "Remove step",
       "expand": "Edit",
-      "collapse": "Close"
+      "collapse": "Close",
+      "untitled": "Untitled step",
+      "holdPointBadge": "Hold point",
+      "noHoldPoint": "No hold point"
     },
     "emergency": {
       "title": "Emergency arrangements",
       "firstAid": "First aid",
       "procedure": "Emergency procedure",
-      "rescuePlan": "Rescue plan"
+      "rescuePlan": "Rescue plan",
+      "nearestHospital": "Nearest A&E"
     },
     "logistics": {
       "welfare": "Welfare",
-      "accessEgress": "Access and egress"
+      "accessEgress": "Access and egress",
+      "title": "Site logistics",
+      "environmental": "Environmental controls",
+      "permitsRequired": "Permits expected",
+      "competence": "Competence and training"
     },
     "builder": {
       "saving": "Saving…",
@@ -6684,7 +6699,9 @@
       "startPack": "Start a pack",
       "duplicate": "Duplicate",
       "copySuffix": "copy",
-      "empty": "No method statements yet."
+      "empty": "No method statements yet.",
+      "edit": "Edit",
+      "backToLibrary": "Back to the library"
     },
     "reviews": {
       "title": "Contractor RAMS review",
@@ -6805,6 +6822,21 @@
       "coshh_covered": "COSHH / substances covered where used",
       "plant_certified": "Plant and equipment certification in date",
       "insurance_current": "Insurance current and adequate for the work"
+    },
+    "editor": {
+      "titleLabel": "Method statement title",
+      "tradeLabel": "Trade",
+      "publish": "Publish version",
+      "saved": "Saved",
+      "neverPublished": "Never published",
+      "saveFailed": "Not saved: {message}",
+      "publishFailed": "Could not publish: {message}",
+      "archived": "This method statement is archived and cannot be edited.",
+      "unpublishedChanges": "You have changes that are not in the published version yet. Publish to make them available to new packs.",
+      "scopeLabel": "Scope of works",
+      "scopePlaceholder": "What the job actually is, in one paragraph.",
+      "versionsTitle": "Published versions",
+      "publishedBy": "by {name} on {date}"
     }
   },
   "reportChooser": {

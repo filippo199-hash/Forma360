@@ -27,6 +27,8 @@
  */
 import { z } from 'zod';
 
+import type { RamsReviewOutcome } from './rams';
+
 // ─── Categories ─────────────────────────────────────────────────────────────
 
 /**
@@ -276,6 +278,66 @@ export function gasGateError(args: {
   if (latestPerLimit.some((e) => e.latest !== undefined && !freshEnough(e.latest))) {
     return 'gas-test-stale';
   }
+  return null;
+}
+
+// ─── The RAMS gate (RS-E14 / RS-A11) ───────────────────────────────────────
+
+export type RamsGateError =
+  | 'rams-pack-required'
+  | 'rams-pack-not-issued'
+  | 'rams-acceptance-expired';
+
+/**
+ * What the permit's RAMS link currently resolves to, as loaded from the
+ * database. `null` means the permit links to nothing (or links to a row
+ * that no longer exists).
+ */
+export type PermitRamsLink =
+  | {
+      kind: 'own_pack';
+      /** Status of the pack owning the linked version. */
+      packStatus: string;
+    }
+  | {
+      kind: 'third_party_review';
+      outcome: RamsReviewOutcome;
+      validFrom: Date | null;
+      validTo: Date | null;
+    }
+  | null;
+
+/**
+ * The RS-E14 RAMS gate. A permit whose type demands an accepted safe system
+ * of work may be backed by either side of the module:
+ *   - an OWN pack: the linked pack version must belong to a pack that is
+ *     currently `issued` (a withdrawn or superseded pack stops backing it);
+ *   - a THIRD-PARTY pack: the linked review must be accepted (with or
+ *     without conditions) and still inside its validity window.
+ *
+ * RS-A11: this is pure so the permit page can preview the blocker before
+ * the issuer presses Issue, standing at the job. The router loads the link
+ * facts; both sides then reach the same verdict from the same code.
+ *
+ * Returns null when the gate is satisfied.
+ */
+export function ramsGateError(args: {
+  requiresRamsPack: boolean;
+  link: PermitRamsLink;
+  now: Date;
+}): RamsGateError | null {
+  if (!args.requiresRamsPack) return null;
+  if (args.link === null) return 'rams-pack-required';
+  if (args.link.kind === 'own_pack') {
+    return args.link.packStatus === 'issued' ? null : 'rams-pack-not-issued';
+  }
+  const { outcome, validFrom, validTo } = args.link;
+  if (outcome !== 'accepted' && outcome !== 'accepted_with_conditions') {
+    return 'rams-acceptance-expired';
+  }
+  if (validFrom !== null && validFrom.getTime() > args.now.getTime())
+    return 'rams-acceptance-expired';
+  if (validTo !== null && validTo.getTime() < args.now.getTime()) return 'rams-acceptance-expired';
   return null;
 }
 

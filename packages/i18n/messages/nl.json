@@ -4843,7 +4843,8 @@
         "acceptor": "Acceptant",
         "acceptAction": "Vergunning accepteren",
         "acknowledgeConflicts": "Ik heb de overlappende vergunningen beoordeeld en accepteer het gecombineerde risico",
-        "awaitingAcceptor": "Wachten op de aangewezen acceptant. Alleen die persoon kan accepteren."
+        "awaitingAcceptor": "Wachten op de aangewezen acceptant. Alleen die persoon kan accepteren.",
+        "ramsBlocked": "Uitgifte is geblokkeerd totdat aan de RAMS-eis is voldaan."
       },
       "actions": {
         "title": "Acties",
@@ -4914,7 +4915,13 @@
         "requiredBeforeIssue": "risicobeoordeling vereist vóór uitgifte",
         "riskAssessment": "Risicobeoordeling",
         "methodStatement": "Werkmethodebeschrijving",
-        "none": "Niet gekoppeld"
+        "none": "Niet gekoppeld",
+        "ramsRequired": "Dit vergunningstype vereist een RAMS-pakket",
+        "ramsSatisfied": "Er is een uitgegeven pakket of een geldige geaccepteerde beoordeling gekoppeld.",
+        "ramsMissing": "Er is nog geen RAMS-pakket of geaccepteerde aannemersbeoordeling gekoppeld.",
+        "ramsNotIssued": "Het gekoppelde pakket is momenteel niet uitgegeven — geef het eerst (opnieuw) uit.",
+        "ramsExpired": "De gekoppelde aannemersbeoordeling is niet geaccepteerd of de geldigheid is verlopen.",
+        "ramsOpenModule": "RAMS openen"
       },
       "workers": {
         "title": "Personen onder deze vergunning",
@@ -6370,17 +6377,25 @@
       "moveDown": "Omlaag",
       "remove": "Stap verwijderen",
       "expand": "Bewerken",
-      "collapse": "Sluiten"
+      "collapse": "Sluiten",
+      "untitled": "Naamloze stap",
+      "holdPointBadge": "Stoppunt",
+      "noHoldPoint": "Geen stoppunt"
     },
     "emergency": {
       "title": "Noodmaatregelen",
       "firstAid": "EHBO",
       "procedure": "Noodprocedure",
-      "rescuePlan": "Reddingsplan"
+      "rescuePlan": "Reddingsplan",
+      "nearestHospital": "Dichtstbijzijnde SEH"
     },
     "logistics": {
       "welfare": "Voorzieningen",
-      "accessEgress": "Toegang en vluchtwegen"
+      "accessEgress": "Toegang en vluchtwegen",
+      "title": "Bouwplaatslogistiek",
+      "environmental": "Milieumaatregelen",
+      "permitsRequired": "Verwachte vergunningen",
+      "competence": "Vakbekwaamheid en opleiding"
     },
     "builder": {
       "saving": "Opslaan…",
@@ -6449,7 +6464,9 @@
       "startPack": "Pakket aanmaken",
       "duplicate": "Dupliceren",
       "copySuffix": "kopie",
-      "empty": "Nog geen werkmethoden."
+      "empty": "Nog geen werkmethoden.",
+      "edit": "Bewerken",
+      "backToLibrary": "Terug naar de bibliotheek"
     },
     "reviews": {
       "title": "Beoordeling RAMS onderaannemers",
@@ -6570,6 +6587,21 @@
       "coshh_covered": "Gevaarlijke stoffen gedekt waar gebruikt",
       "plant_certified": "Certificering van materieel en gereedschap geldig",
       "insurance_current": "Verzekering actueel en toereikend voor het werk"
+    },
+    "editor": {
+      "titleLabel": "Titel van de werkmethode",
+      "tradeLabel": "Vakgebied",
+      "publish": "Versie publiceren",
+      "saved": "Opgeslagen",
+      "neverPublished": "Nooit gepubliceerd",
+      "saveFailed": "Niet opgeslagen: {message}",
+      "publishFailed": "Publiceren mislukt: {message}",
+      "archived": "Deze werkmethode is gearchiveerd en kan niet worden bewerkt.",
+      "unpublishedChanges": "Er zijn wijzigingen die nog niet in de gepubliceerde versie staan. Publiceer om ze beschikbaar te maken voor nieuwe pakketten.",
+      "scopeLabel": "Omvang van het werk",
+      "scopePlaceholder": "Wat het werk werkelijk inhoudt, in één alinea.",
+      "versionsTitle": "Gepubliceerde versies",
+      "publishedBy": "door {name} op {date}"
     }
   },
   "reportChooser": {

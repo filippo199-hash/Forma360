@@ -8,7 +8,7 @@
  * The starter set seeds on first visit; everything is duplicate-and-
  * tailor from there.
  */
-import { Copy, Plus } from 'lucide-react';
+import { Copy, Pencil, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -154,6 +154,16 @@ export default function RamsLibraryPage() {
                     >
                       <Copy className="mr-1.5 h-4 w-4" aria-hidden />
                       {t('library.duplicate')}
+                    </Button>
+                  ) : null}
+                  {/* RS-A12: the library was read-and-clone only — a
+                      duplicated template could never be changed. */}
+                  {canCreate ? (
+                    <Button asChild type="button" variant="outline" size="sm">
+                      <Link href={`/${locale}/rams/library/${ms.id}`}>
+                        <Pencil className="mr-1.5 h-4 w-4" aria-hidden />
+                        {t('library.edit')}
+                      </Link>
                     </Button>
                   ) : null}
                 </div>

@@ -4843,7 +4843,8 @@
         "acceptor": "受領者",
         "acceptAction": "許可を受領",
         "acknowledgeConflicts": "重複する許可を確認し、複合リスクを了承します",
-        "awaitingAcceptor": "指定された受領者の署名待ちです。受領できるのは本人のみです。"
+        "awaitingAcceptor": "指定された受領者の署名待ちです。受領できるのは本人のみです。",
+        "ramsBlocked": "RAMS 要件を満たすまで発行はできません。"
       },
       "actions": {
         "title": "許可の操作",
@@ -4914,7 +4915,13 @@
         "requiredBeforeIssue": "発行前にリスクアセスメントが必要",
         "riskAssessment": "リスクアセスメント",
         "methodStatement": "作業手順書",
-        "none": "未リンク"
+        "none": "未リンク",
+        "ramsRequired": "この許可証タイプには RAMS パックが必要です",
+        "ramsSatisfied": "発行済みパック、または有効な承認済みレビューが紐づいています。",
+        "ramsMissing": "RAMS パックも承認済みの請負業者レビューもまだ紐づいていません。",
+        "ramsNotIssued": "紐づくパックは現在発行されていません。先に発行または再発行してください。",
+        "ramsExpired": "紐づく請負業者レビューが未承認、または有効期限が切れています。",
+        "ramsOpenModule": "RAMS を開く"
       },
       "workers": {
         "title": "この許可の対象者",
@@ -6370,17 +6377,25 @@
       "moveDown": "下へ",
       "remove": "手順を削除",
       "expand": "編集",
-      "collapse": "閉じる"
+      "collapse": "閉じる",
+      "untitled": "無題のステップ",
+      "holdPointBadge": "ホールドポイント",
+      "noHoldPoint": "ホールドポイントなし"
     },
     "emergency": {
       "title": "緊急時対応",
       "firstAid": "救急処置",
       "procedure": "緊急時の手順",
-      "rescuePlan": "救助計画"
+      "rescuePlan": "救助計画",
+      "nearestHospital": "最寄りの救急外来"
     },
     "logistics": {
       "welfare": "福利厚生設備",
-      "accessEgress": "出入りと避難経路"
+      "accessEgress": "出入りと避難経路",
+      "title": "現場ロジスティクス",
+      "environmental": "環境対策",
+      "permitsRequired": "想定される許可証",
+      "competence": "力量と教育訓練"
     },
     "builder": {
       "saving": "保存中…",
@@ -6449,7 +6464,9 @@
       "startPack": "パックを作成",
       "duplicate": "複製",
       "copySuffix": "コピー",
-      "empty": "作業手順書がまだありません。"
+      "empty": "作業手順書がまだありません。",
+      "edit": "編集",
+      "backToLibrary": "ライブラリに戻る"
     },
     "reviews": {
       "title": "協力会社 RAMS の審査",
@@ -6570,6 +6587,21 @@
       "coshh_covered": "使用する有害物質（COSHH）が網羅されている",
       "plant_certified": "機械・設備の検査証が有効期限内である",
       "insurance_current": "保険が有効で作業に十分である"
+    },
+    "editor": {
+      "titleLabel": "作業手順書のタイトル",
+      "tradeLabel": "職種",
+      "publish": "バージョンを公開",
+      "saved": "保存しました",
+      "neverPublished": "未公開",
+      "saveFailed": "保存されていません: {message}",
+      "publishFailed": "公開できませんでした: {message}",
+      "archived": "この作業手順書はアーカイブ済みのため編集できません。",
+      "unpublishedChanges": "公開版に未反映の変更があります。新しいパックで使えるようにするには公開してください。",
+      "scopeLabel": "作業範囲",
+      "scopePlaceholder": "この作業が実際に何をするものかを 1 段落で。",
+      "versionsTitle": "公開済みバージョン",
+      "publishedBy": "{name} が {date} に公開"
     }
   },
   "reportChooser": {
