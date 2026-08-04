@@ -6441,7 +6441,10 @@
       "issuedTo": "顧客担当者名",
       "createLink": "共有リンクを作成",
       "unnamed": "宛先未設定",
-      "revoked": "失効"
+      "revoked": "失効",
+      "showLink": "リンクを表示",
+      "copyLink": "コピー",
+      "revokeLink": "失効させる"
     },
     "clientDecision": {
       "pending": "顧客の回答待ち",
@@ -6602,7 +6605,8 @@
       "scopePlaceholder": "この作業が実際に何をするものかを 1 段落で。",
       "versionsTitle": "公開済みバージョン",
       "publishedBy": "{name} が {date} に公開"
-    }
+    },
+    "exportFailed": "エクスポートに失敗しました: {message}"
   },
   "reportChooser": {
     "title": "報告する",

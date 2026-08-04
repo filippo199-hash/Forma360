@@ -64,6 +64,8 @@ export default function RamsPackPage() {
   const attestationIsTranslated = attestationText !== RAMS_AUTHOR_ATTESTATION;
   const [clientName, setClientName] = useState('');
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [clientError, setClientError] = useState<string | null>(null);
 
   const invalidate = (): void => {
     void utils.rams.packs.get.invalidate({ packId });
@@ -71,19 +73,50 @@ export default function RamsPackPage() {
     void utils.rams.packs.overview.invalidate();
   };
 
-  const issue = trpc.rams.packs.issue.useMutation({ onSuccess: invalidate });
+  // RS-A14: these mutations swallowed their errors — issuing a pack that
+  // silently did not issue is the worst kind of quiet failure in a module
+  // whose whole job is proving what was in force.
+  const issue = trpc.rams.packs.issue.useMutation({
+    onSuccess: () => {
+      setActionError(null);
+      invalidate();
+    },
+    onError: (err) => setActionError(err.message),
+  });
   const withdraw = trpc.rams.packs.withdraw.useMutation({
     onSuccess: () => {
+      setActionError(null);
       setShowWithdraw(false);
       invalidate();
     },
+    onError: (err) => setActionError(err.message),
   });
   const createLink = trpc.rams.client.createLink.useMutation({
     onSuccess: (r) => {
+      setClientError(null);
       setShareUrl(r.url);
       invalidate();
     },
+    onError: (err) => setClientError(err.message),
   });
+  const revokeLink = trpc.rams.client.revokeLink.useMutation({
+    onSuccess: () => {
+      setClientError(null);
+      setShareUrl(null);
+      invalidate();
+    },
+    onError: (err) => setClientError(err.message),
+  });
+
+  async function showLinkUrl(linkId: string): Promise<void> {
+    try {
+      const result = await utils.rams.client.getLinkUrl.fetch({ linkId });
+      setClientError(null);
+      setShareUrl(result.url);
+    } catch (err) {
+      setClientError(err instanceof Error ? err.message : String(err));
+    }
+  }
 
   if (pack.isPending) {
     return (
@@ -133,6 +166,13 @@ export default function RamsPackPage() {
             <p className="text-sm">{p.withdrawnReason}</p>
           </CardContent>
         </Card>
+      ) : null}
+
+      {/* RS-A14: issue / re-issue / withdraw failures are shown, not swallowed. */}
+      {actionError !== null ? (
+        <p className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+          {actionError}
+        </p>
       ) : null}
 
       {/* Draft: the issue-gate checklist is the primary content. */}
@@ -377,6 +417,30 @@ export default function RamsPackPage() {
                     {l.decisionComment.length > 0 ? (
                       <span className="text-muted-foreground italic">“{l.decisionComment}”</span>
                     ) : null}
+                    {/* RS-A14: a live link was unrecoverable once you
+                        navigated away, and there was no way to pull one
+                        back. Both are here now. */}
+                    {l.revokedAt === null ? (
+                      <>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => void showLinkUrl(l.id)}
+                        >
+                          {t('client.showLink')}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={revokeLink.isPending}
+                          onClick={() => revokeLink.mutate({ linkId: l.id })}
+                        >
+                          {t('client.revokeLink')}
+                        </Button>
+                      </>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -401,8 +465,23 @@ export default function RamsPackPage() {
                 {t('client.createLink')}
               </Button>
             </div>
+            {clientError !== null ? (
+              <p className="mt-2 text-sm text-red-700 dark:text-red-400">{clientError}</p>
+            ) : null}
             {shareUrl !== null ? (
-              <p className="bg-muted mt-2 rounded p-2 font-mono text-xs break-all">{shareUrl}</p>
+              <div className="bg-muted mt-2 flex items-center gap-2 rounded p-2">
+                <p className="flex-1 font-mono text-xs break-all">{shareUrl}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(shareUrl);
+                  }}
+                >
+                  {t('client.copyLink')}
+                </Button>
+              </div>
             ) : null}
           </CardContent>
         </Card>

@@ -6441,7 +6441,10 @@
       "issuedTo": "Contactpersoon opdrachtgever",
       "createLink": "Deellink maken",
       "unnamed": "Naamloze ontvanger",
-      "revoked": "ingetrokken"
+      "revoked": "ingetrokken",
+      "showLink": "Link tonen",
+      "copyLink": "Kopiëren",
+      "revokeLink": "Intrekken"
     },
     "clientDecision": {
       "pending": "Wacht op opdrachtgever",
@@ -6602,7 +6605,8 @@
       "scopePlaceholder": "Wat het werk werkelijk inhoudt, in één alinea.",
       "versionsTitle": "Gepubliceerde versies",
       "publishedBy": "door {name} op {date}"
-    }
+    },
+    "exportFailed": "Export mislukt: {message}"
   },
   "reportChooser": {
     "title": "Iets melden",

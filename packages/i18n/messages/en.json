@@ -6676,7 +6676,10 @@
       "issuedTo": "Client contact name",
       "createLink": "Create share link",
       "unnamed": "Unnamed recipient",
-      "revoked": "revoked"
+      "revoked": "revoked",
+      "showLink": "Show link",
+      "copyLink": "Copy",
+      "revokeLink": "Revoke"
     },
     "clientDecision": {
       "pending": "Awaiting client",
@@ -6837,7 +6840,8 @@
       "scopePlaceholder": "What the job actually is, in one paragraph.",
       "versionsTitle": "Published versions",
       "publishedBy": "by {name} on {date}"
-    }
+    },
+    "exportFailed": "Export failed: {message}"
   },
   "reportChooser": {
     "title": "Report something",

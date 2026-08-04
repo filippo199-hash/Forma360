@@ -6448,7 +6448,10 @@
       "issuedTo": "Ansprechpartner beim Kunden",
       "createLink": "Freigabelink erstellen",
       "unnamed": "Unbenannter Empfänger",
-      "revoked": "widerrufen"
+      "revoked": "widerrufen",
+      "showLink": "Link anzeigen",
+      "copyLink": "Kopieren",
+      "revokeLink": "Widerrufen"
     },
     "clientDecision": {
       "pending": "Warten auf Kunden",
@@ -6609,7 +6612,8 @@
       "scopePlaceholder": "Was die Arbeit tatsächlich ist, in einem Absatz.",
       "versionsTitle": "Veröffentlichte Versionen",
       "publishedBy": "von {name} am {date}"
-    }
+    },
+    "exportFailed": "Export fehlgeschlagen: {message}"
   },
   "reportChooser": {
     "title": "Etwas melden",

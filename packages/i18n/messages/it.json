@@ -6483,7 +6483,10 @@
       "issuedTo": "Referente del cliente",
       "createLink": "Crea link di condivisione",
       "unnamed": "Destinatario senza nome",
-      "revoked": "revocato"
+      "revoked": "revocato",
+      "showLink": "Mostra link",
+      "copyLink": "Copia",
+      "revokeLink": "Revoca"
     },
     "clientDecision": {
       "pending": "In attesa del cliente",
@@ -6644,7 +6647,8 @@
       "scopePlaceholder": "In cosa consiste davvero il lavoro, in un paragrafo.",
       "versionsTitle": "Versioni pubblicate",
       "publishedBy": "da {name} il {date}"
-    }
+    },
+    "exportFailed": "Esportazione non riuscita: {message}"
   },
   "reportChooser": {
     "title": "Segnala qualcosa",

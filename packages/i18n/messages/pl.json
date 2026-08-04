@@ -6441,7 +6441,10 @@
       "issuedTo": "Osoba kontaktowa u klienta",
       "createLink": "Utwórz link do udostępnienia",
       "unnamed": "Odbiorca bez nazwy",
-      "revoked": "unieważniony"
+      "revoked": "unieważniony",
+      "showLink": "Pokaż link",
+      "copyLink": "Kopiuj",
+      "revokeLink": "Unieważnij"
     },
     "clientDecision": {
       "pending": "Oczekuje na klienta",
@@ -6602,7 +6605,8 @@
       "scopePlaceholder": "Na czym naprawdę polega praca — w jednym akapicie.",
       "versionsTitle": "Opublikowane wersje",
       "publishedBy": "przez {name} dnia {date}"
-    }
+    },
+    "exportFailed": "Eksport nie powiódł się: {message}"
   },
   "reportChooser": {
     "title": "Zgłoś zdarzenie",

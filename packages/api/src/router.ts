@@ -332,6 +332,14 @@ export const stubRamsDeps: RamsRouterDeps = {
   enabled: true,
   generateShareToken: () => `rams-stub-token-${(__ramsShareTokenSeq += 1)}`,
   buildShareUrl: (token) => `http://localhost:3000/s/${token}`,
+  // Stubbed rather than absent so the RS-A14 guard (a version must belong
+  // to the pack) is reachable in tests instead of short-circuiting on
+  // `render-not-wired`.
+  renderPdf: async ({ packId, packVersionId }) => ({
+    key: `stub://rams-pdf/${packId}/${packVersionId}`,
+    bytes: 0,
+    stub: true,
+  }),
   appUrl: 'http://localhost:3000',
 };
 

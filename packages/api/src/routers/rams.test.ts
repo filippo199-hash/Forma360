@@ -861,6 +861,41 @@ describe('rams router', () => {
       );
     });
 
+    // RS-A14: the URL is recoverable after navigation, but only through
+    // the permission that minted it, and never for a dead link.
+    it('re-reads a live link URL and refuses a revoked one', async () => {
+      const caller = callerFor(adminId);
+      const { packId } = await readyPack();
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+      const link = await caller.rams.client.createLink({ packId, issuedToName: 'Riverside' });
+      const detail = await caller.rams.packs.get({ packId });
+      const linkId = detail.clientLinks[0]?.id;
+      expect(linkId).toBeDefined();
+      if (linkId === undefined) return;
+
+      const again = await caller.rams.client.getLinkUrl({ linkId });
+      expect(again.url).toBe(link.url);
+
+      await caller.rams.client.revokeLink({ linkId });
+      await expect(caller.rams.client.getLinkUrl({ linkId })).rejects.toThrow(/link-revoked/);
+    });
+
+    it('never returns a link URL to a user who cannot issue', async () => {
+      const caller = callerFor(adminId);
+      const { packId } = await readyPack();
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+      const detail = await caller.rams.packs.get({ packId });
+      await caller.rams.client.createLink({ packId });
+      const withLink = await caller.rams.packs.get({ packId });
+      const linkId = withLink.clientLinks[0]?.id;
+      expect(detail.clientLinks).toHaveLength(0);
+      expect(linkId).toBeDefined();
+      if (linkId === undefined) return;
+      await expect(callerFor(standardId).rams.client.getLinkUrl({ linkId })).rejects.toThrow(
+        /FORBIDDEN|permission/i,
+      );
+    });
+
     it('refuses an expired token', async () => {
       const caller = callerFor(adminId);
       const { packId } = await readyPack();
@@ -1286,6 +1321,67 @@ describe('rams router', () => {
       expect(second.actionId).toBe(first.actionId);
       const list = await caller.actions.list({ sourceType: 'rams' });
       expect(list.rows).toHaveLength(1);
+    });
+  });
+
+  // ─── RS-A14 · register filter + render guard ───────────────────────────
+
+  describe('RS-A14 polish', () => {
+    it('filters the register to packs awaiting a client decision', async () => {
+      const caller = callerFor(adminId);
+      const withLink = await readyPack();
+      const withoutLink = await readyPack();
+      await caller.rams.packs.issue({ packId: withLink.packId, confirmAttestation: true });
+      await caller.rams.packs.issue({ packId: withoutLink.packId, confirmAttestation: true });
+      await caller.rams.client.createLink({ packId: withLink.packId, issuedToName: 'Client' });
+
+      const all = await caller.rams.packs.list({});
+      expect(all).toHaveLength(2);
+
+      const pending = await caller.rams.packs.list({ pendingClientAcceptance: true });
+      expect(pending.map((p) => p.id)).toEqual([withLink.packId]);
+    });
+
+    it('drops a pack from the filter once the client decides', async () => {
+      const caller = callerFor(adminId);
+      const { packId } = await readyPack();
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+      const link = await caller.rams.client.createLink({ packId });
+      expect(await caller.rams.packs.list({ pendingClientAcceptance: true })).toHaveLength(1);
+
+      await caller.rams.client.publicDecide({
+        token: link.token,
+        decision: 'accepted',
+        acceptedByName: 'Dana',
+      });
+      expect(await caller.rams.packs.list({ pendingClientAcceptance: true })).toHaveLength(0);
+    });
+
+    it("refuses to render another pack's version under this pack", async () => {
+      const caller = callerFor(adminId);
+      const mine = await readyPack();
+      const theirs = await readyPack();
+      await caller.rams.packs.issue({ packId: mine.packId, confirmAttestation: true });
+      await caller.rams.packs.issue({ packId: theirs.packId, confirmAttestation: true });
+
+      const theirDetail = await caller.rams.packs.get({ packId: theirs.packId });
+      const theirVersionId = theirDetail.versions[0]?.id;
+      expect(theirVersionId).toBeDefined();
+      if (theirVersionId === undefined) return;
+
+      await expect(
+        caller.rams.packs.renderPdf({ packId: mine.packId, packVersionId: theirVersionId }),
+      ).rejects.toThrow(/version-not-found/);
+
+      // The pack's own version still renders.
+      const mineDetail = await caller.rams.packs.get({ packId: mine.packId });
+      const myVersionId = mineDetail.versions[0]?.id;
+      expect(myVersionId).toBeDefined();
+      const rendered = await caller.rams.packs.renderPdf({
+        packId: mine.packId,
+        packVersionId: myVersionId,
+      });
+      expect(rendered.storageKey).toContain(mine.packId);
     });
   });
 

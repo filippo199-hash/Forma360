@@ -205,3 +205,69 @@ instead — and they are tenant data, editable, exactly as
   natively rather than as a PDF. Nothing in the model forecloses it.
 - Branded (tenant logo / colour) client-facing PDF output — the business
   model puts that on the paid tier; the pack and its plain PDF are not.
+
+---
+
+## Amendment — 4 August 2026 (HSE expert review disposition)
+
+Four practitioners reviewed the module
+([`docs/reviews/rams-hse-expert-review.md`](../reviews/rams-hse-expert-review.md);
+disposition in
+[`rams-hse-review-response.md`](../reviews/rams-hse-review-response.md)).
+Their verdict — that the server work was sound and the product still did
+not function — held, and the immediate cause was that the builder route
+had been written and never committed. Three decisions in this amendment
+change the model rather than just the code.
+
+### Decision 11 — the frozen snapshot carries hazards, not just references
+
+The original snapshot stored metadata *about* each bound RA version:
+reference, title, worst residual band. That was enough to prove which
+assessment was in force, and not enough for anyone to be briefed from it.
+`PackVersionRiskAssessment.hazards` now carries, per hazard, the hazard
+itself, who is at risk, the controls and the residual band, frozen at
+issue like everything else.
+
+This makes the pack self-sufficient — the briefing screen and the PDF
+answer "what am I being briefed on" without joining back to a live RA
+that may since have been revised. The field is optional so versions
+issued before this change still parse; they render without the hazard
+table, which is an honest depiction of what was frozen at the time.
+
+### Decision 12 — briefing idempotency is a database constraint
+
+Briefings are append-only and captured offline, which makes an
+at-least-once delivery model inevitable. The router already accepted a
+`clientRef` and discarded it. It is now stored, with a partial unique
+index on `(pack_id, client_ref)` and `onConflictDoNothing` (migration
+`0070`).
+
+The alternative — trusting the client to send each entry exactly once —
+is what produced the three queue bugs the review found. A briefing record
+is a legal claim that a named person was briefed on a named version; a
+duplicate is a false record, and a dropped one is a missing record. The
+constraint makes both impossible regardless of what the client does.
+
+### Decision 13 — a cross-module gate is a pure helper the caller can preview
+
+The permit RAMS gate lived only inside the permits router, so the permit
+page could not show the blocker until the mutation failed. `ramsGateError`
+is now pure, in `packages/shared/src/permits.ts` beside `gasGateError`,
+taking a `PermitRamsLink` describing what the link resolves to. The
+router loads the facts; both the mutation and `permits.get` reach the
+verdict through the same code.
+
+The general rule this settles: **a gate that blocks an action must be
+previewable by the surface that offers the action.** Loading the facts is
+the router's job and stays async; deciding is pure and shared. Any future
+module gating another module's action follows this shape.
+
+### Not a decision, but the lesson
+
+Two of the review's medium findings (RS-A8, RS-A9) and one earlier
+platform finding (PF-6) were the same bug: a server-side vocabulary
+duplicated by hand in a client file, where forgetting an entry is silent.
+The actions-hub source table and the Cmd-K category table now live in
+`apps/web/src/lib/`, each with a test that reads the router's own
+declaration and fails when the two diverge. Where a client must mirror a
+server enum, the mirror gets a test that scrapes the source of truth.

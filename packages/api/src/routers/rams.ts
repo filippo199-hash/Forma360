@@ -728,6 +728,13 @@ export function createRamsRouter(deps: RamsRouterDeps) {
             status: z.enum(RAMS_PACK_STATUSES).optional(),
             siteId: id26.optional(),
             search: z.string().trim().max(200).optional(),
+            /**
+             * RS-A14: only packs with a live client link still awaiting a
+             * decision — the destination the register's "awaiting client
+             * acceptance" chip needs to become a filter rather than a
+             * number you cannot act on.
+             */
+            pendingClientAcceptance: z.boolean().default(false),
             includeArchived: z.boolean().default(false),
             limit: z.number().int().min(1).max(200).default(50),
           })
@@ -747,6 +754,11 @@ export function createRamsRouter(deps: RamsRouterDeps) {
             sql`lower(${ramsPacks.clientName}) like ${q}`,
           );
           if (clause !== undefined) where.push(clause);
+        }
+        if (input.pendingClientAcceptance) {
+          where.push(
+            sql`exists (select 1 from ${ramsClientLinks} where ${ramsClientLinks.packId} = ${ramsPacks.id} and ${ramsClientLinks.tenantId} = ${ctx.tenantId} and ${ramsClientLinks.decision} = 'pending' and ${ramsClientLinks.revokedAt} is null)`,
+          );
         }
 
         const rows = await ctx.db
@@ -2114,23 +2126,32 @@ export function createRamsRouter(deps: RamsRouterDeps) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'render-not-wired' });
         }
         const pack = await loadPack(ctx.db, ctx.tenantId, input.packId);
-        let packVersionId = input.packVersionId;
+        // RS-A14: resolve the version through the pack in BOTH directions.
+        // Taking a caller-supplied `packVersionId` on trust would render
+        // one pack's content under another pack's identity — same tenant,
+        // but the wrong document, which is exactly what a RAMS pack must
+        // never be.
+        const versionWhere =
+          input.packVersionId === undefined
+            ? eq(ramsPackVersions.versionNumber, pack.currentVersion)
+            : eq(ramsPackVersions.id, input.packVersionId);
+        const versionRows = await ctx.db
+          .select({ id: ramsPackVersions.id })
+          .from(ramsPackVersions)
+          .where(
+            and(
+              eq(ramsPackVersions.tenantId, ctx.tenantId),
+              eq(ramsPackVersions.packId, pack.id),
+              versionWhere,
+            ),
+          )
+          .limit(1);
+        const packVersionId = versionRows[0]?.id;
         if (packVersionId === undefined) {
-          const rows = await ctx.db
-            .select({ id: ramsPackVersions.id })
-            .from(ramsPackVersions)
-            .where(
-              and(
-                eq(ramsPackVersions.tenantId, ctx.tenantId),
-                eq(ramsPackVersions.packId, pack.id),
-                eq(ramsPackVersions.versionNumber, pack.currentVersion),
-              ),
-            )
-            .limit(1);
-          packVersionId = rows[0]?.id;
-        }
-        if (packVersionId === undefined) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'pack-not-issued' });
+          throw new TRPCError({
+            code: input.packVersionId === undefined ? 'BAD_REQUEST' : 'NOT_FOUND',
+            message: input.packVersionId === undefined ? 'pack-not-issued' : 'version-not-found',
+          });
         }
         const rendered = await deps.renderPdf({
           tenantId: ctx.tenantId,
@@ -2360,6 +2381,42 @@ export function createRamsRouter(deps: RamsRouterDeps) {
           payload: { versionNumber: version.versionNumber },
         });
         return { linkId: id, token, url: deps.buildShareUrl(token) };
+      }),
+
+    /**
+     * RS-A14: re-read one live link's share URL.
+     *
+     * RS-A3 removed the token from `packs.get`, which was right — every
+     * `rams.view` holder could read every client's opaque token from the
+     * pack payload. But it left the URL recoverable only from the create
+     * mutation's response, so navigating away lost it for good and the
+     * only way to re-send a link was to mint another one.
+     *
+     * This is the narrow way back: one link at a time, `rams.issue` only
+     * (the permission that minted it), and never for a revoked link.
+     */
+    getLinkUrl: tenantProcedure
+      .use(requirePermission('rams.issue'))
+      .input(z.object({ linkId: id26 }))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        if (deps.buildShareUrl === undefined) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'share-not-wired' });
+        }
+        const rows = await ctx.db
+          .select({ token: ramsClientLinks.token, revokedAt: ramsClientLinks.revokedAt })
+          .from(ramsClientLinks)
+          .where(
+            and(eq(ramsClientLinks.tenantId, ctx.tenantId), eq(ramsClientLinks.id, input.linkId)),
+          )
+          .limit(1);
+        const link = rows[0];
+        if (link === undefined)
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'link-not-found' });
+        if (link.revokedAt !== null) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'link-revoked' });
+        }
+        return { url: deps.buildShareUrl(link.token) };
       }),
 
     revokeLink: tenantProcedure

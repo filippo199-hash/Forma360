@@ -617,7 +617,29 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   `packages/db/src/schema/rams.ts` (11 tables), migration 0069 incl. the
   PF-8 rams.* permission backfill; edge-case IDs RS-E01..E06/E13/E16 in
   `rams.test.ts` (shared), RS-E03..E12/E15/E17/E18 (router), RS-E14 in
-  `permits.test.ts`). Each router is
+  `permits.test.ts`; HSE review + hardening in
+  `docs/reviews/rams-hse-expert-review.md` +
+  `docs/reviews/rams-hse-review-response.md` (ADR 0015 amendment): the
+  builder route `[packId]/build` (RS-A1 — it was written and never
+  committed, which is what made the module unreachable), `TRPCProvider`
+  on `app/s/layout.tsx`, the `reviews.submit` intake form, `clientLinks`
+  projected to drop `token`, re-issue as a signing event with a
+  briefing-invalidation warning, briefing signature capture plus hazards
+  in the frozen snapshot (`PackVersionRiskAssessment.hazards`) and PDF
+  §2, an idempotent offline briefing queue (`clientRef` + partial unique
+  index, migration 0070), `publicDecide` re-decision / pack-status
+  guards, the shared `ramsGateError` helper in
+  `packages/shared/src/permits.ts` so the permit page previews the
+  blocker (`permits.get` returns `ramsGate`), search-param handling on
+  `rams/new` and the method-statement editor at
+  `rams/library/[methodStatementId]`, translated attestation +
+  review-checklist labels, and `client.getLinkUrl` for share-link
+  recovery; new edge-case IDs PW-E11 in `permits.test.ts` and the RS-A14
+  block in `rams.test.ts`. The actions-hub source vocabulary and the
+  Cmd-K category table now live in `apps/web/src/lib/action-sources.ts`
+  and `search-categories.ts`, each with a test that scrapes the router
+  and fails when a server-side value has no client entry — the fix for
+  the RS-A8 / RS-A9 / PF-6 class). Each router is
   built with `{ enabled }` from the brand catalogue; nav + API both gate on
   it.
 - **Everything internal stays `forma360`** (package scope, queue names,

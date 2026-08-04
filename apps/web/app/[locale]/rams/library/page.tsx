@@ -31,6 +31,8 @@ export default function RamsLibraryPage() {
   const canManage = useHasPermission('rams.manage');
 
   const [trade, setTrade] = useState<TradeFilter>('all');
+  // RS-A14: seed and duplicate failed silently — the list simply did not change.
+  const [libraryError, setLibraryError] = useState<string | null>(null);
 
   const utils = trpc.useUtils();
   const list = trpc.rams.methodStatements.list.useQuery({
@@ -38,10 +40,18 @@ export default function RamsLibraryPage() {
     ...(trade !== 'all' ? { trade } : {}),
   });
   const seed = trpc.rams.methodStatements.seedLibrary.useMutation({
-    onSuccess: () => void utils.rams.methodStatements.list.invalidate(),
+    onSuccess: () => {
+      setLibraryError(null);
+      void utils.rams.methodStatements.list.invalidate();
+    },
+    onError: (err) => setLibraryError(err.message),
   });
   const duplicate = trpc.rams.methodStatements.create.useMutation({
-    onSuccess: () => void utils.rams.methodStatements.list.invalidate(),
+    onSuccess: () => {
+      setLibraryError(null);
+      void utils.rams.methodStatements.list.invalidate();
+    },
+    onError: (err) => setLibraryError(err.message),
   });
 
   // Seed the starter set the first time anyone opens the library.
@@ -78,6 +88,12 @@ export default function RamsLibraryPage() {
           ) : null}
         </div>
       </header>
+
+      {libraryError !== null ? (
+        <p className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+          {libraryError}
+        </p>
+      ) : null}
 
       <div className="mb-4 flex flex-wrap gap-1">
         {(['all', ...METHOD_STATEMENT_TRADES] as ReadonlyArray<TradeFilter>).map((tr) => (

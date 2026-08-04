@@ -6441,7 +6441,10 @@
       "issuedTo": "客户联系人",
       "createLink": "创建分享链接",
       "unnamed": "未填写收件人",
-      "revoked": "已失效"
+      "revoked": "已失效",
+      "showLink": "显示链接",
+      "copyLink": "复制",
+      "revokeLink": "撤销"
     },
     "clientDecision": {
       "pending": "待客户确认",
@@ -6602,7 +6605,8 @@
       "scopePlaceholder": "用一段话说明这项工作究竟是什么。",
       "versionsTitle": "已发布版本",
       "publishedBy": "由 {name} 于 {date} 发布"
-    }
+    },
+    "exportFailed": "导出失败：{message}"
   },
   "reportChooser": {
     "title": "报告事项",

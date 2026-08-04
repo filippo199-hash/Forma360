@@ -42,23 +42,34 @@ export default function RamsRegisterPage() {
 
   const [status, setStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
+  // RS-A14: the "awaiting client acceptance" chip was an inert span while
+  // every chip beside it filtered. It is a filter now.
+  const [pendingAcceptanceOnly, setPendingAcceptanceOnly] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const overview = trpc.rams.packs.overview.useQuery();
   const packs = trpc.rams.packs.list.useQuery({
     ...(status !== 'all' ? { status } : {}),
     ...(search.trim().length > 0 ? { search: search.trim() } : {}),
+    ...(pendingAcceptanceOnly ? { pendingClientAcceptance: true } : {}),
   });
   const csv = trpc.useUtils().rams.packs.exportCsv;
 
   async function downloadCsv(): Promise<void> {
-    const result = await csv.fetch({});
-    const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'rams-register.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    // RS-A14: an export that throws left the button looking like it worked.
+    try {
+      const result = await csv.fetch({});
+      setExportError(null);
+      const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rams-register.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : String(err));
+    }
   }
 
   const attention = overview.data;
@@ -129,11 +140,16 @@ export default function RamsRegisterPage() {
               </button>
             ) : null}
             {attention.pendingClientAcceptance > 0 ? (
-              <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-900 dark:bg-blue-900 dark:text-blue-100">
+              <button
+                type="button"
+                aria-pressed={pendingAcceptanceOnly}
+                onClick={() => setPendingAcceptanceOnly((v) => !v)}
+                className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-900 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-100"
+              >
                 {t('attention.pendingClientAcceptance', {
                   count: attention.pendingClientAcceptance,
                 })}
-              </span>
+              </button>
             ) : null}
             {canReview && attention.pendingReviews > 0 ? (
               <Link
@@ -153,6 +169,12 @@ export default function RamsRegisterPage() {
             ) : null}
           </div>
         </section>
+      ) : null}
+
+      {exportError !== null ? (
+        <p className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+          {t('exportFailed', { message: exportError })}
+        </p>
       ) : null}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
