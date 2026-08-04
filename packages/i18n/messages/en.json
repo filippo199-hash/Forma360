@@ -93,6 +93,31 @@
     "fireSafety": "Fire Safety",
     "analytics": "Dashboard",
     "incidents": "Incidents",
+    "myWork": "My work",
+    "more": "More",
+    "quickLabel": "Quick navigation",
+    "collapseMenu": "Collapse menu",
+    "expandMenu": "Expand menu",
+    "groupRisk": "Risk & control",
+    "groupVerify": "Inspect & verify",
+    "groupRespond": "Report & fix",
+    "groupOrg": "Organisation",
+    "child": {
+      "schedulesCalendar": "Calendar",
+      "permitsBoard": "Live board",
+      "permitsTypes": "Permit types",
+      "coshhPointOfWork": "Point of work",
+      "coshhLev": "LEV register",
+      "fireLogbook": "Logbook",
+      "issuesQrCodes": "QR codes",
+      "issuesCategories": "Categories",
+      "actionsCategories": "Categories",
+      "assetsCategories": "Categories",
+      "contractorsGate": "Site gate",
+      "contractorsCalendar": "Calendar",
+      "ramsLibrary": "Method statement library",
+      "ramsReviews": "Contractor RAMS review"
+    },
     "rams": "RAMS"
   },
   "ai": {
@@ -6399,6 +6424,30 @@
       "addFiles": "Add photos / files",
       "none": "No evidence yet. Photos taken at the scene land here.",
       "witness": "Witness"
+    }
+  },
+  "myWork": {
+    "title": "My work",
+    "subtitle": "Everything waiting on you, most overdue first.",
+    "filterLabel": "Filter by type",
+    "overdueOn": "Due {date}",
+    "tiles": {
+      "overdue": "Overdue",
+      "actions": "Open actions",
+      "acknowledgements": "To acknowledge",
+      "drafts": "Unfinished inspections"
+    },
+    "kinds": {
+      "all": "All",
+      "action": "Action",
+      "acknowledgement": "Acknowledgement",
+      "signature": "Signature",
+      "inspection": "Inspection",
+      "approval": "Approval"
+    },
+    "empty": {
+      "title": "Nothing waiting on you",
+      "body": "New work assigned to you appears here."
     }
   },
   "rams": {

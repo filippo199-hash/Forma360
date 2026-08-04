@@ -1447,6 +1447,31 @@
     "fireSafety": "Ochrona ppoż.",
     "analytics": "Pulpit",
     "incidents": "Zdarzenia",
+    "myWork": "Moje zadania",
+    "more": "Więcej",
+    "quickLabel": "Szybka nawigacja",
+    "collapseMenu": "Zwiń menu",
+    "expandMenu": "Rozwiń menu",
+    "groupRisk": "Ryzyko i kontrola",
+    "groupVerify": "Inspekcje i weryfikacja",
+    "groupRespond": "Zgłoś i napraw",
+    "groupOrg": "Organizacja",
+    "child": {
+      "schedulesCalendar": "Kalendarz",
+      "permitsBoard": "Tablica na żywo",
+      "permitsTypes": "Typy zezwoleń",
+      "coshhPointOfWork": "Stanowisko pracy",
+      "coshhLev": "Rejestr LEV",
+      "fireLogbook": "Dziennik",
+      "issuesQrCodes": "Kody QR",
+      "issuesCategories": "Kategorie",
+      "actionsCategories": "Kategorie",
+      "assetsCategories": "Kategorie",
+      "contractorsGate": "Brama budowy",
+      "contractorsCalendar": "Kalendarz",
+      "ramsLibrary": "Biblioteka instrukcji roboczych",
+      "ramsReviews": "Ocena RAMS podwykonawców"
+    },
     "rams": "RAMS"
   },
   "approvals": {
@@ -6164,6 +6189,30 @@
       "addFiles": "Dodaj zdjęcia / pliki",
       "none": "Brak dowodów. Zdjęcia z miejsca zdarzenia pojawią się tutaj.",
       "witness": "Świadek"
+    }
+  },
+  "myWork": {
+    "title": "Moje zadania",
+    "subtitle": "Wszystko, co na Ciebie czeka — najpierw zaległe.",
+    "filterLabel": "Filtruj według typu",
+    "overdueOn": "Termin {date}",
+    "tiles": {
+      "overdue": "Zaległe",
+      "actions": "Otwarte działania",
+      "acknowledgements": "Do potwierdzenia",
+      "drafts": "Niedokończone inspekcje"
+    },
+    "kinds": {
+      "all": "Wszystko",
+      "action": "Działanie",
+      "acknowledgement": "Potwierdzenie zapoznania",
+      "signature": "Podpis",
+      "inspection": "Inspekcja",
+      "approval": "Zatwierdzenie"
+    },
+    "empty": {
+      "title": "Nic na Ciebie nie czeka",
+      "body": "Nowe zadania przypisane Tobie pojawią się tutaj."
     }
   },
   "rams": {

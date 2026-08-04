@@ -1454,6 +1454,31 @@
     "fireSafety": "Sécurité incendie",
     "analytics": "Tableau de bord",
     "incidents": "Incidents",
+    "myWork": "Mes tâches",
+    "more": "Plus",
+    "quickLabel": "Navigation rapide",
+    "collapseMenu": "Réduire le menu",
+    "expandMenu": "Développer le menu",
+    "groupRisk": "Risque et maîtrise",
+    "groupVerify": "Inspecter et vérifier",
+    "groupRespond": "Signaler et corriger",
+    "groupOrg": "Organisation",
+    "child": {
+      "schedulesCalendar": "Calendrier",
+      "permitsBoard": "Tableau en direct",
+      "permitsTypes": "Types de permis",
+      "coshhPointOfWork": "Poste de travail",
+      "coshhLev": "Registre VLE",
+      "fireLogbook": "Registre",
+      "issuesQrCodes": "Codes QR",
+      "issuesCategories": "Catégories",
+      "actionsCategories": "Catégories",
+      "assetsCategories": "Catégories",
+      "contractorsGate": "Accès chantier",
+      "contractorsCalendar": "Calendrier",
+      "ramsLibrary": "Bibliothèque de modes opératoires",
+      "ramsReviews": "Examen des RAMS sous-traitants"
+    },
     "rams": "RAMS"
   },
   "approvals": {
@@ -6171,6 +6196,30 @@
       "addFiles": "Ajouter photos / fichiers",
       "none": "Aucune preuve pour l'instant. Les photos prises sur place apparaissent ici.",
       "witness": "Témoin"
+    }
+  },
+  "myWork": {
+    "title": "Mes tâches",
+    "subtitle": "Tout ce qui vous attend, les retards en premier.",
+    "filterLabel": "Filtrer par type",
+    "overdueOn": "Échéance {date}",
+    "tiles": {
+      "overdue": "En retard",
+      "actions": "Actions ouvertes",
+      "acknowledgements": "À accuser réception",
+      "drafts": "Inspections inachevées"
+    },
+    "kinds": {
+      "all": "Tout",
+      "action": "Action",
+      "acknowledgement": "Accusé de réception",
+      "signature": "Signature",
+      "inspection": "Inspection",
+      "approval": "Approbation"
+    },
+    "empty": {
+      "title": "Rien ne vous attend",
+      "body": "Les nouvelles tâches qui vous sont affectées apparaissent ici."
     }
   },
   "rams": {

@@ -1447,6 +1447,31 @@
     "fireSafety": "Brandveiligheid",
     "analytics": "Dashboard",
     "incidents": "Incidenten",
+    "myWork": "Mijn werk",
+    "more": "Meer",
+    "quickLabel": "Snelle navigatie",
+    "collapseMenu": "Menu inklappen",
+    "expandMenu": "Menu uitklappen",
+    "groupRisk": "Risico en beheersing",
+    "groupVerify": "Inspecteren en verifiëren",
+    "groupRespond": "Melden en oplossen",
+    "groupOrg": "Organisatie",
+    "child": {
+      "schedulesCalendar": "Agenda",
+      "permitsBoard": "Live-bord",
+      "permitsTypes": "Vergunningstypen",
+      "coshhPointOfWork": "Werkplek",
+      "coshhLev": "LEV-register",
+      "fireLogbook": "Logboek",
+      "issuesQrCodes": "QR-codes",
+      "issuesCategories": "Categorieën",
+      "actionsCategories": "Categorieën",
+      "assetsCategories": "Categorieën",
+      "contractorsGate": "Bouwplaatspoort",
+      "contractorsCalendar": "Agenda",
+      "ramsLibrary": "Bibliotheek met werkmethoden",
+      "ramsReviews": "Beoordeling RAMS onderaannemers"
+    },
     "rams": "RAMS"
   },
   "approvals": {
@@ -6164,6 +6189,30 @@
       "addFiles": "Foto's / bestanden toevoegen",
       "none": "Nog geen bewijs. Foto's van de locatie verschijnen hier.",
       "witness": "Getuige"
+    }
+  },
+  "myWork": {
+    "title": "Mijn werk",
+    "subtitle": "Alles wat op u wacht, achterstallig eerst.",
+    "filterLabel": "Filteren op type",
+    "overdueOn": "Vervalt {date}",
+    "tiles": {
+      "overdue": "Achterstallig",
+      "actions": "Openstaande acties",
+      "acknowledgements": "Te bevestigen",
+      "drafts": "Onafgeronde inspecties"
+    },
+    "kinds": {
+      "all": "Alles",
+      "action": "Actie",
+      "acknowledgement": "Bevestiging",
+      "signature": "Handtekening",
+      "inspection": "Inspectie",
+      "approval": "Goedkeuring"
+    },
+    "empty": {
+      "title": "Er wacht niets op u",
+      "body": "Nieuw aan u toegewezen werk verschijnt hier."
     }
   },
   "rams": {

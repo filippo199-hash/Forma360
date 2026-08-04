@@ -1,6 +1,6 @@
 /**
  * RAMS — Risk Assessment & Method Statement domain helpers (FreeHS
- * module B6). See ADR 0014.
+ * module B6). See ADR 0015.
  *
  * Pure data + functions shared by the DB schema, the API router, the web
  * UI, the renderer and any worker:

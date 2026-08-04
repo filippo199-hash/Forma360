@@ -1454,6 +1454,31 @@
     "fireSafety": "Seguridad contra incendios",
     "analytics": "Panel",
     "incidents": "Incidentes",
+    "myWork": "Mi trabajo",
+    "more": "Más",
+    "quickLabel": "Navegación rápida",
+    "collapseMenu": "Contraer menú",
+    "expandMenu": "Expandir menú",
+    "groupRisk": "Riesgo y control",
+    "groupVerify": "Inspeccionar y verificar",
+    "groupRespond": "Notificar y resolver",
+    "groupOrg": "Organización",
+    "child": {
+      "schedulesCalendar": "Calendario",
+      "permitsBoard": "Tablero en vivo",
+      "permitsTypes": "Tipos de permiso",
+      "coshhPointOfWork": "Punto de trabajo",
+      "coshhLev": "Registro LEV",
+      "fireLogbook": "Libro de registro",
+      "issuesQrCodes": "Códigos QR",
+      "issuesCategories": "Categorías",
+      "actionsCategories": "Categorías",
+      "assetsCategories": "Categorías",
+      "contractorsGate": "Acceso a obra",
+      "contractorsCalendar": "Calendario",
+      "ramsLibrary": "Biblioteca de procedimientos",
+      "ramsReviews": "Revisión de RAMS de contratistas"
+    },
     "rams": "RAMS"
   },
   "approvals": {
@@ -6171,6 +6196,30 @@
       "addFiles": "Añadir fotos / archivos",
       "none": "Aún no hay pruebas. Las fotos tomadas en el lugar aparecen aquí.",
       "witness": "Testigo"
+    }
+  },
+  "myWork": {
+    "title": "Mi trabajo",
+    "subtitle": "Todo lo que le espera, primero lo vencido.",
+    "filterLabel": "Filtrar por tipo",
+    "overdueOn": "Vence {date}",
+    "tiles": {
+      "overdue": "Vencidas",
+      "actions": "Acciones abiertas",
+      "acknowledgements": "Por confirmar",
+      "drafts": "Inspecciones sin terminar"
+    },
+    "kinds": {
+      "all": "Todo",
+      "action": "Acción",
+      "acknowledgement": "Confirmación de lectura",
+      "signature": "Firma",
+      "inspection": "Inspección",
+      "approval": "Aprobación"
+    },
+    "empty": {
+      "title": "No hay nada pendiente",
+      "body": "El trabajo que se le asigne aparecerá aquí."
     }
   },
   "rams": {

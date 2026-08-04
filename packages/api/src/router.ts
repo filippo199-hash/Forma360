@@ -27,6 +27,7 @@ import { usersRouter } from './routers/users';
 import { actionsRouter } from './routers/actions';
 import { actionTypesRouter } from './routers/actionTypes';
 import { createAnalyticsRouter } from './routers/analytics';
+import { createMyWorkRouter } from './routers/myWork';
 import { notificationsRouter } from './routers/notifications';
 import { approvalsRouter } from './routers/approvals';
 import { assetTypesRouter } from './routers/assetTypes';
@@ -138,6 +139,9 @@ export function buildAppRouter(deps: {
     search: searchRouter,
     aiAssistant: aiAssistantRouter,
     notifications: notificationsRouter,
+    // ADR 0014: the caller's own queue. Ungated on purpose — it can only
+    // ever return rows assigned to the caller.
+    myWork: createMyWorkRouter(),
     // PF-5: dashboard tiles for brand-gated modules follow the same enabled
     // flags as the routers themselves — one source of truth (ADR 0010).
     analytics: createAnalyticsRouter({

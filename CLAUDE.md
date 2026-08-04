@@ -588,7 +588,7 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   `apps/web/app/[locale]/rams` (register with needs-attention strip + CSV,
   three-motion start screen, pack page, builder, mobile offline briefing,
   method-statement library, contractor-review workspace); domain lib
-  `packages/shared/src/rams.ts` (ADR 0014): two lifecycles with explicit
+  `packages/shared/src/rams.ts` (ADR 0015): two lifecycles with explicit
   self-transitions for republish / re-issue, the step content model where
   steps **reference** hazards in bound RA versions rather than restating
   them (dense 1..n sequencing enforced), the issue gate — whose headline
@@ -640,7 +640,8 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0011 — Risk-assessment versioning, sign-off and residual-risk coherence](./docs/adr/0011-risk-assessment-versioning-and-sign-off.md)
 - [0012 — Permit-to-work lifecycle, signature model and expiry escalation](./docs/adr/0012-permit-lifecycle-and-signature-model.md)
 - [0013 — Incident lifecycle, investigation model and RIDDOR deadline engine](./docs/adr/0013-incident-lifecycle-and-riddor-engine.md)
-- [0014 — Method-statement content model, RAMS pack versioning and briefing records](./docs/adr/0014-rams-method-statement-and-pack-model.md)
+- [0014 — Navigation information architecture](./docs/adr/0014-navigation-information-architecture.md)
+- [0015 — Method-statement content model, RAMS pack versioning and briefing records](./docs/adr/0015-rams-method-statement-and-pack-model.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase

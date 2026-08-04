@@ -1447,6 +1447,31 @@
     "fireSafety": "Segurança contra incêndio",
     "analytics": "Painel",
     "incidents": "Incidentes",
+    "myWork": "O meu trabalho",
+    "more": "Mais",
+    "quickLabel": "Navegação rápida",
+    "collapseMenu": "Recolher menu",
+    "expandMenu": "Expandir menu",
+    "groupRisk": "Risco e controlo",
+    "groupVerify": "Inspecionar e verificar",
+    "groupRespond": "Reportar e resolver",
+    "groupOrg": "Organização",
+    "child": {
+      "schedulesCalendar": "Calendário",
+      "permitsBoard": "Quadro em direto",
+      "permitsTypes": "Tipos de permissão",
+      "coshhPointOfWork": "Ponto de trabalho",
+      "coshhLev": "Registo LEV",
+      "fireLogbook": "Livro de registo",
+      "issuesQrCodes": "Códigos QR",
+      "issuesCategories": "Categorias",
+      "actionsCategories": "Categorias",
+      "assetsCategories": "Categorias",
+      "contractorsGate": "Portaria da obra",
+      "contractorsCalendar": "Calendário",
+      "ramsLibrary": "Biblioteca de procedimentos",
+      "ramsReviews": "Análise de RAMS de empreiteiros"
+    },
     "rams": "RAMS"
   },
   "approvals": {
@@ -6164,6 +6189,30 @@
       "addFiles": "Adicionar fotos / ficheiros",
       "none": "Ainda sem provas. As fotos tiradas no local aparecem aqui.",
       "witness": "Testemunha"
+    }
+  },
+  "myWork": {
+    "title": "O meu trabalho",
+    "subtitle": "Tudo o que está à sua espera, primeiro o que está em atraso.",
+    "filterLabel": "Filtrar por tipo",
+    "overdueOn": "Prazo {date}",
+    "tiles": {
+      "overdue": "Em atraso",
+      "actions": "Ações abertas",
+      "acknowledgements": "A confirmar",
+      "drafts": "Inspeções por concluir"
+    },
+    "kinds": {
+      "all": "Tudo",
+      "action": "Ação",
+      "acknowledgement": "Confirmação de leitura",
+      "signature": "Assinatura",
+      "inspection": "Inspeção",
+      "approval": "Aprovação"
+    },
+    "empty": {
+      "title": "Nada à sua espera",
+      "body": "O trabalho que lhe for atribuído aparece aqui."
     }
   },
   "rams": {
