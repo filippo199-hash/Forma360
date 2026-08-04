@@ -2158,7 +2158,13 @@
       "sourceMaintenance": "Konserwacja",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Zdarzenie",
-      "sourceIncident": "Zdarzenie"
+      "sourceIncident": "Zdarzenie",
+      "sourceRiskAssessment": "Ocena ryzyka",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Ocena ryzyka pożarowego",
+      "sourceFireLogbookEntry": "Kontrola ppoż.",
+      "sourceFireDoorInspection": "Drzwi przeciwpożarowe",
+      "sourceRams": "Pakiet RAMS"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2288,7 +2294,8 @@
       "sourceLinkFireRiskAssessment": "Utworzone przez ocenę ryzyka pożarowego {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Utworzone przez negatywną kontrolę ppoż.",
       "sourceLinkFireDoorInspection": "Utworzone przez negatywną kontrolę drzwi ppoż.",
-      "sourceLinkIncident": "Ze zdarzenia {referenceNumber}"
+      "sourceLinkIncident": "Ze zdarzenia {referenceNumber}",
+      "sourceLinkRams": "Z pakietu RAMS {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2352,11 +2359,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Ocena ryzyka",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Ocena ryzyka pożarowego",
-    "sourceFireLogbookEntry": "Kontrola ppoż.",
-    "sourceFireDoorInspection": "Drzwi przeciwpożarowe",
     "pagerShowing": "{from}–{to} z {total}",
     "pagerPrev": "Poprzednia",
     "pagerNext": "Następna",
@@ -3105,7 +3107,8 @@
       "contractors": "Wykonawcy",
       "sites": "Obiekty i projekty",
       "templates": "Szablony",
-      "incidents": "Zdarzenia"
+      "incidents": "Zdarzenia",
+      "rams": "Pakiety RAMS"
     }
   },
   "ai": {

@@ -28,6 +28,11 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ActionDetailPanel } from '../../../src/components/actions/action-detail-panel';
+import {
+  ACTION_SOURCE_TYPES,
+  actionSourceLabelKey,
+  type ActionSourceType,
+} from '../../../src/lib/action-sources';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { toast } from 'sonner';
@@ -42,18 +47,7 @@ import { trpc } from '../../../src/lib/trpc/client';
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type StatusFilter = 'all' | 'open' | 'in_progress' | 'completed' | 'cancelled';
-type SourceFilter =
-  | 'all'
-  | 'standalone'
-  | 'inspection'
-  | 'issue'
-  | 'maintenance'
-  | 'risk_assessment'
-  | 'coshh_assessment'
-  | 'fire_risk_assessment'
-  | 'fire_logbook_entry'
-  | 'fire_door_inspection'
-  | 'incident';
+type SourceFilter = 'all' | ActionSourceType;
 type PriorityFilter = 'all' | 'low' | 'medium' | 'high' | 'critical';
 type SortBy = 'created' | 'due' | 'priority' | 'updated';
 type ViewMode = 'list' | 'board';
@@ -124,45 +118,11 @@ const STATUSES: ReadonlyArray<StatusFilter> = [
   'completed',
   'cancelled',
 ];
-const SOURCES: ReadonlyArray<SourceFilter> = [
-  'all',
-  'standalone',
-  'inspection',
-  'issue',
-  'maintenance',
-  'risk_assessment',
-  'coshh_assessment',
-  'fire_risk_assessment',
-  'fire_logbook_entry',
-  'fire_door_inspection',
-  'incident',
-];
-
-/** PF-2: one label helper — the list, board and filter share it. */
-function sourceLabelKey(sourceType: string): string {
-  switch (sourceType) {
-    case 'inspection':
-      return 'sourceInspection';
-    case 'issue':
-      return 'sourceIssue';
-    case 'incident':
-      return 'sourceIncident';
-    case 'maintenance':
-      return 'sourceMaintenance';
-    case 'risk_assessment':
-      return 'sourceRiskAssessment';
-    case 'coshh_assessment':
-      return 'sourceCoshhAssessment';
-    case 'fire_risk_assessment':
-      return 'sourceFireRiskAssessment';
-    case 'fire_logbook_entry':
-      return 'sourceFireLogbookEntry';
-    case 'fire_door_inspection':
-      return 'sourceFireDoorInspection';
-    default:
-      return 'sourceStandalone';
-  }
-}
+// PF-2 / RS-A8: the source vocabulary lives in one place — see
+// `src/lib/action-sources.ts`. Adding a source type on the server without
+// labelling it there is now a type error, not a mislabelled row.
+const SOURCES: ReadonlyArray<SourceFilter> = ['all', ...ACTION_SOURCE_TYPES];
+const sourceLabelKey = actionSourceLabelKey;
 const PRIORITIES: ReadonlyArray<PriorityFilter> = ['all', 'critical', 'high', 'medium', 'low'];
 const SORT_OPTIONS: ReadonlyArray<SortBy> = ['created', 'due', 'priority', 'updated'];
 const BOARD_COLUMNS: ReadonlyArray<Exclude<StatusFilter, 'all'>> = [

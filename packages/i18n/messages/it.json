@@ -2165,7 +2165,13 @@
       "sourceMaintenance": "Manutenzione",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Incidente",
-      "sourceIncident": "Incidente"
+      "sourceIncident": "Incidente",
+      "sourceRiskAssessment": "Valutazione dei rischi",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Valutazione rischio incendio",
+      "sourceFireLogbookEntry": "Controllo antincendio",
+      "sourceFireDoorInspection": "Porta tagliafuoco",
+      "sourceRams": "Pacchetto RAMS"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2295,7 +2301,8 @@
       "sourceLinkFireRiskAssessment": "Creata dalla valutazione rischio incendio {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Creata da un controllo antincendio non superato",
       "sourceLinkFireDoorInspection": "Creata da un’ispezione porta tagliafuoco non superata",
-      "sourceLinkIncident": "Generata dall'incidente {referenceNumber}"
+      "sourceLinkIncident": "Generata dall'incidente {referenceNumber}",
+      "sourceLinkRams": "Generata dal pacchetto RAMS {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2359,11 +2366,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Valutazione dei rischi",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Valutazione rischio incendio",
-    "sourceFireLogbookEntry": "Controllo antincendio",
-    "sourceFireDoorInspection": "Porta tagliafuoco",
     "pagerShowing": "Da {from} a {to} di {total}",
     "pagerPrev": "Precedente",
     "pagerNext": "Successiva",
@@ -3147,7 +3149,8 @@
       "contractors": "Appaltatori",
       "sites": "Siti e progetti",
       "templates": "Modelli",
-      "incidents": "Incidenti"
+      "incidents": "Incidenti",
+      "rams": "Pacchetti RAMS"
     }
   },
   "ai": {

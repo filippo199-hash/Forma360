@@ -2158,7 +2158,13 @@
       "sourceMaintenance": "メンテナンス",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "インシデント",
-      "sourceIncident": "インシデント"
+      "sourceIncident": "インシデント",
+      "sourceRiskAssessment": "リスクアセスメント",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "火災リスクアセスメント",
+      "sourceFireLogbookEntry": "防火点検",
+      "sourceFireDoorInspection": "防火扉",
+      "sourceRams": "RAMS パック"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2288,7 +2294,8 @@
       "sourceLinkFireRiskAssessment": "火災リスクアセスメント {referenceNumber} から作成",
       "sourceLinkFireLogbookEntry": "不合格の防火点検から作成",
       "sourceLinkFireDoorInspection": "不合格の防火扉点検から作成",
-      "sourceLinkIncident": "インシデント {referenceNumber} から作成"
+      "sourceLinkIncident": "インシデント {referenceNumber} から作成",
+      "sourceLinkRams": "RAMS パック {referenceNumber} から作成"
     },
     "create": {
       "title": "Create action",
@@ -2352,11 +2359,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "リスクアセスメント",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "火災リスクアセスメント",
-    "sourceFireLogbookEntry": "防火点検",
-    "sourceFireDoorInspection": "防火扉",
     "pagerShowing": "{total}件中 {from}–{to} 件を表示",
     "pagerPrev": "前へ",
     "pagerNext": "次へ",
@@ -3105,7 +3107,8 @@
       "contractors": "請負業者",
       "sites": "拠点・プロジェクト",
       "templates": "テンプレート",
-      "incidents": "インシデント"
+      "incidents": "インシデント",
+      "rams": "RAMS パック"
     }
   },
   "ai": {

@@ -2165,7 +2165,13 @@
       "sourceMaintenance": "Maintenance",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Incident",
-      "sourceIncident": "Incident"
+      "sourceIncident": "Incident",
+      "sourceRiskAssessment": "Évaluation des risques",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Évaluation du risque incendie",
+      "sourceFireLogbookEntry": "Vérification incendie",
+      "sourceFireDoorInspection": "Porte coupe-feu",
+      "sourceRams": "Dossier RAMS"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2295,7 +2301,8 @@
       "sourceLinkFireRiskAssessment": "Créée par l’évaluation incendie {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Créée par une vérification incendie en échec",
       "sourceLinkFireDoorInspection": "Créée par une inspection de porte coupe-feu en échec",
-      "sourceLinkIncident": "Issu de l'incident {referenceNumber}"
+      "sourceLinkIncident": "Issu de l'incident {referenceNumber}",
+      "sourceLinkRams": "Issu du dossier RAMS {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2359,11 +2366,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Évaluation des risques",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Évaluation du risque incendie",
-    "sourceFireLogbookEntry": "Vérification incendie",
-    "sourceFireDoorInspection": "Porte coupe-feu",
     "pagerShowing": "{from}–{to} sur {total}",
     "pagerPrev": "Précédent",
     "pagerNext": "Suivant",
@@ -3112,7 +3114,8 @@
       "contractors": "Sous-traitants",
       "sites": "Sites et projets",
       "templates": "Modèles",
-      "incidents": "Incidents"
+      "incidents": "Incidents",
+      "rams": "Dossiers RAMS"
     }
   },
   "ai": {

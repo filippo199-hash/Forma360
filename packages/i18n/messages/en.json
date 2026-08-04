@@ -2237,7 +2237,13 @@
       "sourceMaintenance": "Maintenance",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Incident",
-      "sourceIncident": "Incident"
+      "sourceIncident": "Incident",
+      "sourceRiskAssessment": "Risk assessment",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Fire risk assessment",
+      "sourceFireLogbookEntry": "Fire check",
+      "sourceFireDoorInspection": "Fire door",
+      "sourceRams": "RAMS pack"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2367,7 +2373,8 @@
       "sourceLinkFireRiskAssessment": "Raised by fire risk assessment {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Raised by a failed fire-safety check",
       "sourceLinkFireDoorInspection": "Raised by a failed fire-door inspection",
-      "sourceLinkIncident": "Raised by incident {referenceNumber}"
+      "sourceLinkIncident": "Raised by incident {referenceNumber}",
+      "sourceLinkRams": "Raised by RAMS pack {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2431,11 +2438,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Risk assessment",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Fire risk assessment",
-    "sourceFireLogbookEntry": "Fire check",
-    "sourceFireDoorInspection": "Fire door",
     "pagerShowing": "Showing {from}–{to} of {total}",
     "pagerPrev": "Previous",
     "pagerNext": "Next",
@@ -3375,7 +3377,8 @@
       "contractors": "Contractors",
       "sites": "Sites & projects",
       "templates": "Templates",
-      "incidents": "Incidents"
+      "incidents": "Incidents",
+      "rams": "RAMS packs"
     }
   },
   "maintenancePrograms": {

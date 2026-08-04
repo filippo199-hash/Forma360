@@ -22,6 +22,11 @@ import { usePlaceTerms } from '../../lib/terminology';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 import { AssetField } from './asset-field';
 import { DetailNotFound } from '../detail-not-found';
+import {
+  actionSourceLinkKey,
+  actionSourceLinkTakesReference,
+  type ActionSourceType,
+} from '../../lib/action-sources';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import {
@@ -675,18 +680,7 @@ function SourceCard({
   locale,
 }: {
   source: {
-    type:
-      | 'issue'
-      | 'inspection'
-      | 'standalone'
-      | 'maintenance'
-      | 'risk_assessment'
-      | 'coshh_assessment'
-      | 'fire_risk_assessment'
-      | 'fire_logbook_entry'
-      | 'fire_door_inspection'
-      | 'incident'
-      | 'rams';
+    type: ActionSourceType;
     referenceNumber: string | null;
     title: string | null;
     href?: string | null;
@@ -695,6 +689,13 @@ function SourceCard({
   locale: string;
 }) {
   const t = useTranslations('actions.detail');
+  // next-intl types every key to its own params; the shared source-key table
+  // is resolved at runtime, so widen the signature once here instead of
+  // casting at each call site.
+  const tWithReference = (key: string, referenceNumber: string): string =>
+    (t as unknown as (k: string, values: { referenceNumber: string }) => string)(key, {
+      referenceNumber,
+    });
   // Maintenance-sourced actions surface their origin via the auto-generated
   // badge + the Asset row instead of this generic source card.
   if (
@@ -715,23 +716,9 @@ function SourceCard({
   return (
     <section className="flex items-start justify-between gap-2 border-t p-5 text-sm">
       <p>
-        {source.type === 'issue'
-          ? t('sourceLinkIssue', { referenceNumber: reference })
-          : source.type === 'inspection'
-            ? t('sourceLinkInspection', { referenceNumber: reference })
-            : source.type === 'incident'
-              ? t('sourceLinkIncident', { referenceNumber: reference })
-              : source.type === 'risk_assessment'
-                ? t('sourceLinkRiskAssessment', { referenceNumber: reference })
-                : source.type === 'coshh_assessment'
-                  ? t('sourceLinkCoshhAssessment', { referenceNumber: reference })
-                  : source.type === 'fire_risk_assessment'
-                    ? t('sourceLinkFireRiskAssessment', { referenceNumber: reference })
-                    : source.type === 'fire_logbook_entry'
-                      ? t('sourceLinkFireLogbookEntry')
-                      : source.type === 'rams'
-                        ? t('sourceLinkRams', { referenceNumber: reference })
-                        : t('sourceLinkFireDoorInspection')}
+        {actionSourceLinkTakesReference(source.type)
+          ? tWithReference(actionSourceLinkKey(source.type), reference)
+          : t(actionSourceLinkKey(source.type) as never)}
       </p>
       <Button asChild type="button" variant="outline" size="sm">
         <Link href={href} target="_blank">

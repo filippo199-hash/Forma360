@@ -2165,7 +2165,13 @@
       "sourceMaintenance": "Mantenimiento",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Incidente",
-      "sourceIncident": "Incidente"
+      "sourceIncident": "Incidente",
+      "sourceRiskAssessment": "Evaluación de riesgos",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Evaluación de riesgo de incendio",
+      "sourceFireLogbookEntry": "Comprobación contra incendios",
+      "sourceFireDoorInspection": "Puerta cortafuego",
+      "sourceRams": "Paquete RAMS"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2295,7 +2301,8 @@
       "sourceLinkFireRiskAssessment": "Creada por la evaluación de incendio {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Creada por una comprobación contra incendios fallida",
       "sourceLinkFireDoorInspection": "Creada por una inspección de puerta cortafuego fallida",
-      "sourceLinkIncident": "Generada por el incidente {referenceNumber}"
+      "sourceLinkIncident": "Generada por el incidente {referenceNumber}",
+      "sourceLinkRams": "Generada por el paquete RAMS {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2359,11 +2366,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Evaluación de riesgos",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Evaluación de riesgo de incendio",
-    "sourceFireLogbookEntry": "Comprobación contra incendios",
-    "sourceFireDoorInspection": "Puerta cortafuego",
     "pagerShowing": "Mostrando {from}–{to} de {total}",
     "pagerPrev": "Anterior",
     "pagerNext": "Siguiente",
@@ -3112,7 +3114,8 @@
       "contractors": "Contratistas",
       "sites": "Sitios y proyectos",
       "templates": "Plantillas",
-      "incidents": "Incidentes"
+      "incidents": "Incidentes",
+      "rams": "Paquetes RAMS"
     }
   },
   "ai": {

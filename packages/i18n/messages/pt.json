@@ -2158,7 +2158,13 @@
       "sourceMaintenance": "Manutenção",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Incidente",
-      "sourceIncident": "Incidente"
+      "sourceIncident": "Incidente",
+      "sourceRiskAssessment": "Avaliação de riscos",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Avaliação de risco de incêndio",
+      "sourceFireLogbookEntry": "Verificação de incêndio",
+      "sourceFireDoorInspection": "Porta corta-fogo",
+      "sourceRams": "Pacote RAMS"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2288,7 +2294,8 @@
       "sourceLinkFireRiskAssessment": "Criada pela avaliação de incêndio {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Criada por uma verificação de incêndio reprovada",
       "sourceLinkFireDoorInspection": "Criada por uma inspeção de porta corta-fogo reprovada",
-      "sourceLinkIncident": "Gerada pelo incidente {referenceNumber}"
+      "sourceLinkIncident": "Gerada pelo incidente {referenceNumber}",
+      "sourceLinkRams": "Gerada pelo pacote RAMS {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2352,11 +2359,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Avaliação de riscos",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Avaliação de risco de incêndio",
-    "sourceFireLogbookEntry": "Verificação de incêndio",
-    "sourceFireDoorInspection": "Porta corta-fogo",
     "pagerShowing": "Mostrando {from}–{to} de {total}",
     "pagerPrev": "Anterior",
     "pagerNext": "Próxima",
@@ -3105,7 +3107,8 @@
       "contractors": "Contratados",
       "sites": "Locais e projetos",
       "templates": "Modelos",
-      "incidents": "Incidentes"
+      "incidents": "Incidentes",
+      "rams": "Pacotes RAMS"
     }
   },
   "ai": {

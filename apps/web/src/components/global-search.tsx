@@ -30,6 +30,7 @@ import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type JSX, type KeyboardEvent } from 'react';
 import { trpc } from '../lib/trpc/client';
+import { SEARCH_CATEGORIES, type SearchIconKey } from '../lib/search-categories';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,6 +47,17 @@ interface ResultCategory {
   items: SearchItem[];
   basePath: string;
 }
+
+/** Icon per category, keyed by the icon name the category table declares. */
+const SEARCH_ICONS: Record<SearchIconKey, JSX.Element> = {
+  asset: <BookOpen className="h-4 w-4" />,
+  inspection: <ClipboardList className="h-4 w-4" />,
+  observation: <AlertCircle className="h-4 w-4" />,
+  action: <CheckSquare className="h-4 w-4" />,
+  headsUp: <Bell className="h-4 w-4" />,
+  document: <FileText className="h-4 w-4" />,
+  incident: <Siren className="h-4 w-4" />,
+};
 
 // ─── Quick-access links shown when no query is typed ─────────────────────────
 
@@ -118,113 +130,16 @@ export function GlobalSearch() {
   const categories: ResultCategory[] = [];
 
   if (data !== undefined) {
-    const categoryDefs: Array<{
-      key: keyof typeof data;
-      labelKey: string;
-      icon: JSX.Element;
-      basePath: string;
-    }> = [
-      {
-        key: 'assets',
-        labelKey: 'categories.assets',
-        icon: <BookOpen className="h-4 w-4" />,
-        basePath: 'assets',
-      },
-      {
-        key: 'inspections',
-        labelKey: 'categories.inspections',
-        icon: <ClipboardList className="h-4 w-4" />,
-        basePath: 'inspections',
-      },
-      {
-        key: 'observations',
-        labelKey: 'categories.observations',
-        icon: <AlertCircle className="h-4 w-4" />,
-        basePath: 'observations',
-      },
-      {
-        key: 'actions',
-        labelKey: 'categories.actions',
-        icon: <CheckSquare className="h-4 w-4" />,
-        basePath: 'actions',
-      },
-      {
-        key: 'headsUp',
-        labelKey: 'categories.headsUp',
-        icon: <Bell className="h-4 w-4" />,
-        basePath: 'heads-up',
-      },
-      {
-        key: 'documents',
-        labelKey: 'categories.documents',
-        icon: <FileText className="h-4 w-4" />,
-        basePath: 'documents',
-      },
-      // PF-6: the brand modules, contractors, sites and templates were
-      // invisible to Cmd-K.
-      {
-        key: 'permits',
-        labelKey: 'categories.permits',
-        icon: <FileText className="h-4 w-4" />,
-        basePath: 'permits',
-      },
-      {
-        key: 'coshh',
-        labelKey: 'categories.coshh',
-        icon: <BookOpen className="h-4 w-4" />,
-        basePath: 'coshh',
-      },
-      {
-        key: 'riskAssessments',
-        labelKey: 'categories.riskAssessments',
-        icon: <ClipboardList className="h-4 w-4" />,
-        basePath: 'risk-assessments',
-      },
-      {
-        key: 'fireBuildings',
-        labelKey: 'categories.fireBuildings',
-        icon: <AlertCircle className="h-4 w-4" />,
-        basePath: 'fire-safety',
-      },
-      {
-        key: 'fireRiskAssessments',
-        labelKey: 'categories.fireRiskAssessments',
-        icon: <AlertCircle className="h-4 w-4" />,
-        basePath: 'fire-safety/fra',
-      },
-      {
-        key: 'incidents',
-        labelKey: 'categories.incidents',
-        icon: <Siren className="h-4 w-4" />,
-        basePath: 'incidents',
-      },
-      {
-        key: 'contractors',
-        labelKey: 'categories.contractors',
-        icon: <CheckSquare className="h-4 w-4" />,
-        basePath: 'contractors',
-      },
-      {
-        key: 'sites',
-        labelKey: 'categories.sites',
-        icon: <BookOpen className="h-4 w-4" />,
-        basePath: 'sites',
-      },
-      {
-        key: 'templates',
-        labelKey: 'categories.templates',
-        icon: <ClipboardList className="h-4 w-4" />,
-        basePath: 'templates',
-      },
-    ];
-
-    for (const def of categoryDefs) {
-      const items = data[def.key];
+    // RS-A9: the category table lives in `src/lib/search-categories.ts` with a
+    // test that walks the router's return shape — a server-side category that
+    // is never listed here is a failing test, not a silent dropped result.
+    for (const def of SEARCH_CATEGORIES) {
+      const items = data[def.key as keyof typeof data];
       if (items.length > 0) {
         categories.push({
           key: def.key,
           label: t(def.labelKey as Parameters<typeof t>[0]),
-          icon: def.icon,
+          icon: SEARCH_ICONS[def.icon],
           items,
           basePath: def.basePath,
         });

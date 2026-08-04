@@ -1235,7 +1235,10 @@ describe('rams router', () => {
   // ─── RS-E17 · actions-hub integration ──────────────────────────────────
 
   describe('RS-E17 actions raised from a pack', () => {
-    it('resolves a label and a working back-link in the actions hub', async () => {
+    // The label itself is a web concern — asserted in
+    // `apps/web/src/lib/action-sources.test.ts`. This one covers the server
+    // half: the source anchor the hub renders that label from.
+    it('resolves a source anchor and a working back-link in the actions hub', async () => {
       const caller = callerFor(adminId);
       const { packId } = await readyPack();
       const raised = await caller.rams.packs.raiseAction({
