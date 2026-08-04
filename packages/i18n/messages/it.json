@@ -6445,7 +6445,12 @@
       "briefedSoFar": "{count} informati",
       "needsRebrief": "Richiede nuova informativa",
       "queued": "{count} informativa/e in attesa di sincronizzazione",
-      "retry": "Riprova ora"
+      "retry": "Riprova ora",
+      "hazardsHeading": "Cosa può farti male e cosa lo impedisce",
+      "whoAffected": "Chi è a rischio",
+      "coshhHeading": "Sostanze in uso",
+      "signatureCaptured": "Firma acquisita",
+      "signAgain": "Firma di nuovo"
     },
     "briefeeCategory": {
       "employee": "Dipendente",

@@ -6410,7 +6410,12 @@
       "briefedSoFar": "{count} briefé(s)",
       "needsRebrief": "À rebriefer",
       "queued": "{count} briefing(s) en attente de synchronisation",
-      "retry": "Réessayer"
+      "retry": "Réessayer",
+      "hazardsHeading": "Ce qui peut vous blesser, et ce qui l'empêche",
+      "whoAffected": "Personnes exposées",
+      "coshhHeading": "Substances utilisées",
+      "signatureCaptured": "Signature enregistrée",
+      "signAgain": "Signer à nouveau"
     },
     "briefeeCategory": {
       "employee": "Salarié",

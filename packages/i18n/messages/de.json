@@ -6410,7 +6410,12 @@
       "briefedSoFar": "{count} unterwiesen",
       "needsRebrief": "Erneute Unterweisung nötig",
       "queued": "{count} Unterweisung(en) warten auf Synchronisierung",
-      "retry": "Jetzt erneut versuchen"
+      "retry": "Jetzt erneut versuchen",
+      "hazardsHeading": "Was Sie verletzen kann — und was das verhindert",
+      "whoAffected": "Wer gefährdet ist",
+      "coshhHeading": "Verwendete Gefahrstoffe",
+      "signatureCaptured": "Unterschrift erfasst",
+      "signAgain": "Erneut unterschreiben"
     },
     "briefeeCategory": {
       "employee": "Mitarbeitende",

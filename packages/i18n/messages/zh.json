@@ -6403,7 +6403,12 @@
       "briefedSoFar": "已交底 {count} 人",
       "needsRebrief": "需重新交底",
       "queued": "{count} 条交底待同步",
-      "retry": "立即重试"
+      "retry": "立即重试",
+      "hazardsHeading": "可能造成伤害的因素及防范措施",
+      "whoAffected": "受影响人员",
+      "coshhHeading": "使用的物质",
+      "signatureCaptured": "已采集签名",
+      "signAgain": "重新签名"
     },
     "briefeeCategory": {
       "employee": "本公司员工",

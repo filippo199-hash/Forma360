@@ -219,6 +219,12 @@ async function loadBoundRaVersions(
         hazard: h.hazard,
         residualLikelihood: h.residualLikelihood,
         residualSeverity: h.residualSeverity,
+        // RS-A6: carried so the briefing screen and the PDF can show
+        // what the crew is actually being protected from, and how.
+        whoAffected: h.affectedGroups.join(', '),
+        controls: [h.existingControls, ...h.controls.map((c) => c.description)]
+          .filter((s) => s.trim().length > 0)
+          .join('\n'),
       })),
     });
   }
@@ -241,6 +247,20 @@ function summariseRaVersion(v: BoundRaVersion): PackVersionRiskAssessment {
     versionNumber: v.versionNumber,
     worstResidualBand: band,
     hazardCount: v.hazards.length,
+    // RS-A6: the hazards themselves are frozen into the pack, not just
+    // a count of them, so "the pack as issued" can actually be briefed
+    // and printed. Banding is resolved here, against the matrix in force
+    // at issue, so the record never re-computes later.
+    hazards: v.hazards.map((h) => ({
+      index: h.index,
+      hazard: h.hazard,
+      whoAffected: h.whoAffected ?? '',
+      controls: h.controls ?? '',
+      residualBand: worstBand(
+        [{ likelihood: h.residualLikelihood, severity: h.residualSeverity }],
+        v.matrix,
+      ),
+    })),
   };
 }
 
@@ -2236,23 +2256,32 @@ export function createRamsRouter(deps: RamsRouterDeps) {
           }
 
           const id = newId();
-          await ctx.db.insert(ramsBriefings).values({
-            id,
-            tenantId: ctx.tenantId,
-            packId: pack.id,
-            packVersionId: version.id,
-            versionNumber: version.versionNumber,
-            briefeeKind: entry.kind,
-            briefeeUserId: entry.kind === 'user' ? (entry.userId ?? null) : null,
-            briefeeName: entry.name,
-            briefeeCategory: entry.category,
-            briefeeOrganisation: entry.organisation,
-            briefedBy: ctx.auth.userId,
-            briefedByName,
-            briefedAt: now(),
-            signatureData: entry.signatureData ?? null,
-            questionsNote: entry.questionsNote,
-          });
+          await ctx.db
+            .insert(ramsBriefings)
+            .values({
+              id,
+              tenantId: ctx.tenantId,
+              packId: pack.id,
+              packVersionId: version.id,
+              versionNumber: version.versionNumber,
+              briefeeKind: entry.kind,
+              briefeeUserId: entry.kind === 'user' ? (entry.userId ?? null) : null,
+              briefeeName: entry.name,
+              briefeeCategory: entry.category,
+              briefeeOrganisation: entry.organisation,
+              briefedBy: ctx.auth.userId,
+              briefedByName,
+              briefedAt: now(),
+              signatureData: entry.signatureData ?? null,
+              // RS-A7: stored, so the partial unique index makes an
+              // offline replay genuinely idempotent instead of nominally.
+              clientRef: entry.clientRef ?? null,
+              questionsNote: entry.questionsNote,
+            })
+            // …and the replay itself is a no-op rather than an error. A
+            // phone retrying a flush must not be told its briefing failed,
+            // or the operator will record the person a third time by hand.
+            .onConflictDoNothing();
           created.push(id);
         }
 

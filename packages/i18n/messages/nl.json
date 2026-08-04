@@ -6403,7 +6403,12 @@
       "briefedSoFar": "{count} ingelicht",
       "needsRebrief": "Opnieuw inlichten",
       "queued": "{count} toolbox(en) wachten op synchronisatie",
-      "retry": "Nu opnieuw proberen"
+      "retry": "Nu opnieuw proberen",
+      "hazardsHeading": "Wat u kan verwonden, en wat dat voorkomt",
+      "whoAffected": "Wie loopt risico",
+      "coshhHeading": "Gebruikte stoffen",
+      "signatureCaptured": "Handtekening vastgelegd",
+      "signAgain": "Opnieuw ondertekenen"
     },
     "briefeeCategory": {
       "employee": "Medewerker",

@@ -6403,7 +6403,12 @@
       "briefedSoFar": "{count} 名に周知済み",
       "needsRebrief": "再周知が必要",
       "queued": "{count} 件の周知が同期待ちです",
-      "retry": "今すぐ再試行"
+      "retry": "今すぐ再試行",
+      "hazardsHeading": "危険とその防止策",
+      "whoAffected": "影響を受ける人",
+      "coshhHeading": "使用する物質",
+      "signatureCaptured": "署名を取得しました",
+      "signAgain": "署名し直す"
     },
     "briefeeCategory": {
       "employee": "自社社員",

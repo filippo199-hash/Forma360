@@ -6410,7 +6410,12 @@
       "briefedSoFar": "{count} informados",
       "needsRebrief": "Requiere nueva divulgación",
       "queued": "{count} divulgación(es) pendientes de sincronizar",
-      "retry": "Reintentar ahora"
+      "retry": "Reintentar ahora",
+      "hazardsHeading": "Qué puede hacerle daño y qué lo evita",
+      "whoAffected": "Quién está en riesgo",
+      "coshhHeading": "Sustancias en uso",
+      "signatureCaptured": "Firma capturada",
+      "signAgain": "Firmar de nuevo"
     },
     "briefeeCategory": {
       "employee": "Empleado",

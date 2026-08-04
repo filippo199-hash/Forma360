@@ -6403,7 +6403,12 @@
       "briefedSoFar": "{count} informados",
       "needsRebrief": "Necessita de nova divulgação",
       "queued": "{count} divulgação(ões) a aguardar sincronização",
-      "retry": "Tentar novamente"
+      "retry": "Tentar novamente",
+      "hazardsHeading": "O que lhe pode causar dano e o que o evita",
+      "whoAffected": "Quem está em risco",
+      "coshhHeading": "Substâncias em uso",
+      "signatureCaptured": "Assinatura registada",
+      "signAgain": "Assinar novamente"
     },
     "briefeeCategory": {
       "employee": "Colaborador",

@@ -6403,7 +6403,12 @@
       "briefedSoFar": "{count} poinstruowanych",
       "needsRebrief": "Wymaga ponownego instruktażu",
       "queued": "{count} instruktaż(y) czeka na synchronizację",
-      "retry": "Spróbuj ponownie"
+      "retry": "Spróbuj ponownie",
+      "hazardsHeading": "Co może cię skrzywdzić i co temu zapobiega",
+      "whoAffected": "Kto jest narażony",
+      "coshhHeading": "Stosowane substancje",
+      "signatureCaptured": "Podpis zarejestrowany",
+      "signAgain": "Podpisz ponownie"
     },
     "briefeeCategory": {
       "employee": "Pracownik",

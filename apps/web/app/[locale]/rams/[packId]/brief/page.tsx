@@ -18,8 +18,9 @@ import { AlertTriangle, CheckCircle2, CloudOff, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { BRIEFEE_CATEGORIES, type BriefeeCategory } from '@forma360/shared/rams';
+import { SignaturePad } from '../../../../../src/components/inspections/signature-pad';
 import { HoldPointChip } from '../../../../../src/components/rams/chips';
 import { Button } from '../../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../../src/components/ui/card';
@@ -30,10 +31,22 @@ import { Textarea } from '../../../../../src/components/ui/textarea';
 import { trpc } from '../../../../../src/lib/trpc/client';
 
 interface QueuedEntry {
+  /**
+   * RS-A7: the idempotency key. The router accepts `clientRef` "so an
+   * offline replay is idempotent"; it now stores it behind a unique
+   * index, so re-sending an entry that already landed is a no-op
+   * instead of a second row for the same operative.
+   */
+  clientRef: string;
   name: string;
   category: BriefeeCategory;
   organisation: string;
   questionsNote: string;
+  signatureData: string | null;
+}
+
+function newClientRef(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 const queueKey = (packId: string): string => `rams-briefing-queue:${packId}`;
@@ -74,7 +87,8 @@ export default function RamsBriefPage() {
   const [questionsNote, setQuestionsNote] = useState('');
   const [queue, setQueue] = useState<QueuedEntry[]>([]);
   const [syncError, setSyncError] = useState<string | null>(null);
-  const [justSaved, setJustSaved] = useState(false);
+  const [signature, setSignature] = useState<string | null>(null);
+  const flushing = useRef(false);
 
   useEffect(() => {
     setQueue(loadQueue(packId));
@@ -83,31 +97,53 @@ export default function RamsBriefPage() {
   const record = trpc.rams.briefings.record.useMutation();
 
   /**
-   * Drain the offline queue. Any failure leaves the entries in place and
-   * surfaces the error — a briefing that silently vanished is worse than
-   * one that visibly needs retrying.
+   * Drain the offline queue (RS-A7).
+   *
+   * Three bugs lived here. The flush sent the *whole* queue, so
+   * recording a second briefee while the first was still in flight
+   * re-sent the first and recorded that operative twice. A successful
+   * flush then cleared the entire queue rather than the entries it had
+   * actually sent, erasing anything added mid-flight, unsent. And both
+   * were masked by an optimistic "Recorded ✓" that fired before the
+   * server answered.
+   *
+   * Now: one flush at a time (`flushing`), send exactly the snapshot
+   * taken at entry, and remove only those `clientRef`s from whatever the
+   * queue has become. `clientRef` is stored server-side behind a unique
+   * index, so even a retry that duplicates on the wire cannot duplicate
+   * in the record.
    */
   const flush = useCallback(
     async (entries: QueuedEntry[]): Promise<void> => {
-      if (entries.length === 0) return;
+      if (entries.length === 0 || flushing.current) return;
+      flushing.current = true;
+      const sending = [...entries];
       try {
         await record.mutateAsync({
           packId,
-          entries: entries.map((e) => ({
+          entries: sending.map((e) => ({
             kind: 'named_person' as const,
+            clientRef: e.clientRef,
             name: e.name,
             category: e.category,
             organisation: e.organisation,
             questionsNote: e.questionsNote,
+            ...(e.signatureData !== null ? { signatureData: e.signatureData } : {}),
           })),
         });
-        setQueue([]);
-        saveQueue(packId, []);
+        const sentRefs = new Set(sending.map((e) => e.clientRef));
+        setQueue((current) => {
+          const remaining = current.filter((e) => !sentRefs.has(e.clientRef));
+          saveQueue(packId, remaining);
+          return remaining;
+        });
         setSyncError(null);
         void utils.rams.briefings.forPack.invalidate({ packId });
         void utils.rams.packs.get.invalidate({ packId });
       } catch (err) {
         setSyncError(err instanceof Error ? err.message : String(err));
+      } finally {
+        flushing.current = false;
       }
     },
     [packId, record, utils],
@@ -122,6 +158,16 @@ export default function RamsBriefPage() {
     return () => window.removeEventListener('online', onOnline);
   }, [packId, flush]);
 
+  // RS-A7: …and on a timer, because a phone that never fires an `online`
+  // event otherwise just sits there holding the briefing register.
+  useEffect(() => {
+    if (queue.length === 0) return undefined;
+    const timer = setInterval(() => {
+      void flush(loadQueue(packId));
+    }, 20_000);
+    return () => clearInterval(timer);
+  }, [queue.length, packId, flush]);
+
   // Warn before leaving with unsynced briefings.
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent): void => {
@@ -133,20 +179,23 @@ export default function RamsBriefPage() {
 
   function submitOne(): void {
     const entry: QueuedEntry = {
+      clientRef: newClientRef(),
       name: name.trim(),
       category,
       organisation: organisation.trim(),
       questionsNote: questionsNote.trim(),
+      signatureData: signature,
     };
     if (entry.name.length === 0) return;
 
     // Clear the form immediately so the phone can be passed on — the
-    // queue is what guarantees the record survives.
+    // queue is what guarantees the record survives. No optimistic
+    // "Recorded ✓" (RS-A7): the queue banner is the honest status, and
+    // it clears itself when the server has actually taken the entry.
     setName('');
     setOrganisation('');
     setQuestionsNote('');
-    setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 1500);
+    setSignature(null);
 
     const next = [...queue, entry];
     setQueue(next);
@@ -185,6 +234,13 @@ export default function RamsBriefPage() {
   }
 
   const steps = version.content.content.steps;
+  // RS-A6: hazards + controls travel in the frozen snapshot now, so the
+  // briefing shows the RA half of "RAMS". Packs issued before that has
+  // no hazards in their content and simply render the steps, as before.
+  const hazards = version.content.riskAssessments.flatMap((ra) =>
+    (ra.hazards ?? []).map((h) => ({ ...h, raVersionId: ra.raVersionId })),
+  );
+  const coshh = version.content.coshh;
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-6">
@@ -236,6 +292,53 @@ export default function RamsBriefPage() {
               {version.content.content.scopeOfWorks}
             </p>
           ) : null}
+
+          {/* RS-A6: the risks, on the one screen where the risk
+              assessment actually reaches a human. The steps alone are a
+              method statement; a crew cannot be briefed on a RAMS
+              without what could hurt them and what stops it. */}
+          {hazards.length > 0 ? (
+            <div className="mb-4 rounded-md border p-3">
+              <h3 className="mb-2 text-sm font-semibold">{t('briefing.hazardsHeading')}</h3>
+              <ul className="space-y-2">
+                {hazards.map((h) => (
+                  <li key={`${h.raVersionId}-${h.index}`} className="text-sm">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{h.hazard}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {t(`band.${h.residualBand}` as never)}
+                      </span>
+                    </div>
+                    {h.whoAffected.length > 0 ? (
+                      <p className="text-muted-foreground text-xs">
+                        {t('briefing.whoAffected')}: {h.whoAffected}
+                      </p>
+                    ) : null}
+                    {h.controls.length > 0 ? (
+                      <p className="mt-0.5 text-sm whitespace-pre-wrap">{h.controls}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {coshh.length > 0 ? (
+            <div className="mb-4 rounded-md border p-3">
+              <h3 className="mb-2 text-sm font-semibold">{t('briefing.coshhHeading')}</h3>
+              <ul className="space-y-1 text-sm">
+                {coshh.map((c) => (
+                  <li key={c.assessmentId}>
+                    <span className="font-medium">{c.substanceName}</span>
+                    {c.taskDescription.length > 0 ? (
+                      <span className="text-muted-foreground"> — {c.taskDescription}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           <ol className="space-y-3">
             {steps.map((s) => (
               <li key={s.id} className="border-l-2 pl-3">
@@ -324,20 +427,36 @@ export default function RamsBriefPage() {
             />
           </div>
           <p className="text-muted-foreground text-xs">{t('briefing.understoodStatement')}</p>
+
+          {/* RS-A6: the signature. The router has always accepted
+              `signatureData` and the PDF has always printed a "Signed"
+              column — with no pad, that column was structurally "—" for
+              every row, forever, and a briefing register with no
+              signatures is not evidence. */}
+          {signature === null ? (
+            <SignaturePad
+              defaultName={name}
+              onSave={({ signatureData }) => setSignature(signatureData)}
+            />
+          ) : (
+            <div className="flex items-center justify-between gap-2 rounded-md border p-2">
+              <span className="flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2 className="h-4 w-4" aria-hidden />
+                {t('briefing.signatureCaptured')}
+              </span>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setSignature(null)}>
+                {t('briefing.signAgain')}
+              </Button>
+            </div>
+          )}
+
           <Button
             type="button"
             className="w-full"
             disabled={name.trim().length === 0}
             onClick={submitOne}
           >
-            {justSaved ? (
-              <>
-                <CheckCircle2 className="mr-1.5 h-4 w-4" aria-hidden />
-                {t('briefing.recorded')}
-              </>
-            ) : (
-              t('briefing.confirm')
-            )}
+            {t('briefing.confirm')}
           </Button>
         </CardContent>
       </Card>

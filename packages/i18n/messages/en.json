@@ -6638,7 +6638,12 @@
       "briefedSoFar": "{count} briefed",
       "needsRebrief": "Needs re-briefing",
       "queued": "{count} briefing(s) waiting to sync",
-      "retry": "Retry now"
+      "retry": "Retry now",
+      "hazardsHeading": "What can hurt you, and what stops it",
+      "whoAffected": "Who is at risk",
+      "coshhHeading": "Substances in use",
+      "signatureCaptured": "Signature captured",
+      "signAgain": "Sign again"
     },
     "briefeeCategory": {
       "employee": "Employee",
