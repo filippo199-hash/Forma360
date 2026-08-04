@@ -1429,10 +1429,10 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "危险源与未遂事件",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "简报",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "文档",
@@ -1447,14 +1447,10 @@
     "fireSafety": "消防安全",
     "analytics": "仪表盘",
     "incidents": "事故事件",
-    "myWork": "我的工作",
     "more": "更多",
     "quickLabel": "快速导航",
     "collapseMenu": "收起菜单",
     "expandMenu": "展开菜单",
-    "groupRisk": "风险与控制",
-    "groupVerify": "检查与验证",
-    "groupRespond": "上报与整改",
     "groupOrg": "组织",
     "child": {
       "schedulesCalendar": "日历",
@@ -1470,9 +1466,40 @@
       "contractorsGate": "工地门禁",
       "contractorsCalendar": "日历",
       "ramsLibrary": "作业方法说明库",
-      "ramsReviews": "承包商 RAMS 审查"
+      "ramsReviews": "承包商 RAMS 审查",
+      "templates": "模板",
+      "schedules": "排程",
+      "approvals": "审批",
+      "maintenance": "维护"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "groupForMe": "与我相关",
+    "groupDoWork": "开展工作",
+    "groupRecords": "记录与台账",
+    "myActions": "我的行动",
+    "myAcknowledgements": "我的确认事项",
+    "report": {
+      "label": "报告",
+      "notSure": "不确定选哪个？回答一个问题 →",
+      "options": {
+        "hazard": {
+          "label": "危险源或未遂事件",
+          "hint": "无人受伤"
+        },
+        "incident": {
+          "label": "事件",
+          "hint": "有人受伤或患病"
+        },
+        "permit": {
+          "label": "作业许可",
+          "hint": "需授权的高风险作业"
+        },
+        "inspection": {
+          "label": "检查",
+          "hint": "开始检查表或审核"
+        }
+      }
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6213,7 +6240,11 @@
     "empty": {
       "title": "没有待处理事项",
       "body": "分配给您的新工作会显示在这里。"
-    }
+    },
+    "myActionsTitle": "我的行动",
+    "myActionsSubtitle": "分配给您的全部事项，逾期最久的排在前面。",
+    "myAcknowledgementsTitle": "我的确认事项",
+    "myAcknowledgementsSubtitle": "等待您确认的简报与风险评估。"
   },
   "rams": {
     "title": "RAMS",
@@ -6499,5 +6530,19 @@
       "review_submitted": "承包商文件包提交审查",
       "review_decided": "记录审查结论"
     }
+  },
+  "reportChooser": {
+    "title": "报告事项",
+    "subtitle": "一个问题决定去向：是否有人受伤？",
+    "harmed": {
+      "label": "是——有人受伤或患病",
+      "hint": "作为事件报告。将立即通知管理者并核查 RIDDOR 时限。"
+    },
+    "noHarm": {
+      "label": "否——但本可能出事",
+      "hint": "作为危险源或未遂事件报告。交由团队在有人受伤前处理。"
+    },
+    "footnote": "不确定？选择最接近的——审阅人之后可以调整。",
+    "noPermission": "您没有在此报告的权限。请向管理员申请。"
   }
 }

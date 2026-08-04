@@ -140,8 +140,18 @@ export function buildAppRouter(deps: {
     aiAssistant: aiAssistantRouter,
     notifications: notificationsRouter,
     // ADR 0014: the caller's own queue. Ungated on purpose — it can only
-    // ever return rows assigned to the caller.
-    myWork: createMyWorkRouter(),
+    // ever return rows assigned to the caller. It also serves the menu's
+    // needs-attention numbers, so it takes the same brand flags the
+    // module routers do — a deployment never queries a module it does
+    // not ship.
+    myWork: createMyWorkRouter({
+      enabledModules: [
+        ...(deps.incidents?.enabled === true ? (['incidents'] as const) : []),
+        ...(deps.permits?.enabled === true ? (['permits'] as const) : []),
+        ...(deps.riskAssessments?.enabled === true ? (['riskAssessments'] as const) : []),
+        ...(deps.fireSafety?.enabled === true ? (['fireSafety'] as const) : []),
+      ],
+    }),
     // PF-5: dashboard tiles for brand-gated modules follow the same enabled
     // flags as the routers themselves — one source of truth (ADR 0010).
     analytics: createAnalyticsRouter({

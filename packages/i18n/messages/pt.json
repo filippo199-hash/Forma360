@@ -1429,10 +1429,10 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Perigos e quase acidentes",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "Comunicados",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Documentos",
@@ -1447,15 +1447,11 @@
     "fireSafety": "Segurança contra incêndio",
     "analytics": "Painel",
     "incidents": "Incidentes",
-    "myWork": "O meu trabalho",
     "more": "Mais",
     "quickLabel": "Navegação rápida",
     "collapseMenu": "Recolher menu",
     "expandMenu": "Expandir menu",
-    "groupRisk": "Risco e controlo",
-    "groupVerify": "Inspecionar e verificar",
-    "groupRespond": "Reportar e resolver",
-    "groupOrg": "Organização",
+    "groupOrg": "A organização",
     "child": {
       "schedulesCalendar": "Calendário",
       "permitsBoard": "Quadro em direto",
@@ -1470,9 +1466,40 @@
       "contractorsGate": "Portaria da obra",
       "contractorsCalendar": "Calendário",
       "ramsLibrary": "Biblioteca de procedimentos",
-      "ramsReviews": "Análise de RAMS de empreiteiros"
+      "ramsReviews": "Análise de RAMS de empreiteiros",
+      "templates": "Modelos",
+      "schedules": "Agendamentos",
+      "approvals": "Aprovações",
+      "maintenance": "Manutenção"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "groupForMe": "Para mim",
+    "groupDoWork": "Executar o trabalho",
+    "groupRecords": "Registos e arquivos",
+    "myActions": "As minhas ações",
+    "myAcknowledgements": "As minhas confirmações",
+    "report": {
+      "label": "Comunicar",
+      "notSure": "Não tem a certeza? Responda a uma pergunta →",
+      "options": {
+        "hazard": {
+          "label": "Perigo ou quase acidente",
+          "hint": "Ninguém ficou ferido"
+        },
+        "incident": {
+          "label": "Incidente",
+          "hint": "Alguém ficou ferido ou adoeceu"
+        },
+        "permit": {
+          "label": "Permissão de trabalho",
+          "hint": "Trabalho de alto risco que exige autorização"
+        },
+        "inspection": {
+          "label": "Inspeção",
+          "hint": "Iniciar uma lista de verificação ou auditoria"
+        }
+      }
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6213,7 +6240,11 @@
     "empty": {
       "title": "Nada à sua espera",
       "body": "O trabalho que lhe for atribuído aparece aqui."
-    }
+    },
+    "myActionsTitle": "As minhas ações",
+    "myActionsSubtitle": "Tudo o que lhe foi atribuído, o mais atrasado primeiro.",
+    "myAcknowledgementsTitle": "As minhas confirmações",
+    "myAcknowledgementsSubtitle": "Comunicados e avaliações de risco à espera da sua confirmação."
   },
   "rams": {
     "title": "RAMS",
@@ -6499,5 +6530,19 @@
       "review_submitted": "Pacote de empreiteiro submetido a análise",
       "review_decided": "Decisão de análise registada"
     }
+  },
+  "reportChooser": {
+    "title": "Comunicar algo",
+    "subtitle": "Uma pergunta decide para onde isto vai: alguém ficou ferido?",
+    "harmed": {
+      "label": "Sim — alguém ficou ferido ou adoeceu",
+      "hint": "Comunica um incidente. Os gestores são alertados de imediato e o prazo RIDDOR é verificado."
+    },
+    "noHarm": {
+      "label": "Não — mas podia ter corrido mal",
+      "hint": "Comunica um perigo ou quase acidente. Segue para a equipa que corrige antes de alguém se magoar."
+    },
+    "footnote": "Não tem a certeza? Escolha o mais adequado — quem analisar pode movê-lo depois.",
+    "noPermission": "Não tem permissão para comunicar aqui. Peça acesso a um administrador."
   }
 }

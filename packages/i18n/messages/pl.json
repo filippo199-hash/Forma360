@@ -1429,10 +1429,10 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Zagrożenia i zdarzenia potencjalnie wypadkowe",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "Odprawy",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Dokumenty",
@@ -1447,14 +1447,10 @@
     "fireSafety": "Ochrona ppoż.",
     "analytics": "Pulpit",
     "incidents": "Zdarzenia",
-    "myWork": "Moje zadania",
     "more": "Więcej",
     "quickLabel": "Szybka nawigacja",
     "collapseMenu": "Zwiń menu",
     "expandMenu": "Rozwiń menu",
-    "groupRisk": "Ryzyko i kontrola",
-    "groupVerify": "Inspekcje i weryfikacja",
-    "groupRespond": "Zgłoś i napraw",
     "groupOrg": "Organizacja",
     "child": {
       "schedulesCalendar": "Kalendarz",
@@ -1470,9 +1466,40 @@
       "contractorsGate": "Brama budowy",
       "contractorsCalendar": "Kalendarz",
       "ramsLibrary": "Biblioteka instrukcji roboczych",
-      "ramsReviews": "Ocena RAMS podwykonawców"
+      "ramsReviews": "Ocena RAMS podwykonawców",
+      "templates": "Szablony",
+      "schedules": "Harmonogramy",
+      "approvals": "Zatwierdzenia",
+      "maintenance": "Utrzymanie"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "groupForMe": "Dla mnie",
+    "groupDoWork": "Wykonaj pracę",
+    "groupRecords": "Dokumentacja i rejestry",
+    "myActions": "Moje działania",
+    "myAcknowledgements": "Moje potwierdzenia",
+    "report": {
+      "label": "Zgłoś",
+      "notSure": "Nie wiesz, co wybrać? Odpowiedz na jedno pytanie →",
+      "options": {
+        "hazard": {
+          "label": "Zagrożenie lub zdarzenie potencjalnie wypadkowe",
+          "hint": "Nikt nie ucierpiał"
+        },
+        "incident": {
+          "label": "Zdarzenie",
+          "hint": "Ktoś doznał urazu lub zachorował"
+        },
+        "permit": {
+          "label": "Zezwolenie na pracę",
+          "hint": "Praca wysokiego ryzyka wymagająca zezwolenia"
+        },
+        "inspection": {
+          "label": "Inspekcja",
+          "hint": "Rozpocznij listę kontrolną lub audyt"
+        }
+      }
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6213,7 +6240,11 @@
     "empty": {
       "title": "Nic na Ciebie nie czeka",
       "body": "Nowe zadania przypisane Tobie pojawią się tutaj."
-    }
+    },
+    "myActionsTitle": "Moje działania",
+    "myActionsSubtitle": "Wszystko przypisane Tobie — najbardziej zaległe na górze.",
+    "myAcknowledgementsTitle": "Moje potwierdzenia",
+    "myAcknowledgementsSubtitle": "Odprawy i oceny ryzyka oczekujące na Twoje potwierdzenie."
   },
   "rams": {
     "title": "RAMS",
@@ -6499,5 +6530,19 @@
       "review_submitted": "Przesłano pakiet podwykonawcy do oceny",
       "review_decided": "Zapisano decyzję oceny"
     }
+  },
+  "reportChooser": {
+    "title": "Zgłoś zdarzenie",
+    "subtitle": "Jedno pytanie decyduje, gdzie to trafi: czy ktoś ucierpiał?",
+    "harmed": {
+      "label": "Tak — ktoś doznał urazu lub zachorował",
+      "hint": "Zgłasza zdarzenie. Kierownicy są natychmiast powiadamiani, a termin RIDDOR sprawdzany."
+    },
+    "noHarm": {
+      "label": "Nie — ale mogło się źle skończyć",
+      "hint": "Zgłasza zagrożenie lub zdarzenie potencjalnie wypadkowe. Trafia do zespołu, który usuwa je, zanim ktoś ucierpi."
+    },
+    "footnote": "Nie masz pewności? Wybierz najbliższe — osoba weryfikująca może to później przenieść.",
+    "noPermission": "Nie masz uprawnień do zgłaszania. Poproś administratora o dostęp."
   }
 }

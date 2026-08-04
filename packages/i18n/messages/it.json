@@ -1436,10 +1436,10 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Pericoli e quasi infortuni",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "Briefing",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Documenti",
@@ -1454,15 +1454,11 @@
     "fireSafety": "Sicurezza antincendio",
     "analytics": "Dashboard",
     "incidents": "Incidenti",
-    "myWork": "Le mie attività",
     "more": "Altro",
     "quickLabel": "Navigazione rapida",
     "collapseMenu": "Comprimi menu",
     "expandMenu": "Espandi menu",
-    "groupRisk": "Rischio e controllo",
-    "groupVerify": "Ispeziona e verifica",
-    "groupRespond": "Segnala e risolvi",
-    "groupOrg": "Organizzazione",
+    "groupOrg": "L'organizzazione",
     "child": {
       "schedulesCalendar": "Calendario",
       "permitsBoard": "Bacheca live",
@@ -1477,9 +1473,40 @@
       "contractorsGate": "Ingresso cantiere",
       "contractorsCalendar": "Calendario",
       "ramsLibrary": "Libreria delle procedure operative",
-      "ramsReviews": "Esame dei RAMS degli appaltatori"
+      "ramsReviews": "Esame dei RAMS degli appaltatori",
+      "templates": "Modelli",
+      "schedules": "Pianificazioni",
+      "approvals": "Approvazioni",
+      "maintenance": "Manutenzione"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "groupForMe": "Per me",
+    "groupDoWork": "Svolgere il lavoro",
+    "groupRecords": "Documenti e registri",
+    "myActions": "Le mie azioni",
+    "myAcknowledgements": "Le mie conferme",
+    "report": {
+      "label": "Segnala",
+      "notSure": "Non sai quale? Rispondi a una domanda →",
+      "options": {
+        "hazard": {
+          "label": "Pericolo o quasi infortunio",
+          "hint": "Nessuno si è fatto male"
+        },
+        "incident": {
+          "label": "Incidente",
+          "hint": "Qualcuno si è fatto male o si è ammalato"
+        },
+        "permit": {
+          "label": "Permesso di lavoro",
+          "hint": "Lavoro ad alto rischio che richiede autorizzazione"
+        },
+        "inspection": {
+          "label": "Ispezione",
+          "hint": "Avvia una checklist o un audit"
+        }
+      }
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6255,7 +6282,11 @@
     "empty": {
       "title": "Nulla in attesa",
       "body": "Le nuove attività assegnate a te compaiono qui."
-    }
+    },
+    "myActionsTitle": "Le mie azioni",
+    "myActionsSubtitle": "Tutto ciò che ti è assegnato, prima il più in ritardo.",
+    "myAcknowledgementsTitle": "Le mie conferme",
+    "myAcknowledgementsSubtitle": "Briefing e valutazioni dei rischi in attesa della tua conferma."
   },
   "rams": {
     "title": "RAMS",
@@ -6541,5 +6572,19 @@
       "review_submitted": "Pacchetto appaltatore inviato all'esame",
       "review_decided": "Decisione di esame registrata"
     }
+  },
+  "reportChooser": {
+    "title": "Segnala qualcosa",
+    "subtitle": "Una domanda decide dove va: qualcuno si è fatto male?",
+    "harmed": {
+      "label": "Sì — qualcuno si è fatto male o si è ammalato",
+      "hint": "Segnala un incidente. I responsabili sono avvisati subito e viene verificata la scadenza RIDDOR."
+    },
+    "noHarm": {
+      "label": "No — ma poteva finire male",
+      "hint": "Segnala un pericolo o quasi infortunio. Va al team che risolve prima che qualcuno si faccia male."
+    },
+    "footnote": "Non sei sicuro? Scegli quello più adatto — chi lo esamina potrà spostarlo poi.",
+    "noPermission": "Non hai il permesso di segnalare qui. Chiedi l'accesso a un amministratore."
   }
 }

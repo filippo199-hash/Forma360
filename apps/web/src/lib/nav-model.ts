@@ -37,8 +37,8 @@ import {
   FolderOpen,
   Hammer,
   HardHat,
-  Inbox,
   ListChecks,
+  ListTodo,
   QrCode,
   ScrollText,
   Settings,
@@ -53,31 +53,31 @@ import { grantsAdminAccess, type PermissionKey } from '@forma360/permissions/cat
 /** Every top-level destination. The i18n key is `nav.<key>`. */
 export type NavItemKey =
   | 'analytics'
-  | 'myWork'
   | 'ai'
-  | 'riskAssessments'
-  | 'coshh'
-  | 'permits'
-  | 'rams'
-  | 'fireSafety'
+  | 'myActions'
+  | 'myAcknowledgements'
   | 'inspections'
-  | 'schedules'
-  | 'approvals'
-  | 'templates'
   | 'issues'
   | 'incidents'
+  | 'permits'
   | 'actions'
-  | 'headsUp'
+  | 'riskAssessments'
+  | 'coshh'
+  | 'fireSafety'
+  | 'rams'
   | 'sites'
   | 'assets'
-  | 'maintenance'
-  | 'documents'
   | 'contractors'
+  | 'documents'
+  | 'headsUp'
   | 'settings';
 
 /** Second-level destinations. The i18n key is `nav.child.<key>`. */
 export type NavChildKey =
+  | 'templates'
+  | 'schedules'
   | 'schedulesCalendar'
+  | 'approvals'
   | 'permitsBoard'
   | 'permitsTypes'
   | 'coshhPointOfWork'
@@ -88,6 +88,7 @@ export type NavChildKey =
   | 'issuesQrCodes'
   | 'issuesCategories'
   | 'actionsCategories'
+  | 'maintenance'
   | 'assetsCategories'
   | 'contractorsGate'
   | 'contractorsCalendar';
@@ -97,21 +98,34 @@ export type NavChildKey =
  * three orientation entries that answer "where am I and what is mine",
  * which practitioners reach for before any module.
  */
-export type NavSectionKey = 'groupRisk' | 'groupVerify' | 'groupRespond' | 'groupOrg';
+export type NavSectionKey = 'groupForMe' | 'groupDoWork' | 'groupRecords' | 'groupOrg';
 
 /**
- * Counts the menu is allowed to show. Deliberately short: every badge is
- * either the caller's own queue or a queue the caller owns, so a number
- * on the menu always means "you, now". Org-wide totals belong on the
- * dashboard, not in the chrome.
+ * Counts the menu is allowed to show.
+ *
+ * Two families, both earned: the caller's own queues ("you, now"), and
+ * the per-module needs-attention numbers the navigation review asked
+ * for (§1) — the thing that lets a longer menu be *faster*, because you
+ * navigate to the red rather than from memory. Org-wide vanity totals
+ * still belong on the dashboard, not in the chrome.
  */
-export type NavBadgeKey = 'myWork' | 'approvals' | 'actions' | 'headsUp';
+export type NavBadgeKey =
+  | 'myActions'
+  | 'myAcknowledgements'
+  | 'approvals'
+  | 'actions'
+  | 'incidents'
+  | 'permits'
+  | 'riskAssessments'
+  | 'fireSafety';
 
 export interface NavChild {
   readonly key: NavChildKey;
   readonly href: string;
   /** Defaults to the parent's permission when omitted. */
   readonly permission?: PermissionKey;
+  /** A nested entry may carry a count of its own (Approvals does). */
+  readonly badge?: NavBadgeKey;
 }
 
 export interface NavItem {
@@ -148,22 +162,120 @@ const BRAND_MODULE_FOR: Partial<Record<NavItemKey, BrandOnlyModule>> = {
 function sectionBlueprint(locale: string): readonly NavSection[] {
   const p = (path: string): string => `/${locale}${path}`;
   return [
+    // Above the rule: the two entries that answer *about* everything
+    // rather than being a place you work (Lindqvist).
     {
       key: null,
       items: [
-        { key: 'analytics', href: p('/analytics'), icon: ChartColumn, permission: 'analytics.view' },
-        { key: 'myWork', href: p('/my-work'), icon: Inbox, badge: 'myWork' },
+        {
+          key: 'analytics',
+          href: p('/analytics'),
+          icon: ChartColumn,
+          permission: 'analytics.view',
+        },
         { key: 'ai', href: p('/ai'), icon: Bot },
       ],
     },
+    // FOR ME — for the ~90% who are not safety professionals, this block
+    // *is* the application (Bello). Ungated: both entries can only ever
+    // show rows addressed to the caller.
     {
-      key: 'groupRisk',
+      key: 'groupForMe',
+      items: [
+        { key: 'myActions', href: p('/my-work/actions'), icon: ListTodo, badge: 'myActions' },
+        {
+          key: 'myAcknowledgements',
+          href: p('/my-work/acknowledgements'),
+          icon: BadgeCheck,
+          badge: 'myAcknowledgements',
+        },
+      ],
+    },
+    // DO THE WORK — the golden thread in reading order: what you planned
+    // and verified, what was found, what was harmed, what was controlled,
+    // what is being fixed (Lindqvist).
+    {
+      key: 'groupDoWork',
+      items: [
+        {
+          key: 'inspections',
+          href: p('/inspections'),
+          icon: ClipboardCheck,
+          permission: 'inspections.view',
+          // Templates, Schedules and Approvals have no independent
+          // existence — nesting them is what takes the list from 20 to 16
+          // without hiding anything.
+          children: [
+            { key: 'templates', href: p('/templates'), permission: 'templates.view' },
+            { key: 'schedules', href: p('/schedules') },
+            { key: 'schedulesCalendar', href: p('/schedules/calendar') },
+            {
+              key: 'approvals',
+              href: p('/approvals'),
+              permission: 'inspections.manage',
+              badge: 'approvals',
+            },
+          ],
+        },
+        {
+          key: 'issues',
+          href: p('/observations'),
+          icon: AlertTriangle,
+          permission: 'issues.view',
+          children: [
+            { key: 'issuesQrCodes', href: p('/observations/qr-codes') },
+            { key: 'issuesCategories', href: p('/observations/categories') },
+          ],
+        },
+        {
+          key: 'incidents',
+          href: p('/incidents'),
+          icon: Siren,
+          permission: 'incidents.view',
+          badge: 'incidents',
+        },
+        // A permit is a live operational control issued and closed within
+        // a shift — work, not a register (the panel's contested call).
+        {
+          key: 'permits',
+          href: p('/permits'),
+          icon: FileSignature,
+          permission: 'permits.view',
+          badge: 'permits',
+          children: [
+            { key: 'permitsBoard', href: p('/permits/board') },
+            { key: 'permitsTypes', href: p('/permits/types'), permission: 'permits.manage' },
+          ],
+        },
+        // The same module as "My actions", two doors: managing every
+        // action and closing your own three are different jobs.
+        {
+          key: 'actions',
+          href: p('/actions'),
+          icon: ListChecks,
+          permission: 'actions.view',
+          badge: 'actions',
+          children: [
+            {
+              key: 'actionsCategories',
+              href: p('/actions/categories'),
+              permission: 'actions.settings',
+            },
+          ],
+        },
+      ],
+    },
+    // RECORDS & REGISTERS — documents that live for years and get
+    // reviewed. One seam to point an auditor at (Nair, Lindqvist).
+    {
+      key: 'groupRecords',
       items: [
         {
           key: 'riskAssessments',
           href: p('/risk-assessments'),
           icon: ShieldAlert,
           permission: 'riskAssessments.view',
+          badge: 'riskAssessments',
         },
         {
           key: 'coshh',
@@ -175,19 +287,16 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
             { key: 'coshhLev', href: p('/coshh/lev') },
           ],
         },
+        // Contains a live logbook, but its centre of gravity is the FRA
+        // and the statutory calendar — hence a register.
         {
-          key: 'permits',
-          href: p('/permits'),
-          icon: FileSignature,
-          permission: 'permits.view',
-          children: [
-            { key: 'permitsBoard', href: p('/permits/board') },
-            { key: 'permitsTypes', href: p('/permits/types'), permission: 'permits.manage' },
-          ],
+          key: 'fireSafety',
+          href: p('/fire-safety'),
+          icon: Flame,
+          permission: 'fireSafety.view',
+          badge: 'fireSafety',
+          children: [{ key: 'fireLogbook', href: p('/fire-safety/logbook') }],
         },
-        // Sits after Permits — both are "plan the job, then do it safely"
-        // surfaces, and a permit type can demand an issued RAMS pack
-        // (ADR 0015 module, ADR 0010 brand gate).
         {
           key: 'rams',
           href: p('/rams'),
@@ -198,86 +307,10 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
             { key: 'ramsReviews', href: p('/rams/reviews'), permission: 'rams.review' },
           ],
         },
-        {
-          key: 'fireSafety',
-          href: p('/fire-safety'),
-          icon: Flame,
-          permission: 'fireSafety.view',
-          children: [{ key: 'fireLogbook', href: p('/fire-safety/logbook') }],
-        },
       ],
     },
-    {
-      key: 'groupVerify',
-      items: [
-        {
-          key: 'inspections',
-          href: p('/inspections'),
-          icon: ClipboardCheck,
-          permission: 'inspections.view',
-        },
-        {
-          key: 'schedules',
-          href: p('/schedules'),
-          icon: CalendarClock,
-          permission: 'inspections.view',
-          children: [{ key: 'schedulesCalendar', href: p('/schedules/calendar') }],
-        },
-        {
-          key: 'approvals',
-          href: p('/approvals'),
-          icon: BadgeCheck,
-          permission: 'inspections.manage',
-          badge: 'approvals',
-        },
-        {
-          key: 'templates',
-          href: p('/templates'),
-          icon: FileStack,
-          permission: 'templates.view',
-        },
-      ],
-    },
-    {
-      key: 'groupRespond',
-      items: [
-        {
-          key: 'issues',
-          href: p('/observations'),
-          icon: AlertTriangle,
-          permission: 'issues.view',
-          children: [
-            { key: 'issuesQrCodes', href: p('/observations/qr-codes') },
-            { key: 'issuesCategories', href: p('/observations/categories') },
-          ],
-        },
-        // Sits between Observations and Actions — the found → recorded →
-        // fixed reading order (ADR 0013 module, ADR 0010 brand gate).
-        {
-          key: 'incidents',
-          href: p('/incidents'),
-          icon: Siren,
-          permission: 'incidents.view',
-        },
-        {
-          key: 'actions',
-          href: p('/actions'),
-          icon: ListChecks,
-          permission: 'actions.view',
-          badge: 'actions',
-          children: [
-            { key: 'actionsCategories', href: p('/actions/categories'), permission: 'actions.settings' },
-          ],
-        },
-        {
-          key: 'headsUp',
-          href: p('/heads-up'),
-          icon: Bell,
-          permission: 'headsUp.view',
-          badge: 'headsUp',
-        },
-      ],
-    },
+    // THE ORGANISATION — the things work happens *to* and *with*, plus
+    // the distribution channel alongside Documents.
     {
       key: 'groupOrg',
       items: [
@@ -288,25 +321,36 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           icon: Wrench,
           permission: 'assets.view',
           children: [
+            {
+              key: 'maintenance',
+              href: p('/maintenance'),
+              permission: 'assets.maintenance.manage',
+            },
             { key: 'assetsCategories', href: p('/assets/categories'), permission: 'assets.manage' },
           ],
         },
-        {
-          key: 'maintenance',
-          href: p('/maintenance'),
-          icon: Hammer,
-          permission: 'assets.maintenance.manage',
-        },
-        { key: 'documents', href: p('/documents'), icon: FolderOpen, permission: 'documents.view' },
         {
           key: 'contractors',
           href: p('/contractors'),
           icon: HardHat,
           permission: 'contractors.view',
           children: [
-            { key: 'contractorsGate', href: p('/contractors/gate'), permission: 'contractors.gate' },
+            {
+              key: 'contractorsGate',
+              href: p('/contractors/gate'),
+              permission: 'contractors.gate',
+            },
             { key: 'contractorsCalendar', href: p('/contractors/calendar') },
           ],
+        },
+        { key: 'documents', href: p('/documents'), icon: FolderOpen, permission: 'documents.view' },
+        // "Briefings" to everyone outside this product — the rename the
+        // panel asked for; the route keeps its /heads-up path.
+        {
+          key: 'headsUp',
+          href: p('/heads-up'),
+          icon: Bell,
+          permission: 'headsUp.view',
         },
       ],
     },
@@ -391,7 +435,17 @@ export function activeNavItem(
   sections: readonly NavSection[],
   pathname: string,
 ): NavItem | undefined {
-  return flattenNavItems(sections).find((item) => isNavItemActive(item, pathname));
+  const items = flattenNavItems(sections);
+  const direct = items.find((item) => isNavItemActive(item, pathname));
+  if (direct !== undefined) return direct;
+  // A nested entry need not live under its parent's path — Approvals,
+  // Schedules, Templates and Maintenance are all top-level routes that
+  // now hang off Inspections and Assets. Without this, standing on
+  // /approvals would light nothing up and hide the sub-navigation that
+  // got you there.
+  return items.find((item) =>
+    (item.children ?? []).some((child) => isNavChildActive(child, pathname)),
+  );
 }
 
 /**
@@ -404,7 +458,8 @@ export function activeNavItem(
  * field, the overwhelmingly common intent is to record something.
  */
 export const MOBILE_TAB_PRIORITY: readonly NavItemKey[] = [
-  'myWork',
+  'myActions',
+  'myAcknowledgements',
   'issues',
   'incidents',
   'inspections',
@@ -433,7 +488,10 @@ export function buildMobileTabs(sections: readonly NavSection[]): readonly NavIt
 
 /** Icon for the "no badge value yet" case and for sub-nav bullets. */
 export const NAV_CHILD_ICON: Record<NavChildKey, LucideIcon> = {
+  templates: FileStack,
+  schedules: CalendarClock,
   schedulesCalendar: CalendarDays,
+  approvals: BadgeCheck,
   permitsBoard: ClipboardCheck,
   permitsTypes: FileStack,
   coshhPointOfWork: FlaskConical,
@@ -444,6 +502,7 @@ export const NAV_CHILD_ICON: Record<NavChildKey, LucideIcon> = {
   issuesQrCodes: QrCode,
   issuesCategories: FolderOpen,
   actionsCategories: FolderOpen,
+  maintenance: Hammer,
   assetsCategories: FolderOpen,
   contractorsGate: HardHat,
   contractorsCalendar: CalendarDays,

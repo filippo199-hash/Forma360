@@ -1436,10 +1436,10 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Gefährdungen & Beinaheunfälle",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "Unterweisungen",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Dokumente",
@@ -1454,15 +1454,11 @@
     "fireSafety": "Brandschutz",
     "analytics": "Dashboard",
     "incidents": "Vorfälle",
-    "myWork": "Meine Aufgaben",
     "more": "Mehr",
     "quickLabel": "Schnellnavigation",
     "collapseMenu": "Menü einklappen",
     "expandMenu": "Menü ausklappen",
-    "groupRisk": "Risiko & Kontrolle",
-    "groupVerify": "Prüfen & verifizieren",
-    "groupRespond": "Melden & beheben",
-    "groupOrg": "Organisation",
+    "groupOrg": "Die Organisation",
     "child": {
       "schedulesCalendar": "Kalender",
       "permitsBoard": "Live-Tafel",
@@ -1477,9 +1473,40 @@
       "contractorsGate": "Baustellentor",
       "contractorsCalendar": "Kalender",
       "ramsLibrary": "Bibliothek der Arbeitsanweisungen",
-      "ramsReviews": "Prüfung von Nachunternehmer-RAMS"
+      "ramsReviews": "Prüfung von Nachunternehmer-RAMS",
+      "templates": "Vorlagen",
+      "schedules": "Zeitpläne",
+      "approvals": "Freigaben",
+      "maintenance": "Wartung"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "groupForMe": "Für mich",
+    "groupDoWork": "Die Arbeit erledigen",
+    "groupRecords": "Nachweise & Register",
+    "myActions": "Meine Maßnahmen",
+    "myAcknowledgements": "Meine Bestätigungen",
+    "report": {
+      "label": "Melden",
+      "notSure": "Unsicher? Eine Frage beantworten →",
+      "options": {
+        "hazard": {
+          "label": "Gefährdung oder Beinaheunfall",
+          "hint": "Niemand wurde verletzt"
+        },
+        "incident": {
+          "label": "Vorfall",
+          "hint": "Jemand wurde verletzt oder erkrankte"
+        },
+        "permit": {
+          "label": "Arbeitserlaubnis",
+          "hint": "Hochriskante Arbeit mit Genehmigungspflicht"
+        },
+        "inspection": {
+          "label": "Prüfung",
+          "hint": "Checkliste oder Audit starten"
+        }
+      }
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6220,7 +6247,11 @@
     "empty": {
       "title": "Nichts wartet auf Sie",
       "body": "Neu zugewiesene Aufgaben erscheinen hier."
-    }
+    },
+    "myActionsTitle": "Meine Maßnahmen",
+    "myActionsSubtitle": "Alles, was Ihnen zugewiesen ist — am stärksten überfällig zuerst.",
+    "myAcknowledgementsTitle": "Meine Bestätigungen",
+    "myAcknowledgementsSubtitle": "Unterweisungen und Gefährdungsbeurteilungen, die auf Ihre Bestätigung warten."
   },
   "rams": {
     "title": "RAMS",
@@ -6506,5 +6537,19 @@
       "review_submitted": "Nachunternehmer-Paket zur Prüfung eingereicht",
       "review_decided": "Prüfentscheidung erfasst"
     }
+  },
+  "reportChooser": {
+    "title": "Etwas melden",
+    "subtitle": "Eine Frage entscheidet, wohin das gehört: Wurde jemand verletzt?",
+    "harmed": {
+      "label": "Ja — jemand wurde verletzt oder erkrankte",
+      "hint": "Meldet einen Vorfall. Führungskräfte werden sofort alarmiert und die RIDDOR-Frist geprüft."
+    },
+    "noHarm": {
+      "label": "Nein — aber es hätte schiefgehen können",
+      "hint": "Meldet eine Gefährdung oder einen Beinaheunfall. Geht an das Team, das Dinge behebt, bevor jemand zu Schaden kommt."
+    },
+    "footnote": "Unsicher? Wählen Sie das Passendste — wer es prüft, kann es später verschieben.",
+    "noPermission": "Sie haben hier keine Melderechte. Bitten Sie eine:n Administrator:in um Zugang."
   }
 }

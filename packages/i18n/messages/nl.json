@@ -1429,10 +1429,10 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Gevaren en bijna-ongevallen",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "Briefings",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Documenten",
@@ -1447,15 +1447,11 @@
     "fireSafety": "Brandveiligheid",
     "analytics": "Dashboard",
     "incidents": "Incidenten",
-    "myWork": "Mijn werk",
     "more": "Meer",
     "quickLabel": "Snelle navigatie",
     "collapseMenu": "Menu inklappen",
     "expandMenu": "Menu uitklappen",
-    "groupRisk": "Risico en beheersing",
-    "groupVerify": "Inspecteren en verifiëren",
-    "groupRespond": "Melden en oplossen",
-    "groupOrg": "Organisatie",
+    "groupOrg": "De organisatie",
     "child": {
       "schedulesCalendar": "Agenda",
       "permitsBoard": "Live-bord",
@@ -1470,9 +1466,40 @@
       "contractorsGate": "Bouwplaatspoort",
       "contractorsCalendar": "Agenda",
       "ramsLibrary": "Bibliotheek met werkmethoden",
-      "ramsReviews": "Beoordeling RAMS onderaannemers"
+      "ramsReviews": "Beoordeling RAMS onderaannemers",
+      "templates": "Sjablonen",
+      "schedules": "Planningen",
+      "approvals": "Goedkeuringen",
+      "maintenance": "Onderhoud"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "groupForMe": "Voor mij",
+    "groupDoWork": "Het werk doen",
+    "groupRecords": "Dossiers en registers",
+    "myActions": "Mijn acties",
+    "myAcknowledgements": "Mijn bevestigingen",
+    "report": {
+      "label": "Melden",
+      "notSure": "Twijfel? Beantwoord één vraag →",
+      "options": {
+        "hazard": {
+          "label": "Gevaar of bijna-ongeval",
+          "hint": "Niemand raakte gewond"
+        },
+        "incident": {
+          "label": "Incident",
+          "hint": "Iemand raakte gewond of werd ziek"
+        },
+        "permit": {
+          "label": "Werkvergunning",
+          "hint": "Risicovol werk waarvoor toestemming nodig is"
+        },
+        "inspection": {
+          "label": "Inspectie",
+          "hint": "Start een checklist of audit"
+        }
+      }
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6213,7 +6240,11 @@
     "empty": {
       "title": "Er wacht niets op u",
       "body": "Nieuw aan u toegewezen werk verschijnt hier."
-    }
+    },
+    "myActionsTitle": "Mijn acties",
+    "myActionsSubtitle": "Alles wat aan u is toegewezen, meest te laat eerst.",
+    "myAcknowledgementsTitle": "Mijn bevestigingen",
+    "myAcknowledgementsSubtitle": "Briefings en risicobeoordelingen die op uw bevestiging wachten."
   },
   "rams": {
     "title": "RAMS",
@@ -6499,5 +6530,19 @@
       "review_submitted": "Pakket onderaannemer ter beoordeling aangeboden",
       "review_decided": "Beoordelingsbeslissing vastgelegd"
     }
+  },
+  "reportChooser": {
+    "title": "Iets melden",
+    "subtitle": "Eén vraag bepaalt waar dit heen gaat: is iemand gewond geraakt?",
+    "harmed": {
+      "label": "Ja — iemand raakte gewond of werd ziek",
+      "hint": "Meldt een incident. Managers worden direct gewaarschuwd en de RIDDOR-termijn wordt gecontroleerd."
+    },
+    "noHarm": {
+      "label": "Nee — maar het had mis kunnen gaan",
+      "hint": "Meldt een gevaar of bijna-ongeval. Gaat naar het team dat het oplost voordat iemand gewond raakt."
+    },
+    "footnote": "Twijfel? Kies wat het beste past — wie het beoordeelt, kan het later verplaatsen.",
+    "noPermission": "U heeft hier geen meldrechten. Vraag een beheerder om toegang."
   }
 }

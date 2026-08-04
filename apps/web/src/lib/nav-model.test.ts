@@ -70,21 +70,27 @@ describe('nav model (ADR 0014)', () => {
     expect(reporter).not.toContain('permits');
     expect(reporter).not.toContain('analytics');
     // Unpermissioned entries stay for everyone: the assistant and the
-    // caller's own queue are not module surfaces.
+    // caller's own two doors are not module surfaces.
     expect(reporter).toContain('ai');
-    expect(reporter).toContain('myWork');
+    expect(reporter).toContain('myActions');
+    expect(reporter).toContain('myAcknowledgements');
 
     // The administrator sees every entry the brand ships.
     expect(keysOf(ADMIN).length).toBeGreaterThan(reporter.length);
   });
 
   it('NAV-E03: a group with nothing left in it loses its heading too', () => {
-    // Forma360 has no brand modules at all → no "Risk & control" group.
-    expect(sectionsFor(ADMIN, 'forma360').map((s) => s.key)).not.toContain('groupRisk');
-    // A viewer with no verify-side permission loses that group.
+    // Forma360 ships none of the brand registers, so "Records &
+    // registers" disappears with them.
+    expect(sectionsFor(ADMIN, 'forma360').map((s) => s.key)).not.toContain('groupRecords');
+    // A viewer who can only report hazards keeps the work group (their
+    // one module) and loses the organisation group entirely.
     const sections = sectionsFor(['issues.view']);
-    expect(sections.map((s) => s.key)).not.toContain('groupVerify');
-    expect(sections.map((s) => s.key)).toContain('groupRespond');
+    expect(sections.map((s) => s.key)).toContain('groupDoWork');
+    expect(sections.map((s) => s.key)).not.toContain('groupOrg');
+    expect(sections.map((s) => s.key)).not.toContain('groupRecords');
+    // The personal block survives every gate — it is nobody's module.
+    expect(sections.map((s) => s.key)).toContain('groupForMe');
     // No section ever renders empty.
     for (const section of sectionsFor(ADMIN)) expect(section.items.length).toBeGreaterThan(0);
   });
@@ -111,23 +117,31 @@ describe('nav model (ADR 0014)', () => {
     // library needs manage and the contractor-review queue needs review.
     const packViewer = flattenNavItems(sectionsFor(['rams.view'])).find((i) => i.key === 'rams');
     expect(packViewer?.children).toBeUndefined();
-    const ramsFull = flattenNavItems(
-      sectionsFor(['rams.view', 'rams.manage', 'rams.review']),
-    ).find((i) => i.key === 'rams');
+    const ramsFull = flattenNavItems(sectionsFor(['rams.view', 'rams.manage', 'rams.review'])).find(
+      (i) => i.key === 'rams',
+    );
     expect(ramsFull?.children?.map((c) => c.key)).toEqual(['ramsLibrary', 'ramsReviews']);
   });
 
   it('NAV-E05: active matching is exact or segment-prefix, never cross-entry', () => {
     const items = flattenNavItems(sectionsFor(ADMIN));
     const inspections = items.find((i) => i.key === 'inspections') as NavItem;
-    const approvals = items.find((i) => i.key === 'approvals') as NavItem;
 
     expect(isNavItemActive(inspections, '/en/inspections')).toBe(true);
     expect(isNavItemActive(inspections, '/en/inspections/01ABC/status')).toBe(true);
-    // The pre-0013 bug: /approvals lit up Inspections as well as Approvals.
+    // Approvals and Schedules now nest under Inspections, so the parent
+    // must still not claim their routes as its own.
     expect(isNavItemActive(inspections, '/en/approvals')).toBe(false);
     expect(isNavItemActive(inspections, '/en/schedules')).toBe(false);
-    expect(isNavItemActive(approvals, '/en/approvals/01ABC')).toBe(true);
+
+    // The two personal doors share the /my-work trunk but are distinct
+    // routes, so exactly one of them ever lights up.
+    const myActions = items.find((i) => i.key === 'myActions') as NavItem;
+    const myAcks = items.find((i) => i.key === 'myAcknowledgements') as NavItem;
+    expect(isNavItemActive(myActions, '/en/my-work/actions')).toBe(true);
+    expect(isNavItemActive(myAcks, '/en/my-work/actions')).toBe(false);
+    expect(isNavItemActive(myActions, '/en/my-work/acknowledgements')).toBe(false);
+    expect(isNavItemActive(myAcks, '/en/my-work/acknowledgements')).toBe(true);
 
     // A shared prefix that is not a path segment must not match.
     const sites = items.find((i) => i.key === 'sites') as NavItem;
@@ -161,31 +175,57 @@ describe('nav model (ADR 0014)', () => {
 
   it('NAV-E08: the tab bar fills by priority, skips what is gated, and is bounded', () => {
     const admin = buildMobileTabs(sectionsFor(ADMIN));
-    expect(admin.map((t) => t.key)).toEqual(['myWork', 'issues', 'incidents', 'inspections']);
+    expect(admin.map((t) => t.key)).toEqual([
+      'myActions',
+      'myAcknowledgements',
+      'issues',
+      'incidents',
+    ]);
     expect(admin.length).toBe(MOBILE_TAB_SLOTS);
 
     // Forma360 ships no brand modules, so Incidents drops out and the
     // next core entry is promoted rather than leaving a gap.
     expect(buildMobileTabs(sectionsFor(ADMIN, 'forma360')).map((t) => t.key)).toEqual([
-      'myWork',
+      'myActions',
+      'myAcknowledgements',
       'issues',
       'inspections',
-      'actions',
     ]);
 
-    // A permit-only viewer falls through to the entries they can open.
+    // A permit-only viewer falls through to the entries they can open —
+    // the personal block is ungated, so it always leads.
     const permitOnly = buildMobileTabs(sectionsFor(['permits.view']));
-    expect(permitOnly.map((t) => t.key)).toEqual(['myWork', 'permits', 'ai']);
+    expect(permitOnly.map((t) => t.key)).toEqual([
+      'myActions',
+      'myAcknowledgements',
+      'permits',
+      'ai',
+    ]);
     expect(permitOnly.length).toBeLessThanOrEqual(MOBILE_TAB_SLOTS);
   });
 
-  it('NAV-E09: badges sit only on the caller-scoped entries', () => {
-    const badged = flattenNavItems(sectionsFor(ADMIN)).filter((i) => i.badge !== undefined);
-    expect(badged.map((i) => i.key).sort()).toEqual(['actions', 'approvals', 'headsUp', 'myWork']);
-    // The badge key always names its own entry's queue.
+  it('NAV-E09: badges name their own queue, on items and on nested entries', () => {
+    const items = flattenNavItems(sectionsFor(ADMIN));
+    const badged = items.filter((i) => i.badge !== undefined);
+    expect(badged.map((i) => i.key).sort()).toEqual([
+      'actions',
+      'fireSafety',
+      'incidents',
+      'myAcknowledgements',
+      'myActions',
+      'permits',
+      'riskAssessments',
+    ]);
+    // Every badge key names its own entry — no entry borrows another's
+    // number, which is what would make the menu lie.
     for (const item of badged) {
-      expect(['myWork', 'approvals', 'actions', 'headsUp']).toContain(item.badge);
+      expect(item.badge).toBe(item.key === 'actions' ? 'actions' : item.key);
     }
+    // Approvals kept its count when it nested under Inspections.
+    const approvals = items
+      .find((i) => i.key === 'inspections')
+      ?.children?.find((c) => c.key === 'approvals');
+    expect(approvals?.badge).toBe('approvals');
   });
 
   it('NAV-E10: every destination is locale-prefixed and every child has an icon', () => {

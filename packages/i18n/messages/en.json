@@ -75,9 +75,9 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Hazards & near misses",
     "actions": "Actions",
-    "headsUp": "Heads Up",
+    "headsUp": "Briefings",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Documents",
@@ -93,15 +93,11 @@
     "fireSafety": "Fire Safety",
     "analytics": "Dashboard",
     "incidents": "Incidents",
-    "myWork": "My work",
     "more": "More",
     "quickLabel": "Quick navigation",
     "collapseMenu": "Collapse menu",
     "expandMenu": "Expand menu",
-    "groupRisk": "Risk & control",
-    "groupVerify": "Inspect & verify",
-    "groupRespond": "Report & fix",
-    "groupOrg": "Organisation",
+    "groupOrg": "The organisation",
     "child": {
       "schedulesCalendar": "Calendar",
       "permitsBoard": "Live board",
@@ -116,9 +112,40 @@
       "contractorsGate": "Site gate",
       "contractorsCalendar": "Calendar",
       "ramsLibrary": "Method statement library",
-      "ramsReviews": "Contractor RAMS review"
+      "ramsReviews": "Contractor RAMS review",
+      "templates": "Templates",
+      "schedules": "Schedules",
+      "approvals": "Approvals",
+      "maintenance": "Maintenance"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "groupForMe": "For me",
+    "groupDoWork": "Do the work",
+    "groupRecords": "Records & registers",
+    "myActions": "My actions",
+    "myAcknowledgements": "My acknowledgements",
+    "report": {
+      "label": "Report",
+      "notSure": "Not sure which? Answer one question →",
+      "options": {
+        "hazard": {
+          "label": "Hazard or near miss",
+          "hint": "Nobody was hurt"
+        },
+        "incident": {
+          "label": "Incident",
+          "hint": "Someone was harmed or made ill"
+        },
+        "permit": {
+          "label": "Permit to work",
+          "hint": "High-risk work needing authorisation"
+        },
+        "inspection": {
+          "label": "Inspection",
+          "hint": "Start a checklist or audit"
+        }
+      }
+    }
   },
   "ai": {
     "emptyTitle": "How can I help?",
@@ -6448,7 +6475,11 @@
     "empty": {
       "title": "Nothing waiting on you",
       "body": "New work assigned to you appears here."
-    }
+    },
+    "myActionsTitle": "My actions",
+    "myActionsSubtitle": "Everything assigned to you, most overdue first.",
+    "myAcknowledgementsTitle": "My acknowledgements",
+    "myAcknowledgementsSubtitle": "Briefings and risk assessments waiting for your sign-off."
   },
   "rams": {
     "title": "RAMS",
@@ -6734,5 +6765,19 @@
       "review_submitted": "Contractor pack submitted for review",
       "review_decided": "Review decision recorded"
     }
+  },
+  "reportChooser": {
+    "title": "Report something",
+    "subtitle": "One question decides where this goes: was anyone harmed?",
+    "harmed": {
+      "label": "Yes — someone was harmed or made ill",
+      "hint": "Reports an incident. Managers are alerted straight away and the RIDDOR clock is checked."
+    },
+    "noHarm": {
+      "label": "No — but it could have gone wrong",
+      "hint": "Reports a hazard or near miss. Goes to the team who fix things before they hurt someone."
+    },
+    "footnote": "Not sure? Pick the one that fits best — anyone reviewing it can move it later.",
+    "noPermission": "You don't have permission to report here. Ask an administrator for reporting access."
   }
 }

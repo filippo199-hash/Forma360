@@ -1429,10 +1429,10 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "危険・ヒヤリハット",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "周知事項",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "ドキュメント",
@@ -1447,14 +1447,10 @@
     "fireSafety": "防火管理",
     "analytics": "ダッシュボード",
     "incidents": "インシデント",
-    "myWork": "マイタスク",
     "more": "その他",
     "quickLabel": "クイックナビゲーション",
     "collapseMenu": "メニューを折りたたむ",
     "expandMenu": "メニューを展開",
-    "groupRisk": "リスクと管理",
-    "groupVerify": "点検と検証",
-    "groupRespond": "報告と是正",
     "groupOrg": "組織",
     "child": {
       "schedulesCalendar": "カレンダー",
@@ -1470,9 +1466,40 @@
       "contractorsGate": "現場ゲート",
       "contractorsCalendar": "カレンダー",
       "ramsLibrary": "作業手順書ライブラリ",
-      "ramsReviews": "協力会社 RAMS の審査"
+      "ramsReviews": "協力会社 RAMS の審査",
+      "templates": "テンプレート",
+      "schedules": "スケジュール",
+      "approvals": "承認",
+      "maintenance": "保全"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "groupForMe": "自分の担当",
+    "groupDoWork": "作業を行う",
+    "groupRecords": "記録・台帳",
+    "myActions": "自分のアクション",
+    "myAcknowledgements": "自分の確認事項",
+    "report": {
+      "label": "報告",
+      "notSure": "どちらか迷う場合は、1つの質問に回答 →",
+      "options": {
+        "hazard": {
+          "label": "危険・ヒヤリハット",
+          "hint": "負傷者なし"
+        },
+        "incident": {
+          "label": "インシデント",
+          "hint": "負傷者または健康被害あり"
+        },
+        "permit": {
+          "label": "作業許可",
+          "hint": "許可が必要な高リスク作業"
+        },
+        "inspection": {
+          "label": "点検",
+          "hint": "チェックリストまたは監査を開始"
+        }
+      }
+    }
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6213,7 +6240,11 @@
     "empty": {
       "title": "待機中の作業はありません",
       "body": "新しく割り当てられた作業はここに表示されます。"
-    }
+    },
+    "myActionsTitle": "自分のアクション",
+    "myActionsSubtitle": "自分に割り当てられたすべて。期限超過の大きい順。",
+    "myAcknowledgementsTitle": "自分の確認事項",
+    "myAcknowledgementsSubtitle": "あなたの確認待ちの周知事項とリスクアセスメント。"
   },
   "rams": {
     "title": "RAMS",
@@ -6499,5 +6530,19 @@
       "review_submitted": "協力会社パックを審査に提出",
       "review_decided": "審査判定を記録"
     }
+  },
+  "reportChooser": {
+    "title": "報告する",
+    "subtitle": "この報告先は1つの質問で決まります。負傷者はいましたか？",
+    "harmed": {
+      "label": "はい — 負傷者または健康被害がありました",
+      "hint": "インシデントとして報告します。管理者に直ちに通知され、RIDDOR期限も確認されます。"
+    },
+    "noHarm": {
+      "label": "いいえ — ただし事故になり得ました",
+      "hint": "危険源・ヒヤリハットとして報告します。誰かが負傷する前に対処するチームへ届きます。"
+    },
+    "footnote": "迷う場合は近いほうを選んでください。確認する担当者が後で変更できます。",
+    "noPermission": "ここで報告する権限がありません。管理者に権限付与を依頼してください。"
   }
 }
