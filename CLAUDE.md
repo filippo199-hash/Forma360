@@ -165,6 +165,20 @@ pnpm --filter @forma360/shared test:r2  # manual R2 smoke test
 - i18n lint rule at `tools/eslint-rules/no-hardcoded-strings.js` — enforced
   on `apps/web/app/**/*.tsx` + `packages/ui/src/**/*.tsx`.
 - Sentry configs at `apps/web/sentry.*.config.ts` + `packages/jobs/src/sentry.ts`.
+  **Live since ADR 0016**: options are built once by
+  `buildSentryOptions` in `packages/shared/src/sentry-options.ts` and
+  shared by all four runtimes (browser / Next server / Next edge /
+  worker), so no runtime can forget the scrubber. Every event passes
+  through `scrubEvent` (`packages/shared/src/sentry-scrub.ts`, edge cases
+  SC-E01..E09) which drops request bodies, cookies, query strings, `extra`
+  and console breadcrumbs, allowlists headers/contexts/tags, and redacts
+  the opaque `/s/<token>` and `/scan/<token>` access tokens that would
+  otherwise be replayable from a Sentry event. Only
+  `INTERNAL_SERVER_ERROR` is reported from the tRPC `onError` hook —
+  domain guards throw by design and would drown the signal. Session
+  Replay is off deliberately. Verify a deployment with
+  `POST /api/debug/sentry-check` (admin-gated; captures a real event and
+  returns its id).
 - Request-id flow: middleware generates → header-forwarded to route
   handler → passed into `createContext` → echoed back on response.
 - Playwright smoke at `apps/web/e2e/smoke.spec.ts`.
@@ -664,6 +678,7 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0013 — Incident lifecycle, investigation model and RIDDOR deadline engine](./docs/adr/0013-incident-lifecycle-and-riddor-engine.md)
 - [0014 — Navigation information architecture](./docs/adr/0014-navigation-information-architecture.md)
 - [0015 — Method-statement content model, RAMS pack versioning and briefing records](./docs/adr/0015-rams-method-statement-and-pack-model.md)
+- [0016 — Error reporting and PII scrubbing](./docs/adr/0016-error-reporting-and-pii-scrubbing.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase
