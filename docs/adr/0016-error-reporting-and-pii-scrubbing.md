@@ -142,3 +142,58 @@ error data in-region and materially simplifies the Article 9 position.
 - Alert rules and an issue-owner mapping.
 - Cron monitoring for the repeatable workers — Sentry can alert on a job
   that stops running at all, which log-based alerting cannot.
+
+---
+
+## Addendum — 5 August 2026, after the first production event
+
+Verified against the real wiring-check event
+(`FREEHS-SERVER-1`, `94438dfb8b604a74944a12004ca85084`). The scrubbing held:
+no request body, no cookies, no query string, no email, no IP, and only four
+headers survived. Three things the design got wrong or under-stated:
+
+### 1. `runtime` was the wrong tag key — fixed
+
+Sentry derives a `runtime` tag at ingest from `contexts.runtime`
+(`node v22.19.0`) and **that value wins over a custom tag of the same name**.
+Our `runtime=server` was silently discarded, so filtering `runtime:server`
+in Sentry would have matched nothing. Renamed to `app_runtime`. Covered by
+SC-E10 so it cannot regress.
+
+The general rule: do not name a custom tag after anything Sentry derives —
+`runtime`, `url`, `transaction`, `browser`, `os`, `server_name`, `level`,
+`handled`, `mechanism`.
+
+### 2. The allowlist governs what we *send*, not the final tag set
+
+The event carried `url`, `transaction`, `browser`, `client_os`, `os`,
+`server_name`, `handled`, `level`, `mechanism` and `interface_type` — none
+of which are in `TAG_ALLOWLIST`. They are materialised by Sentry at ingest
+from other event fields, after `beforeSend` has run, so the allowlist never
+sees them.
+
+This is not a leak: none is PII, and the derived `url` tag is built from the
+`request.url` we already redact, so a `/s/<token>` URL still arrives
+redacted. But the earlier wording implied the allowlist bounded the whole
+tag set, and it does not. Corrected in the source comment.
+
+### 3. Sentry infers country-level geo from the connecting IP
+
+The event carried `user.geo: US, United States` despite `sendDefaultPii:
+false` and no `ip_address` in the payload. Geo is derived at ingest from the
+connecting IP. For server events that is the Railway container and therefore
+uninteresting. **For browser events it will be the end user's location.**
+
+Not addressed in code, because it cannot be: it happens after the event
+leaves us. The mitigation is a project setting — Sentry → Project Settings →
+Security & Privacy → **"Prevent Storing of IP Addresses"** — which should be
+enabled on `freehs-web` in particular. Recorded here so the next person
+knows it is a deliberate outstanding item rather than an oversight.
+
+### Not fixable: member project creation
+
+`Settings → General → "Let members create projects"` is gated behind
+Sentry's **Business** plan. Until forma360 upgrades, the MCP connector will
+keep returning `403: Your organization has disabled this feature for
+members`, and new projects must be created through the browser. Not a
+settings mistake — a plan tier.

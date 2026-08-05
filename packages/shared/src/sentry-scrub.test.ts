@@ -1,7 +1,7 @@
 /**
  * Tests for the Sentry event scrubber.
  *
- * Edge case IDs (SC-E01..E09) — these guard a privacy boundary, so each
+ * Edge case IDs (SC-E01..E10) — these guard a privacy boundary, so each
  * one asserts something does NOT appear, not just that something does.
  */
 import { describe, expect, it } from 'vitest';
@@ -173,6 +173,21 @@ describe('scrubEvent extras, contexts and tags (SC-E08, SC-E09)', () => {
       tenantId: '01J8TENANT',
       procedure: 'incidents.create',
       brand: 'freehs',
+    });
+  });
+
+  it('keeps app_runtime, and does not rely on the SDK-owned runtime tag (SC-E10)', () => {
+    // Sentry derives `runtime` at ingest from contexts.runtime and that
+    // value wins, so our own process label has to live under a key the SDK
+    // does not own. Verified against a real production event: a custom
+    // `runtime` tag was replaced by `node v22.19.0`.
+    const out = scrubEvent({
+      tags: { app_runtime: 'worker', runtime: 'node v22.19.0', queue: 'forma360-incident-alert' },
+    });
+    expect(out.tags).toEqual({
+      app_runtime: 'worker',
+      runtime: 'node v22.19.0',
+      queue: 'forma360-incident-alert',
     });
   });
 

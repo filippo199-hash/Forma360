@@ -43,13 +43,25 @@ const HEADER_ALLOWLIST = new Set([
   'x-request-id',
 ]);
 
-/** Tag keys we deliberately set and therefore trust. */
+/**
+ * Tag keys we deliberately set and therefore trust.
+ *
+ * This governs what WE send. Sentry additionally derives tags at ingest
+ * from other event fields — `url` and `transaction` from the request,
+ * `browser` / `os` / `runtime` from contexts — and those bypass this list
+ * entirely. None of them is PII, and the derived `url` inherits our
+ * redaction because it is built from the `request.url` we already
+ * scrubbed. Worth knowing when reading an event: the tag set you see in
+ * Sentry is a superset of this one.
+ */
 const TAG_ALLOWLIST = new Set([
   'tenantId',
   'procedure',
   'trpc.path',
   'trpc.type',
   'brand',
+  // Ours. `runtime` is Sentry's own derived tag and cannot be overridden.
+  'app_runtime',
   'runtime',
   'queue',
   'job',

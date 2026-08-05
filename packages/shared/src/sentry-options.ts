@@ -16,7 +16,14 @@ import { scrubEvent, type ScrubbableEvent } from './sentry-scrub';
 
 export interface SentryRuntimeOptions {
   dsn: string | undefined;
-  /** Which process this is — shows up as the `runtime` tag. */
+  /**
+   * Which process this is — surfaces as the `app_runtime` tag.
+   *
+   * NOT `runtime`: Sentry derives its own `runtime` tag at ingest from
+   * `contexts.runtime` (`node v22.19.0`), and that derived value wins. A
+   * custom `runtime` tag is silently discarded, so filtering on
+   * `runtime:server` in Sentry would have matched nothing.
+   */
   runtime: 'browser' | 'server' | 'edge' | 'worker';
   /** Deployment environment: production / staging / development. */
   environment: string;
@@ -63,7 +70,7 @@ export function buildSentryOptions(options: SentryRuntimeOptions): {
   beforeSendTransaction: <T extends ScrubbableEvent>(event: T) => T;
   beforeBreadcrumb: (crumb: { category?: string } | null) => { category?: string } | null;
 } {
-  const tags: Record<string, string> = { runtime: options.runtime };
+  const tags: Record<string, string> = { app_runtime: options.runtime };
   if (options.brand !== undefined) tags.brand = options.brand;
 
   return {
