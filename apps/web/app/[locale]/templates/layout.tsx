@@ -5,6 +5,7 @@ import { headers } from 'next/headers';
 import { signInHref } from '../../../src/lib/sign-in-redirect';
 import type { ReactNode } from 'react';
 import { PermissionsProvider } from '../../../src/lib/permissions-context';
+import { ModuleShell } from '../../../src/components/module-shell';
 import { loadCurrentUserPermissions } from '../../../src/server/load-permissions';
 
 /**
@@ -33,11 +34,7 @@ export default async function TemplatesLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      <div className="min-h-screen w-full bg-[#eef4fb] dark:bg-slate-900/40">
-        {/* No padding here — the page provides its own px-4 py-6, matching the
-         * sibling Inspections / Approvals / Schedules tab layouts. */}
-        <div className="mx-auto w-full max-w-[1200px]">{children}</div>
-      </div>
+      <ModuleShell>{children}</ModuleShell>
     </PermissionsProvider>
   );
 }

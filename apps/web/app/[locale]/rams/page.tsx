@@ -76,7 +76,7 @@ export default function RamsRegisterPage() {
   const rows = packs.data ?? [];
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-6">
+    <main>
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t('title')}</h1>

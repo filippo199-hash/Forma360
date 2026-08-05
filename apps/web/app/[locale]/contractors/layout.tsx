@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { signInHref } from '../../../src/lib/sign-in-redirect';
 import type { ReactNode } from 'react';
 import { PermissionsProvider } from '../../../src/lib/permissions-context';
+import { ModuleShell } from '../../../src/components/module-shell';
 import { loadCurrentUserPermissions } from '../../../src/server/load-permissions';
 
 export default async function ContractorsLayout({
@@ -23,9 +24,7 @@ export default async function ContractorsLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      <div className="min-h-screen w-full bg-[#eef4fb] dark:bg-slate-900/40">
-        <div className="mx-auto w-full max-w-[1200px] px-4 py-4 sm:py-8">{children}</div>
-      </div>
+      <ModuleShell>{children}</ModuleShell>
     </PermissionsProvider>
   );
 }
