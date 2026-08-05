@@ -260,7 +260,25 @@ app, and cannot read events. What the split actually buys is quota isolation
 against someone flooding the public DSN. Sentry's own Next.js documentation
 uses one project per app for exactly this reason.
 
-Recommended: collapse to a single `freehs` project, rate-limit the browser
-DSN for the flooding concern, and separate browser from server with the
-`app_runtime` tag, which now works. Not done yet — it reverses a documented
-decision and needs sign-off.
+**Resolved: collapsed to a single project.** Decision 6 above is superseded
+for FreeHS.
+
+- `freehs-server` renamed to **`freehs`** (project id `4511859971063888`
+  unchanged, so the server DSN and the uploaded map bundles survive intact).
+- The project carries **two DSNs**, which is the part worth understanding.
+  Sharing one key between browser and server would mean rate-limiting the
+  public key also throttles server errors — so the browser gets its own:
+  - `Default` — server, edge and worker (`SENTRY_DSN`). No rate limit.
+  - `Browser (public, rate-limited)` — the browser bundle
+    (`NEXT_PUBLIC_SENTRY_DSN`), capped at 2,000 events/hour. This is the key
+    that ships publicly, so it is the one an outsider could flood; the cap
+    means they can burn their own key's budget without blinding us to
+    server errors.
+- `SENTRY_PROJECT=freehs`, so one build's maps cover both event sources.
+- Browser and server are separated by the `app_runtime` tag, not by project.
+
+`freehs-web` is left in place, empty apart from two stale artifact bundles
+from the failed upload attempts. Delete it whenever; nothing points at it.
+
+The same shape applies to Forma360 when it launches: one project, two DSNs,
+the public one rate-limited.
