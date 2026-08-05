@@ -32,6 +32,14 @@
       "types": "./src/logger.ts",
       "default": "./src/logger.ts"
     },
+    "./sentry-scrub": {
+      "types": "./src/sentry-scrub.ts",
+      "default": "./src/sentry-scrub.ts"
+    },
+    "./sentry-options": {
+      "types": "./src/sentry-options.ts",
+      "default": "./src/sentry-options.ts"
+    },
     "./email": {
       "types": "./src/email.ts",
       "default": "./src/email.ts"

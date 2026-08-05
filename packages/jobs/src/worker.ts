@@ -785,9 +785,15 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
         { job_id: job?.id, queue: job?.queueName, err: err.message },
         '[worker] job failed',
       );
+      // `job.data` is deliberately NOT attached: worker payloads carry row
+      // ids and, for the incident alert queue, enough context to identify a
+      // person. The queue and job name are what you actually triage on.
       Sentry.captureException(err, {
-        tags: { queue: job?.queueName ?? 'unknown', job_name: job?.name ?? 'unknown' },
-        extra: { job_id: job?.id, attempts: job?.attemptsMade, data: job?.data },
+        tags: {
+          queue: job?.queueName ?? 'unknown',
+          job: job?.name ?? 'unknown',
+          handler: job?.name ?? 'unknown',
+        },
       });
     });
   }

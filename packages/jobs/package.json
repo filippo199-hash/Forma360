@@ -32,7 +32,7 @@
     "@forma360/db": "workspace:^",
     "@forma360/permissions": "workspace:^",
     "@forma360/shared": "workspace:^",
-    "@sentry/node": "^8.48.0",
+    "@sentry/node": "^10.69.0",
     "bullmq": "^5.30.0",
     "drizzle-orm": "^0.45.0",
     "ioredis": "^5.4.1",

@@ -42,21 +42,30 @@ const nextConfig: NextConfig = {
 };
 
 // Wrap with next-intl first (the i18n plugin has to be the innermost wrap so
-// Sentry can instrument the final handler), then with Sentry — but only
-// when SENTRY_DSN is configured. Without a DSN, skipping the Sentry wrap
-// avoids pulling @sentry/nextjs's server-side instrumentation into the
-// middleware + RSC bundles, which matters because the current Sentry
-// release (8.x) isn't certified against Next 16 and its edge code path
-// trips on `node:crypto`. Set SENTRY_DSN when you're ready for production
-// error tracking; the wrap re-engages automatically on the next build.
+// Sentry can instrument the final handler), then with Sentry.
+//
+// The wrap used to be conditional on SENTRY_DSN because Sentry 8.x was not
+// certified against Next 16 and its edge code path tripped on `node:crypto`.
+// Sentry 10 fixes that, so the wrap is now unconditional — a build that only
+// engages Sentry in production is a build whose Sentry-specific breakage can
+// only be discovered in production. Runtime behaviour is still governed by
+// the DSN: `Sentry.init({ dsn: undefined })` no-ops.
+//
+// Source maps upload only when SENTRY_AUTH_TOKEN is present; without it the
+// build still succeeds and you get minified frames.
 const withIntl = withNextIntl(nextConfig);
-const finalConfig = process.env.SENTRY_DSN
-  ? withSentryConfig(withIntl, {
-      silent: !process.env.SENTRY_AUTH_TOKEN,
-      telemetry: false,
-      hideSourceMaps: true,
-      disableLogger: true,
-    })
-  : withIntl;
 
-export default finalConfig;
+export default withSentryConfig(withIntl, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+  telemetry: false,
+  // Upload source maps for readable stack traces, then delete them from the
+  // deployed bundle so the client never serves them.
+  sourcemaps: { deleteSourcemapsAfterUpload: true },
+  disableLogger: true,
+  // Route browser events through our own origin so ad-blockers do not eat
+  // the client error reports we most need from field devices.
+  tunnelRoute: '/monitoring',
+});

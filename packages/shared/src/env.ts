@@ -112,6 +112,15 @@ const serverSchemaBase = z.object({
   WHATSAPP_APP_SECRET: z.string().min(1).optional(),
 
   SENTRY_DSN: z.string().url().optional(),
+  /**
+   * Sentry environment name. Defaults to RAILWAY_ENVIRONMENT_NAME, then
+   * NODE_ENV, so a local run is never filed under production.
+   */
+  SENTRY_ENVIRONMENT: z.string().min(1).optional(),
+  /** Org + project + token for source-map upload at build time. */
+  SENTRY_ORG: z.string().min(1).optional(),
+  SENTRY_PROJECT: z.string().min(1).optional(),
+  SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
 
   LOG_LEVEL: logLevelSchema.default('info'),
 });

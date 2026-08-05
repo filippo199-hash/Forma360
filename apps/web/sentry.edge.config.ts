@@ -1,11 +1,21 @@
 import * as Sentry from '@sentry/nextjs';
+import {
+  buildSentryOptions,
+  resolveEnvironment,
+  resolveRelease,
+} from '@forma360/shared/sentry-options';
 
 /**
- * Sentry initialisation for the edge runtime (middleware, edge API routes).
- * Node APIs are not available here; Sentry's edge-compatible init covers
- * fetch-based request capture only.
+ * Sentry for the edge runtime (proxy/middleware, edge routes). Node APIs
+ * are unavailable here; the SDK's edge build covers fetch-based capture.
  */
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 0.1,
-});
+Sentry.init(
+  buildSentryOptions({
+    dsn: process.env.SENTRY_DSN,
+    runtime: 'edge',
+    environment: resolveEnvironment(process.env),
+    release: resolveRelease(process.env),
+    brand: process.env.BRAND,
+    tracesSampleRate: 0.1,
+  }),
+);
