@@ -82,6 +82,7 @@
     "maintenance": "Maintenance",
     "documents": "Documents",
     "ai": "AI Assistant",
+    "forMe": "For me",
     "settings": "Settings",
     "sites": "Sites",
     "projects": "Projects",
@@ -119,33 +120,8 @@
       "maintenance": "Maintenance"
     },
     "rams": "RAMS",
-    "groupForMe": "For me",
     "groupDoWork": "Do the work",
-    "groupRecords": "Records & registers",
-    "myActions": "My actions",
-    "myAcknowledgements": "My acknowledgements",
-    "report": {
-      "label": "Report",
-      "notSure": "Not sure which? Answer one question →",
-      "options": {
-        "hazard": {
-          "label": "Hazard or near miss",
-          "hint": "Nobody was hurt"
-        },
-        "incident": {
-          "label": "Incident",
-          "hint": "Someone was harmed or made ill"
-        },
-        "permit": {
-          "label": "Permit to work",
-          "hint": "High-risk work needing authorisation"
-        },
-        "inspection": {
-          "label": "Inspection",
-          "hint": "Start a checklist or audit"
-        }
-      }
-    }
+    "groupRecords": "Records & registers"
   },
   "ai": {
     "emptyTitle": "How can I help?",

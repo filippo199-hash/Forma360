@@ -369,8 +369,7 @@ describe('analytics router (PF-5 dashboard)', () => {
     await seedAction({ createdAt: new Date(now - 100 * DAY_MS) });
 
     const t = await callerFor(adminId).analytics.trends();
-    const idx = (d: Date): number =>
-      Math.floor((d.getTime() - t.windowStart.getTime()) / WEEK_MS);
+    const idx = (d: Date): number => Math.floor((d.getTime() - t.windowStart.getTime()) / WEEK_MS);
     expect(t.weeks).toBe(8);
     expect(t.actionsCreated[idx(new Date(now - 15 * DAY_MS))]).toBe(1);
     expect(t.actionsCompleted[idx(new Date(now - 8 * DAY_MS))]).toBe(1);

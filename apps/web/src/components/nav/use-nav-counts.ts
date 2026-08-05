@@ -29,8 +29,9 @@ export function useNavCounts(): NavCounts {
   if (data === undefined) return {};
   const modules = data.modules;
   return {
-    myActions: data.myOpenActions,
-    myAcknowledgements: data.myPendingAcks,
+    // "For me" is one door onto the combined queue, so its badge is the
+    // sum of the two personal queues behind it.
+    forMe: data.myOpenActions + data.myPendingAcks,
     approvals: data.awaitingApproval,
     actions: data.myOpenActions,
     ...(modules.incidents !== undefined ? { incidents: modules.incidents } : {}),

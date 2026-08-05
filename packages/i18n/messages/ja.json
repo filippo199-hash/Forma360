@@ -1437,6 +1437,7 @@
     "maintenance": "Maintenance",
     "documents": "ドキュメント",
     "ai": "AIアシスタント",
+    "forMe": "自分の担当",
     "sites": "サイト",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1473,33 +1474,8 @@
       "maintenance": "保全"
     },
     "rams": "RAMS",
-    "groupForMe": "自分の担当",
     "groupDoWork": "作業を行う",
-    "groupRecords": "記録・台帳",
-    "myActions": "自分のアクション",
-    "myAcknowledgements": "自分の確認事項",
-    "report": {
-      "label": "報告",
-      "notSure": "どちらか迷う場合は、1つの質問に回答 →",
-      "options": {
-        "hazard": {
-          "label": "危険・ヒヤリハット",
-          "hint": "負傷者なし"
-        },
-        "incident": {
-          "label": "インシデント",
-          "hint": "負傷者または健康被害あり"
-        },
-        "permit": {
-          "label": "作業許可",
-          "hint": "許可が必要な高リスク作業"
-        },
-        "inspection": {
-          "label": "点検",
-          "hint": "チェックリストまたは監査を開始"
-        }
-      }
-    }
+    "groupRecords": "記録・台帳"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

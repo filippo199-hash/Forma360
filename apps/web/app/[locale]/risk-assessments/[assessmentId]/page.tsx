@@ -209,9 +209,7 @@ export default function RiskAssessmentDetailPage() {
     .flatMap((h) => h.controls)
     .filter((c) => c.status === 'planned' && c.actionId === null);
   const isUntitled = title.trim().length === 0 || title === t('untitled');
-  const currentVersionRow = versions.find(
-    (v) => v.versionNumber === assessment.currentVersion,
-  );
+  const currentVersionRow = versions.find((v) => v.versionNumber === assessment.currentVersion);
   const nextVersionNumber = assessment.currentVersion + (hasUnpublishedChanges ? 1 : 0);
   const myAckPending =
     myAcknowledgement !== null &&
@@ -311,8 +309,7 @@ export default function RiskAssessmentDetailPage() {
     }
   }
 
-  const showPublishButton =
-    editable && (assessment.status !== 'active' || hasUnpublishedChanges);
+  const showPublishButton = editable && (assessment.status !== 'active' || hasUnpublishedChanges);
   const publishButton = showPublishButton ? (
     <Button type="button" disabled={publish.isPending} onClick={startPublish}>
       {publish.isPending
@@ -666,7 +663,9 @@ export default function RiskAssessmentDetailPage() {
             <Tabs
               value={panelTab}
               onValueChange={(v) =>
-                setPanelTab(v === 'distribution' ? 'distribution' : v === 'versions' ? 'versions' : 'review')
+                setPanelTab(
+                  v === 'distribution' ? 'distribution' : v === 'versions' ? 'versions' : 'review',
+                )
               }
             >
               <TabsList>
@@ -794,10 +793,7 @@ export default function RiskAssessmentDetailPage() {
               assessment.matrix,
             );
             return (
-              <div
-                key={h.id}
-                className="rounded border border-black p-2 [break-inside:avoid]"
-              >
+              <div key={h.id} className="rounded border border-black p-2 [break-inside:avoid]">
                 <p className="font-bold">
                   {index + 1}. {h.hazard}
                   {h.harmDescription.length > 0 ? (
@@ -920,9 +916,7 @@ export default function RiskAssessmentDetailPage() {
               <p className="text-sm">
                 {t('publishConfirm.actionsIntro', { count: pendingPlanned.length })}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {t('publishConfirm.assignmentsHint')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('publishConfirm.assignmentsHint')}</p>
               <ul className="max-h-72 space-y-2 overflow-y-auto">
                 {pendingPlanned.map((c) => {
                   const a = assignments[c.id] ?? { assigneeIds: [], due: defaultDueDateInput() };
@@ -931,9 +925,7 @@ export default function RiskAssessmentDetailPage() {
                       <span className="block text-sm">{c.description}</span>
                       <div className="flex flex-wrap items-end gap-2">
                         <div className="min-w-48 flex-1 space-y-1">
-                          <Label className="text-xs">
-                            {t('publishConfirm.assigneeLabel')}
-                          </Label>
+                          <Label className="text-xs">{t('publishConfirm.assigneeLabel')}</Label>
                           <GroupUserSelector
                             mode="users"
                             multiple={false}

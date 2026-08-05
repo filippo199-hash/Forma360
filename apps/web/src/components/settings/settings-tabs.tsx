@@ -20,7 +20,8 @@ type TabKey =
   | 'permissions'
   | 'groups'
   | 'customFields'
-  | 'riskMatrix' | 'audit';
+  | 'riskMatrix'
+  | 'audit';
 
 /**
  * Folder segment for each tab. Most tabs live at a folder named after the key;

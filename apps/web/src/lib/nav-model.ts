@@ -54,8 +54,7 @@ import { grantsAdminAccess, type PermissionKey } from '@forma360/permissions/cat
 export type NavItemKey =
   | 'analytics'
   | 'ai'
-  | 'myActions'
-  | 'myAcknowledgements'
+  | 'forMe'
   | 'inspections'
   | 'issues'
   | 'incidents'
@@ -98,7 +97,7 @@ export type NavChildKey =
  * three orientation entries that answer "where am I and what is mine",
  * which practitioners reach for before any module.
  */
-export type NavSectionKey = 'groupForMe' | 'groupDoWork' | 'groupRecords' | 'groupOrg';
+export type NavSectionKey = 'groupDoWork' | 'groupRecords' | 'groupOrg';
 
 /**
  * Counts the menu is allowed to show.
@@ -110,8 +109,7 @@ export type NavSectionKey = 'groupForMe' | 'groupDoWork' | 'groupRecords' | 'gro
  * still belong on the dashboard, not in the chrome.
  */
 export type NavBadgeKey =
-  | 'myActions'
-  | 'myAcknowledgements'
+  | 'forMe'
   | 'approvals'
   | 'actions'
   | 'incidents'
@@ -162,8 +160,13 @@ const BRAND_MODULE_FOR: Partial<Record<NavItemKey, BrandOnlyModule>> = {
 function sectionBlueprint(locale: string): readonly NavSection[] {
   const p = (path: string): string => `/${locale}${path}`;
   return [
-    // Above the rule: the two entries that answer *about* everything
-    // rather than being a place you work (Lindqvist).
+    // Above the rule: the entries that answer *about* everything rather
+    // than being a place you work (Lindqvist), plus the caller's own
+    // queue. "For me" is one destination rather than a group of personal
+    // doors — for the ~90% who are not safety professionals it *is* the
+    // application (Bello), and the combined queue at /my-work already
+    // merges actions, acknowledgements, signatures and drafts into one
+    // list. Ungated: it can only ever show rows addressed to the caller.
     {
       key: null,
       items: [
@@ -174,21 +177,7 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           permission: 'analytics.view',
         },
         { key: 'ai', href: p('/ai'), icon: Bot },
-      ],
-    },
-    // FOR ME — for the ~90% who are not safety professionals, this block
-    // *is* the application (Bello). Ungated: both entries can only ever
-    // show rows addressed to the caller.
-    {
-      key: 'groupForMe',
-      items: [
-        { key: 'myActions', href: p('/my-work/actions'), icon: ListTodo, badge: 'myActions' },
-        {
-          key: 'myAcknowledgements',
-          href: p('/my-work/acknowledgements'),
-          icon: BadgeCheck,
-          badge: 'myAcknowledgements',
-        },
+        { key: 'forMe', href: p('/my-work'), icon: ListTodo, badge: 'forMe' },
       ],
     },
     // DO THE WORK — the golden thread in reading order: what you planned
@@ -454,12 +443,11 @@ export function activeNavItem(
  * itself between sessions defeats the muscle memory that makes it worth
  * having — and the last slot is always "more", which opens the full menu.
  *
- * `Report` (raise an observation) outranks browsing: on a phone, in the
- * field, the overwhelmingly common intent is to record something.
+ * The caller's own queue leads: on a phone, in the field, "what is waiting
+ * on me" beats browsing any register.
  */
 export const MOBILE_TAB_PRIORITY: readonly NavItemKey[] = [
-  'myActions',
-  'myAcknowledgements',
+  'forMe',
   'issues',
   'incidents',
   'inspections',

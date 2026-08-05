@@ -1437,6 +1437,7 @@
     "maintenance": "Maintenance",
     "documents": "文档",
     "ai": "AI助手",
+    "forMe": "与我相关",
     "sites": "站点",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1473,33 +1474,8 @@
       "maintenance": "维护"
     },
     "rams": "RAMS",
-    "groupForMe": "与我相关",
     "groupDoWork": "开展工作",
-    "groupRecords": "记录与台账",
-    "myActions": "我的行动",
-    "myAcknowledgements": "我的确认事项",
-    "report": {
-      "label": "报告",
-      "notSure": "不确定选哪个？回答一个问题 →",
-      "options": {
-        "hazard": {
-          "label": "危险源或未遂事件",
-          "hint": "无人受伤"
-        },
-        "incident": {
-          "label": "事件",
-          "hint": "有人受伤或患病"
-        },
-        "permit": {
-          "label": "作业许可",
-          "hint": "需授权的高风险作业"
-        },
-        "inspection": {
-          "label": "检查",
-          "hint": "开始检查表或审核"
-        }
-      }
-    }
+    "groupRecords": "记录与台账"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

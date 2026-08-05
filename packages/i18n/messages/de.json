@@ -1444,6 +1444,7 @@
     "maintenance": "Maintenance",
     "documents": "Dokumente",
     "ai": "KI-Assistent",
+    "forMe": "Für mich",
     "sites": "Standorte",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1480,33 +1481,8 @@
       "maintenance": "Wartung"
     },
     "rams": "RAMS",
-    "groupForMe": "Für mich",
     "groupDoWork": "Die Arbeit erledigen",
-    "groupRecords": "Nachweise & Register",
-    "myActions": "Meine Maßnahmen",
-    "myAcknowledgements": "Meine Bestätigungen",
-    "report": {
-      "label": "Melden",
-      "notSure": "Unsicher? Eine Frage beantworten →",
-      "options": {
-        "hazard": {
-          "label": "Gefährdung oder Beinaheunfall",
-          "hint": "Niemand wurde verletzt"
-        },
-        "incident": {
-          "label": "Vorfall",
-          "hint": "Jemand wurde verletzt oder erkrankte"
-        },
-        "permit": {
-          "label": "Arbeitserlaubnis",
-          "hint": "Hochriskante Arbeit mit Genehmigungspflicht"
-        },
-        "inspection": {
-          "label": "Prüfung",
-          "hint": "Checkliste oder Audit starten"
-        }
-      }
-    }
+    "groupRecords": "Nachweise & Register"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

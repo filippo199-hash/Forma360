@@ -1437,6 +1437,7 @@
     "maintenance": "Maintenance",
     "documents": "Documenten",
     "ai": "AI-assistent",
+    "forMe": "Voor mij",
     "sites": "Locaties",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1473,33 +1474,8 @@
       "maintenance": "Onderhoud"
     },
     "rams": "RAMS",
-    "groupForMe": "Voor mij",
     "groupDoWork": "Het werk doen",
-    "groupRecords": "Dossiers en registers",
-    "myActions": "Mijn acties",
-    "myAcknowledgements": "Mijn bevestigingen",
-    "report": {
-      "label": "Melden",
-      "notSure": "Twijfel? Beantwoord één vraag →",
-      "options": {
-        "hazard": {
-          "label": "Gevaar of bijna-ongeval",
-          "hint": "Niemand raakte gewond"
-        },
-        "incident": {
-          "label": "Incident",
-          "hint": "Iemand raakte gewond of werd ziek"
-        },
-        "permit": {
-          "label": "Werkvergunning",
-          "hint": "Risicovol werk waarvoor toestemming nodig is"
-        },
-        "inspection": {
-          "label": "Inspectie",
-          "hint": "Start een checklist of audit"
-        }
-      }
-    }
+    "groupRecords": "Dossiers en registers"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

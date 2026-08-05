@@ -119,7 +119,8 @@ export default function PointOfWorkPage() {
 
   const selectedControls = [...carried.filter((c) => ticked.has(c.key)), ...added];
   const allPpe =
-    selectedControls.length > 0 && selectedControls.every((c) => c.tier === 'rpe' || c.tier === 'ppe');
+    selectedControls.length > 0 &&
+    selectedControls.every((c) => c.tier === 'rpe' || c.tier === 'ppe');
   const cmrBlocked =
     substance !== undefined &&
     (substance.isCarcinogen || substance.isMutagen) &&
@@ -461,7 +462,11 @@ export default function PointOfWorkPage() {
                   aria-label={t('tierLabel')}
                   value={addedTier}
                   onChange={(e) =>
-                    setAddedTier(TIERS.includes(e.target.value as Tier) ? (e.target.value as Tier) : 'administrative')
+                    setAddedTier(
+                      TIERS.includes(e.target.value as Tier)
+                        ? (e.target.value as Tier)
+                        : 'administrative',
+                    )
                   }
                   className="rounded-md border border-input bg-background px-2 py-2 text-xs"
                 >
@@ -507,7 +512,11 @@ export default function PointOfWorkPage() {
           <Card>
             <CardContent className="space-y-3 p-4">
               <p className="text-xs text-muted-foreground">{tEditor('signOff.statement')}</p>
-              <Button className="h-11 w-full" disabled={!ready || busy} onClick={() => void submit()}>
+              <Button
+                className="h-11 w-full"
+                disabled={!ready || busy}
+                onClick={() => void submit()}
+              >
                 {busy ? t('publishing') : t('signPublishButton')}
               </Button>
             </CardContent>

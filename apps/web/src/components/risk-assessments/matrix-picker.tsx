@@ -1,11 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import {
-  bandChipClasses,
-  bandFor,
-  type MatrixThresholds,
-} from '../../lib/risk-matrix';
+import { bandChipClasses, bandFor, type MatrixThresholds } from '../../lib/risk-matrix';
 
 const STEPS = [1, 2, 3, 4, 5] as const;
 
@@ -58,7 +54,11 @@ export function MatrixPicker({
           {t('hazards.severity')}
         </span>
         <div>
-          <div className="grid grid-cols-[auto_repeat(5,minmax(0,1fr))] gap-0.5" role="group" aria-label={label}>
+          <div
+            className="grid grid-cols-[auto_repeat(5,minmax(0,1fr))] gap-0.5"
+            role="group"
+            aria-label={label}
+          >
             {[...STEPS].reverse().map((s) => (
               <div key={`row-${s}`} className="contents">
                 <span

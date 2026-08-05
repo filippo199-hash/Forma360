@@ -105,7 +105,8 @@ async function notifyDecision(
         documentNumber: input.documentNumber ?? '',
         decisionLine:
           input.decision === 'approved' ? 'APPROVED it' : `REJECTED it back to you for changes`,
-        commentLine: input.comment !== null && input.comment.length > 0 ? `\n\nComment: ${input.comment}` : '',
+        commentLine:
+          input.comment !== null && input.comment.length > 0 ? `\n\nComment: ${input.comment}` : '',
         viewUrl: `${approvalsDeps.appUrl.replace(/\/$/, '')}/en/inspections/${input.inspectionId}/status`,
       },
     });

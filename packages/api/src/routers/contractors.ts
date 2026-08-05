@@ -1383,10 +1383,7 @@ export const contractorsRouter = router({
         // surprise. One derivation per distinct contractor on today's list.
         const complianceByContractor = new Map<string, ComplianceStatus>();
         for (const cid of new Set(visits.map((v) => v.contractorId))) {
-          complianceByContractor.set(
-            cid,
-            await contractorComplianceStatus(ctx.db, tenantId, cid),
-          );
+          complianceByContractor.set(cid, await contractorComplianceStatus(ctx.db, tenantId, cid));
         }
         return {
           visits: visits.map((v) => ({
@@ -1440,11 +1437,7 @@ export const contractorsRouter = router({
             throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit is cancelled' });
           // PF-19: the kiosk has no override — a non-compliant contractor is
           // sent to the site office.
-          const compliance = await contractorComplianceStatus(
-            ctx.db,
-            tenantId,
-            visit.contractorId,
-          );
+          const compliance = await contractorComplianceStatus(ctx.db, tenantId, visit.contractorId);
           if (compliance === 'non_compliant') {
             throw new TRPCError({ code: 'FORBIDDEN', message: 'contractor_non_compliant' });
           }
