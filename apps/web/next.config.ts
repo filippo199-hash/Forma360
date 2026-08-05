@@ -28,7 +28,25 @@ const nextConfig: NextConfig = {
   // puppeteer-core is dynamically imported by @forma360/render at runtime for
   // PDF rendering; keep it external so Next resolves it from node_modules
   // instead of bundling it (and its chromium glue) into the server build.
-  serverExternalPackages: ['pg', 'bullmq', 'ioredis', '@aws-sdk/client-s3', 'puppeteer-core'],
+  //
+  // pino + pino-pretty are here for a sharper reason: pino spawns its
+  // transport in a worker thread via `thread-stream`, which locates the
+  // worker with `join(__dirname, 'lib', 'worker.js')`. Bundled, `__dirname`
+  // becomes the chunk directory and the path resolves to
+  // `.next/server/chunks/lib/worker.js` — a file webpack never emits. The
+  // worker dies at boot, takes the logger's output with it, and raises an
+  // uncaught exception. Externalised, pino resolves from node_modules and
+  // finds its own worker. Both are declared in this package's package.json
+  // so Node can resolve them from `.next/server` under pnpm.
+  serverExternalPackages: [
+    'pg',
+    'bullmq',
+    'ioredis',
+    '@aws-sdk/client-s3',
+    'puppeteer-core',
+    'pino',
+    'pino-pretty',
+  ],
 
   // NOTE: production builds run `next build --webpack` (see package.json).
   // Turbopack emits *indexed* source maps — a `sections` array with an empty
