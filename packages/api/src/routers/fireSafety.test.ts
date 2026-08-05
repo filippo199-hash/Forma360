@@ -1087,7 +1087,6 @@ describe('fireSafety router', () => {
     expect(loaded.referenceNumber).toBe('FRA-10000');
   });
 
-
   it('FS-E30: a check links to an asset and assetHistory joins the service history (PF-17)', async () => {
     const caller = callerFor(adminId);
     const { id: buildingId } = await createOffice(caller);

@@ -41,9 +41,7 @@ const BAND_ORDER: Record<RiskBand, number> = {
 };
 
 export function isRiskBandLevel(value: unknown): value is RiskBandLevel {
-  return (
-    typeof value === 'string' && (RISK_BAND_LEVELS as ReadonlyArray<string>).includes(value)
-  );
+  return typeof value === 'string' && (RISK_BAND_LEVELS as ReadonlyArray<string>).includes(value);
 }
 
 /** Numeric rank for comparing bands (none < low < medium < high < critical). */

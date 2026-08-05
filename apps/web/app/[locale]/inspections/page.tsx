@@ -967,7 +967,6 @@ function InspectionRowMenu({
   );
 }
 
-
 /**
  * "My scheduled inspections" (PF-3): pending + missed occurrences for
  * the signed-in assignee, one-click start. Starting links the created
@@ -1021,9 +1020,7 @@ function MyScheduledCard({ locale }: { locale: string }) {
                   size="sm"
                   variant={overdue ? 'default' : 'outline'}
                   disabled={start.isPending || o.inspectionId !== null}
-                  onClick={() =>
-                    start.mutate({ templateId: o.templateId, occurrenceId: o.id })
-                  }
+                  onClick={() => start.mutate({ templateId: o.templateId, occurrenceId: o.id })}
                 >
                   {t('startNow')}
                 </Button>

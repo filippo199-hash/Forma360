@@ -163,9 +163,7 @@ describe('myWork (ADR 0014)', () => {
       createdByUserId: adminId,
       ...over,
     });
-    await db
-      .insert(schema.headsUpRecipients)
-      .values({ id: newId(), tenantId, headsUpId, userId });
+    await db.insert(schema.headsUpRecipients).values({ id: newId(), tenantId, headsUpId, userId });
     return headsUpId;
   }
 
@@ -213,7 +211,11 @@ describe('myWork (ADR 0014)', () => {
       title: 'Late',
       dueAt: new Date(Date.now() - 2 * DAY),
     });
-    await seedAction({ assigneeUserId: workerId, title: 'Soon', dueAt: new Date(Date.now() + DAY) });
+    await seedAction({
+      assigneeUserId: workerId,
+      title: 'Soon',
+      dueAt: new Date(Date.now() + DAY),
+    });
     await seedAction({ assigneeUserId: workerId, title: 'Undated' });
     await seedInspection({ status: 'in_progress', conductedBy: workerId, title: 'Half-done walk' });
 

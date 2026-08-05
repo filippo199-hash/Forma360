@@ -620,7 +620,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'heads-up-archived' });
         }
 
-const result = await publishHeadsUp(ctx.db, {
+        const result = await publishHeadsUp(ctx.db, {
           tenantId: ctx.tenantId,
           headsUpId: headsUp.id,
           userIds: input.userIds,

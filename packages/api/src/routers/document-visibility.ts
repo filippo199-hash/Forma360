@@ -110,8 +110,7 @@ export function makeFolderGrantChecker(
     const cached = memo.get(folderId);
     if (cached !== undefined) return cached;
     memo.set(folderId, false); // cycle guard
-    const result =
-      grants.folderIds.has(folderId) || granted(byId.get(folderId)?.parentId ?? null);
+    const result = grants.folderIds.has(folderId) || granted(byId.get(folderId)?.parentId ?? null);
     memo.set(folderId, result);
     return result;
   }

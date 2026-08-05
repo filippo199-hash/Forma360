@@ -528,8 +528,8 @@ export default function FireBuildingPage() {
                           <p className="mt-0.5 text-xs text-muted-foreground">
                             {t('logbook.linkedAssetLine', {
                               name:
-                                (assetsList.data ?? []).find((a) => a.id === check.assetId)
-                                  ?.name ?? check.assetId,
+                                (assetsList.data ?? []).find((a) => a.id === check.assetId)?.name ??
+                                check.assetId,
                             })}
                           </p>
                         ) : null}

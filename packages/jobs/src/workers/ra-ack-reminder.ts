@@ -43,10 +43,7 @@ const DAY_MS = 86_400_000;
  * Pending acknowledgements on active assessments that are due a chase.
  * Pure — the handler and tests share it.
  */
-export async function findDueAckReminders(
-  db: Database,
-  now: Date,
-): Promise<PendingAckReminder[]> {
+export async function findDueAckReminders(db: Database, now: Date): Promise<PendingAckReminder[]> {
   const graceCutoff = new Date(now.getTime() - FIRST_REMINDER_GRACE_DAYS * DAY_MS);
   const repeatCutoff = new Date(now.getTime() - REPEAT_REMINDER_DAYS * DAY_MS);
   const dueSoonCutoff = new Date(now.getTime() + DUE_SOON_DAYS * DAY_MS);
@@ -64,10 +61,7 @@ export async function findDueAckReminders(
       referenceNumber: riskAssessments.referenceNumber,
     })
     .from(riskAssessmentAcknowledgements)
-    .innerJoin(
-      riskAssessments,
-      eq(riskAssessments.id, riskAssessmentAcknowledgements.assessmentId),
-    )
+    .innerJoin(riskAssessments, eq(riskAssessments.id, riskAssessmentAcknowledgements.assessmentId))
     .innerJoin(user, eq(user.id, riskAssessmentAcknowledgements.userId))
     .where(
       and(

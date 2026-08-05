@@ -24,9 +24,7 @@ export interface HeadsUpPublishDeps {
   now?: () => Date;
 }
 
-export async function runHeadsUpPublish(
-  deps: HeadsUpPublishDeps,
-): Promise<{ published: number }> {
+export async function runHeadsUpPublish(deps: HeadsUpPublishDeps): Promise<{ published: number }> {
   const now = deps.now?.() ?? new Date();
   const due = await deps.db
     .select({
@@ -36,7 +34,11 @@ export async function runHeadsUpPublish(
     })
     .from(headsUps)
     .where(
-      and(eq(headsUps.status, 'draft'), isNotNull(headsUps.publishAt), lte(headsUps.publishAt, now)),
+      and(
+        eq(headsUps.status, 'draft'),
+        isNotNull(headsUps.publishAt),
+        lte(headsUps.publishAt, now),
+      ),
     )
     .limit(MAX_PUBLISHES_PER_RUN);
 

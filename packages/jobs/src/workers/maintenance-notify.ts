@@ -84,11 +84,7 @@ export function createMaintenanceNotifyHandler(deps: MaintenanceNotifyDeps) {
     // PF-18: recipients are the people who can act — holders of
     // assets.maintenance.manage (admins included via org.settings) — not
     // every user in the tenant.
-    const adminRows = await usersHoldingPermission(
-      deps.db,
-      tenantId,
-      'assets.maintenance.manage',
-    );
+    const adminRows = await usersHoldingPermission(deps.db, tenantId, 'assets.maintenance.manage');
 
     const status =
       job.data.statusLabel ??

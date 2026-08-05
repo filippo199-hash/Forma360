@@ -148,8 +148,7 @@ export default function AnalyticsPage() {
   // the needs-attention semantics live in exactly one place. It needs
   // fireSafety.view — skip the query (and the tile) without it.
   const canSeeFire =
-    brandHasModule(activeBrand.id, 'fireSafety') &&
-    (isAdmin || perms.includes('fireSafety.view'));
+    brandHasModule(activeBrand.id, 'fireSafety') && (isAdmin || perms.includes('fireSafety.view'));
   const fire = trpc.fireSafety.overview.useQuery(undefined, { enabled: canSeeFire });
 
   const d = dashboard.data;

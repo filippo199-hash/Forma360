@@ -241,7 +241,10 @@ export const defaultTemplatedTemplateLoader: TemplatedTemplateLoader = async (ke
       const { fileURLToPath } = await import('node:url');
       const { dirname, join } = await import('node:path');
       const here = dirname(fileURLToPath(import.meta.url));
-      const raw = await readFile(join(here, '..', '..', 'i18n', 'emails', locale, `${key}.json`), 'utf-8');
+      const raw = await readFile(
+        join(here, '..', '..', 'i18n', 'emails', locale, `${key}.json`),
+        'utf-8',
+      );
       return templateSchema.parse(JSON.parse(raw));
     } catch {
       // fall through to English

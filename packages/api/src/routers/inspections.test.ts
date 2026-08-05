@@ -715,10 +715,12 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
       expect(res.status).toBe('completed');
 
       // requireAction created exactly one action for this question.
-      const actions = (await caller.actions.list({
-        sourceType: 'inspection',
-        sourceId: inspectionId,
-      })).rows;
+      const actions = (
+        await caller.actions.list({
+          sourceType: 'inspection',
+          sourceId: inspectionId,
+        })
+      ).rows;
       const created = actions.filter((a) => a.sourceItemId === itemId);
       expect(created).toHaveLength(1);
       expect(created[0]?.title).toBe('Fix the issue');
@@ -736,10 +738,12 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
       const res = await caller.inspections.submit({ inspectionId });
       expect(res.status).toBe('completed');
 
-      const actions = (await caller.actions.list({
-        sourceType: 'inspection',
-        sourceId: inspectionId,
-      })).rows;
+      const actions = (
+        await caller.actions.list({
+          sourceType: 'inspection',
+          sourceId: inspectionId,
+        })
+      ).rows;
       expect(actions.filter((a) => a.sourceItemId === itemId)).toHaveLength(0);
     });
 
@@ -753,10 +757,12 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
         responses: { [itemId]: badId, [`evidence:${itemId}`]: ['k1'] },
       });
       await caller.inspections.submit({ inspectionId });
-      const actions = (await caller.actions.list({
-        sourceType: 'inspection',
-        sourceId: inspectionId,
-      })).rows;
+      const actions = (
+        await caller.actions.list({
+          sourceType: 'inspection',
+          sourceId: inspectionId,
+        })
+      ).rows;
       expect(actions.filter((a) => a.sourceItemId === itemId)).toHaveLength(1);
     });
   });
