@@ -19,7 +19,6 @@ import {
   type NavSection,
   type NavSectionKey,
 } from '../lib/nav-model';
-import { ReportButton } from './nav/report-button';
 import { usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
 import { useNavCounts, type NavCounts } from './nav/use-nav-counts';
@@ -277,7 +276,6 @@ export function SiteNavItems({
       aria-label={t('primaryLabel')}
       className={cn('flex flex-1 flex-col overflow-y-auto p-3', collapsed && 'px-2')}
     >
-      <ReportButton locale={locale} collapsed={collapsed} {...(onNavigate ? { onNavigate } : {})} />
       {sections.map(renderSection)}
       <div className="mt-auto pt-3">{renderItem(settingsNavItem(locale), counts)}</div>
     </nav>

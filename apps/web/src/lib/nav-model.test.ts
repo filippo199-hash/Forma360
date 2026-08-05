@@ -70,10 +70,9 @@ describe('nav model (ADR 0014)', () => {
     expect(reporter).not.toContain('permits');
     expect(reporter).not.toContain('analytics');
     // Unpermissioned entries stay for everyone: the assistant and the
-    // caller's own two doors are not module surfaces.
+    // caller's own queue are not module surfaces.
     expect(reporter).toContain('ai');
-    expect(reporter).toContain('myActions');
-    expect(reporter).toContain('myAcknowledgements');
+    expect(reporter).toContain('forMe');
 
     // The administrator sees every entry the brand ships.
     expect(keysOf(ADMIN).length).toBeGreaterThan(reporter.length);
@@ -89,8 +88,10 @@ describe('nav model (ADR 0014)', () => {
     expect(sections.map((s) => s.key)).toContain('groupDoWork');
     expect(sections.map((s) => s.key)).not.toContain('groupOrg');
     expect(sections.map((s) => s.key)).not.toContain('groupRecords');
-    // The personal block survives every gate — it is nobody's module.
-    expect(sections.map((s) => s.key)).toContain('groupForMe');
+    // The unlabelled top block survives every gate — "For me" and the
+    // assistant are nobody's module.
+    expect(sections.map((s) => s.key)).toContain(null);
+    expect(flattenNavItems(sections).map((i) => i.key)).toContain('forMe');
     // No section ever renders empty.
     for (const section of sectionsFor(ADMIN)) expect(section.items.length).toBeGreaterThan(0);
   });
@@ -134,14 +135,12 @@ describe('nav model (ADR 0014)', () => {
     expect(isNavItemActive(inspections, '/en/approvals')).toBe(false);
     expect(isNavItemActive(inspections, '/en/schedules')).toBe(false);
 
-    // The two personal doors share the /my-work trunk but are distinct
-    // routes, so exactly one of them ever lights up.
-    const myActions = items.find((i) => i.key === 'myActions') as NavItem;
-    const myAcks = items.find((i) => i.key === 'myAcknowledgements') as NavItem;
-    expect(isNavItemActive(myActions, '/en/my-work/actions')).toBe(true);
-    expect(isNavItemActive(myAcks, '/en/my-work/actions')).toBe(false);
-    expect(isNavItemActive(myActions, '/en/my-work/acknowledgements')).toBe(false);
-    expect(isNavItemActive(myAcks, '/en/my-work/acknowledgements')).toBe(true);
+    // "For me" owns the whole /my-work trunk, so the two personal
+    // sub-routes still light it up rather than nothing.
+    const forMe = items.find((i) => i.key === 'forMe') as NavItem;
+    expect(isNavItemActive(forMe, '/en/my-work')).toBe(true);
+    expect(isNavItemActive(forMe, '/en/my-work/actions')).toBe(true);
+    expect(isNavItemActive(forMe, '/en/my-work/acknowledgements')).toBe(true);
 
     // A shared prefix that is not a path segment must not match.
     const sites = items.find((i) => i.key === 'sites') as NavItem;
@@ -175,32 +174,22 @@ describe('nav model (ADR 0014)', () => {
 
   it('NAV-E08: the tab bar fills by priority, skips what is gated, and is bounded', () => {
     const admin = buildMobileTabs(sectionsFor(ADMIN));
-    expect(admin.map((t) => t.key)).toEqual([
-      'myActions',
-      'myAcknowledgements',
-      'issues',
-      'incidents',
-    ]);
+    expect(admin.map((t) => t.key)).toEqual(['forMe', 'issues', 'incidents', 'inspections']);
     expect(admin.length).toBe(MOBILE_TAB_SLOTS);
 
     // Forma360 ships no brand modules, so Incidents drops out and the
     // next core entry is promoted rather than leaving a gap.
     expect(buildMobileTabs(sectionsFor(ADMIN, 'forma360')).map((t) => t.key)).toEqual([
-      'myActions',
-      'myAcknowledgements',
+      'forMe',
       'issues',
       'inspections',
+      'actions',
     ]);
 
     // A permit-only viewer falls through to the entries they can open —
-    // the personal block is ungated, so it always leads.
+    // "For me" is ungated, so it always leads.
     const permitOnly = buildMobileTabs(sectionsFor(['permits.view']));
-    expect(permitOnly.map((t) => t.key)).toEqual([
-      'myActions',
-      'myAcknowledgements',
-      'permits',
-      'ai',
-    ]);
+    expect(permitOnly.map((t) => t.key)).toEqual(['forMe', 'permits', 'ai']);
     expect(permitOnly.length).toBeLessThanOrEqual(MOBILE_TAB_SLOTS);
   });
 
@@ -210,9 +199,8 @@ describe('nav model (ADR 0014)', () => {
     expect(badged.map((i) => i.key).sort()).toEqual([
       'actions',
       'fireSafety',
+      'forMe',
       'incidents',
-      'myAcknowledgements',
-      'myActions',
       'permits',
       'riskAssessments',
     ]);

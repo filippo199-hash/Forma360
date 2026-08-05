@@ -1444,6 +1444,7 @@
     "maintenance": "Maintenance",
     "documents": "Documentos",
     "ai": "Asistente IA",
+    "forMe": "Para mí",
     "sites": "Sitios",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1480,33 +1481,8 @@
       "maintenance": "Mantenimiento"
     },
     "rams": "RAMS",
-    "groupForMe": "Para mí",
     "groupDoWork": "Hacer el trabajo",
-    "groupRecords": "Registros y expedientes",
-    "myActions": "Mis acciones",
-    "myAcknowledgements": "Mis confirmaciones",
-    "report": {
-      "label": "Notificar",
-      "notSure": "¿No está seguro? Responda una pregunta →",
-      "options": {
-        "hazard": {
-          "label": "Peligro o cuasi accidente",
-          "hint": "Nadie resultó herido"
-        },
-        "incident": {
-          "label": "Incidente",
-          "hint": "Alguien resultó herido o enfermó"
-        },
-        "permit": {
-          "label": "Permiso de trabajo",
-          "hint": "Trabajo de alto riesgo que requiere autorización"
-        },
-        "inspection": {
-          "label": "Inspección",
-          "hint": "Iniciar una lista de verificación o auditoría"
-        }
-      }
-    }
+    "groupRecords": "Registros y expedientes"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

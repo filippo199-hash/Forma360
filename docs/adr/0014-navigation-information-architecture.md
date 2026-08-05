@@ -238,3 +238,30 @@ should never have to make from a menu, and getting it wrong sends a
 serious injury down a path where nobody is alerted. The ＋Report
 affordance states the distinction in its labels, and `/report` asks the
 one question that settles it — *was anyone harmed?* — then routes.
+
+## Amendment (5 Aug 2026) — the menu carries destinations only
+
+Two of the panel's additions are withdrawn from the menu. Neither the
+model, the gates nor the testing discipline changes.
+
+- **The ＋Report button is gone.** A dropdown of *verbs* pinned above a
+  list of *places* made the top of the menu two different kinds of thing,
+  and every destination behind it is one tap away inside its module. The
+  `/report` triage route survives and still asks the question that
+  settles hazard-versus-incident; it is now reached from the modules and
+  from links, not from the chrome. `nav/report-button.tsx` and the
+  `nav.report` strings are deleted.
+- **"For me" is one entry, not a group.** *My actions* and *My
+  acknowledgements* were two doors onto `/my-work`, which already merges
+  actions, acknowledgements, signatures, drafts and approvals into one
+  overdue-first queue with filter chips. A heading plus two rows to reach
+  a page that then re-splits itself is a group that earns nothing, so the
+  `groupForMe` section collapses into a single `forMe` entry sitting
+  under Ask AI in the unlabelled top block. `/my-work/actions` and
+  `/my-work/acknowledgements` stay routable for direct links; the parent
+  entry lights up for all three (NAV-E05).
+
+Consequences: `NavBadgeKey` loses `myActions` / `myAcknowledgements` and
+gains `forMe`, whose count is the sum of the two personal queues — one
+number for one door. `MOBILE_TAB_PRIORITY` leads with `forMe`, so the
+tab bar promotes one more browsable module than before.
