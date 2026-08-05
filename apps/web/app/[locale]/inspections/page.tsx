@@ -91,7 +91,7 @@ export default function InspectionsListPage() {
   const locale = params.locale ?? 'en';
 
   return (
-    <div className="px-4 py-4 sm:py-6">
+    <div>
       <SectionTabBar activeTab="inspections" locale={locale} />
       <InspectionsTab locale={locale} />
     </div>

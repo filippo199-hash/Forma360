@@ -32,7 +32,7 @@ export default function ApprovalsPage() {
   const { data, isLoading } = trpc.inspections.list.useQuery({ status: 'awaiting_approval' });
 
   return (
-    <div className="px-4 py-6">
+    <div>
       <SectionTabBar activeTab="approvals" locale={locale} />
 
       <div className="space-y-4">

@@ -37,7 +37,7 @@ export default function SchedulesPage() {
   const { data: templates } = trpc.templates.list.useQuery({});
 
   return (
-    <div className="px-4 py-4 sm:py-6">
+    <div className="space-y-4 sm:space-y-6">
       <SectionTabBar activeTab="schedules" locale={locale} />
 
       <div className="space-y-4">

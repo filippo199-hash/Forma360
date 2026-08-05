@@ -123,7 +123,7 @@ export default function RiskAssessmentsPage() {
   ) : null;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 px-4 py-6">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">{t('title')}</h1>

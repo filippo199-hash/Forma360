@@ -57,7 +57,7 @@ export default function FireSafetyHubPage() {
   ].filter((a) => a.count > 0);
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+    <main>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{t('title')}</h1>

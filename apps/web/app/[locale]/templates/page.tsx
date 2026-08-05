@@ -137,7 +137,7 @@ export default function TemplatesListPage() {
   const totalCount = rows?.filter((r) => normaliseStatus(r.status) !== 'archived').length ?? 0;
 
   return (
-    <div className="px-4 py-6">
+    <div>
       <SectionTabBar activeTab="templates" locale={locale} />
       <div className="space-y-4">
         <header className="flex flex-wrap items-center justify-between gap-3">
