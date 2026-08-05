@@ -197,3 +197,70 @@ Sentry's **Business** plan. Until forma360 upgrades, the MCP connector will
 keep returning `403: Your organization has disabled this feature for
 members`, and new projects must be created through the browser. Not a
 settings mistake — a plan tier.
+
+---
+
+## Addendum 2 — 5 August 2026, source maps
+
+Stack traces stayed minified through three attempted fixes. The first two
+diagnoses were wrong and worth recording, because both were plausible.
+
+**Wrong diagnosis 1: the maps went to the wrong project.** True but not the
+cause. `SENTRY_PROJECT` was set to `freehs-web` while the unreadable frames
+were `_next/server/` chunks, which land in `freehs-server`. Pointing it at
+`freehs-server` moved the bundles across; the frames still did not resolve.
+
+**Wrong diagnosis 2: a path/`urlPrefix` mismatch.** The event reported
+`app:///_next/server/chunks/…` while the bundle stored `~/chunks/…`. Also
+true, also not the cause — debug-ID resolution ignores paths entirely, and
+the debug IDs matched.
+
+**Actual cause: Turbopack emits indexed source maps.** Verified by inspecting
+the build output directly. Every one of the 186 server maps is a `sections`
+map whose *top-level* `sources` array is empty and which has no top-level
+`sourcesContent`; the real content sits inside `sections[].map`. Sentry's
+symbolicator reads the top level, finds nothing, and returns
+`js_no_source: "Source code was not found"` — precisely the error on the
+event. The map was present, in the right project, with a matching debug ID,
+and unreadable anyway.
+
+Building the same tree with `next build --webpack` produces 76 flat maps,
+every one carrying `sourcesContent`.
+
+### Decision: production builds use webpack
+
+`apps/web/package.json` pins `next build --webpack`. Turbopack remains the
+default for `next dev`, where source maps are served locally and the format
+does not matter.
+
+Cost: ~4 minutes of build wall-clock instead of ~3.5. Benefit: server stack
+traces that name a file and a line. For an application whose worker escalates
+expired permits, a stack trace nobody can read is close to no stack trace.
+
+Revisit when Sentry's symbolicator supports indexed maps, or when Turbopack
+emits flat ones — at which point deleting one flag restores the faster build.
+
+### Also fixed: browser maps were never generated
+
+`productionBrowserSourceMaps` was unset, so Next emitted no browser source
+maps at all. The earlier upload had nothing to give the browser project even
+when correctly aimed at it. Now enabled; the Sentry plugin uploads them and
+deletes them from the bundle, so nothing ships to the client.
+
+### Open decision: one project or two
+
+One build has one `SENTRY_PROJECT`, so source maps can only be uploaded to
+one project. With browser and server events split across `freehs-web` and
+`freehs-server`, exactly one of them can ever have readable traces.
+
+The split was decision 6 above, justified as "the browser bundle never
+carries the server project's key". That reasoning is weak: a DSN is a
+write-only ingest key, public by construction in any browser-instrumented
+app, and cannot read events. What the split actually buys is quota isolation
+against someone flooding the public DSN. Sentry's own Next.js documentation
+uses one project per app for exactly this reason.
+
+Recommended: collapse to a single `freehs` project, rate-limit the browser
+DSN for the flooding concern, and separate browser from server with the
+`app_runtime` tag, which now works. Not done yet — it reverses a documented
+decision and needs sign-off.

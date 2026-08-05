@@ -19,11 +19,24 @@ const nextConfig: NextConfig = {
     remotePatterns: [],
   },
 
+  // Needed for readable browser stack traces in Sentry — Next does not emit
+  // browser source maps in production otherwise. They are uploaded and then
+  // deleted from the bundle by `sourcemaps.deleteSourcemapsAfterUpload`, so
+  // nothing ships to the client.
+  productionBrowserSourceMaps: true,
+
   // puppeteer-core is dynamically imported by @forma360/render at runtime for
   // PDF rendering; keep it external so Next resolves it from node_modules
   // instead of bundling it (and its chromium glue) into the server build.
   serverExternalPackages: ['pg', 'bullmq', 'ioredis', '@aws-sdk/client-s3', 'puppeteer-core'],
 
+  // NOTE: production builds run `next build --webpack` (see package.json).
+  // Turbopack emits *indexed* source maps — a `sections` array with an empty
+  // top-level `sources` — and Sentry's symbolicator reads only the top level,
+  // so every server frame came back `js_no_source: Source code was not found`
+  // even with the map uploaded to the right project and the debug IDs
+  // matching. Webpack emits flat maps with embedded `sourcesContent`, which
+  // Sentry resolves. Costs ~4 min of build time; buys readable stack traces.
   webpack(config) {
     config.resolve = config.resolve ?? {};
     config.resolve.extensionAlias = {
