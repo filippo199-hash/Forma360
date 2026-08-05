@@ -282,3 +282,43 @@ from the failed upload attempts. Delete it whenever; nothing points at it.
 
 The same shape applies to Forma360 when it launches: one project, two DSNs,
 the public one rate-limited.
+
+## Addendum 3 — 5 August 2026, two defects Sentry caught in its first hour
+
+The point of turning Sentry on was to see production faults we otherwise
+couldn't. It earned that within minutes: the first two issues after the
+webpack deploy were both real, both ours, and neither was visible any other
+way.
+
+### `pino` must be externalised from the server bundle
+
+Seven minutes after the webpack build (Addendum 2) went live, Sentry raised
+`the worker thread exited` and `Cannot find module
+'.next/server/chunks/lib/worker.js'` — uncaught, at every boot.
+
+`pino` runs its transport in a worker thread through `thread-stream`, which
+finds the worker with `join(__dirname, 'lib', 'worker.js')`. Turbopack never
+bundled `pino`, so the switch to webpack was what exposed it: bundled,
+`__dirname` resolves to the chunk directory and the worker file is one
+webpack never emits. The worker died and took the web server's log output
+with it, so the Railway logs had gone silent — the failure actively hid
+itself, and only Sentry (a separate transport) still had a voice.
+
+Fix: `pino` and `pino-pretty` join `pg` / `bullmq` / `ioredis` /
+`puppeteer-core` in `serverExternalPackages`, and are declared in
+`apps/web/package.json` so the resulting bare `require` resolves under pnpm.
+`logger.test.ts` now asserts a production logger spawns no transport worker,
+and `logger-externals.test.ts` scrapes the build config to require every
+runtime logging package be both externalised and declared.
+
+### `NODE_ENV` was not `production` in the web container
+
+The same investigation turned up a second, older fault. The pretty
+(worker-thread) transport only attaches when `nodeEnv !== 'production'`, so
+its mere presence proved `env.NODE_ENV` was not `production` at web runtime.
+That is not only a logging concern: better-auth sets its session-cookie
+`Secure` attribute from the same value, so cookies on the live HTTPS site
+were being issued without `Secure`. Set `NODE_ENV=production` on the web
+service. (The worker hard-codes its logger to production and serves no
+cookies, so it was unaffected.) Externalising `pino` fixes the crash
+independently of this; the two fixes are belt and suspenders.
