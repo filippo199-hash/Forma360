@@ -64,7 +64,9 @@ export default withSentryConfig(withIntl, {
   // Upload source maps for readable stack traces, then delete them from the
   // deployed bundle so the client never serves them.
   sourcemaps: { deleteSourcemapsAfterUpload: true },
-  disableLogger: true,
+  // Strip the SDK's own debug logging from the bundle. `disableLogger` was
+  // deprecated in Sentry 10 and warns at error severity on every boot.
+  webpack: { treeshake: { removeDebugLogging: true } },
   // Route browser events through our own origin so ad-blockers do not eat
   // the client error reports we most need from field devices.
   tunnelRoute: '/monitoring',
