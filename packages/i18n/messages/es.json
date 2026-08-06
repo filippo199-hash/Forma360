@@ -1491,9 +1491,12 @@
       "templates": "Plantillas",
       "schedules": "Programaciones",
       "approvals": "Aprobaciones",
-      "maintenance": "Mantenimiento"
+      "maintenance": "Mantenimiento",
+      "trainingMatrix": "Matriz",
+      "trainingRequirements": "Requisitos"
     },
     "rams": "RAMS",
+    "training": "Formación",
     "groupDoWork": "Hacer el trabajo",
     "groupRecords": "Registros y expedientes"
   },
@@ -6617,5 +6620,112 @@
     },
     "footnote": "¿No está seguro? Elija lo que mejor encaje: quien lo revise podrá moverlo después.",
     "noPermission": "No tiene permiso para notificar aquí. Solicite acceso a un administrador."
+  },
+  "training": {
+    "title": "Formación y competencia",
+    "subtitle": "Quién tiene qué, qué falta y cuándo caduca.",
+    "tabs": {
+      "gaps": "Brechas",
+      "matrix": "Matriz",
+      "compliance": "Cumplimiento",
+      "requirements": "Requisitos"
+    },
+    "asAt": "A fecha de {date}",
+    "status": {
+      "in_date": "Vigente",
+      "expiring_soon": "Por caducar",
+      "expired": "Caducado",
+      "not_held": "Nunca obtenido",
+      "not_required": "No requerido"
+    },
+    "gaps": {
+      "expired": "Caducado",
+      "expiringSoon": "Por caducar",
+      "notHeld": "Nunca obtenido",
+      "empty": "Sin brechas. Todos los registros requeridos están vigentes.",
+      "record": "Registrar",
+      "expiresOn": "caduca el {date}",
+      "requiredByRole": "requerido por el puesto",
+      "total": "{count} por gestionar"
+    },
+    "matrix": {
+      "person": "Persona",
+      "empty": "Aún no hay nada. Añada un requisito y registre lo que tiene su gente.",
+      "exportCsv": "Exportar CSV",
+      "legend": "Leyenda"
+    },
+    "compliance": {
+      "overall": "Global",
+      "statutory": "Solo obligatorio legal",
+      "byRequirement": "Por requisito",
+      "gapsCount": "{count} con brechas",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Requisitos",
+      "add": "Añadir requisito",
+      "name": "Nombre",
+      "category": "Categoría",
+      "obligation": "Obligación",
+      "validity": "Validez",
+      "validityMonths": "{months} meses",
+      "noExpiry": "No caduca",
+      "leadDays": "Avisar {days} días antes",
+      "empty": "Aún no hay requisitos. Añada las acreditaciones que su gente debe tener.",
+      "archive": "Archivar",
+      "save": "Guardar",
+      "assignments": "Quién lo necesita",
+      "addAssignment": "Asignar",
+      "cancel": "Cancelar",
+      "scope": {
+        "role": "Puesto",
+        "group": "Grupo",
+        "site": "Centro",
+        "person": "Persona"
+      }
+    },
+    "obligation": {
+      "statutory": "Legal",
+      "mandatory": "Obligatorio",
+      "discretionary": "Discrecional"
+    },
+    "record": {
+      "title": "Registrar formación",
+      "person": "Persona",
+      "requirement": "Requisito",
+      "achievedAt": "Fecha de obtención",
+      "expiresAt": "Caduca",
+      "expiryAuto": "Calculado a partir del periodo de validez",
+      "awardingBody": "Entidad emisora",
+      "certificateNumber": "Número de certificado",
+      "evidence": "Certificado o foto de la tarjeta",
+      "save": "Guardar registro",
+      "saved": "Registro guardado",
+      "source": "Origen",
+      "cancel": "Cancelar",
+      "sources": {
+        "internal": "Interno",
+        "external": "Proveedor externo",
+        "imported": "Importado",
+        "self_declared": "Autodeclarado"
+      }
+    },
+    "person": {
+      "title": "Formación",
+      "noRecords": "Aún no hay formación registrada.",
+      "verified": "Verificado",
+      "unverified": "Sin verificar"
+    },
+    "import": {
+      "title": "Importar registros",
+      "help": "Pegue un CSV con las columnas: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importar",
+      "imported": "{count} registros importados",
+      "failed": "{count} filas fallidas"
+    },
+    "errors": {
+      "moduleDisabled": "Este módulo no está activado.",
+      "generic": "Algo ha salido mal."
+    }
   }
 }

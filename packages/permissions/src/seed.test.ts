@@ -96,7 +96,10 @@ describe('seedDefaultPermissionSets', () => {
     expect(perms).not.toContain('groups.manage');
     expect(perms).toContain('inspections.conduct');
     expect(perms).toContain('issues.report');
-    expect(perms).toContain('training.take');
+    // `training.take` was an LMS verb and is retired (FreeHS B7); a standard
+    // user gets read access to the matrix, not a course to sit.
+    expect(perms).toContain('training.view');
+    expect(perms).not.toContain('training.manage');
   });
 
   it('is idempotent — calling twice does not create duplicates', async () => {

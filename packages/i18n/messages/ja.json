@@ -1484,9 +1484,12 @@
       "templates": "テンプレート",
       "schedules": "スケジュール",
       "approvals": "承認",
-      "maintenance": "保全"
+      "maintenance": "保全",
+      "trainingMatrix": "マトリクス",
+      "trainingRequirements": "要件"
     },
     "rams": "RAMS",
+    "training": "研修",
     "groupDoWork": "作業を行う",
     "groupRecords": "記録・台帳"
   },
@@ -6610,5 +6613,112 @@
     },
     "footnote": "迷う場合は近いほうを選んでください。確認する担当者が後で変更できます。",
     "noPermission": "ここで報告する権限がありません。管理者に権限付与を依頼してください。"
+  },
+  "training": {
+    "title": "研修と力量",
+    "subtitle": "誰が何を保有し、何が不足し、いつ失効するか。",
+    "tabs": {
+      "gaps": "不足",
+      "matrix": "マトリクス",
+      "compliance": "遵守状況",
+      "requirements": "要件"
+    },
+    "asAt": "{date} 時点",
+    "status": {
+      "in_date": "有効",
+      "expiring_soon": "まもなく失効",
+      "expired": "失効",
+      "not_held": "未取得",
+      "not_required": "対象外"
+    },
+    "gaps": {
+      "expired": "失効",
+      "expiringSoon": "まもなく失効",
+      "notHeld": "未取得",
+      "empty": "不足はありません。必要な記録はすべて有効です。",
+      "record": "記録",
+      "expiresOn": "{date} に失効",
+      "requiredByRole": "役割により必須",
+      "total": "対応が必要: {count} 件"
+    },
+    "matrix": {
+      "person": "対象者",
+      "empty": "表示できるものがありません。要件を追加し、記録を登録してください。",
+      "exportCsv": "CSV を書き出す",
+      "legend": "凡例"
+    },
+    "compliance": {
+      "overall": "全体",
+      "statutory": "法定のみ",
+      "byRequirement": "要件別",
+      "gapsCount": "不足 {count} 件",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "要件",
+      "add": "要件を追加",
+      "name": "名称",
+      "category": "分類",
+      "obligation": "義務区分",
+      "validity": "有効期間",
+      "validityMonths": "{months} か月",
+      "noExpiry": "失効しない",
+      "leadDays": "{days} 日前に督促",
+      "empty": "要件がまだありません。必要な資格を追加してください。",
+      "archive": "アーカイブ",
+      "save": "保存",
+      "assignments": "対象者",
+      "addAssignment": "割り当て",
+      "cancel": "キャンセル",
+      "scope": {
+        "role": "役割",
+        "group": "グループ",
+        "site": "拠点",
+        "person": "個人"
+      }
+    },
+    "obligation": {
+      "statutory": "法定",
+      "mandatory": "必須",
+      "discretionary": "任意"
+    },
+    "record": {
+      "title": "研修を記録",
+      "person": "対象者",
+      "requirement": "要件",
+      "achievedAt": "取得日",
+      "expiresAt": "失効日",
+      "expiryAuto": "有効期間から自動計算",
+      "awardingBody": "発行機関",
+      "certificateNumber": "証明書番号",
+      "evidence": "証明書またはカードの写真",
+      "save": "記録を保存",
+      "saved": "記録を保存しました",
+      "source": "入手元",
+      "cancel": "キャンセル",
+      "sources": {
+        "internal": "社内",
+        "external": "外部機関",
+        "imported": "インポート",
+        "self_declared": "自己申告"
+      }
+    },
+    "person": {
+      "title": "研修",
+      "noRecords": "登録された研修はありません。",
+      "verified": "確認済み",
+      "unverified": "未確認"
+    },
+    "import": {
+      "title": "記録をインポート",
+      "help": "次の列を含む CSV を貼り付けてください: personName, userEmail, requirementName, achievedAt, expiresAt。",
+      "run": "インポート",
+      "imported": "{count} 件を取り込みました",
+      "failed": "{count} 行が失敗しました"
+    },
+    "errors": {
+      "moduleDisabled": "このモジュールは有効ではありません。",
+      "generic": "問題が発生しました。"
+    }
   }
 }

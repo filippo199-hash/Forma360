@@ -1484,9 +1484,12 @@
       "templates": "模板",
       "schedules": "排程",
       "approvals": "审批",
-      "maintenance": "维护"
+      "maintenance": "维护",
+      "trainingMatrix": "矩阵",
+      "trainingRequirements": "要求"
     },
     "rams": "RAMS",
+    "training": "培训",
     "groupDoWork": "开展工作",
     "groupRecords": "记录与台账"
   },
@@ -6610,5 +6613,112 @@
     },
     "footnote": "不确定？选择最接近的——审阅人之后可以调整。",
     "noPermission": "您没有在此报告的权限。请向管理员申请。"
+  },
+  "training": {
+    "title": "培训与能力",
+    "subtitle": "谁持有什么、缺少什么以及何时到期。",
+    "tabs": {
+      "gaps": "缺口",
+      "matrix": "矩阵",
+      "compliance": "合规情况",
+      "requirements": "要求"
+    },
+    "asAt": "截至 {date}",
+    "status": {
+      "in_date": "有效",
+      "expiring_soon": "即将到期",
+      "expired": "已过期",
+      "not_held": "从未取得",
+      "not_required": "无需"
+    },
+    "gaps": {
+      "expired": "已过期",
+      "expiringSoon": "即将到期",
+      "notHeld": "从未取得",
+      "empty": "没有缺口。所有必需的记录均在有效期内。",
+      "record": "登记",
+      "expiresOn": "{date} 到期",
+      "requiredByRole": "按岗位要求",
+      "total": "{count} 项待处理"
+    },
+    "matrix": {
+      "person": "人员",
+      "empty": "暂无内容。请先添加要求并登记人员持有的证书。",
+      "exportCsv": "导出 CSV",
+      "legend": "图例"
+    },
+    "compliance": {
+      "overall": "总体",
+      "statutory": "仅法定",
+      "byRequirement": "按要求",
+      "gapsCount": "{count} 项有缺口",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "要求",
+      "add": "添加要求",
+      "name": "名称",
+      "category": "分类",
+      "obligation": "义务类别",
+      "validity": "有效期",
+      "validityMonths": "{months} 个月",
+      "noExpiry": "永不过期",
+      "leadDays": "提前 {days} 天提醒",
+      "empty": "尚无要求。请添加人员需要持有的资质。",
+      "archive": "归档",
+      "save": "保存",
+      "assignments": "适用人员",
+      "addAssignment": "分配",
+      "cancel": "取消",
+      "scope": {
+        "role": "岗位",
+        "group": "群组",
+        "site": "场所",
+        "person": "个人"
+      }
+    },
+    "obligation": {
+      "statutory": "法定",
+      "mandatory": "强制",
+      "discretionary": "自愿"
+    },
+    "record": {
+      "title": "登记培训",
+      "person": "人员",
+      "requirement": "要求",
+      "achievedAt": "取得日期",
+      "expiresAt": "到期日",
+      "expiryAuto": "根据有效期自动计算",
+      "awardingBody": "发证机构",
+      "certificateNumber": "证书编号",
+      "evidence": "证书或证卡照片",
+      "save": "保存记录",
+      "saved": "记录已保存",
+      "source": "来源",
+      "cancel": "取消",
+      "sources": {
+        "internal": "内部",
+        "external": "外部机构",
+        "imported": "导入",
+        "self_declared": "本人声明"
+      }
+    },
+    "person": {
+      "title": "培训",
+      "noRecords": "尚未登记培训。",
+      "verified": "已核实",
+      "unverified": "未核实"
+    },
+    "import": {
+      "title": "导入记录",
+      "help": "粘贴包含以下列的 CSV：personName、userEmail、requirementName、achievedAt、expiresAt。",
+      "run": "导入",
+      "imported": "已导入 {count} 条记录",
+      "failed": "{count} 行失败"
+    },
+    "errors": {
+      "moduleDisabled": "此模块未启用。",
+      "generic": "出了点问题。"
+    }
   }
 }

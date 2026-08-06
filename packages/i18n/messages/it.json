@@ -1491,9 +1491,12 @@
       "templates": "Modelli",
       "schedules": "Pianificazioni",
       "approvals": "Approvazioni",
-      "maintenance": "Manutenzione"
+      "maintenance": "Manutenzione",
+      "trainingMatrix": "Matrice",
+      "trainingRequirements": "Requisiti"
     },
     "rams": "RAMS",
+    "training": "Formazione",
     "groupDoWork": "Svolgere il lavoro",
     "groupRecords": "Documenti e registri"
   },
@@ -6652,5 +6655,112 @@
     },
     "footnote": "Non sei sicuro? Scegli quello più adatto — chi lo esamina potrà spostarlo poi.",
     "noPermission": "Non hai il permesso di segnalare qui. Chiedi l'accesso a un amministratore."
+  },
+  "training": {
+    "title": "Formazione e competenze",
+    "subtitle": "Chi possiede cosa, cosa manca e quando scade.",
+    "tabs": {
+      "gaps": "Lacune",
+      "matrix": "Matrice",
+      "compliance": "Conformità",
+      "requirements": "Requisiti"
+    },
+    "asAt": "Al {date}",
+    "status": {
+      "in_date": "In corso di validità",
+      "expiring_soon": "In scadenza",
+      "expired": "Scaduto",
+      "not_held": "Mai conseguito",
+      "not_required": "Non richiesto"
+    },
+    "gaps": {
+      "expired": "Scaduto",
+      "expiringSoon": "In scadenza",
+      "notHeld": "Mai conseguito",
+      "empty": "Nessuna lacuna. Tutti gli attestati richiesti sono validi.",
+      "record": "Registra",
+      "expiresOn": "scade il {date}",
+      "requiredByRole": "richiesto dalla mansione",
+      "total": "{count} da gestire"
+    },
+    "matrix": {
+      "person": "Persona",
+      "empty": "Ancora nulla da mostrare. Aggiungi un requisito e registra gli attestati.",
+      "exportCsv": "Esporta CSV",
+      "legend": "Legenda"
+    },
+    "compliance": {
+      "overall": "Complessiva",
+      "statutory": "Solo obbligo di legge",
+      "byRequirement": "Per requisito",
+      "gapsCount": "{count} con lacune",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Requisiti",
+      "add": "Aggiungi requisito",
+      "name": "Nome",
+      "category": "Categoria",
+      "obligation": "Obbligo",
+      "validity": "Validità",
+      "validityMonths": "{months} mesi",
+      "noExpiry": "Non scade mai",
+      "leadDays": "Sollecita {days} giorni prima",
+      "empty": "Nessun requisito. Aggiungi gli attestati che le persone devono possedere.",
+      "archive": "Archivia",
+      "save": "Salva",
+      "assignments": "Chi ne ha bisogno",
+      "addAssignment": "Assegna",
+      "cancel": "Annulla",
+      "scope": {
+        "role": "Mansione",
+        "group": "Gruppo",
+        "site": "Sito",
+        "person": "Persona"
+      }
+    },
+    "obligation": {
+      "statutory": "Di legge",
+      "mandatory": "Obbligatorio",
+      "discretionary": "Facoltativo"
+    },
+    "record": {
+      "title": "Registra formazione",
+      "person": "Persona",
+      "requirement": "Requisito",
+      "achievedAt": "Data di conseguimento",
+      "expiresAt": "Scadenza",
+      "expiryAuto": "Calcolata dal periodo di validità",
+      "awardingBody": "Ente rilasciante",
+      "certificateNumber": "Numero attestato",
+      "evidence": "Attestato o foto del tesserino",
+      "save": "Salva attestato",
+      "saved": "Attestato salvato",
+      "source": "Origine",
+      "cancel": "Annulla",
+      "sources": {
+        "internal": "Interna",
+        "external": "Ente esterno",
+        "imported": "Importata",
+        "self_declared": "Autodichiarata"
+      }
+    },
+    "person": {
+      "title": "Formazione",
+      "noRecords": "Nessuna formazione registrata.",
+      "verified": "Verificato",
+      "unverified": "Non verificato"
+    },
+    "import": {
+      "title": "Importa attestati",
+      "help": "Incolla un CSV con le colonne: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importa",
+      "imported": "{count} attestati importati",
+      "failed": "{count} righe non riuscite"
+    },
+    "errors": {
+      "moduleDisabled": "Questo modulo non è attivo.",
+      "generic": "Qualcosa è andato storto."
+    }
   }
 }

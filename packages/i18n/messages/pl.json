@@ -1484,9 +1484,12 @@
       "templates": "Szablony",
       "schedules": "Harmonogramy",
       "approvals": "Zatwierdzenia",
-      "maintenance": "Utrzymanie"
+      "maintenance": "Utrzymanie",
+      "trainingMatrix": "Macierz",
+      "trainingRequirements": "Wymagania"
     },
     "rams": "RAMS",
+    "training": "Szkolenia",
     "groupDoWork": "Wykonaj pracę",
     "groupRecords": "Dokumentacja i rejestry"
   },
@@ -6610,5 +6613,112 @@
     },
     "footnote": "Nie masz pewności? Wybierz najbliższe — osoba weryfikująca może to później przenieść.",
     "noPermission": "Nie masz uprawnień do zgłaszania. Poproś administratora o dostęp."
+  },
+  "training": {
+    "title": "Szkolenia i kompetencje",
+    "subtitle": "Kto co posiada, czego brakuje i kiedy wygasa.",
+    "tabs": {
+      "gaps": "Braki",
+      "matrix": "Macierz",
+      "compliance": "Zgodność",
+      "requirements": "Wymagania"
+    },
+    "asAt": "Stan na {date}",
+    "status": {
+      "in_date": "Ważne",
+      "expiring_soon": "Wkrótce wygasa",
+      "expired": "Wygasło",
+      "not_held": "Nigdy nie uzyskano",
+      "not_required": "Niewymagane"
+    },
+    "gaps": {
+      "expired": "Wygasłe",
+      "expiringSoon": "Wkrótce wygasa",
+      "notHeld": "Nigdy nie uzyskano",
+      "empty": "Brak luk. Wszystkie wymagane zapisy są ważne.",
+      "record": "Zarejestruj",
+      "expiresOn": "wygasa {date}",
+      "requiredByRole": "wymagane przez stanowisko",
+      "total": "{count} do obsłużenia"
+    },
+    "matrix": {
+      "person": "Osoba",
+      "empty": "Nie ma jeszcze czego pokazać. Dodaj wymaganie i zarejestruj uprawnienia.",
+      "exportCsv": "Eksportuj CSV",
+      "legend": "Legenda"
+    },
+    "compliance": {
+      "overall": "Ogółem",
+      "statutory": "Tylko ustawowe",
+      "byRequirement": "Wg wymagania",
+      "gapsCount": "{count} z brakami",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Wymagania",
+      "add": "Dodaj wymaganie",
+      "name": "Nazwa",
+      "category": "Kategoria",
+      "obligation": "Obowiązek",
+      "validity": "Ważność",
+      "validityMonths": "{months} mies.",
+      "noExpiry": "Nigdy nie wygasa",
+      "leadDays": "Przypomnij {days} dni wcześniej",
+      "empty": "Brak wymagań. Dodaj uprawnienia, które muszą posiadać pracownicy.",
+      "archive": "Archiwizuj",
+      "save": "Zapisz",
+      "assignments": "Kogo dotyczy",
+      "addAssignment": "Przypisz",
+      "cancel": "Anuluj",
+      "scope": {
+        "role": "Stanowisko",
+        "group": "Grupa",
+        "site": "Lokalizacja",
+        "person": "Osoba"
+      }
+    },
+    "obligation": {
+      "statutory": "Ustawowe",
+      "mandatory": "Obowiązkowe",
+      "discretionary": "Dobrowolne"
+    },
+    "record": {
+      "title": "Zarejestruj szkolenie",
+      "person": "Osoba",
+      "requirement": "Wymaganie",
+      "achievedAt": "Data uzyskania",
+      "expiresAt": "Wygasa",
+      "expiryAuto": "Obliczone z okresu ważności",
+      "awardingBody": "Jednostka wydająca",
+      "certificateNumber": "Numer certyfikatu",
+      "evidence": "Certyfikat lub zdjęcie karty",
+      "save": "Zapisz zapis",
+      "saved": "Zapis zapisany",
+      "source": "Źródło",
+      "cancel": "Anuluj",
+      "sources": {
+        "internal": "Wewnętrzne",
+        "external": "Dostawca zewnętrzny",
+        "imported": "Zaimportowane",
+        "self_declared": "Oświadczenie własne"
+      }
+    },
+    "person": {
+      "title": "Szkolenia",
+      "noRecords": "Brak zarejestrowanych szkoleń.",
+      "verified": "Zweryfikowane",
+      "unverified": "Niezweryfikowane"
+    },
+    "import": {
+      "title": "Importuj zapisy",
+      "help": "Wklej CSV z kolumnami: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importuj",
+      "imported": "Zaimportowano {count} zapisów",
+      "failed": "{count} wierszy nie powiodło się"
+    },
+    "errors": {
+      "moduleDisabled": "Ten moduł nie jest włączony.",
+      "generic": "Coś poszło nie tak."
+    }
   }
 }

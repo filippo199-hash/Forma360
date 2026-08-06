@@ -113,6 +113,7 @@ export const BRAND_ONLY_MODULES = [
   'fireSafety',
   'incidents',
   'rams',
+  'training',
 ] as const;
 
 export type BrandOnlyModule = (typeof BRAND_ONLY_MODULES)[number];
@@ -124,7 +125,7 @@ export type BrandOnlyModule = (typeof BRAND_ONLY_MODULES)[number];
  */
 export const BRAND_MODULES: Record<BrandId, ReadonlyArray<BrandOnlyModule>> = {
   forma360: [],
-  freehs: ['riskAssessments', 'coshh', 'permits', 'fireSafety', 'incidents', 'rams'],
+  freehs: ['riskAssessments', 'coshh', 'permits', 'fireSafety', 'incidents', 'rams', 'training'],
 };
 
 export function brandHasModule(id: BrandId, module: BrandOnlyModule): boolean {

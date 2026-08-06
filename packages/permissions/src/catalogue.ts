@@ -127,11 +127,17 @@ export const PERMISSION_KEYS = [
   'analytics.manage',
   'analytics.schedules.manage',
 
-  // ─── Training (Phase 10) ─────────────────────────────────────────────────
+  // ─── Training & competence matrix (FreeHS B7) ────────────────────────────
+  // The originally reserved set (`training.take`, `training.courses.manage`)
+  // encoded an LMS — taking a course, administering a catalogue — which is
+  // explicitly what this module is not. The practitioner review revised them
+  // to the four verbs the matrix actually has. `training.record` is separate
+  // from `training.manage` on the `fireSafety.record` precedent: a supervisor
+  // records their crew's tickets without owning the requirement catalogue.
   'training.view',
-  'training.take',
+  'training.record',
+  'training.verify',
   'training.manage',
-  'training.courses.manage',
 
   // ─── Integrations & billing (admin-only) ─────────────────────────────────
   'integrations.manage',

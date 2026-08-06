@@ -35,6 +35,7 @@ import {
   Flame,
   FlaskConical,
   FolderOpen,
+  GraduationCap,
   Hammer,
   HardHat,
   ListChecks,
@@ -64,6 +65,7 @@ export type NavItemKey =
   | 'coshh'
   | 'fireSafety'
   | 'rams'
+  | 'training'
   | 'sites'
   | 'assets'
   | 'contractors'
@@ -83,6 +85,8 @@ export type NavChildKey =
   | 'coshhLev'
   | 'ramsLibrary'
   | 'ramsReviews'
+  | 'trainingMatrix'
+  | 'trainingRequirements'
   | 'fireLogbook'
   | 'issuesQrCodes'
   | 'issuesCategories'
@@ -115,7 +119,8 @@ export type NavBadgeKey =
   | 'incidents'
   | 'permits'
   | 'riskAssessments'
-  | 'fireSafety';
+  | 'fireSafety'
+  | 'training';
 
 export interface NavChild {
   readonly key: NavChildKey;
@@ -149,6 +154,7 @@ const BRAND_MODULE_FOR: Partial<Record<NavItemKey, BrandOnlyModule>> = {
   rams: 'rams',
   fireSafety: 'fireSafety',
   incidents: 'incidents',
+  training: 'training',
 };
 
 /**
@@ -294,6 +300,24 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           children: [
             { key: 'ramsLibrary', href: p('/rams/library'), permission: 'rams.manage' },
             { key: 'ramsReviews', href: p('/rams/reviews'), permission: 'rams.review' },
+          ],
+        },
+        // The competence register: a record that lives for years and gets
+        // reviewed, so it sits with the registers rather than the work.
+        // Its badge is the gap count — the number that makes people open it.
+        {
+          key: 'training',
+          href: p('/training'),
+          icon: GraduationCap,
+          permission: 'training.view',
+          badge: 'training',
+          children: [
+            { key: 'trainingMatrix', href: p('/training/matrix') },
+            {
+              key: 'trainingRequirements',
+              href: p('/training/requirements'),
+              permission: 'training.manage',
+            },
           ],
         },
       ],
@@ -486,6 +510,8 @@ export const NAV_CHILD_ICON: Record<NavChildKey, LucideIcon> = {
   coshhLev: Wrench,
   ramsLibrary: FileStack,
   ramsReviews: HardHat,
+  trainingMatrix: GraduationCap,
+  trainingRequirements: FileStack,
   fireLogbook: Flame,
   issuesQrCodes: QrCode,
   issuesCategories: FolderOpen,

@@ -33,3 +33,4 @@ export * from './permits';
 export * from './fire-safety';
 export * from './incidents';
 export * from './rams';
+export * from './training';
