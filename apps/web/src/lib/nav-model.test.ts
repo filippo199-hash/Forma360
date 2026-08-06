@@ -50,6 +50,7 @@ describe('nav model (ADR 0014)', () => {
     expect(freehs).toContain('rams');
     expect(freehs).toContain('fireSafety');
     expect(freehs).toContain('incidents');
+    expect(freehs).toContain('training');
 
     const forma = keysOf(ADMIN, 'forma360');
     expect(forma).not.toContain('riskAssessments');
@@ -58,6 +59,7 @@ describe('nav model (ADR 0014)', () => {
     expect(forma).not.toContain('rams');
     expect(forma).not.toContain('fireSafety');
     expect(forma).not.toContain('incidents');
+    expect(forma).not.toContain('training');
     // Core modules are unaffected by the brand gate.
     expect(forma).toContain('inspections');
     expect(forma).toContain('actions');
@@ -229,5 +231,41 @@ describe('nav model (ADR 0014)', () => {
       }
       expect(settingsNavItem(locale).href).toBe(`/${locale}/settings`);
     }
+  });
+  it('NAV-E11: training sits with the organisation, beside Contractors (TR-A15)', () => {
+    // The panel's argument, and the reason this is asserted rather than
+    // argued in a comment: a reviewer asking "who is allowed to do this
+    // work" wants the two competence registers — our people and their
+    // people — side by side. Training is about PEOPLE, which is what
+    // this group holds; it is not a document register.
+    const sections = sectionsFor(ADMIN);
+    const org = sections.find((s) => s.key === 'groupOrg');
+    const keys = (org?.items ?? []).map((i) => i.key);
+    expect(keys).toContain('training');
+    expect(keys).toContain('contractors');
+    expect(keys.indexOf('training')).toBe(keys.indexOf('contractors') + 1);
+
+    // …and specifically NOT in the records group.
+    const records = sections.find((s) => s.key === 'groupRecords');
+    expect((records?.items ?? []).map((i) => i.key)).not.toContain('training');
+  });
+
+  it('NAV-E12: training is permission-gated and brand-gated (TR-A15)', () => {
+    // A viewer without training.view never sees the entry…
+    expect(keysOf(['issues.view'])).not.toContain('training');
+    // …one with it does…
+    expect(keysOf(['training.view'])).toContain('training');
+    // …and the requirements child needs the manage key on top.
+    const viewer = flattenNavItems(sectionsFor(['training.view'])).find(
+      (i) => i.key === 'training',
+    );
+    expect(viewer?.children?.map((c) => c.key)).toEqual(['trainingMatrix']);
+    const manager = flattenNavItems(sectionsFor(['training.view', 'training.manage'])).find(
+      (i) => i.key === 'training',
+    );
+    expect(manager?.children?.map((c) => c.key)).toEqual([
+      'trainingMatrix',
+      'trainingRequirements',
+    ]);
   });
 });

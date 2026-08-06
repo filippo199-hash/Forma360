@@ -20,6 +20,8 @@ import { z } from 'zod';
 import type { Database } from '@forma360/db/client';
 import {
   groupMembers,
+  siteMembers,
+  sites,
   trainingRecords,
   trainingRequirementAssignments,
   trainingRequirements,
@@ -99,6 +101,17 @@ export interface MatrixCell {
   status: TrainingStatus;
   expiresAt: Date | null;
   recordId: string | null;
+  /**
+   * Is this requirement actually assigned to this person? (TR-A7)
+   *
+   * A cell also exists for a record someone holds but is no longer
+   * required to — a machine operator who moved to the office keeps his
+   * abrasive-wheels card in the wallet. Those cells must NOT reach the
+   * gap list (noise in the one view designed to be actionable) or the
+   * compliance denominator (a lapsed voluntary card must not drag the
+   * board number), so every consumer filters on this.
+   */
+  required: boolean;
 }
 
 function parseDay(value: string): Date {
@@ -220,6 +233,17 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
       groupsByUser.set(m.userId, [...(groupsByUser.get(m.userId) ?? []), m.groupId]);
     }
 
+    // Site membership, so site-scoped assignment resolves and the site
+    // filter narrows a 800 x 30 grid to something readable (TR-A10).
+    const sitesByUser = new Map<string, string[]>();
+    const siteMemberships = await db
+      .select({ userId: siteMembers.userId, siteId: siteMembers.siteId })
+      .from(siteMembers)
+      .where(eq(siteMembers.tenantId, tenantId));
+    for (const m of siteMemberships) {
+      sitesByUser.set(m.userId, [...(sitesByUser.get(m.userId) ?? []), m.siteId]);
+    }
+
     // The population: every active user, plus every account-less person who
     // appears in a record (contractors' operatives, agency staff — the
     // matrix must cover the site, not just the payroll).
@@ -230,7 +254,7 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
         name: u.name,
         category: 'employee',
         roleName: roleByUser.get(u.id) ?? null,
-        siteIds: [],
+        siteIds: sitesByUser.get(u.id) ?? [],
         groupIds: groupsByUser.get(u.id) ?? [],
       }));
     const seen = new Set(people.map((p) => personKeyOf(p.userId, p.name)));
@@ -271,8 +295,13 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
       return out;
     }
 
+    const inScope =
+      opts.siteId === undefined
+        ? people
+        : people.filter((p) => p.siteIds.includes(opts.siteId as string));
+
     const cells: MatrixCell[] = [];
-    for (const person of people) {
+    for (const person of inScope) {
       const required = requiredFor(person);
       const key = personKeyOf(person.userId, person.name);
       for (const req of requirements) {
@@ -303,11 +332,12 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
           status,
           expiresAt: governing?.expiresAt ?? null,
           recordId: governing?.id ?? null,
+          required: isRequired,
         });
       }
     }
 
-    return { people, cells };
+    return { people: inScope, cells };
   }
 
   return router({
@@ -538,6 +568,56 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
         return { id, expiresAt };
       }),
 
+    /**
+     * Void a record (TR-A8).
+     *
+     * An append-only store cannot edit, so it MUST be able to supersede —
+     * shipping the read filter without the writer was the worst of both.
+     * The row stays readable (the audit trail is the point) but drops out
+     * of the current matrix, which is what `supersededAt` always meant.
+     *
+     * Without this, a fat-fingered expiry of 2099 wins forever: because
+     * `currentRecord` prefers the furthest-reaching cover, that person is
+     * permanently in date, permanently absent from the gap list, and —
+     * now the gate is wired — permanently passes it.
+     */
+    supersedeRecord: tenantProcedure
+      .use(requirePermission('training.record'))
+      .input(
+        z.object({
+          id: z.string().min(1),
+          reason: z.string().trim().min(1).max(500),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const rows = await ctx.db
+          .select()
+          .from(trainingRecords)
+          .where(and(eq(trainingRecords.tenantId, ctx.tenantId), eq(trainingRecords.id, input.id)))
+          .limit(1);
+        const record = rows[0];
+        if (record === undefined) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'record-not-found' });
+        }
+        if (record.supersededAt !== null) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'already-superseded' });
+        }
+        await ctx.db
+          .update(trainingRecords)
+          .set({
+            supersededAt: now(),
+            // Kept with the row rather than in a side table: the reason a
+            // record was voided is part of the evidence.
+            notes:
+              record.notes === null
+                ? `[voided] ${input.reason}`
+                : `${record.notes}\n[voided] ${input.reason}`,
+          })
+          .where(and(eq(trainingRecords.tenantId, ctx.tenantId), eq(trainingRecords.id, input.id)));
+        return { ok: true };
+      }),
+
     /** Confirm a record against its evidence — distinct from entering it. */
     verifyRecord: tenantProcedure
       .use(requirePermission('training.verify'))
@@ -587,8 +667,13 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
           siteId: input?.siteId,
           requirementId: input?.requirementId,
         });
+        // TR-A7: only cells the person is actually REQUIRED to hold. A
+        // lapsed card someone is no longer required to have is not a gap;
+        // listing it is noise in the one view built to be actionable.
         const gaps = cells.filter(
-          (c) => c.status === 'expired' || c.status === 'expiring_soon' || c.status === 'not_held',
+          (c) =>
+            c.required &&
+            (c.status === 'expired' || c.status === 'expiring_soon' || c.status === 'not_held'),
         );
         return {
           asOf,
@@ -602,12 +687,23 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
     /** One person's wallet — their cards, for the gate and the induction. */
     person: tenantProcedure
       .use(requirePermission('training.view'))
-      .input(z.object({ userId: z.string().min(1).optional(), personName: z.string().optional() }))
+      .input(
+        z
+          .object({
+            userId: z.string().min(1).optional(),
+            personName: z.string().optional(),
+          })
+          .default({}),
+      )
       .query(async ({ ctx, input }) => {
         assertEnabled();
-        if (input.userId === undefined && input.personName === undefined) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'person-required' });
-        }
+        // No argument = the caller's own wallet. This is what makes
+        // `/training/me` a personal door rather than another org-wide
+        // view (TR-A5), and it can never resolve to someone else.
+        const target =
+          input.userId === undefined && input.personName === undefined
+            ? { userId: ctx.auth.userId }
+            : input;
         const asOf = now();
         const { cells } = await resolveMatrix(ctx.db, ctx.tenantId, { asOf });
         const key = input.userId ?? personKeyOf(null, (input.personName ?? '').trim());
@@ -618,9 +714,9 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
           .where(
             and(
               eq(trainingRecords.tenantId, ctx.tenantId),
-              input.userId !== undefined
-                ? eq(trainingRecords.userId, input.userId)
-                : eq(trainingRecords.personName, input.personName ?? ''),
+              target.userId !== undefined
+                ? eq(trainingRecords.userId, target.userId)
+                : eq(trainingRecords.personName, target.personName ?? ''),
             ),
           )
           .orderBy(desc(trainingRecords.achievedAt));
@@ -683,28 +779,62 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
             ),
           );
         const obligationById = new Map(requirements.map((r) => [r.id, r.obligation]));
-        const statuses = cells.map((c) => c.status);
-        const statutory = cells
-          .filter((c) => obligationById.get(c.requirementId) === 'statutory')
-          .map((c) => c.status);
+        // TR-A7: the denominator is what people are REQUIRED to hold. A
+        // held-but-unrequired card must not drag the board number.
+        const required = cells.filter((c) => c.required);
+        const statuses = required.map((c) => c.status);
+        const withObligation = (o: string) =>
+          required.filter((c) => obligationById.get(c.requirementId) === o).map((c) => c.status);
 
-        const byRequirement = requirements.map((r) => ({
-          requirementId: r.id,
-          name: r.name,
-          obligation: r.obligation,
-          percent: compliancePercent(
-            cells.filter((c) => c.requirementId === r.id).map((c) => c.status),
-          ),
-          gaps: cells.filter(
-            (c) => c.requirementId === r.id && (c.status === 'expired' || c.status === 'not_held'),
-          ).length,
-        }));
+        const byRequirement = requirements.map((r) => {
+          const mine = required.filter((c) => c.requirementId === r.id);
+          return {
+            requirementId: r.id,
+            name: r.name,
+            obligation: r.obligation,
+            percent: compliancePercent(mine.map((c) => c.status)),
+            gaps: mine.filter((c) => c.status === 'expired' || c.status === 'not_held').length,
+          };
+        });
+
+        // TR-A12: the board asks by area first, so the roll-up has to
+        // answer by area — not only by requirement.
+        const siteRows = await ctx.db
+          .select({ id: sites.id, name: sites.name })
+          .from(sites)
+          .where(and(eq(sites.tenantId, ctx.tenantId), isNull(sites.archivedAt)));
+        const memberships = await ctx.db
+          .select({ userId: siteMembers.userId, siteId: siteMembers.siteId })
+          .from(siteMembers)
+          .where(eq(siteMembers.tenantId, ctx.tenantId));
+        const sitesForUser = new Map<string, string[]>();
+        for (const m of memberships) {
+          sitesForUser.set(m.userId, [...(sitesForUser.get(m.userId) ?? []), m.siteId]);
+        }
+        const byArea = siteRows
+          .map((site) => {
+            const mine = required.filter(
+              (c) => c.userId !== null && (sitesForUser.get(c.userId) ?? []).includes(site.id),
+            );
+            return {
+              siteId: site.id,
+              name: site.name,
+              percent: compliancePercent(mine.map((c) => c.status)),
+              gaps: mine.filter((c) => c.status === 'expired' || c.status === 'not_held').length,
+            };
+          })
+          .filter((a) => a.percent !== null)
+          .sort((a, b) => (a.percent ?? 101) - (b.percent ?? 101));
 
         return {
           asOf,
           overall: compliancePercent(statuses),
-          statutory: compliancePercent(statutory),
+          // Statutory and mandatory carry different consequences and the
+          // board asks for them apart (TR-A12).
+          statutory: compliancePercent(withObligation('statutory')),
+          mandatory: compliancePercent(withObligation('mandatory')),
           byRequirement: byRequirement.sort((a, b) => (a.percent ?? 101) - (b.percent ?? 101)),
+          byArea,
         };
       }),
 

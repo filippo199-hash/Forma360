@@ -3100,7 +3100,8 @@
       "sites": "拠点・プロジェクト",
       "templates": "テンプレート",
       "incidents": "インシデント",
-      "rams": "RAMS パック"
+      "rams": "RAMS パック",
+      "training": "研修"
     }
   },
   "ai": {
@@ -6647,14 +6648,18 @@
       "empty": "表示できるものがありません。要件を追加し、記録を登録してください。",
       "exportCsv": "CSV を書き出す",
       "legend": "凡例",
-      "allRequirements": "すべての要件"
+      "allRequirements": "すべての要件",
+      "exportPdf": "PDF を書き出す",
+      "sortByGaps": "不足順に並べ替え"
     },
     "compliance": {
       "overall": "全体",
       "statutory": "法定のみ",
       "byRequirement": "要件別",
       "gapsCount": "不足 {count} 件",
-      "noData": "—"
+      "noData": "—",
+      "mandatory": "必須のみ",
+      "byArea": "エリア別"
     },
     "requirements": {
       "title": "要件",
@@ -6677,7 +6682,14 @@
         "group": "グループ",
         "site": "拠点",
         "person": "個人"
-      }
+      },
+      "edit": "編集",
+      "leadLabel": "何日前に督促するか",
+      "evidenceNote": "必要な証跡",
+      "description": "説明",
+      "scopeLabel": "割り当て方法",
+      "archiveTitle": "この要件をアーカイブしますか？",
+      "archiveBody": "{name} はマトリクスと不足一覧に表示されなくなります。既存の記録は証跡として保持されます。"
     },
     "obligation": {
       "statutory": "法定",
@@ -6703,24 +6715,66 @@
         "external": "外部機関",
         "imported": "インポート",
         "self_declared": "自己申告"
-      }
+      },
+      "personKind": {
+        "user": "社内の人",
+        "other": "アカウントのない人"
+      },
+      "searchPeople": "人を検索…",
+      "narrowSearch": "該当者がまだあります。入力を続けて絞り込んでください。",
+      "searching": "検索中…",
+      "personCategory": "区分",
+      "categories": {
+        "employee": "従業員",
+        "contractor": "請負業者",
+        "agency": "派遣社員"
+      },
+      "addPhoto": "カードを撮影",
+      "removePhoto": "削除",
+      "notes": "メモ"
     },
     "person": {
       "title": "研修",
       "noRecords": "登録された研修はありません。",
       "verified": "確認済み",
-      "unverified": "未確認"
+      "unverified": "未確認",
+      "myTitle": "自分の研修",
+      "asAt": "{date} 時点",
+      "noExpiry": "失効しない",
+      "noEvidence": "証明書が添付されていません",
+      "verify": "確認",
+      "void": "無効化",
+      "voided": "無効",
+      "voidReason": "無効化の理由"
     },
     "import": {
       "title": "記録をインポート",
       "help": "次の列を含む CSV を貼り付けてください: personName, userEmail, requirementName, achievedAt, expiresAt。",
       "run": "インポート",
       "imported": "{count} 件を取り込みました",
-      "failed": "{count} 行が失敗しました"
+      "failed": "{count} 行が失敗しました",
+      "chooseFile": "CSV ファイルを選択",
+      "template": "テンプレートを取得",
+      "paste": "または CSV を貼り付け",
+      "close": "閉じる",
+      "rowLabel": "{row} 行目",
+      "badColumns": "ヘッダー行には personName、requirementName、achievedAt が必要です。",
+      "noRows": "取り込む行がありません。"
     },
     "errors": {
       "moduleDisabled": "このモジュールは有効ではありません。",
-      "generic": "問題が発生しました。"
+      "generic": "問題が発生しました。",
+      "loadFailed": "この画面を読み込めませんでした。",
+      "retry": "再試行",
+      "noPermission": "要件を管理する権限がありません。",
+      "uploadFailed": "アップロードに失敗しました（{reason}）。"
+    },
+    "filters": {
+      "asOf": "基準日",
+      "site": "拠点",
+      "allSites": "すべての拠点",
+      "allRequirements": "すべての要件",
+      "clear": "クリア"
     }
   }
 }

@@ -3100,7 +3100,8 @@
       "sites": "Locaties & projecten",
       "templates": "Sjablonen",
       "incidents": "Incidenten",
-      "rams": "RAMS-pakketten"
+      "rams": "RAMS-pakketten",
+      "training": "Opleidingen"
     }
   },
   "ai": {
@@ -6647,14 +6648,18 @@
       "empty": "Nog niets te tonen. Voeg een vereiste toe en leg vast wat mensen hebben.",
       "exportCsv": "CSV exporteren",
       "legend": "Legenda",
-      "allRequirements": "Alle vereisten"
+      "allRequirements": "Alle vereisten",
+      "exportPdf": "PDF exporteren",
+      "sortByGaps": "Sorteren op hiaten"
     },
     "compliance": {
       "overall": "Totaal",
       "statutory": "Alleen wettelijk",
       "byRequirement": "Per vereiste",
       "gapsCount": "{count} met hiaten",
-      "noData": "—"
+      "noData": "—",
+      "mandatory": "Alleen verplicht",
+      "byArea": "Per gebied"
     },
     "requirements": {
       "title": "Vereisten",
@@ -6677,7 +6682,14 @@
         "group": "Groep",
         "site": "Locatie",
         "person": "Persoon"
-      }
+      },
+      "edit": "Bewerken",
+      "leadLabel": "Hoeveel dagen vooraf herinneren",
+      "evidenceNote": "Verwacht bewijs",
+      "description": "Omschrijving",
+      "scopeLabel": "Toewijzen op",
+      "archiveTitle": "Deze vereiste archiveren?",
+      "archiveBody": "{name} verschijnt niet meer in de matrix en de hiatenlijst. Bestaande registraties blijven als bewijs bewaard."
     },
     "obligation": {
       "statutory": "Wettelijk",
@@ -6703,24 +6715,66 @@
         "external": "Externe aanbieder",
         "imported": "Geïmporteerd",
         "self_declared": "Zelf opgegeven"
-      }
+      },
+      "personKind": {
+        "user": "Een collega",
+        "other": "Iemand zonder account"
+      },
+      "searchPeople": "Personen zoeken…",
+      "narrowSearch": "Meer resultaten — typ verder om de lijst te verfijnen.",
+      "searching": "Zoeken…",
+      "personCategory": "Type persoon",
+      "categories": {
+        "employee": "Medewerker",
+        "contractor": "Aannemer",
+        "agency": "Uitzendkracht"
+      },
+      "addPhoto": "Pas fotograferen",
+      "removePhoto": "Verwijderen",
+      "notes": "Notities"
     },
     "person": {
       "title": "Opleidingen",
       "noRecords": "Nog geen opleidingen vastgelegd.",
       "verified": "Geverifieerd",
-      "unverified": "Niet geverifieerd"
+      "unverified": "Niet geverifieerd",
+      "myTitle": "Mijn opleidingen",
+      "asAt": "Per {date}",
+      "noExpiry": "Verloopt nooit",
+      "noEvidence": "Geen certificaat bijgevoegd",
+      "verify": "Verifiëren",
+      "void": "Ongeldig maken",
+      "voided": "Ongeldig",
+      "voidReason": "Waarom wordt dit ongeldig gemaakt?"
     },
     "import": {
       "title": "Registraties importeren",
       "help": "Plak CSV met kolommen: personName, userEmail, requirementName, achievedAt, expiresAt.",
       "run": "Importeren",
       "imported": "{count} registraties geïmporteerd",
-      "failed": "{count} rijen mislukt"
+      "failed": "{count} rijen mislukt",
+      "chooseFile": "Kies een CSV-bestand",
+      "template": "Sjabloon downloaden",
+      "paste": "Of plak CSV",
+      "close": "Sluiten",
+      "rowLabel": "Rij {row}",
+      "badColumns": "De koprij moet personName, requirementName en achievedAt bevatten.",
+      "noRows": "Geen rijen om te importeren."
     },
     "errors": {
       "moduleDisabled": "Deze module is niet ingeschakeld.",
-      "generic": "Er is iets misgegaan."
+      "generic": "Er is iets misgegaan.",
+      "loadFailed": "Kan deze weergave niet laden.",
+      "retry": "Opnieuw proberen",
+      "noPermission": "U hebt geen rechten om vereisten te beheren.",
+      "uploadFailed": "Uploaden mislukt ({reason})."
+    },
+    "filters": {
+      "asOf": "Per",
+      "site": "Locatie",
+      "allSites": "Alle locaties",
+      "allRequirements": "Alle vereisten",
+      "clear": "Wissen"
     }
   }
 }

@@ -78,4 +78,12 @@ export const SEARCH_CATEGORIES: ReadonlyArray<SearchCategoryDef> = [
   { key: 'templates', labelKey: 'categories.templates', basePath: 'templates', icon: 'inspection' },
   // RS-A9: the server has returned RAMS hits since the module landed.
   { key: 'rams', labelKey: 'categories.rams', basePath: 'rams', icon: 'inspection' },
+  // TR-A13: training was in the nav but not in Cmd-K — the same bug a
+  // third time, and the reason this list has a test.
+  {
+    key: 'training',
+    labelKey: 'categories.training',
+    basePath: 'training/requirements',
+    icon: 'action',
+  },
 ];

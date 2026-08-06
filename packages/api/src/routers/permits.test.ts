@@ -1531,4 +1531,105 @@ describe('permits router', () => {
       ).resolves.toBeDefined();
     });
   });
+  // ── TR-A1: the competence gate is wired, not dead code ────────────────
+  describe('competence gate (TR-A1 / FreeHS B7)', () => {
+    /** A permit type demanding one training requirement. */
+    async function gatedType(requirementId: string): Promise<string> {
+      const admin = callerFor(adminId);
+      const created = await admin.permits.types.create({
+        category: 'other',
+        name: `Gated ${requirementId.slice(-6)}`,
+        maxDurationHours: 12,
+        requiredTrainingIds: [requirementId],
+        preconditions: [{ id: 'area_ready', label: 'Work area prepared' }],
+      });
+      return created.typeId;
+    }
+
+    async function requirement(): Promise<string> {
+      const id = newId();
+      await db.insert(schema.trainingRequirements).values({
+        id,
+        tenantId,
+        name: `Confined space ${id.slice(-6)}`,
+        validityMonths: 24,
+        renewalLeadDays: 60,
+      });
+      return id;
+    }
+
+    async function draftOnGatedType(typeId: string): Promise<string> {
+      const admin = callerFor(adminId);
+      const { permitId } = await admin.permits.create({
+        permitTypeId: typeId,
+        title: 'Vessel entry',
+        siteId: siteA,
+        locationText: 'Vessel 3',
+        acceptorUserId: standardId,
+        ...window(0, 6),
+      });
+      await checkAll(permitId);
+      return permitId;
+    }
+
+    it('TR-A1: refuses to issue when the acceptor has never held the ticket', async () => {
+      const reqId = await requirement();
+      const permitId = await draftOnGatedType(await gatedType(reqId));
+      await expect(
+        callerFor(adminId).permits.issue({ permitId, acknowledgeConflicts: true }),
+      ).rejects.toMatchObject({ message: 'training-missing' });
+    });
+
+    it('TR-A1: refuses when the ticket has lapsed, and says so', async () => {
+      const reqId = await requirement();
+      await db.insert(schema.trainingRecords).values({
+        id: newId(),
+        tenantId,
+        requirementId: reqId,
+        userId: standardId,
+        personName: 'Standard User',
+        achievedAt: new Date(Date.now() - 800 * 86_400_000),
+        expiresAt: new Date(Date.now() - 10 * 86_400_000),
+      });
+      const permitId = await draftOnGatedType(await gatedType(reqId));
+      await expect(
+        callerFor(adminId).permits.issue({ permitId, acknowledgeConflicts: true }),
+      ).rejects.toMatchObject({ message: 'training-expired' });
+    });
+
+    it('TR-A1: issues once the ticket is in date, and previews the shortfall before that', async () => {
+      const reqId = await requirement();
+      const permitId = await draftOnGatedType(await gatedType(reqId));
+
+      // The permit page previews who is short, so the issuer sees it
+      // before pressing Issue rather than discovering it at the job.
+      const before = await callerFor(adminId).permits.get({ permitId });
+      expect(before.trainingShortfalls).toHaveLength(1);
+      expect(before.trainingShortfalls[0]).toMatchObject({ reason: 'training-missing' });
+
+      await db.insert(schema.trainingRecords).values({
+        id: newId(),
+        tenantId,
+        requirementId: reqId,
+        userId: standardId,
+        personName: 'Standard User',
+        achievedAt: new Date(Date.now() - 30 * 86_400_000),
+        expiresAt: new Date(Date.now() + 400 * 86_400_000),
+      });
+
+      const after = await callerFor(adminId).permits.get({ permitId });
+      expect(after.trainingShortfalls).toHaveLength(0);
+      await expect(
+        callerFor(adminId).permits.issue({ permitId, acknowledgeConflicts: true }),
+      ).resolves.toBeDefined();
+    });
+
+    it('TR-A1: a type with no required training is unaffected', async () => {
+      // Every pre-existing permit type must keep issuing exactly as before.
+      const permitId = await draftOnGatedType(await simpleTypeId());
+      await expect(
+        callerFor(adminId).permits.issue({ permitId, acknowledgeConflicts: true }),
+      ).resolves.toBeDefined();
+    });
+  });
 });

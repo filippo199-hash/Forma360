@@ -31,9 +31,12 @@
  * Brand gating (ADR 0010): built with `{ enabled }` wired from the active
  * brand's module catalogue; every procedure refuses when disabled.
  *
- * Deliberate v1 gaps (documented, not accidental): competence checks
- * against Training records are a precondition checklist line until the
- * Training module (Phase 10) lands; extension does not re-run the SIMOPs
+ * Competence is enforced against the Training matrix (FreeHS B7): a type
+ * carrying `requiredTrainingIds` refuses to issue while any named
+ * operative is expired or has never held the ticket, and `get` previews
+ * the shortfall so the issuer sees it before pressing Issue.
+ *
+ * Deliberate v1 gaps (documented, not accidental): extension does not re-run the SIMOPs
  * check for the lengthened window; no dependents-registry resolver (the
  * registry's module union is closed — same status as risk assessments and
  * COSHH).
@@ -43,6 +46,8 @@ import {
   permitEvents,
   permits,
   permitTypes,
+  trainingRecords,
+  trainingRequirements,
   ramsPacks,
   ramsPackVersions,
   ramsReviews,
@@ -75,6 +80,9 @@ import {
   PERMIT_WORKER_ROLES,
   permitIsOverdue,
   ramsGateError,
+  trainingGateShortfalls,
+  type TrainingGateFact,
+  type TrainingGateShortfall,
   type PermitRamsLink,
   type RamsGateError,
   permitTypePreconditionSchema,
@@ -89,8 +97,9 @@ import {
 } from '@forma360/shared/permits';
 import { grantsAdminAccess } from '@forma360/permissions/catalogue';
 import { newId } from '@forma360/shared/id';
+import { statusAsOf } from '@forma360/shared/training';
 import { TRPCError } from '@trpc/server';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
 import { requirePermission, tenantProcedure } from '../procedures';
@@ -494,6 +503,125 @@ async function ramsPackGateError(
   return ramsGateError({ requiresRamsPack: true, link, now });
 }
 
+// ─── Competence gate (FreeHS B7 — the training matrix hook) ─────────────────
+
+/**
+ * Everyone the permit names: the acceptor plus the gang. These are the
+ * people whose competence the type's `requiredTrainingIds` is asserting,
+ * so these are the people the matrix is asked about.
+ *
+ * A worker with no `userId` (a contractor's operative typed by name) is
+ * matched on name, which is exactly how the training matrix keys
+ * account-less people.
+ */
+function permitNamedPeople(
+  permit: Pick<Permit, 'acceptorUserId' | 'workers'>,
+  acceptorName: string | null,
+): Array<{ userId: string | null; name: string }> {
+  const people: Array<{ userId: string | null; name: string }> = [];
+  if (permit.acceptorUserId !== null) {
+    people.push({ userId: permit.acceptorUserId, name: acceptorName ?? '' });
+  }
+  for (const w of permit.workers) {
+    people.push({ userId: w.userId, name: w.name });
+  }
+  return people;
+}
+
+/**
+ * Resolve each named person's standing against each required requirement,
+ * then hand the facts to the pure helper in `@forma360/shared/permits`.
+ *
+ * This is the wire the training module was built for. Until it existed,
+ * nine seeded permit types asked the issuer to tick "competence of all
+ * operatives verified" — an attestation of something the platform could
+ * already check, and the weakest control in the product.
+ *
+ * Returns every shortfall, not just a verdict, so `previewTrainingGate`
+ * can show the issuer exactly who to swap out before they press Issue.
+ */
+async function loadTrainingShortfalls(
+  db: Database,
+  tenantId: string,
+  permit: Pick<Permit, 'acceptorUserId' | 'workers'>,
+  requiredTrainingIds: readonly string[],
+  now: Date,
+): Promise<TrainingGateShortfall[]> {
+  if (requiredTrainingIds.length === 0) return [];
+
+  const [requirements, acceptorRows] = await Promise.all([
+    db
+      .select({
+        id: trainingRequirements.id,
+        name: trainingRequirements.name,
+        leadDays: trainingRequirements.renewalLeadDays,
+      })
+      .from(trainingRequirements)
+      .where(
+        and(
+          eq(trainingRequirements.tenantId, tenantId),
+          inArray(trainingRequirements.id, [...requiredTrainingIds]),
+        ),
+      ),
+    permit.acceptorUserId === null
+      ? Promise.resolve([])
+      : db
+          .select({ name: user.name })
+          .from(user)
+          .where(eq(user.id, permit.acceptorUserId))
+          .limit(1),
+  ]);
+  if (requirements.length === 0) return [];
+
+  const people = permitNamedPeople(permit, acceptorRows[0]?.name ?? null);
+  if (people.length === 0) return [];
+
+  // One query for every record that could matter, then decide in memory —
+  // a gang of ten against three requirements must not be thirty queries.
+  const records = await db
+    .select({
+      requirementId: trainingRecords.requirementId,
+      userId: trainingRecords.userId,
+      personName: trainingRecords.personName,
+      achievedAt: trainingRecords.achievedAt,
+      expiresAt: trainingRecords.expiresAt,
+    })
+    .from(trainingRecords)
+    .where(
+      and(
+        eq(trainingRecords.tenantId, tenantId),
+        isNull(trainingRecords.supersededAt),
+        inArray(trainingRecords.requirementId, [...requiredTrainingIds]),
+      ),
+    );
+
+  const facts: TrainingGateFact[] = [];
+  for (const person of people) {
+    for (const requirement of requirements) {
+      const held = records.filter(
+        (r) =>
+          r.requirementId === requirement.id &&
+          (person.userId !== null
+            ? r.userId === person.userId
+            : r.userId === null && r.personName.toLowerCase() === person.name.toLowerCase()),
+      );
+      facts.push({
+        personLabel: person.name === '' ? (person.userId ?? '') : person.name,
+        requirementId: requirement.id,
+        requirementName: requirement.name,
+        status: statusAsOf({
+          required: true,
+          records: held.map((h) => ({ achievedAt: h.achievedAt, expiresAt: h.expiresAt })),
+          leadDays: requirement.leadDays,
+          asOf: now,
+        }),
+      });
+    }
+  }
+
+  return trainingGateShortfalls({ requiredTrainingIds, facts });
+}
+
 /** The category ordering used for type lists — matches the catalogue. */
 const CATEGORY_ORDER = new Map(PERMIT_CATEGORIES.map((c, i) => [c, i] as const));
 
@@ -510,6 +638,11 @@ const typeCreateInput = z.object({
   requiresRiskAssessment: z.boolean().default(false),
   /** RAMS spec §10.2 — demands an issued own pack or an accepted third-party review. */
   requiresRamsPack: z.boolean().default(false),
+  /**
+   * FreeHS B7 — training requirements every named operative must hold, in
+   * date, before this type can be issued. Empty = no competence gate.
+   */
+  requiredTrainingIds: z.array(z.string().length(26)).max(20).default([]),
   maxDurationHours: z.number().int().min(1).max(72).default(12),
   preconditions: z.array(permitTypePreconditionSchema).max(40).default([]),
   gasLimits: z.array(gasLimitSchema).max(20).default([]),
@@ -531,6 +664,7 @@ const typeUpdateInput = z.object({
   requiresRescuePlan: z.boolean().optional(),
   requiresRiskAssessment: z.boolean().optional(),
   requiresRamsPack: z.boolean().optional(),
+  requiredTrainingIds: z.array(z.string().length(26)).max(20).optional(),
   maxDurationHours: z.number().int().min(1).max(72).optional(),
   preconditions: z.array(permitTypePreconditionSchema).max(40).optional(),
   gasLimits: z.array(gasLimitSchema).max(20).optional(),
@@ -677,6 +811,7 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           requiresIsolationCertificate: input.requiresIsolationCertificate,
           requiresRescuePlan: input.requiresRescuePlan,
           requiresRamsPack: input.requiresRamsPack,
+          requiredTrainingIds: input.requiredTrainingIds,
           requiresRiskAssessment: input.requiresRiskAssessment,
           maxDurationHours: input.maxDurationHours,
           preconditions: input.preconditions,
@@ -724,6 +859,9 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
               : {}),
             ...(input.requiresIsolationCertificate !== undefined
               ? { requiresIsolationCertificate: input.requiresIsolationCertificate }
+              : {}),
+            ...(input.requiredTrainingIds !== undefined
+              ? { requiredTrainingIds: input.requiredTrainingIds }
               : {}),
             ...(input.requiresRamsPack !== undefined
               ? { requiresRamsPack: input.requiresRamsPack }
@@ -916,6 +1054,17 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
               now,
             })
           : null;
+        // Same idea for the competence gate (FreeHS B7): the issuer sees
+        // exactly who is short of what on the permit page, rather than
+        // discovering it when Issue fails at the job. Every shortfall is
+        // returned, not just a verdict, so the UI can name names.
+        const trainingShortfalls = await loadTrainingShortfalls(
+          ctx.db,
+          ctx.tenantId,
+          permit,
+          type.requiredTrainingIds,
+          now,
+        );
         return {
           ...permit,
           type,
@@ -923,6 +1072,7 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           riskAssessment,
           methodStatement,
           ramsGate,
+          trainingShortfalls,
           insideCount: openEntryCount(permit.entryLog),
           /** The caller's own id — lets the UI show "accept" only to the named acceptor. */
           viewerUserId: ctx.auth.userId,
@@ -1691,6 +1841,29 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           if (ramsError !== null) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: ramsError });
           }
+        }
+        // The competence gate (FreeHS B7). Replaces the issuer ticking
+        // "competence of all operatives verified" with a real check
+        // against the training matrix for the acceptor and every named
+        // member of the gang. `expiring_soon` does not block: the card is
+        // valid today, and a shift-long permit must not fail because a
+        // ticket lapses next month.
+        const trainingShortfalls = await loadTrainingShortfalls(
+          ctx.db,
+          ctx.tenantId,
+          permit,
+          type.requiredTrainingIds,
+          now,
+        );
+        if (trainingShortfalls.length > 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            // The headline names the worse of the two reasons; the
+            // preview procedure carries the per-person detail.
+            message: trainingShortfalls.some((s) => s.reason === 'training-expired')
+              ? 'training-expired'
+              : 'training-missing',
+          });
         }
 
         const conflicts = await findConflicts(ctx.db, ctx.tenantId, {
