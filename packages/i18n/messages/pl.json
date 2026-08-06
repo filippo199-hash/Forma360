@@ -3100,7 +3100,8 @@
       "sites": "Obiekty i projekty",
       "templates": "Szablony",
       "incidents": "Zdarzenia",
-      "rams": "Pakiety RAMS"
+      "rams": "Pakiety RAMS",
+      "training": "Szkolenia"
     }
   },
   "ai": {
@@ -6647,14 +6648,18 @@
       "empty": "Nie ma jeszcze czego pokazać. Dodaj wymaganie i zarejestruj uprawnienia.",
       "exportCsv": "Eksportuj CSV",
       "legend": "Legenda",
-      "allRequirements": "Wszystkie wymagania"
+      "allRequirements": "Wszystkie wymagania",
+      "exportPdf": "Eksportuj PDF",
+      "sortByGaps": "Sortuj wg braków"
     },
     "compliance": {
       "overall": "Ogółem",
       "statutory": "Tylko ustawowe",
       "byRequirement": "Wg wymagania",
       "gapsCount": "{count} z brakami",
-      "noData": "—"
+      "noData": "—",
+      "mandatory": "Tylko obowiązkowe",
+      "byArea": "Wg obszaru"
     },
     "requirements": {
       "title": "Wymagania",
@@ -6677,7 +6682,14 @@
         "group": "Grupa",
         "site": "Lokalizacja",
         "person": "Osoba"
-      }
+      },
+      "edit": "Edytuj",
+      "leadLabel": "Ile dni wcześniej przypomnieć",
+      "evidenceNote": "Oczekiwany dowód",
+      "description": "Opis",
+      "scopeLabel": "Przypisz wg",
+      "archiveTitle": "Zarchiwizować to wymaganie?",
+      "archiveBody": "{name} przestanie pojawiać się w macierzy i na liście braków. Istniejące zapisy pozostają jako dowód."
     },
     "obligation": {
       "statutory": "Ustawowe",
@@ -6703,24 +6715,66 @@
         "external": "Dostawca zewnętrzny",
         "imported": "Zaimportowane",
         "self_declared": "Oświadczenie własne"
-      }
+      },
+      "personKind": {
+        "user": "Współpracownik",
+        "other": "Osoba bez konta"
+      },
+      "searchPeople": "Szukaj osób…",
+      "narrowSearch": "Więcej wyników — pisz dalej, aby zawęzić listę.",
+      "searching": "Szukanie…",
+      "personCategory": "Typ osoby",
+      "categories": {
+        "employee": "Pracownik",
+        "contractor": "Wykonawca",
+        "agency": "Pracownik agencyjny"
+      },
+      "addPhoto": "Sfotografuj kartę",
+      "removePhoto": "Usuń",
+      "notes": "Uwagi"
     },
     "person": {
       "title": "Szkolenia",
       "noRecords": "Brak zarejestrowanych szkoleń.",
       "verified": "Zweryfikowane",
-      "unverified": "Niezweryfikowane"
+      "unverified": "Niezweryfikowane",
+      "myTitle": "Moje szkolenia",
+      "asAt": "Stan na {date}",
+      "noExpiry": "Nigdy nie wygasa",
+      "noEvidence": "Brak załączonego certyfikatu",
+      "verify": "Zweryfikuj",
+      "void": "Unieważnij",
+      "voided": "Unieważniony",
+      "voidReason": "Dlaczego unieważniasz?"
     },
     "import": {
       "title": "Importuj zapisy",
       "help": "Wklej CSV z kolumnami: personName, userEmail, requirementName, achievedAt, expiresAt.",
       "run": "Importuj",
       "imported": "Zaimportowano {count} zapisów",
-      "failed": "{count} wierszy nie powiodło się"
+      "failed": "{count} wierszy nie powiodło się",
+      "chooseFile": "Wybierz plik CSV",
+      "template": "Pobierz szablon",
+      "paste": "Lub wklej CSV",
+      "close": "Zamknij",
+      "rowLabel": "Wiersz {row}",
+      "badColumns": "Wiersz nagłówka musi zawierać personName, requirementName i achievedAt.",
+      "noRows": "Brak wierszy do importu."
     },
     "errors": {
       "moduleDisabled": "Ten moduł nie jest włączony.",
-      "generic": "Coś poszło nie tak."
+      "generic": "Coś poszło nie tak.",
+      "loadFailed": "Nie udało się wczytać tego widoku.",
+      "retry": "Spróbuj ponownie",
+      "noPermission": "Nie masz uprawnień do zarządzania wymaganiami.",
+      "uploadFailed": "Przesyłanie nie powiodło się ({reason})."
+    },
+    "filters": {
+      "asOf": "Na dzień",
+      "site": "Lokalizacja",
+      "allSites": "Wszystkie lokalizacje",
+      "allRequirements": "Wszystkie wymagania",
+      "clear": "Wyczyść"
     }
   }
 }

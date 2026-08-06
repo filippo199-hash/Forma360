@@ -22,6 +22,7 @@
  * layer and client components can import it.
  */
 import { z } from 'zod';
+import { trainingStatus } from './training';
 
 // ─── Check frequencies ──────────────────────────────────────────────────────
 
@@ -412,21 +413,34 @@ export const MARSHAL_EXPIRY_SOON_DAYS = 60;
 export type MarshalTrainingStatus = 'not_trained' | 'in_date' | 'expiring_soon' | 'expired';
 
 /**
- * Training state for one marshal. No `trainedAt` = never trained; an
- * expiry in the past = expired; within {@link MARSHAL_EXPIRY_SOON_DAYS}
- * = expiring soon; a missing expiry on recorded training = in date
- * (non-expiring qualification).
+ * Training state for one marshal.
+ *
+ * TR-A13: this is now a thin adapter over `trainingStatus` in
+ * `training.ts` rather than a second implementation. The training module
+ * lifted its vocabulary from here, as the brief asked — but the
+ * consume-back never happened, so two divergent copies coexisted and
+ * could drift apart on the boundary cases (an expiry exactly now, a
+ * missing expiry) that matter most.
+ *
+ * The only difference that survives is the name of the "no record" state:
+ * fire safety says `not_trained`, the matrix says `not_held`. That is a
+ * label on the same fact, and it is translated at this boundary rather
+ * than by keeping two status engines.
  */
 export function marshalTrainingStatus(
   marshal: { trainedAt: Date | null; trainingExpiresAt: Date | null },
   now: Date,
 ): MarshalTrainingStatus {
-  if (marshal.trainedAt === null) return 'not_trained';
-  if (marshal.trainingExpiresAt === null) return 'in_date';
-  if (marshal.trainingExpiresAt.getTime() <= now.getTime()) return 'expired';
-  const soonMs = MARSHAL_EXPIRY_SOON_DAYS * 24 * 60 * 60 * 1000;
-  if (marshal.trainingExpiresAt.getTime() - now.getTime() <= soonMs) return 'expiring_soon';
-  return 'in_date';
+  const status = trainingStatus({
+    required: true,
+    record:
+      marshal.trainedAt === null
+        ? null
+        : { achievedAt: marshal.trainedAt, expiresAt: marshal.trainingExpiresAt },
+    leadDays: MARSHAL_EXPIRY_SOON_DAYS,
+    now,
+  });
+  return status === 'not_held' || status === 'not_required' ? 'not_trained' : status;
 }
 
 // ─── Building information documents ─────────────────────────────────────────

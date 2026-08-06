@@ -302,24 +302,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
             { key: 'ramsReviews', href: p('/rams/reviews'), permission: 'rams.review' },
           ],
         },
-        // The competence register: a record that lives for years and gets
-        // reviewed, so it sits with the registers rather than the work.
-        // Its badge is the gap count — the number that makes people open it.
-        {
-          key: 'training',
-          href: p('/training'),
-          icon: GraduationCap,
-          permission: 'training.view',
-          badge: 'training',
-          children: [
-            { key: 'trainingMatrix', href: p('/training/matrix') },
-            {
-              key: 'trainingRequirements',
-              href: p('/training/requirements'),
-              permission: 'training.manage',
-            },
-          ],
-        },
       ],
     },
     // THE ORGANISATION — the things work happens *to* and *with*, plus
@@ -354,6 +336,26 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
               permission: 'contractors.gate',
             },
             { key: 'contractorsCalendar', href: p('/contractors/calendar') },
+          ],
+        },
+        // TR-A15: the competence register sits beside Contractors, not with
+        // the document registers. The panel's argument is that a reviewer
+        // looking at "who is allowed to do this work" wants the two
+        // competence registers — our people and their people — side by
+        // side; training is about PEOPLE, which is what this group holds.
+        {
+          key: 'training',
+          href: p('/training'),
+          icon: GraduationCap,
+          permission: 'training.view',
+          badge: 'training',
+          children: [
+            { key: 'trainingMatrix', href: p('/training/matrix') },
+            {
+              key: 'trainingRequirements',
+              href: p('/training/requirements'),
+              permission: 'training.manage',
+            },
           ],
         },
         { key: 'documents', href: p('/documents'), icon: FolderOpen, permission: 'documents.view' },

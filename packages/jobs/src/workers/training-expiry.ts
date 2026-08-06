@@ -24,6 +24,7 @@ import { trainingRecords, trainingRequirements, user } from '@forma360/db/schema
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, eq, isNotNull, isNull, lte, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 
 export const TRAINING_EXPIRY_CRON = '0 7 * * *'; // 07:00 UTC daily
 
@@ -37,6 +38,14 @@ export interface DueTrainingReminder {
   requirementName: string;
   email: string;
   expiresOn: string;
+  /** Recipient's own locale, so the chase arrives in their language. */
+  locale: string | null;
+  /**
+   * True when the holder has no account and the chase went to whoever
+   * recorded the card instead — a contractor's operative cannot be
+   * emailed, but the person responsible for their paperwork can.
+   */
+  viaRecorder: boolean;
 }
 
 /**
@@ -47,6 +56,12 @@ export interface DueTrainingReminder {
  * schedule. Already-expired records are included — the chase matters most
  * once it has lapsed — but only until they are stamped.
  *
+ * TR-A6: this used to INNER JOIN the user table, which silently excluded
+ * every contractor's operative and agency worker — exactly the people
+ * whose cards lapse most and who the matrix exists to cover. It is now a
+ * LEFT JOIN, and an account-less holder's chase is addressed to the
+ * person who recorded the card.
+ *
  * Pure, so the handler and its tests share one definition of "due".
  */
 export async function findDueTrainingReminders(
@@ -54,6 +69,8 @@ export async function findDueTrainingReminders(
   today: Date,
   limit: number,
 ): Promise<DueTrainingReminder[]> {
+  const holder = alias(user, 'holder');
+  const recorder = alias(user, 'recorder');
   const rows = await db
     .select({
       recordId: trainingRecords.id,
@@ -61,18 +78,22 @@ export async function findDueTrainingReminders(
       personName: trainingRecords.personName,
       expiresAt: trainingRecords.expiresAt,
       requirementName: trainingRequirements.name,
-      email: user.email,
+      holderEmail: holder.email,
+      holderLocale: holder.locale,
+      holderDeactivatedAt: holder.deactivatedAt,
+      recorderEmail: recorder.email,
+      recorderLocale: recorder.locale,
     })
     .from(trainingRecords)
     .innerJoin(trainingRequirements, eq(trainingRecords.requirementId, trainingRequirements.id))
-    .innerJoin(user, eq(trainingRecords.userId, user.id))
+    .leftJoin(holder, eq(trainingRecords.userId, holder.id))
+    .leftJoin(recorder, eq(trainingRecords.recordedByUserId, recorder.id))
     .where(
       and(
         isNull(trainingRecords.reminderSentAt),
         isNull(trainingRecords.supersededAt),
         isNotNull(trainingRecords.expiresAt),
         isNull(trainingRequirements.archivedAt),
-        isNull(user.deactivatedAt),
         // expiry <= today + the requirement's own lead time
         lte(
           trainingRecords.expiresAt,
@@ -82,16 +103,25 @@ export async function findDueTrainingReminders(
     )
     .limit(limit);
 
-  return rows
-    .filter((r): r is typeof r & { expiresAt: Date } => r.expiresAt !== null)
-    .map((r) => ({
+  const due: DueTrainingReminder[] = [];
+  for (const r of rows) {
+    if (r.expiresAt === null) continue;
+    // A deactivated holder is nobody's to chase.
+    const holderReachable = r.holderEmail !== null && r.holderDeactivatedAt === null;
+    const email = holderReachable ? r.holderEmail : r.recorderEmail;
+    if (email === null || email === undefined) continue;
+    due.push({
       recordId: r.recordId,
       tenantId: r.tenantId,
       personName: r.personName,
       requirementName: r.requirementName,
-      email: r.email,
+      email,
       expiresOn: r.expiresAt.toISOString().slice(0, 10),
-    }));
+      locale: (holderReachable ? r.holderLocale : r.recorderLocale) ?? null,
+      viaRecorder: !holderReachable,
+    });
+  }
+  return due;
 }
 
 export interface TrainingExpiryDeps {
@@ -114,7 +144,9 @@ export async function runTrainingExpiryReminders(deps: TrainingExpiryDeps): Prom
   let sent = 0;
   for (const r of due) {
     try {
-      await deps.notify(r, `${deps.appUrl}/en/training`);
+      // TR-A9: the link lands in the recipient's own locale, not a
+      // hardcoded /en/ that throws away five shipped translations.
+      await deps.notify(r, `${deps.appUrl}/${r.locale ?? 'en'}/training`);
       await deps.db
         .update(trainingRecords)
         .set({ reminderSentAt: today })

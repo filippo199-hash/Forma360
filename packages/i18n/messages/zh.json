@@ -3100,7 +3100,8 @@
       "sites": "站点与项目",
       "templates": "模板",
       "incidents": "事故事件",
-      "rams": "RAMS 工作包"
+      "rams": "RAMS 工作包",
+      "training": "培训"
     }
   },
   "ai": {
@@ -6647,14 +6648,18 @@
       "empty": "暂无内容。请先添加要求并登记人员持有的证书。",
       "exportCsv": "导出 CSV",
       "legend": "图例",
-      "allRequirements": "所有要求"
+      "allRequirements": "所有要求",
+      "exportPdf": "导出 PDF",
+      "sortByGaps": "按缺口排序"
     },
     "compliance": {
       "overall": "总体",
       "statutory": "仅法定",
       "byRequirement": "按要求",
       "gapsCount": "{count} 项有缺口",
-      "noData": "—"
+      "noData": "—",
+      "mandatory": "仅强制",
+      "byArea": "按区域"
     },
     "requirements": {
       "title": "要求",
@@ -6677,7 +6682,14 @@
         "group": "群组",
         "site": "场所",
         "person": "个人"
-      }
+      },
+      "edit": "编辑",
+      "leadLabel": "提前多少天提醒",
+      "evidenceNote": "所需证据",
+      "description": "说明",
+      "scopeLabel": "分配方式",
+      "archiveTitle": "归档此要求？",
+      "archiveBody": "{name} 将不再显示在矩阵和缺口列表中。已有记录将作为证据保留。"
     },
     "obligation": {
       "statutory": "法定",
@@ -6703,24 +6715,66 @@
         "external": "外部机构",
         "imported": "导入",
         "self_declared": "本人声明"
-      }
+      },
+      "personKind": {
+        "user": "同事",
+        "other": "无账号人员"
+      },
+      "searchPeople": "搜索人员…",
+      "narrowSearch": "还有更多匹配项，请继续输入以缩小范围。",
+      "searching": "搜索中…",
+      "personCategory": "人员类型",
+      "categories": {
+        "employee": "员工",
+        "contractor": "承包商",
+        "agency": "劳务派遣人员"
+      },
+      "addPhoto": "拍摄证卡",
+      "removePhoto": "移除",
+      "notes": "备注"
     },
     "person": {
       "title": "培训",
       "noRecords": "尚未登记培训。",
       "verified": "已核实",
-      "unverified": "未核实"
+      "unverified": "未核实",
+      "myTitle": "我的培训",
+      "asAt": "截至 {date}",
+      "noExpiry": "永不过期",
+      "noEvidence": "未附证书",
+      "verify": "核实",
+      "void": "作废",
+      "voided": "已作废",
+      "voidReason": "作废原因"
     },
     "import": {
       "title": "导入记录",
       "help": "粘贴包含以下列的 CSV：personName、userEmail、requirementName、achievedAt、expiresAt。",
       "run": "导入",
       "imported": "已导入 {count} 条记录",
-      "failed": "{count} 行失败"
+      "failed": "{count} 行失败",
+      "chooseFile": "选择 CSV 文件",
+      "template": "下载模板",
+      "paste": "或粘贴 CSV",
+      "close": "关闭",
+      "rowLabel": "第 {row} 行",
+      "badColumns": "标题行必须包含 personName、requirementName 和 achievedAt。",
+      "noRows": "没有可导入的行。"
     },
     "errors": {
       "moduleDisabled": "此模块未启用。",
-      "generic": "出了点问题。"
+      "generic": "出了点问题。",
+      "loadFailed": "无法加载此视图。",
+      "retry": "重试",
+      "noPermission": "您没有管理要求的权限。",
+      "uploadFailed": "上传失败（{reason}）。"
+    },
+    "filters": {
+      "asOf": "截至",
+      "site": "场所",
+      "allSites": "所有场所",
+      "allRequirements": "所有要求",
+      "clear": "清除"
     }
   }
 }

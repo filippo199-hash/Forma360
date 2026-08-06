@@ -50,6 +50,12 @@ const listInput = z
     limit: z.number().int().min(1).max(200).default(50),
     cursor: z.string().optional(),
     includeDeactivated: z.boolean().default(false),
+    /**
+     * Name / email substring. Without it every picker in the product is
+     * capped at the first `limit` people with no way to reach the rest —
+     * which is how a person-picker silently truncates at 50 (TR-A2).
+     */
+    search: z.string().trim().max(200).optional(),
   })
   .default({});
 
@@ -98,6 +104,12 @@ export const usersRouter = router({
       if (!input.includeDeactivated) {
         whereParts.push(sql`${user.deactivatedAt} IS NULL`);
       }
+      if (input.search !== undefined && input.search !== '') {
+        const term = `%${input.search.toLowerCase()}%`;
+        whereParts.push(
+          sql`(lower(${user.name}) LIKE ${term} OR lower(${user.email}) LIKE ${term})`,
+        );
+      }
       const rows = await ctx.db
         .select({
           id: user.id,
@@ -112,7 +124,7 @@ export const usersRouter = router({
         })
         .from(user)
         .where(and(...whereParts))
-        .orderBy(user.createdAt)
+        .orderBy(input.search !== undefined && input.search !== '' ? user.name : user.createdAt)
         .limit(input.limit + 1);
       const hasMore = rows.length > input.limit;
       return {
