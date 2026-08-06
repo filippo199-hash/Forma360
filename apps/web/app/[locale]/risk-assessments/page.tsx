@@ -216,7 +216,7 @@ export default function RiskAssessmentsPage() {
           {newButton}
         </div>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-left">

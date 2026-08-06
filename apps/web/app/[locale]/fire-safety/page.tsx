@@ -148,7 +148,7 @@ export default function FireSafetyHubPage() {
       ) : (
         <>
           {/* Table (desktop) — the mobile card list below takes over under md. */}
-          <div className="hidden overflow-x-auto rounded-lg border md:block">
+          <div className="hidden overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm md:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">

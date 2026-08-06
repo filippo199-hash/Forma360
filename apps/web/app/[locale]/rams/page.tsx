@@ -220,7 +220,7 @@ export default function RamsRegisterPage() {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-x-auto md:block">
+          <div className="hidden overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm md:block">
             <table className="w-full text-sm">
               <thead className="text-muted-foreground border-b text-left">
                 <tr>

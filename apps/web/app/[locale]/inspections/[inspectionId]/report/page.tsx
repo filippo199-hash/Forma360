@@ -205,7 +205,7 @@ export default function InspectionReportPage() {
         {allActions.length > 0 ? (
           <section>
             <h2 className="mb-3 text-base font-semibold">{t('allActionsHeading')}</h2>
-            <div className="overflow-hidden rounded-lg border">
+            <div className="overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
