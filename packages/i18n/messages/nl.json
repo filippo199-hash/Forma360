@@ -67,7 +67,17 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ Filter toevoegen",
+    "resultsCount": "{count} resultaten",
+    "removeFilter": "Filter {label} verwijderen",
+    "from": "Van",
+    "to": "Tot",
+    "showArchived": "Gearchiveerde tonen",
+    "hideArchived": "Gearchiveerde verbergen",
+    "exportCsv": "CSV exporteren",
+    "categories": "Categorieën",
+    "settings": "Instellingen"
   },
   "auth": {
     "signIn": {

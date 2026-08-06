@@ -67,7 +67,17 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ フィルターを追加",
+    "resultsCount": "{count} 件",
+    "removeFilter": "{label} フィルターを削除",
+    "from": "開始",
+    "to": "終了",
+    "showArchived": "アーカイブを表示",
+    "hideArchived": "アーカイブを非表示",
+    "exportCsv": "CSVをエクスポート",
+    "categories": "カテゴリ",
+    "settings": "設定"
   },
   "auth": {
     "signIn": {

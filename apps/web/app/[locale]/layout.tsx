@@ -26,6 +26,7 @@ import {
 import { ThemeProvider } from '../../src/components/theme-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
 import { Toaster } from '../../src/components/ui/sonner';
+import { TooltipProvider } from '../../src/components/ui/tooltip';
 import { auth } from '../../src/server/auth';
 
 const inter = Inter({
@@ -117,44 +118,48 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <TRPCProvider>
-              {isExternal && !isHomePage ? (
-                /* External contractor portal — minimal shell, no internal nav. */
-                <div className="flex min-h-screen flex-col">
-                  <PortalHeader name={displayName} locale={locale} />
-                  <main className="flex-1">{children}</main>
-                </div>
-              ) : showSidebar ? (
-                /* Signed-in app shell — full-height dark sidebar on the left,
-                 * header + content in the column to its right (Cantiere360).
-                 * PF-27: the shell provides the caller's permissions so the
-                 * nav can hide modules the user cannot open. */
-                <PermissionsProvider permissions={(await loadCurrentUserPermissions()).permissions}>
-                  <div className="flex min-h-screen">
-                    <SiteSidebar locale={locale} />
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <SiteHeader showBrand={false} />
-                      {/* ADR 0014: the phone tab bar is fixed to the bottom,
-                       * so content reserves its height below `md`. */}
-                      <main className="flex-1 pb-16 md:pb-0">{children}</main>
-                    </div>
-                    {/* Floating assistant launcher on every signed-in page. */}
-                    <ChatBubble />
-                    {/* PF-10: drains queued offline mutations + pending chip. */}
-                    <OfflineQueueFlusher />
-                    {/* ADR 0014: thumb-reachable navigation on phones. */}
-                    <MobileTabBar locale={locale} />
+              <TooltipProvider delayDuration={200}>
+                {isExternal && !isHomePage ? (
+                  /* External contractor portal — minimal shell, no internal nav. */
+                  <div className="flex min-h-screen flex-col">
+                    <PortalHeader name={displayName} locale={locale} />
+                    <main className="flex-1">{children}</main>
                   </div>
-                </PermissionsProvider>
-              ) : (
-                /* Public pages — header on top, marketing/legal footer below. */
-                <div className="flex min-h-screen flex-col">
-                  <SiteHeader />
-                  <main className="flex-1">{children}</main>
-                  <SiteFooter />
-                </div>
-              )}
-              <Toaster />
-              <ServiceWorkerRegister />
+                ) : showSidebar ? (
+                  /* Signed-in app shell — full-height dark sidebar on the left,
+                   * header + content in the column to its right (Cantiere360).
+                   * PF-27: the shell provides the caller's permissions so the
+                   * nav can hide modules the user cannot open. */
+                  <PermissionsProvider
+                    permissions={(await loadCurrentUserPermissions()).permissions}
+                  >
+                    <div className="flex min-h-screen">
+                      <SiteSidebar locale={locale} />
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <SiteHeader showBrand={false} />
+                        {/* ADR 0014: the phone tab bar is fixed to the bottom,
+                         * so content reserves its height below `md`. */}
+                        <main className="flex-1 pb-16 md:pb-0">{children}</main>
+                      </div>
+                      {/* Floating assistant launcher on every signed-in page. */}
+                      <ChatBubble />
+                      {/* PF-10: drains queued offline mutations + pending chip. */}
+                      <OfflineQueueFlusher />
+                      {/* ADR 0014: thumb-reachable navigation on phones. */}
+                      <MobileTabBar locale={locale} />
+                    </div>
+                  </PermissionsProvider>
+                ) : (
+                  /* Public pages — header on top, marketing/legal footer below. */
+                  <div className="flex min-h-screen flex-col">
+                    <SiteHeader />
+                    <main className="flex-1">{children}</main>
+                    <SiteFooter />
+                  </div>
+                )}
+                <Toaster />
+                <ServiceWorkerRegister />
+              </TooltipProvider>
             </TRPCProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

@@ -67,7 +67,17 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ 添加筛选",
+    "resultsCount": "{count} 条结果",
+    "removeFilter": "移除 {label} 筛选",
+    "from": "从",
+    "to": "至",
+    "showArchived": "显示已归档",
+    "hideArchived": "隐藏已归档",
+    "exportCsv": "导出 CSV",
+    "categories": "类别",
+    "settings": "设置"
   },
   "auth": {
     "signIn": {

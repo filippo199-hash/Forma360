@@ -67,7 +67,17 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ Dodaj filtr",
+    "resultsCount": "{count} wyników",
+    "removeFilter": "Usuń filtr {label}",
+    "from": "Od",
+    "to": "Do",
+    "showArchived": "Pokaż zarchiwizowane",
+    "hideArchived": "Ukryj zarchiwizowane",
+    "exportCsv": "Eksportuj CSV",
+    "categories": "Kategorie",
+    "settings": "Ustawienia"
   },
   "auth": {
     "signIn": {
