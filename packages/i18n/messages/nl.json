@@ -1471,9 +1471,12 @@
       "templates": "Sjablonen",
       "schedules": "Planningen",
       "approvals": "Goedkeuringen",
-      "maintenance": "Onderhoud"
+      "maintenance": "Onderhoud",
+      "trainingMatrix": "Matrix",
+      "trainingRequirements": "Vereisten"
     },
     "rams": "RAMS",
+    "training": "Opleidingen",
     "groupDoWork": "Het werk doen",
     "groupRecords": "Dossiers en registers"
   },
@@ -6597,5 +6600,112 @@
     },
     "footnote": "Twijfel? Kies wat het beste past — wie het beoordeelt, kan het later verplaatsen.",
     "noPermission": "U heeft hier geen meldrechten. Vraag een beheerder om toegang."
+  },
+  "training": {
+    "title": "Opleiding en vakbekwaamheid",
+    "subtitle": "Wie wat heeft, wat ontbreekt en wanneer het verloopt.",
+    "tabs": {
+      "gaps": "Hiaten",
+      "matrix": "Matrix",
+      "compliance": "Naleving",
+      "requirements": "Vereisten"
+    },
+    "asAt": "Per {date}",
+    "status": {
+      "in_date": "Geldig",
+      "expiring_soon": "Verloopt binnenkort",
+      "expired": "Verlopen",
+      "not_held": "Nooit behaald",
+      "not_required": "Niet vereist"
+    },
+    "gaps": {
+      "expired": "Verlopen",
+      "expiringSoon": "Verloopt binnenkort",
+      "notHeld": "Nooit behaald",
+      "empty": "Geen hiaten. Alle vereiste registraties zijn geldig.",
+      "record": "Vastleggen",
+      "expiresOn": "verloopt op {date}",
+      "requiredByRole": "vereist door functie",
+      "total": "{count} op te volgen"
+    },
+    "matrix": {
+      "person": "Persoon",
+      "empty": "Nog niets te tonen. Voeg een vereiste toe en leg vast wat mensen hebben.",
+      "exportCsv": "CSV exporteren",
+      "legend": "Legenda"
+    },
+    "compliance": {
+      "overall": "Totaal",
+      "statutory": "Alleen wettelijk",
+      "byRequirement": "Per vereiste",
+      "gapsCount": "{count} met hiaten",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Vereisten",
+      "add": "Vereiste toevoegen",
+      "name": "Naam",
+      "category": "Categorie",
+      "obligation": "Verplichting",
+      "validity": "Geldigheid",
+      "validityMonths": "{months} maanden",
+      "noExpiry": "Verloopt nooit",
+      "leadDays": "{days} dagen vooraf herinneren",
+      "empty": "Nog geen vereisten. Voeg de certificaten toe die uw mensen moeten hebben.",
+      "archive": "Archiveren",
+      "save": "Opslaan",
+      "assignments": "Wie het nodig heeft",
+      "addAssignment": "Toewijzen",
+      "cancel": "Annuleren",
+      "scope": {
+        "role": "Functie",
+        "group": "Groep",
+        "site": "Locatie",
+        "person": "Persoon"
+      }
+    },
+    "obligation": {
+      "statutory": "Wettelijk",
+      "mandatory": "Verplicht",
+      "discretionary": "Optioneel"
+    },
+    "record": {
+      "title": "Opleiding vastleggen",
+      "person": "Persoon",
+      "requirement": "Vereiste",
+      "achievedAt": "Behaald op",
+      "expiresAt": "Verloopt",
+      "expiryAuto": "Berekend uit de geldigheidsduur",
+      "awardingBody": "Uitgevende instantie",
+      "certificateNumber": "Certificaatnummer",
+      "evidence": "Certificaat of foto van de pas",
+      "save": "Registratie opslaan",
+      "saved": "Registratie opgeslagen",
+      "source": "Herkomst",
+      "cancel": "Annuleren",
+      "sources": {
+        "internal": "Intern",
+        "external": "Externe aanbieder",
+        "imported": "Geïmporteerd",
+        "self_declared": "Zelf opgegeven"
+      }
+    },
+    "person": {
+      "title": "Opleidingen",
+      "noRecords": "Nog geen opleidingen vastgelegd.",
+      "verified": "Geverifieerd",
+      "unverified": "Niet geverifieerd"
+    },
+    "import": {
+      "title": "Registraties importeren",
+      "help": "Plak CSV met kolommen: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importeren",
+      "imported": "{count} registraties geïmporteerd",
+      "failed": "{count} rijen mislukt"
+    },
+    "errors": {
+      "moduleDisabled": "Deze module is niet ingeschakeld.",
+      "generic": "Er is iets misgegaan."
+    }
   }
 }

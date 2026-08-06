@@ -498,6 +498,13 @@
       "when": 1780000180000,
       "tag": "0070_rams_briefing_client_ref",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1780000190000,
+      "tag": "0071_training_matrix",
+      "breakpoints": true
     }
   ]
 }

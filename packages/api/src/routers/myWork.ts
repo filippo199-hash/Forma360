@@ -32,6 +32,7 @@ import {
   permits,
   riskAssessmentAcknowledgements,
   riskAssessments,
+  trainingRecords,
 } from '@forma360/db/schema';
 import { grantsAdminAccess, type PermissionKey } from '@forma360/permissions/catalogue';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
@@ -43,6 +44,7 @@ import {
   desc,
   eq,
   inArray,
+  isNotNull,
   isNull,
   lte,
   lt,
@@ -82,7 +84,13 @@ export interface MyWorkRow {
  * (ADR 0010) so a deployment never spends queries on a module it does
  * not ship, and permission-gated per caller below.
  */
-export const NAV_COUNT_MODULES = ['incidents', 'permits', 'riskAssessments', 'fireSafety'] as const;
+export const NAV_COUNT_MODULES = [
+  'incidents',
+  'permits',
+  'riskAssessments',
+  'fireSafety',
+  'training',
+] as const;
 export type NavCountModule = (typeof NAV_COUNT_MODULES)[number];
 
 const NAV_COUNT_PERMISSION: Record<NavCountModule, PermissionKey> = {
@@ -90,6 +98,7 @@ const NAV_COUNT_PERMISSION: Record<NavCountModule, PermissionKey> = {
   permits: 'permits.view',
   riskAssessments: 'riskAssessments.view',
   fireSafety: 'fireSafety.view',
+  training: 'training.view',
 };
 
 export interface MyWorkRouterDeps {
@@ -225,6 +234,28 @@ export function createMyWorkRouter(deps: MyWorkRouterDeps = {}) {
           const n = (checks[0]?.n ?? 0) + (fras[0]?.n ?? 0);
           if (n > 0) out.fireSafety = n;
         }),
+      );
+    }
+
+    if (wants('training')) {
+      jobs.push(
+        db
+          .select({ n: count() })
+          .from(trainingRecords)
+          .where(
+            and(
+              eq(trainingRecords.tenantId, tenantId),
+              isNull(trainingRecords.supersededAt),
+              isNotNull(trainingRecords.expiresAt),
+              lt(trainingRecords.expiresAt, at),
+            ),
+          )
+          .then((rows) => {
+            // Expired only. "Expiring soon" is a plan, not an alarm, and a
+            // badge that counts both trains people to ignore the number.
+            const n = rows[0]?.n ?? 0;
+            if (n > 0) out.training = n;
+          }),
       );
     }
 

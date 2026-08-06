@@ -341,6 +341,86 @@ export function ramsGateError(args: {
   return null;
 }
 
+// ─── Competence gate (FreeHS B7 — the training matrix hook) ─────────────────
+
+export type TrainingGateError = 'training-missing' | 'training-expired';
+
+/** One person's standing against one required requirement, as loaded. */
+export interface TrainingGateFact {
+  readonly personLabel: string;
+  readonly requirementId: string;
+  readonly requirementName: string;
+  /** Computed by `trainingStatus` in `training.ts` — the single source. */
+  readonly status: 'in_date' | 'expiring_soon' | 'expired' | 'not_held' | 'not_required';
+}
+
+/** Who is short of what, for the UI to name names rather than say "blocked". */
+export interface TrainingGateShortfall {
+  readonly personLabel: string;
+  readonly requirementId: string;
+  readonly requirementName: string;
+  readonly reason: TrainingGateError;
+}
+
+/**
+ * The competence gate. Until this existed, nine seeded permit types asked
+ * the issuer to tick "competence of all operatives verified" — an
+ * attestation of something the platform could already check, and the
+ * weakest control in the product. This replaces the tick with a real
+ * check against the training matrix for every named operative.
+ *
+ * `expiring_soon` does **not** block: the card is valid today, and a
+ * permit that runs for a shift does not fail because a ticket lapses next
+ * month. Only `expired` and `not_held` stop an issue.
+ *
+ * Pure, and returns *every* shortfall rather than the first, so the permit
+ * page can list exactly who to swap out before the issuer presses Issue
+ * (the RS-A11 lesson: a gate the UI cannot preview is a gate people learn
+ * to route around).
+ */
+export function trainingGateShortfalls(args: {
+  requiredTrainingIds: readonly string[];
+  facts: readonly TrainingGateFact[];
+}): TrainingGateShortfall[] {
+  if (args.requiredTrainingIds.length === 0) return [];
+  const required = new Set(args.requiredTrainingIds);
+  const shortfalls: TrainingGateShortfall[] = [];
+  for (const fact of args.facts) {
+    if (!required.has(fact.requirementId)) continue;
+    // `not_required` cannot occur for a requirement the permit type
+    // demands — the type's demand IS the requirement — so treat it as
+    // "no record", which is what it means here.
+    if (fact.status === 'expired') {
+      shortfalls.push({ ...pick(fact), reason: 'training-expired' });
+    } else if (fact.status === 'not_held' || fact.status === 'not_required') {
+      shortfalls.push({ ...pick(fact), reason: 'training-missing' });
+    }
+  }
+  return shortfalls;
+}
+
+function pick(f: TrainingGateFact) {
+  return {
+    personLabel: f.personLabel,
+    requirementId: f.requirementId,
+    requirementName: f.requirementName,
+  };
+}
+
+/** The blocking verdict: null when every named operative is covered. */
+export function trainingGateError(args: {
+  requiredTrainingIds: readonly string[];
+  facts: readonly TrainingGateFact[];
+}): TrainingGateError | null {
+  const shortfalls = trainingGateShortfalls(args);
+  if (shortfalls.length === 0) return null;
+  // Expired outranks missing in the headline: it is the more alarming
+  // finding (someone *was* competent and the system let it lapse).
+  return shortfalls.some((s) => s.reason === 'training-expired')
+    ? 'training-expired'
+    : 'training-missing';
+}
+
 // ─── Workers on the permit + entry/exit log (PW-8) ─────────────────────────
 
 export const PERMIT_WORKER_ROLES = ['supervisor', 'worker', 'entrant', 'standby'] as const;

@@ -38,5 +38,6 @@ export function useNavCounts(): NavCounts {
     ...(modules.permits !== undefined ? { permits: modules.permits } : {}),
     ...(modules.riskAssessments !== undefined ? { riskAssessments: modules.riskAssessments } : {}),
     ...(modules.fireSafety !== undefined ? { fireSafety: modules.fireSafety } : {}),
+    ...(modules.training !== undefined ? { training: modules.training } : {}),
   };
 }

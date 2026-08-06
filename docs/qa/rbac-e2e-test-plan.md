@@ -49,7 +49,7 @@ Verify, with real browser journeys on production, that:
 Reference — what the system sets actually contain (from `packages/permissions/src/seed.ts`):
 - **Administrator** = all 64 keys (holds `org.settings` ⇒ `grantsAdminAccess`).
 - **Manager** = everything **except** `billing.manage`, `integrations.manage`, `org.settings`, `users.anonymise` ⇒ **Manager is NOT admin** for layouts gated on `grantsAdminAccess`.
-- **Standard** = view keys + `inspections.conduct/sign`, `issues.report`, `actions.create`, `assets.readings.record`, `training.take`, incl. `templates.view` + `analytics.view`.
+- **Standard** = view keys + `inspections.conduct/sign`, `issues.report`, `actions.create`, `assets.readings.record`, `training.view`, incl. `templates.view` + `analytics.view`.
 
 > ⚠️ Design tension to test explicitly (B6/B7): `/templates` layout redirects **non-admins** to `/settings/profile` — so a **Manager with full `templates.*` keys** and a Standard user with `templates.view` both have **no UI entry point** to templates. Decide whether that's intended; record actual behavior.
 

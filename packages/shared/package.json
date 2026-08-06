@@ -103,6 +103,10 @@
     "./rams": {
       "types": "./src/rams.ts",
       "default": "./src/rams.ts"
+    },
+    "./training": {
+      "types": "./src/training.ts",
+      "default": "./src/training.ts"
     }
   },
   "scripts": {

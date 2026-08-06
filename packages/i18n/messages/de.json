@@ -1478,9 +1478,12 @@
       "templates": "Vorlagen",
       "schedules": "Zeitpläne",
       "approvals": "Freigaben",
-      "maintenance": "Wartung"
+      "maintenance": "Wartung",
+      "trainingMatrix": "Matrix",
+      "trainingRequirements": "Anforderungen"
     },
     "rams": "RAMS",
+    "training": "Schulungen",
     "groupDoWork": "Die Arbeit erledigen",
     "groupRecords": "Nachweise & Register"
   },
@@ -6604,5 +6607,112 @@
     },
     "footnote": "Unsicher? Wählen Sie das Passendste — wer es prüft, kann es später verschieben.",
     "noPermission": "Sie haben hier keine Melderechte. Bitten Sie eine:n Administrator:in um Zugang."
+  },
+  "training": {
+    "title": "Schulungen & Kompetenz",
+    "subtitle": "Wer was besitzt, was fehlt und wann es abläuft.",
+    "tabs": {
+      "gaps": "Lücken",
+      "matrix": "Matrix",
+      "compliance": "Erfüllung",
+      "requirements": "Anforderungen"
+    },
+    "asAt": "Stand {date}",
+    "status": {
+      "in_date": "Gültig",
+      "expiring_soon": "Läuft bald ab",
+      "expired": "Abgelaufen",
+      "not_held": "Nie erworben",
+      "not_required": "Nicht erforderlich"
+    },
+    "gaps": {
+      "expired": "Abgelaufen",
+      "expiringSoon": "Läuft bald ab",
+      "notHeld": "Nie erworben",
+      "empty": "Keine Lücken. Alle erforderlichen Nachweise sind gültig.",
+      "record": "Erfassen",
+      "expiresOn": "läuft ab am {date}",
+      "requiredByRole": "durch Rolle erforderlich",
+      "total": "{count} zu bearbeiten"
+    },
+    "matrix": {
+      "person": "Person",
+      "empty": "Noch nichts vorhanden. Legen Sie eine Anforderung an und erfassen Sie Nachweise.",
+      "exportCsv": "CSV exportieren",
+      "legend": "Legende"
+    },
+    "compliance": {
+      "overall": "Gesamt",
+      "statutory": "Nur gesetzlich",
+      "byRequirement": "Nach Anforderung",
+      "gapsCount": "{count} mit Lücken",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Anforderungen",
+      "add": "Anforderung hinzufügen",
+      "name": "Name",
+      "category": "Kategorie",
+      "obligation": "Verpflichtung",
+      "validity": "Gültigkeit",
+      "validityMonths": "{months} Monate",
+      "noExpiry": "Läuft nie ab",
+      "leadDays": "{days} Tage im Voraus erinnern",
+      "empty": "Noch keine Anforderungen. Legen Sie die benötigten Nachweise an.",
+      "archive": "Archivieren",
+      "save": "Speichern",
+      "assignments": "Wer braucht das",
+      "addAssignment": "Zuweisen",
+      "cancel": "Abbrechen",
+      "scope": {
+        "role": "Rolle",
+        "group": "Gruppe",
+        "site": "Standort",
+        "person": "Person"
+      }
+    },
+    "obligation": {
+      "statutory": "Gesetzlich",
+      "mandatory": "Verpflichtend",
+      "discretionary": "Freiwillig"
+    },
+    "record": {
+      "title": "Schulung erfassen",
+      "person": "Person",
+      "requirement": "Anforderung",
+      "achievedAt": "Erwerbsdatum",
+      "expiresAt": "Gültig bis",
+      "expiryAuto": "Aus der Gültigkeitsdauer berechnet",
+      "awardingBody": "Ausstellende Stelle",
+      "certificateNumber": "Zertifikatsnummer",
+      "evidence": "Zertifikat oder Kartenfoto",
+      "save": "Nachweis speichern",
+      "saved": "Nachweis gespeichert",
+      "source": "Quelle",
+      "cancel": "Abbrechen",
+      "sources": {
+        "internal": "Intern",
+        "external": "Externer Anbieter",
+        "imported": "Importiert",
+        "self_declared": "Selbstauskunft"
+      }
+    },
+    "person": {
+      "title": "Schulungen",
+      "noRecords": "Noch keine Schulungen erfasst.",
+      "verified": "Geprüft",
+      "unverified": "Nicht geprüft"
+    },
+    "import": {
+      "title": "Nachweise importieren",
+      "help": "CSV mit den Spalten einfügen: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importieren",
+      "imported": "{count} Nachweise importiert",
+      "failed": "{count} Zeilen fehlgeschlagen"
+    },
+    "errors": {
+      "moduleDisabled": "Dieses Modul ist nicht aktiviert.",
+      "generic": "Etwas ist schiefgelaufen."
+    }
   }
 }

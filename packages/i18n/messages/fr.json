@@ -1478,9 +1478,12 @@
       "templates": "Modèles",
       "schedules": "Planifications",
       "approvals": "Approbations",
-      "maintenance": "Maintenance"
+      "maintenance": "Maintenance",
+      "trainingMatrix": "Matrice",
+      "trainingRequirements": "Exigences"
     },
     "rams": "RAMS",
+    "training": "Formations",
     "groupDoWork": "Faire le travail",
     "groupRecords": "Dossiers et registres"
   },
@@ -6604,5 +6607,112 @@
     },
     "footnote": "Vous hésitez ? Choisissez le plus proche — la personne qui l'examinera pourra le déplacer.",
     "noPermission": "Vous n'avez pas la permission de signaler ici. Demandez l'accès à un administrateur."
+  },
+  "training": {
+    "title": "Formation et compétences",
+    "subtitle": "Qui détient quoi, ce qui manque et quand cela expire.",
+    "tabs": {
+      "gaps": "Écarts",
+      "matrix": "Matrice",
+      "compliance": "Conformité",
+      "requirements": "Exigences"
+    },
+    "asAt": "Au {date}",
+    "status": {
+      "in_date": "À jour",
+      "expiring_soon": "Bientôt expiré",
+      "expired": "Expiré",
+      "not_held": "Jamais obtenu",
+      "not_required": "Non requis"
+    },
+    "gaps": {
+      "expired": "Expiré",
+      "expiringSoon": "Bientôt expiré",
+      "notHeld": "Jamais obtenu",
+      "empty": "Aucun écart. Toutes les attestations requises sont à jour.",
+      "record": "Enregistrer",
+      "expiresOn": "expire le {date}",
+      "requiredByRole": "requis par le poste",
+      "total": "{count} à traiter"
+    },
+    "matrix": {
+      "person": "Personne",
+      "empty": "Rien à afficher. Ajoutez une exigence et enregistrez les attestations.",
+      "exportCsv": "Exporter en CSV",
+      "legend": "Légende"
+    },
+    "compliance": {
+      "overall": "Global",
+      "statutory": "Réglementaire uniquement",
+      "byRequirement": "Par exigence",
+      "gapsCount": "{count} avec écarts",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Exigences",
+      "add": "Ajouter une exigence",
+      "name": "Nom",
+      "category": "Catégorie",
+      "obligation": "Obligation",
+      "validity": "Validité",
+      "validityMonths": "{months} mois",
+      "noExpiry": "N'expire jamais",
+      "leadDays": "Relancer {days} jours avant",
+      "empty": "Aucune exigence pour l'instant. Ajoutez les titres que vos équipes doivent détenir.",
+      "archive": "Archiver",
+      "save": "Enregistrer",
+      "assignments": "Qui est concerné",
+      "addAssignment": "Affecter",
+      "cancel": "Annuler",
+      "scope": {
+        "role": "Poste",
+        "group": "Groupe",
+        "site": "Site",
+        "person": "Personne"
+      }
+    },
+    "obligation": {
+      "statutory": "Réglementaire",
+      "mandatory": "Obligatoire",
+      "discretionary": "Facultatif"
+    },
+    "record": {
+      "title": "Enregistrer une formation",
+      "person": "Personne",
+      "requirement": "Exigence",
+      "achievedAt": "Date d'obtention",
+      "expiresAt": "Expire le",
+      "expiryAuto": "Calculé à partir de la durée de validité",
+      "awardingBody": "Organisme délivrant",
+      "certificateNumber": "Numéro de certificat",
+      "evidence": "Certificat ou photo de la carte",
+      "save": "Enregistrer l'attestation",
+      "saved": "Attestation enregistrée",
+      "source": "Origine",
+      "cancel": "Annuler",
+      "sources": {
+        "internal": "Interne",
+        "external": "Organisme externe",
+        "imported": "Importé",
+        "self_declared": "Déclaratif"
+      }
+    },
+    "person": {
+      "title": "Formations",
+      "noRecords": "Aucune formation enregistrée.",
+      "verified": "Vérifié",
+      "unverified": "Non vérifié"
+    },
+    "import": {
+      "title": "Importer des attestations",
+      "help": "Collez un CSV avec les colonnes : personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importer",
+      "imported": "{count} attestations importées",
+      "failed": "{count} lignes en échec"
+    },
+    "errors": {
+      "moduleDisabled": "Ce module n'est pas activé.",
+      "generic": "Une erreur est survenue."
+    }
   }
 }

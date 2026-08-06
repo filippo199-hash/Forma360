@@ -1471,9 +1471,12 @@
       "templates": "Modelos",
       "schedules": "Agendamentos",
       "approvals": "Aprovações",
-      "maintenance": "Manutenção"
+      "maintenance": "Manutenção",
+      "trainingMatrix": "Matriz",
+      "trainingRequirements": "Requisitos"
     },
     "rams": "RAMS",
+    "training": "Formação",
     "groupDoWork": "Executar o trabalho",
     "groupRecords": "Registos e arquivos"
   },
@@ -6597,5 +6600,112 @@
     },
     "footnote": "Não tem a certeza? Escolha o mais adequado — quem analisar pode movê-lo depois.",
     "noPermission": "Não tem permissão para comunicar aqui. Peça acesso a um administrador."
+  },
+  "training": {
+    "title": "Formação e competência",
+    "subtitle": "Quem tem o quê, o que falta e quando expira.",
+    "tabs": {
+      "gaps": "Lacunas",
+      "matrix": "Matriz",
+      "compliance": "Conformidade",
+      "requirements": "Requisitos"
+    },
+    "asAt": "À data de {date}",
+    "status": {
+      "in_date": "Válido",
+      "expiring_soon": "A expirar",
+      "expired": "Expirado",
+      "not_held": "Nunca obtido",
+      "not_required": "Não exigido"
+    },
+    "gaps": {
+      "expired": "Expirado",
+      "expiringSoon": "A expirar",
+      "notHeld": "Nunca obtido",
+      "empty": "Sem lacunas. Todos os registos exigidos estão válidos.",
+      "record": "Registar",
+      "expiresOn": "expira a {date}",
+      "requiredByRole": "exigido pela função",
+      "total": "{count} a tratar"
+    },
+    "matrix": {
+      "person": "Pessoa",
+      "empty": "Ainda não há nada. Adicione um requisito e registe o que as pessoas têm.",
+      "exportCsv": "Exportar CSV",
+      "legend": "Legenda"
+    },
+    "compliance": {
+      "overall": "Global",
+      "statutory": "Apenas legal",
+      "byRequirement": "Por requisito",
+      "gapsCount": "{count} com lacunas",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Requisitos",
+      "add": "Adicionar requisito",
+      "name": "Nome",
+      "category": "Categoria",
+      "obligation": "Obrigação",
+      "validity": "Validade",
+      "validityMonths": "{months} meses",
+      "noExpiry": "Nunca expira",
+      "leadDays": "Avisar {days} dias antes",
+      "empty": "Ainda sem requisitos. Adicione as credenciais que as pessoas devem ter.",
+      "archive": "Arquivar",
+      "save": "Guardar",
+      "assignments": "Quem precisa",
+      "addAssignment": "Atribuir",
+      "cancel": "Cancelar",
+      "scope": {
+        "role": "Função",
+        "group": "Grupo",
+        "site": "Local",
+        "person": "Pessoa"
+      }
+    },
+    "obligation": {
+      "statutory": "Legal",
+      "mandatory": "Obrigatório",
+      "discretionary": "Facultativo"
+    },
+    "record": {
+      "title": "Registar formação",
+      "person": "Pessoa",
+      "requirement": "Requisito",
+      "achievedAt": "Data de obtenção",
+      "expiresAt": "Expira",
+      "expiryAuto": "Calculado a partir do período de validade",
+      "awardingBody": "Entidade emissora",
+      "certificateNumber": "Número do certificado",
+      "evidence": "Certificado ou foto do cartão",
+      "save": "Guardar registo",
+      "saved": "Registo guardado",
+      "source": "Origem",
+      "cancel": "Cancelar",
+      "sources": {
+        "internal": "Interna",
+        "external": "Entidade externa",
+        "imported": "Importada",
+        "self_declared": "Autodeclarada"
+      }
+    },
+    "person": {
+      "title": "Formação",
+      "noRecords": "Ainda sem formação registada.",
+      "verified": "Verificado",
+      "unverified": "Não verificado"
+    },
+    "import": {
+      "title": "Importar registos",
+      "help": "Cole um CSV com as colunas: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importar",
+      "imported": "{count} registos importados",
+      "failed": "{count} linhas falharam"
+    },
+    "errors": {
+      "moduleDisabled": "Este módulo não está ativado.",
+      "generic": "Algo correu mal."
+    }
   }
 }

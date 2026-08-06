@@ -117,9 +117,12 @@
       "templates": "Templates",
       "schedules": "Schedules",
       "approvals": "Approvals",
-      "maintenance": "Maintenance"
+      "maintenance": "Maintenance",
+      "trainingMatrix": "Matrix",
+      "trainingRequirements": "Requirements"
     },
     "rams": "RAMS",
+    "training": "Training",
     "groupDoWork": "Do the work",
     "groupRecords": "Records & registers"
   },
@@ -6832,5 +6835,112 @@
     },
     "footnote": "Not sure? Pick the one that fits best — anyone reviewing it can move it later.",
     "noPermission": "You don't have permission to report here. Ask an administrator for reporting access."
+  },
+  "training": {
+    "title": "Training & competence",
+    "subtitle": "Who holds what, what is missing, and when it expires.",
+    "tabs": {
+      "gaps": "Gaps",
+      "matrix": "Matrix",
+      "compliance": "Compliance",
+      "requirements": "Requirements"
+    },
+    "asAt": "As at {date}",
+    "status": {
+      "in_date": "In date",
+      "expiring_soon": "Expiring soon",
+      "expired": "Expired",
+      "not_held": "Never held",
+      "not_required": "Not required"
+    },
+    "gaps": {
+      "expired": "Expired",
+      "expiringSoon": "Expiring soon",
+      "notHeld": "Never held",
+      "empty": "No gaps. Every required record is in date.",
+      "record": "Record",
+      "expiresOn": "expires {date}",
+      "requiredByRole": "required by role",
+      "total": "{count} to chase"
+    },
+    "matrix": {
+      "person": "Person",
+      "empty": "Nothing to show yet. Add a requirement and record what people hold.",
+      "exportCsv": "Export CSV",
+      "legend": "Legend"
+    },
+    "compliance": {
+      "overall": "Overall",
+      "statutory": "Statutory only",
+      "byRequirement": "By requirement",
+      "gapsCount": "{count} with gaps",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Requirements",
+      "add": "Add requirement",
+      "name": "Name",
+      "category": "Category",
+      "obligation": "Obligation",
+      "validity": "Validity",
+      "validityMonths": "{months} months",
+      "noExpiry": "Never expires",
+      "leadDays": "Chase {days} days ahead",
+      "empty": "No requirements yet. Add the tickets your people need to hold.",
+      "archive": "Archive",
+      "save": "Save",
+      "assignments": "Who needs it",
+      "addAssignment": "Assign",
+      "cancel": "Cancel",
+      "scope": {
+        "role": "Role",
+        "group": "Group",
+        "site": "Site",
+        "person": "Person"
+      }
+    },
+    "obligation": {
+      "statutory": "Statutory",
+      "mandatory": "Mandatory",
+      "discretionary": "Discretionary"
+    },
+    "record": {
+      "title": "Record training",
+      "person": "Person",
+      "requirement": "Requirement",
+      "achievedAt": "Date achieved",
+      "expiresAt": "Expires",
+      "expiryAuto": "Computed from the validity period",
+      "awardingBody": "Awarding body",
+      "certificateNumber": "Certificate number",
+      "evidence": "Certificate or card photo",
+      "save": "Save record",
+      "saved": "Record saved",
+      "source": "Source",
+      "cancel": "Cancel",
+      "sources": {
+        "internal": "Internal",
+        "external": "External provider",
+        "imported": "Imported",
+        "self_declared": "Self-declared"
+      }
+    },
+    "person": {
+      "title": "Training",
+      "noRecords": "No training recorded yet.",
+      "verified": "Verified",
+      "unverified": "Not verified"
+    },
+    "import": {
+      "title": "Import records",
+      "help": "Paste CSV with columns: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Import",
+      "imported": "{count} records imported",
+      "failed": "{count} rows failed"
+    },
+    "errors": {
+      "moduleDisabled": "This module is not enabled.",
+      "generic": "Something went wrong."
+    }
   }
 }

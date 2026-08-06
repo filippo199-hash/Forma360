@@ -1,0 +1,8 @@
+{
+  "subject": "Formazione in scadenza: {requirementName}",
+  "preheader": "{requirementName} scade il {expiresOn}.",
+  "greeting": "Ciao {personName},",
+  "body": "Il tuo attestato di formazione per \"{requirementName}\" scade il {expiresOn}. Organizza il rinnovo e chiedi al tuo responsabile di registrare il nuovo certificato, così la matrice delle competenze resta aggiornata: {url}",
+  "cta": "Vedi la matrice della formazione",
+  "footer": "Ricevi questo messaggio perché hai un attestato di formazione su {productName}."
+}

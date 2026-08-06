@@ -8,7 +8,7 @@
  *     `users.anonymise`)
  *   - Standard — view-level access + the end-user verbs
  *     (inspections.conduct, issues.report, actions.create, headsUp.view,
- *     training.take, etc.)
+ *     training.view, etc.)
  *
  * All three are `isSystem: true` so the UI blocks renaming / deletion.
  */
@@ -44,7 +44,6 @@ const STANDARD_KEYS: ReadonlyArray<PermissionKey> = [
   'documents.view',
   'analytics.view',
   'training.view',
-  'training.take',
   'riskAssessments.view',
   'coshh.view',
   'permits.view',

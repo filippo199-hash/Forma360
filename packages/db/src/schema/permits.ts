@@ -87,6 +87,19 @@ export const permitTypes = pgTable(
      */
     requiresRamsPack: boolean('requires_rams_pack').notNull().default(false),
 
+    /**
+     * Training requirement ids every named operative must hold, in date,
+     * before this type can be issued (FreeHS B7). Replaces the issuer
+     * self-ticking "competence of all operatives verified" — the platform's
+     * weakest control, because it asked a human to attest something the
+     * system can check. Empty = no training gate, so existing types are
+     * unaffected until an admin opts in.
+     */
+    requiredTrainingIds: jsonb('required_training_ids')
+      .notNull()
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`),
+
     /** Longest validity window a single issue may cover. */
     maxDurationHours: integer('max_duration_hours').notNull().default(12),
 

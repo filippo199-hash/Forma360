@@ -55,6 +55,7 @@ import { createPermitsRouter, type PermitsRouterDeps } from './routers/permits';
 import { createFireSafetyRouter, type FireSafetyRouterDeps } from './routers/fireSafety';
 import { createIncidentsRouter, type IncidentsRouterDeps } from './routers/incidents';
 import { createRamsRouter, type RamsRouterDeps } from './routers/rams';
+import { createTrainingRouter, type TrainingRouterDeps } from './routers/training';
 import {
   createRiskAssessmentsRouter,
   type RiskAssessmentsRouterDeps,
@@ -102,6 +103,11 @@ export function buildAppRouter(deps: {
    * omitting it DISABLES the module.
    */
   rams?: RamsRouterDeps;
+  /**
+   * Brand-gated (ADR 0010), same contract as the other B-modules:
+   * omitting it DISABLES the module.
+   */
+  training?: TrainingRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -150,6 +156,7 @@ export function buildAppRouter(deps: {
         ...(deps.permits?.enabled === true ? (['permits'] as const) : []),
         ...(deps.riskAssessments?.enabled === true ? (['riskAssessments'] as const) : []),
         ...(deps.fireSafety?.enabled === true ? (['fireSafety'] as const) : []),
+        ...(deps.training?.enabled === true ? (['training'] as const) : []),
       ],
     }),
     // PF-5: dashboard tiles for brand-gated modules follow the same enabled
@@ -168,6 +175,7 @@ export function buildAppRouter(deps: {
     fireSafety: createFireSafetyRouter(deps.fireSafety ?? { enabled: false }),
     incidents: createIncidentsRouter(deps.incidents ?? { enabled: false }),
     rams: createRamsRouter(deps.rams ?? { enabled: false }),
+    training: createTrainingRouter(deps.training ?? { enabled: false }),
   });
 }
 
@@ -356,6 +364,7 @@ export const appRouter = buildAppRouter({
   fireSafety: stubFireSafetyDeps,
   incidents: stubIncidentsDeps,
   rams: stubRamsDeps,
+  training: { enabled: true },
 });
 
 export type AppRouter = typeof appRouter;

@@ -203,6 +203,7 @@ describe('nav model (ADR 0014)', () => {
       'incidents',
       'permits',
       'riskAssessments',
+      'training',
     ]);
     // Every badge key names its own entry — no entry borrows another's
     // number, which is what would make the menu lie.

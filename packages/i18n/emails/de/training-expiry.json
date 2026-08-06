@@ -1,0 +1,8 @@
+{
+  "subject": "Schulung läuft ab: {requirementName}",
+  "preheader": "{requirementName} läuft am {expiresOn} ab.",
+  "greeting": "Hallo {personName},",
+  "body": "Ihr Schulungsnachweis für \"{requirementName}\" läuft am {expiresOn} ab. Bitte veranlassen Sie die Verlängerung und lassen Sie das neue Zertifikat von Ihrer Führungskraft erfassen, damit Ihre Qualifikationsmatrix aktuell bleibt: {url}",
+  "cta": "Qualifikationsmatrix ansehen",
+  "footer": "Sie erhalten diese E-Mail, weil für Sie ein Schulungsnachweis in {productName} hinterlegt ist."
+}
