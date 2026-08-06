@@ -6282,7 +6282,8 @@
       "expiringReviews": "{count} Freigaben laufen ab"
     },
     "filters": {
-      "all": "Alle"
+      "all": "Alle",
+      "pendingAcceptance": "Warten auf Kundenfreigabe"
     },
     "columns": {
       "reference": "Referenz",
@@ -6652,7 +6653,8 @@
       "person": "Person",
       "empty": "Noch nichts vorhanden. Legen Sie eine Anforderung an und erfassen Sie Nachweise.",
       "exportCsv": "CSV exportieren",
-      "legend": "Legende"
+      "legend": "Legende",
+      "allRequirements": "Alle Anforderungen"
     },
     "compliance": {
       "overall": "Gesamt",

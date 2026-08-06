@@ -6510,7 +6510,8 @@
       "expiringReviews": "{count} acceptances expiring"
     },
     "filters": {
-      "all": "All"
+      "all": "All",
+      "pendingAcceptance": "Awaiting client acceptance"
     },
     "columns": {
       "reference": "Reference",
@@ -6880,7 +6881,8 @@
       "person": "Person",
       "empty": "Nothing to show yet. Add a requirement and record what people hold.",
       "exportCsv": "Export CSV",
-      "legend": "Legend"
+      "legend": "Legend",
+      "allRequirements": "All requirements"
     },
     "compliance": {
       "overall": "Overall",

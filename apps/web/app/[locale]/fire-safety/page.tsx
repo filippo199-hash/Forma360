@@ -17,9 +17,10 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { DueStatusChip, DutyBadges } from '../../../src/components/fire-safety/chips';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
-import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -28,6 +29,7 @@ type StatusFilter = 'active' | 'archived' | 'all';
 
 export default function FireSafetyHubPage() {
   const t = useTranslations('fireSafety');
+  const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -36,6 +38,7 @@ export default function FireSafetyHubPage() {
 
   const [status, setStatus] = useState<StatusFilter>('active');
   const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   const listInput: { status: StatusFilter; search?: string } = { status };
   if (search.trim() !== '') listInput.search = search.trim();
@@ -56,30 +59,53 @@ export default function FireSafetyHubPage() {
     { key: 'marshalsExpiringSoon', count: overview?.marshalsExpiringSoon ?? 0 },
   ].filter((a) => a.count > 0);
 
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilterKey(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setStatus('active');
+  }
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: tCommon('status'),
+      control: {
+        kind: 'select',
+        value: status,
+        onValueChange: (v) => setStatus(v as StatusFilter),
+        options: [
+          { value: 'active', label: t('filters.active') },
+          { value: 'archived', label: t('filters.archived') },
+          { value: 'all', label: t('filters.all') },
+        ],
+      },
+    },
+  ];
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
+
   return (
     <main>
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
-            <Link href={`/${locale}/fire-safety/logbook`}>
-              <CalendarClock className="mr-1.5 h-4 w-4" aria-hidden="true" />
-              {t('logbookButton')}
+      <ModuleHeader className="mb-5" title={t('title')} description={t('subtitle')}>
+        <Button asChild variant="outline">
+          <Link href={`/${locale}/fire-safety/logbook`}>
+            <CalendarClock className="mr-1.5 h-4 w-4" aria-hidden="true" />
+            {t('logbookButton')}
+          </Link>
+        </Button>
+        {canCreate ? (
+          <Button asChild>
+            <Link href={`/${locale}/fire-safety/new`}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              {t('newBuildingButton')}
             </Link>
           </Button>
-          {canCreate ? (
-            <Button asChild>
-              <Link href={`/${locale}/fire-safety/new`}>
-                <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                {t('newBuildingButton')}
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+        ) : null}
+      </ModuleHeader>
 
       {attention.length > 0 ? (
         <div className="mb-5 flex flex-wrap gap-2">
@@ -98,35 +124,19 @@ export default function FireSafetyHubPage() {
         </div>
       ) : null}
 
-      <div className="mb-4 flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="fire-search" className="text-xs font-medium text-muted-foreground">
-            {t('filters.search')}
-          </label>
-          <Input
-            id="fire-search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('filters.searchPlaceholder')}
-            className="h-9 w-56"
-          />
-        </div>
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="fire-status" className="text-xs font-medium text-muted-foreground">
-            {t('filters.status')}
-          </label>
-          <select
-            id="fire-status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="active">{t('filters.active')}</option>
-            <option value="archived">{t('filters.archived')}</option>
-            <option value="all">{t('filters.all')}</option>
-          </select>
-        </div>
-      </div>
+      <FilterBar
+        className="mb-4"
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: t('filters.searchPlaceholder'),
+        }}
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilterKey}
+        resultsCount={(rows ?? []).length}
+      />
 
       {isLoading ? (
         <div className="space-y-2">
@@ -150,8 +160,8 @@ export default function FireSafetyHubPage() {
           {/* Table (desktop) — the mobile card list below takes over under md. */}
           <div className="hidden overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm md:block">
             <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
+              <thead className="border-b bg-muted/40 text-left">
+                <tr>
                   <th className="px-3 py-2 font-medium">{t('columns.building')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.duties')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.checks')}</th>

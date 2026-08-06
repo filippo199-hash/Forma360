@@ -6317,7 +6317,8 @@
       "expiringReviews": "{count} accettazioni in scadenza"
     },
     "filters": {
-      "all": "Tutti"
+      "all": "Tutti",
+      "pendingAcceptance": "In attesa di accettazione del cliente"
     },
     "columns": {
       "reference": "Riferimento",
@@ -6687,7 +6688,8 @@
       "person": "Persona",
       "empty": "Ancora nulla da mostrare. Aggiungi un requisito e registra gli attestati.",
       "exportCsv": "Esporta CSV",
-      "legend": "Legenda"
+      "legend": "Legenda",
+      "allRequirements": "Tutti i requisiti"
     },
     "compliance": {
       "overall": "Complessiva",

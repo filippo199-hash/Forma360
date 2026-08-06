@@ -6275,7 +6275,8 @@
       "expiringReviews": "{count} akceptacji wygasa"
     },
     "filters": {
-      "all": "Wszystkie"
+      "all": "Wszystkie",
+      "pendingAcceptance": "Oczekuje na akceptację klienta"
     },
     "columns": {
       "reference": "Numer",
@@ -6645,7 +6646,8 @@
       "person": "Osoba",
       "empty": "Nie ma jeszcze czego pokazać. Dodaj wymaganie i zarejestruj uprawnienia.",
       "exportCsv": "Eksportuj CSV",
-      "legend": "Legenda"
+      "legend": "Legenda",
+      "allRequirements": "Wszystkie wymagania"
     },
     "compliance": {
       "overall": "Ogółem",

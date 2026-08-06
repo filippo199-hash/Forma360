@@ -13,6 +13,7 @@
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -53,15 +54,11 @@ export default function TrainingGapsPage() {
     <div className="space-y-4 sm:space-y-6">
       <TrainingTabs activeTab="gaps" locale={locale} />
 
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-        </div>
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
         {canRecord ? (
           <Button onClick={() => setPrefill({} as GapRow)}>{t('record.title')}</Button>
         ) : null}
-      </header>
+      </ModuleHeader>
 
       {/* Compliance is a moving number; a view without its date is meaningless. */}
       {data !== undefined ? (

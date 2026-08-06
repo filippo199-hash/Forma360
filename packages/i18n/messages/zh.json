@@ -6275,7 +6275,8 @@
       "expiringReviews": "{count} 个验收即将到期"
     },
     "filters": {
-      "all": "全部"
+      "all": "全部",
+      "pendingAcceptance": "等待客户接受"
     },
     "columns": {
       "reference": "编号",
@@ -6645,7 +6646,8 @@
       "person": "人员",
       "empty": "暂无内容。请先添加要求并登记人员持有的证书。",
       "exportCsv": "导出 CSV",
-      "legend": "图例"
+      "legend": "图例",
+      "allRequirements": "所有要求"
     },
     "compliance": {
       "overall": "总体",

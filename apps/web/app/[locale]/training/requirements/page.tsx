@@ -15,6 +15,7 @@ import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { ModuleHeader } from '../../../../src/components/module-header';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
@@ -87,13 +88,12 @@ export default function TrainingRequirementsPage() {
     <div className="space-y-4 sm:space-y-6">
       <TrainingTabs activeTab="requirements" locale={locale} />
 
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('requirements.title')}</h1>
+      <ModuleHeader title={t('requirements.title')}>
         <Button onClick={() => setAddOpen(true)}>
           <Plus className="mr-1 h-4 w-4" />
           {t('requirements.add')}
         </Button>
-      </header>
+      </ModuleHeader>
 
       {isLoading ? (
         <Card>

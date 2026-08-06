@@ -1,17 +1,20 @@
 'use client';
 
 import type { IssueStatusValue } from '@forma360/shared/issues-schema';
-import { Tags } from 'lucide-react';
+import { Archive, Tags } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ObservationDetailPanel } from '../../../src/components/observations/observation-detail-panel';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
 import { relativeTime } from '../../../src/lib/relative-time';
@@ -73,6 +76,7 @@ function deriveObservationRow(
 export default function ObservationsListPage() {
   const t = useTranslations('issues.list');
   const tStatus = useTranslations('issues.status');
+  const tCommon = useTranslations('common');
   const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -104,6 +108,7 @@ export default function ObservationsListPage() {
   const effectiveSiteId = siteParam !== '' ? siteParam : siteId;
   const [includeArchived, setIncludeArchived] = useState(false);
   const [pages, setPages] = useState<string[]>([]);
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   const currentCursor = pages.length === 0 ? undefined : pages[pages.length - 1];
 
@@ -127,115 +132,115 @@ export default function ObservationsListPage() {
     setPages([]);
   }
 
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilterKey(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setStatus('all');
+    if (key === 'category') setCategoryId('');
+    if (key === 'site') setSiteId('');
+    resetPagination();
+  }
+
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: t('filterStatus'),
+      control: {
+        kind: 'select',
+        value: status,
+        onValueChange: (v) => {
+          setStatus(v as StatusFilter);
+          resetPagination();
+        },
+        options: STATUSES.map((s) => ({
+          value: s,
+          label: s === 'all' ? t('filterStatusAll') : tStatus(s),
+        })),
+      },
+    },
+    {
+      key: 'category',
+      label: t('filterCategory'),
+      control: {
+        kind: 'select',
+        value: categoryId,
+        onValueChange: (v) => {
+          setCategoryId(v);
+          resetPagination();
+        },
+        options: [
+          { value: '', label: t('filterCategoryAll') },
+          ...(categories ?? []).map((c) => ({ value: c.id, label: c.name })),
+        ],
+      },
+    },
+  ];
+  // ?site= deep links pin the site via the shared chip; the manual site
+  // filter is only offered when no deep-link site is active.
+  if (siteParam === '') {
+    filterDefs.push({
+      key: 'site',
+      label: placeLabel,
+      control: {
+        kind: 'select',
+        value: siteId,
+        onValueChange: (v) => {
+          setSiteId(v);
+          resetPagination();
+        },
+        options: [
+          { value: '', label: t('filterSiteAll') },
+          ...(sites ?? []).map((s) => ({ value: s.id, label: s.name })),
+        ],
+      },
+    });
+  }
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
+
   return (
     <div className="mx-auto w-full max-w-[1200px] space-y-4 sm:space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {canManageSettings ? (
-            <Button
-              asChild
-              variant="outline"
-              title={t('manageCategoriesButton')}
-              className="w-10 px-0 sm:w-auto sm:px-4"
-            >
-              <Link href={`/${locale}/observations/categories`}>
-                <Tags className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('manageCategoriesButton')}</span>
-              </Link>
-            </Button>
-          ) : null}
-          {canReport ? (
-            <Button asChild>
-              <Link href={`/${locale}/observations/new`}>{t('newButton')}</Link>
-            </Button>
-          ) : null}
-        </div>
-      </header>
-
-      {siteParam !== '' ? <SiteFilterChip siteId={siteParam} onClear={clearSiteParam} /> : null}
-
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="filter-status" className="text-xs font-medium text-muted-foreground">
-            {t('filterStatus')}
-          </label>
-          <select
-            id="filter-status"
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as StatusFilter);
-              resetPagination();
-            }}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s === 'all' ? t('filterStatusAll') : tStatus(s)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="filter-category" className="text-xs font-medium text-muted-foreground">
-            {t('filterCategory')}
-          </label>
-          <select
-            id="filter-category"
-            value={categoryId}
-            onChange={(e) => {
-              setCategoryId(e.target.value);
-              resetPagination();
-            }}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">{t('filterCategoryAll')}</option>
-            {(categories ?? []).map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {siteParam === '' ? (
-          <div className="flex flex-col gap-1 text-sm">
-            <label htmlFor="filter-site" className="text-xs font-medium text-muted-foreground">
-              {placeLabel}
-            </label>
-            <select
-              id="filter-site"
-              value={siteId}
-              onChange={(e) => {
-                setSiteId(e.target.value);
-                resetPagination();
-              }}
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">{t('filterSiteAll')}</option>
-              {(sites ?? []).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : null}
-        <label className="flex cursor-pointer items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={includeArchived}
-            onChange={(e) => {
-              setIncludeArchived(e.target.checked);
-              resetPagination();
-            }}
-            className="h-4 w-4"
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        <TooltipIconButton
+          icon={Archive}
+          label={includeArchived ? tCommon('hideArchived') : tCommon('showArchived')}
+          active={includeArchived}
+          onClick={() => {
+            setIncludeArchived((v) => !v);
+            resetPagination();
+          }}
+        />
+        {canManageSettings ? (
+          <TooltipIconButton
+            icon={Tags}
+            label={t('manageCategoriesButton')}
+            href={`/${locale}/observations/categories`}
           />
-          <span>{t('showArchived')}</span>
-        </label>
-      </div>
+        ) : null}
+        {canReport ? (
+          <Button asChild>
+            <Link href={`/${locale}/observations/new`}>{t('newButton')}</Link>
+          </Button>
+        ) : null}
+      </ModuleHeader>
+
+      <FilterBar
+        leading={
+          siteParam !== '' ? (
+            <SiteFilterChip siteId={siteParam} onClear={clearSiteParam} />
+          ) : undefined
+        }
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilterKey}
+        resultsCount={(data?.items ?? []).length}
+      />
 
       {/* Table (desktop) — the mobile card list below takes over under md. */}
       <Card className="hidden md:block">

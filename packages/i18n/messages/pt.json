@@ -6275,7 +6275,8 @@
       "expiringReviews": "{count} aceitações a expirar"
     },
     "filters": {
-      "all": "Todos"
+      "all": "Todos",
+      "pendingAcceptance": "Aguardando aceitação do cliente"
     },
     "columns": {
       "reference": "Referência",
@@ -6645,7 +6646,8 @@
       "person": "Pessoa",
       "empty": "Ainda não há nada. Adicione um requisito e registe o que as pessoas têm.",
       "exportCsv": "Exportar CSV",
-      "legend": "Legenda"
+      "legend": "Legenda",
+      "allRequirements": "Todos os requisitos"
     },
     "compliance": {
       "overall": "Global",

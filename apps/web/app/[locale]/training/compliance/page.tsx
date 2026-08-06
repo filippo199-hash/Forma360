@@ -13,6 +13,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { ModuleHeader } from '../../../../src/components/module-header';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { TrainingTabs } from '../../../../src/components/training/training-tabs';
@@ -58,14 +59,12 @@ export default function TrainingCompliancePage() {
     <div className="space-y-4 sm:space-y-6">
       <TrainingTabs activeTab="compliance" locale={locale} />
 
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('tabs.compliance')}</h1>
-        {data !== undefined ? (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}
-          </p>
-        ) : null}
-      </header>
+      <ModuleHeader title={t('tabs.compliance')} />
+      {data !== undefined ? (
+        <p className="text-xs text-muted-foreground">
+          {t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}
+        </p>
+      ) : null}
 
       {isLoading ? (
         <Card>

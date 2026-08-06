@@ -6282,7 +6282,8 @@
       "expiringReviews": "{count} aceptaciones por caducar"
     },
     "filters": {
-      "all": "Todos"
+      "all": "Todos",
+      "pendingAcceptance": "Pendiente de aceptación del cliente"
     },
     "columns": {
       "reference": "Referencia",
@@ -6652,7 +6653,8 @@
       "person": "Persona",
       "empty": "Aún no hay nada. Añada un requisito y registre lo que tiene su gente.",
       "exportCsv": "Exportar CSV",
-      "legend": "Leyenda"
+      "legend": "Leyenda",
+      "allRequirements": "Todos los requisitos"
     },
     "compliance": {
       "overall": "Global",

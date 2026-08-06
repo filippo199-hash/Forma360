@@ -1,14 +1,25 @@
 'use client';
 
-import { ChevronDown, ChevronRight, ImageIcon, Plus, QrCode, Settings } from 'lucide-react';
+import {
+  Archive,
+  ChevronDown,
+  ChevronRight,
+  ImageIcon,
+  Plus,
+  QrCode,
+  Settings,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { type ReactNode, useState } from 'react';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -39,6 +50,7 @@ export default function AssetsListPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [includeArchived, setIncludeArchived] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
 
@@ -71,6 +83,34 @@ export default function AssetsListPage() {
       return next;
     });
   }
+
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilterKey(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'type') setTypeFilter('all');
+  }
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'type',
+      label: t('filterType'),
+      control: {
+        kind: 'select',
+        value: typeFilter,
+        onValueChange: setTypeFilter,
+        options: [
+          { value: 'all', label: t('filterTypeAll') },
+          ...types.map((tp) => ({ value: tp.id, label: tp.name })),
+        ],
+      },
+    },
+  ];
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
 
   function renderRow(row: AssetRow, isChild: boolean): ReactNode {
     const children = childMap.get(row.id) ?? [];
@@ -157,62 +197,42 @@ export default function AssetsListPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {canManage ? (
-            <Button variant="outline" size="icon" asChild title={tSettings('title')}>
-              <Link href={`/${locale}/assets/settings`} aria-label={tSettings('title')}>
-                <Settings className="h-4 w-4" />
-              </Link>
-            </Button>
-          ) : null}
-          {canManage ? (
-            <Button asChild>
-              <Link href={`/${locale}/assets/new`}>
-                <Plus className="mr-1 h-4 w-4" />
-                {t('newButton')}
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </header>
-
-      {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
-
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="space-y-1">
-          <label htmlFor="type-filter" className="text-xs font-medium text-muted-foreground">
-            {t('filterType')}
-          </label>
-          <select
-            id="type-filter"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="block rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="all">{t('filterTypeAll')}</option>
-            {types.map((tp) => (
-              <option key={tp.id} value={tp.id}>
-                {tp.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <label className="flex cursor-pointer items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={includeArchived}
-            onChange={(e) => setIncludeArchived(e.target.checked)}
-            className="h-4 w-4"
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        <TooltipIconButton
+          icon={Archive}
+          label={includeArchived ? tCommon('hideArchived') : tCommon('showArchived')}
+          active={includeArchived}
+          onClick={() => setIncludeArchived((v) => !v)}
+        />
+        {canManage ? (
+          <TooltipIconButton
+            icon={Settings}
+            label={tSettings('title')}
+            href={`/${locale}/assets/settings`}
           />
-          {t('showArchived')}
-        </label>
-      </div>
+        ) : null}
+        {canManage ? (
+          <Button asChild>
+            <Link href={`/${locale}/assets/new`}>
+              <Plus className="mr-1 h-4 w-4" />
+              {t('newButton')}
+            </Link>
+          </Button>
+        ) : null}
+      </ModuleHeader>
+
+      <FilterBar
+        leading={
+          siteFilter !== '' ? (
+            <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} />
+          ) : undefined
+        }
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilterKey}
+        resultsCount={allRows.length}
+      />
 
       {error ? (
         <Card>

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -36,10 +37,7 @@ export default function ApprovalsPage() {
       <SectionTabBar activeTab="approvals" locale={locale} />
 
       <div className="space-y-4">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{t('queueTitle')}</h1>
-          <p className="text-sm text-muted-foreground">{t('queueSubtitle')}</p>
-        </header>
+        <ModuleHeader title={t('queueTitle')} description={t('queueSubtitle')} />
 
         <Card>
           <CardContent className="p-0">

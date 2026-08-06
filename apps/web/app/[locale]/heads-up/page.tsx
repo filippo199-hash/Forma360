@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -33,11 +34,7 @@ export default function HeadsUpListPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-        </div>
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
         {canPublish && activeMode === 'manage' ? (
           <Button asChild>
             <Link href={`/${locale}/heads-up/new`}>
@@ -46,7 +43,7 @@ export default function HeadsUpListPage() {
             </Link>
           </Button>
         ) : null}
-      </header>
+      </ModuleHeader>
 
       {canSeeManage ? (
         <div className="inline-flex gap-1 rounded-lg border bg-muted/40 p-1">

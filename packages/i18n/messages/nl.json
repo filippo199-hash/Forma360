@@ -6275,7 +6275,8 @@
       "expiringReviews": "{count} acceptaties verlopen binnenkort"
     },
     "filters": {
-      "all": "Alle"
+      "all": "Alle",
+      "pendingAcceptance": "Wachten op klantacceptatie"
     },
     "columns": {
       "reference": "Referentie",
@@ -6645,7 +6646,8 @@
       "person": "Persoon",
       "empty": "Nog niets te tonen. Voeg een vereiste toe en leg vast wat mensen hebben.",
       "exportCsv": "CSV exporteren",
-      "legend": "Legenda"
+      "legend": "Legenda",
+      "allRequirements": "Alle vereisten"
     },
     "compliance": {
       "overall": "Totaal",

@@ -6275,7 +6275,8 @@
       "expiringReviews": "承諾の期限切れ間近 {count} 件"
     },
     "filters": {
-      "all": "すべて"
+      "all": "すべて",
+      "pendingAcceptance": "顧客の承認待ち"
     },
     "columns": {
       "reference": "整理番号",
@@ -6645,7 +6646,8 @@
       "person": "対象者",
       "empty": "表示できるものがありません。要件を追加し、記録を登録してください。",
       "exportCsv": "CSV を書き出す",
-      "legend": "凡例"
+      "legend": "凡例",
+      "allRequirements": "すべての要件"
     },
     "compliance": {
       "overall": "全体",

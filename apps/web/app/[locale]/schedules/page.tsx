@@ -5,7 +5,9 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -19,9 +21,11 @@ export default function SchedulesPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const t = useTranslations('schedules');
+  const tCommon = useTranslations('common');
 
   const [pausedFilter, setPausedFilter] = useState<PausedFilter>('all');
   const [templateId, setTemplateId] = useState<string | undefined>(undefined);
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
   const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
 
   const query = useMemo(() => {
@@ -36,61 +40,72 @@ export default function SchedulesPage() {
   const { data: rows, isLoading } = trpc.schedules.list.useQuery(query);
   const { data: templates } = trpc.templates.list.useQuery({});
 
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilterKey(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setPausedFilter('all');
+    if (key === 'template') setTemplateId(undefined);
+  }
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: tCommon('status'),
+      control: {
+        kind: 'select',
+        value: pausedFilter,
+        onValueChange: (v) => setPausedFilter(v as PausedFilter),
+        options: [
+          { value: 'all', label: t('filterAll') },
+          { value: 'active', label: t('filterActive') },
+          { value: 'paused', label: t('filterPaused') },
+        ],
+      },
+    },
+    {
+      key: 'template',
+      label: t('filterTemplate'),
+      control: {
+        kind: 'select',
+        value: templateId ?? '',
+        onValueChange: (v) => setTemplateId(v === '' ? undefined : v),
+        options: [
+          { value: '', label: t('filterTemplate') },
+          ...(templates ?? []).map((tpl) => ({ value: tpl.id, label: tpl.name })),
+        ],
+      },
+    },
+  ];
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <SectionTabBar activeTab="schedules" locale={locale} />
 
       <div className="space-y-4">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-            <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-          </div>
+        <ModuleHeader title={t('title')} description={t('subtitle')}>
           <Button asChild>
             <Link href={`/${locale}/schedules/new`}>{t('create')}</Link>
           </Button>
-        </header>
+        </ModuleHeader>
 
-        {siteFilter !== '' ? (
-          <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} />
-        ) : null}
-
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-muted p-0.5">
-            {(['all', 'active', 'paused'] as PausedFilter[]).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setPausedFilter(key)}
-                aria-pressed={pausedFilter === key}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  pausedFilter === key
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {key === 'all'
-                  ? t('filterAll')
-                  : key === 'active'
-                    ? t('filterActive')
-                    : t('filterPaused')}
-              </button>
-            ))}
-          </div>
-          <select
-            className="ml-auto max-w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm"
-            value={templateId ?? ''}
-            onChange={(e) => setTemplateId(e.target.value === '' ? undefined : e.target.value)}
-            aria-label={t('filterTemplate')}
-          >
-            <option value="">{t('filterTemplate')}</option>
-            {templates?.map((tpl) => (
-              <option key={tpl.id} value={tpl.id}>
-                {tpl.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FilterBar
+          leading={
+            siteFilter !== '' ? (
+              <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} />
+            ) : undefined
+          }
+          filters={filterDefs}
+          activeKeys={activeFilterKeys}
+          onAddFilter={addFilter}
+          onRemoveFilter={removeFilterKey}
+          resultsCount={rows?.length ?? 0}
+        />
 
         {isLoading ? (
           <div className="space-y-2">

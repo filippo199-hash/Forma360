@@ -17,10 +17,12 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { RAMS_PACK_STATUSES, type RamsPackStatus } from '@forma360/shared/rams';
 import { BriefingChip, PackStatusChip } from '../../../src/components/rams/chips';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
-import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
@@ -35,6 +37,7 @@ function formatDate(value: Date | string | null): string {
 
 export default function RamsRegisterPage() {
   const t = useTranslations('rams');
+  const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const canCreate = useHasPermission('rams.create');
@@ -46,6 +49,7 @@ export default function RamsRegisterPage() {
   // every chip beside it filtered. It is a filter now.
   const [pendingAcceptanceOnly, setPendingAcceptanceOnly] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   const overview = trpc.rams.packs.overview.useQuery();
   const packs = trpc.rams.packs.list.useQuery({
@@ -75,42 +79,90 @@ export default function RamsRegisterPage() {
   const attention = overview.data;
   const rows = packs.data ?? [];
 
+  // Attention chips are navigation: they set a filter and reveal it in the
+  // filter row so the applied state is visible, matching incidents.
+  function applyStatus(value: StatusFilter): void {
+    setStatus(value);
+    setActiveFilters((prev) => new Set(prev).add('status'));
+  }
+  function togglePendingAcceptance(): void {
+    const next = !pendingAcceptanceOnly;
+    setPendingAcceptanceOnly(next);
+    setActiveFilters((prev) => {
+      const s = new Set(prev);
+      if (next) s.add('pendingAcceptance');
+      else s.delete('pendingAcceptance');
+      return s;
+    });
+  }
+
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+    if (key === 'pendingAcceptance') setPendingAcceptanceOnly(true);
+  }
+  function removeFilterKey(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setStatus('all');
+    if (key === 'pendingAcceptance') setPendingAcceptanceOnly(false);
+  }
+
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: tCommon('status'),
+      control: {
+        kind: 'select',
+        value: status,
+        onValueChange: (v) => setStatus(v as StatusFilter),
+        options: STATUS_FILTERS.map((s) => ({
+          value: s,
+          label: s === 'all' ? t('filters.all') : t(`status.${s}`),
+        })),
+      },
+    },
+    {
+      key: 'pendingAcceptance',
+      label: t('filters.pendingAcceptance'),
+      control: { kind: 'boolean' },
+    },
+  ];
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
+
   return (
     <main>
-      <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{t('title')}</h1>
-          <p className="text-muted-foreground text-sm">{t('subtitle')}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild type="button" variant="outline" size="sm">
-            <Link href={`/${locale}/rams/library`}>
-              <FolderOpen className="mr-1.5 h-4 w-4" aria-hidden />
-              {t('library.title')}
+      <ModuleHeader className="mb-5" title={t('title')} description={t('subtitle')}>
+        <Button asChild type="button" variant="outline">
+          <Link href={`/${locale}/rams/library`}>
+            <FolderOpen className="mr-1.5 h-4 w-4" aria-hidden />
+            {t('library.title')}
+          </Link>
+        </Button>
+        {canReview ? (
+          <Button asChild type="button" variant="outline">
+            <Link href={`/${locale}/rams/reviews`}>
+              <ShieldCheck className="mr-1.5 h-4 w-4" aria-hidden />
+              {t('reviews.title')}
             </Link>
           </Button>
-          {canReview ? (
-            <Button asChild type="button" variant="outline" size="sm">
-              <Link href={`/${locale}/rams/reviews`}>
-                <ShieldCheck className="mr-1.5 h-4 w-4" aria-hidden />
-                {t('reviews.title')}
-              </Link>
-            </Button>
-          ) : null}
-          <Button type="button" variant="outline" size="sm" onClick={() => void downloadCsv()}>
-            <Download className="mr-1.5 h-4 w-4" aria-hidden />
-            {t('exportCsv')}
+        ) : null}
+        <TooltipIconButton
+          icon={Download}
+          label={t('exportCsv')}
+          onClick={() => void downloadCsv()}
+        />
+        {canCreate ? (
+          <Button asChild type="button">
+            <Link href={`/${locale}/rams/new`}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t('newPack')}
+            </Link>
           </Button>
-          {canCreate ? (
-            <Button asChild type="button" size="sm">
-              <Link href={`/${locale}/rams/new`}>
-                <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-                {t('newPack')}
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </header>
+        ) : null}
+      </ModuleHeader>
 
       {attention !== undefined &&
       attention.draftPacks +
@@ -124,7 +176,7 @@ export default function RamsRegisterPage() {
             {attention.draftPacks > 0 ? (
               <button
                 type="button"
-                onClick={() => setStatus('draft')}
+                onClick={() => applyStatus('draft')}
                 className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100"
               >
                 {t('attention.draftPacks', { count: attention.draftPacks })}
@@ -133,7 +185,7 @@ export default function RamsRegisterPage() {
             {attention.awaitingBriefing > 0 ? (
               <button
                 type="button"
-                onClick={() => setStatus('issued')}
+                onClick={() => applyStatus('issued')}
                 className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-100"
               >
                 {t('attention.awaitingBriefing', { count: attention.awaitingBriefing })}
@@ -143,7 +195,7 @@ export default function RamsRegisterPage() {
               <button
                 type="button"
                 aria-pressed={pendingAcceptanceOnly}
-                onClick={() => setPendingAcceptanceOnly((v) => !v)}
+                onClick={togglePendingAcceptance}
                 className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-900 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-100"
               >
                 {t('attention.pendingClientAcceptance', {
@@ -177,28 +229,15 @@ export default function RamsRegisterPage() {
         </p>
       ) : null}
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('searchPlaceholder')}
-          className="max-w-xs"
-        />
-        <div className="flex flex-wrap gap-1">
-          {STATUS_FILTERS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setStatus(s)}
-              className={`rounded-full border px-3 py-1 text-sm ${
-                status === s ? 'bg-foreground text-background' : 'hover:bg-muted'
-              }`}
-            >
-              {s === 'all' ? t('filters.all') : t(`status.${s}`)}
-            </button>
-          ))}
-        </div>
-      </div>
+      <FilterBar
+        className="mb-4"
+        search={{ value: search, onChange: setSearch, placeholder: t('searchPlaceholder') }}
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilterKey}
+        resultsCount={rows.length}
+      />
 
       {packs.isPending ? (
         <div className="space-y-2">
@@ -222,37 +261,37 @@ export default function RamsRegisterPage() {
           {/* Desktop table */}
           <div className="hidden overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm md:block">
             <table className="w-full text-sm">
-              <thead className="text-muted-foreground border-b text-left">
+              <thead className="border-b bg-muted/40 text-left">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">{t('columns.reference')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('columns.title')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('columns.client')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('columns.site')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('columns.planned')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('columns.status')}</th>
-                  <th className="py-2 font-medium">{t('columns.briefing')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.client')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.planned')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
+                  <th className="px-3 py-2 font-medium">{t('columns.briefing')}</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/50 border-b">
-                    <td className="py-2 pr-3 font-mono text-xs">
+                  <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10">
+                    <td className="px-3 py-3 font-mono text-xs">
                       <Link className="hover:underline" href={`/${locale}/rams/${r.id}`}>
                         {r.referenceNumber ?? r.id.slice(-6)}
                       </Link>
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="px-3 py-3">
                       <Link className="hover:underline" href={`/${locale}/rams/${r.id}`}>
                         {r.title}
                       </Link>
                     </td>
-                    <td className="py-2 pr-3">{r.clientName}</td>
-                    <td className="py-2 pr-3">{r.siteName ?? '—'}</td>
-                    <td className="py-2 pr-3">{formatDate(r.plannedFrom)}</td>
-                    <td className="py-2 pr-3">
+                    <td className="px-3 py-3">{r.clientName}</td>
+                    <td className="px-3 py-3">{r.siteName ?? '—'}</td>
+                    <td className="px-3 py-3">{formatDate(r.plannedFrom)}</td>
+                    <td className="px-3 py-3">
                       <PackStatusChip status={r.status} />
                     </td>
-                    <td className="py-2">
+                    <td className="px-3 py-3">
                       <BriefingChip
                         onCurrent={r.briefedOnCurrentVersion}
                         currentVersion={r.currentVersion}

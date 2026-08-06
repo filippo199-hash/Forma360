@@ -6282,7 +6282,8 @@
       "expiringReviews": "{count} acceptations arrivant à échéance"
     },
     "filters": {
-      "all": "Tous"
+      "all": "Tous",
+      "pendingAcceptance": "En attente d'acceptation du client"
     },
     "columns": {
       "reference": "Référence",
@@ -6652,7 +6653,8 @@
       "person": "Personne",
       "empty": "Rien à afficher. Ajoutez une exigence et enregistrez les attestations.",
       "exportCsv": "Exporter en CSV",
-      "legend": "Légende"
+      "legend": "Légende",
+      "allRequirements": "Toutes les exigences"
     },
     "compliance": {
       "overall": "Global",

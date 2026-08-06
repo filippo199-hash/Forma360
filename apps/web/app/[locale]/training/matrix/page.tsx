@@ -11,12 +11,15 @@
  * exports to CSV — because the grid is a board paper and has to leave
  * the building looking like one.
  */
+import { Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { Button } from '../../../../src/components/ui/button';
+import { FilterBar, type FilterDef } from '../../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../../src/components/module-header';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { StatusGlyph, StatusLegend } from '../../../../src/components/training/status-chip';
 import { TrainingTabs } from '../../../../src/components/training/training-tabs';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -27,6 +30,8 @@ export default function TrainingMatrixPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const [requirementFilter, setRequirementFilter] = useState('');
+  // The requirement filter leads the grid, so it shows by default.
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set(['requirement']));
 
   const { data, isLoading } = trpc.training.matrix.useQuery(
     requirementFilter === '' ? {} : { requirementId: requirementFilter },
@@ -71,38 +76,60 @@ export default function TrainingMatrixPage() {
     URL.revokeObjectURL(url);
   }
 
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilterKey(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'requirement') setRequirementFilter('');
+  }
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'requirement',
+      label: t('tabs.requirements'),
+      control: {
+        kind: 'select',
+        value: requirementFilter,
+        onValueChange: setRequirementFilter,
+        options: [
+          { value: '', label: t('matrix.allRequirements') },
+          ...requirements.map((r) => ({ value: r.id, label: r.name })),
+        ],
+      },
+    },
+  ];
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <TrainingTabs activeTab="matrix" locale={locale} />
 
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('tabs.matrix')}</h1>
-          {data !== undefined ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}
-            </p>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={requirementFilter}
-            onChange={(e) => setRequirementFilter(e.target.value)}
-            aria-label={t('tabs.requirements')}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-          >
-            <option value="">{t('tabs.requirements')}</option>
-            {requirements.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-          <Button variant="outline" onClick={exportCsv} disabled={rows.length === 0}>
-            {t('matrix.exportCsv')}
-          </Button>
-        </div>
-      </header>
+      <ModuleHeader title={t('tabs.matrix')}>
+        <TooltipIconButton
+          icon={Download}
+          label={t('matrix.exportCsv')}
+          onClick={exportCsv}
+          disabled={rows.length === 0}
+        />
+      </ModuleHeader>
+
+      <FilterBar
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilterKey}
+        resultsCount={rows.length}
+      />
+
+      {data !== undefined ? (
+        <p className="text-xs text-muted-foreground">
+          {t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}
+        </p>
+      ) : null}
 
       <StatusLegend />
 
