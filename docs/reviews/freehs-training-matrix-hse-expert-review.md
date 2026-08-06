@@ -386,6 +386,74 @@ training.manage        -- requirement catalogue and assignments
 right. Standard should hold `training.view` plus, ideally, "see my own
 records" — people ask when their card expires.
 
+## Where it sits in the menu
+
+Assessed against the grouped navigation as it now ships — **Risk & control /
+Inspect & verify / Report & fix / Organisation**, with a `My work` entry above
+them.
+
+**Recommendation: the Organisation group, adjacent to Contractors.**
+
+```
+ORGANISATION
+  Sites
+  Assets            ▸ Maintenance
+  Documents
+  Contractors       ▸ Gate · Calendar
+  Training          ▸ Requirements          ← training.manage
+```
+
+### Why Organisation and not one of the others
+The groups divide by **what kind of object a thing is**, not what it is about:
+
+- **Risk & control** holds *assessments and authorisations* — risk assessments,
+  COSHH, permits, RAMS, fire risk assessments. A training record is neither; it
+  asserts a fact about a person, it does not assess a risk or authorise work.
+- **Inspect & verify** and **Report & fix** are activity groups — things you do
+  on a given day. Maintaining a competence register is not a day-of activity.
+- **Organisation** holds the *registers of the resources the safety system acts
+  upon and with*: places, equipment, files, companies. **People's capabilities
+  are the fourth resource**, and the group is currently missing them.
+
+There is also a structural parallel already in that group that settles it:
+**Assets → Maintenance** answers *"is this thing fit for use and in date?"*.
+**People → Training** answers exactly the same question about a person. Placing
+it next to **Contractors** puts the two "who is competent" registers side by
+side — which matters because a contractor's operatives need records in the same
+matrix (§ Whitfield, § Bello).
+
+### Two doors, like Actions
+The matrix belongs in Organisation **for practitioners**. But the panel's own
+scale argument applies: roughly nine in ten users will only ever want to know
+*"when does my card expire?"*, and they will not open the Organisation group to
+find out.
+
+So **"My training" is a tile and a filter tab in `My work`**, not a second nav
+entry — the pattern already shipped there (overdue / actions / acknowledgements
+/ drafts, with a badge). Two doors onto one module, exactly as Actions has a
+practitioner view and a personal one.
+
+### The nested child
+The **requirement catalogue** is configuration and nests under Training, gated
+on `training.manage` — consistent with `permits ▸ Types`,
+`observations ▸ Categories`, `actions ▸ Categories` and
+`assets ▸ Categories`. It does not need a top-level entry.
+
+### Naming
+Label it **"Training"**, even though the panel says "competence matrix" among
+themselves and Lindqvist would prefer "Competence". *Training* is the word
+people search for and the word on the tender question. `nav.training`, in all
+10 locales, in the same PR that adds the entry.
+
+### The counter-argument, recorded
+Lindqvist would file it under **Risk & control**, because that is where an
+auditor looks — clause 7.2 records get sampled in the same sitting as the risk
+assessments and the COSHH file. It is a reasonable position, and if users are
+observed hunting for it, that is the alternative to try. The panel's majority
+view is that Risk & control is specifically the *assessment and authorisation*
+group, that adding Training would make it a six-item group, and that
+Organisation is the natural home for a register of resources.
+
 ---
 
 # Priority
@@ -393,7 +461,7 @@ records" — people ask when their card expires.
 | # | Capability | Why first |
 |---|---|---|
 | 1 | Requirement catalogue + role assignment + record capture + computed status | Nothing works without the model |
-| 2 | Gap list and person/wallet views | The two screens used daily |
+| 2 | Gap list and person/wallet views, plus the **"My training" tile in `My work`** | The two screens used daily — and the one door the other 90% of users need |
 | 3 | **Bulk CSV import** | Without it the matrix is empty on day one (Bello) — and it's everyone's migration path |
 | 4 | Expiry chasing worker | The reason the matrix stays current |
 | 5 | **Permits enforcement hook** | Turns reporting into control; retires the platform's weakest precondition |
@@ -430,6 +498,17 @@ records" — people ask when their card expires.
 - **Non-user people**: contractors' operatives and agency staff need records
   without accounts. The incidents module's person model (user *or* named person
   with a category) is the precedent.
+- **Nav placement** lands in `apps/web/src/lib/nav-model.ts`: a `training` entry
+  in the `groupOrg` section after `contractors`, `permission: 'training.view'`,
+  with a `children` entry for the requirement catalogue gated on
+  `training.manage` — the same shape as the `permits` / `assets` / `contractors`
+  entries beside it. If the module is brand-gated, add it to `BRAND_MODULE_FOR`
+  as well, and cover both the positive and negative cases in
+  `nav-model.test.ts` as the RAMS entry does.
+- **The `My work` door** is a tile plus a filter tab in
+  `apps/web/app/[locale]/my-work/page.tsx`, fed by the existing `myWork.counts`
+  / `myWork.list` procedures — extend those rather than adding a parallel query,
+  so the badge stays a single round-trip.
 - **Ship with the chrome**: search, AI tools, nav entry with `nav.training` in
   all 10 locales, and the full namespace translated at launch. Every review in
   this series has flagged a module that outran its chrome; the last one shipped
