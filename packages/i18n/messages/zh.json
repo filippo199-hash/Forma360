@@ -77,7 +77,10 @@
     "hideArchived": "隐藏已归档",
     "exportCsv": "导出 CSV",
     "categories": "类别",
-    "settings": "设置"
+    "settings": "设置",
+    "status": "状态",
+    "type": "类型",
+    "site": "场所"
   },
   "auth": {
     "signIn": {

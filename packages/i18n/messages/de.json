@@ -77,7 +77,10 @@
     "hideArchived": "Archivierte ausblenden",
     "exportCsv": "CSV exportieren",
     "categories": "Kategorien",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "status": "Status",
+    "type": "Typ",
+    "site": "Standort"
   },
   "auth": {
     "signIn": {

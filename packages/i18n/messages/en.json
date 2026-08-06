@@ -77,7 +77,10 @@
     "hideArchived": "Hide archived",
     "exportCsv": "Export CSV",
     "categories": "Categories",
-    "settings": "Settings"
+    "settings": "Settings",
+    "status": "Status",
+    "type": "Type",
+    "site": "Site"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
