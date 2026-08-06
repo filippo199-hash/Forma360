@@ -25,6 +25,9 @@
  *   - PW-E09: seeded gas limits — gas-requiring defaults carry evaluable
  *     limits, confined space gets the 30-minute freshness window; the
  *     open-entry counter (PW-8)
+ *   - PW-E11: ramsGateError — own-pack status, third-party acceptance
+ *     outcome and validity window, and the no-link case; pure so the
+ *     permit page previews the blocker before Issue (RS-A11)
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -41,12 +44,17 @@ import {
   PERMIT_CATEGORIES,
   PERMIT_STATUSES,
   permitIsOverdue,
+  ramsGateError,
+  trainingGateError,
+  trainingGateShortfalls,
+  type TrainingGateFact,
   readingWithinLimit,
   sameAreaMatch,
   snapshotPreconditions,
   validityWindowError,
   type GasLimit,
   type GasReading,
+  type PermitRamsLink,
 } from './permits';
 
 describe('canTransition (PW-E01)', () => {
@@ -432,5 +440,130 @@ describe('seeded gas limits + entry counter (PW-E09)', () => {
       ]),
     ).toBe(2);
     expect(openEntryCount([])).toBe(0);
+  });
+});
+
+describe('ramsGateError (PW-E11 / RS-A11)', () => {
+  const now = new Date('2026-08-04T10:00:00Z');
+  const gate = (link: PermitRamsLink, requiresRamsPack = true) =>
+    ramsGateError({ requiresRamsPack, link, now });
+
+  it('never blocks a type that does not require a pack', () => {
+    expect(gate(null, false)).toBeNull();
+    expect(gate({ kind: 'own_pack', packStatus: 'draft' }, false)).toBeNull();
+  });
+
+  it('demands a link when the type requires one', () => {
+    expect(gate(null)).toBe('rams-pack-required');
+  });
+
+  it('accepts an own pack only while it is issued', () => {
+    expect(gate({ kind: 'own_pack', packStatus: 'issued' })).toBeNull();
+    for (const status of ['draft', 'ready', 'withdrawn', 'superseded', 'archived']) {
+      expect(gate({ kind: 'own_pack', packStatus: status }), status).toBe('rams-pack-not-issued');
+    }
+  });
+
+  it('accepts a third-party review on either accepted outcome', () => {
+    const base = { kind: 'third_party_review', validFrom: null, validTo: null } as const;
+    expect(gate({ ...base, outcome: 'accepted' })).toBeNull();
+    expect(gate({ ...base, outcome: 'accepted_with_conditions' })).toBeNull();
+    expect(gate({ ...base, outcome: 'pending' })).toBe('rams-acceptance-expired');
+    expect(gate({ ...base, outcome: 'rejected' })).toBe('rams-acceptance-expired');
+  });
+
+  it('refuses an acceptance outside its validity window (RS-E13)', () => {
+    const accepted = { kind: 'third_party_review', outcome: 'accepted' } as const;
+    // Not yet in force.
+    expect(gate({ ...accepted, validFrom: new Date('2026-08-05T00:00:00Z'), validTo: null })).toBe(
+      'rams-acceptance-expired',
+    );
+    // Lapsed.
+    expect(gate({ ...accepted, validFrom: null, validTo: new Date('2026-08-03T00:00:00Z') })).toBe(
+      'rams-acceptance-expired',
+    );
+    // Inside the window.
+    expect(
+      gate({
+        ...accepted,
+        validFrom: new Date('2026-08-01T00:00:00Z'),
+        validTo: new Date('2026-08-31T00:00:00Z'),
+      }),
+    ).toBeNull();
+  });
+});
+
+describe('trainingGateError (PW-E12 / FreeHS B7)', () => {
+  const fact = (
+    personLabel: string,
+    requirementId: string,
+    status: TrainingGateFact['status'],
+  ): TrainingGateFact => ({
+    personLabel,
+    requirementId,
+    requirementName: `Req ${requirementId}`,
+    status,
+  });
+
+  it('PW-E12: a type with no required training never blocks', () => {
+    expect(
+      trainingGateError({
+        requiredTrainingIds: [],
+        facts: [fact('Dave', 'r1', 'expired')],
+      }),
+    ).toBeNull();
+  });
+
+  it('PW-E12: expired and never-held block; expiring_soon does not', () => {
+    // The card is valid today — a shift-long permit must not fail because
+    // a ticket lapses next month.
+    expect(
+      trainingGateError({
+        requiredTrainingIds: ['r1'],
+        facts: [fact('Dave', 'r1', 'expiring_soon')],
+      }),
+    ).toBeNull();
+    expect(
+      trainingGateError({ requiredTrainingIds: ['r1'], facts: [fact('Dave', 'r1', 'in_date')] }),
+    ).toBeNull();
+    expect(
+      trainingGateError({ requiredTrainingIds: ['r1'], facts: [fact('Dave', 'r1', 'expired')] }),
+    ).toBe('training-expired');
+    expect(
+      trainingGateError({ requiredTrainingIds: ['r1'], facts: [fact('Nia', 'r1', 'not_held')] }),
+    ).toBe('training-missing');
+  });
+
+  it('PW-E12: requirements the type does not demand are ignored', () => {
+    expect(
+      trainingGateError({
+        requiredTrainingIds: ['r1'],
+        facts: [fact('Dave', 'r1', 'in_date'), fact('Dave', 'r2', 'expired')],
+      }),
+    ).toBeNull();
+  });
+
+  it('PW-E12: every shortfall is listed so the UI can name names', () => {
+    const shortfalls = trainingGateShortfalls({
+      requiredTrainingIds: ['r1', 'r2'],
+      facts: [
+        fact('Dave', 'r1', 'expired'),
+        fact('Dave', 'r2', 'in_date'),
+        fact('Nia', 'r1', 'not_held'),
+        fact('Nia', 'r2', 'expiring_soon'),
+      ],
+    });
+    expect(shortfalls).toHaveLength(2);
+    expect(shortfalls.map((s) => `${s.personLabel}:${s.reason}`)).toEqual([
+      'Dave:training-expired',
+      'Nia:training-missing',
+    ]);
+    // Expired outranks missing in the single-verdict headline.
+    expect(
+      trainingGateError({
+        requiredTrainingIds: ['r1', 'r2'],
+        facts: [fact('Nia', 'r1', 'not_held'), fact('Dave', 'r2', 'expired')],
+      }),
+    ).toBe('training-expired');
   });
 });

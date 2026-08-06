@@ -74,7 +74,16 @@ export const adminRouter = router({
           /** Keyset: only events strictly older than this instant. */
           before: z.string().datetime().optional(),
           module: z
-            .enum(['all', 'actions', 'observations', 'permits', 'coshh', 'riskAssessments', 'fireSafety', 'contractors'])
+            .enum([
+              'all',
+              'actions',
+              'observations',
+              'permits',
+              'coshh',
+              'riskAssessments',
+              'fireSafety',
+              'contractors',
+            ])
             .default('all'),
         })
         .default({ limit: 50, module: 'all' }),
@@ -226,7 +235,9 @@ export const adminRouter = router({
             )
             .orderBy(desc(fireEvents.createdAt))
             .limit(per)
-            .then((rows) => rows.map((r) => ({ ...r, module: 'fireSafety', kind: String(r.kind) }))),
+            .then((rows) =>
+              rows.map((r) => ({ ...r, module: 'fireSafety', kind: String(r.kind) })),
+            ),
         );
       }
       if (want('contractors')) {
@@ -259,7 +270,9 @@ export const adminRouter = router({
         .slice(0, per);
 
       // Resolve actor names in one pass.
-      const actorIds = [...new Set(merged.flatMap((r) => (r.actorUserId === null ? [] : [r.actorUserId])))];
+      const actorIds = [
+        ...new Set(merged.flatMap((r) => (r.actorUserId === null ? [] : [r.actorUserId]))),
+      ];
       const actors =
         actorIds.length > 0
           ? await ctx.db

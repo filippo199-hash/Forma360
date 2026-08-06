@@ -38,6 +38,7 @@ import requestToJoin from '../../i18n/emails/en/request-to-join.json';
 import riskAssessmentAckReminder from '../../i18n/emails/en/risk-assessment-ack-reminder.json';
 import riskAssessmentDistributed from '../../i18n/emails/en/risk-assessment-distributed.json';
 import scheduleReminder from '../../i18n/emails/en/schedule-reminder.json';
+import trainingExpiry from '../../i18n/emails/en/training-expiry.json';
 import signatureWorkflowComplete from '../../i18n/emails/en/signature-workflow-complete.json';
 import signatureWorkflowRequest from '../../i18n/emails/en/signature-workflow-request.json';
 import verification from '../../i18n/emails/en/verification.json';
@@ -64,6 +65,7 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'issue-created': issueCreated,
   'maintenance-reminder': maintenanceReminder,
   'contractor-doc-expiry': contractorDocExpiry,
+  'training-expiry': trainingExpiry,
   'contractor-portal-invite': contractorPortalInvite,
   'contractor-overstay': contractorOverstay,
   'observation-critical-alert': observationCriticalAlert,
@@ -241,7 +243,10 @@ export const defaultTemplatedTemplateLoader: TemplatedTemplateLoader = async (ke
       const { fileURLToPath } = await import('node:url');
       const { dirname, join } = await import('node:path');
       const here = dirname(fileURLToPath(import.meta.url));
-      const raw = await readFile(join(here, '..', '..', 'i18n', 'emails', locale, `${key}.json`), 'utf-8');
+      const raw = await readFile(
+        join(here, '..', '..', 'i18n', 'emails', locale, `${key}.json`),
+        'utf-8',
+      );
       return templateSchema.parse(JSON.parse(raw));
     } catch {
       // fall through to English

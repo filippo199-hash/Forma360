@@ -39,10 +39,7 @@ export interface DueActionRow {
  * Everything that needs a reminder today, across all tenants. Pure —
  * the handler and the tests share it.
  */
-export async function findActionsNeedingReminder(
-  db: Database,
-  now: Date,
-): Promise<DueActionRow[]> {
+export async function findActionsNeedingReminder(db: Database, now: Date): Promise<DueActionRow[]> {
   const soonCutoff = new Date(now.getTime() + DUE_SOON_DAYS * 24 * 60 * 60 * 1000);
   const repingCutoff = new Date(now.getTime() - OVERDUE_REPING_DAYS * 24 * 60 * 60 * 1000);
   const rows = await db
@@ -66,7 +63,10 @@ export async function findActionsNeedingReminder(
         lte(actions.dueAt, soonCutoff),
         or(
           // Overdue: never pinged, or last ping older than the cadence.
-          and(lt(actions.dueAt, now), or(isNull(actions.overdueRemindedAt), lt(actions.overdueRemindedAt, repingCutoff))),
+          and(
+            lt(actions.dueAt, now),
+            or(isNull(actions.overdueRemindedAt), lt(actions.overdueRemindedAt, repingCutoff)),
+          ),
           // Due soon (but not yet due): warned once only.
           and(sql`${actions.dueAt} >= ${now}`, isNull(actions.dueSoonRemindedAt)),
         ),
@@ -216,10 +216,14 @@ async function stampReminded(
 /** Plain-text line block for the email body. */
 export function actionDigestLines(overdue: DueActionRow[], dueSoon: DueActionRow[]): string {
   const line = (r: DueActionRow, tag: string) =>
-    `${tag} — ${r.referenceNumber ?? ''} ${r.title} (due ${r.dueAt.toISOString().slice(0, 10)})`.replace('  ', ' ');
-  return [...overdue.map((r) => line(r, 'OVERDUE')), ...dueSoon.map((r) => line(r, 'Due soon'))].join(
-    '\n',
-  );
+    `${tag} — ${r.referenceNumber ?? ''} ${r.title} (due ${r.dueAt.toISOString().slice(0, 10)})`.replace(
+      '  ',
+      ' ',
+    );
+  return [
+    ...overdue.map((r) => line(r, 'OVERDUE')),
+    ...dueSoon.map((r) => line(r, 'Due soon')),
+  ].join('\n');
 }
 
 export function createActionRemindersHandler(deps: ActionRemindersDeps) {

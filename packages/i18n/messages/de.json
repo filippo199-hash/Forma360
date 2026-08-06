@@ -67,7 +67,20 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ Filter hinzufügen",
+    "resultsCount": "{count} Ergebnisse",
+    "removeFilter": "Filter {label} entfernen",
+    "from": "Von",
+    "to": "Bis",
+    "showArchived": "Archivierte anzeigen",
+    "hideArchived": "Archivierte ausblenden",
+    "exportCsv": "CSV exportieren",
+    "categories": "Kategorien",
+    "settings": "Einstellungen",
+    "status": "Status",
+    "type": "Typ",
+    "site": "Standort"
   },
   "auth": {
     "signIn": {
@@ -1436,14 +1449,15 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Gefährdungen & Beinaheunfälle",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "Unterweisungen",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Dokumente",
     "ai": "KI-Assistent",
+    "forMe": "Für mich",
     "sites": "Standorte",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1454,15 +1468,11 @@
     "fireSafety": "Brandschutz",
     "analytics": "Dashboard",
     "incidents": "Vorfälle",
-    "myWork": "Meine Aufgaben",
     "more": "Mehr",
     "quickLabel": "Schnellnavigation",
     "collapseMenu": "Menü einklappen",
     "expandMenu": "Menü ausklappen",
-    "groupRisk": "Risiko & Kontrolle",
-    "groupVerify": "Prüfen & verifizieren",
-    "groupRespond": "Melden & beheben",
-    "groupOrg": "Organisation",
+    "groupOrg": "Die Organisation",
     "child": {
       "schedulesCalendar": "Kalender",
       "permitsBoard": "Live-Tafel",
@@ -1477,9 +1487,18 @@
       "contractorsGate": "Baustellentor",
       "contractorsCalendar": "Kalender",
       "ramsLibrary": "Bibliothek der Arbeitsanweisungen",
-      "ramsReviews": "Prüfung von Nachunternehmer-RAMS"
+      "ramsReviews": "Prüfung von Nachunternehmer-RAMS",
+      "templates": "Vorlagen",
+      "schedules": "Zeitpläne",
+      "approvals": "Freigaben",
+      "maintenance": "Wartung",
+      "trainingMatrix": "Matrix",
+      "trainingRequirements": "Anforderungen"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "training": "Schulungen",
+    "groupDoWork": "Die Arbeit erledigen",
+    "groupRecords": "Nachweise & Register"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2138,7 +2157,13 @@
       "sourceMaintenance": "Wartung",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Vorfall",
-      "sourceIncident": "Vorfall"
+      "sourceIncident": "Vorfall",
+      "sourceRiskAssessment": "Gefährdungsbeurteilung",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Brandschutzbeurteilung",
+      "sourceFireLogbookEntry": "Brandschutzprüfung",
+      "sourceFireDoorInspection": "Brandschutztür",
+      "sourceRams": "RAMS-Paket"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2268,7 +2293,8 @@
       "sourceLinkFireRiskAssessment": "Erstellt aus Brandschutzbeurteilung {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Erstellt aus nicht bestandener Brandschutzprüfung",
       "sourceLinkFireDoorInspection": "Erstellt aus nicht bestandener Türprüfung",
-      "sourceLinkIncident": "Aus Vorfall {referenceNumber}"
+      "sourceLinkIncident": "Aus Vorfall {referenceNumber}",
+      "sourceLinkRams": "Aus RAMS-Paket {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2332,11 +2358,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Gefährdungsbeurteilung",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Brandschutzbeurteilung",
-    "sourceFireLogbookEntry": "Brandschutzprüfung",
-    "sourceFireDoorInspection": "Brandschutztür",
     "pagerShowing": "{from}–{to} von {total}",
     "pagerPrev": "Zurück",
     "pagerNext": "Weiter",
@@ -3085,7 +3106,8 @@
       "contractors": "Auftragnehmer",
       "sites": "Standorte & Projekte",
       "templates": "Vorlagen",
-      "incidents": "Vorfälle"
+      "incidents": "Vorfälle",
+      "rams": "RAMS-Pakete"
     }
   },
   "ai": {
@@ -4820,7 +4842,8 @@
         "acceptor": "Annehmende Person",
         "acceptAction": "Freigabe annehmen",
         "acknowledgeConflicts": "Ich habe die überlappenden Freigaben geprüft und akzeptiere das kombinierte Risiko",
-        "awaitingAcceptor": "Warten auf die benannte annehmende Person. Nur sie kann annehmen."
+        "awaitingAcceptor": "Warten auf die benannte annehmende Person. Nur sie kann annehmen.",
+        "ramsBlocked": "Die Ausstellung ist blockiert, bis die RAMS-Anforderung erfüllt ist."
       },
       "actions": {
         "title": "Aktionen",
@@ -4891,7 +4914,13 @@
         "requiredBeforeIssue": "Gefährdungsbeurteilung vor Ausstellung erforderlich",
         "riskAssessment": "Gefährdungsbeurteilung",
         "methodStatement": "Arbeitsanweisung",
-        "none": "Nicht verknüpft"
+        "none": "Nicht verknüpft",
+        "ramsRequired": "Diese Erlaubnisart erfordert ein RAMS-Paket",
+        "ramsSatisfied": "Ein ausgestelltes Paket oder eine gültige akzeptierte Prüfung ist verknüpft.",
+        "ramsMissing": "Es ist noch kein RAMS-Paket und keine akzeptierte Auftragnehmerprüfung verknüpft.",
+        "ramsNotIssued": "Das verknüpfte Paket ist derzeit nicht ausgestellt — bitte zuerst ausstellen oder neu ausstellen.",
+        "ramsExpired": "Die verknüpfte Auftragnehmerprüfung ist nicht akzeptiert oder ihre Gültigkeit ist abgelaufen.",
+        "ramsOpenModule": "RAMS öffnen"
       },
       "workers": {
         "title": "Personen unter dieser Freigabe",
@@ -6220,7 +6249,11 @@
     "empty": {
       "title": "Nichts wartet auf Sie",
       "body": "Neu zugewiesene Aufgaben erscheinen hier."
-    }
+    },
+    "myActionsTitle": "Meine Maßnahmen",
+    "myActionsSubtitle": "Alles, was Ihnen zugewiesen ist — am stärksten überfällig zuerst.",
+    "myAcknowledgementsTitle": "Meine Bestätigungen",
+    "myAcknowledgementsSubtitle": "Unterweisungen und Gefährdungsbeurteilungen, die auf Ihre Bestätigung warten."
   },
   "rams": {
     "title": "RAMS",
@@ -6299,7 +6332,9 @@
       "allClear": "Alles Nötige für die Ausgabe dieses Pakets liegt vor.",
       "unreferencedTitle": "Hohe Risiken, die kein Schritt abdeckt",
       "attestationTitle": "Erklärung des Erstellers",
-      "attestationConfirm": "Ich bestätige die obige Erklärung."
+      "attestationConfirm": "Ich bestätige die obige Erklärung.",
+      "attestationText": "Ich bestätige, dass ich diese Gefährdungsbeurteilung und Arbeitsanweisung erstellt oder geprüft habe, dass sie für die beschriebene Arbeit geeignet und ausreichend ist, dass der Arbeitsablauf und die Schutzmaßnahmen tatsächlich so eingehalten werden, und dass sie allen Ausführenden vor Arbeitsbeginn unterwiesen wird.",
+      "attestationCanonical": "Rechtsverbindlich ist der englische Wortlaut; er wird unverändert gespeichert und auf dem PDF gedruckt."
     },
     "errors": {
       "no-steps": "Fügen Sie der Arbeitsanweisung mindestens einen Schritt hinzu.",
@@ -6341,17 +6376,25 @@
       "moveDown": "Nach unten",
       "remove": "Schritt entfernen",
       "expand": "Bearbeiten",
-      "collapse": "Schließen"
+      "collapse": "Schließen",
+      "untitled": "Unbenannter Schritt",
+      "holdPointBadge": "Haltepunkt",
+      "noHoldPoint": "Kein Haltepunkt"
     },
     "emergency": {
       "title": "Notfallmaßnahmen",
       "firstAid": "Erste Hilfe",
       "procedure": "Notfallablauf",
-      "rescuePlan": "Rettungskonzept"
+      "rescuePlan": "Rettungskonzept",
+      "nearestHospital": "Nächste Notaufnahme"
     },
     "logistics": {
       "welfare": "Sozialeinrichtungen",
-      "accessEgress": "Zu- und Abgang"
+      "accessEgress": "Zu- und Abgang",
+      "title": "Baustellenlogistik",
+      "environmental": "Umweltschutzmaßnahmen",
+      "permitsRequired": "Erwartete Erlaubnisscheine",
+      "competence": "Qualifikation und Schulung"
     },
     "builder": {
       "saving": "Wird gespeichert …",
@@ -6377,7 +6420,12 @@
       "briefedSoFar": "{count} unterwiesen",
       "needsRebrief": "Erneute Unterweisung nötig",
       "queued": "{count} Unterweisung(en) warten auf Synchronisierung",
-      "retry": "Jetzt erneut versuchen"
+      "retry": "Jetzt erneut versuchen",
+      "hazardsHeading": "Was Sie verletzen kann — und was das verhindert",
+      "whoAffected": "Wer gefährdet ist",
+      "coshhHeading": "Verwendete Gefahrstoffe",
+      "signatureCaptured": "Unterschrift erfasst",
+      "signAgain": "Erneut unterschreiben"
     },
     "briefeeCategory": {
       "employee": "Mitarbeitende",
@@ -6392,7 +6440,10 @@
       "issuedTo": "Ansprechpartner beim Kunden",
       "createLink": "Freigabelink erstellen",
       "unnamed": "Unbenannter Empfänger",
-      "revoked": "widerrufen"
+      "revoked": "widerrufen",
+      "showLink": "Link anzeigen",
+      "copyLink": "Kopieren",
+      "revokeLink": "Widerrufen"
     },
     "clientDecision": {
       "pending": "Warten auf Kunden",
@@ -6415,7 +6466,9 @@
       "startPack": "Paket anlegen",
       "duplicate": "Duplizieren",
       "copySuffix": "Kopie",
-      "empty": "Noch keine Arbeitsanweisungen."
+      "empty": "Noch keine Arbeitsanweisungen.",
+      "edit": "Bearbeiten",
+      "backToLibrary": "Zurück zur Bibliothek"
     },
     "reviews": {
       "title": "Prüfung von Nachunternehmer-RAMS",
@@ -6428,7 +6481,18 @@
       "validTo": "Angenommen bis",
       "recordDecision": "Entscheidung erfassen",
       "itemComment": "Was ist hier nicht in Ordnung?",
-      "expired": "Abgelaufen"
+      "expired": "Abgelaufen",
+      "logReceived": "Erhaltenes Paket erfassen",
+      "logReceivedHint": "Ein Nachunternehmer hat Ihnen ein RAMS geschickt — per E-Mail, Portal oder auf Papier. Hier erfassen, um es zu prüfen.",
+      "contractor": "Nachunternehmer",
+      "contractorPlaceholder": "Nachunternehmer suchen…",
+      "packTitle": "Titel des Pakets",
+      "packTitlePlaceholder": "z. B. Austausch Dachanlage — RAMS Rev. B",
+      "site": "Standort (optional)",
+      "sitePlaceholder": "Wo die Arbeit stattfindet",
+      "workDescription": "Worum es bei der Arbeit geht (optional)",
+      "workDescriptionPlaceholder": "Alles, was der Prüfer vor der Checkliste wissen muss",
+      "logAndOpen": "Erfassen und Checkliste öffnen"
     },
     "reviewOutcome": {
       "pending": "Prüfung ausstehend",
@@ -6505,6 +6569,163 @@
       "method_statement_duplicated": "Arbeitsanweisung dupliziert",
       "review_submitted": "Nachunternehmer-Paket zur Prüfung eingereicht",
       "review_decided": "Prüfentscheidung erfasst"
+    },
+    "common": {
+      "cancel": "Abbrechen"
+    },
+    "reissue": {
+      "title": "Paket neu ausgeben",
+      "invalidatesWarning": "Dies erzeugt eine neue Version. Alle {count} Unterweisung(en) zur aktuellen Version verlieren ihre Gültigkeit — alle müssen vor Fortsetzung der Arbeit erneut unterwiesen werden.",
+      "note": "Warum wird neu ausgegeben? (optional)",
+      "notePlaceholder": "z. B. Ablauf nach der Begehung mit dem Kunden geändert",
+      "confirm": "Unterschreiben und neu ausgeben"
+    },
+    "reviewChecklist": {
+      "scope_matches": "Arbeitsumfang entspricht dem von uns beauftragten Werk",
+      "hazards_credible": "Gefährdungen ermittelt und Schutzmaßnahmen plausibel",
+      "sequence_holdpoints": "Ablauf enthält Freischalt-/Erlaubnis-Haltepunkte",
+      "emergency_present": "Notfall- und Erste-Hilfe-Regelungen vorhanden",
+      "competence_evidence": "Nachweise zu Befähigung und Schulung beigefügt",
+      "coshh_covered": "Gefahrstoffe abgedeckt, wo verwendet",
+      "plant_certified": "Prüfnachweise für Anlagen und Geräte gültig",
+      "insurance_current": "Versicherung aktuell und für die Arbeit ausreichend"
+    },
+    "editor": {
+      "titleLabel": "Titel der Arbeitsanweisung",
+      "tradeLabel": "Gewerk",
+      "publish": "Version veröffentlichen",
+      "saved": "Gespeichert",
+      "neverPublished": "Nie veröffentlicht",
+      "saveFailed": "Nicht gespeichert: {message}",
+      "publishFailed": "Veröffentlichen fehlgeschlagen: {message}",
+      "archived": "Diese Arbeitsanweisung ist archiviert und kann nicht bearbeitet werden.",
+      "unpublishedChanges": "Es gibt Änderungen, die noch nicht in der veröffentlichten Version enthalten sind. Veröffentlichen Sie sie, damit neue Pakete sie nutzen können.",
+      "scopeLabel": "Leistungsumfang",
+      "scopePlaceholder": "Was die Arbeit tatsächlich ist, in einem Absatz.",
+      "versionsTitle": "Veröffentlichte Versionen",
+      "publishedBy": "von {name} am {date}"
+    },
+    "exportFailed": "Export fehlgeschlagen: {message}"
+  },
+  "reportChooser": {
+    "title": "Etwas melden",
+    "subtitle": "Eine Frage entscheidet, wohin das gehört: Wurde jemand verletzt?",
+    "harmed": {
+      "label": "Ja — jemand wurde verletzt oder erkrankte",
+      "hint": "Meldet einen Vorfall. Führungskräfte werden sofort alarmiert und die RIDDOR-Frist geprüft."
+    },
+    "noHarm": {
+      "label": "Nein — aber es hätte schiefgehen können",
+      "hint": "Meldet eine Gefährdung oder einen Beinaheunfall. Geht an das Team, das Dinge behebt, bevor jemand zu Schaden kommt."
+    },
+    "footnote": "Unsicher? Wählen Sie das Passendste — wer es prüft, kann es später verschieben.",
+    "noPermission": "Sie haben hier keine Melderechte. Bitten Sie eine:n Administrator:in um Zugang."
+  },
+  "training": {
+    "title": "Schulungen & Kompetenz",
+    "subtitle": "Wer was besitzt, was fehlt und wann es abläuft.",
+    "tabs": {
+      "gaps": "Lücken",
+      "matrix": "Matrix",
+      "compliance": "Erfüllung",
+      "requirements": "Anforderungen"
+    },
+    "asAt": "Stand {date}",
+    "status": {
+      "in_date": "Gültig",
+      "expiring_soon": "Läuft bald ab",
+      "expired": "Abgelaufen",
+      "not_held": "Nie erworben",
+      "not_required": "Nicht erforderlich"
+    },
+    "gaps": {
+      "expired": "Abgelaufen",
+      "expiringSoon": "Läuft bald ab",
+      "notHeld": "Nie erworben",
+      "empty": "Keine Lücken. Alle erforderlichen Nachweise sind gültig.",
+      "record": "Erfassen",
+      "expiresOn": "läuft ab am {date}",
+      "requiredByRole": "durch Rolle erforderlich",
+      "total": "{count} zu bearbeiten"
+    },
+    "matrix": {
+      "person": "Person",
+      "empty": "Noch nichts vorhanden. Legen Sie eine Anforderung an und erfassen Sie Nachweise.",
+      "exportCsv": "CSV exportieren",
+      "legend": "Legende"
+    },
+    "compliance": {
+      "overall": "Gesamt",
+      "statutory": "Nur gesetzlich",
+      "byRequirement": "Nach Anforderung",
+      "gapsCount": "{count} mit Lücken",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Anforderungen",
+      "add": "Anforderung hinzufügen",
+      "name": "Name",
+      "category": "Kategorie",
+      "obligation": "Verpflichtung",
+      "validity": "Gültigkeit",
+      "validityMonths": "{months} Monate",
+      "noExpiry": "Läuft nie ab",
+      "leadDays": "{days} Tage im Voraus erinnern",
+      "empty": "Noch keine Anforderungen. Legen Sie die benötigten Nachweise an.",
+      "archive": "Archivieren",
+      "save": "Speichern",
+      "assignments": "Wer braucht das",
+      "addAssignment": "Zuweisen",
+      "cancel": "Abbrechen",
+      "scope": {
+        "role": "Rolle",
+        "group": "Gruppe",
+        "site": "Standort",
+        "person": "Person"
+      }
+    },
+    "obligation": {
+      "statutory": "Gesetzlich",
+      "mandatory": "Verpflichtend",
+      "discretionary": "Freiwillig"
+    },
+    "record": {
+      "title": "Schulung erfassen",
+      "person": "Person",
+      "requirement": "Anforderung",
+      "achievedAt": "Erwerbsdatum",
+      "expiresAt": "Gültig bis",
+      "expiryAuto": "Aus der Gültigkeitsdauer berechnet",
+      "awardingBody": "Ausstellende Stelle",
+      "certificateNumber": "Zertifikatsnummer",
+      "evidence": "Zertifikat oder Kartenfoto",
+      "save": "Nachweis speichern",
+      "saved": "Nachweis gespeichert",
+      "source": "Quelle",
+      "cancel": "Abbrechen",
+      "sources": {
+        "internal": "Intern",
+        "external": "Externer Anbieter",
+        "imported": "Importiert",
+        "self_declared": "Selbstauskunft"
+      }
+    },
+    "person": {
+      "title": "Schulungen",
+      "noRecords": "Noch keine Schulungen erfasst.",
+      "verified": "Geprüft",
+      "unverified": "Nicht geprüft"
+    },
+    "import": {
+      "title": "Nachweise importieren",
+      "help": "CSV mit den Spalten einfügen: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importieren",
+      "imported": "{count} Nachweise importiert",
+      "failed": "{count} Zeilen fehlgeschlagen"
+    },
+    "errors": {
+      "moduleDisabled": "Dieses Modul ist nicht aktiviert.",
+      "generic": "Etwas ist schiefgelaufen."
     }
   }
 }

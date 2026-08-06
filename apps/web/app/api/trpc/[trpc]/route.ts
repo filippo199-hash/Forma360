@@ -11,6 +11,7 @@
  *     server logs with client-side telemetry.
  */
 import { buildAppRouter } from '@forma360/api';
+import * as Sentry from '@sentry/nextjs';
 import { isId } from '@forma360/shared/id';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { logger } from '../../../../src/server/logger';
@@ -26,6 +27,7 @@ import { permitsDeps } from '../../../../src/server/permits-deps';
 import { fireSafetyDeps } from '../../../../src/server/fire-safety-deps';
 import { incidentsDeps } from '../../../../src/server/incidents-deps';
 import { ramsDeps } from '../../../../src/server/rams-deps';
+import { trainingDeps } from '../../../../src/server/training-deps';
 import { createContext } from '../../../../src/server/trpc';
 // Side-effect import: wires the users router's invite email + appUrl deps.
 import '../../../../src/server/users-deps';
@@ -48,6 +50,7 @@ const appRouter = buildAppRouter({
   fireSafety: fireSafetyDeps,
   incidents: incidentsDeps,
   rams: ramsDeps,
+  training: trainingDeps,
 });
 
 async function handler(req: Request): Promise<Response> {
@@ -55,6 +58,8 @@ async function handler(req: Request): Promise<Response> {
   const presetId = isId(incomingId) ? incomingId : undefined;
 
   let contextRequestId: string | undefined;
+  let contextTenantId: string | undefined;
+  let contextUserId: string | undefined;
 
   const response = await fetchRequestHandler({
     endpoint: '/api/trpc',
@@ -66,6 +71,8 @@ async function handler(req: Request): Promise<Response> {
         ...(presetId !== undefined ? { requestId: presetId as never } : {}),
       });
       contextRequestId = ctx.requestId;
+      contextTenantId = ctx.auth?.tenantId;
+      contextUserId = ctx.auth?.userId;
       return ctx;
     },
     // Without this hook the fetch adapter swallows procedure errors in
@@ -83,6 +90,21 @@ async function handler(req: Request): Promise<Response> {
         },
         '[trpc] procedure error',
       );
+      // Only genuine 500s reach Sentry. Every other code is a domain guard
+      // doing its job — `rams-pack-not-issued`, `last-admin`, an expired
+      // permit window — and reporting those would bury the real failures
+      // under thousands of correctly-refused mutations.
+      if (error.code !== 'INTERNAL_SERVER_ERROR') return;
+      Sentry.withScope((scope) => {
+        scope.setTag('procedure', path ?? 'unknown');
+        scope.setTag('trpc.type', type);
+        if (contextTenantId !== undefined) scope.setTag('tenantId', contextTenantId);
+        if (contextUserId !== undefined) scope.setUser({ id: contextUserId });
+        if (contextRequestId !== undefined) scope.setTag('x-request-id', contextRequestId);
+        // Report the cause when tRPC has wrapped the real error, so the
+        // Sentry title is the actual failure and not "INTERNAL_SERVER_ERROR".
+        Sentry.captureException(error.cause instanceof Error ? error.cause : error);
+      });
     },
   });
 

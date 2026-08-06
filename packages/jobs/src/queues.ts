@@ -130,6 +130,11 @@ export const QUEUE_NAMES = {
   /** Platform PF-3 — stamps 'missed' on scheduled occurrences past grace. */
   SCHEDULE_MISSED_SWEEP: 'forma360-schedule-missed-sweep',
   RETENTION_SWEEP: 'forma360-retention-sweep',
+  /**
+   * FreeHS B7 — daily training-expiry chasing. One reminder per record,
+   * deduped on `reminder_sent_at`, silent when nothing is due.
+   */
+  TRAINING_EXPIRY: 'forma360-training-expiry',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -290,6 +295,10 @@ export const scheduleMissedSweepPayloadSchema = z.object({}).strict();
 export type ScheduleMissedSweepPayload = z.infer<typeof scheduleMissedSweepPayloadSchema>;
 
 /** PF-31 retention v1 — tick payload is empty. */
+/** Training expiry chase — no payload; the worker scans expiries. */
+export const trainingExpiryPayloadSchema = z.object({}).strict();
+export type TrainingExpiryPayload = z.infer<typeof trainingExpiryPayloadSchema>;
+
 export const retentionSweepPayloadSchema = z.object({}).strict();
 export type RetentionSweepPayload = z.infer<typeof retentionSweepPayloadSchema>;
 
@@ -322,6 +331,7 @@ export interface QueuePayloads {
   [QUEUE_NAMES.DOCUMENT_EXPIRY]: DocumentExpiryPayload;
   [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: ScheduleMissedSweepPayload;
   [QUEUE_NAMES.RETENTION_SWEEP]: RetentionSweepPayload;
+  [QUEUE_NAMES.TRAINING_EXPIRY]: TrainingExpiryPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -350,6 +360,7 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.DOCUMENT_EXPIRY]: documentExpiryPayloadSchema,
   [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: scheduleMissedSweepPayloadSchema,
   [QUEUE_NAMES.RETENTION_SWEEP]: retentionSweepPayloadSchema,
+  [QUEUE_NAMES.TRAINING_EXPIRY]: trainingExpiryPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

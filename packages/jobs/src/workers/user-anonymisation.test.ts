@@ -55,8 +55,20 @@ describe('user-anonymisation cascade (PF-31)', () => {
     const targetId = `usr_${newId()}`;
     const otherId = `usr_${newId()}`;
     await db.insert(schema.user).values([
-      { id: targetId, name: 'Tina Target', email: `t-${tenantId}@x.test`, tenantId, permissionSetId: psId },
-      { id: otherId, name: 'Oscar Other', email: `o-${tenantId}@x.test`, tenantId, permissionSetId: psId },
+      {
+        id: targetId,
+        name: 'Tina Target',
+        email: `t-${tenantId}@x.test`,
+        tenantId,
+        permissionSetId: psId,
+      },
+      {
+        id: otherId,
+        name: 'Oscar Other',
+        email: `o-${tenantId}@x.test`,
+        tenantId,
+        permissionSetId: psId,
+      },
     ]);
     await db.insert(schema.session).values({
       id: newId(),
@@ -70,14 +82,22 @@ describe('user-anonymisation cascade (PF-31)', () => {
     // A signed inspection slot for each user.
     const templateId = newId();
     const versionId = newId();
-    await db.insert(schema.templates).values({ id: templateId, tenantId, name: 'T', createdBy: targetId });
+    await db
+      .insert(schema.templates)
+      .values({ id: templateId, tenantId, name: 'T', createdBy: targetId });
     await db.insert(schema.templateVersions).values({
       id: versionId,
       tenantId,
       templateId,
       versionNumber: 1,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      content: { schemaVersion: '1', title: 'T', pages: [], settings: {}, customResponseSets: [] } as any,
+      content: {
+        schemaVersion: '1',
+        title: 'T',
+        pages: [],
+        settings: {},
+        customResponseSets: [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
       publishedAt: new Date(),
     });
     const inspectionId = newId();
@@ -87,7 +107,12 @@ describe('user-anonymisation cascade (PF-31)', () => {
       templateId,
       templateVersionId: versionId,
       title: 'Audit',
-      accessSnapshot: { groups: [], sites: [], permissions: [], snapshotAt: new Date().toISOString() },
+      accessSnapshot: {
+        groups: [],
+        sites: [],
+        permissions: [],
+        snapshotAt: new Date().toISOString(),
+      },
       createdBy: targetId,
     });
     for (const [slot, uid, name] of [
@@ -133,7 +158,10 @@ describe('user-anonymisation cascade (PF-31)', () => {
     expect(other?.signerName).toBe('Oscar Other');
     expect(other?.signatureData).toContain('STROKES');
 
-    const sessions = await db.select().from(schema.session).where(eq(schema.session.userId, targetId));
+    const sessions = await db
+      .select()
+      .from(schema.session)
+      .where(eq(schema.session.userId, targetId));
     expect(sessions).toHaveLength(0);
   });
 });

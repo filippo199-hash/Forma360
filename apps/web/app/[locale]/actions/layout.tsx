@@ -31,9 +31,11 @@ export default async function ActionsLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      {/* Full-width shell so the board page can bleed a tinted canvas to the
-          content edges; non-board pages re-constrain themselves to max-w-[1200px]. */}
-      <div className="flex min-h-screen w-full flex-col px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+      {/* Full-width blue canvas so the board page can bleed a tinted panel to
+          the content edges; non-board pages re-constrain themselves to
+          max-w-[1200px]. The background matches the ModuleShell the centered
+          modules use, so the two read as one surface. */}
+      <div className="flex min-h-screen w-full flex-col bg-[#eef4fb] px-4 py-4 dark:bg-slate-900/40 sm:px-6 sm:py-6 lg:px-8">
         {children}
       </div>
     </PermissionsProvider>

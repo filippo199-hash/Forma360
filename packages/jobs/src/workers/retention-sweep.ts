@@ -42,10 +42,7 @@ export async function runRetentionSweep(
       .returning({ id: notifications.id });
     deleted += rows.length;
   }
-  deps.logger.info(
-    { tenants: policied.length, deleted },
-    '[retention-sweep] run complete',
-  );
+  deps.logger.info({ tenants: policied.length, deleted }, '[retention-sweep] run complete');
   return { tenants: policied.length, notificationsDeleted: deleted };
 }
 

@@ -54,7 +54,6 @@ import {
   type PermitEventKind,
   type PermitType,
 } from '@forma360/db/schema';
-import { reviewAcceptanceValid } from '@forma360/shared/rams';
 import type { Database } from '@forma360/db/client';
 import {
   allPreconditionsChecked,
@@ -75,6 +74,9 @@ import {
   PERMIT_CATEGORIES,
   PERMIT_WORKER_ROLES,
   permitIsOverdue,
+  ramsGateError,
+  type PermitRamsLink,
+  type RamsGateError,
   permitTypePreconditionSchema,
   readingWithinLimit,
   sameAreaMatch,
@@ -423,12 +425,11 @@ function hasAttachmentOfKind(permit: Permit, kind: string): boolean {
   return permit.attachments.some((a) => a.kind === kind);
 }
 
-/** Why a `requiresRamsPack` type refuses to issue. RAMS spec §10.2. */
-type RamsGateError = 'rams-pack-required' | 'rams-pack-not-issued' | 'rams-acceptance-expired';
-
 /**
- * The RAMS gate (RS-E14). A permit whose type demands an accepted safe
- * system of work may be backed by either side of the module:
+ * Loads whatever the permit's RAMS link currently resolves to, so the pure
+ * `ramsGateError` helper can reach the RS-E14 verdict. A permit whose type
+ * demands an accepted safe system of work may be backed by either side of
+ * the module:
  *   - an OWN pack: the linked `rams_pack_versions` row must belong to a
  *     pack that is currently `issued` (a withdrawn or superseded pack
  *     stops backing the permit);
@@ -437,16 +438,11 @@ type RamsGateError = 'rams-pack-required' | 'rams-pack-not-issued' | 'rams-accep
  *
  * Returns null when the gate is satisfied.
  */
-async function ramsPackGateError(
+async function loadPermitRamsLink(
   db: Database,
   tenantId: string,
   permit: Pick<Permit, 'ramsPackVersionId' | 'ramsReviewId'>,
-  now: Date,
-): Promise<RamsGateError | null> {
-  if (permit.ramsPackVersionId === null && permit.ramsReviewId === null) {
-    return 'rams-pack-required';
-  }
-
+): Promise<PermitRamsLink> {
   if (permit.ramsPackVersionId !== null) {
     const rows = await db
       .select({ status: ramsPacks.status })
@@ -460,23 +456,42 @@ async function ramsPackGateError(
       )
       .limit(1);
     const row = rows[0];
-    if (row === undefined) return 'rams-pack-required';
-    if (row.status !== 'issued') return 'rams-pack-not-issued';
-    return null;
+    return row === undefined ? null : { kind: 'own_pack', packStatus: row.status };
   }
 
-  const rows = await db
-    .select({
-      outcome: ramsReviews.outcome,
-      validFrom: ramsReviews.validFrom,
-      validTo: ramsReviews.validTo,
-    })
-    .from(ramsReviews)
-    .where(and(eq(ramsReviews.tenantId, tenantId), eq(ramsReviews.id, permit.ramsReviewId ?? '')))
-    .limit(1);
-  const review = rows[0];
-  if (review === undefined) return 'rams-pack-required';
-  return reviewAcceptanceValid(review, now) ? null : 'rams-acceptance-expired';
+  if (permit.ramsReviewId !== null) {
+    const rows = await db
+      .select({
+        outcome: ramsReviews.outcome,
+        validFrom: ramsReviews.validFrom,
+        validTo: ramsReviews.validTo,
+      })
+      .from(ramsReviews)
+      .where(and(eq(ramsReviews.tenantId, tenantId), eq(ramsReviews.id, permit.ramsReviewId)))
+      .limit(1);
+    const review = rows[0];
+    return review === undefined
+      ? null
+      : {
+          kind: 'third_party_review',
+          outcome: review.outcome,
+          validFrom: review.validFrom,
+          validTo: review.validTo,
+        };
+  }
+
+  return null;
+}
+
+/** Loads the link, then reaches the RS-E14 verdict via the shared helper. */
+async function ramsPackGateError(
+  db: Database,
+  tenantId: string,
+  permit: Pick<Permit, 'ramsPackVersionId' | 'ramsReviewId'>,
+  now: Date,
+): Promise<RamsGateError | null> {
+  const link = await loadPermitRamsLink(db, tenantId, permit);
+  return ramsGateError({ requiresRamsPack: true, link, now });
 }
 
 /** The category ordering used for type lists — matches the catalogue. */
@@ -891,12 +906,23 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
             : null;
 
         const now = new Date();
+        // RS-A11: preview the RS-E14 RAMS blocker here, using the same pure
+        // helper `issue` runs — so the issuer sees it on the permit page
+        // instead of discovering it when the mutation fails at the job.
+        const ramsGate = type.requiresRamsPack
+          ? ramsGateError({
+              requiresRamsPack: true,
+              link: await loadPermitRamsLink(ctx.db, ctx.tenantId, permit),
+              now,
+            })
+          : null;
         return {
           ...permit,
           type,
           siteName,
           riskAssessment,
           methodStatement,
+          ramsGate,
           insideCount: openEntryCount(permit.entryLog),
           /** The caller's own id — lets the UI show "accept" only to the named acceptor. */
           viewerUserId: ctx.auth.userId,

@@ -13,6 +13,16 @@
  */
 import type { RamsRenderSnapshot } from '@forma360/render';
 
+/**
+ * RS-A13: residual bands are stored snake_case, and a naive
+ * `text-transform: capitalize` printed `very_high` as "Very_high" on a
+ * document handed to a client.
+ */
+function formatBand(band: string): string {
+  const words = band.split('_').filter((w) => w.length > 0);
+  return words.map((w, i) => (i === 0 ? `${w.charAt(0).toUpperCase()}${w.slice(1)}` : w)).join(' ');
+}
+
 function formatDate(value: string | null): string {
   if (value === null) return '—';
   const d = new Date(value);
@@ -57,7 +67,18 @@ const H2: React.CSSProperties = {
   color: '#0f172a',
 };
 
-export function RamsPrintLayout({ snapshot }: { snapshot: RamsRenderSnapshot }) {
+/**
+ * The layout renders a pack; it has no use for the tenant id, so it
+ * asks for a snapshot without one (RS-A14). A full `RamsRenderSnapshot`
+ * still satisfies this — the PDF path passes one unchanged — while the
+ * public share view can pass a sanitised snapshot and be type-checked
+ * on it rather than trusted.
+ */
+export type PrintableRamsSnapshot = Omit<RamsRenderSnapshot, 'pack'> & {
+  pack: Omit<RamsRenderSnapshot['pack'], 'tenantId'>;
+};
+
+export function RamsPrintLayout({ snapshot }: { snapshot: PrintableRamsSnapshot }) {
   const { pack, version, briefings, acceptance } = snapshot;
   const { content, jobContext } = version.content;
 
@@ -151,13 +172,56 @@ export function RamsPrintLayout({ snapshot }: { snapshot: RamsRenderSnapshot }) 
                   <td style={{ padding: 5 }}>{ra.title}</td>
                   <td style={{ padding: 5 }}>v{ra.versionNumber}</td>
                   <td style={{ padding: 5 }}>{ra.hazardCount}</td>
-                  <td style={{ padding: 5, textTransform: 'capitalize' }}>
-                    {ra.worstResidualBand}
-                  </td>
+                  {/* RS-A13: `very_high` printed as "Very_high" on a
+                      document handed to a client. */}
+                  <td style={{ padding: 5 }}>{formatBand(ra.worstResidualBand)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        )}
+
+        {/* RS-A13 / Lindqvist: §2 was five columns *about* an assessment
+            rather than the assessment. The hazards and their controls
+            are frozen into the pack, so the printed record can carry
+            what the crew was actually protected from. Packs issued
+            before that simply show the summary table above. */}
+        {version.content.riskAssessments.map((ra) =>
+          (ra.hazards ?? []).length === 0 ? null : (
+            <div key={`hz-${ra.raVersionId}`} style={{ marginTop: 8 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, margin: '6px 0 2px' }}>
+                {ra.referenceNumber !== null ? `${ra.referenceNumber} — ` : ''}
+                {ra.title}
+              </p>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc' }}>
+                    <th style={{ textAlign: 'left', padding: 4 }}>Hazard</th>
+                    <th style={{ textAlign: 'left', padding: 4 }}>Who is at risk</th>
+                    <th style={{ textAlign: 'left', padding: 4 }}>Controls</th>
+                    <th style={{ textAlign: 'left', padding: 4 }}>Residual</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(ra.hazards ?? []).map((h) => (
+                    <tr
+                      key={`${ra.raVersionId}-${h.index}`}
+                      style={{ borderTop: '1px solid #e2e8f0' }}
+                    >
+                      <td style={{ padding: 4 }}>{h.hazard}</td>
+                      <td style={{ padding: 4 }}>
+                        {h.whoAffected.length > 0 ? h.whoAffected : '—'}
+                      </td>
+                      <td style={{ padding: 4, whiteSpace: 'pre-wrap' }}>
+                        {h.controls.length > 0 ? h.controls : '—'}
+                      </td>
+                      <td style={{ padding: 4 }}>{formatBand(h.residualBand)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ),
         )}
       </section>
 

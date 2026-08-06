@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { RiskBandChip } from '../../../src/components/risk-assessments/risk-band-chip';
 import { RaStatusChip } from '../../../src/components/risk-assessments/status-chip';
 import { SiteSelector } from '../../../src/components/selectors/site-selector';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import {
   Dialog,
@@ -42,6 +44,7 @@ type TypeFilter = 'all' | 'standing' | 'dynamic';
 
 export default function RiskAssessmentsPage() {
   const t = useTranslations('riskAssessments');
+  const tCommon = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
   const canCreate = useHasPermission('riskAssessments.create');
@@ -52,6 +55,7 @@ export default function RiskAssessmentsPage() {
   const [siteFilter, setSiteFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [dueOnly, setDueOnly] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
   // One round-trip: archived rows need their own fetch, everything else is
   // filtered client-side so tabs + search feel instant.
   const list = trpc.riskAssessments.list.useQuery({
@@ -116,6 +120,76 @@ export default function RiskAssessmentsPage() {
         (a.referenceNumber ?? '').toLowerCase().includes(needle) ||
         (a.siteName ?? '').toLowerCase().includes(needle)),
   );
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+    if (key === 'reviewsDue') setDueOnly(true);
+  }
+  function removeFilterKey(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setStatus('all');
+    if (key === 'type') setType('all');
+    if (key === 'site') setSiteFilter('all');
+    if (key === 'reviewsDue') setDueOnly(false);
+  }
+
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: tCommon('status'),
+      control: {
+        kind: 'select',
+        value: status,
+        onValueChange: (v) => setStatus(v as StatusFilter),
+        options: [
+          { value: 'all', label: t('filters.allStatuses') },
+          { value: 'active', label: t('status.active') },
+          { value: 'draft', label: t('status.draft') },
+          { value: 'archived', label: t('status.archived') },
+        ],
+      },
+    },
+    {
+      key: 'type',
+      label: tCommon('type'),
+      control: {
+        kind: 'select',
+        value: type,
+        onValueChange: (v) => setType(v as TypeFilter),
+        options: [
+          { value: 'all', label: t('filters.allTypes') },
+          { value: 'standing', label: t('type.standing') },
+          { value: 'dynamic', label: t('type.dynamic') },
+        ],
+      },
+    },
+  ];
+  if (siteOptions.length > 0) {
+    filterDefs.push({
+      key: 'site',
+      label: tCommon('site'),
+      control: {
+        kind: 'select',
+        value: siteFilter,
+        onValueChange: setSiteFilter,
+        options: [
+          { value: 'all', label: t('filters.allSites') },
+          ...(hasSiteless ? [{ value: 'none', label: t('filters.noSite') }] : []),
+          ...siteOptions.map(([id, name]) => ({ value: id, label: name })),
+        ],
+      },
+    });
+  }
+  filterDefs.push({
+    key: 'reviewsDue',
+    label: t('filters.reviewDueOnly'),
+    control: { kind: 'boolean' },
+  });
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
+
   const newButton = canCreate ? (
     <Button type="button" disabled={create.isPending} onClick={handleCreate}>
       {create.isPending ? t('create.submitting') : t('newButton')}
@@ -123,14 +197,10 @@ export default function RiskAssessmentsPage() {
   ) : null;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 px-4 py-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
-        </div>
+    <div className="space-y-4">
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
         {newButton}
-      </div>
+      </ModuleHeader>
 
       {pending.data !== undefined && pending.data.length > 0 ? (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
@@ -147,62 +217,14 @@ export default function RiskAssessmentsPage() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          className="w-64"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('searchPlaceholder')}
-        />
-        <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('filters.allStatuses')}</SelectItem>
-            <SelectItem value="active">{t('status.active')}</SelectItem>
-            <SelectItem value="draft">{t('status.draft')}</SelectItem>
-            <SelectItem value="archived">{t('status.archived')}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={type} onValueChange={(v) => setType(v as TypeFilter)}>
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('filters.allTypes')}</SelectItem>
-            <SelectItem value="standing">{t('type.standing')}</SelectItem>
-            <SelectItem value="dynamic">{t('type.dynamic')}</SelectItem>
-          </SelectContent>
-        </Select>
-        {siteOptions.length > 0 ? (
-          <Select value={siteFilter} onValueChange={setSiteFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('filters.allSites')}</SelectItem>
-              {hasSiteless ? <SelectItem value="none">{t('filters.noSite')}</SelectItem> : null}
-              {siteOptions.map(([id, name]) => (
-                <SelectItem key={id} value={id}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : null}
-        <Button
-          type="button"
-          size="sm"
-          variant={dueOnly ? 'default' : 'outline'}
-          onClick={() => setDueOnly((v) => !v)}
-        >
-          {t('filters.reviewDueOnly')}
-        </Button>
-        <span className="ml-auto text-sm text-muted-foreground">
-          {t('resultsCount', { count: rows.length })}
-        </span>
-      </div>
+      <FilterBar
+        search={{ value: search, onChange: setSearch, placeholder: t('searchPlaceholder') }}
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilterKey}
+        resultsCount={rows.length}
+      />
 
       {list.isLoading ? (
         <div className="space-y-2">
@@ -216,7 +238,7 @@ export default function RiskAssessmentsPage() {
           {newButton}
         </div>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-left">

@@ -1,19 +1,10 @@
 'use client';
 
-import {
-  Archive,
-  ChevronDown,
-  FileEdit,
-  Filter,
-  MoreHorizontal,
-  Pencil,
-  Search,
-  X,
-} from 'lucide-react';
+import { Archive, Download, FileEdit, MoreHorizontal, Pencil, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ArchiveDialog } from '../../../src/components/archive-dialog';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
@@ -34,11 +25,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../../src/components/ui/dropdown-menu';
-import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { TemplatePickerDialog } from '../../../src/components/inspections/template-picker-dialog';
 import { AwaitingSignatureBanner } from '../../../src/components/inspections/awaiting-signature-banner';
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { trpc } from '../../../src/lib/trpc/client';
 
 // ─── Shared helpers ────────────────────────────────────────────────────────────
@@ -91,7 +84,7 @@ export default function InspectionsListPage() {
   const locale = params.locale ?? 'en';
 
   return (
-    <div className="px-4 py-4 sm:py-6">
+    <div>
       <SectionTabBar activeTab="inspections" locale={locale} />
       <InspectionsTab locale={locale} />
     </div>
@@ -186,8 +179,6 @@ function InspectionsTab({ locale }: { locale: string }) {
   const [conductedFrom, setConductedFrom] = useState('');
   const [conductedTo, setConductedTo] = useState('');
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
-  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
-  const filterMenuRef = useRef<HTMLDivElement>(null);
 
   const { data: templateOptions } = trpc.templates.list.useQuery({ includeArchived: false });
   const { data: usersData } = trpc.users.list.useQuery({});
@@ -227,15 +218,6 @@ function InspectionsTab({ locale }: { locale: string }) {
     }
   }
 
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) {
-        setFilterMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
   const { data: rows, isLoading } = trpc.inspections.list.useQuery(listInput);
 
   const archiveMany = trpc.inspectionsExport.archiveMany.useMutation({
@@ -348,36 +330,81 @@ function InspectionsTab({ locale }: { locale: string }) {
   const selectionCount = selectedIds.size;
   const totalCount = rows?.length ?? 0;
 
+  // Canonical order so chips render the same regardless of add order.
+  const activeFilterKeys = ALL_FILTER_KEYS.filter((k) => activeFilters.has(k));
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: t('filter_status'),
+      control: {
+        kind: 'select',
+        value: statusFilter,
+        onValueChange: (v) => setStatusFilter(v as StatusFilterValue),
+        options: INSPECTION_STATUSES.map((s) => ({
+          value: s,
+          label: s === 'all' ? t('filterStatusAll') : statusLabel(s),
+        })),
+      },
+    },
+    {
+      key: 'template',
+      label: t('filter_template'),
+      control: {
+        kind: 'select',
+        value: templateFilter,
+        onValueChange: setTemplateFilter,
+        options: [
+          { value: '', label: t('filterAny') },
+          ...(templateOptions ?? []).map((tpl) => ({ value: tpl.id, label: tpl.name })),
+        ],
+      },
+    },
+    {
+      key: 'conductedBy',
+      label: t('filter_conductedBy'),
+      control: {
+        kind: 'select',
+        value: conductedByFilter,
+        onValueChange: setConductedByFilter,
+        options: [
+          { value: '', label: t('filterAny') },
+          ...(usersData?.users ?? []).map((u) => ({ value: u.id, label: u.name })),
+        ],
+      },
+    },
+    {
+      key: 'conductedOn',
+      label: t('filter_conductedOn'),
+      control: {
+        kind: 'dateRange',
+        from: conductedFrom,
+        to: conductedTo,
+        onFromChange: setConductedFrom,
+        onToChange: setConductedTo,
+      },
+    },
+  ];
+
   return (
     <div className="space-y-4">
       {/* Signatory call-out — invisible unless the caller has pending signatures. */}
       <AwaitingSignatureBanner />
 
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          {/* Subtitle is desktop-only — vertical space is precious on phones. */}
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={includeArchived}
-              onChange={(e) => setIncludeArchived(e.target.checked)}
-              className="h-4 w-4"
-              aria-label={t('showArchived')}
-            />
-            <span>{t('showArchived')}</span>
-          </label>
-          {/* Available on mobile too (finding #9) — exports the current filter. */}
-          <Button variant="outline" onClick={exportCurrentFilter}>
-            {tExport('button')}
-          </Button>
-          <Button onClick={() => setShowPicker(true)}>{t('startButton')}</Button>
-        </div>
-      </header>
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        <TooltipIconButton
+          icon={Archive}
+          label={includeArchived ? tCommon('hideArchived') : tCommon('showArchived')}
+          active={includeArchived}
+          onClick={() => setIncludeArchived((v) => !v)}
+        />
+        <TooltipIconButton
+          icon={Download}
+          label={tCommon('exportCsv')}
+          onClick={exportCurrentFilter}
+        />
+        <Button onClick={() => setShowPicker(true)}>{t('startButton')}</Button>
+      </ModuleHeader>
 
       {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 
@@ -386,151 +413,19 @@ function InspectionsTab({ locale }: { locale: string }) {
       <MyScheduledCard locale={locale} />
 
       {/* Search + filter row */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('searchPlaceholder')}
-            className="pl-8"
-          />
-        </div>
-
-        {/* Add filter button + dropdown */}
-        <div className="relative" ref={filterMenuRef}>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setFilterMenuOpen((v) => !v)}
-            className="gap-1.5"
-          >
-            <Filter className="h-3.5 w-3.5" />
-            {/* Icon-only on phones. */}
-            <span className="hidden sm:inline">{t('addFilter')}</span>
-            {activeFilters.size > 0 ? (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                {activeFilters.size}
-              </span>
-            ) : (
-              <ChevronDown className="hidden h-3 w-3 text-muted-foreground sm:block" />
-            )}
-          </Button>
-          {filterMenuOpen && ALL_FILTER_KEYS.some((k) => !activeFilters.has(k)) ? (
-            <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-md border bg-popover py-1 shadow-lg">
-              {ALL_FILTER_KEYS.filter((k) => !activeFilters.has(k)).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => {
-                    setActiveFilters((prev) => new Set(prev).add(k));
-                    setFilterMenuOpen(false);
-                  }}
-                  className="flex w-full items-center px-3 py-2 text-sm hover:bg-accent"
-                >
-                  {t(`filter_${k}`)}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        {/* Status filter chip */}
-        {activeFilters.has('status') ? (
-          <FilterChip label={t('filter_status')} onRemove={() => removeFilter('status')}>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusFilterValue)}
-              className="border-0 bg-transparent text-xs outline-none"
-            >
-              {INSPECTION_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s === 'all'
-                    ? t('filterStatusAll')
-                    : tFilter(
-                        s === 'in_progress'
-                          ? 'inProgress'
-                          : s === 'awaiting_signatures'
-                            ? 'awaitingSignatures'
-                            : s === 'awaiting_signature_workflow'
-                              ? 'awaiting_signature_workflow'
-                              : s === 'awaiting_approval'
-                                ? 'awaitingApproval'
-                                : s === 'completed'
-                                  ? 'completed'
-                                  : 'rejected',
-                      )}
-                </option>
-              ))}
-            </select>
-          </FilterChip>
-        ) : null}
-
-        {/* Template filter chip */}
-        {activeFilters.has('template') ? (
-          <FilterChip label={t('filter_template')} onRemove={() => removeFilter('template')}>
-            <select
-              value={templateFilter}
-              onChange={(e) => setTemplateFilter(e.target.value)}
-              className="max-w-[160px] border-0 bg-transparent text-xs outline-none"
-            >
-              <option value="">{t('filterAny')}</option>
-              {(templateOptions ?? []).map((tpl) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {tpl.name}
-                </option>
-              ))}
-            </select>
-          </FilterChip>
-        ) : null}
-
-        {/* Conducted by filter chip */}
-        {activeFilters.has('conductedBy') ? (
-          <FilterChip label={t('filter_conductedBy')} onRemove={() => removeFilter('conductedBy')}>
-            <select
-              value={conductedByFilter}
-              onChange={(e) => setConductedByFilter(e.target.value)}
-              className="max-w-[160px] border-0 bg-transparent text-xs outline-none"
-            >
-              <option value="">{t('filterAny')}</option>
-              {(usersData?.users ?? []).map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
-          </FilterChip>
-        ) : null}
-
-        {/* Conducted on (date range) filter chip */}
-        {activeFilters.has('conductedOn') ? (
-          <FilterChip label={t('filter_conductedOn')} onRemove={() => removeFilter('conductedOn')}>
-            <span className="flex items-center gap-1">
-              <input
-                type="date"
-                value={conductedFrom}
-                onChange={(e) => setConductedFrom(e.target.value)}
-                className="border-0 bg-transparent text-xs outline-none"
-                aria-label={t('filterFrom')}
-              />
-              <span className="text-muted-foreground">–</span>
-              <input
-                type="date"
-                value={conductedTo}
-                onChange={(e) => setConductedTo(e.target.value)}
-                className="border-0 bg-transparent text-xs outline-none"
-                aria-label={t('filterTo')}
-              />
-            </span>
-          </FilterChip>
-        ) : null}
-
-        <span className="ml-auto text-sm text-muted-foreground">
-          {t('resultsCount', { count: filteredRows.length })}
-          {filteredRows.length !== totalCount ? ` / ${totalCount}` : ''}
-        </span>
-      </div>
+      <FilterBar
+        search={{
+          value: searchQuery,
+          onChange: setSearchQuery,
+          placeholder: t('searchPlaceholder'),
+        }}
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={(k) => setActiveFilters((prev) => new Set(prev).add(k as FilterKey))}
+        onRemoveFilter={(k) => removeFilter(k as FilterKey)}
+        resultsCount={filteredRows.length}
+        resultsSuffix={filteredRows.length !== totalCount ? ` / ${totalCount}` : null}
+      />
 
       {/* Table (desktop) — the mobile card list below takes over under md. */}
       <Card className="hidden md:block">
@@ -893,31 +788,6 @@ function InspectionsTab({ locale }: { locale: string }) {
 
 // ── FilterChip ────────────────────────────────────────────────────────────────
 
-function FilterChip({
-  label,
-  onRemove,
-  children,
-}: {
-  label: string;
-  onRemove: () => void;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="inline-flex items-center gap-1 rounded-full border border-input bg-background px-2.5 py-1 text-xs">
-      <span className="font-medium text-muted-foreground">{label}:</span>
-      {children}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="ml-0.5 rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-        aria-label={`Remove ${label} filter`}
-      >
-        <X className="h-3 w-3" />
-      </button>
-    </div>
-  );
-}
-
 function InspectionRowMenu({
   conductUrl,
   reportUrl,
@@ -966,7 +836,6 @@ function InspectionRowMenu({
     </DropdownMenu>
   );
 }
-
 
 /**
  * "My scheduled inspections" (PF-3): pending + missed occurrences for
@@ -1021,9 +890,7 @@ function MyScheduledCard({ locale }: { locale: string }) {
                   size="sm"
                   variant={overdue ? 'default' : 'outline'}
                   disabled={start.isPending || o.inspectionId !== null}
-                  onClick={() =>
-                    start.mutate({ templateId: o.templateId, occurrenceId: o.id })
-                  }
+                  onClick={() => start.mutate({ templateId: o.templateId, occurrenceId: o.id })}
                 >
                   {t('startNow')}
                 </Button>

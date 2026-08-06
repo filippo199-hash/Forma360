@@ -165,6 +165,20 @@ pnpm --filter @forma360/shared test:r2  # manual R2 smoke test
 - i18n lint rule at `tools/eslint-rules/no-hardcoded-strings.js` — enforced
   on `apps/web/app/**/*.tsx` + `packages/ui/src/**/*.tsx`.
 - Sentry configs at `apps/web/sentry.*.config.ts` + `packages/jobs/src/sentry.ts`.
+  **Live since ADR 0016**: options are built once by
+  `buildSentryOptions` in `packages/shared/src/sentry-options.ts` and
+  shared by all four runtimes (browser / Next server / Next edge /
+  worker), so no runtime can forget the scrubber. Every event passes
+  through `scrubEvent` (`packages/shared/src/sentry-scrub.ts`, edge cases
+  SC-E01..E09) which drops request bodies, cookies, query strings, `extra`
+  and console breadcrumbs, allowlists headers/contexts/tags, and redacts
+  the opaque `/s/<token>` and `/scan/<token>` access tokens that would
+  otherwise be replayable from a Sentry event. Only
+  `INTERNAL_SERVER_ERROR` is reported from the tRPC `onError` hook —
+  domain guards throw by design and would drown the signal. Session
+  Replay is off deliberately. Verify a deployment with
+  `POST /api/debug/sentry-check` (admin-gated; captures a real event and
+  returns its id).
 - Request-id flow: middleware generates → header-forwarded to route
   handler → passed into `createContext` → echoed back on response.
 - Playwright smoke at `apps/web/e2e/smoke.spec.ts`.
@@ -617,7 +631,29 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   `packages/db/src/schema/rams.ts` (11 tables), migration 0069 incl. the
   PF-8 rams.* permission backfill; edge-case IDs RS-E01..E06/E13/E16 in
   `rams.test.ts` (shared), RS-E03..E12/E15/E17/E18 (router), RS-E14 in
-  `permits.test.ts`). Each router is
+  `permits.test.ts`; HSE review + hardening in
+  `docs/reviews/rams-hse-expert-review.md` +
+  `docs/reviews/rams-hse-review-response.md` (ADR 0015 amendment): the
+  builder route `[packId]/build` (RS-A1 — it was written and never
+  committed, which is what made the module unreachable), `TRPCProvider`
+  on `app/s/layout.tsx`, the `reviews.submit` intake form, `clientLinks`
+  projected to drop `token`, re-issue as a signing event with a
+  briefing-invalidation warning, briefing signature capture plus hazards
+  in the frozen snapshot (`PackVersionRiskAssessment.hazards`) and PDF
+  §2, an idempotent offline briefing queue (`clientRef` + partial unique
+  index, migration 0070), `publicDecide` re-decision / pack-status
+  guards, the shared `ramsGateError` helper in
+  `packages/shared/src/permits.ts` so the permit page previews the
+  blocker (`permits.get` returns `ramsGate`), search-param handling on
+  `rams/new` and the method-statement editor at
+  `rams/library/[methodStatementId]`, translated attestation +
+  review-checklist labels, and `client.getLinkUrl` for share-link
+  recovery; new edge-case IDs PW-E11 in `permits.test.ts` and the RS-A14
+  block in `rams.test.ts`. The actions-hub source vocabulary and the
+  Cmd-K category table now live in `apps/web/src/lib/action-sources.ts`
+  and `search-categories.ts`, each with a test that scrapes the router
+  and fails when a server-side value has no client entry — the fix for
+  the RS-A8 / RS-A9 / PF-6 class). Each router is
   built with `{ enabled }` from the brand catalogue; nav + API both gate on
   it.
 - **Everything internal stays `forma360`** (package scope, queue names,
@@ -642,6 +678,7 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0013 — Incident lifecycle, investigation model and RIDDOR deadline engine](./docs/adr/0013-incident-lifecycle-and-riddor-engine.md)
 - [0014 — Navigation information architecture](./docs/adr/0014-navigation-information-architecture.md)
 - [0015 — Method-statement content model, RAMS pack versioning and briefing records](./docs/adr/0015-rams-method-statement-and-pack-model.md)
+- [0016 — Error reporting and PII scrubbing](./docs/adr/0016-error-reporting-and-pii-scrubbing.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase

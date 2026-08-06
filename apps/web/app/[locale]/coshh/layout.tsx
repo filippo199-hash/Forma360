@@ -7,6 +7,7 @@ import { activeBrand } from '../../../src/lib/brand';
 import { signInHref } from '../../../src/lib/sign-in-redirect';
 import type { ReactNode } from 'react';
 import { PermissionsProvider } from '../../../src/lib/permissions-context';
+import { ModuleShell } from '../../../src/components/module-shell';
 import { loadCurrentUserPermissions } from '../../../src/server/load-permissions';
 
 /**
@@ -34,5 +35,9 @@ export default async function CoshhLayout({
     redirect(signInHref(locale, (await headers()).get('x-pathname')));
   }
 
-  return <PermissionsProvider permissions={permissions}>{children}</PermissionsProvider>;
+  return (
+    <PermissionsProvider permissions={permissions}>
+      <ModuleShell>{children}</ModuleShell>
+    </PermissionsProvider>
+  );
 }

@@ -66,9 +66,7 @@ export default function RiskMatrixSettingsPage() {
   const save = trpc.riskAssessments.updateMatrixSettings.useMutation({
     onSuccess: (res) => {
       toast.success(
-        res.draftsUpdated > 0
-          ? t('savedWithDrafts', { count: res.draftsUpdated })
-          : t('saved'),
+        res.draftsUpdated > 0 ? t('savedWithDrafts', { count: res.draftsUpdated }) : t('saved'),
       );
       void utils.riskAssessments.getMatrixSettings.invalidate();
       void utils.riskAssessments.list.invalidate();

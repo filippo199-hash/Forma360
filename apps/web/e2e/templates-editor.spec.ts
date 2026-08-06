@@ -22,7 +22,10 @@ test('editor route returns an OK response', async ({ page }) => {
 test('anonymous visit to /en/templates is bounced by the auth gate', async ({ page }) => {
   const response = await page.goto('/en/templates');
   expect(response?.ok()).toBeTruthy();
-  // The layout redirects an anonymous caller to the locale landing — the key
-  // signal is that it does NOT stay on the protected /templates route.
-  await expect(page).toHaveURL(/\/en\/?$/);
+  // The auth gate redirects an anonymous caller to the sign-in page, carrying
+  // a `next` param so login returns them to where they were headed — the key
+  // signal is that it does NOT stay on the protected /templates route. (The
+  // sibling specs use the looser `/\/en(\/.*)?$/`; this one asserts the
+  // sign-in destination specifically.)
+  await expect(page).toHaveURL(/\/en\/sign-in/);
 });

@@ -1,15 +1,30 @@
 import * as Sentry from '@sentry/nextjs';
+import {
+  buildSentryOptions,
+  resolveEnvironment,
+  resolveRelease,
+} from '@forma360/shared/sentry-options';
 
 /**
- * Sentry initialisation for the browser bundle.
+ * Sentry for the browser bundle.
  *
- * DSN is public (NEXT_PUBLIC_SENTRY_DSN). When unset (local dev, CI) Sentry
- * silently no-ops — every capture* call just drops on the floor.
+ * The DSN is public by design (NEXT_PUBLIC_SENTRY_DSN) and points at a
+ * separate project from the server. Session Replay stays off: it records
+ * the DOM, and these screens show incident narratives and injury details.
+ * Turning it on would need a consent flow and a privacy-mask pass first.
  */
 Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  tracesSampleRate: 0.1,
-  // Disable replay by default; enable per-user once we have consent UX.
+  ...buildSentryOptions({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    runtime: 'browser',
+    environment: resolveEnvironment({
+      SENTRY_ENVIRONMENT: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+      NODE_ENV: process.env.NODE_ENV,
+    }),
+    release: resolveRelease({ SENTRY_RELEASE: process.env.NEXT_PUBLIC_SENTRY_RELEASE }),
+    brand: process.env.NEXT_PUBLIC_BRAND,
+    tracesSampleRate: 0.1,
+  }),
   replaysOnErrorSampleRate: 0,
   replaysSessionSampleRate: 0,
 });

@@ -97,7 +97,7 @@ export default function FireLogbookPage() {
         ) : (due ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('logbook.nothingDue')}</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border">
+          <div className="overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
@@ -180,7 +180,7 @@ export default function FireLogbookPage() {
         ) : (entries ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('logbook.noEntries')}</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border">
+          <div className="overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">

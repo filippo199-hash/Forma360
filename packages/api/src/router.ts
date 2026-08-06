@@ -55,6 +55,7 @@ import { createPermitsRouter, type PermitsRouterDeps } from './routers/permits';
 import { createFireSafetyRouter, type FireSafetyRouterDeps } from './routers/fireSafety';
 import { createIncidentsRouter, type IncidentsRouterDeps } from './routers/incidents';
 import { createRamsRouter, type RamsRouterDeps } from './routers/rams';
+import { createTrainingRouter, type TrainingRouterDeps } from './routers/training';
 import {
   createRiskAssessmentsRouter,
   type RiskAssessmentsRouterDeps,
@@ -102,6 +103,11 @@ export function buildAppRouter(deps: {
    * omitting it DISABLES the module.
    */
   rams?: RamsRouterDeps;
+  /**
+   * Brand-gated (ADR 0010), same contract as the other B-modules:
+   * omitting it DISABLES the module.
+   */
+  training?: TrainingRouterDeps;
 }) {
   return router({
     health: healthRouter,
@@ -140,8 +146,19 @@ export function buildAppRouter(deps: {
     aiAssistant: aiAssistantRouter,
     notifications: notificationsRouter,
     // ADR 0014: the caller's own queue. Ungated on purpose — it can only
-    // ever return rows assigned to the caller.
-    myWork: createMyWorkRouter(),
+    // ever return rows assigned to the caller. It also serves the menu's
+    // needs-attention numbers, so it takes the same brand flags the
+    // module routers do — a deployment never queries a module it does
+    // not ship.
+    myWork: createMyWorkRouter({
+      enabledModules: [
+        ...(deps.incidents?.enabled === true ? (['incidents'] as const) : []),
+        ...(deps.permits?.enabled === true ? (['permits'] as const) : []),
+        ...(deps.riskAssessments?.enabled === true ? (['riskAssessments'] as const) : []),
+        ...(deps.fireSafety?.enabled === true ? (['fireSafety'] as const) : []),
+        ...(deps.training?.enabled === true ? (['training'] as const) : []),
+      ],
+    }),
     // PF-5: dashboard tiles for brand-gated modules follow the same enabled
     // flags as the routers themselves — one source of truth (ADR 0010).
     analytics: createAnalyticsRouter({
@@ -158,6 +175,7 @@ export function buildAppRouter(deps: {
     fireSafety: createFireSafetyRouter(deps.fireSafety ?? { enabled: false }),
     incidents: createIncidentsRouter(deps.incidents ?? { enabled: false }),
     rams: createRamsRouter(deps.rams ?? { enabled: false }),
+    training: createTrainingRouter(deps.training ?? { enabled: false }),
   });
 }
 
@@ -322,6 +340,14 @@ export const stubRamsDeps: RamsRouterDeps = {
   enabled: true,
   generateShareToken: () => `rams-stub-token-${(__ramsShareTokenSeq += 1)}`,
   buildShareUrl: (token) => `http://localhost:3000/s/${token}`,
+  // Stubbed rather than absent so the RS-A14 guard (a version must belong
+  // to the pack) is reachable in tests instead of short-circuiting on
+  // `render-not-wired`.
+  renderPdf: async ({ packId, packVersionId }) => ({
+    key: `stub://rams-pdf/${packId}/${packVersionId}`,
+    bytes: 0,
+    stub: true,
+  }),
   appUrl: 'http://localhost:3000',
 };
 
@@ -338,6 +364,7 @@ export const appRouter = buildAppRouter({
   fireSafety: stubFireSafetyDeps,
   incidents: stubIncidentsDeps,
   rams: stubRamsDeps,
+  training: { enabled: true },
 });
 
 export type AppRouter = typeof appRouter;

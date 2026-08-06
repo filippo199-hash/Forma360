@@ -50,8 +50,22 @@ export default function RamsPackPage() {
   const [attested, setAttested] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState('');
   const [showWithdraw, setShowWithdraw] = useState(false);
+  // RS-A5: re-issue is a signing event, not a button.
+  const [showReissue, setShowReissue] = useState(false);
+  const [reissueAttested, setReissueAttested] = useState(false);
+  const [reissueNote, setReissueNote] = useState('');
+
+  // RS-A13: the author reads the declaration in their own language.
+  // The canonical English wording is still what the router snapshots
+  // onto the version and what the PDF prints, so the record is identical
+  // everywhere (ADR 0015) — the translation is for comprehension, and a
+  // non-English author is told so explicitly.
+  const attestationText = t('gate.attestationText');
+  const attestationIsTranslated = attestationText !== RAMS_AUTHOR_ATTESTATION;
   const [clientName, setClientName] = useState('');
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [clientError, setClientError] = useState<string | null>(null);
 
   const invalidate = (): void => {
     void utils.rams.packs.get.invalidate({ packId });
@@ -59,19 +73,50 @@ export default function RamsPackPage() {
     void utils.rams.packs.overview.invalidate();
   };
 
-  const issue = trpc.rams.packs.issue.useMutation({ onSuccess: invalidate });
+  // RS-A14: these mutations swallowed their errors — issuing a pack that
+  // silently did not issue is the worst kind of quiet failure in a module
+  // whose whole job is proving what was in force.
+  const issue = trpc.rams.packs.issue.useMutation({
+    onSuccess: () => {
+      setActionError(null);
+      invalidate();
+    },
+    onError: (err) => setActionError(err.message),
+  });
   const withdraw = trpc.rams.packs.withdraw.useMutation({
     onSuccess: () => {
+      setActionError(null);
       setShowWithdraw(false);
       invalidate();
     },
+    onError: (err) => setActionError(err.message),
   });
   const createLink = trpc.rams.client.createLink.useMutation({
     onSuccess: (r) => {
+      setClientError(null);
       setShareUrl(r.url);
       invalidate();
     },
+    onError: (err) => setClientError(err.message),
   });
+  const revokeLink = trpc.rams.client.revokeLink.useMutation({
+    onSuccess: () => {
+      setClientError(null);
+      setShareUrl(null);
+      invalidate();
+    },
+    onError: (err) => setClientError(err.message),
+  });
+
+  async function showLinkUrl(linkId: string): Promise<void> {
+    try {
+      const result = await utils.rams.client.getLinkUrl.fetch({ linkId });
+      setClientError(null);
+      setShareUrl(result.url);
+    } catch (err) {
+      setClientError(err instanceof Error ? err.message : String(err));
+    }
+  }
 
   if (pack.isPending) {
     return (
@@ -121,6 +166,13 @@ export default function RamsPackPage() {
             <p className="text-sm">{p.withdrawnReason}</p>
           </CardContent>
         </Card>
+      ) : null}
+
+      {/* RS-A14: issue / re-issue / withdraw failures are shown, not swallowed. */}
+      {actionError !== null ? (
+        <p className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+          {actionError}
+        </p>
       ) : null}
 
       {/* Draft: the issue-gate checklist is the primary content. */}
@@ -176,7 +228,12 @@ export default function RamsPackPage() {
             {canIssue && readyToIssue ? (
               <div className="mt-4 border-t pt-4">
                 <p className="mb-2 text-sm font-medium">{t('gate.attestationTitle')}</p>
-                <p className="text-muted-foreground mb-2 text-sm">{RAMS_AUTHOR_ATTESTATION}</p>
+                <p className="text-muted-foreground mb-2 text-sm">{attestationText}</p>
+                {attestationIsTranslated ? (
+                  <p className="text-muted-foreground mb-2 text-xs">
+                    {t('gate.attestationCanonical')}
+                  </p>
+                ) : null}
                 <label className="flex items-start gap-2 text-sm">
                   <input
                     type="checkbox"
@@ -237,8 +294,7 @@ export default function RamsPackPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={issue.isPending}
-                    onClick={() => issue.mutate({ packId, confirmAttestation: true })}
+                    onClick={() => setShowReissue((v) => !v)}
                   >
                     {t('reissuePack')}
                   </Button>
@@ -253,6 +309,63 @@ export default function RamsPackPage() {
                 </>
               ) : null}
             </div>
+
+            {/* RS-A5: re-issue signs the author's declaration exactly as
+                the first issue does — the text in full and an explicit
+                tick. It previously fired the mutation with
+                confirmAttestation hardcoded true, so the record claimed a
+                named person had attested a declaration they were never
+                shown. It also warns what version n+1 costs: every
+                briefing against the current version stops counting. */}
+            {showReissue ? (
+              <div className="mt-3 space-y-2 border-t pt-3">
+                <p className="text-sm font-medium">{t('reissue.title')}</p>
+                <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                  {t('reissue.invalidatesWarning', { count: briefedOnCurrent })}
+                </p>
+                <div className="space-y-1.5">
+                  <Label htmlFor="reissue-note">{t('reissue.note')}</Label>
+                  <Textarea
+                    id="reissue-note"
+                    rows={2}
+                    value={reissueNote}
+                    onChange={(e) => setReissueNote(e.target.value)}
+                    placeholder={t('reissue.notePlaceholder')}
+                  />
+                </div>
+                <p className="text-sm font-medium">{t('gate.attestationTitle')}</p>
+                <p className="text-muted-foreground text-sm">{attestationText}</p>
+                {attestationIsTranslated ? (
+                  <p className="text-muted-foreground text-xs">{t('gate.attestationCanonical')}</p>
+                ) : null}
+                <label className="flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={reissueAttested}
+                    onChange={(e) => setReissueAttested(e.target.checked)}
+                  />
+                  <span>{t('gate.attestationConfirm')}</span>
+                </label>
+                {issue.error !== null ? (
+                  <p className="text-destructive text-sm">{issue.error.message}</p>
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!reissueAttested || issue.isPending}
+                  onClick={() =>
+                    issue.mutate({
+                      packId,
+                      confirmAttestation: true,
+                      ...(reissueNote.trim() !== '' ? { reissueNote: reissueNote.trim() } : {}),
+                    })
+                  }
+                >
+                  {t('reissue.confirm')}
+                </Button>
+              </div>
+            ) : null}
 
             {showWithdraw ? (
               <div className="mt-3 border-t pt-3">
@@ -304,6 +417,30 @@ export default function RamsPackPage() {
                     {l.decisionComment.length > 0 ? (
                       <span className="text-muted-foreground italic">“{l.decisionComment}”</span>
                     ) : null}
+                    {/* RS-A14: a live link was unrecoverable once you
+                        navigated away, and there was no way to pull one
+                        back. Both are here now. */}
+                    {l.revokedAt === null ? (
+                      <>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => void showLinkUrl(l.id)}
+                        >
+                          {t('client.showLink')}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={revokeLink.isPending}
+                          onClick={() => revokeLink.mutate({ linkId: l.id })}
+                        >
+                          {t('client.revokeLink')}
+                        </Button>
+                      </>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -328,8 +465,23 @@ export default function RamsPackPage() {
                 {t('client.createLink')}
               </Button>
             </div>
+            {clientError !== null ? (
+              <p className="mt-2 text-sm text-red-700 dark:text-red-400">{clientError}</p>
+            ) : null}
             {shareUrl !== null ? (
-              <p className="bg-muted mt-2 rounded p-2 font-mono text-xs break-all">{shareUrl}</p>
+              <div className="bg-muted mt-2 flex items-center gap-2 rounded p-2">
+                <p className="flex-1 font-mono text-xs break-all">{shareUrl}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(shareUrl);
+                  }}
+                >
+                  {t('client.copyLink')}
+                </Button>
+              </div>
             ) : null}
           </CardContent>
         </Card>

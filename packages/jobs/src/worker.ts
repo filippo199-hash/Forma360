@@ -88,6 +88,11 @@ import {
   type MissedOccurrence,
 } from './workers/schedule-missed-sweep';
 import { createRetentionSweepHandler, RETENTION_SWEEP_CRON } from './workers/retention-sweep';
+import {
+  createTrainingExpiryHandler,
+  TRAINING_EXPIRY_CRON,
+  type DueTrainingReminder,
+} from './workers/training-expiry';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -724,6 +729,36 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   );
   logger.info({ cron: RETENTION_SWEEP_CRON }, '[worker] registered retention-sweep repeatable');
 
+  // ─── FreeHS B7 — training expiry chasing ────────────────────────────────
+  const trainingExpiryWorker = new Worker(
+    QUEUE_NAMES.TRAINING_EXPIRY,
+    createTrainingExpiryHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'training-expiry' }),
+      appUrl: env.APP_URL,
+      notify: async (r: DueTrainingReminder, url: string) => {
+        await sendTemplatedEmail({
+          to: r.email,
+          templateKey: 'training-expiry',
+          variables: {
+            personName: r.personName,
+            requirementName: r.requirementName,
+            expiresOn: r.expiresOn,
+            url,
+          },
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const trainingExpiryQueue = getQueue(QUEUE_NAMES.TRAINING_EXPIRY, connection);
+  await trainingExpiryQueue.upsertJobScheduler(
+    'training-expiry',
+    { pattern: TRAINING_EXPIRY_CRON, tz: 'UTC' },
+    { name: 'training-expiry', data: {} },
+  );
+  logger.info({ cron: TRAINING_EXPIRY_CRON }, '[worker] registered training-expiry repeatable');
+
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
   await scheduleTickQueue.upsertJobScheduler(
@@ -775,6 +810,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     documentExpiryWorker,
     scheduleMissedSweepWorker,
     retentionSweepWorker,
+    trainingExpiryWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {
@@ -785,9 +821,15 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
         { job_id: job?.id, queue: job?.queueName, err: err.message },
         '[worker] job failed',
       );
+      // `job.data` is deliberately NOT attached: worker payloads carry row
+      // ids and, for the incident alert queue, enough context to identify a
+      // person. The queue and job name are what you actually triage on.
       Sentry.captureException(err, {
-        tags: { queue: job?.queueName ?? 'unknown', job_name: job?.name ?? 'unknown' },
-        extra: { job_id: job?.id, attempts: job?.attemptsMade, data: job?.data },
+        tags: {
+          queue: job?.queueName ?? 'unknown',
+          job: job?.name ?? 'unknown',
+          handler: job?.name ?? 'unknown',
+        },
       });
     });
   }

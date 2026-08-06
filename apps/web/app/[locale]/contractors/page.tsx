@@ -278,7 +278,7 @@ export default function ContractorsPage() {
       ) : null}
 
       {/* PF-19: contractors on site holding open permits — the join the
-        * review found missing. */}
+       * review found missing. */}
       {(openPermits.data?.length ?? 0) > 0 ? (
         <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
           <CardContent className="p-4">
@@ -312,7 +312,7 @@ export default function ContractorsPage() {
       ) : null}
 
       {/* PF-19: versioned site induction — editing bumps the version and
-        * forces every portal user to re-acknowledge. */}
+       * forces every portal user to re-acknowledge. */}
       {canManage ? (
         <Card>
           <CardContent className="space-y-2 p-4">

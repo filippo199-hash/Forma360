@@ -28,6 +28,11 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ActionDetailPanel } from '../../../src/components/actions/action-detail-panel';
+import {
+  ACTION_SOURCE_TYPES,
+  actionSourceLabelKey,
+  type ActionSourceType,
+} from '../../../src/lib/action-sources';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { toast } from 'sonner';
@@ -42,18 +47,7 @@ import { trpc } from '../../../src/lib/trpc/client';
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type StatusFilter = 'all' | 'open' | 'in_progress' | 'completed' | 'cancelled';
-type SourceFilter =
-  | 'all'
-  | 'standalone'
-  | 'inspection'
-  | 'issue'
-  | 'maintenance'
-  | 'risk_assessment'
-  | 'coshh_assessment'
-  | 'fire_risk_assessment'
-  | 'fire_logbook_entry'
-  | 'fire_door_inspection'
-  | 'incident';
+type SourceFilter = 'all' | ActionSourceType;
 type PriorityFilter = 'all' | 'low' | 'medium' | 'high' | 'critical';
 type SortBy = 'created' | 'due' | 'priority' | 'updated';
 type ViewMode = 'list' | 'board';
@@ -124,45 +118,11 @@ const STATUSES: ReadonlyArray<StatusFilter> = [
   'completed',
   'cancelled',
 ];
-const SOURCES: ReadonlyArray<SourceFilter> = [
-  'all',
-  'standalone',
-  'inspection',
-  'issue',
-  'maintenance',
-  'risk_assessment',
-  'coshh_assessment',
-  'fire_risk_assessment',
-  'fire_logbook_entry',
-  'fire_door_inspection',
-  'incident',
-];
-
-/** PF-2: one label helper — the list, board and filter share it. */
-function sourceLabelKey(sourceType: string): string {
-  switch (sourceType) {
-    case 'inspection':
-      return 'sourceInspection';
-    case 'issue':
-      return 'sourceIssue';
-    case 'incident':
-      return 'sourceIncident';
-    case 'maintenance':
-      return 'sourceMaintenance';
-    case 'risk_assessment':
-      return 'sourceRiskAssessment';
-    case 'coshh_assessment':
-      return 'sourceCoshhAssessment';
-    case 'fire_risk_assessment':
-      return 'sourceFireRiskAssessment';
-    case 'fire_logbook_entry':
-      return 'sourceFireLogbookEntry';
-    case 'fire_door_inspection':
-      return 'sourceFireDoorInspection';
-    default:
-      return 'sourceStandalone';
-  }
-}
+// PF-2 / RS-A8: the source vocabulary lives in one place — see
+// `src/lib/action-sources.ts`. Adding a source type on the server without
+// labelling it there is now a type error, not a mislabelled row.
+const SOURCES: ReadonlyArray<SourceFilter> = ['all', ...ACTION_SOURCE_TYPES];
+const sourceLabelKey = actionSourceLabelKey;
 const PRIORITIES: ReadonlyArray<PriorityFilter> = ['all', 'critical', 'high', 'medium', 'low'];
 const SORT_OPTIONS: ReadonlyArray<SortBy> = ['created', 'due', 'priority', 'updated'];
 const BOARD_COLUMNS: ReadonlyArray<Exclude<StatusFilter, 'all'>> = [
@@ -545,454 +505,449 @@ export default function ActionsListPage() {
   }
 
   return (
-    // Full-bleed light-blue canvas (matches the observation detail page): the
-    // header, filters and board all sit on the tint, bleeding to the content
-    // edges and filling the height. Inner content stays centered at max-w-[1200px].
-    <div className="-mx-4 -my-6 flex flex-1 flex-col bg-[#eef4fb] px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-      <div className="mx-auto w-full max-w-[1200px] space-y-4">
-        {/* Header */}
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-            <p className="mt-0.5 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-            {myCounts !== undefined && myCounts.openAssigned > 0 ? (
-              <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
+    // The blue canvas and full-height fill live in the layout now; the page
+    // just re-constrains its content to the shared 1200px column.
+    <div className="mx-auto w-full max-w-[1200px] space-y-4">
+      {/* Header */}
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          <p className="mt-0.5 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
+          {myCounts !== undefined && myCounts.openAssigned > 0 ? (
+            <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setAssignedToMe(true)}
+                className="rounded-md border border-input bg-background px-2 py-0.5 hover:bg-accent"
+              >
+                {t('myOpenChip', { count: myCounts.openAssigned })}
+              </button>
+              {myCounts.overdueAssigned > 0 ? (
                 <button
                   type="button"
-                  onClick={() => setAssignedToMe(true)}
-                  className="rounded-md border border-input bg-background px-2 py-0.5 hover:bg-accent"
+                  onClick={() => {
+                    setAssignedToMe(true);
+                    setOverdueOnly(true);
+                  }}
+                  className="rounded-md border border-red-300 bg-red-50 px-2 py-0.5 text-red-900 hover:bg-red-100 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
                 >
-                  {t('myOpenChip', { count: myCounts.openAssigned })}
+                  {t('myOverdueChip', { count: myCounts.overdueAssigned })}
                 </button>
-                {myCounts.overdueAssigned > 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAssignedToMe(true);
-                      setOverdueOnly(true);
-                    }}
-                    className="rounded-md border border-red-300 bg-red-50 px-2 py-0.5 text-red-900 hover:bg-red-100 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
-                  >
-                    {t('myOverdueChip', { count: myCounts.overdueAssigned })}
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {canSettings ? (
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                title={t('settingsButton')}
-                className="w-9 px-0 sm:w-auto sm:px-3"
-              >
-                <Link href={`/${locale}/actions/settings`}>
-                  <Settings2 className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{t('settingsButton')}</span>
-                </Link>
-              </Button>
-            ) : null}
-            <ViewToggle view={view} onChange={setView} t={t} />
-            {canCreate ? (
-              <Button asChild>
-                <Link href={`/${locale}/actions/new`}>
-                  <Plus className="mr-1 h-4 w-4" />
-                  {t('newButton')}
-                </Link>
-              </Button>
-            ) : null}
-          </div>
-        </header>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {canSettings ? (
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              title={t('settingsButton')}
+              className="w-9 px-0 sm:w-auto sm:px-3"
+            >
+              <Link href={`/${locale}/actions/settings`}>
+                <Settings2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t('settingsButton')}</span>
+              </Link>
+            </Button>
+          ) : null}
+          <ViewToggle view={view} onChange={setView} t={t} />
+          {canCreate ? (
+            <Button asChild>
+              <Link href={`/${locale}/actions/new`}>
+                <Plus className="mr-1 h-4 w-4" />
+                {t('newButton')}
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </header>
 
-        {siteFilter !== '' ? (
-          <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} />
-        ) : null}
+      {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 
-        {/* Saved views bar */}
-        {views.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={applyDefaultView}
+      {/* Saved views bar */}
+      {views.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={applyDefaultView}
+            className={cn(
+              'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+              activeViewId === null
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-input bg-background text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t('savedViews.allActions')}
+          </button>
+          {views.map((sv) => (
+            <div
+              key={sv.id}
               className={cn(
-                'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                activeViewId === null
+                'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                activeViewId === sv.id
                   ? 'border-primary bg-primary text-primary-foreground'
                   : 'border-input bg-background text-muted-foreground hover:text-foreground',
               )}
             >
-              {t('savedViews.allActions')}
-            </button>
-            {views.map((sv) => (
-              <div
-                key={sv.id}
+              <button type="button" onClick={() => applySavedView(sv)}>
+                {sv.name}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteView(sv.id)}
+                aria-label={t('savedViews.deleteView')}
                 className={cn(
-                  'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                  activeViewId === sv.id
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-input bg-background text-muted-foreground hover:text-foreground',
+                  'ml-0.5 rounded-full p-0.5 hover:bg-black/10 dark:hover:bg-white/10',
+                  activeViewId === sv.id ? 'text-primary-foreground/70' : 'text-muted-foreground',
                 )}
               >
-                <button type="button" onClick={() => applySavedView(sv)}>
-                  {sv.name}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteView(sv.id)}
-                  aria-label={t('savedViews.deleteView')}
-                  className={cn(
-                    'ml-0.5 rounded-full p-0.5 hover:bg-black/10 dark:hover:bg-white/10',
-                    activeViewId === sv.id ? 'text-primary-foreground/70' : 'text-muted-foreground',
-                  )}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : null}
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
-        {/* Search + filter bar */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Search */}
-          <div className="relative min-w-[200px]">
-            <SearchIcon
-              className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('searchPlaceholder')}
-              className="pl-8"
-              aria-label={t('searchLabel')}
-            />
-          </div>
-
-          {/* Add filter button */}
-          <div className="relative" ref={filterMenuRef}>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setFilterMenuOpen((v) => !v)}
-              className="gap-1.5"
-            >
-              <Filter className="h-3.5 w-3.5" />
-              {/* Icon-only on phones. */}
-              <span className="hidden sm:inline">{t('addFilter')}</span>
-              {nonDefaultFiltersCount > 0 ? (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                  {nonDefaultFiltersCount}
-                </span>
-              ) : (
-                <ChevronDown className="hidden h-3 w-3 text-muted-foreground sm:block" />
-              )}
-            </Button>
-
-            {filterMenuOpen && availableFilterKeys.length > 0 ? (
-              <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-md border bg-popover py-1 shadow-lg">
-                {availableFilterKeys.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => addFilter(key)}
-                    className="flex w-full items-center px-3 py-2 text-sm hover:bg-accent"
-                  >
-                    {filterLabel(key)}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          {/* Active filter chips */}
-          {activeFilters.has('sort') ? (
-            <FilterChip
-              label={t('sortLabel')}
-              removable={false}
-              onRemove={() => removeFilter('sort')}
-            >
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortBy)}
-                className="border-0 bg-transparent text-xs outline-none"
-              >
-                {SORT_OPTIONS.map((s) => (
-                  <option key={s} value={s}>
-                    {t(`sortBy.${s}`)}
-                  </option>
-                ))}
-              </select>
-            </FilterChip>
-          ) : null}
-
-          {activeFilters.has('status') && view === 'list' ? (
-            <FilterChip label={t('filterStatus')} removable onRemove={() => removeFilter('status')}>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as StatusFilter)}
-                className="border-0 bg-transparent text-xs outline-none"
-              >
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s === 'all' ? t('filterStatusAll') : tStatus(s)}
-                  </option>
-                ))}
-              </select>
-            </FilterChip>
-          ) : null}
-
-          {activeFilters.has('source') ? (
-            <FilterChip label={t('filterSource')} removable onRemove={() => removeFilter('source')}>
-              <select
-                value={source}
-                onChange={(e) => setSource(e.target.value as SourceFilter)}
-                className="border-0 bg-transparent text-xs outline-none"
-              >
-                {SOURCES.map((s) => (
-                  <option key={s} value={s}>
-                    {s === 'all' ? t('filterSourceAll') : t(sourceLabelKey(s) as never)}
-                  </option>
-                ))}
-              </select>
-            </FilterChip>
-          ) : null}
-
-          {activeFilters.has('priority') ? (
-            <FilterChip
-              label={t('filterPriority')}
-              removable
-              onRemove={() => removeFilter('priority')}
-            >
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value as PriorityFilter)}
-                className="border-0 bg-transparent text-xs outline-none"
-              >
-                {PRIORITIES.map((p) => (
-                  <option key={p} value={p}>
-                    {p === 'all' ? t('filterPriorityAll') : tPriority(p)}
-                  </option>
-                ))}
-              </select>
-            </FilterChip>
-          ) : null}
-
-          {activeFilters.has('assignedToMe') ? (
-            <FilterChip
-              label={t('filterAssigneeMe')}
-              removable
-              onRemove={() => removeFilter('assignedToMe')}
-              active={assignedToMe}
-              onToggle={() => setAssignedToMe((v) => !v)}
-            />
-          ) : null}
-
-          {activeFilters.has('overdue') ? (
-            <FilterChip
-              label={t('overdueChip')}
-              removable
-              onRemove={() => removeFilter('overdue')}
-              active={overdueOnly}
-              onToggle={() => setOverdueOnly((v) => !v)}
-            />
-          ) : null}
-
-          {activeFilters.has('hideClosed') && view === 'list' ? (
-            <FilterChip
-              label={t('hideClosed')}
-              removable
-              onRemove={() => removeFilter('hideClosed')}
-              active={hideClosed}
-              onToggle={() => setHideClosed((v) => !v)}
-            />
-          ) : null}
-
-          {activeFilters.has('archived') ? (
-            <FilterChip
-              label={t('showArchived')}
-              removable
-              onRemove={() => removeFilter('archived')}
-              active={includeArchived}
-              onToggle={() => setIncludeArchived((v) => !v)}
-            />
-          ) : null}
-
-          {nonDefaultFiltersCount > 0 ? (
-            <button
-              type="button"
-              onClick={() => {
-                setActiveViewId(null);
-                setStatus('all');
-                setSource('all');
-                setPriority('all');
-                setAssignedToMe(false);
-                setOverdueOnly(false);
-                setHideClosed(false);
-                setIncludeArchived(false);
-                setSortBy('created');
-                setQuery('');
-                setActiveFilters(new Set(['sort']));
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-            >
-              {t('clearFilters')}
-            </button>
-          ) : null}
-
-          {/* Save view button */}
-          <div className="relative ml-auto">
-            {saveViewOpen ? (
-              <div className="flex items-center gap-1.5 rounded-md border bg-popover px-2 py-1 shadow-md">
-                <Bookmark className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <input
-                  ref={saveViewInputRef}
-                  value={saveViewName}
-                  onChange={(e) => setSaveViewName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveView();
-                    if (e.key === 'Escape') {
-                      setSaveViewOpen(false);
-                      setSaveViewName('');
-                    }
-                  }}
-                  placeholder={t('savedViews.namePlaceholder')}
-                  className="w-36 border-0 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
-                />
-                <button
-                  type="button"
-                  onClick={handleSaveView}
-                  disabled={saveViewName.trim().length === 0}
-                  className="rounded px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-40"
-                >
-                  {t('savedViews.saveConfirm')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSaveViewOpen(false);
-                    setSaveViewName('');
-                  }}
-                  className="rounded p-0.5 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setSaveViewOpen(true)}
-                className="gap-1.5 text-muted-foreground"
-              >
-                <Bookmark className="h-3.5 w-3.5" />
-                {t('savedViews.saveButton')}
-              </Button>
-            )}
-          </div>
+      {/* Search + filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Search */}
+        <div className="relative min-w-[200px]">
+          <SearchIcon
+            className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            className="pl-8"
+            aria-label={t('searchLabel')}
+          />
         </div>
 
-        {/* Content */}
-        {isError ? (
-          <p
-            role="alert"
-            className="mb-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+        {/* Add filter button */}
+        <div className="relative" ref={filterMenuRef}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setFilterMenuOpen((v) => !v)}
+            className="gap-1.5"
           >
-            {t('loadError')}
-          </p>
-        ) : null}
-        {view === 'list' ? (
-          <>
-            <ListView
-              rows={list}
-              isLoading={isLoading}
-              locale={locale}
-              canCreate={canCreate}
-              onSelect={handleSelectAction}
-              tStatus={(k) => tStatus(k)}
-              tPriority={(k) => tPriority(k)}
-              t={t}
-            />
-            {totalCount > list.length || offset > 0 ? (
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>
-                  {t('pagerShowing', {
-                    from: totalCount === 0 ? 0 : offset + 1,
-                    to: offset + list.length,
-                    total: totalCount,
-                  })}
-                </span>
-                <span className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={offset === 0}
-                    onClick={() => setOffset(Math.max(0, offset - 100))}
-                  >
-                    {t('pagerPrev')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={offset + list.length >= totalCount}
-                    onClick={() => setOffset(offset + 100)}
-                  >
-                    {t('pagerNext')}
-                  </Button>
-                </span>
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragCancel={() => setDraggingId(null)}
-          >
-            <BoardView
-              grouped={grouped}
-              isLoading={isLoading}
-              locale={locale}
-              canManage={canManage}
-              onSelect={handleSelectAction}
-              tStatus={(k) => tStatus(k)}
-              tPriority={(k) => tPriority(k)}
-              t={t}
-            />
-            {/* Ghost card shown while dragging */}
-            <DragOverlay dropAnimation={null}>
-              {draggingCard !== null ? (
-                <BoardCardContent
-                  row={draggingCard}
-                  locale={locale}
-                  tPriority={(k) => tPriority(k)}
-                  t={t}
-                  isDragOverlay
-                />
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
+            <Filter className="h-3.5 w-3.5" />
+            {/* Icon-only on phones. */}
+            <span className="hidden sm:inline">{t('addFilter')}</span>
+            {nonDefaultFiltersCount > 0 ? (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                {nonDefaultFiltersCount}
+              </span>
+            ) : (
+              <ChevronDown className="hidden h-3 w-3 text-muted-foreground sm:block" />
+            )}
+          </Button>
 
-        {/* Action detail sidebar */}
-        <Sheet
-          open={selectedActionId !== null}
-          onOpenChange={(open) => {
-            if (!open) handleClosePanel();
-          }}
-        >
-          <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
-            {selectedActionId !== null ? (
-              <ActionDetailPanel actionId={selectedActionId} locale={locale} />
-            ) : null}
-          </SheetContent>
-        </Sheet>
+          {filterMenuOpen && availableFilterKeys.length > 0 ? (
+            <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-md border bg-popover py-1 shadow-lg">
+              {availableFilterKeys.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => addFilter(key)}
+                  className="flex w-full items-center px-3 py-2 text-sm hover:bg-accent"
+                >
+                  {filterLabel(key)}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Active filter chips */}
+        {activeFilters.has('sort') ? (
+          <FilterChip
+            label={t('sortLabel')}
+            removable={false}
+            onRemove={() => removeFilter('sort')}
+          >
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              className="border-0 bg-transparent text-xs outline-none"
+            >
+              {SORT_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {t(`sortBy.${s}`)}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
+        ) : null}
+
+        {activeFilters.has('status') && view === 'list' ? (
+          <FilterChip label={t('filterStatus')} removable onRemove={() => removeFilter('status')}>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as StatusFilter)}
+              className="border-0 bg-transparent text-xs outline-none"
+            >
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s === 'all' ? t('filterStatusAll') : tStatus(s)}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
+        ) : null}
+
+        {activeFilters.has('source') ? (
+          <FilterChip label={t('filterSource')} removable onRemove={() => removeFilter('source')}>
+            <select
+              value={source}
+              onChange={(e) => setSource(e.target.value as SourceFilter)}
+              className="border-0 bg-transparent text-xs outline-none"
+            >
+              {SOURCES.map((s) => (
+                <option key={s} value={s}>
+                  {s === 'all' ? t('filterSourceAll') : t(sourceLabelKey(s) as never)}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
+        ) : null}
+
+        {activeFilters.has('priority') ? (
+          <FilterChip
+            label={t('filterPriority')}
+            removable
+            onRemove={() => removeFilter('priority')}
+          >
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as PriorityFilter)}
+              className="border-0 bg-transparent text-xs outline-none"
+            >
+              {PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {p === 'all' ? t('filterPriorityAll') : tPriority(p)}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
+        ) : null}
+
+        {activeFilters.has('assignedToMe') ? (
+          <FilterChip
+            label={t('filterAssigneeMe')}
+            removable
+            onRemove={() => removeFilter('assignedToMe')}
+            active={assignedToMe}
+            onToggle={() => setAssignedToMe((v) => !v)}
+          />
+        ) : null}
+
+        {activeFilters.has('overdue') ? (
+          <FilterChip
+            label={t('overdueChip')}
+            removable
+            onRemove={() => removeFilter('overdue')}
+            active={overdueOnly}
+            onToggle={() => setOverdueOnly((v) => !v)}
+          />
+        ) : null}
+
+        {activeFilters.has('hideClosed') && view === 'list' ? (
+          <FilterChip
+            label={t('hideClosed')}
+            removable
+            onRemove={() => removeFilter('hideClosed')}
+            active={hideClosed}
+            onToggle={() => setHideClosed((v) => !v)}
+          />
+        ) : null}
+
+        {activeFilters.has('archived') ? (
+          <FilterChip
+            label={t('showArchived')}
+            removable
+            onRemove={() => removeFilter('archived')}
+            active={includeArchived}
+            onToggle={() => setIncludeArchived((v) => !v)}
+          />
+        ) : null}
+
+        {nonDefaultFiltersCount > 0 ? (
+          <button
+            type="button"
+            onClick={() => {
+              setActiveViewId(null);
+              setStatus('all');
+              setSource('all');
+              setPriority('all');
+              setAssignedToMe(false);
+              setOverdueOnly(false);
+              setHideClosed(false);
+              setIncludeArchived(false);
+              setSortBy('created');
+              setQuery('');
+              setActiveFilters(new Set(['sort']));
+            }}
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+          >
+            {t('clearFilters')}
+          </button>
+        ) : null}
+
+        {/* Save view button */}
+        <div className="relative ml-auto">
+          {saveViewOpen ? (
+            <div className="flex items-center gap-1.5 rounded-md border bg-popover px-2 py-1 shadow-md">
+              <Bookmark className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <input
+                ref={saveViewInputRef}
+                value={saveViewName}
+                onChange={(e) => setSaveViewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveView();
+                  if (e.key === 'Escape') {
+                    setSaveViewOpen(false);
+                    setSaveViewName('');
+                  }
+                }}
+                placeholder={t('savedViews.namePlaceholder')}
+                className="w-36 border-0 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+              />
+              <button
+                type="button"
+                onClick={handleSaveView}
+                disabled={saveViewName.trim().length === 0}
+                className="rounded px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-40"
+              >
+                {t('savedViews.saveConfirm')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSaveViewOpen(false);
+                  setSaveViewName('');
+                }}
+                className="rounded p-0.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setSaveViewOpen(true)}
+              className="gap-1.5 text-muted-foreground"
+            >
+              <Bookmark className="h-3.5 w-3.5" />
+              {t('savedViews.saveButton')}
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Content */}
+      {isError ? (
+        <p
+          role="alert"
+          className="mb-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+        >
+          {t('loadError')}
+        </p>
+      ) : null}
+      {view === 'list' ? (
+        <>
+          <ListView
+            rows={list}
+            isLoading={isLoading}
+            locale={locale}
+            canCreate={canCreate}
+            onSelect={handleSelectAction}
+            tStatus={(k) => tStatus(k)}
+            tPriority={(k) => tPriority(k)}
+            t={t}
+          />
+          {totalCount > list.length || offset > 0 ? (
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>
+                {t('pagerShowing', {
+                  from: totalCount === 0 ? 0 : offset + 1,
+                  to: offset + list.length,
+                  total: totalCount,
+                })}
+              </span>
+              <span className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={offset === 0}
+                  onClick={() => setOffset(Math.max(0, offset - 100))}
+                >
+                  {t('pagerPrev')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={offset + list.length >= totalCount}
+                  onClick={() => setOffset(offset + 100)}
+                >
+                  {t('pagerNext')}
+                </Button>
+              </span>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => setDraggingId(null)}
+        >
+          <BoardView
+            grouped={grouped}
+            isLoading={isLoading}
+            locale={locale}
+            canManage={canManage}
+            onSelect={handleSelectAction}
+            tStatus={(k) => tStatus(k)}
+            tPriority={(k) => tPriority(k)}
+            t={t}
+          />
+          {/* Ghost card shown while dragging */}
+          <DragOverlay dropAnimation={null}>
+            {draggingCard !== null ? (
+              <BoardCardContent
+                row={draggingCard}
+                locale={locale}
+                tPriority={(k) => tPriority(k)}
+                t={t}
+                isDragOverlay
+              />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
+
+      {/* Action detail sidebar */}
+      <Sheet
+        open={selectedActionId !== null}
+        onOpenChange={(open) => {
+          if (!open) handleClosePanel();
+        }}
+      >
+        <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
+          {selectedActionId !== null ? (
+            <ActionDetailPanel actionId={selectedActionId} locale={locale} />
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

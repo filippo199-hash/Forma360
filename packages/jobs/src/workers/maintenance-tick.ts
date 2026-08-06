@@ -13,7 +13,12 @@
  * values already sent. When the asset is serviced, the due date changes, so
  * the old log key is irrelevant.
  */
-import { assetReadings, assets, maintenancePlanAssets, maintenancePlans } from '@forma360/db/schema';
+import {
+  assetReadings,
+  assets,
+  maintenancePlanAssets,
+  maintenancePlans,
+} from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job, ConnectionOptions } from 'bullmq';
@@ -171,7 +176,9 @@ export async function evaluateUsageLink(
   const latest = await db
     .select({ value: assetReadings.value })
     .from(assetReadings)
-    .where(and(eq(assetReadings.assetId, link.assetId), eq(assetReadings.fieldName, link.usageField)))
+    .where(
+      and(eq(assetReadings.assetId, link.assetId), eq(assetReadings.fieldName, link.usageField)),
+    )
     .orderBy(desc(assetReadings.capturedAt))
     .limit(1);
   const current = latest[0] === undefined ? null : Number(latest[0].value);
@@ -225,6 +232,10 @@ export async function evaluateUsageLink(
     );
     n += 1;
   }
-  if (n > 0) log.info({ planId: link.planId, assetId: link.assetId }, '[maintenance-tick] usage notify enqueued');
+  if (n > 0)
+    log.info(
+      { planId: link.planId, assetId: link.assetId },
+      '[maintenance-tick] usage notify enqueued',
+    );
   return n;
 }

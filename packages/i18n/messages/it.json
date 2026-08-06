@@ -67,7 +67,20 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ Aggiungi filtro",
+    "resultsCount": "{count} risultati",
+    "removeFilter": "Rimuovi filtro {label}",
+    "from": "Da",
+    "to": "A",
+    "showArchived": "Mostra archiviati",
+    "hideArchived": "Nascondi archiviati",
+    "exportCsv": "Esporta CSV",
+    "categories": "Categorie",
+    "settings": "Impostazioni",
+    "status": "Stato",
+    "type": "Tipo",
+    "site": "Sito"
   },
   "auth": {
     "signIn": {
@@ -1436,14 +1449,15 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Pericoli e quasi infortuni",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "Briefing",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Documenti",
     "ai": "Assistente IA",
+    "forMe": "Per me",
     "sites": "Siti",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1454,15 +1468,11 @@
     "fireSafety": "Sicurezza antincendio",
     "analytics": "Dashboard",
     "incidents": "Incidenti",
-    "myWork": "Le mie attività",
     "more": "Altro",
     "quickLabel": "Navigazione rapida",
     "collapseMenu": "Comprimi menu",
     "expandMenu": "Espandi menu",
-    "groupRisk": "Rischio e controllo",
-    "groupVerify": "Ispeziona e verifica",
-    "groupRespond": "Segnala e risolvi",
-    "groupOrg": "Organizzazione",
+    "groupOrg": "L'organizzazione",
     "child": {
       "schedulesCalendar": "Calendario",
       "permitsBoard": "Bacheca live",
@@ -1477,9 +1487,18 @@
       "contractorsGate": "Ingresso cantiere",
       "contractorsCalendar": "Calendario",
       "ramsLibrary": "Libreria delle procedure operative",
-      "ramsReviews": "Esame dei RAMS degli appaltatori"
+      "ramsReviews": "Esame dei RAMS degli appaltatori",
+      "templates": "Modelli",
+      "schedules": "Pianificazioni",
+      "approvals": "Approvazioni",
+      "maintenance": "Manutenzione",
+      "trainingMatrix": "Matrice",
+      "trainingRequirements": "Requisiti"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "training": "Formazione",
+    "groupDoWork": "Svolgere il lavoro",
+    "groupRecords": "Documenti e registri"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2138,7 +2157,13 @@
       "sourceMaintenance": "Manutenzione",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Incidente",
-      "sourceIncident": "Incidente"
+      "sourceIncident": "Incidente",
+      "sourceRiskAssessment": "Valutazione dei rischi",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Valutazione rischio incendio",
+      "sourceFireLogbookEntry": "Controllo antincendio",
+      "sourceFireDoorInspection": "Porta tagliafuoco",
+      "sourceRams": "Pacchetto RAMS"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2268,7 +2293,8 @@
       "sourceLinkFireRiskAssessment": "Creata dalla valutazione rischio incendio {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Creata da un controllo antincendio non superato",
       "sourceLinkFireDoorInspection": "Creata da un’ispezione porta tagliafuoco non superata",
-      "sourceLinkIncident": "Generata dall'incidente {referenceNumber}"
+      "sourceLinkIncident": "Generata dall'incidente {referenceNumber}",
+      "sourceLinkRams": "Generata dal pacchetto RAMS {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2332,11 +2358,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Valutazione dei rischi",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Valutazione rischio incendio",
-    "sourceFireLogbookEntry": "Controllo antincendio",
-    "sourceFireDoorInspection": "Porta tagliafuoco",
     "pagerShowing": "Da {from} a {to} di {total}",
     "pagerPrev": "Precedente",
     "pagerNext": "Successiva",
@@ -3120,7 +3141,8 @@
       "contractors": "Appaltatori",
       "sites": "Siti e progetti",
       "templates": "Modelli",
-      "incidents": "Incidenti"
+      "incidents": "Incidenti",
+      "rams": "Pacchetti RAMS"
     }
   },
   "ai": {
@@ -4855,7 +4877,8 @@
         "acceptor": "Accettante",
         "acceptAction": "Accetta permesso",
         "acknowledgeConflicts": "Ho esaminato i permessi sovrapposti e accetto il rischio combinato",
-        "awaitingAcceptor": "In attesa della firma dell'accettante designato. Solo quella persona può accettare."
+        "awaitingAcceptor": "In attesa della firma dell'accettante designato. Solo quella persona può accettare.",
+        "ramsBlocked": "L'emissione è bloccata finché il requisito RAMS non è soddisfatto."
       },
       "actions": {
         "title": "Azioni sul permesso",
@@ -4926,7 +4949,13 @@
         "requiredBeforeIssue": "valutazione dei rischi richiesta prima dell'emissione",
         "riskAssessment": "Valutazione dei rischi",
         "methodStatement": "Procedura di lavoro",
-        "none": "Non collegato"
+        "none": "Non collegato",
+        "ramsRequired": "Questo tipo di permesso richiede un pacchetto RAMS",
+        "ramsSatisfied": "È collegato un pacchetto emesso o una revisione accettata ancora valida.",
+        "ramsMissing": "Non è ancora collegato alcun pacchetto RAMS né revisione appaltatore accettata.",
+        "ramsNotIssued": "Il pacchetto collegato non è attualmente emesso: emettilo o riemettilo prima.",
+        "ramsExpired": "La revisione appaltatore collegata non è accettata oppure la validità è scaduta.",
+        "ramsOpenModule": "Apri RAMS"
       },
       "workers": {
         "title": "Persone sotto questo permesso",
@@ -6255,7 +6284,11 @@
     "empty": {
       "title": "Nulla in attesa",
       "body": "Le nuove attività assegnate a te compaiono qui."
-    }
+    },
+    "myActionsTitle": "Le mie azioni",
+    "myActionsSubtitle": "Tutto ciò che ti è assegnato, prima il più in ritardo.",
+    "myAcknowledgementsTitle": "Le mie conferme",
+    "myAcknowledgementsSubtitle": "Briefing e valutazioni dei rischi in attesa della tua conferma."
   },
   "rams": {
     "title": "RAMS",
@@ -6334,7 +6367,9 @@
       "allClear": "C'è tutto il necessario per emettere questo pacchetto.",
       "unreferencedTitle": "Rischi elevati che nessuna fase affronta",
       "attestationTitle": "Dichiarazione del redattore",
-      "attestationConfirm": "Confermo la dichiarazione qui sopra."
+      "attestationConfirm": "Confermo la dichiarazione qui sopra.",
+      "attestationText": "Confermo di aver redatto o verificato questa valutazione dei rischi e procedura operativa, che è idonea e sufficiente per il lavoro descritto, che la sequenza di lavoro e le misure di controllo sono quelle che verranno effettivamente seguite, e che sarà illustrata a tutti gli esecutori prima dell'inizio.",
+      "attestationCanonical": "Fa fede il testo inglese: viene registrato alla lettera e stampato sul PDF."
     },
     "errors": {
       "no-steps": "Aggiungi almeno una fase alla procedura operativa.",
@@ -6376,17 +6411,25 @@
       "moveDown": "Sposta giù",
       "remove": "Elimina fase",
       "expand": "Modifica",
-      "collapse": "Chiudi"
+      "collapse": "Chiudi",
+      "untitled": "Fase senza titolo",
+      "holdPointBadge": "Punto di fermo",
+      "noHoldPoint": "Nessun punto di fermo"
     },
     "emergency": {
       "title": "Misure di emergenza",
       "firstAid": "Primo soccorso",
       "procedure": "Procedura di emergenza",
-      "rescuePlan": "Piano di salvataggio"
+      "rescuePlan": "Piano di salvataggio",
+      "nearestHospital": "Pronto soccorso più vicino"
     },
     "logistics": {
       "welfare": "Servizi igienico-assistenziali",
-      "accessEgress": "Accesso ed esodo"
+      "accessEgress": "Accesso ed esodo",
+      "title": "Logistica di cantiere",
+      "environmental": "Controlli ambientali",
+      "permitsRequired": "Permessi previsti",
+      "competence": "Competenza e formazione"
     },
     "builder": {
       "saving": "Salvataggio…",
@@ -6412,7 +6455,12 @@
       "briefedSoFar": "{count} informati",
       "needsRebrief": "Richiede nuova informativa",
       "queued": "{count} informativa/e in attesa di sincronizzazione",
-      "retry": "Riprova ora"
+      "retry": "Riprova ora",
+      "hazardsHeading": "Cosa può farti male e cosa lo impedisce",
+      "whoAffected": "Chi è a rischio",
+      "coshhHeading": "Sostanze in uso",
+      "signatureCaptured": "Firma acquisita",
+      "signAgain": "Firma di nuovo"
     },
     "briefeeCategory": {
       "employee": "Dipendente",
@@ -6427,7 +6475,10 @@
       "issuedTo": "Referente del cliente",
       "createLink": "Crea link di condivisione",
       "unnamed": "Destinatario senza nome",
-      "revoked": "revocato"
+      "revoked": "revocato",
+      "showLink": "Mostra link",
+      "copyLink": "Copia",
+      "revokeLink": "Revoca"
     },
     "clientDecision": {
       "pending": "In attesa del cliente",
@@ -6450,7 +6501,9 @@
       "startPack": "Crea un pacchetto",
       "duplicate": "Duplica",
       "copySuffix": "copia",
-      "empty": "Nessuna procedura operativa."
+      "empty": "Nessuna procedura operativa.",
+      "edit": "Modifica",
+      "backToLibrary": "Torna alla libreria"
     },
     "reviews": {
       "title": "Esame dei RAMS degli appaltatori",
@@ -6463,7 +6516,18 @@
       "validTo": "Accettato fino al",
       "recordDecision": "Registra la decisione",
       "itemComment": "Che cosa non va in questo punto?",
-      "expired": "Scaduto"
+      "expired": "Scaduto",
+      "logReceived": "Registra un pacchetto ricevuto",
+      "logReceivedHint": "Un appaltatore ti ha inviato un RAMS — via e-mail, portale o cartaceo. Registralo qui per esaminarlo.",
+      "contractor": "Appaltatore",
+      "contractorPlaceholder": "Cerca appaltatori…",
+      "packTitle": "Titolo del pacchetto",
+      "packTitlePlaceholder": "es. Sostituzione impianto in copertura — RAMS rev. B",
+      "site": "Sito (facoltativo)",
+      "sitePlaceholder": "Dove si svolgerà il lavoro",
+      "workDescription": "In cosa consiste il lavoro (facoltativo)",
+      "workDescriptionPlaceholder": "Ciò che il revisore deve sapere prima di aprire la checklist",
+      "logAndOpen": "Registra e apri la checklist"
     },
     "reviewOutcome": {
       "pending": "In attesa di esame",
@@ -6540,6 +6604,163 @@
       "method_statement_duplicated": "Procedura operativa duplicata",
       "review_submitted": "Pacchetto appaltatore inviato all'esame",
       "review_decided": "Decisione di esame registrata"
+    },
+    "common": {
+      "cancel": "Annulla"
+    },
+    "reissue": {
+      "title": "Riemetti questo pacchetto",
+      "invalidatesWarning": "Questo crea una nuova versione. I {count} briefing sulla versione attuale non valgono più — tutti devono essere ri-briefati prima di proseguire.",
+      "note": "Perché riemetti? (facoltativo)",
+      "notePlaceholder": "es. Sequenza modificata dopo il sopralluogo con il cliente",
+      "confirm": "Firma e riemetti"
+    },
+    "reviewChecklist": {
+      "scope_matches": "L'ambito dei lavori corrisponde a quanto commissionato",
+      "hazards_credible": "Pericoli identificati e misure credibili per il lavoro",
+      "sequence_holdpoints": "La sequenza include hold point di sezionamento / permesso",
+      "emergency_present": "Disposizioni di emergenza e primo soccorso presenti",
+      "competence_evidence": "Evidenze di competenza e formazione allegate",
+      "coshh_covered": "Sostanze pericolose coperte dove utilizzate",
+      "plant_certified": "Certificazioni di macchine e attrezzature in corso di validità",
+      "insurance_current": "Assicurazione in corso e adeguata al lavoro"
+    },
+    "editor": {
+      "titleLabel": "Titolo della procedura operativa",
+      "tradeLabel": "Categoria",
+      "publish": "Pubblica versione",
+      "saved": "Salvato",
+      "neverPublished": "Mai pubblicato",
+      "saveFailed": "Non salvato: {message}",
+      "publishFailed": "Pubblicazione non riuscita: {message}",
+      "archived": "Questa procedura è archiviata e non può essere modificata.",
+      "unpublishedChanges": "Ci sono modifiche non ancora presenti nella versione pubblicata. Pubblicale per renderle disponibili ai nuovi pacchetti.",
+      "scopeLabel": "Ambito dei lavori",
+      "scopePlaceholder": "In cosa consiste davvero il lavoro, in un paragrafo.",
+      "versionsTitle": "Versioni pubblicate",
+      "publishedBy": "da {name} il {date}"
+    },
+    "exportFailed": "Esportazione non riuscita: {message}"
+  },
+  "reportChooser": {
+    "title": "Segnala qualcosa",
+    "subtitle": "Una domanda decide dove va: qualcuno si è fatto male?",
+    "harmed": {
+      "label": "Sì — qualcuno si è fatto male o si è ammalato",
+      "hint": "Segnala un incidente. I responsabili sono avvisati subito e viene verificata la scadenza RIDDOR."
+    },
+    "noHarm": {
+      "label": "No — ma poteva finire male",
+      "hint": "Segnala un pericolo o quasi infortunio. Va al team che risolve prima che qualcuno si faccia male."
+    },
+    "footnote": "Non sei sicuro? Scegli quello più adatto — chi lo esamina potrà spostarlo poi.",
+    "noPermission": "Non hai il permesso di segnalare qui. Chiedi l'accesso a un amministratore."
+  },
+  "training": {
+    "title": "Formazione e competenze",
+    "subtitle": "Chi possiede cosa, cosa manca e quando scade.",
+    "tabs": {
+      "gaps": "Lacune",
+      "matrix": "Matrice",
+      "compliance": "Conformità",
+      "requirements": "Requisiti"
+    },
+    "asAt": "Al {date}",
+    "status": {
+      "in_date": "In corso di validità",
+      "expiring_soon": "In scadenza",
+      "expired": "Scaduto",
+      "not_held": "Mai conseguito",
+      "not_required": "Non richiesto"
+    },
+    "gaps": {
+      "expired": "Scaduto",
+      "expiringSoon": "In scadenza",
+      "notHeld": "Mai conseguito",
+      "empty": "Nessuna lacuna. Tutti gli attestati richiesti sono validi.",
+      "record": "Registra",
+      "expiresOn": "scade il {date}",
+      "requiredByRole": "richiesto dalla mansione",
+      "total": "{count} da gestire"
+    },
+    "matrix": {
+      "person": "Persona",
+      "empty": "Ancora nulla da mostrare. Aggiungi un requisito e registra gli attestati.",
+      "exportCsv": "Esporta CSV",
+      "legend": "Legenda"
+    },
+    "compliance": {
+      "overall": "Complessiva",
+      "statutory": "Solo obbligo di legge",
+      "byRequirement": "Per requisito",
+      "gapsCount": "{count} con lacune",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Requisiti",
+      "add": "Aggiungi requisito",
+      "name": "Nome",
+      "category": "Categoria",
+      "obligation": "Obbligo",
+      "validity": "Validità",
+      "validityMonths": "{months} mesi",
+      "noExpiry": "Non scade mai",
+      "leadDays": "Sollecita {days} giorni prima",
+      "empty": "Nessun requisito. Aggiungi gli attestati che le persone devono possedere.",
+      "archive": "Archivia",
+      "save": "Salva",
+      "assignments": "Chi ne ha bisogno",
+      "addAssignment": "Assegna",
+      "cancel": "Annulla",
+      "scope": {
+        "role": "Mansione",
+        "group": "Gruppo",
+        "site": "Sito",
+        "person": "Persona"
+      }
+    },
+    "obligation": {
+      "statutory": "Di legge",
+      "mandatory": "Obbligatorio",
+      "discretionary": "Facoltativo"
+    },
+    "record": {
+      "title": "Registra formazione",
+      "person": "Persona",
+      "requirement": "Requisito",
+      "achievedAt": "Data di conseguimento",
+      "expiresAt": "Scadenza",
+      "expiryAuto": "Calcolata dal periodo di validità",
+      "awardingBody": "Ente rilasciante",
+      "certificateNumber": "Numero attestato",
+      "evidence": "Attestato o foto del tesserino",
+      "save": "Salva attestato",
+      "saved": "Attestato salvato",
+      "source": "Origine",
+      "cancel": "Annulla",
+      "sources": {
+        "internal": "Interna",
+        "external": "Ente esterno",
+        "imported": "Importata",
+        "self_declared": "Autodichiarata"
+      }
+    },
+    "person": {
+      "title": "Formazione",
+      "noRecords": "Nessuna formazione registrata.",
+      "verified": "Verificato",
+      "unverified": "Non verificato"
+    },
+    "import": {
+      "title": "Importa attestati",
+      "help": "Incolla un CSV con le colonne: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importa",
+      "imported": "{count} attestati importati",
+      "failed": "{count} righe non riuscite"
+    },
+    "errors": {
+      "moduleDisabled": "Questo modulo non è attivo.",
+      "generic": "Qualcosa è andato storto."
     }
   }
 }

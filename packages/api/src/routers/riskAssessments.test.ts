@@ -467,9 +467,7 @@ describe('riskAssessments router', () => {
       status: 'planned',
     });
     const dueAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    await publishOk(caller, assessmentId, [
-      { controlId, assigneeUserId: standardId, dueAt },
-    ]);
+    await publishOk(caller, assessmentId, [{ controlId, assigneeUserId: standardId, dueAt }]);
     const rows = await db
       .select()
       .from(schema.actions)
@@ -1000,9 +998,7 @@ describe('riskAssessments router', () => {
     const ack = detail.acknowledgements.find((a) => a.userId === standardId);
     expect(ack?.dueAt).not.toBeNull();
 
-    const mails = __authStubMailbox.filter(
-      (m) => m.templateKey === 'risk-assessment-distributed',
-    );
+    const mails = __authStubMailbox.filter((m) => m.templateKey === 'risk-assessment-distributed');
     expect(mails).toHaveLength(1);
     expect(mails[0]?.to).toBe(`stan-${tenantId}@acme.test`);
     expect(mails[0]?.variables['title']).toBe('Manual handling');
@@ -1035,5 +1031,4 @@ describe('riskAssessments router', () => {
     parent = await caller.riskAssessments.get({ assessmentId });
     expect(parent.linkedVariants[0]?.driftsFromParent).toBe(true);
   });
-
 });

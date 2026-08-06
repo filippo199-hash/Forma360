@@ -67,7 +67,20 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ フィルターを追加",
+    "resultsCount": "{count} 件",
+    "removeFilter": "{label} フィルターを削除",
+    "from": "開始",
+    "to": "終了",
+    "showArchived": "アーカイブを表示",
+    "hideArchived": "アーカイブを非表示",
+    "exportCsv": "CSVをエクスポート",
+    "categories": "カテゴリ",
+    "settings": "設定",
+    "status": "ステータス",
+    "type": "種類",
+    "site": "拠点"
   },
   "auth": {
     "signIn": {
@@ -1429,14 +1442,15 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "危険・ヒヤリハット",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "周知事項",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "ドキュメント",
     "ai": "AIアシスタント",
+    "forMe": "自分の担当",
     "sites": "サイト",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1447,14 +1461,10 @@
     "fireSafety": "防火管理",
     "analytics": "ダッシュボード",
     "incidents": "インシデント",
-    "myWork": "マイタスク",
     "more": "その他",
     "quickLabel": "クイックナビゲーション",
     "collapseMenu": "メニューを折りたたむ",
     "expandMenu": "メニューを展開",
-    "groupRisk": "リスクと管理",
-    "groupVerify": "点検と検証",
-    "groupRespond": "報告と是正",
     "groupOrg": "組織",
     "child": {
       "schedulesCalendar": "カレンダー",
@@ -1470,9 +1480,18 @@
       "contractorsGate": "現場ゲート",
       "contractorsCalendar": "カレンダー",
       "ramsLibrary": "作業手順書ライブラリ",
-      "ramsReviews": "協力会社 RAMS の審査"
+      "ramsReviews": "協力会社 RAMS の審査",
+      "templates": "テンプレート",
+      "schedules": "スケジュール",
+      "approvals": "承認",
+      "maintenance": "保全",
+      "trainingMatrix": "マトリクス",
+      "trainingRequirements": "要件"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "training": "研修",
+    "groupDoWork": "作業を行う",
+    "groupRecords": "記録・台帳"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2131,7 +2150,13 @@
       "sourceMaintenance": "メンテナンス",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "インシデント",
-      "sourceIncident": "インシデント"
+      "sourceIncident": "インシデント",
+      "sourceRiskAssessment": "リスクアセスメント",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "火災リスクアセスメント",
+      "sourceFireLogbookEntry": "防火点検",
+      "sourceFireDoorInspection": "防火扉",
+      "sourceRams": "RAMS パック"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2261,7 +2286,8 @@
       "sourceLinkFireRiskAssessment": "火災リスクアセスメント {referenceNumber} から作成",
       "sourceLinkFireLogbookEntry": "不合格の防火点検から作成",
       "sourceLinkFireDoorInspection": "不合格の防火扉点検から作成",
-      "sourceLinkIncident": "インシデント {referenceNumber} から作成"
+      "sourceLinkIncident": "インシデント {referenceNumber} から作成",
+      "sourceLinkRams": "RAMS パック {referenceNumber} から作成"
     },
     "create": {
       "title": "Create action",
@@ -2325,11 +2351,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "リスクアセスメント",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "火災リスクアセスメント",
-    "sourceFireLogbookEntry": "防火点検",
-    "sourceFireDoorInspection": "防火扉",
     "pagerShowing": "{total}件中 {from}–{to} 件を表示",
     "pagerPrev": "前へ",
     "pagerNext": "次へ",
@@ -3078,7 +3099,8 @@
       "contractors": "請負業者",
       "sites": "拠点・プロジェクト",
       "templates": "テンプレート",
-      "incidents": "インシデント"
+      "incidents": "インシデント",
+      "rams": "RAMS パック"
     }
   },
   "ai": {
@@ -4813,7 +4835,8 @@
         "acceptor": "受領者",
         "acceptAction": "許可を受領",
         "acknowledgeConflicts": "重複する許可を確認し、複合リスクを了承します",
-        "awaitingAcceptor": "指定された受領者の署名待ちです。受領できるのは本人のみです。"
+        "awaitingAcceptor": "指定された受領者の署名待ちです。受領できるのは本人のみです。",
+        "ramsBlocked": "RAMS 要件を満たすまで発行はできません。"
       },
       "actions": {
         "title": "許可の操作",
@@ -4884,7 +4907,13 @@
         "requiredBeforeIssue": "発行前にリスクアセスメントが必要",
         "riskAssessment": "リスクアセスメント",
         "methodStatement": "作業手順書",
-        "none": "未リンク"
+        "none": "未リンク",
+        "ramsRequired": "この許可証タイプには RAMS パックが必要です",
+        "ramsSatisfied": "発行済みパック、または有効な承認済みレビューが紐づいています。",
+        "ramsMissing": "RAMS パックも承認済みの請負業者レビューもまだ紐づいていません。",
+        "ramsNotIssued": "紐づくパックは現在発行されていません。先に発行または再発行してください。",
+        "ramsExpired": "紐づく請負業者レビューが未承認、または有効期限が切れています。",
+        "ramsOpenModule": "RAMS を開く"
       },
       "workers": {
         "title": "この許可の対象者",
@@ -6213,7 +6242,11 @@
     "empty": {
       "title": "待機中の作業はありません",
       "body": "新しく割り当てられた作業はここに表示されます。"
-    }
+    },
+    "myActionsTitle": "自分のアクション",
+    "myActionsSubtitle": "自分に割り当てられたすべて。期限超過の大きい順。",
+    "myAcknowledgementsTitle": "自分の確認事項",
+    "myAcknowledgementsSubtitle": "あなたの確認待ちの周知事項とリスクアセスメント。"
   },
   "rams": {
     "title": "RAMS",
@@ -6292,7 +6325,9 @@
       "allClear": "このパックを発行するために必要なものはすべて揃っています。",
       "unreferencedTitle": "どの手順でも対応されていない高リスク",
       "attestationTitle": "作成者の宣誓",
-      "attestationConfirm": "上記の宣誓内容を確認しました。"
+      "attestationConfirm": "上記の宣誓内容を確認しました。",
+      "attestationText": "本リスクアセスメントおよび作業手順書を作成または確認したこと、記載された作業に対して適切かつ十分であること、作業手順と管理措置が実際に順守されるものであること、そして作業開始前に全作業者へ周知することを確認します。",
+      "attestationCanonical": "法的効力を持つのは英語原文です。英文がそのまま記録され、PDFに印刷されます。"
     },
     "errors": {
       "no-steps": "作業手順書に少なくとも 1 つの手順を追加してください。",
@@ -6334,17 +6369,25 @@
       "moveDown": "下へ",
       "remove": "手順を削除",
       "expand": "編集",
-      "collapse": "閉じる"
+      "collapse": "閉じる",
+      "untitled": "無題のステップ",
+      "holdPointBadge": "ホールドポイント",
+      "noHoldPoint": "ホールドポイントなし"
     },
     "emergency": {
       "title": "緊急時対応",
       "firstAid": "救急処置",
       "procedure": "緊急時の手順",
-      "rescuePlan": "救助計画"
+      "rescuePlan": "救助計画",
+      "nearestHospital": "最寄りの救急外来"
     },
     "logistics": {
       "welfare": "福利厚生設備",
-      "accessEgress": "出入りと避難経路"
+      "accessEgress": "出入りと避難経路",
+      "title": "現場ロジスティクス",
+      "environmental": "環境対策",
+      "permitsRequired": "想定される許可証",
+      "competence": "力量と教育訓練"
     },
     "builder": {
       "saving": "保存中…",
@@ -6370,7 +6413,12 @@
       "briefedSoFar": "{count} 名に周知済み",
       "needsRebrief": "再周知が必要",
       "queued": "{count} 件の周知が同期待ちです",
-      "retry": "今すぐ再試行"
+      "retry": "今すぐ再試行",
+      "hazardsHeading": "危険とその防止策",
+      "whoAffected": "影響を受ける人",
+      "coshhHeading": "使用する物質",
+      "signatureCaptured": "署名を取得しました",
+      "signAgain": "署名し直す"
     },
     "briefeeCategory": {
       "employee": "自社社員",
@@ -6385,7 +6433,10 @@
       "issuedTo": "顧客担当者名",
       "createLink": "共有リンクを作成",
       "unnamed": "宛先未設定",
-      "revoked": "失効"
+      "revoked": "失効",
+      "showLink": "リンクを表示",
+      "copyLink": "コピー",
+      "revokeLink": "失効させる"
     },
     "clientDecision": {
       "pending": "顧客の回答待ち",
@@ -6408,7 +6459,9 @@
       "startPack": "パックを作成",
       "duplicate": "複製",
       "copySuffix": "コピー",
-      "empty": "作業手順書がまだありません。"
+      "empty": "作業手順書がまだありません。",
+      "edit": "編集",
+      "backToLibrary": "ライブラリに戻る"
     },
     "reviews": {
       "title": "協力会社 RAMS の審査",
@@ -6421,7 +6474,18 @@
       "validTo": "承諾期限",
       "recordDecision": "判定を記録",
       "itemComment": "どこに問題がありますか？",
-      "expired": "期限切れ"
+      "expired": "期限切れ",
+      "logReceived": "受領したパックを登録",
+      "logReceivedHint": "協力会社からRAMSが届きました（メール・ポータル・紙）。審査するためにここで登録します。",
+      "contractor": "協力会社",
+      "contractorPlaceholder": "協力会社を検索…",
+      "packTitle": "パックのタイトル",
+      "packTitlePlaceholder": "例: 屋上設備交換 — RAMS 改訂B",
+      "site": "サイト（任意）",
+      "sitePlaceholder": "作業が行われる場所",
+      "workDescription": "作業内容（任意）",
+      "workDescriptionPlaceholder": "チェックリストを開く前に審査者が知っておくべきこと",
+      "logAndOpen": "登録してチェックリストを開く"
     },
     "reviewOutcome": {
       "pending": "審査待ち",
@@ -6498,6 +6562,163 @@
       "method_statement_duplicated": "作業手順書を複製",
       "review_submitted": "協力会社パックを審査に提出",
       "review_decided": "審査判定を記録"
+    },
+    "common": {
+      "cancel": "キャンセル"
+    },
+    "reissue": {
+      "title": "このパックを再発行",
+      "invalidatesWarning": "新しいバージョンが作成されます。現行バージョンに対する {count} 件の周知は無効となり、作業再開前に全員へ再周知が必要です。",
+      "note": "再発行の理由（任意）",
+      "notePlaceholder": "例: 客先立会後に手順を変更",
+      "confirm": "署名して再発行"
+    },
+    "reviewChecklist": {
+      "scope_matches": "作業範囲が発注内容と一致している",
+      "hazards_credible": "危険源が特定され、管理措置が作業に妥当である",
+      "sequence_holdpoints": "手順に隔離・許可のホールドポイントが含まれている",
+      "emergency_present": "緊急時および応急手当の取り決めがある",
+      "competence_evidence": "力量および教育訓練の証跡が添付されている",
+      "coshh_covered": "使用する有害物質（COSHH）が網羅されている",
+      "plant_certified": "機械・設備の検査証が有効期限内である",
+      "insurance_current": "保険が有効で作業に十分である"
+    },
+    "editor": {
+      "titleLabel": "作業手順書のタイトル",
+      "tradeLabel": "職種",
+      "publish": "バージョンを公開",
+      "saved": "保存しました",
+      "neverPublished": "未公開",
+      "saveFailed": "保存されていません: {message}",
+      "publishFailed": "公開できませんでした: {message}",
+      "archived": "この作業手順書はアーカイブ済みのため編集できません。",
+      "unpublishedChanges": "公開版に未反映の変更があります。新しいパックで使えるようにするには公開してください。",
+      "scopeLabel": "作業範囲",
+      "scopePlaceholder": "この作業が実際に何をするものかを 1 段落で。",
+      "versionsTitle": "公開済みバージョン",
+      "publishedBy": "{name} が {date} に公開"
+    },
+    "exportFailed": "エクスポートに失敗しました: {message}"
+  },
+  "reportChooser": {
+    "title": "報告する",
+    "subtitle": "この報告先は1つの質問で決まります。負傷者はいましたか？",
+    "harmed": {
+      "label": "はい — 負傷者または健康被害がありました",
+      "hint": "インシデントとして報告します。管理者に直ちに通知され、RIDDOR期限も確認されます。"
+    },
+    "noHarm": {
+      "label": "いいえ — ただし事故になり得ました",
+      "hint": "危険源・ヒヤリハットとして報告します。誰かが負傷する前に対処するチームへ届きます。"
+    },
+    "footnote": "迷う場合は近いほうを選んでください。確認する担当者が後で変更できます。",
+    "noPermission": "ここで報告する権限がありません。管理者に権限付与を依頼してください。"
+  },
+  "training": {
+    "title": "研修と力量",
+    "subtitle": "誰が何を保有し、何が不足し、いつ失効するか。",
+    "tabs": {
+      "gaps": "不足",
+      "matrix": "マトリクス",
+      "compliance": "遵守状況",
+      "requirements": "要件"
+    },
+    "asAt": "{date} 時点",
+    "status": {
+      "in_date": "有効",
+      "expiring_soon": "まもなく失効",
+      "expired": "失効",
+      "not_held": "未取得",
+      "not_required": "対象外"
+    },
+    "gaps": {
+      "expired": "失効",
+      "expiringSoon": "まもなく失効",
+      "notHeld": "未取得",
+      "empty": "不足はありません。必要な記録はすべて有効です。",
+      "record": "記録",
+      "expiresOn": "{date} に失効",
+      "requiredByRole": "役割により必須",
+      "total": "対応が必要: {count} 件"
+    },
+    "matrix": {
+      "person": "対象者",
+      "empty": "表示できるものがありません。要件を追加し、記録を登録してください。",
+      "exportCsv": "CSV を書き出す",
+      "legend": "凡例"
+    },
+    "compliance": {
+      "overall": "全体",
+      "statutory": "法定のみ",
+      "byRequirement": "要件別",
+      "gapsCount": "不足 {count} 件",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "要件",
+      "add": "要件を追加",
+      "name": "名称",
+      "category": "分類",
+      "obligation": "義務区分",
+      "validity": "有効期間",
+      "validityMonths": "{months} か月",
+      "noExpiry": "失効しない",
+      "leadDays": "{days} 日前に督促",
+      "empty": "要件がまだありません。必要な資格を追加してください。",
+      "archive": "アーカイブ",
+      "save": "保存",
+      "assignments": "対象者",
+      "addAssignment": "割り当て",
+      "cancel": "キャンセル",
+      "scope": {
+        "role": "役割",
+        "group": "グループ",
+        "site": "拠点",
+        "person": "個人"
+      }
+    },
+    "obligation": {
+      "statutory": "法定",
+      "mandatory": "必須",
+      "discretionary": "任意"
+    },
+    "record": {
+      "title": "研修を記録",
+      "person": "対象者",
+      "requirement": "要件",
+      "achievedAt": "取得日",
+      "expiresAt": "失効日",
+      "expiryAuto": "有効期間から自動計算",
+      "awardingBody": "発行機関",
+      "certificateNumber": "証明書番号",
+      "evidence": "証明書またはカードの写真",
+      "save": "記録を保存",
+      "saved": "記録を保存しました",
+      "source": "入手元",
+      "cancel": "キャンセル",
+      "sources": {
+        "internal": "社内",
+        "external": "外部機関",
+        "imported": "インポート",
+        "self_declared": "自己申告"
+      }
+    },
+    "person": {
+      "title": "研修",
+      "noRecords": "登録された研修はありません。",
+      "verified": "確認済み",
+      "unverified": "未確認"
+    },
+    "import": {
+      "title": "記録をインポート",
+      "help": "次の列を含む CSV を貼り付けてください: personName, userEmail, requirementName, achievedAt, expiresAt。",
+      "run": "インポート",
+      "imported": "{count} 件を取り込みました",
+      "failed": "{count} 行が失敗しました"
+    },
+    "errors": {
+      "moduleDisabled": "このモジュールは有効ではありません。",
+      "generic": "問題が発生しました。"
     }
   }
 }

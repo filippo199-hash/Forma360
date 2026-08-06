@@ -29,11 +29,7 @@ function negotiateLocale(acceptLanguage: string | null): string {
   return DEFAULT_LOCALE;
 }
 
-export default async function ScanReportPage({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
+export default async function ScanReportPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const locale = negotiateLocale((await headers()).get('accept-language'));
   const t = await getTranslations({ locale, namespace: 'scanPage' });

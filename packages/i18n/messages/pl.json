@@ -67,7 +67,20 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ Dodaj filtr",
+    "resultsCount": "{count} wyników",
+    "removeFilter": "Usuń filtr {label}",
+    "from": "Od",
+    "to": "Do",
+    "showArchived": "Pokaż zarchiwizowane",
+    "hideArchived": "Ukryj zarchiwizowane",
+    "exportCsv": "Eksportuj CSV",
+    "categories": "Kategorie",
+    "settings": "Ustawienia",
+    "status": "Status",
+    "type": "Typ",
+    "site": "Lokalizacja"
   },
   "auth": {
     "signIn": {
@@ -1429,14 +1442,15 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Zagrożenia i zdarzenia potencjalnie wypadkowe",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "Odprawy",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Dokumenty",
     "ai": "Asystent AI",
+    "forMe": "Dla mnie",
     "sites": "Lokalizacje",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1447,14 +1461,10 @@
     "fireSafety": "Ochrona ppoż.",
     "analytics": "Pulpit",
     "incidents": "Zdarzenia",
-    "myWork": "Moje zadania",
     "more": "Więcej",
     "quickLabel": "Szybka nawigacja",
     "collapseMenu": "Zwiń menu",
     "expandMenu": "Rozwiń menu",
-    "groupRisk": "Ryzyko i kontrola",
-    "groupVerify": "Inspekcje i weryfikacja",
-    "groupRespond": "Zgłoś i napraw",
     "groupOrg": "Organizacja",
     "child": {
       "schedulesCalendar": "Kalendarz",
@@ -1470,9 +1480,18 @@
       "contractorsGate": "Brama budowy",
       "contractorsCalendar": "Kalendarz",
       "ramsLibrary": "Biblioteka instrukcji roboczych",
-      "ramsReviews": "Ocena RAMS podwykonawców"
+      "ramsReviews": "Ocena RAMS podwykonawców",
+      "templates": "Szablony",
+      "schedules": "Harmonogramy",
+      "approvals": "Zatwierdzenia",
+      "maintenance": "Utrzymanie",
+      "trainingMatrix": "Macierz",
+      "trainingRequirements": "Wymagania"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "training": "Szkolenia",
+    "groupDoWork": "Wykonaj pracę",
+    "groupRecords": "Dokumentacja i rejestry"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2131,7 +2150,13 @@
       "sourceMaintenance": "Konserwacja",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Zdarzenie",
-      "sourceIncident": "Zdarzenie"
+      "sourceIncident": "Zdarzenie",
+      "sourceRiskAssessment": "Ocena ryzyka",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Ocena ryzyka pożarowego",
+      "sourceFireLogbookEntry": "Kontrola ppoż.",
+      "sourceFireDoorInspection": "Drzwi przeciwpożarowe",
+      "sourceRams": "Pakiet RAMS"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2261,7 +2286,8 @@
       "sourceLinkFireRiskAssessment": "Utworzone przez ocenę ryzyka pożarowego {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Utworzone przez negatywną kontrolę ppoż.",
       "sourceLinkFireDoorInspection": "Utworzone przez negatywną kontrolę drzwi ppoż.",
-      "sourceLinkIncident": "Ze zdarzenia {referenceNumber}"
+      "sourceLinkIncident": "Ze zdarzenia {referenceNumber}",
+      "sourceLinkRams": "Z pakietu RAMS {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2325,11 +2351,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Ocena ryzyka",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Ocena ryzyka pożarowego",
-    "sourceFireLogbookEntry": "Kontrola ppoż.",
-    "sourceFireDoorInspection": "Drzwi przeciwpożarowe",
     "pagerShowing": "{from}–{to} z {total}",
     "pagerPrev": "Poprzednia",
     "pagerNext": "Następna",
@@ -3078,7 +3099,8 @@
       "contractors": "Wykonawcy",
       "sites": "Obiekty i projekty",
       "templates": "Szablony",
-      "incidents": "Zdarzenia"
+      "incidents": "Zdarzenia",
+      "rams": "Pakiety RAMS"
     }
   },
   "ai": {
@@ -4813,7 +4835,8 @@
         "acceptor": "Przyjmujący",
         "acceptAction": "Przyjmij pozwolenie",
         "acknowledgeConflicts": "Przejrzałem nakładające się pozwolenia i akceptuję łączne ryzyko",
-        "awaitingAcceptor": "Oczekiwanie na podpis wyznaczonego przyjmującego. Tylko ta osoba może przyjąć."
+        "awaitingAcceptor": "Oczekiwanie na podpis wyznaczonego przyjmującego. Tylko ta osoba może przyjąć.",
+        "ramsBlocked": "Wydanie jest zablokowane do czasu spełnienia wymogu RAMS."
       },
       "actions": {
         "title": "Działania",
@@ -4884,7 +4907,13 @@
         "requiredBeforeIssue": "ocena ryzyka wymagana przed wydaniem",
         "riskAssessment": "Ocena ryzyka",
         "methodStatement": "Instrukcja wykonywania prac",
-        "none": "Niepowiązane"
+        "none": "Niepowiązane",
+        "ramsRequired": "Ten typ zezwolenia wymaga pakietu RAMS",
+        "ramsSatisfied": "Powiązano wydany pakiet lub ważną zaakceptowaną ocenę.",
+        "ramsMissing": "Nie powiązano jeszcze pakietu RAMS ani zaakceptowanej oceny wykonawcy.",
+        "ramsNotIssued": "Powiązany pakiet nie jest obecnie wydany — najpierw go wydaj lub wydaj ponownie.",
+        "ramsExpired": "Powiązana ocena wykonawcy nie jest zaakceptowana albo jej ważność wygasła.",
+        "ramsOpenModule": "Otwórz RAMS"
       },
       "workers": {
         "title": "Osoby objęte pozwoleniem",
@@ -6213,7 +6242,11 @@
     "empty": {
       "title": "Nic na Ciebie nie czeka",
       "body": "Nowe zadania przypisane Tobie pojawią się tutaj."
-    }
+    },
+    "myActionsTitle": "Moje działania",
+    "myActionsSubtitle": "Wszystko przypisane Tobie — najbardziej zaległe na górze.",
+    "myAcknowledgementsTitle": "Moje potwierdzenia",
+    "myAcknowledgementsSubtitle": "Odprawy i oceny ryzyka oczekujące na Twoje potwierdzenie."
   },
   "rams": {
     "title": "RAMS",
@@ -6292,7 +6325,9 @@
       "allClear": "Wszystko, co potrzebne do wydania tego pakietu, jest gotowe.",
       "unreferencedTitle": "Wysokie ryzyka, których żaden krok nie obejmuje",
       "attestationTitle": "Oświadczenie autora",
-      "attestationConfirm": "Potwierdzam powyższe oświadczenie."
+      "attestationConfirm": "Potwierdzam powyższe oświadczenie.",
+      "attestationText": "Potwierdzam, że opracowałem lub zweryfikowałem tę ocenę ryzyka i instrukcję roboczą, że jest odpowiednia i wystarczająca dla opisanych prac, że kolejność prac i środki kontroli będą faktycznie stosowane, oraz że zostanie ona omówiona ze wszystkimi wykonawcami przed rozpoczęciem.",
+      "attestationCanonical": "Wiążący jest tekst angielski — zapisywany dosłownie i drukowany na PDF."
     },
     "errors": {
       "no-steps": "Dodaj co najmniej jeden krok do instrukcji roboczej.",
@@ -6334,17 +6369,25 @@
       "moveDown": "W dół",
       "remove": "Usuń krok",
       "expand": "Edytuj",
-      "collapse": "Zamknij"
+      "collapse": "Zamknij",
+      "untitled": "Krok bez tytułu",
+      "holdPointBadge": "Punkt wstrzymania",
+      "noHoldPoint": "Brak punktu wstrzymania"
     },
     "emergency": {
       "title": "Procedury awaryjne",
       "firstAid": "Pierwsza pomoc",
       "procedure": "Procedura awaryjna",
-      "rescuePlan": "Plan ratunkowy"
+      "rescuePlan": "Plan ratunkowy",
+      "nearestHospital": "Najbliższy SOR"
     },
     "logistics": {
       "welfare": "Zaplecze socjalne",
-      "accessEgress": "Dojście i ewakuacja"
+      "accessEgress": "Dojście i ewakuacja",
+      "title": "Logistyka budowy",
+      "environmental": "Środki ochrony środowiska",
+      "permitsRequired": "Przewidywane zezwolenia",
+      "competence": "Kompetencje i szkolenia"
     },
     "builder": {
       "saving": "Zapisywanie…",
@@ -6370,7 +6413,12 @@
       "briefedSoFar": "{count} poinstruowanych",
       "needsRebrief": "Wymaga ponownego instruktażu",
       "queued": "{count} instruktaż(y) czeka na synchronizację",
-      "retry": "Spróbuj ponownie"
+      "retry": "Spróbuj ponownie",
+      "hazardsHeading": "Co może cię skrzywdzić i co temu zapobiega",
+      "whoAffected": "Kto jest narażony",
+      "coshhHeading": "Stosowane substancje",
+      "signatureCaptured": "Podpis zarejestrowany",
+      "signAgain": "Podpisz ponownie"
     },
     "briefeeCategory": {
       "employee": "Pracownik",
@@ -6385,7 +6433,10 @@
       "issuedTo": "Osoba kontaktowa u klienta",
       "createLink": "Utwórz link do udostępnienia",
       "unnamed": "Odbiorca bez nazwy",
-      "revoked": "unieważniony"
+      "revoked": "unieważniony",
+      "showLink": "Pokaż link",
+      "copyLink": "Kopiuj",
+      "revokeLink": "Unieważnij"
     },
     "clientDecision": {
       "pending": "Oczekuje na klienta",
@@ -6408,7 +6459,9 @@
       "startPack": "Utwórz pakiet",
       "duplicate": "Powiel",
       "copySuffix": "kopia",
-      "empty": "Brak instrukcji roboczych."
+      "empty": "Brak instrukcji roboczych.",
+      "edit": "Edytuj",
+      "backToLibrary": "Powrót do biblioteki"
     },
     "reviews": {
       "title": "Ocena RAMS podwykonawców",
@@ -6421,7 +6474,18 @@
       "validTo": "Zaakceptowany do",
       "recordDecision": "Zapisz decyzję",
       "itemComment": "Co jest tu nie tak?",
-      "expired": "Wygasł"
+      "expired": "Wygasł",
+      "logReceived": "Zarejestruj otrzymany pakiet",
+      "logReceivedHint": "Podwykonawca przesłał RAMS — e-mailem, przez portal lub papierowo. Zarejestruj go tutaj, aby ocenić.",
+      "contractor": "Podwykonawca",
+      "contractorPlaceholder": "Szukaj podwykonawców…",
+      "packTitle": "Tytuł pakietu",
+      "packTitlePlaceholder": "np. Wymiana urządzeń na dachu — RAMS rew. B",
+      "site": "Obiekt (opcjonalnie)",
+      "sitePlaceholder": "Gdzie będą prowadzone prace",
+      "workDescription": "Na czym polega praca (opcjonalnie)",
+      "workDescriptionPlaceholder": "Co oceniający powinien wiedzieć przed otwarciem listy",
+      "logAndOpen": "Zarejestruj i otwórz listę"
     },
     "reviewOutcome": {
       "pending": "Oczekuje na ocenę",
@@ -6498,6 +6562,163 @@
       "method_statement_duplicated": "Powielono instrukcję roboczą",
       "review_submitted": "Przesłano pakiet podwykonawcy do oceny",
       "review_decided": "Zapisano decyzję oceny"
+    },
+    "common": {
+      "cancel": "Anuluj"
+    },
+    "reissue": {
+      "title": "Wydaj pakiet ponownie",
+      "invalidatesWarning": "To tworzy nową wersję. Wszystkie odprawy ({count}) dla obecnej wersji tracą ważność — przed wznowieniem prac trzeba je powtórzyć.",
+      "note": "Dlaczego wydajesz ponownie? (opcjonalnie)",
+      "notePlaceholder": "np. Zmieniono kolejność po obchodzie z klientem",
+      "confirm": "Podpisz i wydaj ponownie"
+    },
+    "reviewChecklist": {
+      "scope_matches": "Zakres prac odpowiada zleconym pracom",
+      "hazards_credible": "Zagrożenia zidentyfikowane, a środki kontroli wiarygodne",
+      "sequence_holdpoints": "Kolejność zawiera punkty wstrzymania: odcięcie / zezwolenie",
+      "emergency_present": "Ustalenia awaryjne i pierwszej pomocy obecne",
+      "competence_evidence": "Załączono dowody kompetencji i szkoleń",
+      "coshh_covered": "Substancje niebezpieczne ujęte tam, gdzie są używane",
+      "plant_certified": "Certyfikaty maszyn i sprzętu aktualne",
+      "insurance_current": "Ubezpieczenie aktualne i adekwatne do prac"
+    },
+    "editor": {
+      "titleLabel": "Tytuł instrukcji wykonania",
+      "tradeLabel": "Branża",
+      "publish": "Opublikuj wersję",
+      "saved": "Zapisano",
+      "neverPublished": "Nigdy nieopublikowane",
+      "saveFailed": "Nie zapisano: {message}",
+      "publishFailed": "Nie udało się opublikować: {message}",
+      "archived": "Ta instrukcja jest zarchiwizowana i nie można jej edytować.",
+      "unpublishedChanges": "Masz zmiany, których nie ma jeszcze w opublikowanej wersji. Opublikuj, aby były dostępne dla nowych pakietów.",
+      "scopeLabel": "Zakres prac",
+      "scopePlaceholder": "Na czym naprawdę polega praca — w jednym akapicie.",
+      "versionsTitle": "Opublikowane wersje",
+      "publishedBy": "przez {name} dnia {date}"
+    },
+    "exportFailed": "Eksport nie powiódł się: {message}"
+  },
+  "reportChooser": {
+    "title": "Zgłoś zdarzenie",
+    "subtitle": "Jedno pytanie decyduje, gdzie to trafi: czy ktoś ucierpiał?",
+    "harmed": {
+      "label": "Tak — ktoś doznał urazu lub zachorował",
+      "hint": "Zgłasza zdarzenie. Kierownicy są natychmiast powiadamiani, a termin RIDDOR sprawdzany."
+    },
+    "noHarm": {
+      "label": "Nie — ale mogło się źle skończyć",
+      "hint": "Zgłasza zagrożenie lub zdarzenie potencjalnie wypadkowe. Trafia do zespołu, który usuwa je, zanim ktoś ucierpi."
+    },
+    "footnote": "Nie masz pewności? Wybierz najbliższe — osoba weryfikująca może to później przenieść.",
+    "noPermission": "Nie masz uprawnień do zgłaszania. Poproś administratora o dostęp."
+  },
+  "training": {
+    "title": "Szkolenia i kompetencje",
+    "subtitle": "Kto co posiada, czego brakuje i kiedy wygasa.",
+    "tabs": {
+      "gaps": "Braki",
+      "matrix": "Macierz",
+      "compliance": "Zgodność",
+      "requirements": "Wymagania"
+    },
+    "asAt": "Stan na {date}",
+    "status": {
+      "in_date": "Ważne",
+      "expiring_soon": "Wkrótce wygasa",
+      "expired": "Wygasło",
+      "not_held": "Nigdy nie uzyskano",
+      "not_required": "Niewymagane"
+    },
+    "gaps": {
+      "expired": "Wygasłe",
+      "expiringSoon": "Wkrótce wygasa",
+      "notHeld": "Nigdy nie uzyskano",
+      "empty": "Brak luk. Wszystkie wymagane zapisy są ważne.",
+      "record": "Zarejestruj",
+      "expiresOn": "wygasa {date}",
+      "requiredByRole": "wymagane przez stanowisko",
+      "total": "{count} do obsłużenia"
+    },
+    "matrix": {
+      "person": "Osoba",
+      "empty": "Nie ma jeszcze czego pokazać. Dodaj wymaganie i zarejestruj uprawnienia.",
+      "exportCsv": "Eksportuj CSV",
+      "legend": "Legenda"
+    },
+    "compliance": {
+      "overall": "Ogółem",
+      "statutory": "Tylko ustawowe",
+      "byRequirement": "Wg wymagania",
+      "gapsCount": "{count} z brakami",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Wymagania",
+      "add": "Dodaj wymaganie",
+      "name": "Nazwa",
+      "category": "Kategoria",
+      "obligation": "Obowiązek",
+      "validity": "Ważność",
+      "validityMonths": "{months} mies.",
+      "noExpiry": "Nigdy nie wygasa",
+      "leadDays": "Przypomnij {days} dni wcześniej",
+      "empty": "Brak wymagań. Dodaj uprawnienia, które muszą posiadać pracownicy.",
+      "archive": "Archiwizuj",
+      "save": "Zapisz",
+      "assignments": "Kogo dotyczy",
+      "addAssignment": "Przypisz",
+      "cancel": "Anuluj",
+      "scope": {
+        "role": "Stanowisko",
+        "group": "Grupa",
+        "site": "Lokalizacja",
+        "person": "Osoba"
+      }
+    },
+    "obligation": {
+      "statutory": "Ustawowe",
+      "mandatory": "Obowiązkowe",
+      "discretionary": "Dobrowolne"
+    },
+    "record": {
+      "title": "Zarejestruj szkolenie",
+      "person": "Osoba",
+      "requirement": "Wymaganie",
+      "achievedAt": "Data uzyskania",
+      "expiresAt": "Wygasa",
+      "expiryAuto": "Obliczone z okresu ważności",
+      "awardingBody": "Jednostka wydająca",
+      "certificateNumber": "Numer certyfikatu",
+      "evidence": "Certyfikat lub zdjęcie karty",
+      "save": "Zapisz zapis",
+      "saved": "Zapis zapisany",
+      "source": "Źródło",
+      "cancel": "Anuluj",
+      "sources": {
+        "internal": "Wewnętrzne",
+        "external": "Dostawca zewnętrzny",
+        "imported": "Zaimportowane",
+        "self_declared": "Oświadczenie własne"
+      }
+    },
+    "person": {
+      "title": "Szkolenia",
+      "noRecords": "Brak zarejestrowanych szkoleń.",
+      "verified": "Zweryfikowane",
+      "unverified": "Niezweryfikowane"
+    },
+    "import": {
+      "title": "Importuj zapisy",
+      "help": "Wklej CSV z kolumnami: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importuj",
+      "imported": "Zaimportowano {count} zapisów",
+      "failed": "{count} wierszy nie powiodło się"
+    },
+    "errors": {
+      "moduleDisabled": "Ten moduł nie jest włączony.",
+      "generic": "Coś poszło nie tak."
     }
   }
 }

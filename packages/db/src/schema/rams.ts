@@ -226,6 +226,27 @@ export type RamsPack = typeof ramsPacks.$inferSelect;
 export type NewRamsPack = typeof ramsPacks.$inferInsert;
 
 /** One bound risk assessment, as frozen into a pack version. */
+/**
+ * One hazard from a bound RA version, frozen into the pack.
+ *
+ * RS-A6 / the PDF §2 gap: the snapshot used to carry only *metadata
+ * about* each assessment — reference, title, version, a worst band and a
+ * count — so neither the briefing screen nor the printed pack could show
+ * a single hazard or control. You cannot brief a crew on a risk
+ * assessment without the risks. Optional on the interface because packs
+ * issued before this shipped have no hazards in their frozen content and
+ * must keep rendering.
+ */
+export interface PackVersionHazard {
+  /** Index inside the RA version's own `content.hazards`. */
+  index: number;
+  hazard: string;
+  whoAffected: string;
+  /** The controls as worded in the assessment — what the crew must do. */
+  controls: string;
+  residualBand: string;
+}
+
 export interface PackVersionRiskAssessment {
   raVersionId: string;
   assessmentId: string;
@@ -235,6 +256,8 @@ export interface PackVersionRiskAssessment {
   /** Worst residual band across the version's hazards, for the summary row. */
   worstResidualBand: string;
   hazardCount: number;
+  /** Absent on packs issued before RS-A6. */
+  hazards?: PackVersionHazard[];
 }
 
 /** One bound COSHH assessment, as frozen into a pack version. */
@@ -491,6 +514,14 @@ export const ramsBriefings = pgTable(
     signatureData: text('signature_data'),
     /** Anything the briefee raised, captured at the point of briefing. */
     questionsNote: text('questions_note').notNull().default(''),
+    /**
+     * RS-A7: the offline queue's idempotency key. The router always
+     * accepted one "so an offline replay is idempotent" and then threw
+     * it away — there was no column — so a replayed flush recorded the
+     * same operative twice. Unique per pack, so a retry lands as a
+     * no-op rather than a duplicate signature in the register.
+     */
+    clientRef: text('client_ref'),
 
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
       .notNull()
@@ -499,6 +530,13 @@ export const ramsBriefings = pgTable(
   (table) => [
     index('rams_briefings_tenant_version_idx').on(table.tenantId, table.packVersionId),
     index('rams_briefings_pack_idx').on(table.packId, table.briefedAt),
+    // RS-A7: the DB is what makes the offline replay idempotent, not the
+    // client's good intentions. Partial, so rows without a clientRef
+    // (anything recorded before this, or from a non-queued path) are
+    // unaffected.
+    uniqueIndex('rams_briefings_client_ref_uq')
+      .on(table.packId, table.clientRef)
+      .where(sql`${table.clientRef} IS NOT NULL`),
   ],
 );
 

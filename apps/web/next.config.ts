@@ -19,11 +19,42 @@ const nextConfig: NextConfig = {
     remotePatterns: [],
   },
 
+  // Needed for readable browser stack traces in Sentry — Next does not emit
+  // browser source maps in production otherwise. They are uploaded and then
+  // deleted from the bundle by `sourcemaps.deleteSourcemapsAfterUpload`, so
+  // nothing ships to the client.
+  productionBrowserSourceMaps: true,
+
   // puppeteer-core is dynamically imported by @forma360/render at runtime for
   // PDF rendering; keep it external so Next resolves it from node_modules
   // instead of bundling it (and its chromium glue) into the server build.
-  serverExternalPackages: ['pg', 'bullmq', 'ioredis', '@aws-sdk/client-s3', 'puppeteer-core'],
+  //
+  // pino + pino-pretty are here for a sharper reason: pino spawns its
+  // transport in a worker thread via `thread-stream`, which locates the
+  // worker with `join(__dirname, 'lib', 'worker.js')`. Bundled, `__dirname`
+  // becomes the chunk directory and the path resolves to
+  // `.next/server/chunks/lib/worker.js` — a file webpack never emits. The
+  // worker dies at boot, takes the logger's output with it, and raises an
+  // uncaught exception. Externalised, pino resolves from node_modules and
+  // finds its own worker. Both are declared in this package's package.json
+  // so Node can resolve them from `.next/server` under pnpm.
+  serverExternalPackages: [
+    'pg',
+    'bullmq',
+    'ioredis',
+    '@aws-sdk/client-s3',
+    'puppeteer-core',
+    'pino',
+    'pino-pretty',
+  ],
 
+  // NOTE: production builds run `next build --webpack` (see package.json).
+  // Turbopack emits *indexed* source maps — a `sections` array with an empty
+  // top-level `sources` — and Sentry's symbolicator reads only the top level,
+  // so every server frame came back `js_no_source: Source code was not found`
+  // even with the map uploaded to the right project and the debug IDs
+  // matching. Webpack emits flat maps with embedded `sourcesContent`, which
+  // Sentry resolves. Costs ~4 min of build time; buys readable stack traces.
   webpack(config) {
     config.resolve = config.resolve ?? {};
     config.resolve.extensionAlias = {
@@ -42,21 +73,32 @@ const nextConfig: NextConfig = {
 };
 
 // Wrap with next-intl first (the i18n plugin has to be the innermost wrap so
-// Sentry can instrument the final handler), then with Sentry — but only
-// when SENTRY_DSN is configured. Without a DSN, skipping the Sentry wrap
-// avoids pulling @sentry/nextjs's server-side instrumentation into the
-// middleware + RSC bundles, which matters because the current Sentry
-// release (8.x) isn't certified against Next 16 and its edge code path
-// trips on `node:crypto`. Set SENTRY_DSN when you're ready for production
-// error tracking; the wrap re-engages automatically on the next build.
+// Sentry can instrument the final handler), then with Sentry.
+//
+// The wrap used to be conditional on SENTRY_DSN because Sentry 8.x was not
+// certified against Next 16 and its edge code path tripped on `node:crypto`.
+// Sentry 10 fixes that, so the wrap is now unconditional — a build that only
+// engages Sentry in production is a build whose Sentry-specific breakage can
+// only be discovered in production. Runtime behaviour is still governed by
+// the DSN: `Sentry.init({ dsn: undefined })` no-ops.
+//
+// Source maps upload only when SENTRY_AUTH_TOKEN is present; without it the
+// build still succeeds and you get minified frames.
 const withIntl = withNextIntl(nextConfig);
-const finalConfig = process.env.SENTRY_DSN
-  ? withSentryConfig(withIntl, {
-      silent: !process.env.SENTRY_AUTH_TOKEN,
-      telemetry: false,
-      hideSourceMaps: true,
-      disableLogger: true,
-    })
-  : withIntl;
 
-export default finalConfig;
+export default withSentryConfig(withIntl, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+  telemetry: false,
+  // Upload source maps for readable stack traces, then delete them from the
+  // deployed bundle so the client never serves them.
+  sourcemaps: { deleteSourcemapsAfterUpload: true },
+  // Strip the SDK's own debug logging from the bundle. `disableLogger` was
+  // deprecated in Sentry 10 and warns at error severity on every boot.
+  webpack: { treeshake: { removeDebugLogging: true } },
+  // Route browser events through our own origin so ad-blockers do not eat
+  // the client error reports we most need from field devices.
+  tunnelRoute: '/monitoring',
+});

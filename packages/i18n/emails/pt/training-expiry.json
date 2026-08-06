@@ -1,0 +1,8 @@
+{
+  "subject": "Formação a expirar: {requirementName}",
+  "preheader": "{requirementName} expira a {expiresOn}.",
+  "greeting": "Olá {personName},",
+  "body": "O seu registo de formação de \"{requirementName}\" expira a {expiresOn}. Trate da renovação e peça à sua chefia que registe o novo certificado para manter a matriz de formação atualizada: {url}",
+  "cta": "Ver a matriz de formação",
+  "footer": "Recebe esta mensagem porque tem um registo de formação em {productName}."
+}

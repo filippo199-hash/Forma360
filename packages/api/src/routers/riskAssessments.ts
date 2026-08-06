@@ -686,7 +686,9 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
     /** One frozen version — "the assessment as in force on {date}" (M-3). */
     getVersion: tenantProcedure
       .use(requirePermission('riskAssessments.view'))
-      .input(z.object({ assessmentId: z.string().length(26), versionNumber: z.number().int().min(1) }))
+      .input(
+        z.object({ assessmentId: z.string().length(26), versionNumber: z.number().int().min(1) }),
+      )
       .query(async ({ ctx, input }) => {
         assertEnabled();
         const assessment = await loadAssessment(ctx.db, ctx.tenantId, input.assessmentId);
@@ -1498,7 +1500,8 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
                   recipientName: u.name,
                   title: assessment.title,
                   referenceNumber: assessment.referenceNumber ?? '',
-                  dueDate: dueAt !== null ? dueAt.toISOString().slice(0, 10) : 'as soon as possible',
+                  dueDate:
+                    dueAt !== null ? dueAt.toISOString().slice(0, 10) : 'as soon as possible',
                   viewUrl: `${appUrl}/en/risk-assessments/${assessment.id}`,
                 },
               });

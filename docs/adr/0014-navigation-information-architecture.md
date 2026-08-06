@@ -178,3 +178,90 @@ figure the rail has no room to print.
 - **Badge everything.** Rejected: see §4. Four numbers that always mean
   "you, now" get read; fifteen that sometimes mean "the org, this month"
   do not.
+
+## Amendment (4 Aug 2026) — the practitioner panel's IA
+
+A four-practitioner design review of the shipped menu
+(`docs/reviews/freehs-navigation-ia-hse-expert-review.md`, disposition in
+`freehs-navigation-ia-review-response.md`) replaced the grouping this ADR
+originally recorded. The model, the gates and the testing discipline are
+unchanged; the shape is not.
+
+### Groups
+
+`groupRisk` / `groupVerify` / `groupRespond` are retired in favour of
+four groups named for what the user is doing, not for an abstraction:
+
+- **(unlabelled top block)** — Dashboard, Ask AI. Both answer *about*
+  everything rather than being a place you work.
+- **For me** — My actions, My acknowledgements. Ungated, because both can
+  only ever show rows addressed to the caller. For the majority of
+  licensed users who are not safety professionals, this block is the
+  application.
+- **Do the work** — Inspections, Hazards & near misses, Incidents,
+  Permits, Actions: the golden thread in reading order.
+- **Records & registers** — Risk assessments, COSHH, Fire Safety, RAMS:
+  documents that live for years and get reviewed. One seam to point an
+  auditor at.
+- **The organisation** — Sites, Assets, Contractors, Documents,
+  Briefings: the things work happens to and with, plus the distribution
+  channel alongside Documents.
+
+Permits sit in the work group (a live control issued and closed within a
+shift), Fire Safety in the registers group (its centre of gravity is the
+FRA and the statutory calendar) — both contested placements the panel
+argued through and settled.
+
+### Nesting changes what "active" means
+
+Templates, Schedules, Approvals and Maintenance became children of
+Inspections and Assets, but their routes are top-level (`/approvals`,
+not `/inspections/approvals`). `activeNavItem` therefore falls back to
+matching an item's *children* — otherwise standing on `/approvals`
+highlighted nothing and hid the sub-navigation that got you there.
+`NavChild` also gained an optional badge so Approvals kept its queue
+count on the way down.
+
+### Counts are a menu feature, not a module feature
+
+`myWork.counts` is now the single batched nav-counts endpoint: the
+caller's own queues plus per-module needs-attention numbers, each gated
+on both the brand catalogue (no query for a module the deployment does
+not ship) and the caller's view permission. A sixteen-entry menu costs
+one request. Group headings aggregate their items and show the total
+only while folded — open, the items speak for themselves.
+
+### The report decision moves into the flow
+
+"Observations" versus "Incidents" is a judgement an untrained reporter
+should never have to make from a menu, and getting it wrong sends a
+serious injury down a path where nobody is alerted. The ＋Report
+affordance states the distinction in its labels, and `/report` asks the
+one question that settles it — *was anyone harmed?* — then routes.
+
+## Amendment (5 Aug 2026) — the menu carries destinations only
+
+Two of the panel's additions are withdrawn from the menu. Neither the
+model, the gates nor the testing discipline changes.
+
+- **The ＋Report button is gone.** A dropdown of *verbs* pinned above a
+  list of *places* made the top of the menu two different kinds of thing,
+  and every destination behind it is one tap away inside its module. The
+  `/report` triage route survives and still asks the question that
+  settles hazard-versus-incident; it is now reached from the modules and
+  from links, not from the chrome. `nav/report-button.tsx` and the
+  `nav.report` strings are deleted.
+- **"For me" is one entry, not a group.** *My actions* and *My
+  acknowledgements* were two doors onto `/my-work`, which already merges
+  actions, acknowledgements, signatures, drafts and approvals into one
+  overdue-first queue with filter chips. A heading plus two rows to reach
+  a page that then re-splits itself is a group that earns nothing, so the
+  `groupForMe` section collapses into a single `forMe` entry sitting
+  under Ask AI in the unlabelled top block. `/my-work/actions` and
+  `/my-work/acknowledgements` stay routable for direct links; the parent
+  entry lights up for all three (NAV-E05).
+
+Consequences: `NavBadgeKey` loses `myActions` / `myAcknowledgements` and
+gains `forMe`, whose count is the sum of the two personal queues — one
+number for one door. `MOBILE_TAB_PRIORITY` leads with `forMe`, so the
+tab bar promotes one more browsable module than before.

@@ -86,9 +86,11 @@ export default async function SharedInspectionPage({ params }: Props) {
       packVersionId: ramsLink.packVersionId,
     });
     if (ramsSnapshot === null) notFound();
+    // RS-A14: drop the tenant id before it crosses to the client bundle.
+    const { tenantId: _packTenantId, ...publicPack } = ramsSnapshot.pack;
     return (
       <RamsClientAcceptanceView
-        snapshot={ramsSnapshot}
+        snapshot={{ ...ramsSnapshot, pack: publicPack }}
         token={token}
         alreadyDecided={
           ramsLink.decision === 'pending'

@@ -67,7 +67,20 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ Filter toevoegen",
+    "resultsCount": "{count} resultaten",
+    "removeFilter": "Filter {label} verwijderen",
+    "from": "Van",
+    "to": "Tot",
+    "showArchived": "Gearchiveerde tonen",
+    "hideArchived": "Gearchiveerde verbergen",
+    "exportCsv": "CSV exporteren",
+    "categories": "Categorieën",
+    "settings": "Instellingen",
+    "status": "Status",
+    "type": "Type",
+    "site": "Locatie"
   },
   "auth": {
     "signIn": {
@@ -1429,14 +1442,15 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Gevaren en bijna-ongevallen",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "Briefings",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Documenten",
     "ai": "AI-assistent",
+    "forMe": "Voor mij",
     "sites": "Locaties",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1447,15 +1461,11 @@
     "fireSafety": "Brandveiligheid",
     "analytics": "Dashboard",
     "incidents": "Incidenten",
-    "myWork": "Mijn werk",
     "more": "Meer",
     "quickLabel": "Snelle navigatie",
     "collapseMenu": "Menu inklappen",
     "expandMenu": "Menu uitklappen",
-    "groupRisk": "Risico en beheersing",
-    "groupVerify": "Inspecteren en verifiëren",
-    "groupRespond": "Melden en oplossen",
-    "groupOrg": "Organisatie",
+    "groupOrg": "De organisatie",
     "child": {
       "schedulesCalendar": "Agenda",
       "permitsBoard": "Live-bord",
@@ -1470,9 +1480,18 @@
       "contractorsGate": "Bouwplaatspoort",
       "contractorsCalendar": "Agenda",
       "ramsLibrary": "Bibliotheek met werkmethoden",
-      "ramsReviews": "Beoordeling RAMS onderaannemers"
+      "ramsReviews": "Beoordeling RAMS onderaannemers",
+      "templates": "Sjablonen",
+      "schedules": "Planningen",
+      "approvals": "Goedkeuringen",
+      "maintenance": "Onderhoud",
+      "trainingMatrix": "Matrix",
+      "trainingRequirements": "Vereisten"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "training": "Opleidingen",
+    "groupDoWork": "Het werk doen",
+    "groupRecords": "Dossiers en registers"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2131,7 +2150,13 @@
       "sourceMaintenance": "Onderhoud",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Incident",
-      "sourceIncident": "Incident"
+      "sourceIncident": "Incident",
+      "sourceRiskAssessment": "Risicobeoordeling",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Brandrisicobeoordeling",
+      "sourceFireLogbookEntry": "Brandveiligheidscontrole",
+      "sourceFireDoorInspection": "Branddeur",
+      "sourceRams": "RAMS-pakket"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2261,7 +2286,8 @@
       "sourceLinkFireRiskAssessment": "Aangemaakt door brandrisicobeoordeling {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Aangemaakt door een afgekeurde brandveiligheidscontrole",
       "sourceLinkFireDoorInspection": "Aangemaakt door een afgekeurde branddeurinspectie",
-      "sourceLinkIncident": "Voortgekomen uit incident {referenceNumber}"
+      "sourceLinkIncident": "Voortgekomen uit incident {referenceNumber}",
+      "sourceLinkRams": "Voortgekomen uit RAMS-pakket {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2325,11 +2351,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Risicobeoordeling",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Brandrisicobeoordeling",
-    "sourceFireLogbookEntry": "Brandveiligheidscontrole",
-    "sourceFireDoorInspection": "Branddeur",
     "pagerShowing": "{from}–{to} van {total}",
     "pagerPrev": "Vorige",
     "pagerNext": "Volgende",
@@ -3078,7 +3099,8 @@
       "contractors": "Aannemers",
       "sites": "Locaties & projecten",
       "templates": "Sjablonen",
-      "incidents": "Incidenten"
+      "incidents": "Incidenten",
+      "rams": "RAMS-pakketten"
     }
   },
   "ai": {
@@ -4813,7 +4835,8 @@
         "acceptor": "Acceptant",
         "acceptAction": "Vergunning accepteren",
         "acknowledgeConflicts": "Ik heb de overlappende vergunningen beoordeeld en accepteer het gecombineerde risico",
-        "awaitingAcceptor": "Wachten op de aangewezen acceptant. Alleen die persoon kan accepteren."
+        "awaitingAcceptor": "Wachten op de aangewezen acceptant. Alleen die persoon kan accepteren.",
+        "ramsBlocked": "Uitgifte is geblokkeerd totdat aan de RAMS-eis is voldaan."
       },
       "actions": {
         "title": "Acties",
@@ -4884,7 +4907,13 @@
         "requiredBeforeIssue": "risicobeoordeling vereist vóór uitgifte",
         "riskAssessment": "Risicobeoordeling",
         "methodStatement": "Werkmethodebeschrijving",
-        "none": "Niet gekoppeld"
+        "none": "Niet gekoppeld",
+        "ramsRequired": "Dit vergunningstype vereist een RAMS-pakket",
+        "ramsSatisfied": "Er is een uitgegeven pakket of een geldige geaccepteerde beoordeling gekoppeld.",
+        "ramsMissing": "Er is nog geen RAMS-pakket of geaccepteerde aannemersbeoordeling gekoppeld.",
+        "ramsNotIssued": "Het gekoppelde pakket is momenteel niet uitgegeven — geef het eerst (opnieuw) uit.",
+        "ramsExpired": "De gekoppelde aannemersbeoordeling is niet geaccepteerd of de geldigheid is verlopen.",
+        "ramsOpenModule": "RAMS openen"
       },
       "workers": {
         "title": "Personen onder deze vergunning",
@@ -6213,7 +6242,11 @@
     "empty": {
       "title": "Er wacht niets op u",
       "body": "Nieuw aan u toegewezen werk verschijnt hier."
-    }
+    },
+    "myActionsTitle": "Mijn acties",
+    "myActionsSubtitle": "Alles wat aan u is toegewezen, meest te laat eerst.",
+    "myAcknowledgementsTitle": "Mijn bevestigingen",
+    "myAcknowledgementsSubtitle": "Briefings en risicobeoordelingen die op uw bevestiging wachten."
   },
   "rams": {
     "title": "RAMS",
@@ -6292,7 +6325,9 @@
       "allClear": "Alles wat nodig is om dit pakket uit te geven is aanwezig.",
       "unreferencedTitle": "Hoge risico's die geen enkele stap afdekt",
       "attestationTitle": "Verklaring van de opsteller",
-      "attestationConfirm": "Ik bevestig bovenstaande verklaring."
+      "attestationConfirm": "Ik bevestig bovenstaande verklaring.",
+      "attestationText": "Ik bevestig dat ik deze risicobeoordeling en werkmethode heb opgesteld of beoordeeld, dat deze geschikt en toereikend is voor het beschreven werk, dat de werkvolgorde en de beheersmaatregelen daadwerkelijk zullen worden gevolgd, en dat iedereen die het werk uitvoert vooraf wordt geïnstrueerd.",
+      "attestationCanonical": "De Engelse tekst is bindend: die wordt letterlijk vastgelegd en op de pdf afgedrukt."
     },
     "errors": {
       "no-steps": "Voeg minstens één stap toe aan de werkmethode.",
@@ -6334,17 +6369,25 @@
       "moveDown": "Omlaag",
       "remove": "Stap verwijderen",
       "expand": "Bewerken",
-      "collapse": "Sluiten"
+      "collapse": "Sluiten",
+      "untitled": "Naamloze stap",
+      "holdPointBadge": "Stoppunt",
+      "noHoldPoint": "Geen stoppunt"
     },
     "emergency": {
       "title": "Noodmaatregelen",
       "firstAid": "EHBO",
       "procedure": "Noodprocedure",
-      "rescuePlan": "Reddingsplan"
+      "rescuePlan": "Reddingsplan",
+      "nearestHospital": "Dichtstbijzijnde SEH"
     },
     "logistics": {
       "welfare": "Voorzieningen",
-      "accessEgress": "Toegang en vluchtwegen"
+      "accessEgress": "Toegang en vluchtwegen",
+      "title": "Bouwplaatslogistiek",
+      "environmental": "Milieumaatregelen",
+      "permitsRequired": "Verwachte vergunningen",
+      "competence": "Vakbekwaamheid en opleiding"
     },
     "builder": {
       "saving": "Opslaan…",
@@ -6370,7 +6413,12 @@
       "briefedSoFar": "{count} ingelicht",
       "needsRebrief": "Opnieuw inlichten",
       "queued": "{count} toolbox(en) wachten op synchronisatie",
-      "retry": "Nu opnieuw proberen"
+      "retry": "Nu opnieuw proberen",
+      "hazardsHeading": "Wat u kan verwonden, en wat dat voorkomt",
+      "whoAffected": "Wie loopt risico",
+      "coshhHeading": "Gebruikte stoffen",
+      "signatureCaptured": "Handtekening vastgelegd",
+      "signAgain": "Opnieuw ondertekenen"
     },
     "briefeeCategory": {
       "employee": "Medewerker",
@@ -6385,7 +6433,10 @@
       "issuedTo": "Contactpersoon opdrachtgever",
       "createLink": "Deellink maken",
       "unnamed": "Naamloze ontvanger",
-      "revoked": "ingetrokken"
+      "revoked": "ingetrokken",
+      "showLink": "Link tonen",
+      "copyLink": "Kopiëren",
+      "revokeLink": "Intrekken"
     },
     "clientDecision": {
       "pending": "Wacht op opdrachtgever",
@@ -6408,7 +6459,9 @@
       "startPack": "Pakket aanmaken",
       "duplicate": "Dupliceren",
       "copySuffix": "kopie",
-      "empty": "Nog geen werkmethoden."
+      "empty": "Nog geen werkmethoden.",
+      "edit": "Bewerken",
+      "backToLibrary": "Terug naar de bibliotheek"
     },
     "reviews": {
       "title": "Beoordeling RAMS onderaannemers",
@@ -6421,7 +6474,18 @@
       "validTo": "Geaccepteerd tot",
       "recordDecision": "Beslissing vastleggen",
       "itemComment": "Wat klopt hier niet?",
-      "expired": "Verlopen"
+      "expired": "Verlopen",
+      "logReceived": "Ontvangen pakket vastleggen",
+      "logReceivedHint": "Een aannemer stuurde u een RAMS — per e-mail, portaal of op papier. Leg het hier vast om het te beoordelen.",
+      "contractor": "Aannemer",
+      "contractorPlaceholder": "Aannemers zoeken…",
+      "packTitle": "Titel van het pakket",
+      "packTitlePlaceholder": "bijv. Vervanging dakinstallatie — RAMS rev. B",
+      "site": "Locatie (optioneel)",
+      "sitePlaceholder": "Waar het werk plaatsvindt",
+      "workDescription": "Wat het werk inhoudt (optioneel)",
+      "workDescriptionPlaceholder": "Wat de beoordelaar moet weten voordat de checklist opengaat",
+      "logAndOpen": "Vastleggen en checklist openen"
     },
     "reviewOutcome": {
       "pending": "Wacht op beoordeling",
@@ -6498,6 +6562,163 @@
       "method_statement_duplicated": "Werkmethode gedupliceerd",
       "review_submitted": "Pakket onderaannemer ter beoordeling aangeboden",
       "review_decided": "Beoordelingsbeslissing vastgelegd"
+    },
+    "common": {
+      "cancel": "Annuleren"
+    },
+    "reissue": {
+      "title": "Dit pakket opnieuw uitgeven",
+      "invalidatesWarning": "Dit maakt een nieuwe versie. Alle {count} briefing(s) op de huidige versie vervallen — iedereen moet opnieuw worden geïnstrueerd voordat het werk doorgaat.",
+      "note": "Waarom opnieuw uitgeven? (optioneel)",
+      "notePlaceholder": "bijv. Volgorde gewijzigd na de rondgang met de klant",
+      "confirm": "Ondertekenen en opnieuw uitgeven"
+    },
+    "reviewChecklist": {
+      "scope_matches": "Werkomvang komt overeen met de opdracht",
+      "hazards_credible": "Gevaren geïdentificeerd en beheersmaatregelen geloofwaardig",
+      "sequence_holdpoints": "Volgorde bevat stoppunten voor isolatie / vergunning",
+      "emergency_present": "Nood- en EHBO-regelingen aanwezig",
+      "competence_evidence": "Bewijs van bekwaamheid en opleiding bijgevoegd",
+      "coshh_covered": "Gevaarlijke stoffen gedekt waar gebruikt",
+      "plant_certified": "Certificering van materieel en gereedschap geldig",
+      "insurance_current": "Verzekering actueel en toereikend voor het werk"
+    },
+    "editor": {
+      "titleLabel": "Titel van de werkmethode",
+      "tradeLabel": "Vakgebied",
+      "publish": "Versie publiceren",
+      "saved": "Opgeslagen",
+      "neverPublished": "Nooit gepubliceerd",
+      "saveFailed": "Niet opgeslagen: {message}",
+      "publishFailed": "Publiceren mislukt: {message}",
+      "archived": "Deze werkmethode is gearchiveerd en kan niet worden bewerkt.",
+      "unpublishedChanges": "Er zijn wijzigingen die nog niet in de gepubliceerde versie staan. Publiceer om ze beschikbaar te maken voor nieuwe pakketten.",
+      "scopeLabel": "Omvang van het werk",
+      "scopePlaceholder": "Wat het werk werkelijk inhoudt, in één alinea.",
+      "versionsTitle": "Gepubliceerde versies",
+      "publishedBy": "door {name} op {date}"
+    },
+    "exportFailed": "Export mislukt: {message}"
+  },
+  "reportChooser": {
+    "title": "Iets melden",
+    "subtitle": "Eén vraag bepaalt waar dit heen gaat: is iemand gewond geraakt?",
+    "harmed": {
+      "label": "Ja — iemand raakte gewond of werd ziek",
+      "hint": "Meldt een incident. Managers worden direct gewaarschuwd en de RIDDOR-termijn wordt gecontroleerd."
+    },
+    "noHarm": {
+      "label": "Nee — maar het had mis kunnen gaan",
+      "hint": "Meldt een gevaar of bijna-ongeval. Gaat naar het team dat het oplost voordat iemand gewond raakt."
+    },
+    "footnote": "Twijfel? Kies wat het beste past — wie het beoordeelt, kan het later verplaatsen.",
+    "noPermission": "U heeft hier geen meldrechten. Vraag een beheerder om toegang."
+  },
+  "training": {
+    "title": "Opleiding en vakbekwaamheid",
+    "subtitle": "Wie wat heeft, wat ontbreekt en wanneer het verloopt.",
+    "tabs": {
+      "gaps": "Hiaten",
+      "matrix": "Matrix",
+      "compliance": "Naleving",
+      "requirements": "Vereisten"
+    },
+    "asAt": "Per {date}",
+    "status": {
+      "in_date": "Geldig",
+      "expiring_soon": "Verloopt binnenkort",
+      "expired": "Verlopen",
+      "not_held": "Nooit behaald",
+      "not_required": "Niet vereist"
+    },
+    "gaps": {
+      "expired": "Verlopen",
+      "expiringSoon": "Verloopt binnenkort",
+      "notHeld": "Nooit behaald",
+      "empty": "Geen hiaten. Alle vereiste registraties zijn geldig.",
+      "record": "Vastleggen",
+      "expiresOn": "verloopt op {date}",
+      "requiredByRole": "vereist door functie",
+      "total": "{count} op te volgen"
+    },
+    "matrix": {
+      "person": "Persoon",
+      "empty": "Nog niets te tonen. Voeg een vereiste toe en leg vast wat mensen hebben.",
+      "exportCsv": "CSV exporteren",
+      "legend": "Legenda"
+    },
+    "compliance": {
+      "overall": "Totaal",
+      "statutory": "Alleen wettelijk",
+      "byRequirement": "Per vereiste",
+      "gapsCount": "{count} met hiaten",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Vereisten",
+      "add": "Vereiste toevoegen",
+      "name": "Naam",
+      "category": "Categorie",
+      "obligation": "Verplichting",
+      "validity": "Geldigheid",
+      "validityMonths": "{months} maanden",
+      "noExpiry": "Verloopt nooit",
+      "leadDays": "{days} dagen vooraf herinneren",
+      "empty": "Nog geen vereisten. Voeg de certificaten toe die uw mensen moeten hebben.",
+      "archive": "Archiveren",
+      "save": "Opslaan",
+      "assignments": "Wie het nodig heeft",
+      "addAssignment": "Toewijzen",
+      "cancel": "Annuleren",
+      "scope": {
+        "role": "Functie",
+        "group": "Groep",
+        "site": "Locatie",
+        "person": "Persoon"
+      }
+    },
+    "obligation": {
+      "statutory": "Wettelijk",
+      "mandatory": "Verplicht",
+      "discretionary": "Optioneel"
+    },
+    "record": {
+      "title": "Opleiding vastleggen",
+      "person": "Persoon",
+      "requirement": "Vereiste",
+      "achievedAt": "Behaald op",
+      "expiresAt": "Verloopt",
+      "expiryAuto": "Berekend uit de geldigheidsduur",
+      "awardingBody": "Uitgevende instantie",
+      "certificateNumber": "Certificaatnummer",
+      "evidence": "Certificaat of foto van de pas",
+      "save": "Registratie opslaan",
+      "saved": "Registratie opgeslagen",
+      "source": "Herkomst",
+      "cancel": "Annuleren",
+      "sources": {
+        "internal": "Intern",
+        "external": "Externe aanbieder",
+        "imported": "Geïmporteerd",
+        "self_declared": "Zelf opgegeven"
+      }
+    },
+    "person": {
+      "title": "Opleidingen",
+      "noRecords": "Nog geen opleidingen vastgelegd.",
+      "verified": "Geverifieerd",
+      "unverified": "Niet geverifieerd"
+    },
+    "import": {
+      "title": "Registraties importeren",
+      "help": "Plak CSV met kolommen: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Importeren",
+      "imported": "{count} registraties geïmporteerd",
+      "failed": "{count} rijen mislukt"
+    },
+    "errors": {
+      "moduleDisabled": "Deze module is niet ingeschakeld.",
+      "generic": "Er is iets misgegaan."
     }
   }
 }

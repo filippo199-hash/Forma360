@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronDown, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -17,6 +17,7 @@ import {
   type NavChild,
   type NavItem,
   type NavSection,
+  type NavSectionKey,
 } from '../lib/nav-model';
 import { usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
@@ -56,6 +57,45 @@ function useCollapsed(): readonly [boolean, () => void] {
     });
   }, []);
   return [collapsed, toggle] as const;
+}
+
+/** localStorage key for the per-group fold state. */
+const GROUPS_KEY = 'forma360.nav.groups';
+
+/**
+ * Which groups are folded (navigation review §2). Everything defaults to
+ * open — Tom's fold-away is a preference, never a hiding place — and the
+ * choice survives the session per group.
+ */
+function useGroupState(): readonly [Record<string, boolean>, (key: NavSectionKey) => void] {
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(GROUPS_KEY);
+      if (raw === null) return;
+      const parsed: unknown = JSON.parse(raw);
+      if (typeof parsed !== 'object' || parsed === null) return;
+      const next: Record<string, boolean> = {};
+      for (const [key, value] of Object.entries(parsed)) {
+        if (typeof value === 'boolean') next[key] = value;
+      }
+      setOpen(next);
+    } catch {
+      // Private-mode storage or corrupt value — every group stays open.
+    }
+  }, []);
+  const toggle = useCallback((key: NavSectionKey) => {
+    setOpen((prev) => {
+      const next = { ...prev, [key]: prev[key] === false };
+      try {
+        window.localStorage.setItem(GROUPS_KEY, JSON.stringify(next));
+      } catch {
+        // Non-fatal: the preference just won't survive the session.
+      }
+      return next;
+    });
+  }, []);
+  return [open, toggle] as const;
 }
 
 function NavBadge({ value, collapsed }: { value: number; collapsed: boolean }) {
@@ -98,6 +138,7 @@ export function SiteNavItems({
   const pathname = usePathname();
   const terminology = useTerminology();
   const counts = useNavCounts();
+  const [openGroups, toggleGroup] = useGroupState();
 
   const sections = buildNavSections({
     locale,
@@ -114,6 +155,8 @@ export function SiteNavItems({
   function renderChild(child: NavChild) {
     const Icon = NAV_CHILD_ICON[child.key];
     const isActive = isNavChildActive(child, pathname);
+    // Approvals keeps its queue count now that it nests under Inspections.
+    const badge = child.badge === undefined ? 0 : (counts[child.badge] ?? 0);
     return (
       <Link
         key={child.key}
@@ -129,6 +172,7 @@ export function SiteNavItems({
       >
         <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span className="truncate">{t(`child.${child.key}`)}</span>
+        <NavBadge value={badge} collapsed={false} />
       </Link>
     );
   }
@@ -161,30 +205,69 @@ export function SiteNavItems({
   }
 
   function renderSection(section: NavSection) {
-    return (
-      <div key={section.key ?? 'top'} className={cn(section.key === null ? '' : 'mt-4')}>
-        {section.key !== null ? (
-          collapsed ? (
+    const headingId = `nav-group-${section.key ?? 'top'}`;
+    // The group's own needs-attention total, so a folded group still
+    // says it wants opening (navigation review §1).
+    const groupTotal = section.items.reduce(
+      (sum, item) => sum + (item.badge === undefined ? 0 : (counts[item.badge] ?? 0)),
+      0,
+    );
+    const isOpen = section.key === null || openGroups[section.key] !== false;
+    const items = (
+      <ul className="flex list-none flex-col gap-0.5 p-0">
+        {section.items.map((item) => (
+          <li key={item.key} className="flex flex-col gap-0.5">
+            {renderItem(item, counts)}
+            {/* Sub-navigation appears only under the entry that owns the
+             * current route, so the resting menu stays module-length. */}
+            {!collapsed && active?.key === item.key ? (
+              <ul className="flex list-none flex-col gap-0.5 p-0">
+                {(item.children ?? []).map((child) => (
+                  <li key={child.key}>{renderChild(child)}</li>
+                ))}
+              </ul>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    );
+
+    // The unlabelled top block, and the icon rail, have nothing to fold.
+    if (section.key === null || collapsed) {
+      return (
+        <div key={section.key ?? 'top'} className={cn(section.key === null ? '' : 'mt-4')}>
+          {section.key !== null && collapsed ? (
             <div className="mx-2 mb-2 border-t border-sidebar-border" role="presentation" />
-          ) : (
-            <h2 className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
-              {t(section.key)}
-            </h2>
-          )
-        ) : null}
-        <div className="flex flex-col gap-0.5">
-          {section.items.map((item) => (
-            <div key={item.key} className="flex flex-col gap-0.5">
-              {renderItem(item, counts)}
-              {/* Sub-navigation appears only under the entry that owns the
-               * current route, so the resting menu stays module-length. */}
-              {!collapsed && active?.key === item.key
-                ? (item.children ?? []).map(renderChild)
-                : null}
-            </div>
-          ))}
+          ) : null}
+          {items}
         </div>
-      </div>
+      );
+    }
+
+    return (
+      <section key={section.key} aria-labelledby={headingId} className="mt-4">
+        <h2 id={headingId} className="px-1">
+          <button
+            type="button"
+            onClick={() => toggleGroup(section.key as NavSectionKey)}
+            aria-expanded={isOpen}
+            className="flex w-full items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45 transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-foreground/70"
+          >
+            <ChevronDown
+              className={cn('h-3 w-3 shrink-0 transition-transform', isOpen ? '' : '-rotate-90')}
+              aria-hidden="true"
+            />
+            <span className="truncate">{t(section.key)}</span>
+            {/* Only while folded: open, the items carry their own numbers. */}
+            {!isOpen && groupTotal > 0 ? (
+              <span className="ml-auto min-w-5 rounded-full bg-brand px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-brand-foreground">
+                {groupTotal > 99 ? '99+' : groupTotal}
+              </span>
+            ) : null}
+          </button>
+        </h2>
+        {isOpen ? items : null}
+      </section>
     );
   }
 

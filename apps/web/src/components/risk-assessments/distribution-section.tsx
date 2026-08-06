@@ -158,9 +158,7 @@ export function DistributionSection({
               {sharing ? t('distribution.sharingHeadsUp') : t('distribution.shareHeadsUp')}
             </Button>
             {!isActive ? (
-              <p className="text-xs text-muted-foreground">
-                {t('distribution.shareNeedsPublish')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('distribution.shareNeedsPublish')}</p>
             ) : (
               <p className="text-xs text-muted-foreground">{t('distribution.shareRecordsAcks')}</p>
             )}

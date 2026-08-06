@@ -485,7 +485,7 @@ export default function FireBuildingPage() {
       {/* ── Logbook ─────────────────────────────────────────────────── */}
       {tab === 'logbook' ? (
         <section className="space-y-5">
-          <div className="overflow-x-auto rounded-lg border">
+          <div className="overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
@@ -528,8 +528,8 @@ export default function FireBuildingPage() {
                           <p className="mt-0.5 text-xs text-muted-foreground">
                             {t('logbook.linkedAssetLine', {
                               name:
-                                (assetsList.data ?? []).find((a) => a.id === check.assetId)
-                                  ?.name ?? check.assetId,
+                                (assetsList.data ?? []).find((a) => a.id === check.assetId)?.name ??
+                                check.assetId,
                             })}
                           </p>
                         ) : null}
@@ -851,7 +851,7 @@ export default function FireBuildingPage() {
           {building.doors.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('doors.empty')}</p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border">
+            <div className="overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
@@ -1157,7 +1157,7 @@ export default function FireBuildingPage() {
           {building.drills.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('drills.empty')}</p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border">
+            <div className="overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">

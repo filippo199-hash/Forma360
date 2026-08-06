@@ -67,7 +67,20 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ Add filter",
+    "resultsCount": "{count} results",
+    "removeFilter": "Remove {label} filter",
+    "from": "From",
+    "to": "To",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
+    "exportCsv": "Export CSV",
+    "categories": "Categories",
+    "settings": "Settings",
+    "status": "Status",
+    "type": "Type",
+    "site": "Site"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -75,13 +88,14 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "Hazards & near misses",
     "actions": "Actions",
-    "headsUp": "Heads Up",
+    "headsUp": "Briefings",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "Documents",
     "ai": "AI Assistant",
+    "forMe": "For me",
     "settings": "Settings",
     "sites": "Sites",
     "projects": "Projects",
@@ -93,15 +107,11 @@
     "fireSafety": "Fire Safety",
     "analytics": "Dashboard",
     "incidents": "Incidents",
-    "myWork": "My work",
     "more": "More",
     "quickLabel": "Quick navigation",
     "collapseMenu": "Collapse menu",
     "expandMenu": "Expand menu",
-    "groupRisk": "Risk & control",
-    "groupVerify": "Inspect & verify",
-    "groupRespond": "Report & fix",
-    "groupOrg": "Organisation",
+    "groupOrg": "The organisation",
     "child": {
       "schedulesCalendar": "Calendar",
       "permitsBoard": "Live board",
@@ -116,9 +126,18 @@
       "contractorsGate": "Site gate",
       "contractorsCalendar": "Calendar",
       "ramsLibrary": "Method statement library",
-      "ramsReviews": "Contractor RAMS review"
+      "ramsReviews": "Contractor RAMS review",
+      "templates": "Templates",
+      "schedules": "Schedules",
+      "approvals": "Approvals",
+      "maintenance": "Maintenance",
+      "trainingMatrix": "Matrix",
+      "trainingRequirements": "Requirements"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "training": "Training",
+    "groupDoWork": "Do the work",
+    "groupRecords": "Records & registers"
   },
   "ai": {
     "emptyTitle": "How can I help?",
@@ -2210,7 +2229,13 @@
       "sourceMaintenance": "Maintenance",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Incident",
-      "sourceIncident": "Incident"
+      "sourceIncident": "Incident",
+      "sourceRiskAssessment": "Risk assessment",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "Fire risk assessment",
+      "sourceFireLogbookEntry": "Fire check",
+      "sourceFireDoorInspection": "Fire door",
+      "sourceRams": "RAMS pack"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2340,7 +2365,8 @@
       "sourceLinkFireRiskAssessment": "Raised by fire risk assessment {referenceNumber}",
       "sourceLinkFireLogbookEntry": "Raised by a failed fire-safety check",
       "sourceLinkFireDoorInspection": "Raised by a failed fire-door inspection",
-      "sourceLinkIncident": "Raised by incident {referenceNumber}"
+      "sourceLinkIncident": "Raised by incident {referenceNumber}",
+      "sourceLinkRams": "Raised by RAMS pack {referenceNumber}"
     },
     "create": {
       "title": "Create action",
@@ -2404,11 +2430,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "Risk assessment",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "Fire risk assessment",
-    "sourceFireLogbookEntry": "Fire check",
-    "sourceFireDoorInspection": "Fire door",
     "pagerShowing": "Showing {from}–{to} of {total}",
     "pagerPrev": "Previous",
     "pagerNext": "Next",
@@ -3348,7 +3369,8 @@
       "contractors": "Contractors",
       "sites": "Sites & projects",
       "templates": "Templates",
-      "incidents": "Incidents"
+      "incidents": "Incidents",
+      "rams": "RAMS packs"
     }
   },
   "maintenancePrograms": {
@@ -5054,7 +5076,8 @@
         "acceptor": "Acceptor",
         "acceptAction": "Accept permit",
         "acknowledgeConflicts": "I have reviewed the overlapping permits and accept the combined risk",
-        "awaitingAcceptor": "Waiting for the named acceptor to sign on. Only they can accept."
+        "awaitingAcceptor": "Waiting for the named acceptor to sign on. Only they can accept.",
+        "ramsBlocked": "Issue is blocked until the RAMS requirement is met."
       },
       "actions": {
         "title": "Permit actions",
@@ -5125,7 +5148,13 @@
         "requiredBeforeIssue": "risk assessment required before issue",
         "riskAssessment": "Risk assessment",
         "methodStatement": "Method statement",
-        "none": "Not linked"
+        "none": "Not linked",
+        "ramsRequired": "This permit type requires a RAMS pack",
+        "ramsSatisfied": "An issued pack or an in-date accepted review is linked.",
+        "ramsMissing": "No RAMS pack or accepted contractor review is linked yet.",
+        "ramsNotIssued": "The linked pack is not currently issued — issue or re-issue it first.",
+        "ramsExpired": "The linked contractor review is not accepted, or its validity has lapsed.",
+        "ramsOpenModule": "Open RAMS"
       },
       "workers": {
         "title": "People under this permit",
@@ -6448,7 +6477,11 @@
     "empty": {
       "title": "Nothing waiting on you",
       "body": "New work assigned to you appears here."
-    }
+    },
+    "myActionsTitle": "My actions",
+    "myActionsSubtitle": "Everything assigned to you, most overdue first.",
+    "myAcknowledgementsTitle": "My acknowledgements",
+    "myAcknowledgementsSubtitle": "Briefings and risk assessments waiting for your sign-off."
   },
   "rams": {
     "title": "RAMS",
@@ -6527,7 +6560,9 @@
       "allClear": "Everything needed to issue this pack is in place.",
       "unreferencedTitle": "High-risk hazards no step addresses",
       "attestationTitle": "Author declaration",
-      "attestationConfirm": "I confirm the declaration above."
+      "attestationConfirm": "I confirm the declaration above.",
+      "attestationText": "I confirm that I have prepared or reviewed this risk assessment and method statement, that it is suitable and sufficient for the work described, that the sequence of work and the control measures are those that will actually be followed, and that it will be briefed to everyone carrying out the work before they start.",
+      "attestationCanonical": ""
     },
     "errors": {
       "no-steps": "Add at least one step to the method statement.",
@@ -6569,17 +6604,25 @@
       "moveDown": "Move down",
       "remove": "Remove step",
       "expand": "Edit",
-      "collapse": "Close"
+      "collapse": "Close",
+      "untitled": "Untitled step",
+      "holdPointBadge": "Hold point",
+      "noHoldPoint": "No hold point"
     },
     "emergency": {
       "title": "Emergency arrangements",
       "firstAid": "First aid",
       "procedure": "Emergency procedure",
-      "rescuePlan": "Rescue plan"
+      "rescuePlan": "Rescue plan",
+      "nearestHospital": "Nearest A&E"
     },
     "logistics": {
       "welfare": "Welfare",
-      "accessEgress": "Access and egress"
+      "accessEgress": "Access and egress",
+      "title": "Site logistics",
+      "environmental": "Environmental controls",
+      "permitsRequired": "Permits expected",
+      "competence": "Competence and training"
     },
     "builder": {
       "saving": "Saving…",
@@ -6605,7 +6648,12 @@
       "briefedSoFar": "{count} briefed",
       "needsRebrief": "Needs re-briefing",
       "queued": "{count} briefing(s) waiting to sync",
-      "retry": "Retry now"
+      "retry": "Retry now",
+      "hazardsHeading": "What can hurt you, and what stops it",
+      "whoAffected": "Who is at risk",
+      "coshhHeading": "Substances in use",
+      "signatureCaptured": "Signature captured",
+      "signAgain": "Sign again"
     },
     "briefeeCategory": {
       "employee": "Employee",
@@ -6620,7 +6668,10 @@
       "issuedTo": "Client contact name",
       "createLink": "Create share link",
       "unnamed": "Unnamed recipient",
-      "revoked": "revoked"
+      "revoked": "revoked",
+      "showLink": "Show link",
+      "copyLink": "Copy",
+      "revokeLink": "Revoke"
     },
     "clientDecision": {
       "pending": "Awaiting client",
@@ -6643,7 +6694,9 @@
       "startPack": "Start a pack",
       "duplicate": "Duplicate",
       "copySuffix": "copy",
-      "empty": "No method statements yet."
+      "empty": "No method statements yet.",
+      "edit": "Edit",
+      "backToLibrary": "Back to the library"
     },
     "reviews": {
       "title": "Contractor RAMS review",
@@ -6656,7 +6709,18 @@
       "validTo": "Accepted until",
       "recordDecision": "Record decision",
       "itemComment": "What is wrong with this?",
-      "expired": "Expired"
+      "expired": "Expired",
+      "logReceived": "Log a received pack",
+      "logReceivedHint": "A contractor sent you a RAMS — by email, portal or on paper. Log it here to review it.",
+      "contractor": "Contractor",
+      "contractorPlaceholder": "Search contractors…",
+      "packTitle": "Pack title",
+      "packTitlePlaceholder": "e.g. Roof plant replacement — RAMS rev B",
+      "site": "Site (optional)",
+      "sitePlaceholder": "Where the work will happen",
+      "workDescription": "What the work is (optional)",
+      "workDescriptionPlaceholder": "Anything the reviewer needs to know before opening the checklist",
+      "logAndOpen": "Log and open the checklist"
     },
     "reviewOutcome": {
       "pending": "Awaiting review",
@@ -6733,6 +6797,163 @@
       "method_statement_duplicated": "Method statement duplicated",
       "review_submitted": "Contractor pack submitted for review",
       "review_decided": "Review decision recorded"
+    },
+    "common": {
+      "cancel": "Cancel"
+    },
+    "reissue": {
+      "title": "Re-issue this pack",
+      "invalidatesWarning": "This creates a new version. All {count} briefing(s) against the current version stop counting — everyone must be re-briefed before work continues.",
+      "note": "Why are you re-issuing? (optional)",
+      "notePlaceholder": "e.g. Sequence changed after the client walk-round",
+      "confirm": "Sign and re-issue"
+    },
+    "reviewChecklist": {
+      "scope_matches": "Scope of works matches the work we have instructed",
+      "hazards_credible": "Hazards identified and controls credible for the work",
+      "sequence_holdpoints": "Sequence includes isolation / permit hold points",
+      "emergency_present": "Emergency and first-aid arrangements present",
+      "competence_evidence": "Competence and training evidence attached",
+      "coshh_covered": "COSHH / substances covered where used",
+      "plant_certified": "Plant and equipment certification in date",
+      "insurance_current": "Insurance current and adequate for the work"
+    },
+    "editor": {
+      "titleLabel": "Method statement title",
+      "tradeLabel": "Trade",
+      "publish": "Publish version",
+      "saved": "Saved",
+      "neverPublished": "Never published",
+      "saveFailed": "Not saved: {message}",
+      "publishFailed": "Could not publish: {message}",
+      "archived": "This method statement is archived and cannot be edited.",
+      "unpublishedChanges": "You have changes that are not in the published version yet. Publish to make them available to new packs.",
+      "scopeLabel": "Scope of works",
+      "scopePlaceholder": "What the job actually is, in one paragraph.",
+      "versionsTitle": "Published versions",
+      "publishedBy": "by {name} on {date}"
+    },
+    "exportFailed": "Export failed: {message}"
+  },
+  "reportChooser": {
+    "title": "Report something",
+    "subtitle": "One question decides where this goes: was anyone harmed?",
+    "harmed": {
+      "label": "Yes — someone was harmed or made ill",
+      "hint": "Reports an incident. Managers are alerted straight away and the RIDDOR clock is checked."
+    },
+    "noHarm": {
+      "label": "No — but it could have gone wrong",
+      "hint": "Reports a hazard or near miss. Goes to the team who fix things before they hurt someone."
+    },
+    "footnote": "Not sure? Pick the one that fits best — anyone reviewing it can move it later.",
+    "noPermission": "You don't have permission to report here. Ask an administrator for reporting access."
+  },
+  "training": {
+    "title": "Training & competence",
+    "subtitle": "Who holds what, what is missing, and when it expires.",
+    "tabs": {
+      "gaps": "Gaps",
+      "matrix": "Matrix",
+      "compliance": "Compliance",
+      "requirements": "Requirements"
+    },
+    "asAt": "As at {date}",
+    "status": {
+      "in_date": "In date",
+      "expiring_soon": "Expiring soon",
+      "expired": "Expired",
+      "not_held": "Never held",
+      "not_required": "Not required"
+    },
+    "gaps": {
+      "expired": "Expired",
+      "expiringSoon": "Expiring soon",
+      "notHeld": "Never held",
+      "empty": "No gaps. Every required record is in date.",
+      "record": "Record",
+      "expiresOn": "expires {date}",
+      "requiredByRole": "required by role",
+      "total": "{count} to chase"
+    },
+    "matrix": {
+      "person": "Person",
+      "empty": "Nothing to show yet. Add a requirement and record what people hold.",
+      "exportCsv": "Export CSV",
+      "legend": "Legend"
+    },
+    "compliance": {
+      "overall": "Overall",
+      "statutory": "Statutory only",
+      "byRequirement": "By requirement",
+      "gapsCount": "{count} with gaps",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "Requirements",
+      "add": "Add requirement",
+      "name": "Name",
+      "category": "Category",
+      "obligation": "Obligation",
+      "validity": "Validity",
+      "validityMonths": "{months} months",
+      "noExpiry": "Never expires",
+      "leadDays": "Chase {days} days ahead",
+      "empty": "No requirements yet. Add the tickets your people need to hold.",
+      "archive": "Archive",
+      "save": "Save",
+      "assignments": "Who needs it",
+      "addAssignment": "Assign",
+      "cancel": "Cancel",
+      "scope": {
+        "role": "Role",
+        "group": "Group",
+        "site": "Site",
+        "person": "Person"
+      }
+    },
+    "obligation": {
+      "statutory": "Statutory",
+      "mandatory": "Mandatory",
+      "discretionary": "Discretionary"
+    },
+    "record": {
+      "title": "Record training",
+      "person": "Person",
+      "requirement": "Requirement",
+      "achievedAt": "Date achieved",
+      "expiresAt": "Expires",
+      "expiryAuto": "Computed from the validity period",
+      "awardingBody": "Awarding body",
+      "certificateNumber": "Certificate number",
+      "evidence": "Certificate or card photo",
+      "save": "Save record",
+      "saved": "Record saved",
+      "source": "Source",
+      "cancel": "Cancel",
+      "sources": {
+        "internal": "Internal",
+        "external": "External provider",
+        "imported": "Imported",
+        "self_declared": "Self-declared"
+      }
+    },
+    "person": {
+      "title": "Training",
+      "noRecords": "No training recorded yet.",
+      "verified": "Verified",
+      "unverified": "Not verified"
+    },
+    "import": {
+      "title": "Import records",
+      "help": "Paste CSV with columns: personName, userEmail, requirementName, achievedAt, expiresAt.",
+      "run": "Import",
+      "imported": "{count} records imported",
+      "failed": "{count} rows failed"
+    },
+    "errors": {
+      "moduleDisabled": "This module is not enabled.",
+      "generic": "Something went wrong."
     }
   }
 }

@@ -18,6 +18,11 @@ import {
 import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
+import {
+  actionSourceLinkKey,
+  actionSourceLinkTakesReference,
+  type ActionSourceType,
+} from '../../../../src/lib/action-sources';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { AssetField } from '../../../../src/components/actions/asset-field';
@@ -663,18 +668,7 @@ function SourceCard({
   locale,
 }: {
   source: {
-    type:
-      | 'issue'
-      | 'inspection'
-      | 'standalone'
-      | 'maintenance'
-      | 'risk_assessment'
-      | 'coshh_assessment'
-      | 'fire_risk_assessment'
-      | 'fire_logbook_entry'
-      | 'fire_door_inspection'
-      | 'incident'
-      | 'rams';
+    type: ActionSourceType;
     referenceNumber: string | null;
     title: string | null;
     href?: string | null;
@@ -683,6 +677,13 @@ function SourceCard({
   locale: string;
 }) {
   const t = useTranslations('actions.detail');
+  // next-intl types every key to its own params; the shared source-key table
+  // is resolved at runtime, so widen the signature once here instead of
+  // casting at each call site.
+  const tWithReference = (key: string, referenceNumber: string): string =>
+    (t as unknown as (k: string, values: { referenceNumber: string }) => string)(key, {
+      referenceNumber,
+    });
   // Maintenance-sourced actions show their origin via the auto-generated
   // badge + the Asset row, so skip the generic source card entirely.
   if (source !== null && source.type === 'maintenance') return null;
@@ -713,21 +714,9 @@ function SourceCard({
       <CardContent className="flex items-start justify-between gap-2 p-6 text-sm">
         <div className="space-y-0.5">
           <p>
-            {source.type === 'issue'
-              ? t('sourceLinkIssue', { referenceNumber: reference })
-              : source.type === 'inspection'
-                ? t('sourceLinkInspection', { referenceNumber: reference })
-                : source.type === 'incident'
-                  ? t('sourceLinkIncident', { referenceNumber: reference })
-                  : source.type === 'risk_assessment'
-                    ? t('sourceLinkRiskAssessment', { referenceNumber: reference })
-                    : source.type === 'coshh_assessment'
-                      ? t('sourceLinkCoshhAssessment', { referenceNumber: reference })
-                      : source.type === 'fire_risk_assessment'
-                        ? t('sourceLinkFireRiskAssessment', { referenceNumber: reference })
-                        : source.type === 'fire_logbook_entry'
-                          ? t('sourceLinkFireLogbookEntry')
-                          : t('sourceLinkFireDoorInspection')}
+            {actionSourceLinkTakesReference(source.type)
+              ? tWithReference(actionSourceLinkKey(source.type), reference)
+              : t(actionSourceLinkKey(source.type) as never)}
           </p>
           {source.title !== null && source.title.length > 0 ? (
             <p className="text-muted-foreground">{source.title}</p>

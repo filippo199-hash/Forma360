@@ -373,6 +373,16 @@ export interface BoundRaHazard {
   hazard: string;
   residualLikelihood: number | null;
   residualSeverity: number | null;
+  /**
+   * RS-A6: who is at risk and what is being done about it. The issue
+   * gate does not need these, but the briefing screen and the printed
+   * pack do — you cannot brief a crew on a risk assessment without the
+   * risks — so they travel with the hazard rather than being fetched
+   * again from a different shape. Optional so the pure gate helpers stay
+   * callable from callers that only have likelihood and severity.
+   */
+  whoAffected?: string;
+  controls?: string;
 }
 
 export interface BoundRaVersion {

@@ -67,7 +67,20 @@
     "remove": "Remove",
     "on": "On",
     "off": "Off",
-    "restore": "Restore"
+    "restore": "Restore",
+    "addFilter": "+ 添加筛选",
+    "resultsCount": "{count} 条结果",
+    "removeFilter": "移除 {label} 筛选",
+    "from": "从",
+    "to": "至",
+    "showArchived": "显示已归档",
+    "hideArchived": "隐藏已归档",
+    "exportCsv": "导出 CSV",
+    "categories": "类别",
+    "settings": "设置",
+    "status": "状态",
+    "type": "类型",
+    "site": "场所"
   },
   "auth": {
     "signIn": {
@@ -1429,14 +1442,15 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Observations",
+    "issues": "危险源与未遂事件",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Heads Up",
+    "headsUp": "简报",
     "assets": "Assets",
     "maintenance": "Maintenance",
     "documents": "文档",
     "ai": "AI助手",
+    "forMe": "与我相关",
     "sites": "站点",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1447,14 +1461,10 @@
     "fireSafety": "消防安全",
     "analytics": "仪表盘",
     "incidents": "事故事件",
-    "myWork": "我的工作",
     "more": "更多",
     "quickLabel": "快速导航",
     "collapseMenu": "收起菜单",
     "expandMenu": "展开菜单",
-    "groupRisk": "风险与控制",
-    "groupVerify": "检查与验证",
-    "groupRespond": "上报与整改",
     "groupOrg": "组织",
     "child": {
       "schedulesCalendar": "日历",
@@ -1470,9 +1480,18 @@
       "contractorsGate": "工地门禁",
       "contractorsCalendar": "日历",
       "ramsLibrary": "作业方法说明库",
-      "ramsReviews": "承包商 RAMS 审查"
+      "ramsReviews": "承包商 RAMS 审查",
+      "templates": "模板",
+      "schedules": "排程",
+      "approvals": "审批",
+      "maintenance": "维护",
+      "trainingMatrix": "矩阵",
+      "trainingRequirements": "要求"
     },
-    "rams": "RAMS"
+    "rams": "RAMS",
+    "training": "培训",
+    "groupDoWork": "开展工作",
+    "groupRecords": "记录与台账"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -2131,7 +2150,13 @@
       "sourceMaintenance": "维护",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "事故事件",
-      "sourceIncident": "事故事件"
+      "sourceIncident": "事故事件",
+      "sourceRiskAssessment": "风险评估",
+      "sourceCoshhAssessment": "COSHH",
+      "sourceFireRiskAssessment": "火灾风险评估",
+      "sourceFireLogbookEntry": "消防检查",
+      "sourceFireDoorInspection": "防火门",
+      "sourceRams": "RAMS 工作包"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -2261,7 +2286,8 @@
       "sourceLinkFireRiskAssessment": "由火灾风险评估 {referenceNumber} 创建",
       "sourceLinkFireLogbookEntry": "由不合格的消防检查创建",
       "sourceLinkFireDoorInspection": "由不合格的防火门检查创建",
-      "sourceLinkIncident": "由事故 {referenceNumber} 生成"
+      "sourceLinkIncident": "由事故 {referenceNumber} 生成",
+      "sourceLinkRams": "由 RAMS 工作包 {referenceNumber} 生成"
     },
     "create": {
       "title": "Create action",
@@ -2325,11 +2351,6 @@
     "filters": {
       "removeAria": "Remove {label} filter"
     },
-    "sourceRiskAssessment": "风险评估",
-    "sourceCoshhAssessment": "COSHH",
-    "sourceFireRiskAssessment": "火灾风险评估",
-    "sourceFireLogbookEntry": "消防检查",
-    "sourceFireDoorInspection": "防火门",
     "pagerShowing": "显示第 {from}–{to} 条，共 {total} 条",
     "pagerPrev": "上一页",
     "pagerNext": "下一页",
@@ -3078,7 +3099,8 @@
       "contractors": "承包商",
       "sites": "站点与项目",
       "templates": "模板",
-      "incidents": "事故事件"
+      "incidents": "事故事件",
+      "rams": "RAMS 工作包"
     }
   },
   "ai": {
@@ -4813,7 +4835,8 @@
         "acceptor": "接收人",
         "acceptAction": "接收许可",
         "acknowledgeConflicts": "我已查看重叠的许可并接受叠加风险",
-        "awaitingAcceptor": "等待指定接收人签字。只有本人可以接收。"
+        "awaitingAcceptor": "等待指定接收人签字。只有本人可以接收。",
+        "ramsBlocked": "在满足 RAMS 要求之前无法签发。"
       },
       "actions": {
         "title": "许可操作",
@@ -4884,7 +4907,13 @@
         "requiredBeforeIssue": "签发前需要风险评估",
         "riskAssessment": "风险评估",
         "methodStatement": "施工方案",
-        "none": "未关联"
+        "none": "未关联",
+        "ramsRequired": "此许可类型需要 RAMS 工作包",
+        "ramsSatisfied": "已关联已签发的工作包或在有效期内的已接受评审。",
+        "ramsMissing": "尚未关联 RAMS 工作包或已接受的承包商评审。",
+        "ramsNotIssued": "关联的工作包当前未签发 — 请先签发或重新签发。",
+        "ramsExpired": "关联的承包商评审未被接受，或有效期已过。",
+        "ramsOpenModule": "打开 RAMS"
       },
       "workers": {
         "title": "本许可涵盖人员",
@@ -6213,7 +6242,11 @@
     "empty": {
       "title": "没有待处理事项",
       "body": "分配给您的新工作会显示在这里。"
-    }
+    },
+    "myActionsTitle": "我的行动",
+    "myActionsSubtitle": "分配给您的全部事项，逾期最久的排在前面。",
+    "myAcknowledgementsTitle": "我的确认事项",
+    "myAcknowledgementsSubtitle": "等待您确认的简报与风险评估。"
   },
   "rams": {
     "title": "RAMS",
@@ -6292,7 +6325,9 @@
       "allClear": "签发该文件包所需内容均已齐备。",
       "unreferencedTitle": "无任何步骤应对的高风险",
       "attestationTitle": "编制人声明",
-      "attestationConfirm": "我确认以上声明。"
+      "attestationConfirm": "我确认以上声明。",
+      "attestationText": "本人确认已编制或审核本风险评估与作业方法说明，其对所述作业适当且充分，作业顺序与控制措施为实际将遵循的内容，并将在开工前向所有作业人员进行交底。",
+      "attestationCanonical": "以英文原文为准：系统按原文记录并打印在 PDF 上。"
     },
     "errors": {
       "no-steps": "请为作业方法说明添加至少一个步骤。",
@@ -6334,17 +6369,25 @@
       "moveDown": "下移",
       "remove": "删除步骤",
       "expand": "编辑",
-      "collapse": "收起"
+      "collapse": "收起",
+      "untitled": "未命名步骤",
+      "holdPointBadge": "停工点",
+      "noHoldPoint": "无停工点"
     },
     "emergency": {
       "title": "应急处置",
       "firstAid": "急救",
       "procedure": "应急程序",
-      "rescuePlan": "救援方案"
+      "rescuePlan": "救援方案",
+      "nearestHospital": "最近的急诊科"
     },
     "logistics": {
       "welfare": "生活设施",
-      "accessEgress": "进出与疏散通道"
+      "accessEgress": "进出与疏散通道",
+      "title": "现场后勤",
+      "environmental": "环境控制措施",
+      "permitsRequired": "预计所需许可",
+      "competence": "能力与培训"
     },
     "builder": {
       "saving": "保存中…",
@@ -6370,7 +6413,12 @@
       "briefedSoFar": "已交底 {count} 人",
       "needsRebrief": "需重新交底",
       "queued": "{count} 条交底待同步",
-      "retry": "立即重试"
+      "retry": "立即重试",
+      "hazardsHeading": "可能造成伤害的因素及防范措施",
+      "whoAffected": "受影响人员",
+      "coshhHeading": "使用的物质",
+      "signatureCaptured": "已采集签名",
+      "signAgain": "重新签名"
     },
     "briefeeCategory": {
       "employee": "本公司员工",
@@ -6385,7 +6433,10 @@
       "issuedTo": "客户联系人",
       "createLink": "创建分享链接",
       "unnamed": "未填写收件人",
-      "revoked": "已失效"
+      "revoked": "已失效",
+      "showLink": "显示链接",
+      "copyLink": "复制",
+      "revokeLink": "撤销"
     },
     "clientDecision": {
       "pending": "待客户确认",
@@ -6408,7 +6459,9 @@
       "startPack": "创建文件包",
       "duplicate": "复制",
       "copySuffix": "副本",
-      "empty": "暂无作业方法说明。"
+      "empty": "暂无作业方法说明。",
+      "edit": "编辑",
+      "backToLibrary": "返回资料库"
     },
     "reviews": {
       "title": "承包商 RAMS 审查",
@@ -6421,7 +6474,18 @@
       "validTo": "受理有效期至",
       "recordDecision": "记录审查结论",
       "itemComment": "该项存在什么问题？",
-      "expired": "已过期"
+      "expired": "已过期",
+      "logReceived": "登记收到的作业包",
+      "logReceivedHint": "承包商通过邮件、门户或纸质方式发来了 RAMS。在此登记以便审查。",
+      "contractor": "承包商",
+      "contractorPlaceholder": "搜索承包商…",
+      "packTitle": "作业包标题",
+      "packTitlePlaceholder": "例如：屋面设备更换 — RAMS 修订B",
+      "site": "场所（可选）",
+      "sitePlaceholder": "作业发生地点",
+      "workDescription": "作业内容（可选）",
+      "workDescriptionPlaceholder": "审查人在打开检查表前需要了解的信息",
+      "logAndOpen": "登记并打开检查表"
     },
     "reviewOutcome": {
       "pending": "待审查",
@@ -6498,6 +6562,163 @@
       "method_statement_duplicated": "复制作业方法说明",
       "review_submitted": "承包商文件包提交审查",
       "review_decided": "记录审查结论"
+    },
+    "common": {
+      "cancel": "取消"
+    },
+    "reissue": {
+      "title": "重新签发本作业包",
+      "invalidatesWarning": "这会创建新版本。针对当前版本的 {count} 次交底将失效——继续作业前必须重新交底。",
+      "note": "重新签发原因（可选）",
+      "notePlaceholder": "例如：客户巡场后调整了作业顺序",
+      "confirm": "签署并重新签发"
+    },
+    "reviewChecklist": {
+      "scope_matches": "作业范围与我方委托内容一致",
+      "hazards_credible": "已识别危险源，控制措施对该作业可信",
+      "sequence_holdpoints": "作业顺序包含隔离/许可的停止点",
+      "emergency_present": "已包含应急与急救安排",
+      "competence_evidence": "已附能力与培训证明",
+      "coshh_covered": "涉及使用的有害物质（COSHH）已覆盖",
+      "plant_certified": "设备与机具的检验证明在有效期内",
+      "insurance_current": "保险有效且与作业相匹配"
+    },
+    "editor": {
+      "titleLabel": "施工方法说明标题",
+      "tradeLabel": "工种",
+      "publish": "发布版本",
+      "saved": "已保存",
+      "neverPublished": "从未发布",
+      "saveFailed": "未保存：{message}",
+      "publishFailed": "无法发布：{message}",
+      "archived": "此施工方法说明已归档，无法编辑。",
+      "unpublishedChanges": "有些更改尚未包含在已发布版本中。发布后新工作包才能使用。",
+      "scopeLabel": "工作范围",
+      "scopePlaceholder": "用一段话说明这项工作究竟是什么。",
+      "versionsTitle": "已发布版本",
+      "publishedBy": "由 {name} 于 {date} 发布"
+    },
+    "exportFailed": "导出失败：{message}"
+  },
+  "reportChooser": {
+    "title": "报告事项",
+    "subtitle": "一个问题决定去向：是否有人受伤？",
+    "harmed": {
+      "label": "是——有人受伤或患病",
+      "hint": "作为事件报告。将立即通知管理者并核查 RIDDOR 时限。"
+    },
+    "noHarm": {
+      "label": "否——但本可能出事",
+      "hint": "作为危险源或未遂事件报告。交由团队在有人受伤前处理。"
+    },
+    "footnote": "不确定？选择最接近的——审阅人之后可以调整。",
+    "noPermission": "您没有在此报告的权限。请向管理员申请。"
+  },
+  "training": {
+    "title": "培训与能力",
+    "subtitle": "谁持有什么、缺少什么以及何时到期。",
+    "tabs": {
+      "gaps": "缺口",
+      "matrix": "矩阵",
+      "compliance": "合规情况",
+      "requirements": "要求"
+    },
+    "asAt": "截至 {date}",
+    "status": {
+      "in_date": "有效",
+      "expiring_soon": "即将到期",
+      "expired": "已过期",
+      "not_held": "从未取得",
+      "not_required": "无需"
+    },
+    "gaps": {
+      "expired": "已过期",
+      "expiringSoon": "即将到期",
+      "notHeld": "从未取得",
+      "empty": "没有缺口。所有必需的记录均在有效期内。",
+      "record": "登记",
+      "expiresOn": "{date} 到期",
+      "requiredByRole": "按岗位要求",
+      "total": "{count} 项待处理"
+    },
+    "matrix": {
+      "person": "人员",
+      "empty": "暂无内容。请先添加要求并登记人员持有的证书。",
+      "exportCsv": "导出 CSV",
+      "legend": "图例"
+    },
+    "compliance": {
+      "overall": "总体",
+      "statutory": "仅法定",
+      "byRequirement": "按要求",
+      "gapsCount": "{count} 项有缺口",
+      "noData": "—"
+    },
+    "requirements": {
+      "title": "要求",
+      "add": "添加要求",
+      "name": "名称",
+      "category": "分类",
+      "obligation": "义务类别",
+      "validity": "有效期",
+      "validityMonths": "{months} 个月",
+      "noExpiry": "永不过期",
+      "leadDays": "提前 {days} 天提醒",
+      "empty": "尚无要求。请添加人员需要持有的资质。",
+      "archive": "归档",
+      "save": "保存",
+      "assignments": "适用人员",
+      "addAssignment": "分配",
+      "cancel": "取消",
+      "scope": {
+        "role": "岗位",
+        "group": "群组",
+        "site": "场所",
+        "person": "个人"
+      }
+    },
+    "obligation": {
+      "statutory": "法定",
+      "mandatory": "强制",
+      "discretionary": "自愿"
+    },
+    "record": {
+      "title": "登记培训",
+      "person": "人员",
+      "requirement": "要求",
+      "achievedAt": "取得日期",
+      "expiresAt": "到期日",
+      "expiryAuto": "根据有效期自动计算",
+      "awardingBody": "发证机构",
+      "certificateNumber": "证书编号",
+      "evidence": "证书或证卡照片",
+      "save": "保存记录",
+      "saved": "记录已保存",
+      "source": "来源",
+      "cancel": "取消",
+      "sources": {
+        "internal": "内部",
+        "external": "外部机构",
+        "imported": "导入",
+        "self_declared": "本人声明"
+      }
+    },
+    "person": {
+      "title": "培训",
+      "noRecords": "尚未登记培训。",
+      "verified": "已核实",
+      "unverified": "未核实"
+    },
+    "import": {
+      "title": "导入记录",
+      "help": "粘贴包含以下列的 CSV：personName、userEmail、requirementName、achievedAt、expiresAt。",
+      "run": "导入",
+      "imported": "已导入 {count} 条记录",
+      "failed": "{count} 行失败"
+    },
+    "errors": {
+      "moduleDisabled": "此模块未启用。",
+      "generic": "出了点问题。"
     }
   }
 }

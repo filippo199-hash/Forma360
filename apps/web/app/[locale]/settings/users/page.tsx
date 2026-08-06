@@ -212,7 +212,7 @@ export default function UsersPage() {
               </ul>
 
               {/* Desktop: table */}
-              <div className="hidden overflow-x-auto md:block">
+              <div className="hidden overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm md:block">
                 <table className="w-full text-sm">
                   <thead className="border-b bg-muted/40">
                     <tr className="text-left">

@@ -14,13 +14,7 @@
  *  - re-publish is idempotent (onConflictDoNothing)
  */
 import type { Database } from '@forma360/db/client';
-import {
-  groupMembers,
-  headsUpRecipients,
-  headsUps,
-  siteMembers,
-  user,
-} from '@forma360/db/schema';
+import { groupMembers, headsUpRecipients, headsUps, siteMembers, user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { notifyInAppMany } from './notify';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
