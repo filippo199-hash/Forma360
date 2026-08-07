@@ -33,6 +33,7 @@ import {
   inspections,
   issueCategories,
   issues,
+  permissionSets,
   permits,
   permitTypes,
   riskAssessmentControls,
@@ -48,6 +49,7 @@ import {
   type IssueAccessSnapshot,
   type IssueCategorySnapshot,
 } from '@forma360/db/schema';
+import { PERMISSION_KEYS, type PermissionKey } from '@forma360/permissions/catalogue';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import type { BrandId } from '@forma360/shared/brand';
 import { newId } from '@forma360/shared/id';
@@ -90,6 +92,36 @@ export const SANDBOX_EMAIL_DOMAIN = 'sandbox.invalid';
 /** True when this address is a placeholder rather than a real inbox. */
 export function isSandboxEmail(email: string): boolean {
   return email.toLowerCase().endsWith(`@${SANDBOX_EMAIL_DOMAIN}`);
+}
+
+/**
+ * Permission keys withheld from a try-it-now visitor.
+ *
+ * A sandbox hands an Administrator session to someone who has proven
+ * nothing — no email, no payment, no identity. Administrator holds
+ * every key in the catalogue, and a handful of those let the holder
+ * send domain-authenticated mail to an ARBITRARY external address with
+ * attacker-controlled text in it (`users.invite` composes a subject
+ * from the inviter's own name and the workspace name, both self-service
+ * editable). That turns a one-click anonymous workspace into an
+ * unmetered mailer on a verified sending domain, which costs us the
+ * domain's reputation rather than costing the attacker anything.
+ *
+ * Derived from the catalogue by subtraction so it cannot drift: a new
+ * key is granted by default, and only the ones named here are withheld.
+ * Everything the tiles actually need stays.
+ */
+const SANDBOX_WITHHELD_PERMISSIONS: readonly PermissionKey[] = [
+  // Invites an arbitrary address, with self-service text in the subject.
+  'users.invite',
+  // Contractor portal invites take an arbitrary address too.
+  'contractors.manage',
+];
+
+/** Administrator, minus the keys that can mail strangers. */
+function sandboxPermissionKeys(): PermissionKey[] {
+  const withheld = new Set<string>(SANDBOX_WITHHELD_PERMISSIONS);
+  return PERMISSION_KEYS.filter((k) => !withheld.has(k));
 }
 
 /** Default observation categories, mirroring `auth.signUpWithTenant`. */
@@ -151,6 +183,22 @@ export async function provisionSandbox(
 
     const sets = await seedDefaultPermissionSets(tx as unknown as Database, tenantId);
 
+    // The visitor is an administrator of their own workspace, minus the
+    // keys that could mail strangers from our sending domain. Claiming
+    // does not widen this — a claimed workspace is still a workspace an
+    // anonymous stranger created, and an admin can promote themselves
+    // through Settings once they are a known person.
+    const sandboxSetId = newId();
+    await tx.insert(permissionSets).values({
+      id: sandboxSetId,
+      tenantId,
+      name: 'Administrator (trial)',
+      description:
+        'Full access to this workspace. Sending invitations is enabled once you claim it.',
+      permissions: sandboxPermissionKeys(),
+      isSystem: false,
+    });
+
     await tx.insert(user).values([
       {
         id: userId,
@@ -159,7 +207,7 @@ export async function provisionSandbox(
         email: `${tenantId.toLowerCase()}@${SANDBOX_EMAIL_DOMAIN}`,
         emailVerified: false,
         tenantId,
-        permissionSetId: sets.administrator,
+        permissionSetId: sandboxSetId,
       },
       {
         id: colleagueId,
@@ -326,7 +374,7 @@ async function seedRiskAssessment(ctx: SeedContext): Promise<void> {
       existingControls: hazard.existingControls,
       residualLikelihood: hazard.residualLikelihood,
       residualSeverity: hazard.residualSeverity,
-      residualJustification: '',
+      residualJustification: hazard.residualJustification ?? '',
     });
 
     for (const control of hazard.controls) {

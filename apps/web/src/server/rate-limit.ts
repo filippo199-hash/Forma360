@@ -50,3 +50,22 @@ export function tooManyRequests(retryAfterSec: number): Response {
     },
   });
 }
+
+/**
+ * Is the limiter actually able to count right now?
+ *
+ * {@link rateLimit} fails OPEN — the right trade for endpoints that are
+ * already authenticated, where a Redis blip should not take the feature
+ * down. Anonymous tenant creation is the exception: it is unauthenticated
+ * and it writes, so "allow everything while Redis is down" is an
+ * unbounded write path rather than a graceful degradation. That endpoint
+ * calls this and refuses when the answer is no.
+ */
+export async function rateLimiterHealthy(): Promise<boolean> {
+  try {
+    await redis.ping();
+    return true;
+  } catch {
+    return false;
+  }
+}

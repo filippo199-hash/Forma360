@@ -53,6 +53,8 @@ export interface SeedHazard {
   readonly existingControls: string;
   readonly residualLikelihood: number | null;
   readonly residualSeverity: number | null;
+  /** Required when the residual lands in the high band — publish gate. */
+  readonly residualJustification?: string;
   readonly controls: ReadonlyArray<{ description: string; tier: ControlTier }>;
 }
 
@@ -79,6 +81,14 @@ export const SANDBOX_RISK_ASSESSMENTS: Record<string, SeedRiskAssessment> = {
           'Segregated pedestrian walkway painted through the yard; forklift operators hold in-date accredited training.',
         residualLikelihood: 2,
         residualSeverity: 5,
+        // 2 x 5 = 10 lands in the HIGH band under the default matrix,
+        // and `riskAssessments.publish` refuses a high residual with no
+        // planned control and no justification. Without this line the
+        // visitor completes the one decision the seed leaves them, hits
+        // Publish, and is blocked by a hazard that is not theirs — the
+        // tile's entire promise dies at the last step.
+        residualJustification:
+          'Segregation and reversing alarms cut the frequency of an encounter, but severity stays at 5 because a collision with a counterbalance truck remains potentially fatal. Further reduction is not reasonably practicable at this yard layout.',
         controls: [
           {
             description: 'Physical barrier separating the walkway from the bay apron',

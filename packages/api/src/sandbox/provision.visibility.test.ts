@@ -24,6 +24,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { createTestContext } from '../context';
 import { appRouter } from '../router';
 import { createCallerFactory } from '../trpc';
@@ -163,5 +164,59 @@ describe('sandbox content is visible through the real API', () => {
       issueListed.items.length,
       'the observation register would be empty',
     ).toBeGreaterThanOrEqual(3);
+  });
+
+  it('SB-V09 — the seeded risk assessment can actually be published', async () => {
+    // The tile promises a document the visitor walks out holding. If
+    // publish refuses, the promise dies at the last step — and it did:
+    // a seeded hazard with a HIGH residual and no justification blocked
+    // it, and the error named a hazard that was not the visitor's.
+    const { caller, tenantId } = await visitorFor('riskAssessment', 'general');
+
+    const hazards = await db
+      .select()
+      .from(schema.riskAssessmentHazards)
+      .where(eq(schema.riskAssessmentHazards.tenantId, tenantId));
+    const bySort = [...hazards].sort((a, b) => a.sortOrder - b.sortOrder);
+    const mine = bySort[bySort.length - 1];
+    const assessmentId = mine?.assessmentId ?? '';
+
+    // Do exactly what the visitor does: work the one open hazard.
+    await caller.riskAssessments.addControl({
+      hazardId: mine?.id ?? '',
+      description: 'Team lift for anything over 20 kg, with a pallet truck for mixed pallets',
+      tier: 'administrative',
+      status: 'in_place',
+    });
+    await caller.riskAssessments.updateHazard({
+      hazardId: mine?.id ?? '',
+      residualLikelihood: 2,
+      residualSeverity: 2,
+    });
+
+    // ...and publish. No actionAssignments: every control is in place.
+    await expect(
+      caller.riskAssessments.publish({ assessmentId, confirmSignOff: true }),
+    ).resolves.toBeDefined();
+
+    const after = await db
+      .select()
+      .from(schema.riskAssessments)
+      .where(eq(schema.riskAssessments.id, assessmentId));
+    expect(after[0]?.status, 'a published assessment is active').toBe('active');
+    expect(after[0]?.currentVersion, 'publish snapshots a version').toBeGreaterThanOrEqual(1);
+  });
+
+  it('SB-V10 — the visitor cannot mail strangers from our sending domain', async () => {
+    const { caller } = await visitorFor('riskAssessment', 'general');
+
+    // users.invite composes a domain-authenticated email with
+    // self-service text in the subject, to any address in the world.
+    await expect(
+      caller.users.invite({
+        email: 'victim@example.com',
+        permissionSetId: '01JQZZZZZZZZZZZZZZZZZZZZZZ',
+      }),
+    ).rejects.toThrow(/FORBIDDEN|permission/i);
   });
 });
