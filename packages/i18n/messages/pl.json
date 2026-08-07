@@ -2738,9 +2738,7 @@
         "overview": "Overview",
         "readings": "Readings",
         "media": "Media",
-        "actions": "Actions",
-        "inspections": "Inspections",
-        "observations": "Observations"
+        "activity": "Aktywność"
       },
       "fields": {
         "type": "Type",
@@ -2775,7 +2773,9 @@
         "uploadPhoto": "Upload photo",
         "changePhoto": "Change photo",
         "removePhoto": "Remove photo",
-        "noPhoto": "No photos yet."
+        "noPhoto": "No photos yet.",
+        "empty": "Brak zdjęć.",
+        "addPhoto": "Dodaj zdjęcie"
       },
       "stubs": {
         "actions": "No actions linked to this asset yet.",
@@ -2806,7 +2806,29 @@
         "result": "Wynik",
         "notes": "Uwagi"
       },
-      "fieldRequired": "{name} jest wymagane"
+      "fieldRequired": "{name} jest wymagane",
+      "viewAll": "Zobacz wszystko",
+      "viewAllCount": "Zobacz wszystkie ({count})",
+      "activity": {
+        "heading": "Aktywność",
+        "kinds": {
+          "inspection": "Inspekcja",
+          "action": "Działanie",
+          "observation": "Obserwacja"
+        },
+        "filters": {
+          "all": "Wszystko",
+          "inspection": "Inspekcje",
+          "action": "Działania",
+          "observation": "Obserwacje"
+        },
+        "empty": {
+          "all": "Nic jeszcze nie zarejestrowano dla tego zasobu. Powiązane inspekcje, działania i obserwacje pojawią się tutaj.",
+          "inspection": "Brak powiązanych inspekcji.",
+          "action": "Brak działań dla tego zasobu.",
+          "observation": "Brak zgłoszonych obserwacji dla tego zasobu."
+        }
+      }
     },
     "settings": {
       "title": "Settings",

@@ -2738,9 +2738,7 @@
         "overview": "Overview",
         "readings": "Readings",
         "media": "Media",
-        "actions": "Actions",
-        "inspections": "Inspections",
-        "observations": "Observations"
+        "activity": "Activiteit"
       },
       "fields": {
         "type": "Type",
@@ -2775,7 +2773,9 @@
         "uploadPhoto": "Upload photo",
         "changePhoto": "Change photo",
         "removePhoto": "Remove photo",
-        "noPhoto": "No photos yet."
+        "noPhoto": "No photos yet.",
+        "empty": "Nog geen foto’s.",
+        "addPhoto": "Foto toevoegen"
       },
       "stubs": {
         "actions": "No actions linked to this asset yet.",
@@ -2806,7 +2806,29 @@
         "result": "Resultaat",
         "notes": "Notities"
       },
-      "fieldRequired": "{name} is verplicht"
+      "fieldRequired": "{name} is verplicht",
+      "viewAll": "Alles bekijken",
+      "viewAllCount": "Alle {count} bekijken",
+      "activity": {
+        "heading": "Activiteit",
+        "kinds": {
+          "inspection": "Inspectie",
+          "action": "Actie",
+          "observation": "Waarneming"
+        },
+        "filters": {
+          "all": "Alles",
+          "inspection": "Inspecties",
+          "action": "Acties",
+          "observation": "Waarnemingen"
+        },
+        "empty": {
+          "all": "Er is nog niets vastgelegd voor dit asset. Gekoppelde inspecties, acties en waarnemingen verschijnen hier.",
+          "inspection": "Nog geen inspecties gekoppeld.",
+          "action": "Nog geen acties voor dit asset.",
+          "observation": "Nog geen waarnemingen voor dit asset."
+        }
+      }
     },
     "settings": {
       "title": "Settings",

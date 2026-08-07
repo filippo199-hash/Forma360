@@ -2738,9 +2738,7 @@
         "overview": "Overview",
         "readings": "Readings",
         "media": "Media",
-        "actions": "Actions",
-        "inspections": "Inspections",
-        "observations": "Observations"
+        "activity": "活动"
       },
       "fields": {
         "type": "Type",
@@ -2775,7 +2773,9 @@
         "uploadPhoto": "Upload photo",
         "changePhoto": "Change photo",
         "removePhoto": "Remove photo",
-        "noPhoto": "No photos yet."
+        "noPhoto": "No photos yet.",
+        "empty": "暂无照片。",
+        "addPhoto": "添加照片"
       },
       "stubs": {
         "actions": "No actions linked to this asset yet.",
@@ -2806,7 +2806,29 @@
         "result": "结果",
         "notes": "备注"
       },
-      "fieldRequired": "{name} 为必填项"
+      "fieldRequired": "{name} 为必填项",
+      "viewAll": "查看全部",
+      "viewAllCount": "查看全部 {count} 项",
+      "activity": {
+        "heading": "活动",
+        "kinds": {
+          "inspection": "检查",
+          "action": "行动",
+          "observation": "观察"
+        },
+        "filters": {
+          "all": "全部",
+          "inspection": "检查",
+          "action": "行动",
+          "observation": "观察"
+        },
+        "empty": {
+          "all": "尚未记录与此资产相关的内容。关联的检查、行动和观察将显示在这里。",
+          "inspection": "尚无关联的检查。",
+          "action": "尚无针对此资产的行动。",
+          "observation": "尚无针对此资产的观察报告。"
+        }
+      }
     },
     "settings": {
       "title": "Settings",

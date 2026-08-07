@@ -2952,9 +2952,7 @@
         "overview": "Overview",
         "readings": "Readings",
         "media": "Media",
-        "actions": "Actions",
-        "inspections": "Inspections",
-        "observations": "Observations"
+        "activity": "Activity"
       },
       "fields": {
         "type": "Type",
@@ -2989,7 +2987,9 @@
         "uploadPhoto": "Upload photo",
         "changePhoto": "Change photo",
         "removePhoto": "Remove photo",
-        "noPhoto": "No photos yet."
+        "noPhoto": "No photos yet.",
+        "empty": "No photos yet.",
+        "addPhoto": "Add a photo"
       },
       "stubs": {
         "actions": "No actions linked to this asset yet.",
@@ -3020,7 +3020,29 @@
         "result": "Result",
         "notes": "Notes"
       },
-      "fieldRequired": "{name} is required"
+      "fieldRequired": "{name} is required",
+      "viewAll": "View all",
+      "viewAllCount": "View all {count}",
+      "activity": {
+        "heading": "Activity",
+        "kinds": {
+          "inspection": "Inspection",
+          "action": "Action",
+          "observation": "Observation"
+        },
+        "filters": {
+          "all": "All",
+          "inspection": "Inspections",
+          "action": "Actions",
+          "observation": "Observations"
+        },
+        "empty": {
+          "all": "Nothing recorded against this asset yet. Inspections, actions and observations linked to it will appear here.",
+          "inspection": "No inspections linked to this asset yet.",
+          "action": "No actions raised against this asset yet.",
+          "observation": "No observations reported against this asset yet."
+        }
+      }
     },
     "settings": {
       "title": "Settings",
