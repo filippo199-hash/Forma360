@@ -6,6 +6,7 @@
  * contractor has a primary contact email — then sends a single reminder and
  * stamps `reminder_sent_at` so it never fires twice for the same document.
  */
+import { randomBytes } from 'node:crypto';
 import type { Database } from '@forma360/db/client';
 import { contractorDocuments, contractorRequirements, contractors } from '@forma360/db/schema';
 import type { Logger } from '@forma360/shared/logger';
@@ -17,7 +18,11 @@ export const REMINDER_LEAD_DAYS = 14;
 
 export interface DueReminder {
   docId: string;
+  tenantId: string;
+  contractorId: string;
   contractorName: string;
+  /** CT-O03: the contact's own email language; null = English. */
+  locale: string | null;
   requirementName: string;
   email: string;
   endDate: string;
@@ -43,9 +48,12 @@ export async function findDueReminders(
   const rows = await db
     .select({
       docId: contractorDocuments.id,
+      tenantId: contractorDocuments.tenantId,
+      contractorId: contractorDocuments.contractorId,
       endDate: contractorDocuments.endDate,
       requirementName: contractorRequirements.name,
       contractorName: contractors.name,
+      locale: contractors.locale,
       email: contractors.primaryContactEmail,
       uploadToken: contractors.uploadToken,
     })
@@ -73,7 +81,10 @@ export async function findDueReminders(
     )
     .map((r) => ({
       docId: r.docId,
+      tenantId: r.tenantId,
+      contractorId: r.contractorId,
       contractorName: r.contractorName,
+      locale: r.locale,
       requirementName: r.requirementName,
       email: r.email,
       endDate: r.endDate,
@@ -95,16 +106,47 @@ export interface ContractorReminderDeps {
 export async function runContractorDocReminders(deps: ContractorReminderDeps): Promise<number> {
   const today = deps.now?.() ?? new Date();
   const due = await findDueReminders(deps.db, today, REMINDER_LEAD_DAYS);
+  const base = deps.appUrl.replace(/\/$/, '');
+  /**
+   * CT-W01: one mint per contractor per run. Two documents due for the same
+   * contractor must share a token — a second mint would invalidate the link
+   * already sent in the first email.
+   */
+  const mintedTokens = new Map<string, string>();
   let sent = 0;
   for (const r of due) {
-    const uploadUrl =
-      r.uploadToken !== null ? `${deps.appUrl}/contractor-upload/${r.uploadToken}` : deps.appUrl;
     try {
-      await deps.notify(r, uploadUrl);
+      // CT-W01: never fall back to the bare app URL. `upload_token` is
+      // nullable and only the manual "copy upload link" button ever wrote
+      // it, so the one email that matters — a blocking certificate 14 days
+      // from expiry — shipped a CTA pointing at the tenant's sign-in page,
+      // to an external party with no account. And `reminderSentAt` was
+      // stamped anyway: one dead email, then permanent silence. A
+      // contractor with no token gets one minted here, so legacy rows
+      // self-heal and the one-shot stamp is never spent on a dead end.
+      let token = r.uploadToken;
+      if (token === null) {
+        const cached = mintedTokens.get(r.contractorId);
+        if (cached !== undefined) {
+          token = cached;
+        } else {
+          token = randomBytes(24).toString('hex');
+          await deps.db
+            .update(contractors)
+            .set({ uploadToken: token, updatedAt: today })
+            .where(and(eq(contractors.tenantId, r.tenantId), eq(contractors.id, r.contractorId)));
+          mintedTokens.set(r.contractorId, token);
+        }
+      }
+      // CT-O03: the link lands in the contact's own language, not whatever
+      // Accept-Language the middleware happens to guess.
+      await deps.notify(r, `${base}/${r.locale ?? 'en'}/contractor-upload/${token}`);
       await deps.db
         .update(contractorDocuments)
         .set({ reminderSentAt: today })
-        .where(eq(contractorDocuments.id, r.docId));
+        .where(
+          and(eq(contractorDocuments.tenantId, r.tenantId), eq(contractorDocuments.id, r.docId)),
+        );
       sent += 1;
     } catch (err) {
       deps.logger.error({ err, docId: r.docId }, '[contractor-doc-reminder] notify failed');

@@ -1,8 +1,8 @@
 {
-  "subject": "Ancora in sito: {who} ({contractorName})",
+  "subject": "Ancora in sito: {contractorName}",
   "preheader": "{contractorName} è in sito da oltre 24 ore.",
   "greeting": "Attenzione,",
-  "body": "{who} di {contractorName} ha effettuato il check-in il {checkedInAt} e non ha ancora fatto il check-out: sono passate più di 24 ore. Visita: {title}{siteLine}. Conferma che sia ancora in sito oppure registra l'uscita.",
+  "body": "Una visita di un appaltatore è aperta da più di 24 ore senza check-out.\n\nAppaltatore: {contractorName}\nVisitatore: {who}\nVisita: {title}\nSito: {siteName}\nCheck-in: {checkedInAt}\n\nConferma che sia ancora in sito oppure registra l'uscita.",
   "cta": "Apri la bacheca presenze",
   "footer": "Ricevi questa email perché hai programmato questa visita o gestisci il varco."
 }

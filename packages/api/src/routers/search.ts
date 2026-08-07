@@ -304,7 +304,18 @@ export const searchRouter = router({
           ? ctx.db
               .select({ id: contractors.id, name: contractors.name })
               .from(contractors)
-              .where(and(eq(contractors.tenantId, tid), ilike(contractors.name, q)))
+              .where(
+                and(
+                  eq(contractors.tenantId, tid),
+                  // The register hides archived contractors, so Cmd-K was
+                  // the only door left to a record it says does not exist —
+                  // and the detail page rendered it with live Add
+                  // requirement / Upload buttons. Every sibling category
+                  // here already filters this.
+                  isNull(contractors.archivedAt),
+                  ilike(contractors.name, q),
+                ),
+              )
               .orderBy(desc(contractors.updatedAt))
               .limit(MAX_PER_CATEGORY)
           : empty<{ id: string; name: string }>(),

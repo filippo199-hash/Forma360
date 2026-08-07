@@ -87,7 +87,7 @@ export default function ContractorCalendarPage() {
   }, [cells, anchor]);
 
   const utils = trpc.useUtils();
-  const contractorsQ = trpc.contractors.list.useQuery();
+  const contractorsQ = trpc.contractors.list.useQuery({ limit: 200 });
   const {
     data,
     isLoading: visitsLoading,
@@ -196,7 +196,7 @@ export default function ContractorCalendarPage() {
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
           >
             <option value="">{t('visits.allContractors')}</option>
-            {(contractorsQ.data ?? []).map((c) => (
+            {(contractorsQ.data?.contractors ?? []).map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
