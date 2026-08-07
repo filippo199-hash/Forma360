@@ -6551,7 +6551,8 @@
       "legend": "图例",
       "allRequirements": "所有要求",
       "exportPdf": "导出 PDF",
-      "sortByGaps": "按缺口排序"
+      "sortByGaps": "按缺口排序",
+      "tooLarge": "此矩阵太大，无法一次显示。请按站点或要求筛选以缩小范围。"
     },
     "compliance": {
       "overall": "总体",

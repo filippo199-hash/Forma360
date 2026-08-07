@@ -6555,7 +6555,8 @@
       "legend": "Legenda",
       "allRequirements": "Todos os requisitos",
       "exportPdf": "Exportar PDF",
-      "sortByGaps": "Ordenar por lacunas"
+      "sortByGaps": "Ordenar por lacunas",
+      "tooLarge": "Esta grelha é demasiado grande para mostrar de uma vez. Filtre por local ou requisito para a reduzir."
     },
     "compliance": {
       "overall": "Global",

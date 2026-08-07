@@ -6783,7 +6783,8 @@
       "legend": "Legend",
       "allRequirements": "All requirements",
       "exportPdf": "Export PDF",
-      "sortByGaps": "Sort by gaps"
+      "sortByGaps": "Sort by gaps",
+      "tooLarge": "This grid is too large to show at once. Filter by site or requirement to narrow it."
     },
     "compliance": {
       "overall": "Overall",

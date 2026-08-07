@@ -6562,7 +6562,8 @@
       "legend": "Leyenda",
       "allRequirements": "Todos los requisitos",
       "exportPdf": "Exportar PDF",
-      "sortByGaps": "Ordenar por brechas"
+      "sortByGaps": "Ordenar por brechas",
+      "tooLarge": "Esta cuadrícula es demasiado grande para mostrarse de una vez. Filtra por centro o requisito para reducirla."
     },
     "compliance": {
       "overall": "Global",

@@ -6562,7 +6562,8 @@
       "legend": "Legende",
       "allRequirements": "Alle Anforderungen",
       "exportPdf": "PDF exportieren",
-      "sortByGaps": "Nach Lücken sortieren"
+      "sortByGaps": "Nach Lücken sortieren",
+      "tooLarge": "Diese Matrix ist zu groß, um sie auf einmal anzuzeigen. Filtern Sie nach Standort oder Anforderung, um sie einzugrenzen."
     },
     "compliance": {
       "overall": "Gesamt",

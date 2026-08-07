@@ -6562,7 +6562,8 @@
       "legend": "Légende",
       "allRequirements": "Toutes les exigences",
       "exportPdf": "Exporter en PDF",
-      "sortByGaps": "Trier par écarts"
+      "sortByGaps": "Trier par écarts",
+      "tooLarge": "Cette grille est trop grande pour être affichée en une seule fois. Filtrez par site ou par exigence pour la réduire."
     },
     "compliance": {
       "overall": "Global",

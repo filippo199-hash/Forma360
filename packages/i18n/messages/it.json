@@ -6597,7 +6597,8 @@
       "legend": "Legenda",
       "allRequirements": "Tutti i requisiti",
       "exportPdf": "Esporta PDF",
-      "sortByGaps": "Ordina per lacune"
+      "sortByGaps": "Ordina per lacune",
+      "tooLarge": "Questa griglia è troppo grande per essere mostrata tutta insieme. Filtra per sito o requisito per restringerla."
     },
     "compliance": {
       "overall": "Complessiva",

@@ -6555,7 +6555,8 @@
       "legend": "凡例",
       "allRequirements": "すべての要件",
       "exportPdf": "PDF を書き出す",
-      "sortByGaps": "不足順に並べ替え"
+      "sortByGaps": "不足順に並べ替え",
+      "tooLarge": "この表は一度に表示するには大きすぎます。サイトまたは要件で絞り込んでください。"
     },
     "compliance": {
       "overall": "全体",
