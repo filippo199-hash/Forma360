@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { signInHref } from '../../../src/lib/sign-in-redirect';
 import type { ReactNode } from 'react';
+import { ModuleTabs } from '../../../src/components/module-tabs';
 import { PermissionsProvider } from '../../../src/lib/permissions-context';
 import { loadCurrentUserPermissions } from '../../../src/server/load-permissions';
 
@@ -36,6 +37,9 @@ export default async function ActionsLayout({
           max-w-[1200px]. The background matches the ModuleShell the centered
           modules use, so the two read as one surface. */}
       <div className="flex min-h-screen w-full flex-col bg-[#eef4fb] px-4 py-4 dark:bg-slate-900/40 sm:px-6 sm:py-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[1200px]">
+          <ModuleTabs />
+        </div>
         {children}
       </div>
     </PermissionsProvider>

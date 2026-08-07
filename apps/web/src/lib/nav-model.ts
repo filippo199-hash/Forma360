@@ -463,6 +463,49 @@ export function activeNavItem(
   );
 }
 
+/** One tab in a module's in-page tab strip (see {@link moduleTabsForPath}). */
+export interface ModuleTab {
+  /** `nav.<key>` for the module tab, `nav.child.<key>` for a child tab. */
+  readonly key: NavItemKey | NavChildKey;
+  readonly href: string;
+  readonly active: boolean;
+  /** True for the leading tab — the module's own landing. */
+  readonly isParent: boolean;
+}
+
+/**
+ * The in-page tab strip for the module that owns `pathname`: the module
+ * itself as the leading tab, then its children (already brand- and
+ * permission-filtered by {@link buildNavSections}). This is what moves the
+ * sub-navigation out of the sidebar and onto the page (ADR 0014 amendment).
+ *
+ * Returns `undefined` when the module has no children, or when the current
+ * route is deeper than a tab page — a detail, form or editor route — so the
+ * strip appears on the module's list pages only, exactly as the Inspections
+ * and Training tab bars already do. `pathname` must match a tab's href
+ * exactly for the strip to show; a child's own sub-routes fall through.
+ */
+export function moduleTabsForPath(
+  sections: readonly NavSection[],
+  pathname: string,
+): { readonly item: NavItem; readonly tabs: readonly ModuleTab[] } | undefined {
+  const item = activeNavItem(sections, pathname);
+  if (item?.children === undefined || item.children.length === 0) return undefined;
+  const tabHrefs = [item.href, ...item.children.map((child) => child.href)];
+  if (!tabHrefs.includes(pathname)) return undefined;
+  const onChild = item.children.some((child) => isNavChildActive(child, pathname));
+  const tabs: ModuleTab[] = [
+    { key: item.key, href: item.href, active: !onChild, isParent: true },
+    ...item.children.map((child) => ({
+      key: child.key,
+      href: child.href,
+      active: isNavChildActive(child, pathname),
+      isParent: false,
+    })),
+  ];
+  return { item, tabs };
+}
+
 /**
  * The mobile tab bar: five thumb-reachable destinations, chosen from what
  * the viewer can actually open. Order is fixed — a tab bar that reorders

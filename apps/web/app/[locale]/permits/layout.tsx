@@ -8,6 +8,7 @@ import { signInHref } from '../../../src/lib/sign-in-redirect';
 import type { ReactNode } from 'react';
 import { PermissionsProvider } from '../../../src/lib/permissions-context';
 import { ModuleShell } from '../../../src/components/module-shell';
+import { ModuleTabs } from '../../../src/components/module-tabs';
 import { loadCurrentUserPermissions } from '../../../src/server/load-permissions';
 
 /**
@@ -38,7 +39,10 @@ export default async function PermitsLayout({
 
   return (
     <PermissionsProvider permissions={permissions}>
-      <ModuleShell>{children}</ModuleShell>
+      <ModuleShell>
+        <ModuleTabs />
+        {children}
+      </ModuleShell>
     </PermissionsProvider>
   );
 }
