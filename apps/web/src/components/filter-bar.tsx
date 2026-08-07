@@ -37,6 +37,14 @@ export type FilterControl =
       onFromChange: (value: string) => void;
       onToChange: (value: string) => void;
     }
+  /** A single date (e.g. an "as at" point), not a from/to range. */
+  | { kind: 'date'; value: string; onChange: (value: string) => void }
+  /**
+   * An arbitrary control rendered in place of the chip (e.g. the hierarchical
+   * SiteSelector, which is a popover and does not fit the compact inner
+   * controls). It supplies its own value display; the bar adds the remove ✕.
+   */
+  | { kind: 'custom'; render: () => ReactNode }
   /** Presence of the chip is the value — removing the chip turns it off. */
   | { kind: 'boolean' };
 
@@ -116,6 +124,16 @@ function ChipControl({ control }: { control: FilterControl }) {
           aria-label={tCommon('to')}
         />
       </span>
+    );
+  }
+  if (control.kind === 'date') {
+    return (
+      <input
+        type="date"
+        value={control.value}
+        onChange={(e) => control.onChange(e.target.value)}
+        className="border-0 bg-transparent text-xs outline-none"
+      />
     );
   }
   return null;
@@ -223,6 +241,24 @@ export function FilterBar({
       {activeKeys.map((key) => {
         const def = byKey.get(key);
         if (def === undefined) return null;
+        // A custom control (e.g. SiteSelector) renders itself; the bar only
+        // labels it and adds the remove ✕, rather than wrapping it in a pill.
+        if (def.control.kind === 'custom') {
+          const render = def.control.render;
+          return (
+            <div key={key} className="inline-flex items-center gap-1">
+              {render()}
+              <button
+                type="button"
+                onClick={() => onRemoveFilter(key)}
+                className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label={tCommon('removeFilter', { label: def.label })}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          );
+        }
         return (
           <FilterChip key={key} label={def.label} onRemove={() => onRemoveFilter(key)}>
             {def.control.kind === 'boolean' ? undefined : <ChipControl control={def.control} />}
