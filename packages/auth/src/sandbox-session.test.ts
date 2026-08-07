@@ -107,7 +107,7 @@ describe('createSandboxSession', () => {
       db: db as never,
       redis: fakeRedis() as never,
       sendEmail: () => Promise.resolve(),
-      sendTemplatedEmail: () => Promise.resolve(),
+      sendTemplatedEmail: () => Promise.resolve({ delivery: 'console' as const }),
       secret: SECRET,
       baseUrl: 'http://localhost:3000',
       nodeEnv: 'test',

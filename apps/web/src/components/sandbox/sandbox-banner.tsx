@@ -19,11 +19,12 @@ import { Label } from '../ui/label';
 /**
  * The save prompt for a try-it-now workspace (ADR 0017).
  *
- * Shown only while the workspace is an *unclaimed* sandbox. It is a
- * prompt, never a gate: the work is already saved, and everything stays
- * usable whether or not the visitor hands over an address. What the
- * email buys them is the way back, which is exactly how the copy frames
- * it.
+ * Shown only while the workspace is an *unclaimed* sandbox — a fact the
+ * server shell already resolved, so this costs an ordinary user nothing
+ * and never renders for them. It is a prompt, never a gate: the work is
+ * already saved, and everything stays usable whether or not the visitor
+ * hands over an address. What the email buys them is the way back,
+ * which is exactly how the copy frames it.
  *
  * A single field is required. Name and company are offered because both
  * end up on the documents they generate, but neither blocks the save.
@@ -37,15 +38,9 @@ export function SandboxBanner() {
   const [companyName, setCompanyName] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const status = trpc.sandbox.status.useQuery(undefined, {
-    // Cheap, but there is no reason to refetch it on every focus.
-    staleTime: 60_000,
-    retry: false,
-  });
   const claim = trpc.sandbox.claim.useMutation();
 
-  const isUnclaimedSandbox = status.data?.isSandbox === true && status.data.isClaimed === false;
-  if (!isUnclaimedSandbox || dismissed) return null;
+  if (dismissed) return null;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -72,7 +67,6 @@ export function SandboxBanner() {
       }
       setOpen(false);
       setDismissed(true);
-      await status.refetch();
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
       toast.error(message.includes('email-in-use') ? t('errorInUse') : t('errorGeneric'));

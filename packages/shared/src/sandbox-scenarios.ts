@@ -20,7 +20,7 @@
  * asked for after the workspace exists, not at the door.
  */
 import { z } from 'zod';
-import { brandHasModule, type BrandId, type BrandOnlyModule } from './brand';
+import { brandHasModule, getBrand, type BrandId, type BrandOnlyModule } from './brand';
 
 export const SANDBOX_SCENARIO_IDS = [
   'riskAssessment',
@@ -145,8 +145,16 @@ export const sandboxChoiceSchema = z.object({
 
 export type SandboxChoice = z.infer<typeof sandboxChoiceSchema>;
 
-/** The tiles this brand can offer, with unavailable refinements dropped. */
+/**
+ * The tiles this brand can offer, with unavailable refinements dropped.
+ *
+ * Empty for a brand that does not offer the sandbox at all — which is
+ * the single switch the whole feature hangs off. `/try` 404s, the
+ * creation endpoint 404s, and the hero falls back to sign-up, all from
+ * this one return value.
+ */
 export function scenariosForBrand(brand: BrandId): readonly SandboxScenario[] {
+  if (!getBrand(brand).offersSandbox) return [];
   return SANDBOX_SCENARIOS.filter(
     (s) => s.requiresModule === undefined || brandHasModule(brand, s.requiresModule),
   ).map((s) => ({

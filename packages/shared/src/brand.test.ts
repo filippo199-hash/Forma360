@@ -6,10 +6,14 @@ describe('brand catalogue', () => {
     for (const id of BRAND_IDS) {
       const brand = BRANDS[id];
       expect(brand.id).toBe(id);
+      // Every identity string must be present and non-empty; capability
+      // flags (offersSandbox) are booleans and simply have to be set.
       for (const value of Object.values(brand)) {
+        if (typeof value === 'boolean') continue;
         expect(typeof value).toBe('string');
         expect(value.length).toBeGreaterThan(0);
       }
+      expect(typeof brand.offersSandbox).toBe('boolean');
     }
   });
 

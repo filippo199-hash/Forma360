@@ -11,6 +11,7 @@
  *   SB-E16 — every tile has exactly one default refinement.
  */
 import { describe, expect, it } from 'vitest';
+import { BRAND_IDS, brandHasModule } from './brand';
 import {
   SANDBOX_SCENARIOS,
   defaultRefinement,
@@ -20,9 +21,10 @@ import {
 } from './sandbox-scenarios';
 
 describe('sandbox scenario catalogue', () => {
-  it('SB-E10 — Forma360 only offers tiles built on core modules', () => {
-    const ids = scenariosForBrand('forma360').map((s) => s.id);
-    expect(ids).toEqual(['inspection', 'hazard']);
+  it('SB-E10 — a brand that does not offer the sandbox gets no tiles at all', () => {
+    // Forma360 sells through demos; the sandbox is FreeHS-only. This one
+    // return value is what 404s /try and the creation endpoint there.
+    expect(scenariosForBrand('forma360')).toEqual([]);
   });
 
   it('SB-E11 — FreeHS offers every tile', () => {
@@ -30,19 +32,38 @@ describe('sandbox scenario catalogue', () => {
     expect(ids).toEqual(SANDBOX_SCENARIOS.map((s) => s.id));
   });
 
-  it('SB-E12 — refinements needing an absent module are dropped', () => {
-    const forma = scenariosForBrand('forma360').find((s) => s.id === 'inspection');
-    // fireChecks needs the fireSafety module, which Forma360 does not ship.
-    expect(forma?.refinements.map((r) => r.id)).not.toContain('fireChecks');
+  it('SB-E12 — a brand is never offered a tile or refinement it cannot ship', () => {
+    // The invariant that matters: whatever survives the filter is
+    // backed by a module the brand actually has.
+    for (const brand of BRAND_IDS) {
+      for (const scenario of scenariosForBrand(brand)) {
+        if (scenario.requiresModule !== undefined) {
+          expect(brandHasModule(brand, scenario.requiresModule)).toBe(true);
+        }
+        for (const refinement of scenario.refinements) {
+          if (refinement.requiresModule !== undefined) {
+            expect(brandHasModule(brand, refinement.requiresModule)).toBe(true);
+          }
+        }
+      }
+    }
 
+    // FreeHS ships fireSafety, so the fire-checks refinement is offered.
     const freehs = scenariosForBrand('freehs').find((s) => s.id === 'inspection');
     expect(freehs?.refinements.map((r) => r.id)).toContain('fireChecks');
   });
 
-  it('SB-E13 — a tile the brand does not ship cannot be provisioned', () => {
-    expect(
-      resolveSandboxChoice('forma360', { scenarioId: 'permit', refinementId: 'hotWork' }),
-    ).toBeNull();
+  it('SB-E13 — nothing can be provisioned for a brand without the sandbox', () => {
+    for (const scenario of SANDBOX_SCENARIOS) {
+      for (const refinement of scenario.refinements) {
+        expect(
+          resolveSandboxChoice('forma360', {
+            scenarioId: scenario.id,
+            refinementId: refinement.id,
+          }),
+        ).toBeNull();
+      }
+    }
     expect(
       resolveSandboxChoice('freehs', { scenarioId: 'permit', refinementId: 'hotWork' }),
     ).not.toBeNull();
