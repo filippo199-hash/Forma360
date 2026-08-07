@@ -227,6 +227,16 @@ const GOAL_ASSERTIONS: Record<SandboxScenarioId, GoalAssertion> = {
       .where(eq(schema.permits.tenantId, tenantId));
     expect(permits.length, 'one permit waiting on the visitor').toBe(1);
 
+    // A draft permit is invisible: permits.list defaults to status
+    // 'open' (issued / active / suspended). The row would exist and the
+    // register would be empty.
+    expect(permits[0]?.status, 'a draft permit never reaches the register').toBe('issued');
+    expect(permits[0]?.issuedAt, 'issued means issued by someone').not.toBeNull();
+    expect(
+      permits[0]?.preconditions.every((p) => p.checked),
+      'issue confirms preconditions',
+    ).toBe(true);
+
     const expected: Record<string, string> = {
       hotWork: 'hot_work',
       confinedSpace: 'confined_space',

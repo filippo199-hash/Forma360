@@ -59,6 +59,7 @@ import {
 } from '@forma360/shared/sandbox-scenarios';
 import { and, eq } from 'drizzle-orm';
 import { ensureSeededTypes } from '../routers/permits';
+import { snapshotPreconditions } from '@forma360/shared/permits';
 import { nextReferenceValue } from '../reference-counter';
 import { formatIncidentReference } from '@forma360/shared/incidents';
 import { buildTemplateContentFromSpec } from '@forma360/shared/template-builder';
@@ -430,12 +431,13 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
   await ensureSeededTypes(tx, ctx.tenantId, ctx.userId);
 
   const typeRows = await tx
-    .select({ id: permitTypes.id })
+    .select({ id: permitTypes.id, preconditions: permitTypes.preconditions })
     .from(permitTypes)
     .where(and(eq(permitTypes.tenantId, ctx.tenantId), eq(permitTypes.category, content.category)))
     .limit(1);
-  const permitTypeId = typeRows[0]?.id;
-  if (permitTypeId === undefined) return;
+  const permitType = typeRows[0];
+  if (permitType === undefined) return;
+  const permitTypeId = permitType.id;
 
   const validFrom = new Date();
   const validTo = new Date(validFrom.getTime() + 8 * 60 * 60 * 1000);
@@ -443,6 +445,22 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
   // Same contract as the permits router: PTW-, four digits, claimed
   // through the counter.
   const ref = await nextReferenceValue(tx, ctx.tenantId, 'permit');
+
+  // ISSUED, not draft. `permits.list` defaults to status 'open'
+  // (issued / active / suspended), so a draft is invisible on the
+  // register the visitor lands on — the row would exist and the page
+  // would be empty. Issued is also the honest state for "waiting on
+  // you": a colleague raised and issued it, the visitor is the named
+  // acceptor, and accepting it is their decision.
+  const preconditions = snapshotPreconditions(permitType.preconditions).map((pc) => ({
+    ...pc,
+    // Preconditions are a condition OF issue, so an issued permit has
+    // them confirmed by the issuer.
+    checked: true,
+    checkedBy: ctx.colleagueId,
+    checkedByName: `${SANDBOX_COLLEAGUE.firstName} ${SANDBOX_COLLEAGUE.lastName}`,
+    checkedAt: validFrom.toISOString(),
+  }));
 
   await ctx.tx.insert(permits).values({
     id: newId(),
@@ -455,10 +473,14 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
     ...(ctx.siteIds.get('northfield') !== undefined
       ? { siteId: ctx.siteIds.get('northfield') as string }
       : {}),
-    status: 'draft',
+    status: 'issued',
+    preconditions,
+    issuerUserId: ctx.colleagueId,
+    issuedAt: validFrom,
+    acceptorUserId: ctx.userId,
     validFrom,
     validTo,
-    createdBy: ctx.userId,
+    createdBy: ctx.colleagueId,
   });
 }
 
