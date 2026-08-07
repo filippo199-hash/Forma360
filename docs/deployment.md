@@ -96,8 +96,19 @@ All services communicate over Railway's private network
    `BETTER_AUTH_*`, and `NEXT_PUBLIC_SENTRY_DSN` are not needed (the
    worker doesn't serve HTTP). Easiest path: copy them all via the "Shared
    Variables" feature and let the worker ignore the ones it doesn't consume.
-5. The worker's image includes `postgresql_16` (see
-   `packages/jobs/nixpacks.toml`) so the nightly `pg_dump` handler resolves.
+5. The worker's image must carry the PostgreSQL client binaries so the
+   nightly `pg_dump` handler resolves. The service builds with **Railpack**,
+   which ignores `nixpacks.toml` — set the package as a service variable
+   instead:
+
+   ```
+   RAILPACK_DEPLOY_APT_PACKAGES=postgresql-client
+   ```
+
+   On the Ubuntu 24.04 runtime image that resolves to client 16, matching the
+   pinned `postgres-ssl:16` server. Getting this wrong is silent until 03:00:
+   the job throws `spawn pg_dump ENOENT` and no backup is written
+   (Sentry FREEHS-4).
 6. Trigger a deploy. Tail the logs and confirm the
    `[worker] registered pg-dump-nightly repeatable` line appears.
 
