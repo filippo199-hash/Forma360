@@ -2913,6 +2913,24 @@
         "fieldNameRequired": "All fields must have a name",
         "nameRequired": "Category name is required",
         "selectNeedsOption": "Select field \"{name}\" needs at least one option"
+      },
+      "suggest": {
+        "title": "{count} suggested fields for “{name}”",
+        "subtitle": "Tick the ones you want. Nothing is added until you press Add, and everything stays editable afterwards.",
+        "subtitleAi": "Suggested by AI from the category name. Check them before adding — they are a starting point, not advice.",
+        "thinking": "Looking for fields that suit “{name}”…",
+        "addChosen": "Add {count} selected",
+        "noThanks": "No thanks, I’ll add my own",
+        "dismiss": "Dismiss suggestions",
+        "selectAll": "Select all",
+        "selectNone": "Select none",
+        "addedToast": "{count} fields added — edit or remove any of them below.",
+        "types": {
+          "text": "Text",
+          "number": "Number",
+          "date": "Date",
+          "select": "Choice"
+        }
       }
     },
     "detail": {

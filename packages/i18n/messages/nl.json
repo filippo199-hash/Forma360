@@ -2819,6 +2819,24 @@
         "fieldNameRequired": "All fields must have a name",
         "nameRequired": "Category name is required",
         "selectNeedsOption": "Select field \"{name}\" needs at least one option"
+      },
+      "suggest": {
+        "title": "{count} voorgestelde velden voor ‘{name}’",
+        "subtitle": "Vink aan wat u wilt. Er wordt niets toegevoegd tot u op Toevoegen klikt, en alles blijft daarna bewerkbaar.",
+        "subtitleAi": "Door AI voorgesteld op basis van de categorienaam. Controleer ze vóór toevoegen — een startpunt, geen advies.",
+        "thinking": "Zoeken naar velden die bij ‘{name}’ passen…",
+        "addChosen": "{count} geselecteerde toevoegen",
+        "noThanks": "Nee bedankt, ik voeg ze zelf toe",
+        "dismiss": "Suggesties sluiten",
+        "selectAll": "Alles selecteren",
+        "selectNone": "Niets selecteren",
+        "addedToast": "{count} velden toegevoegd — hieronder bewerken of verwijderen.",
+        "types": {
+          "text": "Tekst",
+          "number": "Getal",
+          "date": "Datum",
+          "select": "Keuze"
+        }
       }
     }
   },

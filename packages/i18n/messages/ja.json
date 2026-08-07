@@ -2819,6 +2819,24 @@
         "fieldNameRequired": "All fields must have a name",
         "nameRequired": "Category name is required",
         "selectNeedsOption": "Select field \"{name}\" needs at least one option"
+      },
+      "suggest": {
+        "title": "「{name}」向けの推奨項目 {count} 件",
+        "subtitle": "必要なものにチェックを入れてください。「追加」を押すまで何も追加されず、追加後も編集できます。",
+        "subtitleAi": "カテゴリ名から AI が提案しました。追加前にご確認ください。出発点であり助言ではありません。",
+        "thinking": "「{name}」に合う項目を探しています…",
+        "addChosen": "選択した {count} 件を追加",
+        "noThanks": "不要です。自分で追加します",
+        "dismiss": "提案を閉じる",
+        "selectAll": "すべて選択",
+        "selectNone": "選択を解除",
+        "addedToast": "{count} 件の項目を追加しました。下で編集・削除できます。",
+        "types": {
+          "text": "テキスト",
+          "number": "数値",
+          "date": "日付",
+          "select": "選択"
+        }
       }
     }
   },

@@ -2819,6 +2819,24 @@
         "fieldNameRequired": "All fields must have a name",
         "nameRequired": "Category name is required",
         "selectNeedsOption": "Select field \"{name}\" needs at least one option"
+      },
+      "suggest": {
+        "title": "为“{name}”建议的 {count} 个字段",
+        "subtitle": "勾选需要的字段。在点击“添加”之前不会添加任何内容，添加后仍可编辑。",
+        "subtitleAi": "由 AI 根据类别名称建议。添加前请核对——这是起点，并非专业建议。",
+        "thinking": "正在查找适合“{name}”的字段…",
+        "addChosen": "添加所选 {count} 项",
+        "noThanks": "不用了，我自己添加",
+        "dismiss": "关闭建议",
+        "selectAll": "全选",
+        "selectNone": "取消全选",
+        "addedToast": "已添加 {count} 个字段——可在下方编辑或删除。",
+        "types": {
+          "text": "文本",
+          "number": "数字",
+          "date": "日期",
+          "select": "选择"
+        }
       }
     }
   },
