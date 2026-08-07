@@ -6636,6 +6636,7 @@
     "joinHint": "{name} já tem um espaço aqui — poderá pedir para se juntar mais tarde.",
     "nameLabel": "O seu nome",
     "optional": "opcional",
+    "savedNoCode": "Guardado. Não conseguimos enviar o código agora — use Iniciar sessão com este e-mail quando voltar.",
     "submit": "Guardar o meu espaço",
     "success": "Guardado. Verifique a sua caixa de entrada para o código de acesso.",
     "title": "Guarde o seu trabalho"

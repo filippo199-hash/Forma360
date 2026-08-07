@@ -6871,6 +6871,7 @@
     "joinHint": "{name} already has a workspace here — you can ask to join them later.",
     "nameLabel": "Your name",
     "optional": "optional",
+    "savedNoCode": "Saved. We couldn't send the sign-in code just now — use Sign in with this address when you come back.",
     "submit": "Save my workspace",
     "success": "Saved. Check your inbox for the code that brings you back.",
     "title": "Save your work"

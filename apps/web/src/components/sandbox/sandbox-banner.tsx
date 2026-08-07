@@ -55,13 +55,22 @@ export function SandboxBanner() {
       // Same OTP send the ordinary sign-up flow uses — the code in their
       // inbox is what brings them back, so there is no second kind of
       // return link to maintain.
-      await fetch('/api/auth/email-otp/send-verification-otp', {
+      const otpSent = await fetch('/api/auth/email-otp/send-verification-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), type: 'sign-in' }),
-      }).catch(() => undefined);
+      })
+        .then((r) => r.ok)
+        .catch(() => false);
 
-      toast.success(t('success'));
+      // The address is saved either way — that is what protects their
+      // work. But telling them to check an inbox that will stay empty
+      // is worse than saying the code did not go out.
+      if (otpSent) {
+        toast.success(t('success'));
+      } else {
+        toast.warning(t('savedNoCode'));
+      }
       if (result.existingTenant !== null) {
         toast.info(t('joinHint', { name: result.existingTenant.name }));
       }

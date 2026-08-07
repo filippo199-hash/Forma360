@@ -25,6 +25,7 @@
 import type { Database } from '@forma360/db/client';
 import {
   contractors,
+  incidents,
   issueCategories,
   issues,
   permits,
@@ -49,9 +50,12 @@ import {
 } from '@forma360/shared/sandbox-scenarios';
 import { and, eq } from 'drizzle-orm';
 import { ensureSeededTypes } from '../routers/permits';
+import { nextReferenceValue } from '../reference-counter';
+import { formatIncidentReference } from '@forma360/shared/incidents';
 import {
   SANDBOX_COLLEAGUE,
   SANDBOX_CONTRACTORS,
+  SANDBOX_INCIDENT,
   SANDBOX_OBSERVATIONS,
   SANDBOX_PERMITS,
   SANDBOX_RISK_ASSESSMENTS,
@@ -195,13 +199,6 @@ export async function provisionSandbox(
     await seedScenario(ctx);
   });
 
-  // Permit types seed on their own tenant-row lock, so they run after
-  // the provisioning tx has committed rather than nesting inside it.
-  if (resolved.scenario.id === 'permit') {
-    await ensureSeededTypes(db, tenantId, userId);
-    await seedPermitRow(db, tenantId, userId, resolved);
-  }
-
   logger.info(
     {
       tenantId,
@@ -234,12 +231,13 @@ async function seedScenario(ctx: SeedContext): Promise<void> {
       await seedObservations(ctx);
       return;
     case 'incident':
-      await seedObservations(ctx);
+      await seedIncident(ctx);
       return;
     case 'permit':
+      await seedPermit(ctx);
+      return;
     case 'inspection':
     case 'rams':
-      // Permits seed post-commit (they need the type catalogue).
       // Inspections and RAMS land on a register furnished with the
       // shared org context above; their own content is authored in the
       // module, which is where their start screens already lead.
@@ -253,15 +251,26 @@ async function seedScenario(ctx: SeedContext): Promise<void> {
  * it is what puts their judgement into the document they then publish.
  */
 async function seedRiskAssessment(ctx: SeedContext): Promise<void> {
-  const content =
-    SANDBOX_RISK_ASSESSMENTS[ctx.resolved.refinement.id] ?? SANDBOX_RISK_ASSESSMENTS['general'];
+  // No fallback. The COSHH and fire refinements land on their own
+  // modules, and seeding a warehouse loading-bay assessment there would
+  // promise one thing and deliver another.
+  const content = SANDBOX_RISK_ASSESSMENTS[ctx.resolved.refinement.id];
   if (content === undefined) return;
 
   const assessmentId = newId();
+  // Claim the reference through the shared counter, exactly as the
+  // router does. Stamping one by hand would leave the counter at zero,
+  // and the visitor's first self-created assessment would collide with
+  // this one.
+  const raRef = await nextReferenceValue(
+    ctx.tx as unknown as Database,
+    ctx.tenantId,
+    'riskAssessment',
+  );
   await ctx.tx.insert(riskAssessments).values({
     id: assessmentId,
     tenantId: ctx.tenantId,
-    referenceNumber: 'RA-0001',
+    referenceNumber: `RA-${String(raRef).padStart(4, '0')}`,
     title: content.title,
     activity: content.activity,
     type: 'standing',
@@ -321,6 +330,10 @@ async function seedObservations(ctx: SeedContext): Promise<void> {
     const categoryId = ctx.categoryIds.get(obs.categoryName);
     if (categoryId === undefined) continue;
 
+    // Same contract as the issues router: OBS-, six digits, claimed
+    // through the counter so the visitor's next report cannot collide.
+    const ref = await nextReferenceValue(ctx.tx as unknown as Database, ctx.tenantId, 'issue');
+
     const categorySnapshot: IssueCategorySnapshot = {
       categoryId,
       name: obs.categoryName,
@@ -334,7 +347,7 @@ async function seedObservations(ctx: SeedContext): Promise<void> {
       categoryId,
       categorySnapshot,
       accessSnapshot,
-      referenceNumber: `ISS-${String(n).padStart(6, '0')}`,
+      referenceNumber: `OBS-${String(ref).padStart(6, '0')}`,
       title: obs.title,
       description: obs.description,
       ...(ctx.siteIds.get('northfield') !== undefined
@@ -348,23 +361,52 @@ async function seedObservations(ctx: SeedContext): Promise<void> {
 }
 
 /**
- * Seed one permit sitting in `issued` — waiting on the visitor to walk
- * it through to active. Runs after the provisioning tx because the
- * type catalogue seeds under its own tenant-row lock.
+ * Seed one incident sitting at `reported` — triage is the visitor's
+ * first decision, and the injury facts are chosen so the RIDDOR
+ * screening is a real judgement rather than a demo prop: nine days off
+ * work puts it over the over-7-day threshold.
  */
-async function seedPermitRow(
-  db: Database,
-  tenantId: string,
-  userId: string,
-  resolved: ResolvedSandboxChoice,
-): Promise<void> {
-  const content = SANDBOX_PERMITS[resolved.refinement.id] ?? SANDBOX_PERMITS['hotWork'];
+async function seedIncident(ctx: SeedContext): Promise<void> {
+  const ref = await nextReferenceValue(ctx.tx as unknown as Database, ctx.tenantId, 'incident');
+  const occurredAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+
+  await ctx.tx.insert(incidents).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    referenceNumber: formatIncidentReference(ref),
+    title: SANDBOX_INCIDENT.title,
+    kind: SANDBOX_INCIDENT.kind,
+    description: SANDBOX_INCIDENT.description,
+    locationText: SANDBOX_INCIDENT.locationText,
+    ...(ctx.siteIds.get('northfield') !== undefined
+      ? { siteId: ctx.siteIds.get('northfield') as string }
+      : {}),
+    occurredAt,
+    status: 'reported',
+    reportedByUserId: ctx.colleagueId,
+  });
+}
+
+/**
+ * Seed one permit for the visitor to walk through. Runs inside the
+ * provisioning transaction so a failure here rolls the whole workspace
+ * back rather than leaving a half-built tenant behind.
+ *
+ * The nine default permit types come from the same `ensureSeededTypes`
+ * the permits router uses, so the sandbox catalogue and a real tenant's
+ * catalogue can never drift.
+ */
+async function seedPermit(ctx: SeedContext): Promise<void> {
+  const content = SANDBOX_PERMITS[ctx.resolved.refinement.id] ?? SANDBOX_PERMITS['hotWork'];
   if (content === undefined) return;
 
-  const typeRows = await db
+  const tx = ctx.tx as unknown as Database;
+  await ensureSeededTypes(tx, ctx.tenantId, ctx.userId);
+
+  const typeRows = await tx
     .select({ id: permitTypes.id })
     .from(permitTypes)
-    .where(and(eq(permitTypes.tenantId, tenantId), eq(permitTypes.category, content.category)))
+    .where(and(eq(permitTypes.tenantId, ctx.tenantId), eq(permitTypes.category, content.category)))
     .limit(1);
   const permitTypeId = typeRows[0]?.id;
   if (permitTypeId === undefined) return;
@@ -372,17 +414,24 @@ async function seedPermitRow(
   const validFrom = new Date();
   const validTo = new Date(validFrom.getTime() + 8 * 60 * 60 * 1000);
 
-  await db.insert(permits).values({
+  // Same contract as the permits router: PTW-, four digits, claimed
+  // through the counter.
+  const ref = await nextReferenceValue(tx, ctx.tenantId, 'permit');
+
+  await ctx.tx.insert(permits).values({
     id: newId(),
-    tenantId,
+    tenantId: ctx.tenantId,
     permitTypeId,
-    referenceNumber: 'PTW-000001',
+    referenceNumber: `PTW-${String(ref).padStart(4, '0')}`,
     title: content.title,
     workDescription: content.description,
     locationText: content.locationText,
+    ...(ctx.siteIds.get('northfield') !== undefined
+      ? { siteId: ctx.siteIds.get('northfield') as string }
+      : {}),
     status: 'draft',
     validFrom,
     validTo,
-    createdBy: userId,
+    createdBy: ctx.userId,
   });
 }

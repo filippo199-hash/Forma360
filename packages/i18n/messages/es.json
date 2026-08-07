@@ -6643,6 +6643,7 @@
     "joinHint": "{name} ya tiene un espacio aquí — podrás pedir unirte más adelante.",
     "nameLabel": "Tu nombre",
     "optional": "opcional",
+    "savedNoCode": "Guardado. No pudimos enviar el código ahora — usa Iniciar sesión con esta dirección cuando vuelvas.",
     "submit": "Guardar mi espacio",
     "success": "Guardado. Revisa tu bandeja de entrada para el código de acceso.",
     "title": "Guarda tu trabajo"

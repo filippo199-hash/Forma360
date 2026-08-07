@@ -30,7 +30,10 @@ import { tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
 const claimInput = z.object({
-  email: z.string().email(),
+  // `.trim()` runs before `.email()`. Without it a pasted address with a
+  // trailing space is rejected as malformed — and pasting is how most
+  // people enter an address on a phone.
+  email: z.string().trim().email(),
   /** Optional — the visitor's own name, stamped onto documents. */
   name: z.string().min(1).max(100).optional(),
   /** Optional — replaces the placeholder workspace name. */

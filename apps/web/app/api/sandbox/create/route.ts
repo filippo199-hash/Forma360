@@ -60,25 +60,38 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'Bad request' }, { status: 400 });
   }
 
+  let provisioned: { tenantId: string; userId: string; landingPath: string };
   try {
-    const { tenantId, userId, landingPath } = await provisionSandbox(db, logger, {
+    provisioned = await provisionSandbox(db, logger, {
       brand: env.BRAND,
       choice: parsed.data,
     });
-
-    const session = await createSandboxSession(auth, userId, env.BETTER_AUTH_SECRET);
-
-    logger.info({ tenantId, clientIp }, '[sandbox] session issued');
-
-    return Response.json(
-      { landingPath },
-      { status: 200, headers: { 'set-cookie': session.setCookie } },
-    );
   } catch (err) {
     if (err instanceof SandboxChoiceError) {
       return Response.json({ error: 'Unknown scenario' }, { status: 400 });
     }
+    // Provisioning is one transaction, so a failure here leaves nothing
+    // behind.
     logger.error({ err }, '[sandbox] provisioning failed');
+    return Response.json({ error: 'Could not create the workspace.' }, { status: 500 });
+  }
+
+  try {
+    const session = await createSandboxSession(auth, provisioned.userId, env.BETTER_AUTH_SECRET);
+    logger.info({ tenantId: provisioned.tenantId, clientIp }, '[sandbox] session issued');
+    return Response.json(
+      { landingPath: provisioned.landingPath },
+      { status: 200, headers: { 'set-cookie': session.setCookie } },
+    );
+  } catch (err) {
+    // The tenant committed but nobody can reach it — it has no session
+    // and no email, so it is unreachable by construction. Logged with
+    // the id so it is traceable, and left for the TTL sweep, which
+    // collects any sandbox whose `claimedAt` never arrives.
+    logger.error(
+      { err, tenantId: provisioned.tenantId, orphaned: true },
+      '[sandbox] session minting failed — workspace orphaned',
+    );
     return Response.json({ error: 'Could not create the workspace.' }, { status: 500 });
   }
 }

@@ -6636,6 +6636,7 @@
     "joinHint": "{name} heeft hier al een werkruimte — je kunt later vragen om je aan te sluiten.",
     "nameLabel": "Je naam",
     "optional": "optioneel",
+    "savedNoCode": "Bewaard. We konden de code nu niet versturen — log bij terugkomst in met dit adres.",
     "submit": "Werkruimte bewaren",
     "success": "Bewaard. Check je inbox voor de code om terug te komen.",
     "title": "Bewaar je werk"

@@ -56,6 +56,11 @@ export function ScenarioPicker({
 
   async function build(): Promise<void> {
     if (scenario === null || refinementId === null || copy === null) return;
+    // A second click would provision a second tenant and orphan the
+    // first — only the last response's cookie survives. The phase guard
+    // is the real fix; `disabled` alone loses the race on a fast
+    // double-click.
+    if (phase === 'building') return;
     setPhase('building');
     setStep(0);
 
@@ -221,7 +226,7 @@ export function ScenarioPicker({
                     <button
                       type="button"
                       onClick={() => void build()}
-                      disabled={refinementId === null}
+                      disabled={refinementId === null || phase === 'building'}
                       className="inline-flex h-11 items-center justify-center rounded-lg bg-brand px-6 text-sm font-semibold text-brand-foreground shadow-sm transition-transform hover:-translate-y-0.5 disabled:opacity-50"
                     >
                       {TRY_PAGE.continueCta}

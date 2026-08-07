@@ -6643,6 +6643,7 @@
     "joinHint": "{name} hat hier bereits einen Arbeitsbereich — Sie können später um Beitritt bitten.",
     "nameLabel": "Ihr Name",
     "optional": "optional",
+    "savedNoCode": "Gesichert. Der Code konnte gerade nicht gesendet werden — melden Sie sich bei Ihrer Rückkehr mit dieser Adresse an.",
     "submit": "Arbeitsbereich sichern",
     "success": "Gesichert. Prüfen Sie Ihren Posteingang auf den Zugangscode.",
     "title": "Arbeit sichern"

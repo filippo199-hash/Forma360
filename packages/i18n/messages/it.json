@@ -6678,6 +6678,7 @@
     "joinHint": "{name} ha già uno spazio qui — potrai chiedere di unirti più tardi.",
     "nameLabel": "Il tuo nome",
     "optional": "facoltativo",
+    "savedNoCode": "Salvato. Non siamo riusciti a inviare il codice ora — usa Accedi con questo indirizzo al tuo ritorno.",
     "submit": "Salva il mio spazio",
     "success": "Salvato. Controlla la posta per il codice di accesso.",
     "title": "Salva il tuo lavoro"
