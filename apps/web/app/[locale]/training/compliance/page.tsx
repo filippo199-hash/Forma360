@@ -20,6 +20,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { FilterBar, type FilterDef } from '../../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../../src/components/module-header';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
@@ -62,8 +63,33 @@ export default function TrainingCompliancePage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const [asOf, setAsOf] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
   const query = trpc.training.compliance.useQuery(asOf !== '' ? { asOf } : {});
   const data = query.data;
+
+  // Single "as at" filter, behind the shared "+ Add filter" chip row so the
+  // compliance page reads the same as every other module (ADR 0014).
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'asOf',
+      label: t('filters.asOf'),
+      control: { kind: 'date', value: asOf, onChange: setAsOf },
+    },
+  ];
+  const activeFilterKeys = filterDefs
+    .map((f) => f.key)
+    .filter((k) => activeFilters.has(k) || asOf !== '');
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilter(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'asOf') setAsOf('');
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -76,20 +102,14 @@ export default function TrainingCompliancePage() {
             ? t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })
             : ''
         }
-      >
-        <div className="flex flex-col gap-1">
-          <label htmlFor="compliance-asof" className="text-xs font-medium text-muted-foreground">
-            {t('filters.asOf')}
-          </label>
-          <input
-            id="compliance-asof"
-            type="date"
-            value={asOf}
-            onChange={(e) => setAsOf(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-          />
-        </div>
-      </ModuleHeader>
+      />
+
+      <FilterBar
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilter}
+      />
 
       {query.isPending ? (
         <Card>

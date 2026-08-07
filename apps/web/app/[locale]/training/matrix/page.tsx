@@ -21,6 +21,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
 import { TRAINING_STATUS_GLYPH, type TrainingStatus } from '@forma360/shared/training';
+import { FilterBar, type FilterDef } from '../../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../../src/components/module-header';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
@@ -45,6 +46,9 @@ function MatrixInner() {
   const siteFilter = search.get('siteId') ?? '';
   const asOf = search.get('asOf') ?? '';
   const [sortByGaps, setSortByGaps] = useState(false);
+  // Which filters are revealed as chips. A filter that already carries a URL
+  // value (a deep-link from the compliance drill-down) is active on arrival.
+  const [addedFilters, setAddedFilters] = useState<Set<string>>(new Set());
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(search.toString());
@@ -163,6 +167,66 @@ function MatrixInner() {
       : `/${locale}/training/person?name=${encodeURIComponent(person.name)}`;
   }
 
+  // The shared "+ Add filter" chip row (ADR 0014). Values live in the URL so
+  // a deep-link stays shareable; the site keeps the hierarchical SiteSelector.
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'requirement',
+      label: t('tabs.requirements'),
+      control: {
+        kind: 'select',
+        value: requirementFilter,
+        onValueChange: (v) => setParam('requirementId', v),
+        options: [
+          { value: '', label: t('filters.allRequirements') },
+          ...(data?.requirements ?? []).map((r) => ({ value: r.id, label: r.name })),
+        ],
+      },
+    },
+    {
+      key: 'site',
+      label: t('filters.site'),
+      control: {
+        kind: 'custom',
+        render: () => (
+          <SiteSelector
+            value={siteFilter !== '' ? [siteFilter] : []}
+            onChange={(next) => setParam('siteId', next[0] ?? '')}
+            multiple={false}
+            placeholder={t('filters.allSites')}
+            className="w-56"
+          />
+        ),
+      },
+    },
+    {
+      key: 'asOf',
+      label: t('filters.asOf'),
+      control: { kind: 'date', value: asOf, onChange: (v) => setParam('asOf', v) },
+    },
+  ];
+  const activeFilterKeys = filterDefs
+    .map((f) => f.key)
+    .filter((k) => {
+      if (addedFilters.has(k)) return true;
+      if (k === 'requirement') return requirementFilter !== '';
+      if (k === 'site') return siteFilter !== '';
+      return asOf !== '';
+    });
+  function addFilter(key: string): void {
+    setAddedFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilter(key: string): void {
+    setAddedFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'requirement') setParam('requirementId', '');
+    if (key === 'site') setParam('siteId', '');
+    if (key === 'asOf') setParam('asOf', '');
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <TrainingTabs activeTab="matrix" locale={locale} />
@@ -183,57 +247,23 @@ function MatrixInner() {
         </Button>
       </ModuleHeader>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="matrix-req" className="text-xs font-medium text-muted-foreground">
-            {t('tabs.requirements')}
-          </label>
-          <select
-            id="matrix-req"
-            value={requirementFilter}
-            onChange={(e) => setParam('requirementId', e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+      <FilterBar
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilter}
+        resultsCount={rows.length}
+        trailing={
+          <Button
+            variant={sortByGaps ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSortByGaps((v) => !v)}
           >
-            <option value="">{t('filters.allRequirements')}</option>
-            {(data?.requirements ?? []).map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="matrix-site" className="text-xs font-medium text-muted-foreground">
-            {t('filters.site')}
-          </label>
-          <SiteSelector
-            value={siteFilter !== '' ? [siteFilter] : []}
-            onChange={(next) => setParam('siteId', next[0] ?? '')}
-            multiple={false}
-            placeholder={t('filters.allSites')}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="matrix-asof" className="text-xs font-medium text-muted-foreground">
-            {t('filters.asOf')}
-          </label>
-          <input
-            id="matrix-asof"
-            type="date"
-            value={asOf}
-            onChange={(e) => setParam('asOf', e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-          />
-        </div>
-        <Button
-          variant={sortByGaps ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSortByGaps((v) => !v)}
-        >
-          <ArrowDownWideNarrow className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-          {t('matrix.sortByGaps')}
-        </Button>
-      </div>
+            <ArrowDownWideNarrow className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+            {t('matrix.sortByGaps')}
+          </Button>
+        }
+      />
 
       <StatusLegend />
 
