@@ -6635,5 +6635,24 @@
       "allRequirements": "Alle vereisten",
       "clear": "Wissen"
     }
+  },
+  "sandbox": {
+    "bannerBody": "Alles hier is echt en aanpasbaar. Voeg je e-mailadres toe zodat je kunt terugkomen.",
+    "bannerCta": "Mijn werk bewaren",
+    "bannerTitle": "Je zit in een demowerkruimte",
+    "body": "Vertel ons waar we je toegang naartoe sturen. Geen wachtwoord — we mailen je een code.",
+    "cancel": "Nog niet",
+    "companyLabel": "Bedrijfsnaam",
+    "dismiss": "Nu niet",
+    "emailLabel": "Zakelijk e-mailadres",
+    "errorGeneric": "Bewaren is niet gelukt. Probeer het opnieuw.",
+    "errorInUse": "Dat adres heeft al een account. Log in plaats daarvan in.",
+    "joinHint": "{name} heeft hier al een werkruimte — je kunt later vragen om je aan te sluiten.",
+    "nameLabel": "Je naam",
+    "optional": "optioneel",
+    "savedNoCode": "Bewaard. We konden de code nu niet versturen — log bij terugkomst in met dit adres.",
+    "submit": "Werkruimte bewaren",
+    "success": "Bewaard. Check je inbox voor de code om terug te komen.",
+    "title": "Bewaar je werk"
   }
 }

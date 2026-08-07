@@ -6635,5 +6635,24 @@
       "allRequirements": "Wszystkie wymagania",
       "clear": "Wyczyść"
     }
+  },
+  "sandbox": {
+    "bannerBody": "Wszystko tutaj jest prawdziwe i możesz to zmieniać. Podaj e-mail, aby móc wrócić.",
+    "bannerCta": "Zapisz moją pracę",
+    "bannerTitle": "Jesteś w demonstracyjnej przestrzeni roboczej",
+    "body": "Podaj adres, na który wyślemy Ci powrót. Bez hasła — wyślemy kod e-mailem.",
+    "cancel": "Jeszcze nie",
+    "companyLabel": "Nazwa firmy",
+    "dismiss": "Nie teraz",
+    "emailLabel": "Służbowy e-mail",
+    "errorGeneric": "Nie udało się zapisać. Spróbuj ponownie.",
+    "errorInUse": "Ten adres ma już konto. Zaloguj się.",
+    "joinHint": "{name} ma już tutaj przestrzeń roboczą — możesz później poprosić o dołączenie.",
+    "nameLabel": "Twoje imię",
+    "optional": "opcjonalnie",
+    "savedNoCode": "Zapisano. Nie udało się teraz wysłać kodu — przy powrocie zaloguj się tym adresem.",
+    "submit": "Zapisz przestrzeń roboczą",
+    "success": "Zapisano. Sprawdź skrzynkę — wysłaliśmy kod powrotu.",
+    "title": "Zapisz swoją pracę"
   }
 }

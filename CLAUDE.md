@@ -661,6 +661,48 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - Each brand gets its own Railway project, Postgres, Redis, R2, Resend
   domain, Sentry and secrets. Databases are never shared across brands.
 
+## Try-it-now sandbox (ADR 0017) — FreeHS only
+
+A visitor can get a real, seeded, signed-in workspace with no account.
+Everything hangs off `brand.offersSandbox` (true for FreeHS, false for
+Forma360) — do not add a brand conditional anywhere else.
+
+- **Catalogue** at `packages/shared/src/sandbox-scenarios.ts`. Six tiles
+  × refinements, gated twice: on `offersSandbox`, then on
+  `BRAND_MODULES`. `scenariosForBrand()` returning `[]` is what 404s
+  `/try` and the creation endpoint. `resolveSandboxChoice()` refuses an
+  unknown pair rather than defaulting.
+- **Provisioning** at `packages/api/src/sandbox/provision.ts` — writes
+  the same rows `signUpWithTenant` does, plus a `settings.sandbox`
+  marker. A sandbox is an ordinary tenant; ADR 0002 is untouched. Seed
+  content lives in `seed-data.ts` and is deliberately not i18n'd (it is
+  the visitor's data, not chrome). **Each scenario leaves exactly one
+  decision open** — keep that property when adding scenarios.
+  Two rules the QA pass turned into tests, so break them and the suite
+  fails: every seeded reference number is claimed through
+  `nextReferenceValue` (hand-stamping one leaves the counter at zero and
+  the visitor's first record collides — SB-Q01/Q02), and a tile only
+  seeds content into the module it *lands on* (SB-Q10/Q11). Seeded
+  today: risk assessments (general / manual handling), permits (all four
+  types), observations, incidents. Not yet seeded — they land on a
+  register furnished with the shared org context only: inspections,
+  RAMS, and the COSHH / fire refinements of the risk-assessment tile.
+- **Session** at `packages/auth/src/sandbox-session.ts` — mints a real
+  better-auth session. It reproduces better-auth's cookie signing and is
+  pinned by a round-trip test. If that test fails after a better-auth
+  bump, fix the signing; do not weaken the test.
+- **Claim** at `packages/api/src/routers/sandbox.ts` — `status` +
+  `claim`. Claiming swaps the `@sandbox.invalid` placeholder for a real
+  address and stamps `claimedAt`; returning uses the ordinary email-OTP
+  flow. The save prompt is never a gate.
+- **UI**: `/try` (`app/[locale]/try`), `ScenarioPicker`,
+  `POST /api/sandbox/create`, and `SandboxBanner` mounted in the signed-in
+  shell. Funnel copy is in `src/content/try.ts` (marketing convention,
+  English); in-app copy is i18n'd under the `sandbox` namespace.
+- **Not yet built**: the TTL sweep for unclaimed sandboxes. The
+  `claimedAt` marker exists so that worker can be added without a
+  migration.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)
@@ -679,6 +721,7 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
 - [0014 — Navigation information architecture](./docs/adr/0014-navigation-information-architecture.md)
 - [0015 — Method-statement content model, RAMS pack versioning and briefing records](./docs/adr/0015-rams-method-statement-and-pack-model.md)
 - [0016 — Error reporting and PII scrubbing](./docs/adr/0016-error-reporting-and-pii-scrubbing.md)
+- [0017 — Try-it-now sandbox workspaces](./docs/adr/0017-try-it-now-sandbox.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase

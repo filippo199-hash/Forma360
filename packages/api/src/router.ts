@@ -19,6 +19,7 @@ import { healthRouter } from './routers/health';
 import { permissionsRouter } from './routers/permissions';
 import { sitesRouter } from './routers/sites';
 import { templatesRouter } from './routers/templates';
+import { sandboxRouter } from './routers/sandbox';
 import { tenantsRouter } from './routers/tenants';
 import { usersRouter } from './routers/users';
 // Phase 2 PR 28 routers — imported AFTER templates so their
@@ -113,6 +114,7 @@ export function buildAppRouter(deps: {
     admin: adminRouter,
     permissions: permissionsRouter,
     tenants: tenantsRouter,
+    sandbox: sandboxRouter,
     users: usersRouter,
     customFields: customFieldsRouter,
     groups: groupsRouter,

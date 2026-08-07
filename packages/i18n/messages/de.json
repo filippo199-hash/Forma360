@@ -6642,5 +6642,24 @@
       "allRequirements": "Alle Anforderungen",
       "clear": "Zurücksetzen"
     }
+  },
+  "sandbox": {
+    "bannerBody": "Alles hier ist echt und von Ihnen änderbar. Hinterlegen Sie Ihre E-Mail, um zurückzukehren.",
+    "bannerCta": "Meine Arbeit sichern",
+    "bannerTitle": "Sie befinden sich in einem Demo-Arbeitsbereich",
+    "body": "Sagen Sie uns, wohin wir Ihren Rückweg schicken sollen. Kein Passwort — wir senden Ihnen einen Code per E-Mail.",
+    "cancel": "Noch nicht",
+    "companyLabel": "Firmenname",
+    "dismiss": "Jetzt nicht",
+    "emailLabel": "Geschäftliche E-Mail",
+    "errorGeneric": "Speichern nicht möglich. Bitte erneut versuchen.",
+    "errorInUse": "Diese Adresse hat bereits ein Konto. Bitte melden Sie sich an.",
+    "joinHint": "{name} hat hier bereits einen Arbeitsbereich — Sie können später um Beitritt bitten.",
+    "nameLabel": "Ihr Name",
+    "optional": "optional",
+    "savedNoCode": "Gesichert. Der Code konnte gerade nicht gesendet werden — melden Sie sich bei Ihrer Rückkehr mit dieser Adresse an.",
+    "submit": "Arbeitsbereich sichern",
+    "success": "Gesichert. Prüfen Sie Ihren Posteingang auf den Zugangscode.",
+    "title": "Arbeit sichern"
   }
 }

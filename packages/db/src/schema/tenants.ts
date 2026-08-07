@@ -36,6 +36,18 @@ export interface TenantSettings {
    * Absent until an admin sets it via `tenants.updateBranding`.
    */
   branding?: { logoStorageKey?: string; primaryColor?: string };
+  /**
+   * Present only on try-it-now workspaces (ADR 0017). `scenarioId` /
+   * `refinementId` record what the visitor asked for; `claimedAt` flips
+   * from absent to a timestamp when they hand over a real email address.
+   * An unclaimed sandbox is swept by the TTL worker; a claimed one is an
+   * ordinary tenant that merely remembers how it started.
+   */
+  sandbox?: {
+    scenarioId: string;
+    refinementId: string;
+    claimedAt?: string;
+  };
   [key: string]: unknown;
 }
 

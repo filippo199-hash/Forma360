@@ -6642,5 +6642,24 @@
       "allRequirements": "Todos los requisitos",
       "clear": "Limpiar"
     }
+  },
+  "sandbox": {
+    "bannerBody": "Todo aquí es real y puedes modificarlo. Añade tu correo para poder volver.",
+    "bannerCta": "Guardar mi trabajo",
+    "bannerTitle": "Estás en un espacio de demostración",
+    "body": "Dinos dónde enviarte el acceso de vuelta. Sin contraseña — te enviaremos un código por correo.",
+    "cancel": "Todavía no",
+    "companyLabel": "Nombre de la empresa",
+    "dismiss": "Ahora no",
+    "emailLabel": "Correo de trabajo",
+    "errorGeneric": "No pudimos guardarlo. Inténtalo de nuevo.",
+    "errorInUse": "Esa dirección ya tiene una cuenta. Inicia sesión en su lugar.",
+    "joinHint": "{name} ya tiene un espacio aquí — podrás pedir unirte más adelante.",
+    "nameLabel": "Tu nombre",
+    "optional": "opcional",
+    "savedNoCode": "Guardado. No pudimos enviar el código ahora — usa Iniciar sesión con esta dirección cuando vuelvas.",
+    "submit": "Guardar mi espacio",
+    "success": "Guardado. Revisa tu bandeja de entrada para el código de acceso.",
+    "title": "Guarda tu trabajo"
   }
 }

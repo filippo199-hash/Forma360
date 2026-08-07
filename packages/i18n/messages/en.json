@@ -6863,5 +6863,24 @@
       "allRequirements": "All requirements",
       "clear": "Clear"
     }
+  },
+  "sandbox": {
+    "bannerBody": "Everything here is real and yours to change. Add your email so you can come back to it.",
+    "bannerCta": "Save my work",
+    "bannerTitle": "You're in a demo workspace",
+    "body": "Tell us where to send your way back in. No password — we'll email you a code.",
+    "cancel": "Not yet",
+    "companyLabel": "Company name",
+    "dismiss": "Not now",
+    "emailLabel": "Work email",
+    "errorGeneric": "We couldn't save that. Please try again.",
+    "errorInUse": "That address already has an account. Sign in instead.",
+    "joinHint": "{name} already has a workspace here — you can ask to join them later.",
+    "nameLabel": "Your name",
+    "optional": "optional",
+    "savedNoCode": "Saved. We couldn't send the sign-in code just now — use Sign in with this address when you come back.",
+    "submit": "Save my workspace",
+    "success": "Saved. Check your inbox for the code that brings you back.",
+    "title": "Save your work"
   }
 }

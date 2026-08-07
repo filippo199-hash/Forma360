@@ -292,6 +292,13 @@ importers:
       ioredis:
         specifier: ^5.4.1
         version: 5.10.1
+    devDependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.2.0
+        version: 0.2.17
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@25.6.0)(@vitest/ui@2.1.9)(happy-dom@16.8.1)(lightningcss@1.32.0)(terser@5.46.1)
 
   packages/db:
     dependencies:

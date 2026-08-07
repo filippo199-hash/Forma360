@@ -31,6 +31,10 @@
     "./heads-up-publish": {
       "types": "./src/heads-up-publish.ts",
       "default": "./src/heads-up-publish.ts"
+    },
+    "./sandbox": {
+      "types": "./src/sandbox/provision.ts",
+      "default": "./src/sandbox/provision.ts"
     }
   },
   "scripts": {

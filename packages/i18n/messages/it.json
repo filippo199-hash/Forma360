@@ -6677,5 +6677,24 @@
       "allRequirements": "Tutti i requisiti",
       "clear": "Azzera"
     }
+  },
+  "sandbox": {
+    "bannerBody": "Tutto qui è reale e puoi modificarlo. Aggiungi la tua email per poterci tornare.",
+    "bannerCta": "Salva il mio lavoro",
+    "bannerTitle": "Sei in uno spazio dimostrativo",
+    "body": "Dicci dove inviarti il link per rientrare. Nessuna password — ti invieremo un codice via email.",
+    "cancel": "Non ancora",
+    "companyLabel": "Nome azienda",
+    "dismiss": "Non ora",
+    "emailLabel": "Email di lavoro",
+    "errorGeneric": "Non siamo riusciti a salvare. Riprova.",
+    "errorInUse": "Questo indirizzo ha già un account. Accedi invece.",
+    "joinHint": "{name} ha già uno spazio qui — potrai chiedere di unirti più tardi.",
+    "nameLabel": "Il tuo nome",
+    "optional": "facoltativo",
+    "savedNoCode": "Salvato. Non siamo riusciti a inviare il codice ora — usa Accedi con questo indirizzo al tuo ritorno.",
+    "submit": "Salva il mio spazio",
+    "success": "Salvato. Controlla la posta per il codice di accesso.",
+    "title": "Salva il tuo lavoro"
   }
 }
