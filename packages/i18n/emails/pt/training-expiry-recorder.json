@@ -1,0 +1,8 @@
+{
+  "subject": "Formação a expirar: {requirementName} — {personName}",
+  "preheader": "A formação {requirementName} de {personName} expira a {expiresOn}.",
+  "greeting": "Olá,",
+  "body": "O registo de formação de {personName} para \"{requirementName}\" expira a {expiresOn}. Foi você que registou este cartão e a pessoa não tem conta no sistema, por isso este lembrete chega-lhe a si. Trate da renovação e registe o novo certificado: {url}",
+  "cta": "Ver a matriz de formação",
+  "footer": "Recebe esta mensagem porque registou esta formação em {productName}."
+}

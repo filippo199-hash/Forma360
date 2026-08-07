@@ -33,7 +33,8 @@ export function PersonWallet({
 }: {
   userId?: string | undefined;
   personName?: string | undefined;
-  heading: string;
+  /** Falls back to the name the server resolved, so an id-only route works. */
+  heading?: string | undefined;
 }) {
   const t = useTranslations('training.person');
   const tRecord = useTranslations('training.record');
@@ -44,8 +45,11 @@ export function PersonWallet({
   const canRecord = useHasPermission('training.record');
   const [voiding, setVoiding] = useState<string | null>(null);
 
+  // No props at all = "me". Sending `{ personName: '' }` here is what made
+  // /training/me an empty wallet for every user — the server's
+  // default-to-caller branch needs the field ABSENT, not empty (TR-B2).
   const query = trpc.training.person.useQuery(
-    userId !== undefined ? { userId } : { personName: personName ?? '' },
+    userId !== undefined ? { userId } : personName !== undefined ? { personName } : {},
   );
 
   const verify = trpc.training.verifyRecord.useMutation({
@@ -98,7 +102,11 @@ export function PersonWallet({
   return (
     <div className="space-y-4">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{heading}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {heading !== undefined && heading !== ''
+            ? heading
+            : (query.data?.personName ?? t('title'))}
+        </h1>
         {query.data !== undefined ? (
           <p className="text-xs text-muted-foreground">
             {t('asAt', { date: fmt(query.data.asOf) })}

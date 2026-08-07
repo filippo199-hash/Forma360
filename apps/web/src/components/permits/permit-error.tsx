@@ -22,6 +22,10 @@ const KNOWN_SLUGS = new Set([
   'issuer-is-acceptor',
   'preconditions-incomplete',
   'gas-test-required',
+  // TR-B1: the competence gate's two verdicts. Without these the issuer
+  // at the job face got "something went wrong" with no names and no reason.
+  'training-expired',
+  'training-missing',
   'isolation-certificate-required',
   'rescue-plan-required',
   'authorisation-required',

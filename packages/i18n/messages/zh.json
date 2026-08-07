@@ -4955,7 +4955,8 @@
         "requiresGasTesting": "需要气体检测",
         "requiresIsolationCertificate": "需要隔离证书",
         "requiresRescuePlan": "需要救援方案",
-        "requiresRiskAssessment": "需要关联风险评估"
+        "requiresRiskAssessment": "需要关联风险评估",
+        "requiresRamsPack": "需要已接受的 RAMS 方案"
       },
       "maxDuration": "最长有效期",
       "hours": "小时",
@@ -4976,7 +4977,8 @@
       "gasLimitMax": "上限",
       "addGasLimit": "添加限值",
       "gasFreshness": "气体检测有效期",
-      "gasFreshnessUnit": "分钟"
+      "gasFreshnessUnit": "分钟",
+      "description": "说明"
     },
     "errors": {
       "module-disabled": "该模块不可用。",
@@ -5027,8 +5029,22 @@
       "entry-log-full": "该许可的进出记录已满。",
       "unknown-entry": "该记录行不存在。",
       "already-exited": "该人员已记录退出。",
-      "render-unavailable": "当前环境不支持 PDF 生成。"
-    }
+      "render-unavailable": "当前环境不支持 PDF 生成。",
+      "training-expired": "无法签发：许可证上列明的人员培训已过期。",
+      "training-missing": "无法签发：许可证上列明的人员从未取得所需培训。"
+    },
+    "competence": {
+      "blockedTitle": "能力要求未满足",
+      "personExpired": "{person} — {requirement} 已过期",
+      "personMissing": "{person} — 未持有 {requirement}",
+      "openModule": "打开培训"
+    },
+    "signatures": {
+      "competenceBlocked": "已阻止：能力要求未满足"
+    },
+    "requiredTraining": "所需培训",
+    "requiredTrainingHint": "所有列明作业人员必须持有且在有效期内，才能签发此类许可证。",
+    "requiredTrainingNone": "尚未定义培训要求。"
   },
   "fireSafety": {
     "title": "消防安全",
@@ -6623,7 +6639,8 @@
       "gaps": "缺口",
       "matrix": "矩阵",
       "compliance": "合规情况",
-      "requirements": "要求"
+      "requirements": "要求",
+      "me": "我的培训"
     },
     "asAt": "截至 {date}",
     "status": {
@@ -6641,7 +6658,8 @@
       "record": "登记",
       "expiresOn": "{date} 到期",
       "requiredByRole": "按岗位要求",
-      "total": "{count} 项待处理"
+      "total": "{count} 项待处理",
+      "noSiteMembers": "尚无人员归属此场所，因此没有可显示的内容。请先为该场所添加人员。"
     },
     "matrix": {
       "person": "人员",
@@ -6759,7 +6777,12 @@
       "close": "关闭",
       "rowLabel": "第 {row} 行",
       "badColumns": "标题行必须包含 personName、requirementName 和 achievedAt。",
-      "noRows": "没有可导入的行。"
+      "noRows": "没有可导入的行。",
+      "dryRun": "试运行",
+      "dryRunDone": "试运行：将导入 {count} 条记录。未写入任何数据。",
+      "matchSummary": "{matched} 条已匹配账号 · {nameOnly} 条仅按姓名记录",
+      "duplicatesSkipped": "{count} 行已存在，已跳过。",
+      "errorGroup": "{message} — {count} 行（首行：第 {first} 行）"
     },
     "errors": {
       "moduleDisabled": "此模块未启用。",

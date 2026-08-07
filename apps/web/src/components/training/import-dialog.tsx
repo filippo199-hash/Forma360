@@ -37,6 +37,8 @@ const COLUMNS = [
 ] as const;
 
 interface ParsedRow {
+  /** 1-based line number in the user's file, so errors name THEIR row. */
+  sourceRow: number;
   personName: string;
   userEmail?: string;
   requirementName: string;
@@ -52,12 +54,27 @@ interface ParsedRow {
  * quotes, header row required. Anything richer belongs in a library, and
  * anything richer than this is not what an LMS export looks like.
  */
-export function parseCsv(text: string): { rows: ParsedRow[]; error: string | null } {
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l !== '');
-  if (lines.length < 2) return { rows: [], error: 'empty' };
+export function parseCsv(text: string): {
+  rows: ParsedRow[];
+  /**
+   * TR-B4: rows this parser could NOT use, with the reason and the line
+   * number from the user's file. Previously these were dropped with a bare
+   * `continue`, so a 2,000-row extract with 40 missing dates imported 1,960
+   * and reported "Imported 1,960" with no failures — silent truncation,
+   * the worst failure mode an importer has.
+   */
+  skipped: Array<{ row: number; message: string }>;
+  error: string | null;
+} {
+  // Keep the physical line index so a blank line does not shift the
+  // numbers the user is asked to go and fix.
+  const physical = text.split(/\r?\n/);
+  const lines: Array<{ text: string; no: number }> = [];
+  physical.forEach((l, i) => {
+    const t = l.trim();
+    if (t !== '') lines.push({ text: t, no: i + 1 });
+  });
+  if (lines.length < 2) return { rows: [], skipped: [], error: 'empty' };
 
   const splitLine = (line: string): string[] => {
     const out: string[] = [];
@@ -79,15 +96,16 @@ export function parseCsv(text: string): { rows: ParsedRow[]; error: string | nul
     return out.map((c) => c.trim());
   };
 
-  const header = splitLine(lines[0] ?? '').map((h) => h.replace(/^\uFEFF/, ''));
+  const header = splitLine(lines[0]?.text ?? '').map((h) => h.replace(/^\uFEFF/, ''));
   const index = new Map(header.map((h, i) => [h, i] as const));
   if (!index.has('personName') || !index.has('requirementName') || !index.has('achievedAt')) {
-    return { rows: [], error: 'columns' };
+    return { rows: [], skipped: [], error: 'columns' };
   }
 
   const rows: ParsedRow[] = [];
+  const skipped: Array<{ row: number; message: string }> = [];
   for (const line of lines.slice(1)) {
-    const cells = splitLine(line);
+    const cells = splitLine(line.text);
     const at = (col: (typeof COLUMNS)[number]): string | undefined => {
       const i = index.get(col);
       if (i === undefined) return undefined;
@@ -98,9 +116,18 @@ export function parseCsv(text: string): { rows: ParsedRow[]; error: string | nul
     const requirementName = at('requirementName');
     const achievedAt = at('achievedAt');
     if (personName === undefined || requirementName === undefined || achievedAt === undefined) {
+      const missing = [
+        personName === undefined ? 'personName' : null,
+        requirementName === undefined ? 'requirementName' : null,
+        achievedAt === undefined ? 'achievedAt' : null,
+      ]
+        .filter((v): v is string => v !== null)
+        .join(', ');
+      skipped.push({ row: line.no, message: `missing:${missing}` });
       continue;
     }
     rows.push({
+      sourceRow: line.no,
       personName,
       requirementName,
       achievedAt,
@@ -115,7 +142,20 @@ export function parseCsv(text: string): { rows: ParsedRow[]; error: string | nul
         : {}),
     });
   }
-  return { rows, error: rows.length === 0 ? 'empty' : null };
+  return { rows, skipped, error: rows.length === 0 && skipped.length === 0 ? 'empty' : null };
+}
+
+/** Collapse repeated identical failures to one line with a count. */
+export function groupErrors(
+  errors: ReadonlyArray<{ row: number; message: string }>,
+): Array<{ message: string; count: number; rows: number[] }> {
+  const byMessage = new Map<string, number[]>();
+  for (const e of errors) {
+    byMessage.set(e.message, [...(byMessage.get(e.message) ?? []), e.row]);
+  }
+  return [...byMessage.entries()]
+    .map(([message, rows]) => ({ message, count: rows.length, rows: rows.sort((a, b) => a - b) }))
+    .sort((a, b) => b.count - a.count);
 }
 
 export function ImportDialog({
@@ -131,8 +171,13 @@ export function ImportDialog({
   const [text, setText] = useState('');
   const [result, setResult] = useState<{
     imported: number;
+    wouldImport: number;
     failed: number;
     errors: Array<{ row: number; message: string }>;
+    matchedToUsers: number;
+    nameOnly: number;
+    skippedDuplicates: number;
+    dryRun: boolean;
   } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -140,23 +185,26 @@ export function ImportDialog({
     onSuccess: (res) => {
       setResult(res);
       void utils.training.invalidate();
-      if (res.imported > 0) toast.success(t('imported', { count: res.imported }));
+      if (res.dryRun) toast.success(t('dryRunDone', { count: res.wouldImport }));
+      else if (res.imported > 0) toast.success(t('imported', { count: res.imported }));
       if (res.failed > 0) toast.error(t('failed', { count: res.failed }));
     },
     onError: (err) => toast.error(err.message || tErr('generic')),
   });
 
-  function submit() {
-    const { rows, error } = parseCsv(text);
+  function submit(dryRun: boolean) {
+    const { rows, skipped, error } = parseCsv(text);
     if (error === 'columns') {
       toast.error(t('badColumns'));
       return;
     }
-    if (error !== null || rows.length === 0) {
+    if (rows.length === 0 && skipped.length === 0) {
       toast.error(t('noRows'));
       return;
     }
-    run.mutate({ rows });
+    // Unparseable rows travel WITH the request so they are reported as
+    // failures rather than disappearing between the two halves (TR-B4).
+    run.mutate({ rows, skipped, dryRun });
   }
 
   function downloadTemplate() {
@@ -227,14 +275,39 @@ export function ImportDialog({
               people not to try again. */}
           {result !== null ? (
             <div className="space-y-2 rounded-md border p-3 text-sm">
-              <p className="font-medium">{t('imported', { count: result.imported })}</p>
+              <p className="font-medium">
+                {result.dryRun
+                  ? t('dryRunDone', { count: result.wouldImport })
+                  : t('imported', { count: result.imported })}
+              </p>
+              {/* The pre-import summary Bello asked for: how many rows will
+                  land on an account, and how many become name-only people. */}
+              <p className="text-xs text-muted-foreground">
+                {t('matchSummary', {
+                  matched: result.matchedToUsers,
+                  nameOnly: result.nameOnly,
+                })}
+              </p>
+              {result.skippedDuplicates > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  {t('duplicatesSkipped', { count: result.skippedDuplicates })}
+                </p>
+              ) : null}
               {result.failed > 0 ? (
                 <>
                   <p className="text-destructive">{t('failed', { count: result.failed })}</p>
                   <ul className="max-h-40 space-y-0.5 overflow-y-auto font-mono text-xs text-muted-foreground">
-                    {result.errors.map((e) => (
-                      <li key={`${e.row}-${e.message}`}>
-                        {t('rowLabel', { row: e.row })}: {e.message}
+                    {/* One unknown course name in a 2,000-row extract used to
+                        print 2,000 identical lines into a small scroll box. */}
+                    {groupErrors(result.errors).map((g) => (
+                      <li key={g.message}>
+                        {g.count === 1
+                          ? `${t('rowLabel', { row: g.rows[0] ?? 0 })}: ${g.message}`
+                          : t('errorGroup', {
+                              message: g.message,
+                              count: g.count,
+                              first: g.rows[0] ?? 0,
+                            })}
                       </li>
                     ))}
                   </ul>
@@ -248,7 +321,16 @@ export function ImportDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t('close')}
           </Button>
-          <Button onClick={submit} disabled={text.trim() === '' || run.isPending}>
+          {/* Dry run first: an append-only store makes a bad import
+              expensive to undo, one voided row at a time (TR-B6). */}
+          <Button
+            variant="outline"
+            onClick={() => submit(true)}
+            disabled={text.trim() === '' || run.isPending}
+          >
+            {t('dryRun')}
+          </Button>
+          <Button onClick={() => submit(false)} disabled={text.trim() === '' || run.isPending}>
             {t('run')}
           </Button>
         </DialogFooter>

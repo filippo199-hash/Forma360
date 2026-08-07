@@ -365,8 +365,10 @@ describe('training router (FreeHS B7)', () => {
         description: null,
       }),
     ).rejects.toThrow(/FORBIDDEN|training.manage/);
-    // …but can read the matrix.
-    await expect(standard.training.gaps({})).resolves.toBeDefined();
+    // TR-B10: and can no longer read the ORG-WIDE views either — those
+    // name colleagues' shortfalls. Their own record stays reachable.
+    await expect(standard.training.gaps({})).rejects.toThrow(/FORBIDDEN|training.view/);
+    await expect(standard.training.person({})).resolves.toBeDefined();
   });
 
   it('TR-E17: CSV import reports per-row failures instead of failing whole', async () => {
@@ -611,5 +613,187 @@ describe('training router (FreeHS B7)', () => {
     // empty — never the colleague's record.
     const mine = await callerFor(standardId, tenantId).training.person({});
     expect(mine.records).toHaveLength(0);
+  });
+  // ── Round 2 (TR-B2 / TR-B5 / TR-B6 / TR-B7 / TR-B10 / TR-B12) ─────────
+
+  it('TR-B2: the person view with NO arguments returns the caller’s own wallet', async () => {
+    const caller = callerFor(adminId, tenantId);
+    const requirementId = await seedRequirement();
+    await caller.training.addRecord({
+      requirementId,
+      userId: adminId,
+      personName: 'Priya Nair',
+      personCategory: 'employee',
+      contractorId: null,
+      achievedAt: iso(-10),
+      awardingBody: null,
+      certificateNumber: null,
+      evidenceKey: null,
+      evidenceFilename: null,
+      source: 'external',
+      notes: null,
+    });
+
+    // The exact call the /training/me page makes.
+    const mine = await caller.training.person({});
+    expect(mine.records).toHaveLength(1);
+    expect(mine.isSelf).toBe(true);
+    expect(mine.personName).toBe('Priya Nair');
+
+    // An empty string must be treated as absent, which is what the page
+    // used to send — and what produced WHERE person_name = ''.
+    const alsoMine = await caller.training.person({ personName: '' });
+    expect(alsoMine.records).toHaveLength(1);
+  });
+
+  it('TR-B2: the cell key follows the resolved target, so gaps show in my wallet', async () => {
+    // A requirement assigned to the OPERATOR's role, never held.
+    await seedRequirement();
+    // Give the operator the role match by asking as them.
+    const asOperator = callerFor(operatorId, tenantId);
+    const mine = await asOperator.training.person({});
+    // A not_held requirement exists only as a CELL, never as a record —
+    // so if the key is wrong, "what am I missing" is silently blank.
+    expect(mine.cells).toHaveLength(1);
+    expect(mine.cells[0]?.status).toBe('not_held');
+  });
+
+  it('TR-B10: another person’s wallet needs training.view; your own never does', async () => {
+    // `standardId` holds the seeded Standard set, which no longer carries
+    // training.view.
+    const standard = callerFor(standardId, tenantId);
+    await expect(standard.training.person({})).resolves.toBeDefined();
+    await expect(standard.training.person({ userId: operatorId })).rejects.toThrow(
+      /FORBIDDEN|training.view/,
+    );
+    // …and the org-wide views stay shut.
+    await expect(standard.training.gaps({})).rejects.toThrow(/FORBIDDEN|training.view/);
+  });
+
+  it('TR-B7: a requirement-filtered matrix returns exactly one column', async () => {
+    const caller = callerFor(adminId, tenantId);
+    const a = await seedRequirement({ name: 'Abrasive wheels' });
+    await seedRequirement({ name: 'Manual handling' });
+    await seedRequirement({ name: 'First aid at work' });
+
+    expect((await caller.training.matrix({})).requirements).toHaveLength(3);
+    // Filtered: one column, so the grid cannot assert "not required" about
+    // 29 other tickets and then write that into the CSV and the PDF.
+    const filtered = await caller.training.matrix({ requirementId: a });
+    expect(filtered.requirements).toHaveLength(1);
+    expect(filtered.requirements[0]?.id).toBe(a);
+  });
+
+  it('TR-B5: an import row with no email matches an existing user by name', async () => {
+    const caller = callerFor(adminId, tenantId);
+    await seedRequirement({ name: 'Manual handling' });
+    const res = await caller.training.importRecords({
+      rows: [
+        // No userEmail — the common case for an LMS extract keyed on a
+        // payroll number. This used to create a duplicate name-only person
+        // beside the same human's account.
+        { personName: 'Dave Mullins', requirementName: 'Manual handling', achievedAt: iso(-5) },
+      ],
+      skipped: [],
+      dryRun: false,
+    });
+    expect(res.imported).toBe(1);
+    expect(res.matchedToUsers).toBe(1);
+    expect(res.nameOnly).toBe(0);
+    const records = await caller.training.listRecords({});
+    expect(records[0]?.userId).toBe(operatorId);
+  });
+
+  it('TR-B4: rows the client could not parse are reported, not silently dropped', async () => {
+    const caller = callerFor(adminId, tenantId);
+    await seedRequirement({ name: 'Manual handling' });
+    const res = await caller.training.importRecords({
+      rows: [
+        {
+          personName: 'Dave Mullins',
+          requirementName: 'Manual handling',
+          achievedAt: iso(-5),
+          sourceRow: 2,
+        },
+      ],
+      // What the parser could not use, carried through with the user's own
+      // line numbers.
+      skipped: [
+        { row: 3, message: 'missing:achievedAt' },
+        { row: 7, message: 'missing:personName' },
+      ],
+      dryRun: false,
+    });
+    expect(res.imported).toBe(1);
+    expect(res.failed).toBe(2);
+    expect(res.errors.map((e) => e.row).sort()).toEqual([3, 7]);
+  });
+
+  it('TR-B6: re-running the same import is a no-op, and dry run writes nothing', async () => {
+    const caller = callerFor(adminId, tenantId);
+    await seedRequirement({ name: 'Manual handling' });
+    const row = {
+      personName: 'Dave Mullins',
+      userEmail: 'dave@precision.test',
+      requirementName: 'Manual handling',
+      achievedAt: iso(-5),
+    };
+
+    // Dry run: reports what would land, writes nothing.
+    const dry = await caller.training.importRecords({ rows: [row], skipped: [], dryRun: true });
+    expect(dry.wouldImport).toBe(1);
+    expect(dry.imported).toBe(0);
+    expect(await caller.training.listRecords({})).toHaveLength(0);
+
+    // Real run, then the same file again.
+    expect(
+      (await caller.training.importRecords({ rows: [row], skipped: [], dryRun: false })).imported,
+    ).toBe(1);
+    const second = await caller.training.importRecords({ rows: [row], skipped: [], dryRun: false });
+    expect(second.imported).toBe(0);
+    expect(second.skippedDuplicates).toBe(1);
+    expect(await caller.training.listRecords({})).toHaveLength(1);
+  });
+
+  it('TR-B12: a userId from another tenant is refused, not silently inserted', async () => {
+    const caller = callerFor(adminId, tenantId);
+    const requirementId = await seedRequirement();
+    const outsider = (
+      await db.select().from(schema.user).where(eq(schema.user.tenantId, otherTenantId)).limit(1)
+    )[0];
+    expect(outsider).toBeDefined();
+    await expect(
+      caller.training.addRecord({
+        requirementId,
+        userId: outsider?.id ?? '',
+        personName: 'Rival Rob',
+        personCategory: 'employee',
+        contractorId: null,
+        achievedAt: iso(-5),
+        awardingBody: null,
+        certificateNumber: null,
+        evidenceKey: null,
+        evidenceFilename: null,
+        source: 'external',
+        notes: null,
+      }),
+    ).rejects.toThrow(/user-not-in-tenant/);
+  });
+
+  it('TR-B13: an empty site filter says the site has no members', async () => {
+    const caller = callerFor(adminId, tenantId);
+    await seedRequirement();
+    const siteId = newId();
+    await db.insert(schema.sites).values({
+      id: siteId,
+      tenantId,
+      name: 'Riverside',
+      kind: 'site',
+      path: siteId,
+    });
+    const gaps = await caller.training.gaps({ siteId });
+    expect(gaps.total).toBe(0);
+    // …and says WHY, rather than reading as "no gaps".
+    expect(gaps.siteHasNoMembers).toBe(true);
   });
 });

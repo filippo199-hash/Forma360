@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 // Suffixed so a locale binding cannot shadow a vitest global.
 import deMessages from '@forma360/i18n/messages/de';
@@ -79,5 +79,40 @@ describe('Cmd-K search categories', () => {
     const rams = SEARCH_CATEGORIES.find((c) => c.key === 'rams');
     expect(rams).toBeDefined();
     expect(rams?.basePath).toBe('rams');
+  });
+  /**
+   * TR-B3: the previous guard asserted that a server category had a client
+   * entry — and passed while every training hit 404'd, because the entry
+   * pointed at `training/requirements/<id>`, which was never a route. The
+   * lesson the reviewer drew generalises: **assert the URL, not the table
+   * row.** So this walks the App Router directory and proves each
+   * `basePath` ends at a segment that can accept an id.
+   */
+  it('every basePath resolves to a real route that accepts an id', () => {
+    const appDir = resolve(process.cwd(), 'app/[locale]');
+    for (const def of SEARCH_CATEGORIES) {
+      const dir = resolve(appDir, def.basePath);
+      expect(
+        existsSync(dir),
+        `route directory missing for ${def.key}: app/[locale]/${def.basePath}`,
+      ).toBe(true);
+      // `basePath/<id>` must land somewhere: either a dynamic segment
+      // ([id], [x]) or a catch-all under that directory.
+      const dynamic = readdirSync(dir, { withFileTypes: true }).filter(
+        (e) => e.isDirectory() && e.name.startsWith('[') && e.name.endsWith(']'),
+      );
+      expect(
+        dynamic.length,
+        `app/[locale]/${def.basePath} has no dynamic child, so /${def.basePath}/<id> 404s`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it('sends training hits to a person, not a requirement definition', () => {
+    // A requirement definition is an admin object behind training.manage,
+    // while search is gated on training.view — so a standard user got hits
+    // they could not open. A searcher typing a name wants that person.
+    const training = SEARCH_CATEGORIES.find((c) => c.key === 'training');
+    expect(training?.basePath).toBe('training/person');
   });
 });

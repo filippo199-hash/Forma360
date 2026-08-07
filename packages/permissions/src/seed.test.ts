@@ -96,9 +96,10 @@ describe('seedDefaultPermissionSets', () => {
     expect(perms).not.toContain('groups.manage');
     expect(perms).toContain('inspections.conduct');
     expect(perms).toContain('issues.report');
-    // `training.take` was an LMS verb and is retired (FreeHS B7); a standard
-    // user gets read access to the matrix, not a course to sit.
-    expect(perms).toContain('training.view');
+    // TR-B10: a standard user gets NO org-wide training read. The gap
+    // list, matrix and roll-up all name colleagues' shortfalls; their own
+    // record is reachable without this key via /training/me.
+    expect(perms).not.toContain('training.view');
     expect(perms).not.toContain('training.manage');
   });
 

@@ -1,0 +1,8 @@
+{
+  "subject": "Formación a punto de caducar: {requirementName} — {personName}",
+  "preheader": "La formación {requirementName} de {personName} caduca el {expiresOn}.",
+  "greeting": "Hola:",
+  "body": "El registro de formación de {personName} para \"{requirementName}\" caduca el {expiresOn}. Usted registró esta acreditación y la persona no tiene cuenta en el sistema, por lo que este aviso le llega a usted. Organice la renovación y registre el nuevo certificado: {url}",
+  "cta": "Ver la matriz de formación",
+  "footer": "Recibe este mensaje porque registró esta formación en {productName}."
+}

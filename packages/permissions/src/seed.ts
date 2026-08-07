@@ -8,7 +8,7 @@
  *     `users.anonymise`)
  *   - Standard — view-level access + the end-user verbs
  *     (inspections.conduct, issues.report, actions.create, headsUp.view,
- *     training.view, etc.)
+ *     issues.report, etc.)
  *
  * All three are `isSystem: true` so the UI blocks renaming / deletion.
  */
@@ -43,7 +43,13 @@ const STANDARD_KEYS: ReadonlyArray<PermissionKey> = [
   'assets.readings.record',
   'documents.view',
   'analytics.view',
-  'training.view',
+  // TR-B10: `training.view` is deliberately NOT here. It gates the gap
+  // list, the matrix and the compliance roll-up — three org-wide views
+  // that name individuals and their competence shortfalls. "Every
+  // employee can list every colleague's expired tickets by name" is not a
+  // defensible default under data minimisation. A standard user reaches
+  // their OWN record through /training/me and the My work queue, neither
+  // of which needs this key.
   'riskAssessments.view',
   'coshh.view',
   'permits.view',

@@ -4962,7 +4962,8 @@
         "requiresGasTesting": "Requiere medición de gases",
         "requiresIsolationCertificate": "Requiere certificado de aislamiento",
         "requiresRescuePlan": "Requiere plan de rescate",
-        "requiresRiskAssessment": "Requiere evaluación de riesgos vinculada"
+        "requiresRiskAssessment": "Requiere evaluación de riesgos vinculada",
+        "requiresRamsPack": "Paquete RAMS aceptado requerido"
       },
       "maxDuration": "Validez máxima",
       "hours": "horas",
@@ -4983,7 +4984,8 @@
       "gasLimitMax": "Máx.",
       "addGasLimit": "Añadir límite",
       "gasFreshness": "Vigencia de la medición de gases",
-      "gasFreshnessUnit": "minutos"
+      "gasFreshnessUnit": "minutos",
+      "description": "Descripción"
     },
     "errors": {
       "module-disabled": "Este módulo no está disponible.",
@@ -5034,8 +5036,22 @@
       "entry-log-full": "El registro de entradas de este permiso está lleno.",
       "unknown-entry": "Esa fila del registro no existe.",
       "already-exited": "La salida de esa persona ya fue registrada.",
-      "render-unavailable": "La generación de PDF no está disponible en este entorno."
-    }
+      "render-unavailable": "La generación de PDF no está disponible en este entorno.",
+      "training-expired": "No se puede emitir: alguien nombrado en el permiso tiene formación caducada.",
+      "training-missing": "No se puede emitir: alguien nombrado nunca ha obtenido la formación requerida."
+    },
+    "competence": {
+      "blockedTitle": "Competencia no acreditada",
+      "personExpired": "{person} — {requirement} ha caducado",
+      "personMissing": "{person} — no tiene {requirement}",
+      "openModule": "Abrir formación"
+    },
+    "signatures": {
+      "competenceBlocked": "Bloqueado: competencia no acreditada"
+    },
+    "requiredTraining": "Formación requerida",
+    "requiredTrainingHint": "Cada operario nombrado debe tenerlas vigentes antes de poder emitir este tipo.",
+    "requiredTrainingNone": "Aún no hay requisitos de formación definidos."
   },
   "fireSafety": {
     "title": "Seguridad contra incendios",
@@ -6630,7 +6646,8 @@
       "gaps": "Brechas",
       "matrix": "Matriz",
       "compliance": "Cumplimiento",
-      "requirements": "Requisitos"
+      "requirements": "Requisitos",
+      "me": "Mi formación"
     },
     "asAt": "A fecha de {date}",
     "status": {
@@ -6648,7 +6665,8 @@
       "record": "Registrar",
       "expiresOn": "caduca el {date}",
       "requiredByRole": "requerido por el puesto",
-      "total": "{count} por gestionar"
+      "total": "{count} por gestionar",
+      "noSiteMembers": "Aún no hay nadie asignado a este centro, por lo que no hay nada que mostrar. Añada personas al centro."
     },
     "matrix": {
       "person": "Persona",
@@ -6766,7 +6784,12 @@
       "close": "Cerrar",
       "rowLabel": "Fila {row}",
       "badColumns": "La fila de encabezado debe incluir personName, requirementName y achievedAt.",
-      "noRows": "No hay filas para importar."
+      "noRows": "No hay filas para importar.",
+      "dryRun": "Simulación",
+      "dryRunDone": "Simulación: se importarían {count} registros. No se ha escrito nada.",
+      "matchSummary": "{matched} vinculados a una cuenta · {nameOnly} registrados solo por nombre",
+      "duplicatesSkipped": "{count} filas ya existían y se han omitido.",
+      "errorGroup": "{message} — {count} filas (primera: fila {first})"
     },
     "errors": {
       "moduleDisabled": "Este módulo no está activado.",

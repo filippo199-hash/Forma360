@@ -4955,7 +4955,8 @@
         "requiresGasTesting": "Gasmeting vereist",
         "requiresIsolationCertificate": "Veiligstellingscertificaat vereist",
         "requiresRescuePlan": "Reddingsplan vereist",
-        "requiresRiskAssessment": "Gekoppelde risicobeoordeling vereist"
+        "requiresRiskAssessment": "Gekoppelde risicobeoordeling vereist",
+        "requiresRamsPack": "Geaccepteerd RAMS-pakket vereist"
       },
       "maxDuration": "Maximale geldigheid",
       "hours": "uur",
@@ -4976,7 +4977,8 @@
       "gasLimitMax": "Max",
       "addGasLimit": "Grens toevoegen",
       "gasFreshness": "Versheid gasmeting",
-      "gasFreshnessUnit": "minuten"
+      "gasFreshnessUnit": "minuten",
+      "description": "Omschrijving"
     },
     "errors": {
       "module-disabled": "Deze module is niet beschikbaar.",
@@ -5027,8 +5029,22 @@
       "entry-log-full": "Het logboek van deze vergunning is vol.",
       "unknown-entry": "Die logboekregel bestaat niet.",
       "already-exited": "Het vertrek van die persoon is al vastgelegd.",
-      "render-unavailable": "Pdf-generatie is in deze omgeving niet beschikbaar."
-    }
+      "render-unavailable": "Pdf-generatie is in deze omgeving niet beschikbaar.",
+      "training-expired": "Uitgeven niet mogelijk: iemand op dit werkvergunning heeft verlopen opleiding.",
+      "training-missing": "Uitgeven niet mogelijk: iemand op deze vergunning heeft de vereiste opleiding nooit behaald."
+    },
+    "competence": {
+      "blockedTitle": "Vakbekwaamheid niet voldaan",
+      "personExpired": "{person} — {requirement} is verlopen",
+      "personMissing": "{person} — {requirement} niet behaald",
+      "openModule": "Opleidingen openen"
+    },
+    "signatures": {
+      "competenceBlocked": "Geblokkeerd: vakbekwaamheid niet voldaan"
+    },
+    "requiredTraining": "Vereiste opleiding",
+    "requiredTrainingHint": "Elke genoemde medewerker moet deze geldig hebben voordat dit type kan worden uitgegeven.",
+    "requiredTrainingNone": "Nog geen opleidingsvereisten gedefinieerd."
   },
   "fireSafety": {
     "title": "Brandveiligheid",
@@ -6623,7 +6639,8 @@
       "gaps": "Hiaten",
       "matrix": "Matrix",
       "compliance": "Naleving",
-      "requirements": "Vereisten"
+      "requirements": "Vereisten",
+      "me": "Mijn opleidingen"
     },
     "asAt": "Per {date}",
     "status": {
@@ -6641,7 +6658,8 @@
       "record": "Vastleggen",
       "expiresOn": "verloopt op {date}",
       "requiredByRole": "vereist door functie",
-      "total": "{count} op te volgen"
+      "total": "{count} op te volgen",
+      "noSiteMembers": "Er is nog niemand lid van deze locatie, dus er is niets te tonen. Voeg mensen toe aan de locatie."
     },
     "matrix": {
       "person": "Persoon",
@@ -6759,7 +6777,12 @@
       "close": "Sluiten",
       "rowLabel": "Rij {row}",
       "badColumns": "De koprij moet personName, requirementName en achievedAt bevatten.",
-      "noRows": "Geen rijen om te importeren."
+      "noRows": "Geen rijen om te importeren.",
+      "dryRun": "Testrun",
+      "dryRunDone": "Testrun: {count} registraties zouden worden geïmporteerd. Er is niets weggeschreven.",
+      "matchSummary": "{matched} gekoppeld aan een account · {nameOnly} alleen op naam vastgelegd",
+      "duplicatesSkipped": "{count} rijen bestonden al en zijn overgeslagen.",
+      "errorGroup": "{message} — {count} rijen (eerste: rij {first})"
     },
     "errors": {
       "moduleDisabled": "Deze module is niet ingeschakeld.",

@@ -1,0 +1,8 @@
+{
+  "subject": "Schulung läuft ab: {requirementName} — {personName}",
+  "preheader": "{requirementName} von {personName} läuft am {expiresOn} ab.",
+  "greeting": "Hallo,",
+  "body": "Der Schulungsnachweis von {personName} für \"{requirementName}\" läuft am {expiresOn} ab. Sie haben diesen Nachweis erfasst, und die Person hat kein Konto im System, daher erhalten Sie diese Erinnerung. Bitte veranlassen Sie die Verlängerung und erfassen Sie das neue Zertifikat: {url}",
+  "cta": "Qualifikationsmatrix ansehen",
+  "footer": "Sie erhalten diese E-Mail, weil Sie diesen Schulungsnachweis in {productName} erfasst haben."
+}
