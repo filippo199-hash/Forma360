@@ -14,6 +14,7 @@ import { PortalHeader } from '../../src/components/portal/portal-header';
 import { SiteFooter } from '../../src/components/site-footer';
 import { SiteHeader } from '../../src/components/site-header';
 import { MobileTabBar } from '../../src/components/mobile-tab-bar';
+import { SandboxBanner } from '../../src/components/sandbox/sandbox-banner';
 import { SiteSidebar } from '../../src/components/site-sidebar';
 import { PermissionsProvider } from '../../src/lib/permissions-context';
 import { loadCurrentUserPermissions } from '../../src/server/load-permissions';
@@ -133,6 +134,9 @@ export default async function LocaleLayout({
                     <SiteSidebar locale={locale} />
                     <div className="flex min-w-0 flex-1 flex-col">
                       <SiteHeader showBrand={false} />
+                      {/* ADR 0017: renders only inside an unclaimed
+                       * try-it-now workspace; a no-op everywhere else. */}
+                      <SandboxBanner />
                       {/* ADR 0014: the phone tab bar is fixed to the bottom,
                        * so content reserves its height below `md`. */}
                       <main className="flex-1 pb-16 md:pb-0">{children}</main>

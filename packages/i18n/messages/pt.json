@@ -6621,5 +6621,23 @@
     },
     "footnote": "Não tem a certeza? Escolha o mais adequado — quem analisar pode movê-lo depois.",
     "noPermission": "Não tem permissão para comunicar aqui. Peça acesso a um administrador."
+  },
+  "sandbox": {
+    "bannerBody": "Tudo aqui é real e pode ser alterado. Adicione o seu e-mail para poder voltar.",
+    "bannerCta": "Guardar o meu trabalho",
+    "bannerTitle": "Está num espaço de demonstração",
+    "body": "Diga-nos para onde enviar o seu regresso. Sem palavra-passe — enviamos-lhe um código por e-mail.",
+    "cancel": "Ainda não",
+    "companyLabel": "Nome da empresa",
+    "dismiss": "Agora não",
+    "emailLabel": "E-mail profissional",
+    "errorGeneric": "Não foi possível guardar. Tente novamente.",
+    "errorInUse": "Esse endereço já tem uma conta. Inicie sessão.",
+    "joinHint": "{name} já tem um espaço aqui — poderá pedir para se juntar mais tarde.",
+    "nameLabel": "O seu nome",
+    "optional": "opcional",
+    "submit": "Guardar o meu espaço",
+    "success": "Guardado. Verifique a sua caixa de entrada para o código de acesso.",
+    "title": "Guarde o seu trabalho"
   }
 }

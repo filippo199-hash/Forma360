@@ -6621,5 +6621,23 @@
     },
     "footnote": "不确定？选择最接近的——审阅人之后可以调整。",
     "noPermission": "您没有在此报告的权限。请向管理员申请。"
+  },
+  "sandbox": {
+    "bannerBody": "这里的一切都是真实的，您可以随意修改。留下邮箱即可随时回来。",
+    "bannerCta": "保存我的工作",
+    "bannerTitle": "您正在使用演示工作区",
+    "body": "告诉我们把返回链接发到哪里。无需密码 — 我们会通过邮件发送验证码。",
+    "cancel": "暂不",
+    "companyLabel": "公司名称",
+    "dismiss": "暂不",
+    "emailLabel": "工作邮箱",
+    "errorGeneric": "保存失败，请重试。",
+    "errorInUse": "该邮箱已有账户，请直接登录。",
+    "joinHint": "{name} 在这里已有工作区 — 您稍后可以申请加入。",
+    "nameLabel": "您的姓名",
+    "optional": "选填",
+    "submit": "保存我的工作区",
+    "success": "已保存。请查收邮件中的返回验证码。",
+    "title": "保存您的工作"
   }
 }

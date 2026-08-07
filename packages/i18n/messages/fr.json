@@ -6628,5 +6628,23 @@
     },
     "footnote": "Vous hésitez ? Choisissez le plus proche — la personne qui l'examinera pourra le déplacer.",
     "noPermission": "Vous n'avez pas la permission de signaler ici. Demandez l'accès à un administrateur."
+  },
+  "sandbox": {
+    "bannerBody": "Tout ici est réel et modifiable. Ajoutez votre e-mail pour pouvoir y revenir.",
+    "bannerCta": "Enregistrer mon travail",
+    "bannerTitle": "Vous êtes dans un espace de démonstration",
+    "body": "Dites-nous où envoyer votre lien de retour. Pas de mot de passe — nous vous enverrons un code par e-mail.",
+    "cancel": "Pas encore",
+    "companyLabel": "Nom de l'entreprise",
+    "dismiss": "Pas maintenant",
+    "emailLabel": "E-mail professionnel",
+    "errorGeneric": "Nous n'avons pas pu enregistrer. Réessayez.",
+    "errorInUse": "Cette adresse a déjà un compte. Connectez-vous plutôt.",
+    "joinHint": "{name} a déjà un espace ici — vous pourrez demander à les rejoindre plus tard.",
+    "nameLabel": "Votre nom",
+    "optional": "facultatif",
+    "submit": "Enregistrer mon espace",
+    "success": "Enregistré. Consultez votre boîte de réception pour le code de retour.",
+    "title": "Enregistrez votre travail"
   }
 }
