@@ -78,7 +78,7 @@ export const TRY_TILES: Readonly<Record<SandboxScenarioId, TryTileCopy>> = {
     ],
   },
   hazard: {
-    label: 'Hazards & near misses',
+    label: 'Observations',
     blurb: 'Let anyone report what they see, then turn it into action.',
     refineQuestion: 'What happens after someone reports one?',
     refinements: {
