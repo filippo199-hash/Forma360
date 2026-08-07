@@ -52,6 +52,17 @@ export interface SandboxScenario {
   readonly requiresModule?: BrandOnlyModule;
   /** Locale-relative route the visitor lands on once seeding is done. */
   readonly landingPath: string;
+  /**
+   * What the visitor must find when they land — the tile's contract.
+   *
+   * This is not documentation. `provision.goals.test.ts` walks every
+   * tile and every refinement and asserts the goal against the real
+   * database, so a tile whose seed does not deliver its goal fails the
+   * suite. A tile that promises a site-walkthrough template and drops
+   * the visitor on an empty register is the exact failure this field
+   * exists to make impossible.
+   */
+  readonly goal: string;
   readonly refinements: readonly SandboxRefinement[];
 }
 
@@ -67,6 +78,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     id: 'riskAssessment',
     requiresModule: 'riskAssessments',
     landingPath: '/risk-assessments',
+    goal: 'A draft risk assessment with worked hazards and controls, and one hazard left unrated for the visitor to judge. The COSHH and fire refinements instead land on their own module with a substance / building already on file.',
     refinements: [
       { id: 'general', isDefault: true },
       { id: 'coshh', requiresModule: 'coshh', landingPath: '/coshh' },
@@ -77,6 +89,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
   {
     id: 'inspection',
     landingPath: '/inspections',
+    goal: 'A published template matching the chosen subject, ready to run, plus one inspection already in progress so the register is not empty.',
     refinements: [
       { id: 'siteWalk', isDefault: true },
       { id: 'equipment' },
@@ -87,6 +100,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
   {
     id: 'hazard',
     landingPath: '/observations',
+    goal: 'An observation register with three reports, two of them still open.',
     refinements: [
       { id: 'captureOnly' },
       { id: 'withActions', isDefault: true },
@@ -97,6 +111,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     id: 'permit',
     requiresModule: 'permits',
     landingPath: '/permits',
+    goal: 'The nine default permit types, plus one permit of the chosen category raised and waiting on the visitor.',
     refinements: [
       { id: 'hotWork', isDefault: true },
       { id: 'confinedSpace' },
@@ -108,6 +123,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     id: 'incident',
     requiresModule: 'incidents',
     landingPath: '/incidents',
+    goal: 'One incident at reported, with injury facts that make the RIDDOR screening a real judgement rather than a prop.',
     refinements: [
       { id: 'recordOnly' },
       { id: 'withInvestigation' },
@@ -118,6 +134,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     id: 'rams',
     requiresModule: 'rams',
     landingPath: '/rams',
+    goal: 'A RAMS pack in the register that the visitor can open and work on.',
     refinements: [
       { id: 'reviewPack', isDefault: true },
       { id: 'buildPack' },
