@@ -16,6 +16,7 @@
  */
 
 import type { ControlTier } from '@forma360/db/schema';
+import { parseTemplateSpec, type TemplateSpec } from '@forma360/shared/template-spec';
 import type { PermitCategory } from '@forma360/shared/permits';
 
 /** Sites every sandbox gets, so location pickers are never empty. */
@@ -244,3 +245,301 @@ export const SANDBOX_OBSERVATIONS = [
     needsAction: false,
   },
 ] as const;
+
+/**
+ * Inspection templates per refinement, expressed as `TemplateSpec` — the
+ * small AI-facing shape that `buildTemplateContentFromSpec` expands into
+ * schema-valid `TemplateContent`. Hand-writing the full content JSON
+ * here would duplicate the builder and drift from it; going through the
+ * spec means the sandbox template is built by exactly the same code path
+ * as one imported from a PDF.
+ *
+ * Each checklist is written so a visitor can run it in under a minute
+ * and get a report worth looking at: pass/fail with a flagged failure,
+ * one photo prompt, one signature.
+ */
+export const SANDBOX_INSPECTION_SPECS: Record<string, TemplateSpec> = {
+  siteWalk: parseTemplateSpec({
+    title: 'Weekly site safety walkthrough',
+    description: 'A short walk of the site covering housekeeping, equipment and people.',
+    pages: [
+      {
+        title: 'Walkthrough',
+        sections: [
+          {
+            title: 'Housekeeping and access',
+            questions: [
+              {
+                prompt: 'Are all walkways and fire exits clear and unobstructed?',
+                type: 'multipleChoice',
+                required: true,
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  {
+                    label: 'No',
+                    color: 'red',
+                    flag: true,
+                    requireEvidence: true,
+                    requireAction: 'Clear the obstructed route',
+                  },
+                  { label: 'N/A', color: 'grey' },
+                ],
+              },
+              {
+                prompt: 'Is waste segregated and stored in the designated area?',
+                type: 'multipleChoice',
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  { label: 'No', color: 'red', flag: true },
+                ],
+              },
+            ],
+          },
+          {
+            title: 'Equipment and plant',
+            questions: [
+              {
+                prompt: 'Are all machine guards in place and undamaged?',
+                type: 'multipleChoice',
+                required: true,
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  {
+                    label: 'No',
+                    color: 'red',
+                    flag: true,
+                    requireEvidence: true,
+                    requireAction: 'Repair or replace the damaged guard',
+                  },
+                ],
+              },
+              { prompt: 'Photo of anything that needs attention', type: 'media' },
+            ],
+          },
+          {
+            title: 'People',
+            questions: [
+              {
+                prompt: 'Is the required PPE being worn in all designated areas?',
+                type: 'multipleChoice',
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  { label: 'Mostly', color: 'amber', flag: true },
+                  { label: 'No', color: 'red', flag: true },
+                ],
+              },
+              { prompt: 'Anything else worth noting?', type: 'text' },
+            ],
+          },
+        ],
+      },
+    ],
+  }),
+
+  equipment: parseTemplateSpec({
+    title: 'Plant and equipment pre-use check',
+    description: 'Run before the machine is used for the first time each shift.',
+    pages: [
+      {
+        title: 'Pre-use check',
+        sections: [
+          {
+            title: 'Visual condition',
+            questions: [
+              { prompt: 'Which machine is being checked?', type: 'asset' },
+              {
+                prompt: 'Is the machine free from visible damage or leaks?',
+                type: 'multipleChoice',
+                required: true,
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  {
+                    label: 'No',
+                    color: 'red',
+                    flag: true,
+                    requireEvidence: true,
+                    requireAction: 'Take the machine out of service and report the defect',
+                  },
+                ],
+              },
+              {
+                prompt: 'Is the emergency stop accessible and working?',
+                type: 'multipleChoice',
+                required: true,
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  {
+                    label: 'No',
+                    color: 'red',
+                    flag: true,
+                    requireAction: 'Do not use — report immediately',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            title: 'Records',
+            questions: [
+              {
+                prompt: 'Is the statutory inspection certificate in date?',
+                type: 'multipleChoice',
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  { label: 'No', color: 'red', flag: true },
+                ],
+              },
+              { prompt: 'Checked by', type: 'signature' },
+            ],
+          },
+        ],
+      },
+    ],
+  }),
+
+  vehicles: parseTemplateSpec({
+    title: 'Vehicle and forklift daily check',
+    description: 'Daily walk-round before the vehicle is driven.',
+    pages: [
+      {
+        title: 'Daily check',
+        sections: [
+          {
+            title: 'Before starting',
+            questions: [
+              { prompt: 'Which vehicle?', type: 'asset' },
+              {
+                prompt: 'Are the tyres free from damage and correctly inflated?',
+                type: 'multipleChoice',
+                required: true,
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  { label: 'No', color: 'red', flag: true, requireEvidence: true },
+                ],
+              },
+              {
+                prompt: 'Is the hydraulic system free from visible leaks?',
+                type: 'multipleChoice',
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  {
+                    label: 'No',
+                    color: 'red',
+                    flag: true,
+                    requireAction: 'Report the leak to maintenance',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            title: 'Operating checks',
+            questions: [
+              {
+                prompt: 'Do the horn, lights and reversing alarm all work?',
+                type: 'multipleChoice',
+                required: true,
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  { label: 'No', color: 'red', flag: true },
+                ],
+              },
+              { prompt: 'Odometer / hour reading', type: 'number', unit: 'hrs' },
+              { prompt: 'Driver signature', type: 'signature' },
+            ],
+          },
+        ],
+      },
+    ],
+  }),
+
+  fireChecks: parseTemplateSpec({
+    title: 'Weekly fire safety check',
+    description: 'The weekly walk required to keep the fire logbook current.',
+    pages: [
+      {
+        title: 'Fire check',
+        sections: [
+          {
+            title: 'Means of escape',
+            questions: [
+              {
+                prompt: 'Are all escape routes clear and free from storage?',
+                type: 'multipleChoice',
+                required: true,
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  {
+                    label: 'No',
+                    color: 'red',
+                    flag: true,
+                    requireEvidence: true,
+                    requireAction: 'Clear the escape route immediately',
+                  },
+                ],
+              },
+              {
+                prompt: 'Do all final exit doors open freely from the inside?',
+                type: 'multipleChoice',
+                required: true,
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  { label: 'No', color: 'red', flag: true },
+                ],
+              },
+            ],
+          },
+          {
+            title: 'Fire equipment',
+            questions: [
+              {
+                prompt: 'Are extinguishers in place, sealed and in date?',
+                type: 'multipleChoice',
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  { label: 'No', color: 'red', flag: true },
+                ],
+              },
+              {
+                prompt: 'Has the weekly call-point test been completed and logged?',
+                type: 'multipleChoice',
+                options: [
+                  { label: 'Yes', color: 'green' },
+                  { label: 'No', color: 'red', flag: true },
+                ],
+              },
+              { prompt: 'Completed by', type: 'signature' },
+            ],
+          },
+        ],
+      },
+    ],
+  }),
+};
+
+/** The in-progress inspection the visitor finds waiting in the register. */
+export const SANDBOX_INSPECTION_RUN = {
+  /** Partially answered, so it reads as someone else's work in progress. */
+  titleSuffix: 'Eastgate Distribution Centre',
+} as const;
+
+/** COSHH substance for the COSHH refinement of the risk-assessment tile. */
+export const SANDBOX_COSHH = {
+  name: 'Sodium hypochlorite 10% (bulk cleaning)',
+  supplier: 'Halden Chemical Supplies',
+  taskDescription:
+    'Decanting and dilution of bulk sodium hypochlorite for daily floor and drain cleaning across the production area.',
+} as const;
+
+/** Building for the fire refinement of the risk-assessment tile. */
+export const SANDBOX_FIRE_BUILDING = {
+  name: 'Eastgate Distribution Centre — main warehouse',
+  fraTitle: 'Fire risk assessment — Eastgate main warehouse',
+} as const;
+
+/** RAMS pack for the RAMS tile. */
+export const SANDBOX_RAMS_PACK = {
+  title: 'Conveyor frame repair — hot works, Line 3',
+  description:
+    'Method statement and risk assessment covering the MIG welding repair to the Line 3 conveyor frame, including hot-work controls and fire watch.',
+} as const;

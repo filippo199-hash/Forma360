@@ -25,17 +25,26 @@
 import type { Database } from '@forma360/db/client';
 import {
   contractors,
+  coshhAssessments,
+  coshhSubstances,
+  fireBuildings,
+  fireRiskAssessments,
   incidents,
+  inspections,
   issueCategories,
   issues,
   permits,
   permitTypes,
   riskAssessmentControls,
   riskAssessmentHazards,
+  ramsPacks,
   riskAssessments,
   sites,
+  templateVersions,
+  templates,
   tenants,
   user,
+  type AccessSnapshot,
   type IssueAccessSnapshot,
   type IssueCategorySnapshot,
 } from '@forma360/db/schema';
@@ -52,12 +61,19 @@ import { and, eq } from 'drizzle-orm';
 import { ensureSeededTypes } from '../routers/permits';
 import { nextReferenceValue } from '../reference-counter';
 import { formatIncidentReference } from '@forma360/shared/incidents';
+import { buildTemplateContentFromSpec } from '@forma360/shared/template-builder';
+import { methodStatementContentSchema } from '@forma360/shared/rams';
 import {
   SANDBOX_COLLEAGUE,
   SANDBOX_CONTRACTORS,
+  SANDBOX_COSHH,
+  SANDBOX_FIRE_BUILDING,
   SANDBOX_INCIDENT,
+  SANDBOX_INSPECTION_RUN,
+  SANDBOX_INSPECTION_SPECS,
   SANDBOX_OBSERVATIONS,
   SANDBOX_PERMITS,
+  SANDBOX_RAMS_PACK,
   SANDBOX_RISK_ASSESSMENTS,
   SANDBOX_SITES,
 } from './seed-data';
@@ -237,10 +253,10 @@ async function seedScenario(ctx: SeedContext): Promise<void> {
       await seedPermit(ctx);
       return;
     case 'inspection':
+      await seedInspection(ctx);
+      return;
     case 'rams':
-      // Inspections and RAMS land on a register furnished with the
-      // shared org context above; their own content is authored in the
-      // module, which is where their start screens already lead.
+      await seedRamsPack(ctx);
       return;
   }
 }
@@ -251,9 +267,19 @@ async function seedScenario(ctx: SeedContext): Promise<void> {
  * it is what puts their judgement into the document they then publish.
  */
 async function seedRiskAssessment(ctx: SeedContext): Promise<void> {
-  // No fallback. The COSHH and fire refinements land on their own
-  // modules, and seeding a warehouse loading-bay assessment there would
-  // promise one thing and deliver another.
+  // The COSHH and fire refinements land on their own modules, so they
+  // furnish THOSE registers instead — seeding a warehouse loading-bay
+  // assessment behind a COSHH tile would promise one thing and deliver
+  // another.
+  if (ctx.resolved.refinement.id === 'coshh') {
+    await seedCoshh(ctx);
+    return;
+  }
+  if (ctx.resolved.refinement.id === 'fire') {
+    await seedFireBuilding(ctx);
+    return;
+  }
+
   const content = SANDBOX_RISK_ASSESSMENTS[ctx.resolved.refinement.id];
   if (content === undefined) return;
 
@@ -432,6 +458,179 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
     status: 'draft',
     validFrom,
     validTo,
+    createdBy: ctx.userId,
+  });
+}
+
+/**
+ * Seed a published inspection template plus one inspection already
+ * running against it.
+ *
+ * The content is built by `buildTemplateContentFromSpec` — the same
+ * deterministic builder the AI import path uses — rather than a
+ * hand-written content blob. That guarantees the seeded template is
+ * schema-valid by construction and cannot drift from what the builder
+ * produces for everyone else.
+ *
+ * The template is PUBLISHED with a current version, because a draft is
+ * not runnable and the visitor's goal is to run it.
+ */
+async function seedInspection(ctx: SeedContext): Promise<void> {
+  const spec = SANDBOX_INSPECTION_SPECS[ctx.resolved.refinement.id];
+  if (spec === undefined) return;
+
+  const content = buildTemplateContentFromSpec(spec);
+  const templateId = newId();
+  const versionId = newId();
+  const now = new Date();
+
+  // Three columns must agree for the template to be startable, and
+  // nothing in the DB keeps them in sync: `templates.status` is what the
+  // start-inspection picker filters on, `templates.currentVersionId` is
+  // what `inspections.create` pins from (NOT `is_current`), and
+  // `templates.titleFormat` is the only store the title renderer reads.
+  // Setting only `is_current` leaves a template that looks published and
+  // cannot be run.
+  await ctx.tx.insert(templates).values({
+    id: templateId,
+    tenantId: ctx.tenantId,
+    name: spec.title,
+    description: spec.description ?? '',
+    status: 'published',
+    currentVersionId: versionId,
+    titleFormat: content.settings.titleFormat,
+    createdBy: ctx.userId,
+    updatedAt: now,
+  });
+
+  await ctx.tx.insert(templateVersions).values({
+    id: versionId,
+    tenantId: ctx.tenantId,
+    templateId,
+    versionNumber: 1,
+    content,
+    isCurrent: true,
+    publishedAt: now,
+    publishedBy: ctx.userId,
+  });
+
+  // One inspection in progress, so the register is not empty and the
+  // visitor can see what a run looks like before starting their own.
+  // ADR 0007: the access snapshot is frozen at start.
+  const accessSnapshot: AccessSnapshot = {
+    groups: [],
+    sites: [],
+    permissions: [],
+    snapshotAt: now.toISOString(),
+  };
+
+  await ctx.tx.insert(inspections).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    templateId,
+    templateVersionId: versionId,
+    title: `${spec.title} — ${SANDBOX_INSPECTION_RUN.titleSuffix}`,
+    status: 'in_progress',
+    ...(ctx.siteIds.get('eastgate') !== undefined
+      ? { siteId: ctx.siteIds.get('eastgate') as string }
+      : {}),
+    accessSnapshot,
+    createdBy: ctx.colleagueId,
+    startedAt: now,
+  });
+}
+
+/** Seed one hazardous substance with a COSHH assessment against it. */
+async function seedCoshh(ctx: SeedContext): Promise<void> {
+  const substanceId = newId();
+  const ref = await nextReferenceValue(
+    ctx.tx as unknown as Database,
+    ctx.tenantId,
+    'coshhSubstance',
+  );
+
+  await ctx.tx.insert(coshhSubstances).values({
+    id: substanceId,
+    tenantId: ctx.tenantId,
+    referenceNumber: `CS-${String(ref).padStart(4, '0')}`,
+    name: SANDBOX_COSHH.name,
+    supplier: SANDBOX_COSHH.supplier,
+    createdBy: ctx.userId,
+  });
+
+  const assessmentRef = await nextReferenceValue(
+    ctx.tx as unknown as Database,
+    ctx.tenantId,
+    'coshhAssessment',
+  );
+  await ctx.tx.insert(coshhAssessments).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    substanceId,
+    referenceNumber: `COSHH-${String(assessmentRef).padStart(4, '0')}`,
+    taskDescription: SANDBOX_COSHH.taskDescription,
+    status: 'active',
+    // In the future: a review already overdue would light the amber
+    // "assessments due" chip on a workspace seconds old.
+    nextReviewAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    createdBy: ctx.userId,
+  });
+}
+
+/** Seed one building with a fire risk assessment against it. */
+async function seedFireBuilding(ctx: SeedContext): Promise<void> {
+  const buildingId = newId();
+  await ctx.tx.insert(fireBuildings).values({
+    id: buildingId,
+    tenantId: ctx.tenantId,
+    name: SANDBOX_FIRE_BUILDING.name,
+    ...(ctx.siteIds.get('eastgate') !== undefined
+      ? { siteId: ctx.siteIds.get('eastgate') as string }
+      : {}),
+    createdBy: ctx.userId,
+  });
+
+  const ref = await nextReferenceValue(
+    ctx.tx as unknown as Database,
+    ctx.tenantId,
+    'fireRiskAssessment',
+  );
+  // Left at the default 'draft' the register prints "FRA missing", which
+  // reads as a broken workspace rather than a furnished one. Only an
+  // `active` FRA counts as in place.
+  const now = new Date();
+  await ctx.tx.insert(fireRiskAssessments).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    buildingId,
+    referenceNumber: `FRA-${String(ref).padStart(4, '0')}`,
+    title: SANDBOX_FIRE_BUILDING.fraTitle,
+    status: 'active',
+    riskRating: 'tolerable',
+    publishedAt: now,
+    publishedBy: ctx.userId,
+    nextReviewAt: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000),
+    createdBy: ctx.userId,
+  });
+}
+
+/** Seed one RAMS pack the visitor can open and build on. */
+async function seedRamsPack(ctx: SeedContext): Promise<void> {
+  const ref = await nextReferenceValue(ctx.tx as unknown as Database, ctx.tenantId, 'ramsPack');
+
+  await ctx.tx.insert(ramsPacks).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    referenceNumber: `RAMS-${String(ref).padStart(6, '0')}`,
+    title: SANDBOX_RAMS_PACK.title,
+    // Parsed through the real schema so defaults (schemaVersion,
+    // emergency, logistics) are filled in exactly as the builder would.
+    draftContent: methodStatementContentSchema.parse({
+      scopeOfWorks: SANDBOX_RAMS_PACK.description,
+    }),
+    ...(ctx.siteIds.get('northfield') !== undefined
+      ? { siteId: ctx.siteIds.get('northfield') as string }
+      : {}),
     createdBy: ctx.userId,
   });
 }
