@@ -31,6 +31,7 @@ import {
   riskAssessments,
   sites,
   templates,
+  trainingRequirements,
 } from '@forma360/db/schema';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import type { PermissionKey } from '@forma360/permissions/catalogue';
@@ -76,6 +77,7 @@ export const searchRouter = router({
         templateRows,
         incidentRows,
         ramsRows,
+        trainingRows,
       ] = await Promise.all([
         // Assets — search name
         has('assets.view')
@@ -392,6 +394,26 @@ export const searchRouter = router({
               referenceNumber: string | null;
               status: string;
             }>(),
+        // Training requirements — the module is in the nav, so it is
+        // searchable (TR-A13; the PF-6 promise above).
+        has('training.view')
+          ? ctx.db
+              .select({
+                id: trainingRequirements.id,
+                name: trainingRequirements.name,
+                category: trainingRequirements.category,
+              })
+              .from(trainingRequirements)
+              .where(
+                and(
+                  eq(trainingRequirements.tenantId, tid),
+                  isNull(trainingRequirements.archivedAt),
+                  or(ilike(trainingRequirements.name, q), ilike(trainingRequirements.category, q)),
+                ),
+              )
+              .orderBy(desc(trainingRequirements.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{ id: string; name: string; category: string | null }>(),
       ]);
 
       // Apply per-document / per-folder visibility for non-managers (managers
@@ -478,6 +500,11 @@ export const searchRouter = router({
           id: r.id,
           title: r.title,
           subtitle: r.referenceNumber,
+        })),
+        training: trainingRows.map((r) => ({
+          id: r.id,
+          title: r.name,
+          subtitle: r.category,
         })),
       };
     }),

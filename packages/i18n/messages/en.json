@@ -3370,7 +3370,8 @@
       "sites": "Sites & projects",
       "templates": "Templates",
       "incidents": "Incidents",
-      "rams": "RAMS packs"
+      "rams": "RAMS packs",
+      "training": "Training"
     }
   },
   "maintenancePrograms": {
@@ -6510,7 +6511,8 @@
       "expiringReviews": "{count} acceptances expiring"
     },
     "filters": {
-      "all": "All"
+      "all": "All",
+      "pendingAcceptance": "Awaiting client acceptance"
     },
     "columns": {
       "reference": "Reference",
@@ -6880,14 +6882,19 @@
       "person": "Person",
       "empty": "Nothing to show yet. Add a requirement and record what people hold.",
       "exportCsv": "Export CSV",
-      "legend": "Legend"
+      "legend": "Legend",
+      "allRequirements": "All requirements",
+      "exportPdf": "Export PDF",
+      "sortByGaps": "Sort by gaps"
     },
     "compliance": {
       "overall": "Overall",
       "statutory": "Statutory only",
       "byRequirement": "By requirement",
       "gapsCount": "{count} with gaps",
-      "noData": "—"
+      "noData": "—",
+      "mandatory": "Mandatory only",
+      "byArea": "By area"
     },
     "requirements": {
       "title": "Requirements",
@@ -6910,7 +6917,14 @@
         "group": "Group",
         "site": "Site",
         "person": "Person"
-      }
+      },
+      "edit": "Edit",
+      "leadLabel": "Chase how many days ahead",
+      "evidenceNote": "Evidence expected",
+      "description": "Description",
+      "scopeLabel": "Assign by",
+      "archiveTitle": "Archive this requirement?",
+      "archiveBody": "{name} will stop appearing in the matrix and the gap list. Existing records are kept as evidence."
     },
     "obligation": {
       "statutory": "Statutory",
@@ -6936,24 +6950,66 @@
         "external": "External provider",
         "imported": "Imported",
         "self_declared": "Self-declared"
-      }
+      },
+      "personKind": {
+        "user": "A colleague",
+        "other": "Someone without an account"
+      },
+      "searchPeople": "Search people…",
+      "narrowSearch": "More people match — keep typing to narrow the list.",
+      "searching": "Searching…",
+      "personCategory": "Person type",
+      "categories": {
+        "employee": "Employee",
+        "contractor": "Contractor",
+        "agency": "Agency worker"
+      },
+      "addPhoto": "Photograph the card",
+      "removePhoto": "Remove",
+      "notes": "Notes"
     },
     "person": {
       "title": "Training",
       "noRecords": "No training recorded yet.",
       "verified": "Verified",
-      "unverified": "Not verified"
+      "unverified": "Not verified",
+      "myTitle": "My training",
+      "asAt": "As at {date}",
+      "noExpiry": "Never expires",
+      "noEvidence": "No certificate attached",
+      "verify": "Verify",
+      "void": "Void",
+      "voided": "Voided",
+      "voidReason": "Why is this being voided?"
     },
     "import": {
       "title": "Import records",
       "help": "Paste CSV with columns: personName, userEmail, requirementName, achievedAt, expiresAt.",
       "run": "Import",
       "imported": "{count} records imported",
-      "failed": "{count} rows failed"
+      "failed": "{count} rows failed",
+      "chooseFile": "Choose a CSV file",
+      "template": "Download template",
+      "paste": "Or paste CSV",
+      "close": "Close",
+      "rowLabel": "Row {row}",
+      "badColumns": "The header row must include personName, requirementName and achievedAt.",
+      "noRows": "No rows to import."
     },
     "errors": {
       "moduleDisabled": "This module is not enabled.",
-      "generic": "Something went wrong."
+      "generic": "Something went wrong.",
+      "loadFailed": "Could not load this view.",
+      "retry": "Try again",
+      "noPermission": "You do not have permission to manage requirements.",
+      "uploadFailed": "Upload failed ({reason})."
+    },
+    "filters": {
+      "asOf": "As at",
+      "site": "Site",
+      "allSites": "All sites",
+      "allRequirements": "All requirements",
+      "clear": "Clear"
     }
   }
 }

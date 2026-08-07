@@ -16,6 +16,8 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { FolderTree } from '../../../src/components/documents/folder-tree';
+import { FilterBar } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -28,6 +30,7 @@ import {
 import { Input } from '../../../src/components/ui/input';
 import { Label } from '../../../src/components/ui/label';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -239,57 +242,37 @@ export default function DocumentsPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Page header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {canFolderManage && currentFolderId !== null ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={openFolderAccess}
-              title={t('folderSettingsButton')}
-              className="w-10 px-0 sm:w-auto sm:px-4"
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('folderSettingsButton')}</span>
-            </Button>
-          ) : null}
-          {canFolderManage && currentFolderId !== null ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleDeleteFolder}
-              disabled={deleteFolder.isPending}
-              title={tFolder('deleteButton')}
-              className="w-10 px-0 text-destructive hover:text-destructive sm:w-auto sm:px-4"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">{tFolder('deleteButton')}</span>
-            </Button>
-          ) : null}
-          {canFolderManage ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowFolderDialog(true)}
-              title={t('newFolderButton')}
-              className="w-10 px-0 sm:w-auto sm:px-4"
-            >
-              <FolderPlus className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('newFolderButton')}</span>
-            </Button>
-          ) : null}
-          <Button type="button" asChild>
-            <Link href={`/${locale}/documents/new`}>
-              <Upload className="mr-1 h-4 w-4" />
-              {t('uploadButton')}
-            </Link>
-          </Button>
-        </div>
-      </header>
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        {canFolderManage && currentFolderId !== null ? (
+          <TooltipIconButton
+            icon={Settings}
+            label={t('folderSettingsButton')}
+            onClick={openFolderAccess}
+          />
+        ) : null}
+        {canFolderManage && currentFolderId !== null ? (
+          <TooltipIconButton
+            icon={Trash2}
+            label={tFolder('deleteButton')}
+            variant="destructive"
+            onClick={handleDeleteFolder}
+            disabled={deleteFolder.isPending}
+          />
+        ) : null}
+        {canFolderManage ? (
+          <TooltipIconButton
+            icon={FolderPlus}
+            label={t('newFolderButton')}
+            onClick={() => setShowFolderDialog(true)}
+          />
+        ) : null}
+        <Button type="button" asChild>
+          <Link href={`/${locale}/documents/new`}>
+            <Upload className="mr-1 h-4 w-4" />
+            {t('uploadButton')}
+          </Link>
+        </Button>
+      </ModuleHeader>
 
       {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 
@@ -523,10 +506,13 @@ export default function DocumentsPage() {
           ) : null}
 
           {/* Search */}
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('searchPlaceholder')}
+          <FilterBar
+            search={{ value: query, onChange: setQuery, placeholder: t('searchPlaceholder') }}
+            filters={[]}
+            activeKeys={[]}
+            onAddFilter={() => undefined}
+            onRemoveFilter={() => undefined}
+            resultsCount={docs.length}
           />
 
           {/* Documents */}

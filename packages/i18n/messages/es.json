@@ -3107,7 +3107,8 @@
       "sites": "Sitios y proyectos",
       "templates": "Plantillas",
       "incidents": "Incidentes",
-      "rams": "Paquetes RAMS"
+      "rams": "Paquetes RAMS",
+      "training": "Formación"
     }
   },
   "ai": {
@@ -6282,7 +6283,8 @@
       "expiringReviews": "{count} aceptaciones por caducar"
     },
     "filters": {
-      "all": "Todos"
+      "all": "Todos",
+      "pendingAcceptance": "Pendiente de aceptación del cliente"
     },
     "columns": {
       "reference": "Referencia",
@@ -6652,14 +6654,19 @@
       "person": "Persona",
       "empty": "Aún no hay nada. Añada un requisito y registre lo que tiene su gente.",
       "exportCsv": "Exportar CSV",
-      "legend": "Leyenda"
+      "legend": "Leyenda",
+      "allRequirements": "Todos los requisitos",
+      "exportPdf": "Exportar PDF",
+      "sortByGaps": "Ordenar por brechas"
     },
     "compliance": {
       "overall": "Global",
       "statutory": "Solo obligatorio legal",
       "byRequirement": "Por requisito",
       "gapsCount": "{count} con brechas",
-      "noData": "—"
+      "noData": "—",
+      "mandatory": "Solo obligatorio",
+      "byArea": "Por área"
     },
     "requirements": {
       "title": "Requisitos",
@@ -6682,7 +6689,14 @@
         "group": "Grupo",
         "site": "Centro",
         "person": "Persona"
-      }
+      },
+      "edit": "Editar",
+      "leadLabel": "Avisar con cuántos días de antelación",
+      "evidenceNote": "Evidencia esperada",
+      "description": "Descripción",
+      "scopeLabel": "Asignar por",
+      "archiveTitle": "¿Archivar este requisito?",
+      "archiveBody": "{name} dejará de aparecer en la matriz y en la lista de brechas. Los registros existentes se conservan como evidencia."
     },
     "obligation": {
       "statutory": "Legal",
@@ -6708,24 +6722,66 @@
         "external": "Proveedor externo",
         "imported": "Importado",
         "self_declared": "Autodeclarado"
-      }
+      },
+      "personKind": {
+        "user": "Un compañero",
+        "other": "Alguien sin cuenta"
+      },
+      "searchPeople": "Buscar personas…",
+      "narrowSearch": "Hay más coincidencias: siga escribiendo para acotar la lista.",
+      "searching": "Buscando…",
+      "personCategory": "Tipo de persona",
+      "categories": {
+        "employee": "Empleado",
+        "contractor": "Contratista",
+        "agency": "Trabajador de ETT"
+      },
+      "addPhoto": "Fotografiar la tarjeta",
+      "removePhoto": "Quitar",
+      "notes": "Notas"
     },
     "person": {
       "title": "Formación",
       "noRecords": "Aún no hay formación registrada.",
       "verified": "Verificado",
-      "unverified": "Sin verificar"
+      "unverified": "Sin verificar",
+      "myTitle": "Mi formación",
+      "asAt": "A fecha de {date}",
+      "noExpiry": "No caduca",
+      "noEvidence": "Sin certificado adjunto",
+      "verify": "Verificar",
+      "void": "Anular",
+      "voided": "Anulado",
+      "voidReason": "¿Por qué se anula?"
     },
     "import": {
       "title": "Importar registros",
       "help": "Pegue un CSV con las columnas: personName, userEmail, requirementName, achievedAt, expiresAt.",
       "run": "Importar",
       "imported": "{count} registros importados",
-      "failed": "{count} filas fallidas"
+      "failed": "{count} filas fallidas",
+      "chooseFile": "Elegir un archivo CSV",
+      "template": "Descargar plantilla",
+      "paste": "O pegar CSV",
+      "close": "Cerrar",
+      "rowLabel": "Fila {row}",
+      "badColumns": "La fila de encabezado debe incluir personName, requirementName y achievedAt.",
+      "noRows": "No hay filas para importar."
     },
     "errors": {
       "moduleDisabled": "Este módulo no está activado.",
-      "generic": "Algo ha salido mal."
+      "generic": "Algo ha salido mal.",
+      "loadFailed": "No se ha podido cargar esta vista.",
+      "retry": "Reintentar",
+      "noPermission": "No tiene permiso para gestionar requisitos.",
+      "uploadFailed": "Error al subir ({reason})."
+    },
+    "filters": {
+      "asOf": "A fecha de",
+      "site": "Centro",
+      "allSites": "Todos los centros",
+      "allRequirements": "Todos los requisitos",
+      "clear": "Limpiar"
     }
   }
 }

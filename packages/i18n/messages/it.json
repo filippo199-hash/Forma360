@@ -3142,7 +3142,8 @@
       "sites": "Siti e progetti",
       "templates": "Modelli",
       "incidents": "Incidenti",
-      "rams": "Pacchetti RAMS"
+      "rams": "Pacchetti RAMS",
+      "training": "Formazione"
     }
   },
   "ai": {
@@ -6317,7 +6318,8 @@
       "expiringReviews": "{count} accettazioni in scadenza"
     },
     "filters": {
-      "all": "Tutti"
+      "all": "Tutti",
+      "pendingAcceptance": "In attesa di accettazione del cliente"
     },
     "columns": {
       "reference": "Riferimento",
@@ -6687,14 +6689,19 @@
       "person": "Persona",
       "empty": "Ancora nulla da mostrare. Aggiungi un requisito e registra gli attestati.",
       "exportCsv": "Esporta CSV",
-      "legend": "Legenda"
+      "legend": "Legenda",
+      "allRequirements": "Tutti i requisiti",
+      "exportPdf": "Esporta PDF",
+      "sortByGaps": "Ordina per lacune"
     },
     "compliance": {
       "overall": "Complessiva",
       "statutory": "Solo obbligo di legge",
       "byRequirement": "Per requisito",
       "gapsCount": "{count} con lacune",
-      "noData": "—"
+      "noData": "—",
+      "mandatory": "Solo obbligatorio",
+      "byArea": "Per area"
     },
     "requirements": {
       "title": "Requisiti",
@@ -6717,7 +6724,14 @@
         "group": "Gruppo",
         "site": "Sito",
         "person": "Persona"
-      }
+      },
+      "edit": "Modifica",
+      "leadLabel": "Quanti giorni prima sollecitare",
+      "evidenceNote": "Prova attesa",
+      "description": "Descrizione",
+      "scopeLabel": "Assegna per",
+      "archiveTitle": "Archiviare questo requisito?",
+      "archiveBody": "{name} non comparirà più nella matrice né nell’elenco delle lacune. Gli attestati esistenti restano come prova."
     },
     "obligation": {
       "statutory": "Di legge",
@@ -6743,24 +6757,66 @@
         "external": "Ente esterno",
         "imported": "Importata",
         "self_declared": "Autodichiarata"
-      }
+      },
+      "personKind": {
+        "user": "Un collega",
+        "other": "Una persona senza account"
+      },
+      "searchPeople": "Cerca persone…",
+      "narrowSearch": "Ci sono altri risultati: continua a digitare per restringere.",
+      "searching": "Ricerca…",
+      "personCategory": "Tipo di persona",
+      "categories": {
+        "employee": "Dipendente",
+        "contractor": "Appaltatore",
+        "agency": "Lavoratore interinale"
+      },
+      "addPhoto": "Fotografa il tesserino",
+      "removePhoto": "Rimuovi",
+      "notes": "Note"
     },
     "person": {
       "title": "Formazione",
       "noRecords": "Nessuna formazione registrata.",
       "verified": "Verificato",
-      "unverified": "Non verificato"
+      "unverified": "Non verificato",
+      "myTitle": "La mia formazione",
+      "asAt": "Al {date}",
+      "noExpiry": "Non scade mai",
+      "noEvidence": "Nessun attestato allegato",
+      "verify": "Verifica",
+      "void": "Annulla",
+      "voided": "Annullato",
+      "voidReason": "Perché viene annullato?"
     },
     "import": {
       "title": "Importa attestati",
       "help": "Incolla un CSV con le colonne: personName, userEmail, requirementName, achievedAt, expiresAt.",
       "run": "Importa",
       "imported": "{count} attestati importati",
-      "failed": "{count} righe non riuscite"
+      "failed": "{count} righe non riuscite",
+      "chooseFile": "Scegli un file CSV",
+      "template": "Scarica il modello",
+      "paste": "Oppure incolla il CSV",
+      "close": "Chiudi",
+      "rowLabel": "Riga {row}",
+      "badColumns": "La riga di intestazione deve contenere personName, requirementName e achievedAt.",
+      "noRows": "Nessuna riga da importare."
     },
     "errors": {
       "moduleDisabled": "Questo modulo non è attivo.",
-      "generic": "Qualcosa è andato storto."
+      "generic": "Qualcosa è andato storto.",
+      "loadFailed": "Impossibile caricare questa vista.",
+      "retry": "Riprova",
+      "noPermission": "Non hai i permessi per gestire i requisiti.",
+      "uploadFailed": "Caricamento non riuscito ({reason})."
+    },
+    "filters": {
+      "asOf": "Al",
+      "site": "Sito",
+      "allSites": "Tutti i siti",
+      "allRequirements": "Tutti i requisiti",
+      "clear": "Azzera"
     }
   }
 }

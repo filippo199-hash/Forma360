@@ -1,11 +1,13 @@
 'use client';
 
-import { CalendarDays, DoorOpen, FileText, HardHat, LogOut, Plus, Search } from 'lucide-react';
+import { CalendarDays, DoorOpen, FileText, HardHat, LogOut, Plus } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { FilterBar } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import {
@@ -19,6 +21,7 @@ import { Input } from '../../../src/components/ui/input';
 import { Textarea } from '../../../src/components/ui/textarea';
 import { Label } from '../../../src/components/ui/label';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -135,58 +138,35 @@ export default function ContractorsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-        </div>
-        {/* On phones the utility links collapse to icon-only squares to reclaim the row. */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            asChild
-            title={t('visits.calendarLink')}
-            className="w-10 px-0 sm:w-auto sm:px-4"
-          >
-            <Link href={`/${locale}/contractors/calendar`}>
-              <CalendarDays className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('visits.calendarLink')}</span>
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        <Button variant="outline" asChild>
+          <Link href={`/${locale}/contractors/calendar`}>
+            <CalendarDays className="mr-1.5 h-4 w-4" />
+            {t('visits.calendarLink')}
+          </Link>
+        </Button>
+        {canManage ? (
+          <Button variant="outline" asChild>
+            <Link href={`/${locale}/contractors/gate`}>
+              <DoorOpen className="mr-1.5 h-4 w-4" />
+              {t('gate.navLink')}
             </Link>
           </Button>
-          {canManage ? (
-            <Button
-              variant="outline"
-              asChild
-              title={t('gate.navLink')}
-              className="w-10 px-0 sm:w-auto sm:px-4"
-            >
-              <Link href={`/${locale}/contractors/gate`}>
-                <DoorOpen className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('gate.navLink')}</span>
-              </Link>
-            </Button>
-          ) : null}
-          {canManage ? (
-            <Button
-              variant="outline"
-              asChild
-              title={t('manageTemplates')}
-              className="w-10 px-0 sm:w-auto sm:px-4"
-            >
-              <Link href={`/${locale}/contractors/templates`}>
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('manageTemplates')}</span>
-              </Link>
-            </Button>
-          ) : null}
-          {canManage ? (
-            <Button onClick={() => setOpen(true)}>
-              <Plus className="mr-1 h-4 w-4" />
-              {t('newButton')}
-            </Button>
-          ) : null}
-        </div>
-      </header>
+        ) : null}
+        {canManage ? (
+          <TooltipIconButton
+            icon={FileText}
+            label={t('manageTemplates')}
+            href={`/${locale}/contractors/templates`}
+          />
+        ) : null}
+        {canManage ? (
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" />
+            {t('newButton')}
+          </Button>
+        ) : null}
+      </ModuleHeader>
 
       {/* Gate board — who is currently on site, grouped by contractor. */}
       {onSite.error !== null && onSiteTotal === 0 ? (
@@ -350,15 +330,14 @@ export default function ContractorsPage() {
         </Card>
       ) : null}
 
-      <div className="relative max-w-xs">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('searchPlaceholder')}
-          className="h-9 pl-8"
-        />
-      </div>
+      <FilterBar
+        search={{ value: search, onChange: setSearch, placeholder: t('searchPlaceholder') }}
+        filters={[]}
+        activeKeys={[]}
+        onAddFilter={() => undefined}
+        onRemoveFilter={() => undefined}
+        resultsCount={visible.length}
+      />
 
       {isLoading ? (
         <Skeleton className="h-48 w-full" />

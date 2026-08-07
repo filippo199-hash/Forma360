@@ -3107,7 +3107,8 @@
       "sites": "Standorte & Projekte",
       "templates": "Vorlagen",
       "incidents": "Vorfälle",
-      "rams": "RAMS-Pakete"
+      "rams": "RAMS-Pakete",
+      "training": "Schulungen"
     }
   },
   "ai": {
@@ -6282,7 +6283,8 @@
       "expiringReviews": "{count} Freigaben laufen ab"
     },
     "filters": {
-      "all": "Alle"
+      "all": "Alle",
+      "pendingAcceptance": "Warten auf Kundenfreigabe"
     },
     "columns": {
       "reference": "Referenz",
@@ -6652,14 +6654,19 @@
       "person": "Person",
       "empty": "Noch nichts vorhanden. Legen Sie eine Anforderung an und erfassen Sie Nachweise.",
       "exportCsv": "CSV exportieren",
-      "legend": "Legende"
+      "legend": "Legende",
+      "allRequirements": "Alle Anforderungen",
+      "exportPdf": "PDF exportieren",
+      "sortByGaps": "Nach Lücken sortieren"
     },
     "compliance": {
       "overall": "Gesamt",
       "statutory": "Nur gesetzlich",
       "byRequirement": "Nach Anforderung",
       "gapsCount": "{count} mit Lücken",
-      "noData": "—"
+      "noData": "—",
+      "mandatory": "Nur verpflichtend",
+      "byArea": "Nach Bereich"
     },
     "requirements": {
       "title": "Anforderungen",
@@ -6682,7 +6689,14 @@
         "group": "Gruppe",
         "site": "Standort",
         "person": "Person"
-      }
+      },
+      "edit": "Bearbeiten",
+      "leadLabel": "Wie viele Tage im Voraus erinnern",
+      "evidenceNote": "Erwartete Nachweise",
+      "description": "Beschreibung",
+      "scopeLabel": "Zuweisen nach",
+      "archiveTitle": "Diese Anforderung archivieren?",
+      "archiveBody": "{name} erscheint nicht mehr in der Matrix und der Lückenliste. Vorhandene Nachweise bleiben als Beleg erhalten."
     },
     "obligation": {
       "statutory": "Gesetzlich",
@@ -6708,24 +6722,66 @@
         "external": "Externer Anbieter",
         "imported": "Importiert",
         "self_declared": "Selbstauskunft"
-      }
+      },
+      "personKind": {
+        "user": "Kolleg:in",
+        "other": "Person ohne Konto"
+      },
+      "searchPeople": "Personen suchen…",
+      "narrowSearch": "Weitere Treffer — tippen Sie weiter, um die Liste einzugrenzen.",
+      "searching": "Suche…",
+      "personCategory": "Personentyp",
+      "categories": {
+        "employee": "Beschäftigte:r",
+        "contractor": "Fremdfirma",
+        "agency": "Zeitarbeitskraft"
+      },
+      "addPhoto": "Karte fotografieren",
+      "removePhoto": "Entfernen",
+      "notes": "Notizen"
     },
     "person": {
       "title": "Schulungen",
       "noRecords": "Noch keine Schulungen erfasst.",
       "verified": "Geprüft",
-      "unverified": "Nicht geprüft"
+      "unverified": "Nicht geprüft",
+      "myTitle": "Meine Schulungen",
+      "asAt": "Stand {date}",
+      "noExpiry": "Läuft nie ab",
+      "noEvidence": "Kein Zertifikat hinterlegt",
+      "verify": "Prüfen",
+      "void": "Ungültig machen",
+      "voided": "Ungültig",
+      "voidReason": "Warum wird das ungültig gemacht?"
     },
     "import": {
       "title": "Nachweise importieren",
       "help": "CSV mit den Spalten einfügen: personName, userEmail, requirementName, achievedAt, expiresAt.",
       "run": "Importieren",
       "imported": "{count} Nachweise importiert",
-      "failed": "{count} Zeilen fehlgeschlagen"
+      "failed": "{count} Zeilen fehlgeschlagen",
+      "chooseFile": "CSV-Datei wählen",
+      "template": "Vorlage herunterladen",
+      "paste": "Oder CSV einfügen",
+      "close": "Schließen",
+      "rowLabel": "Zeile {row}",
+      "badColumns": "Die Kopfzeile muss personName, requirementName und achievedAt enthalten.",
+      "noRows": "Keine Zeilen zum Importieren."
     },
     "errors": {
       "moduleDisabled": "Dieses Modul ist nicht aktiviert.",
-      "generic": "Etwas ist schiefgelaufen."
+      "generic": "Etwas ist schiefgelaufen.",
+      "loadFailed": "Diese Ansicht konnte nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "noPermission": "Sie haben keine Berechtigung, Anforderungen zu verwalten.",
+      "uploadFailed": "Upload fehlgeschlagen ({reason})."
+    },
+    "filters": {
+      "asOf": "Stand",
+      "site": "Standort",
+      "allSites": "Alle Standorte",
+      "allRequirements": "Alle Anforderungen",
+      "clear": "Zurücksetzen"
     }
   }
 }

@@ -10,11 +10,8 @@ import { cn } from '../lib/cn';
 import {
   activeNavItem,
   buildNavSections,
-  isNavChildActive,
   isNavItemActive,
-  NAV_CHILD_ICON,
   settingsNavItem,
-  type NavChild,
   type NavItem,
   type NavSection,
   type NavSectionKey,
@@ -145,6 +142,10 @@ export function SiteNavItems({
     brandId: activeBrand.id,
     permissions: perms,
   });
+  // Which module the current route belongs to — used to light up the right
+  // row even on a sub-page whose path lives outside the module's own prefix
+  // (Approvals/Schedules/Templates under Inspections, Maintenance under
+  // Assets). The sub-pages are tabs on the page now, not menu children.
   const active = activeNavItem(sections, pathname);
 
   function labelFor(item: NavItem): string {
@@ -152,34 +153,9 @@ export function SiteNavItems({
     return item.key === 'sites' ? t(navLabelKey(terminology)) : t(item.key);
   }
 
-  function renderChild(child: NavChild) {
-    const Icon = NAV_CHILD_ICON[child.key];
-    const isActive = isNavChildActive(child, pathname);
-    // Approvals keeps its queue count now that it nests under Inspections.
-    const badge = child.badge === undefined ? 0 : (counts[child.badge] ?? 0);
-    return (
-      <Link
-        key={child.key}
-        href={child.href}
-        {...(onNavigate !== undefined ? { onClick: onNavigate } : {})}
-        className={cn(
-          'ml-4 flex items-center gap-2 rounded-md border-l border-sidebar-border py-1.5 pl-4 pr-3 text-[13px] transition-colors',
-          isActive
-            ? 'font-medium text-sidebar-accent-foreground'
-            : 'text-sidebar-foreground/65 hover:text-sidebar-foreground',
-        )}
-        aria-current={isActive ? 'page' : undefined}
-      >
-        <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <span className="truncate">{t(`child.${child.key}`)}</span>
-        <NavBadge value={badge} collapsed={false} />
-      </Link>
-    );
-  }
-
   function renderItem(item: NavItem, navCounts: NavCounts) {
     const Icon = item.icon;
-    const isActive = isNavItemActive(item, pathname);
+    const isActive = isNavItemActive(item, pathname) || active?.key === item.key;
     const label = labelFor(item);
     const badge = item.badge === undefined ? 0 : (navCounts[item.badge] ?? 0);
     return (
@@ -213,21 +189,13 @@ export function SiteNavItems({
       0,
     );
     const isOpen = section.key === null || openGroups[section.key] !== false;
+    // Sub-navigation no longer lives in the menu (ADR 0014 amendment): a
+    // module's sub-pages are tabs on the page now (see ModuleTabs), so the
+    // sidebar stays exactly the module list, expanded or collapsed.
     const items = (
       <ul className="flex list-none flex-col gap-0.5 p-0">
         {section.items.map((item) => (
-          <li key={item.key} className="flex flex-col gap-0.5">
-            {renderItem(item, counts)}
-            {/* Sub-navigation appears only under the entry that owns the
-             * current route, so the resting menu stays module-length. */}
-            {!collapsed && active?.key === item.key ? (
-              <ul className="flex list-none flex-col gap-0.5 p-0">
-                {(item.children ?? []).map((child) => (
-                  <li key={child.key}>{renderChild(child)}</li>
-                ))}
-              </ul>
-            ) : null}
-          </li>
+          <li key={item.key}>{renderItem(item, counts)}</li>
         ))}
       </ul>
     );

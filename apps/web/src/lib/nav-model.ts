@@ -302,24 +302,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
             { key: 'ramsReviews', href: p('/rams/reviews'), permission: 'rams.review' },
           ],
         },
-        // The competence register: a record that lives for years and gets
-        // reviewed, so it sits with the registers rather than the work.
-        // Its badge is the gap count — the number that makes people open it.
-        {
-          key: 'training',
-          href: p('/training'),
-          icon: GraduationCap,
-          permission: 'training.view',
-          badge: 'training',
-          children: [
-            { key: 'trainingMatrix', href: p('/training/matrix') },
-            {
-              key: 'trainingRequirements',
-              href: p('/training/requirements'),
-              permission: 'training.manage',
-            },
-          ],
-        },
       ],
     },
     // THE ORGANISATION — the things work happens *to* and *with*, plus
@@ -354,6 +336,26 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
               permission: 'contractors.gate',
             },
             { key: 'contractorsCalendar', href: p('/contractors/calendar') },
+          ],
+        },
+        // TR-A15: the competence register sits beside Contractors, not with
+        // the document registers. The panel's argument is that a reviewer
+        // looking at "who is allowed to do this work" wants the two
+        // competence registers — our people and their people — side by
+        // side; training is about PEOPLE, which is what this group holds.
+        {
+          key: 'training',
+          href: p('/training'),
+          icon: GraduationCap,
+          permission: 'training.view',
+          badge: 'training',
+          children: [
+            { key: 'trainingMatrix', href: p('/training/matrix') },
+            {
+              key: 'trainingRequirements',
+              href: p('/training/requirements'),
+              permission: 'training.manage',
+            },
           ],
         },
         { key: 'documents', href: p('/documents'), icon: FolderOpen, permission: 'documents.view' },
@@ -459,6 +461,49 @@ export function activeNavItem(
   return items.find((item) =>
     (item.children ?? []).some((child) => isNavChildActive(child, pathname)),
   );
+}
+
+/** One tab in a module's in-page tab strip (see {@link moduleTabsForPath}). */
+export interface ModuleTab {
+  /** `nav.<key>` for the module tab, `nav.child.<key>` for a child tab. */
+  readonly key: NavItemKey | NavChildKey;
+  readonly href: string;
+  readonly active: boolean;
+  /** True for the leading tab — the module's own landing. */
+  readonly isParent: boolean;
+}
+
+/**
+ * The in-page tab strip for the module that owns `pathname`: the module
+ * itself as the leading tab, then its children (already brand- and
+ * permission-filtered by {@link buildNavSections}). This is what moves the
+ * sub-navigation out of the sidebar and onto the page (ADR 0014 amendment).
+ *
+ * Returns `undefined` when the module has no children, or when the current
+ * route is deeper than a tab page — a detail, form or editor route — so the
+ * strip appears on the module's list pages only, exactly as the Inspections
+ * and Training tab bars already do. `pathname` must match a tab's href
+ * exactly for the strip to show; a child's own sub-routes fall through.
+ */
+export function moduleTabsForPath(
+  sections: readonly NavSection[],
+  pathname: string,
+): { readonly item: NavItem; readonly tabs: readonly ModuleTab[] } | undefined {
+  const item = activeNavItem(sections, pathname);
+  if (item?.children === undefined || item.children.length === 0) return undefined;
+  const tabHrefs = [item.href, ...item.children.map((child) => child.href)];
+  if (!tabHrefs.includes(pathname)) return undefined;
+  const onChild = item.children.some((child) => isNavChildActive(child, pathname));
+  const tabs: ModuleTab[] = [
+    { key: item.key, href: item.href, active: !onChild, isParent: true },
+    ...item.children.map((child) => ({
+      key: child.key,
+      href: child.href,
+      active: isNavChildActive(child, pathname),
+      isParent: false,
+    })),
+  ];
+  return { item, tabs };
 }
 
 /**

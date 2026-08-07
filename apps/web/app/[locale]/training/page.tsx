@@ -6,39 +6,59 @@
  * Nair's design point, and the reason it leads rather than the grid:
  * *"Everyone pictures the grid. The grid matters — but I look at it once
  * a month. What I need on a Tuesday morning is the gap list: who is
- * missing what, sorted by how much it matters."* So the grid is the
- * second tab and this is the first, ordered expired → expiring → never
- * held, with every row one click from recording the fix.
+ * missing what, sorted by how much it matters."*
+ *
+ * Review fixes carried here: the list now shows only requirements a
+ * person is actually **required** to hold (TR-A7 — a lapsed voluntary
+ * card is not a gap); the **as at** and **site** controls are wired
+ * (TR-A10), so "was he competent on the day" is reachable from the UI
+ * rather than only the API; a failed query renders as a **failure**
+ * rather than as "no gaps" (TR-A14), because the safe-looking state is
+ * the lie; and rows link to the person's wallet.
  */
+import { FileWarning } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { ImportDialog } from '../../../src/components/training/import-dialog';
 import { RecordDialog } from '../../../src/components/training/record-dialog';
 import { StatusChip } from '../../../src/components/training/status-chip';
 import { TrainingTabs } from '../../../src/components/training/training-tabs';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
-type GapRow = {
+interface GapRow {
   personKey: string;
   personName: string;
   userId: string | null;
   requirementId: string;
   requirementName: string;
   expiresAt: Date | null;
-};
+}
 
 export default function TrainingGapsPage() {
   const t = useTranslations('training');
+  const tErr = useTranslations('training.errors');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canRecord = useHasPermission('training.record');
   const [prefill, setPrefill] = useState<GapRow | null>(null);
+  const [recordOpen, setRecordOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [asOf, setAsOf] = useState('');
+  const [siteId, setSiteId] = useState('');
 
-  const { data, isLoading } = trpc.training.gaps.useQuery({});
+  const { data: sites } = trpc.sites.list.useQuery();
+  const query = trpc.training.gaps.useQuery({
+    ...(asOf !== '' ? { asOf } : {}),
+    ...(siteId !== '' ? { siteId } : {}),
+  });
+  const data = query.data;
 
   const formatDate = (d: Date | null): string =>
     d === null ? '—' : new Date(d).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
@@ -49,33 +69,107 @@ export default function TrainingGapsPage() {
     { key: 'notHeld', rows: data?.notHeld ?? [] },
   ];
 
+  function walletHref(row: GapRow): string {
+    return row.userId !== null
+      ? `/${locale}/training/person?userId=${encodeURIComponent(row.userId)}&name=${encodeURIComponent(row.personName)}`
+      : `/${locale}/training/person?name=${encodeURIComponent(row.personName)}`;
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <TrainingTabs activeTab="gaps" locale={locale} />
 
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-        </div>
+      {/* The shared module header (ADR 0014 standard). */}
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        <Button asChild variant="outline">
+          <Link href={`/${locale}/training/me`}>{t('person.myTitle')}</Link>
+        </Button>
         {canRecord ? (
-          <Button onClick={() => setPrefill({} as GapRow)}>{t('record.title')}</Button>
+          <>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              {t('import.title')}
+            </Button>
+            <Button
+              onClick={() => {
+                setPrefill(null);
+                setRecordOpen(true);
+              }}
+            >
+              {t('record.title')}
+            </Button>
+          </>
         ) : null}
-      </header>
+      </ModuleHeader>
 
-      {/* Compliance is a moving number; a view without its date is meaningless. */}
-      {data !== undefined ? (
-        <p className="text-xs text-muted-foreground">
-          {t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}
-        </p>
-      ) : null}
+      {/* As-at and site: the two controls the server always accepted and
+          no page ever passed (TR-A10). */}
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="training-asof" className="text-xs font-medium text-muted-foreground">
+            {t('filters.asOf')}
+          </label>
+          <input
+            id="training-asof"
+            type="date"
+            value={asOf}
+            onChange={(e) => setAsOf(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="training-site" className="text-xs font-medium text-muted-foreground">
+            {t('filters.site')}
+          </label>
+          <select
+            id="training-site"
+            value={siteId}
+            onChange={(e) => setSiteId(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          >
+            <option value="">{t('filters.allSites')}</option>
+            {(sites ?? []).map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {asOf !== '' || siteId !== '' ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setAsOf('');
+              setSiteId('');
+            }}
+          >
+            {t('filters.clear')}
+          </Button>
+        ) : null}
+        {data !== undefined ? (
+          <p className="ml-auto text-xs text-muted-foreground">
+            {t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}
+          </p>
+        ) : null}
+      </div>
 
-      {isLoading ? (
+      {query.isPending ? (
         <Card>
           <CardContent className="space-y-2 p-4">
             <Skeleton className="h-5 w-full" />
             <Skeleton className="h-5 w-full" />
             <Skeleton className="h-5 w-2/3" />
+          </CardContent>
+        </Card>
+      ) : query.isError ? (
+        /* TR-A14: "no gaps" and "the query failed" must not look identical. */
+        <Card>
+          <CardContent className="flex flex-col items-center gap-2 p-10 text-center">
+            <FileWarning className="h-6 w-6 text-destructive" aria-hidden="true" />
+            <p className="font-medium">{tErr('loadFailed')}</p>
+            <Button size="sm" variant="outline" onClick={() => void query.refetch()}>
+              {tErr('retry')}
+            </Button>
           </CardContent>
         </Card>
       ) : (data?.total ?? 0) === 0 ? (
@@ -110,7 +204,12 @@ export default function TrainingGapsPage() {
                         className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"
                       >
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate font-medium">{row.personName}</span>
+                          <Link
+                            href={walletHref(row)}
+                            className="block truncate font-medium hover:underline"
+                          >
+                            {row.personName}
+                          </Link>
                           <span className="block truncate text-xs text-muted-foreground">
                             {row.requirementName}
                           </span>
@@ -121,7 +220,14 @@ export default function TrainingGapsPage() {
                             : t('gaps.expiresOn', { date: formatDate(row.expiresAt) })}
                         </span>
                         {canRecord ? (
-                          <Button size="sm" variant="outline" onClick={() => setPrefill(row)}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setPrefill(row);
+                              setRecordOpen(true);
+                            }}
+                          >
                             {t('gaps.record')}
                           </Button>
                         ) : null}
@@ -135,20 +241,22 @@ export default function TrainingGapsPage() {
       )}
 
       <RecordDialog
-        open={prefill !== null}
+        open={recordOpen}
         onOpenChange={(v) => {
+          setRecordOpen(v);
           if (!v) setPrefill(null);
         }}
-        prefill={
-          prefill !== null && prefill.requirementId !== undefined
-            ? {
+        {...(prefill !== null
+          ? {
+              prefill: {
                 requirementId: prefill.requirementId,
                 personName: prefill.personName,
                 userId: prefill.userId,
-              }
-            : undefined
-        }
+              },
+            }
+          : {})}
       />
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

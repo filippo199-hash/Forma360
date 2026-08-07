@@ -33,6 +33,7 @@ import {
   actionSourceLabelKey,
   type ActionSourceType,
 } from '../../../src/lib/action-sources';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { toast } from 'sonner';
@@ -40,6 +41,7 @@ import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -509,60 +511,49 @@ export default function ActionsListPage() {
     // just re-constrains its content to the shared 1200px column.
     <div className="mx-auto w-full max-w-[1200px] space-y-4">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-0.5 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-          {myCounts !== undefined && myCounts.openAssigned > 0 ? (
-            <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
-              <button
-                type="button"
-                onClick={() => setAssignedToMe(true)}
-                className="rounded-md border border-input bg-background px-2 py-0.5 hover:bg-accent"
-              >
-                {t('myOpenChip', { count: myCounts.openAssigned })}
-              </button>
-              {myCounts.overdueAssigned > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAssignedToMe(true);
-                    setOverdueOnly(true);
-                  }}
-                  className="rounded-md border border-red-300 bg-red-50 px-2 py-0.5 text-red-900 hover:bg-red-100 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
-                >
-                  {t('myOverdueChip', { count: myCounts.overdueAssigned })}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {canSettings ? (
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              title={t('settingsButton')}
-              className="w-9 px-0 sm:w-auto sm:px-3"
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        {canSettings ? (
+          <TooltipIconButton
+            icon={Settings2}
+            label={t('settingsButton')}
+            href={`/${locale}/actions/settings`}
+          />
+        ) : null}
+        <ViewToggle view={view} onChange={setView} t={t} />
+        {canCreate ? (
+          <Button asChild>
+            <Link href={`/${locale}/actions/new`}>
+              <Plus className="mr-1 h-4 w-4" />
+              {t('newButton')}
+            </Link>
+          </Button>
+        ) : null}
+      </ModuleHeader>
+
+      {/* My-work quick filters (attention strip). */}
+      {myCounts !== undefined && myCounts.openAssigned > 0 ? (
+        <div className="flex flex-wrap gap-1.5 text-xs">
+          <button
+            type="button"
+            onClick={() => setAssignedToMe(true)}
+            className="rounded-md border border-input bg-background px-2 py-0.5 hover:bg-accent"
+          >
+            {t('myOpenChip', { count: myCounts.openAssigned })}
+          </button>
+          {myCounts.overdueAssigned > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                setAssignedToMe(true);
+                setOverdueOnly(true);
+              }}
+              className="rounded-md border border-red-300 bg-red-50 px-2 py-0.5 text-red-900 hover:bg-red-100 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
             >
-              <Link href={`/${locale}/actions/settings`}>
-                <Settings2 className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{t('settingsButton')}</span>
-              </Link>
-            </Button>
-          ) : null}
-          <ViewToggle view={view} onChange={setView} t={t} />
-          {canCreate ? (
-            <Button asChild>
-              <Link href={`/${locale}/actions/new`}>
-                <Plus className="mr-1 h-4 w-4" />
-                {t('newButton')}
-              </Link>
-            </Button>
+              {t('myOverdueChip', { count: myCounts.overdueAssigned })}
+            </button>
           ) : null}
         </div>
-      </header>
+      ) : null}
 
       {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 

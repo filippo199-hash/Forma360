@@ -9,7 +9,7 @@
  * mirrors the observations module: filter row, desktop table, mobile
  * cards, one predictable primary target per row.
  */
-import { Fan, Plus, Zap } from 'lucide-react';
+import { Download, Fan, Plus, Zap } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -20,10 +20,12 @@ import {
   RegimeChips,
   SdsStatusChip,
 } from '../../../src/components/coshh/chips';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
-import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -32,6 +34,7 @@ type StatusFilter = 'active' | 'archived' | 'all';
 
 export default function CoshhInventoryPage() {
   const t = useTranslations('coshh');
+  const tCommon = useTranslations('common');
   const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -42,6 +45,7 @@ export default function CoshhInventoryPage() {
   const [status, setStatus] = useState<StatusFilter>('active');
   const [siteId, setSiteId] = useState('');
   const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   const listInput: { status: StatusFilter; siteId?: string; search?: string } = { status };
   if (siteId !== '') listInput.siteId = siteId;
@@ -119,54 +123,89 @@ export default function CoshhInventoryPage() {
     URL.revokeObjectURL(url);
   }
 
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilterKey(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setStatus('active');
+    if (key === 'site') setSiteId('');
+  }
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: tCommon('status'),
+      control: {
+        kind: 'select',
+        value: status,
+        onValueChange: (v) => setStatus(v as StatusFilter),
+        options: [
+          { value: 'active', label: t('filters.active') },
+          { value: 'archived', label: t('filters.archived') },
+          { value: 'all', label: t('filters.all') },
+        ],
+      },
+    },
+    {
+      key: 'site',
+      label: placeLabel,
+      control: {
+        kind: 'select',
+        value: siteId,
+        onValueChange: setSiteId,
+        options: [
+          { value: '', label: t('filters.allSites') },
+          ...(sites ?? []).map((s) => ({ value: s.id, label: s.name })),
+        ],
+      },
+    },
+  ];
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            disabled={(rows ?? []).length === 0}
-            onClick={exportCsv}
-            className="hidden sm:inline-flex"
-          >
-            {t('exportCsv')}
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            title={t('powButton')}
-            className="w-10 px-0 sm:w-auto sm:px-4"
-          >
-            <Link href={`/${locale}/coshh/point-of-work`}>
-              <Zap className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('powButton')}</span>
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        <TooltipIconButton
+          icon={Download}
+          label={tCommon('exportCsv')}
+          onClick={exportCsv}
+          disabled={(rows ?? []).length === 0}
+        />
+        <Button
+          asChild
+          variant="outline"
+          title={t('powButton')}
+          className="w-10 px-0 sm:w-auto sm:px-4"
+        >
+          <Link href={`/${locale}/coshh/point-of-work`}>
+            <Zap className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('powButton')}</span>
+          </Link>
+        </Button>
+        <Button
+          asChild
+          variant="outline"
+          title={t('levButton')}
+          className="w-10 px-0 sm:w-auto sm:px-4"
+        >
+          <Link href={`/${locale}/coshh/lev`}>
+            <Fan className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('levButton')}</span>
+          </Link>
+        </Button>
+        {canCreate ? (
+          <Button asChild>
+            <Link href={`/${locale}/coshh/new`}>
+              <Plus className="mr-1 h-4 w-4" />
+              {t('newButton')}
             </Link>
           </Button>
-          <Button
-            asChild
-            variant="outline"
-            title={t('levButton')}
-            className="w-10 px-0 sm:w-auto sm:px-4"
-          >
-            <Link href={`/${locale}/coshh/lev`}>
-              <Fan className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('levButton')}</span>
-            </Link>
-          </Button>
-          {canCreate ? (
-            <Button asChild>
-              <Link href={`/${locale}/coshh/new`}>
-                <Plus className="mr-1 h-4 w-4" />
-                {t('newButton')}
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </header>
+        ) : null}
+      </ModuleHeader>
 
       {attention.length > 0 ? (
         <div className="flex flex-wrap gap-2">
@@ -184,53 +223,14 @@ export default function CoshhInventoryPage() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="coshh-search" className="text-xs font-medium text-muted-foreground">
-            {t('filters.search')}
-          </label>
-          <Input
-            id="coshh-search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('filters.searchPlaceholder')}
-            className="h-9 w-56"
-          />
-        </div>
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="coshh-status" className="text-xs font-medium text-muted-foreground">
-            {t('filters.status')}
-          </label>
-          <select
-            id="coshh-status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="active">{t('filters.active')}</option>
-            <option value="archived">{t('filters.archived')}</option>
-            <option value="all">{t('filters.all')}</option>
-          </select>
-        </div>
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="coshh-site" className="text-xs font-medium text-muted-foreground">
-            {placeLabel}
-          </label>
-          <select
-            id="coshh-site"
-            value={siteId}
-            onChange={(e) => setSiteId(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">{t('filters.allSites')}</option>
-            {(sites ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <FilterBar
+        search={{ value: search, onChange: setSearch, placeholder: t('filters.searchPlaceholder') }}
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilterKey}
+        resultsCount={(rows ?? []).length}
+      />
 
       {/* Table (desktop) — the mobile card list below takes over under md. */}
       <Card className="hidden md:block">

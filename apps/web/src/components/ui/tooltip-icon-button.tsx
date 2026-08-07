@@ -36,7 +36,7 @@ export function TooltipIconButton({
   href?: string;
   disabled?: boolean;
   active?: boolean;
-  variant?: 'outline' | 'ghost' | 'secondary';
+  variant?: 'outline' | 'ghost' | 'secondary' | 'destructive';
   type?: 'button' | 'submit';
 }) {
   const resolvedVariant = active === true ? 'secondary' : variant;

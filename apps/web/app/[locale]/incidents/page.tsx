@@ -25,10 +25,12 @@ import {
   RiddorChip,
   SeverityChip,
 } from '../../../src/components/incidents/chips';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
-import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
@@ -79,6 +81,7 @@ function statusesFor(
 
 export default function IncidentsPage() {
   const t = useTranslations('incidents');
+  const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -93,6 +96,7 @@ export default function IncidentsPage() {
   const [search, setSearch] = useState('');
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   // IN-A13: debounce free-text search so the register doesn't refetch
   // on every keystroke.
@@ -118,63 +122,136 @@ export default function IncidentsPage() {
   const { data: sites } = trpc.sites.list.useQuery();
   const utils = trpc.useUtils();
 
-  // Clicking a chip applies the matching register filter (IN-A13).
-  const attention: Array<{
+  // Clicking a chip applies the matching register filter (IN-A13) and
+  // reveals it in the filter row so the applied state is visible.
+  const attentionItems: Array<{
     key: string;
     count: number;
     alarm?: boolean;
-    apply: () => void;
+    status: StatusFilter;
+    riddorOnly: boolean;
   }> = [
-    {
-      key: 'untriaged',
-      count: overview?.untriaged ?? 0,
-      apply: () => {
-        setStatus('reported');
-        setRiddorOnly(false);
-      },
-    },
+    { key: 'untriaged', count: overview?.untriaged ?? 0, status: 'reported', riddorOnly: false },
     {
       key: 'riddorOverdue',
       count: overview?.riddorOverdue ?? 0,
       alarm: true,
-      apply: () => {
-        setStatus('open');
-        setRiddorOnly(true);
-      },
+      status: 'open',
+      riddorOnly: true,
     },
-    {
-      key: 'riddorDueSoon',
-      count: overview?.riddorDueSoon ?? 0,
-      apply: () => {
-        setStatus('open');
-        setRiddorOnly(true);
-      },
-    },
+    { key: 'riddorDueSoon', count: overview?.riddorDueSoon ?? 0, status: 'open', riddorOnly: true },
     {
       key: 'rescreenRequired',
       count: overview?.rescreenRequired ?? 0,
-      apply: () => {
-        setStatus('open');
-        setRiddorOnly(true);
-      },
+      status: 'open',
+      riddorOnly: true,
     },
     {
       key: 'investigating',
       count: overview?.investigating ?? 0,
-      apply: () => {
-        setStatus('investigating');
-        setRiddorOnly(false);
-      },
+      status: 'investigating',
+      riddorOnly: false,
     },
     {
       key: 'effectivenessOverdue',
       count: overview?.effectivenessOverdue ?? 0,
-      apply: () => {
-        setStatus('closed');
-        setRiddorOnly(false);
+      status: 'closed',
+      riddorOnly: false,
+    },
+  ];
+  const attention = attentionItems.filter((a) => a.count > 0);
+
+  function applyAttention(a: { status: StatusFilter; riddorOnly: boolean }): void {
+    setStatus(a.status);
+    setRiddorOnly(a.riddorOnly);
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.add('status');
+      if (a.riddorOnly) next.add('riddorOnly');
+      else next.delete('riddorOnly');
+      return next;
+    });
+  }
+
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+    if (key === 'riddorOnly') setRiddorOnly(true);
+  }
+  function removeFilterKey(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setStatus('open');
+    if (key === 'kind') setKind('');
+    if (key === 'severity') setSeverity('');
+    if (key === 'site') setSiteId('');
+    if (key === 'riddorOnly') setRiddorOnly(false);
+  }
+
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: tCommon('status'),
+      control: {
+        kind: 'select',
+        value: status,
+        onValueChange: (v) => setStatus(v as StatusFilter),
+        options: STATUS_FILTERS.map((s) => ({
+          value: s,
+          label: t(`list.statusFilter.${s}` as never),
+        })),
       },
     },
-  ].filter((a) => a.count > 0);
+    {
+      key: 'kind',
+      label: t('list.columns.kind'),
+      control: {
+        kind: 'select',
+        value: kind,
+        onValueChange: setKind,
+        options: [
+          { value: '', label: t('list.allKinds') },
+          ...KINDS.map((k) => ({ value: k, label: t(`kinds.${k}` as never) })),
+        ],
+      },
+    },
+    {
+      key: 'severity',
+      label: t('list.columns.severity'),
+      control: {
+        kind: 'select',
+        value: severity,
+        onValueChange: setSeverity,
+        options: [
+          { value: '', label: t('list.allSeverities') },
+          ...SEVERITIES.map((s) => ({ value: s, label: t(`severities.${s}` as never) })),
+        ],
+      },
+    },
+  ];
+  if ((sites ?? []).length > 0) {
+    filterDefs.push({
+      key: 'site',
+      label: tCommon('site'),
+      control: {
+        kind: 'select',
+        value: siteId,
+        onValueChange: setSiteId,
+        options: [
+          { value: '', label: t('list.allSites') },
+          ...(sites ?? []).map((s) => ({ value: s.id, label: s.name })),
+        ],
+      },
+    });
+  }
+  filterDefs.push({
+    key: 'riddorOnly',
+    label: t('list.riddorOnly'),
+    control: { kind: 'boolean' },
+  });
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
 
   async function exportCsv(): Promise<void> {
     setExporting(true);
@@ -199,31 +276,22 @@ export default function IncidentsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void exportCsv()}
-            disabled={exporting}
-          >
-            <Download className="mr-1.5 h-4 w-4" />
-            {t('list.exportCsv')}
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        <TooltipIconButton
+          icon={Download}
+          label={t('list.exportCsv')}
+          onClick={() => void exportCsv()}
+          disabled={exporting}
+        />
+        {canReport ? (
+          <Button asChild>
+            <Link href={`/${locale}/incidents/new`}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              {t('list.report')}
+            </Link>
           </Button>
-          {canReport ? (
-            <Button asChild>
-              <Link href={`/${locale}/incidents/new`}>
-                <Plus className="mr-1.5 h-4 w-4" />
-                {t('list.report')}
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+        ) : null}
+      </ModuleHeader>
 
       {attention.length > 0 ? (
         <div className="flex flex-wrap gap-2">
@@ -231,7 +299,7 @@ export default function IncidentsPage() {
             <button
               key={a.key}
               type="button"
-              onClick={a.apply}
+              onClick={() => applyAttention(a)}
               className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-colors ${
                 a.alarm === true
                   ? 'border-red-300 bg-red-50 text-red-900 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-950/70'
@@ -248,70 +316,18 @@ export default function IncidentsPage() {
         <p className="text-sm text-red-600 dark:text-red-400">{t('list.exportFailed')}</p>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as StatusFilter)}
-          className="h-9 rounded-md border bg-background px-2 text-sm"
-        >
-          {STATUS_FILTERS.map((s) => (
-            <option key={s} value={s}>
-              {t(`list.statusFilter.${s}` as never)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={kind}
-          onChange={(e) => setKind(e.target.value)}
-          className="h-9 rounded-md border bg-background px-2 text-sm"
-        >
-          <option value="">{t('list.allKinds')}</option>
-          {KINDS.map((k) => (
-            <option key={k} value={k}>
-              {t(`kinds.${k}` as never)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={severity}
-          onChange={(e) => setSeverity(e.target.value)}
-          className="h-9 rounded-md border bg-background px-2 text-sm"
-        >
-          <option value="">{t('list.allSeverities')}</option>
-          {SEVERITIES.map((s) => (
-            <option key={s} value={s}>
-              {t(`severities.${s}` as never)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={siteId}
-          onChange={(e) => setSiteId(e.target.value)}
-          className="h-9 max-w-44 rounded-md border bg-background px-2 text-sm"
-        >
-          <option value="">{t('list.allSites')}</option>
-          {(sites ?? []).map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-        <label className="inline-flex cursor-pointer items-center gap-1.5 text-sm">
-          <input
-            type="checkbox"
-            checked={riddorOnly}
-            onChange={(e) => setRiddorOnly(e.target.checked)}
-            className="h-4 w-4"
-          />
-          {t('list.riddorOnly')}
-        </label>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('list.searchPlaceholder')}
-          className="h-9 w-56"
-        />
-      </div>
+      <FilterBar
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: t('list.searchPlaceholder'),
+        }}
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilterKey}
+        resultsCount={rows?.length ?? 0}
+      />
 
       {isLoading ? (
         <div className="space-y-2">
@@ -330,16 +346,16 @@ export default function IncidentsPage() {
           {/* Desktop table */}
           <div className="hidden overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm md:block">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <thead className="border-b bg-muted/40 text-left">
                 <tr>
-                  <th className="px-3 py-2">{t('list.columns.reference')}</th>
-                  <th className="px-3 py-2">{t('list.columns.title')}</th>
-                  <th className="px-3 py-2">{t('list.columns.kind')}</th>
-                  <th className="px-3 py-2">{t('list.columns.severity')}</th>
-                  <th className="px-3 py-2">{t('list.columns.status')}</th>
-                  <th className="px-3 py-2">{t('list.columns.site')}</th>
-                  <th className="px-3 py-2">{t('list.columns.occurred')}</th>
-                  <th className="px-3 py-2">{t('list.columns.riddor')}</th>
+                  <th className="px-3 py-2 font-medium">{t('list.columns.reference')}</th>
+                  <th className="px-3 py-2 font-medium">{t('list.columns.title')}</th>
+                  <th className="px-3 py-2 font-medium">{t('list.columns.kind')}</th>
+                  <th className="px-3 py-2 font-medium">{t('list.columns.severity')}</th>
+                  <th className="px-3 py-2 font-medium">{t('list.columns.status')}</th>
+                  <th className="px-3 py-2 font-medium">{t('list.columns.site')}</th>
+                  <th className="px-3 py-2 font-medium">{t('list.columns.occurred')}</th>
+                  <th className="px-3 py-2 font-medium">{t('list.columns.riddor')}</th>
                 </tr>
               </thead>
               <tbody>

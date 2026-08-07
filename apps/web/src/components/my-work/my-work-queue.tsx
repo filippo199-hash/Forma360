@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ClipboardCheck,
   FileSignature,
+  GraduationCap,
   ListChecks,
   type LucideIcon,
 } from 'lucide-react';
@@ -35,9 +36,10 @@ import { trpc } from '../../lib/trpc/client';
  * and be linked to directly; this component backs all three.
  */
 
-type Kind = 'action' | 'acknowledgement' | 'signature' | 'inspection' | 'approval';
+type Kind = 'action' | 'acknowledgement' | 'signature' | 'inspection' | 'approval' | 'training';
 
 const KIND_ICON: Record<Kind, LucideIcon> = {
+  training: GraduationCap,
   action: ListChecks,
   acknowledgement: Bell,
   signature: FileSignature,
@@ -48,6 +50,7 @@ const KIND_ICON: Record<Kind, LucideIcon> = {
 const FILTERS: readonly (Kind | 'all')[] = [
   'all',
   'action',
+  'training',
   'acknowledgement',
   'signature',
   'inspection',

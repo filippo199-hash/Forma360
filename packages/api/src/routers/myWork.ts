@@ -33,6 +33,7 @@ import {
   riskAssessmentAcknowledgements,
   riskAssessments,
   trainingRecords,
+  trainingRequirements,
 } from '@forma360/db/schema';
 import { grantsAdminAccess, type PermissionKey } from '@forma360/permissions/catalogue';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
@@ -66,6 +67,10 @@ export const MY_WORK_KINDS = [
   'signature',
   'inspection',
   'approval',
+  // TR-A5: "when does my card expire?" is what nine in ten users want
+  // from the training module. Without this their only door is the gap
+  // list — a named list of every colleague's shortfalls.
+  'training',
 ] as const;
 export type MyWorkKind = (typeof MY_WORK_KINDS)[number];
 
@@ -525,6 +530,51 @@ export function createMyWorkRouter(deps: MyWorkRouterDeps = {}) {
             href: `/inspections/${r.id}/status`,
             dueAt: null,
             overdue: false,
+          });
+        }
+      }
+
+      // TR-A5: the caller's OWN training, so a standard user has a
+      // personal door into the module instead of only the org-wide gap
+      // list. Scoped to `me` by construction — it can never surface a
+      // colleague's shortfall.
+      if (wants('training')) {
+        const found = await ctx.db
+          .select({
+            id: trainingRecords.id,
+            requirementName: trainingRequirements.name,
+            expiresAt: trainingRecords.expiresAt,
+            leadDays: trainingRequirements.renewalLeadDays,
+          })
+          .from(trainingRecords)
+          .innerJoin(
+            trainingRequirements,
+            eq(trainingRecords.requirementId, trainingRequirements.id),
+          )
+          .where(
+            and(
+              eq(trainingRecords.tenantId, ctx.tenantId),
+              eq(trainingRecords.userId, me),
+              isNull(trainingRecords.supersededAt),
+              isNull(trainingRequirements.archivedAt),
+              isNotNull(trainingRecords.expiresAt),
+            ),
+          )
+          .orderBy(asc(trainingRecords.expiresAt))
+          .limit(input.limit);
+        for (const r of found) {
+          if (r.expiresAt === null) continue;
+          // Only surface what is actually worth acting on: inside the
+          // requirement's own chase window, or already lapsed.
+          const dueMs = r.expiresAt.getTime() - at.getTime();
+          if (dueMs > r.leadDays * 86_400_000) continue;
+          rows.push({
+            kind: 'training',
+            id: r.id,
+            title: r.requirementName,
+            href: `/training/me`,
+            dueAt: r.expiresAt,
+            overdue: r.expiresAt < at,
           });
         }
       }

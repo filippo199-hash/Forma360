@@ -5,16 +5,14 @@ import {
   ArchiveRestore,
   Building2,
   Copy,
+  Download,
   FileEdit,
-  Filter,
   LayoutGrid,
   MoreHorizontal,
   Pencil,
   QrCode,
-  Search,
   Send,
   Users,
-  X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -41,12 +39,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../../src/components/ui/dropdown-menu';
-import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { trpc } from '../../../src/lib/trpc/client';
 
-type FilterKey = 'status' | 'access';
 type NormalisedStatus = 'draft' | 'published' | 'archived';
 type StatusFilterValue = 'all' | NormalisedStatus;
 type AccessFilterValue = 'all' | 'allUsers' | 'restricted';
@@ -59,7 +58,7 @@ export default function TemplatesListPage() {
   const utils = trpc.useUtils();
 
   const [search, setSearch] = useState('');
-  const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('all');
   const [accessFilter, setAccessFilter] = useState<AccessFilterValue>('all');
   const [showCreate, setShowCreate] = useState(false);
@@ -119,11 +118,11 @@ export default function TemplatesListPage() {
     });
   }, [rows, search, statusFilter, accessFilter, activeFilters]);
 
-  function addFilter(key: FilterKey) {
+  function addFilter(key: string) {
     setActiveFilters((prev) => new Set([...prev, key]));
   }
 
-  function removeFilter(key: FilterKey) {
+  function removeFilter(key: string) {
     setActiveFilters((prev) => {
       const next = new Set(prev);
       next.delete(key);
@@ -136,125 +135,61 @@ export default function TemplatesListPage() {
   const hasActiveFilters = activeFilters.size > 0 || search.trim().length > 0;
   const totalCount = rows?.filter((r) => normaliseStatus(r.status) !== 'archived').length ?? 0;
 
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: t('filter.status'),
+      control: {
+        kind: 'select',
+        value: statusFilter,
+        onValueChange: (v) => setStatusFilter(v as StatusFilterValue),
+        options: [
+          { value: 'all', label: t('filter.any') },
+          { value: 'draft', label: t('status.draft') },
+          { value: 'published', label: t('status.published') },
+          { value: 'archived', label: t('status.archived') },
+        ],
+      },
+    },
+    {
+      key: 'access',
+      label: t('filter.access'),
+      control: {
+        kind: 'select',
+        value: accessFilter,
+        onValueChange: (v) => setAccessFilter(v as AccessFilterValue),
+        options: [
+          { value: 'all', label: t('filter.any') },
+          { value: 'allUsers', label: t('filter.allUsers') },
+          { value: 'restricted', label: t('filter.restricted') },
+        ],
+      },
+    },
+  ];
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
+
   return (
     <div>
       <SectionTabBar activeTab="templates" locale={locale} />
       <div className="space-y-4">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold">
-            {t('title')}
-            {rows !== undefined ? (
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                ({filtered.length} {t('of')} {totalCount})
-              </span>
-            ) : null}
-          </h1>
-          <div className="flex items-center gap-2">
-            {/* Desktop-only — CSV export is not a phone workflow. */}
-            <Button
-              variant="outline"
-              onClick={() => setShowExport(true)}
-              className="hidden sm:inline-flex"
-            >
-              {t('export.button')}
-            </Button>
-            <Button onClick={() => setShowCreate(true)}>{t('newButton')}</Button>
-          </div>
-        </header>
+        <ModuleHeader title={t('title')}>
+          <TooltipIconButton
+            icon={Download}
+            label={t('export.button')}
+            onClick={() => setShowExport(true)}
+          />
+          <Button onClick={() => setShowCreate(true)}>{t('newButton')}</Button>
+        </ModuleHeader>
 
-        {/* Search + filter bar */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-48 flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder={t('searchPlaceholder')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-
-          {activeFilters.has('status') && (
-            <FilterChip label={t('filter.status')}>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="font-medium outline-none hover:text-foreground">
-                  {statusFilter === 'all' ? t('filter.any') : t(`status.${statusFilter}`)}
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onSelect={() => setStatusFilter('all')}>
-                    {t('filter.any')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setStatusFilter('draft')}>
-                    {t('status.draft')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setStatusFilter('published')}>
-                    {t('status.published')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setStatusFilter('archived')}>
-                    {t('status.archived')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <button
-                className="ml-1 text-muted-foreground hover:text-foreground"
-                onClick={() => removeFilter('status')}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </FilterChip>
-          )}
-
-          {activeFilters.has('access') && (
-            <FilterChip label={t('filter.access')}>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="font-medium outline-none hover:text-foreground">
-                  {accessFilter === 'all' ? t('filter.any') : t(`filter.${accessFilter}`)}
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onSelect={() => setAccessFilter('all')}>
-                    {t('filter.any')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setAccessFilter('allUsers')}>
-                    {t('filter.allUsers')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setAccessFilter('restricted')}>
-                    {t('filter.restricted')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <button
-                className="ml-1 text-muted-foreground hover:text-foreground"
-                onClick={() => removeFilter('access')}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </FilterChip>
-          )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <Filter className="h-3.5 w-3.5" />
-                {/* Icon-only on phones. */}
-                <span className="hidden sm:inline">{t('addFilter')}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onSelect={() => addFilter('status')}
-                disabled={activeFilters.has('status')}
-              >
-                {t('filter.status')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => addFilter('access')}
-                disabled={activeFilters.has('access')}
-              >
-                {t('filter.access')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <FilterBar
+          search={{ value: search, onChange: setSearch, placeholder: t('searchPlaceholder') }}
+          filters={filterDefs}
+          activeKeys={activeFilterKeys}
+          onAddFilter={addFilter}
+          onRemoveFilter={removeFilter}
+          resultsCount={filtered.length}
+          resultsSuffix={rows !== undefined ? ` / ${totalCount}` : undefined}
+        />
 
         <Card>
           <CardContent className="p-0">
@@ -416,17 +351,6 @@ export default function TemplatesListPage() {
           />
         ) : null}
       </div>
-    </div>
-  );
-}
-
-// ─── Filter chip ───────────────────────────────────────────────────────────────
-
-function FilterChip({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-1 rounded-md border bg-muted/40 px-2.5 py-1 text-sm">
-      <span className="text-muted-foreground">{label}:</span>
-      {children}
     </div>
   );
 }

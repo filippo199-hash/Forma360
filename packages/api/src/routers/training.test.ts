@@ -471,4 +471,145 @@ describe('training router (FreeHS B7)', () => {
       await caller.training.qualifiedFor({ requirementId: lapsedReq, includeExpiringSoon: true }),
     ).toHaveLength(0);
   });
+  // ── Review round 1 (TR-A7 / TR-A8 / TR-A12) ───────────────────────────
+
+  it('TR-A7: a held-but-not-required record is not a gap and does not drag compliance', async () => {
+    const caller = callerFor(adminId, tenantId);
+    // Assigned to the role Dave holds, and one he does NOT hold.
+    const assigned = await seedRequirement({ name: 'Manual handling', validityMonths: 12 });
+    const { id: unassigned } = await caller.training.createRequirement({
+      name: 'Abrasive wheels',
+      category: null,
+      obligation: 'mandatory',
+      validityMonths: 12,
+      renewalLeadDays: 60,
+      evidenceNote: null,
+      description: null,
+    });
+
+    // In date for what he needs; lapsed on what he does not.
+    await caller.training.addRecord({
+      requirementId: assigned,
+      userId: operatorId,
+      personName: 'Dave Mullins',
+      personCategory: 'employee',
+      contractorId: null,
+      achievedAt: iso(-10),
+      awardingBody: null,
+      certificateNumber: null,
+      evidenceKey: null,
+      evidenceFilename: null,
+      source: 'external',
+      notes: null,
+    });
+    await caller.training.addRecord({
+      requirementId: unassigned,
+      userId: operatorId,
+      personName: 'Dave Mullins',
+      personCategory: 'employee',
+      contractorId: null,
+      achievedAt: iso(-800),
+      expiresAt: iso(-30),
+      awardingBody: null,
+      certificateNumber: null,
+      evidenceKey: null,
+      evidenceFilename: null,
+      source: 'external',
+      notes: null,
+    });
+
+    // The lapsed voluntary card is NOT a gap …
+    const gaps = await caller.training.gaps({});
+    expect(gaps.total).toBe(0);
+
+    // … and does not drag the board number: 1 of 1 required is in date.
+    const compliance = await caller.training.compliance({});
+    expect(compliance.overall).toBe(100);
+    const wheels = compliance.byRequirement.find((r) => r.requirementId === unassigned);
+    expect(wheels?.gaps).toBe(0);
+
+    // It still shows in the matrix, because the wallet must not blank a
+    // card someone actually holds.
+    const matrix = await caller.training.matrix({});
+    const cell = matrix.cells.find((c) => c.requirementId === unassigned);
+    expect(cell?.status).toBe('expired');
+    expect(cell?.required).toBe(false);
+  });
+
+  it('TR-A8: superseding a record removes it from the matrix and reopens the gap', async () => {
+    const caller = callerFor(adminId, tenantId);
+    const requirementId = await seedRequirement({ validityMonths: 12 });
+
+    // The classic fat-finger: an expiry decades out, which under
+    // "furthest-reaching cover" would mark this person permanently
+    // competent — and permanently pass the permit gate.
+    const { id } = await caller.training.addRecord({
+      requirementId,
+      userId: operatorId,
+      personName: 'Dave Mullins',
+      personCategory: 'employee',
+      contractorId: null,
+      achievedAt: iso(-10),
+      expiresAt: '2099-01-01',
+      awardingBody: null,
+      certificateNumber: null,
+      evidenceKey: null,
+      evidenceFilename: null,
+      source: 'external',
+      notes: null,
+    });
+    expect((await caller.training.gaps({})).total).toBe(0);
+
+    await caller.training.supersedeRecord({ id, reason: 'Expiry typed as 2099' });
+
+    // The gap is back, and the row survives as evidence with its reason.
+    expect((await caller.training.gaps({})).notHeld).toHaveLength(1);
+    const records = await caller.training.listRecords({});
+    expect(records).toHaveLength(1);
+    expect(records[0]?.supersededAt).not.toBeNull();
+    expect(records[0]?.notes).toContain('Expiry typed as 2099');
+
+    // Voiding twice is refused rather than silently re-stamping.
+    await expect(caller.training.supersedeRecord({ id, reason: 'again' })).rejects.toThrow(
+      /already-superseded/,
+    );
+  });
+
+  it('TR-A12: compliance reports statutory and mandatory apart, and by area', async () => {
+    const caller = callerFor(adminId, tenantId);
+    await seedRequirement({ name: 'Fire marshal', validityMonths: 12, obligation: 'statutory' });
+    await seedRequirement({ name: 'Manual handling', validityMonths: 12, obligation: 'mandatory' });
+
+    const compliance = await caller.training.compliance({});
+    // Both are reported, and separately — the board asks for them apart.
+    expect(compliance.statutory).toBe(0);
+    expect(compliance.mandatory).toBe(0);
+    expect(compliance.overall).toBe(0);
+    expect(Array.isArray(compliance.byArea)).toBe(true);
+  });
+
+  it('TR-A5: the person view defaults to the caller, so /training/me is personal', async () => {
+    const caller = callerFor(adminId, tenantId);
+    const requirementId = await seedRequirement();
+    // A record for someone ELSE.
+    await caller.training.addRecord({
+      requirementId,
+      userId: operatorId,
+      personName: 'Dave Mullins',
+      personCategory: 'employee',
+      contractorId: null,
+      achievedAt: iso(-10),
+      awardingBody: null,
+      certificateNumber: null,
+      evidenceKey: null,
+      evidenceFilename: null,
+      source: 'external',
+      notes: null,
+    });
+
+    // Calling with no argument returns the CALLER's wallet, which is
+    // empty — never the colleague's record.
+    const mine = await callerFor(standardId, tenantId).training.person({});
+    expect(mine.records).toHaveLength(0);
+  });
 });

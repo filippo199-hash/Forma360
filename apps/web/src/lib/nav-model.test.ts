@@ -16,6 +16,14 @@
  *     the viewer cannot open, and never exceeds its slot count
  *   - NAV-E09: badge keys only ever sit on personally-scoped entries
  *   - NAV-E10: every href is locale-prefixed
+ *   - NAV-E11: training sits in the organisation group, beside Contractors
+ *   - NAV-E12: training is permission- and brand-gated
+ *   - NAV-E13: the in-page tab strip leads with the module and lists its
+ *     (permission-filtered) children
+ *   - NAV-E14: a child route activates its tab; a route deeper than any tab
+ *     hides the strip (list pages only, like Inspections/Training)
+ *   - NAV-E15: a module without children has no strip; child tabs honour the
+ *     same permission gate as the sidebar did
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -24,6 +32,7 @@ import {
   flattenNavItems,
   isNavItemActive,
   MOBILE_TAB_SLOTS,
+  moduleTabsForPath,
   NAV_CHILD_ICON,
   activeNavItem,
   settingsNavItem,
@@ -50,6 +59,7 @@ describe('nav model (ADR 0014)', () => {
     expect(freehs).toContain('rams');
     expect(freehs).toContain('fireSafety');
     expect(freehs).toContain('incidents');
+    expect(freehs).toContain('training');
 
     const forma = keysOf(ADMIN, 'forma360');
     expect(forma).not.toContain('riskAssessments');
@@ -58,6 +68,7 @@ describe('nav model (ADR 0014)', () => {
     expect(forma).not.toContain('rams');
     expect(forma).not.toContain('fireSafety');
     expect(forma).not.toContain('incidents');
+    expect(forma).not.toContain('training');
     // Core modules are unaffected by the brand gate.
     expect(forma).toContain('inspections');
     expect(forma).toContain('actions');
@@ -229,5 +240,74 @@ describe('nav model (ADR 0014)', () => {
       }
       expect(settingsNavItem(locale).href).toBe(`/${locale}/settings`);
     }
+  });
+
+  it('NAV-E11: training sits with the organisation, beside Contractors (TR-A15)', () => {
+    // The panel's argument, and the reason this is asserted rather than
+    // argued in a comment: a reviewer asking "who is allowed to do this
+    // work" wants the two competence registers — our people and their
+    // people — side by side. Training is about PEOPLE, which is what
+    // this group holds; it is not a document register.
+    const sections = sectionsFor(ADMIN);
+    const org = sections.find((s) => s.key === 'groupOrg');
+    const keys = (org?.items ?? []).map((i) => i.key);
+    expect(keys).toContain('training');
+    expect(keys).toContain('contractors');
+    expect(keys.indexOf('training')).toBe(keys.indexOf('contractors') + 1);
+
+    // …and specifically NOT in the records group.
+    const records = sections.find((s) => s.key === 'groupRecords');
+    expect((records?.items ?? []).map((i) => i.key)).not.toContain('training');
+  });
+
+  it('NAV-E12: training is permission-gated and brand-gated (TR-A15)', () => {
+    // A viewer without training.view never sees the entry…
+    expect(keysOf(['issues.view'])).not.toContain('training');
+    // …one with it does…
+    expect(keysOf(['training.view'])).toContain('training');
+    // …and the requirements child needs the manage key on top.
+    const viewer = flattenNavItems(sectionsFor(['training.view'])).find(
+      (i) => i.key === 'training',
+    );
+    expect(viewer?.children?.map((c) => c.key)).toEqual(['trainingMatrix']);
+    const manager = flattenNavItems(sectionsFor(['training.view', 'training.manage'])).find(
+      (i) => i.key === 'training',
+    );
+    expect(manager?.children?.map((c) => c.key)).toEqual([
+      'trainingMatrix',
+      'trainingRequirements',
+    ]);
+  });
+
+  it('NAV-E13: the tab strip leads with the module and lists its children', () => {
+    const sections = sectionsFor(ADMIN);
+    const strip = moduleTabsForPath(sections, '/en/coshh');
+    expect(strip?.tabs.map((t) => t.key)).toEqual(['coshh', 'coshhPointOfWork', 'coshhLev']);
+    expect(strip?.tabs[0]).toMatchObject({ key: 'coshh', isParent: true, active: true });
+    // Only the module tab is active on the module's own landing.
+    expect(strip?.tabs.filter((t) => t.active).map((t) => t.key)).toEqual(['coshh']);
+  });
+
+  it('NAV-E14: a child route activates its tab; a deeper route hides the strip', () => {
+    const sections = sectionsFor(ADMIN);
+    const onChild = moduleTabsForPath(sections, '/en/coshh/point-of-work');
+    expect(onChild?.tabs.filter((t) => t.active).map((t) => t.key)).toEqual(['coshhPointOfWork']);
+    expect(onChild?.tabs.find((t) => t.isParent)?.active).toBe(false);
+    // A detail or form route under the module is deeper than any tab — no strip.
+    expect(moduleTabsForPath(sections, '/en/coshh/new')).toBeUndefined();
+    expect(moduleTabsForPath(sections, '/en/coshh/01ABC')).toBeUndefined();
+  });
+
+  it('NAV-E15: modules without children have no strip; child tabs honour permission', () => {
+    // Incidents has no children — nothing to tab between.
+    expect(moduleTabsForPath(sectionsFor(ADMIN), '/en/incidents')).toBeUndefined();
+    // A permits viewer sees the board tab but not the manage-gated types tab.
+    const viewer = moduleTabsForPath(sectionsFor(['permits.view']), '/en/permits');
+    expect(viewer?.tabs.map((t) => t.key)).toEqual(['permits', 'permitsBoard']);
+    const manager = moduleTabsForPath(
+      sectionsFor(['permits.view', 'permits.manage']),
+      '/en/permits',
+    );
+    expect(manager?.tabs.map((t) => t.key)).toEqual(['permits', 'permitsBoard', 'permitsTypes']);
   });
 });

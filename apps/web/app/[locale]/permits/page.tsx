@@ -19,10 +19,12 @@ import {
   CountdownChip,
   PermitStatusChip,
 } from '../../../src/components/permits/chips';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
-import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -50,6 +52,7 @@ export default function PermitsPage() {
   const [status, setStatus] = useState<StatusFilter>('open');
   const [siteId, setSiteId] = useState('');
   const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   const listInput: { status: StatusFilter; siteId?: string; search?: string } = { status };
   if (siteId !== '') listInput.siteId = siteId;
@@ -80,48 +83,81 @@ export default function PermitsPage() {
     return `${d(f)} → ${d(to_)}`;
   };
 
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilterKey(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setStatus('open');
+    if (key === 'site') setSiteId('');
+  }
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: t('filters.status'),
+      control: {
+        kind: 'select',
+        value: status,
+        onValueChange: (v) => setStatus(v as StatusFilter),
+        options: [
+          { value: 'open', label: t('filters.open') },
+          { value: 'draft', label: t('status.draft') },
+          { value: 'issued', label: t('status.issued') },
+          { value: 'active', label: t('status.active') },
+          { value: 'suspended', label: t('status.suspended') },
+          { value: 'closed', label: t('status.closed') },
+          { value: 'cancelled', label: t('status.cancelled') },
+          { value: 'all', label: t('filters.all') },
+        ],
+      },
+    },
+  ];
+  if ((sites ?? []).length > 0) {
+    filterDefs.push({
+      key: 'site',
+      label: placeLabel,
+      control: {
+        kind: 'select',
+        value: siteId,
+        onValueChange: setSiteId,
+        options: [
+          { value: '', label: t('filters.allSites') },
+          ...(sites ?? []).map((s) => ({ value: s.id, label: s.name })),
+        ],
+      },
+    });
+  }
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            asChild
-            variant="outline"
-            title={t('boardButton')}
-            className="w-10 px-0 sm:w-auto sm:px-4"
-          >
-            <Link href={`/${locale}/permits/board`}>
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('boardButton')}</span>
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        <Button asChild variant="outline">
+          <Link href={`/${locale}/permits/board`}>
+            <LayoutDashboard className="mr-1.5 h-4 w-4" />
+            {t('boardButton')}
+          </Link>
+        </Button>
+        {canManage ? (
+          <TooltipIconButton
+            icon={Settings2}
+            label={t('typesButton')}
+            href={`/${locale}/permits/types`}
+          />
+        ) : null}
+        {canCreate ? (
+          <Button asChild>
+            <Link href={`/${locale}/permits/new`}>
+              <Plus className="mr-1 h-4 w-4" />
+              {t('newButton')}
             </Link>
           </Button>
-          {canManage ? (
-            <Button
-              asChild
-              variant="outline"
-              title={t('typesButton')}
-              className="w-10 px-0 sm:w-auto sm:px-4"
-            >
-              <Link href={`/${locale}/permits/types`}>
-                <Settings2 className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('typesButton')}</span>
-              </Link>
-            </Button>
-          ) : null}
-          {canCreate ? (
-            <Button asChild>
-              <Link href={`/${locale}/permits/new`}>
-                <Plus className="mr-1 h-4 w-4" />
-                {t('newButton')}
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </header>
+        ) : null}
+      </ModuleHeader>
 
       {attention.length > 0 ? (
         <div className="flex flex-wrap gap-2">
@@ -149,58 +185,18 @@ export default function PermitsPage() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="permits-search" className="text-xs font-medium text-muted-foreground">
-            {t('filters.search')}
-          </label>
-          <Input
-            id="permits-search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('filters.searchPlaceholder')}
-            className="h-9 w-56"
-          />
-        </div>
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="permits-status" className="text-xs font-medium text-muted-foreground">
-            {t('filters.status')}
-          </label>
-          <select
-            id="permits-status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="open">{t('filters.open')}</option>
-            <option value="draft">{t('status.draft')}</option>
-            <option value="issued">{t('status.issued')}</option>
-            <option value="active">{t('status.active')}</option>
-            <option value="suspended">{t('status.suspended')}</option>
-            <option value="closed">{t('status.closed')}</option>
-            <option value="cancelled">{t('status.cancelled')}</option>
-            <option value="all">{t('filters.all')}</option>
-          </select>
-        </div>
-        <div className="flex flex-col gap-1 text-sm">
-          <label htmlFor="permits-site" className="text-xs font-medium text-muted-foreground">
-            {placeLabel}
-          </label>
-          <select
-            id="permits-site"
-            value={siteId}
-            onChange={(e) => setSiteId(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">{t('filters.allSites')}</option>
-            {(sites ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <FilterBar
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: t('filters.searchPlaceholder'),
+        }}
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilterKey}
+        resultsCount={(rows ?? []).length}
+      />
 
       {/* Table (desktop) — the mobile card list below takes over under md. */}
       <Card className="hidden md:block">

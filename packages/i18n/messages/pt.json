@@ -3100,7 +3100,8 @@
       "sites": "Locais e projetos",
       "templates": "Modelos",
       "incidents": "Incidentes",
-      "rams": "Pacotes RAMS"
+      "rams": "Pacotes RAMS",
+      "training": "Formação"
     }
   },
   "ai": {
@@ -6275,7 +6276,8 @@
       "expiringReviews": "{count} aceitações a expirar"
     },
     "filters": {
-      "all": "Todos"
+      "all": "Todos",
+      "pendingAcceptance": "Aguardando aceitação do cliente"
     },
     "columns": {
       "reference": "Referência",
@@ -6645,14 +6647,19 @@
       "person": "Pessoa",
       "empty": "Ainda não há nada. Adicione um requisito e registe o que as pessoas têm.",
       "exportCsv": "Exportar CSV",
-      "legend": "Legenda"
+      "legend": "Legenda",
+      "allRequirements": "Todos os requisitos",
+      "exportPdf": "Exportar PDF",
+      "sortByGaps": "Ordenar por lacunas"
     },
     "compliance": {
       "overall": "Global",
       "statutory": "Apenas legal",
       "byRequirement": "Por requisito",
       "gapsCount": "{count} com lacunas",
-      "noData": "—"
+      "noData": "—",
+      "mandatory": "Apenas obrigatório",
+      "byArea": "Por área"
     },
     "requirements": {
       "title": "Requisitos",
@@ -6675,7 +6682,14 @@
         "group": "Grupo",
         "site": "Local",
         "person": "Pessoa"
-      }
+      },
+      "edit": "Editar",
+      "leadLabel": "Quantos dias antes avisar",
+      "evidenceNote": "Prova esperada",
+      "description": "Descrição",
+      "scopeLabel": "Atribuir por",
+      "archiveTitle": "Arquivar este requisito?",
+      "archiveBody": "{name} deixará de aparecer na matriz e na lista de lacunas. Os registos existentes são mantidos como prova."
     },
     "obligation": {
       "statutory": "Legal",
@@ -6701,24 +6715,66 @@
         "external": "Entidade externa",
         "imported": "Importada",
         "self_declared": "Autodeclarada"
-      }
+      },
+      "personKind": {
+        "user": "Um colega",
+        "other": "Alguém sem conta"
+      },
+      "searchPeople": "Procurar pessoas…",
+      "narrowSearch": "Há mais correspondências — continue a escrever para refinar.",
+      "searching": "A procurar…",
+      "personCategory": "Tipo de pessoa",
+      "categories": {
+        "employee": "Colaborador",
+        "contractor": "Empreiteiro",
+        "agency": "Trabalhador temporário"
+      },
+      "addPhoto": "Fotografar o cartão",
+      "removePhoto": "Remover",
+      "notes": "Notas"
     },
     "person": {
       "title": "Formação",
       "noRecords": "Ainda sem formação registada.",
       "verified": "Verificado",
-      "unverified": "Não verificado"
+      "unverified": "Não verificado",
+      "myTitle": "A minha formação",
+      "asAt": "À data de {date}",
+      "noExpiry": "Nunca expira",
+      "noEvidence": "Sem certificado anexado",
+      "verify": "Verificar",
+      "void": "Anular",
+      "voided": "Anulado",
+      "voidReason": "Porque está a ser anulado?"
     },
     "import": {
       "title": "Importar registos",
       "help": "Cole um CSV com as colunas: personName, userEmail, requirementName, achievedAt, expiresAt.",
       "run": "Importar",
       "imported": "{count} registos importados",
-      "failed": "{count} linhas falharam"
+      "failed": "{count} linhas falharam",
+      "chooseFile": "Escolher um ficheiro CSV",
+      "template": "Descarregar modelo",
+      "paste": "Ou colar CSV",
+      "close": "Fechar",
+      "rowLabel": "Linha {row}",
+      "badColumns": "A linha de cabeçalho tem de incluir personName, requirementName e achievedAt.",
+      "noRows": "Sem linhas para importar."
     },
     "errors": {
       "moduleDisabled": "Este módulo não está ativado.",
-      "generic": "Algo correu mal."
+      "generic": "Algo correu mal.",
+      "loadFailed": "Não foi possível carregar esta vista.",
+      "retry": "Tentar novamente",
+      "noPermission": "Não tem permissão para gerir requisitos.",
+      "uploadFailed": "Falha no carregamento ({reason})."
+    },
+    "filters": {
+      "asOf": "À data de",
+      "site": "Local",
+      "allSites": "Todos os locais",
+      "allRequirements": "Todos os requisitos",
+      "clear": "Limpar"
     }
   }
 }

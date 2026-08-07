@@ -739,6 +739,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       notify: async (r: DueTrainingReminder, url: string) => {
         await sendTemplatedEmail({
           to: r.email,
+          locale: r.locale ?? undefined,
           templateKey: 'training-expiry',
           variables: {
             personName: r.personName,

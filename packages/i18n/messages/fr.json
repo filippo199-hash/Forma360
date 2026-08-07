@@ -3107,7 +3107,8 @@
       "sites": "Sites et projets",
       "templates": "Modèles",
       "incidents": "Incidents",
-      "rams": "Dossiers RAMS"
+      "rams": "Dossiers RAMS",
+      "training": "Formations"
     }
   },
   "ai": {
@@ -6282,7 +6283,8 @@
       "expiringReviews": "{count} acceptations arrivant à échéance"
     },
     "filters": {
-      "all": "Tous"
+      "all": "Tous",
+      "pendingAcceptance": "En attente d'acceptation du client"
     },
     "columns": {
       "reference": "Référence",
@@ -6652,14 +6654,19 @@
       "person": "Personne",
       "empty": "Rien à afficher. Ajoutez une exigence et enregistrez les attestations.",
       "exportCsv": "Exporter en CSV",
-      "legend": "Légende"
+      "legend": "Légende",
+      "allRequirements": "Toutes les exigences",
+      "exportPdf": "Exporter en PDF",
+      "sortByGaps": "Trier par écarts"
     },
     "compliance": {
       "overall": "Global",
       "statutory": "Réglementaire uniquement",
       "byRequirement": "Par exigence",
       "gapsCount": "{count} avec écarts",
-      "noData": "—"
+      "noData": "—",
+      "mandatory": "Obligatoire uniquement",
+      "byArea": "Par secteur"
     },
     "requirements": {
       "title": "Exigences",
@@ -6682,7 +6689,14 @@
         "group": "Groupe",
         "site": "Site",
         "person": "Personne"
-      }
+      },
+      "edit": "Modifier",
+      "leadLabel": "Relancer combien de jours avant",
+      "evidenceNote": "Preuve attendue",
+      "description": "Description",
+      "scopeLabel": "Affecter par",
+      "archiveTitle": "Archiver cette exigence ?",
+      "archiveBody": "{name} n’apparaîtra plus dans la matrice ni dans la liste des écarts. Les attestations existantes sont conservées comme preuve."
     },
     "obligation": {
       "statutory": "Réglementaire",
@@ -6708,24 +6722,66 @@
         "external": "Organisme externe",
         "imported": "Importé",
         "self_declared": "Déclaratif"
-      }
+      },
+      "personKind": {
+        "user": "Un collègue",
+        "other": "Une personne sans compte"
+      },
+      "searchPeople": "Rechercher des personnes…",
+      "narrowSearch": "D’autres personnes correspondent — continuez à taper pour affiner.",
+      "searching": "Recherche…",
+      "personCategory": "Type de personne",
+      "categories": {
+        "employee": "Salarié",
+        "contractor": "Sous-traitant",
+        "agency": "Intérimaire"
+      },
+      "addPhoto": "Photographier la carte",
+      "removePhoto": "Retirer",
+      "notes": "Notes"
     },
     "person": {
       "title": "Formations",
       "noRecords": "Aucune formation enregistrée.",
       "verified": "Vérifié",
-      "unverified": "Non vérifié"
+      "unverified": "Non vérifié",
+      "myTitle": "Mes formations",
+      "asAt": "Au {date}",
+      "noExpiry": "N’expire jamais",
+      "noEvidence": "Aucun certificat joint",
+      "verify": "Vérifier",
+      "void": "Annuler",
+      "voided": "Annulé",
+      "voidReason": "Pourquoi cette annulation ?"
     },
     "import": {
       "title": "Importer des attestations",
       "help": "Collez un CSV avec les colonnes : personName, userEmail, requirementName, achievedAt, expiresAt.",
       "run": "Importer",
       "imported": "{count} attestations importées",
-      "failed": "{count} lignes en échec"
+      "failed": "{count} lignes en échec",
+      "chooseFile": "Choisir un fichier CSV",
+      "template": "Télécharger le modèle",
+      "paste": "Ou coller le CSV",
+      "close": "Fermer",
+      "rowLabel": "Ligne {row}",
+      "badColumns": "La ligne d’en-tête doit contenir personName, requirementName et achievedAt.",
+      "noRows": "Aucune ligne à importer."
     },
     "errors": {
       "moduleDisabled": "Ce module n'est pas activé.",
-      "generic": "Une erreur est survenue."
+      "generic": "Une erreur est survenue.",
+      "loadFailed": "Impossible de charger cette vue.",
+      "retry": "Réessayer",
+      "noPermission": "Vous n’avez pas l’autorisation de gérer les exigences.",
+      "uploadFailed": "Échec de l’envoi ({reason})."
+    },
+    "filters": {
+      "asOf": "Au",
+      "site": "Site",
+      "allSites": "Tous les sites",
+      "allRequirements": "Toutes les exigences",
+      "clear": "Effacer"
     }
   }
 }
