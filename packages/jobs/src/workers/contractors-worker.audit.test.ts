@@ -120,9 +120,11 @@ describe('contractors workers — audit', () => {
       });
 
       expect(sent).toBe(1);
-      expect({ ctaLandsOnAnUploadPage: urls[0]?.includes('/contractor-upload/') === true }).toEqual({
-        ctaLandsOnAnUploadPage: true,
-      });
+      expect({ ctaLandsOnAnUploadPage: urls[0]?.includes('/contractor-upload/') === true }).toEqual(
+        {
+          ctaLandsOnAnUploadPage: true,
+        },
+      );
 
       const [row] = await db
         .select({ reminderSentAt: schema.contractorDocuments.reminderSentAt })
@@ -322,9 +324,9 @@ describe('contractors workers — audit', () => {
         },
       });
 
-      expect({ mailedAGuardFromAnotherSite: recipients.includes('north-only@northgate.test') }).toEqual(
-        { mailedAGuardFromAnotherSite: false },
-      );
+      expect({
+        mailedAGuardFromAnotherSite: recipients.includes('north-only@northgate.test'),
+      }).toEqual({ mailedAGuardFromAnotherSite: false });
     });
   });
 });

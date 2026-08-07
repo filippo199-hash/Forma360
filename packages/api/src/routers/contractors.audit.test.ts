@@ -38,6 +38,8 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { TRPCError } from '@trpc/server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import * as schema from '@forma360/db/schema';
+import { eq } from 'drizzle-orm';
 import { resetDependentsRegistryForTests } from '@forma360/permissions/dependents';
 import { appRouter } from '../router';
 import { createCallerFactory } from '../trpc';
@@ -80,10 +82,9 @@ function contractorProcedures(): string[] {
 function resolve(caller: Caller, path: string): (input?: unknown) => Promise<unknown> {
   const fn = path
     .split('.')
-    .reduce<Record<string, unknown>>(
-      (acc, part) => acc[part] as Record<string, unknown>,
-      caller as unknown as Record<string, unknown>,
-    );
+    .reduce<
+      Record<string, unknown>
+    >((acc, part) => acc[part] as Record<string, unknown>, caller as unknown as Record<string, unknown>);
   return fn as unknown as (input?: unknown) => Promise<unknown>;
 }
 
@@ -205,6 +206,38 @@ describe('contractors — audit suite', () => {
         name: 'Receptionist Was Here Ltd',
       });
       expect(res.ok).toBe(false);
+    });
+
+    it('CT-P06 · [BUG] removing a contractor portal user cannot deactivate an arbitrary employee', async () => {
+      // `contractors.users.remove` takes a bare `z.string()` userId, deletes
+      // the (possibly non-existent) contractor_users row, and then
+      // UNCONDITIONALLY sets `deactivatedAt` on any user in the tenant.
+      //
+      // So `contractors.manage` — which every seeded Manager holds — is a
+      // back door onto user deactivation. It bypasses the `users.deactivate`
+      // permission, the self-deactivation block, and the S-E02 last-admin
+      // guard (`wouldDropBelowMinAdmins`), which exists precisely so a
+      // tenant cannot be left with no administrator.
+      const manager = createCaller(world.ctxFor(world.a.tenantId, world.a.actors.manager));
+      const victimId = world.a.actors.admin;
+
+      const res = await callFor(manager, 'contractors.users.remove', { userId: victimId });
+
+      const [row] = await world.db
+        .select({ deactivatedAt: schema.user.deactivatedAt })
+        .from(schema.user)
+        .where(eq(schema.user.id, victimId));
+
+      expect({ accepted: res.ok, adminDeactivated: row?.deactivatedAt !== null }).toEqual({
+        accepted: false,
+        adminDeactivated: false,
+      });
+
+      // Undo, so the rest of the suite still has a working administrator.
+      await world.db
+        .update(schema.user)
+        .set({ deactivatedAt: null })
+        .where(eq(schema.user.id, victimId));
     });
 
     it('CT-P05 · a document verifier can verify but cannot rewrite the requirement set', async () => {
@@ -580,6 +613,37 @@ describe('contractors — audit suite', () => {
       expect({
         showsOtherSiteVisit: ids.has(world.a.visits.scheduledOtherSite as string),
       }).toEqual({ showsOtherSiteVisit: false });
+    });
+
+    it('CT-G08 · [BUG] a suspended contractor is refused at the gate', async () => {
+      // The schema calls `complianceOverride` the way to "force
+      // `non_compliant`, or `suspended` to bar a contractor regardless of
+      // paperwork". The gate does not implement it:
+      //
+      //   contractorComplianceStatus() returns `override ?? derived`
+      //   selfCheckIn refuses only `if (compliance === 'non_compliant')`
+      //
+      // 'suspended' is neither, so it sails through — and because the
+      // override REPLACES the derived value, suspending a contractor whose
+      // paperwork is already invalid actually UNBLOCKS them. The control
+      // built to bar someone from site is the one that admits them.
+      const token = await freshToken();
+      const admin = asAdminA();
+      const { id: visitId } = await admin.contractors.visits.create({
+        contractorId: world.a.planted.suspended as string,
+        title: 'Suspended contractor at the gate',
+        scheduledStart: world.now.toISOString(),
+        authorize: true,
+      });
+
+      const res = await callFor(asPublic(), 'contractors.gate.selfCheckIn', {
+        token,
+        visitId,
+        eventType: 'check_in',
+      });
+      expect({ suspendedContractorAdmitted: res.ok }).toEqual({
+        suspendedContractorAdmitted: false,
+      });
     });
 
     it('CT-G07 · required capture fields are enforced on self check-in', async () => {
