@@ -11,9 +11,19 @@
  * so it cannot show anyone else's.
  */
 import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { PersonWallet } from '../../../../src/components/training/person-wallet';
+import { TrainingTabs } from '../../../../src/components/training/training-tabs';
 
 export default function MyTrainingPage() {
   const t = useTranslations('training.person');
-  return <PersonWallet heading={t('myTitle')} />;
+  const params = useParams<{ locale: string }>();
+  const locale = params.locale ?? 'en';
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      {/* TR-B11: inside the module's own navigation, not outside it. */}
+      <TrainingTabs activeTab="me" locale={locale} />
+      <PersonWallet heading={t('myTitle')} />
+    </div>
+  );
 }

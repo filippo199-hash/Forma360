@@ -12,16 +12,7 @@
  * action-type → template linking are explicitly out of scope here —
  * they'll land in a Phase 4 follow-on once the MVP is on prod.
  */
-import {
-  assets,
-  incidents,
-  inspections,
-  issues,
-  maintenancePrograms,
-  maintenanceProgramTriggers,
-  ramsPacks,
-  user,
-} from '@forma360/db/schema';
+import { assets, incidents, inspections, issues, ramsPacks, user } from '@forma360/db/schema';
 import {
   actionActivity,
   actionAssets,
@@ -80,7 +71,6 @@ import { notifyInApp } from '../notify';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertAssetsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
-import { rollForwardMaintenanceAction } from './maintenance-actions';
 
 type Db = DependentResolverDeps['db'];
 
@@ -409,7 +399,6 @@ const listInput = z
         'inspection',
         'issue',
         'standalone',
-        'maintenance',
         'risk_assessment',
         'coshh_assessment',
         'fire_risk_assessment',
@@ -834,7 +823,6 @@ export const actionsRouter = router({
           | 'issue'
           | 'inspection'
           | 'standalone'
-          | 'maintenance'
           | 'risk_assessment'
           | 'coshh_assessment'
           | 'fire_risk_assessment'
@@ -846,36 +834,7 @@ export const actionsRouter = router({
         title: string | null;
         href: string | null;
       } | null = null;
-      if (action.sourceType === 'maintenance' && action.sourceId !== null) {
-        // Resolve the owning maintenance program name (via the trigger) so
-        // the detail panel can label the auto-generated source.
-        const trigRows = await ctx.db
-          .select({ programId: maintenanceProgramTriggers.programId })
-          .from(maintenanceProgramTriggers)
-          .where(
-            and(
-              eq(maintenanceProgramTriggers.tenantId, ctx.tenantId),
-              eq(maintenanceProgramTriggers.id, action.sourceId),
-            ),
-          )
-          .limit(1);
-        const programId = trigRows[0]?.programId ?? null;
-        let programName: string | null = null;
-        if (programId !== null) {
-          const pRows = await ctx.db
-            .select({ name: maintenancePrograms.name })
-            .from(maintenancePrograms)
-            .where(
-              and(
-                eq(maintenancePrograms.tenantId, ctx.tenantId),
-                eq(maintenancePrograms.id, programId),
-              ),
-            )
-            .limit(1);
-          programName = pRows[0]?.name ?? null;
-        }
-        source = { type: 'maintenance', referenceNumber: null, title: programName, href: null };
-      } else if (action.sourceType === 'standalone' || action.sourceId === null) {
+      if (action.sourceType === 'standalone' || action.sourceId === null) {
         source = { type: 'standalone', referenceNumber: null, title: null, href: null };
       } else if (action.sourceType === 'risk_assessment') {
         const rows = await ctx.db
@@ -1076,8 +1035,8 @@ export const actionsRouter = router({
         actionType = tRows[0] ?? null;
       }
       // Assets linked to this action (via `action_assets`). Surfaced on the
-      // detail panel so maintenance-generated actions show the asset they
-      // belong to and the user can jump straight to it.
+      // detail panel so the action shows the asset it belongs to and the
+      // user can jump straight to it.
       const linkedAssets = await ctx.db
         .select({ id: assets.id, name: assets.name })
         .from(actionAssets)
@@ -1683,21 +1642,6 @@ export const actionsRouter = router({
             payload: { parentId: action.id, parentReference: action.referenceNumber },
           });
         }
-      }
-
-      // Maintenance roll-forward (To-Do #3): completing a maintenance action
-      // materialises the next occurrence so the program keeps scheduling work.
-      if (input.status === 'completed' && action.sourceType === 'maintenance') {
-        await rollForwardMaintenanceAction(ctx.db, {
-          tenantId: ctx.tenantId,
-          userId: ctx.auth.userId,
-          action: {
-            id: action.id,
-            sourceType: action.sourceType,
-            sourceId: action.sourceId,
-            dueAt: action.dueAt,
-          },
-        });
       }
 
       return { ok: true as const };

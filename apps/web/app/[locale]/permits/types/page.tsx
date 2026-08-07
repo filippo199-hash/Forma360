@@ -20,6 +20,8 @@ import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Switch } from '../../../../src/components/ui/switch';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { brandHasModule } from '@forma360/shared/brand';
+import { activeBrand } from '../../../../src/lib/brand';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 const FLAG_KEYS = [
@@ -28,6 +30,9 @@ const FLAG_KEYS = [
   'requiresIsolationCertificate',
   'requiresRescuePlan',
   'requiresRiskAssessment',
+  // Found by the TR-B1 contract test: the RAMS gate had the same defect as
+  // the competence gate — enforced on issue, with no way to switch it on.
+  'requiresRamsPack',
 ] as const;
 type FlagKey = (typeof FLAG_KEYS)[number];
 
@@ -52,6 +57,13 @@ export default function PermitTypesPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canManage = useHasPermission('permits.manage');
+  // The competence catalogue, for the gate's multi-select. Only queried
+  // where the brand ships the module (ADR 0010).
+  const trainingEnabled = brandHasModule(activeBrand.id, 'training');
+  const { data: requirements } = trpc.training.listRequirements.useQuery(
+    {},
+    { enabled: trainingEnabled },
+  );
 
   const utils = trpc.useUtils();
   const { data: types, isLoading } = trpc.permits.types.list.useQuery({ includeArchived: true });
@@ -212,6 +224,68 @@ export default function PermitTypesPage() {
                       />
                     </label>
                   ))}
+                </div>
+
+                {/* TR-B1: the competence gate's arming control. The gate was
+                    wired server-side and could not be switched on from
+                    anywhere — `requiredTrainingIds` appeared in no .tsx file
+                    at all, so every seeded type shipped an empty list and
+                    nothing was enforced. Brand-gated: only where the module
+                    ships. */}
+                {trainingEnabled ? (
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-medium">{t('requiredTraining')}</p>
+                    <p className="text-xs text-muted-foreground">{t('requiredTrainingHint')}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(requirements ?? []).length === 0 ? (
+                        <span className="text-xs text-muted-foreground">
+                          {t('requiredTrainingNone')}
+                        </span>
+                      ) : (
+                        (requirements ?? []).map((req) => {
+                          const on = type.requiredTrainingIds.includes(req.id);
+                          return (
+                            <label
+                              key={req.id}
+                              className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={on}
+                                disabled={!canManage || archived}
+                                className="h-3.5 w-3.5"
+                                onChange={(e) => {
+                                  const next = e.target.checked
+                                    ? [...type.requiredTrainingIds, req.id]
+                                    : type.requiredTrainingIds.filter((id) => id !== req.id);
+                                  updateType.mutate({
+                                    typeId: type.id,
+                                    requiredTrainingIds: next,
+                                  });
+                                }}
+                              />
+                              {req.name}
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">{t('description')}</p>
+                  <Input
+                    defaultValue={type.description}
+                    disabled={!canManage || archived}
+                    className="h-8"
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      if (v !== type.description) {
+                        updateType.mutate({ typeId: type.id, description: v });
+                      }
+                    }}
+                  />
                 </div>
 
                 <div className="flex items-center gap-2 text-sm">

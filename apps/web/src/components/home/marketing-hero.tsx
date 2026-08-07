@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import { scenariosForBrand } from '@forma360/shared/sandbox-scenarios';
 import { HERO } from '../../content/site';
+import { activeBrand } from '../../lib/brand';
 
 /**
  * Public marketing hero. Clean, confident, centred — a large display
@@ -13,6 +15,20 @@ export function MarketingHero({
   locale: string;
   isSignedIn?: boolean;
 }) {
+  // Brands that ship the sandbox lead with it — trying the product beats
+  // reading about it. Brands that don't fall back to sign-up.
+  const hasSandbox = scenariosForBrand(activeBrand.id).length > 0;
+  const primaryHref = isSignedIn
+    ? `/${locale}/ai`
+    : hasSandbox
+      ? `/${locale}/try`
+      : `/${locale}/sign-up`;
+  const primaryLabel = isSignedIn
+    ? HERO.appCta
+    : hasSandbox
+      ? HERO.tryCta
+      : HERO.primaryCta;
+
   return (
     <section className="relative overflow-hidden border-b">
       {/* Atmosphere: faint grid + two soft brand glows. Decorative only. */}
@@ -60,16 +76,16 @@ export function MarketingHero({
           style={{ animationDelay: '240ms' }}
         >
           <Link
-            href={isSignedIn ? `/${locale}/ai` : `/${locale}/sign-up`}
+            href={primaryHref}
             className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand px-6 text-sm font-semibold text-brand-foreground shadow-sm transition-transform hover:-translate-y-0.5 sm:w-auto"
           >
-            {isSignedIn ? HERO.appCta : HERO.primaryCta}
+            {primaryLabel}
           </Link>
           <Link
-            href={`/${locale}/contact`}
+            href={!isSignedIn && hasSandbox ? `/${locale}/sign-up` : `/${locale}/contact`}
             className="inline-flex h-11 w-full items-center justify-center rounded-lg border bg-background px-6 text-sm font-semibold transition-colors hover:bg-accent sm:w-auto"
           >
-            {HERO.secondaryCta}
+            {!isSignedIn && hasSandbox ? HERO.primaryCta : HERO.secondaryCta}
           </Link>
         </div>
         <p

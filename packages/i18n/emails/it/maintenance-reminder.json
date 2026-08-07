@@ -1,8 +1,0 @@
-{
-  "subject": "Manutenzione {status}: {assetName} — {planName}",
-  "preheader": "Un piano di manutenzione è {status} per {assetName}.",
-  "greeting": "Salve,",
-  "body": "Il piano di manutenzione \"{planName}\" per l'asset \"{assetName}\" è {status}. L'intervento è previsto per {dueDate}.",
-  "cta": "Vedi il piano di manutenzione",
-  "footer": "Ricevi questa email perché puoi gestire la manutenzione su questo account {productName}."
-}

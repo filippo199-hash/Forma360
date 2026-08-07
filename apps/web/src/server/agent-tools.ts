@@ -87,7 +87,7 @@ export const WRITE_TOOL_NAMES = new Set<ToolName>([
  */
 export const WRITE_INSTRUCTIONS = `
 
-You can also take actions on the user's behalf using the write tools: create an observation, create a corrective action, comment on an action or observation, record an asset meter reading (which feeds maintenance scheduling), and draft a heads-up announcement.
+You can also take actions on the user's behalf using the write tools: create an observation, create a corrective action, comment on an action or observation, record an asset meter reading, and draft a heads-up announcement.
 
 Rules for write actions — follow these exactly:
 - ALWAYS confirm with the user BEFORE calling any create / comment / record tool. First summarise what you're about to do (the type, the title, and the key fields), then ask the user to confirm. Only call the tool after they clearly say yes.
@@ -356,7 +356,7 @@ export const TOOLS: Anthropic.Tool[] = [
   {
     name: 'record_asset_reading',
     description:
-      'Record a meter/usage reading for an asset (e.g. odometer km, engine hours). Feeds the asset maintenance schedule. Get the assetId from list_assets.',
+      'Record a meter/usage reading for an asset (e.g. odometer km, engine hours). Get the assetId from list_assets.',
     input_schema: {
       type: 'object' as const,
       properties: {

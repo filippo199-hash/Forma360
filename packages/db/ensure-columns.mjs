@@ -35,38 +35,6 @@ try {
     -- 0033: document-level visibility by group / site (To-Do #5)
     ALTER TABLE "documents" ADD COLUMN IF NOT EXISTS "visible_to_group_ids" jsonb NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE "documents" ADD COLUMN IF NOT EXISTS "visible_to_site_ids" jsonb NOT NULL DEFAULT '[]'::jsonb;
-    -- 0034: maintenance programs (To-Do #3)
-    CREATE TABLE IF NOT EXISTS "maintenance_programs" (
-      "id" varchar(26) PRIMARY KEY NOT NULL,
-      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
-      "name" text NOT NULL,
-      "description" text NOT NULL DEFAULT '',
-      "archived_at" timestamptz,
-      "created_by" text NOT NULL,
-      "created_at" timestamptz NOT NULL DEFAULT now(),
-      "updated_at" timestamptz NOT NULL DEFAULT now()
-    );
-    CREATE TABLE IF NOT EXISTS "maintenance_program_triggers" (
-      "id" varchar(26) PRIMARY KEY NOT NULL,
-      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
-      "program_id" varchar(26) NOT NULL REFERENCES "maintenance_programs"("id") ON DELETE CASCADE,
-      "title" text NOT NULL,
-      "trigger_type" text NOT NULL,
-      "interval_days" integer,
-      "interval_value" numeric,
-      "usage_field" text,
-      "unit" text,
-      "sort_order" integer NOT NULL DEFAULT 0,
-      "created_at" timestamptz NOT NULL DEFAULT now()
-    );
-    CREATE TABLE IF NOT EXISTS "maintenance_program_assets" (
-      "id" varchar(26) PRIMARY KEY NOT NULL,
-      "tenant_id" varchar(26) NOT NULL REFERENCES "tenants"("id") ON DELETE RESTRICT,
-      "program_id" varchar(26) NOT NULL REFERENCES "maintenance_programs"("id") ON DELETE CASCADE,
-      "asset_id" text NOT NULL REFERENCES "assets"("id") ON DELETE CASCADE,
-      "created_at" timestamptz NOT NULL DEFAULT now()
-    );
-    CREATE UNIQUE INDEX IF NOT EXISTS "maintenance_program_assets_unique" ON "maintenance_program_assets" ("program_id", "asset_id");
     -- per-user saved views for the Actions board (To-Do #3)
     CREATE TABLE IF NOT EXISTS "action_saved_views" (
       "id" varchar(26) PRIMARY KEY NOT NULL,

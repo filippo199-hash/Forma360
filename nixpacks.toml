@@ -17,4 +17,9 @@
 # system-installed chromium instead (see packages/render/src/pdf.ts).
 # ffmpeg: samples still frames from inbound WhatsApp videos so the AI
 # assistant's vision can "watch" them (apps/web/src/server/video-frames.ts).
-nixPkgs = ['nodejs_22', 'pnpm-9_x', 'chromium', 'ffmpeg']
+# postgresql_16: `pg_dump` for the worker's nightly backup job. It has to be
+# declared HERE, not in packages/jobs/nixpacks.toml — the worker's Root
+# Directory is `/`, so that file is never read and the job spent its life
+# throwing `spawn pg_dump ENOENT` (Sentry FREEHS-4). Matches the pinned
+# postgres-ssl:16 server; pg_dump refuses a server newer than itself.
+nixPkgs = ['nodejs_22', 'pnpm-9_x', 'chromium', 'ffmpeg', 'postgresql_16']

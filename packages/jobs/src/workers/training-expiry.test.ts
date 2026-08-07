@@ -291,4 +291,29 @@ describe('training-expiry worker', () => {
       }),
     ).toBe(0);
   });
+  it('TR-B9: a deactivated holder’s cards are not chased at all', async () => {
+    const reqId = await requirement(60);
+    await record({ requirementId: reqId, expiresInDays: 5 });
+    // The holder leaves.
+    await db
+      .update(schema.user)
+      .set({ deactivatedAt: dayOf(-1) })
+      .where(eq(schema.user.id, holderId));
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    // Previously this fell through to the RECORDER, so for a month after
+    // someone left, whoever recorded their tickets got a chase per lapsing
+    // card for a person who no longer works there — the code did the
+    // opposite of the comment directly above it.
+    expect(
+      await runTrainingExpiryReminders({
+        db: db as unknown as Database,
+        logger,
+        appUrl: 'https://x.test',
+        notify,
+        now: () => NOW,
+      }),
+    ).toBe(0);
+    expect(notify).not.toHaveBeenCalled();
+  });
 });

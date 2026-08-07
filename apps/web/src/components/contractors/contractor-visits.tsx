@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '../../lib/cn';
 import { usePlaceTerms } from '../../lib/terminology';
+import { SiteSelector } from '../selectors/site-selector';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -80,7 +81,6 @@ export function VisitCreateDialog({
   const contractorsQ = trpc.contractors.list.useQuery(undefined, {
     enabled: open && fixedContractorId === undefined,
   });
-  const sitesQ = trpc.sites.list.useQuery(undefined, { enabled: open, retry: false });
 
   const [contractorId, setContractorId] = useState(fixedContractorId ?? '');
   const [title, setTitle] = useState('');
@@ -217,20 +217,13 @@ export function VisitCreateDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="v-site">{placeTerms.label}</Label>
-            <select
-              id="v-site"
-              value={siteId}
-              onChange={(e) => setSiteId(e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="">{placeTerms.noneLabel}</option>
-              {(sitesQ.data ?? []).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            <Label>{placeTerms.label}</Label>
+            <SiteSelector
+              value={siteId !== '' ? [siteId] : []}
+              onChange={(next) => setSiteId(next[0] ?? '')}
+              multiple={false}
+              placeholder={placeTerms.noneLabel}
+            />
           </div>
 
           {walkIn && walkInBlocked ? (

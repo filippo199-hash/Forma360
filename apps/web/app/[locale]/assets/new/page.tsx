@@ -13,15 +13,12 @@ import { Label } from '../../../../src/components/ui/label';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
+import {
+  CustomFieldInputs,
+  customFieldsOf,
+  firstMissingRequired,
+} from '../../../../src/components/assets/custom-field-inputs';
 import { trpc } from '../../../../src/lib/trpc/client';
-
-interface CustomField {
-  id: string;
-  name: string;
-  fieldType: 'text' | 'number' | 'date' | 'select';
-  options?: string[];
-  required?: boolean;
-}
 
 export default function NewAssetPage() {
   const t = useTranslations('assets.new');
@@ -54,9 +51,7 @@ export default function NewAssetPage() {
 
   // Find the selected type so we can render its custom fields.
   const selectedType = types.find((tp) => tp.id === typeId) ?? null;
-  const customFields: CustomField[] = Array.isArray(selectedType?.customFields)
-    ? (selectedType.customFields as CustomField[])
-    : [];
+  const customFields = customFieldsOf(selectedType);
 
   const create = trpc.assets.create.useMutation({
     onSuccess: ({ assetId }) => {
@@ -109,15 +104,12 @@ export default function NewAssetPage() {
     e.preventDefault();
     if (name.trim().length === 0) return;
 
-    // Validate required custom fields.
-    for (const field of customFields) {
-      if (field.required === true) {
-        const val = customFieldValues[field.id] ?? '';
-        if (val.trim().length === 0) {
-          toast.error(t('fieldRequired', { name: field.name }));
-          return;
-        }
-      }
+    // Validate required custom fields through the shared helper, so
+    // "required" means the same thing here and on the detail page.
+    const missing = firstMissingRequired(customFields, customFieldValues);
+    if (missing !== null) {
+      toast.error(t('fieldRequired', { name: missing.name }));
+      return;
     }
 
     create.mutate({
@@ -239,45 +231,14 @@ export default function NewAssetPage() {
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t('fields.customFieldsHeading')}
               </p>
-              {customFields.map((field) => (
-                <div key={field.id} className="space-y-1.5">
-                  <Label htmlFor={`cf-${field.id}`}>
-                    {field.name}
-                    {field.required === true ? (
-                      <span className="ml-1 text-destructive">*</span>
-                    ) : null}
-                  </Label>
-                  {field.fieldType === 'select' ? (
-                    <select
-                      id={`cf-${field.id}`}
-                      value={customFieldValues[field.id] ?? ''}
-                      onChange={(e) => setFieldValue(field.id, e.target.value)}
-                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      <option value="">—</option>
-                      {(field.options ?? []).map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <Input
-                      id={`cf-${field.id}`}
-                      type={
-                        field.fieldType === 'number'
-                          ? 'number'
-                          : field.fieldType === 'date'
-                            ? 'date'
-                            : 'text'
-                      }
-                      value={customFieldValues[field.id] ?? ''}
-                      onChange={(e) => setFieldValue(field.id, e.target.value)}
-                      placeholder={field.name}
-                    />
-                  )}
-                </div>
-              ))}
+              {/* Shared with the detail page's edit mode, so the two cannot
+                  drift — the detail page had no copy at all, which is how a
+                  value became uneditable the moment it was saved. */}
+              <CustomFieldInputs
+                fields={customFields}
+                values={customFieldValues}
+                onChange={setFieldValue}
+              />
             </div>
           ) : null}
         </div>

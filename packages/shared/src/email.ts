@@ -29,7 +29,6 @@ import issueCreated from '../../i18n/emails/en/issue-created.json';
 import contractorDocExpiry from '../../i18n/emails/en/contractor-doc-expiry.json';
 import contractorPortalInvite from '../../i18n/emails/en/contractor-portal-invite.json';
 import contractorOverstay from '../../i18n/emails/en/contractor-overstay.json';
-import maintenanceReminder from '../../i18n/emails/en/maintenance-reminder.json';
 import observationCriticalAlert from '../../i18n/emails/en/observation-critical-alert.json';
 import observationNotification from '../../i18n/emails/en/observation-notification.json';
 import otp from '../../i18n/emails/en/otp.json';
@@ -39,6 +38,7 @@ import riskAssessmentAckReminder from '../../i18n/emails/en/risk-assessment-ack-
 import riskAssessmentDistributed from '../../i18n/emails/en/risk-assessment-distributed.json';
 import scheduleReminder from '../../i18n/emails/en/schedule-reminder.json';
 import trainingExpiry from '../../i18n/emails/en/training-expiry.json';
+import trainingExpiryRecorder from '../../i18n/emails/en/training-expiry-recorder.json';
 import signatureWorkflowComplete from '../../i18n/emails/en/signature-workflow-complete.json';
 import signatureWorkflowRequest from '../../i18n/emails/en/signature-workflow-request.json';
 import verification from '../../i18n/emails/en/verification.json';
@@ -63,9 +63,9 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'inspection-notify': inspectionNotify,
   invite,
   'issue-created': issueCreated,
-  'maintenance-reminder': maintenanceReminder,
   'contractor-doc-expiry': contractorDocExpiry,
   'training-expiry': trainingExpiry,
+  'training-expiry-recorder': trainingExpiryRecorder,
   'contractor-portal-invite': contractorPortalInvite,
   'contractor-overstay': contractorOverstay,
   'observation-critical-alert': observationCriticalAlert,

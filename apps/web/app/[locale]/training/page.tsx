@@ -21,7 +21,9 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { SiteSelector } from '../../../src/components/selectors/site-selector';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -52,8 +54,9 @@ export default function TrainingGapsPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [asOf, setAsOf] = useState('');
   const [siteId, setSiteId] = useState('');
+  // Which filters are revealed as chips (the platform "+ Add filter" model).
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
-  const { data: sites } = trpc.sites.list.useQuery();
   const query = trpc.training.gaps.useQuery({
     ...(asOf !== '' ? { asOf } : {}),
     ...(siteId !== '' ? { siteId } : {}),
@@ -73,6 +76,48 @@ export default function TrainingGapsPage() {
     return row.userId !== null
       ? `/${locale}/training/person?userId=${encodeURIComponent(row.userId)}&name=${encodeURIComponent(row.personName)}`
       : `/${locale}/training/person?name=${encodeURIComponent(row.personName)}`;
+  }
+
+  // Same "+ Add filter" chip model as every other module (ADR 0014). The
+  // site keeps the hierarchical SiteSelector (a custom control) rather than
+  // being flattened into a plain select; "as at" is a single-date chip.
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'site',
+      label: t('filters.site'),
+      control: {
+        kind: 'custom',
+        render: () => (
+          <SiteSelector
+            value={siteId !== '' ? [siteId] : []}
+            onChange={(next) => setSiteId(next[0] ?? '')}
+            multiple={false}
+            placeholder={t('filters.allSites')}
+            className="w-56"
+          />
+        ),
+      },
+    },
+    {
+      key: 'asOf',
+      label: t('filters.asOf'),
+      control: { kind: 'date', value: asOf, onChange: setAsOf },
+    },
+  ];
+  const activeFilterKeys = filterDefs
+    .map((f) => f.key)
+    .filter((k) => activeFilters.has(k) || (k === 'site' ? siteId !== '' : asOf !== ''));
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilter(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'site') setSiteId('');
+    if (key === 'asOf') setAsOf('');
   }
 
   return (
@@ -101,57 +146,20 @@ export default function TrainingGapsPage() {
         ) : null}
       </ModuleHeader>
 
-      {/* As-at and site: the two controls the server always accepted and
-          no page ever passed (TR-A10). */}
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="training-asof" className="text-xs font-medium text-muted-foreground">
-            {t('filters.asOf')}
-          </label>
-          <input
-            id="training-asof"
-            type="date"
-            value={asOf}
-            onChange={(e) => setAsOf(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="training-site" className="text-xs font-medium text-muted-foreground">
-            {t('filters.site')}
-          </label>
-          <select
-            id="training-site"
-            value={siteId}
-            onChange={(e) => setSiteId(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-          >
-            <option value="">{t('filters.allSites')}</option>
-            {(sites ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {asOf !== '' || siteId !== '' ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setAsOf('');
-              setSiteId('');
-            }}
-          >
-            {t('filters.clear')}
-          </Button>
-        ) : null}
-        {data !== undefined ? (
-          <p className="ml-auto text-xs text-muted-foreground">
-            {t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}
-          </p>
-        ) : null}
-      </div>
+      {/* The as-at and site controls the server always accepted (TR-A10),
+          now behind the shared "+ Add filter" chip row for platform parity. */}
+      <FilterBar
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilter}
+        {...(data !== undefined
+          ? {
+              resultsCount: data.total,
+              resultsSuffix: ` · ${t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}`,
+            }
+          : {})}
+      />
 
       {query.isPending ? (
         <Card>
@@ -170,6 +178,20 @@ export default function TrainingGapsPage() {
             <Button size="sm" variant="outline" onClick={() => void query.refetch()}>
               {tErr('retry')}
             </Button>
+          </CardContent>
+        </Card>
+      ) : data?.siteHasNoMembers === true ? (
+        /* TR-B13: "no gaps" and "nobody is a member of this site" looked
+           identical, and the reassuring one was the wrong one. */
+        <Card>
+          <CardContent className="space-y-2 p-10 text-center text-muted-foreground">
+            <p>{t('gaps.noSiteMembers')}</p>
+            <Link
+              href={`/${locale}/sites`}
+              className="inline-block text-sm text-primary hover:underline"
+            >
+              {t('filters.site')}
+            </Link>
           </CardContent>
         </Card>
       ) : (data?.total ?? 0) === 0 ? (

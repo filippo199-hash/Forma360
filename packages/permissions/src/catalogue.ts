@@ -110,11 +110,10 @@ export const PERMISSION_KEYS = [
   'headsUp.manage',
   'headsUp.analytics.view',
 
-  // ─── Assets & Maintenance (Phase 5B) ─────────────────────────────────────
+  // ─── Assets (Phase 5B) ───────────────────────────────────────────────────
   'assets.view',
   'assets.manage',
   'assets.readings.record',
-  'assets.maintenance.manage',
 
   // ─── Documents (Phase 5C) ────────────────────────────────────────────────
   'documents.view',

@@ -1,0 +1,8 @@
+{
+  "subject": "Formazione in scadenza: {requirementName} — {personName}",
+  "preheader": "La formazione {requirementName} di {personName} scade il {expiresOn}.",
+  "greeting": "Ciao,",
+  "body": "L'attestato di formazione di {personName} per \"{requirementName}\" scade il {expiresOn}. Hai registrato tu questo tesserino e la persona non ha un account nel sistema, quindi il promemoria arriva a te. Organizza il rinnovo e registra il nuovo certificato: {url}",
+  "cta": "Vedi la matrice della formazione",
+  "footer": "Ricevi questo messaggio perché hai registrato questo attestato su {productName}."
+}

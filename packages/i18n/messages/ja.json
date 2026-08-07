@@ -300,7 +300,7 @@
         "issues": "Issues",
         "actions": "Actions",
         "headsUp": "Heads Up",
-        "assets": "Assets & Maintenance",
+        "assets": "Assets",
         "documents": "Documents",
         "analytics": "Analytics",
         "training": "Training",
@@ -357,7 +357,6 @@
         "assets_view": "View assets",
         "assets_manage": "Manage assets",
         "assets_readings_record": "Record asset readings",
-        "assets_maintenance_manage": "Manage asset maintenance",
         "documents_view": "View documents",
         "documents_manage": "Manage documents",
         "documents_folders_manage": "Manage document folders",
@@ -1447,7 +1446,6 @@
     "settings": "Settings",
     "headsUp": "周知事項",
     "assets": "Assets",
-    "maintenance": "Maintenance",
     "documents": "ドキュメント",
     "ai": "AIアシスタント",
     "forMe": "自分の担当",
@@ -1484,7 +1482,6 @@
       "templates": "テンプレート",
       "schedules": "スケジュール",
       "approvals": "承認",
-      "maintenance": "保全",
       "trainingMatrix": "マトリクス",
       "trainingRequirements": "要件"
     },
@@ -2147,7 +2144,6 @@
         "savedToast": "View \"{name}\" saved"
       },
       "settingsButton": "設定",
-      "sourceMaintenance": "メンテナンス",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "インシデント",
       "sourceIncident": "インシデント",
@@ -2229,9 +2225,7 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action",
-          "created_auto": "メンテナンスプログラム「{program}」からこのアクションを自動生成しました",
-          "created_auto_generic": "メンテナンスプログラムからこのアクションを自動生成しました"
+          "restored": "restored this action"
         }
       },
       "comments": {
@@ -2740,16 +2734,11 @@
       "readingUnitPlaceholder": "Unit",
       "addReadingButton": "Record",
       "readingAddedToast": "Reading recorded",
-      "maintenancePlansHint": "Maintenance plans are managed in the Maintenance section.",
-      "maintenancePlansLink": "Go to Maintenance",
       "tabs": {
         "overview": "Overview",
         "readings": "Readings",
-        "maintenance": "Maintenance",
         "media": "Media",
-        "actions": "Actions",
-        "inspections": "Inspections",
-        "observations": "Observations"
+        "activity": "アクティビティ"
       },
       "fields": {
         "type": "Type",
@@ -2763,7 +2752,10 @@
         "noSite": "No site",
         "owner": "所有者",
         "noOwner": "所有者なし",
-        "ownerPlaceholder": "所有者を選択"
+        "ownerPlaceholder": "所有者を選択",
+        "customFieldsHeading": "カテゴリ項目",
+        "customFieldEmpty": "未設定",
+        "customFieldsIncomplete": "この資産タイプの必須項目が未入力です。資産を編集して入力してください。"
       },
       "readingColumns": {
         "field": "Field",
@@ -2781,7 +2773,9 @@
         "uploadPhoto": "Upload photo",
         "changePhoto": "Change photo",
         "removePhoto": "Remove photo",
-        "noPhoto": "No photos yet."
+        "noPhoto": "No photos yet.",
+        "empty": "写真はまだありません。",
+        "addPhoto": "写真を追加"
       },
       "stubs": {
         "actions": "No actions linked to this asset yet.",
@@ -2803,18 +2797,6 @@
         "createdAt": "作成日"
       },
       "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
-      "plans": {
-        "heading": "保全計画",
-        "empty": "この資産を対象とする保全計画はありません。",
-        "timeMeta": "{interval} 日ごと — 前回整備 {last}",
-        "usageMeta": "{interval} {unit} ごと — 現在値 {current}",
-        "status": {
-          "on_schedule": "予定どおり",
-          "approaching": "間近",
-          "overdue": "期限超過",
-          "awaiting_first_reading": "初回計測待ち"
-        }
-      },
       "fireHistory": {
         "heading": "防火点検履歴",
         "checkLine": "{type} — {building}",
@@ -2823,12 +2805,34 @@
         "type": "点検",
         "result": "結果",
         "notes": "備考"
+      },
+      "fieldRequired": "{name} は必須です",
+      "viewAll": "すべて表示",
+      "viewAllCount": "すべて表示（{count}）",
+      "activity": {
+        "heading": "アクティビティ",
+        "kinds": {
+          "inspection": "点検",
+          "action": "アクション",
+          "observation": "観察"
+        },
+        "filters": {
+          "all": "すべて",
+          "inspection": "点検",
+          "action": "アクション",
+          "observation": "観察"
+        },
+        "empty": {
+          "all": "この資産に関する記録はまだありません。関連する点検・アクション・観察がここに表示されます。",
+          "inspection": "関連する点検はまだありません。",
+          "action": "この資産に対するアクションはまだありません。",
+          "observation": "この資産に関する観察報告はまだありません。"
+        }
       }
     },
     "settings": {
       "title": "Settings",
-      "categoriesTab": "Categories",
-      "programsTab": "Maintenance programs"
+      "categoriesTab": "Categories"
     },
     "categories": {
       "addFieldHint": "Click \"Add field\" to define what data to collect for each asset.",
@@ -2837,6 +2841,24 @@
         "fieldNameRequired": "All fields must have a name",
         "nameRequired": "Category name is required",
         "selectNeedsOption": "Select field \"{name}\" needs at least one option"
+      },
+      "suggest": {
+        "title": "「{name}」向けの推奨項目 {count} 件",
+        "subtitle": "必要なものにチェックを入れてください。「追加」を押すまで何も追加されず、追加後も編集できます。",
+        "subtitleAi": "カテゴリ名から AI が提案しました。追加前にご確認ください。出発点であり助言ではありません。",
+        "thinking": "「{name}」に合う項目を探しています…",
+        "addChosen": "選択した {count} 件を追加",
+        "noThanks": "不要です。自分で追加します",
+        "dismiss": "提案を閉じる",
+        "selectAll": "すべて選択",
+        "selectNone": "選択を解除",
+        "addedToast": "{count} 件の項目を追加しました。下で編集・削除できます。",
+        "types": {
+          "text": "テキスト",
+          "number": "数値",
+          "date": "日付",
+          "select": "選択"
+        }
       }
     }
   },
@@ -2851,101 +2873,6 @@
     "createdToast": "Asset type created",
     "archivedToast": "Asset type archived",
     "archiveConfirm": "Archive this asset type? It cannot be used for new assets."
-  },
-  "maintenancePlans": {
-    "table": {
-      "title": "Maintenance",
-      "subtitle": "Maintenance schedule across all assets.",
-      "empty": "No maintenance plans configured yet.",
-      "columns": {
-        "asset": "Asset",
-        "plan": "Plan",
-        "type": "Type",
-        "lastService": "Last service",
-        "status": "Status"
-      },
-      "planType": {
-        "time": "Time-based",
-        "usage": "Usage-based"
-      },
-      "status": {
-        "awaiting_first_reading": "Awaiting first reading",
-        "on_schedule": "On schedule",
-        "approaching": "Approaching due",
-        "overdue": "Overdue"
-      }
-    },
-    "list": {
-      "newButton": "New plan",
-      "overdueBadge": "{count} overdue",
-      "approachingBadge": "{count} approaching",
-      "assetsLinked": "assets",
-      "scheduleTableHeading": "Service schedule"
-    },
-    "new": {
-      "title": "New Maintenance Plan",
-      "backLink": "Back to Maintenance",
-      "createdToast": "Maintenance plan created",
-      "submitButton": "Create plan",
-      "basicHeading": "Basic info",
-      "scheduleHeading": "Schedule",
-      "notificationsHeading": "Notifications",
-      "notificationsHint": "Get email alerts before service is due.",
-      "notifDayChip": "{days} days before",
-      "addNotifDay": "Add",
-      "removeNotifDay": "Remove",
-      "fields": {
-        "name": "Plan name",
-        "namePlaceholder": "e.g. Annual vehicle service",
-        "description": "Description",
-        "descriptionPlaceholder": "Optional details",
-        "planType": "Plan type",
-        "planTypes": {
-          "time": "Time-based (every N days)",
-          "usage": "Usage-based (every N km/hours)"
-        },
-        "intervalDays": "Service every",
-        "intervalUsage": "Service every",
-        "usageUnit": "Unit",
-        "usageField": "Reading field",
-        "lastServiceDate": "Last service date",
-        "days": "days",
-        "usageUnitPlaceholder": "例: km",
-        "usageFieldPlaceholder": "例: 走行距離"
-      }
-    },
-    "detail": {
-      "backLink": "Back to Maintenance",
-      "updatedToast": "Plan updated",
-      "archivedToast": "Plan archived",
-      "archivedBadge": "Archived",
-      "detailsHeading": "Details",
-      "linkAssetHeading": "Link an asset",
-      "selectAssetPlaceholder": "Select an asset…",
-      "linkAssetButton": "Link",
-      "noLinkedAssets": "No assets linked to this plan yet.",
-      "assetLinkedToast": "Asset linked",
-      "assetUnlinkedToast": "Asset unlinked",
-      "serviceRecordedToast": "Service recorded",
-      "recordServiceButton": "Record",
-      "unlinkAsset": "Unlink asset",
-      "tabs": {
-        "overview": "Overview",
-        "assets": "Assets"
-      },
-      "fields": {
-        "planType": "Type",
-        "interval": "Service interval",
-        "usageField": "Reading field",
-        "notifications": "Notifications",
-        "linkedAssets": "Linked assets"
-      },
-      "assetColumns": {
-        "asset": "Asset",
-        "lastService": "Last service",
-        "recordService": "Record service"
-      }
-    }
   },
   "documents": {
     "list": {
@@ -3120,7 +3047,6 @@
     "suggestions": [
       "点検はいくつありますか？",
       "未対応のアクションを一覧表示",
-      "まもなく整備が必要な資産は？",
       "まもなく期限切れの文書はありますか？"
     ],
     "bubbleTitle": "アシスタント",
@@ -3132,95 +3058,6 @@
     "copied": "Copied",
     "working": "Looking things up…",
     "openHistory": "Conversations"
-  },
-  "maintenancePrograms": {
-    "title": "Maintenance Programs",
-    "subtitle": "Define recurring maintenance triggers and attach them to your assets.",
-    "newProgram": "New program",
-    "startFromTemplate": "Start from template",
-    "useTemplate": "Use",
-    "noTemplates": "No templates available.",
-    "empty": "No maintenance programs yet.",
-    "createdToast": "Program created",
-    "savedToast": "Changes saved",
-    "archivedToast": "Program archived",
-    "triggerAddedToast": "Trigger added",
-    "triggerRemovedToast": "Trigger removed",
-    "assetAttachedToast": "{count, plural, =0 {Asset attached, no new actions} one {Asset attached, # action created} other {Asset attached, # actions created}}",
-    "assetDetachedToast": "Asset detached",
-    "backLink": "Back to programs",
-    "detailsHeading": "Details",
-    "triggersHeading": "Triggers",
-    "triggersAndAssets": "{triggers} triggers · {assets} assets",
-    "triggerCount": "{count, plural, one {# trigger} other {# triggers}}",
-    "noTriggers": "No triggers yet.",
-    "addTriggerHeading": "Add trigger",
-    "addTriggerButton": "Add trigger",
-    "removeTrigger": "Remove trigger",
-    "assetsHeading": "Attached assets",
-    "noAssets": "No assets attached yet.",
-    "detach": "Detach",
-    "attachAssetLabel": "Attach an asset",
-    "attachAssetButton": "Attach",
-    "selectAsset": "Select an asset…",
-    "attachedProgramsHeading": "Maintenance programs",
-    "noProgramsForAsset": "No maintenance programs attached to this asset yet.",
-    "attachProgramLabel": "Attach a maintenance program",
-    "attachProgramButton": "Attach program",
-    "selectProgram": "Select a program…",
-    "maintenanceActionsHeading": "Maintenance actions",
-    "noMaintenanceActions": "No maintenance actions for this asset yet.",
-    "triggerType": {
-      "time": "Time",
-      "distance": "Distance",
-      "usage": "Usage"
-    },
-    "triggerSummary": {
-      "time": "Every {days} days",
-      "usage": "Every {value} {unit}"
-    },
-    "fields": {
-      "name": "Name",
-      "namePlaceholder": "e.g. Vehicle servicing",
-      "description": "Description",
-      "descriptionPlaceholder": "What this program covers…",
-      "triggerTitle": "Title",
-      "triggerTitlePlaceholder": "e.g. Change oil",
-      "triggerType": "Trigger type",
-      "intervalDays": "Interval (days)",
-      "intervalDaysPlaceholder": "e.g. 365",
-      "intervalValue": "Interval",
-      "intervalValuePlaceholder": "e.g. 10000",
-      "unit": "Unit",
-      "unitPlaceholder": "e.g. km",
-      "usageField": "Reading field",
-      "usageFieldPlaceholder": "e.g. odometer"
-    },
-    "actionColumns": {
-      "title": "Title",
-      "detail": "Detail",
-      "status": "Status",
-      "dueAt": "Due"
-    },
-    "detachTitle": "Detach program?",
-    "detachBody": "Remove “{name}” from this asset?",
-    "detachExplain": "Choose what happens to this asset’s open maintenance actions for this program.",
-    "detachKeep": "Detach, keep actions",
-    "detachCancel": "Detach & cancel actions",
-    "detachedToast": "Program detached",
-    "deleteTitle": "Delete program?",
-    "deleteBody": "This deletes the program and detaches it from all assets.",
-    "deleteKeep": "Delete, keep actions",
-    "deleteCancel": "Delete & cancel actions",
-    "deletedRedirectToast": "Program deleted",
-    "applyTitle": "Apply schedule change?",
-    "applyBody": "You changed this program. Apply the new schedule to the {count} asset(s) already linked, or only to assets linked from now on?",
-    "applyExisting": "Apply to existing assets",
-    "applyNew": "Only new assets",
-    "appliedToast": "Updated {count} asset(s)",
-    "detachAssetConfirm": "Detach this asset from the program?",
-    "loadError": "Could not load maintenance programs.",
-    "removeTriggerConfirm": "Remove this trigger from the program?"
   },
   "sites": {
     "title": "Sites & Projects",
@@ -4955,7 +4792,8 @@
         "requiresGasTesting": "ガス測定が必要",
         "requiresIsolationCertificate": "隔離証明書が必要",
         "requiresRescuePlan": "救助計画が必要",
-        "requiresRiskAssessment": "リスクアセスメントのリンクが必要"
+        "requiresRiskAssessment": "リスクアセスメントのリンクが必要",
+        "requiresRamsPack": "承認済み RAMS パックが必要"
       },
       "maxDuration": "最長有効期間",
       "hours": "時間",
@@ -4976,7 +4814,8 @@
       "gasLimitMax": "上限",
       "addGasLimit": "限界値を追加",
       "gasFreshness": "ガス測定の有効時間",
-      "gasFreshnessUnit": "分"
+      "gasFreshnessUnit": "分",
+      "description": "説明"
     },
     "errors": {
       "module-disabled": "このモジュールは利用できません。",
@@ -5027,8 +4866,22 @@
       "entry-log-full": "この許可の入退場記録が上限に達しました。",
       "unknown-entry": "その記録行は存在しません。",
       "already-exited": "その人の退場は既に記録済みです。",
-      "render-unavailable": "この環境ではPDF生成を利用できません。"
-    }
+      "render-unavailable": "この環境ではPDF生成を利用できません。",
+      "training-expired": "発行できません：この許可証に記載された人の研修が失効しています。",
+      "training-missing": "発行できません：記載された人が必要な研修を取得していません。"
+    },
+    "competence": {
+      "blockedTitle": "力量要件を満たしていません",
+      "personExpired": "{person} — {requirement} が失効しています",
+      "personMissing": "{person} — {requirement} 未取得",
+      "openModule": "研修を開く"
+    },
+    "signatures": {
+      "competenceBlocked": "ブロック：力量要件未達"
+    },
+    "requiredTraining": "必要な研修",
+    "requiredTrainingHint": "記載された作業者全員が有効な状態で保有している必要があります。",
+    "requiredTrainingNone": "研修要件がまだ定義されていません。"
   },
   "fireSafety": {
     "title": "防火管理",
@@ -5606,8 +5459,7 @@
       "keys": {
         "emailActionReminders": "アクション期限/超過リマインダー",
         "emailScheduleMissed": "未実施の予定点検",
-        "emailDocumentExpiry": "文書期限リマインダー",
-        "emailMaintenance": "保全リマインダー"
+        "emailDocumentExpiry": "文書期限リマインダー"
       }
     }
   },
@@ -6623,7 +6475,8 @@
       "gaps": "不足",
       "matrix": "マトリクス",
       "compliance": "遵守状況",
-      "requirements": "要件"
+      "requirements": "要件",
+      "me": "自分の研修"
     },
     "asAt": "{date} 時点",
     "status": {
@@ -6641,7 +6494,8 @@
       "record": "記録",
       "expiresOn": "{date} に失効",
       "requiredByRole": "役割により必須",
-      "total": "対応が必要: {count} 件"
+      "total": "対応が必要: {count} 件",
+      "noSiteMembers": "この拠点にはまだ誰も所属していないため、表示するものがありません。拠点に人を追加してください。"
     },
     "matrix": {
       "person": "対象者",
@@ -6759,7 +6613,12 @@
       "close": "閉じる",
       "rowLabel": "{row} 行目",
       "badColumns": "ヘッダー行には personName、requirementName、achievedAt が必要です。",
-      "noRows": "取り込む行がありません。"
+      "noRows": "取り込む行がありません。",
+      "dryRun": "テスト実行",
+      "dryRunDone": "テスト実行：{count} 件が取り込まれます。書き込みは行われていません。",
+      "matchSummary": "アカウント紐付け {matched} 件 · 氏名のみ {nameOnly} 件",
+      "duplicatesSkipped": "{count} 行はすでに存在するためスキップしました。",
+      "errorGroup": "{message} — {count} 行（最初：{first} 行目）"
     },
     "errors": {
       "moduleDisabled": "このモジュールは有効ではありません。",
@@ -6776,5 +6635,24 @@
       "allRequirements": "すべての要件",
       "clear": "クリア"
     }
+  },
+  "sandbox": {
+    "bannerBody": "ここにあるものはすべて実際のデータで、自由に変更できます。メールアドレスを登録すると、あとから戻れます。",
+    "bannerCta": "作業を保存",
+    "bannerTitle": "デモ用ワークスペースです",
+    "body": "戻るためのリンクの送り先を教えてください。パスワードは不要です — コードをメールでお送りします。",
+    "cancel": "まだしない",
+    "companyLabel": "会社名",
+    "dismiss": "今はしない",
+    "emailLabel": "仕事用メールアドレス",
+    "errorGeneric": "保存できませんでした。もう一度お試しください。",
+    "errorInUse": "このアドレスには既にアカウントがあります。サインインしてください。",
+    "joinHint": "{name} は既にワークスペースをお持ちです — あとから参加を依頼できます。",
+    "nameLabel": "お名前",
+    "optional": "任意",
+    "savedNoCode": "保存しました。サインインコードを送信できませんでした — 次回はこのアドレスでサインインしてください。",
+    "submit": "ワークスペースを保存",
+    "success": "保存しました。受信トレイで戻るためのコードをご確認ください。",
+    "title": "作業を保存"
   }
 }

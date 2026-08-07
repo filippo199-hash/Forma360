@@ -17,7 +17,6 @@ export const ACTION_SOURCE_TYPES = [
   'standalone',
   'inspection',
   'issue',
-  'maintenance',
   'risk_assessment',
   'coshh_assessment',
   'fire_risk_assessment',
@@ -37,7 +36,6 @@ const SOURCE_LABEL_KEYS: Record<ActionSourceType, string> = {
   standalone: 'sourceStandalone',
   inspection: 'sourceInspection',
   issue: 'sourceIssue',
-  maintenance: 'sourceMaintenance',
   risk_assessment: 'sourceRiskAssessment',
   coshh_assessment: 'sourceCoshhAssessment',
   fire_risk_assessment: 'sourceFireRiskAssessment',
@@ -55,9 +53,6 @@ const SOURCE_LINK_KEYS: Record<ActionSourceType, string> = {
   standalone: 'sourceLinkStandalone',
   inspection: 'sourceLinkInspection',
   issue: 'sourceLinkIssue',
-  // Maintenance never renders the generic card — it shows the program badge
-  // and the asset row instead — but it needs a key for completeness.
-  maintenance: 'sourceLinkStandalone',
   risk_assessment: 'sourceLinkRiskAssessment',
   coshh_assessment: 'sourceLinkCoshhAssessment',
   fire_risk_assessment: 'sourceLinkFireRiskAssessment',

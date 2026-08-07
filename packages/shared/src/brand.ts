@@ -50,6 +50,14 @@ export interface BrandConfig {
   readonly address: string;
   /** Country of establishment / governing law. */
   readonly jurisdiction: string;
+  /**
+   * Whether this brand offers the try-it-now sandbox (ADR 0017): a
+   * seeded, signed-in workspace handed to a visitor who has not signed
+   * up. A brand capability rather than a module flag — Forma360 sells
+   * through demos, FreeHS sells by being tried — so it lives here in
+   * place 1 of the four ADR 0010 permits, not in an inline conditional.
+   */
+  readonly offersSandbox: boolean;
 }
 
 export const BRANDS: Record<BrandId, BrandConfig> = {
@@ -66,6 +74,8 @@ export const BRANDS: Record<BrandId, BrandConfig> = {
       'Forma360 Ltd, a company registered in England and Wales under company number 17292397',
     address: '128 City Road, London, EC1V 2NX, United Kingdom',
     jurisdiction: 'England and Wales',
+    // Forma360 sells through demos and onboarding calls, not self-serve.
+    offersSandbox: false,
   },
   freehs: {
     id: 'freehs',
@@ -82,6 +92,7 @@ export const BRANDS: Record<BrandId, BrandConfig> = {
       'FreeHS, a trading name of Forma360 Ltd, a company registered in England and Wales under company number 17292397',
     address: '128 City Road, London, EC1V 2NX, United Kingdom',
     jurisdiction: 'England and Wales',
+    offersSandbox: true,
   },
 };
 

@@ -385,7 +385,7 @@ async function findConflicts(
  * Serialised on the tenant row lock so two concurrent first reads cannot
  * double-seed. Idempotent.
  */
-async function ensureSeededTypes(
+export async function ensureSeededTypes(
   db: Database,
   tenantId: string,
   actorUserId: string,

@@ -26,8 +26,8 @@ export type ReferenceSeries =
  * The old generators did `SELECT count(*) … + 1`, which has no lock — two
  * concurrent creates read the same count and stamped duplicate refs. This
  * upsert increments under the row lock, so concurrent claims serialize into
- * distinct values. Actions and maintenance-generated actions both use the
- * 'action' series so they can't collide on the shared `actions` table.
+ * distinct values. All actions use the 'action' series so they can't
+ * collide on the shared `actions` table.
  *
  * Returns the new integer; callers format it (e.g. `OBS-${n.padStart(6)}`).
  */

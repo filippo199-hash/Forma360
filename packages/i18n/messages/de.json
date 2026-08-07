@@ -300,7 +300,7 @@
         "issues": "Issues",
         "actions": "Actions",
         "headsUp": "Heads Up",
-        "assets": "Assets & Maintenance",
+        "assets": "Assets",
         "documents": "Documents",
         "analytics": "Analytics",
         "training": "Training",
@@ -357,7 +357,6 @@
         "assets_view": "View assets",
         "assets_manage": "Manage assets",
         "assets_readings_record": "Record asset readings",
-        "assets_maintenance_manage": "Manage asset maintenance",
         "documents_view": "View documents",
         "documents_manage": "Manage documents",
         "documents_folders_manage": "Manage document folders",
@@ -1454,7 +1453,6 @@
     "settings": "Settings",
     "headsUp": "Unterweisungen",
     "assets": "Assets",
-    "maintenance": "Maintenance",
     "documents": "Dokumente",
     "ai": "KI-Assistent",
     "forMe": "Für mich",
@@ -1491,7 +1489,6 @@
       "templates": "Vorlagen",
       "schedules": "Zeitpläne",
       "approvals": "Freigaben",
-      "maintenance": "Wartung",
       "trainingMatrix": "Matrix",
       "trainingRequirements": "Anforderungen"
     },
@@ -2154,7 +2151,6 @@
         "savedToast": "View \"{name}\" saved"
       },
       "settingsButton": "Einstellungen",
-      "sourceMaintenance": "Wartung",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Vorfall",
       "sourceIncident": "Vorfall",
@@ -2236,9 +2232,7 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action",
-          "created_auto": "hat diese Aktion automatisch aus dem Wartungsprogramm „{program}“ erstellt",
-          "created_auto_generic": "hat diese Aktion automatisch aus einem Wartungsprogramm erstellt"
+          "restored": "restored this action"
         }
       },
       "comments": {
@@ -2747,16 +2741,11 @@
       "readingUnitPlaceholder": "Unit",
       "addReadingButton": "Record",
       "readingAddedToast": "Reading recorded",
-      "maintenancePlansHint": "Maintenance plans are managed in the Maintenance section.",
-      "maintenancePlansLink": "Go to Maintenance",
       "tabs": {
         "overview": "Overview",
         "readings": "Readings",
-        "maintenance": "Maintenance",
         "media": "Media",
-        "actions": "Actions",
-        "inspections": "Inspections",
-        "observations": "Observations"
+        "activity": "Aktivität"
       },
       "fields": {
         "type": "Type",
@@ -2770,7 +2759,10 @@
         "noSite": "No site",
         "owner": "Eigentümer",
         "noOwner": "Kein Eigentümer",
-        "ownerPlaceholder": "Eigentümer auswählen"
+        "ownerPlaceholder": "Eigentümer auswählen",
+        "customFieldsHeading": "Kategoriefelder",
+        "customFieldEmpty": "Nicht gesetzt",
+        "customFieldsIncomplete": "Einige Pflichtangaben für diesen Anlagentyp fehlen noch. Bearbeiten Sie die Anlage, um sie zu ergänzen."
       },
       "readingColumns": {
         "field": "Field",
@@ -2788,7 +2780,9 @@
         "uploadPhoto": "Upload photo",
         "changePhoto": "Change photo",
         "removePhoto": "Remove photo",
-        "noPhoto": "No photos yet."
+        "noPhoto": "No photos yet.",
+        "empty": "Noch keine Fotos.",
+        "addPhoto": "Foto hinzufügen"
       },
       "stubs": {
         "actions": "No actions linked to this asset yet.",
@@ -2810,18 +2804,6 @@
         "createdAt": "Erstellt"
       },
       "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
-      "plans": {
-        "heading": "Wartungspläne",
-        "empty": "Keine Wartungspläne für dieses Objekt.",
-        "timeMeta": "Alle {interval} Tage — letzter Service {last}",
-        "usageMeta": "Alle {interval} {unit} — Zähler bei {current}",
-        "status": {
-          "on_schedule": "Im Plan",
-          "approaching": "Bald fällig",
-          "overdue": "Überfällig",
-          "awaiting_first_reading": "Erste Ablesung ausstehend"
-        }
-      },
       "fireHistory": {
         "heading": "Brandschutz-Historie",
         "checkLine": "{type} — {building}",
@@ -2830,12 +2812,34 @@
         "type": "Prüfung",
         "result": "Ergebnis",
         "notes": "Notizen"
+      },
+      "fieldRequired": "{name} ist erforderlich",
+      "viewAll": "Alle ansehen",
+      "viewAllCount": "Alle {count} ansehen",
+      "activity": {
+        "heading": "Aktivität",
+        "kinds": {
+          "inspection": "Prüfung",
+          "action": "Maßnahme",
+          "observation": "Beobachtung"
+        },
+        "filters": {
+          "all": "Alle",
+          "inspection": "Prüfungen",
+          "action": "Maßnahmen",
+          "observation": "Beobachtungen"
+        },
+        "empty": {
+          "all": "Für diese Anlage wurde noch nichts erfasst. Verknüpfte Prüfungen, Maßnahmen und Beobachtungen erscheinen hier.",
+          "inspection": "Noch keine Prüfungen mit dieser Anlage verknüpft.",
+          "action": "Noch keine Maßnahmen für diese Anlage.",
+          "observation": "Noch keine Beobachtungen zu dieser Anlage."
+        }
       }
     },
     "settings": {
       "title": "Settings",
-      "categoriesTab": "Categories",
-      "programsTab": "Maintenance programs"
+      "categoriesTab": "Categories"
     },
     "categories": {
       "addFieldHint": "Click \"Add field\" to define what data to collect for each asset.",
@@ -2844,6 +2848,24 @@
         "fieldNameRequired": "All fields must have a name",
         "nameRequired": "Category name is required",
         "selectNeedsOption": "Select field \"{name}\" needs at least one option"
+      },
+      "suggest": {
+        "title": "{count} Feldvorschläge für „{name}“",
+        "subtitle": "Wählen Sie aus, was Sie möchten. Es wird nichts hinzugefügt, bevor Sie auf Hinzufügen klicken; alles bleibt danach bearbeitbar.",
+        "subtitleAi": "Von der KI aus dem Kategorienamen vorgeschlagen. Bitte vor dem Hinzufügen prüfen — ein Startpunkt, keine Beratung.",
+        "thinking": "Suche nach passenden Feldern für „{name}“…",
+        "addChosen": "{count} ausgewählte hinzufügen",
+        "noThanks": "Nein danke, ich füge eigene hinzu",
+        "dismiss": "Vorschläge schließen",
+        "selectAll": "Alle auswählen",
+        "selectNone": "Auswahl aufheben",
+        "addedToast": "{count} Felder hinzugefügt — unten bearbeiten oder entfernen.",
+        "types": {
+          "text": "Text",
+          "number": "Zahl",
+          "date": "Datum",
+          "select": "Auswahl"
+        }
       }
     }
   },
@@ -2858,101 +2880,6 @@
     "createdToast": "Asset type created",
     "archivedToast": "Asset type archived",
     "archiveConfirm": "Archive this asset type? It cannot be used for new assets."
-  },
-  "maintenancePlans": {
-    "table": {
-      "title": "Maintenance",
-      "subtitle": "Maintenance schedule across all assets.",
-      "empty": "No maintenance plans configured yet.",
-      "columns": {
-        "asset": "Asset",
-        "plan": "Plan",
-        "type": "Type",
-        "lastService": "Last service",
-        "status": "Status"
-      },
-      "planType": {
-        "time": "Time-based",
-        "usage": "Usage-based"
-      },
-      "status": {
-        "awaiting_first_reading": "Awaiting first reading",
-        "on_schedule": "On schedule",
-        "approaching": "Approaching due",
-        "overdue": "Overdue"
-      }
-    },
-    "list": {
-      "newButton": "New plan",
-      "overdueBadge": "{count} overdue",
-      "approachingBadge": "{count} approaching",
-      "assetsLinked": "assets",
-      "scheduleTableHeading": "Service schedule"
-    },
-    "new": {
-      "title": "New Maintenance Plan",
-      "backLink": "Back to Maintenance",
-      "createdToast": "Maintenance plan created",
-      "submitButton": "Create plan",
-      "basicHeading": "Basic info",
-      "scheduleHeading": "Schedule",
-      "notificationsHeading": "Notifications",
-      "notificationsHint": "Get email alerts before service is due.",
-      "notifDayChip": "{days} days before",
-      "addNotifDay": "Add",
-      "removeNotifDay": "Remove",
-      "fields": {
-        "name": "Plan name",
-        "namePlaceholder": "e.g. Annual vehicle service",
-        "description": "Description",
-        "descriptionPlaceholder": "Optional details",
-        "planType": "Plan type",
-        "planTypes": {
-          "time": "Time-based (every N days)",
-          "usage": "Usage-based (every N km/hours)"
-        },
-        "intervalDays": "Service every",
-        "intervalUsage": "Service every",
-        "usageUnit": "Unit",
-        "usageField": "Reading field",
-        "lastServiceDate": "Last service date",
-        "days": "days",
-        "usageUnitPlaceholder": "z. B. km",
-        "usageFieldPlaceholder": "z. B. Tacho"
-      }
-    },
-    "detail": {
-      "backLink": "Back to Maintenance",
-      "updatedToast": "Plan updated",
-      "archivedToast": "Plan archived",
-      "archivedBadge": "Archived",
-      "detailsHeading": "Details",
-      "linkAssetHeading": "Link an asset",
-      "selectAssetPlaceholder": "Select an asset…",
-      "linkAssetButton": "Link",
-      "noLinkedAssets": "No assets linked to this plan yet.",
-      "assetLinkedToast": "Asset linked",
-      "assetUnlinkedToast": "Asset unlinked",
-      "serviceRecordedToast": "Service recorded",
-      "recordServiceButton": "Record",
-      "unlinkAsset": "Unlink asset",
-      "tabs": {
-        "overview": "Overview",
-        "assets": "Assets"
-      },
-      "fields": {
-        "planType": "Type",
-        "interval": "Service interval",
-        "usageField": "Reading field",
-        "notifications": "Notifications",
-        "linkedAssets": "Linked assets"
-      },
-      "assetColumns": {
-        "asset": "Asset",
-        "lastService": "Last service",
-        "recordService": "Record service"
-      }
-    }
   },
   "documents": {
     "list": {
@@ -3127,7 +3054,6 @@
     "suggestions": [
       "Wie viele Inspektionen haben wir?",
       "Meine offenen Aktionen auflisten",
-      "Welche Anlagen brauchen bald Wartung?",
       "Laufen bald Dokumente ab?"
     ],
     "bubbleTitle": "Assistent",
@@ -3139,95 +3065,6 @@
     "copied": "Copied",
     "working": "Looking things up…",
     "openHistory": "Conversations"
-  },
-  "maintenancePrograms": {
-    "title": "Maintenance Programs",
-    "subtitle": "Define recurring maintenance triggers and attach them to your assets.",
-    "newProgram": "New program",
-    "startFromTemplate": "Start from template",
-    "useTemplate": "Use",
-    "noTemplates": "No templates available.",
-    "empty": "No maintenance programs yet.",
-    "createdToast": "Program created",
-    "savedToast": "Changes saved",
-    "archivedToast": "Program archived",
-    "triggerAddedToast": "Trigger added",
-    "triggerRemovedToast": "Trigger removed",
-    "assetAttachedToast": "{count, plural, =0 {Asset attached, no new actions} one {Asset attached, # action created} other {Asset attached, # actions created}}",
-    "assetDetachedToast": "Asset detached",
-    "backLink": "Back to programs",
-    "detailsHeading": "Details",
-    "triggersHeading": "Triggers",
-    "triggersAndAssets": "{triggers} triggers · {assets} assets",
-    "triggerCount": "{count, plural, one {# trigger} other {# triggers}}",
-    "noTriggers": "No triggers yet.",
-    "addTriggerHeading": "Add trigger",
-    "addTriggerButton": "Add trigger",
-    "removeTrigger": "Remove trigger",
-    "assetsHeading": "Attached assets",
-    "noAssets": "No assets attached yet.",
-    "detach": "Detach",
-    "attachAssetLabel": "Attach an asset",
-    "attachAssetButton": "Attach",
-    "selectAsset": "Select an asset…",
-    "attachedProgramsHeading": "Maintenance programs",
-    "noProgramsForAsset": "No maintenance programs attached to this asset yet.",
-    "attachProgramLabel": "Attach a maintenance program",
-    "attachProgramButton": "Attach program",
-    "selectProgram": "Select a program…",
-    "maintenanceActionsHeading": "Maintenance actions",
-    "noMaintenanceActions": "No maintenance actions for this asset yet.",
-    "triggerType": {
-      "time": "Time",
-      "distance": "Distance",
-      "usage": "Usage"
-    },
-    "triggerSummary": {
-      "time": "Every {days} days",
-      "usage": "Every {value} {unit}"
-    },
-    "fields": {
-      "name": "Name",
-      "namePlaceholder": "e.g. Vehicle servicing",
-      "description": "Description",
-      "descriptionPlaceholder": "What this program covers…",
-      "triggerTitle": "Title",
-      "triggerTitlePlaceholder": "e.g. Change oil",
-      "triggerType": "Trigger type",
-      "intervalDays": "Interval (days)",
-      "intervalDaysPlaceholder": "e.g. 365",
-      "intervalValue": "Interval",
-      "intervalValuePlaceholder": "e.g. 10000",
-      "unit": "Unit",
-      "unitPlaceholder": "e.g. km",
-      "usageField": "Reading field",
-      "usageFieldPlaceholder": "e.g. odometer"
-    },
-    "actionColumns": {
-      "title": "Title",
-      "detail": "Detail",
-      "status": "Status",
-      "dueAt": "Due"
-    },
-    "detachTitle": "Detach program?",
-    "detachBody": "Remove “{name}” from this asset?",
-    "detachExplain": "Choose what happens to this asset’s open maintenance actions for this program.",
-    "detachKeep": "Detach, keep actions",
-    "detachCancel": "Detach & cancel actions",
-    "detachedToast": "Program detached",
-    "deleteTitle": "Delete program?",
-    "deleteBody": "This deletes the program and detaches it from all assets.",
-    "deleteKeep": "Delete, keep actions",
-    "deleteCancel": "Delete & cancel actions",
-    "deletedRedirectToast": "Program deleted",
-    "applyTitle": "Apply schedule change?",
-    "applyBody": "You changed this program. Apply the new schedule to the {count} asset(s) already linked, or only to assets linked from now on?",
-    "applyExisting": "Apply to existing assets",
-    "applyNew": "Only new assets",
-    "appliedToast": "Updated {count} asset(s)",
-    "detachAssetConfirm": "Detach this asset from the program?",
-    "loadError": "Could not load maintenance programs.",
-    "removeTriggerConfirm": "Remove this trigger from the program?"
   },
   "sites": {
     "title": "Sites & Projects",
@@ -4962,7 +4799,8 @@
         "requiresGasTesting": "Gasmessung erforderlich",
         "requiresIsolationCertificate": "Freischaltzertifikat erforderlich",
         "requiresRescuePlan": "Rettungsplan erforderlich",
-        "requiresRiskAssessment": "Verknüpfte Gefährdungsbeurteilung erforderlich"
+        "requiresRiskAssessment": "Verknüpfte Gefährdungsbeurteilung erforderlich",
+        "requiresRamsPack": "Angenommenes RAMS-Paket erforderlich"
       },
       "maxDuration": "Maximale Gültigkeit",
       "hours": "Stunden",
@@ -4983,7 +4821,8 @@
       "gasLimitMax": "Max.",
       "addGasLimit": "Grenzwert hinzufügen",
       "gasFreshness": "Aktualität der Gasmessung",
-      "gasFreshnessUnit": "Minuten"
+      "gasFreshnessUnit": "Minuten",
+      "description": "Beschreibung"
     },
     "errors": {
       "module-disabled": "Dieses Modul ist nicht verfügbar.",
@@ -5034,8 +4873,22 @@
       "entry-log-full": "Das Protokoll dieser Freigabe ist voll.",
       "unknown-entry": "Dieser Protokolleintrag existiert nicht.",
       "already-exited": "Für diese Person wurde der Ausstieg bereits erfasst.",
-      "render-unavailable": "PDF-Erzeugung ist in dieser Umgebung nicht verfügbar."
-    }
+      "render-unavailable": "PDF-Erzeugung ist in dieser Umgebung nicht verfügbar.",
+      "training-expired": "Ausstellung nicht möglich: Für eine benannte Person ist die Schulung abgelaufen.",
+      "training-missing": "Ausstellung nicht möglich: Eine benannte Person hat die erforderliche Schulung nie erworben."
+    },
+    "competence": {
+      "blockedTitle": "Kompetenz nicht erfüllt",
+      "personExpired": "{person} — {requirement} ist abgelaufen",
+      "personMissing": "{person} — {requirement} nicht vorhanden",
+      "openModule": "Schulungen öffnen"
+    },
+    "signatures": {
+      "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt"
+    },
+    "requiredTraining": "Erforderliche Schulungen",
+    "requiredTrainingHint": "Jede benannte Person muss diese gültig besitzen, bevor dieser Typ ausgestellt werden kann.",
+    "requiredTrainingNone": "Noch keine Schulungsanforderungen definiert."
   },
   "fireSafety": {
     "title": "Brandschutz",
@@ -5613,8 +5466,7 @@
       "keys": {
         "emailActionReminders": "Erinnerungen an fällige/überfällige Maßnahmen",
         "emailScheduleMissed": "Verpasste geplante Inspektionen",
-        "emailDocumentExpiry": "Erinnerungen an ablaufende Dokumente",
-        "emailMaintenance": "Wartungserinnerungen"
+        "emailDocumentExpiry": "Erinnerungen an ablaufende Dokumente"
       }
     }
   },
@@ -6630,7 +6482,8 @@
       "gaps": "Lücken",
       "matrix": "Matrix",
       "compliance": "Erfüllung",
-      "requirements": "Anforderungen"
+      "requirements": "Anforderungen",
+      "me": "Meine Schulungen"
     },
     "asAt": "Stand {date}",
     "status": {
@@ -6648,7 +6501,8 @@
       "record": "Erfassen",
       "expiresOn": "läuft ab am {date}",
       "requiredByRole": "durch Rolle erforderlich",
-      "total": "{count} zu bearbeiten"
+      "total": "{count} zu bearbeiten",
+      "noSiteMembers": "Diesem Standort ist noch niemand zugeordnet, daher gibt es nichts anzuzeigen. Weisen Sie dem Standort Personen zu."
     },
     "matrix": {
       "person": "Person",
@@ -6766,7 +6620,12 @@
       "close": "Schließen",
       "rowLabel": "Zeile {row}",
       "badColumns": "Die Kopfzeile muss personName, requirementName und achievedAt enthalten.",
-      "noRows": "Keine Zeilen zum Importieren."
+      "noRows": "Keine Zeilen zum Importieren.",
+      "dryRun": "Testlauf",
+      "dryRunDone": "Testlauf: {count} Nachweise würden importiert. Es wurde nichts geschrieben.",
+      "matchSummary": "{matched} einem Konto zugeordnet · {nameOnly} nur mit Namen erfasst",
+      "duplicatesSkipped": "{count} Zeilen waren bereits vorhanden und wurden übersprungen.",
+      "errorGroup": "{message} — {count} Zeilen (erste: Zeile {first})"
     },
     "errors": {
       "moduleDisabled": "Dieses Modul ist nicht aktiviert.",
@@ -6783,5 +6642,24 @@
       "allRequirements": "Alle Anforderungen",
       "clear": "Zurücksetzen"
     }
+  },
+  "sandbox": {
+    "bannerBody": "Alles hier ist echt und von Ihnen änderbar. Hinterlegen Sie Ihre E-Mail, um zurückzukehren.",
+    "bannerCta": "Meine Arbeit sichern",
+    "bannerTitle": "Sie befinden sich in einem Demo-Arbeitsbereich",
+    "body": "Sagen Sie uns, wohin wir Ihren Rückweg schicken sollen. Kein Passwort — wir senden Ihnen einen Code per E-Mail.",
+    "cancel": "Noch nicht",
+    "companyLabel": "Firmenname",
+    "dismiss": "Jetzt nicht",
+    "emailLabel": "Geschäftliche E-Mail",
+    "errorGeneric": "Speichern nicht möglich. Bitte erneut versuchen.",
+    "errorInUse": "Diese Adresse hat bereits ein Konto. Bitte melden Sie sich an.",
+    "joinHint": "{name} hat hier bereits einen Arbeitsbereich — Sie können später um Beitritt bitten.",
+    "nameLabel": "Ihr Name",
+    "optional": "optional",
+    "savedNoCode": "Gesichert. Der Code konnte gerade nicht gesendet werden — melden Sie sich bei Ihrer Rückkehr mit dieser Adresse an.",
+    "submit": "Arbeitsbereich sichern",
+    "success": "Gesichert. Prüfen Sie Ihren Posteingang auf den Zugangscode.",
+    "title": "Arbeit sichern"
   }
 }

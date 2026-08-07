@@ -29,6 +29,8 @@ import {
   userCustomFieldValues,
   customUserFields,
 } from '@forma360/db/schema';
+import { grantsAdminAccess } from '@forma360/permissions/catalogue';
+import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { newId } from '@forma360/shared/id';
 import {
   compliancePercent,
@@ -536,6 +538,19 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
         const req = await loadRequirement(ctx.db, ctx.tenantId, input.requirementId);
+        // TR-B12: ground rule 4 — a client-supplied user id is never taken
+        // on trust. An id from another tenant used to insert cleanly and
+        // then vanish from every view, which is a silent integrity hole.
+        if (input.userId !== null) {
+          const owner = await ctx.db
+            .select({ id: user.id })
+            .from(user)
+            .where(and(eq(user.id, input.userId), eq(user.tenantId, ctx.tenantId)))
+            .limit(1);
+          if (owner[0] === undefined) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'user-not-in-tenant' });
+          }
+        }
         const achievedAt = parseDay(input.achievedAt);
         // An explicit expiry wins (a certificate can state its own); a
         // null one means "never expires" only when the caller says so
@@ -662,11 +677,12 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
       .query(async ({ ctx, input }) => {
         assertEnabled();
         const asOf = input?.asOf !== undefined ? parseDay(input.asOf) : now();
-        const { cells } = await resolveMatrix(ctx.db, ctx.tenantId, {
+        const { cells, people } = await resolveMatrix(ctx.db, ctx.tenantId, {
           asOf,
           siteId: input?.siteId,
           requirementId: input?.requirementId,
         });
+        const peopleInScope = people.length;
         // TR-A7: only cells the person is actually REQUIRED to hold. A
         // lapsed card someone is no longer required to have is not a gap;
         // listing it is noise in the one view built to be actionable.
@@ -681,12 +697,18 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
           expiringSoon: gaps.filter((c) => c.status === 'expiring_soon'),
           notHeld: gaps.filter((c) => c.status === 'not_held'),
           total: gaps.length,
+          // TR-B13: site scoping resolves through `site_members`, a curated
+          // table. A tenant that has never curated it gets an empty grid and
+          // no explanation — "no gaps" and "nobody is a member of this site"
+          // look identical, and the reassuring one is the wrong one.
+          siteHasNoMembers: input?.siteId !== undefined && peopleInScope === 0,
         };
       }),
 
     /** One person's wallet — their cards, for the gate and the induction. */
+    // TR-B10: NOT permission-gated as a whole — your own wallet is your
+    // own record. The org-wide read is gated inline below.
     person: tenantProcedure
-      .use(requirePermission('training.view'))
       .input(
         z
           .object({
@@ -700,13 +722,41 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
         // No argument = the caller's own wallet. This is what makes
         // `/training/me` a personal door rather than another org-wide
         // view (TR-A5), and it can never resolve to someone else.
-        const target =
-          input.userId === undefined && input.personName === undefined
+        // Treat an empty string as absent: the wallet page has no props to
+        // pass for "me", and `{ personName: '' }` used to fall past this
+        // branch into `WHERE person_name = ''`, which matches nothing —
+        // an empty wallet for every user in every tenant (TR-B2).
+        const askedUserId =
+          input.userId === undefined || input.userId === '' ? undefined : input.userId;
+        const askedName =
+          input.personName === undefined || input.personName.trim() === ''
+            ? undefined
+            : input.personName.trim();
+        const target: { userId?: string; personName?: string } =
+          askedUserId === undefined && askedName === undefined
             ? { userId: ctx.auth.userId }
-            : input;
+            : askedUserId !== undefined
+              ? { userId: askedUserId }
+              : { personName: askedName as string };
+
+        // TR-B10: your own wallet needs no permission — it is your own
+        // record. Anyone else's is an org-wide read and needs
+        // `training.view`, which Standard no longer holds. Mirrors the
+        // self-access rule on `users.get`.
+        const isSelf = target.userId === ctx.auth.userId;
+        if (!isSelf) {
+          const perms = await loadUserPermissions(ctx.db, ctx.tenantId, ctx.auth.userId);
+          if (!perms.includes('training.view') && !grantsAdminAccess(perms)) {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'training.view' });
+          }
+        }
+
         const asOf = now();
         const { cells } = await resolveMatrix(ctx.db, ctx.tenantId, { asOf });
-        const key = input.userId ?? personKeyOf(null, (input.personName ?? '').trim());
+        // The cell key must follow the RESOLVED target, not the raw input,
+        // or "what am I missing" stays blank even once records are right
+        // (a not_held requirement exists only as a cell) — TR-B2.
+        const key = target.userId ?? personKeyOf(null, target.personName ?? '');
         const mine = cells.filter((c) => c.personKey === key);
         const records = await ctx.db
           .select()
@@ -720,7 +770,19 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
             ),
           )
           .orderBy(desc(trainingRecords.achievedAt));
-        return { asOf, cells: mine, records };
+        // The resolved display name, so a page addressed only by id (or by
+        // nothing, for "me") can title itself without a second round trip.
+        const named =
+          target.userId !== undefined
+            ? (
+                await ctx.db
+                  .select({ name: user.name })
+                  .from(user)
+                  .where(and(eq(user.id, target.userId), eq(user.tenantId, ctx.tenantId)))
+                  .limit(1)
+              )[0]?.name
+            : target.personName;
+        return { asOf, cells: mine, records, personName: named ?? null, isSelf };
       }),
 
     /** The grid — people × requirements. Filtered, because 800 × 30 is a query. */
@@ -750,6 +812,14 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
             and(
               eq(trainingRequirements.tenantId, ctx.tenantId),
               isNull(trainingRequirements.archivedAt),
+              // TR-B7: a filtered grid must have ONE column. Returning every
+              // requirement while `cells` was filtered rendered 29 columns of
+              // "–", asserting that people are not required to hold tickets
+              // they are — and `exportRows` wrote that into the CSV and the
+              // PDF, where it leaves the building.
+              ...(input?.requirementId !== undefined
+                ? [eq(trainingRequirements.id, input.requirementId)]
+                : []),
             ),
           )
           .orderBy(trainingRequirements.name);
@@ -888,10 +958,22 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
                 awardingBody: z.string().trim().max(200).optional(),
                 certificateNumber: z.string().trim().max(100).optional(),
                 personCategory: z.string().trim().max(50).optional(),
+                /** 1-based line in the user's file, so errors name THEIR row. */
+                sourceRow: z.number().int().min(1).optional(),
               }),
             )
             .min(1)
             .max(2000),
+          /**
+           * TR-B4: rows the client could not parse at all, passed through so
+           * they appear in the failure report instead of vanishing.
+           */
+          skipped: z
+            .array(z.object({ row: z.number().int().min(1), message: z.string().max(200) }))
+            .max(2000)
+            .default([]),
+          /** TR-B6: report what WOULD be written, without writing it. */
+          dryRun: z.boolean().default(false),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -906,23 +988,54 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
           .from(user)
           .where(eq(user.tenantId, ctx.tenantId));
         const byEmail = new Map(users.map((u) => [u.email.toLowerCase(), u]));
+        // TR-B5: most LMS extracts carry a payroll number, not an email.
+        // Without a name fallback every such row became a NAME-ONLY person
+        // sitting beside the same human's account in the matrix — the same
+        // nurse twice, once with a wall of not_held and once holding every
+        // card, wrong in both directions at once.
+        const byName_ = new Map<string, Array<(typeof users)[number]>>();
+        for (const u of users) {
+          const k = u.name.trim().toLowerCase();
+          byName_.set(k, [...(byName_.get(k) ?? []), u]);
+        }
 
-        const errors: Array<{ row: number; message: string }> = [];
+        // Rows the CLIENT could not parse start in the failure list, so a
+        // dropped row is never reported as a success (TR-B4).
+        const errors: Array<{ row: number; message: string }> = [...input.skipped];
         const values: Array<typeof trainingRecords.$inferInsert> = [];
+        let matchedToUsers = 0;
+        let nameOnly = 0;
 
         input.rows.forEach((row, i) => {
+          // The user's own line number, not an index into a filtered array.
+          const rowNo = row.sourceRow ?? i + 1;
           const req = byName.get(row.requirementName.toLowerCase());
           if (req === undefined) {
-            errors.push({ row: i + 1, message: `unknown-requirement:${row.requirementName}` });
+            errors.push({ row: rowNo, message: `unknown-requirement:${row.requirementName}` });
             return;
           }
           const achieved = new Date(`${row.achievedAt.slice(0, 10)}T00:00:00.000Z`);
           if (Number.isNaN(achieved.getTime())) {
-            errors.push({ row: i + 1, message: `invalid-date:${row.achievedAt}` });
+            errors.push({ row: rowNo, message: `invalid-date:${row.achievedAt}` });
             return;
           }
-          const matchedUser =
+
+          let matchedUser =
             row.userEmail !== undefined ? byEmail.get(row.userEmail.toLowerCase()) : undefined;
+          if (matchedUser === undefined && row.userEmail === undefined) {
+            const candidates = byName_.get(row.personName.trim().toLowerCase()) ?? [];
+            if (candidates.length === 1) {
+              matchedUser = candidates[0];
+            } else if (candidates.length > 1) {
+              // Guessing between two people with the same name is how a
+              // competence record ends up on the wrong human. Report it.
+              errors.push({ row: rowNo, message: `ambiguous-person:${row.personName}` });
+              return;
+            }
+          }
+          if (matchedUser !== undefined) matchedToUsers += 1;
+          else nameOnly += 1;
+
           const expires =
             row.expiresAt !== undefined
               ? new Date(`${row.expiresAt.slice(0, 10)}T00:00:00.000Z`)
@@ -944,10 +1057,58 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
           });
         });
 
+        // TR-B6: re-running the same extract used to insert everything a
+        // second time, and the only undo was voiding rows one at a time.
+        // The natural key is (requirement, person, achieved date).
+        let skippedDuplicates = 0;
         if (values.length > 0) {
-          await ctx.db.insert(trainingRecords).values(values);
+          const existing = await ctx.db
+            .select({
+              requirementId: trainingRecords.requirementId,
+              userId: trainingRecords.userId,
+              personName: trainingRecords.personName,
+              achievedAt: trainingRecords.achievedAt,
+            })
+            .from(trainingRecords)
+            .where(eq(trainingRecords.tenantId, ctx.tenantId));
+          const seen = new Set(
+            existing.map(
+              (e) =>
+                `${e.requirementId}::${personKeyOf(e.userId, e.personName)}::${e.achievedAt.toISOString().slice(0, 10)}`,
+            ),
+          );
+          const fresh = values.filter((v) => {
+            const key = `${v.requirementId}::${personKeyOf(v.userId ?? null, v.personName)}::${(v.achievedAt as Date).toISOString().slice(0, 10)}`;
+            if (seen.has(key)) return false;
+            // Also dedupe WITHIN the file, so one extract cannot fight itself.
+            seen.add(key);
+            return true;
+          });
+          skippedDuplicates = values.length - fresh.length;
+          if (!input.dryRun && fresh.length > 0) {
+            await ctx.db.insert(trainingRecords).values(fresh);
+          }
+          return {
+            imported: input.dryRun ? 0 : fresh.length,
+            wouldImport: fresh.length,
+            failed: errors.length,
+            errors,
+            matchedToUsers,
+            nameOnly,
+            skippedDuplicates,
+            dryRun: input.dryRun,
+          };
         }
-        return { imported: values.length, failed: errors.length, errors };
+        return {
+          imported: 0,
+          wouldImport: 0,
+          failed: errors.length,
+          errors,
+          matchedToUsers,
+          nameOnly,
+          skippedDuplicates,
+          dryRun: input.dryRun,
+        };
       }),
   });
 }

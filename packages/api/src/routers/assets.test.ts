@@ -1,5 +1,5 @@
 /**
- * Integration tests for Assets & Maintenance routers (Phase 5B).
+ * Integration tests for the Assets router (Phase 5B).
  */
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -78,6 +78,9 @@ const MIGRATION_FILES = [
   '0065_backfill_freehs_permission_keys.sql',
   '0066_wave_f_field.sql',
   '0067_wave_g_platform.sql',
+  // Drops the maintenance tables 0027/0034 created — exercises the drop
+  // migration end-to-end so the withdrawn feature leaves a clean schema.
+  '0073_drop_maintenance.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -235,39 +238,56 @@ describe('Assets router (Phase 5B)', () => {
     expect(readings[0]?.fieldName).toBe('runtime_hours');
     expect(readings[0]?.value).toBe('1250');
   });
-
-  it('creates a maintenance plan and links assets', async () => {
+  it('AS-CF05: changing type keeps old values and accepts the new type’s fields', async () => {
     const caller = createCaller(ctxFor(adminUserId));
-    const { assetId } = await caller.assets.create({ name: 'Generator' });
 
-    const { planId } = await caller.maintenancePlans.create({
-      name: '6-month service',
-      planType: 'time',
-      intervalDays: 180,
-      notificationDaysBefore: [7, 14],
+    // A plain type with no custom fields — the asset the user actually had.
+    const { typeId: plainType } = await caller.assetTypes.create({ name: 'Generic' });
+    const { assetId } = await caller.assets.create({ name: 'Unit 7', typeId: plainType });
+
+    // Later, a richer type is defined.
+    const { typeId: carType } = await caller.assetTypes.create({
+      name: 'Cars',
+      customFields: [
+        { id: 'reg', name: 'Registration', fieldType: 'text', required: true },
+        { id: 'mot', name: 'MOT due', fieldType: 'date' },
+      ],
     });
 
-    await caller.maintenancePlans.linkAssets({ planId, assetIds: [assetId] });
-
-    const { linkedAssets } = await caller.maintenancePlans.get({ planId });
-    expect(linkedAssets).toHaveLength(1);
-    expect(linkedAssets[0]?.assetId).toBe(assetId);
-  });
-
-  it('maintenance table returns status for linked plans', async () => {
-    const caller = createCaller(ctxFor(adminUserId));
-    const { assetId } = await caller.assets.create({ name: 'Compressor' });
-    const { planId } = await caller.maintenancePlans.create({
-      name: 'Monthly check',
-      planType: 'time',
-      intervalDays: 30,
+    // Switching the asset onto it, and filling the new fields in the same
+    // save — which is exactly what had no UI before this fix.
+    await caller.assets.update({
+      assetId,
+      typeId: carType,
+      customFieldValues: { reg: 'AB12 CDE', mot: '2027-03-01' },
     });
-    await caller.maintenancePlans.linkAssets({ planId, assetIds: [assetId] });
 
-    const table = await caller.maintenancePlans.table();
-    const row = table.find((r) => r.planId === planId && r.assetId === assetId);
-    expect(row).toBeDefined();
-    // No last service date => on_schedule (no due date to compare).
-    expect(row?.status).toBe('on_schedule');
+    const afterSwitch = await caller.assets.get({ assetId });
+    expect(afterSwitch.assetType?.id).toBe(carType);
+    // The detail page reads the type definition off `get`, so it must come
+    // back with the fields or the page has nothing to render.
+    expect(afterSwitch.assetType?.customFields).toHaveLength(2);
+    expect(afterSwitch.asset.customFieldValues).toMatchObject({
+      reg: 'AB12 CDE',
+      mot: '2027-03-01',
+    });
+
+    // Switching to a third type must not destroy what the car type held —
+    // the editor sends the whole map back, so switching BACK restores it.
+    const { typeId: pumpType } = await caller.assetTypes.create({
+      name: 'Pumps',
+      customFields: [{ id: 'pressure', name: 'Pressure', fieldType: 'number' }],
+    });
+    await caller.assets.update({
+      assetId,
+      typeId: pumpType,
+      customFieldValues: { reg: 'AB12 CDE', mot: '2027-03-01', pressure: '4.2' },
+    });
+
+    const afterSecond = await caller.assets.get({ assetId });
+    expect(afterSecond.asset.customFieldValues).toMatchObject({
+      reg: 'AB12 CDE',
+      pressure: '4.2',
+    });
   });
 });

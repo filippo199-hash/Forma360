@@ -1,25 +1,15 @@
 'use client';
 
-import { ArrowLeft, Camera, ImageIcon, Loader2, Pencil, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Camera, ImageIcon, Loader2, Pencil, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ActionDetailPanel } from '../../../../src/components/actions/action-detail-panel';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../../../src/components/ui/dialog';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
-import { Sheet, SheetContent } from '../../../../src/components/ui/sheet';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Textarea } from '../../../../src/components/ui/textarea';
@@ -31,26 +21,38 @@ import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { brandHasModule } from '@forma360/shared/brand';
 import { activeBrand } from '../../../../src/lib/brand';
+import {
+  AssetActivityList,
+  buildActivityRows,
+  type ActivityKind,
+} from '../../../../src/components/assets/asset-activity';
+import {
+  CustomFieldInputs,
+  CustomFieldReadout,
+  customFieldsOf,
+  customFieldValuesOf,
+  firstMissingRequired,
+  type CustomFieldValues,
+} from '../../../../src/components/assets/custom-field-inputs';
 import { trpc } from '../../../../src/lib/trpc/client';
 
-type Tab =
-  | 'overview'
-  | 'readings'
-  | 'maintenance'
-  | 'media'
-  | 'actions'
-  | 'inspections'
-  | 'observations';
+/**
+ * Four tabs, not six. Inspections, actions and observations were three
+ * separate tabs each holding one thin table; none of them answered "what
+ * is happening with this asset" on its own, so they merge into Activity
+ * and the overview summarises the lot.
+ */
+type Tab = 'overview' | 'activity' | 'readings' | 'media';
+
+/** Type chips on the Activity tab. */
+const ACTIVITY_FILTERS = ['all', 'inspection', 'action', 'observation'] as const;
 
 export default function AssetDetailPage() {
   const t = useTranslations('assets.detail');
-  const tMaintPrograms = useTranslations('maintenancePrograms');
   const tCommon = useTranslations('common');
   const tActionStatus = useTranslations('actions.status');
-  const tActionPriority = useTranslations('actions.priority');
   const tInspectionStatus = useTranslations('inspections.status');
   const tIssueStatus = useTranslations('issues.status');
-  const tIssuePriority = useTranslations('issues.priority');
   const params = useParams<{ locale: string; assetId: string }>();
   const locale = params.locale ?? 'en';
   const assetId = params.assetId ?? '';
@@ -58,7 +60,6 @@ export default function AssetDetailPage() {
 
   const canManage = useHasPermission('assets.manage');
   const canRecord = useHasPermission('assets.readings.record');
-  const canManageMaintenance = useHasPermission('assets.maintenance.manage');
   const canViewContractors = useHasPermission('contractors.view');
   // PF-17: the fire logbook can target this asset — show its service
   // history here so extinguisher #12 is one page, not two systems.
@@ -89,51 +90,38 @@ export default function AssetDetailPage() {
   const [readingFieldName, setReadingFieldName] = useState('');
   const [readingValue, setReadingValue] = useState('');
   const [readingUnit, setReadingUnit] = useState('');
+  const [editCustomFieldValues, setEditCustomFieldValues] = useState<CustomFieldValues>({});
+  const [activityFilter, setActivityFilter] = useState<'all' | ActivityKind>('all');
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const [attachProgramId, setAttachProgramId] = useState('');
-  // Maintenance action detail (opens in a side sheet, like the Actions page).
-  const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
-  // Program pending detach (drives the keep/cancel-actions dialog).
-  const [detachTarget, setDetachTarget] = useState<{ programId: string; name: string } | null>(
-    null,
-  );
 
   const { data, isLoading, error } = trpc.assets.get.useQuery({ assetId });
-  const { data: assetTypesList } = trpc.assetTypes.list.useQuery(undefined, { enabled: editing });
+  // Loaded unconditionally: read mode needs the type definition to show
+  // the custom fields, and edit mode needs it to swap the field set the
+  // moment the type changes.
+  const { data: assetTypesList } = trpc.assetTypes.list.useQuery();
   const { data: readingsData } = trpc.assets.readings.list.useQuery(
     { assetId },
-    { enabled: tab === 'readings' },
-  );
-  const {
-    data: maintenanceData,
-    isLoading: maintenanceLoading,
-    error: maintenanceError,
-  } = trpc.maintenancePrograms.listForAsset.useQuery(
-    { assetId },
-    { enabled: tab === 'maintenance' },
-  );
-  // PF-18: time/usage maintenance PLANS for this asset (the page previously
-  // showed only programs — the second maintenance system was invisible).
-  const plansQuery = trpc.maintenancePlans.listForAsset.useQuery(
-    { assetId },
-    { enabled: assetId !== '' },
+    { enabled: tab === 'readings' || tab === 'overview' },
   );
   const fireHistory = trpc.fireSafety.logbook.assetHistory.useQuery(
     { assetId },
     { enabled: assetId !== '' && canViewFire },
   );
-  const { data: programsListData } = trpc.maintenancePrograms.list.useQuery(undefined, {
-    enabled: tab === 'maintenance' && canManageMaintenance,
-  });
   const { data: linkedInspections, isLoading: inspectionsLoading } =
-    trpc.assets.listLinkedInspections.useQuery({ assetId }, { enabled: tab === 'inspections' });
+    trpc.assets.listLinkedInspections.useQuery(
+      { assetId },
+      { enabled: tab === 'activity' || tab === 'overview' },
+    );
   const { data: linkedActions, isLoading: actionsLoading } = trpc.assets.listLinkedActions.useQuery(
     { assetId },
-    { enabled: tab === 'actions' },
+    { enabled: tab === 'activity' || tab === 'overview' },
   );
   const { data: linkedObservations, isLoading: observationsLoading } =
-    trpc.assets.listLinkedObservations.useQuery({ assetId }, { enabled: tab === 'observations' });
+    trpc.assets.listLinkedObservations.useQuery(
+      { assetId },
+      { enabled: tab === 'activity' || tab === 'overview' },
+    );
 
   const update = trpc.assets.update.useMutation({
     onSuccess: () => {
@@ -173,23 +161,43 @@ export default function AssetDetailPage() {
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
-  const attachProgram = trpc.maintenancePrograms.attachAsset.useMutation({
-    onSuccess: (res) => {
-      toast.success(tMaintPrograms('assetAttachedToast', { count: res.actionsCreated }));
-      setAttachProgramId('');
-      void utils.maintenancePrograms.listForAsset.invalidate({ assetId });
-    },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  // The fields the CURRENTLY SELECTED type defines. In edit mode this
+  // follows the dropdown, so choosing a new type immediately offers that
+  // type's fields — the whole point of the fix. In read mode it follows
+  // the saved type.
+  // One merged, newest-first stream. The overview shows the head of it;
+  // the Activity tab shows all of it with type filters.
+  const activityRows = buildActivityRows({
+    locale,
+    inspections: linkedInspections ?? [],
+    actions: linkedActions ?? [],
+    observations: linkedObservations ?? [],
   });
+  const filteredActivity =
+    activityFilter === 'all' ? activityRows : activityRows.filter((r) => r.kind === activityFilter);
+  const activityLoading = inspectionsLoading || actionsLoading || observationsLoading;
 
-  const detachProgram = trpc.maintenancePrograms.detachAsset.useMutation({
-    onSuccess: () => {
-      toast.success(tMaintPrograms('detachedToast'));
-      setDetachTarget(null);
-      void utils.maintenancePrograms.listForAsset.invalidate({ assetId });
-    },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
-  });
+  /** Each module owns its status vocabulary; keep all three translated. */
+  const activityStatusLabel = (kind: ActivityKind, status: string): string => {
+    if (kind === 'inspection') return inspectionStatusLabel(status);
+    if (kind === 'observation') return issueStatusLabel(status);
+    return status === 'open' ||
+      status === 'in_progress' ||
+      status === 'completed' ||
+      status === 'cancelled'
+      ? tActionStatus(status)
+      : status.replace(/_/g, ' ');
+  };
+
+  const editCustomFields = customFieldsOf(
+    (assetTypesList ?? []).find((at) => at.id === editTypeId) ?? null,
+  );
+  const savedCustomFields = customFieldsOf(data?.assetType ?? null);
+  const savedCustomFieldValues = data === undefined ? {} : customFieldValuesOf(data.asset);
+
+  function setCustomFieldValue(fieldId: string, value: string) {
+    setEditCustomFieldValues((prev) => ({ ...prev, [fieldId]: value }));
+  }
 
   function startEditing() {
     if (data === undefined) return;
@@ -199,6 +207,7 @@ export default function AssetDetailPage() {
     setEditTypeId(asset.typeId ?? '');
     setEditSiteId(asset.siteId ?? '');
     setEditOwnerUserId(asset.ownerUserId ?? '');
+    setEditCustomFieldValues(customFieldValuesOf(asset));
     setEditing(true);
   }
 
@@ -207,6 +216,12 @@ export default function AssetDetailPage() {
   }
 
   function saveEditing() {
+    // Required fields mean the same thing here as on create.
+    const missing = firstMissingRequired(editCustomFields, editCustomFieldValues);
+    if (missing !== null) {
+      toast.error(t('fieldRequired', { name: missing.name }));
+      return;
+    }
     update.mutate({
       assetId,
       name: editName.trim(),
@@ -214,6 +229,10 @@ export default function AssetDetailPage() {
       typeId: editTypeId === '' ? null : editTypeId,
       siteId: editSiteId === '' ? null : editSiteId,
       ownerUserId: editOwnerUserId === '' ? null : editOwnerUserId,
+      // `customFieldValues` replaces the whole map, so values belonging to
+      // a PREVIOUS type are carried through rather than destroyed: switch
+      // a car back to a pump and its pump readings are still there.
+      customFieldValues: editCustomFieldValues,
     });
   }
 
@@ -249,15 +268,7 @@ export default function AssetDetailPage() {
   const { asset, assetType, siteName, ownerName, childrenCount, latestReadings } = data;
   const isArchived = asset.archivedAt !== null;
 
-  const TABS: Tab[] = [
-    'overview',
-    'readings',
-    'maintenance',
-    'media',
-    'actions',
-    'inspections',
-    'observations',
-  ];
+  const TABS: Tab[] = ['overview', 'activity', 'readings', 'media'];
 
   return (
     <div className="space-y-6">
@@ -395,6 +406,24 @@ export default function AssetDetailPage() {
                     ))}
                   </select>
                 </div>
+
+                {/* The selected type's custom fields. These existed only on
+                    the create page, so changing an asset's type to one that
+                    defines fields left no way to fill them in — and a value
+                    typed at creation was never editable again. */}
+                {editCustomFields.length > 0 ? (
+                  <div className="space-y-4 border-t pt-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t('fields.customFieldsHeading')}
+                    </p>
+                    <CustomFieldInputs
+                      fields={editCustomFields}
+                      values={editCustomFieldValues}
+                      onChange={setCustomFieldValue}
+                      idPrefix="edit-cf"
+                    />
+                  </div>
+                ) : null}
                 <div className="space-y-1.5">
                   <Label>{placeLabel}</Label>
                   <SiteSelector
@@ -454,12 +483,45 @@ export default function AssetDetailPage() {
                     </DetailRow>
                   ) : null}
                   <DetailRow label={t('fields.children')}>{String(childrenCount)}</DetailRow>
+
+                  {/* The type's custom fields. Before this they were visible
+                      nowhere after creation, so a value could not be read
+                      back or corrected. An unanswered field shows a dash
+                      rather than vanishing — it is a prompt to go and fill
+                      it in, which is exactly what a type change produces. */}
+                  {savedCustomFields.length > 0 ? (
+                    <div className="space-y-3 border-t pt-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {t('fields.customFieldsHeading')}
+                      </p>
+                      <CustomFieldReadout
+                        fields={savedCustomFields}
+                        values={savedCustomFieldValues}
+                        emptyLabel={t('fields.customFieldEmpty')}
+                      />
+                      {canManage &&
+                      firstMissingRequired(savedCustomFields, savedCustomFieldValues) !== null ? (
+                        <p className="text-xs text-amber-700 dark:text-amber-400">
+                          {t('fields.customFieldsIncomplete')}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
 
               <Card>
                 <CardContent className="space-y-3 p-6 text-sm">
-                  <h2 className="text-base font-semibold">{t('latestReadingsHeading')}</h2>
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-base font-semibold">{t('latestReadingsHeading')}</h2>
+                    <button
+                      type="button"
+                      onClick={() => setTab('readings')}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      {t('viewAll')}
+                    </button>
+                  </div>
                   {latestReadings.length === 0 ? (
                     <p className="text-muted-foreground">{t('noReadings')}</p>
                   ) : (
@@ -478,8 +540,153 @@ export default function AssetDetailPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Activity + media summaries, so the overview answers "what is
+                happening with this asset" without a tab hop. Each card is a
+                head-of-list with a way through to the full view. */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between gap-2 border-b p-4">
+                    <h2 className="text-base font-semibold">{t('activity.heading')}</h2>
+                    {activityRows.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setTab('activity')}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        {t('viewAllCount', { count: activityRows.length })}
+                      </button>
+                    ) : null}
+                  </div>
+                  {activityLoading ? (
+                    <div className="space-y-2 p-4">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-8 w-full" />
+                      ))}
+                    </div>
+                  ) : (
+                    <AssetActivityList
+                      rows={activityRows}
+                      limit={5}
+                      emptyLabel={t('activity.empty.all')}
+                      statusLabel={activityStatusLabel}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between gap-2 border-b p-4">
+                    <h2 className="text-base font-semibold">{t('media.heading')}</h2>
+                    <button
+                      type="button"
+                      onClick={() => setTab('media')}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      {t('viewAll')}
+                    </button>
+                  </div>
+                  {asset.photoKey === null ? (
+                    <div className="flex flex-col items-center gap-2 p-8 text-center">
+                      <ImageIcon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+                      <p className="text-sm text-muted-foreground">{t('media.empty')}</p>
+                      {canManage && !isArchived ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={photoUploading}
+                          onClick={() => photoInputRef.current?.click()}
+                        >
+                          {t('media.addPhoto')}
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setTab('media')}
+                      className="block w-full p-4"
+                    >
+                      {/* R2 blob behind the session-gated /api/files proxy —
+                          next/image cannot sign that URL, same as the other
+                          asset photos on this page. */}
+                      <img
+                        src={`/api/files?key=${encodeURIComponent(asset.photoKey)}`}
+                        alt={asset.name}
+                        className="h-40 w-full rounded-md object-cover"
+                      />
+                    </button>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
             {canViewContractors ? (
               <AssetContractorsSection assetId={assetId} canManage={canLinkContractors} />
+            ) : null}
+            {/* PF-17: fire logbook history for this asset. */}
+            {canViewFire && (fireHistory.data?.checks.length ?? 0) > 0 ? (
+              <Card>
+                <CardContent className="space-y-2 p-6">
+                  <h2 className="text-base font-semibold">{t('fireHistory.heading')}</h2>
+                  <ul className="space-y-1 text-sm">
+                    {(fireHistory.data?.checks ?? []).map((c) => (
+                      <li key={c.id} className="text-muted-foreground">
+                        {t('fireHistory.checkLine', {
+                          type: c.checkType.replace(/_/g, ' '),
+                          building: c.buildingName,
+                        })}
+                      </li>
+                    ))}
+                  </ul>
+                  {(fireHistory.data?.entries ?? []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t('fireHistory.empty')}</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="border-b bg-muted/40 text-left">
+                          <tr>
+                            <th className="px-3 py-2 font-medium">
+                              {t('fireHistory.performedAt')}
+                            </th>
+                            <th className="px-3 py-2 font-medium">{t('fireHistory.type')}</th>
+                            <th className="px-3 py-2 font-medium">{t('fireHistory.result')}</th>
+                            <th className="px-3 py-2 font-medium">{t('fireHistory.notes')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(fireHistory.data?.entries ?? []).slice(0, 20).map((e) => (
+                            <tr key={e.id} className="border-b last:border-0">
+                              <td className="px-3 py-2 whitespace-nowrap">
+                                {new Date(e.performedAt).toLocaleDateString(locale)}
+                              </td>
+                              <td className="px-3 py-2">{e.checkType.replace(/_/g, ' ')}</td>
+                              <td className="px-3 py-2">
+                                <span
+                                  className={cn(
+                                    'rounded-full px-2 py-0.5 text-xs font-medium',
+                                    e.result === 'fail'
+                                      ? 'bg-destructive/10 text-destructive'
+                                      : e.result === 'defects_found'
+                                        ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100'
+                                        : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
+                                  )}
+                                >
+                                  {e.result}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 text-muted-foreground">{e.notes}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             ) : null}
           </div>
         )
@@ -583,281 +790,6 @@ export default function AssetDetailPage() {
         </div>
       ) : null}
 
-      {/* ── MAINTENANCE ── */}
-      {tab === 'maintenance' ? (
-        <div className="space-y-4">
-          {/* Attach a maintenance program */}
-          {canManageMaintenance ? (
-            <Card>
-              <CardContent className="flex flex-wrap items-end gap-2 p-6">
-                <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="attach-program">{tMaintPrograms('attachProgramLabel')}</Label>
-                  <select
-                    id="attach-program"
-                    value={attachProgramId}
-                    onChange={(e) => setAttachProgramId(e.target.value)}
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="">{tMaintPrograms('selectProgram')}</option>
-                    {(programsListData?.programs ?? [])
-                      .filter(
-                        (p) =>
-                          !(maintenanceData?.programs ?? []).some((ap) => ap.programId === p.id),
-                      )
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <Button
-                  type="button"
-                  disabled={attachProgram.isPending || attachProgramId === ''}
-                  onClick={() => attachProgram.mutate({ programId: attachProgramId, assetId })}
-                >
-                  {tMaintPrograms('attachProgramButton')}
-                </Button>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {/* PF-18: maintenance plans (time/usage) attached to this asset. */}
-          <Card>
-            <CardContent className="space-y-2 p-6">
-              <h2 className="text-base font-semibold">{t('plans.heading')}</h2>
-              {(plansQuery.data ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t('plans.empty')}</p>
-              ) : (
-                <ul className="divide-y rounded-md border">
-                  {(plansQuery.data ?? []).map((pl) => (
-                    <li
-                      key={pl.planId}
-                      className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5"
-                    >
-                      <div>
-                        <Link
-                          href={`/${locale}/maintenance/${pl.planId}`}
-                          className="font-medium hover:underline"
-                        >
-                          {pl.planName ?? pl.planId}
-                        </Link>
-                        <p className="text-xs text-muted-foreground">
-                          {pl.planType === 'usage'
-                            ? t('plans.usageMeta', {
-                                interval: pl.intervalUsage ?? '',
-                                unit: pl.usageUnit ?? '',
-                                current: pl.latestReadingValue ?? '—',
-                              })
-                            : t('plans.timeMeta', {
-                                interval: pl.intervalDays ?? 0,
-                                last: pl.lastServiceDate ?? '—',
-                              })}
-                        </p>
-                      </div>
-                      <span
-                        className={cn(
-                          'rounded-full px-2 py-0.5 text-xs font-medium',
-                          pl.status === 'overdue'
-                            ? 'bg-destructive/10 text-destructive'
-                            : pl.status === 'approaching'
-                              ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100'
-                              : 'bg-muted text-muted-foreground',
-                        )}
-                      >
-                        {t(`plans.status.${pl.status}` as never)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* PF-17: fire logbook history for this asset. */}
-          {canViewFire && (fireHistory.data?.checks.length ?? 0) > 0 ? (
-            <Card>
-              <CardContent className="space-y-2 p-6">
-                <h2 className="text-base font-semibold">{t('fireHistory.heading')}</h2>
-                <ul className="space-y-1 text-sm">
-                  {(fireHistory.data?.checks ?? []).map((c) => (
-                    <li key={c.id} className="text-muted-foreground">
-                      {t('fireHistory.checkLine', {
-                        type: c.checkType.replace(/_/g, ' '),
-                        building: c.buildingName,
-                      })}
-                    </li>
-                  ))}
-                </ul>
-                {(fireHistory.data?.entries ?? []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t('fireHistory.empty')}</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="border-b bg-muted/40 text-left">
-                        <tr>
-                          <th className="px-3 py-2 font-medium">{t('fireHistory.performedAt')}</th>
-                          <th className="px-3 py-2 font-medium">{t('fireHistory.type')}</th>
-                          <th className="px-3 py-2 font-medium">{t('fireHistory.result')}</th>
-                          <th className="px-3 py-2 font-medium">{t('fireHistory.notes')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(fireHistory.data?.entries ?? []).slice(0, 20).map((e) => (
-                          <tr key={e.id} className="border-b last:border-0">
-                            <td className="px-3 py-2 whitespace-nowrap">
-                              {new Date(e.performedAt).toLocaleDateString(locale)}
-                            </td>
-                            <td className="px-3 py-2">{e.checkType.replace(/_/g, ' ')}</td>
-                            <td className="px-3 py-2">
-                              <span
-                                className={cn(
-                                  'rounded-full px-2 py-0.5 text-xs font-medium',
-                                  e.result === 'fail'
-                                    ? 'bg-destructive/10 text-destructive'
-                                    : e.result === 'defects_found'
-                                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100'
-                                      : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
-                                )}
-                              >
-                                {e.result}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 text-muted-foreground">{e.notes}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {maintenanceLoading ? (
-            <Skeleton className="h-48 w-full" />
-          ) : maintenanceError !== null ? (
-            <DetailNotFound error={maintenanceError} />
-          ) : (
-            <>
-              {/* Attached programs */}
-              <Card>
-                <CardContent className="space-y-2 p-6">
-                  <h2 className="text-base font-semibold">
-                    {tMaintPrograms('attachedProgramsHeading')}
-                  </h2>
-                  {(maintenanceData?.programs ?? []).length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      {tMaintPrograms('noProgramsForAsset')}
-                    </p>
-                  ) : (
-                    <ul className="divide-y rounded-md border">
-                      {(maintenanceData?.programs ?? []).map((p) => (
-                        <li
-                          key={p.programId}
-                          className="flex items-center justify-between gap-2 px-3 py-2.5"
-                        >
-                          <Link
-                            href={`/${locale}/assets/settings/programs/${p.programId}`}
-                            className="font-medium hover:underline"
-                          >
-                            {p.programName}
-                          </Link>
-                          {canManageMaintenance ? (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setDetachTarget({ programId: p.programId, name: p.programName })
-                              }
-                              className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                              aria-label={tMaintPrograms('detach')}
-                              title={tMaintPrograms('detach')}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Maintenance actions */}
-              <Card>
-                <CardContent className="p-0">
-                  <div className="border-b px-6 py-3">
-                    <h2 className="text-base font-semibold">
-                      {tMaintPrograms('maintenanceActionsHeading')}
-                    </h2>
-                  </div>
-                  {(maintenanceData?.actions ?? []).length === 0 ? (
-                    <div className="py-12 text-center text-muted-foreground">
-                      <p className="text-sm">{tMaintPrograms('noMaintenanceActions')}</p>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead className="border-b bg-muted/40">
-                          <tr className="text-left">
-                            <th className="px-3 py-2 font-medium">
-                              {tMaintPrograms('actionColumns.title')}
-                            </th>
-                            <th className="px-3 py-2 font-medium">
-                              {tMaintPrograms('actionColumns.detail')}
-                            </th>
-                            <th className="px-3 py-2 font-medium">
-                              {tMaintPrograms('actionColumns.status')}
-                            </th>
-                            <th className="px-3 py-2 font-medium">
-                              {tMaintPrograms('actionColumns.dueAt')}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(maintenanceData?.actions ?? []).map((action) => (
-                            <tr
-                              key={action.id}
-                              className="border-b last:border-0 hover:bg-muted/30"
-                            >
-                              <td className="px-3 py-2 font-medium">
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedActionId(action.id)}
-                                  className="text-left hover:underline"
-                                >
-                                  {action.referenceNumber !== null ? (
-                                    <span className="mr-1 text-xs text-muted-foreground">
-                                      {action.referenceNumber}
-                                    </span>
-                                  ) : null}
-                                  {action.title}
-                                </button>
-                              </td>
-                              <td className="px-3 py-2 text-muted-foreground">
-                                {action.description !== '' ? action.description : '—'}
-                              </td>
-                              <td className="px-3 py-2 text-muted-foreground">
-                                {tActionStatus(action.status)}
-                              </td>
-                              <td className="px-3 py-2 text-muted-foreground">
-                                {action.dueAt !== null
-                                  ? new Date(action.dueAt).toLocaleDateString(locale)
-                                  : '—'}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </div>
-      ) : null}
-
       {/* ── MEDIA ── */}
       {tab === 'media' ? (
         <div className="space-y-4">
@@ -926,232 +858,53 @@ export default function AssetDetailPage() {
       ) : null}
 
       {/* ── ACTIONS ── */}
-      {tab === 'actions' ? (
-        <Card>
-          <CardContent className="p-0">
-            {actionsLoading ? (
-              <div className="space-y-2 p-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : !linkedActions || linkedActions.length === 0 ? (
-              <div className="py-16 text-center text-muted-foreground">
-                <p className="text-sm">{t('empty.actions')}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.priority')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.dueAt')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {linkedActions.map((a) => (
-                      <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-4 py-2">
-                          <Link href={`/${locale}/actions/${a.id}`} className="hover:underline">
-                            {a.referenceNumber ? (
-                              <span className="mr-1 text-xs text-muted-foreground">
-                                {a.referenceNumber}
-                              </span>
-                            ) : null}
-                            {a.title}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2">{tActionStatus(a.status)}</td>
-                        <td className="px-4 py-2">
-                          {a.priority !== null ? tActionPriority(a.priority) : '—'}
-                        </td>
-                        <td className="px-4 py-2">
-                          {a.dueAt ? new Date(a.dueAt).toLocaleDateString(locale) : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* ── ACTIVITY ── inspections + actions + observations, merged.
+             Three tabs each showing one thin table answered nothing on
+             their own; the useful view is all of it, newest first. */}
+      {tab === 'activity' ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {ACTIVITY_FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setActivityFilter(f)}
+                aria-pressed={activityFilter === f}
+                className={cn(
+                  'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                  activityFilter === f
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border text-muted-foreground hover:bg-muted',
+                )}
+              >
+                {t(`activity.filters.${f}`)}
+                {f !== 'all' ? (
+                  <span className="ml-1.5 tabular-nums opacity-70">
+                    {activityRows.filter((r) => r.kind === f).length}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+          <Card>
+            <CardContent className="p-0">
+              {activityLoading ? (
+                <div className="space-y-2 p-4">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-10 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <AssetActivityList
+                  rows={filteredActivity}
+                  emptyLabel={t(`activity.empty.${activityFilter}`)}
+                  statusLabel={activityStatusLabel}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
       ) : null}
-
-      {/* ── INSPECTIONS ── */}
-      {tab === 'inspections' ? (
-        <Card>
-          <CardContent className="p-0">
-            {inspectionsLoading ? (
-              <div className="space-y-2 p-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : !linkedInspections || linkedInspections.length === 0 ? (
-              <div className="py-16 text-center text-muted-foreground">
-                <p className="text-sm">{t('empty.inspections')}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.docNumber')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.startedAt')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {linkedInspections.map((ins) => (
-                      <tr
-                        key={`${ins.id}-${ins.questionId}`}
-                        className="border-b last:border-0 hover:bg-muted/30"
-                      >
-                        <td className="px-4 py-2">
-                          <Link
-                            href={`/${locale}/inspections/${ins.id}`}
-                            className="hover:underline"
-                          >
-                            {ins.title}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2">{inspectionStatusLabel(ins.status)}</td>
-                        <td className="px-4 py-2">{ins.documentNumber ?? '—'}</td>
-                        <td className="px-4 py-2">
-                          {ins.startedAt ? new Date(ins.startedAt).toLocaleDateString(locale) : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {/* ── OBSERVATIONS ── */}
-      {tab === 'observations' ? (
-        <Card>
-          <CardContent className="p-0">
-            {observationsLoading ? (
-              <div className="space-y-2 p-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : !linkedObservations || linkedObservations.length === 0 ? (
-              <div className="py-16 text-center text-muted-foreground">
-                <p className="text-sm">{t('empty.observations')}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.priority')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.createdAt')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {linkedObservations.map((obs) => (
-                      <tr key={obs.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-4 py-2">
-                          <Link
-                            href={`/${locale}/observations/${obs.id}`}
-                            className="hover:underline"
-                          >
-                            {obs.referenceNumber ? (
-                              <span className="mr-1 text-xs text-muted-foreground">
-                                {obs.referenceNumber}
-                              </span>
-                            ) : null}
-                            {obs.title}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2">{issueStatusLabel(obs.status)}</td>
-                        <td className="px-4 py-2">
-                          {obs.priority !== null ? tIssuePriority(obs.priority) : '—'}
-                        </td>
-                        <td className="px-4 py-2">
-                          {obs.createdAt ? new Date(obs.createdAt).toLocaleDateString(locale) : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {/* Detach-program confirm — keep or cancel the asset's open actions. */}
-      <Dialog open={detachTarget !== null} onOpenChange={(o) => !o && setDetachTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{tMaintPrograms('detachTitle')}</DialogTitle>
-            <DialogDescription>
-              {tMaintPrograms('detachBody', { name: detachTarget?.name ?? '' })}{' '}
-              {tMaintPrograms('detachExplain')}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button
-              variant="outline"
-              disabled={detachProgram.isPending}
-              onClick={() =>
-                detachTarget !== null &&
-                detachProgram.mutate({
-                  programId: detachTarget.programId,
-                  assetId,
-                  cancelOpenActions: false,
-                })
-              }
-            >
-              {tMaintPrograms('detachKeep')}
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={detachProgram.isPending}
-              onClick={() =>
-                detachTarget !== null &&
-                detachProgram.mutate({
-                  programId: detachTarget.programId,
-                  assetId,
-                  cancelOpenActions: true,
-                })
-              }
-            >
-              {tMaintPrograms('detachCancel')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Maintenance action detail — opens in a side sheet, no page change. */}
-      <Sheet
-        open={selectedActionId !== null}
-        onOpenChange={(o) => {
-          if (!o) {
-            setSelectedActionId(null);
-            // Reflect any status change (complete → roll-forward, cancel, etc.).
-            void utils.maintenancePrograms.listForAsset.invalidate({ assetId });
-          }
-        }}
-      >
-        <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
-          {selectedActionId !== null ? (
-            <ActionDetailPanel actionId={selectedActionId} locale={locale} />
-          ) : null}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

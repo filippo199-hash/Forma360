@@ -80,10 +80,12 @@ export const SEARCH_CATEGORIES: ReadonlyArray<SearchCategoryDef> = [
   { key: 'rams', labelKey: 'categories.rams', basePath: 'rams', icon: 'inspection' },
   // TR-A13: training was in the nav but not in Cmd-K — the same bug a
   // third time, and the reason this list has a test.
+  // TR-B3: people, at a route that exists. `training/requirements/<id>`
+  // was never a route, so every training hit 404'd.
   {
     key: 'training',
     labelKey: 'categories.training',
-    basePath: 'training/requirements',
+    basePath: 'training/person',
     icon: 'action',
   },
 ];

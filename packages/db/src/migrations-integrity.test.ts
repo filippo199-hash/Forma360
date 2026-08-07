@@ -48,6 +48,45 @@ async function applyFile(client: PGlite, file: string): Promise<void> {
   }
 }
 
+/**
+ * Table names removed by a `DROP TABLE` in any migration. Re-applying (the
+ * invariant-#4 pass) an *earlier* migration that ALTERs such a table onto an
+ * at-HEAD database fails with `relation "…" does not exist` — and that is
+ * correct: drizzle-kit never replays a migration older than the database's
+ * last-applied one, so a pre-drop ALTER is never run against a post-drop
+ * database in production. The re-apply pass tolerates exactly these; every
+ * other statement must still be idempotent.
+ */
+async function collectDroppedTables(files: string[]): Promise<Set<string>> {
+  const dropped = new Set<string>();
+  for (const file of files) {
+    const sql = await readFile(join(MIGRATIONS_DIR, file), 'utf-8');
+    for (const m of sql.matchAll(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-z_]+)"?/gi)) {
+      if (m[1] !== undefined) dropped.add(m[1]);
+    }
+  }
+  return dropped;
+}
+
+async function reapplyFile(
+  client: PGlite,
+  file: string,
+  droppedTables: ReadonlySet<string>,
+): Promise<void> {
+  const sqlText = await readFile(join(MIGRATIONS_DIR, file), 'utf-8');
+  for (const stmt of sqlText.split('--> statement-breakpoint').map((s) => s.trim())) {
+    if (stmt.length === 0) continue;
+    try {
+      await client.exec(stmt);
+    } catch (err) {
+      const missing = /relation "([a-z_]+)" does not exist/i.exec(String(err));
+      // Expected only when the missing relation is one a later migration drops.
+      if (missing?.[1] !== undefined && droppedTables.has(missing[1])) continue;
+      throw err;
+    }
+  }
+}
+
 describe('migration chain integrity', () => {
   it('registers every .sql file in the drizzle journal, in order', async () => {
     const files = await listMigrationFiles();
@@ -93,11 +132,14 @@ describe('migration chain integrity', () => {
     }
 
     // Journal-repair path (existing production database): the hand-written
-    // tail must tolerate running against DDL that already exists.
+    // tail must tolerate running against DDL that already exists — except a
+    // pre-drop ALTER of a table a later migration removes, which drizzle
+    // never replays against a post-drop database (see collectDroppedTables).
+    const droppedTables = await collectDroppedTables(files);
     const handWritten = files.filter((f) => f >= FIRST_HANDWRITTEN);
     expect(handWritten.length).toBeGreaterThan(0);
     for (const file of handWritten) {
-      await applyFile(client, file);
+      await reapplyFile(client, file, droppedTables);
     }
 
     // Smoke-check a column from migration 0028 — the one whose absence

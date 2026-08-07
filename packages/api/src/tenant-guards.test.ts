@@ -104,20 +104,6 @@ describe('tenant reference guards', () => {
     await expect(a.sites.addMember({ siteId, userId: adminA })).resolves.toEqual({ ok: true });
   });
 
-  it('maintenancePlans.unlinkAsset cannot target another tenant plan', async () => {
-    const b = createCaller(ctxFor(tenantB, adminB));
-    const { planId } = await b.maintenancePlans.create({
-      name: 'Service',
-      planType: 'time',
-      intervalDays: 30,
-    });
-
-    // Tenant A must not be able to touch tenant B's plan (join table has no
-    // tenantId, so the guard is the only thing standing between them).
-    const a = createCaller(ctxFor(tenantA, adminA));
-    await expect(a.maintenancePlans.unlinkAsset({ planId, assetId: newId() })).rejects.toThrow();
-  });
-
   it('assertStorageKeyInTenant only accepts keys under the tenant prefix', () => {
     expect(() => assertStorageKeyInTenant(tenantA, `${tenantA}/issues/x/f.pdf`)).not.toThrow();
     // A key pointing at another tenant's object is rejected.

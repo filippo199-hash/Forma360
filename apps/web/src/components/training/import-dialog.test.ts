@@ -15,7 +15,7 @@
  *     strings, so the server's defaults apply
  */
 import { describe, expect, it } from 'vitest';
-import { parseCsv } from './import-dialog';
+import { groupErrors, parseCsv } from './import-dialog';
 
 describe('training CSV import (web path)', () => {
   it('TR-W10: reads a realistic export — quotes, BOM, CRLF, blank tail', () => {
@@ -77,5 +77,60 @@ describe('training CSV import (web path)', () => {
       achievedAt: '2026-04-02',
       certificateNumber: 'CS-9911',
     });
+  });
+  it('TR-B4: rows missing a required value are REPORTED, not silently dropped', () => {
+    // The defect this test exists for: a 2,000-row extract with 40 missing
+    // dates imported 1,960 and reported "Imported 1,960" with no failures.
+    // Silent truncation on an import is the worst failure mode there is.
+    const csv =
+      'personName,requirementName,achievedAt\n' +
+      'Dave,Abrasive wheels,2026-01-05\n' +
+      ',Abrasive wheels,2026-01-05\n' +
+      'Nia,,2026-01-05\n' +
+      'Tom,Manual handling,\n';
+    const { rows, skipped } = parseCsv(csv);
+    expect(rows).toHaveLength(1);
+    expect(skipped).toHaveLength(3);
+    expect(skipped.map((s) => s.message)).toEqual([
+      'missing:personName',
+      'missing:requirementName',
+      'missing:achievedAt',
+    ]);
+  });
+
+  it('TR-B4: reported row numbers are the user’s file lines, not array indices', () => {
+    // Once anything is dropped, an index into the surviving array is offset
+    // from the spreadsheet the user is being asked to go and fix.
+    const csv =
+      'personName,requirementName,achievedAt\n' + // line 1
+      ',Abrasive wheels,2026-01-05\n' + // line 2 — bad
+      '\n' + // line 3 — blank, must not shift the count
+      'Dave,Abrasive wheels,2026-01-05\n'; // line 4 — good
+    const { rows, skipped } = parseCsv(csv);
+    expect(skipped[0]?.row).toBe(2);
+    expect(rows[0]?.sourceRow).toBe(4);
+  });
+
+  it('TR-B4: a file of nothing but bad rows is a failure report, not "empty"', () => {
+    const { rows, skipped, error } = parseCsv('personName,requirementName,achievedAt\n,,\n,,\n');
+    expect(rows).toHaveLength(0);
+    expect(skipped).toHaveLength(2);
+    // Not 'empty' — there IS something to tell the user about.
+    expect(error).toBeNull();
+  });
+
+  it('groups repeated identical failures so one bad course name is one line', () => {
+    // An extract with one unknown course produced one error PER ROW — up to
+    // 2,000 identical lines in a small scroll box.
+    const grouped = groupErrors([
+      { row: 2, message: 'unknown-requirement:Fork Lift' },
+      { row: 5, message: 'unknown-requirement:Fork Lift' },
+      { row: 9, message: 'unknown-requirement:Fork Lift' },
+      { row: 3, message: 'invalid-date:32/13/2026' },
+    ]);
+    expect(grouped).toHaveLength(2);
+    expect(grouped[0]).toMatchObject({ message: 'unknown-requirement:Fork Lift', count: 3 });
+    expect(grouped[0]?.rows).toEqual([2, 5, 9]);
+    expect(grouped[1]).toMatchObject({ count: 1 });
   });
 });

@@ -47,6 +47,12 @@ export const HERO = {
   subtitle: `${activeBrand.name} brings inspections, issues, corrective actions, assets and analytics into one platform. Its AI assistant answers questions about your operations in plain language — in the app or over WhatsApp.`,
   primaryCta: 'Get started',
   secondaryCta: 'Book a demo',
+  /**
+   * Leads the hero on brands that ship the try-it-now sandbox
+   * (ADR 0017). Says the price up front, because "no account" is the
+   * objection being answered.
+   */
+  tryCta: 'Try it now — no account',
   /** Shown instead of the primary CTA when the visitor is already signed in. */
   appCta: 'Open the app',
   /** Small reassurance line under the hero CTAs. */
@@ -121,15 +127,15 @@ export const MODULES: Module[] = [
   },
   {
     icon: 'package',
-    title: 'Assets & maintenance',
+    title: 'Assets',
     description:
-      'Keep an asset register, schedule preventive maintenance, and link work to the equipment it concerns.',
+      'Keep an asset register, record meter readings, and link work to the equipment it concerns.',
   },
   {
     icon: 'calendar-clock',
     title: 'Schedules & reminders',
     description:
-      'Automate recurring inspections and maintenance, with reminders so nothing slips through the cracks.',
+      'Automate recurring inspections, with reminders so nothing slips through the cracks.',
   },
   {
     icon: 'file-text',

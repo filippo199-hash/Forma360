@@ -19,7 +19,6 @@ export const NOTIFICATION_PREF_KEYS = [
   'emailActionReminders',
   'emailScheduleMissed',
   'emailDocumentExpiry',
-  'emailMaintenance',
 ] as const;
 export type NotificationPrefKey = (typeof NOTIFICATION_PREF_KEYS)[number];
 

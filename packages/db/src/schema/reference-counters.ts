@@ -11,10 +11,10 @@ import { tenants } from './tenants';
  *   INSERT … ON CONFLICT (tenant_id, series) DO UPDATE
  *     SET value = value + 1 RETURNING value
  * upsert — atomic under the row lock, so concurrent claims serialize into
- * distinct values. `series` is 'issue' (OBS-) or 'action' (AC-). Actions and
- * maintenance-generated actions share the 'action' series so they never
- * collide on the same `actions` table. Seeded from the current max reference
- * number per tenant at migration time (see 0052_reference_counters.sql).
+ * distinct values. `series` is 'issue' (OBS-) or 'action' (AC-). All actions
+ * share the 'action' series so they never collide on the same `actions`
+ * table. Seeded from the current max reference number per tenant at
+ * migration time (see 0052_reference_counters.sql).
  */
 export const referenceCounters = pgTable(
   'reference_counters',

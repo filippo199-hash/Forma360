@@ -51,15 +51,6 @@ export const QUEUE_NAMES = {
    */
   SCHEDULE_REMINDER: 'forma360-schedule-reminder',
   /**
-   * Phase 5B — daily tick that scans maintenance plans for upcoming or
-   * overdue service windows and fans out to MAINTENANCE_NOTIFY.
-   */
-  MAINTENANCE_TICK: 'forma360-maintenance-tick',
-  /**
-   * Phase 5B — send a maintenance reminder email for one plan-asset link.
-   */
-  MAINTENANCE_NOTIFY: 'forma360-maintenance-notify',
-  /**
    * Phase 3 — send notification emails for a newly-created observation.
    * Fans out to each resolved recipient (group members, site members, named
    * users) and respects the category's `notificationRule` + `criticalAlerts`
@@ -204,34 +195,6 @@ export const scheduleReminderPayloadSchema = z.object({
 });
 export type ScheduleReminderPayload = z.infer<typeof scheduleReminderPayloadSchema>;
 
-/** Phase 5B — maintenance tick: no payload needed. */
-export const maintenanceTickPayloadSchema = z.object({
-  /** ISO timestamp for the tick (defaults to now). */
-  tickAt: z.string().datetime().optional(),
-});
-export type MaintenanceTickPayload = z.infer<typeof maintenanceTickPayloadSchema>;
-
-/** Phase 5B — send a maintenance reminder for one plan-asset link. */
-export const maintenanceNotifyPayloadSchema = z.object({
-  tenantId: z.string().length(26),
-  planId: z.string().length(26),
-  assetId: z.string().length(26),
-  /**
-   * Dedup key for this service cycle. Time-based plans use the computed
-   * due date (YYYY-MM-DD); usage-based plans (PF-18) use
-   * `usage:<threshold>` so one cycle notifies once however long it takes
-   * the meter to cross.
-   */
-  dueDate: z.string().min(4).max(64),
-  /** Human status line for the email (usage plans); defaults from daysBefore. */
-  statusLabel: z.string().max(200).optional(),
-  /** Human "due" label for the email (usage plans), e.g. "at 12000 km". */
-  dueLabel: z.string().max(200).optional(),
-  /** How many days before due this notification is for. */
-  daysBefore: z.number().int().min(0),
-});
-export type MaintenanceNotifyPayload = z.infer<typeof maintenanceNotifyPayloadSchema>;
-
 /** Phase 3 — send observation-created notification emails. */
 export const observationNotifyPayloadSchema = z.object({
   tenantId: z.string().length(26),
@@ -315,8 +278,6 @@ export interface QueuePayloads {
   [QUEUE_NAMES.SCHEDULE_TICK]: ScheduleTickPayload;
   [QUEUE_NAMES.SCHEDULE_MATERIALISE]: ScheduleMaterialisePayload;
   [QUEUE_NAMES.SCHEDULE_REMINDER]: ScheduleReminderPayload;
-  [QUEUE_NAMES.MAINTENANCE_TICK]: MaintenanceTickPayload;
-  [QUEUE_NAMES.MAINTENANCE_NOTIFY]: MaintenanceNotifyPayload;
   [QUEUE_NAMES.OBSERVATION_NOTIFY]: ObservationNotifyPayload;
   [QUEUE_NAMES.CONTRACTOR_DOC_REMINDER]: ContractorDocReminderPayload;
   [QUEUE_NAMES.CONTRACTOR_OVERSTAY]: ContractorOverstayPayload;
@@ -344,8 +305,6 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.SCHEDULE_TICK]: scheduleTickPayloadSchema,
   [QUEUE_NAMES.SCHEDULE_MATERIALISE]: scheduleMaterialisePayloadSchema,
   [QUEUE_NAMES.SCHEDULE_REMINDER]: scheduleReminderPayloadSchema,
-  [QUEUE_NAMES.MAINTENANCE_TICK]: maintenanceTickPayloadSchema,
-  [QUEUE_NAMES.MAINTENANCE_NOTIFY]: maintenanceNotifyPayloadSchema,
   [QUEUE_NAMES.OBSERVATION_NOTIFY]: observationNotifyPayloadSchema,
   [QUEUE_NAMES.CONTRACTOR_DOC_REMINDER]: contractorDocReminderPayloadSchema,
   [QUEUE_NAMES.CONTRACTOR_OVERSTAY]: contractorOverstayPayloadSchema,

@@ -19,6 +19,7 @@ import { healthRouter } from './routers/health';
 import { permissionsRouter } from './routers/permissions';
 import { sitesRouter } from './routers/sites';
 import { templatesRouter } from './routers/templates';
+import { sandboxRouter } from './routers/sandbox';
 import { tenantsRouter } from './routers/tenants';
 import { usersRouter } from './routers/users';
 // Phase 2 PR 28 routers — imported AFTER templates so their
@@ -43,8 +44,6 @@ import {
   type InspectionsExportDeps,
 } from './routers/inspectionsExport';
 import { createIssuesRouter, type IssuesRouterDeps } from './routers/issues';
-import { maintenancePlansRouter } from './routers/maintenancePlans';
-import { maintenanceProgramsRouter } from './routers/maintenancePrograms';
 import { aiAssistantRouter } from './routers/aiAssistant';
 import { searchRouter } from './routers/search';
 import { siteMediaRouter } from './routers/siteMedia';
@@ -115,6 +114,7 @@ export function buildAppRouter(deps: {
     admin: adminRouter,
     permissions: permissionsRouter,
     tenants: tenantsRouter,
+    sandbox: sandboxRouter,
     users: usersRouter,
     customFields: customFieldsRouter,
     groups: groupsRouter,
@@ -137,8 +137,6 @@ export function buildAppRouter(deps: {
     headsUps: createHeadsUpsRouter(deps.headsUps),
     assetTypes: assetTypesRouter,
     assets: assetsRouter,
-    maintenancePlans: maintenancePlansRouter,
-    maintenancePrograms: maintenanceProgramsRouter,
     documentFolders: documentFoldersRouter,
     documentLabels: documentLabelsRouter,
     documents: documentsRouter,
