@@ -683,6 +683,134 @@ describe('contractors — audit suite', () => {
   });
 
   // ═══════════════════════════════════════════════════════════════════════
+  // CT-L — visit lifecycle
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('CT-L · visit lifecycle', () => {
+    async function freshVisit(title: string): Promise<string> {
+      const { id } = await asAdminA().contractors.visits.create({
+        contractorId: world.a.contractorIds[3] as string,
+        siteId: world.a.sites.primary,
+        title,
+        scheduledStart: world.now.toISOString(),
+        authorize: true,
+      });
+      return id;
+    }
+
+    it('CT-L01 · [BUG] staff check-in enforces the gate fields marked required', async () => {
+      // `gate.selfCheckIn` loads every required field and refuses a blank
+      // answer. `visits.checkIn` — the desk flow, which is how most arrivals
+      // are actually recorded — takes `capturedFields` as optional and never
+      // checks them at all.
+      //
+      // So the questions a company made mandatory ("site induction
+      // complete?", "permit to work in place?") are enforced only when the
+      // contractor scans themselves in, and the resulting event log is
+      // indistinguishable from one where they were answered.
+      const admin = asAdminA();
+      const { id: fieldId } = await admin.contractors.gateFields.create({
+        label: 'Site induction complete?',
+        fieldType: 'yes_no',
+        required: true,
+      });
+      const visitId = await freshVisit('Staff check-in, required field blank');
+
+      const res = await callFor(admin, 'contractors.visits.checkIn', { id: visitId });
+      expect({ acceptedWithRequiredFieldBlank: res.ok }).toEqual({
+        acceptedWithRequiredFieldBlank: false,
+      });
+
+      await admin.contractors.gateFields.remove({ id: fieldId });
+    });
+
+    it('CT-L02 · [BUG] a visit cannot be deleted while the person is still on site', async () => {
+      // `visits.delete` sets `archivedAt` with no status guard, and both
+      // `onSiteNow` and the overstay worker filter on `archivedAt IS NULL`.
+      // Deleting a checked-in visit therefore erases someone who is
+      // physically on the premises from the on-site board and from overstay
+      // detection, with no check-out event and no record they left.
+      //
+      // The on-site board is what a fire marshal reads at the assembly
+      // point. It must not be possible to empty it of someone who is inside.
+      const admin = asAdminA();
+      const visitId = await freshVisit('On site, then deleted');
+      await admin.contractors.visits.checkIn({ id: visitId });
+
+      const res = await callFor(admin, 'contractors.visits.delete', { id: visitId });
+      const board = (await admin.contractors.visits.onSiteNow()) as Array<{ id: string }>;
+
+      expect({
+        deleteAccepted: res.ok,
+        stillOnBoard: board.some((v) => v.id === visitId),
+      }).toEqual({ deleteAccepted: false, stillOnBoard: true });
+    });
+
+    it('CT-L03 · [BUG] a second check-out does not overwrite the recorded departure time', async () => {
+      // `checkOut` guards only `checkedInAt === null`, so an already
+      // checked-out visit can be checked out again — moving `checkedOutAt`
+      // forward. The departure time on the gate record is the evidence of
+      // when someone left; a stray second tap rewrites it.
+      const admin = asAdminA();
+      const visitId = await freshVisit('Double check-out');
+      await admin.contractors.visits.checkIn({ id: visitId });
+      await admin.contractors.visits.checkOut({ id: visitId });
+
+      const first = (await admin.contractors.visits.get({ id: visitId })) as {
+        visit: { checkedOutAt: Date | null };
+      };
+      const second = await callFor(admin, 'contractors.visits.checkOut', { id: visitId });
+      const after = (await admin.contractors.visits.get({ id: visitId })) as {
+        visit: { checkedOutAt: Date | null };
+      };
+
+      expect({
+        secondAccepted: second.ok,
+        departureTimeUnchanged:
+          first.visit.checkedOutAt?.getTime() === after.visit.checkedOutAt?.getTime(),
+      }).toEqual({ secondAccepted: false, departureTimeUnchanged: true });
+    });
+
+    it('CT-L04 · [BUG] re-checking-in a departed visit does not strand it on the board', async () => {
+      // `checkIn` sets status back to `checked_in` and stamps a new
+      // `checkedInAt`, but never clears `checkedOutAt`. The row then reads
+      // "on site" while carrying a departure time in the past — it appears
+      // on the on-site board, and `onSiteNow` has no way to resolve it.
+      const admin = asAdminA();
+      const visitId = await freshVisit('Re-entry after check-out');
+      await admin.contractors.visits.checkIn({ id: visitId });
+      await admin.contractors.visits.checkOut({ id: visitId });
+      await callFor(admin, 'contractors.visits.checkIn', { id: visitId });
+
+      const after = (await admin.contractors.visits.get({ id: visitId })) as {
+        visit: { status: string; checkedInAt: Date | null; checkedOutAt: Date | null };
+      };
+      const contradictory =
+        after.visit.status === 'checked_in' && after.visit.checkedOutAt !== null;
+      expect({ onSiteWithADepartureTime: contradictory }).toEqual({
+        onSiteWithADepartureTime: false,
+      });
+    });
+
+    it('CT-L05 · [BUG] someone checked in yesterday can still check out at the kiosk', async () => {
+      // The kiosk lists visits by `scheduledStart` within ±24h. A contractor
+      // on a multi-day job, or anyone who overran, falls out of that window
+      // while still `checked_in` — so the one screen they have no longer
+      // offers them a way out. They stay on the on-site board indefinitely,
+      // inflating the headcount the fire roll call depends on, and the
+      // overstay alert fires every hour with no way for them to clear it.
+      const admin = asAdminA();
+      const { token } = await admin.contractors.gate.regenerateToken();
+      const kiosk = (await asPublic().contractors.gate.publicByToken({ token })) as {
+        visits: Array<{ id: string }>;
+      };
+      const ids = new Set(kiosk.visits.map((v) => v.id));
+      expect({
+        strandedVisitOfferedAWayOut: ids.has(world.a.visits.overstaying as string),
+      }).toEqual({ strandedVisitOfferedAWayOut: true });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
   // CT-V — volume
   // ═══════════════════════════════════════════════════════════════════════
   describe('CT-V · volume', () => {
