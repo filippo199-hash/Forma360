@@ -1448,7 +1448,7 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Gefährdungen & Beinaheunfälle",
+    "issues": "Beobachtungen",
     "actions": "Actions",
     "settings": "Settings",
     "headsUp": "Unterweisungen",
@@ -1470,7 +1470,6 @@
     "quickLabel": "Schnellnavigation",
     "collapseMenu": "Menü einklappen",
     "expandMenu": "Menü ausklappen",
-    "groupOrg": "Die Organisation",
     "child": {
       "schedulesCalendar": "Kalender",
       "permitsBoard": "Live-Tafel",
@@ -1493,9 +1492,7 @@
       "trainingRequirements": "Anforderungen"
     },
     "rams": "RAMS",
-    "training": "Schulungen",
-    "groupDoWork": "Die Arbeit erledigen",
-    "groupRecords": "Nachweise & Register"
+    "training": "Schulungen"
   },
   "approvals": {
     "queueTitle": "Approvals queue",

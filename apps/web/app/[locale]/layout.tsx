@@ -128,7 +128,7 @@ export default async function LocaleLayout({
                     <main className="flex-1">{children}</main>
                   </div>
                 ) : showSidebar ? (
-                  /* Signed-in app shell — full-height dark sidebar on the left,
+                  /* Signed-in app shell — full-height sidebar on the left,
                    * header + content in the column to its right (Cantiere360).
                    * PF-27: the shell provides the caller's permissions so the
                    * nav can hide modules the user cannot open. */

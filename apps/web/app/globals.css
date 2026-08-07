@@ -37,12 +37,15 @@
   --color-input: hsl(220 13% 91%);
   --color-ring: hsl(221 83% 53%);
 
-  /* Dark slate sidebar (Cantiere360 signature). */
-  --color-sidebar: hsl(220 13% 18%);
-  --color-sidebar-foreground: hsl(220 14% 90%);
-  --color-sidebar-accent: hsl(220 13% 24%);
-  --color-sidebar-accent-foreground: hsl(0 0% 100%);
-  --color-sidebar-border: hsl(220 13% 24%);
+  /* Light sidebar: the menu is chrome, not a feature — a white rail that
+   * sits flush with the page reads as part of the document rather than as
+   * a slab bolted to its edge, and it lets the blue primary do the work of
+   * saying "you are here". Dark mode keeps a dark rail (see `.dark`). */
+  --color-sidebar: hsl(0 0% 100%);
+  --color-sidebar-foreground: hsl(220 14% 11%);
+  --color-sidebar-accent: hsl(220 14% 95%);
+  --color-sidebar-accent-foreground: hsl(220 14% 11%);
+  --color-sidebar-border: hsl(220 13% 91%);
 
   --radius: 0.5rem;
   --radius-sm: calc(var(--radius) - 4px);
@@ -91,7 +94,8 @@
   --color-input: hsl(220 13% 24%);
   --color-ring: hsl(221 83% 65%);
 
-  /* Sidebar stays dark in both themes. */
+  /* In dark mode the sidebar follows the surface palette rather than
+   * inverting it — it is the light theme that got the white rail. */
   --color-sidebar: hsl(220 14% 12%);
   --color-sidebar-foreground: hsl(220 14% 90%);
   --color-sidebar-accent: hsl(220 13% 22%);
