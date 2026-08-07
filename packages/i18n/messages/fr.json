@@ -2826,6 +2826,24 @@
         "fieldNameRequired": "All fields must have a name",
         "nameRequired": "Category name is required",
         "selectNeedsOption": "Select field \"{name}\" needs at least one option"
+      },
+      "suggest": {
+        "title": "{count} champs suggérés pour « {name} »",
+        "subtitle": "Cochez ceux que vous voulez. Rien n’est ajouté avant que vous cliquiez sur Ajouter, et tout reste modifiable ensuite.",
+        "subtitleAi": "Suggérés par l’IA à partir du nom de la catégorie. Vérifiez-les avant d’ajouter : c’est un point de départ, pas un conseil.",
+        "thinking": "Recherche de champs adaptés à « {name} »…",
+        "addChosen": "Ajouter les {count} sélectionnés",
+        "noThanks": "Non merci, je les ajouterai moi-même",
+        "dismiss": "Fermer les suggestions",
+        "selectAll": "Tout sélectionner",
+        "selectNone": "Tout désélectionner",
+        "addedToast": "{count} champs ajoutés — modifiez-les ou supprimez-les ci-dessous.",
+        "types": {
+          "text": "Texte",
+          "number": "Nombre",
+          "date": "Date",
+          "select": "Choix"
+        }
       }
     }
   },

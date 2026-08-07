@@ -2826,6 +2826,24 @@
         "fieldNameRequired": "All fields must have a name",
         "nameRequired": "Category name is required",
         "selectNeedsOption": "Select field \"{name}\" needs at least one option"
+      },
+      "suggest": {
+        "title": "{count} Feldvorschläge für „{name}“",
+        "subtitle": "Wählen Sie aus, was Sie möchten. Es wird nichts hinzugefügt, bevor Sie auf Hinzufügen klicken; alles bleibt danach bearbeitbar.",
+        "subtitleAi": "Von der KI aus dem Kategorienamen vorgeschlagen. Bitte vor dem Hinzufügen prüfen — ein Startpunkt, keine Beratung.",
+        "thinking": "Suche nach passenden Feldern für „{name}“…",
+        "addChosen": "{count} ausgewählte hinzufügen",
+        "noThanks": "Nein danke, ich füge eigene hinzu",
+        "dismiss": "Vorschläge schließen",
+        "selectAll": "Alle auswählen",
+        "selectNone": "Auswahl aufheben",
+        "addedToast": "{count} Felder hinzugefügt — unten bearbeiten oder entfernen.",
+        "types": {
+          "text": "Text",
+          "number": "Zahl",
+          "date": "Datum",
+          "select": "Auswahl"
+        }
       }
     }
   },

@@ -23,6 +23,8 @@ import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { SuggestedFieldsPanel } from '../../../../src/components/assets/suggested-fields-panel';
+import { suggestFieldsFor, type SuggestedField } from '../../../../src/lib/asset-field-library';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -383,6 +385,13 @@ export default function AssetSettingsPage() {
   const [newDesc, setNewDesc] = useState('');
   const [newFields, setNewFields] = useState<CustomField[]>([]);
   const [search, setSearch] = useState('');
+  // Suggestion state. `dismissedFor` remembers the name the user said no
+  // to, so the panel does not reappear on every keystroke after that.
+  const [suggestions, setSuggestions] = useState<SuggestedField[]>([]);
+  const [suggestSource, setSuggestSource] = useState<'library' | 'ai'>('library');
+  const [suggestFor, setSuggestFor] = useState('');
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [dismissedFor, setDismissedFor] = useState<string[]>([]);
 
   const { data, isLoading, error, refetch } = trpc.assetTypes.list.useQuery({
     includeArchived: false,
@@ -400,6 +409,9 @@ export default function AssetSettingsPage() {
       setNewName('');
       setNewDesc('');
       setNewFields([]);
+      setSuggestions([]);
+      setSuggestFor('');
+      setDismissedFor([]);
       setShowCreate(false);
       void utils.assetTypes.list.invalidate();
     },
@@ -431,6 +443,90 @@ export default function AssetSettingsPage() {
     });
   }
 
+  /**
+   * Look for suggestions for the typed name. The curated library answers
+   * instantly and for free; only an unknown category reaches the model.
+   * Never called automatically on a name the user has already declined.
+   */
+  async function requestSuggestions(rawName: string) {
+    const name = rawName.trim();
+    if (name.length < 2) return;
+    if (dismissedFor.includes(name.toLowerCase())) return;
+
+    const fromLibrary = suggestFieldsFor(name);
+    if (fromLibrary.length > 0) {
+      setSuggestions(fromLibrary);
+      setSuggestSource('library');
+      setSuggestFor(name);
+      return;
+    }
+
+    setSuggestLoading(true);
+    setSuggestFor(name);
+    try {
+      const res = await fetch('/api/ai/asset-field-suggest', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ categoryName: name }),
+      });
+      if (!res.ok) {
+        setSuggestions([]);
+        return;
+      }
+      const body = (await res.json()) as {
+        suggestion: {
+          fields: Array<{
+            name: string;
+            fieldType: CustomField['fieldType'];
+            options: string[];
+            recommended: boolean;
+            hint: string;
+          }>;
+        };
+      };
+      setSuggestions(
+        body.suggestion.fields.map((f, i) => ({
+          key: `ai-${i}`,
+          name: f.name,
+          fieldType: f.fieldType,
+          options: f.options,
+          recommended: f.recommended,
+          hint: f.hint,
+        })),
+      );
+      setSuggestSource('ai');
+    } catch {
+      // A failed suggestion is not a failed category — the builder below
+      // still works, so this stays silent rather than shouting.
+      setSuggestions([]);
+    } finally {
+      setSuggestLoading(false);
+    }
+  }
+
+  /** Add only what was ticked, as ordinary editable fields. */
+  function acceptSuggestions(chosen: SuggestedField[]) {
+    setNewFields((prev) => [
+      ...prev,
+      ...chosen.map((s) => ({
+        id: newFieldId(),
+        name: s.name,
+        fieldType: s.fieldType,
+        // `exactOptionalPropertyTypes`: omit the key rather than set it
+        // undefined, which is a different thing to the type.
+        ...(s.options !== undefined && s.options.length > 0 ? { options: [...s.options] } : {}),
+        required: false,
+      })),
+    ]);
+    setSuggestions([]);
+    toast.success(t('suggest.addedToast', { count: chosen.length }));
+  }
+
+  function dismissSuggestions() {
+    if (suggestFor !== '') setDismissedFor((prev) => [...prev, suggestFor.toLowerCase()]);
+    setSuggestions([]);
+  }
+
   function addNewField() {
     setNewFields((prev) => [
       ...prev,
@@ -454,6 +550,9 @@ export default function AssetSettingsPage() {
                 setNewName('');
                 setNewDesc('');
                 setNewFields([]);
+                setSuggestions([]);
+                setSuggestFor('');
+                setDismissedFor([]);
               }}
             >
               <Plus className="mr-1 h-4 w-4" />
@@ -478,6 +577,16 @@ export default function AssetSettingsPage() {
                     id="new-cat-name"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
+                    // Suggest once the name has settled, not on every
+                    // keystroke — nobody wants a proposal mid-word, and the
+                    // AI fallback should not fire on "c", "ca", "car".
+                    onBlur={(e) => void requestSuggestions(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        void requestSuggestions(newName);
+                      }
+                    }}
                     maxLength={200}
                     placeholder={t('create.namePlaceholder')}
                     autoFocus
@@ -495,6 +604,20 @@ export default function AssetSettingsPage() {
                   />
                 </div>
               </div>
+
+              {/* "We think you'll want these" — proposed, never imposed.
+                  Nothing is added until Add is pressed. */}
+              {suggestLoading || suggestions.length > 0 ? (
+                <SuggestedFieldsPanel
+                  key={suggestFor}
+                  categoryName={suggestFor}
+                  suggestions={suggestions}
+                  source={suggestSource}
+                  loading={suggestLoading}
+                  onAdd={acceptSuggestions}
+                  onDismiss={dismissSuggestions}
+                />
+              ) : null}
 
               {/* Custom fields for new category */}
               <div className="space-y-3">

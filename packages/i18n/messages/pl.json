@@ -2819,6 +2819,24 @@
         "fieldNameRequired": "All fields must have a name",
         "nameRequired": "Category name is required",
         "selectNeedsOption": "Select field \"{name}\" needs at least one option"
+      },
+      "suggest": {
+        "title": "{count} proponowanych pól dla „{name}”",
+        "subtitle": "Zaznacz te, których chcesz. Nic nie zostanie dodane, dopóki nie klikniesz Dodaj, a wszystko pozostaje edytowalne.",
+        "subtitleAi": "Zaproponowane przez AI na podstawie nazwy kategorii. Sprawdź je przed dodaniem — to punkt wyjścia, nie porada.",
+        "thinking": "Szukam pól pasujących do „{name}”…",
+        "addChosen": "Dodaj {count} zaznaczonych",
+        "noThanks": "Nie, dziękuję — dodam własne",
+        "dismiss": "Zamknij propozycje",
+        "selectAll": "Zaznacz wszystko",
+        "selectNone": "Odznacz wszystko",
+        "addedToast": "Dodano {count} pól — edytuj je lub usuń poniżej.",
+        "types": {
+          "text": "Tekst",
+          "number": "Liczba",
+          "date": "Data",
+          "select": "Wybór"
+        }
       }
     }
   },
