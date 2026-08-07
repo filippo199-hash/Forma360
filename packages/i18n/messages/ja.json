@@ -2754,7 +2754,10 @@
         "noSite": "No site",
         "owner": "所有者",
         "noOwner": "所有者なし",
-        "ownerPlaceholder": "所有者を選択"
+        "ownerPlaceholder": "所有者を選択",
+        "customFieldsHeading": "カテゴリ項目",
+        "customFieldEmpty": "未設定",
+        "customFieldsIncomplete": "この資産タイプの必須項目が未入力です。資産を編集して入力してください。"
       },
       "readingColumns": {
         "field": "Field",
@@ -2802,7 +2805,8 @@
         "type": "点検",
         "result": "結果",
         "notes": "備考"
-      }
+      },
+      "fieldRequired": "{name} は必須です"
     },
     "settings": {
       "title": "Settings",

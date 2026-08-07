@@ -2761,7 +2761,10 @@
         "noSite": "No site",
         "owner": "Eigentümer",
         "noOwner": "Kein Eigentümer",
-        "ownerPlaceholder": "Eigentümer auswählen"
+        "ownerPlaceholder": "Eigentümer auswählen",
+        "customFieldsHeading": "Kategoriefelder",
+        "customFieldEmpty": "Nicht gesetzt",
+        "customFieldsIncomplete": "Einige Pflichtangaben für diesen Anlagentyp fehlen noch. Bearbeiten Sie die Anlage, um sie zu ergänzen."
       },
       "readingColumns": {
         "field": "Field",
@@ -2809,7 +2812,8 @@
         "type": "Prüfung",
         "result": "Ergebnis",
         "notes": "Notizen"
-      }
+      },
+      "fieldRequired": "{name} ist erforderlich"
     },
     "settings": {
       "title": "Settings",

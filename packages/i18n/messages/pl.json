@@ -2754,7 +2754,10 @@
         "noSite": "No site",
         "owner": "Właściciel",
         "noOwner": "Brak właściciela",
-        "ownerPlaceholder": "Wybierz właściciela"
+        "ownerPlaceholder": "Wybierz właściciela",
+        "customFieldsHeading": "Pola kategorii",
+        "customFieldEmpty": "Nie ustawiono",
+        "customFieldsIncomplete": "Nie uzupełniono jeszcze niektórych wymaganych danych dla tego typu zasobu. Edytuj zasób, aby je dodać."
       },
       "readingColumns": {
         "field": "Field",
@@ -2802,7 +2805,8 @@
         "type": "Kontrola",
         "result": "Wynik",
         "notes": "Uwagi"
-      }
+      },
+      "fieldRequired": "{name} jest wymagane"
     },
     "settings": {
       "title": "Settings",

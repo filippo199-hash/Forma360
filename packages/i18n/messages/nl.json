@@ -2754,7 +2754,10 @@
         "noSite": "No site",
         "owner": "Eigenaar",
         "noOwner": "Geen eigenaar",
-        "ownerPlaceholder": "Eigenaar selecteren"
+        "ownerPlaceholder": "Eigenaar selecteren",
+        "customFieldsHeading": "Categorievelden",
+        "customFieldEmpty": "Niet ingevuld",
+        "customFieldsIncomplete": "Enkele verplichte gegevens voor dit assettype zijn nog niet ingevuld. Bewerk het asset om ze toe te voegen."
       },
       "readingColumns": {
         "field": "Field",
@@ -2802,7 +2805,8 @@
         "type": "Controle",
         "result": "Resultaat",
         "notes": "Notities"
-      }
+      },
+      "fieldRequired": "{name} is verplicht"
     },
     "settings": {
       "title": "Settings",
