@@ -1441,7 +1441,7 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Perigos e quase acidentes",
+    "issues": "Observações",
     "actions": "Actions",
     "settings": "Settings",
     "headsUp": "Comunicados",
@@ -1463,7 +1463,6 @@
     "quickLabel": "Navegação rápida",
     "collapseMenu": "Recolher menu",
     "expandMenu": "Expandir menu",
-    "groupOrg": "A organização",
     "child": {
       "schedulesCalendar": "Calendário",
       "permitsBoard": "Quadro em direto",
@@ -1486,9 +1485,7 @@
       "trainingRequirements": "Requisitos"
     },
     "rams": "RAMS",
-    "training": "Formação",
-    "groupDoWork": "Executar o trabalho",
-    "groupRecords": "Registos e arquivos"
+    "training": "Formação"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6555,7 +6552,8 @@
       "legend": "Legenda",
       "allRequirements": "Todos os requisitos",
       "exportPdf": "Exportar PDF",
-      "sortByGaps": "Ordenar por lacunas"
+      "sortByGaps": "Ordenar por lacunas",
+      "tooLarge": "Esta grelha é demasiado grande para mostrar de uma vez. Filtre por local ou requisito para a reduzir."
     },
     "compliance": {
       "overall": "Global",

@@ -1448,7 +1448,7 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Pericoli e quasi infortuni",
+    "issues": "Osservazioni",
     "actions": "Actions",
     "settings": "Settings",
     "headsUp": "Briefing",
@@ -1470,7 +1470,6 @@
     "quickLabel": "Navigazione rapida",
     "collapseMenu": "Comprimi menu",
     "expandMenu": "Espandi menu",
-    "groupOrg": "L'organizzazione",
     "child": {
       "schedulesCalendar": "Calendario",
       "permitsBoard": "Bacheca live",
@@ -1493,9 +1492,7 @@
       "trainingRequirements": "Requisiti"
     },
     "rams": "RAMS",
-    "training": "Formazione",
-    "groupDoWork": "Svolgere il lavoro",
-    "groupRecords": "Documenti e registri"
+    "training": "Formazione"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6597,7 +6594,8 @@
       "legend": "Legenda",
       "allRequirements": "Tutti i requisiti",
       "exportPdf": "Esporta PDF",
-      "sortByGaps": "Ordina per lacune"
+      "sortByGaps": "Ordina per lacune",
+      "tooLarge": "Questa griglia è troppo grande per essere mostrata tutta insieme. Filtra per sito o requisito per restringerla."
     },
     "compliance": {
       "overall": "Complessiva",

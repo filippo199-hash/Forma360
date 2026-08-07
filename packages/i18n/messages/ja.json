@@ -1441,7 +1441,7 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "危険・ヒヤリハット",
+    "issues": "観察報告",
     "actions": "Actions",
     "settings": "Settings",
     "headsUp": "周知事項",
@@ -1463,7 +1463,6 @@
     "quickLabel": "クイックナビゲーション",
     "collapseMenu": "メニューを折りたたむ",
     "expandMenu": "メニューを展開",
-    "groupOrg": "組織",
     "child": {
       "schedulesCalendar": "カレンダー",
       "permitsBoard": "ライブボード",
@@ -1486,9 +1485,7 @@
       "trainingRequirements": "要件"
     },
     "rams": "RAMS",
-    "training": "研修",
-    "groupDoWork": "作業を行う",
-    "groupRecords": "記録・台帳"
+    "training": "研修"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6555,7 +6552,8 @@
       "legend": "凡例",
       "allRequirements": "すべての要件",
       "exportPdf": "PDF を書き出す",
-      "sortByGaps": "不足順に並べ替え"
+      "sortByGaps": "不足順に並べ替え",
+      "tooLarge": "この表は一度に表示するには大きすぎます。サイトまたは要件で絞り込んでください。"
     },
     "compliance": {
       "overall": "全体",

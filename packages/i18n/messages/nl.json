@@ -1441,7 +1441,7 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Gevaren en bijna-ongevallen",
+    "issues": "Waarnemingen",
     "actions": "Actions",
     "settings": "Settings",
     "headsUp": "Briefings",
@@ -1463,7 +1463,6 @@
     "quickLabel": "Snelle navigatie",
     "collapseMenu": "Menu inklappen",
     "expandMenu": "Menu uitklappen",
-    "groupOrg": "De organisatie",
     "child": {
       "schedulesCalendar": "Agenda",
       "permitsBoard": "Live-bord",
@@ -1486,9 +1485,7 @@
       "trainingRequirements": "Vereisten"
     },
     "rams": "RAMS",
-    "training": "Opleidingen",
-    "groupDoWork": "Het werk doen",
-    "groupRecords": "Dossiers en registers"
+    "training": "Opleidingen"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6555,7 +6552,8 @@
       "legend": "Legenda",
       "allRequirements": "Alle vereisten",
       "exportPdf": "PDF exporteren",
-      "sortByGaps": "Sorteren op hiaten"
+      "sortByGaps": "Sorteren op hiaten",
+      "tooLarge": "Dit raster is te groot om in één keer te tonen. Filter op locatie of vereiste om het te beperken."
     },
     "compliance": {
       "overall": "Totaal",

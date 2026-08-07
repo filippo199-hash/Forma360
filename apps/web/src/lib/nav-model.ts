@@ -17,8 +17,8 @@
  *                 not hold is dropped. Administrators (`org.settings`)
  *                 bypass this.
  *   3. emptiness — a group whose items were all dropped disappears with
- *                 them, heading included. No brand or role ever sees a
- *                 heading with nothing under it.
+ *                 them, separator included. No brand or role ever sees a
+ *                 rule with nothing under it.
  */
 import {
   AlertTriangle,
@@ -95,9 +95,15 @@ export type NavChildKey =
   | 'contractorsCalendar';
 
 /**
- * Group headings. `null` is the unlabelled block at the very top — the
- * three orientation entries that answer "where am I and what is mine",
- * which practitioners reach for before any module.
+ * Group identity. `null` is the block at the very top — the three
+ * orientation entries that answer "where am I and what is mine", which
+ * practitioners reach for before any module.
+ *
+ * These keys no longer name a *visible* heading: the renderers draw a
+ * hairline rule between groups instead of a labelled, foldable section.
+ * They stay because the grouping itself is still real — it fixes render
+ * order and is what the model's tests assert against — and because the
+ * blueprint below reads as prose about the shape of the work.
  */
 export type NavSectionKey = 'groupDoWork' | 'groupRecords' | 'groupOrg';
 

@@ -1441,7 +1441,7 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "危险源与未遂事件",
+    "issues": "观察报告",
     "actions": "Actions",
     "settings": "Settings",
     "headsUp": "简报",
@@ -1463,7 +1463,6 @@
     "quickLabel": "快速导航",
     "collapseMenu": "收起菜单",
     "expandMenu": "展开菜单",
-    "groupOrg": "组织",
     "child": {
       "schedulesCalendar": "日历",
       "permitsBoard": "实时看板",
@@ -1486,9 +1485,7 @@
       "trainingRequirements": "要求"
     },
     "rams": "RAMS",
-    "training": "培训",
-    "groupDoWork": "开展工作",
-    "groupRecords": "记录与台账"
+    "training": "培训"
   },
   "approvals": {
     "queueTitle": "Approvals queue",
@@ -6551,7 +6548,8 @@
       "legend": "图例",
       "allRequirements": "所有要求",
       "exportPdf": "导出 PDF",
-      "sortByGaps": "按缺口排序"
+      "sortByGaps": "按缺口排序",
+      "tooLarge": "此矩阵太大，无法一次显示。请按站点或要求筛选以缩小范围。"
     },
     "compliance": {
       "overall": "总体",

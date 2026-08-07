@@ -88,7 +88,7 @@
     "inspections": "Inspections",
     "approvals": "Approvals",
     "schedules": "Schedules",
-    "issues": "Hazards & near misses",
+    "issues": "Observations",
     "actions": "Actions",
     "headsUp": "Briefings",
     "assets": "Assets",
@@ -110,7 +110,6 @@
     "quickLabel": "Quick navigation",
     "collapseMenu": "Collapse menu",
     "expandMenu": "Expand menu",
-    "groupOrg": "The organisation",
     "child": {
       "schedulesCalendar": "Calendar",
       "permitsBoard": "Live board",
@@ -133,9 +132,7 @@
       "trainingRequirements": "Requirements"
     },
     "rams": "RAMS",
-    "training": "Training",
-    "groupDoWork": "Do the work",
-    "groupRecords": "Records & registers"
+    "training": "Training"
   },
   "ai": {
     "emptyTitle": "How can I help?",
@@ -6783,7 +6780,8 @@
       "legend": "Legend",
       "allRequirements": "All requirements",
       "exportPdf": "Export PDF",
-      "sortByGaps": "Sort by gaps"
+      "sortByGaps": "Sort by gaps",
+      "tooLarge": "This grid is too large to show at once. Filter by site or requirement to narrow it."
     },
     "compliance": {
       "overall": "Overall",
