@@ -55,6 +55,7 @@ import type { PermissionKey } from '@forma360/permissions/catalogue';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
+import { eq } from 'drizzle-orm';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { createTestContext, type Context } from '../../context';
 
@@ -103,6 +104,15 @@ export interface Actors {
   viewer: string;
   /** A user with a permission set holding literally nothing. */
   nobody: string;
+  /** Custom set: `training.view` + `training.record` — the supervisor. */
+  trainingRecorder: string;
+  /** Custom set: `training.view` only — reads the matrix, records nothing. */
+  trainingViewer: string;
+  /**
+   * A deactivated user who still holds live training records. Leavers must
+   * drop out of the matrix without taking the evidence with them.
+   */
+  leaver: string;
 }
 
 export interface TenantWorld {
@@ -115,6 +125,12 @@ export interface TenantWorld {
   planted: Record<string, string>;
   /** Visits planted for gate / overstay work. */
   visits: Record<string, string>;
+  /** Training requirements, by the name the suite refers to them by. */
+  requirements: Record<string, string>;
+  /** Training records planted on boundaries, by name. */
+  trainingRecords: Record<string, string>;
+  /** A group and the role string used for role-scoped assignment. */
+  training: { groupId: string; roleName: string; roleFieldId: string };
 }
 
 export interface World {
@@ -185,6 +201,11 @@ async function seedTenant(
   ]);
   const viewSetId = await customSet(db, tenantId, 'Contractor Viewer', ['contractors.view']);
   const nobodySetId = await customSet(db, tenantId, 'No Access', []);
+  const trainRecordSetId = await customSet(db, tenantId, 'Training Recorder', [
+    'training.view',
+    'training.record',
+  ]);
+  const trainViewSetId = await customSet(db, tenantId, 'Training Viewer', ['training.view']);
 
   const e = (local: string) => `${local}@${opts.slug}.test`;
   const actors: Actors = {
@@ -195,7 +216,20 @@ async function seedTenant(
     docVerifier: await makeUser(db, tenantId, 'Val Verifier', e('verify'), verifySetId),
     viewer: await makeUser(db, tenantId, 'Vic Viewer', e('viewer'), viewSetId),
     nobody: await makeUser(db, tenantId, 'Nil Nobody', e('nobody'), nobodySetId),
+    trainingRecorder: await makeUser(
+      db,
+      tenantId,
+      'Rhea Recorder',
+      e('recorder'),
+      trainRecordSetId,
+    ),
+    trainingViewer: await makeUser(db, tenantId, 'Tam Trainview', e('trainview'), trainViewSetId),
+    leaver: await makeUser(db, tenantId, 'Lee Leaver', e('leaver'), seeded.standard),
   };
+  await db
+    .update(schema.user)
+    .set({ deactivatedAt: new Date(opts.now.getTime() - 30 * DAY_MS) })
+    .where(eq(schema.user.id, actors.leaver));
 
   // Sites: two, so a cross-site leak at the gate kiosk is observable.
   const primary = newId();
@@ -506,7 +540,188 @@ async function seedTenant(
 
   await db.insert(schema.contractorVisits).values(visitRows);
 
-  return { tenantId, actors, sites: { primary, secondary }, contractorIds, planted, visits };
+  // ─── Training & competence (FreeHS B7) ────────────────────────────────
+  //
+  // The matrix is a derived view over assignments x records, so the fixture
+  // has to seed BOTH sides plus the three things a person can be reached
+  // by — role (a custom user field), group, site — or the union logic is
+  // never exercised.
+  const roleFieldId = newId();
+  await db.insert(schema.customUserFields).values({
+    id: roleFieldId,
+    tenantId,
+    // `resolveMatrix` picks the role field by matching /role|job title|
+    // position/i against the field NAME. That fuzzy match is itself under
+    // test (TR-C07), so the fixture uses the plainest possible name.
+    name: 'Job title',
+    type: 'text',
+  });
+  const roleName = 'Machine operator';
+  const trainingGroupId = newId();
+  await db.insert(schema.groups).values({
+    id: trainingGroupId,
+    tenantId,
+    name: 'Night shift',
+  });
+
+  // The people the matrix is about: the recorder holds the role, the viewer
+  // is in the group, the manager is on the primary site.
+  await db.insert(schema.userCustomFieldValues).values({
+    tenantId,
+    userId: actors.trainingRecorder,
+    fieldId: roleFieldId,
+    value: roleName,
+  });
+  await db
+    .insert(schema.groupMembers)
+    .values({ tenantId, groupId: trainingGroupId, userId: actors.trainingViewer });
+  await db.insert(schema.siteMembers).values({ tenantId, siteId: primary, userId: actors.manager });
+
+  const requirements: Record<string, string> = {};
+  const reqRows: Array<typeof schema.trainingRequirements.$inferInsert> = [];
+  const addReq = (
+    key: string,
+    row: Omit<typeof schema.trainingRequirements.$inferInsert, 'id' | 'tenantId'>,
+  ): string => {
+    const id = newId();
+    requirements[key] = id;
+    reqRows.push({ id, tenantId, ...row });
+    return id;
+  };
+
+  // Three-year card, chased 60 days out — the ordinary case.
+  const abrasive = addReq('abrasiveWheels', {
+    name: 'Abrasive wheels',
+    obligation: 'statutory',
+    validityMonths: 36,
+    renewalLeadDays: 60,
+  });
+  // Never expires: a qualification, not a ticket. Must read permanently
+  // in date rather than being given an invented expiry.
+  addReq('nvqLevel3', {
+    name: 'NVQ Level 3',
+    obligation: 'mandatory',
+    validityMonths: null,
+  });
+  // Short lead time, so the expiring_soon boundary is reachable separately
+  // from the default 60.
+  const firstAid = addReq('firstAid', {
+    name: 'First aid at work',
+    obligation: 'statutory',
+    validityMonths: 36,
+    renewalLeadDays: 14,
+  });
+  // Advisory: an unmet one must not drag the compliance figure.
+  addReq('toolboxTalk', {
+    name: 'Manual handling toolbox talk',
+    obligation: 'discretionary',
+    validityMonths: 12,
+  });
+  await db.insert(schema.trainingRequirements).values(reqRows);
+
+  // Assignments across all four scopes, so the union is exercised.
+  await db.insert(schema.trainingRequirementAssignments).values([
+    { id: newId(), tenantId, requirementId: abrasive, scope: 'role', roleName },
+    { id: newId(), tenantId, requirementId: firstAid, scope: 'group', groupId: trainingGroupId },
+    {
+      id: newId(),
+      tenantId,
+      requirementId: requirements.nvqLevel3 as string,
+      scope: 'site',
+      siteId: primary,
+    },
+    {
+      id: newId(),
+      tenantId,
+      requirementId: requirements.toolboxTalk as string,
+      scope: 'person',
+      userId: actors.trainingRecorder,
+    },
+  ]);
+
+  const trainingRecordIds: Record<string, string> = {};
+  const recRows: Array<typeof schema.trainingRecords.$inferInsert> = [];
+  const addRec = (
+    key: string,
+    row: Omit<typeof schema.trainingRecords.$inferInsert, 'id' | 'tenantId'>,
+  ): string => {
+    const id = newId();
+    trainingRecordIds[key] = id;
+    recRows.push({ id, tenantId, ...row });
+    return id;
+  };
+
+  const dayDate = (offset: number): Date =>
+    new Date(new Date(opts.now.getTime() + offset * DAY_MS).toISOString().slice(0, 10));
+
+  // Expired yesterday — a gap, and blocking for the permit gate.
+  addRec('expiredYesterday', {
+    requirementId: abrasive,
+    userId: actors.trainingRecorder,
+    personName: 'Rhea Recorder',
+    achievedAt: dayDate(-1000),
+    expiresAt: dayDate(-1),
+  });
+  // Inside its own 14-day lead: expiring_soon, which must NOT block a
+  // permit — the card is valid today.
+  addRec('expiringInsideLead', {
+    requirementId: firstAid,
+    userId: actors.trainingViewer,
+    personName: 'Tam Trainview',
+    achievedAt: dayDate(-1000),
+    expiresAt: dayDate(7),
+  });
+  // Just outside the same lead: plain in_date.
+  addRec('expiringOutsideLead', {
+    requirementId: firstAid,
+    userId: actors.manager,
+    personName: 'Mo Manager',
+    achievedAt: dayDate(-1000),
+    expiresAt: dayDate(40),
+  });
+  // A typo'd far-future expiry, voided. `currentRecord` prefers the
+  // furthest-reaching cover, so if `supersededAt` is not honoured this row
+  // marks its holder permanently competent.
+  addRec('supersededTypo', {
+    requirementId: abrasive,
+    userId: actors.trainingViewer,
+    personName: 'Tam Trainview',
+    achievedAt: dayDate(-10),
+    expiresAt: new Date('2099-01-01'),
+    supersededAt: new Date(opts.now.getTime() - DAY_MS),
+    notes: '[voided] expiry mistyped as 2099',
+  });
+  // A leaver's live card: the evidence must survive their deactivation.
+  addRec('leaverCard', {
+    requirementId: abrasive,
+    userId: actors.leaver,
+    personName: 'Lee Leaver',
+    achievedAt: dayDate(-100),
+    expiresAt: dayDate(300),
+  });
+  // An account-less contractor's operative, keyed only by name.
+  addRec('nameOnlyOperative', {
+    requirementId: abrasive,
+    userId: null,
+    personName: 'Dan Operative',
+    personCategory: 'contractor',
+    achievedAt: dayDate(-100),
+    expiresAt: dayDate(300),
+    recordedByUserId: actors.manager,
+  });
+  await db.insert(schema.trainingRecords).values(recRows);
+
+  return {
+    tenantId,
+    actors,
+    sites: { primary, secondary },
+    contractorIds,
+    planted,
+    visits,
+    requirements,
+    trainingRecords: trainingRecordIds,
+    training: { groupId: trainingGroupId, roleName, roleFieldId },
+  };
 }
 
 /**
