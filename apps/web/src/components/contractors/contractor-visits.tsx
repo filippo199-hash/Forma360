@@ -5,8 +5,10 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '../../lib/cn';
+import { useHasPermission } from '../../lib/permissions-context';
 import { usePlaceTerms } from '../../lib/terminology';
 import { SiteSelector } from '../selectors/site-selector';
+import { contractorErrorMessage } from '../../lib/contractor-errors';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -78,9 +80,10 @@ export function VisitCreateDialog({
   const tCommon = useTranslations('common');
   const placeTerms = usePlaceTerms();
 
-  const contractorsQ = trpc.contractors.list.useQuery(undefined, {
-    enabled: open && fixedContractorId === undefined,
-  });
+  const contractorsQ = trpc.contractors.list.useQuery(
+    { limit: 200 },
+    { enabled: open && fixedContractorId === undefined },
+  );
 
   const [contractorId, setContractorId] = useState(fixedContractorId ?? '');
   const [title, setTitle] = useState('');
@@ -108,8 +111,7 @@ export function VisitCreateDialog({
     setAuthorize(true);
   };
 
-  const onErr = (err: { message: string }) =>
-    toast.error(err.message.length > 0 ? err.message : t('error'));
+  const onErr = (err: { message: string }) => toast.error(contractorErrorMessage(err.message, t));
 
   const create = trpc.contractors.visits.create.useMutation({
     onSuccess: () => {
@@ -185,7 +187,7 @@ export function VisitCreateDialog({
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="">{t('visits.selectContractor')}</option>
-                {(contractorsQ.data ?? []).map((c) => (
+                {(contractorsQ.data?.contractors ?? []).map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
@@ -314,6 +316,10 @@ export function VisitDetailDialog({
   const tCommon = useTranslations('common');
   const format = useFormatter();
   const placeTerms = usePlaceTerms();
+  // CT-P03: reception checks people in and out without the module's admin
+  // key. `canManage` still gates authorise / cancel / no-show / delete.
+  const hasGateKey = useHasPermission('contractors.gate');
+  const canOperateGate = canManage || hasGateKey;
   const utils = trpc.useUtils();
   const { data, isLoading, error } = trpc.contractors.visits.get.useQuery(
     { id: visitId ?? '' },
@@ -339,8 +345,7 @@ export function VisitDetailDialog({
     setOverrideReason('');
   };
 
-  const onErr = (err: { message: string }) =>
-    toast.error(err.message.length > 0 ? err.message : t('error'));
+  const onErr = (err: { message: string }) => toast.error(contractorErrorMessage(err.message, t));
   const done = (msg: string) => () => {
     toast.success(msg);
     // Refresh this dialog (actions + audit log) and the parent list.
@@ -480,7 +485,7 @@ export function VisitDetailDialog({
             </dl>
 
             {/* Check-in form: capture fields + optional staff-override reason. */}
-            {canManage && checkingIn ? (
+            {canOperateGate && checkingIn ? (
               <div className="space-y-3 rounded-md border bg-muted/30 p-3">
                 {gateFields.map((f) => (
                   <div key={f.id} className="space-y-1">
@@ -547,9 +552,9 @@ export function VisitDetailDialog({
               </div>
             ) : null}
 
-            {canManage && !checkingIn ? (
+            {canOperateGate && !checkingIn ? (
               <DialogFooter className="flex-wrap gap-2 sm:justify-start">
-                {v.authorizedByUserId === null ? (
+                {canManage && v.authorizedByUserId === null ? (
                   <Button
                     size="sm"
                     variant="outline"
@@ -572,7 +577,7 @@ export function VisitDetailDialog({
                     {t('visits.checkOut')}
                   </Button>
                 ) : null}
-                {v.status === 'scheduled' ? (
+                {canManage && v.status === 'scheduled' ? (
                   <>
                     <Button
                       size="sm"
@@ -598,18 +603,20 @@ export function VisitDetailDialog({
                     </Button>
                   </>
                 ) : null}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive"
-                  disabled={busy}
-                  onClick={() => {
-                    if (window.confirm(t('visits.deleteVisitConfirm')))
-                      deleteM.mutate({ id: v.id });
-                  }}
-                >
-                  {t('visits.deleteVisit')}
-                </Button>
+                {canManage ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    disabled={busy}
+                    onClick={() => {
+                      if (window.confirm(t('visits.deleteVisitConfirm')))
+                        deleteM.mutate({ id: v.id });
+                    }}
+                  >
+                    {t('visits.deleteVisit')}
+                  </Button>
+                ) : null}
               </DialogFooter>
             ) : null}
 
@@ -673,6 +680,8 @@ export function ContractorVisitsSection({
 }) {
   const t = useTranslations('contractors');
   const format = useFormatter();
+  const hasGateKey = useHasPermission('contractors.gate');
+  const canOperateGate = canManage || hasGateKey;
   const utils = trpc.useUtils();
   const { data, isLoading, error } = trpc.contractors.visits.listForContractor.useQuery({
     contractorId,
@@ -696,18 +705,22 @@ export function ContractorVisitsSection({
           <h2 className="text-base font-semibold">{t('visits.visitsHeading')}</h2>
           <p className="text-sm text-muted-foreground">{t('visits.visitsSubtitle')}</p>
         </div>
-        {canManage ? (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {/* CT-P03: logging a walk-in IS gate work; scheduling a future
+              visit is not. They were behind one flag. */}
+          {canOperateGate ? (
             <Button variant="outline" size="sm" onClick={() => setWalkInOpen(true)}>
               <LogIn className="mr-1 h-4 w-4" />
               {t('visits.logWalkIn')}
             </Button>
+          ) : null}
+          {canManage ? (
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <CalendarClock className="mr-1 h-4 w-4" />
               {t('visits.newVisit')}
             </Button>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </div>
 
       {isLoading ? (

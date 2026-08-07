@@ -34,6 +34,7 @@ import {
 import {
   createContractorOverstayHandler,
   CONTRACTOR_OVERSTAY_CRON,
+  type OverstayRecipient,
   type OverstayVisit,
 } from './workers/contractor-overstay';
 import { createObservationNotifyHandler } from './workers/observation-notify';
@@ -230,6 +231,9 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       notify: async (r: DueReminder, uploadUrl: string) => {
         await sendTemplatedEmail({
           to: r.email,
+          // CT-O03: five translated templates shipped on disk and were never
+          // reachable, because the loader was never told a locale.
+          locale: r.locale ?? undefined,
           templateKey: 'contractor-doc-expiry',
           variables: {
             contractorName: r.contractorName,
@@ -260,15 +264,22 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
       db: workerDb,
       logger: logger.child({ handler: 'contractor-overstay' }),
       appUrl: env.APP_URL,
-      notify: async (v: OverstayVisit, email: string, boardUrl: string) => {
+      notify: async (v: OverstayVisit, recipient: OverstayRecipient, boardUrl: string) => {
         await sendTemplatedEmail({
-          to: email,
+          to: recipient.email,
+          locale: recipient.locale ?? undefined,
           templateKey: 'contractor-overstay',
+          // CT-O03: bare values only. `siteLine` used to arrive as the
+          // English fragment ` at Warehouse 2` and `who` as `A visitor`,
+          // both interpolated straight into translated bodies — so the
+          // Italian mail read "Visita: Rewire at Warehouse 2". Every label
+          // and connector now lives in the per-locale template; `—` is the
+          // house placeholder (see the incident-alert wiring).
           variables: {
-            who: v.visitorName ?? 'A visitor',
+            who: v.visitorName ?? '—',
             contractorName: v.contractorName,
             title: v.title,
-            siteLine: v.siteName !== null ? ` at ${v.siteName}` : '',
+            siteName: v.siteName ?? '—',
             checkedInAt: v.checkedInAt.toISOString().replace('T', ' ').slice(0, 16),
             url: boardUrl,
           },

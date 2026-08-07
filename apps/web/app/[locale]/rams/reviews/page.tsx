@@ -67,7 +67,7 @@ export default function RamsReviewsPage() {
 
   const utils = trpc.useUtils();
   const list = trpc.rams.reviews.list.useQuery({});
-  const contractors = trpc.contractors.list.useQuery(undefined, { enabled: canReview });
+  const contractors = trpc.contractors.list.useQuery({ limit: 200 }, { enabled: canReview });
   const detail = trpc.rams.reviews.get.useQuery(
     { reviewId: selected ?? '' },
     { enabled: selected !== null },
@@ -148,7 +148,10 @@ export default function RamsReviewsPage() {
               <SearchSelect
                 value={intakeContractor}
                 onChange={setIntakeContractor}
-                options={(contractors.data ?? []).map((c) => ({ id: c.id, label: c.name }))}
+                options={(contractors.data?.contractors ?? []).map((c) => ({
+                  id: c.id,
+                  label: c.name,
+                }))}
                 label={t('reviews.contractor')}
                 placeholder={t('reviews.contractorPlaceholder')}
               />

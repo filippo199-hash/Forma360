@@ -163,6 +163,131 @@ describe('contractors gate (Phase 2b)', () => {
     expect(visit.visit.status).toBe('checked_in');
   });
 
+  it('CT-G06: a site kiosk shows only its own site, and admits only its own site', async () => {
+    // One token used to unlock every reception screen in the company: each
+    // kiosk listed every site's arrivals — names, companies, times, with no
+    // session — and could admit a visit booked somewhere else.
+    const caller = createCaller(ctxFor(adminUserId));
+    const siteA = await caller.sites.create({ name: 'Depot A' });
+    const siteB = await caller.sites.create({ name: 'Depot B' });
+
+    const { id: visitA } = await caller.contractors.visits.create({
+      contractorId,
+      title: 'Rewire A',
+      siteId: siteA.id,
+      scheduledStart: new Date().toISOString(),
+      authorize: true,
+    });
+    const { id: visitB } = await caller.contractors.visits.create({
+      contractorId,
+      title: 'Rewire B',
+      siteId: siteB.id,
+      scheduledStart: new Date().toISOString(),
+      authorize: true,
+    });
+
+    const { token: tokenA } = await caller.contractors.gate.regenerateToken({ siteId: siteA.id });
+    const { token: tokenB } = await caller.contractors.gate.regenerateToken({ siteId: siteB.id });
+    expect(tokenA).not.toBe(tokenB);
+
+    const pub = createCaller(publicCtx());
+    const kioskA = await pub.contractors.gate.publicByToken({ token: tokenA });
+    expect(kioskA.siteName).toBe('Depot A');
+    expect(kioskA.visits.map((v) => v.id)).toContain(visitA);
+    expect(kioskA.visits.map((v) => v.id)).not.toContain(visitB);
+
+    // Kiosk A cannot admit a visit booked for site B.
+    await expect(
+      pub.contractors.gate.selfCheckIn({ token: tokenA, visitId: visitB, eventType: 'check_in' }),
+    ).rejects.toThrow();
+    await expect(
+      pub.contractors.gate.selfCheckIn({ token: tokenA, visitId: visitA, eventType: 'check_in' }),
+    ).resolves.toBeDefined();
+  });
+
+  it('CT-G06: revoking one kiosk leaves the others alive', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const siteA = await caller.sites.create({ name: 'Depot A' });
+    const siteB = await caller.sites.create({ name: 'Depot B' });
+    const { token: tokenA } = await caller.contractors.gate.regenerateToken({ siteId: siteA.id });
+    const { token: tokenB } = await caller.contractors.gate.regenerateToken({ siteId: siteB.id });
+
+    const revoked = await caller.contractors.gate.revokeToken({ siteId: siteA.id });
+    expect(revoked.revoked).toBe(1);
+    // Revoking again is honest about having found nothing.
+    expect((await caller.contractors.gate.revokeToken({ siteId: siteA.id })).revoked).toBe(0);
+
+    const pub = createCaller(publicCtx());
+    await expect(pub.contractors.gate.publicByToken({ token: tokenA })).rejects.toThrow();
+    await expect(pub.contractors.gate.publicByToken({ token: tokenB })).resolves.toBeDefined();
+  });
+
+  it('CT-G06: a visit with no site stays reachable from every kiosk', async () => {
+    // `contractorVisits.siteId` is nullable and `visits.create` never
+    // required it, so most existing rows have none. Hiding them would
+    // strand anyone already checked in under such a visit with no screen
+    // to check out from.
+    const caller = createCaller(ctxFor(adminUserId));
+    const site = await caller.sites.create({ name: 'Depot' });
+    const { id: unsited } = await caller.contractors.visits.create({
+      contractorId,
+      title: 'No site recorded',
+      scheduledStart: new Date().toISOString(),
+      authorize: true,
+    });
+    const { token } = await caller.contractors.gate.regenerateToken({ siteId: site.id });
+    const pub = createCaller(publicCtx());
+    const kiosk = await pub.contractors.gate.publicByToken({ token });
+    expect(kiosk.visits.map((v) => v.id)).toContain(unsited);
+    await expect(
+      pub.contractors.gate.selfCheckIn({ token, visitId: unsited, eventType: 'check_in' }),
+    ).resolves.toBeDefined();
+  });
+
+  it('CT-G08: a suspended contractor is barred at the gate and cannot be waived', async () => {
+    // A manual override REPLACES the derived status, and only
+    // `non_compliant` was refused — so suspending a contractor whose
+    // paperwork had also lapsed converted a refusal into an admission.
+    const caller = createCaller(ctxFor(adminUserId));
+    await caller.contractors.setComplianceOverride({ id: contractorId, override: 'suspended' });
+    const { id: visitId } = await caller.contractors.visits.create({
+      contractorId,
+      title: 'Rewire',
+      scheduledStart: new Date().toISOString(),
+      authorize: true,
+    });
+    // Not even with an override reason — a suspension is not a desk call.
+    await expect(
+      caller.contractors.visits.checkIn({ id: visitId, overrideReason: 'Manager said ok' }),
+    ).rejects.toThrow(/contractor_suspended/);
+
+    const { token } = await caller.contractors.gate.regenerateToken();
+    const pub = createCaller(publicCtx());
+    await expect(
+      pub.contractors.gate.selfCheckIn({ token, visitId, eventType: 'check_in' }),
+    ).rejects.toThrow(/contractor_suspended/);
+  });
+
+  it('CT-G05: a second scan cannot re-stamp the check-in time', async () => {
+    // The overstay worker measures from `checkedInAt`, so a contractor
+    // could clear their own overstay alert simply by scanning again.
+    const caller = createCaller(ctxFor(adminUserId));
+    const { id: visitId } = await caller.contractors.visits.create({
+      contractorId,
+      title: 'Rewire',
+      scheduledStart: new Date().toISOString(),
+      authorize: true,
+    });
+    const { token } = await caller.contractors.gate.regenerateToken();
+    const pub = createCaller(publicCtx());
+    await pub.contractors.gate.selfCheckIn({ token, visitId, eventType: 'check_in' });
+    const first = (await caller.contractors.visits.get({ id: visitId })).visit.checkedInAt;
+    await expect(
+      pub.contractors.gate.selfCheckIn({ token, visitId, eventType: 'check_in' }),
+    ).rejects.toThrow(/visit-already-checked-in/);
+    expect((await caller.contractors.visits.get({ id: visitId })).visit.checkedInAt).toEqual(first);
+  });
+
   it('an invalid kiosk token is rejected', async () => {
     const pub = createCaller(publicCtx());
     await expect(pub.contractors.gate.publicByToken({ token: 'nope-nope-nope' })).rejects.toThrow();

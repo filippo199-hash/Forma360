@@ -326,7 +326,13 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
             {
               key: 'contractorsGate',
               href: p('/contractors/gate'),
-              permission: 'contractors.gate',
+              // CT-P03: this page CONFIGURES the kiosk (token + capture
+              // fields), and both its queries need `contractors.manage`.
+              // Gating the link on `contractors.gate` showed reception a
+              // door that then refused to open. `contractors.gate` is the
+              // *operating* key (check-in / check-out) and gates no nav
+              // entry, the same shape as `fireSafety.record`.
+              permission: 'contractors.manage',
             },
             { key: 'contractorsCalendar', href: p('/contractors/calendar') },
           ],

@@ -1,0 +1,12 @@
+-- CT-O03 (contractors audit): give the primary contact a language.
+--
+-- Contractor emails shipped in English regardless of the five translated
+-- templates on disk, because `sendTemplatedEmail` was never told a locale.
+-- Overstay alerts go to tenant users and can read `user.locale`; the
+-- document-expiry reminder goes to `contractors.primary_contact_email` —
+-- an external party with no `user` row and therefore no language anywhere
+-- in the schema. It has to live on the contractor.
+--
+-- Nullable, no backfill: null means English, which is exactly today's
+-- behaviour, so this is safe to run against a live table.
+ALTER TABLE "contractors" ADD COLUMN IF NOT EXISTS "locale" text;

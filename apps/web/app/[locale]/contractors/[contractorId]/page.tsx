@@ -8,6 +8,7 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
+import { Checkbox } from '../../../../src/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ import { ContractorUsersSection } from '../../../../src/components/contractors/c
 import { ContractorVisitsSection } from '../../../../src/components/contractors/contractor-visits';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { contractorErrorMessage } from '../../../../src/lib/contractor-errors';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 const DOC_BADGE: Record<string, string> = {
@@ -42,6 +44,14 @@ const STATUS_BADGE: Record<string, string> = {
 
 const OVERRIDE_OPTIONS = ['', 'compliant', 'non_compliant', 'suspended'] as const;
 
+/**
+ * CT-O03: the languages a contractor email can actually be sent in — the
+ * set of `packages/i18n/emails/<locale>` bundles. Offering the other four
+ * app locales here would promise a translation that silently falls back to
+ * English.
+ */
+const CONTACT_LOCALES = ['de', 'en', 'es', 'fr', 'it', 'pt'] as const;
+
 export default function ContractorDetailPage() {
   const t = useTranslations('contractors');
   const tCommon = useTranslations('common');
@@ -49,7 +59,7 @@ export default function ContractorDetailPage() {
   const params = useParams<{ locale: string; contractorId: string }>();
   const locale = params.locale ?? 'en';
   const contractorId = params.contractorId ?? '';
-  const canManage = useHasPermission('contractors.manage');
+  const hasManage = useHasPermission('contractors.manage');
   const canVerify = useHasPermission('contractors.verifyDocs');
   const utils = trpc.useUtils();
   const router = useRouter();
@@ -60,8 +70,7 @@ export default function ContractorDetailPage() {
   );
 
   const invalidate = () => void utils.contractors.get.invalidate({ id: contractorId });
-  const onErr = (err: { message: string }) =>
-    toast.error(err.message.length > 0 ? err.message : t('error'));
+  const onErr = (err: { message: string }) => toast.error(contractorErrorMessage(err.message, t));
 
   const addRequirement = trpc.contractors.addRequirement.useMutation({
     onSuccess: () => {
@@ -83,6 +92,7 @@ export default function ContractorDetailPage() {
       setUploadReqId(null);
       setUpStart('');
       setUpEnd('');
+      setUpNoExpiry(false);
     },
     onError: onErr,
   });
@@ -157,6 +167,10 @@ export default function ContractorDetailPage() {
   const [edContactName, setEdContactName] = useState('');
   const [edContactEmail, setEdContactEmail] = useState('');
   const [edNotes, setEdNotes] = useState('');
+  // CT-O03: the language every email to this contractor is sent in. An
+  // external contact has no user account, so this is the only place it can
+  // live — without it the translated templates were unreachable.
+  const [edLocale, setEdLocale] = useState('');
 
   // Add-requirement dialog
   const [reqOpen, setReqOpen] = useState(false);
@@ -171,6 +185,9 @@ export default function ContractorDetailPage() {
   const [uploadReqId, setUploadReqId] = useState<string | null>(null);
   const [upStart, setUpStart] = useState('');
   const [upEnd, setUpEnd] = useState('');
+  // CT-U01: "no expiry" is now an assertion, not the default you fall into
+  // by leaving the box blank. The router refuses the upload otherwise.
+  const [upNoExpiry, setUpNoExpiry] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -198,6 +215,7 @@ export default function ContractorDetailPage() {
         sizeBytes: body.sizeBytes,
         ...(upStart !== '' ? { startDate: upStart } : {}),
         ...(upEnd !== '' ? { endDate: upEnd } : {}),
+        noExpiry: upEnd === '' && upNoExpiry,
       });
     } catch {
       toast.error(t('error'));
@@ -220,6 +238,14 @@ export default function ContractorDetailPage() {
   }
 
   const { contractor, requirements, complianceStatus } = data;
+  const uploadRequirement = requirements.find((r) => r.id === uploadReqId);
+  // The register hides archived contractors, so this page was the one place
+  // a retired company still looked live — same buttons, no indication.
+  const isArchived = contractor.archivedAt !== null;
+  // An archived contractor takes no new work: the router refuses
+  // `addRequirement`, `applyTemplates`, `visits.create` and `users.invite`
+  // on one, so offering the buttons would only produce a NOT_FOUND toast.
+  const canManage = hasManage && !isArchived;
   const isOverridden = contractor.complianceOverride !== null;
 
   return (
@@ -231,6 +257,15 @@ export default function ContractorDetailPage() {
         <ArrowLeft className="h-4 w-4" />
         {t('backToList')}
       </Link>
+
+      {isArchived ? (
+        <div
+          role="status"
+          className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
+        >
+          {t('archivedBanner')}
+        </div>
+      ) : null}
 
       <header className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{contractor.name}</h1>
@@ -296,6 +331,7 @@ export default function ContractorDetailPage() {
                 setEdContactName(contractor.primaryContactName ?? '');
                 setEdContactEmail(contractor.primaryContactEmail ?? '');
                 setEdNotes(contractor.notes ?? '');
+                setEdLocale(contractor.locale ?? '');
                 setEditOpen(true);
               }}
             >
@@ -429,6 +465,23 @@ export default function ContractorDetailPage() {
               </div>
             </div>
             <div className="space-y-1.5">
+              <Label htmlFor="ed-locale">{t('fieldContactLocale')}</Label>
+              <select
+                id="ed-locale"
+                value={edLocale}
+                onChange={(e) => setEdLocale(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">{t('contactLocaleDefault')}</option>
+                {CONTACT_LOCALES.map((code) => (
+                  <option key={code} value={code}>
+                    {t(`contactLocale_${code}` as 'contactLocale_en')}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">{t('fieldContactLocaleHint')}</p>
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="ed-notes">{t('fieldNotes')}</Label>
               <textarea
                 id="ed-notes"
@@ -453,6 +506,7 @@ export default function ContractorDetailPage() {
                   category: edCategory.trim() === '' ? null : edCategory.trim(),
                   primaryContactName: edContactName.trim() === '' ? null : edContactName.trim(),
                   primaryContactEmail: edContactEmail.trim() === '' ? null : edContactEmail.trim(),
+                  locale: edLocale === '' ? null : edLocale,
                   notes: edNotes.trim() === '' ? null : edNotes.trim(),
                 })
               }
@@ -548,6 +602,7 @@ export default function ContractorDetailPage() {
                             setUploadReqId(r.id);
                             setUpStart('');
                             setUpEnd('');
+                            setUpNoExpiry(false);
                           }}
                         >
                           <Upload className="mr-1 h-3.5 w-3.5" />
@@ -575,9 +630,19 @@ export default function ContractorDetailPage() {
                         <li key={d.id} className="flex items-center gap-3 px-3 py-2 text-sm">
                           <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate" title={d.filename}>
+                            {/* CT-D01: verify and reject sat next to a filename
+                                that was plain text — the reviewer was asked to
+                                approve evidence they had no way to open, so
+                                "verified" meant "the row exists". */}
+                            <a
+                              href={`/api/files?key=${encodeURIComponent(d.storageKey)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block truncate underline-offset-2 hover:underline"
+                              title={d.filename}
+                            >
                               {d.filename}
-                            </p>
+                            </a>
                             <p className="text-xs text-muted-foreground">
                               {d.endDate !== null
                                 ? t('expires', {
@@ -752,10 +817,30 @@ export default function ContractorDetailPage() {
                   id="up-end"
                   type="date"
                   value={upEnd}
+                  disabled={upNoExpiry}
                   onChange={(e) => setUpEnd(e.target.value)}
                 />
               </div>
             </div>
+            {uploadRequirement?.recurrenceMonths == null ? (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="up-no-expiry"
+                  checked={upNoExpiry}
+                  onCheckedChange={(checked) => {
+                    setUpNoExpiry(checked);
+                    if (checked) setUpEnd('');
+                  }}
+                />
+                <Label htmlFor="up-no-expiry" className="font-normal">
+                  {t('portalNoExpiry')}
+                </Label>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {t('portalRenewalNote', { months: uploadRequirement.recurrenceMonths })}
+              </p>
+            )}
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
