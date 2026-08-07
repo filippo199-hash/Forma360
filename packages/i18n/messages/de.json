@@ -4962,7 +4962,8 @@
         "requiresGasTesting": "Gasmessung erforderlich",
         "requiresIsolationCertificate": "Freischaltzertifikat erforderlich",
         "requiresRescuePlan": "Rettungsplan erforderlich",
-        "requiresRiskAssessment": "Verknüpfte Gefährdungsbeurteilung erforderlich"
+        "requiresRiskAssessment": "Verknüpfte Gefährdungsbeurteilung erforderlich",
+        "requiresRamsPack": "Angenommenes RAMS-Paket erforderlich"
       },
       "maxDuration": "Maximale Gültigkeit",
       "hours": "Stunden",
@@ -4983,7 +4984,8 @@
       "gasLimitMax": "Max.",
       "addGasLimit": "Grenzwert hinzufügen",
       "gasFreshness": "Aktualität der Gasmessung",
-      "gasFreshnessUnit": "Minuten"
+      "gasFreshnessUnit": "Minuten",
+      "description": "Beschreibung"
     },
     "errors": {
       "module-disabled": "Dieses Modul ist nicht verfügbar.",
@@ -5034,8 +5036,22 @@
       "entry-log-full": "Das Protokoll dieser Freigabe ist voll.",
       "unknown-entry": "Dieser Protokolleintrag existiert nicht.",
       "already-exited": "Für diese Person wurde der Ausstieg bereits erfasst.",
-      "render-unavailable": "PDF-Erzeugung ist in dieser Umgebung nicht verfügbar."
-    }
+      "render-unavailable": "PDF-Erzeugung ist in dieser Umgebung nicht verfügbar.",
+      "training-expired": "Ausstellung nicht möglich: Für eine benannte Person ist die Schulung abgelaufen.",
+      "training-missing": "Ausstellung nicht möglich: Eine benannte Person hat die erforderliche Schulung nie erworben."
+    },
+    "competence": {
+      "blockedTitle": "Kompetenz nicht erfüllt",
+      "personExpired": "{person} — {requirement} ist abgelaufen",
+      "personMissing": "{person} — {requirement} nicht vorhanden",
+      "openModule": "Schulungen öffnen"
+    },
+    "signatures": {
+      "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt"
+    },
+    "requiredTraining": "Erforderliche Schulungen",
+    "requiredTrainingHint": "Jede benannte Person muss diese gültig besitzen, bevor dieser Typ ausgestellt werden kann.",
+    "requiredTrainingNone": "Noch keine Schulungsanforderungen definiert."
   },
   "fireSafety": {
     "title": "Brandschutz",
@@ -6630,7 +6646,8 @@
       "gaps": "Lücken",
       "matrix": "Matrix",
       "compliance": "Erfüllung",
-      "requirements": "Anforderungen"
+      "requirements": "Anforderungen",
+      "me": "Meine Schulungen"
     },
     "asAt": "Stand {date}",
     "status": {
@@ -6648,7 +6665,8 @@
       "record": "Erfassen",
       "expiresOn": "läuft ab am {date}",
       "requiredByRole": "durch Rolle erforderlich",
-      "total": "{count} zu bearbeiten"
+      "total": "{count} zu bearbeiten",
+      "noSiteMembers": "Diesem Standort ist noch niemand zugeordnet, daher gibt es nichts anzuzeigen. Weisen Sie dem Standort Personen zu."
     },
     "matrix": {
       "person": "Person",
@@ -6766,7 +6784,12 @@
       "close": "Schließen",
       "rowLabel": "Zeile {row}",
       "badColumns": "Die Kopfzeile muss personName, requirementName und achievedAt enthalten.",
-      "noRows": "Keine Zeilen zum Importieren."
+      "noRows": "Keine Zeilen zum Importieren.",
+      "dryRun": "Testlauf",
+      "dryRunDone": "Testlauf: {count} Nachweise würden importiert. Es wurde nichts geschrieben.",
+      "matchSummary": "{matched} einem Konto zugeordnet · {nameOnly} nur mit Namen erfasst",
+      "duplicatesSkipped": "{count} Zeilen waren bereits vorhanden und wurden übersprungen.",
+      "errorGroup": "{message} — {count} Zeilen (erste: Zeile {first})"
     },
     "errors": {
       "moduleDisabled": "Dieses Modul ist nicht aktiviert.",

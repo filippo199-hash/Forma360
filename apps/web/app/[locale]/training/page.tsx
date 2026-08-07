@@ -172,6 +172,20 @@ export default function TrainingGapsPage() {
             </Button>
           </CardContent>
         </Card>
+      ) : data?.siteHasNoMembers === true ? (
+        /* TR-B13: "no gaps" and "nobody is a member of this site" looked
+           identical, and the reassuring one was the wrong one. */
+        <Card>
+          <CardContent className="space-y-2 p-10 text-center text-muted-foreground">
+            <p>{t('gaps.noSiteMembers')}</p>
+            <Link
+              href={`/${locale}/sites`}
+              className="inline-block text-sm text-primary hover:underline"
+            >
+              {t('filters.site')}
+            </Link>
+          </CardContent>
+        </Card>
       ) : (data?.total ?? 0) === 0 ? (
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">

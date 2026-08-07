@@ -457,6 +457,39 @@ export default function PermitDetailPage() {
             </div>
             {/* RS-A11: the RAMS gate is previewed here rather than only
                 failing at Issue, when the issuer is standing at the job. */}
+            {/* TR-B1: the competence shortfall, named. The server has
+                returned `trainingShortfalls` since the gate was wired and
+                nothing rendered it, so the issuer saw nothing until Issue
+                failed at the job face. Every shortfall is listed — who, and
+                which ticket — because "blocked" is not actionable and
+                "swap Dave off this permit" is. */}
+            {permit.trainingShortfalls.length > 0 ? (
+              <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm dark:border-red-800 dark:bg-red-950/40">
+                <p className="font-medium">{t('competence.blockedTitle')}</p>
+                <ul className="mt-1 space-y-0.5 text-muted-foreground">
+                  {permit.trainingShortfalls.map((sf) => (
+                    <li key={`${sf.personLabel}-${sf.requirementId}`}>
+                      {sf.reason === 'training-expired'
+                        ? t('competence.personExpired', {
+                            person: sf.personLabel,
+                            requirement: sf.requirementName,
+                          })
+                        : t('competence.personMissing', {
+                            person: sf.personLabel,
+                            requirement: sf.requirementName,
+                          })}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href={`/${locale}/training`}
+                  className="mt-1 inline-block text-primary hover:underline"
+                >
+                  {t('competence.openModule')}
+                </Link>
+              </div>
+            ) : null}
+
             {permit.type.requiresRamsPack ? (
               <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950/40">
                 <p className="font-medium">{t('ssow.ramsRequired')}</p>
@@ -1033,12 +1066,20 @@ export default function PermitDetailPage() {
                       {t('signatures.ramsBlocked')}
                     </p>
                   ) : null}
+                  {permit.trainingShortfalls.length > 0 ? (
+                    <p className="max-w-xs text-right text-xs text-red-700 dark:text-red-400">
+                      {t('signatures.competenceBlocked')}
+                    </p>
+                  ) : null}
                   <Button
                     size="sm"
                     disabled={
                       issue.isPending ||
                       !allChecked ||
                       permit.ramsGate !== null ||
+                      // The same verdict the server reaches, so the button is
+                      // dead before it is pressed rather than after.
+                      permit.trainingShortfalls.length > 0 ||
                       (permit.conflicts.length > 0 && !acknowledgeConflicts)
                     }
                     onClick={() => issue.mutate({ permitId, acknowledgeConflicts })}

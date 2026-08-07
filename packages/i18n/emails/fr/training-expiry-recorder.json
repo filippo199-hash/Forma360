@@ -1,0 +1,8 @@
+{
+  "subject": "Formation bientôt expirée : {requirementName} — {personName}",
+  "preheader": "La formation {requirementName} de {personName} expire le {expiresOn}.",
+  "greeting": "Bonjour,",
+  "body": "L'attestation de formation de {personName} pour « {requirementName} » expire le {expiresOn}. Vous avez enregistré cette carte et cette personne n'a pas de compte sur le système : ce rappel vous est donc adressé. Merci d'organiser le renouvellement et d'enregistrer le nouveau certificat : {url}",
+  "cta": "Voir la matrice de formation",
+  "footer": "Vous recevez ce message car vous avez enregistré cette formation sur {productName}."
+}

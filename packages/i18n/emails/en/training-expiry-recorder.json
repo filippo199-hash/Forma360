@@ -1,0 +1,8 @@
+{
+  "subject": "Training expiring: {requirementName} — {personName}",
+  "preheader": "{personName}'s {requirementName} expires on {expiresOn}.",
+  "greeting": "Hi,",
+  "body": "{personName}'s training record for \"{requirementName}\" expires on {expiresOn}. You recorded this card, and they have no account on the system, so this reminder comes to you. Please arrange the renewal and record the new certificate: {url}",
+  "cta": "View the training matrix",
+  "footer": "You are receiving this because you recorded this training record on {productName}."
+}

@@ -25,6 +25,9 @@ const ROUTES = [
   // TR-A4 / TR-A5: the wallet and the personal door.
   '/en/training/me',
   '/en/training/person',
+  // TR-B3: the id-addressed wallet Cmd-K resolves to. Before this route
+  // existed the palette sent every training hit to a 404.
+  '/en/training/person/01KPFAKETESTIDAAAAAAAAAAAA',
 ];
 
 for (const route of ROUTES) {

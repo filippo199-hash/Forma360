@@ -106,8 +106,15 @@ export async function findDueTrainingReminders(
   const due: DueTrainingReminder[] = [];
   for (const r of rows) {
     if (r.expiresAt === null) continue;
-    // A deactivated holder is nobody's to chase.
-    const holderReachable = r.holderEmail !== null && r.holderDeactivatedAt === null;
+    // TR-B9: a deactivated holder is nobody's to chase — and that has to
+    // mean SKIP, not "fall through to the recorder". The previous code did
+    // the opposite of this comment, so for a month after someone left,
+    // whoever recorded their tickets got a chase per lapsing card for a
+    // person who no longer works there.
+    if (r.holderDeactivatedAt !== null) continue;
+    // The recorder fallback exists only for genuinely account-less people
+    // (a contractor's operative), which is what TR-A6 asked for.
+    const holderReachable = r.holderEmail !== null;
     const email = holderReachable ? r.holderEmail : r.recorderEmail;
     if (email === null || email === undefined) continue;
     due.push({

@@ -4955,7 +4955,8 @@
         "requiresGasTesting": "Wymagany pomiar gazów",
         "requiresIsolationCertificate": "Wymagane świadectwo odłączenia",
         "requiresRescuePlan": "Wymagany plan ratunkowy",
-        "requiresRiskAssessment": "Wymagana powiązana ocena ryzyka"
+        "requiresRiskAssessment": "Wymagana powiązana ocena ryzyka",
+        "requiresRamsPack": "Wymagany zaakceptowany pakiet RAMS"
       },
       "maxDuration": "Maksymalna ważność",
       "hours": "godz.",
@@ -4976,7 +4977,8 @@
       "gasLimitMax": "Maks",
       "addGasLimit": "Dodaj limit",
       "gasFreshness": "Świeżość pomiaru gazów",
-      "gasFreshnessUnit": "minut"
+      "gasFreshnessUnit": "minut",
+      "description": "Opis"
     },
     "errors": {
       "module-disabled": "Ten moduł jest niedostępny.",
@@ -5027,8 +5029,22 @@
       "entry-log-full": "Rejestr wejść tego pozwolenia jest pełny.",
       "unknown-entry": "Taki wpis w rejestrze nie istnieje.",
       "already-exited": "Wyjście tej osoby już odnotowano.",
-      "render-unavailable": "Generowanie PDF jest niedostępne w tym środowisku."
-    }
+      "render-unavailable": "Generowanie PDF jest niedostępne w tym środowisku.",
+      "training-expired": "Nie można wydać: osoba wskazana w zezwoleniu ma wygasłe szkolenie.",
+      "training-missing": "Nie można wydać: osoba wskazana nigdy nie uzyskała wymaganego szkolenia."
+    },
+    "competence": {
+      "blockedTitle": "Kompetencje niespełnione",
+      "personExpired": "{person} — {requirement} wygasło",
+      "personMissing": "{person} — brak {requirement}",
+      "openModule": "Otwórz szkolenia"
+    },
+    "signatures": {
+      "competenceBlocked": "Zablokowane: brak kompetencji"
+    },
+    "requiredTraining": "Wymagane szkolenia",
+    "requiredTrainingHint": "Każdy wskazany pracownik musi je posiadać i mieć ważne przed wydaniem tego typu.",
+    "requiredTrainingNone": "Nie zdefiniowano jeszcze wymagań szkoleniowych."
   },
   "fireSafety": {
     "title": "Ochrona przeciwpożarowa",
@@ -6623,7 +6639,8 @@
       "gaps": "Braki",
       "matrix": "Macierz",
       "compliance": "Zgodność",
-      "requirements": "Wymagania"
+      "requirements": "Wymagania",
+      "me": "Moje szkolenia"
     },
     "asAt": "Stan na {date}",
     "status": {
@@ -6641,7 +6658,8 @@
       "record": "Zarejestruj",
       "expiresOn": "wygasa {date}",
       "requiredByRole": "wymagane przez stanowisko",
-      "total": "{count} do obsłużenia"
+      "total": "{count} do obsłużenia",
+      "noSiteMembers": "Nikt nie jest jeszcze przypisany do tej lokalizacji, więc nie ma czego pokazać. Dodaj osoby do lokalizacji."
     },
     "matrix": {
       "person": "Osoba",
@@ -6759,7 +6777,12 @@
       "close": "Zamknij",
       "rowLabel": "Wiersz {row}",
       "badColumns": "Wiersz nagłówka musi zawierać personName, requirementName i achievedAt.",
-      "noRows": "Brak wierszy do importu."
+      "noRows": "Brak wierszy do importu.",
+      "dryRun": "Próba",
+      "dryRunDone": "Próba: zaimportowano by {count} zapisów. Nic nie zostało zapisane.",
+      "matchSummary": "{matched} powiązano z kontem · {nameOnly} zapisano tylko z imienia i nazwiska",
+      "duplicatesSkipped": "{count} wierszy już istniało i zostało pominiętych.",
+      "errorGroup": "{message} — {count} wierszy (pierwszy: wiersz {first})"
     },
     "errors": {
       "moduleDisabled": "Ten moduł nie jest włączony.",

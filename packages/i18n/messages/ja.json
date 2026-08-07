@@ -4955,7 +4955,8 @@
         "requiresGasTesting": "ガス測定が必要",
         "requiresIsolationCertificate": "隔離証明書が必要",
         "requiresRescuePlan": "救助計画が必要",
-        "requiresRiskAssessment": "リスクアセスメントのリンクが必要"
+        "requiresRiskAssessment": "リスクアセスメントのリンクが必要",
+        "requiresRamsPack": "承認済み RAMS パックが必要"
       },
       "maxDuration": "最長有効期間",
       "hours": "時間",
@@ -4976,7 +4977,8 @@
       "gasLimitMax": "上限",
       "addGasLimit": "限界値を追加",
       "gasFreshness": "ガス測定の有効時間",
-      "gasFreshnessUnit": "分"
+      "gasFreshnessUnit": "分",
+      "description": "説明"
     },
     "errors": {
       "module-disabled": "このモジュールは利用できません。",
@@ -5027,8 +5029,22 @@
       "entry-log-full": "この許可の入退場記録が上限に達しました。",
       "unknown-entry": "その記録行は存在しません。",
       "already-exited": "その人の退場は既に記録済みです。",
-      "render-unavailable": "この環境ではPDF生成を利用できません。"
-    }
+      "render-unavailable": "この環境ではPDF生成を利用できません。",
+      "training-expired": "発行できません：この許可証に記載された人の研修が失効しています。",
+      "training-missing": "発行できません：記載された人が必要な研修を取得していません。"
+    },
+    "competence": {
+      "blockedTitle": "力量要件を満たしていません",
+      "personExpired": "{person} — {requirement} が失効しています",
+      "personMissing": "{person} — {requirement} 未取得",
+      "openModule": "研修を開く"
+    },
+    "signatures": {
+      "competenceBlocked": "ブロック：力量要件未達"
+    },
+    "requiredTraining": "必要な研修",
+    "requiredTrainingHint": "記載された作業者全員が有効な状態で保有している必要があります。",
+    "requiredTrainingNone": "研修要件がまだ定義されていません。"
   },
   "fireSafety": {
     "title": "防火管理",
@@ -6623,7 +6639,8 @@
       "gaps": "不足",
       "matrix": "マトリクス",
       "compliance": "遵守状況",
-      "requirements": "要件"
+      "requirements": "要件",
+      "me": "自分の研修"
     },
     "asAt": "{date} 時点",
     "status": {
@@ -6641,7 +6658,8 @@
       "record": "記録",
       "expiresOn": "{date} に失効",
       "requiredByRole": "役割により必須",
-      "total": "対応が必要: {count} 件"
+      "total": "対応が必要: {count} 件",
+      "noSiteMembers": "この拠点にはまだ誰も所属していないため、表示するものがありません。拠点に人を追加してください。"
     },
     "matrix": {
       "person": "対象者",
@@ -6759,7 +6777,12 @@
       "close": "閉じる",
       "rowLabel": "{row} 行目",
       "badColumns": "ヘッダー行には personName、requirementName、achievedAt が必要です。",
-      "noRows": "取り込む行がありません。"
+      "noRows": "取り込む行がありません。",
+      "dryRun": "テスト実行",
+      "dryRunDone": "テスト実行：{count} 件が取り込まれます。書き込みは行われていません。",
+      "matchSummary": "アカウント紐付け {matched} 件 · 氏名のみ {nameOnly} 件",
+      "duplicatesSkipped": "{count} 行はすでに存在するためスキップしました。",
+      "errorGroup": "{message} — {count} 行（最初：{first} 行目）"
     },
     "errors": {
       "moduleDisabled": "このモジュールは有効ではありません。",

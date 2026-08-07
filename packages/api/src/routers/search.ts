@@ -31,7 +31,8 @@ import {
   riskAssessments,
   sites,
   templates,
-  trainingRequirements,
+  trainingRecords,
+  user,
 } from '@forma360/db/schema';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import type { PermissionKey } from '@forma360/permissions/catalogue';
@@ -394,26 +395,31 @@ export const searchRouter = router({
               referenceNumber: string | null;
               status: string;
             }>(),
-        // Training requirements — the module is in the nav, so it is
-        // searchable (TR-A13; the PF-6 promise above).
+        // Training — PEOPLE, not requirement definitions (TR-B3). A
+        // searcher typing a name wants that person's cards; a requirement
+        // definition is an admin object, and the id-based href it produced
+        // pointed at a route that did not exist. Restricted to users who
+        // actually hold a record, so the palette does not become a second
+        // user directory.
         has('training.view')
           ? ctx.db
-              .select({
-                id: trainingRequirements.id,
-                name: trainingRequirements.name,
-                category: trainingRequirements.category,
+              .selectDistinct({
+                id: user.id,
+                name: user.name,
+                email: user.email,
               })
-              .from(trainingRequirements)
+              .from(trainingRecords)
+              .innerJoin(user, eq(trainingRecords.userId, user.id))
               .where(
                 and(
-                  eq(trainingRequirements.tenantId, tid),
-                  isNull(trainingRequirements.archivedAt),
-                  or(ilike(trainingRequirements.name, q), ilike(trainingRequirements.category, q)),
+                  eq(trainingRecords.tenantId, tid),
+                  isNull(trainingRecords.supersededAt),
+                  isNull(user.deactivatedAt),
+                  or(ilike(user.name, q), ilike(user.email, q)),
                 ),
               )
-              .orderBy(desc(trainingRequirements.updatedAt))
               .limit(MAX_PER_CATEGORY)
-          : empty<{ id: string; name: string; category: string | null }>(),
+          : empty<{ id: string; name: string; email: string }>(),
       ]);
 
       // Apply per-document / per-folder visibility for non-managers (managers
@@ -504,7 +510,7 @@ export const searchRouter = router({
         training: trainingRows.map((r) => ({
           id: r.id,
           title: r.name,
-          subtitle: r.category,
+          subtitle: r.email,
         })),
       };
     }),

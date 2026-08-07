@@ -740,7 +740,10 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
         await sendTemplatedEmail({
           to: r.email,
           locale: r.locale ?? undefined,
-          templateKey: 'training-expiry',
+          // TR-B8: `viaRecorder` was set and never read, so a recorder got
+          // "Your training record expires" about someone else's card. The
+          // template now has two bodies and picks by this flag.
+          templateKey: r.viaRecorder ? 'training-expiry-recorder' : 'training-expiry',
           variables: {
             personName: r.personName,
             requirementName: r.requirementName,

@@ -4962,7 +4962,8 @@
         "requiresGasTesting": "Mesures de gaz requises",
         "requiresIsolationCertificate": "Certificat de consignation requis",
         "requiresRescuePlan": "Plan de sauvetage requis",
-        "requiresRiskAssessment": "Évaluation des risques liée requise"
+        "requiresRiskAssessment": "Évaluation des risques liée requise",
+        "requiresRamsPack": "Dossier RAMS accepté requis"
       },
       "maxDuration": "Validité maximale",
       "hours": "heures",
@@ -4983,7 +4984,8 @@
       "gasLimitMax": "Max",
       "addGasLimit": "Ajouter la limite",
       "gasFreshness": "Fraîcheur de la mesure de gaz",
-      "gasFreshnessUnit": "minutes"
+      "gasFreshnessUnit": "minutes",
+      "description": "Description"
     },
     "errors": {
       "module-disabled": "Ce module n'est pas disponible.",
@@ -5034,8 +5036,22 @@
       "entry-log-full": "Le journal des entrées de ce permis est plein.",
       "unknown-entry": "Cette ligne du journal n'existe pas.",
       "already-exited": "La sortie de cette personne a déjà été consignée.",
-      "render-unavailable": "La génération de PDF n'est pas disponible dans cet environnement."
-    }
+      "render-unavailable": "La génération de PDF n'est pas disponible dans cet environnement.",
+      "training-expired": "Émission impossible : une personne nommée sur ce permis a une formation expirée.",
+      "training-missing": "Émission impossible : une personne nommée n’a jamais obtenu la formation requise."
+    },
+    "competence": {
+      "blockedTitle": "Compétence non satisfaite",
+      "personExpired": "{person} — {requirement} a expiré",
+      "personMissing": "{person} — {requirement} non détenue",
+      "openModule": "Ouvrir les formations"
+    },
+    "signatures": {
+      "competenceBlocked": "Bloqué : compétence non satisfaite"
+    },
+    "requiredTraining": "Formations requises",
+    "requiredTrainingHint": "Chaque intervenant nommé doit les détenir, en cours de validité, avant émission.",
+    "requiredTrainingNone": "Aucune exigence de formation définie."
   },
   "fireSafety": {
     "title": "Sécurité incendie",
@@ -6630,7 +6646,8 @@
       "gaps": "Écarts",
       "matrix": "Matrice",
       "compliance": "Conformité",
-      "requirements": "Exigences"
+      "requirements": "Exigences",
+      "me": "Mes formations"
     },
     "asAt": "Au {date}",
     "status": {
@@ -6648,7 +6665,8 @@
       "record": "Enregistrer",
       "expiresOn": "expire le {date}",
       "requiredByRole": "requis par le poste",
-      "total": "{count} à traiter"
+      "total": "{count} à traiter",
+      "noSiteMembers": "Personne n’est encore rattaché à ce site : il n’y a rien à afficher. Ajoutez des personnes au site."
     },
     "matrix": {
       "person": "Personne",
@@ -6766,7 +6784,12 @@
       "close": "Fermer",
       "rowLabel": "Ligne {row}",
       "badColumns": "La ligne d’en-tête doit contenir personName, requirementName et achievedAt.",
-      "noRows": "Aucune ligne à importer."
+      "noRows": "Aucune ligne à importer.",
+      "dryRun": "Simulation",
+      "dryRunDone": "Simulation : {count} attestations seraient importées. Rien n’a été écrit.",
+      "matchSummary": "{matched} rattachés à un compte · {nameOnly} enregistrés au nom seul",
+      "duplicatesSkipped": "{count} lignes existaient déjà et ont été ignorées.",
+      "errorGroup": "{message} — {count} lignes (première : ligne {first})"
     },
     "errors": {
       "moduleDisabled": "Ce module n'est pas activé.",

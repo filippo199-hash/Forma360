@@ -5196,7 +5196,8 @@
         "requiresGasTesting": "Gas testing required",
         "requiresIsolationCertificate": "Isolation certificate required",
         "requiresRescuePlan": "Rescue plan required",
-        "requiresRiskAssessment": "Linked risk assessment required"
+        "requiresRiskAssessment": "Linked risk assessment required",
+        "requiresRamsPack": "Accepted RAMS pack required"
       },
       "maxDuration": "Maximum validity",
       "hours": "hours",
@@ -5217,7 +5218,8 @@
       "gasLimitMax": "Max",
       "addGasLimit": "Add limit",
       "gasFreshness": "Gas test freshness",
-      "gasFreshnessUnit": "minutes"
+      "gasFreshnessUnit": "minutes",
+      "description": "Description"
     },
     "errors": {
       "module-disabled": "This module is not available.",
@@ -5268,8 +5270,22 @@
       "entry-log-full": "The entry log is full for this permit.",
       "unknown-entry": "That entry-log row does not exist.",
       "already-exited": "That person has already been logged out.",
-      "render-unavailable": "PDF rendering is not available in this environment."
-    }
+      "render-unavailable": "PDF rendering is not available in this environment.",
+      "training-expired": "Cannot issue: someone named on this permit has expired training.",
+      "training-missing": "Cannot issue: someone named on this permit has never held the required training."
+    },
+    "competence": {
+      "blockedTitle": "Competence not met",
+      "personExpired": "{person} — {requirement} has expired",
+      "personMissing": "{person} — {requirement} not held",
+      "openModule": "Open training"
+    },
+    "signatures": {
+      "competenceBlocked": "Blocked: competence not met"
+    },
+    "requiredTraining": "Required training",
+    "requiredTrainingHint": "Every named operative must hold these, in date, before this type can be issued.",
+    "requiredTrainingNone": "No training requirements defined yet."
   },
   "fireSafety": {
     "title": "Fire Safety",
@@ -6858,7 +6874,8 @@
       "gaps": "Gaps",
       "matrix": "Matrix",
       "compliance": "Compliance",
-      "requirements": "Requirements"
+      "requirements": "Requirements",
+      "me": "My training"
     },
     "asAt": "As at {date}",
     "status": {
@@ -6876,7 +6893,8 @@
       "record": "Record",
       "expiresOn": "expires {date}",
       "requiredByRole": "required by role",
-      "total": "{count} to chase"
+      "total": "{count} to chase",
+      "noSiteMembers": "Nobody is a member of this site yet, so there is nothing to show. Add people to the site to see their training here."
     },
     "matrix": {
       "person": "Person",
@@ -6994,7 +7012,12 @@
       "close": "Close",
       "rowLabel": "Row {row}",
       "badColumns": "The header row must include personName, requirementName and achievedAt.",
-      "noRows": "No rows to import."
+      "noRows": "No rows to import.",
+      "dryRun": "Dry run",
+      "dryRunDone": "Dry run: {count} records would be imported. Nothing was written.",
+      "matchSummary": "{matched} matched to an account · {nameOnly} recorded as name-only people",
+      "duplicatesSkipped": "{count} rows already existed and were skipped.",
+      "errorGroup": "{message} — {count} rows (first: row {first})"
     },
     "errors": {
       "moduleDisabled": "This module is not enabled.",
