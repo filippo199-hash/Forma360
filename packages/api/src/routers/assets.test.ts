@@ -238,4 +238,56 @@ describe('Assets router (Phase 5B)', () => {
     expect(readings[0]?.fieldName).toBe('runtime_hours');
     expect(readings[0]?.value).toBe('1250');
   });
+  it('AS-CF05: changing type keeps old values and accepts the new type’s fields', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+
+    // A plain type with no custom fields — the asset the user actually had.
+    const { typeId: plainType } = await caller.assetTypes.create({ name: 'Generic' });
+    const { assetId } = await caller.assets.create({ name: 'Unit 7', typeId: plainType });
+
+    // Later, a richer type is defined.
+    const { typeId: carType } = await caller.assetTypes.create({
+      name: 'Cars',
+      customFields: [
+        { id: 'reg', name: 'Registration', fieldType: 'text', required: true },
+        { id: 'mot', name: 'MOT due', fieldType: 'date' },
+      ],
+    });
+
+    // Switching the asset onto it, and filling the new fields in the same
+    // save — which is exactly what had no UI before this fix.
+    await caller.assets.update({
+      assetId,
+      typeId: carType,
+      customFieldValues: { reg: 'AB12 CDE', mot: '2027-03-01' },
+    });
+
+    const afterSwitch = await caller.assets.get({ assetId });
+    expect(afterSwitch.assetType?.id).toBe(carType);
+    // The detail page reads the type definition off `get`, so it must come
+    // back with the fields or the page has nothing to render.
+    expect(afterSwitch.assetType?.customFields).toHaveLength(2);
+    expect(afterSwitch.asset.customFieldValues).toMatchObject({
+      reg: 'AB12 CDE',
+      mot: '2027-03-01',
+    });
+
+    // Switching to a third type must not destroy what the car type held —
+    // the editor sends the whole map back, so switching BACK restores it.
+    const { typeId: pumpType } = await caller.assetTypes.create({
+      name: 'Pumps',
+      customFields: [{ id: 'pressure', name: 'Pressure', fieldType: 'number' }],
+    });
+    await caller.assets.update({
+      assetId,
+      typeId: pumpType,
+      customFieldValues: { reg: 'AB12 CDE', mot: '2027-03-01', pressure: '4.2' },
+    });
+
+    const afterSecond = await caller.assets.get({ assetId });
+    expect(afterSecond.asset.customFieldValues).toMatchObject({
+      reg: 'AB12 CDE',
+      pressure: '4.2',
+    });
+  });
 });

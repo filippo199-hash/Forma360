@@ -21,6 +21,14 @@ import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { brandHasModule } from '@forma360/shared/brand';
 import { activeBrand } from '../../../../src/lib/brand';
+import {
+  CustomFieldInputs,
+  CustomFieldReadout,
+  customFieldsOf,
+  customFieldValuesOf,
+  firstMissingRequired,
+  type CustomFieldValues,
+} from '../../../../src/components/assets/custom-field-inputs';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type Tab = 'overview' | 'readings' | 'media' | 'actions' | 'inspections' | 'observations';
@@ -70,11 +78,15 @@ export default function AssetDetailPage() {
   const [readingFieldName, setReadingFieldName] = useState('');
   const [readingValue, setReadingValue] = useState('');
   const [readingUnit, setReadingUnit] = useState('');
+  const [editCustomFieldValues, setEditCustomFieldValues] = useState<CustomFieldValues>({});
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, error } = trpc.assets.get.useQuery({ assetId });
-  const { data: assetTypesList } = trpc.assetTypes.list.useQuery(undefined, { enabled: editing });
+  // Loaded unconditionally: read mode needs the type definition to show
+  // the custom fields, and edit mode needs it to swap the field set the
+  // moment the type changes.
+  const { data: assetTypesList } = trpc.assetTypes.list.useQuery();
   const { data: readingsData } = trpc.assets.readings.list.useQuery(
     { assetId },
     { enabled: tab === 'readings' },
@@ -130,6 +142,20 @@ export default function AssetDetailPage() {
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
 
+  // The fields the CURRENTLY SELECTED type defines. In edit mode this
+  // follows the dropdown, so choosing a new type immediately offers that
+  // type's fields — the whole point of the fix. In read mode it follows
+  // the saved type.
+  const editCustomFields = customFieldsOf(
+    (assetTypesList ?? []).find((at) => at.id === editTypeId) ?? null,
+  );
+  const savedCustomFields = customFieldsOf(data?.assetType ?? null);
+  const savedCustomFieldValues = data === undefined ? {} : customFieldValuesOf(data.asset);
+
+  function setCustomFieldValue(fieldId: string, value: string) {
+    setEditCustomFieldValues((prev) => ({ ...prev, [fieldId]: value }));
+  }
+
   function startEditing() {
     if (data === undefined) return;
     const { asset } = data;
@@ -138,6 +164,7 @@ export default function AssetDetailPage() {
     setEditTypeId(asset.typeId ?? '');
     setEditSiteId(asset.siteId ?? '');
     setEditOwnerUserId(asset.ownerUserId ?? '');
+    setEditCustomFieldValues(customFieldValuesOf(asset));
     setEditing(true);
   }
 
@@ -146,6 +173,12 @@ export default function AssetDetailPage() {
   }
 
   function saveEditing() {
+    // Required fields mean the same thing here as on create.
+    const missing = firstMissingRequired(editCustomFields, editCustomFieldValues);
+    if (missing !== null) {
+      toast.error(t('fieldRequired', { name: missing.name }));
+      return;
+    }
     update.mutate({
       assetId,
       name: editName.trim(),
@@ -153,6 +186,10 @@ export default function AssetDetailPage() {
       typeId: editTypeId === '' ? null : editTypeId,
       siteId: editSiteId === '' ? null : editSiteId,
       ownerUserId: editOwnerUserId === '' ? null : editOwnerUserId,
+      // `customFieldValues` replaces the whole map, so values belonging to
+      // a PREVIOUS type are carried through rather than destroyed: switch
+      // a car back to a pump and its pump readings are still there.
+      customFieldValues: editCustomFieldValues,
     });
   }
 
@@ -326,6 +363,24 @@ export default function AssetDetailPage() {
                     ))}
                   </select>
                 </div>
+
+                {/* The selected type's custom fields. These existed only on
+                    the create page, so changing an asset's type to one that
+                    defines fields left no way to fill them in — and a value
+                    typed at creation was never editable again. */}
+                {editCustomFields.length > 0 ? (
+                  <div className="space-y-4 border-t pt-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t('fields.customFieldsHeading')}
+                    </p>
+                    <CustomFieldInputs
+                      fields={editCustomFields}
+                      values={editCustomFieldValues}
+                      onChange={setCustomFieldValue}
+                      idPrefix="edit-cf"
+                    />
+                  </div>
+                ) : null}
                 <div className="space-y-1.5">
                   <Label>{placeLabel}</Label>
                   <SiteSelector
@@ -385,6 +440,30 @@ export default function AssetDetailPage() {
                     </DetailRow>
                   ) : null}
                   <DetailRow label={t('fields.children')}>{String(childrenCount)}</DetailRow>
+
+                  {/* The type's custom fields. Before this they were visible
+                      nowhere after creation, so a value could not be read
+                      back or corrected. An unanswered field shows a dash
+                      rather than vanishing — it is a prompt to go and fill
+                      it in, which is exactly what a type change produces. */}
+                  {savedCustomFields.length > 0 ? (
+                    <div className="space-y-3 border-t pt-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {t('fields.customFieldsHeading')}
+                      </p>
+                      <CustomFieldReadout
+                        fields={savedCustomFields}
+                        values={savedCustomFieldValues}
+                        emptyLabel={t('fields.customFieldEmpty')}
+                      />
+                      {canManage &&
+                      firstMissingRequired(savedCustomFields, savedCustomFieldValues) !== null ? (
+                        <p className="text-xs text-amber-700 dark:text-amber-400">
+                          {t('fields.customFieldsIncomplete')}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
 

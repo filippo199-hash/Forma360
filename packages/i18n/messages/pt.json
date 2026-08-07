@@ -2754,7 +2754,10 @@
         "noSite": "No site",
         "owner": "Proprietário",
         "noOwner": "Sem proprietário",
-        "ownerPlaceholder": "Selecionar proprietário"
+        "ownerPlaceholder": "Selecionar proprietário",
+        "customFieldsHeading": "Campos da categoria",
+        "customFieldEmpty": "Por preencher",
+        "customFieldsIncomplete": "Faltam alguns dados obrigatórios para este tipo de ativo. Edite o ativo para os adicionar."
       },
       "readingColumns": {
         "field": "Field",
@@ -2802,7 +2805,8 @@
         "type": "Verificação",
         "result": "Resultado",
         "notes": "Notas"
-      }
+      },
+      "fieldRequired": "{name} é obrigatório"
     },
     "settings": {
       "title": "Settings",

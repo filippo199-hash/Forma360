@@ -2754,7 +2754,10 @@
         "noSite": "No site",
         "owner": "负责人",
         "noOwner": "无负责人",
-        "ownerPlaceholder": "选择负责人"
+        "ownerPlaceholder": "选择负责人",
+        "customFieldsHeading": "类别字段",
+        "customFieldEmpty": "未填写",
+        "customFieldsIncomplete": "此资产类型的部分必填信息尚未填写。请编辑资产以补充。"
       },
       "readingColumns": {
         "field": "Field",
@@ -2802,7 +2805,8 @@
         "type": "检查",
         "result": "结果",
         "notes": "备注"
-      }
+      },
+      "fieldRequired": "{name} 为必填项"
     },
     "settings": {
       "title": "Settings",

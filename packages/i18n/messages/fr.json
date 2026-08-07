@@ -2761,7 +2761,10 @@
         "noSite": "No site",
         "owner": "Propriétaire",
         "noOwner": "Aucun propriétaire",
-        "ownerPlaceholder": "Sélectionner un propriétaire"
+        "ownerPlaceholder": "Sélectionner un propriétaire",
+        "customFieldsHeading": "Champs de la catégorie",
+        "customFieldEmpty": "Non renseigné",
+        "customFieldsIncomplete": "Certaines informations obligatoires pour ce type d’équipement ne sont pas encore renseignées. Modifiez l’équipement pour les ajouter."
       },
       "readingColumns": {
         "field": "Field",
@@ -2809,7 +2812,8 @@
         "type": "Contrôle",
         "result": "Résultat",
         "notes": "Notes"
-      }
+      },
+      "fieldRequired": "{name} est obligatoire"
     },
     "settings": {
       "title": "Settings",

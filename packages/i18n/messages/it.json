@@ -2796,7 +2796,10 @@
         "noSite": "No site",
         "owner": "Proprietario",
         "noOwner": "Nessun proprietario",
-        "ownerPlaceholder": "Seleziona proprietario"
+        "ownerPlaceholder": "Seleziona proprietario",
+        "customFieldsHeading": "Campi della categoria",
+        "customFieldEmpty": "Non impostato",
+        "customFieldsIncomplete": "Alcuni dati obbligatori per questo tipo di asset non sono ancora stati inseriti. Modifica l’asset per aggiungerli."
       },
       "readingColumns": {
         "field": "Field",
@@ -2844,7 +2847,8 @@
         "type": "Controllo",
         "result": "Esito",
         "notes": "Note"
-      }
+      },
+      "fieldRequired": "{name} è obbligatorio"
     },
     "settings": {
       "title": "Settings",

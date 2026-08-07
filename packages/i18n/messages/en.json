@@ -2950,7 +2950,10 @@
         "noSite": "No site",
         "owner": "Owner",
         "noOwner": "No owner",
-        "ownerPlaceholder": "Select owner"
+        "ownerPlaceholder": "Select owner",
+        "customFieldsHeading": "Category fields",
+        "customFieldEmpty": "Not set",
+        "customFieldsIncomplete": "Some required details for this asset type have not been filled in yet. Edit the asset to add them."
       },
       "readingColumns": {
         "field": "Field",
@@ -2998,7 +3001,8 @@
         "type": "Check",
         "result": "Result",
         "notes": "Notes"
-      }
+      },
+      "fieldRequired": "{name} is required"
     },
     "settings": {
       "title": "Settings",
