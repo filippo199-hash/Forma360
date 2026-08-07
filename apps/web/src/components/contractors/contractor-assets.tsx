@@ -4,6 +4,7 @@ import { AlertTriangle, Boxes, HardHat, Plus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { contractorErrorMessage } from '../../lib/contractor-errors';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -64,8 +65,7 @@ export function ContractorAssetsSection({
 
   const refresh = () =>
     void utils.contractors.assets.listForContractor.invalidate({ contractorId });
-  const onErr = (err: { message: string }) =>
-    toast.error(err.message.length > 0 ? err.message : t('error'));
+  const onErr = (err: { message: string }) => toast.error(contractorErrorMessage(err.message, t));
 
   const link = trpc.contractors.assets.link.useMutation({
     onSuccess: () => {
@@ -220,15 +220,14 @@ export function AssetContractorsSection({
   const t = useTranslations('contractors');
   const utils = trpc.useUtils();
   const linksQ = trpc.contractors.assets.listForAsset.useQuery({ assetId });
-  const contractorsQ = trpc.contractors.list.useQuery(undefined, { retry: false });
+  const contractorsQ = trpc.contractors.list.useQuery({ limit: 200 }, { retry: false });
 
   const [open, setOpen] = useState(false);
   const [contractorId, setContractorId] = useState('');
   const [note, setNote] = useState('');
 
   const refresh = () => void utils.contractors.assets.listForAsset.invalidate({ assetId });
-  const onErr = (err: { message: string }) =>
-    toast.error(err.message.length > 0 ? err.message : t('error'));
+  const onErr = (err: { message: string }) => toast.error(contractorErrorMessage(err.message, t));
 
   const link = trpc.contractors.assets.link.useMutation({
     onSuccess: () => {
@@ -244,7 +243,7 @@ export function AssetContractorsSection({
 
   const links = linksQ.data ?? [];
   const linkedIds = useMemo(() => new Set(links.map((l) => l.contractorId)), [links]);
-  const available = (contractorsQ.data ?? []).filter((c) => !linkedIds.has(c.id));
+  const available = (contractorsQ.data?.contractors ?? []).filter((c) => !linkedIds.has(c.id));
 
   return (
     <section className="space-y-3">

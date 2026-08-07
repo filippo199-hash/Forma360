@@ -7,6 +7,7 @@
  * (derived, never stored). Later phases add external users, visits/gate,
  * and the asset link.
  */
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   date,
@@ -51,6 +52,13 @@ export const contractors = pgTable(
     complianceOverrideReason: text('compliance_override_reason'),
     primaryContactName: text('primary_contact_name'),
     primaryContactEmail: text('primary_contact_email'),
+    /**
+     * Preferred email language for the primary contact (PF-20). Null =
+     * English. An external contact has no `user` row, so the only place
+     * their language can live is here — without it every contractor email
+     * shipped in English regardless of the translated templates on disk.
+     */
+    locale: text('locale'),
     notes: text('notes'),
     /** Opaque token for the public, no-login contractor upload portal. */
     uploadToken: text('upload_token'),
@@ -295,14 +303,53 @@ export const contractorVisitEvents = pgTable(
 
 export type ContractorVisitEvent = typeof contractorVisitEvents.$inferSelect;
 
-export const contractorGateConfig = pgTable('contractor_gate_config', {
-  tenantId: varchar('tenant_id', { length: 26 })
-    .primaryKey()
-    .references(() => tenants.id, { onDelete: 'restrict' }),
-  /** Opaque token behind the public self-scan kiosk URL. */
-  gateToken: text('gate_token'),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
+/**
+ * The kiosk token behind the public self-scan gate.
+ *
+ * CT-G06: this table used to be keyed on `tenant_id` alone, so ONE token
+ * unlocked every reception screen in the company. Every kiosk listed every
+ * site's contractor arrivals — names, companies, times — with no session;
+ * any kiosk could admit a visit booked for a different site; and
+ * revocation was all-or-nothing, so rotating the token for one compromised
+ * screen killed every other screen in the business.
+ *
+ * `siteId` is nullable on purpose. The row that exists today keeps working
+ * exactly as it does now — it is simply "the tenant-wide token" — so no
+ * live kiosk stops working the moment this deploys. Sites get their own
+ * rows as administrators create them, and a tenant retires the legacy row
+ * once every screen has a site-specific token.
+ *
+ * Two partial unique indexes rather than one composite: Postgres treats
+ * NULLs as distinct in a normal unique index, so `(tenantId, siteId)` alone
+ * would happily allow ten tenant-wide rows for the same tenant.
+ */
+export const contractorGateConfig = pgTable(
+  'contractor_gate_config',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    /** Null = the legacy tenant-wide token. Non-null = one screen, one site. */
+    siteId: varchar('site_id', { length: 26 }).references(() => sites.id, {
+      onDelete: 'cascade',
+    }),
+    /** Opaque token behind the public self-scan kiosk URL. */
+    gateToken: text('gate_token'),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // A token must resolve to exactly one config, or the kiosk lookup is
+    // ambiguous — which is a security property, not a tidiness one.
+    uniqueIndex('contractor_gate_config_token_idx').on(t.gateToken),
+    uniqueIndex('contractor_gate_config_tenant_legacy_uq')
+      .on(t.tenantId)
+      .where(sql`${t.siteId} IS NULL`),
+    uniqueIndex('contractor_gate_config_tenant_site_uq')
+      .on(t.tenantId, t.siteId)
+      .where(sql`${t.siteId} IS NOT NULL`),
+  ],
+);
 
 export type ContractorGateConfig = typeof contractorGateConfig.$inferSelect;
 

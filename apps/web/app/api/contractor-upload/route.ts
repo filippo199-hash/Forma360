@@ -5,8 +5,14 @@
  * for one of their requirements. The token resolves the contractor + tenant;
  * the file is stored and a `contractor_documents` row is created as `pending`
  * for the company to verify. No session — the token is the capability.
+ *
+ * CT-U01: the period of cover is mandatory — either an expiry date or an
+ * explicit "this document never expires". A null expiry means "valid
+ * forever" to the compliance derivation and therefore to the gate, so it
+ * must never be reachable by simply omitting a field.
  */
 import { contractorDocuments, contractorRequirements, contractors } from '@forma360/db/schema';
+import { todayIso, validateDocumentPeriod } from '@forma360/shared/contractors';
 import { newId } from '@forma360/shared/id';
 import { objectKey } from '@forma360/shared/storage';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -20,7 +26,6 @@ import { storage } from '../../../src/server/storage';
 const MAX_BYTES = 50 * 1024 * 1024;
 const ACCEPTED_MIME = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp']);
 const FILENAME_SAFE = /[^A-Za-z0-9._-]/g;
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function sanitizeFilename(raw: string): string {
   const cleaned = raw.trim().replace(/\s+/g, '_').replace(FILENAME_SAFE, '_');
@@ -33,6 +38,7 @@ export async function POST(req: Request): Promise<Response> {
   const requirementId = String(form.get('requirementId') ?? '');
   const startDate = String(form.get('startDate') ?? '');
   const endDate = String(form.get('endDate') ?? '');
+  const noExpiry = String(form.get('noExpiry') ?? '') === 'true';
   const file = form.get('file');
 
   if (token.length < 10 || requirementId.length !== 26 || !(file instanceof File)) {
@@ -55,17 +61,38 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'INVALID_TOKEN' }, { status: 404 });
   }
   const rRows = await db
-    .select({ id: contractorRequirements.id })
+    .select({
+      id: contractorRequirements.id,
+      recurrenceMonths: contractorRequirements.recurrenceMonths,
+    })
     .from(contractorRequirements)
     .where(
       and(
+        eq(contractorRequirements.tenantId, contractor.tenantId),
         eq(contractorRequirements.id, requirementId),
         eq(contractorRequirements.contractorId, contractor.id),
       ),
     )
     .limit(1);
-  if (rRows[0] === undefined) {
+  const requirement = rRows[0];
+  if (requirement === undefined) {
     return NextResponse.json({ error: 'REQUIREMENT_NOT_FOUND' }, { status: 404 });
+  }
+
+  // CT-U01: a client that sends neither a date nor the assertion fails
+  // closed. This is the enforcement point — the portal form mirrors it for
+  // the message, but the token is a public capability and `curl` reaches
+  // here directly.
+  const period = validateDocumentPeriod({
+    startDate,
+    endDate,
+    noExpiry,
+    recurrenceMonths: requirement.recurrenceMonths,
+    today: todayIso(),
+    rejectExpired: true,
+  });
+  if (!period.ok) {
+    return NextResponse.json({ error: period.error }, { status: 400 });
   }
 
   const key = objectKey({
@@ -106,8 +133,8 @@ export async function POST(req: Request): Promise<Response> {
     filename: file.name,
     mimeType: file.type || 'application/octet-stream',
     sizeBytes: file.size,
-    startDate: DATE_RE.test(startDate) ? startDate : null,
-    endDate: DATE_RE.test(endDate) ? endDate : null,
+    startDate: startDate === '' ? null : startDate,
+    endDate: endDate === '' ? null : endDate,
     status: 'pending',
   });
 

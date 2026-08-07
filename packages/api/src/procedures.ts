@@ -106,3 +106,41 @@ export function requirePermission(perm: PermissionKey) {
     });
   });
 }
+
+/**
+ * Any-of variant of `requirePermission`. Passes when the caller holds at
+ * least ONE of the listed keys (administrators still bypass via
+ * `grantsAdminAccess`, same as the single-key guard).
+ *
+ * Use it where one operation is legitimately reachable from two different
+ * job roles — contractor gate check-in, say, which both the contractor
+ * manager (`contractors.manage`) and the reception operator
+ * (`contractors.gate`) must be able to perform. Prefer `requirePermission`
+ * when there is only one right key, and an in-handler check when the
+ * decision needs row data (see `assertCanRecord` in routers/permits.ts).
+ *
+ * The rest-parameter tuple type makes an empty call a compile error — a
+ * zero-key guard would silently authorise everyone.
+ */
+export function requireAnyPermission(...perms: readonly [PermissionKey, ...PermissionKey[]]) {
+  return middleware(async ({ ctx, next }) => {
+    if (ctx.auth === null) {
+      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Authentication required' });
+    }
+    const held = await loadUserPermissions(ctx.db, ctx.auth.tenantId, ctx.auth.userId);
+    if (!perms.some((p) => held.includes(p)) && !grantsAdminAccess(held)) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: `Missing permission: one of ${perms.join(', ')}`,
+      });
+    }
+    return next({
+      ctx: {
+        ...ctx,
+        auth: ctx.auth,
+        tenantId: ctx.auth.tenantId,
+        permissions: held,
+      },
+    });
+  });
+}

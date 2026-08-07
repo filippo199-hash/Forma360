@@ -24,6 +24,7 @@ import { Skeleton } from '../../../src/components/ui/skeleton';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
+import { contractorErrorMessage } from '../../../src/lib/contractor-errors';
 import { trpc } from '../../../src/lib/trpc/client';
 
 /** Viewer's timezone — check-in times are stored as absolute instants. */
@@ -45,9 +46,23 @@ export default function ContractorsPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canManage = useHasPermission('contractors.manage');
+  // The permit chip below deep-links into the permits module, which is
+  // gated on its own key — render it as plain text for anyone who would
+  // land on a "you don't have access" page.
+  const canViewPermits = useHasPermission('permits.view');
   const utils = trpc.useUtils();
 
-  const { data, isLoading, error } = trpc.contractors.list.useQuery();
+  // CT-V02: the register is paged and searched server-side. It used to
+  // load every contractor plus their whole requirement + document graph
+  // and filter in the browser.
+  const [search, setSearch] = useState('');
+  const [cursors, setCursors] = useState<string[]>([]);
+  const cursor = cursors[cursors.length - 1];
+  const { data, isLoading, error } = trpc.contractors.list.useQuery({
+    limit: 50,
+    ...(search.trim() === '' ? {} : { search: search.trim() }),
+    ...(cursor === undefined ? {} : { cursor }),
+  });
   // Live "who is on site" board for the gate guard — refetch every 30s.
   const onSite = trpc.contractors.visits.onSiteNow.useQuery(undefined, {
     refetchInterval: 30_000,
@@ -57,7 +72,7 @@ export default function ContractorsPage() {
       toast.success(t('visits.checkedOutToast'));
       void utils.contractors.visits.onSiteNow.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('error')),
+    onError: (err) => toast.error(contractorErrorMessage(err.message, t)),
   });
   // PF-19: the permits↔contractors join — who is inside with live permits.
   const openPermits = trpc.contractors.visits.onSiteWithOpenPermits.useQuery(undefined, {
@@ -72,7 +87,7 @@ export default function ContractorsPage() {
       setInductionDraft(null);
       void utils.contractors.induction.get.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('error')),
+    onError: (err) => toast.error(contractorErrorMessage(err.message, t)),
   });
 
   // Group the on-site people by contractor so the guard sees, per contractor,
@@ -95,17 +110,7 @@ export default function ContractorsPage() {
     }
     return [...map.values()];
   }, [onSite.data]);
-  const rows = data ?? [];
-  const [search, setSearch] = useState('');
-  const visible = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (q === '') return rows;
-    return rows.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) ||
-        (r.category !== null && r.category.toLowerCase().includes(q)),
-    );
-  }, [rows, search]);
+  const visible = data?.contractors ?? [];
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
@@ -123,7 +128,7 @@ export default function ContractorsPage() {
       setContactName('');
       setContactEmail('');
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('error')),
+    onError: (err) => toast.error(contractorErrorMessage(err.message, t)),
   });
 
   function submit() {
@@ -278,12 +283,18 @@ export default function ContractorsPage() {
                     </Link>
                     <span className="text-muted-foreground"> — {r.permitTitle}</span>
                   </span>
-                  <Link
-                    href={`/${locale}/permits/${r.permitId}`}
-                    className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 hover:underline dark:bg-amber-900/40 dark:text-amber-100"
-                  >
-                    {r.permitReference ?? r.permitId} · {r.permitStatus}
-                  </Link>
+                  {canViewPermits ? (
+                    <Link
+                      href={`/${locale}/permits/${r.permitId}`}
+                      className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 hover:underline dark:bg-amber-900/40 dark:text-amber-100"
+                    >
+                      {r.permitReference ?? r.permitId}
+                    </Link>
+                  ) : (
+                    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+                      {r.permitReference ?? r.permitId}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -331,7 +342,16 @@ export default function ContractorsPage() {
       ) : null}
 
       <FilterBar
-        search={{ value: search, onChange: setSearch, placeholder: t('searchPlaceholder') }}
+        search={{
+          value: search,
+          // Any new search restarts at page one — a cursor from the old
+          // result set would page into nothing.
+          onChange: (v: string) => {
+            setSearch(v);
+            setCursors([]);
+          },
+          placeholder: t('searchPlaceholder'),
+        }}
         filters={[]}
         activeKeys={[]}
         onAddFilter={() => undefined}
@@ -449,6 +469,33 @@ export default function ContractorsPage() {
               );
             })}
           </div>
+
+          {/* CT-V02: the register no longer ships every row, so it has to
+              say when there are more and offer a way to reach them. */}
+          {data !== undefined && (data.hasMore || cursors.length > 0) ? (
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={cursors.length === 0}
+                onClick={() => setCursors((prev) => prev.slice(0, -1))}
+              >
+                {t('pagerPrevious')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!data.hasMore || data.nextCursor === null}
+                onClick={() =>
+                  setCursors((prev) =>
+                    data.nextCursor === null ? prev : [...prev, data.nextCursor],
+                  )
+                }
+              >
+                {t('pagerNext')}
+              </Button>
+            </div>
+          ) : null}
         </>
       )}
 

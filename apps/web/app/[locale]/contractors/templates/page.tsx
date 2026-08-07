@@ -12,6 +12,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
+import { contractorErrorMessage } from '../../../../src/lib/contractor-errors';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type TemplateRow = { id: string; category: string; name: string; blocking: boolean };
@@ -38,8 +39,7 @@ export default function ContractorTemplatesPage() {
   }, [rows]);
 
   const invalidate = () => void utils.contractors.templates.list.invalidate();
-  const onErr = (err: { message: string }) =>
-    toast.error(err.message.length > 0 ? err.message : t('error'));
+  const onErr = (err: { message: string }) => toast.error(contractorErrorMessage(err.message, t));
 
   const create = trpc.contractors.templates.create.useMutation({
     onSuccess: invalidate,

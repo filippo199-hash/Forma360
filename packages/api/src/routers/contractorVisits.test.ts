@@ -142,7 +142,120 @@ describe('contractors.visits router', () => {
       title: 'Future visit',
       scheduledStart: inDays(3),
     });
-    await expect(caller.contractors.visits.checkOut({ id })).rejects.toThrow(/never checked in/);
+    // CT-L03: the refusal is now a slug from the shared visit state
+    // machine, so the desk and the kiosk cannot disagree about it.
+    await expect(caller.contractors.visits.checkOut({ id })).rejects.toThrow(
+      /visit-not-checked-in/,
+    );
+  });
+
+  it('CT-L02: a visit cannot be deleted or cancelled while someone is on site', async () => {
+    // The on-site board is what a fire marshal reads at the assembly
+    // point. Archiving a checked-in visit erased someone physically
+    // present, with no check-out and no record they ever left.
+    const caller = createCaller(ctxFor(adminUserId));
+    const { id } = await caller.contractors.visits.createWalkIn({
+      contractorId,
+      title: 'On site now',
+    });
+    await expect(caller.contractors.visits.delete({ id })).rejects.toThrow(/visit-on-site/);
+    await expect(caller.contractors.visits.setStatus({ id, status: 'cancelled' })).rejects.toThrow(
+      /visit-on-site/,
+    );
+
+    // Check them out first, then it is fine.
+    await caller.contractors.visits.checkOut({ id });
+    await expect(caller.contractors.visits.delete({ id })).resolves.toBeDefined();
+  });
+
+  it('CT-L03: a second check-out cannot overwrite the real departure time', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { id } = await caller.contractors.visits.createWalkIn({
+      contractorId,
+      title: 'Leaving',
+    });
+    await caller.contractors.visits.checkOut({ id });
+    const first = (await caller.contractors.visits.get({ id })).visit.checkedOutAt;
+    await expect(caller.contractors.visits.checkOut({ id })).rejects.toThrow(
+      /visit-already-checked-out/,
+    );
+    expect((await caller.contractors.visits.get({ id })).visit.checkedOutAt).toEqual(first);
+  });
+
+  it('CT-L04: re-entry after a genuine check-out clears the old departure', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { id } = await caller.contractors.visits.createWalkIn({
+      contractorId,
+      title: 'In and out and in',
+    });
+    await caller.contractors.visits.checkOut({ id });
+    await caller.contractors.visits.checkIn({ id });
+    const visit = (await caller.contractors.visits.get({ id })).visit;
+    expect(visit.status).toBe('checked_in');
+    // A stale `checkedOutAt` alongside `checked_in` reads as "left at 14:02"
+    // for someone standing in the building.
+    expect(visit.checkedOutAt).toBeNull();
+  });
+
+  it('CT-L01: the desk enforces required gate questions, same as the kiosk', async () => {
+    // A staff-recorded arrival used to produce an event indistinguishable
+    // from one where the induction question had actually been asked.
+    const caller = createCaller(ctxFor(adminUserId));
+    await caller.contractors.gateFields.create({
+      label: 'Site induction completed?',
+      fieldType: 'yes_no',
+      required: true,
+    });
+    const { id } = await caller.contractors.visits.create({
+      contractorId,
+      title: 'Rewire',
+      scheduledStart: new Date().toISOString(),
+      authorize: true,
+    });
+    await expect(caller.contractors.visits.checkIn({ id })).rejects.toThrow(/gate_field_required/);
+  });
+
+  it('CT-P03: a gate operator can check in and out without contractors.manage', async () => {
+    // `contractors.gate` existed in the catalogue and gated NO procedure —
+    // ticking it granted nothing, and the only way to let a receptionist
+    // check someone in was `contractors.manage`, which also authorises
+    // rename, archive, delete and token rotation.
+    const gateSetId = newId();
+    await db.insert(schema.permissionSets).values({
+      id: gateSetId,
+      tenantId,
+      name: 'Reception',
+      permissions: ['contractors.view', 'contractors.gate'],
+    });
+    const receptionistId = newId();
+    await db.insert(schema.user).values({
+      id: receptionistId,
+      name: 'Reception',
+      email: 'reception@acme.test',
+      tenantId,
+      permissionSetId: gateSetId,
+    });
+
+    const admin = createCaller(ctxFor(adminUserId));
+    const { id } = await admin.contractors.visits.create({
+      contractorId,
+      title: 'Rewire',
+      scheduledStart: new Date().toISOString(),
+      authorize: true,
+    });
+
+    const reception = createCaller(ctxFor(receptionistId));
+    await expect(reception.contractors.visits.checkIn({ id })).resolves.toBeDefined();
+    await expect(reception.contractors.visits.checkOut({ id })).resolves.toBeDefined();
+    await expect(
+      reception.contractors.visits.createWalkIn({ contractorId, title: 'Walk-in' }),
+    ).resolves.toBeDefined();
+
+    // …but not the admin operations that share the module.
+    await expect(reception.contractors.visits.delete({ id })).rejects.toThrow(/permission/i);
+    await expect(
+      reception.contractors.update({ id: contractorId, name: 'Renamed' }),
+    ).rejects.toThrow(/permission/i);
   });
 
   it('calendar list returns only visits inside the range; delete hides them', async () => {

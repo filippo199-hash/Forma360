@@ -196,6 +196,48 @@ describe('contractors.users portal (Phase 4)', () => {
     expect(deactivated?.deactivatedAt).not.toBeNull();
   });
 
+  it('CT-P06: removal refuses a user who is not a portal user for this tenant', async () => {
+    // `remove` accepted any tenant userId and unconditionally stamped
+    // `deactivatedAt`, so `contractors.manage` — held by every seeded
+    // Manager — was a way to deactivate ANY user without holding
+    // `users.deactivate`, including the last administrator. A permanent
+    // tenant lockout, routed around three guards.
+    const admin = createCaller(ctxFor(adminUserId));
+    const [systemSet] = await db
+      .select({ id: schema.permissionSets.id })
+      .from(schema.permissionSets)
+      .where(
+        and(eq(schema.permissionSets.tenantId, tenantId), eq(schema.permissionSets.isSystem, true)),
+      )
+      .limit(1);
+    if (!systemSet) throw new Error('expected a seeded system permission set');
+    const bystanderId = newId();
+    await db.insert(schema.user).values({
+      id: bystanderId,
+      name: 'Bystander',
+      email: 'bystander@acme.test',
+      tenantId,
+      permissionSetId: systemSet.id,
+    });
+
+    await expect(admin.contractors.users.remove({ userId: bystanderId })).rejects.toThrow(
+      /contractor_user_not_found/,
+    );
+    const [row] = await db
+      .select({ deactivatedAt: schema.user.deactivatedAt })
+      .from(schema.user)
+      .where(eq(schema.user.id, bystanderId))
+      .limit(1);
+    expect(row?.deactivatedAt).toBeNull();
+  });
+
+  it('CT-P06: you cannot remove your own portal access', async () => {
+    const admin = createCaller(ctxFor(adminUserId));
+    await expect(admin.contractors.users.remove({ userId: adminUserId })).rejects.toThrow(
+      /cannot_remove_self/,
+    );
+  });
+
   it('inviting an email that already has a tenant user is rejected', async () => {
     const admin = createCaller(ctxFor(adminUserId));
     const [systemSet] = await db
@@ -219,6 +261,6 @@ describe('contractors.users portal (Phase 4)', () => {
         email: 'dupe@sparky.test',
         activities: [],
       }),
-    ).rejects.toThrow(/already exists/i);
+    ).rejects.toThrow(/contractor-user-email-taken/);
   });
 });

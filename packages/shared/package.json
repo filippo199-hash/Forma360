@@ -16,6 +16,10 @@
       "types": "./src/brand.ts",
       "default": "./src/brand.ts"
     },
+    "./contractors": {
+      "types": "./src/contractors.ts",
+      "default": "./src/contractors.ts"
+    },
     "./sandbox-scenarios": {
       "types": "./src/sandbox-scenarios.ts",
       "default": "./src/sandbox-scenarios.ts"
