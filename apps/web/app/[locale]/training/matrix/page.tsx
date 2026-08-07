@@ -22,6 +22,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
 import { TRAINING_STATUS_GLYPH, type TrainingStatus } from '@forma360/shared/training';
 import { ModuleHeader } from '../../../../src/components/module-header';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
@@ -52,7 +53,6 @@ function MatrixInner() {
     router.replace(`/${locale}/training/matrix${next.size > 0 ? `?${next.toString()}` : ''}`);
   }
 
-  const { data: sites } = trpc.sites.list.useQuery();
   const query = trpc.training.matrix.useQuery({
     ...(requirementFilter !== '' ? { requirementId: requirementFilter } : {}),
     ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
@@ -206,19 +206,12 @@ function MatrixInner() {
           <label htmlFor="matrix-site" className="text-xs font-medium text-muted-foreground">
             {t('filters.site')}
           </label>
-          <select
-            id="matrix-site"
-            value={siteFilter}
-            onChange={(e) => setParam('siteId', e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-          >
-            <option value="">{t('filters.allSites')}</option>
-            {(sites ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          <SiteSelector
+            value={siteFilter !== '' ? [siteFilter] : []}
+            onChange={(next) => setParam('siteId', next[0] ?? '')}
+            multiple={false}
+            placeholder={t('filters.allSites')}
+          />
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="matrix-asof" className="text-xs font-medium text-muted-foreground">

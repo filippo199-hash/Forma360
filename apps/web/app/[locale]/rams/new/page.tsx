@@ -26,6 +26,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type Source = 'library' | 'duplicate' | 'blank';
@@ -60,7 +61,6 @@ export default function NewRamsPackPage() {
   const utils = trpc.useUtils();
   const templates = trpc.rams.methodStatements.list.useQuery({ templatesOnly: true });
   const previous = trpc.rams.packs.list.useQuery({ limit: 25 });
-  const sites = trpc.sites.list.useQuery();
   const seedLibrary = trpc.rams.methodStatements.seedLibrary.useMutation({
     onSuccess: () => {
       void utils.rams.methodStatements.list.invalidate();
@@ -243,21 +243,14 @@ export default function NewRamsPackPage() {
                 onChange={(e) => setClientName(e.target.value)}
               />
             </div>
-            <div>
-              <Label htmlFor="rams-site">{t('fields.site')}</Label>
-              <select
-                id="rams-site"
-                value={siteId}
-                onChange={(e) => setSiteId(e.target.value)}
-                className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
-              >
-                <option value="">{t('fields.noSite')}</option>
-                {(sites.data ?? []).map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-1.5">
+              <Label>{t('fields.site')}</Label>
+              <SiteSelector
+                value={siteId !== '' ? [siteId] : []}
+                onChange={(next) => setSiteId(next[0] ?? '')}
+                multiple={false}
+                placeholder={t('fields.noSite')}
+              />
             </div>
           </div>
           <div>

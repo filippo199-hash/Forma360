@@ -23,6 +23,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { TRAINING_ASSIGNMENT_SCOPES, TRAINING_OBLIGATIONS } from '@forma360/shared/training';
 import { ModuleHeader } from '../../../../src/components/module-header';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
@@ -471,19 +472,12 @@ export default function TrainingRequirementsPage() {
             {scope === 'site' ? (
               <div className="space-y-1">
                 <Label htmlFor="assign-site">{t('requirements.scope.site')}</Label>
-                <select
-                  id="assign-site"
-                  value={siteId}
-                  onChange={(e) => setSiteId(e.target.value)}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                >
-                  <option value="">—</option>
-                  {(sites ?? []).map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                <SiteSelector
+                  value={siteId !== '' ? [siteId] : []}
+                  onChange={(next) => setSiteId(next[0] ?? '')}
+                  multiple={false}
+                  placeholder="—"
+                />
               </div>
             ) : null}
 

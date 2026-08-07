@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { SiteSelector } from '../../../src/components/selectors/site-selector';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -53,7 +54,6 @@ export default function TrainingGapsPage() {
   const [asOf, setAsOf] = useState('');
   const [siteId, setSiteId] = useState('');
 
-  const { data: sites } = trpc.sites.list.useQuery();
   const query = trpc.training.gaps.useQuery({
     ...(asOf !== '' ? { asOf } : {}),
     ...(siteId !== '' ? { siteId } : {}),
@@ -120,19 +120,12 @@ export default function TrainingGapsPage() {
           <label htmlFor="training-site" className="text-xs font-medium text-muted-foreground">
             {t('filters.site')}
           </label>
-          <select
-            id="training-site"
-            value={siteId}
-            onChange={(e) => setSiteId(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-          >
-            <option value="">{t('filters.allSites')}</option>
-            {(sites ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          <SiteSelector
+            value={siteId !== '' ? [siteId] : []}
+            onChange={(next) => setSiteId(next[0] ?? '')}
+            multiple={false}
+            placeholder={t('filters.allSites')}
+          />
         </div>
         {asOf !== '' || siteId !== '' ? (
           <Button

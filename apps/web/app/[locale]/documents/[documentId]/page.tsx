@@ -206,7 +206,6 @@ export default function DocumentDetailPage() {
 
   // All folders for the Move dialog (parentId omitted → whole tenant tree).
   const { data: allFolders = [] } = trpc.documentFolders.list.useQuery({});
-  const { data: allSites = [] } = trpc.sites.list.useQuery();
 
   const updateDoc = trpc.documents.update.useMutation({
     onSuccess: () => {
@@ -893,18 +892,12 @@ export default function DocumentDetailPage() {
               <span className="text-xs font-medium text-muted-foreground">
                 {tUpload('siteLabel')}
               </span>
-              <select
-                value={moveSiteId}
-                onChange={(e) => setMoveSiteId(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              >
-                <option value="">{placeNone}</option>
-                {allSites.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+              <SiteSelector
+                value={moveSiteId !== '' ? [moveSiteId] : []}
+                onChange={(next) => setMoveSiteId(next[0] ?? '')}
+                multiple={false}
+                placeholder={placeNone}
+              />
             </div>
             <Button
               className="w-full"

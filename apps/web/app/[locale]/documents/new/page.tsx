@@ -14,6 +14,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { cn } from '../../../../src/lib/cn';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
+import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 const MAX_BYTES = 50 * 1024 * 1024;
@@ -82,7 +83,6 @@ export default function DocumentNewPage() {
   // Data queries
   const utils = trpc.useUtils();
   const { data: folders = [], isLoading: foldersLoading } = trpc.documentFolders.list.useQuery({});
-  const { data: sites = [] } = trpc.sites.list.useQuery();
   const { data: labels = [], isLoading: labelsLoading } = trpc.documentLabels.list.useQuery();
   const { data: usersData, isLoading: usersLoading } = trpc.users.list.useQuery({});
   const users = usersData?.users ?? [];
@@ -332,20 +332,13 @@ export default function DocumentNewPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="doc-site">{placeLabel}</Label>
-              <select
-                id="doc-site"
-                value={siteId}
-                onChange={(e) => setSiteId(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">{placeNone}</option>
-                {sites.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+              <Label>{placeLabel}</Label>
+              <SiteSelector
+                value={siteId !== '' ? [siteId] : []}
+                onChange={(next) => setSiteId(next[0] ?? '')}
+                multiple={false}
+                placeholder={placeNone}
+              />
             </div>
 
             {/* Labels */}

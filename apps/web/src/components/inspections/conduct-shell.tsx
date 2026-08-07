@@ -20,6 +20,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Sheet, SheetContent } from '../ui/sheet';
 import { Skeleton } from '../ui/skeleton';
+import { SiteSelector } from '../selectors/site-selector';
 import { Textarea } from '../ui/textarea';
 import { cn } from '../../lib/cn';
 import { trpc } from '../../lib/trpc/client';
@@ -952,7 +953,6 @@ function RaiseActionTrigger({
   const [label, setLabel] = useState('');
   const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});
 
-  const { data: sites } = trpc.sites.list.useQuery(undefined, { enabled: open });
   const { data: usersData } = trpc.users.list.useQuery({}, { enabled: open });
   const users = usersData?.users ?? [];
   const { data: types } = trpc.actionTypes.list.useQuery(
@@ -1244,19 +1244,12 @@ function RaiseActionTrigger({
                     {tCreate('siteLabel')}
                     {isRequired('site') ? <span className="ml-1 text-destructive">*</span> : null}
                   </Label>
-                  <select
-                    id="ra-site"
-                    value={siteId}
-                    onChange={(e) => setSiteId(e.target.value)}
-                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="">{tCreate('siteNoneOption')}</option>
-                    {(sites ?? []).map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                  <SiteSelector
+                    value={siteId !== '' ? [siteId] : []}
+                    onChange={(next) => setSiteId(next[0] ?? '')}
+                    multiple={false}
+                    placeholder={tCreate('siteNoneOption')}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="ra-assignee">
