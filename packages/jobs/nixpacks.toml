@@ -1,17 +1,14 @@
 # Nixpacks config for the Railway `worker` service.
 #
-# INERT AS DEPLOYED. The worker service builds with **Railpack**, not
-# Nixpacks, and Railpack does not read nixpacks.toml. This file only takes
-# effect if the service's builder is switched back to NIXPACKS.
+# NOT READ AS DEPLOYED. Nixpacks reads nixpacks.toml from the build context
+# root, and the worker's Root Directory is `/` — so the ROOT nixpacks.toml is
+# the file that drives the setup phase. This one only takes effect if the
+# service's Root Directory is ever pointed at `packages/jobs`.
 #
-# The nightly backup job's `pg_dump` shell-out therefore does NOT get its
-# binary from here. Under Railpack the PostgreSQL client is installed via the
-# service variable:
-#
-#   RAILPACK_DEPLOY_APT_PACKAGES=postgresql-client
-#
-# Trusting this file instead is what left the backup job throwing
-# `spawn pg_dump ENOENT` every night (Sentry FREEHS-4). See docs/deployment.md.
+# The nightly backup's `pg_dump` therefore does NOT get its binary from here,
+# despite the postgresql_16 below. Trusting this file is exactly what left the
+# job throwing `spawn pg_dump ENOENT` every night (Sentry FREEHS-4); the real
+# declaration lives in the root nixpacks.toml. See docs/deployment.md.
 
 [phases.setup]
 nixPkgs = ['nodejs_22', 'pnpm-9_x', 'postgresql_16']

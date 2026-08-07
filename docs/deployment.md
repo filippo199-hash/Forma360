@@ -96,19 +96,19 @@ All services communicate over Railway's private network
    `BETTER_AUTH_*`, and `NEXT_PUBLIC_SENTRY_DSN` are not needed (the
    worker doesn't serve HTTP). Easiest path: copy them all via the "Shared
    Variables" feature and let the worker ignore the ones it doesn't consume.
-5. The worker's image must carry the PostgreSQL client binaries so the
-   nightly `pg_dump` handler resolves. The service builds with **Railpack**,
-   which ignores `nixpacks.toml` — set the package as a service variable
-   instead:
+5. The worker's image must carry `pg_dump` so the nightly backup resolves.
+   Declare `postgresql_16` in the **root** `nixpacks.toml` — Nixpacks reads
+   the config from the build context root, and the worker's Root Directory is
+   `/`, so `packages/jobs/nixpacks.toml` is never read no matter what it says.
 
-   ```
-   RAILPACK_DEPLOY_APT_PACKAGES=postgresql-client
-   ```
+   Two traps worth knowing, because together they hid a broken backup:
 
-   On the Ubuntu 24.04 runtime image that resolves to client 16, matching the
-   pinned `postgres-ssl:16` server. Getting this wrong is silent until 03:00:
-   the job throws `spawn pg_dump ENOENT` and no backup is written
-   (Sentry FREEHS-4).
+   - The Railway dashboard may report the builder as **Railpack** while
+     `packages/jobs/railway.toml` sets `builder = "NIXPACKS"`. Config-as-code
+     overrides the dashboard, so Nixpacks is what actually runs. Trust the
+     build log (`FROM ghcr.io/railwayapp/nixpacks:…`), not the settings pane.
+   - A missing `pg_dump` is silent until 03:00, when the job throws
+     `spawn pg_dump ENOENT` and no backup is written (Sentry FREEHS-4).
 6. Trigger a deploy. Tail the logs and confirm the
    `[worker] registered pg-dump-nightly repeatable` line appears.
 

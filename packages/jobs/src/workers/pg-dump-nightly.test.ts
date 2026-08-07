@@ -22,8 +22,10 @@ describe('pgDumpSpawnError (FREEHS-4)', () => {
     // Names what is wrong...
     expect(explained.message).toMatch(/pg_dump/);
     expect(explained.message).toMatch(/not on PATH/i);
-    // ...and what to do about it.
-    expect(explained.message).toMatch(/postgresql-client/);
+    // ...and what to do about it: the ROOT nixpacks.toml is the file that is
+    // actually read, which is the whole trap this error exists to short-circuit.
+    expect(explained.message).toMatch(/postgresql_16/);
+    expect(explained.message).toMatch(/root nixpacks\.toml/i);
     // The original errno is preserved for the stack trace in Sentry.
     expect(explained.cause).toBe(enoent);
   });

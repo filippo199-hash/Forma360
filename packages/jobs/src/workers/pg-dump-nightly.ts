@@ -41,9 +41,8 @@ export function pgDumpSpawnError(err: NodeJS.ErrnoException): Error {
 
   return new Error(
     'pg_dump is not on PATH in the worker image, so the nightly backup cannot run. ' +
-      'The image needs the PostgreSQL client binaries: set ' +
-      'RAILPACK_DEPLOY_APT_PACKAGES=postgresql-client on the worker service. ' +
-      'Note the builder is Railpack, which does not read nixpacks.toml. ' +
+      'Add postgresql_16 to nixPkgs in the ROOT nixpacks.toml — the worker builds ' +
+      'from Root Directory `/`, so packages/jobs/nixpacks.toml is never read. ' +
       'See docs/deployment.md.',
     { cause: err },
   );
