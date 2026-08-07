@@ -2738,9 +2738,7 @@
         "overview": "Overview",
         "readings": "Readings",
         "media": "Media",
-        "actions": "Actions",
-        "inspections": "Inspections",
-        "observations": "Observations"
+        "activity": "アクティビティ"
       },
       "fields": {
         "type": "Type",
@@ -2775,7 +2773,9 @@
         "uploadPhoto": "Upload photo",
         "changePhoto": "Change photo",
         "removePhoto": "Remove photo",
-        "noPhoto": "No photos yet."
+        "noPhoto": "No photos yet.",
+        "empty": "写真はまだありません。",
+        "addPhoto": "写真を追加"
       },
       "stubs": {
         "actions": "No actions linked to this asset yet.",
@@ -2806,7 +2806,29 @@
         "result": "結果",
         "notes": "備考"
       },
-      "fieldRequired": "{name} は必須です"
+      "fieldRequired": "{name} は必須です",
+      "viewAll": "すべて表示",
+      "viewAllCount": "すべて表示（{count}）",
+      "activity": {
+        "heading": "アクティビティ",
+        "kinds": {
+          "inspection": "点検",
+          "action": "アクション",
+          "observation": "観察"
+        },
+        "filters": {
+          "all": "すべて",
+          "inspection": "点検",
+          "action": "アクション",
+          "observation": "観察"
+        },
+        "empty": {
+          "all": "この資産に関する記録はまだありません。関連する点検・アクション・観察がここに表示されます。",
+          "inspection": "関連する点検はまだありません。",
+          "action": "この資産に対するアクションはまだありません。",
+          "observation": "この資産に関する観察報告はまだありません。"
+        }
+      }
     },
     "settings": {
       "title": "Settings",

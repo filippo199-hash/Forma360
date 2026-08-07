@@ -2745,9 +2745,7 @@
         "overview": "Overview",
         "readings": "Readings",
         "media": "Media",
-        "actions": "Actions",
-        "inspections": "Inspections",
-        "observations": "Observations"
+        "activity": "Activité"
       },
       "fields": {
         "type": "Type",
@@ -2782,7 +2780,9 @@
         "uploadPhoto": "Upload photo",
         "changePhoto": "Change photo",
         "removePhoto": "Remove photo",
-        "noPhoto": "No photos yet."
+        "noPhoto": "No photos yet.",
+        "empty": "Aucune photo.",
+        "addPhoto": "Ajouter une photo"
       },
       "stubs": {
         "actions": "No actions linked to this asset yet.",
@@ -2813,7 +2813,29 @@
         "result": "Résultat",
         "notes": "Notes"
       },
-      "fieldRequired": "{name} est obligatoire"
+      "fieldRequired": "{name} est obligatoire",
+      "viewAll": "Tout voir",
+      "viewAllCount": "Voir les {count}",
+      "activity": {
+        "heading": "Activité",
+        "kinds": {
+          "inspection": "Inspection",
+          "action": "Action",
+          "observation": "Observation"
+        },
+        "filters": {
+          "all": "Tout",
+          "inspection": "Inspections",
+          "action": "Actions",
+          "observation": "Observations"
+        },
+        "empty": {
+          "all": "Rien n’a encore été enregistré pour cet équipement. Les inspections, actions et observations liées apparaîtront ici.",
+          "inspection": "Aucune inspection liée pour l’instant.",
+          "action": "Aucune action ouverte pour cet équipement.",
+          "observation": "Aucune observation signalée pour cet équipement."
+        }
+      }
     },
     "settings": {
       "title": "Settings",

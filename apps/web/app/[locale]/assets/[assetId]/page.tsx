@@ -22,6 +22,11 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { brandHasModule } from '@forma360/shared/brand';
 import { activeBrand } from '../../../../src/lib/brand';
 import {
+  AssetActivityList,
+  buildActivityRows,
+  type ActivityKind,
+} from '../../../../src/components/assets/asset-activity';
+import {
   CustomFieldInputs,
   CustomFieldReadout,
   customFieldsOf,
@@ -31,16 +36,23 @@ import {
 } from '../../../../src/components/assets/custom-field-inputs';
 import { trpc } from '../../../../src/lib/trpc/client';
 
-type Tab = 'overview' | 'readings' | 'media' | 'actions' | 'inspections' | 'observations';
+/**
+ * Four tabs, not six. Inspections, actions and observations were three
+ * separate tabs each holding one thin table; none of them answered "what
+ * is happening with this asset" on its own, so they merge into Activity
+ * and the overview summarises the lot.
+ */
+type Tab = 'overview' | 'activity' | 'readings' | 'media';
+
+/** Type chips on the Activity tab. */
+const ACTIVITY_FILTERS = ['all', 'inspection', 'action', 'observation'] as const;
 
 export default function AssetDetailPage() {
   const t = useTranslations('assets.detail');
   const tCommon = useTranslations('common');
   const tActionStatus = useTranslations('actions.status');
-  const tActionPriority = useTranslations('actions.priority');
   const tInspectionStatus = useTranslations('inspections.status');
   const tIssueStatus = useTranslations('issues.status');
-  const tIssuePriority = useTranslations('issues.priority');
   const params = useParams<{ locale: string; assetId: string }>();
   const locale = params.locale ?? 'en';
   const assetId = params.assetId ?? '';
@@ -79,6 +91,7 @@ export default function AssetDetailPage() {
   const [readingValue, setReadingValue] = useState('');
   const [readingUnit, setReadingUnit] = useState('');
   const [editCustomFieldValues, setEditCustomFieldValues] = useState<CustomFieldValues>({});
+  const [activityFilter, setActivityFilter] = useState<'all' | ActivityKind>('all');
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -89,20 +102,26 @@ export default function AssetDetailPage() {
   const { data: assetTypesList } = trpc.assetTypes.list.useQuery();
   const { data: readingsData } = trpc.assets.readings.list.useQuery(
     { assetId },
-    { enabled: tab === 'readings' },
+    { enabled: tab === 'readings' || tab === 'overview' },
   );
   const fireHistory = trpc.fireSafety.logbook.assetHistory.useQuery(
     { assetId },
     { enabled: assetId !== '' && canViewFire },
   );
   const { data: linkedInspections, isLoading: inspectionsLoading } =
-    trpc.assets.listLinkedInspections.useQuery({ assetId }, { enabled: tab === 'inspections' });
+    trpc.assets.listLinkedInspections.useQuery(
+      { assetId },
+      { enabled: tab === 'activity' || tab === 'overview' },
+    );
   const { data: linkedActions, isLoading: actionsLoading } = trpc.assets.listLinkedActions.useQuery(
     { assetId },
-    { enabled: tab === 'actions' },
+    { enabled: tab === 'activity' || tab === 'overview' },
   );
   const { data: linkedObservations, isLoading: observationsLoading } =
-    trpc.assets.listLinkedObservations.useQuery({ assetId }, { enabled: tab === 'observations' });
+    trpc.assets.listLinkedObservations.useQuery(
+      { assetId },
+      { enabled: tab === 'activity' || tab === 'overview' },
+    );
 
   const update = trpc.assets.update.useMutation({
     onSuccess: () => {
@@ -146,6 +165,30 @@ export default function AssetDetailPage() {
   // follows the dropdown, so choosing a new type immediately offers that
   // type's fields — the whole point of the fix. In read mode it follows
   // the saved type.
+  // One merged, newest-first stream. The overview shows the head of it;
+  // the Activity tab shows all of it with type filters.
+  const activityRows = buildActivityRows({
+    locale,
+    inspections: linkedInspections ?? [],
+    actions: linkedActions ?? [],
+    observations: linkedObservations ?? [],
+  });
+  const filteredActivity =
+    activityFilter === 'all' ? activityRows : activityRows.filter((r) => r.kind === activityFilter);
+  const activityLoading = inspectionsLoading || actionsLoading || observationsLoading;
+
+  /** Each module owns its status vocabulary; keep all three translated. */
+  const activityStatusLabel = (kind: ActivityKind, status: string): string => {
+    if (kind === 'inspection') return inspectionStatusLabel(status);
+    if (kind === 'observation') return issueStatusLabel(status);
+    return status === 'open' ||
+      status === 'in_progress' ||
+      status === 'completed' ||
+      status === 'cancelled'
+      ? tActionStatus(status)
+      : status.replace(/_/g, ' ');
+  };
+
   const editCustomFields = customFieldsOf(
     (assetTypesList ?? []).find((at) => at.id === editTypeId) ?? null,
   );
@@ -225,7 +268,7 @@ export default function AssetDetailPage() {
   const { asset, assetType, siteName, ownerName, childrenCount, latestReadings } = data;
   const isArchived = asset.archivedAt !== null;
 
-  const TABS: Tab[] = ['overview', 'readings', 'media', 'actions', 'inspections', 'observations'];
+  const TABS: Tab[] = ['overview', 'activity', 'readings', 'media'];
 
   return (
     <div className="space-y-6">
@@ -469,7 +512,16 @@ export default function AssetDetailPage() {
 
               <Card>
                 <CardContent className="space-y-3 p-6 text-sm">
-                  <h2 className="text-base font-semibold">{t('latestReadingsHeading')}</h2>
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-base font-semibold">{t('latestReadingsHeading')}</h2>
+                    <button
+                      type="button"
+                      onClick={() => setTab('readings')}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      {t('viewAll')}
+                    </button>
+                  </div>
                   {latestReadings.length === 0 ? (
                     <p className="text-muted-foreground">{t('noReadings')}</p>
                   ) : (
@@ -488,6 +540,90 @@ export default function AssetDetailPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Activity + media summaries, so the overview answers "what is
+                happening with this asset" without a tab hop. Each card is a
+                head-of-list with a way through to the full view. */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between gap-2 border-b p-4">
+                    <h2 className="text-base font-semibold">{t('activity.heading')}</h2>
+                    {activityRows.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setTab('activity')}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        {t('viewAllCount', { count: activityRows.length })}
+                      </button>
+                    ) : null}
+                  </div>
+                  {activityLoading ? (
+                    <div className="space-y-2 p-4">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-8 w-full" />
+                      ))}
+                    </div>
+                  ) : (
+                    <AssetActivityList
+                      rows={activityRows}
+                      limit={5}
+                      emptyLabel={t('activity.empty.all')}
+                      statusLabel={activityStatusLabel}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between gap-2 border-b p-4">
+                    <h2 className="text-base font-semibold">{t('media.heading')}</h2>
+                    <button
+                      type="button"
+                      onClick={() => setTab('media')}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      {t('viewAll')}
+                    </button>
+                  </div>
+                  {asset.photoKey === null ? (
+                    <div className="flex flex-col items-center gap-2 p-8 text-center">
+                      <ImageIcon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+                      <p className="text-sm text-muted-foreground">{t('media.empty')}</p>
+                      {canManage && !isArchived ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={photoUploading}
+                          onClick={() => photoInputRef.current?.click()}
+                        >
+                          {t('media.addPhoto')}
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setTab('media')}
+                      className="block w-full p-4"
+                    >
+                      {/* R2 blob behind the session-gated /api/files proxy —
+                          next/image cannot sign that URL, same as the other
+                          asset photos on this page. */}
+                      <img
+                        src={`/api/files?key=${encodeURIComponent(asset.photoKey)}`}
+                        alt={asset.name}
+                        className="h-40 w-full rounded-md object-cover"
+                      />
+                    </button>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
             {canViewContractors ? (
               <AssetContractorsSection assetId={assetId} canManage={canLinkContractors} />
             ) : null}
@@ -722,170 +858,52 @@ export default function AssetDetailPage() {
       ) : null}
 
       {/* ── ACTIONS ── */}
-      {tab === 'actions' ? (
-        <Card>
-          <CardContent className="p-0">
-            {actionsLoading ? (
-              <div className="space-y-2 p-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : !linkedActions || linkedActions.length === 0 ? (
-              <div className="py-16 text-center text-muted-foreground">
-                <p className="text-sm">{t('empty.actions')}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.priority')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.dueAt')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {linkedActions.map((a) => (
-                      <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-4 py-2">
-                          <Link href={`/${locale}/actions/${a.id}`} className="hover:underline">
-                            {a.referenceNumber ? (
-                              <span className="mr-1 text-xs text-muted-foreground">
-                                {a.referenceNumber}
-                              </span>
-                            ) : null}
-                            {a.title}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2">{tActionStatus(a.status)}</td>
-                        <td className="px-4 py-2">
-                          {a.priority !== null ? tActionPriority(a.priority) : '—'}
-                        </td>
-                        <td className="px-4 py-2">
-                          {a.dueAt ? new Date(a.dueAt).toLocaleDateString(locale) : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {/* ── INSPECTIONS ── */}
-      {tab === 'inspections' ? (
-        <Card>
-          <CardContent className="p-0">
-            {inspectionsLoading ? (
-              <div className="space-y-2 p-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : !linkedInspections || linkedInspections.length === 0 ? (
-              <div className="py-16 text-center text-muted-foreground">
-                <p className="text-sm">{t('empty.inspections')}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.docNumber')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.startedAt')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {linkedInspections.map((ins) => (
-                      <tr
-                        key={`${ins.id}-${ins.questionId}`}
-                        className="border-b last:border-0 hover:bg-muted/30"
-                      >
-                        <td className="px-4 py-2">
-                          <Link
-                            href={`/${locale}/inspections/${ins.id}`}
-                            className="hover:underline"
-                          >
-                            {ins.title}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2">{inspectionStatusLabel(ins.status)}</td>
-                        <td className="px-4 py-2">{ins.documentNumber ?? '—'}</td>
-                        <td className="px-4 py-2">
-                          {ins.startedAt ? new Date(ins.startedAt).toLocaleDateString(locale) : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {/* ── OBSERVATIONS ── */}
-      {tab === 'observations' ? (
-        <Card>
-          <CardContent className="p-0">
-            {observationsLoading ? (
-              <div className="space-y-2 p-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : !linkedObservations || linkedObservations.length === 0 ? (
-              <div className="py-16 text-center text-muted-foreground">
-                <p className="text-sm">{t('empty.observations')}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.title')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.status')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.priority')}</th>
-                      <th className="px-4 py-2 text-left font-medium">{t('cols.createdAt')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {linkedObservations.map((obs) => (
-                      <tr key={obs.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-4 py-2">
-                          <Link
-                            href={`/${locale}/observations/${obs.id}`}
-                            className="hover:underline"
-                          >
-                            {obs.referenceNumber ? (
-                              <span className="mr-1 text-xs text-muted-foreground">
-                                {obs.referenceNumber}
-                              </span>
-                            ) : null}
-                            {obs.title}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2">{issueStatusLabel(obs.status)}</td>
-                        <td className="px-4 py-2">
-                          {obs.priority !== null ? tIssuePriority(obs.priority) : '—'}
-                        </td>
-                        <td className="px-4 py-2">
-                          {obs.createdAt ? new Date(obs.createdAt).toLocaleDateString(locale) : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* ── ACTIVITY ── inspections + actions + observations, merged.
+             Three tabs each showing one thin table answered nothing on
+             their own; the useful view is all of it, newest first. */}
+      {tab === 'activity' ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {ACTIVITY_FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setActivityFilter(f)}
+                aria-pressed={activityFilter === f}
+                className={cn(
+                  'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                  activityFilter === f
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border text-muted-foreground hover:bg-muted',
+                )}
+              >
+                {t(`activity.filters.${f}`)}
+                {f !== 'all' ? (
+                  <span className="ml-1.5 tabular-nums opacity-70">
+                    {activityRows.filter((r) => r.kind === f).length}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+          <Card>
+            <CardContent className="p-0">
+              {activityLoading ? (
+                <div className="space-y-2 p-4">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-10 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <AssetActivityList
+                  rows={filteredActivity}
+                  emptyLabel={t(`activity.empty.${activityFilter}`)}
+                  statusLabel={activityStatusLabel}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
       ) : null}
     </div>
   );

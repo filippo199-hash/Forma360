@@ -2738,9 +2738,7 @@
         "overview": "Overview",
         "readings": "Readings",
         "media": "Media",
-        "actions": "Actions",
-        "inspections": "Inspections",
-        "observations": "Observations"
+        "activity": "Atividade"
       },
       "fields": {
         "type": "Type",
@@ -2775,7 +2773,9 @@
         "uploadPhoto": "Upload photo",
         "changePhoto": "Change photo",
         "removePhoto": "Remove photo",
-        "noPhoto": "No photos yet."
+        "noPhoto": "No photos yet.",
+        "empty": "Ainda sem fotos.",
+        "addPhoto": "Adicionar foto"
       },
       "stubs": {
         "actions": "No actions linked to this asset yet.",
@@ -2806,7 +2806,29 @@
         "result": "Resultado",
         "notes": "Notas"
       },
-      "fieldRequired": "{name} é obrigatório"
+      "fieldRequired": "{name} é obrigatório",
+      "viewAll": "Ver tudo",
+      "viewAllCount": "Ver todos ({count})",
+      "activity": {
+        "heading": "Atividade",
+        "kinds": {
+          "inspection": "Inspeção",
+          "action": "Ação",
+          "observation": "Observação"
+        },
+        "filters": {
+          "all": "Tudo",
+          "inspection": "Inspeções",
+          "action": "Ações",
+          "observation": "Observações"
+        },
+        "empty": {
+          "all": "Ainda não há nada registado para este ativo. Inspeções, ações e observações associadas aparecerão aqui.",
+          "inspection": "Ainda sem inspeções associadas.",
+          "action": "Ainda sem ações para este ativo.",
+          "observation": "Ainda sem observações para este ativo."
+        }
+      }
     },
     "settings": {
       "title": "Settings",

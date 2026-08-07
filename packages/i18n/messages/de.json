@@ -2745,9 +2745,7 @@
         "overview": "Overview",
         "readings": "Readings",
         "media": "Media",
-        "actions": "Actions",
-        "inspections": "Inspections",
-        "observations": "Observations"
+        "activity": "Aktivität"
       },
       "fields": {
         "type": "Type",
@@ -2782,7 +2780,9 @@
         "uploadPhoto": "Upload photo",
         "changePhoto": "Change photo",
         "removePhoto": "Remove photo",
-        "noPhoto": "No photos yet."
+        "noPhoto": "No photos yet.",
+        "empty": "Noch keine Fotos.",
+        "addPhoto": "Foto hinzufügen"
       },
       "stubs": {
         "actions": "No actions linked to this asset yet.",
@@ -2813,7 +2813,29 @@
         "result": "Ergebnis",
         "notes": "Notizen"
       },
-      "fieldRequired": "{name} ist erforderlich"
+      "fieldRequired": "{name} ist erforderlich",
+      "viewAll": "Alle ansehen",
+      "viewAllCount": "Alle {count} ansehen",
+      "activity": {
+        "heading": "Aktivität",
+        "kinds": {
+          "inspection": "Prüfung",
+          "action": "Maßnahme",
+          "observation": "Beobachtung"
+        },
+        "filters": {
+          "all": "Alle",
+          "inspection": "Prüfungen",
+          "action": "Maßnahmen",
+          "observation": "Beobachtungen"
+        },
+        "empty": {
+          "all": "Für diese Anlage wurde noch nichts erfasst. Verknüpfte Prüfungen, Maßnahmen und Beobachtungen erscheinen hier.",
+          "inspection": "Noch keine Prüfungen mit dieser Anlage verknüpft.",
+          "action": "Noch keine Maßnahmen für diese Anlage.",
+          "observation": "Noch keine Beobachtungen zu dieser Anlage."
+        }
+      }
     },
     "settings": {
       "title": "Settings",
