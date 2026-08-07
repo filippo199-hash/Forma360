@@ -103,13 +103,13 @@ function NavBadge({ value, collapsed }: { value: number; collapsed: boolean }) {
     // "something is waiting here" without lying about how much.
     return (
       <span
-        className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-brand"
+        className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-slate-300"
         aria-hidden="true"
       />
     );
   }
   return (
-    <span className="ml-auto min-w-5 rounded-full bg-brand px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-brand-foreground">
+    <span className="ml-auto min-w-5 rounded-full bg-slate-300 px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-slate-900">
       {label}
     </span>
   );
@@ -228,7 +228,7 @@ export function SiteNavItems({
             <span className="truncate">{t(section.key)}</span>
             {/* Only while folded: open, the items carry their own numbers. */}
             {!isOpen && groupTotal > 0 ? (
-              <span className="ml-auto min-w-5 rounded-full bg-brand px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-brand-foreground">
+              <span className="ml-auto min-w-5 rounded-full bg-slate-300 px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-slate-900">
                 {groupTotal > 99 ? '99+' : groupTotal}
               </span>
             ) : null}

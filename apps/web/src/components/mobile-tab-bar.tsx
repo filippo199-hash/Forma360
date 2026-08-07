@@ -60,7 +60,7 @@ export function MobileTabBar({ locale }: { locale: string }) {
             <span className="relative">
               <Icon className="h-5 w-5" aria-hidden="true" />
               {badge > 0 ? (
-                <span className="absolute -right-2 -top-1 min-w-4 rounded-full bg-brand px-1 text-[10px] font-semibold leading-4 text-brand-foreground">
+                <span className="absolute -right-2 -top-1 min-w-4 rounded-full bg-slate-300 px-1 text-[10px] font-semibold leading-4 text-slate-900">
                   {badge > 9 ? '9+' : badge}
                 </span>
               ) : null}
