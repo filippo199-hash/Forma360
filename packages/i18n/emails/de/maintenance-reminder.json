@@ -1,8 +1,0 @@
-{
-  "subject": "Wartung {status}: {assetName} — {planName}",
-  "preheader": "Ein Wartungsplan ist {status} für {assetName}.",
-  "greeting": "Hallo,",
-  "body": "Der Wartungsplan \"{planName}\" für das Objekt \"{assetName}\" ist {status}. Der Service ist am {dueDate} fällig.",
-  "cta": "Wartungsplan ansehen",
-  "footer": "Sie erhalten diese E-Mail, weil Sie Wartung auf diesem {productName}-Konto verwalten können."
-}

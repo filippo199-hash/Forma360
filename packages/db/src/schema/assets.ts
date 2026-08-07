@@ -1,7 +1,7 @@
 /**
- * Assets & Maintenance subgraph — Phase 5B.
+ * Assets subgraph — Phase 5B.
  *
- * Five tenant-scoped tables:
+ * Three tenant-scoped tables:
  *
  *   - asset_types            — admin-defined taxonomy with custom-field
  *                              definitions (JSONB). AS-E12: can't delete
@@ -11,28 +11,11 @@
  *                              AS-E01: can't delete parent with sub-assets.
  *                              Has a unique QR token for mobile scanning.
  *   - asset_readings         — odometer / runtime / temperature readings.
- *                              Manual or telematics source. AS-E07: usage-
- *                              based maintenance plans require at least one
- *                              reading before a due-date can be computed.
- *   - maintenance_plans      — time-based (every N days) or usage-based
- *                              (every N km/hours) plans. Notifications via
- *                              `notification_days_before` array.
- *   - maintenance_plan_assets — M:N join. Carries per-asset override of
- *                               last_service_date / last_service_value.
+ *                              Manual or telematics source.
  *
  * See ADR 0002 (tenant scope + RESTRICT FKs).
  */
-import {
-  date,
-  index,
-  integer,
-  jsonb,
-  numeric,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core';
+import { index, jsonb, numeric, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 import { sites } from './sites';
 import { tenants } from './tenants';
@@ -122,58 +105,3 @@ export const assetReadings = pgTable(
 );
 
 export type AssetReading = typeof assetReadings.$inferSelect;
-
-export const maintenancePlanType = ['time', 'usage'] as const;
-export type MaintenancePlanType = (typeof maintenancePlanType)[number];
-
-export const maintenancePlans = pgTable(
-  'maintenance_plans',
-  {
-    id: text('id').primaryKey(),
-    tenantId: text('tenant_id')
-      .notNull()
-      .references(() => tenants.id),
-    name: text('name').notNull(),
-    description: text('description').notNull().default(''),
-    /** 'time' = interval_days, 'usage' = interval_usage + usage_field */
-    planType: text('plan_type').notNull().default('time'),
-    intervalDays: integer('interval_days'),
-    intervalUsage: numeric('interval_usage'),
-    usageField: text('usage_field'),
-    usageUnit: text('usage_unit').notNull().default(''),
-    lastServiceDate: date('last_service_date'),
-    lastServiceValue: numeric('last_service_value'),
-    /** Array of numbers (days before due to notify). */
-    notificationDaysBefore: jsonb('notification_days_before').notNull().default([]),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-    archivedAt: timestamp('archived_at', { withTimezone: true }),
-  },
-  (t) => [index('maintenance_plans_tenant_idx').on(t.tenantId)],
-);
-
-export type MaintenancePlan = typeof maintenancePlans.$inferSelect;
-
-export const maintenancePlanAssets = pgTable(
-  'maintenance_plan_assets',
-  {
-    id: text('id').primaryKey(),
-    planId: text('plan_id')
-      .notNull()
-      .references(() => maintenancePlans.id, { onDelete: 'cascade' }),
-    assetId: text('asset_id')
-      .notNull()
-      .references(() => assets.id, { onDelete: 'cascade' }),
-    lastServiceDate: date('last_service_date'),
-    lastServiceValue: numeric('last_service_value'),
-    /** { [dueDateISO]: number[] } — notificationDaysBefore values already dispatched. */
-    notificationsLog: jsonb('notifications_log').notNull().default({}),
-  },
-  (t) => [
-    uniqueIndex('maintenance_plan_assets_unique_idx').on(t.planId, t.assetId),
-    index('maintenance_plan_assets_plan_idx').on(t.planId),
-    index('maintenance_plan_assets_asset_idx').on(t.assetId),
-  ],
-);
-
-export type MaintenancePlanAsset = typeof maintenancePlanAssets.$inferSelect;

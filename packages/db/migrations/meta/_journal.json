@@ -512,6 +512,13 @@
       "when": 1780000200000,
       "tag": "0072_training_standard_access",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1780000210000,
+      "tag": "0073_drop_maintenance",
+      "breakpoints": true
     }
   ]
 }

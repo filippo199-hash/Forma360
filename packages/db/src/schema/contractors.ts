@@ -5,7 +5,7 @@
  * compliance is judged **company-wide**: it is compliant only when every
  * *blocking* requirement has a `verified` document that has not expired
  * (derived, never stored). Later phases add external users, visits/gate,
- * and the asset/maintenance link.
+ * and the asset link.
  */
 import {
   boolean,
@@ -311,7 +311,7 @@ export type ContractorGateConfig = typeof contractorGateConfig.$inferSelect;
  *
  * Many-to-many: an asset can be serviced by several contractors, and a
  * contractor services many assets. `assetId` is `text` to match `assets.id`
- * (which is a text ULID, not a varchar(26)). Mirrors `maintenanceProgramAssets`.
+ * (which is a text ULID, not a varchar(26)).
  */
 export const contractorAssets = pgTable(
   'contractor_assets',

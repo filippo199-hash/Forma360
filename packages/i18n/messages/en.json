@@ -92,7 +92,6 @@
     "actions": "Actions",
     "headsUp": "Briefings",
     "assets": "Assets",
-    "maintenance": "Maintenance",
     "documents": "Documents",
     "ai": "AI Assistant",
     "forMe": "For me",
@@ -130,7 +129,6 @@
       "templates": "Templates",
       "schedules": "Schedules",
       "approvals": "Approvals",
-      "maintenance": "Maintenance",
       "trainingMatrix": "Matrix",
       "trainingRequirements": "Requirements"
     },
@@ -155,7 +153,6 @@
     "suggestions": [
       "How many inspections do we have?",
       "List my open actions",
-      "Which assets need maintenance soon?",
       "Any documents expiring soon?"
     ],
     "bubbleTitle": "Assistant",
@@ -416,7 +413,7 @@
         "issues": "Issues",
         "actions": "Actions",
         "headsUp": "Heads Up",
-        "assets": "Assets & Maintenance",
+        "assets": "Assets",
         "documents": "Documents",
         "analytics": "Analytics",
         "training": "Training",
@@ -473,7 +470,6 @@
         "assets_view": "View assets",
         "assets_manage": "Manage assets",
         "assets_readings_record": "Record asset readings",
-        "assets_maintenance_manage": "Manage asset maintenance",
         "documents_view": "View documents",
         "documents_manage": "Manage documents",
         "documents_folders_manage": "Manage document folders",
@@ -2226,7 +2222,6 @@
         "deleteView": "Remove",
         "savedToast": "View \"{name}\" saved"
       },
-      "sourceMaintenance": "Maintenance",
       "loadError": "Couldn't load actions. Please try again.",
       "filterSourceIncident": "Incident",
       "sourceIncident": "Incident",
@@ -2308,9 +2303,7 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action",
-          "created_auto": "auto-generated this action from the “{program}” maintenance program",
-          "created_auto_generic": "auto-generated this action from a maintenance program"
+          "restored": "restored this action"
         }
       },
       "comments": {
@@ -2937,19 +2930,9 @@
       "readingUnitPlaceholder": "Unit",
       "addReadingButton": "Record",
       "readingAddedToast": "Reading recorded",
-      "maintenancePlans": {
-        "empty": "No maintenance plans linked to this asset yet.",
-        "columns": {
-          "plan": "Plan",
-          "type": "Type",
-          "lastService": "Last service",
-          "status": "Status"
-        }
-      },
       "tabs": {
         "overview": "Overview",
         "readings": "Readings",
-        "maintenance": "Maintenance",
         "media": "Media",
         "actions": "Actions",
         "inspections": "Inspections",
@@ -3007,18 +2990,6 @@
         "createdAt": "Created"
       },
       "archiveConfirm": "Archive this asset? It will be hidden from active lists but not deleted — you can restore it later.",
-      "plans": {
-        "heading": "Maintenance plans",
-        "empty": "No maintenance plans cover this asset.",
-        "timeMeta": "Every {interval} days — last service {last}",
-        "usageMeta": "Every {interval} {unit} — meter at {current}",
-        "status": {
-          "on_schedule": "On schedule",
-          "approaching": "Approaching",
-          "overdue": "Overdue",
-          "awaiting_first_reading": "Awaiting first reading"
-        }
-      },
       "fireHistory": {
         "heading": "Fire safety history",
         "checkLine": "{type} — {building}",
@@ -3031,8 +3002,7 @@
     },
     "settings": {
       "title": "Settings",
-      "categoriesTab": "Categories",
-      "programsTab": "Maintenance programs"
+      "categoriesTab": "Categories"
     }
   },
   "assetTypes": {
@@ -3047,101 +3017,6 @@
     "updatedToast": "Category saved",
     "archivedToast": "Asset type archived",
     "archiveConfirm": "Archive this asset type? It cannot be used for new assets."
-  },
-  "maintenancePlans": {
-    "table": {
-      "title": "Maintenance",
-      "subtitle": "Maintenance schedule across all assets.",
-      "empty": "No maintenance plans configured yet.",
-      "columns": {
-        "asset": "Asset",
-        "plan": "Plan",
-        "type": "Type",
-        "lastService": "Last service",
-        "status": "Status"
-      },
-      "planType": {
-        "time": "Time-based",
-        "usage": "Usage-based"
-      },
-      "status": {
-        "awaiting_first_reading": "Awaiting first reading",
-        "on_schedule": "On schedule",
-        "approaching": "Approaching due",
-        "overdue": "Overdue"
-      }
-    },
-    "list": {
-      "newButton": "New plan",
-      "overdueBadge": "{count} overdue",
-      "approachingBadge": "{count} approaching",
-      "assetsLinked": "assets",
-      "scheduleTableHeading": "Service schedule"
-    },
-    "new": {
-      "title": "New Maintenance Plan",
-      "backLink": "Back to Maintenance",
-      "createdToast": "Maintenance plan created",
-      "submitButton": "Create plan",
-      "basicHeading": "Basic info",
-      "scheduleHeading": "Schedule",
-      "notificationsHeading": "Notifications",
-      "notificationsHint": "Get email alerts before service is due.",
-      "notifDayChip": "{days} days before",
-      "addNotifDay": "Add",
-      "removeNotifDay": "Remove",
-      "fields": {
-        "name": "Plan name",
-        "namePlaceholder": "e.g. Annual vehicle service",
-        "description": "Description",
-        "descriptionPlaceholder": "Optional details",
-        "planType": "Plan type",
-        "planTypes": {
-          "time": "Time-based (every N days)",
-          "usage": "Usage-based (every N km/hours)"
-        },
-        "intervalDays": "Service every",
-        "intervalUsage": "Service every",
-        "usageUnit": "Unit",
-        "usageField": "Reading field",
-        "lastServiceDate": "Last service date",
-        "days": "days",
-        "usageUnitPlaceholder": "e.g. km",
-        "usageFieldPlaceholder": "e.g. odometer"
-      }
-    },
-    "detail": {
-      "backLink": "Back to Maintenance",
-      "updatedToast": "Plan updated",
-      "archivedToast": "Plan archived",
-      "archivedBadge": "Archived",
-      "detailsHeading": "Details",
-      "linkAssetHeading": "Link an asset",
-      "selectAssetPlaceholder": "Select an asset…",
-      "linkAssetButton": "Link",
-      "noLinkedAssets": "No assets linked to this plan yet.",
-      "assetLinkedToast": "Asset linked",
-      "assetUnlinkedToast": "Asset unlinked",
-      "serviceRecordedToast": "Service recorded",
-      "recordServiceButton": "Record",
-      "unlinkAsset": "Unlink asset",
-      "tabs": {
-        "overview": "Overview",
-        "assets": "Assets"
-      },
-      "fields": {
-        "planType": "Type",
-        "interval": "Service interval",
-        "usageField": "Reading field",
-        "notifications": "Notifications",
-        "linkedAssets": "Linked assets"
-      },
-      "assetColumns": {
-        "asset": "Asset",
-        "lastService": "Last service",
-        "recordService": "Record service"
-      }
-    }
   },
   "documents": {
     "list": {
@@ -3373,95 +3248,6 @@
       "rams": "RAMS packs",
       "training": "Training"
     }
-  },
-  "maintenancePrograms": {
-    "title": "Maintenance Programs",
-    "subtitle": "Define recurring maintenance triggers and attach them to your assets.",
-    "newProgram": "New program",
-    "startFromTemplate": "Start from template",
-    "useTemplate": "Use",
-    "noTemplates": "No templates available.",
-    "empty": "No maintenance programs yet.",
-    "createdToast": "Program created",
-    "savedToast": "Changes saved",
-    "archivedToast": "Program archived",
-    "triggerAddedToast": "Trigger added",
-    "triggerRemovedToast": "Trigger removed",
-    "assetAttachedToast": "{count, plural, =0 {Asset attached, no new actions} one {Asset attached, # action created} other {Asset attached, # actions created}}",
-    "assetDetachedToast": "Asset detached",
-    "backLink": "Back to programs",
-    "detailsHeading": "Details",
-    "triggersHeading": "Triggers",
-    "triggersAndAssets": "{triggers} triggers · {assets} assets",
-    "triggerCount": "{count, plural, one {# trigger} other {# triggers}}",
-    "noTriggers": "No triggers yet.",
-    "addTriggerHeading": "Add trigger",
-    "addTriggerButton": "Add trigger",
-    "removeTrigger": "Remove trigger",
-    "assetsHeading": "Attached assets",
-    "noAssets": "No assets attached yet.",
-    "detach": "Detach",
-    "attachAssetLabel": "Attach an asset",
-    "attachAssetButton": "Attach",
-    "selectAsset": "Select an asset…",
-    "attachedProgramsHeading": "Maintenance programs",
-    "noProgramsForAsset": "No maintenance programs attached to this asset yet.",
-    "attachProgramLabel": "Attach a maintenance program",
-    "attachProgramButton": "Attach program",
-    "selectProgram": "Select a program…",
-    "maintenanceActionsHeading": "Maintenance actions",
-    "noMaintenanceActions": "No maintenance actions for this asset yet.",
-    "triggerType": {
-      "time": "Time",
-      "distance": "Distance",
-      "usage": "Usage"
-    },
-    "triggerSummary": {
-      "time": "Every {days} days",
-      "usage": "Every {value} {unit}"
-    },
-    "fields": {
-      "name": "Name",
-      "namePlaceholder": "e.g. Vehicle servicing",
-      "description": "Description",
-      "descriptionPlaceholder": "What this program covers…",
-      "triggerTitle": "Title",
-      "triggerTitlePlaceholder": "e.g. Change oil",
-      "triggerType": "Trigger type",
-      "intervalDays": "Interval (days)",
-      "intervalDaysPlaceholder": "e.g. 365",
-      "intervalValue": "Interval",
-      "intervalValuePlaceholder": "e.g. 10000",
-      "unit": "Unit",
-      "unitPlaceholder": "e.g. km",
-      "usageField": "Reading field",
-      "usageFieldPlaceholder": "e.g. odometer"
-    },
-    "actionColumns": {
-      "title": "Title",
-      "detail": "Detail",
-      "status": "Status",
-      "dueAt": "Due"
-    },
-    "detachTitle": "Detach program?",
-    "detachBody": "Remove “{name}” from this asset?",
-    "detachExplain": "Choose what happens to this asset’s open maintenance actions for this program.",
-    "detachKeep": "Detach, keep actions",
-    "detachCancel": "Detach & cancel actions",
-    "detachedToast": "Program detached",
-    "deleteTitle": "Delete program?",
-    "deleteBody": "This deletes the program and detaches it from all assets.",
-    "deleteKeep": "Delete, keep actions",
-    "deleteCancel": "Delete & cancel actions",
-    "deletedRedirectToast": "Program deleted",
-    "applyTitle": "Apply schedule change?",
-    "applyBody": "You changed this program. Apply the new schedule to the {count} asset(s) already linked, or only to assets linked from now on?",
-    "applyExisting": "Apply to existing assets",
-    "applyNew": "Only new assets",
-    "appliedToast": "Updated {count} asset(s)",
-    "detachAssetConfirm": "Detach this asset from the program?",
-    "loadError": "Could not load maintenance programs.",
-    "removeTriggerConfirm": "Remove this trigger from the program?"
   },
   "sites": {
     "title": "Sites & Projects",
@@ -5857,8 +5643,7 @@
       "keys": {
         "emailActionReminders": "Action due/overdue reminders",
         "emailScheduleMissed": "Missed scheduled inspections",
-        "emailDocumentExpiry": "Document expiry reminders",
-        "emailMaintenance": "Maintenance reminders"
+        "emailDocumentExpiry": "Document expiry reminders"
       }
     }
   },

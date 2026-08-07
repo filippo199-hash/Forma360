@@ -1,25 +1,15 @@
 'use client';
 
-import { ArrowLeft, Camera, ImageIcon, Loader2, Pencil, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Camera, ImageIcon, Loader2, Pencil, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ActionDetailPanel } from '../../../../src/components/actions/action-detail-panel';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../../../src/components/ui/dialog';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
-import { Sheet, SheetContent } from '../../../../src/components/ui/sheet';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Textarea } from '../../../../src/components/ui/textarea';
@@ -33,18 +23,10 @@ import { brandHasModule } from '@forma360/shared/brand';
 import { activeBrand } from '../../../../src/lib/brand';
 import { trpc } from '../../../../src/lib/trpc/client';
 
-type Tab =
-  | 'overview'
-  | 'readings'
-  | 'maintenance'
-  | 'media'
-  | 'actions'
-  | 'inspections'
-  | 'observations';
+type Tab = 'overview' | 'readings' | 'media' | 'actions' | 'inspections' | 'observations';
 
 export default function AssetDetailPage() {
   const t = useTranslations('assets.detail');
-  const tMaintPrograms = useTranslations('maintenancePrograms');
   const tCommon = useTranslations('common');
   const tActionStatus = useTranslations('actions.status');
   const tActionPriority = useTranslations('actions.priority');
@@ -58,7 +40,6 @@ export default function AssetDetailPage() {
 
   const canManage = useHasPermission('assets.manage');
   const canRecord = useHasPermission('assets.readings.record');
-  const canManageMaintenance = useHasPermission('assets.maintenance.manage');
   const canViewContractors = useHasPermission('contractors.view');
   // PF-17: the fire logbook can target this asset — show its service
   // history here so extinguisher #12 is one page, not two systems.
@@ -91,13 +72,6 @@ export default function AssetDetailPage() {
   const [readingUnit, setReadingUnit] = useState('');
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const [attachProgramId, setAttachProgramId] = useState('');
-  // Maintenance action detail (opens in a side sheet, like the Actions page).
-  const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
-  // Program pending detach (drives the keep/cancel-actions dialog).
-  const [detachTarget, setDetachTarget] = useState<{ programId: string; name: string } | null>(
-    null,
-  );
 
   const { data, isLoading, error } = trpc.assets.get.useQuery({ assetId });
   const { data: assetTypesList } = trpc.assetTypes.list.useQuery(undefined, { enabled: editing });
@@ -105,27 +79,10 @@ export default function AssetDetailPage() {
     { assetId },
     { enabled: tab === 'readings' },
   );
-  const {
-    data: maintenanceData,
-    isLoading: maintenanceLoading,
-    error: maintenanceError,
-  } = trpc.maintenancePrograms.listForAsset.useQuery(
-    { assetId },
-    { enabled: tab === 'maintenance' },
-  );
-  // PF-18: time/usage maintenance PLANS for this asset (the page previously
-  // showed only programs — the second maintenance system was invisible).
-  const plansQuery = trpc.maintenancePlans.listForAsset.useQuery(
-    { assetId },
-    { enabled: assetId !== '' },
-  );
   const fireHistory = trpc.fireSafety.logbook.assetHistory.useQuery(
     { assetId },
     { enabled: assetId !== '' && canViewFire },
   );
-  const { data: programsListData } = trpc.maintenancePrograms.list.useQuery(undefined, {
-    enabled: tab === 'maintenance' && canManageMaintenance,
-  });
   const { data: linkedInspections, isLoading: inspectionsLoading } =
     trpc.assets.listLinkedInspections.useQuery({ assetId }, { enabled: tab === 'inspections' });
   const { data: linkedActions, isLoading: actionsLoading } = trpc.assets.listLinkedActions.useQuery(
@@ -169,24 +126,6 @@ export default function AssetDetailPage() {
     onSuccess: () => {
       toast.success(t('restoreToast'));
       void utils.assets.get.invalidate({ assetId });
-    },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
-  });
-
-  const attachProgram = trpc.maintenancePrograms.attachAsset.useMutation({
-    onSuccess: (res) => {
-      toast.success(tMaintPrograms('assetAttachedToast', { count: res.actionsCreated }));
-      setAttachProgramId('');
-      void utils.maintenancePrograms.listForAsset.invalidate({ assetId });
-    },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
-  });
-
-  const detachProgram = trpc.maintenancePrograms.detachAsset.useMutation({
-    onSuccess: () => {
-      toast.success(tMaintPrograms('detachedToast'));
-      setDetachTarget(null);
-      void utils.maintenancePrograms.listForAsset.invalidate({ assetId });
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -249,15 +188,7 @@ export default function AssetDetailPage() {
   const { asset, assetType, siteName, ownerName, childrenCount, latestReadings } = data;
   const isArchived = asset.archivedAt !== null;
 
-  const TABS: Tab[] = [
-    'overview',
-    'readings',
-    'maintenance',
-    'media',
-    'actions',
-    'inspections',
-    'observations',
-  ];
+  const TABS: Tab[] = ['overview', 'readings', 'media', 'actions', 'inspections', 'observations'];
 
   return (
     <div className="space-y-6">
@@ -481,6 +412,67 @@ export default function AssetDetailPage() {
             {canViewContractors ? (
               <AssetContractorsSection assetId={assetId} canManage={canLinkContractors} />
             ) : null}
+            {/* PF-17: fire logbook history for this asset. */}
+            {canViewFire && (fireHistory.data?.checks.length ?? 0) > 0 ? (
+              <Card>
+                <CardContent className="space-y-2 p-6">
+                  <h2 className="text-base font-semibold">{t('fireHistory.heading')}</h2>
+                  <ul className="space-y-1 text-sm">
+                    {(fireHistory.data?.checks ?? []).map((c) => (
+                      <li key={c.id} className="text-muted-foreground">
+                        {t('fireHistory.checkLine', {
+                          type: c.checkType.replace(/_/g, ' '),
+                          building: c.buildingName,
+                        })}
+                      </li>
+                    ))}
+                  </ul>
+                  {(fireHistory.data?.entries ?? []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t('fireHistory.empty')}</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="border-b bg-muted/40 text-left">
+                          <tr>
+                            <th className="px-3 py-2 font-medium">
+                              {t('fireHistory.performedAt')}
+                            </th>
+                            <th className="px-3 py-2 font-medium">{t('fireHistory.type')}</th>
+                            <th className="px-3 py-2 font-medium">{t('fireHistory.result')}</th>
+                            <th className="px-3 py-2 font-medium">{t('fireHistory.notes')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(fireHistory.data?.entries ?? []).slice(0, 20).map((e) => (
+                            <tr key={e.id} className="border-b last:border-0">
+                              <td className="px-3 py-2 whitespace-nowrap">
+                                {new Date(e.performedAt).toLocaleDateString(locale)}
+                              </td>
+                              <td className="px-3 py-2">{e.checkType.replace(/_/g, ' ')}</td>
+                              <td className="px-3 py-2">
+                                <span
+                                  className={cn(
+                                    'rounded-full px-2 py-0.5 text-xs font-medium',
+                                    e.result === 'fail'
+                                      ? 'bg-destructive/10 text-destructive'
+                                      : e.result === 'defects_found'
+                                        ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100'
+                                        : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
+                                  )}
+                                >
+                                  {e.result}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 text-muted-foreground">{e.notes}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : null}
           </div>
         )
       ) : null}
@@ -580,281 +572,6 @@ export default function AssetDetailPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      ) : null}
-
-      {/* ── MAINTENANCE ── */}
-      {tab === 'maintenance' ? (
-        <div className="space-y-4">
-          {/* Attach a maintenance program */}
-          {canManageMaintenance ? (
-            <Card>
-              <CardContent className="flex flex-wrap items-end gap-2 p-6">
-                <div className="flex-1 space-y-1.5">
-                  <Label htmlFor="attach-program">{tMaintPrograms('attachProgramLabel')}</Label>
-                  <select
-                    id="attach-program"
-                    value={attachProgramId}
-                    onChange={(e) => setAttachProgramId(e.target.value)}
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="">{tMaintPrograms('selectProgram')}</option>
-                    {(programsListData?.programs ?? [])
-                      .filter(
-                        (p) =>
-                          !(maintenanceData?.programs ?? []).some((ap) => ap.programId === p.id),
-                      )
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <Button
-                  type="button"
-                  disabled={attachProgram.isPending || attachProgramId === ''}
-                  onClick={() => attachProgram.mutate({ programId: attachProgramId, assetId })}
-                >
-                  {tMaintPrograms('attachProgramButton')}
-                </Button>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {/* PF-18: maintenance plans (time/usage) attached to this asset. */}
-          <Card>
-            <CardContent className="space-y-2 p-6">
-              <h2 className="text-base font-semibold">{t('plans.heading')}</h2>
-              {(plansQuery.data ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t('plans.empty')}</p>
-              ) : (
-                <ul className="divide-y rounded-md border">
-                  {(plansQuery.data ?? []).map((pl) => (
-                    <li
-                      key={pl.planId}
-                      className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5"
-                    >
-                      <div>
-                        <Link
-                          href={`/${locale}/maintenance/${pl.planId}`}
-                          className="font-medium hover:underline"
-                        >
-                          {pl.planName ?? pl.planId}
-                        </Link>
-                        <p className="text-xs text-muted-foreground">
-                          {pl.planType === 'usage'
-                            ? t('plans.usageMeta', {
-                                interval: pl.intervalUsage ?? '',
-                                unit: pl.usageUnit ?? '',
-                                current: pl.latestReadingValue ?? '—',
-                              })
-                            : t('plans.timeMeta', {
-                                interval: pl.intervalDays ?? 0,
-                                last: pl.lastServiceDate ?? '—',
-                              })}
-                        </p>
-                      </div>
-                      <span
-                        className={cn(
-                          'rounded-full px-2 py-0.5 text-xs font-medium',
-                          pl.status === 'overdue'
-                            ? 'bg-destructive/10 text-destructive'
-                            : pl.status === 'approaching'
-                              ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100'
-                              : 'bg-muted text-muted-foreground',
-                        )}
-                      >
-                        {t(`plans.status.${pl.status}` as never)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* PF-17: fire logbook history for this asset. */}
-          {canViewFire && (fireHistory.data?.checks.length ?? 0) > 0 ? (
-            <Card>
-              <CardContent className="space-y-2 p-6">
-                <h2 className="text-base font-semibold">{t('fireHistory.heading')}</h2>
-                <ul className="space-y-1 text-sm">
-                  {(fireHistory.data?.checks ?? []).map((c) => (
-                    <li key={c.id} className="text-muted-foreground">
-                      {t('fireHistory.checkLine', {
-                        type: c.checkType.replace(/_/g, ' '),
-                        building: c.buildingName,
-                      })}
-                    </li>
-                  ))}
-                </ul>
-                {(fireHistory.data?.entries ?? []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t('fireHistory.empty')}</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="border-b bg-muted/40 text-left">
-                        <tr>
-                          <th className="px-3 py-2 font-medium">{t('fireHistory.performedAt')}</th>
-                          <th className="px-3 py-2 font-medium">{t('fireHistory.type')}</th>
-                          <th className="px-3 py-2 font-medium">{t('fireHistory.result')}</th>
-                          <th className="px-3 py-2 font-medium">{t('fireHistory.notes')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(fireHistory.data?.entries ?? []).slice(0, 20).map((e) => (
-                          <tr key={e.id} className="border-b last:border-0">
-                            <td className="px-3 py-2 whitespace-nowrap">
-                              {new Date(e.performedAt).toLocaleDateString(locale)}
-                            </td>
-                            <td className="px-3 py-2">{e.checkType.replace(/_/g, ' ')}</td>
-                            <td className="px-3 py-2">
-                              <span
-                                className={cn(
-                                  'rounded-full px-2 py-0.5 text-xs font-medium',
-                                  e.result === 'fail'
-                                    ? 'bg-destructive/10 text-destructive'
-                                    : e.result === 'defects_found'
-                                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100'
-                                      : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
-                                )}
-                              >
-                                {e.result}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 text-muted-foreground">{e.notes}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {maintenanceLoading ? (
-            <Skeleton className="h-48 w-full" />
-          ) : maintenanceError !== null ? (
-            <DetailNotFound error={maintenanceError} />
-          ) : (
-            <>
-              {/* Attached programs */}
-              <Card>
-                <CardContent className="space-y-2 p-6">
-                  <h2 className="text-base font-semibold">
-                    {tMaintPrograms('attachedProgramsHeading')}
-                  </h2>
-                  {(maintenanceData?.programs ?? []).length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      {tMaintPrograms('noProgramsForAsset')}
-                    </p>
-                  ) : (
-                    <ul className="divide-y rounded-md border">
-                      {(maintenanceData?.programs ?? []).map((p) => (
-                        <li
-                          key={p.programId}
-                          className="flex items-center justify-between gap-2 px-3 py-2.5"
-                        >
-                          <Link
-                            href={`/${locale}/assets/settings/programs/${p.programId}`}
-                            className="font-medium hover:underline"
-                          >
-                            {p.programName}
-                          </Link>
-                          {canManageMaintenance ? (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setDetachTarget({ programId: p.programId, name: p.programName })
-                              }
-                              className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                              aria-label={tMaintPrograms('detach')}
-                              title={tMaintPrograms('detach')}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Maintenance actions */}
-              <Card>
-                <CardContent className="p-0">
-                  <div className="border-b px-6 py-3">
-                    <h2 className="text-base font-semibold">
-                      {tMaintPrograms('maintenanceActionsHeading')}
-                    </h2>
-                  </div>
-                  {(maintenanceData?.actions ?? []).length === 0 ? (
-                    <div className="py-12 text-center text-muted-foreground">
-                      <p className="text-sm">{tMaintPrograms('noMaintenanceActions')}</p>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead className="border-b bg-muted/40">
-                          <tr className="text-left">
-                            <th className="px-3 py-2 font-medium">
-                              {tMaintPrograms('actionColumns.title')}
-                            </th>
-                            <th className="px-3 py-2 font-medium">
-                              {tMaintPrograms('actionColumns.detail')}
-                            </th>
-                            <th className="px-3 py-2 font-medium">
-                              {tMaintPrograms('actionColumns.status')}
-                            </th>
-                            <th className="px-3 py-2 font-medium">
-                              {tMaintPrograms('actionColumns.dueAt')}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(maintenanceData?.actions ?? []).map((action) => (
-                            <tr
-                              key={action.id}
-                              className="border-b last:border-0 hover:bg-muted/30"
-                            >
-                              <td className="px-3 py-2 font-medium">
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedActionId(action.id)}
-                                  className="text-left hover:underline"
-                                >
-                                  {action.referenceNumber !== null ? (
-                                    <span className="mr-1 text-xs text-muted-foreground">
-                                      {action.referenceNumber}
-                                    </span>
-                                  ) : null}
-                                  {action.title}
-                                </button>
-                              </td>
-                              <td className="px-3 py-2 text-muted-foreground">
-                                {action.description !== '' ? action.description : '—'}
-                              </td>
-                              <td className="px-3 py-2 text-muted-foreground">
-                                {tActionStatus(action.status)}
-                              </td>
-                              <td className="px-3 py-2 text-muted-foreground">
-                                {action.dueAt !== null
-                                  ? new Date(action.dueAt).toLocaleDateString(locale)
-                                  : '—'}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </>
-          )}
         </div>
       ) : null}
 
@@ -1091,67 +808,6 @@ export default function AssetDetailPage() {
           </CardContent>
         </Card>
       ) : null}
-
-      {/* Detach-program confirm — keep or cancel the asset's open actions. */}
-      <Dialog open={detachTarget !== null} onOpenChange={(o) => !o && setDetachTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{tMaintPrograms('detachTitle')}</DialogTitle>
-            <DialogDescription>
-              {tMaintPrograms('detachBody', { name: detachTarget?.name ?? '' })}{' '}
-              {tMaintPrograms('detachExplain')}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button
-              variant="outline"
-              disabled={detachProgram.isPending}
-              onClick={() =>
-                detachTarget !== null &&
-                detachProgram.mutate({
-                  programId: detachTarget.programId,
-                  assetId,
-                  cancelOpenActions: false,
-                })
-              }
-            >
-              {tMaintPrograms('detachKeep')}
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={detachProgram.isPending}
-              onClick={() =>
-                detachTarget !== null &&
-                detachProgram.mutate({
-                  programId: detachTarget.programId,
-                  assetId,
-                  cancelOpenActions: true,
-                })
-              }
-            >
-              {tMaintPrograms('detachCancel')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Maintenance action detail — opens in a side sheet, no page change. */}
-      <Sheet
-        open={selectedActionId !== null}
-        onOpenChange={(o) => {
-          if (!o) {
-            setSelectedActionId(null);
-            // Reflect any status change (complete → roll-forward, cancel, etc.).
-            void utils.maintenancePrograms.listForAsset.invalidate({ assetId });
-          }
-        }}
-      >
-        <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
-          {selectedActionId !== null ? (
-            <ActionDetailPanel actionId={selectedActionId} locale={locale} />
-          ) : null}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

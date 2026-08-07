@@ -43,8 +43,6 @@ import {
   type InspectionsExportDeps,
 } from './routers/inspectionsExport';
 import { createIssuesRouter, type IssuesRouterDeps } from './routers/issues';
-import { maintenancePlansRouter } from './routers/maintenancePlans';
-import { maintenanceProgramsRouter } from './routers/maintenancePrograms';
 import { aiAssistantRouter } from './routers/aiAssistant';
 import { searchRouter } from './routers/search';
 import { siteMediaRouter } from './routers/siteMedia';
@@ -137,8 +135,6 @@ export function buildAppRouter(deps: {
     headsUps: createHeadsUpsRouter(deps.headsUps),
     assetTypes: assetTypesRouter,
     assets: assetsRouter,
-    maintenancePlans: maintenancePlansRouter,
-    maintenancePrograms: maintenanceProgramsRouter,
     documentFolders: documentFoldersRouter,
     documentLabels: documentLabelsRouter,
     documents: documentsRouter,

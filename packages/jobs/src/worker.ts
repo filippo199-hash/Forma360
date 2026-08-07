@@ -26,8 +26,6 @@ import { createSiteReconcileHandler } from './workers/site-membership-reconcile'
 import { createTestQueueHandler } from './workers/test-queue';
 import { createUserAnonymisationHandler } from './workers/user-anonymisation';
 import { createSendEmail, createSendTemplatedEmail } from '@forma360/shared/email';
-import { createMaintenanceTickHandler, MAINTENANCE_TICK_CRON } from './workers/maintenance-tick';
-import { createMaintenanceNotifyHandler } from './workers/maintenance-notify';
 import {
   createContractorDocReminderHandler,
   CONTRACTOR_DOC_REMINDER_CRON,
@@ -214,17 +212,6 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     workerOptions,
   );
 
-  // ─── Phase 5B — Maintenance notifications ──────────────────────────────
-  const maintenanceTickWorker = new Worker(
-    QUEUE_NAMES.MAINTENANCE_TICK,
-    createMaintenanceTickHandler({
-      db: workerDb,
-      logger: logger.child({ handler: 'maintenance-tick' }),
-      connection,
-    }),
-    workerOptions,
-  );
-
   const sendTemplatedEmail = createSendTemplatedEmail({
     delivery: env.EMAIL_DELIVERY,
     resendApiKey: env.RESEND_API_KEY,
@@ -232,26 +219,6 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     logger: logger.child({ component: 'email-templated' }),
     productName: getBrand(env.BRAND).name,
   });
-
-  const maintenanceNotifyWorker = new Worker(
-    QUEUE_NAMES.MAINTENANCE_NOTIFY,
-    createMaintenanceNotifyHandler({
-      db: workerDb,
-      logger: logger.child({ handler: 'maintenance-notify' }),
-      sendTemplatedEmail,
-      appUrl: env.APP_URL,
-    }),
-    workerOptions,
-  );
-
-  // Register maintenance-tick as a daily repeatable job.
-  const maintenanceTickQueue = getQueue(QUEUE_NAMES.MAINTENANCE_TICK, connection);
-  await maintenanceTickQueue.upsertJobScheduler(
-    'maintenance-tick',
-    { pattern: MAINTENANCE_TICK_CRON, tz: 'UTC' },
-    { name: 'maintenance-tick', data: {} },
-  );
-  logger.info({ cron: MAINTENANCE_TICK_CRON }, '[worker] registered maintenance-tick repeatable');
 
   // ─── Contractors Phase 1 — compliance-document expiry reminders ─────────
   const contractorReminderWorker = new Worker(
@@ -798,8 +765,6 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     scheduleTickWorker,
     scheduleMaterialiseWorker,
     scheduleReminderWorker,
-    maintenanceTickWorker,
-    maintenanceNotifyWorker,
     contractorReminderWorker,
     contractorOverstayWorker,
     observationNotifyWorker,

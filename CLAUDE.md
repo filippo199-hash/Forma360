@@ -7,7 +7,7 @@ stack, the conventions, and where to look for the rest.
 ## Mission
 
 > Multi-tenant operational-excellence platform. Inspections, issues,
-> actions, heads-up, assets & maintenance, documents, analytics,
+> actions, heads-up, assets, documents, analytics,
 > compliance, groups & sites, settings — ten modules that share one
 > database, one API, one tRPC boundary.
 

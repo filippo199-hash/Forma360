@@ -1,7 +1,7 @@
 # Forma360
 
 Multi-tenant operational-excellence platform. Inspections, issues, actions,
-heads-up, assets & maintenance, documents, analytics, compliance, and
+heads-up, assets, documents, analytics, compliance, and
 everything that sits around them.
 
 Phase 0 (the foundation) is what lives here today. See

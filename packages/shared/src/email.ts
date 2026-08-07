@@ -29,7 +29,6 @@ import issueCreated from '../../i18n/emails/en/issue-created.json';
 import contractorDocExpiry from '../../i18n/emails/en/contractor-doc-expiry.json';
 import contractorPortalInvite from '../../i18n/emails/en/contractor-portal-invite.json';
 import contractorOverstay from '../../i18n/emails/en/contractor-overstay.json';
-import maintenanceReminder from '../../i18n/emails/en/maintenance-reminder.json';
 import observationCriticalAlert from '../../i18n/emails/en/observation-critical-alert.json';
 import observationNotification from '../../i18n/emails/en/observation-notification.json';
 import otp from '../../i18n/emails/en/otp.json';
@@ -64,7 +63,6 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'inspection-notify': inspectionNotify,
   invite,
   'issue-created': issueCreated,
-  'maintenance-reminder': maintenanceReminder,
   'contractor-doc-expiry': contractorDocExpiry,
   'training-expiry': trainingExpiry,
   'training-expiry-recorder': trainingExpiryRecorder,

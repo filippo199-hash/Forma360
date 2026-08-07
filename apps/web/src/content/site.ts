@@ -121,15 +121,15 @@ export const MODULES: Module[] = [
   },
   {
     icon: 'package',
-    title: 'Assets & maintenance',
+    title: 'Assets',
     description:
-      'Keep an asset register, schedule preventive maintenance, and link work to the equipment it concerns.',
+      'Keep an asset register, record meter readings, and link work to the equipment it concerns.',
   },
   {
     icon: 'calendar-clock',
     title: 'Schedules & reminders',
     description:
-      'Automate recurring inspections and maintenance, with reminders so nothing slips through the cracks.',
+      'Automate recurring inspections, with reminders so nothing slips through the cracks.',
   },
   {
     icon: 'file-text',

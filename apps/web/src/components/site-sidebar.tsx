@@ -144,8 +144,8 @@ export function SiteNavItems({
   });
   // Which module the current route belongs to — used to light up the right
   // row even on a sub-page whose path lives outside the module's own prefix
-  // (Approvals/Schedules/Templates under Inspections, Maintenance under
-  // Assets). The sub-pages are tabs on the page now, not menu children.
+  // (Approvals/Schedules/Templates under Inspections). The sub-pages are
+  // tabs on the page now, not menu children.
   const active = activeNavItem(sections, pathname);
 
   function labelFor(item: NavItem): string {

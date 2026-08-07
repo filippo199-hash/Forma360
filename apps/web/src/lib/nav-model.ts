@@ -36,7 +36,6 @@ import {
   FlaskConical,
   FolderOpen,
   GraduationCap,
-  Hammer,
   HardHat,
   ListChecks,
   ListTodo,
@@ -91,7 +90,6 @@ export type NavChildKey =
   | 'issuesQrCodes'
   | 'issuesCategories'
   | 'actionsCategories'
-  | 'maintenance'
   | 'assetsCategories'
   | 'contractorsGate'
   | 'contractorsCalendar';
@@ -316,11 +314,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           icon: Wrench,
           permission: 'assets.view',
           children: [
-            {
-              key: 'maintenance',
-              href: p('/maintenance'),
-              permission: 'assets.maintenance.manage',
-            },
             { key: 'assetsCategories', href: p('/assets/categories'), permission: 'assets.manage' },
           ],
         },
@@ -454,10 +447,9 @@ export function activeNavItem(
   const direct = items.find((item) => isNavItemActive(item, pathname));
   if (direct !== undefined) return direct;
   // A nested entry need not live under its parent's path — Approvals,
-  // Schedules, Templates and Maintenance are all top-level routes that
-  // now hang off Inspections and Assets. Without this, standing on
-  // /approvals would light nothing up and hide the sub-navigation that
-  // got you there.
+  // Schedules and Templates are all top-level routes that now hang off
+  // Inspections. Without this, standing on /approvals would light
+  // nothing up and hide the sub-navigation that got you there.
   return items.find((item) =>
     (item.children ?? []).some((child) => isNavChildActive(child, pathname)),
   );
@@ -561,7 +553,6 @@ export const NAV_CHILD_ICON: Record<NavChildKey, LucideIcon> = {
   issuesQrCodes: QrCode,
   issuesCategories: FolderOpen,
   actionsCategories: FolderOpen,
-  maintenance: Hammer,
   assetsCategories: FolderOpen,
   contractorsGate: HardHat,
   contractorsCalendar: CalendarDays,

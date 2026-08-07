@@ -269,7 +269,7 @@ export const DATA_DELETION: LegalDoc = {
 export const ABOUT = {
   title: `About ${COMPANY.name}`,
   paragraphs: [
-    `${COMPANY.name} is an operational-excellence platform that helps organisations run inspections, manage issues and corrective actions, track assets and maintenance, centralise documents, and understand performance through analytics — all with strict, multi-tenant data isolation.`,
+    `${COMPANY.name} is an operational-excellence platform that helps organisations run inspections, manage issues and corrective actions, track assets, centralise documents, and understand performance through analytics — all with strict, multi-tenant data isolation.`,
     'Our built-in AI assistant lets teams ask questions about their operations in plain language and get instant, data-scoped answers — on the web and over WhatsApp, so people can check in from wherever they work.',
     `We are based at ${COMPANY.address}.`,
   ],

@@ -1,5 +1,5 @@
 /**
- * Integration tests for Assets & Maintenance routers (Phase 5B).
+ * Integration tests for the Assets router (Phase 5B).
  */
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -78,6 +78,9 @@ const MIGRATION_FILES = [
   '0065_backfill_freehs_permission_keys.sql',
   '0066_wave_f_field.sql',
   '0067_wave_g_platform.sql',
+  // Drops the maintenance tables 0027/0034 created — exercises the drop
+  // migration end-to-end so the withdrawn feature leaves a clean schema.
+  '0073_drop_maintenance.sql',
 ];
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
@@ -234,40 +237,5 @@ describe('Assets router (Phase 5B)', () => {
     expect(readings).toHaveLength(1);
     expect(readings[0]?.fieldName).toBe('runtime_hours');
     expect(readings[0]?.value).toBe('1250');
-  });
-
-  it('creates a maintenance plan and links assets', async () => {
-    const caller = createCaller(ctxFor(adminUserId));
-    const { assetId } = await caller.assets.create({ name: 'Generator' });
-
-    const { planId } = await caller.maintenancePlans.create({
-      name: '6-month service',
-      planType: 'time',
-      intervalDays: 180,
-      notificationDaysBefore: [7, 14],
-    });
-
-    await caller.maintenancePlans.linkAssets({ planId, assetIds: [assetId] });
-
-    const { linkedAssets } = await caller.maintenancePlans.get({ planId });
-    expect(linkedAssets).toHaveLength(1);
-    expect(linkedAssets[0]?.assetId).toBe(assetId);
-  });
-
-  it('maintenance table returns status for linked plans', async () => {
-    const caller = createCaller(ctxFor(adminUserId));
-    const { assetId } = await caller.assets.create({ name: 'Compressor' });
-    const { planId } = await caller.maintenancePlans.create({
-      name: 'Monthly check',
-      planType: 'time',
-      intervalDays: 30,
-    });
-    await caller.maintenancePlans.linkAssets({ planId, assetIds: [assetId] });
-
-    const table = await caller.maintenancePlans.table();
-    const row = table.find((r) => r.planId === planId && r.assetId === assetId);
-    expect(row).toBeDefined();
-    // No last service date => on_schedule (no due date to compare).
-    expect(row?.status).toBe('on_schedule');
   });
 });
