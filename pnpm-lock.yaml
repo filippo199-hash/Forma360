@@ -355,6 +355,9 @@ importers:
       '@forma360/permissions':
         specifier: workspace:^
         version: link:../permissions
+      '@forma360/render':
+        specifier: workspace:^
+        version: link:../render
       '@forma360/shared':
         specifier: workspace:^
         version: link:../shared

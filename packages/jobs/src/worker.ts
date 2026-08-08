@@ -92,6 +92,13 @@ import {
   TRAINING_EXPIRY_CRON,
   type DueTrainingReminder,
 } from './workers/training-expiry';
+import {
+  createDashboardScheduleTickHandler,
+  DASHBOARD_SCHEDULE_TICK_CRON,
+} from './workers/dashboard-schedule-tick';
+import { createDashboardScheduleSendHandler } from './workers/dashboard-schedule-send';
+import { renderDashboardPdf } from '@forma360/render';
+import { createStorage } from '@forma360/shared/storage';
 
 function buildRedis(url: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
@@ -742,6 +749,84 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   );
   logger.info({ cron: TRAINING_EXPIRY_CRON }, '[worker] registered training-expiry repeatable');
 
+  // ─── ADR 0018 — scheduled dashboard PDF delivery ───────────────────────
+  const dashboardScheduleTickWorker = new Worker(
+    QUEUE_NAMES.DASHBOARD_SCHEDULE_TICK,
+    createDashboardScheduleTickHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'dashboard-schedule-tick' }),
+      connection,
+    }),
+    workerOptions,
+  );
+
+  // First worker consumer of the RenderDeps pipeline: R2-backed storage
+  // for the artefact cache, APP_URL for the print route, the shared HMAC
+  // secret for the render token — all from the one parsed env.
+  const dashboardStorage = createStorage({
+    accountId: env.R2_ACCOUNT_ID,
+    accessKeyId: env.R2_ACCESS_KEY_ID,
+    secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    bucket: env.R2_BUCKET,
+  });
+  const dashboardRenderLog = logger.child({ component: 'render-dashboard-pdf' });
+  const dashboardScheduleSendWorker = new Worker(
+    QUEUE_NAMES.DASHBOARD_SCHEDULE_SEND,
+    createDashboardScheduleSendHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'dashboard-schedule-send' }),
+      appUrl: env.APP_URL,
+      renderPdf: async (input) => {
+        const rendered = await renderDashboardPdf(
+          {
+            db: workerDb,
+            storage: dashboardStorage,
+            appUrl: env.APP_URL,
+            renderSharedSecret: env.RENDER_SHARED_SECRET,
+            onLog: (e) => {
+              if (e.level === 'warn') dashboardRenderLog.warn(e.msg);
+              else dashboardRenderLog.info(e.msg);
+            },
+          },
+          input,
+        );
+        // The pipeline caches the artefact in R2 and returns its key;
+        // read the bytes back for the attachment.
+        const url = await dashboardStorage.getSignedDownloadUrl({
+          key: rendered.key,
+          expiresInSeconds: 60 * 5,
+        });
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`dashboard PDF download failed: ${res.status} ${res.statusText}`);
+        }
+        return { bytes: new Uint8Array(await res.arrayBuffer()), stub: rendered.stub };
+      },
+      notify: async (to, input) => {
+        await sendTemplatedEmail({
+          to,
+          templateKey: 'dashboard-scheduled',
+          variables: {
+            dashboardTitle: input.dashboardTitle,
+            viewUrl: input.viewUrl,
+          },
+          attachments: [input.attachment],
+        });
+      },
+    }),
+    workerOptions,
+  );
+  const dashboardScheduleTickQueue = getQueue(QUEUE_NAMES.DASHBOARD_SCHEDULE_TICK, connection);
+  await dashboardScheduleTickQueue.upsertJobScheduler(
+    'dashboard-schedule-tick',
+    { pattern: DASHBOARD_SCHEDULE_TICK_CRON, tz: 'UTC' },
+    { name: 'dashboard-schedule-tick', data: {} },
+  );
+  logger.info(
+    { cron: DASHBOARD_SCHEDULE_TICK_CRON },
+    '[worker] registered dashboard-schedule-tick repeatable',
+  );
+
   // Register the tick as a repeatable job — idempotent per boot.
   const scheduleTickQueue = getQueue(QUEUE_NAMES.SCHEDULE_TICK, connection);
   await scheduleTickQueue.upsertJobScheduler(
@@ -792,6 +877,8 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     scheduleMissedSweepWorker,
     retentionSweepWorker,
     trainingExpiryWorker,
+    dashboardScheduleTickWorker,
+    dashboardScheduleSendWorker,
   ];
   for (const w of allWorkers) {
     w.on('completed', (job) => {
