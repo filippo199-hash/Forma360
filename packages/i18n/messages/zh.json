@@ -6735,7 +6735,8 @@
       "emptyCta": "创建第一个仪表板",
       "widgetCount": "{count} 个组件",
       "updatedAt": "更新于 {at}",
-      "byOwner": "{owner} · {at}"
+      "byOwner": "{owner} · {at}",
+      "loadError": "无法加载您的仪表板。"
     },
     "status": {
       "all": "全部",
@@ -6767,7 +6768,10 @@
       "schedule": "定时发送",
       "archive": "归档",
       "archiveConfirm": "归档此仪表板?定时邮件将被暂停。",
-      "refine": "调整"
+      "refine": "调整",
+      "dataError": "无法加载仪表板数据。",
+      "retry": "重试",
+      "downloadPdf": "下载 PDF"
     },
     "chat": {
       "requestFailed": "出了点问题,请重试。",

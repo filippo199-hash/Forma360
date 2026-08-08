@@ -6735,7 +6735,8 @@
       "emptyCta": "Crie o seu primeiro painel",
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Atualizado {at}",
-      "byOwner": "Por {owner} · {at}"
+      "byOwner": "Por {owner} · {at}",
+      "loadError": "Não foi possível carregar os seus painéis."
     },
     "status": {
       "all": "Todos",
@@ -6767,7 +6768,10 @@
       "schedule": "Agendar",
       "archive": "Arquivar",
       "archiveConfirm": "Arquivar este painel? Os envios agendados serão pausados.",
-      "refine": "Refinar"
+      "refine": "Refinar",
+      "dataError": "Não foi possível carregar os dados do painel.",
+      "retry": "Tentar novamente",
+      "downloadPdf": "Transferir PDF"
     },
     "chat": {
       "requestFailed": "Algo correu mal. Tente novamente.",

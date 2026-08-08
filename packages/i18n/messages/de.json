@@ -6742,7 +6742,8 @@
       "emptyCta": "Erstes Dashboard erstellen",
       "widgetCount": "{count, plural, one {# Widget} other {# Widgets}}",
       "updatedAt": "Aktualisiert {at}",
-      "byOwner": "Von {owner} · {at}"
+      "byOwner": "Von {owner} · {at}",
+      "loadError": "Ihre Dashboards konnten nicht geladen werden."
     },
     "status": {
       "all": "Alle",
@@ -6774,7 +6775,10 @@
       "schedule": "Zeitplan",
       "archive": "Archivieren",
       "archiveConfirm": "Dieses Dashboard archivieren? Geplante E-Mails werden pausiert.",
-      "refine": "Verfeinern"
+      "refine": "Verfeinern",
+      "dataError": "Die Dashboard-Daten konnten nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "downloadPdf": "PDF herunterladen"
     },
     "chat": {
       "requestFailed": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",

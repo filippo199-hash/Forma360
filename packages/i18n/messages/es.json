@@ -6742,7 +6742,8 @@
       "emptyCta": "Crea tu primer panel",
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Actualizado {at}",
-      "byOwner": "Por {owner} · {at}"
+      "byOwner": "Por {owner} · {at}",
+      "loadError": "No se pudieron cargar tus paneles."
     },
     "status": {
       "all": "Todos",
@@ -6774,7 +6775,10 @@
       "schedule": "Programar",
       "archive": "Archivar",
       "archiveConfirm": "¿Archivar este panel? Los envíos programados se pausarán.",
-      "refine": "Refinar"
+      "refine": "Refinar",
+      "dataError": "No se pudieron cargar los datos del panel.",
+      "retry": "Reintentar",
+      "downloadPdf": "Descargar PDF"
     },
     "chat": {
       "requestFailed": "Algo salió mal. Inténtalo de nuevo.",

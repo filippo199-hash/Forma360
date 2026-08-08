@@ -10,6 +10,7 @@ import type { DashboardSpec } from '@forma360/shared/dashboard-spec';
 import {
   Archive,
   ArchiveRestore,
+  Download,
   MessageSquareText,
   Send,
   Share2,
@@ -231,6 +232,16 @@ export default function DashboardPage() {
                     {t('detail.restore')}
                   </Button>
                 )}
+                <Button size="sm" variant="outline" asChild>
+                  <a
+                    href={`/api/exports/dashboard-pdf?dashboardId=${dashboardId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Download className="mr-1.5 h-4 w-4" aria-hidden />
+                    {t('detail.downloadPdf')}
+                  </a>
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
                   <Share2 className="mr-1.5 h-4 w-4" aria-hidden />
                   {t('detail.share')}
@@ -272,12 +283,27 @@ export default function DashboardPage() {
           <FilterBar value={effectiveFilters} onChange={setFilters} />
         </div>
 
+        {data.isError ? (
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm">
+            <span className="text-destructive">{t('detail.dataError')}</span>
+            <Button size="sm" variant="outline" onClick={() => void data.refetch()}>
+              {t('detail.retry')}
+            </Button>
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {spec.widgets.map((widget) => (
             <WidgetCard
               key={widget.id}
               widget={widget}
-              data={data.data?.widgets[widget.id] as WidgetDataShape | undefined}
+              // A failed data query must show each widget's failed state, not
+              // an eternal skeleton (which `undefined` would render).
+              data={
+                data.isError
+                  ? { error: 'failed' }
+                  : (data.data?.widgets[widget.id] as WidgetDataShape | undefined)
+              }
               locale={locale}
               exportQuery={exportQuery}
               dashboardId={dashboardId}

@@ -167,6 +167,16 @@ describe('tenants.updateBranding', () => {
     await expect(caller.tenants.updateBranding({ accentColor: '#12345' })).rejects.toThrow();
   });
 
+  it('rejects a near-white primary/accent the renderer would silently discard', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    // #fefefe is above the near-white luminance threshold — accepting it
+    // would toast "saved" and then be dropped by buildTenantThemeCss.
+    await expect(caller.tenants.updateBranding({ primaryColor: '#fefefe' })).rejects.toThrow();
+    await expect(caller.tenants.updateBranding({ accentColor: '#ffffff' })).rejects.toThrow();
+    // A usable mid-tone still saves.
+    await expect(caller.tenants.updateBranding({ primaryColor: '#1d4ed8' })).resolves.toBeDefined();
+  });
+
   it('clears branding written with the extended shape when the patch is empty', async () => {
     const caller = createCaller(ctxFor(adminUserId));
     await caller.tenants.updateBranding({

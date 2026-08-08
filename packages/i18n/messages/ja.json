@@ -6735,7 +6735,8 @@
       "emptyCta": "最初のダッシュボードを作る",
       "widgetCount": "ウィジェット {count} 件",
       "updatedAt": "更新 {at}",
-      "byOwner": "{owner} · {at}"
+      "byOwner": "{owner} · {at}",
+      "loadError": "ダッシュボードを読み込めませんでした。"
     },
     "status": {
       "all": "すべて",
@@ -6767,7 +6768,10 @@
       "schedule": "スケジュール",
       "archive": "アーカイブ",
       "archiveConfirm": "このダッシュボードをアーカイブしますか?定期メールは一時停止されます。",
-      "refine": "調整"
+      "refine": "調整",
+      "dataError": "ダッシュボードのデータを読み込めませんでした。",
+      "retry": "再試行",
+      "downloadPdf": "PDFをダウンロード"
     },
     "chat": {
       "requestFailed": "問題が発生しました。もう一度お試しください。",

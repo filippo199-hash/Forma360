@@ -94,7 +94,17 @@ export default function DashboardsPage() {
         ))}
       </div>
 
-      {list.isLoading ? (
+      {list.isError ? (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
+            {/* A failed load must never masquerade as an empty tenant. */}
+            <p className="text-sm text-destructive">{t('list.loadError')}</p>
+            <Button variant="outline" onClick={() => void list.refetch()}>
+              {t('detail.retry')}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : list.isLoading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-36 w-full" />

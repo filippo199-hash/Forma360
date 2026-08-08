@@ -6742,7 +6742,8 @@
       "emptyCta": "Créer votre premier tableau de bord",
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Mis à jour {at}",
-      "byOwner": "Par {owner} · {at}"
+      "byOwner": "Par {owner} · {at}",
+      "loadError": "Impossible de charger vos tableaux de bord."
     },
     "status": {
       "all": "Tous",
@@ -6774,7 +6775,10 @@
       "schedule": "Programmer",
       "archive": "Archiver",
       "archiveConfirm": "Archiver ce tableau de bord ? Les envois programmés seront suspendus.",
-      "refine": "Affiner"
+      "refine": "Affiner",
+      "dataError": "Impossible de charger les données du tableau de bord.",
+      "retry": "Réessayer",
+      "downloadPdf": "Télécharger le PDF"
     },
     "chat": {
       "requestFailed": "Une erreur est survenue. Réessayez.",

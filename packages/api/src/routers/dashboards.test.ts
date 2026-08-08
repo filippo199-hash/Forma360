@@ -908,4 +908,55 @@ describe('dashboards router', () => {
     const viewerResult = await call(viewerId).dashboards.renderPdf({ id });
     expect(viewerResult.storageKey).toContain(id);
   });
+
+  it('DH-E23c: renderPdf refuses a viewer who cannot see a widget source — the PDF cannot leak what widgetData gates', async () => {
+    const calls: Array<{ tenantId: string; dashboardId: string }> = [];
+    const wired = router({
+      dashboards: createDashboardsRouter({
+        modules: ALL_MODULES_ON,
+        now: () => FIXED_NOW,
+        renderPdf: async (input) => {
+          calls.push(input);
+          return { key: `${input.tenantId}/dashboards/${input.dashboardId}/pdf-x.pdf`, bytes: 4, stub: false };
+        },
+      }),
+    });
+    const wiredCaller = createCallerFactory(wired);
+    const call = (userId: string) =>
+      wiredCaller(
+        createTestContext({
+          db: db as never,
+          logger: silentLogger(),
+          auth: { userId, email: 'x@test.test', tenantId: tenantId as never },
+        }),
+      );
+
+    // Admin authors a tenant-visible dashboard with an incidents widget.
+    const spec = {
+      version: DASHBOARD_SPEC_VERSION,
+      widgets: [
+        { id: 'open-incidents', kind: 'kpi', title: 'Open incidents', source: 'incidents', metric: 'open' },
+      ],
+    };
+    const { id } = await call(adminId).dashboards.create({ title: 'Incidents', spec });
+    await call(adminId).dashboards.setStatus({ id, status: 'published' });
+    await call(adminId).dashboards.setVisibility({ id, visibility: 'tenant' });
+
+    // Interactive: the viewer (no incidents.view) already gets a forbidden marker.
+    const data = await call(viewerId).dashboards.data({ id });
+    expect(data.widgets['open-incidents']).toEqual({ error: 'forbidden' });
+
+    // PDF: the same viewer must be refused, and the renderer never invoked —
+    // otherwise the shared artefact would carry the very counts the grid hid.
+    calls.length = 0;
+    await expect(call(viewerId).dashboards.renderPdf({ id })).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
+    expect(calls).toEqual([]);
+
+    // The admin (holds every source) still exports it.
+    await expect(call(adminId).dashboards.renderPdf({ id })).resolves.toMatchObject({
+      storageKey: expect.stringContaining(id),
+    });
+  });
 });

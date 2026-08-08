@@ -19,13 +19,16 @@ import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { lookup } from 'node:dns/promises';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { Agent } from 'undici';
 import { z } from 'zod';
 import {
   harvestSiteColors,
+  isPrivateAddress,
   proposeBrandPalette,
   SiteFetchError,
   UrlRefusedError,
   type FetchDeps,
+  type ResolvedAddress,
 } from '../../../../src/server/brand-palette';
 import { auth } from '../../../../src/server/auth';
 import { db } from '../../../../src/server/db';
@@ -39,8 +42,46 @@ const bodySchema = z.object({
   url: z.string().url().max(2048).startsWith('https://'),
 });
 
+/**
+ * Pin the connection to the addresses the guard already validated for this
+ * hop, so undici never re-resolves the hostname (the DNS-rebinding TOCTOU).
+ * The hostname is preserved for TLS SNI + certificate validation; only DNS
+ * is overridden. Each pinned address is re-checked here as defence in depth
+ * — if a validated set is somehow private, the connect fails closed.
+ */
+function pinnedFetch(
+  url: string,
+  init: RequestInit,
+  pin: readonly ResolvedAddress[],
+): Promise<Response> {
+  const safe = pin.filter((a) => !isPrivateAddress(a.address));
+  if (safe.length === 0) {
+    return Promise.reject(new Error('no public address to connect to'));
+  }
+  const dispatcher = new Agent({
+    connect: {
+      lookup: (
+        _hostname: string,
+        _options: unknown,
+        cb: (err: Error | null, address: string, family: number) => void,
+      ) => {
+        const first = safe[0];
+        if (first === undefined) {
+          cb(new Error('no pinned address'), '', 4);
+          return;
+        }
+        cb(null, first.address, first.family);
+      },
+    },
+  });
+  // `dispatcher` is an undici-specific RequestInit extension.
+  return fetch(url, { ...init, dispatcher } as RequestInit & { dispatcher: Agent }).finally(
+    () => void dispatcher.close(),
+  );
+}
+
 const fetchDeps: FetchDeps = {
-  fetch: (url, init) => fetch(url, init),
+  fetch: pinnedFetch,
   lookup: (hostname) => lookup(hostname, { all: true, verbatim: true }),
 };
 

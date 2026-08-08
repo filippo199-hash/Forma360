@@ -41,7 +41,19 @@ export interface ResolvedAddress {
 }
 
 export interface FetchDeps {
-  fetch: (url: string, init: RequestInit) => Promise<Response>;
+  /**
+   * Perform the request. `pin` is the set of addresses the guard just
+   * validated for this exact hop; the production implementation MUST
+   * connect only to these (see the route's pinned undici Agent) so a
+   * fast-rebinding DNS cannot serve a public record to the guard and a
+   * private one to the socket (check/connect TOCTOU). A test fake may
+   * ignore `pin`.
+   */
+  fetch: (
+    url: string,
+    init: RequestInit,
+    pin: readonly ResolvedAddress[],
+  ) => Promise<Response>;
   /** DNS resolution for a hostname — `node:dns/promises` `lookup(host, { all: true })`. */
   lookup: (hostname: string) => Promise<ResolvedAddress[]>;
 }
@@ -142,9 +154,15 @@ function literalIp(hostname: string): string | null {
 
 /**
  * Validate one hop's URL: https only, no embedded credentials, and every
- * address the hostname resolves to must be public. Throws UrlRefusedError.
+ * address the hostname resolves to must be public. Returns the validated
+ * address set so the caller can PIN the connection to exactly these IPs —
+ * re-resolving at connect time would reopen a DNS-rebinding hole. Throws
+ * UrlRefusedError on any refusal.
  */
-export async function assertPublicHttpsUrl(url: URL, deps: FetchDeps): Promise<void> {
+export async function assertPublicHttpsUrl(
+  url: URL,
+  deps: FetchDeps,
+): Promise<readonly ResolvedAddress[]> {
   if (url.protocol !== 'https:') throw new UrlRefusedError('https only');
   if (url.username !== '' || url.password !== '') {
     throw new UrlRefusedError('credentials in URL');
@@ -152,7 +170,7 @@ export async function assertPublicHttpsUrl(url: URL, deps: FetchDeps): Promise<v
   const literal = literalIp(url.hostname);
   if (literal !== null) {
     if (isPrivateAddress(literal)) throw new UrlRefusedError('private address');
-    return;
+    return [{ address: literal, family: literal.includes(':') ? 6 : 4 }];
   }
   let resolved: ResolvedAddress[];
   try {
@@ -164,6 +182,7 @@ export async function assertPublicHttpsUrl(url: URL, deps: FetchDeps): Promise<v
   for (const entry of resolved) {
     if (isPrivateAddress(entry.address)) throw new UrlRefusedError('private address');
   }
+  return resolved;
 }
 
 // ─── Guarded fetch ──────────────────────────────────────────────────────────
@@ -211,18 +230,22 @@ export async function guardedFetchText(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     for (let redirects = 0; ; redirects += 1) {
-      await assertPublicHttpsUrl(url, deps);
+      const pinned = await assertPublicHttpsUrl(url, deps);
 
       let response: Response;
       try {
-        response = await deps.fetch(url.toString(), {
-          redirect: 'manual',
-          signal: controller.signal,
-          headers: {
-            accept: 'text/html,text/css;q=0.9,*/*;q=0.1',
-            'user-agent': 'Forma360-BrandPalette/1.0',
+        response = await deps.fetch(
+          url.toString(),
+          {
+            redirect: 'manual',
+            signal: controller.signal,
+            headers: {
+              accept: 'text/html,text/css;q=0.9,*/*;q=0.1',
+              'user-agent': 'Forma360-BrandPalette/1.0',
+            },
           },
-        });
+          pinned,
+        );
       } catch (err) {
         if (controller.signal.aborted) throw new SiteFetchError('timed out');
         throw new SiteFetchError(err instanceof Error ? err.message : 'fetch failed');

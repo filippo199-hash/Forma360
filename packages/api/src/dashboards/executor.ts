@@ -107,6 +107,13 @@ export interface WidgetMeta {
   siteFilterApplied: boolean;
   /** The concrete range flow metrics were evaluated over. */
   range: ResolvedRange;
+  /**
+   * Set on a timeseries whose bucket span exceeded MAX_BUCKETS: the chart
+   * (and `range`) cover only the earliest window that fits, and the client
+   * should tell the viewer to coarsen the bucket or shorten the range.
+   * Never silently claim the full period was shown.
+   */
+  truncated?: boolean;
 }
 
 export interface KpiResult {
@@ -397,9 +404,15 @@ const METRIC_EXECS: Record<DashboardSourceId, Record<string, MetricExec>> = {
       // No publish stamp exists (publishAt is a user-entered schedule time,
       // NULL for immediate publishes) — COALESCE is the documented
       // approximation until a publishedAt column lands. 'archived' is a
-      // STATUS on this table and must stay countable as a past publish.
+      // STATUS on this table and must stay countable as a past publish —
+      // BUT a draft archived without ever publishing must NOT count. The
+      // EXISTS is the discriminator: recipient rows are created only at
+      // publish, so a never-published draft (archived or not) has none.
       dateExpr: sql`coalesce(${headsUps.publishAt}, ${headsUps.createdAt})`,
-      where: () => [inArray(headsUps.status, ['published', 'archived'])],
+      where: () => [
+        inArray(headsUps.status, ['published', 'archived']),
+        sql`exists (select 1 from heads_up_recipients r where r.heads_up_id = ${headsUps.id})`,
+      ],
     },
     acknowledged: {
       from: headsUpRecipients,
@@ -843,7 +856,22 @@ export async function executeWidget(args: ExecuteWidgetArgs): Promise<WidgetData
     const buckets = enumerateBuckets(range.from, range.to, widget.bucket);
     const bucketIndex = new Map(buckets.map((b, i) => [b, i]));
     const bucketExpr = sql<string>`to_char(date_trunc('${sql.raw(widget.bucket)}', ${exec.dateExpr}), 'YYYY-MM-DD')`;
-    const conditions = conditionsFor(exec, metricId, range);
+    // If the range needs more than MAX_BUCKETS, enumerateBuckets stops
+    // early; clamp the QUERY window to the covered span so the totals and
+    // the displayed buckets agree, and flag it so the chart never claims
+    // the full period. `range` (the object meta.range was built from) is
+    // narrowed in place before it is serialised below.
+    const lastBucket = buckets[buckets.length - 1];
+    let queryRange = range;
+    if (lastBucket !== undefined) {
+      const coveredTo = nextBucket(new Date(`${lastBucket}T00:00:00.000Z`), widget.bucket);
+      if (coveredTo.getTime() < range.to.getTime()) {
+        queryRange = { from: range.from, to: coveredTo };
+        meta.truncated = true;
+        meta.range = { from: range.from.toISOString(), to: coveredTo.toISOString() };
+      }
+    }
+    const conditions = conditionsFor(exec, metricId, queryRange);
 
     if (!widget.splitBy) {
       const rows = await db

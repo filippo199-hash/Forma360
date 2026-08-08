@@ -252,6 +252,33 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
     }
   }
 
+  /**
+   * Refuse a whole-dashboard render (PDF / scheduled email) when the VIEWER
+   * cannot see every widget's source — the interactive grid returns
+   * per-widget lock tiles, but a single-file PDF cannot, so an
+   * all-or-nothing gate is the only thing that keeps a shared artefact from
+   * leaking a forbidden source's counts (DH-E14, ADR 0018 Decision 2).
+   * A row whose stored spec no longer parses cannot be rendered at all.
+   */
+  function assertSpecSourcesViewable(rawSpec: unknown, ctx: Ctx): void {
+    const parsed = parseDashboardSpec(rawSpec);
+    if (!parsed.ok) {
+      throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'spec-invalid' });
+    }
+    const bad = new Set<string>();
+    for (const widget of parsed.spec.widgets) {
+      if (sourceAccess(widget.source as DashboardSourceId, ctx.permissions) !== 'ok') {
+        bad.add(widget.source);
+      }
+    }
+    if (bad.size > 0) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: `Dashboard includes data you cannot view: ${[...bad].join(', ')}`,
+      });
+    }
+  }
+
   const entitled = tenantProcedure.use(requireEntitlement('customDashboards'));
 
   // ─── Reads ────────────────────────────────────────────────────────────
@@ -470,6 +497,15 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
       }
       const row = await loadDashboard(ctx as Ctx, input.id);
       await assertCanView(ctx as Ctx, row);
+      // The PDF is rendered by an identity-less print route that executes
+      // EVERY widget, and the R2 artefact is shared (cache key = spec hash,
+      // not permission set). So a viewer may only render a dashboard whose
+      // every source they are allowed to see — otherwise a tenant-visible
+      // dashboard would leak, via PDF, the very counts the interactive
+      // widgetData gate refuses them (ADR 0018 Decision 2). Refuse rather
+      // than silently produce per-viewer variants that would poison the
+      // shared artefact.
+      assertSpecSourcesViewable(row.spec, ctx as Ctx);
       const rendered = await deps.renderPdf({ tenantId: ctx.tenantId, dashboardId: row.id });
       return {
         storageKey: rendered.key,

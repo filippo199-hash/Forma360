@@ -6777,7 +6777,8 @@
       "emptyCta": "Crea la tua prima dashboard",
       "widgetCount": "{count, plural, one {# widget} other {# widget}}",
       "updatedAt": "Aggiornata {at}",
-      "byOwner": "Di {owner} · {at}"
+      "byOwner": "Di {owner} · {at}",
+      "loadError": "Impossibile caricare le tue dashboard."
     },
     "status": {
       "all": "Tutte",
@@ -6809,7 +6810,10 @@
       "schedule": "Pianifica",
       "archive": "Archivia",
       "archiveConfirm": "Archiviare questa dashboard? Gli invii pianificati saranno sospesi.",
-      "refine": "Rifinisci"
+      "refine": "Rifinisci",
+      "dataError": "Impossibile caricare i dati della dashboard.",
+      "retry": "Riprova",
+      "downloadPdf": "Scarica PDF"
     },
     "chat": {
       "requestFailed": "Qualcosa è andato storto. Riprova.",

@@ -28,7 +28,10 @@ export function FilterBar({
   onChange: (next: DashboardFilters) => void;
 }) {
   const t = useTranslations('dashboards');
-  const sitesQuery = trpc.sites.list.useQuery();
+  // listForConductor, not list: a dashboard viewer holds analytics.view,
+  // not necessarily sites.view — the conductor list is the viewer-safe one
+  // (session-gated) and returns the id/name/depth the filter renders.
+  const sitesQuery = trpc.sites.listForConductor.useQuery();
   const [customOpen, setCustomOpen] = useState(false);
   const isCustom = typeof value.dateRange !== 'string';
 

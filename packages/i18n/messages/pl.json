@@ -6735,7 +6735,8 @@
       "emptyCta": "Zbuduj pierwszy pulpit",
       "widgetCount": "Widżety: {count}",
       "updatedAt": "Zaktualizowano {at}",
-      "byOwner": "Autor: {owner} · {at}"
+      "byOwner": "Autor: {owner} · {at}",
+      "loadError": "Nie udało się wczytać Twoich pulpitów."
     },
     "status": {
       "all": "Wszystkie",
@@ -6767,7 +6768,10 @@
       "schedule": "Harmonogram",
       "archive": "Archiwizuj",
       "archiveConfirm": "Zarchiwizować ten pulpit? Zaplanowane wysyłki zostaną wstrzymane.",
-      "refine": "Dopracuj"
+      "refine": "Dopracuj",
+      "dataError": "Nie udało się wczytać danych pulpitu.",
+      "retry": "Ponów",
+      "downloadPdf": "Pobierz PDF"
     },
     "chat": {
       "requestFailed": "Coś poszło nie tak. Spróbuj ponownie.",

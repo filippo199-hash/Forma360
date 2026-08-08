@@ -19,8 +19,9 @@
  * tick and send.
  */
 import type { Database } from '@forma360/db/client';
-import { dashboardSchedules, dashboards } from '@forma360/db/schema';
+import { dashboardSchedules, dashboards, tenants } from '@forma360/db/schema';
 import { appLink } from '@forma360/shared/app-link';
+import { settingsHaveEntitlement } from '@forma360/shared/entitlements';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, eq } from 'drizzle-orm';
@@ -53,8 +54,11 @@ export interface DashboardScheduleSendDeps {
 }
 
 export type DashboardSendResult =
-  | { sent: number }
-  | { sent: 0; skipped: 'missing' | 'paused' | 'not-published' | 'already-sent' };
+  | { sent: number; failed?: number }
+  | {
+      sent: 0;
+      skipped: 'missing' | 'paused' | 'not-published' | 'already-sent' | 'not-entitled';
+    };
 
 /** Filesystem-friendly attachment name from the dashboard title. */
 export function dashboardPdfFilename(title: string): string {
@@ -83,9 +87,11 @@ export async function runDashboardScheduleSend(
       dashboardId: dashboards.id,
       dashboardTitle: dashboards.title,
       dashboardStatus: dashboards.status,
+      tenantSettings: tenants.settings,
     })
     .from(dashboardSchedules)
     .innerJoin(dashboards, eq(dashboards.id, dashboardSchedules.dashboardId))
+    .innerJoin(tenants, eq(tenants.id, dashboardSchedules.tenantId))
     .where(eq(dashboardSchedules.id, payload.scheduleId))
     .limit(1);
   const row = rows[0];
@@ -97,6 +103,14 @@ export async function runDashboardScheduleSend(
   if (schedule.paused) {
     log.info('[dashboard-schedule-send] paused — skipping');
     return { sent: 0, skipped: 'paused' };
+  }
+  // A downgraded tenant stops delivering, automatically and immediately —
+  // the send worker is the single choke point, so a plan change halts
+  // external emails without needing the admin (who can no longer reach the
+  // entitlement-gated schedule UI) to pause anything (ADR 0018).
+  if (!settingsHaveEntitlement(row.tenantSettings, 'customDashboards')) {
+    log.info('[dashboard-schedule-send] tenant not entitled — skipping');
+    return { sent: 0, skipped: 'not-entitled' };
   }
   if (row.dashboardStatus !== 'published') {
     log.info('[dashboard-schedule-send] dashboard not published — skipping');
@@ -113,6 +127,14 @@ export async function runDashboardScheduleSend(
     tenantId: schedule.tenantId,
     dashboardId: row.dashboardId,
   });
+  // Never email the "Render engine not configured" stub to external
+  // recipients. Throw BEFORE any send so the stamp stays unset and BullMQ
+  // retries; a persistently-misconfigured renderer then surfaces via the
+  // failed-job Sentry hook rather than mailing a broken report.
+  if (rendered.stub) {
+    log.error('[dashboard-schedule-send] PDF rendered as stub — refusing to email; will retry');
+    throw new Error('dashboard PDF rendered as stub — render engine not configured');
+  }
   const attachment = {
     filename: dashboardPdfFilename(row.dashboardTitle),
     content: rendered.bytes,
@@ -122,7 +144,14 @@ export async function runDashboardScheduleSend(
   // link. The dispatcher's undeliverable-address guard still applies.
   const viewUrl = appLink(deps.appUrl, null, `/dashboards/${row.dashboardId}`);
 
+  // Per-recipient isolation (the IN-A1 lesson): one persistently-rejected
+  // address must not, by rethrowing, cause BullMQ to re-send to every
+  // earlier recipient on retry. So we send each independently, stamp the
+  // dedupe cursor when AT LEAST ONE succeeds (partial delivery is
+  // recorded, not retried), and rethrow only when EVERY send fails — an
+  // all-fail occurrence is still owed and retries cleanly with no stamp.
   let sent = 0;
+  let failed = 0;
   for (const recipient of schedule.recipients) {
     try {
       await deps.notify(recipient, {
@@ -132,11 +161,14 @@ export async function runDashboardScheduleSend(
       });
       sent += 1;
     } catch (err) {
-      // Log + rethrow so BullMQ retries; the stamp below never ran, so
-      // the occurrence is still owed (IN-A1 — never stamp before send).
-      log.error({ err, sent }, '[dashboard-schedule-send] notify failed — will retry');
-      throw err;
+      failed += 1;
+      log.error({ err, recipientFailures: failed }, '[dashboard-schedule-send] recipient send failed');
     }
+  }
+
+  if (sent === 0 && failed > 0) {
+    // Total failure — leave the stamp unset and retry the whole occurrence.
+    throw new Error(`dashboard-schedule-send: all ${failed} recipient sends failed`);
   }
 
   await deps.db
@@ -146,8 +178,8 @@ export async function runDashboardScheduleSend(
       and(eq(dashboardSchedules.id, schedule.id), eq(dashboardSchedules.tenantId, schedule.tenantId)),
     );
 
-  log.info({ sent, stub: rendered.stub }, '[dashboard-schedule-send] delivered');
-  return { sent };
+  log.info({ sent, failed, stub: rendered.stub }, '[dashboard-schedule-send] delivered');
+  return failed > 0 ? { sent, failed } : { sent };
 }
 
 /** BullMQ job wrapper. */

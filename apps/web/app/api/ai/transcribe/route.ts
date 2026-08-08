@@ -10,9 +10,15 @@
  * GET reports availability so the UI can hide the mic button instead of
  * failing on first use.
  */
+import { grantsAdminAccess } from '@forma360/permissions/catalogue';
+import { loadUserPermissions } from '@forma360/permissions/requirePermission';
+import { tenants } from '@forma360/db/schema';
+import { settingsHaveEntitlement } from '@forma360/shared/entitlements';
+import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '../../../../src/server/auth';
+import { db } from '../../../../src/server/db';
 import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
 import {
   isTranscriptionConfigured,
@@ -34,15 +40,43 @@ function jsonResponse(status: number, body: unknown): Response {
   });
 }
 
+/**
+ * Voice input exists only for the dashboard builder chats, so it carries
+ * the same gate: the customDashboards entitlement + analytics.create (or
+ * admin). Returns whether the caller may transcribe — the mic button
+ * hides on false, so a non-entitled tenant never sees it.
+ */
+async function canTranscribe(
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const rows = await db
+    .select({ settings: tenants.settings })
+    .from(tenants)
+    .where(eq(tenants.id, tenantId))
+    .limit(1);
+  if (!settingsHaveEntitlement(rows[0]?.settings, 'customDashboards')) return false;
+  const permissions = await loadUserPermissions(db, tenantId, userId);
+  return grantsAdminAccess(permissions) || permissions.includes('analytics.create');
+}
+
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
   if (!session) return jsonResponse(401, { error: 'Unauthorized' });
-  return jsonResponse(200, { available: isTranscriptionConfigured() });
+  const tenantId = (session.user as Record<string, unknown>)['tenantId'];
+  const allowed =
+    typeof tenantId === 'string' && (await canTranscribe(tenantId, session.user.id));
+  return jsonResponse(200, { available: allowed && isTranscriptionConfigured() });
 }
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
   if (!session) return jsonResponse(401, { error: 'Unauthorized' });
+
+  const tenantId = (session.user as Record<string, unknown>)['tenantId'];
+  if (typeof tenantId !== 'string' || !(await canTranscribe(tenantId, session.user.id))) {
+    return jsonResponse(403, { error: 'Forbidden' });
+  }
 
   if (!isTranscriptionConfigured()) {
     return jsonResponse(503, { error: 'transcription-unavailable' });

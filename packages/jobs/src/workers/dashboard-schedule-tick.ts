@@ -21,7 +21,8 @@
  * TRUE frame over a padded walk (±14 h covers any offset + DST).
  */
 import type { Database } from '@forma360/db/client';
-import { dashboardSchedules, dashboards } from '@forma360/db/schema';
+import { dashboardSchedules, dashboards, tenants } from '@forma360/db/schema';
+import { settingsHaveEntitlement } from '@forma360/shared/entitlements';
 import type { Logger } from '@forma360/shared/logger';
 import { floatingToZonedUtc } from '@forma360/shared/timezone';
 import type { ConnectionOptions, Job } from 'bullmq';
@@ -62,14 +63,20 @@ export async function collectDueDashboardSends(
       startAt: dashboardSchedules.startAt,
       endAt: dashboardSchedules.endAt,
       lastSentAt: dashboardSchedules.lastSentAt,
+      tenantSettings: tenants.settings,
     })
     .from(dashboardSchedules)
     .innerJoin(dashboards, eq(dashboards.id, dashboardSchedules.dashboardId))
+    .innerJoin(tenants, eq(tenants.id, dashboardSchedules.tenantId))
     .where(and(eq(dashboardSchedules.paused, false), eq(dashboards.status, 'published')));
 
   const floor = new Date(now.getTime() - DASHBOARD_CATCHUP_WINDOW_MS);
   const due: DueDashboardSend[] = [];
   for (const row of rows) {
+    // A downgraded tenant enqueues nothing (the send worker re-checks too,
+    // but there is no point queuing work that will be skipped).
+    if (!settingsHaveEntitlement(row.tenantSettings, 'customDashboards')) continue;
+
     let fireTimes: Date[];
     try {
       fireTimes = occurrencesBetween({
@@ -77,7 +84,10 @@ export async function collectDueDashboardSends(
         startAt: row.startAt,
         from: new Date(floor.getTime() - TZ_PAD_MS),
         until: new Date(now.getTime() + TZ_PAD_MS),
-        endAt: row.endAt,
+        // Pad the floating-frame bound; the authoritative endAt cut runs
+        // below in the TRUE frame so a non-UTC schedule neither over- nor
+        // under-shoots its end.
+        endAt: row.endAt !== null ? new Date(row.endAt.getTime() + TZ_PAD_MS) : null,
       });
     } catch {
       // A malformed rrule slipped past router validation (or predates
@@ -85,13 +95,18 @@ export async function collectDueDashboardSends(
       continue;
     }
     const lastSentMs = row.lastSentAt?.getTime() ?? Number.NEGATIVE_INFINITY;
+    const startMs = row.startAt.getTime();
+    const endMs = row.endAt?.getTime() ?? Number.POSITIVE_INFINITY;
     let latest: Date | null = null;
     for (const floating of fireTimes) {
       const occ = floatingToZonedUtc(floating, row.timezone);
       const t = occ.getTime();
       // Window (max(lastSentAt, floor), now] — lower-exclusive on the
-      // dedupe cursor so occurrenceAt === lastSentAt never re-fires.
+      // dedupe cursor so occurrenceAt === lastSentAt never re-fires. The
+      // start/end bounds are enforced HERE, in the true (zoned-UTC) frame,
+      // so they hold regardless of the schedule's timezone.
       if (t > now.getTime() || t <= floor.getTime() || t <= lastSentMs) continue;
+      if (t < startMs || t > endMs) continue;
       if (latest === null || t > latest.getTime()) latest = occ;
     }
     if (latest !== null) {

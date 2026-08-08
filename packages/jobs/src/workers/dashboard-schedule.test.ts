@@ -10,8 +10,13 @@
  *     stamps lastSentAt = occurrenceAt; re-running the same occurrence
  *     is a successful no-op; a mid-flight state change (unpublish)
  *     skips cleanly
- *   - DH-J03: a failing notify rethrows (BullMQ retries) and leaves
- *     lastSentAt unstamped — notify-then-stamp, the IN-A1 lesson
+ *   - DH-J03: an ALL-recipient failure rethrows (BullMQ retries) and
+ *     leaves lastSentAt unstamped — notify-then-stamp, the IN-A1 lesson
+ *   - DH-J03b: a PARTIAL failure stamps and returns {sent, failed} — one
+ *     bad address never re-storms the recipients who already received it
+ *   - DH-J03c: a stub PDF (render engine unconfigured) is NEVER emailed —
+ *     the worker throws before any send so BullMQ retries
+ *   - DH-J01c: a downgraded (unentitled) tenant enqueues/sends nothing
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -203,7 +208,8 @@ describe('dashboard schedule workers', () => {
       logger,
       appUrl: 'https://app.test',
       now: () => NOW,
-      renderPdf: async () => ({ bytes: new Uint8Array([0x25, 0x50, 0x44, 0x46]), stub: true }),
+      // A real (non-stub) PDF — the happy path. Stub refusal is DH-J03c.
+      renderPdf: async () => ({ bytes: new Uint8Array([0x25, 0x50, 0x44, 0x46]), stub: false }),
       notify: async (to, input) => {
         notified.push({
           to,
@@ -273,7 +279,7 @@ describe('dashboard schedule workers', () => {
 
   // ─── DH-J03 notify-then-stamp ─────────────────────────────────────────
 
-  it('DH-J03: a failing notify rethrows and leaves lastSentAt unstamped', async () => {
+  it('DH-J03: an all-recipient failure rethrows and leaves lastSentAt unstamped', async () => {
     const dashboardId = await seedDashboard();
     const scheduleId = await seedSchedule(dashboardId);
     const occurrenceAt = '2026-08-08T07:00:00.000Z';
@@ -285,10 +291,62 @@ describe('dashboard schedule workers', () => {
     });
     await expect(
       runDashboardScheduleSend(deps, { scheduleId, occurrenceAt }),
-    ).rejects.toThrow('smtp down');
+    ).rejects.toThrow(/all \d+ recipient sends failed/);
 
     // The stamp never ran — the next tick / BullMQ retry still owes
-    // this occurrence.
+    // this occurrence, and re-sends nobody who already got it.
+    expect(await loadLastSentAt(scheduleId)).toBeNull();
+  });
+
+  it('DH-J03b: one bad recipient does not re-storm the others — partial delivery stamps', async () => {
+    const dashboardId = await seedDashboard();
+    const scheduleId = await seedSchedule(dashboardId);
+    const occurrenceAt = '2026-08-08T07:00:00.000Z';
+
+    const deps = sendDeps({
+      notify: async (to) => {
+        if (to === 'qa@client.example') throw new Error('mailbox full');
+      },
+    });
+    const result = await runDashboardScheduleSend(deps, { scheduleId, occurrenceAt });
+    expect(result).toEqual({ sent: 1, failed: 1 });
+    // Stamped despite the partial failure, so a retry does NOT re-send to
+    // the recipient who already received it (the IN-A1 anti-storm rule).
+    expect(await loadLastSentAt(scheduleId)).toEqual(new Date(occurrenceAt));
+    const repeat = await runDashboardScheduleSend(sendDeps(), { scheduleId, occurrenceAt });
+    expect(repeat).toEqual({ sent: 0, skipped: 'already-sent' });
+  });
+
+  it('DH-J03c: a stub PDF is never emailed — the worker throws before any send', async () => {
+    const dashboardId = await seedDashboard();
+    const scheduleId = await seedSchedule(dashboardId);
+    const occurrenceAt = '2026-08-08T07:00:00.000Z';
+
+    const deps = sendDeps({
+      renderPdf: async () => ({ bytes: new Uint8Array([0x25]), stub: true }),
+    });
+    await expect(
+      runDashboardScheduleSend(deps, { scheduleId, occurrenceAt }),
+    ).rejects.toThrow(/stub/);
+    expect(deps.notified).toHaveLength(0);
+    expect(await loadLastSentAt(scheduleId)).toBeNull();
+  });
+
+  it('DH-J01c: a downgraded tenant neither enqueues (tick) nor sends', async () => {
+    const dashboardId = await seedDashboard();
+    const scheduleId = await seedSchedule(dashboardId);
+    await db.update(schema.tenants).set({ settings: {} }).where(eq(schema.tenants.id, tenantId));
+
+    // Tick: nothing due.
+    const due = await collectDueDashboardSends(db as never, NOW);
+    expect(due).toHaveLength(0);
+
+    // Send (a job already in flight from before the downgrade): skips.
+    const result = await runDashboardScheduleSend(sendDeps(), {
+      scheduleId,
+      occurrenceAt: '2026-08-08T07:00:00.000Z',
+    });
+    expect(result).toEqual({ sent: 0, skipped: 'not-entitled' });
     expect(await loadLastSentAt(scheduleId)).toBeNull();
   });
 

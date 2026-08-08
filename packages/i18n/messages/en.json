@@ -6963,7 +6963,8 @@
       "emptyCta": "Build your first dashboard",
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Updated {at}",
-      "byOwner": "By {owner} · {at}"
+      "byOwner": "By {owner} · {at}",
+      "loadError": "Your dashboards could not be loaded."
     },
     "status": {
       "all": "All",
@@ -6995,7 +6996,10 @@
       "schedule": "Schedule",
       "archive": "Archive",
       "archiveConfirm": "Archive this dashboard? Scheduled emails will be paused.",
-      "refine": "Refine"
+      "refine": "Refine",
+      "dataError": "The dashboard data could not be loaded.",
+      "retry": "Retry",
+      "downloadPdf": "Download PDF"
     },
     "chat": {
       "requestFailed": "Something went wrong. Please try again.",

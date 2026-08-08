@@ -6735,7 +6735,8 @@
       "emptyCta": "Bouw je eerste dashboard",
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Bijgewerkt {at}",
-      "byOwner": "Door {owner} · {at}"
+      "byOwner": "Door {owner} · {at}",
+      "loadError": "Je dashboards konden niet worden geladen."
     },
     "status": {
       "all": "Alle",
@@ -6767,7 +6768,10 @@
       "schedule": "Inplannen",
       "archive": "Archiveren",
       "archiveConfirm": "Dit dashboard archiveren? Geplande e-mails worden gepauzeerd.",
-      "refine": "Verfijnen"
+      "refine": "Verfijnen",
+      "dataError": "De dashboardgegevens konden niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "downloadPdf": "PDF downloaden"
     },
     "chat": {
       "requestFailed": "Er ging iets mis. Probeer het opnieuw.",
