@@ -172,29 +172,40 @@ export function makeFolderVisibilityChecker(
   return visible;
 }
 
+/** The visibility-relevant columns of a document. */
+export interface DocumentVis {
+  id?: string;
+  folderId: string | null;
+  visibleToGroupIds: unknown;
+  visibleToSiteIds: unknown;
+}
+
 /**
- * Whether a single document is visible to a viewer: its own group/site
- * visibility passes AND every ancestor folder's visibility passes. Loads the
- * viewer's memberships and the tenant's folder tree, then reuses the same
- * predicates the `list` endpoint uses — so a by-id read (get, download,
- * versions) enforces exactly what the list already filters. Callers that hold
- * `documents.manage` (or admin) must bypass this themselves; this function
- * makes no permission assumptions.
+ * Build a reusable "can this viewer see this document" predicate, loading
+ * the viewer's memberships, the tenant's folder tree and the ACL grants
+ * exactly once.
+ *
+ * {@link isDocumentVisibleToUser} answers the same question for a single
+ * document and is the right call for a by-id read. Prefer this one whenever
+ * a caller renders a *set* of documents — otherwise the per-document
+ * helper re-runs three queries per row.
+ *
+ * `userId === null` is the anonymous viewer: in nobody's group, on nobody's
+ * site, holding no grant. Only a genuinely unrestricted document passes,
+ * which is exactly the rule a public share link needs — it has no viewer to
+ * check against, so the honest question is not "may they see it" but "is
+ * this document restricted at all" (HU-D04).
  */
-export async function isDocumentVisibleToUser(
+export async function makeDocumentVisibilityFilter(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db: any,
   tenantId: string,
-  userId: string,
-  doc: {
-    id?: string;
-    folderId: string | null;
-    visibleToGroupIds: unknown;
-    visibleToSiteIds: unknown;
-  },
-): Promise<boolean> {
+  userId: string | null,
+): Promise<(doc: DocumentVis) => boolean> {
   const [viewer, allFolders] = await Promise.all([
-    loadViewerMemberships(db, tenantId, userId),
+    userId === null
+      ? Promise.resolve<ViewerMemberships>({ groupIds: new Set(), siteIds: new Set() })
+      : loadViewerMemberships(db, tenantId, userId),
     db
       .select({
         id: documentFolders.id,
@@ -207,13 +218,40 @@ export async function isDocumentVisibleToUser(
   ]);
   // PF-26: an explicit ACL grant (document- or folder-scoped) admits the
   // viewer even when the group/site visibility rules would not.
-  const grants = await loadViewerAccessGrants(db, tenantId, userId, viewer.groupIds);
-  if (doc.id !== undefined && grants.docIds.has(doc.id)) return true;
-  const folderGranted = makeFolderGrantChecker(allFolders as FolderVis[], grants);
-  if (folderGranted(doc.folderId)) return true;
-  const folderVisible = makeFolderVisibilityChecker(allFolders as FolderVis[], viewer);
-  return (
-    ownVisibilityPasses(doc.visibleToGroupIds, doc.visibleToSiteIds, viewer) &&
-    folderVisible(doc.folderId)
-  );
+  const grants: ViewerAccessGrants =
+    userId === null
+      ? { docIds: new Set(), folderIds: new Set() }
+      : await loadViewerAccessGrants(db, tenantId, userId, viewer.groupIds);
+
+  const folders = allFolders as FolderVis[];
+  const folderGranted = makeFolderGrantChecker(folders, grants);
+  const folderVisible = makeFolderVisibilityChecker(folders, viewer);
+
+  return (doc: DocumentVis): boolean => {
+    if (doc.id !== undefined && grants.docIds.has(doc.id)) return true;
+    if (folderGranted(doc.folderId)) return true;
+    return (
+      ownVisibilityPasses(doc.visibleToGroupIds, doc.visibleToSiteIds, viewer) &&
+      folderVisible(doc.folderId)
+    );
+  };
+}
+
+/**
+ * Whether a single document is visible to a viewer: its own group/site
+ * visibility passes AND every ancestor folder's visibility passes. Reuses
+ * the same predicates the `list` endpoint uses — so a by-id read (get,
+ * download, versions) enforces exactly what the list already filters.
+ * Callers that hold `documents.manage` (or admin) must bypass this
+ * themselves; this function makes no permission assumptions.
+ */
+export async function isDocumentVisibleToUser(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any,
+  tenantId: string,
+  userId: string,
+  doc: DocumentVis,
+): Promise<boolean> {
+  const passes = await makeDocumentVisibilityFilter(db, tenantId, userId);
+  return passes(doc);
 }
