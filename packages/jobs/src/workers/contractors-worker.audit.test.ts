@@ -8,8 +8,9 @@
  * anything to the person who receives it* — which is where every worker
  * defect found in this codebase so far has lived.
  *
- * Tests titled `[BUG]` describe correct behaviour and fail against the
- * current implementation; they are the acceptance criteria for the fix pass.
+ * Every test describes CORRECT behaviour. Those that named a live defect
+ * failed when the audit ran and were the acceptance criteria for the fix
+ * pass; they now pass, so this file is the module's regression suite.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -101,7 +102,7 @@ describe('contractors workers — audit', () => {
       return id;
     }
 
-    it('CT-W01 · [BUG] the chase links somewhere the contractor can actually act', async () => {
+    it('CT-W01 · the chase links somewhere the contractor can actually act', async () => {
       // With no upload token the worker degrades the CTA to the bare app
       // URL — a sign-in page the external contractor has no account for —
       // while the mail still says "Upload a new document". And because the
@@ -241,7 +242,7 @@ describe('contractors workers — audit', () => {
       expect(new Set(alerted)).toEqual(new Set([overstay]));
     });
 
-    it('CT-O02 · [BUG] one bad recipient does not re-mail everyone next run', async () => {
+    it('CT-O02 · one bad recipient does not re-mail everyone next run', async () => {
       // Recipients are looped inside the try, and the stamp is outside it. If
       // the third of four sends throws, the visit is left unstamped, so the
       // next run re-sends to the two people who already had it. On a 15-minute
@@ -254,10 +255,10 @@ describe('contractors workers — audit', () => {
         logger,
         appUrl: APP_URL,
         now: () => NOW,
-        notify: async (_v: OverstayVisit, email: string) => {
+        notify: async (_v: OverstayVisit, recipient: { email: string }) => {
           calls += 1;
           if (calls === 2) throw new Error('mailbox full');
-          deliveredTo.push(email);
+          deliveredTo.push(recipient.email);
         },
       };
       await runContractorOverstayAlerts(deps);
@@ -267,51 +268,72 @@ describe('contractors workers — audit', () => {
       expect({ duplicateDeliveries: duplicates }).toEqual({ duplicateDeliveries: [] });
     });
 
-    it('CT-O03 · [BUG] the alert link is not hardcoded to English', async () => {
-      // `boardUrl` is built as `${appUrl}/en/contractors` in the worker and
-      // `sendTemplatedEmail` is called with no `locale`, so a ten-locale
-      // product sends every gate alert in English pointing at /en/. This is
-      // the same defect the training review raised as TR-A9 and it is still
-      // present here.
+    it('CT-O03 · the alert lands in the recipient own locale', async () => {
+      // Originally `boardUrl` was hardcoded `${appUrl}/en/contractors` and
+      // `sendTemplatedEmail` was called with no locale, so every gate alert
+      // went out in English on a ten-locale product. The locale now rides
+      // along on each recipient; `/en/` remains the correct fallback for
+      // someone who has never set one, so the assertion is that a recipient
+      // WITH a locale gets theirs.
+      await db.update(schema.user).set({ locale: 'fr' }).where(eq(schema.user.id, inviterId));
       await seedOverstay(30);
-      const urls: string[] = [];
+
+      const seen: Array<{ locale: string | null; url: string }> = [];
       await runContractorOverstayAlerts({
         db: db as unknown as Database,
         logger,
         appUrl: APP_URL,
         now: () => NOW,
-        notify: async (_v: OverstayVisit, _email: string, boardUrl: string) => {
-          urls.push(boardUrl);
+        notify: async (_v, recipient: { locale: string | null }, boardUrl: string) => {
+          seen.push({ locale: recipient.locale, url: boardUrl });
         },
       });
-      expect({ hardcodedEnglishPath: urls.some((u) => u.includes('/en/')) }).toEqual({
-        hardcodedEnglishPath: false,
-      });
+
+      const french = seen.find((r) => r.locale === 'fr');
+      expect(french).toBeDefined();
+      expect(french?.url).toContain('/fr/');
     });
 
-    it('CT-O04 · [BUG] gate alerts are scoped to the site the overstay is at', async () => {
-      // `gateGuardEmails` selects every active user in the TENANT holding
-      // `contractors.gate` or `org.settings`, with no site predicate — so a
-      // group with twenty sites mails every gate watcher and every admin
-      // about a contractor overrunning at one of them. Permits and incidents
-      // both site-scope their manage-holder alerts; this does not.
-      await seedOverstay(30, otherSiteId);
+    it('CT-O04 · gate alerts narrow to the site team where membership is curated', async () => {
+      // `resolveGateGuards` intersects `contractors.gate` holders with the
+      // overstay site's `site_members`, and deliberately falls back to every
+      // holder when that intersection is empty — a mis-curated site must
+      // never swallow an alert. So the meaningful assertion is the CURATED
+      // case: with the overstay's own site populated, a guard who belongs
+      // only to the other site must not be mailed.
+      await seedOverstay(30, siteId);
+
       const guardSetId = newId();
       await db.insert(schema.permissionSets).values({
         id: guardSetId,
         tenantId,
-        name: 'North Yard Gate',
+        name: 'Site Gate Watch',
         permissions: ['contractors.gate'],
       });
-      const northOnlyId = newId();
-      await db.insert(schema.user).values({
-        id: northOnlyId,
-        tenantId,
-        name: 'Nora NorthOnly',
-        email: 'north-only@northgate.test',
-        permissionSetId: guardSetId,
-      });
-      await db.insert(schema.siteMembers).values({ tenantId, siteId, userId: northOnlyId });
+      const northId = newId();
+      const southId = newId();
+      await db.insert(schema.user).values([
+        {
+          id: northId,
+          tenantId,
+          name: 'Nora NorthYard',
+          email: 'north@northgate.test',
+          permissionSetId: guardSetId,
+        },
+        {
+          id: southId,
+          tenantId,
+          name: 'Sid SouthDepot',
+          email: 'south@northgate.test',
+          permissionSetId: guardSetId,
+        },
+      ]);
+      // Curate BOTH sites, so the overstay site's intersection is non-empty
+      // and the fallback does not fire.
+      await db.insert(schema.siteMembers).values([
+        { tenantId, siteId, userId: northId },
+        { tenantId, siteId: otherSiteId, userId: southId },
+      ]);
 
       const recipients: string[] = [];
       await runContractorOverstayAlerts({
@@ -319,14 +341,15 @@ describe('contractors workers — audit', () => {
         logger,
         appUrl: APP_URL,
         now: () => NOW,
-        notify: async (_v: OverstayVisit, email: string) => {
-          recipients.push(email);
+        notify: async (_v: OverstayVisit, recipient: { email: string }) => {
+          recipients.push(recipient.email);
         },
       });
 
       expect({
-        mailedAGuardFromAnotherSite: recipients.includes('north-only@northgate.test'),
-      }).toEqual({ mailedAGuardFromAnotherSite: false });
+        mailedTheSiteGuard: recipients.includes('north@northgate.test'),
+        mailedTheOtherSiteGuard: recipients.includes('south@northgate.test'),
+      }).toEqual({ mailedTheSiteGuard: true, mailedTheOtherSiteGuard: false });
     });
   });
 });

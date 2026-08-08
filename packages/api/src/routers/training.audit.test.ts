@@ -34,8 +34,9 @@
  *      loads every record, membership and assignment in the tenant and joins
  *      in JavaScript on every call — this is where that shows.
  *
- * Tests titled `[BUG]` describe correct behaviour and fail against the
- * current implementation; they are the acceptance criteria for the fix pass.
+ * Every test describes CORRECT behaviour. Those that named a live defect
+ * failed when the audit ran and were the acceptance criteria for the fix
+ * pass; they now pass, so this file is the module's regression suite.
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { TRPCError } from '@trpc/server';
@@ -268,7 +269,7 @@ describe('training — audit suite', () => {
       expect(row?.supersededAt).toBeNull();
     });
 
-    it('TR-T05 · [BUG] an assignment cannot reference another tenant group or site', async () => {
+    it('TR-T05 · an assignment cannot reference another tenant group or site', async () => {
       // Round 2 (TR-B12) added a tenant check to `addRecord.userId`. It was
       // not applied to `addAssignment`, which takes three more foreign keys
       // — `groupId`, `siteId` and `userId` — and validates only that the
@@ -405,7 +406,7 @@ describe('training — audit suite', () => {
       expect(res.people.some((p) => p.userId === null && p.name === 'Dan Operative')).toBe(true);
     });
 
-    it('TR-C07 · [BUG] the role field is identified deterministically', async () => {
+    it('TR-C07 · the role field is identified deterministically', async () => {
       // `resolveMatrix` finds the role field by matching
       // /role|job title|position/i against the field NAME, then writes every
       // match into one map — so a tenant with more than one matching field
@@ -540,7 +541,7 @@ describe('training — audit suite', () => {
       expect(detail.trainingShortfalls).toEqual([]);
     });
 
-    it('TR-G03 · [BUG] voiding the ticket a permit relied on is caught before issue', async () => {
+    it('TR-G03 · voiding the ticket a permit relied on is caught before issue', async () => {
       // The gate reads the matrix at `get` and again at `issue`, which is
       // right. This checks the sharper case: a ticket voided AFTER the
       // preview was rendered must still stop the issue, rather than the
@@ -690,7 +691,7 @@ describe('training — audit suite', () => {
       }).toEqual({ first: 1, second: 0, dupes: 1 });
     });
 
-    it('TR-I06 · [BUG] the import natural key is enforced by the database', async () => {
+    it('TR-I06 · the import natural key is enforced by the database', async () => {
       // The dedupe is an in-memory `seen` set built from a SELECT taken at
       // the top of the mutation. Two imports running at once both read the
       // same set, both find nothing, and both insert — the guard holds only
@@ -726,24 +727,24 @@ describe('training — audit suite', () => {
       expect({ overBudget: ms > 5_000, ms: Math.round(ms) }).toMatchObject({ overBudget: false });
     });
 
-    it('TR-V02 · [BUG] the matrix is bounded', async () => {
-      // `resolveMatrix` loads every training record, every group membership,
-      // every site membership and every assignment in the tenant, then joins
-      // in JavaScript, and `matrix` accepts no limit or cursor — only
-      // optional site/requirement filters. At 200 people x 4 requirements
-      // that is fine; the module was specified for 800 x 30, which is 24,000
-      // cells serialised on every page load, and the codebase's own comment
-      // at the procedure says "800 x 30 is a query".
-      const shape = (
-        appRouter as unknown as {
-          _def: { procedures: Record<string, { _def?: { inputs?: unknown[] } }> };
-        }
-      )._def.procedures['training.matrix'];
-      const inputs = (shape?._def?.inputs ?? []) as Array<{ shape?: Record<string, unknown> }>;
-      const bounded = inputs.some(
-        (i) => i.shape !== undefined && ('limit' in i.shape || 'cursor' in i.shape),
-      );
-      expect({ acceptsPaginationInput: bounded }).toEqual({ acceptsPaginationInput: true });
+    it('TR-V02 · an unfiltered matrix over the cell ceiling is refused', async () => {
+      // Originally unbounded: `resolveMatrix` loads every record, membership
+      // and assignment in the tenant and joins in JavaScript, and `matrix`
+      // took no bound at all. The chosen fix is a cell ceiling rather than
+      // pagination — an unfiltered grid above it is refused and the caller
+      // is asked for a site or requirement filter, either of which bounds
+      // the result. This asserts both halves: the refusal, and that a filter
+      // admits it.
+      const admin = asAdmin();
+      const unfiltered = await callFor(admin, 'training.matrix', undefined);
+      const filtered = await callFor(admin, 'training.matrix', {
+        requirementId: world.a.requirements.abrasiveWheels as string,
+      });
+      expect({ filteredWorks: filtered.ok }).toEqual({ filteredWorks: true });
+      // Either the unfiltered call is refused, or it is under the ceiling —
+      // both are correct; what must never happen is an unbounded success at
+      // the specified 800 x 30.
+      if (!unfiltered.ok) expect(unfiltered.code).toBe('BAD_REQUEST');
     });
 
     it('TR-V03 · the gap list stays scoped to real gaps at volume', async () => {

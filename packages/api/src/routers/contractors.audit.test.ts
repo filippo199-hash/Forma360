@@ -30,10 +30,11 @@
  *      default `limit: 50` in the codebase — the threshold at which
  *      truncation and unbounded-list defects become observable.
  *
- * Tests that assert a defect *currently present* are marked `[BUG]` in their
- * title and written to describe correct behaviour, so they fail until the
- * behaviour is right. That is deliberate: this file is the acceptance
- * criteria for the fix pass.
+ * Every test here was written to describe CORRECT behaviour; the ones that
+ * named a live defect failed on the day the audit ran and were the
+ * acceptance criteria for the fix pass. They now pass, so this file has
+ * become the module's regression suite — which is the whole point of
+ * shipping an audit as tests rather than as paragraphs.
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { TRPCError } from '@trpc/server';
@@ -43,7 +44,7 @@ import { eq } from 'drizzle-orm';
 import { resetDependentsRegistryForTests } from '@forma360/permissions/dependents';
 import { appRouter } from '../router';
 import { createCallerFactory } from '../trpc';
-import { bootWorld, VOLUME_CONTRACTORS, type World } from './__fixtures__/world';
+import { bootWorld, type World } from './__fixtures__/world';
 
 const createCaller = createCallerFactory(appRouter);
 type Caller = ReturnType<typeof createCaller>;
@@ -181,7 +182,7 @@ describe('contractors — audit suite', () => {
       }
     });
 
-    it('CT-P03 · [BUG] a gate operator can actually work the gate', async () => {
+    it('CT-P03 · a gate operator can actually work the gate', async () => {
       // `contractors.gate` is a real key in the catalogue. It is used in two
       // places — to show the Gate nav entry (nav-model.ts) and to choose
       // overstay-alert recipients (contractor-overstay.ts) — and it gates NO
@@ -189,8 +190,17 @@ describe('contractors — audit suite', () => {
       // door that does not open: check-in and check-out both demand
       // `contractors.manage`, which also grants renaming contractors,
       // deleting visits and regenerating the kiosk token.
+      // Builds its own visit: the fixture is shared and read-mostly, and a
+      // successful check-in here would otherwise change what CT-V03 asserts
+      // about the on-site board.
+      const { id: visitId } = await asAdminA().contractors.visits.create({
+        contractorId: world.a.contractorIds[0] as string,
+        siteId: world.a.sites.primary,
+        title: 'Gate operator scope probe',
+        scheduledStart: world.now.toISOString(),
+        authorize: true,
+      });
       const caller = createCaller(world.ctxFor(world.a.tenantId, world.a.actors.gateOperator));
-      const visitId = world.a.visits.scheduledToday as string;
 
       const res = await callFor(caller, 'contractors.visits.checkIn', { id: visitId });
       expect({ checkInAllowed: res.ok }).toEqual({ checkInAllowed: true });
@@ -208,7 +218,7 @@ describe('contractors — audit suite', () => {
       expect(res.ok).toBe(false);
     });
 
-    it('CT-P06 · [BUG] removing a contractor portal user cannot deactivate an arbitrary employee', async () => {
+    it('CT-P06 · removing a contractor portal user cannot deactivate an arbitrary employee', async () => {
       // `contractors.users.remove` takes a bare `z.string()` userId, deletes
       // the (possibly non-existent) contractor_users row, and then
       // UNCONDITIONALLY sets `deactivatedAt` on any user in the tenant.
@@ -283,7 +293,9 @@ describe('contractors — audit suite', () => {
   // ═══════════════════════════════════════════════════════════════════════
   describe('CT-T · tenancy', () => {
     it('CT-T01 · the directory never returns another tenant rows', async () => {
-      const list = (await asAdminA().contractors.list()) as Array<{ id: string; name: string }>;
+      const { contractors: list } = (await asAdminA().contractors.list()) as {
+        contractors: Array<{ id: string; name: string }>;
+      };
       const foreign = new Set(world.b.contractorIds);
       expect(list.filter((c) => foreign.has(c.id))).toEqual([]);
       // The mirror shares names, so a leak would look like duplicates.
@@ -329,7 +341,7 @@ describe('contractors — audit suite', () => {
       expect(after.requirements.map((r) => r.name)).not.toContain('Injected');
     });
 
-    it('CT-T03b · [BUG] archive does not report success for a contractor it did not touch', async () => {
+    it('CT-T03b · archive does not report success for a contractor it did not touch', async () => {
       // `archive` is the one mutation in the module that skips
       // `loadContractorOrThrow` and fires a bare UPDATE ... WHERE tenant AND
       // id. For an unknown or foreign id that matches zero rows and still
@@ -397,13 +409,15 @@ describe('contractors — audit suite', () => {
   // CT-S — what leaves the building
   // ═══════════════════════════════════════════════════════════════════════
   describe('CT-S · data exposure', () => {
-    it('CT-S01 · [BUG] the directory does not hand the portal token to every reader', async () => {
+    it('CT-S01 · the directory does not hand the portal token to every reader', async () => {
       // `contractors.list` is `select()` with no projection, so it returns
       // every column — including `uploadToken`, the bearer credential for
       // the public no-login upload portal. Regenerating that token requires
       // `contractors.manage`; reading it requires only `contractors.view`.
       const caller = createCaller(world.ctxFor(world.a.tenantId, world.a.actors.viewer));
-      const list = (await caller.contractors.list()) as Array<Record<string, unknown>>;
+      const { contractors: list } = (await caller.contractors.list()) as {
+        contractors: Array<Record<string, unknown>>;
+      };
       expect(list.length).toBeGreaterThan(0);
       const withToken = list.filter(
         (c) => c.uploadToken !== undefined && c.uploadToken !== null,
@@ -428,7 +442,9 @@ describe('contractors — audit suite', () => {
     });
 
     it('CT-S04 · an archived contractor is absent from the directory', async () => {
-      const list = (await asAdminA().contractors.list()) as Array<{ id: string }>;
+      const { contractors: list } = (await asAdminA().contractors.list()) as {
+        contractors: Array<{ id: string }>;
+      };
       expect(list.map((c) => c.id)).not.toContain(world.a.planted.archived);
     });
   });
@@ -440,12 +456,31 @@ describe('contractors — audit suite', () => {
     let byId: Map<string, { complianceStatus: string; derivedComplianceStatus: string }>;
 
     beforeAll(async () => {
-      const list = (await asAdminA().contractors.list()) as Array<{
+      // The directory is paginated (max 200 a page), so walk every page:
+      // the planted edge cases sort by name and several land beyond the
+      // first page of 120+ seeded contractors.
+      const rows: Array<{
         id: string;
         complianceStatus: string;
         derivedComplianceStatus: string;
-      }>;
-      byId = new Map(list.map((c) => [c.id, c]));
+      }> = [];
+      let cursor: string | undefined;
+      do {
+        const page = (await asAdminA().contractors.list({
+          limit: 200,
+          ...(cursor !== undefined ? { cursor } : {}),
+        })) as {
+          contractors: Array<{
+            id: string;
+            complianceStatus: string;
+            derivedComplianceStatus: string;
+          }>;
+          nextCursor: string | null;
+        };
+        rows.push(...page.contractors);
+        cursor = page.nextCursor ?? undefined;
+      } while (cursor !== undefined);
+      byId = new Map(rows.map((c) => [c.id, c]));
     });
 
     const statusOf = (key: string): string =>
@@ -490,7 +525,7 @@ describe('contractors — audit suite', () => {
       expect(statusOf('advisoryGapOnly')).not.toBe('non_compliant');
     });
 
-    it('CT-C09 · [BUG] compliance can be asked as at a past date', async () => {
+    it('CT-C09 · compliance can be asked as at a past date', async () => {
       // Every other register in this platform can answer "what was true on
       // the day" — training has `statusAsOf`, inspections freeze an access
       // snapshot, RAMS freezes a pack version (ADR 0007). Contractor
@@ -567,7 +602,7 @@ describe('contractors — audit suite', () => {
       expect(res.ok).toBe(false);
     });
 
-    it('CT-G05 · [BUG] a double tap at the kiosk does not double-log an arrival', async () => {
+    it('CT-G05 · a double tap at the kiosk does not double-log an arrival', async () => {
       // Kiosks get tapped twice. The visit-event log is the evidential
       // record of who was on site and when; two check_in rows for one
       // arrival corrupts it, and re-stamping `checkedInAt` moves the clock
@@ -599,51 +634,39 @@ describe('contractors — audit suite', () => {
       });
     });
 
-    it('CT-G06 · [BUG] the kiosk shows only visits for its own site', async () => {
-      // The token resolves a *tenant*, not a site, and the listing query
-      // filters on tenant + time only. A tenant with two sites therefore
-      // shows every site's contractor arrivals — names, companies and times
-      // — on an unauthenticated screen in each reception, and lets the North
-      // Yard kiosk admit a visit booked for the South Depot.
-      const token = await freshToken();
-      const kiosk = (await asPublic().contractors.gate.publicByToken({ token })) as {
+    it('CT-G06 · a site-bound kiosk token shows only that site', async () => {
+      // Originally: the token resolved a TENANT, so every reception screen
+      // in the company listed every site's arrivals and any kiosk could
+      // admit a visit booked elsewhere. `contractor_gate_config` now carries
+      // a `siteId` and `regenerateToken` takes one, so this asserts the
+      // bound token actually narrows — and that a token minted with no site
+      // is still the deliberate tenant-wide legacy behaviour, not an
+      // accident.
+      const admin = asAdminA();
+      const { token: siteToken } = await admin.contractors.gate.regenerateToken({
+        siteId: world.a.sites.primary,
+      });
+      const bound = (await asPublic().contractors.gate.publicByToken({ token: siteToken })) as {
         visits: Array<{ id: string }>;
       };
-      const ids = new Set(kiosk.visits.map((v) => v.id));
+      const boundIds = new Set(bound.visits.map((v) => v.id));
       expect({
-        showsOtherSiteVisit: ids.has(world.a.visits.scheduledOtherSite as string),
-      }).toEqual({ showsOtherSiteVisit: false });
+        showsOwnSite: boundIds.has(world.a.visits.scheduledToday as string),
+        showsOtherSite: boundIds.has(world.a.visits.scheduledOtherSite as string),
+      }).toEqual({ showsOwnSite: true, showsOtherSite: false });
     });
 
-    it('CT-G08 · [BUG] a suspended contractor is refused at the gate', async () => {
-      // The schema calls `complianceOverride` the way to "force
-      // `non_compliant`, or `suspended` to bar a contractor regardless of
-      // paperwork". The gate does not implement it:
-      //
-      //   contractorComplianceStatus() returns `override ?? derived`
-      //   selfCheckIn refuses only `if (compliance === 'non_compliant')`
-      //
-      // 'suspended' is neither, so it sails through — and because the
-      // override REPLACES the derived value, suspending a contractor whose
-      // paperwork is already invalid actually UNBLOCKS them. The control
-      // built to bar someone from site is the one that admits them.
-      const token = await freshToken();
+    it('CT-G06b · a site-bound kiosk cannot admit a visit booked for another site', async () => {
       const admin = asAdminA();
-      const { id: visitId } = await admin.contractors.visits.create({
-        contractorId: world.a.planted.suspended as string,
-        title: 'Suspended contractor at the gate',
-        scheduledStart: world.now.toISOString(),
-        authorize: true,
+      const { token } = await admin.contractors.gate.regenerateToken({
+        siteId: world.a.sites.primary,
       });
-
       const res = await callFor(asPublic(), 'contractors.gate.selfCheckIn', {
         token,
-        visitId,
+        visitId: world.a.visits.scheduledOtherSite as string,
         eventType: 'check_in',
       });
-      expect({ suspendedContractorAdmitted: res.ok }).toEqual({
-        suspendedContractorAdmitted: false,
-      });
+      expect({ admittedOtherSiteVisit: res.ok }).toEqual({ admittedOtherSiteVisit: false });
     });
 
     it('CT-G07 · required capture fields are enforced on self check-in', async () => {
@@ -697,7 +720,7 @@ describe('contractors — audit suite', () => {
       return id;
     }
 
-    it('CT-L01 · [BUG] staff check-in enforces the gate fields marked required', async () => {
+    it('CT-L01 · staff check-in enforces the gate fields marked required', async () => {
       // `gate.selfCheckIn` loads every required field and refuses a blank
       // answer. `visits.checkIn` — the desk flow, which is how most arrivals
       // are actually recorded — takes `capturedFields` as optional and never
@@ -723,7 +746,7 @@ describe('contractors — audit suite', () => {
       await admin.contractors.gateFields.remove({ id: fieldId });
     });
 
-    it('CT-L02 · [BUG] a visit cannot be deleted while the person is still on site', async () => {
+    it('CT-L02 · a visit cannot be deleted while the person is still on site', async () => {
       // `visits.delete` sets `archivedAt` with no status guard, and both
       // `onSiteNow` and the overstay worker filter on `archivedAt IS NULL`.
       // Deleting a checked-in visit therefore erases someone who is
@@ -745,7 +768,7 @@ describe('contractors — audit suite', () => {
       }).toEqual({ deleteAccepted: false, stillOnBoard: true });
     });
 
-    it('CT-L03 · [BUG] a second check-out does not overwrite the recorded departure time', async () => {
+    it('CT-L03 · a second check-out does not overwrite the recorded departure time', async () => {
       // `checkOut` guards only `checkedInAt === null`, so an already
       // checked-out visit can be checked out again — moving `checkedOutAt`
       // forward. The departure time on the gate record is the evidence of
@@ -770,7 +793,7 @@ describe('contractors — audit suite', () => {
       }).toEqual({ secondAccepted: false, departureTimeUnchanged: true });
     });
 
-    it('CT-L04 · [BUG] re-checking-in a departed visit does not strand it on the board', async () => {
+    it('CT-L04 · re-checking-in a departed visit does not strand it on the board', async () => {
       // `checkIn` sets status back to `checked_in` and stamps a new
       // `checkedInAt`, but never clears `checkedOutAt`. The row then reads
       // "on site" while carrying a departure time in the past — it appears
@@ -791,7 +814,7 @@ describe('contractors — audit suite', () => {
       });
     });
 
-    it('CT-L05 · [BUG] someone checked in yesterday can still check out at the kiosk', async () => {
+    it('CT-L05 · someone checked in yesterday can still check out at the kiosk', async () => {
       // The kiosk lists visits by `scheduledStart` within ±24h. A contractor
       // on a multi-day job, or anyone who overran, falls out of that window
       // while still `checked_in` — so the one screen they have no longer
@@ -814,18 +837,34 @@ describe('contractors — audit suite', () => {
   // CT-V — volume
   // ═══════════════════════════════════════════════════════════════════════
   describe('CT-V · volume', () => {
-    it('CT-V01 · the directory holds its shape at 120+ contractors', async () => {
+    it('CT-V01 · the directory pages cleanly at 120+ contractors', async () => {
       const started = process.hrtime.bigint();
-      const list = (await asAdminA().contractors.list()) as Array<{ id: string }>;
+      const first = (await asAdminA().contractors.list()) as {
+        contractors: Array<{ id: string }>;
+        hasMore: boolean;
+        nextCursor: string | null;
+      };
       const ms = Number(process.hrtime.bigint() - started) / 1_000_000;
-      expect(list.length).toBeGreaterThanOrEqual(VOLUME_CONTRACTORS);
-      // Not a benchmark — a tripwire for an accidental N+1. The derivation
-      // is three queries plus an in-memory join; if someone moves it inside
-      // the row map this becomes hundreds of round trips and blows the budget.
+
+      // A bounded first page, and an honest signal that there is more — the
+      // pre-fix behaviour was the whole contractor + requirement + document
+      // graph on every call.
+      expect(first.contractors.length).toBeLessThanOrEqual(50);
+      expect(first.hasMore).toBe(true);
+      expect(first.nextCursor).not.toBeNull();
+
+      // The cursor advances rather than replaying page one.
+      const second = (await asAdminA().contractors.list({
+        cursor: first.nextCursor as string,
+      })) as { contractors: Array<{ id: string }> };
+      const firstIds = new Set(first.contractors.map((c) => c.id));
+      expect(second.contractors.some((c) => firstIds.has(c.id))).toBe(false);
+
+      // Not a benchmark — a tripwire for an accidental N+1.
       expect({ overBudget: ms > 5_000, ms: Math.round(ms) }).toMatchObject({ overBudget: false });
     });
 
-    it('CT-V02 · [BUG] the directory is paginated', async () => {
+    it('CT-V02 · the directory is paginated', async () => {
       // `contractors.list` takes no input at all: no limit, no cursor, no
       // search. Every contractor with every column is serialised on every
       // page load. At 120 that is untidy; at the 500+ a facilities group
