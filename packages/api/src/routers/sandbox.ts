@@ -21,7 +21,7 @@
  *     UI offers to sign them into the account they already have.
  */
 import { tenants, user } from '@forma360/db/schema';
-import { getEmailDomain } from '@forma360/shared/email-domains';
+import { getEmailDomain, isFreeEmailDomain } from '@forma360/shared/email-domains';
 import { TRPCError } from '@trpc/server';
 import { and, eq, isNull, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -108,12 +108,18 @@ export const sandboxRouter = router({
       throw new TRPCError({ code: 'CONFLICT', message: 'email-in-use' });
     }
 
-    // Does their work domain already have a workspace? Surfaced so the
+    // Does their WORK domain already have a workspace? Surfaced so the
     // UI can offer "ask to join" rather than stranding them in a
     // parallel tenant nobody else can see.
+    //
+    // Consumer domains are excluded, and that exclusion is the whole
+    // point of the check being safe: every gmail.com user shares a
+    // domain with every other, so matching on it told an anonymous
+    // stranger the NAME of an unrelated customer. A colleague hint is
+    // only meaningful when the domain actually implies a colleague.
     const domain = getEmailDomain(email);
     let existingTenant: { id: string; name: string } | null = null;
-    if (domain !== null) {
+    if (domain !== null && !isFreeEmailDomain(email)) {
       const matches = await ctx.db
         .select({ tenantId: user.tenantId, tenantName: tenants.name })
         .from(user)

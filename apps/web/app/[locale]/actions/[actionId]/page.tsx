@@ -30,6 +30,7 @@ import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
 
 type Tab = 'overview' | 'activity' | 'comments';
 type Priority = 'low' | 'medium' | 'high' | 'critical';
@@ -483,7 +484,7 @@ export default function ActionDetailPage() {
                       className={overdue ? 'border-destructive text-destructive' : ''}
                     />
                   ) : action.dueAt !== null ? (
-                    new Date(action.dueAt).toLocaleString(locale)
+                    formatDateTime(action.dueAt, locale)
                   ) : (
                     tFields('noDueDate')
                   )}
@@ -754,7 +755,7 @@ function ActivityTimeline({
                 <span className="text-muted-foreground">{tEvents('created')}</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                {new Date(createdAt).toLocaleString(locale)}
+                {formatDateTime(createdAt, locale)}
               </p>
             </div>
           </div>
@@ -788,7 +789,7 @@ function ActivityTimeline({
             text = tEvents('status_changed', { from: statusLabel(from), to: statusLabel(to) });
           } else if (row.kind === 'due_date_changed') {
             const to = String(payload['to'] ?? '');
-            text = tEvents('due_date_changed', { to: new Date(to).toLocaleString(locale) });
+            text = tEvents('due_date_changed', { to: formatDateTime(to, locale) });
           } else if (row.kind === 'assignee_changed') {
             text = tEvents('assignee_changed', { to: userName(String(payload['to'] ?? '')) });
           } else if (row.kind === 'site_changed') {
@@ -821,7 +822,7 @@ function ActivityTimeline({
                   <span className="text-muted-foreground">{text}</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(row.createdAt).toLocaleString(locale)}
+                  {formatDateTime(row.createdAt, locale)}
                 </p>
               </div>
             </div>
@@ -905,7 +906,7 @@ function CommentsThread({
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">{c.authorName ?? '—'}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(c.createdAt).toLocaleString(locale)}
+                  {formatDateTime(c.createdAt, locale)}
                 </p>
               </div>
               <p className="whitespace-pre-wrap text-sm">{c.body}</p>
@@ -1188,7 +1189,7 @@ function RecurrenceCard({
               </p>
               {initial.endDate !== null ? (
                 <p className="text-xs text-muted-foreground">
-                  {t('endsOn', { date: new Date(initial.endDate).toLocaleDateString() })}
+                  {t('endsOn', { date: formatDate(initial.endDate) })}
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">{t('noEnd')}</p>

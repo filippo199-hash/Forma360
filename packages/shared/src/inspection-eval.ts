@@ -195,6 +195,39 @@ export function evidenceKey(itemId: string): string {
 }
 
 /**
+ * True when `itemId` names a multiple-choice question at least one of
+ * whose options fires a `requireEvidence` trigger — i.e. an item the
+ * conduct UI may legitimately upload a file against even though it is
+ * not itself a `media` item.
+ *
+ * This exists because the two halves of the evidence gate disagreed. The
+ * client demands a photo the moment the inspector answers "No" to a
+ * Yes/No question carrying `requireEvidence`, and blocks Submit until it
+ * has one; the upload endpoint only ever accepted `media` items and
+ * rejected that exact upload with `ITEM_NOT_MEDIA`. The requirement was
+ * unsatisfiable, and the only way out of the inspection was to change
+ * the honest failing answer to something that does not trigger — a
+ * product that rewards falsifying a failed check. Selection is
+ * deliberately NOT considered here: the endpoint sees only the saved
+ * responses, and the answer that fired the trigger is usually still
+ * un-flushed in the conduct reducer when the file is picked.
+ */
+export function itemAcceptsEvidence(content: TemplateContent, itemId: string): boolean {
+  const sets = setsById(content);
+  for (const page of content.pages) {
+    for (const section of page.sections) {
+      for (const item of section.items) {
+        if (item.id !== itemId || !isMcItem(item)) continue;
+        const set = sets.get(item.responseSetId);
+        if (set === undefined) return false;
+        return set.options.some((o) => optionTriggers(o).some((t) => t.kind === 'requireEvidence'));
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Reserved response-map key holding the note demanded by a selected
  * option's `requireNote` trigger (platform review PF-25 — the trigger
  * was stored, rendered in the editor and never enforced anywhere).

@@ -3912,7 +3912,8 @@
       "reackTitle": "Previously acknowledged version {version}",
       "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
       "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
-      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically.",
+      "noEmailYet": "Brak adresu e-mail"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -4865,7 +4866,10 @@
       "addGasLimit": "Dodaj limit",
       "gasFreshness": "Świeżość pomiaru gazów",
       "gasFreshnessUnit": "minut",
-      "description": "Opis"
+      "description": "Opis",
+      "requiredTraining": "Wymagane szkolenia",
+      "requiredTrainingHint": "Każdy wskazany pracownik musi je posiadać i mieć ważne przed wydaniem tego typu.",
+      "requiredTrainingNone": "Nie zdefiniowano jeszcze wymagań szkoleniowych."
     },
     "errors": {
       "module-disabled": "Ten moduł jest niedostępny.",
@@ -4928,10 +4932,7 @@
     },
     "signatures": {
       "competenceBlocked": "Zablokowane: brak kompetencji"
-    },
-    "requiredTraining": "Wymagane szkolenia",
-    "requiredTrainingHint": "Każdy wskazany pracownik musi je posiadać i mieć ważne przed wydaniem tego typu.",
-    "requiredTrainingNone": "Nie zdefiniowano jeszcze wymagań szkoleniowych."
+    }
   },
   "fireSafety": {
     "title": "Ochrona przeciwpożarowa",
@@ -5834,6 +5835,7 @@
         "not_reportable": "Niepodlegające zgłoszeniu",
         "death": "Zgon",
         "specified_injury": "Uraz wyszczególniony",
+        "non_worker_hospital": "Osoba niepracująca przewieziona do szpitala",
         "over_7_day": "Niezdolność ponad 7 dni",
         "occupational_disease": "Choroba zawodowa",
         "dangerous_occurrence": "Zdarzenie niebezpieczne",
@@ -5842,8 +5844,9 @@
       "help": {
         "not_reportable": "Żadna kategoria nie ma zastosowania. Uzasadnij — decyzja negatywna to też dokument.",
         "death": "Osoba zmarła wskutek wypadku przy pracy. Powiadom niezwłocznie; raport w 10 dni.",
-        "specified_injury": "Złamanie (poza palcami), amputacja, utrata wzroku, zgniecenie głowy/tułowia, ciężkie oparzenia, oskalpowanie, utrata przytomności wskutek uduszenia lub hospitalizacja ponad 24 h. Raport w 10 dni.",
-        "over_7_day": "Niezdolność do pracy ponad 7 dni, nie licząc dnia wypadku. Raport w 15 dni.",
+        "specified_injury": "A worker suffered a Schedule 1 injury: any fracture other than to fingers, thumbs or toes; amputation; permanent or likely-permanent loss or reduction of sight; a crush injury to the head or torso causing damage to the brain or internal organs; a serious burn covering more than 10% of the body or damaging the eyes, respiratory system or other vital organs; scalping requiring hospital treatment; loss of consciousness caused by head injury or asphyxia; or, from working in an enclosed space, any injury leading to hypothermia, heat-induced illness or resuscitation, or requiring admission to hospital for more than 24 hours. Report within 10 days.",
+        "non_worker_hospital": "A person not at work (a visitor, a delivery driver, a member of the public) was injured by a work-related accident and taken from the scene to hospital for treatment. Reportable regardless of how serious the injury turns out to be. Report within 10 days.",
+        "over_7_day": "The worker is incapacitated for routine work for more than 7 consecutive days, not counting the day of the accident. Report within 15 days of the accident.",
         "occupational_disease": "Rozpoznana choroba zawodowa związana z pracą — cieśń nadgarstka, dermatoza, astma zawodowa, HAVS, zapalenie ścięgien, nowotwór zawodowy.",
         "dangerous_occurrence": "Zdarzenie z załącznika 2 — awaria dźwignicy, zawalenie rusztowania, pożar/wybuch elektryczny, awaria ciśnieniowa, uwolnienie substancji.",
         "gas_incident": "Zgon lub uraz związany z gazem albo niebezpieczna instalacja gazowa."

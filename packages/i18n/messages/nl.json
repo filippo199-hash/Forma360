@@ -3912,7 +3912,8 @@
       "reackTitle": "Previously acknowledged version {version}",
       "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
       "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
-      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically.",
+      "noEmailYet": "Nog geen e-mailadres"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -4865,7 +4866,10 @@
       "addGasLimit": "Grens toevoegen",
       "gasFreshness": "Versheid gasmeting",
       "gasFreshnessUnit": "minuten",
-      "description": "Omschrijving"
+      "description": "Omschrijving",
+      "requiredTraining": "Vereiste opleiding",
+      "requiredTrainingHint": "Elke genoemde medewerker moet deze geldig hebben voordat dit type kan worden uitgegeven.",
+      "requiredTrainingNone": "Nog geen opleidingsvereisten gedefinieerd."
     },
     "errors": {
       "module-disabled": "Deze module is niet beschikbaar.",
@@ -4928,10 +4932,7 @@
     },
     "signatures": {
       "competenceBlocked": "Geblokkeerd: vakbekwaamheid niet voldaan"
-    },
-    "requiredTraining": "Vereiste opleiding",
-    "requiredTrainingHint": "Elke genoemde medewerker moet deze geldig hebben voordat dit type kan worden uitgegeven.",
-    "requiredTrainingNone": "Nog geen opleidingsvereisten gedefinieerd."
+    }
   },
   "fireSafety": {
     "title": "Brandveiligheid",
@@ -5834,6 +5835,7 @@
         "not_reportable": "Niet meldplichtig",
         "death": "Overlijden",
         "specified_injury": "Gespecificeerd letsel",
+        "non_worker_hospital": "Niet-werkende naar het ziekenhuis gebracht",
         "over_7_day": "Verzuim langer dan 7 dagen",
         "occupational_disease": "Beroepsziekte",
         "dangerous_occurrence": "Gevaarlijk voorval",
@@ -5842,8 +5844,9 @@
       "help": {
         "not_reportable": "Geen meldplichtige categorie is van toepassing. Motiveer — het negatieve besluit is het dossier.",
         "death": "Iemand is overleden door een arbeidsongeval. Direct melden; rapport binnen 10 dagen.",
-        "specified_injury": "Botbreuk (behalve vingers/tenen), amputatie, verlies van zicht, beknelling van hoofd/romp, ernstige brandwonden, scalpering, bewusteloosheid door verstikking of ziekenhuisopname langer dan 24 uur. Rapport binnen 10 dagen.",
-        "over_7_day": "Meer dan 7 dagen arbeidsongeschikt, de ongevalsdag niet meegeteld. Rapport binnen 15 dagen.",
+        "specified_injury": "A worker suffered a Schedule 1 injury: any fracture other than to fingers, thumbs or toes; amputation; permanent or likely-permanent loss or reduction of sight; a crush injury to the head or torso causing damage to the brain or internal organs; a serious burn covering more than 10% of the body or damaging the eyes, respiratory system or other vital organs; scalping requiring hospital treatment; loss of consciousness caused by head injury or asphyxia; or, from working in an enclosed space, any injury leading to hypothermia, heat-induced illness or resuscitation, or requiring admission to hospital for more than 24 hours. Report within 10 days.",
+        "non_worker_hospital": "A person not at work (a visitor, a delivery driver, a member of the public) was injured by a work-related accident and taken from the scene to hospital for treatment. Reportable regardless of how serious the injury turns out to be. Report within 10 days.",
+        "over_7_day": "The worker is incapacitated for routine work for more than 7 consecutive days, not counting the day of the accident. Report within 15 days of the accident.",
         "occupational_disease": "Gediagnosticeerde werkgerelateerde beroepsziekte — carpaletunnelsyndroom, dermatitis, beroepsastma, HAVS, peesontsteking, beroepskanker.",
         "dangerous_occurrence": "Voorval uit Schedule 2 — bezwijken van hijsmaterieel, steigerinstorting, elektrische brand/explosie, drukfalen, onbedoelde vrijzetting.",
         "gas_incident": "Gasgerelateerd overlijden of letsel, of een gevaarlijke gasinstallatie."

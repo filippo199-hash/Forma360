@@ -9,6 +9,7 @@ import {
   getEvidenceKeys,
   isAnswerFlagged,
   isFollowUpRevealed,
+  itemAcceptsEvidence,
   missingEvidence,
   multipleChoiceLabels,
   selectedOptionIds,
@@ -359,6 +360,46 @@ describe('missingEvidence', () => {
   it('still short when under the required count', () => {
     const responses = { q1: 'bad', [evidenceKey('q1')]: ['k1'] };
     expect(missingEvidence(c, responses)[0]).toMatchObject({ have: 1, need: 2 });
+  });
+});
+
+describe('itemAcceptsEvidence', () => {
+  const reqEvidence: Trigger = { kind: 'requireEvidence', mediaKind: 'any', minCount: 1 };
+  const gated = set('s1', [
+    { id: 'yes', label: 'Yes' },
+    { id: 'no', label: 'No', triggers: [reqEvidence] },
+  ]);
+  const plain = set('s2', [
+    { id: 'a', label: 'A' },
+    { id: 'b', label: 'B' },
+  ]);
+  const c = content([mc('q1', 's1'), mc('q2', 's2')], [gated, plain]);
+
+  /**
+   * The two halves of the evidence gate used to disagree: the conduct UI
+   * demanded a photo on a Yes/No question and blocked Submit until it
+   * had one, while the upload endpoint rejected that exact upload with
+   * `ITEM_NOT_MEDIA` because the item was not a `media` question. The
+   * only way out of the inspection was to change the honest failing
+   * answer to one that does not trigger.
+   */
+  it('accepts an item whose options can demand evidence', () => {
+    expect(itemAcceptsEvidence(c, 'q1')).toBe(true);
+  });
+
+  it('does not accept an item that can never demand evidence', () => {
+    expect(itemAcceptsEvidence(c, 'q2')).toBe(false);
+  });
+
+  it('does not depend on the answer being saved yet', () => {
+    // The endpoint sees only persisted responses, and the answer that
+    // fired the trigger is usually still in the un-flushed reducer when
+    // the file is picked.
+    expect(itemAcceptsEvidence(c, 'q1')).toBe(true);
+  });
+
+  it('is false for an unknown item id', () => {
+    expect(itemAcceptsEvidence(c, 'nope')).toBe(false);
   });
 });
 

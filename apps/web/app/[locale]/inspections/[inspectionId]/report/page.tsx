@@ -11,6 +11,7 @@ import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { ShareLinkDialog } from '../../../../../src/components/share-link-dialog';
 import { FocusedPageShell } from '../../../../../src/components/focused-page-shell';
 import { trpc } from '../../../../../src/lib/trpc/client';
+import { formatDate, formatDateTime } from '../../../../../src/lib/format-date';
 
 /**
  * Inspection report page — full-screen focused view (sidebar hidden).
@@ -190,7 +191,7 @@ export default function InspectionReportPage() {
           {inspection.completedAt !== null ? (
             <span>
               {t('completedAt', {
-                time: new Date(inspection.completedAt).toLocaleDateString(),
+                time: formatDate(inspection.completedAt),
               })}
             </span>
           ) : null}
@@ -247,7 +248,7 @@ export default function InspectionReportPage() {
                         {action.assigneeName ?? '—'}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
-                        {action.dueAt !== null ? new Date(action.dueAt).toLocaleDateString() : '—'}
+                        {action.dueAt !== null ? formatDate(action.dueAt) : '—'}
                       </td>
                     </tr>
                   ))}
@@ -414,7 +415,7 @@ function ReportBody({
   // Title-page items are auto-populated, not answered — resolve their values
   // from the inspection (site name, conducted-by name, date, document number).
   const fmtDate = (d: Date | string | null): string =>
-    d === null ? '' : new Date(d).toLocaleDateString();
+    d === null ? '' : formatDate(d);
   const titleResponses: Record<string, unknown> = { ...responses };
   for (const page of titlePages) {
     for (const section of page.sections) {
@@ -521,7 +522,7 @@ function ReportBody({
                 </p>
                 {sig.signedAt !== null ? (
                   <p className="text-xs text-muted-foreground">
-                    {t('signedAt', { time: new Date(sig.signedAt).toLocaleString() })}
+                    {t('signedAt', { time: formatDateTime(sig.signedAt) })}
                   </p>
                 ) : null}
                 {sig.signatureData.startsWith('data:') ? (
@@ -555,7 +556,7 @@ function ReportBody({
                   {a.approverName ?? a.approverUserId}
                   {a.decidedAt !== null ? (
                     <span className="ml-1 text-muted-foreground">
-                      · {new Date(a.decidedAt).toLocaleString()}
+                      · {formatDateTime(a.decidedAt)}
                     </span>
                   ) : null}
                 </p>
@@ -788,7 +789,7 @@ function ReportItem({
                 {action.dueAt !== null ? (
                   <span className="text-muted-foreground">
                     {t('actionDue', {
-                      date: new Date(action.dueAt).toLocaleDateString(),
+                      date: formatDate(action.dueAt),
                     })}
                   </span>
                 ) : null}

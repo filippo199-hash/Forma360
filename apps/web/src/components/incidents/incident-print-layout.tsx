@@ -44,6 +44,7 @@ const RIDDOR_LABELS: Record<string, string> = {
   not_reportable: 'Not reportable',
   death: 'Death',
   specified_injury: 'Specified injury',
+  non_worker_hospital: 'Non-worker taken to hospital',
   over_7_day: 'Over-7-day injury',
   occupational_disease: 'Occupational disease',
   dangerous_occurrence: 'Dangerous occurrence',

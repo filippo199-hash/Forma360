@@ -195,7 +195,18 @@ export function DistributionSection({
               >
                 <Checkbox checked={selected.has(u.id)} onCheckedChange={() => toggle(u.id)} />
                 <span className="min-w-0 flex-1 truncate">{u.name}</span>
-                <span className="truncate text-xs text-muted-foreground">{u.email}</span>
+                {/* A `.invalid` address is a try-it-now placeholder that
+                    can never receive mail (ADR 0017). The dispatcher
+                    already refuses to send to one — but the dialog said
+                    "recipients are emailed now and chased automatically
+                    until they confirm" while showing the raw
+                    `…@sandbox.invalid` string, so the visitor had no way
+                    to know nothing would ever arrive. */}
+                <span className="truncate text-xs text-muted-foreground">
+                  {u.email.trim().toLowerCase().endsWith('.invalid')
+                    ? t('distribution.noEmailYet')
+                    : u.email}
+                </span>
               </label>
             ))}
           </div>

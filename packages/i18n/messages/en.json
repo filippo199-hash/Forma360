@@ -4146,7 +4146,8 @@
       "reackTitle": "Previously acknowledged version {version}",
       "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
       "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
-      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically.",
+      "noEmailYet": "No email address yet"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -5099,7 +5100,10 @@
       "addGasLimit": "Add limit",
       "gasFreshness": "Gas test freshness",
       "gasFreshnessUnit": "minutes",
-      "description": "Description"
+      "description": "Description",
+      "requiredTraining": "Required training",
+      "requiredTrainingHint": "Every named operative must hold these, in date, before this type can be issued.",
+      "requiredTrainingNone": "No training requirements defined yet."
     },
     "errors": {
       "module-disabled": "This module is not available.",
@@ -5162,10 +5166,7 @@
     },
     "signatures": {
       "competenceBlocked": "Blocked: competence not met"
-    },
-    "requiredTraining": "Required training",
-    "requiredTrainingHint": "Every named operative must hold these, in date, before this type can be issued.",
-    "requiredTrainingNone": "No training requirements defined yet."
+    }
   },
   "fireSafety": {
     "title": "Fire Safety",
@@ -6062,6 +6063,7 @@
         "not_reportable": "Not reportable",
         "death": "Death",
         "specified_injury": "Specified injury",
+        "non_worker_hospital": "Non-worker taken to hospital",
         "over_7_day": "Over-7-day injury",
         "occupational_disease": "Occupational disease",
         "dangerous_occurrence": "Dangerous occurrence",
@@ -6070,8 +6072,9 @@
       "help": {
         "not_reportable": "None of the reportable categories apply. Record why — the negative determination is the record.",
         "death": "A person died as a result of a work-related accident. Notify without delay; report within 10 days.",
-        "specified_injury": "Fracture (not fingers/toes), amputation, sight loss, crush to head/torso, serious burns, scalping, unconsciousness from asphyxia, or 24h+ hospital admission. Report within 10 days.",
-        "over_7_day": "The worker is incapacitated for more than 7 days, not counting the day of the accident. Report within 15 days of the accident.",
+        "specified_injury": "A worker suffered a Schedule 1 injury: any fracture other than to fingers, thumbs or toes; amputation; permanent or likely-permanent loss or reduction of sight; a crush injury to the head or torso causing damage to the brain or internal organs; a serious burn covering more than 10% of the body or damaging the eyes, respiratory system or other vital organs; scalping requiring hospital treatment; loss of consciousness caused by head injury or asphyxia; or, from working in an enclosed space, any injury leading to hypothermia, heat-induced illness or resuscitation, or requiring admission to hospital for more than 24 hours. Report within 10 days.",
+        "non_worker_hospital": "A person not at work (a visitor, a delivery driver, a member of the public) was injured by a work-related accident and taken from the scene to hospital for treatment. Reportable regardless of how serious the injury turns out to be. Report within 10 days.",
+        "over_7_day": "The worker is incapacitated for routine work for more than 7 consecutive days, not counting the day of the accident. Report within 15 days of the accident.",
         "occupational_disease": "A diagnosed occupational disease linked to the work — carpal tunnel, dermatitis, occupational asthma, HAVS, tendonitis, occupational cancer.",
         "dangerous_occurrence": "A Schedule 2 near-miss event — collapse of lifting equipment, scaffold collapse, electrical fire/explosion, pressure-system failure, accidental release.",
         "gas_incident": "A gas-related death or injury, or a dangerous gas fitting."

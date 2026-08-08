@@ -24,6 +24,7 @@ import {
 } from './ui/dialog';
 import { Label } from './ui/label';
 import { trpc } from '../lib/trpc/client';
+import { formatDateTime } from '../lib/format-date';
 
 interface Props {
   inspectionId: string;
@@ -186,7 +187,7 @@ export function ShareLinkDialog({ inspectionId }: Props) {
                       : link.expired
                         ? t('expiredBadge')
                         : link.expiresAt !== null
-                          ? t('expiresAt', { time: new Date(link.expiresAt).toLocaleString() })
+                          ? t('expiresAt', { time: formatDateTime(link.expiresAt) })
                           : t('neverExpires')}
                   </span>
                   {!link.revoked && confirmingRevoke !== link.linkId ? (
