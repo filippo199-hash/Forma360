@@ -136,6 +136,14 @@ export default function CoshhAssessmentPage() {
   const [reviewNote, setReviewNote] = useState('');
   const [showReview, setShowReview] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
+  /**
+   * Seconds the suggestion has been running. Forty-nine seconds of the
+   * single word "Thinking…" is indistinguishable from a hang — a
+   * reviewer only waited because they were testing, and said they would
+   * have reloaded at twenty and concluded the feature was broken. The
+   * output is good enough to be worth waiting for; the UI has to say so.
+   */
+  const [suggestElapsed, setSuggestElapsed] = useState(0);
   const [suggestions, setSuggestions] = useState<CoshhRecommendation | null>(null);
   const [drafting, setDrafting] = useState(false);
 
@@ -188,6 +196,11 @@ export default function CoshhAssessmentPage() {
 
   async function suggestControls(): Promise<void> {
     setSuggesting(true);
+    setSuggestElapsed(0);
+    const started = Date.now();
+    const tick = setInterval(() => {
+      setSuggestElapsed(Math.round((Date.now() - started) / 1000));
+    }, 1000);
     try {
       const res = await fetch('/api/ai/coshh-recommend', {
         method: 'POST',
@@ -201,6 +214,7 @@ export default function CoshhAssessmentPage() {
       const body = (await res.json()) as { recommendation: CoshhRecommendation };
       setSuggestions(body.recommendation);
     } finally {
+      clearInterval(tick);
       setSuggesting(false);
     }
   }
@@ -455,7 +469,9 @@ export default function CoshhAssessmentPage() {
                 onClick={() => void suggestControls()}
               >
                 <Sparkles className="mr-1 h-3.5 w-3.5" />
-                {suggesting ? t('ai.suggesting') : t('ai.suggestButton')}
+                {suggesting
+                  ? t('ai.suggestingElapsed', { seconds: suggestElapsed })
+                  : t('ai.suggestButton')}
               </Button>
             ) : null}
           </div>

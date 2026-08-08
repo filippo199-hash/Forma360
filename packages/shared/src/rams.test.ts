@@ -33,6 +33,7 @@ import {
   reviewAcceptanceValid,
   reviewHasFailures,
   snapshotReviewChecklist,
+  unansweredReviewItems,
   unreferencedHighRiskHazards,
   type BoundRaVersion,
   type MethodStatementContent,
@@ -501,8 +502,25 @@ describe('RS-E13 third-party review helpers', () => {
   it('snapshots the checklist unanswered', () => {
     const snapshot = snapshotReviewChecklist();
     expect(snapshot).toHaveLength(RAMS_REVIEW_CHECKLIST.length);
-    expect(snapshot.every((e) => e.verdict === 'na')).toBe(true);
+    // This assertion used to read `=== 'na'` under this very name, which
+    // is how the defect survived: N/A means "does not apply to this
+    // job" — a finding somebody made — so a fresh checklist of N/As
+    // renders as fully reviewed. A reviewer could open a contractor's
+    // pack and record a complete-looking decision without reading a
+    // single line.
+    expect(snapshot.every((e) => e.verdict === 'unanswered')).toBe(true);
+    expect(unansweredReviewItems(snapshot)).toHaveLength(RAMS_REVIEW_CHECKLIST.length);
     expect(reviewHasFailures(snapshot)).toBe(false);
+  });
+
+  it('RS-E13b — an answered line is no longer counted as unanswered', () => {
+    const snapshot = snapshotReviewChecklist();
+    const first = snapshot[0];
+    expect(first).toBeDefined();
+    if (first === undefined) return;
+    const worked = [{ ...first, verdict: 'na' as const }, ...snapshot.slice(1)];
+    // An explicit N/A is a judgement and counts as answered.
+    expect(unansweredReviewItems(worked)).toHaveLength(RAMS_REVIEW_CHECKLIST.length - 1);
   });
 
   it('detects a failed checklist item', () => {

@@ -414,8 +414,7 @@ function ReportBody({
 
   // Title-page items are auto-populated, not answered — resolve their values
   // from the inspection (site name, conducted-by name, date, document number).
-  const fmtDate = (d: Date | string | null): string =>
-    d === null ? '' : formatDate(d);
+  const fmtDate = (d: Date | string | null): string => (d === null ? '' : formatDate(d));
   const titleResponses: Record<string, unknown> = { ...responses };
   for (const page of titlePages) {
     for (const section of page.sections) {

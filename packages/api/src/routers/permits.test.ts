@@ -957,6 +957,46 @@ describe('permits router', () => {
     });
   });
 
+  it('PW-A1: the named acceptor can refuse, returning the permit to its issuer', async () => {
+    const admin = callerFor(adminId);
+    const { permitId } = await admin.permits.create({
+      permitTypeId: await simpleTypeId(),
+      title: 'Refusable work',
+      siteId: siteB,
+      acceptorUserId: standardId,
+      ...window(0, 4),
+    });
+    await checkAll(permitId);
+    await admin.permits.issue({ permitId });
+
+    // Nobody else may refuse — anyone with issue rights can already cancel.
+    await expect(admin.permits.refuse({ permitId, reason: 'not mine' })).rejects.toMatchObject({
+      message: 'not-the-acceptor',
+    });
+
+    const acceptor = callerFor(standardId);
+    const out = await acceptor.permits.refuse({
+      permitId,
+      reason: 'Scope says combustibles at 4 m but the 10 m precondition is ticked. Clarify first.',
+    });
+    expect(out.status).toBe('draft');
+
+    // Refusal is not cancellation: the permit survives for correction,
+    // and the issue signature is void so the gate runs again.
+    const after = await admin.permits.get({ permitId });
+    expect(after.status).toBe('draft');
+    expect(after.issuedAt).toBeNull();
+    expect(after.parties.issuerName).toBeNull();
+
+    // The reason reaches the audit trail — a refusal without one is a shrug.
+    const refusal = after.events.find((e) => e.kind === 'refused');
+    expect(refusal).toBeDefined();
+    expect(refusal?.detail).toContain('combustibles');
+
+    // ...and it can be issued again once corrected.
+    expect((await admin.permits.issue({ permitId })).status).toBe('issued');
+  });
+
   it('PW-E26: an expired permit cannot be accepted', async () => {
     const admin = callerFor(adminId);
     const { permitId } = await admin.permits.create({

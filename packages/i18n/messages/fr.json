@@ -2156,7 +2156,12 @@
       "sourceFireRiskAssessment": "Évaluation du risque incendie",
       "sourceFireLogbookEntry": "Vérification incendie",
       "sourceFireDoorInspection": "Porte coupe-feu",
-      "sourceRams": "Dossier RAMS"
+      "sourceRams": "Dossier RAMS",
+      "myOpenChip": "{count} qui me sont assignées",
+      "myOverdueChip": "{count} en retard",
+      "pagerShowing": "{from}–{to} sur {total}",
+      "pagerPrev": "Précédent",
+      "pagerNext": "Suivant"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4428,7 +4433,8 @@
         "draftSummaryButton": "Rédiger avec l’IA",
         "drafting": "Rédaction…",
         "summaryError": "Impossible de rédiger le résumé. Réessayez.",
-        "summaryDrafted": "Brouillon prêt — relisez et enregistrez."
+        "summaryDrafted": "Brouillon prêt — relisez et enregistrez.",
+        "suggestingElapsed": "Réflexion… {seconds}s (cela peut prendre jusqu’à une minute)"
       },
       "signOff": {
         "title": "Signature de l’évaluateur",
@@ -4719,7 +4725,19 @@
         "withinLimits": "dans les limites",
         "outOfLimits": "HORS LIMITES",
         "measuredAgainst": "Mesuré contre",
-        "freeReading": "Mesure libre (sans limite)"
+        "freeReading": "Mesure libre (sans limite)",
+        "competence": {
+          "blockedTitle": "Bloqué : compétence non satisfaite",
+          "personExpired": "{person} — {requirement} a expiré",
+          "personMissing": "{person} — aucun justificatif de {requirement}",
+          "openModule": "Ouvrir Formations"
+        },
+        "signatures": {
+          "competenceBlocked": "Bloqué : compétence non satisfaite",
+          "acceptConfirm": "Accepter vous engage sur ce permis et autorise le début des travaux. Continuer ?",
+          "refuseAction": "Refuser",
+          "refusePrompt": "Pourquoi refusez-vous ce permis ? Il retourne à l’émetteur en brouillon avec votre motif."
+        }
       },
       "signatures": {
         "title": "Signatures",
@@ -4783,6 +4801,7 @@
           "authorised": "Autorisé",
           "issued": "Délivré",
           "accepted": "Accepté",
+          "refused": "Refusé et renvoyé à l’émetteur",
           "suspended": "Suspendu",
           "resumed": "Repris",
           "extended": "Prolongé",
@@ -4929,7 +4948,10 @@
       "already-exited": "La sortie de cette personne a déjà été consignée.",
       "render-unavailable": "La génération de PDF n'est pas disponible dans cet environnement.",
       "training-expired": "Émission impossible : une personne nommée sur ce permis a une formation expirée.",
-      "training-missing": "Émission impossible : une personne nommée n’a jamais obtenu la formation requise."
+      "training-missing": "Émission impossible : une personne nommée n’a jamais obtenu la formation requise.",
+      "training-unverifiable-identity": "Émission impossible : une personne nommée sur ce permis n'a pas de compte lié, sa formation ne peut donc pas être vérifiée. Liez-la à un utilisateur ou retirez-la de l'équipe.",
+      "already-inside": "Cette personne est déjà enregistrée comme présente dans le registre d'entrée.",
+      "document-not-visible": "Vous n'avez pas accès à ce document."
     },
     "competence": {
       "blockedTitle": "Compétence non satisfaite",
@@ -5265,7 +5287,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "Personnes exposées",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5281,7 +5303,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "Dangers d'incendie",
+      "ignitionSources": "Sources d'inflammation",
+      "fuelSources": "Matières combustibles",
+      "oxygenSources": "Sources d'oxygène",
+      "evaluationNotes": "Évaluation du risque",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -5485,7 +5511,8 @@
     "photosAdd": "Ajouter une photo",
     "photosRemove": "Retirer",
     "photoTooLarge": "Cette photo dépasse {maxMb} Mo — choisissez-en une plus légère.",
-    "photoUploadFailed": "Une photo n'a pas pu être envoyée. Elle reste jointe ici — renvoyez pour réessayer."
+    "photoUploadFailed": "Une photo n'a pas pu être envoyée. Elle reste jointe ici — renvoyez pour réessayer.",
+    "photoUploadGaveUp": "Votre signalement est enregistré, mais la photo n'a pas pu être envoyée. Si elle est importante, dites à votre responsable ce qu'elle montrait."
   },
   "offline": {
     "title": "Vous êtes hors ligne",
@@ -5857,7 +5884,10 @@
         "occupational_disease": "Maladie professionnelle diagnostiquée liée au travail — canal carpien, dermatite, asthme professionnel, HAVS, tendinite, cancer professionnel.",
         "dangerous_occurrence": "Événement de l'annexe 2 — effondrement d'appareil de levage, d'échafaudage, incendie/explosion électrique, défaillance sous pression, rejet accidentel.",
         "gas_incident": "Décès ou blessure liés au gaz, ou installation de gaz dangereuse."
-      }
+      },
+      "lostTimeRecorded": "{days} jour(s) d’arrêt enregistrés à ce jour.",
+      "lostTimeOngoing": "{days} jour(s) d’arrêt, toujours absent — l’obligation « plus de 7 jours » s’applique à partir du {date} si l’arrêt continue.",
+      "lostTimeOverSeven": "{days} jours d’arrêt — au-delà du seuil de 7 jours. L’obligation « plus de 7 jours » s’applique."
     },
     "investigation": {
       "heading": "Enquête",
@@ -6067,7 +6097,8 @@
     "common": {
       "cancel": "Annuler",
       "save": "Enregistrer",
-      "saving": "Enregistrement…"
+      "saving": "Enregistrement…",
+      "edit": "Modifier"
     },
     "errors": {
       "generic": "Une erreur est survenue. Réessayez.",
@@ -6184,7 +6215,7 @@
       "draftPacks": "{count} en brouillon",
       "awaitingBriefing": "{count} en attente de briefing",
       "pendingClientAcceptance": "{count} en attente d'acceptation client",
-      "pendingReviews": "{count} dossiers sous-traitants à examiner",
+      "pendingReviews": "{count, plural, one {# dossier sous-traitant à examiner} other {# dossiers sous-traitants à examiner}}",
       "expiringReviews": "{count} acceptations arrivant à échéance"
     },
     "filters": {
@@ -6399,7 +6430,10 @@
       "sitePlaceholder": "Où les travaux auront lieu",
       "workDescription": "Nature des travaux (facultatif)",
       "workDescriptionPlaceholder": "Ce que l'examinateur doit savoir avant d'ouvrir la checklist",
-      "logAndOpen": "Enregistrer et ouvrir la checklist"
+      "logAndOpen": "Enregistrer et ouvrir la checklist",
+      "decisionRecorded": "Décision enregistrée",
+      "decisionFailed": "Impossible d'enregistrer la décision. Réessayez.",
+      "recordingDecision": "Enregistrement…"
     },
     "reviewOutcome": {
       "pending": "En attente d'examen",
@@ -6410,7 +6444,8 @@
     "reviewVerdict": {
       "pass": "Conforme",
       "fail": "Non conforme",
-      "na": "S. O."
+      "na": "S. O.",
+      "unanswered": "Non évalué"
     },
     "trade": {
       "mechanical": "Mécanique",

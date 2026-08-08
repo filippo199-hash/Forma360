@@ -2149,7 +2149,12 @@
       "sourceFireRiskAssessment": "火灾风险评估",
       "sourceFireLogbookEntry": "消防检查",
       "sourceFireDoorInspection": "防火门",
-      "sourceRams": "RAMS 工作包"
+      "sourceRams": "RAMS 工作包",
+      "myOpenChip": "分配给我的 {count} 项",
+      "myOverdueChip": "逾期 {count} 项",
+      "pagerShowing": "第 {from}–{to} 项，共 {total} 项",
+      "pagerPrev": "上一页",
+      "pagerNext": "下一页"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4417,7 +4422,8 @@
         "draftSummaryButton": "用 AI 起草",
         "drafting": "起草中…",
         "summaryError": "无法起草摘要,请重试。",
-        "summaryDrafted": "草稿已就绪——请审阅并保存。"
+        "summaryDrafted": "草稿已就绪——请审阅并保存。",
+        "suggestingElapsed": "思考中… {seconds} 秒（最长可能需要一分钟）"
       },
       "signOff": {
         "title": "评估人签署",
@@ -4708,7 +4714,19 @@
         "withinLimits": "在限值内",
         "outOfLimits": "超出限值",
         "measuredAgainst": "对照限值",
-        "freeReading": "自由读数（无限值）"
+        "freeReading": "自由读数（无限值）",
+        "competence": {
+          "blockedTitle": "已阻止：未满足能力要求",
+          "personExpired": "{person} — {requirement} 已过期",
+          "personMissing": "{person} — 没有 {requirement} 记录",
+          "openModule": "打开培训"
+        },
+        "signatures": {
+          "competenceBlocked": "已阻止：未满足能力要求",
+          "acceptConfirm": "接受即表示您在此作业许可上签字并批准开工。是否继续？",
+          "refuseAction": "拒绝",
+          "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。"
+        }
       },
       "signatures": {
         "title": "签字",
@@ -4772,6 +4790,7 @@
           "authorised": "已审批",
           "issued": "已签发",
           "accepted": "已接收",
+          "refused": "已拒绝并退回签发人",
           "suspended": "已暂停",
           "resumed": "已恢复",
           "extended": "已延期",
@@ -4918,7 +4937,10 @@
       "already-exited": "该人员已记录退出。",
       "render-unavailable": "当前环境不支持 PDF 生成。",
       "training-expired": "无法签发：许可证上列明的人员培训已过期。",
-      "training-missing": "无法签发：许可证上列明的人员从未取得所需培训。"
+      "training-missing": "无法签发：许可证上列明的人员从未取得所需培训。",
+      "training-unverifiable-identity": "无法签发：本许可证上的某人没有关联账户，因此无法核实其培训记录。请将其关联到用户，或将其从作业班组中移除。",
+      "already-inside": "该人员已在出入登记表中记录为在内。",
+      "document-not-visible": "您无权访问该文档。"
     },
     "competence": {
       "blockedTitle": "能力要求未满足",
@@ -5254,7 +5276,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "受威胁人员",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5270,7 +5292,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "火灾危险源",
+      "ignitionSources": "引燃源",
+      "fuelSources": "可燃物",
+      "oxygenSources": "氧气来源",
+      "evaluationNotes": "风险评估",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -5474,7 +5500,8 @@
     "photosAdd": "添加照片",
     "photosRemove": "移除",
     "photoTooLarge": "该照片超过 {maxMb} MB,请选择更小的照片。",
-    "photoUploadFailed": "有照片上传失败。它仍附在此处——再次提交即可重试。"
+    "photoUploadFailed": "有照片上传失败。它仍附在此处——再次提交即可重试。",
+    "photoUploadGaveUp": "您的报告已提交，但照片未能上传。如果照片很重要，请告知主管照片的内容。"
   },
   "offline": {
     "title": "您已离线",
@@ -5846,7 +5873,10 @@
         "occupational_disease": "确诊的与工作相关的职业病——腕管综合征、皮炎、职业性哮喘、HAVS、肌腱炎、职业癌。",
         "dangerous_occurrence": "附表2事件——起重设备坍塌、脚手架坍塌、电气火灾/爆炸、压力系统失效、意外泄漏。",
         "gas_incident": "与燃气相关的死亡或伤害，或危险燃气装置。"
-      }
+      },
+      "lostTimeRecorded": "目前已记录 {days} 天误工。",
+      "lostTimeOngoing": "已误工 {days} 天且仍在休假——若持续缺勤，超过 7 天的报告义务将自 {date} 起适用。",
+      "lostTimeOverSeven": "已误工 {days} 天——已超过 7 天门槛，适用超过 7 天的报告义务。"
     },
     "investigation": {
       "heading": "调查",
@@ -6056,7 +6086,8 @@
     "common": {
       "cancel": "取消",
       "save": "保存",
-      "saving": "保存中…"
+      "saving": "保存中…",
+      "edit": "编辑"
     },
     "errors": {
       "generic": "出了点问题，请重试。",
@@ -6173,7 +6204,7 @@
       "draftPacks": "{count} 个草稿",
       "awaitingBriefing": "{count} 个待交底",
       "pendingClientAcceptance": "{count} 个待客户确认",
-      "pendingReviews": "{count} 个承包商文件包待审查",
+      "pendingReviews": "{count} 份待审查的承包商资料",
       "expiringReviews": "{count} 个验收即将到期"
     },
     "filters": {
@@ -6388,7 +6419,10 @@
       "sitePlaceholder": "作业发生地点",
       "workDescription": "作业内容（可选）",
       "workDescriptionPlaceholder": "审查人在打开检查表前需要了解的信息",
-      "logAndOpen": "登记并打开检查表"
+      "logAndOpen": "登记并打开检查表",
+      "decisionRecorded": "已记录决定",
+      "decisionFailed": "无法记录决定，请重试。",
+      "recordingDecision": "正在记录…"
     },
     "reviewOutcome": {
       "pending": "待审查",
@@ -6399,7 +6433,8 @@
     "reviewVerdict": {
       "pass": "符合",
       "fail": "不符合",
-      "na": "不适用"
+      "na": "不适用",
+      "unanswered": "未评估"
     },
     "trade": {
       "mechanical": "机械",

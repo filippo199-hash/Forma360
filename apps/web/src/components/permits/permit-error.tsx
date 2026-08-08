@@ -26,6 +26,14 @@ const KNOWN_SLUGS = new Set([
   // at the job face got "something went wrong" with no names and no reason.
   'training-expired',
   'training-missing',
+  // PW-X03: the third verdict — named on the permit, but not a linked
+  // account, so no record can be attributed to them with certainty.
+  'training-unverifiable-identity',
+  // PW-S01 / PW-X01: refusals the person at the job face has to be able
+  // to act on. "Already inside" tells the standby they are looking at a
+  // register that already has that body on it.
+  'already-inside',
+  'document-not-visible',
   'isolation-certificate-required',
   'rescue-plan-required',
   'authorisation-required',

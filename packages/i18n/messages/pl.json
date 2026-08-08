@@ -2149,7 +2149,12 @@
       "sourceFireRiskAssessment": "Ocena ryzyka pożarowego",
       "sourceFireLogbookEntry": "Kontrola ppoż.",
       "sourceFireDoorInspection": "Drzwi przeciwpożarowe",
-      "sourceRams": "Pakiet RAMS"
+      "sourceRams": "Pakiet RAMS",
+      "myOpenChip": "{count} przypisanych do mnie",
+      "myOverdueChip": "{count} po terminie",
+      "pagerShowing": "{from}–{to} z {total}",
+      "pagerPrev": "Poprzednia",
+      "pagerNext": "Następna"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4421,7 +4426,8 @@
         "draftSummaryButton": "Napisz z AI",
         "drafting": "Pisanie…",
         "summaryError": "Nie udało się napisać streszczenia. Spróbuj ponownie.",
-        "summaryDrafted": "Szkic gotowy — przejrzyj i zapisz."
+        "summaryDrafted": "Szkic gotowy — przejrzyj i zapisz.",
+        "suggestingElapsed": "Myślę… {seconds}s (może potrwać do minuty)"
       },
       "signOff": {
         "title": "Podpis oceniającego",
@@ -4712,7 +4718,19 @@
         "withinLimits": "w granicach",
         "outOfLimits": "POZA GRANICAMI",
         "measuredAgainst": "Pomiar względem",
-        "freeReading": "Pomiar swobodny (bez limitu)"
+        "freeReading": "Pomiar swobodny (bez limitu)",
+        "competence": {
+          "blockedTitle": "Zablokowane: brak wymaganych kompetencji",
+          "personExpired": "{person} — {requirement} straciło ważność",
+          "personMissing": "{person} — brak wpisu {requirement}",
+          "openModule": "Otwórz Szkolenia"
+        },
+        "signatures": {
+          "competenceBlocked": "Zablokowane: brak wymaganych kompetencji",
+          "acceptConfirm": "Akceptacja oznacza podpisanie tego zezwolenia i dopuszczenie prac. Kontynuować?",
+          "refuseAction": "Odmów",
+          "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem."
+        }
       },
       "signatures": {
         "title": "Podpisy",
@@ -4776,6 +4794,7 @@
           "authorised": "Autoryzowano",
           "issued": "Wydano",
           "accepted": "Przyjęto",
+          "refused": "Odmówiono i zwrócono wystawcy",
           "suspended": "Zawieszono",
           "resumed": "Wznowiono",
           "extended": "Przedłużono",
@@ -4922,7 +4941,10 @@
       "already-exited": "Wyjście tej osoby już odnotowano.",
       "render-unavailable": "Generowanie PDF jest niedostępne w tym środowisku.",
       "training-expired": "Nie można wydać: osoba wskazana w zezwoleniu ma wygasłe szkolenie.",
-      "training-missing": "Nie można wydać: osoba wskazana nigdy nie uzyskała wymaganego szkolenia."
+      "training-missing": "Nie można wydać: osoba wskazana nigdy nie uzyskała wymaganego szkolenia.",
+      "training-unverifiable-identity": "Nie można wydać: osoba wskazana w tym zezwoleniu nie ma powiązanego konta, więc nie można zweryfikować jej szkolenia. Powiąż ją z użytkownikiem lub usuń z brygady.",
+      "already-inside": "Ta osoba jest już zapisana jako obecna w rejestrze wejść.",
+      "document-not-visible": "Nie masz dostępu do tego dokumentu."
     },
     "competence": {
       "blockedTitle": "Kompetencje niespełnione",
@@ -5258,7 +5280,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "Osoby zagrożone",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5274,7 +5296,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "Zagrożenia pożarowe",
+      "ignitionSources": "Źródła zapłonu",
+      "fuelSources": "Materiały palne",
+      "oxygenSources": "Źródła tlenu",
+      "evaluationNotes": "Ocena ryzyka",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -5478,7 +5504,8 @@
     "photosAdd": "Dodaj zdjęcie",
     "photosRemove": "Usuń",
     "photoTooLarge": "To zdjęcie przekracza {maxMb} MB — wybierz mniejsze.",
-    "photoUploadFailed": "Nie udało się przesłać zdjęcia. Jest nadal załączone — wyślij ponownie, aby spróbować jeszcze raz."
+    "photoUploadFailed": "Nie udało się przesłać zdjęcia. Jest nadal załączone — wyślij ponownie, aby spróbować jeszcze raz.",
+    "photoUploadGaveUp": "Zgłoszenie zostało zapisane, ale nie udało się przesłać zdjęcia. Jeśli to ważne, powiedz przełożonemu, co było na nim widoczne."
   },
   "offline": {
     "title": "Jesteś offline",
@@ -5850,7 +5877,10 @@
         "occupational_disease": "Rozpoznana choroba zawodowa związana z pracą — cieśń nadgarstka, dermatoza, astma zawodowa, HAVS, zapalenie ścięgien, nowotwór zawodowy.",
         "dangerous_occurrence": "Zdarzenie z załącznika 2 — awaria dźwignicy, zawalenie rusztowania, pożar/wybuch elektryczny, awaria ciśnieniowa, uwolnienie substancji.",
         "gas_incident": "Zgon lub uraz związany z gazem albo niebezpieczna instalacja gazowa."
-      }
+      },
+      "lostTimeRecorded": "Zarejestrowano dotąd {days} dni niezdolności.",
+      "lostTimeOngoing": "{days} dni niezdolności i nadal nieobecny — obowiązek powyżej 7 dni zacznie obowiązywać od {date}, jeśli nieobecność potrwa.",
+      "lostTimeOverSeven": "{days} dni niezdolności — powyżej progu 7 dni. Obowiązek powyżej 7 dni ma zastosowanie."
     },
     "investigation": {
       "heading": "Dochodzenie",
@@ -6060,7 +6090,8 @@
     "common": {
       "cancel": "Anuluj",
       "save": "Zapisz",
-      "saving": "Zapisywanie…"
+      "saving": "Zapisywanie…",
+      "edit": "Edytuj"
     },
     "errors": {
       "generic": "Coś poszło nie tak. Spróbuj ponownie.",
@@ -6177,7 +6208,7 @@
       "draftPacks": "{count} w wersji roboczej",
       "awaitingBriefing": "{count} oczekuje na instruktaż",
       "pendingClientAcceptance": "{count} oczekuje na akceptację klienta",
-      "pendingReviews": "{count} pakietów podwykonawców do oceny",
+      "pendingReviews": "{count, plural, one {# pakiet wykonawcy do przeglądu} other {# pakietów wykonawcy do przeglądu}}",
       "expiringReviews": "{count} akceptacji wygasa"
     },
     "filters": {
@@ -6392,7 +6423,10 @@
       "sitePlaceholder": "Gdzie będą prowadzone prace",
       "workDescription": "Na czym polega praca (opcjonalnie)",
       "workDescriptionPlaceholder": "Co oceniający powinien wiedzieć przed otwarciem listy",
-      "logAndOpen": "Zarejestruj i otwórz listę"
+      "logAndOpen": "Zarejestruj i otwórz listę",
+      "decisionRecorded": "Decyzja zapisana",
+      "decisionFailed": "Nie udało się zapisać decyzji. Spróbuj ponownie.",
+      "recordingDecision": "Zapisywanie…"
     },
     "reviewOutcome": {
       "pending": "Oczekuje na ocenę",
@@ -6403,7 +6437,8 @@
     "reviewVerdict": {
       "pass": "Spełnia",
       "fail": "Nie spełnia",
-      "na": "Nie dotyczy"
+      "na": "Nie dotyczy",
+      "unanswered": "Nieocenione"
     },
     "trade": {
       "mechanical": "Mechanika",

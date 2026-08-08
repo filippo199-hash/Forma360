@@ -62,6 +62,7 @@ export default async function ScanReportPage({ params }: { params: Promise<{ tok
       photosRemove: t('photosRemove'),
       photoTooLarge: t('photoTooLarge', { maxMb: MAX_PHOTO_MB }),
       photoUploadFailed: t('photoUploadFailed'),
+      photoUploadGaveUp: t('photoUploadGaveUp'),
     },
     submit: t('submit'),
     submitting: t('submitting'),

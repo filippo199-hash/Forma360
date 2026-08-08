@@ -560,7 +560,16 @@ export const REVIEW_OUTCOMES = [
 ] as const;
 export type RamsReviewOutcome = (typeof REVIEW_OUTCOMES)[number];
 
-export const REVIEW_ITEM_VERDICTS = ['pass', 'fail', 'na'] as const;
+/**
+ * `unanswered` is the default and it is not a judgement — that is the
+ * whole point. The checklist used to start every line at `na`, so an
+ * untouched pack rendered as fully reviewed and could be signed off
+ * without the reviewer looking at a single line: "I could hit Record
+ * decision on arrival and produce a complete-looking review I never
+ * did." N/A means "this does not apply to this job", which is a
+ * finding somebody has to make.
+ */
+export const REVIEW_ITEM_VERDICTS = ['unanswered', 'pass', 'fail', 'na'] as const;
 export type ReviewItemVerdict = (typeof REVIEW_ITEM_VERDICTS)[number];
 
 /**
@@ -597,9 +606,16 @@ export function snapshotReviewChecklist(): ReviewChecklistEntry[] {
   return RAMS_REVIEW_CHECKLIST.map((item) => ({
     id: item.id,
     label: item.label,
-    verdict: 'na' as const,
+    verdict: 'unanswered' as const,
     comment: '',
   }));
+}
+
+/** Lines the reviewer has not yet formed a view on. */
+export function unansweredReviewItems(
+  entries: ReadonlyArray<ReviewChecklistEntry>,
+): ReadonlyArray<ReviewChecklistEntry> {
+  return entries.filter((e) => e.verdict === 'unanswered');
 }
 
 /**

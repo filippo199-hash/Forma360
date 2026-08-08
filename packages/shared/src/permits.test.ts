@@ -79,12 +79,23 @@ describe('canTransition (PW-E01)', () => {
     expect(canTransition('draft', 'active')).toBe(false);
     expect(canTransition('draft', 'suspended')).toBe(false);
     expect(canTransition('draft', 'closed')).toBe(false);
-    expect(canTransition('issued', 'draft')).toBe(false);
     expect(canTransition('suspended', 'issued')).toBe(false);
     for (const to of PERMIT_STATUSES) {
       expect(canTransition('closed', to)).toBe(false);
       expect(canTransition('cancelled', to)).toBe(false);
     }
+  });
+
+  it('PW-A1 — issued → draft is legal: it is refusal, not cancellation', () => {
+    // The acceptor sends the permit BACK to the issuer for correction.
+    // Without this the only way to decline was to cancel, which kills
+    // the record rather than bouncing it.
+    expect(canTransition('issued', 'draft')).toBe(true);
+    // ...and it is the only way back to draft. Nothing that has been
+    // worked reopens for editing.
+    expect(canTransition('active', 'draft')).toBe(false);
+    expect(canTransition('suspended', 'draft')).toBe(false);
+    expect(canTransition('closed', 'draft')).toBe(false);
   });
 
   it('open statuses are exactly issued / active / suspended', () => {
@@ -149,9 +160,9 @@ describe('DEFAULT_PERMIT_TYPES (PW-E03)', () => {
     // Sprinklers and detection are the hot-work precondition most often
     // missed and most often expensive: heat from a weld sets off the
     // head above it, and the informal "fix" is isolating the system.
-    expect(
-      byCat.get('hot_work')?.preconditions.some((p) => p.id === 'detection_suppression'),
-    ).toBe(true);
+    expect(byCat.get('hot_work')?.preconditions.some((p) => p.id === 'detection_suppression')).toBe(
+      true,
+    );
     expect(byCat.get('confined_space')?.requiresRescuePlan).toBe(true);
     expect(byCat.get('work_at_height')?.requiresRescuePlan).toBe(true);
   });
@@ -509,11 +520,16 @@ describe('trainingGateError (PW-E12 / FreeHS B7)', () => {
     personLabel: string,
     requirementId: string,
     status: TrainingGateFact['status'],
+    // PW-X03: these existing cases are all about a linked person's ticket
+    // status, so they default to linked. The unlinked case is asserted
+    // separately below.
+    linked = true,
   ): TrainingGateFact => ({
     personLabel,
     requirementId,
     requirementName: `Req ${requirementId}`,
     status,
+    linked,
   });
 
   it('PW-E12: a type with no required training never blocks', () => {
@@ -576,5 +592,51 @@ describe('trainingGateError (PW-E12 / FreeHS B7)', () => {
         facts: [fact('Nia', 'r1', 'not_held'), fact('Dave', 'r2', 'expired')],
       }),
     ).toBe('training-expired');
+  });
+
+  it('PW-X03: an unlinked person is refused, however good the name match looked', () => {
+    // The whole defect in one assertion: `in_date` is the verdict the
+    // namesake match produced, and it must not survive the gate when the
+    // person behind it is a free-text name rather than an account.
+    const shortfalls = trainingGateShortfalls({
+      requiredTrainingIds: ['r1'],
+      facts: [fact('john smith', 'r1', 'in_date', false)],
+    });
+    expect(shortfalls).toEqual([
+      {
+        personLabel: 'john smith',
+        requirementId: 'r1',
+        requirementName: 'Req r1',
+        reason: 'training-unverifiable-identity',
+      },
+    ]);
+    expect(
+      trainingGateError({
+        requiredTrainingIds: ['r1'],
+        facts: [fact('john smith', 'r1', 'in_date', false)],
+      }),
+    ).toBe('training-unverifiable-identity');
+  });
+
+  it('PW-X03: identity is the blocker, so it does not stack a second reason', () => {
+    // An unlinked person with no record at all is one shortfall, not two:
+    // "we cannot tell who you mean" subsumes "they hold nothing".
+    const shortfalls = trainingGateShortfalls({
+      requiredTrainingIds: ['r1'],
+      facts: [fact('john smith', 'r1', 'not_held', false)],
+    });
+    expect(shortfalls).toHaveLength(1);
+    expect(shortfalls[0]?.reason).toBe('training-unverifiable-identity');
+  });
+
+  it('PW-X03: a type demanding no training still never blocks an unlinked gang', () => {
+    // The narrow fix, stated as a test: free-text names stay available
+    // everywhere the gate is not load-bearing.
+    expect(
+      trainingGateError({
+        requiredTrainingIds: [],
+        facts: [fact('john smith', 'r1', 'not_held', false)],
+      }),
+    ).toBeNull();
   });
 });

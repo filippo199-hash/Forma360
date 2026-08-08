@@ -119,6 +119,18 @@
     "./training": {
       "types": "./src/training.ts",
       "default": "./src/training.ts"
+    },
+    "./entitlements": {
+      "types": "./src/entitlements.ts",
+      "default": "./src/entitlements.ts"
+    },
+    "./dashboard-sources": {
+      "types": "./src/dashboard-sources.ts",
+      "default": "./src/dashboard-sources.ts"
+    },
+    "./dashboard-spec": {
+      "types": "./src/dashboard-spec.ts",
+      "default": "./src/dashboard-spec.ts"
     }
   },
   "scripts": {

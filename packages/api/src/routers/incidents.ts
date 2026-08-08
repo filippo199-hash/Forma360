@@ -92,6 +92,7 @@ import {
   RIDDOR_CATEGORIES,
   RIDDOR_SUBMISSION_ROUTES,
   riddorDeadlineFor,
+  incidentFindingActionTitle,
   timelineEntriesSchema,
   totalDaysLost,
   whyChainSchema,
@@ -2266,7 +2267,15 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
               assignment?.dueAt?.toISOString() ?? null,
             );
             const actionId = newId();
-            const actionTitle = `Incident finding: ${finding.description.slice(0, 200)}`;
+            // IN-C06: on a violence or sharps case the finding IS the
+            // special-category content, and the action carries it into a
+            // module that has no idea it is protected.
+            const actionTitle = incidentFindingActionTitle({
+              confidential: incident.confidential,
+              category: finding.category,
+              description: finding.description,
+              referenceNumber: incident.referenceNumber,
+            });
             try {
               // Nested tx = SAVEPOINT: a unique violation rolls back to
               // it instead of aborting the whole approval transaction.

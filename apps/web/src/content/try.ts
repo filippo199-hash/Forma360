@@ -16,6 +16,9 @@
 import type { SandboxScenarioId } from '@forma360/shared/sandbox-scenarios';
 import { activeBrand } from '../lib/brand';
 
+/** Workspaces one visitor may build per hour — mirrored from the API route. */
+export const SANDBOX_HOURLY_LIMIT = 5;
+
 export const TRY_PAGE = {
   eyebrow: 'No account needed',
   title: 'What do you need to get done?',
@@ -32,7 +35,13 @@ export const TRY_PAGE = {
   errorTitle: "That didn't work",
   errorBody: 'We could not build the workspace just now. Please try again.',
   errorRetry: 'Try again',
-  rateLimited: "You've created a few workspaces already. Try again in an hour.",
+  // Says the quota AND when the next slot frees up. The old wording
+  // ("a few workspaces already") left a reviewer guessing and pacing a
+  // whole session against a limit they could not see.
+  rateLimited: (minutes: number | null): string =>
+    minutes === null
+      ? `You've used all ${SANDBOX_HOURLY_LIMIT} workspaces for this hour. Try again shortly.`
+      : `You've used all ${SANDBOX_HOURLY_LIMIT} workspaces for this hour. The next one frees up in ${minutes} minute${minutes === 1 ? '' : 's'}.`,
   alreadySignedIn: "You're already signed in — opening your workspace.",
   footNote: 'Nothing is saved to your name until you ask us to. No card, no commitment.',
 } as const;
@@ -66,7 +75,12 @@ export function buildingStepsFor(
 export const TRY_TILES: Readonly<Record<SandboxScenarioId, TryTileCopy>> = {
   riskAssessment: {
     label: 'Risk assessments',
-    blurb: 'Assess an activity, sign it off, share it with the people it covers.',
+    // Names COSHH and fire on the tile, because they are behind it and
+    // nothing on this page said so. A practitioner looking for exactly
+    // those modules wrote them down as missing and "nearly wrote you
+    // off" — they are one level down, in the refinements. The picker
+    // was under-selling the product by about half.
+    blurb: 'General, COSHH, fire, manual handling. Assess it, sign it off, share it.',
     refineQuestion: 'What kind of assessment?',
     refinements: {
       general: 'General workplace',
@@ -83,7 +97,9 @@ export const TRY_TILES: Readonly<Record<SandboxScenarioId, TryTileCopy>> = {
   },
   inspection: {
     label: 'Inspections & audits',
-    blurb: 'Run a checklist on site, capture photos, produce a signed report.',
+    // Dropped "signed report": there is no signature anywhere in the
+    // inspection or the report, so the tile was promising one.
+    blurb: 'Run a checklist on site, flag what fails, raise the actions it needs.',
     refineQuestion: 'What are you inspecting?',
     refinements: {
       siteWalk: 'Site walkthrough',
@@ -99,8 +115,12 @@ export const TRY_TILES: Readonly<Record<SandboxScenarioId, TryTileCopy>> = {
     ],
   },
   hazard: {
-    label: 'Observations',
-    blurb: 'Let anyone report what they see, then turn it into action.',
+    // "Observations" is consultant-speak. In the trade the word is fuzzy
+    // — near miss, hazard report, safety observation card, behavioural
+    // conversation — and a supervisor "would not use that word and would
+    // not click that tile".
+    label: 'Hazards & near misses',
+    blurb: 'Let anyone report what they see — by QR code, no login — then turn it into action.',
     refineQuestion: 'What happens after someone reports one?',
     refinements: {
       captureOnly: 'Just capture it',

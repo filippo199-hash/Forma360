@@ -393,4 +393,3 @@ function CreateCategoryDialog({
     </Dialog>
   );
 }
-

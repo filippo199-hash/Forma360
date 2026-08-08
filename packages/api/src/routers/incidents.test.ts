@@ -99,7 +99,12 @@ describe('incidents router', () => {
   }
 
   async function reportIncident(overrides?: {
-    kind?: 'injury' | 'dangerous_occurrence' | 'sharps_exposure' | 'near_miss';
+    kind?:
+      | 'injury'
+      | 'dangerous_occurrence'
+      | 'sharps_exposure'
+      | 'violence_aggression'
+      | 'near_miss';
     title?: string;
     details?: Record<string, unknown>;
     reporter?: string;
@@ -466,6 +471,87 @@ describe('incidents router', () => {
     ).rejects.toMatchObject({ message: 'approver-is-investigator' });
     // A different manage-holder can approve.
     await callerFor(adminId).incidents.approveInvestigation({ incidentId: id, assignments: [] });
+  });
+
+  it('IN-C06: a confidential finding never becomes a readable action title', async () => {
+    // On a violence or sharps case the finding IS the special-category
+    // content, and the generated action carried it verbatim into a module
+    // with no idea it was protected. The assignee below holds
+    // `actions.view` and nothing whatsoever from incidents.
+    const SENTINEL = 'Named ward assistant repeatedly threatened by patient X';
+    const reporter = callerFor(adminId);
+    const incidentId = await reportIncident({
+      kind: 'violence_aggression',
+      title: 'Assault at handover',
+      details: { nature: 'physical', perpetratorType: 'patient_or_service_user' },
+    });
+    await reporter.incidents.triage({
+      incidentId,
+      // `basic` deliberately: confidentiality is orthogonal to the
+      // investigation level, and a full RCA needs a method recorded.
+      severity: 'moderate',
+      investigationLevel: 'basic',
+      leadInvestigatorUserId: managerId,
+    });
+    const manager = callerFor(managerId);
+    await manager.incidents.startInvestigation({ incidentId });
+    await manager.incidents.saveInvestigation({
+      incidentId,
+      immediateCause: 'Lone working at handover',
+      conclusionSummary: 'Staffing model leaves handover uncovered.',
+    });
+    const finding = await manager.incidents.addFinding({
+      incidentId,
+      category: 'supervision',
+      priority: 'high',
+      description: SENTINEL,
+      requiresAction: true,
+    });
+    await manager.incidents.submitInvestigation({ incidentId });
+    const approved = await reporter.incidents.approveInvestigation({
+      incidentId,
+      assignments: [{ findingId: finding.findingId, assigneeUserId: standardId }],
+    });
+    const actionId = approved.generatedActionIds[0];
+    if (actionId === undefined) throw new Error('no action generated');
+
+    // Control: the finding really is stored and readable by an authorised
+    // caller, so this cannot pass on an empty fixture.
+    const detail = await reporter.incidents.get({ incidentId });
+    expect(JSON.stringify(detail)).toContain(SENTINEL);
+
+    const [action] = await db
+      .select({ title: schema.actions.title, description: schema.actions.description })
+      .from(schema.actions)
+      .where(eq(schema.actions.id, actionId));
+    expect(action?.title).not.toContain(SENTINEL);
+    // Navigable without being readable: category + reference, exactly what
+    // the source card already does.
+    expect(action?.title).toContain('supervision');
+    expect(action?.description ?? '').not.toContain(SENTINEL);
+
+    // IN-C06: the actions hub, to somebody with no incidents access at all.
+    const hub = await callerFor(standardId).actions.list({});
+    expect(JSON.stringify(hub)).not.toContain(SENTINEL);
+
+    // IN-C07: and global search, which matches `actions.title` with no
+    // confidentiality consideration of its own — so the sentence the
+    // incidents module refuses to put in its own results was reachable
+    // from Cmd-K by typing it.
+    const hits = await callerFor(standardId).search.global({ query: 'threatened by patient' });
+    expect(JSON.stringify(hits)).not.toContain(SENTINEL);
+  });
+
+  it('IN-C06: an ordinary incident keeps its descriptive action title', async () => {
+    // The redaction is conditional — degrading every action title in the
+    // hub to a reference number would be a real usability cost, and only
+    // incidents carry special-category data.
+    const { actionId } = await approvedIncident();
+    const [action] = await db
+      .select({ title: schema.actions.title })
+      .from(schema.actions)
+      .where(eq(schema.actions.id, actionId));
+    expect(action?.title).toContain('Fit fixed guard with interlock monitoring');
   });
 
   it('IN-A6: approval refuses action-bearing findings without an owner or due date', async () => {

@@ -2149,7 +2149,12 @@
       "sourceFireRiskAssessment": "Brandrisicobeoordeling",
       "sourceFireLogbookEntry": "Brandveiligheidscontrole",
       "sourceFireDoorInspection": "Branddeur",
-      "sourceRams": "RAMS-pakket"
+      "sourceRams": "RAMS-pakket",
+      "myOpenChip": "{count} aan mij toegewezen",
+      "myOverdueChip": "{count} te laat",
+      "pagerShowing": "{from}–{to} van {total}",
+      "pagerPrev": "Vorige",
+      "pagerNext": "Volgende"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4421,7 +4426,8 @@
         "draftSummaryButton": "Opstellen met AI",
         "drafting": "Opstellen…",
         "summaryError": "Samenvatting kon niet worden opgesteld. Probeer opnieuw.",
-        "summaryDrafted": "Concept klaar — lees na en sla op."
+        "summaryDrafted": "Concept klaar — lees na en sla op.",
+        "suggestingElapsed": "Denken… {seconds}s (dit kan tot een minuut duren)"
       },
       "signOff": {
         "title": "Ondertekening beoordelaar",
@@ -4712,7 +4718,19 @@
         "withinLimits": "binnen de grenzen",
         "outOfLimits": "BUITEN DE GRENZEN",
         "measuredAgainst": "Gemeten tegen",
-        "freeReading": "Vrije meting (geen grens)"
+        "freeReading": "Vrije meting (geen grens)",
+        "competence": {
+          "blockedTitle": "Geblokkeerd: competentie niet aangetoond",
+          "personExpired": "{person} — {requirement} is verlopen",
+          "personMissing": "{person} — geen registratie van {requirement}",
+          "openModule": "Open Opleiding"
+        },
+        "signatures": {
+          "competenceBlocked": "Geblokkeerd: competentie niet aangetoond",
+          "acceptConfirm": "Accepteren tekent u op deze werkvergunning en geeft het werk vrij. Doorgaan?",
+          "refuseAction": "Weigeren",
+          "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever."
+        }
       },
       "signatures": {
         "title": "Handtekeningen",
@@ -4776,6 +4794,7 @@
           "authorised": "Geautoriseerd",
           "issued": "Uitgegeven",
           "accepted": "Geaccepteerd",
+          "refused": "Geweigerd en teruggestuurd naar de uitgever",
           "suspended": "Opgeschort",
           "resumed": "Hervat",
           "extended": "Verlengd",
@@ -4922,7 +4941,10 @@
       "already-exited": "Het vertrek van die persoon is al vastgelegd.",
       "render-unavailable": "Pdf-generatie is in deze omgeving niet beschikbaar.",
       "training-expired": "Uitgeven niet mogelijk: iemand op dit werkvergunning heeft verlopen opleiding.",
-      "training-missing": "Uitgeven niet mogelijk: iemand op deze vergunning heeft de vereiste opleiding nooit behaald."
+      "training-missing": "Uitgeven niet mogelijk: iemand op deze vergunning heeft de vereiste opleiding nooit behaald.",
+      "training-unverifiable-identity": "Uitgeven niet mogelijk: iemand op deze vergunning heeft geen gekoppeld account, waardoor de opleiding niet kan worden geverifieerd. Koppel deze persoon aan een gebruiker of haal hem uit de ploeg.",
+      "already-inside": "Die persoon staat al als aanwezig in het toegangsregister.",
+      "document-not-visible": "U heeft geen toegang tot dat document."
     },
     "competence": {
       "blockedTitle": "Vakbekwaamheid niet voldaan",
@@ -5258,7 +5280,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "Personen in gevaar",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5274,7 +5296,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "Brandgevaren",
+      "ignitionSources": "Ontstekingsbronnen",
+      "fuelSources": "Brandbare materialen",
+      "oxygenSources": "Zuurstofbronnen",
+      "evaluationNotes": "Beoordeling van het risico",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -5478,7 +5504,8 @@
     "photosAdd": "Foto toevoegen",
     "photosRemove": "Verwijderen",
     "photoTooLarge": "Deze foto is groter dan {maxMb} MB — kies een kleinere.",
-    "photoUploadFailed": "Een foto kon niet worden geüpload. Hij is hier nog bijgevoegd — verstuur opnieuw om het nogmaals te proberen."
+    "photoUploadFailed": "Een foto kon niet worden geüpload. Hij is hier nog bijgevoegd — verstuur opnieuw om het nogmaals te proberen.",
+    "photoUploadGaveUp": "Je melding is vastgelegd, maar de foto kon niet worden geüpload. Als het belangrijk is, vertel je leidinggevende wat erop stond."
   },
   "offline": {
     "title": "Je bent offline",
@@ -5850,7 +5877,10 @@
         "occupational_disease": "Gediagnosticeerde werkgerelateerde beroepsziekte — carpaletunnelsyndroom, dermatitis, beroepsastma, HAVS, peesontsteking, beroepskanker.",
         "dangerous_occurrence": "Voorval uit Schedule 2 — bezwijken van hijsmaterieel, steigerinstorting, elektrische brand/explosie, drukfalen, onbedoelde vrijzetting.",
         "gas_incident": "Gasgerelateerd overlijden of letsel, of een gevaarlijke gasinstallatie."
-      }
+      },
+      "lostTimeRecorded": "{days} verzuimdag(en) tot nu toe geregistreerd.",
+      "lostTimeOngoing": "{days} verzuimdag(en) en nog steeds afwezig — de meer-dan-7-dagenplicht geldt vanaf {date} als het verzuim doorloopt.",
+      "lostTimeOverSeven": "{days} verzuimdagen — boven de drempel van 7 dagen. De meer-dan-7-dagenplicht geldt."
     },
     "investigation": {
       "heading": "Onderzoek",
@@ -6060,7 +6090,8 @@
     "common": {
       "cancel": "Annuleren",
       "save": "Opslaan",
-      "saving": "Opslaan…"
+      "saving": "Opslaan…",
+      "edit": "Bewerken"
     },
     "errors": {
       "generic": "Er ging iets mis. Probeer opnieuw.",
@@ -6177,7 +6208,7 @@
       "draftPacks": "{count} in concept",
       "awaitingBriefing": "{count} wachten op toolbox",
       "pendingClientAcceptance": "{count} wachten op akkoord van de opdrachtgever",
-      "pendingReviews": "{count} pakketten van onderaannemers te beoordelen",
+      "pendingReviews": "{count, plural, one {# aannemerspakket te beoordelen} other {# aannemerspakketten te beoordelen}}",
       "expiringReviews": "{count} acceptaties verlopen binnenkort"
     },
     "filters": {
@@ -6392,7 +6423,10 @@
       "sitePlaceholder": "Waar het werk plaatsvindt",
       "workDescription": "Wat het werk inhoudt (optioneel)",
       "workDescriptionPlaceholder": "Wat de beoordelaar moet weten voordat de checklist opengaat",
-      "logAndOpen": "Vastleggen en checklist openen"
+      "logAndOpen": "Vastleggen en checklist openen",
+      "decisionRecorded": "Beslissing vastgelegd",
+      "decisionFailed": "Kon de beslissing niet vastleggen. Probeer opnieuw.",
+      "recordingDecision": "Vastleggen…"
     },
     "reviewOutcome": {
       "pending": "Wacht op beoordeling",
@@ -6403,7 +6437,8 @@
     "reviewVerdict": {
       "pass": "Voldoet",
       "fail": "Voldoet niet",
-      "na": "N.v.t."
+      "na": "N.v.t.",
+      "unanswered": "Niet beoordeeld"
     },
     "trade": {
       "mechanical": "Werktuigbouw",

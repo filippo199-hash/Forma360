@@ -64,6 +64,60 @@ export function defaultConfidential(kind: IncidentKind): boolean {
   return CONFIDENTIAL_BY_DEFAULT_KINDS.includes(kind);
 }
 
+/**
+ * The title of an action generated from an investigation finding (IN-C06).
+ *
+ * This used to be `Incident finding: ${description}` — and on a
+ * `violence_aggression` or `sharps_exposure` case the finding IS the
+ * special-category content. The action then carried it into a module with
+ * no idea it was protected: the actions hub renders the title to any
+ * `actions.view` holder, `search.global` matches on it with no
+ * confidentiality consideration at all, and the reminder worker
+ * interpolates it into an email body.
+ *
+ * What makes it sharp is that three neighbouring places got this right.
+ * The action's own DESCRIPTION was written with the reference number
+ * rather than the title, deliberately. The actions hub blanks the source
+ * card's title for a confidential incident, with a comment saying so. The
+ * incident chase worker uses the reference throughout. Somebody protected
+ * the label on the box and left the contents on the outside.
+ *
+ * Every previous cross-module defect in this series was a module READING
+ * another module's records and applying only its own rule. This inverts
+ * it: a module WRITING into another module's records and carrying its own
+ * confidentiality out with the payload. Incidents did not fail to check
+ * something — it failed to redact something on the way out, and actions
+ * had no way to know it should.
+ *
+ * `confidential` is passed rather than derived from the kind, because
+ * triage can override the per-kind default in both directions — a
+ * `damage` report that turns out to involve an assault is classified up,
+ * and a `sharps_exposure` with nobody named may be classified down.
+ *
+ * A title frozen at approval time is safe here only because the flag
+ * cannot move afterwards: `confidential` is settable at `triage` alone,
+ * `triaged` is reachable only from `reported`, and actions are generated
+ * at `approveInvestigation` — two states later. Reopening does not
+ * re-open triage either. If a later change ever makes the flag mutable
+ * after approval, this becomes a stale-title leak and the already-written
+ * action titles will need rewriting at the point of the flip.
+ */
+export function incidentFindingActionTitle(args: {
+  confidential: boolean;
+  category: string;
+  description: string;
+  referenceNumber: string | null;
+}): string {
+  if (!args.confidential) {
+    return `Incident finding: ${args.description.slice(0, 200)}`;
+  }
+  // Navigable without being readable — exactly what the source card
+  // already does. The description carries the reference too, and the
+  // incident page re-checks detail access.
+  const ref = args.referenceNumber ?? '';
+  return `Incident finding (${args.category})${ref === '' ? '' : ` — ${ref}`}`;
+}
+
 // ─── Severity ───────────────────────────────────────────────────────────────
 
 /** Actual-outcome severity, set at triage, frozen once the investigation is approved. */
