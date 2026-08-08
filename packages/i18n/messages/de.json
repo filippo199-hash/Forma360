@@ -2156,7 +2156,12 @@
       "sourceFireRiskAssessment": "Brandschutzbeurteilung",
       "sourceFireLogbookEntry": "Brandschutzprüfung",
       "sourceFireDoorInspection": "Brandschutztür",
-      "sourceRams": "RAMS-Paket"
+      "sourceRams": "RAMS-Paket",
+      "myOpenChip": "{count} mir zugewiesen",
+      "myOverdueChip": "{count} überfällig",
+      "pagerShowing": "{from}–{to} von {total}",
+      "pagerPrev": "Zurück",
+      "pagerNext": "Weiter"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4719,7 +4724,16 @@
         "withinLimits": "im Grenzbereich",
         "outOfLimits": "AUSSERHALB DER GRENZEN",
         "measuredAgainst": "Gemessen gegen",
-        "freeReading": "Freie Messung (ohne Grenzwert)"
+        "freeReading": "Freie Messung (ohne Grenzwert)",
+        "competence": {
+          "blockedTitle": "Blockiert: Kompetenz nicht erfüllt",
+          "personExpired": "{person} — {requirement} ist abgelaufen",
+          "personMissing": "{person} — kein Nachweis für {requirement}",
+          "openModule": "Schulungen öffnen"
+        },
+        "signatures": {
+          "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt"
+        }
       },
       "signatures": {
         "title": "Unterschriften",
@@ -5265,7 +5279,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "Gefährdete Personen",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5281,7 +5295,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "Brandgefahren",
+      "ignitionSources": "Zündquellen",
+      "fuelSources": "Brennbare Stoffe",
+      "oxygenSources": "Sauerstoffquellen",
+      "evaluationNotes": "Bewertung des Risikos",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -6067,7 +6085,8 @@
     "common": {
       "cancel": "Abbrechen",
       "save": "Speichern",
-      "saving": "Wird gespeichert…"
+      "saving": "Wird gespeichert…",
+      "edit": "Bearbeiten"
     },
     "errors": {
       "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
@@ -6184,7 +6203,7 @@
       "draftPacks": "{count} im Entwurf",
       "awaitingBriefing": "{count} ohne Unterweisung",
       "pendingClientAcceptance": "{count} warten auf Kundenfreigabe",
-      "pendingReviews": "{count} Nachunternehmer-Pakete zu prüfen",
+      "pendingReviews": "{count, plural, one {# Auftragnehmer-Paket zu prüfen} other {# Auftragnehmer-Pakete zu prüfen}}",
       "expiringReviews": "{count} Freigaben laufen ab"
     },
     "filters": {
@@ -6399,7 +6418,10 @@
       "sitePlaceholder": "Wo die Arbeit stattfindet",
       "workDescription": "Worum es bei der Arbeit geht (optional)",
       "workDescriptionPlaceholder": "Alles, was der Prüfer vor der Checkliste wissen muss",
-      "logAndOpen": "Erfassen und Checkliste öffnen"
+      "logAndOpen": "Erfassen und Checkliste öffnen",
+      "decisionRecorded": "Entscheidung erfasst",
+      "decisionFailed": "Entscheidung konnte nicht erfasst werden. Bitte erneut versuchen.",
+      "recordingDecision": "Wird erfasst…"
     },
     "reviewOutcome": {
       "pending": "Prüfung ausstehend",
@@ -6410,7 +6432,8 @@
     "reviewVerdict": {
       "pass": "Erfüllt",
       "fail": "Nicht erfüllt",
-      "na": "Entfällt"
+      "na": "Entfällt",
+      "unanswered": "Nicht bewertet"
     },
     "trade": {
       "mechanical": "Mechanik",

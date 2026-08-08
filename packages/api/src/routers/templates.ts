@@ -123,7 +123,7 @@ function emptyContent(title: string): TemplateContent {
             id: newId(),
             title: 'Details',
             items: [
-              { id: newId(), type: 'site', prompt: 'Site conducted', required: true },
+              { id: newId(), type: 'site', prompt: 'Site', required: true },
               { id: newId(), type: 'inspectionDate', prompt: 'Conducted on', required: false },
               { id: newId(), type: 'conductedBy', prompt: 'Prepared by', required: false },
               { id: newId(), type: 'location', prompt: 'Location', required: false },

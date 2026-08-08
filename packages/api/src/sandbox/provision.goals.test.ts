@@ -90,6 +90,26 @@ const GOAL_ASSERTIONS: Record<SandboxScenarioId, GoalAssertion> = {
         .from(schema.coshhAssessments)
         .where(eq(schema.coshhAssessments.tenantId, tenantId));
       expect(assessments.length, 'substance must carry an assessment').toBeGreaterThanOrEqual(1);
+
+      // An `active` COSHH assessment with no controls is not a valid
+      // assessment — and this is the one module where an empty shell
+      // misrepresents the product's own standard to a visitor whose
+      // first sight of it is this record.
+      const controls = await db
+        .select()
+        .from(schema.coshhAssessmentControls)
+        .where(eq(schema.coshhAssessmentControls.tenantId, tenantId));
+      expect(
+        controls.length,
+        'an active assessment with zero controls would fail an inspection',
+      ).toBeGreaterThanOrEqual(3);
+      const tiers = new Set(controls.map((c) => c.tier));
+      expect(
+        [...tiers].some((t) => t !== 'ppe' && t !== 'rpe'),
+        'controls cannot be PPE-only — that is the last resort, not the answer',
+      ).toBe(true);
+      expect(assessments[0]?.routesOfExposure.length, 'routes of exposure').toBeGreaterThan(0);
+      expect(assessments[0]?.personsExposed.length, 'who is exposed').toBeGreaterThan(0);
       // A review already due would light an amber chip on a brand-new workspace.
       const due = assessments[0]?.nextReviewAt;
       expect(due === null || due === undefined || due.getTime() > Date.now()).toBe(true);

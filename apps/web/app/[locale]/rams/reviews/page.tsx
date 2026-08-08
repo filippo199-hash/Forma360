@@ -24,6 +24,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
   RAMS_REVIEW_CHECKLIST,
   REVIEW_ITEM_VERDICTS,
@@ -87,12 +88,20 @@ export default function RamsReviewsPage() {
     setComments(c);
   }, [stored]);
 
+  // Every other module in the product acknowledges a save; this one did
+  // not, and the reviewer clicked "Record decision" four times believing
+  // it was dead. It worked all four times, so four decisions were
+  // recorded against one pack. A silent success is worse than an error:
+  // the user either repeats the action or walks away thinking the
+  // contractor was never signed off.
   const decide = trpc.rams.reviews.decide.useMutation({
     onSuccess: () => {
+      toast.success(t('reviews.decisionRecorded'));
       void utils.rams.reviews.list.invalidate();
       void utils.rams.reviews.get.invalidate();
       void utils.rams.packs.overview.invalidate();
     },
+    onError: () => toast.error(t('reviews.decisionFailed')),
   });
 
   const submitIntake = trpc.rams.reviews.submit.useMutation({
@@ -283,7 +292,11 @@ export default function RamsReviewsPage() {
                           strings rendered inside a localised page. */}
                       <p className="mb-1 text-sm">{t(`reviewChecklist.${item.id}` as never)}</p>
                       <div className="flex flex-wrap items-center gap-1">
-                        {REVIEW_ITEM_VERDICTS.map((v) => (
+                        {/* `unanswered` is the default, not a choice — it
+                            shows as no chip selected. Offering it as a
+                            fourth button would make "I haven't looked at
+                            this" something the reviewer has to assert. */}
+                        {REVIEW_ITEM_VERDICTS.filter((v) => v !== 'unanswered').map((v) => (
                           <button
                             key={v}
                             type="button"
@@ -379,7 +392,7 @@ export default function RamsReviewsPage() {
                           reviewId: selected,
                           checklist: RAMS_REVIEW_CHECKLIST.map((item) => ({
                             id: item.id,
-                            verdict: verdicts[item.id] ?? 'na',
+                            verdict: verdicts[item.id] ?? 'unanswered',
                             comment: comments[item.id] ?? '',
                           })),
                           outcome,
@@ -391,7 +404,9 @@ export default function RamsReviewsPage() {
                         })
                       }
                     >
-                      {t('reviews.recordDecision')}
+                      {decide.isPending
+                        ? t('reviews.recordingDecision')
+                        : t('reviews.recordDecision')}
                     </Button>
                   </div>
                 ) : null}

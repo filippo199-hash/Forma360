@@ -2149,7 +2149,12 @@
       "sourceFireRiskAssessment": "Ocena ryzyka pożarowego",
       "sourceFireLogbookEntry": "Kontrola ppoż.",
       "sourceFireDoorInspection": "Drzwi przeciwpożarowe",
-      "sourceRams": "Pakiet RAMS"
+      "sourceRams": "Pakiet RAMS",
+      "myOpenChip": "{count} przypisanych do mnie",
+      "myOverdueChip": "{count} po terminie",
+      "pagerShowing": "{from}–{to} z {total}",
+      "pagerPrev": "Poprzednia",
+      "pagerNext": "Następna"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4712,7 +4717,16 @@
         "withinLimits": "w granicach",
         "outOfLimits": "POZA GRANICAMI",
         "measuredAgainst": "Pomiar względem",
-        "freeReading": "Pomiar swobodny (bez limitu)"
+        "freeReading": "Pomiar swobodny (bez limitu)",
+        "competence": {
+          "blockedTitle": "Zablokowane: brak wymaganych kompetencji",
+          "personExpired": "{person} — {requirement} straciło ważność",
+          "personMissing": "{person} — brak wpisu {requirement}",
+          "openModule": "Otwórz Szkolenia"
+        },
+        "signatures": {
+          "competenceBlocked": "Zablokowane: brak wymaganych kompetencji"
+        }
       },
       "signatures": {
         "title": "Podpisy",
@@ -5258,7 +5272,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "Osoby zagrożone",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5274,7 +5288,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "Zagrożenia pożarowe",
+      "ignitionSources": "Źródła zapłonu",
+      "fuelSources": "Materiały palne",
+      "oxygenSources": "Źródła tlenu",
+      "evaluationNotes": "Ocena ryzyka",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -6060,7 +6078,8 @@
     "common": {
       "cancel": "Anuluj",
       "save": "Zapisz",
-      "saving": "Zapisywanie…"
+      "saving": "Zapisywanie…",
+      "edit": "Edytuj"
     },
     "errors": {
       "generic": "Coś poszło nie tak. Spróbuj ponownie.",
@@ -6177,7 +6196,7 @@
       "draftPacks": "{count} w wersji roboczej",
       "awaitingBriefing": "{count} oczekuje na instruktaż",
       "pendingClientAcceptance": "{count} oczekuje na akceptację klienta",
-      "pendingReviews": "{count} pakietów podwykonawców do oceny",
+      "pendingReviews": "{count, plural, one {# pakiet wykonawcy do przeglądu} other {# pakietów wykonawcy do przeglądu}}",
       "expiringReviews": "{count} akceptacji wygasa"
     },
     "filters": {
@@ -6392,7 +6411,10 @@
       "sitePlaceholder": "Gdzie będą prowadzone prace",
       "workDescription": "Na czym polega praca (opcjonalnie)",
       "workDescriptionPlaceholder": "Co oceniający powinien wiedzieć przed otwarciem listy",
-      "logAndOpen": "Zarejestruj i otwórz listę"
+      "logAndOpen": "Zarejestruj i otwórz listę",
+      "decisionRecorded": "Decyzja zapisana",
+      "decisionFailed": "Nie udało się zapisać decyzji. Spróbuj ponownie.",
+      "recordingDecision": "Zapisywanie…"
     },
     "reviewOutcome": {
       "pending": "Oczekuje na ocenę",
@@ -6403,7 +6425,8 @@
     "reviewVerdict": {
       "pass": "Spełnia",
       "fail": "Nie spełnia",
-      "na": "Nie dotyczy"
+      "na": "Nie dotyczy",
+      "unanswered": "Nieocenione"
     },
     "trade": {
       "mechanical": "Mechanika",

@@ -33,6 +33,25 @@ import { buildingStepsFor, TRY_PAGE, TRY_TILES } from '../../content/try';
  * first click on a tile did nothing and the second worked. A link needs
  * no JavaScript to be right.
  */
+/** Minutes until the next workspace slot, from the 429 body or header. */
+async function retryAfterMinutes(response: Response): Promise<number | null> {
+  const header = Number(response.headers.get('Retry-After'));
+  let seconds = Number.isFinite(header) && header > 0 ? header : null;
+  if (seconds === null) {
+    try {
+      const body: unknown = await response.json();
+      const raw =
+        typeof body === 'object' && body !== null && 'retryAfterSec' in body
+          ? (body as { retryAfterSec: unknown }).retryAfterSec
+          : null;
+      if (typeof raw === 'number' && raw > 0) seconds = raw;
+    } catch {
+      seconds = null;
+    }
+  }
+  return seconds === null ? null : Math.max(1, Math.ceil(seconds / 60));
+}
+
 export function ScenarioPicker({
   locale,
   scenarios,
@@ -98,7 +117,12 @@ export function ScenarioPicker({
 
       if (response.status === 429) {
         clearInterval(ticker);
-        setErrorMessage(TRY_PAGE.rateLimited);
+        // The endpoint has always sent `retryAfterSec`; the UI threw it
+        // away and showed "you've created a few workspaces already",
+        // which a reviewer called "polite but useless — it doesn't say
+        // how many I get, how long the window is, or when the next slot
+        // frees up." They had to pace a whole session by guesswork.
+        setErrorMessage(TRY_PAGE.rateLimited(await retryAfterMinutes(response)));
         setPhase('error');
         return;
       }
@@ -180,9 +204,11 @@ export function ScenarioPicker({
       <div className="mx-auto max-w-md text-center">
         <h2 className="font-display text-2xl font-bold tracking-tight">{TRY_PAGE.errorTitle}</h2>
         <p className="mt-3 text-sm text-muted-foreground">{errorMessage}</p>
+        {/* Retries the tile they chose. `reset()` threw the selection
+            away, so every failure cost them the two taps again. */}
         <button
           type="button"
-          onClick={reset}
+          onClick={() => setPhase('choose')}
           className="mt-6 inline-flex h-11 items-center justify-center rounded-lg bg-brand px-6 text-sm font-semibold text-brand-foreground"
         >
           {TRY_PAGE.errorRetry}

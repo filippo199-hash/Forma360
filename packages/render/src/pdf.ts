@@ -57,6 +57,24 @@ export interface RenderDeps {
    * into a package that runs in edge / browser contexts too.
    */
   onLog?: (event: { level: 'warn' | 'info'; msg: string }) => void;
+  /**
+   * Called with the rendered bytes when the object-store upload fails.
+   *
+   * The store is a CACHE and a delivery mechanism, not the source of
+   * truth: by the time it is written the document has already been
+   * rendered and is sitting in memory. Throwing away a finished
+   * inspection report because a cache write 403'd is the wrong failure
+   * mode — and it is not hypothetical. A misconfigured R2 credential
+   * took out all six export endpoints at once, and the practitioner
+   * reviewing the product could not get a single record off the screen:
+   * "a record I can't get off the screen isn't a record, it's a screen."
+   *
+   * The web layer stashes these bytes briefly so the download route can
+   * serve them directly instead of redirecting to a signed URL that
+   * would also fail. Leave undefined and the old behaviour returns:
+   * the upload error propagates.
+   */
+  onUploadFailure?: (input: { key: string; bytes: Uint8Array; error: string }) => void;
 }
 
 export interface RenderResult {
@@ -466,10 +484,30 @@ function isStub(bytes: Uint8Array): boolean {
   return bytes.length < 1500;
 }
 
+/**
+ * Upload the artefact, or — when a caller has supplied
+ * {@link RenderDeps.onUploadFailure} — hand the bytes back to it and
+ * carry on. See that field for why a failed cache write must not
+ * destroy a finished document.
+ */
 async function uploadPdf(
   deps: RenderDeps,
   input: { key: string; bytes: Uint8Array },
 ): Promise<void> {
+  try {
+    await putPdf(deps, input);
+  } catch (err) {
+    if (deps.onUploadFailure === undefined) throw err;
+    const message = err instanceof Error ? err.message : String(err);
+    deps.onLog?.({
+      level: 'warn',
+      msg: `object-store upload failed for ${input.key}; serving the render inline (${message})`,
+    });
+    deps.onUploadFailure({ key: input.key, bytes: input.bytes, error: message });
+  }
+}
+
+async function putPdf(deps: RenderDeps, input: { key: string; bytes: Uint8Array }): Promise<void> {
   const url = await deps.storage.getSignedUploadUrl({
     key: input.key,
     contentType: 'application/pdf',

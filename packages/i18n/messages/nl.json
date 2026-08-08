@@ -2149,7 +2149,12 @@
       "sourceFireRiskAssessment": "Brandrisicobeoordeling",
       "sourceFireLogbookEntry": "Brandveiligheidscontrole",
       "sourceFireDoorInspection": "Branddeur",
-      "sourceRams": "RAMS-pakket"
+      "sourceRams": "RAMS-pakket",
+      "myOpenChip": "{count} aan mij toegewezen",
+      "myOverdueChip": "{count} te laat",
+      "pagerShowing": "{from}–{to} van {total}",
+      "pagerPrev": "Vorige",
+      "pagerNext": "Volgende"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4712,7 +4717,16 @@
         "withinLimits": "binnen de grenzen",
         "outOfLimits": "BUITEN DE GRENZEN",
         "measuredAgainst": "Gemeten tegen",
-        "freeReading": "Vrije meting (geen grens)"
+        "freeReading": "Vrije meting (geen grens)",
+        "competence": {
+          "blockedTitle": "Geblokkeerd: competentie niet aangetoond",
+          "personExpired": "{person} — {requirement} is verlopen",
+          "personMissing": "{person} — geen registratie van {requirement}",
+          "openModule": "Open Opleiding"
+        },
+        "signatures": {
+          "competenceBlocked": "Geblokkeerd: competentie niet aangetoond"
+        }
       },
       "signatures": {
         "title": "Handtekeningen",
@@ -5258,7 +5272,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "Personen in gevaar",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5274,7 +5288,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "Brandgevaren",
+      "ignitionSources": "Ontstekingsbronnen",
+      "fuelSources": "Brandbare materialen",
+      "oxygenSources": "Zuurstofbronnen",
+      "evaluationNotes": "Beoordeling van het risico",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -6060,7 +6078,8 @@
     "common": {
       "cancel": "Annuleren",
       "save": "Opslaan",
-      "saving": "Opslaan…"
+      "saving": "Opslaan…",
+      "edit": "Bewerken"
     },
     "errors": {
       "generic": "Er ging iets mis. Probeer opnieuw.",
@@ -6177,7 +6196,7 @@
       "draftPacks": "{count} in concept",
       "awaitingBriefing": "{count} wachten op toolbox",
       "pendingClientAcceptance": "{count} wachten op akkoord van de opdrachtgever",
-      "pendingReviews": "{count} pakketten van onderaannemers te beoordelen",
+      "pendingReviews": "{count, plural, one {# aannemerspakket te beoordelen} other {# aannemerspakketten te beoordelen}}",
       "expiringReviews": "{count} acceptaties verlopen binnenkort"
     },
     "filters": {
@@ -6392,7 +6411,10 @@
       "sitePlaceholder": "Waar het werk plaatsvindt",
       "workDescription": "Wat het werk inhoudt (optioneel)",
       "workDescriptionPlaceholder": "Wat de beoordelaar moet weten voordat de checklist opengaat",
-      "logAndOpen": "Vastleggen en checklist openen"
+      "logAndOpen": "Vastleggen en checklist openen",
+      "decisionRecorded": "Beslissing vastgelegd",
+      "decisionFailed": "Kon de beslissing niet vastleggen. Probeer opnieuw.",
+      "recordingDecision": "Vastleggen…"
     },
     "reviewOutcome": {
       "pending": "Wacht op beoordeling",
@@ -6403,7 +6425,8 @@
     "reviewVerdict": {
       "pass": "Voldoet",
       "fail": "Voldoet niet",
-      "na": "N.v.t."
+      "na": "N.v.t.",
+      "unanswered": "Niet beoordeeld"
     },
     "trade": {
       "mechanical": "Werktuigbouw",

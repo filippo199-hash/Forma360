@@ -30,6 +30,9 @@ import type { Storage } from '@forma360/shared/storage';
 export interface RenderDocxDeps {
   db: Database;
   storage: Storage;
+  /** See {@link RenderDeps.onUploadFailure} — same contract, Word path. */
+  onUploadFailure?: (input: { key: string; bytes: Uint8Array; error: string }) => void;
+  onLog?: (event: { level: 'warn' | 'info'; msg: string }) => void;
 }
 
 export interface RenderDocxResult {
@@ -232,6 +235,23 @@ function stringifyResponse(v: unknown): string {
 }
 
 async function uploadDocx(
+  deps: RenderDocxDeps,
+  input: { key: string; bytes: Uint8Array },
+): Promise<void> {
+  try {
+    await putDocx(deps, input);
+  } catch (err) {
+    if (deps.onUploadFailure === undefined) throw err;
+    const message = err instanceof Error ? err.message : String(err);
+    deps.onLog?.({
+      level: 'warn',
+      msg: `object-store upload failed for ${input.key}; serving the render inline (${message})`,
+    });
+    deps.onUploadFailure({ key: input.key, bytes: input.bytes, error: message });
+  }
+}
+
+async function putDocx(
   deps: RenderDocxDeps,
   input: { key: string; bytes: Uint8Array },
 ): Promise<void> {

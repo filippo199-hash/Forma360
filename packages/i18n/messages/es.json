@@ -2156,7 +2156,12 @@
       "sourceFireRiskAssessment": "Evaluación de riesgo de incendio",
       "sourceFireLogbookEntry": "Comprobación contra incendios",
       "sourceFireDoorInspection": "Puerta cortafuego",
-      "sourceRams": "Paquete RAMS"
+      "sourceRams": "Paquete RAMS",
+      "myOpenChip": "{count} asignadas a mí",
+      "myOverdueChip": "{count} vencidas",
+      "pagerShowing": "{from}–{to} de {total}",
+      "pagerPrev": "Anterior",
+      "pagerNext": "Siguiente"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4719,7 +4724,16 @@
         "withinLimits": "dentro de límites",
         "outOfLimits": "FUERA DE LÍMITES",
         "measuredAgainst": "Medido contra",
-        "freeReading": "Lectura libre (sin límite)"
+        "freeReading": "Lectura libre (sin límite)",
+        "competence": {
+          "blockedTitle": "Bloqueado: competencia no acreditada",
+          "personExpired": "{person} — {requirement} ha caducado",
+          "personMissing": "{person} — sin registro de {requirement}",
+          "openModule": "Abrir Formación"
+        },
+        "signatures": {
+          "competenceBlocked": "Bloqueado: competencia no acreditada"
+        }
       },
       "signatures": {
         "title": "Firmas",
@@ -5265,7 +5279,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "Personas en riesgo",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5281,7 +5295,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "Peligros de incendio",
+      "ignitionSources": "Fuentes de ignición",
+      "fuelSources": "Materiales combustibles",
+      "oxygenSources": "Fuentes de oxígeno",
+      "evaluationNotes": "Evaluación del riesgo",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -6067,7 +6085,8 @@
     "common": {
       "cancel": "Cancelar",
       "save": "Guardar",
-      "saving": "Guardando…"
+      "saving": "Guardando…",
+      "edit": "Editar"
     },
     "errors": {
       "generic": "Algo salió mal. Inténtelo de nuevo.",
@@ -6184,7 +6203,7 @@
       "draftPacks": "{count} en borrador",
       "awaitingBriefing": "{count} pendientes de divulgación",
       "pendingClientAcceptance": "{count} pendientes de aceptación del cliente",
-      "pendingReviews": "{count} paquetes de contratistas por revisar",
+      "pendingReviews": "{count, plural, one {# paquete de contratista por revisar} other {# paquetes de contratista por revisar}}",
       "expiringReviews": "{count} aceptaciones por caducar"
     },
     "filters": {
@@ -6399,7 +6418,10 @@
       "sitePlaceholder": "Dónde se realizará el trabajo",
       "workDescription": "En qué consiste el trabajo (opcional)",
       "workDescriptionPlaceholder": "Lo que el revisor necesita saber antes de abrir la lista",
-      "logAndOpen": "Registrar y abrir la lista"
+      "logAndOpen": "Registrar y abrir la lista",
+      "decisionRecorded": "Decisión registrada",
+      "decisionFailed": "No se pudo registrar la decisión. Inténtalo de nuevo.",
+      "recordingDecision": "Registrando…"
     },
     "reviewOutcome": {
       "pending": "Pendiente de revisión",
@@ -6410,7 +6432,8 @@
     "reviewVerdict": {
       "pass": "Correcto",
       "fail": "Incorrecto",
-      "na": "N/A"
+      "na": "N/A",
+      "unanswered": "Sin evaluar"
     },
     "trade": {
       "mechanical": "Mecánica",

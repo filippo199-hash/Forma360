@@ -10,6 +10,7 @@
  * secure-information-box requirement three screens later.
  */
 import {
+  FIRE_CHECK_TYPE_SPECS,
   isAbove11mResidential,
   isHighRiseResidential,
   requiredCheckTypesFor,
@@ -189,9 +190,35 @@ export default function NewFireBuildingPage() {
                 </label>
               ))}
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-3 text-xs text-muted-foreground">
-              <DutyBadges duty={duty} />
-              <span>{t('seedPreview', { count: seededChecks.length })}</span>
+            {/* The list, not just the count.
+                "These checks will be scheduled:" was followed by empty
+                space — three systems ticked and nothing named. The
+                moment you press Create it schedules eight statutory
+                checks at the correct frequencies, and a practitioner
+                called that "the most persuasive thing in your entire
+                product… you are computing it and then hiding it behind
+                the commit button." It is computed right here. */}
+            <div className="mt-4 space-y-2 border-t pt-3 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2">
+                <DutyBadges duty={duty} />
+                <span>{t('seedPreview', { count: seededChecks.length })}</span>
+              </div>
+              <ul className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+                {seededChecks.map((type) => (
+                  <li key={type} className="flex items-baseline justify-between gap-2">
+                    {/* `tShared` is the `fireSafety` namespace — these
+                        labels live there, not under `fireSafety.create`. */}
+                    <span className="text-foreground">
+                      {tShared(`checkTypes.${type}` as never)}
+                    </span>
+                    <span className="shrink-0">
+                      {tShared(
+                        `frequencies.${FIRE_CHECK_TYPE_SPECS[type].defaultFrequency}` as never,
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 

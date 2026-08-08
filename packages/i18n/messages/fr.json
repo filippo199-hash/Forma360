@@ -2156,7 +2156,12 @@
       "sourceFireRiskAssessment": "Évaluation du risque incendie",
       "sourceFireLogbookEntry": "Vérification incendie",
       "sourceFireDoorInspection": "Porte coupe-feu",
-      "sourceRams": "Dossier RAMS"
+      "sourceRams": "Dossier RAMS",
+      "myOpenChip": "{count} qui me sont assignées",
+      "myOverdueChip": "{count} en retard",
+      "pagerShowing": "{from}–{to} sur {total}",
+      "pagerPrev": "Précédent",
+      "pagerNext": "Suivant"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4719,7 +4724,16 @@
         "withinLimits": "dans les limites",
         "outOfLimits": "HORS LIMITES",
         "measuredAgainst": "Mesuré contre",
-        "freeReading": "Mesure libre (sans limite)"
+        "freeReading": "Mesure libre (sans limite)",
+        "competence": {
+          "blockedTitle": "Bloqué : compétence non satisfaite",
+          "personExpired": "{person} — {requirement} a expiré",
+          "personMissing": "{person} — aucun justificatif de {requirement}",
+          "openModule": "Ouvrir Formations"
+        },
+        "signatures": {
+          "competenceBlocked": "Bloqué : compétence non satisfaite"
+        }
       },
       "signatures": {
         "title": "Signatures",
@@ -5265,7 +5279,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "Personnes exposées",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5281,7 +5295,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "Dangers d'incendie",
+      "ignitionSources": "Sources d'inflammation",
+      "fuelSources": "Matières combustibles",
+      "oxygenSources": "Sources d'oxygène",
+      "evaluationNotes": "Évaluation du risque",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -6067,7 +6085,8 @@
     "common": {
       "cancel": "Annuler",
       "save": "Enregistrer",
-      "saving": "Enregistrement…"
+      "saving": "Enregistrement…",
+      "edit": "Modifier"
     },
     "errors": {
       "generic": "Une erreur est survenue. Réessayez.",
@@ -6184,7 +6203,7 @@
       "draftPacks": "{count} en brouillon",
       "awaitingBriefing": "{count} en attente de briefing",
       "pendingClientAcceptance": "{count} en attente d'acceptation client",
-      "pendingReviews": "{count} dossiers sous-traitants à examiner",
+      "pendingReviews": "{count, plural, one {# dossier sous-traitant à examiner} other {# dossiers sous-traitants à examiner}}",
       "expiringReviews": "{count} acceptations arrivant à échéance"
     },
     "filters": {
@@ -6399,7 +6418,10 @@
       "sitePlaceholder": "Où les travaux auront lieu",
       "workDescription": "Nature des travaux (facultatif)",
       "workDescriptionPlaceholder": "Ce que l'examinateur doit savoir avant d'ouvrir la checklist",
-      "logAndOpen": "Enregistrer et ouvrir la checklist"
+      "logAndOpen": "Enregistrer et ouvrir la checklist",
+      "decisionRecorded": "Décision enregistrée",
+      "decisionFailed": "Impossible d'enregistrer la décision. Réessayez.",
+      "recordingDecision": "Enregistrement…"
     },
     "reviewOutcome": {
       "pending": "En attente d'examen",
@@ -6410,7 +6432,8 @@
     "reviewVerdict": {
       "pass": "Conforme",
       "fail": "Non conforme",
-      "na": "S. O."
+      "na": "S. O.",
+      "unanswered": "Non évalué"
     },
     "trade": {
       "mechanical": "Mécanique",

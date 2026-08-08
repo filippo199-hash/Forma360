@@ -12,6 +12,7 @@ import {
 } from '@forma360/render';
 import { env } from './env';
 import { db } from './db';
+import { holdRenderedBytes } from './render-fallback';
 import { storage } from './storage';
 import { logger } from './logger';
 
@@ -27,6 +28,7 @@ export const exportsDeps: ExportsRouterDeps = {
         renderSharedSecret: env.RENDER_SHARED_SECRET,
         // Surface why a render fell back to the stub ("Render engine not
         // configured") — without this the failure reason was dropped.
+        onUploadFailure: holdRenderedBytes,
         onLog: (e) => {
           if (e.level === 'warn') renderLog.warn(e.msg);
           else renderLog.info(e.msg);
@@ -34,7 +36,8 @@ export const exportsDeps: ExportsRouterDeps = {
       },
       input,
     ),
-  renderDocx: async (input) => renderInspectionDocx({ db, storage }, input),
+  renderDocx: async (input) =>
+    renderInspectionDocx({ db, storage, onUploadFailure: holdRenderedBytes }, input),
   generateShareToken,
   buildShareUrl: (token) => buildShareUrl(env.APP_URL, token),
 };

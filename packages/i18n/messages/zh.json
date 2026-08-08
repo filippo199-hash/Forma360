@@ -2149,7 +2149,12 @@
       "sourceFireRiskAssessment": "火灾风险评估",
       "sourceFireLogbookEntry": "消防检查",
       "sourceFireDoorInspection": "防火门",
-      "sourceRams": "RAMS 工作包"
+      "sourceRams": "RAMS 工作包",
+      "myOpenChip": "分配给我的 {count} 项",
+      "myOverdueChip": "逾期 {count} 项",
+      "pagerShowing": "第 {from}–{to} 项，共 {total} 项",
+      "pagerPrev": "上一页",
+      "pagerNext": "下一页"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4708,7 +4713,16 @@
         "withinLimits": "在限值内",
         "outOfLimits": "超出限值",
         "measuredAgainst": "对照限值",
-        "freeReading": "自由读数（无限值）"
+        "freeReading": "自由读数（无限值）",
+        "competence": {
+          "blockedTitle": "已阻止：未满足能力要求",
+          "personExpired": "{person} — {requirement} 已过期",
+          "personMissing": "{person} — 没有 {requirement} 记录",
+          "openModule": "打开培训"
+        },
+        "signatures": {
+          "competenceBlocked": "已阻止：未满足能力要求"
+        }
       },
       "signatures": {
         "title": "签字",
@@ -5254,7 +5268,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "受威胁人员",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5270,7 +5284,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "火灾危险源",
+      "ignitionSources": "引燃源",
+      "fuelSources": "可燃物",
+      "oxygenSources": "氧气来源",
+      "evaluationNotes": "风险评估",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -6056,7 +6074,8 @@
     "common": {
       "cancel": "取消",
       "save": "保存",
-      "saving": "保存中…"
+      "saving": "保存中…",
+      "edit": "编辑"
     },
     "errors": {
       "generic": "出了点问题，请重试。",
@@ -6173,7 +6192,7 @@
       "draftPacks": "{count} 个草稿",
       "awaitingBriefing": "{count} 个待交底",
       "pendingClientAcceptance": "{count} 个待客户确认",
-      "pendingReviews": "{count} 个承包商文件包待审查",
+      "pendingReviews": "{count} 份待审查的承包商资料",
       "expiringReviews": "{count} 个验收即将到期"
     },
     "filters": {
@@ -6388,7 +6407,10 @@
       "sitePlaceholder": "作业发生地点",
       "workDescription": "作业内容（可选）",
       "workDescriptionPlaceholder": "审查人在打开检查表前需要了解的信息",
-      "logAndOpen": "登记并打开检查表"
+      "logAndOpen": "登记并打开检查表",
+      "decisionRecorded": "已记录决定",
+      "decisionFailed": "无法记录决定，请重试。",
+      "recordingDecision": "正在记录…"
     },
     "reviewOutcome": {
       "pending": "待审查",
@@ -6399,7 +6421,8 @@
     "reviewVerdict": {
       "pass": "符合",
       "fail": "不符合",
-      "na": "不适用"
+      "na": "不适用",
+      "unanswered": "未评估"
     },
     "trade": {
       "mechanical": "机械",

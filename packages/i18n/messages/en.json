@@ -2227,7 +2227,12 @@
       "sourceFireRiskAssessment": "Fire risk assessment",
       "sourceFireLogbookEntry": "Fire check",
       "sourceFireDoorInspection": "Fire door",
-      "sourceRams": "RAMS pack"
+      "sourceRams": "RAMS pack",
+      "myOpenChip": "{count} assigned to me",
+      "myOverdueChip": "{count} overdue",
+      "pagerShowing": "Showing {from}–{to} of {total}",
+      "pagerPrev": "Previous",
+      "pagerNext": "Next"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4946,7 +4951,16 @@
         "withinLimits": "within limits",
         "outOfLimits": "OUT OF LIMITS",
         "measuredAgainst": "Measured against",
-        "freeReading": "Free reading (no limit)"
+        "freeReading": "Free reading (no limit)",
+        "competence": {
+          "blockedTitle": "Blocked: competence not met",
+          "personExpired": "{person} — {requirement} has expired",
+          "personMissing": "{person} — no record of {requirement}",
+          "openModule": "Open Training"
+        },
+        "signatures": {
+          "competenceBlocked": "Blocked: competence not met"
+        }
       },
       "signatures": {
         "title": "Signatures",
@@ -5492,7 +5506,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "Persons at risk",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5508,7 +5522,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "Fire hazards",
+      "ignitionSources": "Sources of ignition",
+      "fuelSources": "Sources of fuel",
+      "oxygenSources": "Sources of oxygen",
+      "evaluationNotes": "Evaluation of the risk",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -6288,7 +6306,8 @@
     "common": {
       "cancel": "Cancel",
       "save": "Save",
-      "saving": "Saving…"
+      "saving": "Saving…",
+      "edit": "Edit"
     },
     "errors": {
       "generic": "Something went wrong. Try again.",
@@ -6405,7 +6424,7 @@
       "draftPacks": "{count} in draft",
       "awaitingBriefing": "{count} awaiting briefing",
       "pendingClientAcceptance": "{count} awaiting client acceptance",
-      "pendingReviews": "{count} contractor packs to review",
+      "pendingReviews": "{count, plural, one {# contractor pack to review} other {# contractor packs to review}}",
       "expiringReviews": "{count} acceptances expiring"
     },
     "filters": {
@@ -6620,7 +6639,10 @@
       "sitePlaceholder": "Where the work will happen",
       "workDescription": "What the work is (optional)",
       "workDescriptionPlaceholder": "Anything the reviewer needs to know before opening the checklist",
-      "logAndOpen": "Log and open the checklist"
+      "logAndOpen": "Log and open the checklist",
+      "decisionRecorded": "Decision recorded",
+      "decisionFailed": "Could not record the decision. Please try again.",
+      "recordingDecision": "Recording…"
     },
     "reviewOutcome": {
       "pending": "Awaiting review",
@@ -6631,7 +6653,8 @@
     "reviewVerdict": {
       "pass": "Pass",
       "fail": "Fail",
-      "na": "N/A"
+      "na": "N/A",
+      "unanswered": "Not assessed"
     },
     "trade": {
       "mechanical": "Mechanical",

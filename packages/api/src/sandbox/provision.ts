@@ -26,6 +26,7 @@ import type { Database } from '@forma360/db/client';
 import {
   actions,
   contractors,
+  coshhAssessmentControls,
   coshhAssessments,
   coshhSubstances,
   fireBuildings,
@@ -872,18 +873,43 @@ async function seedCoshh(ctx: SeedContext): Promise<void> {
     ctx.tenantId,
     'coshhAssessment',
   );
+  const assessmentId = newId();
   await ctx.tx.insert(coshhAssessments).values({
-    id: newId(),
+    id: assessmentId,
     tenantId: ctx.tenantId,
     substanceId,
     referenceNumber: `COSHH-${String(assessmentRef).padStart(4, '0')}`,
     taskDescription: SANDBOX_COSHH.taskDescription,
     status: 'active',
+    // An `active` assessment with no exposure detail and no controls is
+    // not a valid assessment — see the note on SANDBOX_COSHH.
+    routesOfExposure: [...SANDBOX_COSHH.routesOfExposure],
+    personsExposed: [...SANDBOX_COSHH.personsExposed],
+    personsCount: SANDBOX_COSHH.personsCount,
+    quantityBand: SANDBOX_COSHH.quantityBand,
+    frequencyBand: SANDBOX_COSHH.frequencyBand,
+    durationBand: SANDBOX_COSHH.durationBand,
+    levRequired: SANDBOX_COSHH.levRequired,
+    healthSurveillanceRequired: SANDBOX_COSHH.healthSurveillanceRequired,
+    exposureMonitoringRequired: SANDBOX_COSHH.exposureMonitoringRequired,
+    emergencyNotes: SANDBOX_COSHH.emergencyNotes,
+    plainSummary: SANDBOX_COSHH.plainSummary,
     // In the future: a review already overdue would light the amber
     // "assessments due" chip on a workspace seconds old.
     nextReviewAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
     createdBy: ctx.userId,
   });
+
+  for (const control of SANDBOX_COSHH.controls) {
+    await ctx.tx.insert(coshhAssessmentControls).values({
+      id: newId(),
+      tenantId: ctx.tenantId,
+      assessmentId,
+      tier: control.tier,
+      description: control.description,
+      status: 'in_place',
+    });
+  }
 }
 
 /** Seed one building with a fire risk assessment against it. */

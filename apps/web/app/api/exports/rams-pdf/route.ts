@@ -21,7 +21,7 @@ import { inspectionsExportDeps } from '../../../../src/server/inspections-export
 import { issuesDeps } from '../../../../src/server/issues-deps';
 import { permitsDeps } from '../../../../src/server/permits-deps';
 import { riskAssessmentsDeps } from '../../../../src/server/risk-assessments-deps';
-import { storage } from '../../../../src/server/storage';
+import { deliverRenderedFile } from '../../../../src/server/deliver-render';
 import { createContext } from '../../../../src/server/trpc';
 
 const appRouter = buildAppRouter({
@@ -77,9 +77,11 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.json({ error: code }, { status });
   }
 
-  const signedUrl = await storage.getSignedDownloadUrl({
+  // Serves the bytes directly when the object-store upload failed;
+  // 302s to a signed URL otherwise. See `deliver-render`.
+  return deliverRenderedFile({
     key: rendered.storageKey,
-    expiresInSeconds: 60 * 5,
+    contentType: 'application/pdf',
+    filename: 'rams-pack.pdf',
   });
-  return NextResponse.redirect(signedUrl, 302);
 }

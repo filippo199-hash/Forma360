@@ -2156,7 +2156,12 @@
       "sourceFireRiskAssessment": "Valutazione rischio incendio",
       "sourceFireLogbookEntry": "Controllo antincendio",
       "sourceFireDoorInspection": "Porta tagliafuoco",
-      "sourceRams": "Pacchetto RAMS"
+      "sourceRams": "Pacchetto RAMS",
+      "myOpenChip": "{count} assegnate a me",
+      "myOverdueChip": "{count} in ritardo",
+      "pagerShowing": "Da {from} a {to} di {total}",
+      "pagerPrev": "Precedente",
+      "pagerNext": "Successivo"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4754,7 +4759,16 @@
         "withinLimits": "entro i limiti",
         "outOfLimits": "FUORI LIMITE",
         "measuredAgainst": "Misurato rispetto a",
-        "freeReading": "Lettura libera (senza limite)"
+        "freeReading": "Lettura libera (senza limite)",
+        "competence": {
+          "blockedTitle": "Bloccato: competenza non soddisfatta",
+          "personExpired": "{person} — {requirement} è scaduta",
+          "personMissing": "{person} — nessun record di {requirement}",
+          "openModule": "Apri Formazione"
+        },
+        "signatures": {
+          "competenceBlocked": "Bloccato: competenza non soddisfatta"
+        }
       },
       "signatures": {
         "title": "Firme",
@@ -5300,7 +5314,7 @@
         "other": "Altra"
       },
       "premisesDescription": "Descrizione dei locali",
-      "occupancyHeading": "Occupazione",
+      "occupancyHeading": "Persone a rischio",
       "maxOccupancy": "Occupazione massima",
       "sleepingOccupants": "Occupanti che pernottano",
       "personsAtRisk": {
@@ -5316,7 +5330,11 @@
       },
       "riskRating": "Valutazione complessiva",
       "riskRatingUnset": "Non ancora valutato",
-      "hazardsHeading": "Persone a rischio",
+      "hazardsHeading": "Pericoli di incendio",
+      "ignitionSources": "Fonti di innesco",
+      "fuelSources": "Materiali combustibili",
+      "oxygenSources": "Fonti di ossigeno",
+      "evaluationNotes": "Valutazione del rischio",
       "findingsHeading": "Criticità significative",
       "noFindings": "Nessuna criticità registrata.",
       "addFindingHeading": "Aggiungi criticità",
@@ -6102,7 +6120,8 @@
     "common": {
       "cancel": "Annulla",
       "save": "Salva",
-      "saving": "Salvataggio…"
+      "saving": "Salvataggio…",
+      "edit": "Modifica"
     },
     "errors": {
       "generic": "Qualcosa è andato storto. Riprova.",
@@ -6219,7 +6238,7 @@
       "draftPacks": "{count} in bozza",
       "awaitingBriefing": "{count} in attesa di informativa",
       "pendingClientAcceptance": "{count} in attesa di accettazione del cliente",
-      "pendingReviews": "{count} pacchetti appaltatori da esaminare",
+      "pendingReviews": "{count, plural, one {# pacchetto appaltatore da esaminare} other {# pacchetti appaltatore da esaminare}}",
       "expiringReviews": "{count} accettazioni in scadenza"
     },
     "filters": {
@@ -6434,7 +6453,10 @@
       "sitePlaceholder": "Dove si svolgerà il lavoro",
       "workDescription": "In cosa consiste il lavoro (facoltativo)",
       "workDescriptionPlaceholder": "Ciò che il revisore deve sapere prima di aprire la checklist",
-      "logAndOpen": "Registra e apri la checklist"
+      "logAndOpen": "Registra e apri la checklist",
+      "decisionRecorded": "Decisione registrata",
+      "decisionFailed": "Impossibile registrare la decisione. Riprova.",
+      "recordingDecision": "Registrazione…"
     },
     "reviewOutcome": {
       "pending": "In attesa di esame",
@@ -6445,7 +6467,8 @@
     "reviewVerdict": {
       "pass": "Conforme",
       "fail": "Non conforme",
-      "na": "N/D"
+      "na": "N/D",
+      "unanswered": "Non valutato"
     },
     "trade": {
       "mechanical": "Meccanica",

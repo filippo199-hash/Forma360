@@ -632,12 +632,66 @@ export const SANDBOX_INSPECTION_RUN = {
   textAnswer: 'Aisle 7 racking inspection due next week — flagged to the shift manager.',
 } as const;
 
-/** COSHH substance for the COSHH refinement of the risk-assessment tile. */
+/**
+ * COSHH substance for the COSHH refinement of the risk-assessment tile.
+ *
+ * The assessment is filled in, and that is the point. The first cut
+ * seeded a row with a task description and nothing else — no routes of
+ * exposure, no exposed groups, no quantities, and **no controls at any
+ * of the six tiers** — while badging it `active`. A COSHH assessment
+ * with zero recorded controls is not a valid assessment, and this is
+ * the one module where an empty shell actively misrepresents what good
+ * looks like: the visitor's first sight of the product's own standard
+ * is a record that would fail an inspection.
+ *
+ * The controls deliberately run down the hierarchy and stop short of
+ * PPE-only — engineering and administrative measures first, RPE last
+ * and justified, which is the discipline the editor prompts for.
+ */
 export const SANDBOX_COSHH = {
   name: 'Sodium hypochlorite 10% (bulk cleaning)',
   supplier: 'Halden Chemical Supplies',
   taskDescription:
     'Decanting and dilution of bulk sodium hypochlorite for daily floor and drain cleaning across the production area.',
+  routesOfExposure: ['inhalation', 'skin', 'eyes'],
+  personsExposed: ['employees', 'cleaners'],
+  personsCount: 6,
+  quantityBand: 'medium',
+  frequencyBand: 'daily',
+  durationBand: '15_60_min',
+  levRequired: true,
+  healthSurveillanceRequired: false,
+  exposureMonitoringRequired: false,
+  emergencyNotes:
+    'Eye wash station at the chemical store and in the wash bay. Splash to the eye: irrigate for 15 minutes and seek medical attention. Never mix with acidic descaler — chlorine gas is released; evacuate and ventilate if mixing is suspected.',
+  plainSummary:
+    'Bleach for floors and drains. It burns eyes and skin, and the fumes catch your chest. Use the dosing unit, wear the goggles and gauntlets, and never mix it with anything else.',
+  controls: [
+    {
+      tier: 'substitution',
+      description:
+        'Lowest effective concentration specified for routine floor cleaning; the 10% stock is reserved for drains.',
+    },
+    {
+      tier: 'engineering',
+      description:
+        'Wall-mounted venturi dosing unit dilutes at the tap, so operators never pour from the bulk container.',
+    },
+    {
+      tier: 'engineering',
+      description:
+        'Mechanical ventilation running in the wash bay whenever drain cleaning is done.',
+    },
+    {
+      tier: 'administrative',
+      description:
+        'Decanting restricted to trained cleaning staff; acidic descalers stored in a separate cabinet to prevent mixing.',
+    },
+    {
+      tier: 'ppe',
+      description: 'Chemical splash goggles and nitrile gauntlets worn for every decant.',
+    },
+  ],
 } as const;
 
 /** Building for the fire refinement of the risk-assessment tile. */
