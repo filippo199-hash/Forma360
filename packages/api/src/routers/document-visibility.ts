@@ -174,7 +174,15 @@ export function makeFolderVisibilityChecker(
 
 /** The visibility-relevant columns of a document. */
 export interface DocumentVis {
-  id?: string;
+  /**
+   * DC-S03: REQUIRED, and it used to be optional. The download route simply
+   * did not select it, so the `grants.docIds.has(doc.id)` branch below could
+   * never fire and every document-level ACL grant produced a 404 on the file
+   * — while folder-level grants worked, which made it read as a storage
+   * fault rather than an authorisation bug. Making it required is what stops
+   * the next caller omitting it.
+   */
+  id: string;
   folderId: string | null;
   visibleToGroupIds: unknown;
   visibleToSiteIds: unknown;
@@ -228,7 +236,7 @@ export async function makeDocumentVisibilityFilter(
   const folderVisible = makeFolderVisibilityChecker(folders, viewer);
 
   return (doc: DocumentVis): boolean => {
-    if (doc.id !== undefined && grants.docIds.has(doc.id)) return true;
+    if (grants.docIds.has(doc.id)) return true;
     if (folderGranted(doc.folderId)) return true;
     return (
       ownVisibilityPasses(doc.visibleToGroupIds, doc.visibleToSiteIds, viewer) &&

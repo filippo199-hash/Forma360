@@ -16,6 +16,7 @@
 import type { Database } from '@forma360/db/client';
 import { permitEvents, permits, permitTypes, sites, user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
+import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
 import {
   EXPIRY_WARNING_LEAD_MINUTES,
@@ -124,7 +125,7 @@ export async function findExpiringOpenPermits(
 export async function resolveEscalationRecipients(
   db: Database,
   permit: ExpiredOpenPermit,
-): Promise<Array<{ userId: string; email: string; name: string }>> {
+): Promise<Array<{ userId: string; email: string; name: string; locale: string | null }>> {
   const ids = [
     ...new Set(
       [permit.issuerUserId, permit.acceptorUserId, permit.authoriserUserId].filter(
@@ -143,9 +144,14 @@ export async function resolveEscalationRecipients(
     })
     .from(user)
     .where(and(eq(user.tenantId, permit.tenantId), inArray(user.id, ids)));
-  return rows
-    .filter((r) => r.deactivatedAt === null && r.email.length > 0)
-    .map((r) => ({ userId: r.id, email: r.email, name: r.name }));
+  return (
+    rows
+      .filter((r) => r.deactivatedAt === null && r.email.length > 0)
+      // DOC-A01: `locale` was SELECTed and then dropped here, so the email
+      // body fell back to English even though worker.ts was already wired to
+      // pass it through. The link was hardcoded /en/ on top of that.
+      .map((r) => ({ userId: r.id, email: r.email, name: r.name, locale: r.locale }))
+  );
 }
 
 export type PermitWatchKind = 'warning' | 'escalation';
@@ -162,7 +168,7 @@ export interface PermitExpiryWatchDeps {
   notify: (
     kind: PermitWatchKind,
     permit: ExpiredOpenPermit,
-    recipient: { email: string; name: string },
+    recipient: { email: string; name: string; locale: string | null },
     viewUrl: string,
   ) => Promise<void>;
   /** Overridable clock for tests. */
@@ -194,9 +200,9 @@ export async function runPermitExpiryWatch(
     permit: ExpiredOpenPermit,
   ): Promise<{ attempted: number; delivered: number }> => {
     const recipients = await resolveEscalationRecipients(deps.db, permit);
-    const viewUrl = `${deps.appUrl}/en/permits/${permit.permitId}`;
     let delivered = 0;
     for (const recipient of recipients) {
+      const viewUrl = appLink(deps.appUrl, recipient.locale, `/permits/${permit.permitId}`);
       try {
         await deps.notify(kind, permit, recipient, viewUrl);
         delivered += 1;

@@ -15,6 +15,7 @@
  */
 import { isId, newId } from '@forma360/shared/id';
 import { createStorage, objectKey } from '@forma360/shared/storage';
+import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -64,6 +65,13 @@ export async function POST(req: Request): Promise<Response> {
   const ctx = await createContext({ headers: hdrs });
   if (ctx.auth === null) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  }
+
+  // DC-S02 (swept): same as the Heads-Up sibling — a session was the only
+  // gate, and the route files bytes under any `templateId` the caller names.
+  const perms = await loadUserPermissions(ctx.db, ctx.auth.tenantId, ctx.auth.userId);
+  if (!perms.includes('templates.manage') && !perms.includes('templates.create')) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
 
   const form = await req.formData();

@@ -679,9 +679,11 @@ export default function DocumentDetailPage() {
                   <p className="text-sm text-muted-foreground">{t('signaturesEmpty')}</p>
                 ) : (
                   (sigRequests ?? []).map((req) => {
-                    const signedCount = req.recipients.filter(
-                      (r) => r.signedAt !== null || r.acknowledgedAt !== null,
-                    ).length;
+                    // DC-S01: the named roster is analytics data and is now
+                    // gated server-side. The counts still come back for
+                    // everyone, so a reader without the analytics key sees
+                    // "17/23 signed" rather than a list that looks empty.
+                    const signedCount = req.engagement.acknowledged;
                     return (
                       <div key={req.headsUpId} className="space-y-2 rounded-md border p-3">
                         <div className="flex items-start justify-between gap-2">
@@ -699,8 +701,13 @@ export default function DocumentDetailPage() {
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {signedCount}/{req.recipients.length}
+                          {signedCount}/{req.engagement.total}
                         </p>
+                        {!req.canSeeRoster ? (
+                          <p className="text-xs text-muted-foreground">
+                            {t('signaturesRosterRestricted')}
+                          </p>
+                        ) : null}
                         <ul className="divide-y rounded-md border text-xs">
                           {req.recipients.map((r) => {
                             const at = r.signedAt ?? r.acknowledgedAt;

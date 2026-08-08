@@ -15,6 +15,7 @@
  * .local-storage/<key> rather than R2, matching the inspection-upload
  * pattern.
  */
+import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { createStorage, objectKey } from '@forma360/shared/storage';
 import { newId } from '@forma360/shared/id';
 import { headers } from 'next/headers';
@@ -52,6 +53,20 @@ export async function POST(req: Request): Promise<Response> {
   const ctx = await createContext({ headers: hdrs });
   if (ctx.auth === null) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  }
+
+  // DC-S02: this route had NO permission check at all — a bare session was
+  // enough. Any authenticated user of any tenant, including a Standard field
+  // worker and including a try-it-now sandbox visitor (ADR 0017: a sandbox is
+  // an ordinary tenant with a real session), could curl it in a loop and write
+  // unbounded 50 MB objects into the production R2 bucket. No row is created,
+  // so nothing in the product shows the bytes exist and nothing ever deletes
+  // them: an unmetered write to paid storage, reachable from a public
+  // marketing funnel. The sibling download route has always gated; ten of the
+  // fourteen upload handlers do. This one is now the eleventh.
+  const perms = await loadUserPermissions(ctx.db, ctx.auth.tenantId, ctx.auth.userId);
+  if (!perms.includes('documents.manage')) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
 
   let formData: FormData;

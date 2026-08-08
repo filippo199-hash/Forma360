@@ -24,6 +24,7 @@
 import type { Database } from '@forma360/db/client';
 import { incidentEvents, incidents, siteMembers, sites } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
+import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
 import { needsImmediateAlert } from '@forma360/shared/incidents';
 import { usersHoldingPermission, type PermissionHolder } from '@forma360/permissions/holders';
@@ -115,11 +116,11 @@ export async function runIncidentAlert(
     siteName: row.siteName ?? null,
     occurredAt: row.occurredAt,
   };
-  const viewUrl = `${deps.appUrl}/en/incidents/${row.id}`;
   let notified = 0;
   let attempted = 0;
   for (const recipient of recipients) {
     if (recipient.email === '') continue;
+    const viewUrl = appLink(deps.appUrl, recipient.locale, `/incidents/${row.id}`);
     attempted += 1;
     try {
       await deps.notify(recipient, incident, viewUrl);

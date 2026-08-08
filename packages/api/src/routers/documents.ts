@@ -23,6 +23,7 @@ import {
   type Document,
 } from '@forma360/db/schema';
 import { user } from '@forma360/db/schema';
+import { grantsAdminAccess } from '@forma360/permissions/catalogue';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, ilike, inArray, isNull } from 'drizzle-orm';
@@ -57,7 +58,8 @@ type Db = Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'
 async function assertDocumentVisibleOrThrow(
   ctx: { db: Db; tenantId: string; auth: { userId: string }; permissions: readonly string[] },
   doc: {
-    id?: string;
+    /** Required — DC-S03: an optional id is how the ACL branch got skipped. */
+    id: string;
     folderId: string | null;
     visibleToGroupIds: unknown;
     visibleToSiteIds: unknown;
@@ -69,6 +71,13 @@ async function assertDocumentVisibleOrThrow(
     throw new TRPCError({ code: 'FORBIDDEN', message: 'document-not-visible' });
   }
 }
+
+/**
+ * DC-S04: how much wider to read than the caller asked for, so the
+ * post-query visibility filter still has rows to return. `search.ts` uses
+ * the same trick (`MAX_PER_CATEGORY * 5`) for the same reason.
+ */
+const VISIBILITY_OVERFETCH = 5;
 
 const documentIdInput = z.object({ documentId: z.string().length(26) });
 
@@ -127,6 +136,18 @@ const createInput = z.object({
   labels: z.array(z.string().max(100)).default([]),
   freshnessDays: z.number().int().min(1).optional(),
   ...lifecycleFields,
+  /**
+   * DC-S05: `create` could not set these, and the column default is `[]` =
+   * visible to everyone. So a disciplinary letter or a restricted contract
+   * was readable by every `documents.view` holder — and returned by global
+   * search and the Heads-Up attachment picker — from the moment of upload
+   * until an admin remembered to open the detail page, switch to the Access
+   * tab and save. In a module whose whole selling point is a bespoke
+   * visibility layer, there was no way to create a restricted document
+   * atomically.
+   */
+  visibleToGroupIds: z.array(z.string().length(26)).optional(),
+  visibleToSiteIds: z.array(z.string().length(26)).optional(),
 });
 
 const updateInput = z.object({
@@ -192,6 +213,8 @@ export const documentsRouter = router({
     .use(requirePermission('documents.view'))
     .input(listInput)
     .query(async ({ ctx, input }) => {
+      const isManager =
+        ctx.permissions.includes('documents.manage') || grantsAdminAccess(ctx.permissions);
       const where = [eq(documents.tenantId, ctx.tenantId)];
       if (input.folderId !== undefined) {
         if (input.folderId === null) where.push(isNull(documents.folderId));
@@ -233,11 +256,19 @@ export const documentsRouter = router({
         .leftJoin(user, eq(user.id, documents.uploadedByUserId))
         .where(and(...where))
         .orderBy(asc(documents.name))
-        .limit(input.limit);
+        // DC-S04: the visibility filter below runs in JS, AFTER this LIMIT.
+        // Alphabetical order plus filter-after meant a tenant whose first 200
+        // documents by name sit in one restricted folder showed everyone else
+        // an EMPTY register — "No documents here" while they hold legitimate
+        // access to hundreds — with no pagination and no cursor to reach them.
+        // Over-fetch so the filter has material to work with, exactly as
+        // `search.ts` already does for the same reason, and tell the caller
+        // when the page was still truncated instead of implying it was all.
+        .limit(isManager ? input.limit : input.limit * VISIBILITY_OVERFETCH);
 
       // Managers see everything; everyone else is filtered by file + ancestor
       // folder visibility (To-Do #5/#6).
-      if (ctx.permissions.includes('documents.manage')) return rows;
+      if (isManager) return { documents: rows, truncated: rows.length >= input.limit };
 
       const [viewer, allFolders] = await Promise.all([
         loadViewerMemberships(ctx.db, ctx.tenantId, ctx.auth.userId),
@@ -261,13 +292,24 @@ export const documentsRouter = router({
       );
       const folderGranted = makeFolderGrantChecker(allFolders, grants);
 
-      return rows.filter(
+      const visible = rows.filter(
         (r) =>
           grants.docIds.has(r.id) ||
           folderGranted(r.folderId) ||
           (ownVisibilityPasses(r.visibleToGroupIds, r.visibleToSiteIds, viewer) &&
             folderVisible(r.folderId)),
       );
+      return {
+        documents: visible.slice(0, input.limit),
+        /**
+         * True when there is more to see than we returned — either the
+         * over-fetch itself hit its ceiling, or the visible set exceeded the
+         * requested page. The register uses this to say so rather than
+         * rendering a partial list as if it were complete.
+         */
+        truncated:
+          rows.length >= input.limit * VISIBILITY_OVERFETCH || visible.length > input.limit,
+      };
     }),
 
   get: tenantProcedure
@@ -353,6 +395,11 @@ export const documentsRouter = router({
       await assertUsersInTenant(ctx.db, ctx.tenantId, [input.responsibleUserId]);
       await assertGroupsInTenant(ctx.db, ctx.tenantId, [input.responsibleGroupId]);
       await assertDocumentFoldersInTenant(ctx.db, ctx.tenantId, [input.folderId]);
+      // DC-T05: same guard as `update` — these decide who may read the file.
+      if (input.visibleToGroupIds !== undefined)
+        await assertGroupsInTenant(ctx.db, ctx.tenantId, input.visibleToGroupIds);
+      if (input.visibleToSiteIds !== undefined)
+        await assertSitesInTenant(ctx.db, ctx.tenantId, input.visibleToSiteIds);
 
       const id = newId();
       const versionId = newId();
@@ -378,6 +425,14 @@ export const documentsRouter = router({
           responsibleUserId: input.responsibleUserId ?? null,
           responsibleGroupId: input.responsibleGroupId ?? null,
           reminderDays: input.reminderDays,
+          // DC-S05: restricted from birth when the uploader says so, rather
+          // than public until someone remembers the Access tab.
+          ...(input.visibleToGroupIds !== undefined
+            ? { visibleToGroupIds: input.visibleToGroupIds }
+            : {}),
+          ...(input.visibleToSiteIds !== undefined
+            ? { visibleToSiteIds: input.visibleToSiteIds }
+            : {}),
           currentVersion: 1,
           uploadedByUserId: ctx.auth.userId,
           createdAt: now,
@@ -418,6 +473,18 @@ export const documentsRouter = router({
         await assertGroupsInTenant(ctx.db, ctx.tenantId, [input.responsibleGroupId]);
       if (input.folderId !== undefined)
         await assertDocumentFoldersInTenant(ctx.db, ctx.tenantId, [input.folderId]);
+      // DC-T05: the visibility arrays are the one input that decides WHO MAY
+      // READ this document, and they were the one input nobody checked. They
+      // are plain jsonb with no foreign key, so a cross-tenant or stale id
+      // persisted cleanly and then matched nobody — the document ended up
+      // restricted to a group that does not exist in this tenant, readable
+      // only by managers, while the UI showed a rule that resolves to
+      // nothing. `assertAll` is a no-op on an empty array, so clearing the
+      // restriction with [] still works.
+      if (input.visibleToGroupIds !== undefined)
+        await assertGroupsInTenant(ctx.db, ctx.tenantId, input.visibleToGroupIds);
+      if (input.visibleToSiteIds !== undefined)
+        await assertSitesInTenant(ctx.db, ctx.tenantId, input.visibleToSiteIds);
 
       const updates: Partial<typeof documents.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) updates.name = input.name;
@@ -576,6 +643,23 @@ export const documentsRouter = router({
       if (links.length === 0) return [];
 
       const headsUpIds = links.map((l) => l.headsUpId);
+      /**
+       * DC-S01: the NAMED roster is engagement analytics, and Heads-Up gates
+       * exactly this data behind `headsUp.analytics.view` (see
+       * `headsUps.listRecipients`). This procedure needed only
+       * `documents.view`, which the seeded Standard set holds — so any shift
+       * supervisor could open a policy, click Signatures, and read every
+       * colleague's name, email address and personal
+       * viewed/acknowledged/signed timestamps for every Heads-Up that ever
+       * attached that document. "Who has not signed the drug-and-alcohol
+       * policy, by name" is the roll-up that key exists to gate.
+       *
+       * The COUNTS stay on `documents.view`: "is this policy signed off, and
+       * by how many of how many" is a legitimate question for anyone who can
+       * read the document, and it names nobody.
+       */
+      const canSeeRoster =
+        ctx.permissions.includes('headsUp.analytics.view') || grantsAdminAccess(ctx.permissions);
       const recipients = await ctx.db
         .select({
           headsUpId: headsUpRecipients.headsUpId,
@@ -588,7 +672,12 @@ export const documentsRouter = router({
         })
         .from(headsUpRecipients)
         .leftJoin(user, eq(headsUpRecipients.userId, user.id))
-        .where(inArray(headsUpRecipients.headsUpId, headsUpIds))
+        .where(
+          and(
+            eq(headsUpRecipients.tenantId, ctx.tenantId),
+            inArray(headsUpRecipients.headsUpId, headsUpIds),
+          ),
+        )
         .orderBy(user.name);
 
       const byHeadsUp = new Map<string, typeof recipients>();
@@ -598,10 +687,24 @@ export const documentsRouter = router({
         byHeadsUp.set(r.headsUpId, arr);
       }
 
-      return links.map((l) => ({
-        ...l,
-        recipients: byHeadsUp.get(l.headsUpId) ?? [],
-      }));
+      return links.map((l) => {
+        const rows = byHeadsUp.get(l.headsUpId) ?? [];
+        return {
+          ...l,
+          /** Always safe: totals name nobody. */
+          engagement: {
+            total: rows.length,
+            viewed: rows.filter((r) => r.viewedAt !== null).length,
+            /** Acknowledged OR signed — the old UI predicate, kept exact. */
+            acknowledged: rows.filter((r) => r.acknowledgedAt !== null || r.signedAt !== null)
+              .length,
+            signed: rows.filter((r) => r.signedAt !== null).length,
+          },
+          /** Empty unless the caller holds `headsUp.analytics.view`. */
+          recipients: canSeeRoster ? rows : [],
+          canSeeRoster,
+        };
+      });
     }),
 
   archive: tenantProcedure
@@ -663,6 +766,31 @@ export const documentsRouter = router({
             code: 'BAD_REQUEST',
             message: 'document-or-folder-id-required',
           });
+        }
+        // DC-T07: none of the four ids on this procedure was checked against
+        // the tenant, so a cross-tenant or simply mistyped value wrote a grant
+        // row and returned success. The failure is silent in the direction
+        // that matters: an administrator believes they have shared a document
+        // and has not, and nobody complains about access they never knew they
+        // were promised.
+        //
+        // The subject is the one that decides who the grant is FOR, so it is
+        // checked by type — user ids are better-auth text, group ids are
+        // 26-char ULIDs, and the two id spaces do not overlap.
+        if (input.subjectType === 'user') {
+          await assertUsersInTenant(ctx.db, ctx.tenantId, [input.subjectId]);
+        } else {
+          await assertGroupsInTenant(ctx.db, ctx.tenantId, [input.subjectId]);
+        }
+        // The target ids are inert rather than exploitable — every read path
+        // filters by tenant before consulting the ACL, so a foreign id in the
+        // grant matches nothing. But "matches nothing" IS the defect: it is
+        // the same silent no-op, one field over.
+        if (input.documentId !== undefined) {
+          await loadDocumentOrThrow(ctx.db, ctx.tenantId, input.documentId);
+        }
+        if (input.folderId !== undefined) {
+          await assertDocumentFoldersInTenant(ctx.db, ctx.tenantId, [input.folderId]);
         }
         const id = newId();
         await ctx.db.insert(documentAccess).values({

@@ -23,6 +23,7 @@ import {
   firePeeps,
   fireRiskAssessments,
 } from '@forma360/db/schema';
+import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
 import {
   checkDisplayStatus,
@@ -254,9 +255,9 @@ export async function runFireDueDigest(
   let emails = 0;
   for (const digest of digests) {
     const holders = await usersHoldingPermission(deps.db, digest.tenantId, 'fireSafety.manage');
-    const viewUrl = `${deps.appUrl}/en/fire-safety`;
     for (const holder of holders) {
       if (holder.email.length === 0) continue;
+      const viewUrl = appLink(deps.appUrl, holder.locale, '/fire-safety');
       try {
         await deps.notify(
           { email: holder.email, name: holder.name, locale: holder.locale },

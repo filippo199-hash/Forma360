@@ -213,7 +213,8 @@ export default function NewHeadsUpPage() {
     );
   }
 
-  const { data: allDocuments = [], error: documentsError } = trpc.documents.list.useQuery({});
+  const { data: documentsPage, error: documentsError } = trpc.documents.list.useQuery({});
+  const allDocuments = documentsPage?.documents ?? [];
 
   // ── tRPC mutations ──
   // `create` always writes a draft; publishing immediately is a create→publish
