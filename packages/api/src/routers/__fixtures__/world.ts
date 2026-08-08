@@ -137,6 +137,10 @@ export interface TenantWorld {
   documents: Record<string, string>;
   /** Heads-Ups planted across the lifecycle, by name. */
   headsUps: Record<string, string>;
+  /** Assets and asset types, by the name the suite refers to them by. */
+  assets: Record<string, string>;
+  /** The observation linked to an asset, for the cross-module read axis. */
+  linkedIssueId: string;
 }
 
 export interface World {
@@ -975,6 +979,131 @@ async function seedTenant(
     documentVersion: 1,
   });
 
+  // ─── Assets ───────────────────────────────────────────────────────────
+  //
+  // Two axes drive this seed. The hierarchy is capped at depth 1 by the
+  // router (a parent may not itself have a parent), so the fixture plants a
+  // root and a child to make that boundary reachable. And the asset detail
+  // page reads LINKED records from three other modules — observations,
+  // actions, inspections — on nothing but `assets.view`, so an observation
+  // is linked here to make that cross-module read answerable.
+  const assetIds: Record<string, string> = {};
+  const typeId = newId();
+  await db.insert(schema.assetTypes).values({
+    id: typeId,
+    tenantId,
+    name: 'Fork lift truck',
+    customFields: [{ id: 'hours', name: 'Engine hours', type: 'number' }],
+  });
+  assetIds.type = typeId;
+
+  const rootAsset = newId();
+  const childAsset = newId();
+  const archivedAsset = newId();
+  assetIds.root = rootAsset;
+  assetIds.child = childAsset;
+  assetIds.archived = archivedAsset;
+  await db.insert(schema.assets).values([
+    {
+      id: rootAsset,
+      tenantId,
+      name: 'FLT-01 — Counterbalance',
+      typeId,
+      siteId: primary,
+      ownerUserId: actors.manager,
+      qrToken: `seed-asset-qr-${opts.slug}-root`,
+    },
+    {
+      id: childAsset,
+      tenantId,
+      name: 'FLT-01 — Mast assembly',
+      typeId,
+      siteId: primary,
+      parentId: rootAsset,
+      qrToken: `seed-asset-qr-${opts.slug}-child`,
+    },
+    {
+      id: archivedAsset,
+      tenantId,
+      name: 'FLT-99 — Scrapped',
+      typeId,
+      archivedAt: new Date(opts.now.getTime() - DAY_MS),
+      qrToken: `seed-asset-qr-${opts.slug}-archived`,
+    },
+  ]);
+
+  await db.insert(schema.assetReadings).values([
+    {
+      id: newId(),
+      tenantId,
+      assetId: rootAsset,
+      fieldName: 'Engine hours',
+      value: '1200',
+      unit: 'h',
+      capturedByUserId: actors.manager,
+      capturedAt: new Date(opts.now.getTime() - 10 * DAY_MS),
+    },
+    {
+      id: newId(),
+      tenantId,
+      assetId: rootAsset,
+      fieldName: 'Engine hours',
+      value: '1310',
+      unit: 'h',
+      capturedByUserId: actors.manager,
+      capturedAt: new Date(opts.now.getTime() - DAY_MS),
+    },
+  ]);
+
+  // An observation against the asset. Its title is deliberately the kind of
+  // thing a company would not want visible to everyone who can look up a
+  // fork lift.
+  const issueCategoryId = newId();
+  await db
+    .insert(schema.issueCategories)
+    .values({ id: issueCategoryId, tenantId, name: 'Plant defect', createdBy: actors.admin });
+  const linkedIssueId = newId();
+  await db.insert(schema.issues).values({
+    id: linkedIssueId,
+    tenantId,
+    categoryId: issueCategoryId,
+    title: 'Brake failure — operator named in report',
+    referenceNumber: 'OBS-000001',
+    reportedByUserId: actors.manager,
+    // ADR 0007: an observation freezes who could see it at report time.
+    accessSnapshot: {
+      groupIds: [],
+      siteIds: [],
+      permissions: [],
+      snapshotAt: opts.now.toISOString(),
+    },
+    categorySnapshot: {
+      categoryId: issueCategoryId,
+      name: 'Plant defect',
+      customFields: [],
+      customQuestions: [],
+    },
+  });
+  await db
+    .insert(schema.issueAssets)
+    .values({ id: newId(), tenantId, issueId: linkedIssueId, assetId: rootAsset });
+
+  if (opts.volume) {
+    // Above the list procedure's hard cap of 500, so a silent truncation is
+    // observable rather than theoretical.
+    const bulk: Array<typeof schema.assets.$inferInsert> = [];
+    for (let i = 1; i <= 520; i++) {
+      bulk.push({
+        id: newId(),
+        tenantId,
+        name: `Plant item ${pad(i)}`,
+        typeId,
+        qrToken: `seed-asset-qr-${opts.slug}-bulk-${pad(i)}`,
+      });
+    }
+    await db.insert(schema.assets).values(bulk);
+  }
+
   return {
     tenantId,
     actors,
@@ -988,6 +1117,8 @@ async function seedTenant(
     folders,
     documents: documentIds,
     headsUps: headsUpIds,
+    assets: assetIds,
+    linkedIssueId,
   };
 }
 
