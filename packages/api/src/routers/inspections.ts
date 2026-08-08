@@ -52,6 +52,7 @@ import {
   registerDependentResolver,
   type DependentResolver,
 } from '@forma360/permissions/dependents';
+import { appLink } from '@forma360/shared/app-link';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
 import { usersHoldingPermission } from '@forma360/permissions/holders';
@@ -388,17 +389,18 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
     db: Parameters<DependentResolver>[0]['db'],
     tenantId: string,
     userId: string,
-  ): Promise<{ name: string; email: string }> {
+  ): Promise<{ name: string; email: string; locale: string | null }> {
     const rows = await db
-      .select({ name: user.name, email: user.email })
+      // DOC-A01: locale, so the sign link lands in the signer's language.
+      .select({ name: user.name, email: user.email, locale: user.locale })
       .from(user)
       .where(and(eq(user.tenantId, tenantId), eq(user.id, userId)))
       .limit(1);
     const row = rows[0];
     if (row === undefined) {
-      return { name: userId, email: '' };
+      return { name: userId, email: '', locale: null };
     }
-    return { name: row.name, email: row.email };
+    return { name: row.name, email: row.email, locale: row.locale };
   }
 
   /**
@@ -435,7 +437,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           inspectionTitle: args.inspectionTitle,
           requesterName: requester.name,
           signerName: signer.name,
-          signUrl: `${appUrl}/en/inspections/${args.inspectionId}/sign`,
+          signUrl: appLink(appUrl, signer.locale, `/inspections/${args.inspectionId}/sign`),
         },
       });
     } catch (err) {
@@ -463,7 +465,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
           variables: {
             inspectionTitle: args.inspectionTitle,
             recipientName: recipient.name,
-            viewUrl: `${appUrl}/en/inspections/${args.inspectionId}`,
+            viewUrl: appLink(appUrl, recipient.locale, `/inspections/${args.inspectionId}`),
           },
         });
       } catch (err) {
@@ -1066,7 +1068,10 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
                   inspectionTitle: insp.title,
                   questionPrompt: active.prompt,
                   response: active.optionLabel,
-                  viewUrl: `${appUrl}/en/inspections/${insp.id}/report`,
+                  // DOC-A01: a notify trigger emails an address configured
+                  // on the template — there is no account and no locale, so
+                  // the app default is the only honest answer.
+                  viewUrl: appLink(appUrl, null, `/inspections/${insp.id}/report`),
                 },
               });
             } catch (err) {
@@ -1188,7 +1193,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
                   recipientName: approver.name,
                   title: insp.title,
                   documentNumber: insp.documentNumber ?? '',
-                  viewUrl: `${deps.appUrl.replace(/\/$/, '')}/en/approvals/${insp.id}`,
+                  viewUrl: appLink(deps.appUrl, approver.locale, `/approvals/${insp.id}`),
                 },
               });
             }

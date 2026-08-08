@@ -29,6 +29,7 @@ import {
 } from '@forma360/db/schema';
 import { type DependentResolverDeps } from '@forma360/permissions';
 import type { Database } from '@forma360/db/client';
+import { appLink } from '@forma360/shared/app-link';
 import { newId } from '@forma360/shared/id';
 import {
   DEFAULT_PRIORITY_DUE_DATE_DAYS,
@@ -638,7 +639,7 @@ export async function notifyAssignment(
         referenceNumber: input.referenceNumber ?? '',
         dueLine:
           input.dueAt !== null ? ` It is due by ${input.dueAt.toISOString().slice(0, 10)}.` : '',
-        viewUrl: `${actionsDeps.appUrl.replace(/\/$/, '')}/en/actions/${input.actionId}`,
+        viewUrl: appLink(actionsDeps.appUrl, assignee.locale, `/actions/${input.actionId}`),
       },
     });
   } catch (err) {

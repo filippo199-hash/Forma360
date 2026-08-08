@@ -34,6 +34,7 @@ import {
   user,
 } from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
+import { appLink } from '@forma360/shared/app-link';
 import { getEmailDomain, isFreeEmailDomain } from '@forma360/shared/email-domains';
 import { newId } from '@forma360/shared/id';
 import type { Logger } from '@forma360/shared/logger';
@@ -296,7 +297,9 @@ export function createAuthRouter(deps: AuthRouterDeps) {
           ),
         );
 
-      const settingsUrl = `${appUrl}/en/settings/users`;
+      // DOC-A01: no per-admin locale is loaded on this path, so this is the
+      // app default rather than an oversight. `appLink` makes that explicit.
+      const settingsUrl = appLink(appUrl, null, '/settings/users');
       for (const admin of admins) {
         await deps.sendEmail({
           to: admin.email,

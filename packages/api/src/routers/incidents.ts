@@ -101,6 +101,7 @@ import {
 } from '@forma360/shared/incidents';
 import { grantsAdminAccess } from '@forma360/permissions/catalogue';
 import { usersHoldingPermission } from '@forma360/permissions/holders';
+import { appLink } from '@forma360/shared/app-link';
 import { newId } from '@forma360/shared/id';
 import { toCsv } from '@forma360/shared/csv';
 import { TRPCError } from '@trpc/server';
@@ -180,9 +181,10 @@ async function loadUserInTenant(
   db: Db,
   tenantId: string,
   userId: string,
-): Promise<{ id: string; name: string; email: string }> {
+): Promise<{ id: string; name: string; email: string; locale: string | null }> {
   const rows = await db
-    .select({ id: user.id, name: user.name, email: user.email })
+    // DOC-A01: locale, so an assignment email and its link follow the reader.
+    .select({ id: user.id, name: user.name, email: user.email, locale: user.locale })
     .from(user)
     .where(and(eq(user.tenantId, tenantId), eq(user.id, userId)))
     .limit(1);
@@ -1156,7 +1158,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
               recipientName: investigator.name,
               incidentRef: incident.referenceNumber,
               incidentTitle: incident.confidential ? incident.referenceNumber : incident.title,
-              viewUrl: `${deps.appUrl ?? ''}/en/incidents/${incident.id}`,
+              viewUrl: appLink(deps.appUrl ?? '', investigator.locale, `/incidents/${incident.id}`),
             },
           });
         }
@@ -1298,7 +1300,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
             recipientName: investigator.name,
             incidentRef: incident.referenceNumber,
             incidentTitle: incident.confidential ? incident.referenceNumber : incident.title,
-            viewUrl: `${deps.appUrl ?? ''}/en/incidents/${incident.id}`,
+            viewUrl: appLink(deps.appUrl ?? '', investigator.locale, `/incidents/${incident.id}`),
           },
         });
         return { ok: true };

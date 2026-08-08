@@ -60,7 +60,10 @@ import {
   fireLogbookEntries,
   fireMarshals,
   firePeeps,
+  fireFraVersions,
   fireRiskAssessments,
+  fireSafetySettings,
+  trainingRequirements,
   fireSignificantFindings,
   sites,
   user,
@@ -87,6 +90,7 @@ import {
   FRA_FINDING_PRIORITIES,
   FRA_METHODOLOGIES,
   FRA_RISK_RATINGS,
+  buildFraVersionContent,
   isAbove11mResidential,
   isHighRiseResidential,
   marshalTrainingStatus,
@@ -98,6 +102,8 @@ import {
   type FireBuildingProfile,
   type FireCheckType,
 } from '@forma360/shared/fire-safety';
+import { loadMarshalRequirementIds, resolveMarshalCompetence } from '../marshal-competence';
+import { appLink } from '@forma360/shared/app-link';
 import { newId } from '@forma360/shared/id';
 import { usersHoldingPermission } from '@forma360/permissions/holders';
 import { TRPCError } from '@trpc/server';
@@ -127,6 +133,13 @@ export interface FireSafetyRouterDeps {
    */
   sendAlertEmail?: (input: {
     to: string;
+    /**
+     * DOC-A01: the recipient's language, so the body follows the link.
+     * `string | undefined` rather than `| null` to match `TemplatedEmail`
+     * under exactOptionalPropertyTypes — the call site spreads it in only
+     * when a locale exists.
+     */
+    locale?: string | undefined;
     templateKey: string;
     variables: Record<string, string>;
   }) => Promise<unknown>;
@@ -320,6 +333,61 @@ async function syncAutoChecks(
  * `publishedAt`: an active FRA whose content moved after sign-off is
  * flagged attestation-stale until the RP re-attests (re-publishes).
  */
+/**
+ * FS-G05: refuse a content change that has no signed copy behind it.
+ *
+ * Editing a LIVE assessment in place is deliberate and documented — ADR
+ * 0011 §1 chose it for risk assessments, and FS-E29 asserts it here: the
+ * amber "attestation stale" banner is the whole point. What made it unsafe
+ * was that the working row was the only copy in existence, so an edit to a
+ * signed FRA destroyed the evidence of what was signed.
+ *
+ * Now a published FRA always has a frozen version, so the edit is safe by
+ * construction. This guard catches the one remaining case: an FRA carrying
+ * a sign-off stamp from BEFORE this migration, which has `currentVersion`
+ * 0 and therefore no snapshot to fall back on. Those must be re-published
+ * (re-attested) before their content can move again — the alternative is
+ * to keep silently destroying the only copy of a statutory document.
+ */
+function assertFraContentEditable(fra: { publishedAt: Date | null; currentVersion: number }): void {
+  if (fra.publishedAt !== null && fra.currentVersion === 0) {
+    throw new TRPCError({
+      code: 'PRECONDITION_FAILED',
+      message: 'signed-without-snapshot',
+    });
+  }
+}
+
+/**
+ * FS-X01: refuse a hand-typed competence date once the tenant has said
+ * which training requirement is the fire-marshal ticket.
+ *
+ * The fields cannot simply be removed — Training (B7) is brand-gated, so on
+ * a deployment without it these dates are the only way to record marshal
+ * competence at all. But they must not stay freely writable once a
+ * designation exists: a value the system will immediately label "unbacked"
+ * is a lie with a footnote, and accepting it silently teaches people to
+ * keep maintaining both registers, which is the whole defect.
+ *
+ * Clearing to `null` is ALWAYS allowed — that is how an administrator
+ * retires a legacy unbacked date.
+ */
+async function assertMarshalDatesAllowed(
+  db: Database,
+  tenantId: string,
+  input: { trainedAt?: Date | null | undefined; trainingExpiresAt?: Date | null | undefined },
+): Promise<void> {
+  const settingDates = input.trainedAt != null || input.trainingExpiresAt != null;
+  if (!settingDates) return;
+  const designated = await loadMarshalRequirementIds(db, tenantId);
+  if (designated.length > 0) {
+    throw new TRPCError({
+      code: 'PRECONDITION_FAILED',
+      message: 'training-matrix-is-source',
+    });
+  }
+}
+
 async function touchFraContent(db: Database, fraId: string, now: Date): Promise<void> {
   await db
     .update(fireRiskAssessments)
@@ -1022,6 +1090,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (fra.archivedAt !== null) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
         }
+        assertFraContentEditable(fra);
         if (input.buildingId !== null && input.buildingId !== undefined) {
           await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
         }
@@ -1087,6 +1156,9 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (fra.archivedAt !== null) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
         }
+        // The findings ARE the assessment's content — the schema comment
+        // names them alongside the narrative and the rating.
+        assertFraContentEditable(fra);
         const existing = await ctx.db
           .select({ sortOrder: fireSignificantFindings.sortOrder })
           .from(fireSignificantFindings)
@@ -1145,6 +1217,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (fra.archivedAt !== null) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
         }
+        assertFraContentEditable(fra);
         await ctx.db
           .update(fireSignificantFindings)
           .set({
@@ -1183,6 +1256,24 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           .limit(1);
         const finding = rows[0];
         if (finding === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        /**
+         * FS-G05, the worst of the four and unnamed by the audit: this
+         * procedure never loaded the FRA at all, so it had neither a status
+         * check NOR an `archivedAt` one. Any finding recorded with
+         * `requiresAction: false` — every observation noted but not
+         * remediated — could be HARD-DELETED off a live signed FRA, and the
+         * `finding_removed` event carries only the category, not the text.
+         * The words were simply gone.
+         *
+         * The author did reason about evidence and reached for `actionId`
+         * as the proxy; the missing half is that a finding on a SIGNED
+         * assessment is evidence whether or not it raised an action.
+         */
+        const fra = await loadFra(ctx.db, ctx.tenantId, finding.fraId);
+        if (fra.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        assertFraContentEditable(fra);
         // A finding that already generated an action is evidence — it can
         // be resolved but not removed.
         if (finding.actionId !== null) {
@@ -1261,6 +1352,8 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (fra.riskRating === null) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-risk-rating' });
         }
+        // Narrowed once, so the version snapshot below does not need a cast.
+        const riskRating = fra.riskRating;
         if (fra.responsiblePersonName.trim().length === 0) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-responsible-person' });
         }
@@ -1321,6 +1414,12 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           actionRefs.set(finding.id, `AC-${String(n).padStart(6, '0')}`);
         }
 
+        // Needed by the version snapshot below AND by the intolerable alert,
+        // so it is resolved once before the transaction.
+        const publisherName =
+          (await userNamesById(ctx.db, ctx.tenantId, [ctx.auth.userId])).get(ctx.auth.userId) ??
+          null;
+
         const createdActionIds: string[] = [];
         await ctx.db.transaction(async (tx) => {
           for (const finding of pending) {
@@ -1351,6 +1450,55 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           }
           const now = new Date();
           const frequency = fra.reviewFrequencyMonths ?? suggestedFraReviewMonths(fra.riskRating);
+          const nextReviewAt = addMonthsClamped(now, frequency);
+
+          /**
+           * FS-G05: freeze what is being signed.
+           *
+           * `publish` used to flip a status flag on a mutable row, and four
+           * procedures could then rewrite that row — including its risk
+           * rating, and including hard-deleting a significant finding —
+           * under a LOWER permission tier than could publish it. The
+           * Responsible Person who attested "suitable and sufficient" under
+           * Article 9 could not afterwards demonstrate what they attested,
+           * because no copy of it existed anywhere.
+           *
+           * Supersede n BEFORE inserting n+1: the partial unique index
+           * `fire_fra_versions_current_idx` makes "exactly one current
+           * signed version" a database fact, and unique indexes are checked
+           * per statement rather than at commit.
+           */
+          await tx
+            .update(fireFraVersions)
+            .set({ supersededAt: now })
+            .where(and(eq(fireFraVersions.fraId, fra.id), isNull(fireFraVersions.supersededAt)));
+          const versionNumber = fra.currentVersion + 1;
+          // Re-read the findings inside the tx: `pending` above just gave
+          // them their action ids, and the snapshot must carry those.
+          const frozenFindings = await tx
+            .select()
+            .from(fireSignificantFindings)
+            .where(eq(fireSignificantFindings.fraId, fra.id))
+            .orderBy(asc(fireSignificantFindings.sortOrder));
+          await tx.insert(fireFraVersions).values({
+            id: newId(),
+            tenantId: ctx.tenantId,
+            fraId: fra.id,
+            versionNumber,
+            content: buildFraVersionContent({
+              // `riskRating` is non-null here: the `no-risk-rating` guard at
+              // the top of `publish` refuses otherwise.
+              fra: { ...fra, riskRating },
+              buildingName: building?.name ?? null,
+              nextReviewAt,
+              findings: frozenFindings,
+            }),
+            signedOffBy: ctx.auth.userId,
+            signedOffByName: publisherName,
+            signedOffAt: now,
+            actionsCreated: createdActionIds.length,
+          });
+
           // FS-7: every publish is a fresh attestation — the signature
           // covers the content as of NOW, so both clocks reset together.
           await tx
@@ -1360,8 +1508,9 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               publishedAt: now,
               publishedBy: ctx.auth.userId,
               contentUpdatedAt: now,
+              currentVersion: versionNumber,
               reviewFrequencyMonths: frequency,
-              nextReviewAt: addMonthsClamped(now, frequency),
+              nextReviewAt,
               updatedAt: now,
             })
             .where(eq(fireRiskAssessments.id, fra.id));
@@ -1381,22 +1530,23 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (fra.riskRating === 'intolerable' && sendAlertEmail !== undefined) {
           try {
             const holders = await usersHoldingPermission(ctx.db, ctx.tenantId, 'fireSafety.manage');
-            const publisherName =
-              (await userNamesById(ctx.db, ctx.tenantId, [ctx.auth.userId])).get(ctx.auth.userId) ??
-              'a colleague';
-            const viewUrl = `${deps.appUrl ?? ''}/en/fire-safety/fra/${fra.id}`;
             await Promise.all(
               holders.map((h) =>
                 sendAlertEmail({
                   to: h.email,
+                  ...(h.locale !== null ? { locale: h.locale } : {}),
                   templateKey: 'fra-intolerable-alert',
                   variables: {
                     recipientName: h.name,
                     title: fra.title,
                     referenceNumber: fra.referenceNumber ?? '',
                     buildingLine: building !== null ? ` for ${building.name}` : '',
-                    publishedByName: publisherName,
-                    viewUrl,
+                    publishedByName: publisherName ?? 'a colleague',
+                    // DOC-A01, eleventh instance — and in a ROUTER, where
+                    // the worker sweep in app-link.test.ts cannot see it.
+                    // Every holder got an /en/ link regardless of their
+                    // language; `h.locale` was right here all along.
+                    viewUrl: appLink(deps.appUrl ?? '', h.locale, `/fire-safety/fra/${fra.id}`),
                   },
                 }),
               ),
@@ -2629,11 +2779,25 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           rows.map((r) => r.userId),
         );
         const now = new Date();
-        return rows.map((m) => ({
-          ...m,
-          userName: names.get(m.userId) ?? null,
-          trainingStatus: marshalTrainingStatus(m, now),
-        }));
+        // FS-X01: the training matrix is the register that holds
+        // certificates, verification status and evidence. Where it has an
+        // answer it IS the answer — not "best of the two", because a record
+        // saying expired against a hand-typed date saying in-date must not
+        // render green.
+        const competence = await resolveMarshalCompetence(ctx.db, ctx.tenantId, rows, now);
+        return rows.map((m) => {
+          const c = competence.get(m.userId);
+          return {
+            ...m,
+            userName: names.get(m.userId) ?? null,
+            trainingStatus: c?.status ?? marshalTrainingStatus(m, now),
+            /** 'training' | 'local' | 'none' — where the verdict came from. */
+            competenceSource: c?.source ?? 'none',
+            /** A date somebody typed with no training record behind it. */
+            unbacked: c?.unbacked ?? false,
+            conflictsWithLocal: c?.conflictsWithLocal ?? false,
+          };
+        });
       }),
 
     add: tenantProcedure
@@ -2655,6 +2819,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (building.archivedAt !== null) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
         }
+        await assertMarshalDatesAllowed(ctx.db, ctx.tenantId, input);
         // The user must be a member of this tenant.
         const member = (
           await ctx.db
@@ -2730,6 +2895,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (marshal.endedAt !== null) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'ended' });
         }
+        await assertMarshalDatesAllowed(ctx.db, ctx.tenantId, input);
         await ctx.db
           .update(fireMarshals)
           .set({
@@ -2796,9 +2962,20 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         .from(fireMarshals)
         .where(and(eq(fireMarshals.tenantId, ctx.tenantId), isNull(fireMarshals.endedAt)));
       const now = new Date();
+      // FS-X01: `gap` is the module's only marshal control, and it was
+      // satisfiable by typing a date. It now runs on the reconciled verdict.
+      const competence = await resolveMarshalCompetence(ctx.db, ctx.tenantId, rows, now);
+      const verdict = (m: (typeof rows)[number]) =>
+        competence.get(m.userId) ?? {
+          status: marshalTrainingStatus(m, now),
+          source: 'none' as const,
+          unbacked: false,
+          conflictsWithLocal: false,
+        };
       return buildings.map((building) => {
         const members = rows.filter((m) => m.buildingId === building.id);
-        const statuses = members.map((m) => marshalTrainingStatus(m, now));
+        const verdicts = members.map(verdict);
+        const statuses = verdicts.map((v) => v.status);
         const inDate = statuses.filter((s) => s === 'in_date' || s === 'expiring_soon').length;
         return {
           buildingId: building.id,
@@ -2808,6 +2985,14 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           marshalCount: members.length,
           inDateCount: inDate,
           expiringSoonCount: statuses.filter((s) => s === 'expiring_soon').length,
+          /**
+           * Marshals asserted competent by a date nobody can corroborate.
+           * They still count toward `inDateCount` — silently discounting
+           * them would flip live registers red overnight — but the number
+           * is surfaced so the gap between the two registers is visible
+           * instead of invisible.
+           */
+          unbackedCount: verdicts.filter((v) => v.unbacked).length,
           // FS-8: a gap is only a gap where cover is required, and the
           // building's own minimum is the bar — not "at least one,
           // everywhere".
@@ -2949,9 +3134,66 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
       };
     });
 
+  /**
+   * FS-X01: which training requirements count as a fire-marshal ticket.
+   *
+   * Empty is the default and means "no designation" — the pre-FS-X01
+   * behaviour — so the fix ships inert and no tenant's marshals change
+   * state until an administrator deliberately makes the link.
+   */
+  const settings = router({
+    get: tenantProcedure.use(requirePermission('fireSafety.view')).query(async ({ ctx }) => {
+      assertEnabled();
+      return { marshalRequirementIds: await loadMarshalRequirementIds(ctx.db, ctx.tenantId) };
+    }),
+    setMarshalRequirements: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(z.object({ requirementIds: z.array(z.string().length(26)).max(20) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const ids = [...new Set(input.requirementIds)];
+        // Ground rule 4: a requirement id from another tenant would
+        // designate a ticket nobody here can hold, quietly making every
+        // marshal unbacked.
+        if (ids.length > 0) {
+          const found = await ctx.db
+            .select({ id: trainingRequirements.id })
+            .from(trainingRequirements)
+            .where(
+              and(
+                eq(trainingRequirements.tenantId, ctx.tenantId),
+                inArray(trainingRequirements.id, ids),
+                isNull(trainingRequirements.archivedAt),
+              ),
+            );
+          if (found.length !== ids.length) {
+            throw new TRPCError({
+              code: 'NOT_FOUND',
+              message: 'training-requirement-not-found',
+            });
+          }
+        }
+        const now = new Date();
+        await ctx.db
+          .insert(fireSafetySettings)
+          .values({
+            tenantId: ctx.tenantId,
+            marshalRequirementIds: ids,
+            updatedBy: ctx.auth.userId,
+            updatedAt: now,
+          })
+          .onConflictDoUpdate({
+            target: fireSafetySettings.tenantId,
+            set: { marshalRequirementIds: ids, updatedBy: ctx.auth.userId, updatedAt: now },
+          });
+        return { ok: true as const };
+      }),
+  });
+
   return router({
     buildings,
     fras,
+    settings,
     logbook,
     doors,
     drills,
