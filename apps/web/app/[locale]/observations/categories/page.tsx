@@ -20,6 +20,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDate } from '../../../../src/lib/format-date';
 
 const MAX_NAME = 200;
 const MAX_DESCRIPTION = 2000;
@@ -393,8 +394,3 @@ function CreateCategoryDialog({
   );
 }
 
-function formatDate(d: Date | string): string {
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return '—';
-  return dt.toLocaleDateString();
-}

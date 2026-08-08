@@ -3919,7 +3919,8 @@
       "reackTitle": "Previously acknowledged version {version}",
       "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
       "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
-      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically.",
+      "noEmailYet": "Noch keine E-Mail-Adresse"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -4872,7 +4873,10 @@
       "addGasLimit": "Grenzwert hinzufügen",
       "gasFreshness": "Aktualität der Gasmessung",
       "gasFreshnessUnit": "Minuten",
-      "description": "Beschreibung"
+      "description": "Beschreibung",
+      "requiredTraining": "Erforderliche Schulungen",
+      "requiredTrainingHint": "Jede benannte Person muss diese gültig besitzen, bevor dieser Typ ausgestellt werden kann.",
+      "requiredTrainingNone": "Noch keine Schulungsanforderungen definiert."
     },
     "errors": {
       "module-disabled": "Dieses Modul ist nicht verfügbar.",
@@ -4935,10 +4939,7 @@
     },
     "signatures": {
       "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt"
-    },
-    "requiredTraining": "Erforderliche Schulungen",
-    "requiredTrainingHint": "Jede benannte Person muss diese gültig besitzen, bevor dieser Typ ausgestellt werden kann.",
-    "requiredTrainingNone": "Noch keine Schulungsanforderungen definiert."
+    }
   },
   "fireSafety": {
     "title": "Brandschutz",
@@ -5841,6 +5842,7 @@
         "not_reportable": "Nicht meldepflichtig",
         "death": "Todesfall",
         "specified_injury": "Spezifizierte Verletzung",
+        "non_worker_hospital": "Nicht bei der Arbeit befindliche Person ins Krankenhaus gebracht",
         "over_7_day": "Über-7-Tage-Verletzung",
         "occupational_disease": "Berufskrankheit",
         "dangerous_occurrence": "Gefährliches Ereignis",
@@ -5849,8 +5851,9 @@
       "help": {
         "not_reportable": "Keine meldepflichtige Kategorie trifft zu. Begründung erfassen — die negative Entscheidung ist der Nachweis.",
         "death": "Eine Person ist infolge eines Arbeitsunfalls verstorben. Unverzüglich melden; Bericht binnen 10 Tagen.",
-        "specified_injury": "Fraktur (außer Finger/Zehen), Amputation, Sehverlust, Quetschung von Kopf/Rumpf, schwere Verbrennungen, Skalpierung, Bewusstlosigkeit durch Asphyxie oder Krankenhausaufnahme über 24 h. Bericht binnen 10 Tagen.",
-        "over_7_day": "Mehr als 7 Tage arbeitsunfähig, ohne den Unfalltag. Bericht binnen 15 Tagen nach dem Unfall.",
+        "specified_injury": "A worker suffered a Schedule 1 injury: any fracture other than to fingers, thumbs or toes; amputation; permanent or likely-permanent loss or reduction of sight; a crush injury to the head or torso causing damage to the brain or internal organs; a serious burn covering more than 10% of the body or damaging the eyes, respiratory system or other vital organs; scalping requiring hospital treatment; loss of consciousness caused by head injury or asphyxia; or, from working in an enclosed space, any injury leading to hypothermia, heat-induced illness or resuscitation, or requiring admission to hospital for more than 24 hours. Report within 10 days.",
+        "non_worker_hospital": "A person not at work (a visitor, a delivery driver, a member of the public) was injured by a work-related accident and taken from the scene to hospital for treatment. Reportable regardless of how serious the injury turns out to be. Report within 10 days.",
+        "over_7_day": "The worker is incapacitated for routine work for more than 7 consecutive days, not counting the day of the accident. Report within 15 days of the accident.",
         "occupational_disease": "Diagnostizierte arbeitsbedingte Erkrankung — Karpaltunnel, Dermatitis, Berufsasthma, HAVS, Sehnenscheidenentzündung, Berufskrebs.",
         "dangerous_occurrence": "Ereignis nach Schedule 2 — Versagen von Hebezeug, Gerüsteinsturz, Elektrobrand/Explosion, Drucksystemversagen, unbeabsichtigte Freisetzung.",
         "gas_incident": "Gasbedingter Todesfall bzw. Verletzung oder gefährliche Gasinstallation."

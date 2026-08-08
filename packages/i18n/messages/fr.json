@@ -3919,7 +3919,8 @@
       "reackTitle": "Previously acknowledged version {version}",
       "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
       "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
-      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically.",
+      "noEmailYet": "Aucune adresse e-mail"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -4872,7 +4873,10 @@
       "addGasLimit": "Ajouter la limite",
       "gasFreshness": "Fraîcheur de la mesure de gaz",
       "gasFreshnessUnit": "minutes",
-      "description": "Description"
+      "description": "Description",
+      "requiredTraining": "Formations requises",
+      "requiredTrainingHint": "Chaque intervenant nommé doit les détenir, en cours de validité, avant émission.",
+      "requiredTrainingNone": "Aucune exigence de formation définie."
     },
     "errors": {
       "module-disabled": "Ce module n'est pas disponible.",
@@ -4935,10 +4939,7 @@
     },
     "signatures": {
       "competenceBlocked": "Bloqué : compétence non satisfaite"
-    },
-    "requiredTraining": "Formations requises",
-    "requiredTrainingHint": "Chaque intervenant nommé doit les détenir, en cours de validité, avant émission.",
-    "requiredTrainingNone": "Aucune exigence de formation définie."
+    }
   },
   "fireSafety": {
     "title": "Sécurité incendie",
@@ -5841,6 +5842,7 @@
         "not_reportable": "Non déclarable",
         "death": "Décès",
         "specified_injury": "Blessure spécifiée",
+        "non_worker_hospital": "Personne n'étant pas au travail conduite à l'hôpital",
         "over_7_day": "Arrêt de plus de 7 jours",
         "occupational_disease": "Maladie professionnelle",
         "dangerous_occurrence": "Événement dangereux",
@@ -5849,8 +5851,9 @@
       "help": {
         "not_reportable": "Aucune catégorie déclarable ne s'applique. Motivez — la décision négative est la preuve.",
         "death": "Une personne est décédée des suites d'un accident du travail. Notifier sans délai ; rapport sous 10 jours.",
-        "specified_injury": "Fracture (hors doigts/orteils), amputation, perte de la vue, écrasement tête/torse, brûlures graves, scalp, perte de connaissance par asphyxie, ou hospitalisation de plus de 24 h. Rapport sous 10 jours.",
-        "over_7_day": "Incapacité de plus de 7 jours, sans compter le jour de l'accident. Rapport sous 15 jours.",
+        "specified_injury": "A worker suffered a Schedule 1 injury: any fracture other than to fingers, thumbs or toes; amputation; permanent or likely-permanent loss or reduction of sight; a crush injury to the head or torso causing damage to the brain or internal organs; a serious burn covering more than 10% of the body or damaging the eyes, respiratory system or other vital organs; scalping requiring hospital treatment; loss of consciousness caused by head injury or asphyxia; or, from working in an enclosed space, any injury leading to hypothermia, heat-induced illness or resuscitation, or requiring admission to hospital for more than 24 hours. Report within 10 days.",
+        "non_worker_hospital": "A person not at work (a visitor, a delivery driver, a member of the public) was injured by a work-related accident and taken from the scene to hospital for treatment. Reportable regardless of how serious the injury turns out to be. Report within 10 days.",
+        "over_7_day": "The worker is incapacitated for routine work for more than 7 consecutive days, not counting the day of the accident. Report within 15 days of the accident.",
         "occupational_disease": "Maladie professionnelle diagnostiquée liée au travail — canal carpien, dermatite, asthme professionnel, HAVS, tendinite, cancer professionnel.",
         "dangerous_occurrence": "Événement de l'annexe 2 — effondrement d'appareil de levage, d'échafaudage, incendie/explosion électrique, défaillance sous pression, rejet accidentel.",
         "gas_incident": "Décès ou blessure liés au gaz, ou installation de gaz dangereuse."

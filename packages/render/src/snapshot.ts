@@ -162,8 +162,13 @@ export async function loadInspectionSnapshot(
   const [siteRow] = insp.siteId
     ? await db.select({ name: sites.name }).from(sites).where(eq(sites.id, insp.siteId)).limit(1)
     : [];
-  const [conductedByRow] = insp.conductedBy
-    ? await db.select({ name: user.name }).from(user).where(eq(user.id, insp.conductedBy)).limit(1)
+  // Fall back to whoever created the run when `conductedBy` is null —
+  // the same fallback `inspections.get` applies, so the screen and the
+  // printed document name the same person. A report that prints
+  // "Prepared by —" is not much use to whoever it is handed to.
+  const conductorId = insp.conductedBy ?? insp.createdBy;
+  const [conductedByRow] = conductorId
+    ? await db.select({ name: user.name }).from(user).where(eq(user.id, conductorId)).limit(1)
     : [];
 
   return {

@@ -3908,7 +3908,8 @@
       "reackTitle": "Previously acknowledged version {version}",
       "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
       "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
-      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically.",
+      "noEmailYet": "尚无电子邮件地址"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -4861,7 +4862,10 @@
       "addGasLimit": "添加限值",
       "gasFreshness": "气体检测有效期",
       "gasFreshnessUnit": "分钟",
-      "description": "说明"
+      "description": "说明",
+      "requiredTraining": "所需培训",
+      "requiredTrainingHint": "所有列明作业人员必须持有且在有效期内，才能签发此类许可证。",
+      "requiredTrainingNone": "尚未定义培训要求。"
     },
     "errors": {
       "module-disabled": "该模块不可用。",
@@ -4924,10 +4928,7 @@
     },
     "signatures": {
       "competenceBlocked": "已阻止：能力要求未满足"
-    },
-    "requiredTraining": "所需培训",
-    "requiredTrainingHint": "所有列明作业人员必须持有且在有效期内，才能签发此类许可证。",
-    "requiredTrainingNone": "尚未定义培训要求。"
+    }
   },
   "fireSafety": {
     "title": "消防安全",
@@ -5830,6 +5831,7 @@
         "not_reportable": "无需报告",
         "death": "死亡",
         "specified_injury": "特定伤害",
+        "non_worker_hospital": "非工作人员送医",
         "over_7_day": "超7天伤害",
         "occupational_disease": "职业病",
         "dangerous_occurrence": "危险事件",
@@ -5838,8 +5840,9 @@
       "help": {
         "not_reportable": "不符合任何应报类别。请记录理由——否定性判定本身就是记录。",
         "death": "有人因工亡故。须立即通报，10日内提交报告。",
-        "specified_injury": "骨折（手指脚趾除外）、截肢、失明、头/躯干挤压、严重烧伤、头皮撕脱、窒息致昏迷或住院超24小时。10日内报告。",
-        "over_7_day": "不计事故当日，丧失工作能力超过7天。事故后15日内报告。",
+        "specified_injury": "A worker suffered a Schedule 1 injury: any fracture other than to fingers, thumbs or toes; amputation; permanent or likely-permanent loss or reduction of sight; a crush injury to the head or torso causing damage to the brain or internal organs; a serious burn covering more than 10% of the body or damaging the eyes, respiratory system or other vital organs; scalping requiring hospital treatment; loss of consciousness caused by head injury or asphyxia; or, from working in an enclosed space, any injury leading to hypothermia, heat-induced illness or resuscitation, or requiring admission to hospital for more than 24 hours. Report within 10 days.",
+        "non_worker_hospital": "A person not at work (a visitor, a delivery driver, a member of the public) was injured by a work-related accident and taken from the scene to hospital for treatment. Reportable regardless of how serious the injury turns out to be. Report within 10 days.",
+        "over_7_day": "The worker is incapacitated for routine work for more than 7 consecutive days, not counting the day of the accident. Report within 15 days of the accident.",
         "occupational_disease": "确诊的与工作相关的职业病——腕管综合征、皮炎、职业性哮喘、HAVS、肌腱炎、职业癌。",
         "dangerous_occurrence": "附表2事件——起重设备坍塌、脚手架坍塌、电气火灾/爆炸、压力系统失效、意外泄漏。",
         "gas_incident": "与燃气相关的死亡或伤害，或危险燃气装置。"

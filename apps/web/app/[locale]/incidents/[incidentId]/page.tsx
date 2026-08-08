@@ -40,17 +40,18 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
 
 function fmt(value: string | Date | null | undefined, locale: string): string {
   if (value === null || value === undefined) return '—';
   const d = typeof value === 'string' ? new Date(value) : value;
-  return d.toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  return formatDateTime(d, locale);
 }
 
 function fmtDate(value: string | Date | null | undefined, locale: string): string {
   if (value === null || value === undefined) return '—';
   const d = typeof value === 'string' ? new Date(value) : value;
-  return d.toLocaleDateString(locale, { dateStyle: 'medium' });
+  return formatDate(d, locale);
 }
 
 export default function IncidentDetailPage() {

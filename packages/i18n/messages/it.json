@@ -3954,7 +3954,8 @@
       "reackTitle": "Previously acknowledged version {version}",
       "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
       "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
-      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically.",
+      "noEmailYet": "Nessun indirizzo email"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -4907,7 +4908,10 @@
       "addGasLimit": "Aggiungi limite",
       "gasFreshness": "Validità della misurazione gas",
       "gasFreshnessUnit": "minuti",
-      "description": "Descrizione"
+      "description": "Descrizione",
+      "requiredTraining": "Formazione richiesta",
+      "requiredTrainingHint": "Ogni operatore indicato deve possederle valide prima che questo tipo possa essere emesso.",
+      "requiredTrainingNone": "Nessun requisito di formazione definito."
     },
     "errors": {
       "module-disabled": "Questo modulo non è disponibile.",
@@ -4970,10 +4974,7 @@
     },
     "signatures": {
       "competenceBlocked": "Bloccato: competenza non soddisfatta"
-    },
-    "requiredTraining": "Formazione richiesta",
-    "requiredTrainingHint": "Ogni operatore indicato deve possederle valide prima che questo tipo possa essere emesso.",
-    "requiredTrainingNone": "Nessun requisito di formazione definito."
+    }
   },
   "fireSafety": {
     "title": "Sicurezza antincendio",
@@ -5876,6 +5877,7 @@
         "not_reportable": "Non notificabile",
         "death": "Decesso",
         "specified_injury": "Lesione specificata",
+        "non_worker_hospital": "Non lavoratore portato in ospedale",
         "over_7_day": "Assenza oltre 7 giorni",
         "occupational_disease": "Malattia professionale",
         "dangerous_occurrence": "Evento pericoloso",
@@ -5884,8 +5886,9 @@
       "help": {
         "not_reportable": "Nessuna categoria notificabile si applica. Motiva — la decisione negativa è il documento.",
         "death": "Una persona è deceduta per un infortunio sul lavoro. Notifica senza indugio; rapporto entro 10 giorni.",
-        "specified_injury": "Frattura (escluse dita), amputazione, perdita della vista, schiacciamento di testa/torace, ustioni gravi, scalpo, perdita di coscienza per asfissia o ricovero oltre 24 ore. Rapporto entro 10 giorni.",
-        "over_7_day": "Inabilità per più di 7 giorni, escluso il giorno dell'infortunio. Rapporto entro 15 giorni.",
+        "specified_injury": "A worker suffered a Schedule 1 injury: any fracture other than to fingers, thumbs or toes; amputation; permanent or likely-permanent loss or reduction of sight; a crush injury to the head or torso causing damage to the brain or internal organs; a serious burn covering more than 10% of the body or damaging the eyes, respiratory system or other vital organs; scalping requiring hospital treatment; loss of consciousness caused by head injury or asphyxia; or, from working in an enclosed space, any injury leading to hypothermia, heat-induced illness or resuscitation, or requiring admission to hospital for more than 24 hours. Report within 10 days.",
+        "non_worker_hospital": "A person not at work (a visitor, a delivery driver, a member of the public) was injured by a work-related accident and taken from the scene to hospital for treatment. Reportable regardless of how serious the injury turns out to be. Report within 10 days.",
+        "over_7_day": "The worker is incapacitated for routine work for more than 7 consecutive days, not counting the day of the accident. Report within 15 days of the accident.",
         "occupational_disease": "Malattia professionale diagnosticata legata al lavoro — tunnel carpale, dermatite, asma professionale, HAVS, tendinite, tumore professionale.",
         "dangerous_occurrence": "Evento della Schedule 2 — cedimento di sollevamento, crollo di ponteggio, incendio/esplosione elettrica, guasto in pressione, rilascio accidentale.",
         "gas_incident": "Decesso o lesione legati al gas, o impianto gas pericoloso."

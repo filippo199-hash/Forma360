@@ -22,6 +22,7 @@
  *   - image processing / thumbnail generation.
  */
 import { appRouter } from '@forma360/api';
+import { itemAcceptsEvidence } from '@forma360/shared/inspection-eval';
 import { createStorage, objectKey } from '@forma360/shared/storage';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -84,14 +85,21 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'NOT_IN_PROGRESS' }, { status: 409 });
   }
 
-  // Walk the pinned content to verify the itemId is a media item.
-  let itemOk = false;
-  for (const page of inspectionData.version.content.pages) {
-    for (const section of page.sections) {
-      for (const item of section.items) {
-        if (item.id === itemId && item.type === 'media') {
-          itemOk = true;
-          break;
+  // Walk the pinned content to verify the itemId is somewhere a file may
+  // legitimately land: a `media` question, or a multiple-choice question
+  // whose options can demand evidence (`requireEvidence`). The second
+  // case used to be rejected outright while the conduct UI required
+  // exactly that upload before it would let the inspection be submitted —
+  // see `itemAcceptsEvidence`.
+  let itemOk = itemAcceptsEvidence(inspectionData.version.content, itemId);
+  if (!itemOk) {
+    for (const page of inspectionData.version.content.pages) {
+      for (const section of page.sections) {
+        for (const item of section.items) {
+          if (item.id === itemId && item.type === 'media') {
+            itemOk = true;
+            break;
+          }
         }
       }
     }

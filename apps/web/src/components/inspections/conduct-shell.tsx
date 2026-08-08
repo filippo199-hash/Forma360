@@ -235,10 +235,26 @@ export function ConductShell() {
     if (lastResponsesRef.current === state.responses) return;
     lastResponsesRef.current = state.responses;
     scheduleSave();
+  }, [readonly, scheduleSave, state.responses]);
+
+  // Cancel the pending debounce ONLY on unmount.
+  //
+  // This teardown used to live on the effect above, whose deps include
+  // `scheduleSave` — a `useCallback` over the tRPC mutation object, which
+  // has a new identity on every render. So *any* re-render that was not a
+  // keystroke tore down the in-flight timer and, because of the early
+  // `return` on the ref compare, never re-armed it. Pressing "Next"
+  // dispatches SET_PAGE, which re-renders, which silently threw away
+  // whatever had been typed in the last 1.5 seconds. On a phone in a yard
+  // people tap Next fast, and the field simply came back empty.
+  //
+  // `scheduleSave` already clears any existing timer before setting a new
+  // one, so keeping it alive across renders cannot produce a save storm.
+  useEffect(() => {
     return () => {
       if (timerRef.current !== null) clearTimeout(timerRef.current);
     };
-  }, [readonly, scheduleSave, state.responses]);
+  }, []);
 
   // Retry pending on mount + on `online`.
   useEffect(() => {
@@ -276,7 +292,15 @@ export function ConductShell() {
   // Flush on unmount / tab close.
   useEffect(() => {
     function onBeforeUnload() {
-      if (state.saveStatus.kind !== 'saved' && state.saveStatus.kind !== 'idle') {
+      // A debounce still pending means there are edits the server has
+      // never seen — the case the `kind !== 'idle'` test missed, because
+      // an inspection that has not saved yet in this session sits at
+      // `idle` right up until the first save fires.
+      const debouncePending = timerRef.current !== null;
+      if (
+        debouncePending ||
+        (state.saveStatus.kind !== 'saved' && state.saveStatus.kind !== 'idle')
+      ) {
         savePending(state.inspectionId, {
           responses: state.responses,
           basedOn: state.loadedUpdatedAt,

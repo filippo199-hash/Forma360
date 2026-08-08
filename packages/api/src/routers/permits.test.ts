@@ -465,6 +465,15 @@ describe('permits router', () => {
       unit: 'percent_lel',
       limitId: 'flammables_lel',
     });
+    // Hot work also demands an authorising signature. It is the permit
+    // every insurer expects to be authorised, and the default shipped
+    // with `requiresAuthoriser: false` — so an issued hot-work permit
+    // had an issuer and an acceptor and nobody who authorised the
+    // ignition source.
+    await expect(admin.permits.issue({ permitId: hot })).rejects.toMatchObject({
+      message: 'authorisation-required',
+    });
+    await admin.permits.authorise({ permitId: hot });
     expect((await admin.permits.issue({ permitId: hot })).status).toBe('issued');
 
     // Electrical requires an isolation certificate AND an authorising signature.
@@ -909,7 +918,9 @@ describe('permits router', () => {
       message: 'gas-test-out-of-range',
     });
 
-    // A newer in-range reading unblocks.
+    // A newer in-range reading clears the gas gate. Hot work still needs
+    // its authorising signature — the gate order is gas before
+    // authorisation, so this is the point where the next guard bites.
     await admin.permits.recordGasReading({
       permitId,
       substance: 'Flammables',
@@ -917,6 +928,7 @@ describe('permits router', () => {
       unit: 'percent_lel',
       limitId: 'flammables_lel',
     });
+    await admin.permits.authorise({ permitId });
     expect((await admin.permits.issue({ permitId })).status).toBe('issued');
 
     // Staleness: a fresh draft whose only reading is aged past the window.

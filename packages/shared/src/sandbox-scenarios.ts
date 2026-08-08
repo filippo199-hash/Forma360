@@ -89,7 +89,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
   {
     id: 'inspection',
     landingPath: '/inspections',
-    goal: 'A published template matching the chosen subject, ready to run, plus one inspection already in progress so the register is not empty.',
+    goal: 'A published template matching the chosen subject, ready to run, plus one inspection genuinely part-answered by a named colleague — not an empty shell with a status badge.',
     refinements: [
       { id: 'siteWalk', isDefault: true },
       { id: 'equipment' },
@@ -100,7 +100,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
   {
     id: 'hazard',
     landingPath: '/observations',
-    goal: 'An observation register with three reports, two of them still open.',
+    goal: 'An observation register with three reports, two still open and one already closed out, spread across both sites and across the past fortnight. The withActions refinement also raises a corrective action against each open report.',
     refinements: [
       { id: 'captureOnly' },
       { id: 'withActions', isDefault: true },
@@ -111,7 +111,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     id: 'permit',
     requiresModule: 'permits',
     landingPath: '/permits',
-    goal: 'The nine default permit types, plus one permit of the chosen category raised and waiting on the visitor.',
+    goal: 'The nine default permit types, plus one permit of the chosen category raised and waiting on the visitor — with the gas readings and authorising signature its own type demands already on the record.',
     refinements: [
       { id: 'hotWork', isDefault: true },
       { id: 'confinedSpace' },
@@ -123,7 +123,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     id: 'incident',
     requiresModule: 'incidents',
     landingPath: '/incidents',
-    goal: 'One incident at reported, with injury facts that make the RIDDOR screening a real judgement rather than a prop.',
+    goal: 'One incident at reported, with the injured person, an open absence period and a severity that agree with the description, so the RIDDOR screening is a real judgement rather than a prop.',
     refinements: [
       { id: 'recordOnly' },
       { id: 'withInvestigation' },
@@ -134,7 +134,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     id: 'rams',
     requiresModule: 'rams',
     landingPath: '/rams',
-    goal: 'A RAMS pack in the register that the visitor can open and work on.',
+    goal: 'A RAMS pack with method-statement steps the visitor can read and build on. The reviewPack refinement also puts a contractor pack in the review queue, because that is the page it lands on.',
     refinements: [
       { id: 'reviewPack', isDefault: true },
       { id: 'buildPack' },

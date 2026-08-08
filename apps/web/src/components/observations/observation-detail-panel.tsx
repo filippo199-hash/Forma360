@@ -46,6 +46,7 @@ import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
 import { DetailNotFound } from '../detail-not-found';
 import { ObservationCommentComposer } from './observation-comment-composer';
+import { formatDate, formatDateTime } from '../../lib/format-date';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -989,7 +990,7 @@ function LinkedActionsCard({
                       )}
                     >
                       <Clock className="h-3 w-3" />
-                      {new Date(row.dueAt).toLocaleDateString()}
+                      {formatDate(row.dueAt)}
                     </span>
                   ) : null}
                   {row.assigneeName !== null ? (
@@ -1220,12 +1221,12 @@ function LinkedInspectionsCard({
                 {row.completedAt !== null ? (
                   <span className="flex items-center gap-0.5">
                     <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                    {new Date(row.completedAt).toLocaleDateString()}
+                    {formatDate(row.completedAt)}
                   </span>
                 ) : (
                   <span className="flex items-center gap-0.5">
                     <Clock className="h-3 w-3" />
-                    {new Date(row.startedAt).toLocaleDateString()}
+                    {formatDate(row.startedAt)}
                   </span>
                 )}
               </div>
@@ -1418,7 +1419,7 @@ function describeActivity(
     case 'due_date_changed': {
       const to = payload.to as string | null;
       if (to === null || to === undefined) return tEvents('dueDateCleared');
-      return tEvents('dueDateChanged', { to: new Date(to).toLocaleString() });
+      return tEvents('dueDateChanged', { to: formatDateTime(to) });
     }
     case 'commented':
       return tEvents('commented');
@@ -1439,13 +1440,6 @@ function isPriority(v: string): v is 'low' | 'medium' | 'high' | 'critical' {
 
 function isStatus(v: string): v is 'open' | 'investigation' | 'closed' {
   return v === 'open' || v === 'investigation' || v === 'closed';
-}
-
-function formatDate(d: Date | string | null | undefined): string {
-  if (d === null || d === undefined) return '—';
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return '—';
-  return dt.toLocaleString();
 }
 
 function formatValue(v: unknown): string {
