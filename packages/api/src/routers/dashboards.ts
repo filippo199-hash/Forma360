@@ -76,6 +76,18 @@ export interface DashboardsRouterDeps {
   };
   /** Injectable clock for deterministic tests. */
   now?: () => Date;
+  /**
+   * Dashboard → PDF via the shared Puppeteer pipeline in
+   * `@forma360/render`. Optional: absent in non-web callers — the
+   * `renderPdf` procedure refuses when unwired (PRECONDITION_FAILED
+   * 'render-not-wired', the exports-router convention) rather than
+   * half-rendering. Production wiring lives in
+   * `apps/web/src/server/dashboards-deps.ts`.
+   */
+  renderPdf?: (input: {
+    tenantId: string;
+    dashboardId: string;
+  }) => Promise<{ key: string; bytes: number; stub: boolean }>;
 }
 
 // ─── Dependents (cascade preview) ───────────────────────────────────────────
@@ -192,6 +204,16 @@ const recipientsSchema = z
   .min(1)
   .max(MAX_DASHBOARD_RECIPIENTS)
   .transform((emails) => [...new Set(emails)]);
+
+/** Filesystem-friendly stem for the downloaded PDF, from the title. */
+function pdfFilenameStem(title: string): string {
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  return slug.length > 0 ? slug : 'dashboard';
+}
 
 // ─── Router ─────────────────────────────────────────────────────────────────
 
@@ -428,6 +450,33 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
         throw new TRPCError({ code: 'FORBIDDEN', message: widget.error });
       }
       return { data: widget as WidgetData, applied: result.applied, title: row.title };
+    });
+
+  // ─── PDF export ───────────────────────────────────────────────────────
+
+  /**
+   * Render (or refresh) the dashboard PDF in R2 and return its storage
+   * key; the download route 302s to a short-lived signed URL. Same
+   * access gate as viewing: entitlement + analytics.view + the
+   * assertCanView visibility matrix — the PDF is the dashboard, worn as
+   * a file.
+   */
+  const renderPdf = entitled
+    .use(requirePermission('analytics.view'))
+    .input(z.object({ id: ulid }))
+    .mutation(async ({ ctx, input }) => {
+      if (deps.renderPdf === undefined) {
+        throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'render-not-wired' });
+      }
+      const row = await loadDashboard(ctx as Ctx, input.id);
+      await assertCanView(ctx as Ctx, row);
+      const rendered = await deps.renderPdf({ tenantId: ctx.tenantId, dashboardId: row.id });
+      return {
+        storageKey: rendered.key,
+        filename: `${pdfFilenameStem(row.title)}.pdf`,
+        sizeBytes: rendered.bytes,
+        stub: rendered.stub,
+      };
     });
 
   // ─── Mutations ────────────────────────────────────────────────────────
@@ -817,6 +866,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
     availableSources,
     data,
     widgetData,
+    renderPdf,
     create,
     update,
     updateSpec,

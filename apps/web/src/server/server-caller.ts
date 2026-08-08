@@ -18,6 +18,7 @@ import { eq } from 'drizzle-orm';
 import { authDeps } from './auth-deps';
 import { db } from './db';
 import { coshhDeps } from './coshh-deps';
+import { dashboardsDeps } from './dashboards-deps';
 import { fireSafetyDeps } from './fire-safety-deps';
 import { exportsDeps } from './exports-deps';
 import { headsUpsDeps } from './heads-up-deps';
@@ -53,6 +54,7 @@ const appRouter = buildAppRouter({
   incidents: incidentsDeps,
   rams: ramsDeps,
   training: trainingDeps,
+  dashboards: dashboardsDeps,
 });
 
 export type ServerCaller = ReturnType<typeof appRouter.createCaller>;
