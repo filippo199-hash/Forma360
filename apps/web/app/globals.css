@@ -43,8 +43,11 @@
    * saying "you are here". Dark mode keeps a dark rail (see `.dark`). */
   --color-sidebar: hsl(0 0% 100%);
   --color-sidebar-foreground: hsl(220 14% 11%);
-  --color-sidebar-accent: hsl(220 14% 95%);
-  --color-sidebar-accent-foreground: hsl(220 14% 11%);
+  /* The selected row is the one place the rail is allowed to be loud: a
+   * blue wash carrying blue label + icon, so "you are here" is legible at
+   * a glance rather than a grey smudge you have to hunt for. */
+  --color-sidebar-accent: hsl(226 100% 96%);
+  --color-sidebar-accent-foreground: hsl(226 76% 51%);
   --color-sidebar-border: hsl(220 13% 91%);
 
   --radius: 0.5rem;
@@ -98,8 +101,9 @@
    * inverting it — it is the light theme that got the white rail. */
   --color-sidebar: hsl(220 14% 12%);
   --color-sidebar-foreground: hsl(220 14% 90%);
-  --color-sidebar-accent: hsl(220 13% 22%);
-  --color-sidebar-accent-foreground: hsl(0 0% 100%);
+  /* Same "selected is blue" rule as the light rail, inverted. */
+  --color-sidebar-accent: hsl(226 42% 25%);
+  --color-sidebar-accent-foreground: hsl(226 100% 85%);
   --color-sidebar-border: hsl(220 13% 22%);
 
   --color-brand: hsl(221 83% 65%);
