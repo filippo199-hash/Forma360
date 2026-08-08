@@ -80,7 +80,8 @@ describe('normalizeCssColor', () => {
 
 describe('collectColorsFromCss', () => {
   it('counts frequency across literals', () => {
-    const css = '.a { color: #1d4ed8; } .b { background: #1D4ED8; border: 1px solid rgb(29,78,216); } .c { color: #fff; }';
+    const css =
+      '.a { color: #1d4ed8; } .b { background: #1D4ED8; border: 1px solid rgb(29,78,216); } .c { color: #fff; }';
     const freq = collectColorsFromCss(css);
     expect(freq.get('#1d4ed8')).toBe(3);
     expect(freq.get('#ffffff')).toBe(1);

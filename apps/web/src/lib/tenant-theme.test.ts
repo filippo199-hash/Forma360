@@ -31,9 +31,7 @@ describe('contrast math', () => {
   it('computes the canonical white/black extremes', () => {
     expect(relativeLuminance({ r: 255, g: 255, b: 255 })).toBeCloseTo(1, 5);
     expect(relativeLuminance({ r: 0, g: 0, b: 0 })).toBeCloseTo(0, 5);
-    expect(
-      contrastRatio({ r: 255, g: 255, b: 255 }, { r: 0, g: 0, b: 0 }),
-    ).toBeCloseTo(21, 1);
+    expect(contrastRatio({ r: 255, g: 255, b: 255 }, { r: 0, g: 0, b: 0 })).toBeCloseTo(21, 1);
   });
 
   it('is symmetric', () => {

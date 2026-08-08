@@ -159,9 +159,7 @@ describe('tenants.updateBranding', () => {
     const caller = createCaller(ctxFor(adminUserId));
     // 3-digit hex and rgb() strings are not the canonical #rrggbb form.
     await expect(caller.tenants.updateBranding({ chartColors: ['#abc'] })).rejects.toThrow();
-    await expect(
-      caller.tenants.updateBranding({ chartColors: ['rgb(1,2,3)'] }),
-    ).rejects.toThrow();
+    await expect(caller.tenants.updateBranding({ chartColors: ['rgb(1,2,3)'] })).rejects.toThrow();
     // More than 8 entries is refused.
     await expect(
       caller.tenants.updateBranding({ chartColors: Array.from({ length: 9 }, () => '#123456') }),

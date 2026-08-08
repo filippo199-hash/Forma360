@@ -107,7 +107,10 @@ function expandIpv6(raw: string): number[] | null {
  * link-local / metadata) range? Exported for direct unit-testing.
  */
 export function isPrivateAddress(rawAddress: string): boolean {
-  const address = rawAddress.replace(/^\[|\]$/g, '').trim().toLowerCase();
+  const address = rawAddress
+    .replace(/^\[|\]$/g, '')
+    .trim()
+    .toLowerCase();
   const v4 = parseIpv4(address);
   if (v4 !== null) return isPrivateIpv4(v4);
 
@@ -487,8 +490,7 @@ export type BrandPalette = z.infer<typeof brandPaletteSchema>;
 
 const PROPOSE_PALETTE_TOOL: Anthropic.Tool = {
   name: 'proposePalette',
-  description:
-    'Record the proposed brand palette for this website. Call exactly once.',
+  description: 'Record the proposed brand palette for this website. Call exactly once.',
   input_schema: {
     type: 'object',
     properties: {
@@ -510,8 +512,7 @@ const PROPOSE_PALETTE_TOOL: Anthropic.Tool = {
       },
       reasoning: {
         type: 'string',
-        description:
-          'One or two sentences: which candidates you anchored on and why.',
+        description: 'One or two sentences: which candidates you anchored on and why.',
       },
     },
     required: ['primaryColor', 'accentColor', 'chartColors', 'reasoning'],
@@ -541,9 +542,7 @@ export async function proposeBrandPalette(
   model: string,
   input: PaletteProposalInput,
 ): Promise<BrandPalette> {
-  const candidateLines = input.candidates
-    .map((c) => `${c.hex} (seen ~${c.count}x)`)
-    .join('\n');
+  const candidateLines = input.candidates.map((c) => `${c.hex} (seen ~${c.count}x)`).join('\n');
   const messages: Anthropic.MessageParam[] = [
     {
       role: 'user',
