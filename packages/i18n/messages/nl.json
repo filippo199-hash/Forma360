@@ -4922,7 +4922,10 @@
       "already-exited": "Het vertrek van die persoon is al vastgelegd.",
       "render-unavailable": "Pdf-generatie is in deze omgeving niet beschikbaar.",
       "training-expired": "Uitgeven niet mogelijk: iemand op dit werkvergunning heeft verlopen opleiding.",
-      "training-missing": "Uitgeven niet mogelijk: iemand op deze vergunning heeft de vereiste opleiding nooit behaald."
+      "training-missing": "Uitgeven niet mogelijk: iemand op deze vergunning heeft de vereiste opleiding nooit behaald.",
+      "training-unverifiable-identity": "Uitgeven niet mogelijk: iemand op deze vergunning heeft geen gekoppeld account, waardoor de opleiding niet kan worden geverifieerd. Koppel deze persoon aan een gebruiker of haal hem uit de ploeg.",
+      "already-inside": "Die persoon staat al als aanwezig in het toegangsregister.",
+      "document-not-visible": "U heeft geen toegang tot dat document."
     },
     "competence": {
       "blockedTitle": "Vakbekwaamheid niet voldaan",

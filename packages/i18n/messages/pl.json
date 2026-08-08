@@ -4922,7 +4922,10 @@
       "already-exited": "Wyjście tej osoby już odnotowano.",
       "render-unavailable": "Generowanie PDF jest niedostępne w tym środowisku.",
       "training-expired": "Nie można wydać: osoba wskazana w zezwoleniu ma wygasłe szkolenie.",
-      "training-missing": "Nie można wydać: osoba wskazana nigdy nie uzyskała wymaganego szkolenia."
+      "training-missing": "Nie można wydać: osoba wskazana nigdy nie uzyskała wymaganego szkolenia.",
+      "training-unverifiable-identity": "Nie można wydać: osoba wskazana w tym zezwoleniu nie ma powiązanego konta, więc nie można zweryfikować jej szkolenia. Powiąż ją z użytkownikiem lub usuń z brygady.",
+      "already-inside": "Ta osoba jest już zapisana jako obecna w rejestrze wejść.",
+      "document-not-visible": "Nie masz dostępu do tego dokumentu."
     },
     "competence": {
       "blockedTitle": "Kompetencje niespełnione",

@@ -4929,7 +4929,10 @@
       "already-exited": "La sortie de cette personne a déjà été consignée.",
       "render-unavailable": "La génération de PDF n'est pas disponible dans cet environnement.",
       "training-expired": "Émission impossible : une personne nommée sur ce permis a une formation expirée.",
-      "training-missing": "Émission impossible : une personne nommée n’a jamais obtenu la formation requise."
+      "training-missing": "Émission impossible : une personne nommée n’a jamais obtenu la formation requise.",
+      "training-unverifiable-identity": "Émission impossible : une personne nommée sur ce permis n'a pas de compte lié, sa formation ne peut donc pas être vérifiée. Liez-la à un utilisateur ou retirez-la de l'équipe.",
+      "already-inside": "Cette personne est déjà enregistrée comme présente dans le registre d'entrée.",
+      "document-not-visible": "Vous n'avez pas accès à ce document."
     },
     "competence": {
       "blockedTitle": "Compétence non satisfaite",

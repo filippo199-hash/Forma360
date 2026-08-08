@@ -4929,7 +4929,10 @@
       "already-exited": "Für diese Person wurde der Ausstieg bereits erfasst.",
       "render-unavailable": "PDF-Erzeugung ist in dieser Umgebung nicht verfügbar.",
       "training-expired": "Ausstellung nicht möglich: Für eine benannte Person ist die Schulung abgelaufen.",
-      "training-missing": "Ausstellung nicht möglich: Eine benannte Person hat die erforderliche Schulung nie erworben."
+      "training-missing": "Ausstellung nicht möglich: Eine benannte Person hat die erforderliche Schulung nie erworben.",
+      "training-unverifiable-identity": "Ausstellen nicht möglich: Eine auf dieser Genehmigung genannte Person hat kein verknüpftes Konto, sodass ihre Schulung nicht überprüft werden kann. Verknüpfen Sie sie mit einem Benutzer oder entfernen Sie sie aus dem Team.",
+      "already-inside": "Diese Person ist im Zutrittsregister bereits als anwesend eingetragen.",
+      "document-not-visible": "Sie haben keinen Zugriff auf dieses Dokument."
     },
     "competence": {
       "blockedTitle": "Kompetenz nicht erfüllt",
