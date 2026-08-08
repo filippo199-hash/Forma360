@@ -64,6 +64,23 @@
    * homepage shares the platform palette. */
   --color-brand: hsl(221 83% 53%);
   --color-brand-foreground: hsl(0 0% 100%);
+
+  /* Tenant accent (ADR 0018). Defaults to the brand blue; overridden per
+   * tenant by the inline tenant-theme style when a palette is saved. */
+  --color-brand-accent: hsl(221 83% 53%);
+
+  /* Chart series palette (ADR 0018). Dashboards consume these as
+   * `var(--chart-N)`; per-tenant palettes override them via the inline
+   * tenant-theme style. Anchored on the default brand blue with a
+   * categorical ramp that stays legible on white. */
+  --chart-1: hsl(221 83% 53%);
+  --chart-2: hsl(173 58% 39%);
+  --chart-3: hsl(31 92% 45%);
+  --chart-4: hsl(262 60% 55%);
+  --chart-5: hsl(340 70% 48%);
+  --chart-6: hsl(88 50% 38%);
+  --chart-7: hsl(199 85% 40%);
+  --chart-8: hsl(45 90% 40%);
 }
 
 @variant dark (&:where(.dark, .dark *));
@@ -108,6 +125,18 @@
 
   --color-brand: hsl(221 83% 65%);
   --color-brand-foreground: hsl(220 14% 11%);
+
+  --color-brand-accent: hsl(221 83% 65%);
+
+  /* Chart series palette, lightened for the dark background (ADR 0018). */
+  --chart-1: hsl(221 83% 65%);
+  --chart-2: hsl(173 55% 52%);
+  --chart-3: hsl(31 92% 62%);
+  --chart-4: hsl(262 65% 68%);
+  --chart-5: hsl(340 75% 65%);
+  --chart-6: hsl(88 45% 55%);
+  --chart-7: hsl(199 80% 60%);
+  --chart-8: hsl(45 85% 58%);
 }
 
 body {
