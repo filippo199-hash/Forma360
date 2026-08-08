@@ -42,9 +42,7 @@ export const ENTITLEMENT_KEYS = [
 export type EntitlementKey = (typeof ENTITLEMENT_KEYS)[number];
 
 export function isEntitlementKey(value: unknown): value is EntitlementKey {
-  return (
-    typeof value === 'string' && (ENTITLEMENT_KEYS as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (ENTITLEMENT_KEYS as readonly string[]).includes(value);
 }
 
 export const PLAN_ENTITLEMENTS: Record<PlanId, ReadonlyArray<EntitlementKey>> = {

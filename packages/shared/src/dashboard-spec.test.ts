@@ -127,6 +127,39 @@ describe('dashboardSpecSchema — refusals', () => {
     expect(result.errors.join(' ')).toContain('no dimension "severity"');
   });
 
+  it('DH-E03b: a dimension inapplicable to the metric is rejected (missed × status)', () => {
+    const result = parseDashboardSpec(
+      validSpec([
+        {
+          id: 'missed-by-status',
+          kind: 'breakdown',
+          title: 'Missed by status',
+          source: 'inspections',
+          metric: 'missed',
+          dimension: 'status',
+        },
+      ]),
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(' ')).toContain('cannot be broken down by');
+    // …while template/site remain valid for the same metric.
+    expect(
+      parseDashboardSpec(
+        validSpec([
+          {
+            id: 'missed-by-template',
+            kind: 'breakdown',
+            title: 'Missed by template',
+            source: 'inspections',
+            metric: 'missed',
+            dimension: 'template',
+          },
+        ]),
+      ).ok,
+    ).toBe(true);
+  });
+
   it('DH-E04: a stock metric cannot be plotted over time', () => {
     const result = parseDashboardSpec(
       validSpec([

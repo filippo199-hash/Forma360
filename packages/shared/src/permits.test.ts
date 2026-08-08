@@ -149,9 +149,9 @@ describe('DEFAULT_PERMIT_TYPES (PW-E03)', () => {
     // Sprinklers and detection are the hot-work precondition most often
     // missed and most often expensive: heat from a weld sets off the
     // head above it, and the informal "fix" is isolating the system.
-    expect(
-      byCat.get('hot_work')?.preconditions.some((p) => p.id === 'detection_suppression'),
-    ).toBe(true);
+    expect(byCat.get('hot_work')?.preconditions.some((p) => p.id === 'detection_suppression')).toBe(
+      true,
+    );
     expect(byCat.get('confined_space')?.requiresRescuePlan).toBe(true);
     expect(byCat.get('work_at_height')?.requiresRescuePlan).toBe(true);
   });

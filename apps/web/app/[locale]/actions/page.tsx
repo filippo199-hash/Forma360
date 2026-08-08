@@ -1190,9 +1190,7 @@ function ListView({
                             : 'px-3 py-2 text-muted-foreground'
                         }
                       >
-                        {row.dueAt !== null
-                          ? formatDate(row.dueAt, locale)
-                          : t('noDueDate')}
+                        {row.dueAt !== null ? formatDate(row.dueAt, locale) : t('noDueDate')}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
                         {t(sourceLabelKey(row.sourceType) as never)}

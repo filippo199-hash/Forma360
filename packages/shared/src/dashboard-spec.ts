@@ -19,6 +19,7 @@ import { z } from 'zod';
 import {
   DASHBOARD_SOURCE_IDS,
   DASHBOARD_SOURCES,
+  metricAllowsDimension,
   sourceDimension,
   sourceMetric,
   type DashboardSourceId,
@@ -188,8 +189,7 @@ export const dashboardSpecSchema = z
       const source = DASHBOARD_SOURCES[widget.source as DashboardSourceId];
 
       // DH-E02: every metric reference must exist on the source.
-      const metricIds =
-        widget.kind === 'table' ? widget.metrics : [widget.metric];
+      const metricIds = widget.kind === 'table' ? widget.metrics : [widget.metric];
       for (const metricId of metricIds) {
         const metric = sourceMetric(source, metricId);
         if (!metric) {
@@ -219,7 +219,9 @@ export const dashboardSpecSchema = z
         }
       }
 
-      // DH-E03: every dimension reference must exist on the source.
+      // DH-E03: every dimension reference must exist on the source, and
+      // (DH-E03b) be applicable to every metric the widget uses — some
+      // metrics count a different table than their siblings.
       const dimensionIds: string[] = [];
       if (widget.kind === 'breakdown' || widget.kind === 'table') {
         dimensionIds.push(widget.dimension);
@@ -234,6 +236,17 @@ export const dashboardSpecSchema = z
             path,
             message: `Source "${source.id}" has no dimension "${dimensionId}"`,
           });
+          continue;
+        }
+        for (const metricId of metricIds) {
+          const metric = sourceMetric(source, metricId);
+          if (metric && !metricAllowsDimension(metric, dimensionId)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path,
+              message: `Metric "${metricId}" cannot be broken down by "${dimensionId}"`,
+            });
+          }
         }
       }
 

@@ -51,6 +51,13 @@ export interface DashboardMetric {
   readonly id: string;
   readonly label: string;
   readonly kind: DashboardMetricKind;
+  /**
+   * When set, only these of the source's dimensions apply to this metric
+   * (some metrics count a different table than their siblings — e.g.
+   * inspections `missed` counts scheduled occurrences, which have no
+   * inspection status). Absent = every source dimension applies.
+   */
+  readonly dimensions?: readonly string[];
 }
 
 export interface DashboardDimension {
@@ -77,8 +84,7 @@ export const DASHBOARD_SOURCES: Record<DashboardSourceId, DashboardSource> = {
   actions: {
     id: 'actions',
     label: 'Actions',
-    description:
-      'Corrective and preventive actions across every module: who owes what, by when.',
+    description: 'Corrective and preventive actions across every module: who owes what, by when.',
     permission: 'actions.view',
     siteScoped: true,
     metrics: [
@@ -103,7 +109,13 @@ export const DASHBOARD_SOURCES: Record<DashboardSourceId, DashboardSource> = {
     metrics: [
       { id: 'started', label: 'Inspections started', kind: 'flow' },
       { id: 'completed', label: 'Inspections completed', kind: 'flow' },
-      { id: 'missed', label: 'Scheduled occurrences missed', kind: 'flow' },
+      {
+        id: 'missed',
+        label: 'Scheduled occurrences missed',
+        kind: 'flow',
+        // Counts scheduled_inspection_occurrences — no inspection status there.
+        dimensions: ['template', 'site'],
+      },
       { id: 'inProgress', label: 'Inspections in progress', kind: 'stock' },
     ],
     dimensions: [
@@ -173,7 +185,9 @@ export const DASHBOARD_SOURCES: Record<DashboardSourceId, DashboardSource> = {
     metrics: [
       { id: 'issued', label: 'Permits issued', kind: 'flow' },
       { id: 'closed', label: 'Permits closed', kind: 'flow' },
-      { id: 'active', label: 'Permits currently active', kind: 'stock' },
+      // "Live on the board" = issued | active | suspended (OPEN_PERMIT_STATUSES),
+      // the practitioner notion, matching the register and analytics tile.
+      { id: 'active', label: 'Permits live on the board', kind: 'stock' },
     ],
     dimensions: [
       { id: 'type', label: 'Permit type' },
@@ -257,9 +271,7 @@ export const DASHBOARD_SOURCES: Record<DashboardSourceId, DashboardSource> = {
 };
 
 export function isDashboardSourceId(value: unknown): value is DashboardSourceId {
-  return (
-    typeof value === 'string' && (DASHBOARD_SOURCE_IDS as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (DASHBOARD_SOURCE_IDS as readonly string[]).includes(value);
 }
 
 export function getDashboardSource(id: DashboardSourceId): DashboardSource {
@@ -278,6 +290,11 @@ export function sourceDimension(
   dimensionId: string,
 ): DashboardDimension | undefined {
   return source.dimensions.find((d) => d.id === dimensionId);
+}
+
+/** Whether a dimension applies to a specific metric (see DashboardMetric.dimensions). */
+export function metricAllowsDimension(metric: DashboardMetric, dimensionId: string): boolean {
+  return metric.dimensions === undefined || metric.dimensions.includes(dimensionId);
 }
 
 /**

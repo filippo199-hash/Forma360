@@ -74,9 +74,7 @@ export const dashboards = pgTable(
 
     status: text('status', { enum: dashboardStatuses }).notNull().default('draft'),
 
-    visibility: text('visibility', { enum: dashboardVisibilities })
-      .notNull()
-      .default('private'),
+    visibility: text('visibility', { enum: dashboardVisibilities }).notNull().default('private'),
 
     /**
      * The builder/refine chat thread for this dashboard. SET NULL: the

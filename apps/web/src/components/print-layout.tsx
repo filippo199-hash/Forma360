@@ -130,8 +130,7 @@ export function PrintLayout({
   // Title-page items are auto-populated — resolve their values from the
   // inspection so the title page renders real text, not blanks/ids.
   const insp = snapshot.inspection;
-  const fmtDate = (d: string | null): string =>
-    d === null ? '' : formatDate(d);
+  const fmtDate = (d: string | null): string => (d === null ? '' : formatDate(d));
   const titleValues: Record<string, string> = {};
   for (const page of content?.pages ?? []) {
     if (page.type !== 'title') continue;
