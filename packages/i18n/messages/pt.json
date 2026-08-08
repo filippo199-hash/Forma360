@@ -4726,7 +4726,10 @@
           "openModule": "Abrir Formação"
         },
         "signatures": {
-          "competenceBlocked": "Bloqueado: competência não cumprida"
+          "competenceBlocked": "Bloqueado: competência não cumprida",
+          "acceptConfirm": "Aceitar assina este alvará e autoriza o início dos trabalhos. Continuar?",
+          "refuseAction": "Recusar",
+          "refusePrompt": "Porque recusa este alvará? Volta ao emissor como rascunho com o seu motivo."
         }
       },
       "signatures": {
@@ -4791,6 +4794,7 @@
           "authorised": "Autorizada",
           "issued": "Emitida",
           "accepted": "Aceite",
+          "refused": "Recusado e devolvido ao emissor",
           "suspended": "Suspensa",
           "resumed": "Retomada",
           "extended": "Prorrogada",
@@ -4946,13 +4950,7 @@
       "openModule": "Abrir formação"
     },
     "signatures": {
-      "competenceBlocked": "Bloqueado: competência não cumprida",
-      "acceptConfirm": "Aceitar assina este alvará e autoriza o início dos trabalhos. Continuar?",
-      "refuseAction": "Recusar",
-      "refusePrompt": "Porque recusa este alvará? Volta ao emissor como rascunho com o seu motivo."
-    },
-    "events": {
-      "refused": "Recusado e devolvido ao emissor"
+      "competenceBlocked": "Bloqueado: competência não cumprida"
     }
   },
   "fireSafety": {

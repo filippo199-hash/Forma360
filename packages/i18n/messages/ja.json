@@ -4726,7 +4726,10 @@
           "openModule": "研修を開く"
         },
         "signatures": {
-          "competenceBlocked": "ブロック: 力量要件を満たしていません"
+          "competenceBlocked": "ブロック: 力量要件を満たしていません",
+          "acceptConfirm": "受諾するとこの許可証に署名し、作業開始を認めることになります。続行しますか？",
+          "refuseAction": "差し戻す",
+          "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。"
         }
       },
       "signatures": {
@@ -4791,6 +4794,7 @@
           "authorised": "承認",
           "issued": "発行",
           "accepted": "受領",
+          "refused": "差し戻し（発行者へ返却）",
           "suspended": "一時停止",
           "resumed": "再開",
           "extended": "延長",
@@ -4946,13 +4950,7 @@
       "openModule": "研修を開く"
     },
     "signatures": {
-      "competenceBlocked": "ブロック：力量要件未達",
-      "acceptConfirm": "受諾するとこの許可証に署名し、作業開始を認めることになります。続行しますか？",
-      "refuseAction": "差し戻す",
-      "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。"
-    },
-    "events": {
-      "refused": "差し戻し（発行者へ返却）"
+      "competenceBlocked": "ブロック：力量要件未達"
     }
   },
   "fireSafety": {

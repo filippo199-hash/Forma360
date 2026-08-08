@@ -4733,7 +4733,10 @@
           "openModule": "Ouvrir Formations"
         },
         "signatures": {
-          "competenceBlocked": "Bloqué : compétence non satisfaite"
+          "competenceBlocked": "Bloqué : compétence non satisfaite",
+          "acceptConfirm": "Accepter vous engage sur ce permis et autorise le début des travaux. Continuer ?",
+          "refuseAction": "Refuser",
+          "refusePrompt": "Pourquoi refusez-vous ce permis ? Il retourne à l’émetteur en brouillon avec votre motif."
         }
       },
       "signatures": {
@@ -4798,6 +4801,7 @@
           "authorised": "Autorisé",
           "issued": "Délivré",
           "accepted": "Accepté",
+          "refused": "Refusé et renvoyé à l’émetteur",
           "suspended": "Suspendu",
           "resumed": "Repris",
           "extended": "Prolongé",
@@ -4953,13 +4957,7 @@
       "openModule": "Ouvrir les formations"
     },
     "signatures": {
-      "competenceBlocked": "Bloqué : compétence non satisfaite",
-      "acceptConfirm": "Accepter vous engage sur ce permis et autorise le début des travaux. Continuer ?",
-      "refuseAction": "Refuser",
-      "refusePrompt": "Pourquoi refusez-vous ce permis ? Il retourne à l’émetteur en brouillon avec votre motif."
-    },
-    "events": {
-      "refused": "Refusé et renvoyé à l’émetteur"
+      "competenceBlocked": "Bloqué : compétence non satisfaite"
     }
   },
   "fireSafety": {

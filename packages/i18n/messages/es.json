@@ -4733,7 +4733,10 @@
           "openModule": "Abrir Formación"
         },
         "signatures": {
-          "competenceBlocked": "Bloqueado: competencia no acreditada"
+          "competenceBlocked": "Bloqueado: competencia no acreditada",
+          "acceptConfirm": "Aceptar te vincula a este permiso y autoriza el inicio de los trabajos. ¿Continuar?",
+          "refuseAction": "Rechazar",
+          "refusePrompt": "¿Por qué rechazas este permiso? Volverá al emisor como borrador con tu motivo."
         }
       },
       "signatures": {
@@ -4798,6 +4801,7 @@
           "authorised": "Autorizado",
           "issued": "Emitido",
           "accepted": "Aceptado",
+          "refused": "Rechazado y devuelto al emisor",
           "suspended": "Suspendido",
           "resumed": "Reanudado",
           "extended": "Prorrogado",
@@ -4953,13 +4957,7 @@
       "openModule": "Abrir formación"
     },
     "signatures": {
-      "competenceBlocked": "Bloqueado: competencia no acreditada",
-      "acceptConfirm": "Aceptar te vincula a este permiso y autoriza el inicio de los trabajos. ¿Continuar?",
-      "refuseAction": "Rechazar",
-      "refusePrompt": "¿Por qué rechazas este permiso? Volverá al emisor como borrador con tu motivo."
-    },
-    "events": {
-      "refused": "Rechazado y devuelto al emisor"
+      "competenceBlocked": "Bloqueado: competencia no acreditada"
     }
   },
   "fireSafety": {

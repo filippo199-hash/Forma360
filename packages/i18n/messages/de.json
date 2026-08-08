@@ -4733,7 +4733,10 @@
           "openModule": "Schulungen öffnen"
         },
         "signatures": {
-          "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt"
+          "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt",
+          "acceptConfirm": "Mit der Annahme zeichnen Sie diesen Erlaubnisschein und geben die Arbeit frei. Fortfahren?",
+          "refuseAction": "Ablehnen",
+          "refusePrompt": "Warum lehnen Sie diesen Erlaubnisschein ab? Er geht mit Ihrer Begründung als Entwurf an den Aussteller zurück."
         }
       },
       "signatures": {
@@ -4798,6 +4801,7 @@
           "authorised": "Freigegeben",
           "issued": "Ausgestellt",
           "accepted": "Angenommen",
+          "refused": "Abgelehnt und an den Aussteller zurückgegeben",
           "suspended": "Ausgesetzt",
           "resumed": "Fortgesetzt",
           "extended": "Verlängert",
@@ -4953,13 +4957,7 @@
       "openModule": "Schulungen öffnen"
     },
     "signatures": {
-      "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt",
-      "acceptConfirm": "Mit der Annahme zeichnen Sie diesen Erlaubnisschein und geben die Arbeit frei. Fortfahren?",
-      "refuseAction": "Ablehnen",
-      "refusePrompt": "Warum lehnen Sie diesen Erlaubnisschein ab? Er geht mit Ihrer Begründung als Entwurf an den Aussteller zurück."
-    },
-    "events": {
-      "refused": "Abgelehnt und an den Aussteller zurückgegeben"
+      "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt"
     }
   },
   "fireSafety": {

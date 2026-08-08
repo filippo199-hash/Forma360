@@ -4726,7 +4726,10 @@
           "openModule": "Open Opleiding"
         },
         "signatures": {
-          "competenceBlocked": "Geblokkeerd: competentie niet aangetoond"
+          "competenceBlocked": "Geblokkeerd: competentie niet aangetoond",
+          "acceptConfirm": "Accepteren tekent u op deze werkvergunning en geeft het werk vrij. Doorgaan?",
+          "refuseAction": "Weigeren",
+          "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever."
         }
       },
       "signatures": {
@@ -4791,6 +4794,7 @@
           "authorised": "Geautoriseerd",
           "issued": "Uitgegeven",
           "accepted": "Geaccepteerd",
+          "refused": "Geweigerd en teruggestuurd naar de uitgever",
           "suspended": "Opgeschort",
           "resumed": "Hervat",
           "extended": "Verlengd",
@@ -4946,13 +4950,7 @@
       "openModule": "Opleidingen openen"
     },
     "signatures": {
-      "competenceBlocked": "Geblokkeerd: vakbekwaamheid niet voldaan",
-      "acceptConfirm": "Accepteren tekent u op deze werkvergunning en geeft het werk vrij. Doorgaan?",
-      "refuseAction": "Weigeren",
-      "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever."
-    },
-    "events": {
-      "refused": "Geweigerd en teruggestuurd naar de uitgever"
+      "competenceBlocked": "Geblokkeerd: vakbekwaamheid niet voldaan"
     }
   },
   "fireSafety": {

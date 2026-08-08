@@ -4722,7 +4722,10 @@
           "openModule": "打开培训"
         },
         "signatures": {
-          "competenceBlocked": "已阻止：未满足能力要求"
+          "competenceBlocked": "已阻止：未满足能力要求",
+          "acceptConfirm": "接受即表示您在此作业许可上签字并批准开工。是否继续？",
+          "refuseAction": "拒绝",
+          "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。"
         }
       },
       "signatures": {
@@ -4787,6 +4790,7 @@
           "authorised": "已审批",
           "issued": "已签发",
           "accepted": "已接收",
+          "refused": "已拒绝并退回签发人",
           "suspended": "已暂停",
           "resumed": "已恢复",
           "extended": "已延期",
@@ -4942,13 +4946,7 @@
       "openModule": "打开培训"
     },
     "signatures": {
-      "competenceBlocked": "已阻止：能力要求未满足",
-      "acceptConfirm": "接受即表示您在此作业许可上签字并批准开工。是否继续？",
-      "refuseAction": "拒绝",
-      "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。"
-    },
-    "events": {
-      "refused": "已拒绝并退回签发人"
+      "competenceBlocked": "已阻止：能力要求未满足"
     }
   },
   "fireSafety": {

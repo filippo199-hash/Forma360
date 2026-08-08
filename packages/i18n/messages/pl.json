@@ -4726,7 +4726,10 @@
           "openModule": "Otwórz Szkolenia"
         },
         "signatures": {
-          "competenceBlocked": "Zablokowane: brak wymaganych kompetencji"
+          "competenceBlocked": "Zablokowane: brak wymaganych kompetencji",
+          "acceptConfirm": "Akceptacja oznacza podpisanie tego zezwolenia i dopuszczenie prac. Kontynuować?",
+          "refuseAction": "Odmów",
+          "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem."
         }
       },
       "signatures": {
@@ -4791,6 +4794,7 @@
           "authorised": "Autoryzowano",
           "issued": "Wydano",
           "accepted": "Przyjęto",
+          "refused": "Odmówiono i zwrócono wystawcy",
           "suspended": "Zawieszono",
           "resumed": "Wznowiono",
           "extended": "Przedłużono",
@@ -4946,13 +4950,7 @@
       "openModule": "Otwórz szkolenia"
     },
     "signatures": {
-      "competenceBlocked": "Zablokowane: brak kompetencji",
-      "acceptConfirm": "Akceptacja oznacza podpisanie tego zezwolenia i dopuszczenie prac. Kontynuować?",
-      "refuseAction": "Odmów",
-      "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem."
-    },
-    "events": {
-      "refused": "Odmówiono i zwrócono wystawcy"
+      "competenceBlocked": "Zablokowane: brak kompetencji"
     }
   },
   "fireSafety": {

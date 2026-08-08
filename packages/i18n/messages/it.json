@@ -4768,7 +4768,10 @@
           "openModule": "Apri Formazione"
         },
         "signatures": {
-          "competenceBlocked": "Bloccato: competenza non soddisfatta"
+          "competenceBlocked": "Bloccato: competenza non soddisfatta",
+          "acceptConfirm": "Accettando firmi questo permesso e autorizzi l’inizio dei lavori. Continuare?",
+          "refuseAction": "Rifiuta",
+          "refusePrompt": "Perché rifiuti questo permesso? Tornerà all’emittente come bozza con la tua motivazione."
         }
       },
       "signatures": {
@@ -4833,6 +4836,7 @@
           "authorised": "Autorizzato",
           "issued": "Emesso",
           "accepted": "Accettato",
+          "refused": "Rifiutato e restituito all’emittente",
           "suspended": "Sospeso",
           "resumed": "Ripreso",
           "extended": "Prorogato",
@@ -4988,13 +4992,7 @@
       "openModule": "Apri formazione"
     },
     "signatures": {
-      "competenceBlocked": "Bloccato: competenza non soddisfatta",
-      "acceptConfirm": "Accettando firmi questo permesso e autorizzi l’inizio dei lavori. Continuare?",
-      "refuseAction": "Rifiuta",
-      "refusePrompt": "Perché rifiuti questo permesso? Tornerà all’emittente come bozza con la tua motivazione."
-    },
-    "events": {
-      "refused": "Rifiutato e restituito all’emittente"
+      "competenceBlocked": "Bloccato: competenza non soddisfatta"
     }
   },
   "fireSafety": {
