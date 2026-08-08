@@ -1,0 +1,8 @@
+{
+  "subject": "Rapport planifié : {dashboardTitle}",
+  "preheader": "Votre rapport planifié du tableau de bord {productName} est joint en PDF.",
+  "greeting": "Bonjour,",
+  "body": "Le rapport planifié « {dashboardTitle} » de {productName} est joint à cet e-mail au format PDF.\n\nLes chiffres ont été générés au moment de l'envoi ; ouvrez le tableau de bord en ligne pour la vue en direct.",
+  "cta": "Ouvrir le tableau de bord",
+  "footer": "Vous recevez cet e-mail parce qu'un utilisateur de {productName} a planifié ce rapport pour vous. Contactez cette personne pour modifier ou arrêter ces envois."
+}

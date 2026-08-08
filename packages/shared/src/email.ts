@@ -57,6 +57,7 @@ import incidentChaseDigest from '../../i18n/emails/en/incident-chase-digest.json
 import incidentInvestigatorAssigned from '../../i18n/emails/en/incident-investigator-assigned.json';
 import incidentRiddorEscalation from '../../i18n/emails/en/incident-riddor-escalation.json';
 import incidentRiddorWarning from '../../i18n/emails/en/incident-riddor-warning.json';
+import dashboardScheduled from '../../i18n/emails/en/dashboard-scheduled.json';
 
 const EMAIL_TEMPLATES: Record<string, unknown> = {
   'heads-up-reminder': headsUpReminder,
@@ -101,6 +102,8 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'incident-investigator-assigned': incidentInvestigatorAssigned,
   'incident-riddor-escalation': incidentRiddorEscalation,
   'incident-riddor-warning': incidentRiddorWarning,
+  // ADR 0018 — scheduled dashboard PDF delivery.
+  'dashboard-scheduled': dashboardScheduled,
 };
 
 /** Registered template keys — exported so tests can assert the registry
