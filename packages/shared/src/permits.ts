@@ -78,7 +78,14 @@ export function isOpenPermitStatus(status: PermitStatus): boolean {
  */
 const PERMIT_TRANSITIONS: Record<PermitStatus, ReadonlyArray<PermitStatus>> = {
   draft: ['issued', 'cancelled'],
-  issued: ['active', 'closed', 'cancelled'],
+  // `issued → draft` is REFUSAL: the named acceptor sends the permit
+  // back to the issuer for correction. Without it the acceptor's only
+  // options were to sign, or to cancel — and cancelling KILLS the
+  // permit rather than bouncing it. Faced with a hot-work permit
+  // carrying a contradiction on its face, "the only honest action
+  // available to me is to destroy the record". Refusing and cancelling
+  // are different acts and a permit system needs both.
+  issued: ['active', 'draft', 'closed', 'cancelled'],
   active: ['suspended', 'issued', 'closed', 'cancelled'],
   suspended: ['active', 'closed', 'cancelled'],
   closed: [],

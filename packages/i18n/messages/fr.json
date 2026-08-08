@@ -4433,7 +4433,8 @@
         "draftSummaryButton": "Rédiger avec l’IA",
         "drafting": "Rédaction…",
         "summaryError": "Impossible de rédiger le résumé. Réessayez.",
-        "summaryDrafted": "Brouillon prêt — relisez et enregistrez."
+        "summaryDrafted": "Brouillon prêt — relisez et enregistrez.",
+        "suggestingElapsed": "Réflexion… {seconds}s (cela peut prendre jusqu’à une minute)"
       },
       "signOff": {
         "title": "Signature de l’évaluateur",
@@ -4952,7 +4953,13 @@
       "openModule": "Ouvrir les formations"
     },
     "signatures": {
-      "competenceBlocked": "Bloqué : compétence non satisfaite"
+      "competenceBlocked": "Bloqué : compétence non satisfaite",
+      "acceptConfirm": "Accepter vous engage sur ce permis et autorise le début des travaux. Continuer ?",
+      "refuseAction": "Refuser",
+      "refusePrompt": "Pourquoi refusez-vous ce permis ? Il retourne à l’émetteur en brouillon avec votre motif."
+    },
+    "events": {
+      "refused": "Refusé et renvoyé à l’émetteur"
     }
   },
   "fireSafety": {
@@ -5503,7 +5510,8 @@
     "photosAdd": "Ajouter une photo",
     "photosRemove": "Retirer",
     "photoTooLarge": "Cette photo dépasse {maxMb} Mo — choisissez-en une plus légère.",
-    "photoUploadFailed": "Une photo n'a pas pu être envoyée. Elle reste jointe ici — renvoyez pour réessayer."
+    "photoUploadFailed": "Une photo n'a pas pu être envoyée. Elle reste jointe ici — renvoyez pour réessayer.",
+    "photoUploadGaveUp": "Votre signalement est enregistré, mais la photo n'a pas pu être envoyée. Si elle est importante, dites à votre responsable ce qu'elle montrait."
   },
   "offline": {
     "title": "Vous êtes hors ligne",
@@ -5875,7 +5883,10 @@
         "occupational_disease": "Maladie professionnelle diagnostiquée liée au travail — canal carpien, dermatite, asthme professionnel, HAVS, tendinite, cancer professionnel.",
         "dangerous_occurrence": "Événement de l'annexe 2 — effondrement d'appareil de levage, d'échafaudage, incendie/explosion électrique, défaillance sous pression, rejet accidentel.",
         "gas_incident": "Décès ou blessure liés au gaz, ou installation de gaz dangereuse."
-      }
+      },
+      "lostTimeRecorded": "{days} jour(s) d’arrêt enregistrés à ce jour.",
+      "lostTimeOngoing": "{days} jour(s) d’arrêt, toujours absent — l’obligation « plus de 7 jours » s’applique à partir du {date} si l’arrêt continue.",
+      "lostTimeOverSeven": "{days} jours d’arrêt — au-delà du seuil de 7 jours. L’obligation « plus de 7 jours » s’applique."
     },
     "investigation": {
       "heading": "Enquête",

@@ -352,6 +352,21 @@ const GOAL_ASSERTIONS: Record<SandboxScenarioId, GoalAssertion> = {
       expect(permits[0]?.authoriserUserId, 'authorising signature missing').not.toBeNull();
       expect(permits[0]?.authorisedAt).not.toBeNull();
     }
+
+    // For a permit, "who issued this and when" is the most important
+    // line in the audit trail — and it was the one missing. The seed
+    // wrote the end state without any events, so a permit six people
+    // had signed off showed a History with one line on it.
+    const events = await db
+      .select()
+      .from(schema.permitEvents)
+      .where(eq(schema.permitEvents.tenantId, tenantId));
+    const kinds = new Set(events.map((e) => e.kind));
+    expect(kinds.has('issued'), 'the issue event must reach the log').toBe(true);
+    expect(kinds.has('precondition_checked'), 'precondition confirmations must too').toBe(true);
+    if (type?.requiresAuthoriser === true) {
+      expect(kinds.has('authorised'), 'the authorising signature must reach the log').toBe(true);
+    }
   },
 
   /** Goal: one incident at reported, with RIDDOR-relevant facts. */

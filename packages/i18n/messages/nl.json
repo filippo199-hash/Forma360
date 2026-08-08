@@ -4426,7 +4426,8 @@
         "draftSummaryButton": "Opstellen met AI",
         "drafting": "Opstellen…",
         "summaryError": "Samenvatting kon niet worden opgesteld. Probeer opnieuw.",
-        "summaryDrafted": "Concept klaar — lees na en sla op."
+        "summaryDrafted": "Concept klaar — lees na en sla op.",
+        "suggestingElapsed": "Denken… {seconds}s (dit kan tot een minuut duren)"
       },
       "signOff": {
         "title": "Ondertekening beoordelaar",
@@ -4945,7 +4946,13 @@
       "openModule": "Opleidingen openen"
     },
     "signatures": {
-      "competenceBlocked": "Geblokkeerd: vakbekwaamheid niet voldaan"
+      "competenceBlocked": "Geblokkeerd: vakbekwaamheid niet voldaan",
+      "acceptConfirm": "Accepteren tekent u op deze werkvergunning en geeft het werk vrij. Doorgaan?",
+      "refuseAction": "Weigeren",
+      "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever."
+    },
+    "events": {
+      "refused": "Geweigerd en teruggestuurd naar de uitgever"
     }
   },
   "fireSafety": {
@@ -5496,7 +5503,8 @@
     "photosAdd": "Foto toevoegen",
     "photosRemove": "Verwijderen",
     "photoTooLarge": "Deze foto is groter dan {maxMb} MB — kies een kleinere.",
-    "photoUploadFailed": "Een foto kon niet worden geüpload. Hij is hier nog bijgevoegd — verstuur opnieuw om het nogmaals te proberen."
+    "photoUploadFailed": "Een foto kon niet worden geüpload. Hij is hier nog bijgevoegd — verstuur opnieuw om het nogmaals te proberen.",
+    "photoUploadGaveUp": "Je melding is vastgelegd, maar de foto kon niet worden geüpload. Als het belangrijk is, vertel je leidinggevende wat erop stond."
   },
   "offline": {
     "title": "Je bent offline",
@@ -5868,7 +5876,10 @@
         "occupational_disease": "Gediagnosticeerde werkgerelateerde beroepsziekte — carpaletunnelsyndroom, dermatitis, beroepsastma, HAVS, peesontsteking, beroepskanker.",
         "dangerous_occurrence": "Voorval uit Schedule 2 — bezwijken van hijsmaterieel, steigerinstorting, elektrische brand/explosie, drukfalen, onbedoelde vrijzetting.",
         "gas_incident": "Gasgerelateerd overlijden of letsel, of een gevaarlijke gasinstallatie."
-      }
+      },
+      "lostTimeRecorded": "{days} verzuimdag(en) tot nu toe geregistreerd.",
+      "lostTimeOngoing": "{days} verzuimdag(en) en nog steeds afwezig — de meer-dan-7-dagenplicht geldt vanaf {date} als het verzuim doorloopt.",
+      "lostTimeOverSeven": "{days} verzuimdagen — boven de drempel van 7 dagen. De meer-dan-7-dagenplicht geldt."
     },
     "investigation": {
       "heading": "Onderzoek",

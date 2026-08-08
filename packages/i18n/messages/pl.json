@@ -4426,7 +4426,8 @@
         "draftSummaryButton": "Napisz z AI",
         "drafting": "Pisanie…",
         "summaryError": "Nie udało się napisać streszczenia. Spróbuj ponownie.",
-        "summaryDrafted": "Szkic gotowy — przejrzyj i zapisz."
+        "summaryDrafted": "Szkic gotowy — przejrzyj i zapisz.",
+        "suggestingElapsed": "Myślę… {seconds}s (może potrwać do minuty)"
       },
       "signOff": {
         "title": "Podpis oceniającego",
@@ -4945,7 +4946,13 @@
       "openModule": "Otwórz szkolenia"
     },
     "signatures": {
-      "competenceBlocked": "Zablokowane: brak kompetencji"
+      "competenceBlocked": "Zablokowane: brak kompetencji",
+      "acceptConfirm": "Akceptacja oznacza podpisanie tego zezwolenia i dopuszczenie prac. Kontynuować?",
+      "refuseAction": "Odmów",
+      "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem."
+    },
+    "events": {
+      "refused": "Odmówiono i zwrócono wystawcy"
     }
   },
   "fireSafety": {
@@ -5496,7 +5503,8 @@
     "photosAdd": "Dodaj zdjęcie",
     "photosRemove": "Usuń",
     "photoTooLarge": "To zdjęcie przekracza {maxMb} MB — wybierz mniejsze.",
-    "photoUploadFailed": "Nie udało się przesłać zdjęcia. Jest nadal załączone — wyślij ponownie, aby spróbować jeszcze raz."
+    "photoUploadFailed": "Nie udało się przesłać zdjęcia. Jest nadal załączone — wyślij ponownie, aby spróbować jeszcze raz.",
+    "photoUploadGaveUp": "Zgłoszenie zostało zapisane, ale nie udało się przesłać zdjęcia. Jeśli to ważne, powiedz przełożonemu, co było na nim widoczne."
   },
   "offline": {
     "title": "Jesteś offline",
@@ -5868,7 +5876,10 @@
         "occupational_disease": "Rozpoznana choroba zawodowa związana z pracą — cieśń nadgarstka, dermatoza, astma zawodowa, HAVS, zapalenie ścięgien, nowotwór zawodowy.",
         "dangerous_occurrence": "Zdarzenie z załącznika 2 — awaria dźwignicy, zawalenie rusztowania, pożar/wybuch elektryczny, awaria ciśnieniowa, uwolnienie substancji.",
         "gas_incident": "Zgon lub uraz związany z gazem albo niebezpieczna instalacja gazowa."
-      }
+      },
+      "lostTimeRecorded": "Zarejestrowano dotąd {days} dni niezdolności.",
+      "lostTimeOngoing": "{days} dni niezdolności i nadal nieobecny — obowiązek powyżej 7 dni zacznie obowiązywać od {date}, jeśli nieobecność potrwa.",
+      "lostTimeOverSeven": "{days} dni niezdolności — powyżej progu 7 dni. Obowiązek powyżej 7 dni ma zastosowanie."
     },
     "investigation": {
       "heading": "Dochodzenie",

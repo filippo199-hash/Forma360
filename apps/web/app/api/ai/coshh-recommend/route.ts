@@ -23,6 +23,10 @@ import { createContext } from '../../../../src/server/trpc';
 
 const bodySchema = z.object({ assessmentId: z.string().length(26) });
 
+// A COSHH control recommendation genuinely takes tens of seconds. Say
+// so, rather than letting a platform default cut it off mid-answer.
+export const maxDuration = 120;
+
 export async function POST(request: Request) {
   if (!brandHasModule(activeBrand.id, 'coshh')) {
     return Response.json({ error: 'Not found' }, { status: 404 });

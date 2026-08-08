@@ -39,6 +39,7 @@ import {
   permissionSets,
   permits,
   permitTypes,
+  permitEvents,
   riskAssessmentControls,
   riskAssessmentHazards,
   ramsPacks,
@@ -692,8 +693,9 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
       })
     : [];
 
+  const permitId = newId();
   await ctx.tx.insert(permits).values({
-    id: newId(),
+    id: permitId,
     tenantId: ctx.tenantId,
     permitTypeId,
     referenceNumber: `PTW-${String(ref).padStart(4, '0')}`,
@@ -719,6 +721,42 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
     validTo,
     createdBy: ctx.colleagueId,
   });
+
+  // The audit trail the router would have written.
+  //
+  // Seeding writes the end state directly (see the file header), which
+  // is honest about what it is — but it skipped `permit_events`
+  // entirely, so a permit that six people had signed off showed a
+  // History with one line on it. For a permit, "who issued this and
+  // when" is the most important line in the log, and it was the one
+  // missing.
+  const events: Array<{
+    kind: 'created' | 'precondition_checked' | 'authorised' | 'issued';
+    detail: string;
+    at: Date;
+  }> = [
+    { kind: 'created', detail: '', at: new Date(takenAt.getTime() - 30 * 60 * 1000) },
+    ...preconditions.map((pc) => ({
+      kind: 'precondition_checked' as const,
+      detail: pc.label,
+      at: takenAt,
+    })),
+    ...(permitType.requiresAuthoriser
+      ? [{ kind: 'authorised' as const, detail: '', at: takenAt }]
+      : []),
+    { kind: 'issued', detail: '', at: validFrom },
+  ];
+  for (const event of events) {
+    await ctx.tx.insert(permitEvents).values({
+      id: newId(),
+      tenantId: ctx.tenantId,
+      permitId,
+      actorUserId: ctx.colleagueId,
+      kind: event.kind,
+      detail: event.detail,
+      createdAt: event.at,
+    });
+  }
 }
 
 /**

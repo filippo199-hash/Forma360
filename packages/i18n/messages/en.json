@@ -4660,7 +4660,8 @@
         "draftSummaryButton": "Draft with AI",
         "drafting": "Drafting…",
         "summaryError": "Could not draft the summary. Try again.",
-        "summaryDrafted": "Draft ready — review and save it."
+        "summaryDrafted": "Draft ready — review and save it.",
+        "suggestingElapsed": "Thinking… {seconds}s (this can take up to a minute)"
       },
       "signOff": {
         "title": "Assessor sign-off",
@@ -5179,7 +5180,13 @@
       "openModule": "Open training"
     },
     "signatures": {
-      "competenceBlocked": "Blocked: competence not met"
+      "competenceBlocked": "Blocked: competence not met",
+      "acceptConfirm": "Accepting signs you on to this permit and authorises the work to start. Continue?",
+      "refuseAction": "Refuse",
+      "refusePrompt": "Why are you refusing this permit? It goes back to the issuer as a draft with your reason."
+    },
+    "events": {
+      "refused": "Refused and returned to the issuer"
     }
   },
   "fireSafety": {
@@ -5724,7 +5731,8 @@
     "photosAdd": "Add photo",
     "photosRemove": "Remove",
     "photoTooLarge": "This photo is over {maxMb} MB — please pick a smaller one.",
-    "photoUploadFailed": "A photo failed to upload. It is still attached here — submit again to retry."
+    "photoUploadFailed": "A photo failed to upload. It is still attached here — submit again to retry.",
+    "photoUploadGaveUp": "Your report was filed, but the photo could not be uploaded. If it matters, please tell your supervisor what it showed."
   },
   "offline": {
     "title": "You're offline",
@@ -6096,7 +6104,10 @@
         "occupational_disease": "A diagnosed occupational disease linked to the work — carpal tunnel, dermatitis, occupational asthma, HAVS, tendonitis, occupational cancer.",
         "dangerous_occurrence": "A Schedule 2 near-miss event — collapse of lifting equipment, scaffold collapse, electrical fire/explosion, pressure-system failure, accidental release.",
         "gas_incident": "A gas-related death or injury, or a dangerous gas fitting."
-      }
+      },
+      "lostTimeRecorded": "{days} day(s) lost recorded so far.",
+      "lostTimeOngoing": "{days} day(s) lost and still absent — the over-7-day duty applies from {date} if they are still off.",
+      "lostTimeOverSeven": "{days} day(s) lost — this is over the 7-day threshold. The over-7-day duty applies."
     },
     "investigation": {
       "heading": "Investigation",

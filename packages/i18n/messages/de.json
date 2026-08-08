@@ -4433,7 +4433,8 @@
         "draftSummaryButton": "Mit KI entwerfen",
         "drafting": "Entwirft…",
         "summaryError": "Kurzfassung konnte nicht entworfen werden. Bitte erneut versuchen.",
-        "summaryDrafted": "Entwurf fertig — prüfen und speichern."
+        "summaryDrafted": "Entwurf fertig — prüfen und speichern.",
+        "suggestingElapsed": "Analysiert… {seconds}s (kann bis zu einer Minute dauern)"
       },
       "signOff": {
         "title": "Freigabe durch Beurteiler",
@@ -4952,7 +4953,13 @@
       "openModule": "Schulungen öffnen"
     },
     "signatures": {
-      "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt"
+      "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt",
+      "acceptConfirm": "Mit der Annahme zeichnen Sie diesen Erlaubnisschein und geben die Arbeit frei. Fortfahren?",
+      "refuseAction": "Ablehnen",
+      "refusePrompt": "Warum lehnen Sie diesen Erlaubnisschein ab? Er geht mit Ihrer Begründung als Entwurf an den Aussteller zurück."
+    },
+    "events": {
+      "refused": "Abgelehnt und an den Aussteller zurückgegeben"
     }
   },
   "fireSafety": {
@@ -5503,7 +5510,8 @@
     "photosAdd": "Foto hinzufügen",
     "photosRemove": "Entfernen",
     "photoTooLarge": "Dieses Foto ist größer als {maxMb} MB — bitte ein kleineres wählen.",
-    "photoUploadFailed": "Ein Foto konnte nicht hochgeladen werden. Es bleibt hier angehängt — erneut absenden, um es noch einmal zu versuchen."
+    "photoUploadFailed": "Ein Foto konnte nicht hochgeladen werden. Es bleibt hier angehängt — erneut absenden, um es noch einmal zu versuchen.",
+    "photoUploadGaveUp": "Ihre Meldung wurde erfasst, das Foto konnte aber nicht hochgeladen werden. Falls es wichtig ist, sagen Sie Ihrer Führungskraft, was darauf zu sehen war."
   },
   "offline": {
     "title": "Sie sind offline",
@@ -5875,7 +5883,10 @@
         "occupational_disease": "Diagnostizierte arbeitsbedingte Erkrankung — Karpaltunnel, Dermatitis, Berufsasthma, HAVS, Sehnenscheidenentzündung, Berufskrebs.",
         "dangerous_occurrence": "Ereignis nach Schedule 2 — Versagen von Hebezeug, Gerüsteinsturz, Elektrobrand/Explosion, Drucksystemversagen, unbeabsichtigte Freisetzung.",
         "gas_incident": "Gasbedingter Todesfall bzw. Verletzung oder gefährliche Gasinstallation."
-      }
+      },
+      "lostTimeRecorded": "Bisher {days} Ausfalltag(e) erfasst.",
+      "lostTimeOngoing": "{days} Ausfalltag(e), weiterhin abwesend — die Über-7-Tage-Pflicht greift ab {date}, wenn die Abwesenheit andauert.",
+      "lostTimeOverSeven": "{days} Ausfalltage — über der 7-Tage-Schwelle. Die Über-7-Tage-Pflicht greift."
     },
     "investigation": {
       "heading": "Untersuchung",

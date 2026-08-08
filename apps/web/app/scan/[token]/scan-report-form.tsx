@@ -62,6 +62,7 @@ export interface ScanPageCopy {
     photosRemove: string;
     photoTooLarge: string;
     photoUploadFailed: string;
+    photoUploadGaveUp: string;
   };
   submit: string;
   submitting: string;
@@ -109,6 +110,10 @@ export function ScanReportForm({ token, copy }: { token: string; copy: ScanPageC
   const [photos, setPhotos] = useState<PendingPhoto[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  /** True once an upload attempt has already failed for this report. */
+  const [photoUploadTried, setPhotoUploadTried] = useState(false);
+  /** True when we filed the report without a photo that would not upload. */
+  const [photoDropped, setPhotoDropped] = useState(false);
   const [customQuestionResponses, setCustomQuestionResponses] = useState<Record<string, string>>(
     {},
   );
@@ -175,6 +180,11 @@ export function ScanReportForm({ token, copy }: { token: string; copy: ScanPageC
   }
 
   function removePhoto(index: number) {
+    // The red banner used to stay up after the offending photo was
+    // removed, so the form said a photo had failed when none was
+    // attached.
+    setSubmitError(null);
+    setPhotoUploadTried(false);
     setPhotos((prev) => {
       const target = prev[index];
       if (target !== undefined) URL.revokeObjectURL(target.previewUrl);
@@ -220,17 +230,33 @@ export function ScanReportForm({ token, copy }: { token: string; copy: ScanPageC
     e.preventDefault();
     if (!canSubmit || category === null || category === undefined) return;
 
-    // Photos first — a failed upload keeps the form intact for retry.
+    // Photos first — a failed upload keeps the form intact for ONE retry.
+    //
+    // It used to block the submission outright, for ever: the report was
+    // never created, so somebody who did exactly what the form asks —
+    // "add up to 3 photos, a picture is half the report" — could not
+    // file at all. They either worked out the photo was the problem and
+    // deleted it, losing the evidence, or gave up. On the one feature
+    // built to get reluctant people reporting, that is fatal. A hazard
+    // report without its photograph still beats no hazard report, so the
+    // second attempt files what we have and says the photo did not stick.
     let uploadedPhotos: PendingPhoto[] = photos;
     if (showMedia && photos.length > 0) {
       setUploadingPhotos(true);
       const result = await uploadPendingPhotos(photos);
       setUploadingPhotos(false);
       if (result === null) {
-        setSubmitError(COPY.fields.photoUploadFailed);
-        return;
+        if (!photoUploadTried) {
+          setPhotoUploadTried(true);
+          setSubmitError(COPY.fields.photoUploadFailed);
+          return;
+        }
+        setSubmitError(null);
+        setPhotoDropped(true);
+        uploadedPhotos = photos.filter((p) => p.uploaded !== undefined);
+      } else {
+        uploadedPhotos = result;
       }
-      uploadedPhotos = result;
     }
 
     const descriptionParts: string[] = [];
@@ -333,6 +359,11 @@ export function ScanReportForm({ token, copy }: { token: string; copy: ScanPageC
           <CardContent className="space-y-4 p-8 text-center">
             <h1 className="text-lg font-semibold">{COPY.successTitle}</h1>
             <p className="text-sm text-muted-foreground">{COPY.successBody}</p>
+            {photoDropped ? (
+              <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900">
+                {COPY.fields.photoUploadGaveUp}
+              </p>
+            ) : null}
             <p className="rounded-md bg-muted px-3 py-2 text-center font-mono text-sm">
               {success.referenceNumber}
             </p>

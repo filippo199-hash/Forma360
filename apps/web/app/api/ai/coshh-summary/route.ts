@@ -25,6 +25,10 @@ const bodySchema = z.object({
   locale: z.string().min(2).max(10).default('en'),
 });
 
+// A COSHH control recommendation genuinely takes tens of seconds. Say
+// so, rather than letting a platform default cut it off mid-answer.
+export const maxDuration = 120;
+
 export async function POST(request: Request) {
   if (!brandHasModule(activeBrand.id, 'coshh')) {
     return Response.json({ error: 'Not found' }, { status: 404 });

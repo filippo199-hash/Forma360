@@ -4426,7 +4426,8 @@
         "draftSummaryButton": "AI で下書き",
         "drafting": "作成中…",
         "summaryError": "要約を作成できませんでした。もう一度お試しください。",
-        "summaryDrafted": "下書きができました。確認して保存してください。"
+        "summaryDrafted": "下書きができました。確認して保存してください。",
+        "suggestingElapsed": "考えています… {seconds}秒（最大1分ほどかかります）"
       },
       "signOff": {
         "title": "評価者の署名",
@@ -4945,7 +4946,13 @@
       "openModule": "研修を開く"
     },
     "signatures": {
-      "competenceBlocked": "ブロック：力量要件未達"
+      "competenceBlocked": "ブロック：力量要件未達",
+      "acceptConfirm": "受諾するとこの許可証に署名し、作業開始を認めることになります。続行しますか？",
+      "refuseAction": "差し戻す",
+      "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。"
+    },
+    "events": {
+      "refused": "差し戻し（発行者へ返却）"
     }
   },
   "fireSafety": {
@@ -5496,7 +5503,8 @@
     "photosAdd": "写真を追加",
     "photosRemove": "削除",
     "photoTooLarge": "この写真は {maxMb} MB を超えています。小さいものを選んでください。",
-    "photoUploadFailed": "写真のアップロードに失敗しました。まだ添付されています。もう一度送信してください。"
+    "photoUploadFailed": "写真のアップロードに失敗しました。まだ添付されています。もう一度送信してください。",
+    "photoUploadGaveUp": "報告は登録されましたが、写真をアップロードできませんでした。重要な場合は、写っていた内容を上長にお伝えください。"
   },
   "offline": {
     "title": "オフラインです",
@@ -5868,7 +5876,10 @@
         "occupational_disease": "業務に関連する診断された職業性疾病 — 手根管症候群、皮膚炎、職業性喘息、HAVS、腱炎、職業がん。",
         "dangerous_occurrence": "Schedule 2の事象 — 揚重設備の崩壊、足場倒壊、電気火災・爆発、圧力設備破損、偶発的放出。",
         "gas_incident": "ガスに関連する死亡・負傷、または危険なガス設備。"
-      }
+      },
+      "lostTimeRecorded": "これまでに {days} 日の休業を記録しています。",
+      "lostTimeOngoing": "休業 {days} 日、現在も欠勤中 — 欠勤が続く場合、7日超の届出義務は {date} から適用されます。",
+      "lostTimeOverSeven": "休業 {days} 日 — 7日の基準を超えています。7日超の届出義務が適用されます。"
     },
     "investigation": {
       "heading": "調査",

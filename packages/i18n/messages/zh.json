@@ -4422,7 +4422,8 @@
         "draftSummaryButton": "用 AI 起草",
         "drafting": "起草中…",
         "summaryError": "无法起草摘要,请重试。",
-        "summaryDrafted": "草稿已就绪——请审阅并保存。"
+        "summaryDrafted": "草稿已就绪——请审阅并保存。",
+        "suggestingElapsed": "思考中… {seconds} 秒（最长可能需要一分钟）"
       },
       "signOff": {
         "title": "评估人签署",
@@ -4941,7 +4942,13 @@
       "openModule": "打开培训"
     },
     "signatures": {
-      "competenceBlocked": "已阻止：能力要求未满足"
+      "competenceBlocked": "已阻止：能力要求未满足",
+      "acceptConfirm": "接受即表示您在此作业许可上签字并批准开工。是否继续？",
+      "refuseAction": "拒绝",
+      "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。"
+    },
+    "events": {
+      "refused": "已拒绝并退回签发人"
     }
   },
   "fireSafety": {
@@ -5492,7 +5499,8 @@
     "photosAdd": "添加照片",
     "photosRemove": "移除",
     "photoTooLarge": "该照片超过 {maxMb} MB,请选择更小的照片。",
-    "photoUploadFailed": "有照片上传失败。它仍附在此处——再次提交即可重试。"
+    "photoUploadFailed": "有照片上传失败。它仍附在此处——再次提交即可重试。",
+    "photoUploadGaveUp": "您的报告已提交，但照片未能上传。如果照片很重要，请告知主管照片的内容。"
   },
   "offline": {
     "title": "您已离线",
@@ -5864,7 +5872,10 @@
         "occupational_disease": "确诊的与工作相关的职业病——腕管综合征、皮炎、职业性哮喘、HAVS、肌腱炎、职业癌。",
         "dangerous_occurrence": "附表2事件——起重设备坍塌、脚手架坍塌、电气火灾/爆炸、压力系统失效、意外泄漏。",
         "gas_incident": "与燃气相关的死亡或伤害，或危险燃气装置。"
-      }
+      },
+      "lostTimeRecorded": "目前已记录 {days} 天误工。",
+      "lostTimeOngoing": "已误工 {days} 天且仍在休假——若持续缺勤，超过 7 天的报告义务将自 {date} 起适用。",
+      "lostTimeOverSeven": "已误工 {days} 天——已超过 7 天门槛，适用超过 7 天的报告义务。"
     },
     "investigation": {
       "heading": "调查",

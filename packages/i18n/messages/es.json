@@ -4433,7 +4433,8 @@
         "draftSummaryButton": "Redactar con IA",
         "drafting": "Redactando…",
         "summaryError": "No se pudo redactar el resumen. Inténtalo de nuevo.",
-        "summaryDrafted": "Borrador listo — revísalo y guárdalo."
+        "summaryDrafted": "Borrador listo — revísalo y guárdalo.",
+        "suggestingElapsed": "Pensando… {seconds}s (puede tardar hasta un minuto)"
       },
       "signOff": {
         "title": "Firma del evaluador",
@@ -4952,7 +4953,13 @@
       "openModule": "Abrir formación"
     },
     "signatures": {
-      "competenceBlocked": "Bloqueado: competencia no acreditada"
+      "competenceBlocked": "Bloqueado: competencia no acreditada",
+      "acceptConfirm": "Aceptar te vincula a este permiso y autoriza el inicio de los trabajos. ¿Continuar?",
+      "refuseAction": "Rechazar",
+      "refusePrompt": "¿Por qué rechazas este permiso? Volverá al emisor como borrador con tu motivo."
+    },
+    "events": {
+      "refused": "Rechazado y devuelto al emisor"
     }
   },
   "fireSafety": {
@@ -5503,7 +5510,8 @@
     "photosAdd": "Agregar foto",
     "photosRemove": "Quitar",
     "photoTooLarge": "Esta foto supera {maxMb} MB: elige una más pequeña.",
-    "photoUploadFailed": "Una foto no se pudo subir. Sigue adjunta aquí: envía de nuevo para reintentar."
+    "photoUploadFailed": "Una foto no se pudo subir. Sigue adjunta aquí: envía de nuevo para reintentar.",
+    "photoUploadGaveUp": "Se ha registrado tu informe, pero no se pudo subir la foto. Si es importante, cuéntale a tu responsable qué mostraba."
   },
   "offline": {
     "title": "Sin conexión",
@@ -5875,7 +5883,10 @@
         "occupational_disease": "Enfermedad profesional diagnosticada ligada al trabajo — túnel carpiano, dermatitis, asma laboral, HAVS, tendinitis, cáncer laboral.",
         "dangerous_occurrence": "Evento del anexo 2 — colapso de equipo de elevación, de andamio, incendio/explosión eléctrica, fallo a presión, liberación accidental.",
         "gas_incident": "Muerte o lesión relacionada con gas, o instalación de gas peligrosa."
-      }
+      },
+      "lostTimeRecorded": "{days} día(s) de baja registrados hasta ahora.",
+      "lostTimeOngoing": "{days} día(s) de baja y sigue ausente: el deber de más de 7 días se aplica desde el {date} si continúa.",
+      "lostTimeOverSeven": "{days} días de baja: supera el umbral de 7 días. Se aplica el deber de más de 7 días."
     },
     "investigation": {
       "heading": "Investigación",

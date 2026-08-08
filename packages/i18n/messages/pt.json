@@ -4426,7 +4426,8 @@
         "draftSummaryButton": "Redigir com IA",
         "drafting": "A redigir…",
         "summaryError": "Não foi possível redigir o resumo. Tente novamente.",
-        "summaryDrafted": "Rascunho pronto — reveja e guarde."
+        "summaryDrafted": "Rascunho pronto — reveja e guarde.",
+        "suggestingElapsed": "A pensar… {seconds}s (pode demorar até um minuto)"
       },
       "signOff": {
         "title": "Assinatura do avaliador",
@@ -4945,7 +4946,13 @@
       "openModule": "Abrir formação"
     },
     "signatures": {
-      "competenceBlocked": "Bloqueado: competência não cumprida"
+      "competenceBlocked": "Bloqueado: competência não cumprida",
+      "acceptConfirm": "Aceitar assina este alvará e autoriza o início dos trabalhos. Continuar?",
+      "refuseAction": "Recusar",
+      "refusePrompt": "Porque recusa este alvará? Volta ao emissor como rascunho com o seu motivo."
+    },
+    "events": {
+      "refused": "Recusado e devolvido ao emissor"
     }
   },
   "fireSafety": {
@@ -5496,7 +5503,8 @@
     "photosAdd": "Adicionar foto",
     "photosRemove": "Remover",
     "photoTooLarge": "Esta foto passa de {maxMb} MB — escolha uma menor.",
-    "photoUploadFailed": "Uma foto não pôde ser enviada. Ela continua anexada aqui — envie novamente para tentar de novo."
+    "photoUploadFailed": "Uma foto não pôde ser enviada. Ela continua anexada aqui — envie novamente para tentar de novo.",
+    "photoUploadGaveUp": "O seu relato foi registado, mas não foi possível carregar a fotografia. Se for importante, diga ao seu responsável o que mostrava."
   },
   "offline": {
     "title": "Você está offline",
@@ -5868,7 +5876,10 @@
         "occupational_disease": "Doença profissional diagnosticada ligada ao trabalho — túnel cárpico, dermatite, asma ocupacional, HAVS, tendinite, cancro ocupacional.",
         "dangerous_occurrence": "Evento do anexo 2 — colapso de equipamento de elevação, de andaime, incêndio/explosão elétrica, falha sob pressão, libertação acidental.",
         "gas_incident": "Morte ou lesão relacionada com gás, ou instalação de gás perigosa."
-      }
+      },
+      "lostTimeRecorded": "{days} dia(s) de ausência registados até agora.",
+      "lostTimeOngoing": "{days} dia(s) de ausência e ainda ausente — o dever acima de 7 dias aplica-se a partir de {date} se continuar.",
+      "lostTimeOverSeven": "{days} dias de ausência — acima do limiar de 7 dias. Aplica-se o dever acima de 7 dias."
     },
     "investigation": {
       "heading": "Investigação",

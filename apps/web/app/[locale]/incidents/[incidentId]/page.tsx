@@ -1097,6 +1097,28 @@ export default function IncidentDetailPage() {
           {panel === 'screen' ? (
             <div className="space-y-3 rounded-md border p-3">
               <p className="text-xs text-muted-foreground">{t('riddor.screenHint')}</p>
+              {/* The over-7-day trigger is a CLOCK, not a judgement — the
+                  one part of RIDDOR a computer should own outright. The
+                  lost-time figure was recorded two panels up and the one
+                  screen that needs it ignored it entirely. */}
+              {data.daysLost > 0 ? (
+                <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+                  {(() => {
+                    // reg 4(2): more than seven CONSECUTIVE days, not
+                    // counting the day of the accident. So the duty bites
+                    // on the eighth day lost.
+                    if (data.daysLost > 7)
+                      return t('riddor.lostTimeOverSeven', { days: data.daysLost });
+                    const ongoing = data.absences.some((a) => a.toDate === null);
+                    if (!ongoing) return t('riddor.lostTimeRecorded', { days: data.daysLost });
+                    const crossesAt = new Date(Date.now() + (8 - data.daysLost) * 86_400_000);
+                    return t('riddor.lostTimeOngoing', {
+                      days: data.daysLost,
+                      date: formatDate(crossesAt, locale),
+                    });
+                  })()}
+                </p>
+              ) : null}
               <div className="space-y-1.5">
                 {RIDDOR_CATEGORIES.map((category) => (
                   <label

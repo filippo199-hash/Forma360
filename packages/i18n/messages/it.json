@@ -4468,7 +4468,8 @@
         "draftSummaryButton": "Scrivi con l’IA",
         "drafting": "Scrittura…",
         "summaryError": "Impossibile scrivere la sintesi. Riprova.",
-        "summaryDrafted": "Bozza pronta — rileggi e salva."
+        "summaryDrafted": "Bozza pronta — rileggi e salva.",
+        "suggestingElapsed": "Elaborazione… {seconds}s (può richiedere fino a un minuto)"
       },
       "signOff": {
         "title": "Firma del valutatore",
@@ -4987,7 +4988,13 @@
       "openModule": "Apri formazione"
     },
     "signatures": {
-      "competenceBlocked": "Bloccato: competenza non soddisfatta"
+      "competenceBlocked": "Bloccato: competenza non soddisfatta",
+      "acceptConfirm": "Accettando firmi questo permesso e autorizzi l’inizio dei lavori. Continuare?",
+      "refuseAction": "Rifiuta",
+      "refusePrompt": "Perché rifiuti questo permesso? Tornerà all’emittente come bozza con la tua motivazione."
+    },
+    "events": {
+      "refused": "Rifiutato e restituito all’emittente"
     }
   },
   "fireSafety": {
@@ -5538,7 +5545,8 @@
     "photosAdd": "Aggiungi foto",
     "photosRemove": "Rimuovi",
     "photoTooLarge": "Questa foto supera {maxMb} MB: scegline una più piccola.",
-    "photoUploadFailed": "Una foto non è stata caricata. È ancora allegata qui: invia di nuovo per riprovare."
+    "photoUploadFailed": "Una foto non è stata caricata. È ancora allegata qui: invia di nuovo per riprovare.",
+    "photoUploadGaveUp": "La segnalazione è stata registrata, ma non è stato possibile caricare la foto. Se è importante, riferisci al tuo responsabile cosa mostrava."
   },
   "offline": {
     "title": "Sei offline",
@@ -5910,7 +5918,10 @@
         "occupational_disease": "Malattia professionale diagnosticata legata al lavoro — tunnel carpale, dermatite, asma professionale, HAVS, tendinite, tumore professionale.",
         "dangerous_occurrence": "Evento della Schedule 2 — cedimento di sollevamento, crollo di ponteggio, incendio/esplosione elettrica, guasto in pressione, rilascio accidentale.",
         "gas_incident": "Decesso o lesione legati al gas, o impianto gas pericoloso."
-      }
+      },
+      "lostTimeRecorded": "{days} giorno/i di assenza registrati finora.",
+      "lostTimeOngoing": "{days} giorno/i di assenza, tuttora in corso: l’obbligo oltre 7 giorni scatta dal {date} se l’assenza continua.",
+      "lostTimeOverSeven": "{days} giorni di assenza: oltre la soglia dei 7 giorni. L’obbligo oltre 7 giorni si applica."
     },
     "investigation": {
       "heading": "Indagine",
