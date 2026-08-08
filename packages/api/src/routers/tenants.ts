@@ -23,12 +23,16 @@ const updateSettingsInput = z.object({
   terminology: z.enum(['sites', 'projects', 'both']),
 });
 
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+
 const updateBrandingInput = z.object({
   logoStorageKey: z.string().max(500).optional(),
-  primaryColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .optional(),
+  primaryColor: hexColor.optional(),
+  /** Company website the palette was derived from. https only (ADR 0018). */
+  websiteUrl: z.string().url().max(2048).startsWith('https://').optional(),
+  accentColor: hexColor.optional(),
+  /** Up to 8 `#rrggbb` chart series colours, adjacent-contrast ordered. */
+  chartColors: z.array(hexColor).max(8).optional(),
 });
 
 export const tenantsRouter = router({
@@ -161,10 +165,19 @@ export const tenantsRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND' });
       }
       const next: TenantSettings = { ...current };
-      if (input.logoStorageKey !== undefined || input.primaryColor !== undefined) {
+      const hasAnyKey =
+        input.logoStorageKey !== undefined ||
+        input.primaryColor !== undefined ||
+        input.websiteUrl !== undefined ||
+        input.accentColor !== undefined ||
+        input.chartColors !== undefined;
+      if (hasAnyKey) {
         next.branding = {
           ...(input.logoStorageKey !== undefined ? { logoStorageKey: input.logoStorageKey } : {}),
           ...(input.primaryColor !== undefined ? { primaryColor: input.primaryColor } : {}),
+          ...(input.websiteUrl !== undefined ? { websiteUrl: input.websiteUrl } : {}),
+          ...(input.accentColor !== undefined ? { accentColor: input.accentColor } : {}),
+          ...(input.chartColors !== undefined ? { chartColors: input.chartColors } : {}),
         };
       } else {
         // No keys present → clear branding entirely.

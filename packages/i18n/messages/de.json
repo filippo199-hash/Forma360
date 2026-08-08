@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "Akzentfarbe",
+        "websiteUrl": "Unternehmenswebsite",
+        "websiteUrlPlaceholder": "https://ihre-firma.de",
+        "derivePalette": "Farbpalette von der Website ableiten",
+        "deriving": "Website wird gelesen…",
+        "deriveError": "Von dieser Website konnte keine Farbpalette gelesen werden. Adresse prüfen und erneut versuchen.",
+        "deriveRateLimited": "Zu viele Versuche. Bitte einige Minuten warten und erneut versuchen.",
+        "palettePreview": "Palettenvorschau",
+        "chartColorsLabel": "Diagrammfarben",
+        "sampleButton": "Primäre Schaltfläche",
+        "sampleChip": "Akzent-Tag"
       },
       "retention": {
         "title": "Datenaufbewahrung & Export",

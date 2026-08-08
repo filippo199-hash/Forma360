@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "アクセントカラー",
+        "websiteUrl": "会社のウェブサイト",
+        "websiteUrlPlaceholder": "https://example.co.jp",
+        "derivePalette": "ウェブサイトからパレットを抽出",
+        "deriving": "ウェブサイトを読み取り中…",
+        "deriveError": "そのウェブサイトからパレットを読み取れませんでした。URLを確認して再試行してください。",
+        "deriveRateLimited": "試行回数が多すぎます。数分待ってから再試行してください。",
+        "palettePreview": "パレットのプレビュー",
+        "chartColorsLabel": "グラフの色",
+        "sampleButton": "プライマリボタン",
+        "sampleChip": "アクセントタグ"
       },
       "retention": {
         "title": "データ保持とエクスポート",

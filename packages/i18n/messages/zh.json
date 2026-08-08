@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "强调色",
+        "websiteUrl": "公司网站",
+        "websiteUrlPlaceholder": "https://example.com",
+        "derivePalette": "从网站提取配色",
+        "deriving": "正在读取网站…",
+        "deriveError": "无法从该网站读取配色。请检查网址后重试。",
+        "deriveRateLimited": "尝试次数过多。请等待几分钟后重试。",
+        "palettePreview": "配色预览",
+        "chartColorsLabel": "图表颜色",
+        "sampleButton": "主要按钮",
+        "sampleChip": "强调标签"
       },
       "retention": {
         "title": "数据保留与导出",
