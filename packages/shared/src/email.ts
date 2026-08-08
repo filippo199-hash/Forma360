@@ -200,6 +200,12 @@ export function renderEmail(
  * substitution. The "kind" union on `OutgoingEmail` is kept for the
  * pre-existing better-auth and schedule-reminder code paths.
  */
+/** A file attached to a templated email (e.g. the dashboard PDF). */
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer | Uint8Array;
+}
+
 export interface TemplatedEmail {
   to: string;
   /** Maps to packages/i18n/emails/<locale>/<templateKey>.json. */
@@ -212,6 +218,12 @@ export interface TemplatedEmail {
    * missing falls back to English. Omit for English.
    */
   locale?: string | undefined;
+  /**
+   * Files to attach (ADR 0018 — scheduled dashboard PDFs). The Resend
+   * path passes them through; the console path logs FILENAMES ONLY —
+   * megabytes of PDF bytes must never hit a log line.
+   */
+  attachments?: EmailAttachment[] | undefined;
 }
 
 export type SendTemplatedEmail = (email: TemplatedEmail) => Promise<DeliveryResult>;
@@ -439,6 +451,20 @@ export function createSendEmail(deps: EmailDeps): SendEmail {
   };
 }
 
+/**
+ * Map our attachment shape onto resend@4's `Attachment` (`content` takes
+ * `string | Buffer`). Exported for the dispatcher test — the Resend send
+ * path itself is only exercised in production.
+ */
+export function toResendAttachments(
+  attachments: readonly EmailAttachment[],
+): Array<{ filename: string; content: Buffer }> {
+  return attachments.map((a) => ({
+    filename: a.filename,
+    content: Buffer.isBuffer(a.content) ? a.content : Buffer.from(a.content),
+  }));
+}
+
 // ─── Templated dispatcher ──────────────────────────────────────────────────
 
 export interface TemplatedEmailDeps {
@@ -506,6 +532,10 @@ export function createSendTemplatedEmail(deps: TemplatedEmailDeps): SendTemplate
           templateKey: email.templateKey,
           variables: email.variables,
           subject,
+          // Filenames only, never bytes — see EmailAttachment.
+          ...(email.attachments !== undefined
+            ? { attachments: email.attachments.map((a) => a.filename) }
+            : {}),
         },
         '[email] (console) would send',
       );
@@ -521,6 +551,9 @@ export function createSendTemplatedEmail(deps: TemplatedEmailDeps): SendTemplate
       to: email.to,
       subject,
       text,
+      ...(email.attachments !== undefined
+        ? { attachments: toResendAttachments(email.attachments) }
+        : {}),
     });
     const parsed = resendResponseSchema.parse(raw);
     if (parsed.error !== null) {
