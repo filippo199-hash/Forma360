@@ -2926,6 +2926,7 @@
       "allDocuments": "All documents",
       "searchPlaceholder": "Search documents…",
       "empty": "No documents here.",
+      "truncatedNote": "Vengono mostrati i primi risultati: affina la ricerca o apri una cartella per vederne altri.",
       "versionNum": "v{n}",
       "staleTag": "Stale",
       "columns": {
@@ -3016,6 +3017,7 @@
       "signaturesEmpty": "Not sent for signature yet.",
       "signaturesSentBy": "Sent by {name}",
       "signaturesPending": "Pending",
+      "signaturesRosterRestricted": "I nomi delle singole firme sono riservati alle analisi di coinvolgimento.",
       "signaturesRequestTitle": "Sent via Heads-Up",
       "archiveConfirm": "Archive this document? It will be hidden from the main list but can be restored later."
     },

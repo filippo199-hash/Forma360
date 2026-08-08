@@ -2884,6 +2884,7 @@
       "allDocuments": "All documents",
       "searchPlaceholder": "Search documents…",
       "empty": "No documents here.",
+      "truncatedNote": "Showing the first results — narrow the search or open a folder to see more.",
       "versionNum": "v{n}",
       "staleTag": "Stale",
       "columns": {
@@ -2974,6 +2975,7 @@
       "signaturesEmpty": "Not sent for signature yet.",
       "signaturesSentBy": "Sent by {name}",
       "signaturesPending": "Pending",
+      "signaturesRosterRestricted": "Individual sign-off names are restricted to engagement analytics.",
       "signaturesRequestTitle": "Sent via Heads-Up",
       "archiveConfirm": "Archive this document? It will be hidden from the main list but can be restored later."
     },

@@ -23,6 +23,7 @@
  */
 import type { Database } from '@forma360/db/client';
 import { actions, incidentInvestigations, incidents, user } from '@forma360/db/schema';
+import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
 import { INVESTIGATION_IDLE_CHASE_DAYS } from '@forma360/shared/incidents';
 import type { PermissionHolder } from '@forma360/permissions/holders';
@@ -270,7 +271,7 @@ export async function runIncidentChase(
       await deps.notify(
         { userId: owner.id, name: owner.name, email: owner.email, locale: owner.locale },
         digest,
-        `${deps.appUrl}/en/incidents`,
+        appLink(deps.appUrl, owner.locale, '/incidents'),
       );
       sent += 1;
     } catch (err) {

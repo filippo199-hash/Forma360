@@ -187,7 +187,14 @@ export async function isDocumentVisibleToUser(
   tenantId: string,
   userId: string,
   doc: {
-    id?: string;
+    /**
+     * DC-S03: REQUIRED, and it was optional. The download route simply did
+     * not select it, so `grants.docIds.has(doc.id)` below could never fire
+     * and every document-level ACL grant produced a 404 on the file — while
+     * folder-level grants worked, which made it read as a storage fault.
+     * Making it required is what stops the next caller omitting it.
+     */
+    id: string;
     folderId: string | null;
     visibleToGroupIds: unknown;
     visibleToSiteIds: unknown;
@@ -208,7 +215,7 @@ export async function isDocumentVisibleToUser(
   // PF-26: an explicit ACL grant (document- or folder-scoped) admits the
   // viewer even when the group/site visibility rules would not.
   const grants = await loadViewerAccessGrants(db, tenantId, userId, viewer.groupIds);
-  if (doc.id !== undefined && grants.docIds.has(doc.id)) return true;
+  if (grants.docIds.has(doc.id)) return true;
   const folderGranted = makeFolderGrantChecker(allFolders as FolderVis[], grants);
   if (folderGranted(doc.folderId)) return true;
   const folderVisible = makeFolderVisibilityChecker(allFolders as FolderVis[], viewer);

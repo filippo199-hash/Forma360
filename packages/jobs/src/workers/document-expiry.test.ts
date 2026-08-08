@@ -15,6 +15,7 @@ import * as schema from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
+import { eq } from 'drizzle-orm';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { runDocumentExpiry, type ExpiringDocument } from './document-expiry';
@@ -66,6 +67,16 @@ describe('document-expiry', () => {
     await client.close();
   });
 
+  async function anySetId(): Promise<string> {
+    const [row] = await db
+      .select({ id: schema.permissionSets.id })
+      .from(schema.permissionSets)
+      .where(eq(schema.permissionSets.tenantId, tenantId))
+      .limit(1);
+    if (row === undefined) throw new Error('expected a seeded permission set');
+    return row.id;
+  }
+
   async function seedDocument(
     over: Partial<typeof schema.documents.$inferInsert>,
   ): Promise<string> {
@@ -84,13 +95,13 @@ describe('document-expiry', () => {
     return id;
   }
 
-  function run(sent: Array<{ to: string; doc: ExpiringDocument }>, now: Date) {
+  function run(sent: Array<{ to: string; doc: ExpiringDocument; viewUrl?: string }>, now: Date) {
     return runDocumentExpiry({
       db: db as never,
       logger,
       appUrl: 'https://app.test',
-      notify: (recipient, doc) => {
-        sent.push({ to: recipient.email, doc });
+      notify: (recipient, doc, viewUrl) => {
+        sent.push({ to: recipient.email, doc, viewUrl });
         return Promise.resolve();
       },
       now: () => now,
@@ -133,5 +144,59 @@ describe('document-expiry', () => {
     const sent4: Array<{ to: string; doc: ExpiringDocument }> = [];
     expect((await run(sent4, new Date(NOW.getTime() + 21 * DAY_MS))).reminded).toBe(1);
     expect(sent4[0]?.doc.expired).toBe(true);
+  });
+
+  it('DC-S06: the named responsible party is told — user and group', async () => {
+    // `responsibleUserId` / `responsibleGroupId` are collected on the upload
+    // form, stored, and rendered on the detail page — and the notification
+    // engine ignored both. The reminder went to whoever dragged the PDF in
+    // (possibly a leaver) plus a broadcast of every manage holder: the one
+    // field that names an accountable human was the one field unread.
+    const janeId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: janeId,
+      name: 'Jane Facilities',
+      email: `jane-${tenantId}@acme.test`,
+      tenantId,
+      locale: 'fr',
+      permissionSetId: await anySetId(),
+    });
+
+    const certId = await seedDocument({
+      name: 'Fire alarm service certificate',
+      expiresAt: new Date(NOW.getTime() - DAY_MS),
+      responsibleUserId: janeId,
+    });
+
+    const sent: Array<{ to: string; doc: ExpiringDocument; viewUrl?: string }> = [];
+    expect((await run(sent, NOW)).reminded).toBe(1);
+    expect(sent.map((s) => s.to)).toContain(`jane-${tenantId}@acme.test`);
+    expect(sent.every((s) => s.doc.documentId === certId)).toBe(true);
+    // DOC-A01: and Jane's link is in Jane's language.
+    expect(sent.find((s) => s.to === `jane-${tenantId}@acme.test`)?.viewUrl).toBe(
+      `https://app.test/fr/documents/${certId}`,
+    );
+
+    // A responsible GROUP reaches its members.
+    const groupId = newId();
+    await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'Facilities' });
+    const bobId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: bobId,
+      name: 'Bob',
+      email: `bob-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: await anySetId(),
+    });
+    await db.insert(schema.groupMembers).values({ tenantId, groupId, userId: bobId });
+    await seedDocument({
+      name: 'Lift inspection',
+      expiresAt: new Date(NOW.getTime() - DAY_MS),
+      responsibleGroupId: groupId,
+    });
+
+    const sent2: Array<{ to: string; doc: ExpiringDocument; viewUrl?: string }> = [];
+    await run(sent2, NOW);
+    expect(sent2.map((s) => s.to)).toContain(`bob-${tenantId}@acme.test`);
   });
 });

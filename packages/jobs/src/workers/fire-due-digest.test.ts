@@ -16,6 +16,7 @@ import { PGlite } from '@electric-sql/pglite';
 import * as schema from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
+import { eq } from 'drizzle-orm';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -195,7 +196,36 @@ describe('fire-due-digest', () => {
     // Admin (via org.settings) + the seeded Manager set has fireSafety.manage
     // but no users — so exactly one email, to Alice, never to Stan.
     expect(sent.map((s) => s.to)).toEqual([adminEmail]);
+    // A recipient with no stated language falls back to English.
     expect(sent[0]?.viewUrl).toBe('https://freehs.test/en/fire-safety');
+  });
+
+  it('DOC-A01: the digest link lands in the reader own language', async () => {
+    // Ten workers hardcoded /en/ in the links they emailed, each beside a
+    // locale they were already carrying. `appLink` is the one way now, and
+    // packages/shared/src/app-link.test.ts fails on the eleventh.
+    const buildingId = await seedBuilding('Head Office');
+    await db.insert(schema.fireLogbookChecks).values({
+      id: newId(),
+      tenantId,
+      buildingId,
+      checkType: 'alarm_test',
+      frequency: 'weekly',
+      nextDueAt: new Date(NOW.getTime() - 86_400_000),
+    });
+    await db.update(schema.user).set({ locale: 'fr' }).where(eq(schema.user.email, adminEmail));
+
+    const sent: string[] = [];
+    await runFireDueDigest({
+      db: db as never,
+      logger,
+      appUrl: 'https://freehs.test',
+      notify: async (_recipient, _digest, viewUrl) => {
+        sent.push(viewUrl);
+      },
+      now: () => NOW,
+    });
+    expect(sent).toEqual(['https://freehs.test/fr/fire-safety']);
   });
 
   it('FS-J02: a clean calendar sends nothing; one failing notify does not sink the run', async () => {

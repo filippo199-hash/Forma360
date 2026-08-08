@@ -438,7 +438,7 @@ export default function PermitDetailPage() {
                       updatePermit.mutate({ permitId, methodStatementDocumentId: next })
                     }
                     placeholder={t('ssow.none')}
-                    options={(documentOptions ?? []).map((doc) => ({
+                    options={(documentOptions?.documents ?? []).map((doc) => ({
                       id: doc.id,
                       label: doc.name,
                     }))}
