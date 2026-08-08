@@ -754,9 +754,7 @@ function ActivityTimeline({
                 <span className="font-medium">{createdByName ?? '—'}</span>{' '}
                 <span className="text-muted-foreground">{tEvents('created')}</span>
               </p>
-              <p className="text-xs text-muted-foreground">
-                {formatDateTime(createdAt, locale)}
-              </p>
+              <p className="text-xs text-muted-foreground">{formatDateTime(createdAt, locale)}</p>
             </div>
           </div>
         </CardContent>
