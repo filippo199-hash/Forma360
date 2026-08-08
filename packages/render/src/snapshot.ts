@@ -10,6 +10,7 @@
  */
 import {
   actions,
+  dashboards,
   incidentAbsences,
   incidentEvents,
   incidentEvidence,
@@ -31,6 +32,7 @@ import {
   sites,
   templateVersions,
   templates,
+  tenants,
   user,
   fireBuildings,
   fireFraReviews,
@@ -1347,4 +1349,82 @@ export async function loadRamsSnapshot(
 /** Stable content hash for the RAMS pack PDF cache key. */
 export function hashRamsSnapshot(snap: RamsRenderSnapshot): string {
   return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
+}
+
+// ─── Custom dashboard (ADR 0018) ────────────────────────────────────────────
+
+export interface DashboardRenderSnapshot {
+  dashboard: {
+    id: string;
+    tenantId: string;
+    title: string;
+    description: string | null;
+    status: string;
+    /**
+     * The raw spec jsonb. Deliberately `unknown`: the print route (the
+     * only renderer) narrows through `parseDashboardSpec` and 404s on an
+     * invalid row rather than half-rendering it.
+     */
+    spec: unknown;
+    updatedAt: string;
+  };
+  tenantName: string;
+}
+
+/**
+ * Load a dashboard into a renderer-ready snapshot. Unlike the module
+ * documents above, a dashboard PDF has no frozen version — the widgets
+ * are re-queried live at render time — so the snapshot is just the row
+ * plus the tenant name for the header. Returns `null` when the
+ * dashboard doesn't exist in the tenant.
+ */
+export async function loadDashboardSnapshot(
+  db: Database,
+  input: { tenantId: string; dashboardId: string },
+): Promise<DashboardRenderSnapshot | null> {
+  const rows = await db
+    .select({
+      id: dashboards.id,
+      tenantId: dashboards.tenantId,
+      title: dashboards.title,
+      description: dashboards.description,
+      status: dashboards.status,
+      spec: dashboards.spec,
+      updatedAt: dashboards.updatedAt,
+      tenantName: tenants.name,
+    })
+    .from(dashboards)
+    .innerJoin(tenants, eq(tenants.id, dashboards.tenantId))
+    .where(and(eq(dashboards.tenantId, input.tenantId), eq(dashboards.id, input.dashboardId)))
+    .limit(1);
+  const row = rows[0];
+  if (row === undefined) return null;
+  return {
+    dashboard: {
+      id: row.id,
+      tenantId: row.tenantId,
+      title: row.title,
+      description: row.description,
+      status: row.status,
+      spec: row.spec,
+      updatedAt: row.updatedAt.toISOString(),
+    },
+    tenantName: row.tenantName,
+  };
+}
+
+/**
+ * Stable content hash for the dashboard PDF cache key. Hashes (spec +
+ * updatedAt + title) only: the widget DATA is live and time-varying, so
+ * the key identifies the dashboard definition, not one execution — a
+ * re-render of an unchanged dashboard overwrites the same object with a
+ * fresher artefact instead of accreting one file per run.
+ */
+export function hashDashboardSnapshot(snap: DashboardRenderSnapshot): string {
+  const stable = {
+    spec: snap.dashboard.spec,
+    updatedAt: snap.dashboard.updatedAt,
+    title: snap.dashboard.title,
+  };
+  return createHash('sha256').update(JSON.stringify(stable)).digest('hex');
 }
