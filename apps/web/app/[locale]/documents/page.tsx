@@ -77,7 +77,7 @@ export default function DocumentsPage() {
   // When a site/project filter is active, list that site's docs across all
   // folders (folderId untethered) so the hub drill-in shows everything.
   const {
-    data: docs = [],
+    data: docsPage,
     isLoading: docsLoading,
     error: docsError,
   } = trpc.documents.list.useQuery({
@@ -85,6 +85,13 @@ export default function DocumentsPage() {
     query: query.trim().length > 0 ? query.trim() : undefined,
     ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
   });
+
+  const docs = docsPage?.documents ?? [];
+  // DC-S04: the register no longer implies it showed everything. The
+  // visibility filter runs after the SQL LIMIT, so a truncated page used to
+  // be indistinguishable from a complete one — including an EMPTY page for
+  // someone with hundreds of readable documents.
+  const docsTruncated = docsPage?.truncated ?? false;
 
   // Labels for color-pill resolution
   const { data: allLabels = [] } = trpc.documentLabels.list.useQuery();
@@ -543,6 +550,12 @@ export default function DocumentsPage() {
             </Card>
           ) : (
             <>
+              {/* DC-S04: say so when the page is not the whole register. */}
+              {docsTruncated ? (
+                <p role="status" className="text-xs text-muted-foreground">
+                  {t('truncatedNote')}
+                </p>
+              ) : null}
               {/* Table (desktop) — hidden below md; the card list takes over there. */}
               <Card className="hidden md:block">
                 <CardContent className="p-0">

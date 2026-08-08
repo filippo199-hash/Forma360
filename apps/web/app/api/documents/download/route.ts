@@ -53,6 +53,13 @@ export async function GET(req: Request): Promise<Response> {
   // Verify ownership + fetch the fields needed for the visibility check.
   const rows = await ctx.db
     .select({
+      // DC-S03: `id` was not selected and not passed to the visibility check
+      // below, so the document-level ACL branch (`grants.docIds.has(doc.id)`)
+      // could never fire. A PF-26 grantee saw the document in the register and
+      // on the detail page, then downloaded a file containing
+      // `{"error":"NOT_FOUND"}` — folder-level grants worked, document-level
+      // ones did not, and the asymmetry made it look like a storage fault.
+      id: documents.id,
       storageKey: documents.storageKey,
       filename: documents.filename,
       mimeType: documents.mimeType,
@@ -79,6 +86,7 @@ export async function GET(req: Request): Promise<Response> {
   const isManager = perms.includes('documents.manage') || grantsAdminAccess(perms);
   if (!isManager) {
     const visible = await isDocumentVisibleToUser(ctx.db, ctx.auth.tenantId, ctx.auth.userId, {
+      id: parent.id,
       folderId: parent.folderId,
       visibleToGroupIds: parent.visibleToGroupIds,
       visibleToSiteIds: parent.visibleToSiteIds,

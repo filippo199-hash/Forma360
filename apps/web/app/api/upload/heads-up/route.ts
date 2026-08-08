@@ -15,6 +15,7 @@
  */
 import { newId } from '@forma360/shared/id';
 import { createStorage, objectKey } from '@forma360/shared/storage';
+import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -60,6 +61,16 @@ export async function POST(req: Request): Promise<Response> {
   const ctx = await createContext({ headers: hdrs });
   if (ctx.auth === null) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  }
+
+  // DC-S02 (swept): session-only, no permission check — so any authenticated
+  // user could write unbounded 50 MB objects into the tenant's R2 bucket with
+  // no row to show for it and nothing to ever clean it up. Same hole the
+  // documents upload route had; found by walking the routes rather than
+  // reading them.
+  const perms = await loadUserPermissions(ctx.db, ctx.auth.tenantId, ctx.auth.userId);
+  if (!perms.includes('headsUp.publish') && !perms.includes('headsUp.manage')) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
 
   const form = await req.formData();

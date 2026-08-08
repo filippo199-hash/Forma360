@@ -317,7 +317,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
     title: a.name,
     href: `/${locale}/assets/${a.id}`,
   }));
-  const docItems: PreviewItem[] = (docs.data ?? []).map((d) => ({
+  const docItems: PreviewItem[] = (docs.data?.documents ?? []).map((d) => ({
     id: d.id,
     title: d.name,
     href: `/${locale}/documents/${d.id}`,

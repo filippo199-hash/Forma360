@@ -11,7 +11,11 @@ import { TRPCError } from '@trpc/server';
 import { and, count, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
-import { assertDocumentFoldersInTenant } from '../tenant-guards';
+import {
+  assertDocumentFoldersInTenant,
+  assertGroupsInTenant,
+  assertSitesInTenant,
+} from '../tenant-guards';
 import { router } from '../trpc';
 import { loadViewerMemberships, makeFolderVisibilityChecker } from './document-visibility';
 
@@ -103,6 +107,12 @@ export const documentFoldersRouter = router({
       // A parent folder must belong to this tenant (else the tree could
       // reference another tenant's folder).
       await assertDocumentFoldersInTenant(ctx.db, ctx.tenantId, [input.parentId]);
+      // DC-T05: a folder's visibility CASCADES to every document inside it and
+      // to every sub-folder, so an unchecked id here is strictly worse than
+      // the same hole on a single document — it silently buries a whole
+      // branch of the library behind a rule that matches nobody.
+      await assertGroupsInTenant(ctx.db, ctx.tenantId, input.visibleToGroupIds);
+      await assertSitesInTenant(ctx.db, ctx.tenantId, input.visibleToSiteIds);
       const id = newId();
       const now = new Date();
       await ctx.db.insert(documentFolders).values({
@@ -161,6 +171,13 @@ export const documentFoldersRouter = router({
           cursor = parentRows[0]?.parentId ?? null;
         }
       }
+
+      // DC-T05: same rule as create — the cascade makes this the highest-blast
+      // -radius visibility write in the module.
+      if (input.visibleToGroupIds !== undefined)
+        await assertGroupsInTenant(ctx.db, ctx.tenantId, input.visibleToGroupIds);
+      if (input.visibleToSiteIds !== undefined)
+        await assertSitesInTenant(ctx.db, ctx.tenantId, input.visibleToSiteIds);
 
       const updates: Partial<typeof documentFolders.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) updates.name = input.name;

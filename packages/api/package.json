@@ -32,6 +32,10 @@
       "types": "./src/heads-up-publish.ts",
       "default": "./src/heads-up-publish.ts"
     },
+    "./heads-up-documents": {
+      "types": "./src/heads-up-documents.ts",
+      "default": "./src/heads-up-documents.ts"
+    },
     "./sandbox": {
       "types": "./src/sandbox/provision.ts",
       "default": "./src/sandbox/provision.ts"

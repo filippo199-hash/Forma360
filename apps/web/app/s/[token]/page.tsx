@@ -17,14 +17,8 @@ import {
   loadInspectionSnapshot,
   loadRamsSnapshot,
 } from '@forma360/render';
-import {
-  documents,
-  headsUpAttachments,
-  headsUpDocuments,
-  headsUps,
-  ramsClientLinks,
-  user,
-} from '@forma360/db/schema';
+import { loadHeadsUpLibraryDocuments } from '@forma360/api/heads-up-documents';
+import { headsUpAttachments, headsUps, ramsClientLinks, user } from '@forma360/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { PrintLayout } from '../../../src/components/print-layout';
@@ -133,16 +127,15 @@ export default async function SharedInspectionPage({ params }: Props) {
           eq(headsUpAttachments.headsUpId, headsUp.headsUpId),
         ),
       ),
-    db
-      .select({ name: documents.name })
-      .from(headsUpDocuments)
-      .innerJoin(documents, eq(headsUpDocuments.documentId, documents.id))
-      .where(
-        and(
-          eq(headsUpDocuments.tenantId, headsUp.tenantId),
-          eq(headsUpDocuments.headsUpId, headsUp.headsUpId),
-        ),
-      ),
+    // HU-D04: this route has no viewer, so there is nobody to check a
+    // restriction against — and it is reachable by anyone holding the URL.
+    // Passing `userId: null` asks the honest question instead: is this
+    // document restricted at all? A document scoped to any group or site
+    // (or sitting under a folder that is) is dropped, so a title like
+    // "Redundancy consultation — night shift" cannot escape to the open
+    // internet. Evaluated per render, so restricting a document *after* the
+    // link was minted takes effect immediately.
+    loadHeadsUpLibraryDocuments(db, headsUp.tenantId, headsUp.headsUpId, { userId: null }),
   ]);
 
   const createdAt = headsUpRows[0]?.createdAt ?? new Date();
