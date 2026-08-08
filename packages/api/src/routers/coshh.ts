@@ -77,6 +77,7 @@ import {
   MONITORING_PERIODS,
   PHYSICAL_FORMS,
   pStatementSchema,
+  sdsExtractionSchema,
   SIGNAL_WORDS,
   STATUTORY_LEV_TEST_INTERVAL_MONTHS,
   STORAGE_CLASSES,
@@ -92,6 +93,11 @@ import { and, asc, desc, eq, inArray, isNotNull, isNull, lte, or, sql } from 'dr
 import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
 import { requirePermission, tenantProcedure } from '../procedures';
+// CO-S05 / CO-A02: this file imported nothing from `../tenant-guards`, and
+// that single omission is what let a foreign user id onto the health
+// surveillance register and a foreign storage key onto an SDS row. Six
+// sibling routers already apply these.
+import { assertStorageKeyInTenant, assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
 
 export interface CoshhRouterDeps {
@@ -212,6 +218,34 @@ async function logEvent(
   });
 }
 
+/**
+ * The columns `assessments.update` may patch. Single source of truth for
+ * both the SQL patch and the CO-R07 audit trail — see the loop in `update`.
+ */
+const UPDATABLE_ASSESSMENT_FIELDS = [
+  'taskDescription',
+  'routesOfExposure',
+  'personsExposed',
+  'personsCount',
+  'quantityBand',
+  'frequencyBand',
+  'durationBand',
+  'levRequired',
+  'healthSurveillanceRequired',
+  'exposureMonitoringRequired',
+  'emergencyNotes',
+  'plainSummary',
+  'assessorUserId',
+  'reviewFrequencyMonths',
+  'nextReviewAt',
+] as const;
+
+/** `coshh_events.detail` is a text column; keep one row from swallowing a page. */
+const EVENT_DETAIL_MAX = 4000;
+function truncateDetail(detail: string): string {
+  return detail.length <= EVENT_DETAIL_MAX ? detail : `${detail.slice(0, EVENT_DETAIL_MAX - 1)}…`;
+}
+
 const locationInput = z.object({
   siteId: z.string().length(26).optional(),
   locationText: z.string().max(500).default(''),
@@ -227,8 +261,18 @@ const sdsFileInput = z.object({
   mimeType: z.string().min(1).max(100),
   sizeBytes: z.number().int().positive(),
   issueDate: z.coerce.date().nullable().optional(),
-  /** AI extraction snapshot, already validated by sdsExtractionSchema shape. */
-  extraction: z.unknown().optional(),
+  /**
+   * CO-A01: the AI extraction snapshot, validated HERE rather than trusted.
+   *
+   * This was `z.unknown()` carrying a comment that said it had "already"
+   * been validated by `sdsExtractionSchema`. The HTTP route does validate —
+   * but the route is not the only way in, and the procedure is callable
+   * directly. Ground rule 2 puts the schema at the boundary, and the column
+   * is `$type<SdsExtraction>()`, so anything weaker made that type a
+   * fiction. The `as never` at the insert existed only to smuggle `unknown`
+   * past it; both are gone.
+   */
+  extraction: sdsExtractionSchema.optional(),
 });
 
 const substanceCreateInput = z.object({
@@ -952,6 +996,12 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
       .input(sdsFileInput.extend({ substanceId: z.string().length(26) }))
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
+        // CO-A02: the sheet must live under this tenant's R2 prefix.
+        // `/api/files` re-checks the prefix independently, so a foreign key
+        // would not actually have served the file — but the second layer
+        // holding is not a reason for the first to be absent, and a stored
+        // foreign key is a data-integrity hole regardless.
+        assertStorageKeyInTenant(ctx.tenantId, input.storageKey);
         const substance = await loadSubstance(ctx.db, ctx.tenantId, input.substanceId);
         const versionRows = await ctx.db
           .select({ maxVersion: sql<number>`coalesce(max(${coshhSdsDocuments.version}), 0)` })
@@ -976,7 +1026,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             sizeBytes: input.sizeBytes,
             issueDate,
             reviewByDate: addMonths(issueDate ?? new Date(), substance.sdsReviewMonths),
-            extraction: (input.extraction ?? null) as never,
+            extraction: input.extraction ?? null,
             isCurrent: true,
             createdBy: ctx.auth.userId,
           });
@@ -1106,37 +1156,49 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
         }
         const { assessmentId: _id, ...patch } = input;
+        // Same omission as CO-S05, one procedure over: reassigning the
+        // assessor must not reach across the tenant boundary.
+        if (patch.assessorUserId !== undefined && patch.assessorUserId !== null) {
+          await assertUsersInTenant(ctx.db, ctx.tenantId, [patch.assessorUserId]);
+        }
+
+        // CO-R07: build the patch and its audit trail from ONE list. This
+        // was fifteen hand-written spreads and no event row at all, so the
+        // fields that decide the control regime could be rewritten on a live
+        // assessment with no record of who did it or what it said before —
+        // and republishing then cleared the "changed since publish" flag,
+        // leaving no residue anywhere. Driving both off the same list is
+        // what stops a field added later slipping out of the trail.
+        const before: Record<string, unknown> = {};
+        const updates: Partial<typeof coshhAssessments.$inferInsert> = { updatedAt: new Date() };
+        for (const field of UPDATABLE_ASSESSMENT_FIELDS) {
+          const value = patch[field];
+          if (value === undefined) continue;
+          // Narrow per-key assignment is not expressible over a union of
+          // column types; the key list is derived from the same input schema
+          // the values come from, so the shapes agree by construction.
+          (updates as Record<string, unknown>)[field] = value;
+          before[field] = (assessment as unknown as Record<string, unknown>)[field];
+        }
+
         await ctx.db
           .update(coshhAssessments)
-          .set({
-            ...(patch.taskDescription !== undefined
-              ? { taskDescription: patch.taskDescription }
-              : {}),
-            ...(patch.routesOfExposure !== undefined
-              ? { routesOfExposure: patch.routesOfExposure }
-              : {}),
-            ...(patch.personsExposed !== undefined ? { personsExposed: patch.personsExposed } : {}),
-            ...(patch.personsCount !== undefined ? { personsCount: patch.personsCount } : {}),
-            ...(patch.quantityBand !== undefined ? { quantityBand: patch.quantityBand } : {}),
-            ...(patch.frequencyBand !== undefined ? { frequencyBand: patch.frequencyBand } : {}),
-            ...(patch.durationBand !== undefined ? { durationBand: patch.durationBand } : {}),
-            ...(patch.levRequired !== undefined ? { levRequired: patch.levRequired } : {}),
-            ...(patch.healthSurveillanceRequired !== undefined
-              ? { healthSurveillanceRequired: patch.healthSurveillanceRequired }
-              : {}),
-            ...(patch.exposureMonitoringRequired !== undefined
-              ? { exposureMonitoringRequired: patch.exposureMonitoringRequired }
-              : {}),
-            ...(patch.emergencyNotes !== undefined ? { emergencyNotes: patch.emergencyNotes } : {}),
-            ...(patch.plainSummary !== undefined ? { plainSummary: patch.plainSummary } : {}),
-            ...(patch.assessorUserId !== undefined ? { assessorUserId: patch.assessorUserId } : {}),
-            ...(patch.reviewFrequencyMonths !== undefined
-              ? { reviewFrequencyMonths: patch.reviewFrequencyMonths }
-              : {}),
-            ...(patch.nextReviewAt !== undefined ? { nextReviewAt: patch.nextReviewAt } : {}),
-            updatedAt: new Date(),
-          })
+          .set(updates)
           .where(eq(coshhAssessments.id, assessment.id));
+
+        const changed = Object.keys(before);
+        if (changed.length > 0) {
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            entityType: 'assessment',
+            entityId: assessment.id,
+            actorUserId: ctx.auth.userId,
+            kind: 'updated',
+            // The previous values, not merely the field names: "what it said
+            // before" is the half of the trail that makes it evidence.
+            detail: truncateDetail(`${changed.join(', ')} | was ${JSON.stringify(before)}`),
+          });
+        }
         return { ok: true };
       }),
 
@@ -1617,6 +1679,25 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         if (input.siteId !== undefined && input.siteId !== null) {
           await loadSiteInTenant(ctx.db, ctx.tenantId, input.siteId);
         }
+        // CO-S03: a thorough examination is a statutory event under reg 9. A
+        // fail means the plant is not fit for use, and what makes it fit
+        // again is a PASSING examination — not somebody setting a dropdown
+        // back. This is the same rule Fire Safety already holds for a failed
+        // check (FS-1); LEV had the identical shape and none of the guard.
+        if (input.status === 'in_service') {
+          const latestTest = await ctx.db
+            .select({ result: coshhLevTests.result })
+            .from(coshhLevTests)
+            .where(eq(coshhLevTests.levUnitId, unit.id))
+            .orderBy(desc(coshhLevTests.testedAt))
+            .limit(1);
+          if (latestTest[0]?.result === 'fail') {
+            throw new TRPCError({
+              code: 'PRECONDITION_FAILED',
+              message: 'lev-failed-examination-outstanding',
+            });
+          }
+        }
         const interval = input.testIntervalMonths ?? unit.testIntervalMonths;
         await ctx.db
           .update(coshhLevUnits)
@@ -1653,6 +1734,11 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
         const unit = await loadLevUnit(ctx.db, ctx.tenantId, input.levUnitId);
+        // Same omission as CO-A02, one procedure over: the examination
+        // report is an uploaded file and its key must be ours.
+        if (input.reportStorageKey != null) {
+          assertStorageKeyInTenant(ctx.tenantId, input.reportStorageKey);
+        }
         const id = newId();
         await ctx.db.insert(coshhLevTests).values({
           id,
@@ -1681,7 +1767,18 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             .set({
               lastTestAt: latest.testedAt,
               nextTestDueAt: addMonths(latest.testedAt, unit.testIntervalMonths),
-              ...(latest.result === 'fail' ? { status: 'out_of_service' as const } : {}),
+              // CO-S03, the return path. A fail takes the unit out of
+              // service; a subsequent satisfactory examination is what puts
+              // it back, and nothing else can (see `update` above). Without
+              // this half the guard there would be a dead end rather than a
+              // gate. `decommissioned` is left alone deliberately — a
+              // decommissioned unit does not come back because someone
+              // examined it.
+              ...(latest.result === 'fail'
+                ? { status: 'out_of_service' as const }
+                : unit.status === 'out_of_service'
+                  ? { status: 'in_service' as const }
+                  : {}),
               updatedAt: new Date(),
             })
             .where(eq(coshhLevUnits.id, unit.id));
@@ -1723,8 +1820,21 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             endedAt: coshhHealthSurveillance.endedAt,
           })
           .from(coshhHealthSurveillance)
-          .leftJoin(user, eq(user.id, coshhHealthSurveillance.userId))
-          .where(eq(coshhHealthSurveillance.substanceId, substance.id))
+          // CO-S05, both halves. The WHERE keeps a foreign enrolment row off
+          // the register even if one is already stored; the JOIN predicate
+          // stops a foreign display name resolving even if such a row
+          // survives. Neither alone is enough — the leak was a name, and the
+          // join is what fetched it.
+          .leftJoin(
+            user,
+            and(eq(user.id, coshhHealthSurveillance.userId), eq(user.tenantId, ctx.tenantId)),
+          )
+          .where(
+            and(
+              eq(coshhHealthSurveillance.tenantId, ctx.tenantId),
+              eq(coshhHealthSurveillance.substanceId, substance.id),
+            ),
+          )
           .orderBy(asc(coshhHealthSurveillance.nextDueAt));
         const now = new Date();
         return rows.map((r) => ({
@@ -1746,12 +1856,19 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
         const substance = await loadSubstance(ctx.db, ctx.tenantId, input.substanceId);
+        // CO-S05: the person being enrolled must be ours. Without this, a
+        // foreign user id was written straight onto the register and their
+        // name came back off `list` — a cross-tenant disclosure of who is
+        // under health surveillance for a hazardous substance, which is
+        // special-category data under UK GDPR Article 9.
+        await assertUsersInTenant(ctx.db, ctx.tenantId, [input.userId]);
         // One live enrolment per person per substance.
         const existing = await ctx.db
           .select({ id: coshhHealthSurveillance.id })
           .from(coshhHealthSurveillance)
           .where(
             and(
+              eq(coshhHealthSurveillance.tenantId, ctx.tenantId),
               eq(coshhHealthSurveillance.substanceId, substance.id),
               eq(coshhHealthSurveillance.userId, input.userId),
               isNull(coshhHealthSurveillance.endedAt),
