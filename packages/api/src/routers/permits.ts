@@ -2029,6 +2029,60 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
         return { permitId: permit.id, status: 'active' as const };
       }),
 
+    /**
+     * The other half of the acceptor's decision (PW-A1).
+     *
+     * `accept` was the only thing the named acceptor could do besides
+     * `cancel`, and cancelling KILLS a permit — so an acceptor who spots
+     * a defect on the face of the permit (a scope note that contradicts
+     * a ticked precondition, a hazard with no control against it) had to
+     * either sign it or destroy the record. Refusal returns it to the
+     * issuer as a draft with a mandatory reason, which is what "send it
+     * back for correction" means on paper.
+     *
+     * Deliberately mirrors the RAMS review, which already had the right
+     * model on the *lower*-risk document.
+     */
+    refuse: tenantProcedure
+      .use(requirePermission('permits.view'))
+      .input(
+        z.object({
+          permitId: z.string().length(26),
+          reason: z.string().trim().min(3).max(1000),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const permit = await loadPermit(ctx.db, ctx.tenantId, input.permitId);
+        assertTransition(permit.status, 'draft');
+        // Only the person being asked to sign may refuse. Anyone with
+        // issue rights can already cancel.
+        if (permit.acceptorUserId !== ctx.auth.userId) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'not-the-acceptor' });
+        }
+        const now = new Date();
+        await ctx.db
+          .update(permits)
+          .set({
+            status: 'draft',
+            // The issue signature is void — the permit has to be issued
+            // again once corrected, which re-runs the whole issue gate.
+            issuerUserId: null,
+            issuedAt: null,
+            acceptedAt: null,
+            updatedAt: now,
+          })
+          .where(eq(permits.id, permit.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          permitId: permit.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'refused',
+          detail: input.reason,
+        });
+        return { permitId: permit.id, status: 'draft' as const };
+      }),
+
     suspend: tenantProcedure
       .use(requirePermission('permits.issue'))
       .input(

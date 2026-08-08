@@ -2156,7 +2156,12 @@
       "sourceFireRiskAssessment": "Valutazione rischio incendio",
       "sourceFireLogbookEntry": "Controllo antincendio",
       "sourceFireDoorInspection": "Porta tagliafuoco",
-      "sourceRams": "Pacchetto RAMS"
+      "sourceRams": "Pacchetto RAMS",
+      "myOpenChip": "{count} assegnate a me",
+      "myOverdueChip": "{count} in ritardo",
+      "pagerShowing": "Da {from} a {to} di {total}",
+      "pagerPrev": "Precedente",
+      "pagerNext": "Successivo"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4463,7 +4468,8 @@
         "draftSummaryButton": "Scrivi con l’IA",
         "drafting": "Scrittura…",
         "summaryError": "Impossibile scrivere la sintesi. Riprova.",
-        "summaryDrafted": "Bozza pronta — rileggi e salva."
+        "summaryDrafted": "Bozza pronta — rileggi e salva.",
+        "suggestingElapsed": "Elaborazione… {seconds}s (può richiedere fino a un minuto)"
       },
       "signOff": {
         "title": "Firma del valutatore",
@@ -4754,7 +4760,19 @@
         "withinLimits": "entro i limiti",
         "outOfLimits": "FUORI LIMITE",
         "measuredAgainst": "Misurato rispetto a",
-        "freeReading": "Lettura libera (senza limite)"
+        "freeReading": "Lettura libera (senza limite)",
+        "competence": {
+          "blockedTitle": "Bloccato: competenza non soddisfatta",
+          "personExpired": "{person} — {requirement} è scaduta",
+          "personMissing": "{person} — nessun record di {requirement}",
+          "openModule": "Apri Formazione"
+        },
+        "signatures": {
+          "competenceBlocked": "Bloccato: competenza non soddisfatta",
+          "acceptConfirm": "Accettando firmi questo permesso e autorizzi l’inizio dei lavori. Continuare?",
+          "refuseAction": "Rifiuta",
+          "refusePrompt": "Perché rifiuti questo permesso? Tornerà all’emittente come bozza con la tua motivazione."
+        }
       },
       "signatures": {
         "title": "Firme",
@@ -4818,6 +4836,7 @@
           "authorised": "Autorizzato",
           "issued": "Emesso",
           "accepted": "Accettato",
+          "refused": "Rifiutato e restituito all’emittente",
           "suspended": "Sospeso",
           "resumed": "Ripreso",
           "extended": "Prorogato",
@@ -5303,7 +5322,7 @@
         "other": "Altra"
       },
       "premisesDescription": "Descrizione dei locali",
-      "occupancyHeading": "Occupazione",
+      "occupancyHeading": "Persone a rischio",
       "maxOccupancy": "Occupazione massima",
       "sleepingOccupants": "Occupanti che pernottano",
       "personsAtRisk": {
@@ -5319,7 +5338,11 @@
       },
       "riskRating": "Valutazione complessiva",
       "riskRatingUnset": "Non ancora valutato",
-      "hazardsHeading": "Persone a rischio",
+      "hazardsHeading": "Pericoli di incendio",
+      "ignitionSources": "Fonti di innesco",
+      "fuelSources": "Materiali combustibili",
+      "oxygenSources": "Fonti di ossigeno",
+      "evaluationNotes": "Valutazione del rischio",
       "findingsHeading": "Criticità significative",
       "noFindings": "Nessuna criticità registrata.",
       "addFindingHeading": "Aggiungi criticità",
@@ -5523,7 +5546,8 @@
     "photosAdd": "Aggiungi foto",
     "photosRemove": "Rimuovi",
     "photoTooLarge": "Questa foto supera {maxMb} MB: scegline una più piccola.",
-    "photoUploadFailed": "Una foto non è stata caricata. È ancora allegata qui: invia di nuovo per riprovare."
+    "photoUploadFailed": "Una foto non è stata caricata. È ancora allegata qui: invia di nuovo per riprovare.",
+    "photoUploadGaveUp": "La segnalazione è stata registrata, ma non è stato possibile caricare la foto. Se è importante, riferisci al tuo responsabile cosa mostrava."
   },
   "offline": {
     "title": "Sei offline",
@@ -5895,7 +5919,10 @@
         "occupational_disease": "Malattia professionale diagnosticata legata al lavoro — tunnel carpale, dermatite, asma professionale, HAVS, tendinite, tumore professionale.",
         "dangerous_occurrence": "Evento della Schedule 2 — cedimento di sollevamento, crollo di ponteggio, incendio/esplosione elettrica, guasto in pressione, rilascio accidentale.",
         "gas_incident": "Decesso o lesione legati al gas, o impianto gas pericoloso."
-      }
+      },
+      "lostTimeRecorded": "{days} giorno/i di assenza registrati finora.",
+      "lostTimeOngoing": "{days} giorno/i di assenza, tuttora in corso: l’obbligo oltre 7 giorni scatta dal {date} se l’assenza continua.",
+      "lostTimeOverSeven": "{days} giorni di assenza: oltre la soglia dei 7 giorni. L’obbligo oltre 7 giorni si applica."
     },
     "investigation": {
       "heading": "Indagine",
@@ -6105,7 +6132,8 @@
     "common": {
       "cancel": "Annulla",
       "save": "Salva",
-      "saving": "Salvataggio…"
+      "saving": "Salvataggio…",
+      "edit": "Modifica"
     },
     "errors": {
       "generic": "Qualcosa è andato storto. Riprova.",
@@ -6222,7 +6250,7 @@
       "draftPacks": "{count} in bozza",
       "awaitingBriefing": "{count} in attesa di informativa",
       "pendingClientAcceptance": "{count} in attesa di accettazione del cliente",
-      "pendingReviews": "{count} pacchetti appaltatori da esaminare",
+      "pendingReviews": "{count, plural, one {# pacchetto appaltatore da esaminare} other {# pacchetti appaltatore da esaminare}}",
       "expiringReviews": "{count} accettazioni in scadenza"
     },
     "filters": {
@@ -6437,7 +6465,10 @@
       "sitePlaceholder": "Dove si svolgerà il lavoro",
       "workDescription": "In cosa consiste il lavoro (facoltativo)",
       "workDescriptionPlaceholder": "Ciò che il revisore deve sapere prima di aprire la checklist",
-      "logAndOpen": "Registra e apri la checklist"
+      "logAndOpen": "Registra e apri la checklist",
+      "decisionRecorded": "Decisione registrata",
+      "decisionFailed": "Impossibile registrare la decisione. Riprova.",
+      "recordingDecision": "Registrazione…"
     },
     "reviewOutcome": {
       "pending": "In attesa di esame",
@@ -6448,7 +6479,8 @@
     "reviewVerdict": {
       "pass": "Conforme",
       "fail": "Non conforme",
-      "na": "N/D"
+      "na": "N/D",
+      "unanswered": "Non valutato"
     },
     "trade": {
       "mechanical": "Meccanica",

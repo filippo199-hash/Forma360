@@ -2149,7 +2149,12 @@
       "sourceFireRiskAssessment": "Avaliação de risco de incêndio",
       "sourceFireLogbookEntry": "Verificação de incêndio",
       "sourceFireDoorInspection": "Porta corta-fogo",
-      "sourceRams": "Pacote RAMS"
+      "sourceRams": "Pacote RAMS",
+      "myOpenChip": "{count} atribuídas a mim",
+      "myOverdueChip": "{count} em atraso",
+      "pagerShowing": "{from}–{to} de {total}",
+      "pagerPrev": "Anterior",
+      "pagerNext": "Seguinte"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4421,7 +4426,8 @@
         "draftSummaryButton": "Redigir com IA",
         "drafting": "A redigir…",
         "summaryError": "Não foi possível redigir o resumo. Tente novamente.",
-        "summaryDrafted": "Rascunho pronto — reveja e guarde."
+        "summaryDrafted": "Rascunho pronto — reveja e guarde.",
+        "suggestingElapsed": "A pensar… {seconds}s (pode demorar até um minuto)"
       },
       "signOff": {
         "title": "Assinatura do avaliador",
@@ -4712,7 +4718,19 @@
         "withinLimits": "dentro dos limites",
         "outOfLimits": "FORA DOS LIMITES",
         "measuredAgainst": "Medido contra",
-        "freeReading": "Leitura livre (sem limite)"
+        "freeReading": "Leitura livre (sem limite)",
+        "competence": {
+          "blockedTitle": "Bloqueado: competência não cumprida",
+          "personExpired": "{person} — {requirement} expirou",
+          "personMissing": "{person} — sem registo de {requirement}",
+          "openModule": "Abrir Formação"
+        },
+        "signatures": {
+          "competenceBlocked": "Bloqueado: competência não cumprida",
+          "acceptConfirm": "Aceitar assina este alvará e autoriza o início dos trabalhos. Continuar?",
+          "refuseAction": "Recusar",
+          "refusePrompt": "Porque recusa este alvará? Volta ao emissor como rascunho com o seu motivo."
+        }
       },
       "signatures": {
         "title": "Assinaturas",
@@ -4776,6 +4794,7 @@
           "authorised": "Autorizada",
           "issued": "Emitida",
           "accepted": "Aceite",
+          "refused": "Recusado e devolvido ao emissor",
           "suspended": "Suspensa",
           "resumed": "Retomada",
           "extended": "Prorrogada",
@@ -5261,7 +5280,7 @@
         "other": "Outra"
       },
       "premisesDescription": "Descrição das instalações",
-      "occupancyHeading": "Ocupação",
+      "occupancyHeading": "Pessoas em risco",
       "maxOccupancy": "Ocupação máxima",
       "sleepingOccupants": "Ocupantes dormindo",
       "personsAtRisk": {
@@ -5277,7 +5296,11 @@
       },
       "riskRating": "Classificação geral de risco",
       "riskRatingUnset": "Ainda sem classificação",
-      "hazardsHeading": "Pessoas em risco",
+      "hazardsHeading": "Perigos de incêndio",
+      "ignitionSources": "Fontes de ignição",
+      "fuelSources": "Materiais combustíveis",
+      "oxygenSources": "Fontes de oxigénio",
+      "evaluationNotes": "Avaliação do risco",
       "findingsHeading": "Constatações significativas",
       "noFindings": "Nenhuma constatação registrada.",
       "addFindingHeading": "Adicionar constatação significativa",
@@ -5481,7 +5504,8 @@
     "photosAdd": "Adicionar foto",
     "photosRemove": "Remover",
     "photoTooLarge": "Esta foto passa de {maxMb} MB — escolha uma menor.",
-    "photoUploadFailed": "Uma foto não pôde ser enviada. Ela continua anexada aqui — envie novamente para tentar de novo."
+    "photoUploadFailed": "Uma foto não pôde ser enviada. Ela continua anexada aqui — envie novamente para tentar de novo.",
+    "photoUploadGaveUp": "O seu relato foi registado, mas não foi possível carregar a fotografia. Se for importante, diga ao seu responsável o que mostrava."
   },
   "offline": {
     "title": "Você está offline",
@@ -5853,7 +5877,10 @@
         "occupational_disease": "Doença profissional diagnosticada ligada ao trabalho — túnel cárpico, dermatite, asma ocupacional, HAVS, tendinite, cancro ocupacional.",
         "dangerous_occurrence": "Evento do anexo 2 — colapso de equipamento de elevação, de andaime, incêndio/explosão elétrica, falha sob pressão, libertação acidental.",
         "gas_incident": "Morte ou lesão relacionada com gás, ou instalação de gás perigosa."
-      }
+      },
+      "lostTimeRecorded": "{days} dia(s) de ausência registados até agora.",
+      "lostTimeOngoing": "{days} dia(s) de ausência e ainda ausente — o dever acima de 7 dias aplica-se a partir de {date} se continuar.",
+      "lostTimeOverSeven": "{days} dias de ausência — acima do limiar de 7 dias. Aplica-se o dever acima de 7 dias."
     },
     "investigation": {
       "heading": "Investigação",
@@ -6063,7 +6090,8 @@
     "common": {
       "cancel": "Cancelar",
       "save": "Guardar",
-      "saving": "A guardar…"
+      "saving": "A guardar…",
+      "edit": "Editar"
     },
     "errors": {
       "generic": "Algo correu mal. Tente novamente.",
@@ -6180,7 +6208,7 @@
       "draftPacks": "{count} em rascunho",
       "awaitingBriefing": "{count} a aguardar divulgação",
       "pendingClientAcceptance": "{count} a aguardar aceitação do cliente",
-      "pendingReviews": "{count} pacotes de empreiteiros por analisar",
+      "pendingReviews": "{count, plural, one {# dossiê de empreiteiro para rever} other {# dossiês de empreiteiro para rever}}",
       "expiringReviews": "{count} aceitações a expirar"
     },
     "filters": {
@@ -6395,7 +6423,10 @@
       "sitePlaceholder": "Onde o trabalho vai decorrer",
       "workDescription": "Em que consiste o trabalho (opcional)",
       "workDescriptionPlaceholder": "O que o analista precisa de saber antes de abrir a lista",
-      "logAndOpen": "Registar e abrir a lista"
+      "logAndOpen": "Registar e abrir a lista",
+      "decisionRecorded": "Decisão registada",
+      "decisionFailed": "Não foi possível registar a decisão. Tente novamente.",
+      "recordingDecision": "A registar…"
     },
     "reviewOutcome": {
       "pending": "A aguardar análise",
@@ -6406,7 +6437,8 @@
     "reviewVerdict": {
       "pass": "Conforme",
       "fail": "Não conforme",
-      "na": "N/A"
+      "na": "N/A",
+      "unanswered": "Não avaliado"
     },
     "trade": {
       "mechanical": "Mecânica",

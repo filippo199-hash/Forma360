@@ -1052,8 +1052,13 @@ describe('rams router', () => {
       const entry = got.review.checklist.find((c) => c.id === 'scope_matches');
       expect(entry?.label).toContain('Scope of works');
       expect(entry?.verdict).toBe('pass');
-      // Untouched items keep their default verdict.
-      expect(got.review.checklist.find((c) => c.id === 'coshh_covered')?.verdict).toBe('na');
+      // Untouched items stay UNANSWERED. They used to default to 'na',
+      // which is a judgement — "does not apply to this job" — so an
+      // untouched pack rendered as fully reviewed and could be signed
+      // off without the reviewer reading a line.
+      expect(got.review.checklist.find((c) => c.id === 'coshh_covered')?.verdict).toBe(
+        'unanswered',
+      );
     });
 
     it('refuses a contractor from another tenant', async () => {

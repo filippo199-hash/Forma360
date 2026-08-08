@@ -12,6 +12,7 @@ import { activeBrand } from '../lib/brand';
 import { db } from './db';
 import { env } from './env';
 import { logger } from './logger';
+import { holdRenderedBytes } from './render-fallback';
 import { storage } from './storage';
 
 const renderLog = logger.child({ component: 'render-fra-pdf' });
@@ -35,6 +36,7 @@ export const fireSafetyDeps: FireSafetyRouterDeps = {
         storage,
         appUrl: env.APP_URL,
         renderSharedSecret: env.RENDER_SHARED_SECRET,
+        onUploadFailure: holdRenderedBytes,
         onLog: (e) => {
           if (e.level === 'warn') renderLog.warn(e.msg);
           else renderLog.info(e.msg);

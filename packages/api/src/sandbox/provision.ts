@@ -26,6 +26,7 @@ import type { Database } from '@forma360/db/client';
 import {
   actions,
   contractors,
+  coshhAssessmentControls,
   coshhAssessments,
   coshhSubstances,
   fireBuildings,
@@ -38,6 +39,7 @@ import {
   permissionSets,
   permits,
   permitTypes,
+  permitEvents,
   riskAssessmentControls,
   riskAssessmentHazards,
   ramsPacks,
@@ -691,8 +693,9 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
       })
     : [];
 
+  const permitId = newId();
   await ctx.tx.insert(permits).values({
-    id: newId(),
+    id: permitId,
     tenantId: ctx.tenantId,
     permitTypeId,
     referenceNumber: `PTW-${String(ref).padStart(4, '0')}`,
@@ -718,6 +721,42 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
     validTo,
     createdBy: ctx.colleagueId,
   });
+
+  // The audit trail the router would have written.
+  //
+  // Seeding writes the end state directly (see the file header), which
+  // is honest about what it is — but it skipped `permit_events`
+  // entirely, so a permit that six people had signed off showed a
+  // History with one line on it. For a permit, "who issued this and
+  // when" is the most important line in the log, and it was the one
+  // missing.
+  const events: Array<{
+    kind: 'created' | 'precondition_checked' | 'authorised' | 'issued';
+    detail: string;
+    at: Date;
+  }> = [
+    { kind: 'created', detail: '', at: new Date(takenAt.getTime() - 30 * 60 * 1000) },
+    ...preconditions.map((pc) => ({
+      kind: 'precondition_checked' as const,
+      detail: pc.label,
+      at: takenAt,
+    })),
+    ...(permitType.requiresAuthoriser
+      ? [{ kind: 'authorised' as const, detail: '', at: takenAt }]
+      : []),
+    { kind: 'issued', detail: '', at: validFrom },
+  ];
+  for (const event of events) {
+    await ctx.tx.insert(permitEvents).values({
+      id: newId(),
+      tenantId: ctx.tenantId,
+      permitId,
+      actorUserId: ctx.colleagueId,
+      kind: event.kind,
+      detail: event.detail,
+      createdAt: event.at,
+    });
+  }
 }
 
 /**
@@ -872,18 +911,43 @@ async function seedCoshh(ctx: SeedContext): Promise<void> {
     ctx.tenantId,
     'coshhAssessment',
   );
+  const assessmentId = newId();
   await ctx.tx.insert(coshhAssessments).values({
-    id: newId(),
+    id: assessmentId,
     tenantId: ctx.tenantId,
     substanceId,
     referenceNumber: `COSHH-${String(assessmentRef).padStart(4, '0')}`,
     taskDescription: SANDBOX_COSHH.taskDescription,
     status: 'active',
+    // An `active` assessment with no exposure detail and no controls is
+    // not a valid assessment — see the note on SANDBOX_COSHH.
+    routesOfExposure: [...SANDBOX_COSHH.routesOfExposure],
+    personsExposed: [...SANDBOX_COSHH.personsExposed],
+    personsCount: SANDBOX_COSHH.personsCount,
+    quantityBand: SANDBOX_COSHH.quantityBand,
+    frequencyBand: SANDBOX_COSHH.frequencyBand,
+    durationBand: SANDBOX_COSHH.durationBand,
+    levRequired: SANDBOX_COSHH.levRequired,
+    healthSurveillanceRequired: SANDBOX_COSHH.healthSurveillanceRequired,
+    exposureMonitoringRequired: SANDBOX_COSHH.exposureMonitoringRequired,
+    emergencyNotes: SANDBOX_COSHH.emergencyNotes,
+    plainSummary: SANDBOX_COSHH.plainSummary,
     // In the future: a review already overdue would light the amber
     // "assessments due" chip on a workspace seconds old.
     nextReviewAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
     createdBy: ctx.userId,
   });
+
+  for (const control of SANDBOX_COSHH.controls) {
+    await ctx.tx.insert(coshhAssessmentControls).values({
+      id: newId(),
+      tenantId: ctx.tenantId,
+      assessmentId,
+      tier: control.tier,
+      description: control.description,
+      status: 'in_place',
+    });
+  }
 }
 
 /** Seed one building with a fire risk assessment against it. */

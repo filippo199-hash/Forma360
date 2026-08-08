@@ -164,6 +164,10 @@ export default function PermitDetailPage() {
       mutationOpts.onError(err);
     },
   });
+  // PW-A1: the other half of the acceptor's decision. Without it the
+  // only way to decline a permit was to cancel it, which kills the
+  // record instead of returning it for correction.
+  const refuse = trpc.permits.refuse.useMutation(mutationOpts);
   const suspend = trpc.permits.suspend.useMutation(mutationOpts);
   const resume = trpc.permits.resume.useMutation(mutationOpts);
   const extend = trpc.permits.extend.useMutation(mutationOpts);
@@ -1094,13 +1098,35 @@ export default function PermitDetailPage() {
               permit.parties.acceptorName,
               permit.acceptedAt,
               permit.status === 'issued' && isAcceptor ? (
-                <Button
-                  size="sm"
-                  disabled={accept.isPending}
-                  onClick={() => accept.mutate({ permitId })}
-                >
-                  {t('signatures.acceptAction')}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    disabled={accept.isPending}
+                    onClick={() => {
+                      // Accepting a permit is a legal authorisation —
+                      // welding beside a sprinkler head went through on
+                      // one unconfirmed click, while the inspection
+                      // module asks you to confirm a checklist. Ask on
+                      // the one that matters.
+                      if (!window.confirm(t('signatures.acceptConfirm'))) return;
+                      accept.mutate({ permitId });
+                    }}
+                  >
+                    {t('signatures.acceptAction')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={refuse.isPending}
+                    onClick={() => {
+                      const reason = window.prompt(t('signatures.refusePrompt'));
+                      if (reason === null || reason.trim().length < 3) return;
+                      refuse.mutate({ permitId, reason: reason.trim() });
+                    }}
+                  >
+                    {t('signatures.refuseAction')}
+                  </Button>
+                </div>
               ) : undefined,
             )}
           </div>

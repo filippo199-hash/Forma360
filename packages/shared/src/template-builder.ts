@@ -297,7 +297,10 @@ function buildTitlePage(): TemplateContent['pages'][number] {
         id: newId(),
         title: 'Details',
         items: [
-          { id: newId(), type: 'site', prompt: 'Site conducted', required: false },
+          // "Site conducted" is not English — you conduct an inspection
+          // AT a site. Existing published versions keep their wording;
+          // template content is an immutable snapshot by design.
+          { id: newId(), type: 'site', prompt: 'Site', required: false },
           { id: newId(), type: 'inspectionDate', prompt: 'Conducted on', required: false },
           { id: newId(), type: 'conductedBy', prompt: 'Prepared by', required: false },
           { id: newId(), type: 'location', prompt: 'Location', required: false },

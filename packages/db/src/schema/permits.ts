@@ -294,6 +294,8 @@ export const PERMIT_EVENT_KINDS = [
   'authorised',
   'issued',
   'accepted',
+  /** The named acceptor refused and returned the permit to its issuer. */
+  'refused',
   'suspended',
   'resumed',
   'extended',

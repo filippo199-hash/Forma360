@@ -164,6 +164,25 @@ pnpm --filter @forma360/shared test:r2  # manual R2 smoke test
   `<tenantId>/<module>/<entityId>/<filename>` — validated by a Zod schema.
 - i18n lint rule at `tools/eslint-rules/no-hardcoded-strings.js` — enforced
   on `apps/web/app/**/*.tsx` + `packages/ui/src/**/*.tsx`.
+- **Export delivery** at `apps/web/src/server/deliver-render.ts` +
+  `render-fallback.ts`. Every export route ends in `deliverRenderedFile`.
+  The object store is a cache, not the source of truth: when its upload
+  fails the renderer hands the bytes to `RenderDeps.onUploadFailure`
+  instead of throwing, the web layer parks them in a bounded, single-use,
+  2-minute holding area, and the route serves them off the response. One
+  bad R2 credential used to take out all six exports at once and return
+  a new browser tab containing raw JSON. Attachments deliberately do NOT
+  get this treatment — a photograph must survive the request that
+  uploaded it, and a re-render cannot reconstruct it.
+- **Translation-key guard** at `apps/web/src/lib/translation-keys.test.ts`
+  (I18N-K01/K02). next-intl renders the key path when a key is missing,
+  so the failure is silent in CI and loud on screen — it shipped twice
+  (`permits.types.requiredTraining*`, then the whole fire triangle on the
+  FRA form). K01 scrapes every `useTranslations` binding and its literal
+  `t('key')` calls; it found eleven more nobody had reported. It cannot
+  see keys reaching `t()` through a variable, which is exactly how the
+  FRA bug shipped, so K02 pins that form directly — a general rule for it
+  produced ~40 false positives, and a guard that cries wolf gets deleted.
 - **Date display** at `apps/web/src/lib/format-date.ts`. `formatDate` →
   `16 Aug 2026`, `formatDateTime` → `16 Aug 2026, 17:00`. Use these, not
   `toLocaleDateString`. Four conventions were coexisting on the same

@@ -2149,7 +2149,12 @@
       "sourceFireRiskAssessment": "火災リスクアセスメント",
       "sourceFireLogbookEntry": "防火点検",
       "sourceFireDoorInspection": "防火扉",
-      "sourceRams": "RAMS パック"
+      "sourceRams": "RAMS パック",
+      "myOpenChip": "自分に割り当て {count} 件",
+      "myOverdueChip": "期限超過 {count} 件",
+      "pagerShowing": "{total} 件中 {from}–{to} 件",
+      "pagerPrev": "前へ",
+      "pagerNext": "次へ"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -4421,7 +4426,8 @@
         "draftSummaryButton": "AI で下書き",
         "drafting": "作成中…",
         "summaryError": "要約を作成できませんでした。もう一度お試しください。",
-        "summaryDrafted": "下書きができました。確認して保存してください。"
+        "summaryDrafted": "下書きができました。確認して保存してください。",
+        "suggestingElapsed": "考えています… {seconds}秒（最大1分ほどかかります）"
       },
       "signOff": {
         "title": "評価者の署名",
@@ -4712,7 +4718,19 @@
         "withinLimits": "基準内",
         "outOfLimits": "基準外",
         "measuredAgainst": "対象基準",
-        "freeReading": "自由測定（基準なし）"
+        "freeReading": "自由測定（基準なし）",
+        "competence": {
+          "blockedTitle": "ブロック: 力量要件を満たしていません",
+          "personExpired": "{person} — {requirement} の有効期限が切れています",
+          "personMissing": "{person} — {requirement} の記録がありません",
+          "openModule": "研修を開く"
+        },
+        "signatures": {
+          "competenceBlocked": "ブロック: 力量要件を満たしていません",
+          "acceptConfirm": "受諾するとこの許可証に署名し、作業開始を認めることになります。続行しますか？",
+          "refuseAction": "差し戻す",
+          "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。"
+        }
       },
       "signatures": {
         "title": "署名",
@@ -4776,6 +4794,7 @@
           "authorised": "承認",
           "issued": "発行",
           "accepted": "受領",
+          "refused": "差し戻し（発行者へ返却）",
           "suspended": "一時停止",
           "resumed": "再開",
           "extended": "延長",
@@ -5261,7 +5280,7 @@
         "other": "Other"
       },
       "premisesDescription": "Premises description",
-      "occupancyHeading": "Occupancy",
+      "occupancyHeading": "危険にさらされる人",
       "maxOccupancy": "Maximum occupancy",
       "sleepingOccupants": "Sleeping occupants",
       "personsAtRisk": {
@@ -5277,7 +5296,11 @@
       },
       "riskRating": "Overall risk rating",
       "riskRatingUnset": "Not rated yet",
-      "hazardsHeading": "Persons at risk",
+      "hazardsHeading": "火災危険源",
+      "ignitionSources": "着火源",
+      "fuelSources": "可燃物",
+      "oxygenSources": "酸素供給源",
+      "evaluationNotes": "リスクの評価",
       "findingsHeading": "Significant findings",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
@@ -5481,7 +5504,8 @@
     "photosAdd": "写真を追加",
     "photosRemove": "削除",
     "photoTooLarge": "この写真は {maxMb} MB を超えています。小さいものを選んでください。",
-    "photoUploadFailed": "写真のアップロードに失敗しました。まだ添付されています。もう一度送信してください。"
+    "photoUploadFailed": "写真のアップロードに失敗しました。まだ添付されています。もう一度送信してください。",
+    "photoUploadGaveUp": "報告は登録されましたが、写真をアップロードできませんでした。重要な場合は、写っていた内容を上長にお伝えください。"
   },
   "offline": {
     "title": "オフラインです",
@@ -5853,7 +5877,10 @@
         "occupational_disease": "業務に関連する診断された職業性疾病 — 手根管症候群、皮膚炎、職業性喘息、HAVS、腱炎、職業がん。",
         "dangerous_occurrence": "Schedule 2の事象 — 揚重設備の崩壊、足場倒壊、電気火災・爆発、圧力設備破損、偶発的放出。",
         "gas_incident": "ガスに関連する死亡・負傷、または危険なガス設備。"
-      }
+      },
+      "lostTimeRecorded": "これまでに {days} 日の休業を記録しています。",
+      "lostTimeOngoing": "休業 {days} 日、現在も欠勤中 — 欠勤が続く場合、7日超の届出義務は {date} から適用されます。",
+      "lostTimeOverSeven": "休業 {days} 日 — 7日の基準を超えています。7日超の届出義務が適用されます。"
     },
     "investigation": {
       "heading": "調査",
@@ -6063,7 +6090,8 @@
     "common": {
       "cancel": "キャンセル",
       "save": "保存",
-      "saving": "保存中…"
+      "saving": "保存中…",
+      "edit": "編集"
     },
     "errors": {
       "generic": "問題が発生しました。もう一度お試しください。",
@@ -6180,7 +6208,7 @@
       "draftPacks": "下書き {count} 件",
       "awaitingBriefing": "周知待ち {count} 件",
       "pendingClientAcceptance": "顧客承諾待ち {count} 件",
-      "pendingReviews": "協力会社パックの審査待ち {count} 件",
+      "pendingReviews": "レビュー待ちの請負業者パック {count} 件",
       "expiringReviews": "承諾の期限切れ間近 {count} 件"
     },
     "filters": {
@@ -6395,7 +6423,10 @@
       "sitePlaceholder": "作業が行われる場所",
       "workDescription": "作業内容（任意）",
       "workDescriptionPlaceholder": "チェックリストを開く前に審査者が知っておくべきこと",
-      "logAndOpen": "登録してチェックリストを開く"
+      "logAndOpen": "登録してチェックリストを開く",
+      "decisionRecorded": "判定を記録しました",
+      "decisionFailed": "判定を記録できませんでした。もう一度お試しください。",
+      "recordingDecision": "記録中…"
     },
     "reviewOutcome": {
       "pending": "審査待ち",
@@ -6406,7 +6437,8 @@
     "reviewVerdict": {
       "pass": "適合",
       "fail": "不適合",
-      "na": "該当なし"
+      "na": "該当なし",
+      "unanswered": "未評価"
     },
     "trade": {
       "mechanical": "機械",

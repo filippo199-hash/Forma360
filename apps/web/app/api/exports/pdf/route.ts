@@ -17,7 +17,7 @@ import { headsUpsDeps } from '../../../../src/server/heads-up-deps';
 import { inspectionsDeps } from '../../../../src/server/inspections-deps';
 import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { issuesDeps } from '../../../../src/server/issues-deps';
-import { storage } from '../../../../src/server/storage';
+import { deliverRenderedFile } from '../../../../src/server/deliver-render';
 import { createContext } from '../../../../src/server/trpc';
 
 const appRouter = buildAppRouter({
@@ -54,9 +54,11 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.json({ error: code }, { status });
   }
 
-  const signedUrl = await storage.getSignedDownloadUrl({
+  // Serves the bytes directly when the object-store upload failed;
+  // 302s to a signed URL otherwise. See `deliver-render`.
+  return deliverRenderedFile({
     key: rendered.key,
-    expiresInSeconds: 60 * 5,
+    contentType: 'application/pdf',
+    filename: 'inspection.pdf',
   });
-  return NextResponse.redirect(signedUrl, 302);
 }
