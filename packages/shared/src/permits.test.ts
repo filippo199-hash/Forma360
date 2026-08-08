@@ -79,12 +79,23 @@ describe('canTransition (PW-E01)', () => {
     expect(canTransition('draft', 'active')).toBe(false);
     expect(canTransition('draft', 'suspended')).toBe(false);
     expect(canTransition('draft', 'closed')).toBe(false);
-    expect(canTransition('issued', 'draft')).toBe(false);
     expect(canTransition('suspended', 'issued')).toBe(false);
     for (const to of PERMIT_STATUSES) {
       expect(canTransition('closed', to)).toBe(false);
       expect(canTransition('cancelled', to)).toBe(false);
     }
+  });
+
+  it('PW-A1 — issued → draft is legal: it is refusal, not cancellation', () => {
+    // The acceptor sends the permit BACK to the issuer for correction.
+    // Without this the only way to decline was to cancel, which kills
+    // the record rather than bouncing it.
+    expect(canTransition('issued', 'draft')).toBe(true);
+    // ...and it is the only way back to draft. Nothing that has been
+    // worked reopens for editing.
+    expect(canTransition('active', 'draft')).toBe(false);
+    expect(canTransition('suspended', 'draft')).toBe(false);
+    expect(canTransition('closed', 'draft')).toBe(false);
   });
 
   it('open statuses are exactly issued / active / suspended', () => {
