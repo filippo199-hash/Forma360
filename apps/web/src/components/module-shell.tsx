@@ -18,7 +18,7 @@ import type { ReactNode } from 'react';
  */
 export function ModuleShell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen w-full bg-[#eef4fb] dark:bg-slate-900/40">
+    <div className="min-h-screen w-full bg-[#e1edfb] dark:bg-slate-900/40">
       <div className="mx-auto w-full max-w-[1200px] px-4 py-4 sm:py-6">{children}</div>
     </div>
   );

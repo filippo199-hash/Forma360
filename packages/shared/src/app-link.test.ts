@@ -54,14 +54,17 @@ describe('appLink', () => {
  * three times in three separate audits and would have caught the eleventh
  * the same way: too late. This walks the worker sources instead.
  */
-const WORKERS_DIR = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  '..',
-  'jobs',
-  'src',
-  'workers',
-);
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+/**
+ * Where links get built. Workers were the original ten; the eleventh
+ * turned up in a ROUTER (the fire-safety intolerable-FRA alert), which the
+ * worker-only sweep could not see — so the sweep now covers both.
+ */
+const LINK_BUILDING_DIRS = [
+  join(ROOT, 'jobs', 'src', 'workers'),
+  join(ROOT, 'api', 'src', 'routers'),
+];
 
 /**
  * A locale segment wedged into a URL path inside a template literal —
@@ -72,22 +75,25 @@ const WORKERS_DIR = join(
  */
 const HARDCODED_LOCALE_IN_LINK = /\$\{[^}]*appUrl[^}]*\}[^`]*?\/(?:[a-z]{2})\//;
 
-describe('worker links', () => {
-  it('AL-E04: no worker hardcodes a locale segment — use appLink', async () => {
-    const files = (await readdir(WORKERS_DIR)).filter(
-      (f) => f.endsWith('.ts') && !f.endsWith('.test.ts'),
-    );
-    expect(files.length).toBeGreaterThan(10);
-
+describe('emailed links', () => {
+  it('AL-E04: nothing that emails a link hardcodes a locale — use appLink', async () => {
     const offenders: string[] = [];
-    for (const file of files) {
-      const source = await readFile(join(WORKERS_DIR, file), 'utf-8');
-      for (const [i, line] of source.split('\n').entries()) {
-        if (HARDCODED_LOCALE_IN_LINK.test(line)) {
-          offenders.push(`${file}:${i + 1} ${line.trim()}`);
+    let scanned = 0;
+    for (const dir of LINK_BUILDING_DIRS) {
+      const files = (await readdir(dir)).filter(
+        (f) => f.endsWith('.ts') && !f.endsWith('.test.ts'),
+      );
+      scanned += files.length;
+      for (const file of files) {
+        const source = await readFile(join(dir, file), 'utf-8');
+        for (const [i, line] of source.split('\n').entries()) {
+          if (HARDCODED_LOCALE_IN_LINK.test(line)) {
+            offenders.push(`${file}:${i + 1} ${line.trim()}`);
+          }
         }
       }
     }
+    expect(scanned).toBeGreaterThan(30);
     expect(offenders).toEqual([]);
   });
 });

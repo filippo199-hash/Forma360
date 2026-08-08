@@ -348,9 +348,63 @@ export function ramsGateError(args: {
   return null;
 }
 
+// ─── Risk-assessment gate (RA-X03) ─────────────────────────────────────────
+
+export type RiskAssessmentGateError =
+  | 'risk-assessment-required'
+  | 'risk-assessment-not-signed-off'
+  | 'risk-assessment-withdrawn';
+
+/**
+ * Is the risk assessment cited on this permit actually in force?
+ *
+ * RA-X03: the permit gate enforced `requiresRiskAssessment` as PRESENCE —
+ * `riskAssessmentId === null` — and never looked at status, so a permit to
+ * work could be issued citing an assessment that was still a **draft**, or
+ * one that had been **withdrawn**. The permit prints the RA reference
+ * beside its own number as though it were in force.
+ *
+ * A permit to work is the document that says the work has been assessed
+ * and controlled; issued against an unsigned assessment, its central
+ * assertion is unverified. And the status was already in hand —
+ * `loadRiskAssessmentInTenant` in the permits router has always SELECTed
+ * `status`, for a check nobody wrote.
+ *
+ * Pure, and shaped exactly like {@link ramsGateError} (RS-A11) so the
+ * permit page can preview the blocker before the issuer presses Issue,
+ * standing at the job. That asymmetry — RAMS gated properly ten lines
+ * below, RA gated on a null — is what made this a gap rather than a
+ * policy.
+ *
+ * Returns null when the gate is satisfied.
+ */
+export function riskAssessmentGateError(args: {
+  requiresRiskAssessment: boolean;
+  /** Null when no assessment is cited at all. */
+  assessment: { status: 'draft' | 'active' | 'archived' } | null;
+}): RiskAssessmentGateError | null {
+  if (!args.requiresRiskAssessment) return null;
+  if (args.assessment === null) return 'risk-assessment-required';
+  switch (args.assessment.status) {
+    case 'active':
+      return null;
+    case 'draft':
+      return 'risk-assessment-not-signed-off';
+    case 'archived':
+      return 'risk-assessment-withdrawn';
+  }
+}
+
 // ─── Competence gate (FreeHS B7 — the training matrix hook) ─────────────────
 
-export type TrainingGateError = 'training-missing' | 'training-expired';
+export type TrainingGateError =
+  | 'training-missing'
+  | 'training-expired'
+  /**
+   * PW-X03: the person is named on the permit but not linked to a user
+   * account, so no record can be attributed to them with certainty.
+   */
+  | 'training-unverifiable-identity';
 
 /** One person's standing against one required requirement, as loaded. */
 export interface TrainingGateFact {
@@ -359,6 +413,16 @@ export interface TrainingGateFact {
   readonly requirementName: string;
   /** Computed by `trainingStatus` in `training.ts` — the single source. */
   readonly status: 'in_date' | 'expiring_soon' | 'expired' | 'not_held' | 'not_required';
+  /**
+   * PW-X03: whether this person is a linked user account rather than a
+   * free-text name. REQUIRED, deliberately — the defect was that an
+   * unlinked person was matched to a training record by
+   * `personName.toLowerCase()`, so an untrained "john smith" passed the
+   * gate on a ticket belonging to a *different* John Smith and appeared
+   * in no shortfall list. Making the caller state this is what stops the
+   * next one silently reintroducing the namesake match.
+   */
+  readonly linked: boolean;
 }
 
 /** Who is short of what, for the UI to name names rather than say "blocked". */
@@ -394,6 +458,19 @@ export function trainingGateShortfalls(args: {
   const shortfalls: TrainingGateShortfall[] = [];
   for (const fact of args.facts) {
     if (!required.has(fact.requirementId)) continue;
+    // PW-X03. Where the type demands training, competence must be
+    // attributable to a *person*, not to a string. A free-text name can
+    // only ever be matched to a record by name, and two people called
+    // John Smith are one person as far as that match is concerned — so
+    // the gate would print a verdict it had not earned. Unlinked people
+    // are refused here rather than name-matched, which keeps the training
+    // module's unlinked records available everywhere they are not
+    // load-bearing. One shortfall per person per requirement, and no
+    // status-based reason on top: the identity is the blocker.
+    if (!fact.linked) {
+      shortfalls.push({ ...pick(fact), reason: 'training-unverifiable-identity' });
+      continue;
+    }
     // `not_required` cannot occur for a requirement the permit type
     // demands — the type's demand IS the requirement — so treat it as
     // "no record", which is what it means here.
@@ -419,8 +496,29 @@ export function trainingGateError(args: {
   requiredTrainingIds: readonly string[];
   facts: readonly TrainingGateFact[];
 }): TrainingGateError | null {
-  const shortfalls = trainingGateShortfalls(args);
+  return trainingGateHeadline(trainingGateShortfalls(args));
+}
+
+/**
+ * Reduce a shortfall list to the single verdict shown at the job face.
+ *
+ * Exported because `permits.issue` needs exactly this and used to inline
+ * its own copy of the precedence — which drifted the moment PW-X03 added
+ * a third reason: the page previewed "identity unverifiable" while issue
+ * threw "training-missing" for the same permit. RS-A11 says a preview
+ * that disagrees with the gate is worse than no preview, so there is now
+ * one function and no second copy to forget.
+ */
+export function trainingGateHeadline(
+  shortfalls: readonly TrainingGateShortfall[],
+): TrainingGateError | null {
   if (shortfalls.length === 0) return null;
+  // PW-X03 outranks both: "we cannot tell who this is" is a different and
+  // more fundamental complaint than "their ticket lapsed", and the issuer
+  // fixes it differently — by linking an account, not by booking a course.
+  if (shortfalls.some((s) => s.reason === 'training-unverifiable-identity')) {
+    return 'training-unverifiable-identity';
+  }
   // Expired outranks missing in the headline: it is the more alarming
   // finding (someone *was* competent and the system let it lapse).
   return shortfalls.some((s) => s.reason === 'training-expired')

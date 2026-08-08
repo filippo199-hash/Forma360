@@ -10,6 +10,7 @@
  */
 import type { Database } from '@forma360/db/client';
 import { inspectionApprovals, inspections, user } from '@forma360/db/schema';
+import { appLink } from '@forma360/shared/app-link';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
@@ -107,7 +108,11 @@ async function notifyDecision(
           input.decision === 'approved' ? 'APPROVED it' : `REJECTED it back to you for changes`,
         commentLine:
           input.comment !== null && input.comment.length > 0 ? `\n\nComment: ${input.comment}` : '',
-        viewUrl: `${approvalsDeps.appUrl.replace(/\/$/, '')}/en/inspections/${input.inspectionId}/status`,
+        viewUrl: appLink(
+          approvalsDeps.appUrl,
+          submitter.locale,
+          `/inspections/${input.inspectionId}/status`,
+        ),
       },
     });
   } catch (err) {

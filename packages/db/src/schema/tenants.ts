@@ -31,6 +31,12 @@ export interface TenantSettings {
   siteLabels?: readonly string[];
   terminology?: SiteTerminology;
   /**
+   * Billing plan (ADR 0018). Absent = free. Read through
+   * `planFromSettings` in `@forma360/shared/entitlements` — never
+   * compare this string directly; gate features on an entitlement key.
+   */
+  plan?: 'free' | 'paid';
+  /**
    * Optional tenant branding. `logoStorageKey` is an R2 object key (rendered
    * via a signed URL at read time); `primaryColor` is a `#rrggbb` hex string.
    * Absent until an admin sets it via `tenants.updateBranding`.

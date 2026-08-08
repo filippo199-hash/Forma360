@@ -955,6 +955,283 @@ describe('fireSafety router', () => {
     expect(resigned.events.some((e) => e.kind === 'reattested')).toBe(true);
   });
 
+  it('FS-G05: publishing freezes a signed copy that a later edit cannot touch', async () => {
+    // `publish` used to flip a status flag on a mutable row, and four
+    // procedures could then rewrite that row — including its risk rating,
+    // and including hard-deleting a significant finding — under a LOWER
+    // permission tier than could publish it. The Responsible Person who
+    // attested "suitable and sufficient" under Article 9 could not
+    // afterwards demonstrate what they attested: no copy existed.
+    const caller = callerFor(adminId);
+    const fra = await caller.fireSafety.fras.create({ title: 'Tower FRA' });
+    await caller.fireSafety.fras.update({
+      fraId: fra.id,
+      riskRating: 'substantial',
+      responsiblePersonName: 'Pat Owner',
+    });
+    await fillFraContent(caller, fra.id);
+    // After fillFraContent, which sets its own evaluation text.
+    await caller.fireSafety.fras.update({
+      fraId: fra.id,
+      evaluationNotes: 'Single stair, no AOV, evacuation strategy unresolved.',
+    });
+    await caller.fireSafety.fras.addFinding({
+      fraId: fra.id,
+      category: 'means_of_escape',
+      priority: 'high',
+      description: 'Single stair with no smoke control',
+      requiresAction: true,
+    });
+    await caller.fireSafety.fras.publish({ fraId: fra.id });
+
+    const [v1] = await db
+      .select()
+      .from(schema.fireFraVersions)
+      .where(eq(schema.fireFraVersions.fraId, fra.id));
+    expect(v1).toBeDefined();
+    expect(v1?.versionNumber).toBe(1);
+    expect(v1?.supersededAt).toBeNull();
+    expect(v1?.content.riskRating).toBe('substantial');
+    expect(v1?.content.evaluationNotes).toContain('evacuation strategy unresolved');
+    expect(v1?.content.findings).toHaveLength(1);
+    expect(v1?.signedOffByName).toBe('Alice Admin');
+
+    // The working row stays editable — that is deliberate, ADR 0011 §1, and
+    // FS-E29 asserts it. What changed is that the edit no longer destroys
+    // the evidence.
+    await caller.fireSafety.fras.update({
+      fraId: fra.id,
+      riskRating: 'tolerable',
+      evaluationNotes: 'EDITED AFTER PUBLISH',
+    });
+    const [stillV1] = await db
+      .select()
+      .from(schema.fireFraVersions)
+      .where(eq(schema.fireFraVersions.fraId, fra.id));
+    expect(stillV1?.content.riskRating).toBe('substantial');
+    expect(stillV1?.content.evaluationNotes).toContain('evacuation strategy unresolved');
+
+    // Re-attesting cuts version 2 and supersedes version 1 — the partial
+    // unique index means only one can be current at a time.
+    await caller.fireSafety.fras.publish({ fraId: fra.id });
+    const versions = await db
+      .select()
+      .from(schema.fireFraVersions)
+      .where(eq(schema.fireFraVersions.fraId, fra.id));
+    expect(versions).toHaveLength(2);
+    expect(versions.filter((v) => v.supersededAt === null)).toHaveLength(1);
+    const current = versions.find((v) => v.supersededAt === null);
+    expect(current?.versionNumber).toBe(2);
+    expect(current?.content.riskRating).toBe('tolerable');
+    // …and version 1 still says what was actually signed the first time.
+    expect(versions.find((v) => v.versionNumber === 1)?.content.riskRating).toBe('substantial');
+  });
+
+  it('FS-G05: a significant finding cannot be deleted off a signed FRA without a snapshot', async () => {
+    // `removeFinding` never loaded the FRA at all — neither a status check
+    // nor an archived one. Any finding with `requiresAction: false` (every
+    // observation noted but not remediated) could be HARD-DELETED off a
+    // live signed assessment, and the event carries only the category, not
+    // the text. The words were simply gone.
+    const caller = callerFor(adminId);
+    const fra = await caller.fireSafety.fras.create({ title: 'Depot FRA' });
+    await caller.fireSafety.fras.update({
+      fraId: fra.id,
+      riskRating: 'moderate',
+      responsiblePersonName: 'Pat Owner',
+    });
+    await fillFraContent(caller, fra.id);
+    const observation = await caller.fireSafety.fras.addFinding({
+      fraId: fra.id,
+      category: 'management',
+      priority: 'low',
+      description: 'Extinguisher signage faded on level 2',
+      requiresAction: false,
+    });
+    await caller.fireSafety.fras.addFinding({
+      fraId: fra.id,
+      category: 'means_of_escape',
+      priority: 'high',
+      description: 'Fire door held open with a wedge',
+      requiresAction: true,
+    });
+    await caller.fireSafety.fras.publish({ fraId: fra.id });
+
+    // Deleting it is still permitted — the signed copy survives it, which
+    // is exactly what makes the deletion safe.
+    await caller.fireSafety.fras.removeFinding({ findingId: observation.id });
+    const [signed] = await db
+      .select()
+      .from(schema.fireFraVersions)
+      .where(eq(schema.fireFraVersions.fraId, fra.id));
+    expect(signed?.content.findings.map((f) => f.description)).toContain(
+      'Extinguisher signage faded on level 2',
+    );
+  });
+
+  it('FS-G05: an FRA signed before versioning refuses a content edit until re-attested', async () => {
+    // The one case a frozen copy cannot rescue: a sign-off stamp from
+    // before this migration, with `currentVersion` 0 and no snapshot to
+    // fall back on. Editing those kept silently destroying the only copy.
+    const caller = callerFor(adminId);
+    const fra = await caller.fireSafety.fras.create({ title: 'Legacy FRA' });
+    await caller.fireSafety.fras.update({
+      fraId: fra.id,
+      riskRating: 'moderate',
+      responsiblePersonName: 'Pat Owner',
+    });
+    await fillFraContent(caller, fra.id);
+    await caller.fireSafety.fras.addFinding({
+      fraId: fra.id,
+      category: 'management',
+      priority: 'medium',
+      description: 'Drill overdue',
+      requiresAction: true,
+    });
+    await caller.fireSafety.fras.publish({ fraId: fra.id });
+
+    // Reproduce the pre-migration shape: signed, but no frozen copy.
+    await db.delete(schema.fireFraVersions).where(eq(schema.fireFraVersions.fraId, fra.id));
+    await db
+      .update(schema.fireRiskAssessments)
+      .set({ currentVersion: 0 })
+      .where(eq(schema.fireRiskAssessments.id, fra.id));
+
+    await expect(
+      caller.fireSafety.fras.update({ fraId: fra.id, evaluationNotes: 'Rewritten.' }),
+    ).rejects.toThrow(/signed-without-snapshot/);
+    await expect(
+      caller.fireSafety.fras.addFinding({
+        fraId: fra.id,
+        category: 'management',
+        priority: 'low',
+        description: 'Another',
+        requiresAction: false,
+      }),
+    ).rejects.toThrow(/signed-without-snapshot/);
+    // Re-attesting cuts version 1 and unblocks it.
+    await caller.fireSafety.fras.publish({ fraId: fra.id });
+    await expect(
+      caller.fireSafety.fras.update({ fraId: fra.id, evaluationNotes: 'Now fine.' }),
+    ).resolves.toBeDefined();
+  });
+
+  it('FS-X01: the training matrix governs marshal competence once designated', async () => {
+    // `fire_marshals` carried its own dates and the fire register read only
+    // that row, so a marshal who renewed their ticket stayed `expired`,
+    // counted as no cover, and kept being chased — while the training
+    // matrix, holding the actual certificate, said otherwise.
+    const caller = callerFor(adminId);
+    const building = await createOffice(caller);
+    const marshalUserId = adminId;
+
+    // A lapsed date in the fire register.
+    const lapsed = new Date(Date.now() - 400 * 86_400_000);
+    const { id: marshalId } = await caller.fireSafety.marshals.add({
+      buildingId: building.id,
+      userId: marshalUserId,
+      trainedAt: new Date(Date.now() - 800 * 86_400_000),
+      trainingExpiresAt: lapsed,
+    });
+    expect(
+      (await caller.fireSafety.marshals.list({ buildingId: building.id })).find(
+        (m) => m.id === marshalId,
+      )?.trainingStatus,
+    ).toBe('expired');
+
+    // A current fire-marshal ticket in the training matrix.
+    const requirementId = newId();
+    await db.insert(schema.trainingRequirements).values({
+      id: requirementId,
+      tenantId,
+      name: 'Fire marshal',
+      validityMonths: 36,
+    });
+    await db.insert(schema.trainingRecords).values({
+      id: newId(),
+      tenantId,
+      requirementId,
+      userId: marshalUserId,
+      personName: 'Alice Admin',
+      achievedAt: new Date(Date.now() - 30 * 86_400_000),
+      expiresAt: new Date(Date.now() + 700 * 86_400_000),
+    });
+
+    // Until an administrator says which requirement is the ticket, nothing
+    // changes — the fix ships inert.
+    expect(
+      (await caller.fireSafety.marshals.list({ buildingId: building.id })).find(
+        (m) => m.id === marshalId,
+      )?.trainingStatus,
+    ).toBe('expired');
+
+    await caller.fireSafety.settings.setMarshalRequirements({ requirementIds: [requirementId] });
+    const reconciled = (await caller.fireSafety.marshals.list({ buildingId: building.id })).find(
+      (m) => m.id === marshalId,
+    );
+    expect(reconciled?.trainingStatus).toBe('in_date');
+    expect(reconciled?.competenceSource).toBe('training');
+    expect(reconciled?.conflictsWithLocal).toBe(true);
+  });
+
+  it('FS-X01: a hand-typed date with no record behind it reads as unbacked', async () => {
+    // The worse direction. Anybody could type a future date into the fire
+    // register and the marshal read competent — satisfying the building's
+    // marshal target and closing the coverage gap that exists to force the
+    // training — with no record, no certificate and no verification behind
+    // it, and nothing in the product to contradict it.
+    const caller = callerFor(adminId);
+    const building = await createOffice(caller);
+    await caller.fireSafety.marshals.add({
+      buildingId: building.id,
+      userId: adminId,
+      trainedAt: new Date(Date.now() - 30 * 86_400_000),
+      trainingExpiresAt: new Date(Date.now() + 700 * 86_400_000),
+    });
+
+    const requirementId = newId();
+    await db.insert(schema.trainingRequirements).values({
+      id: requirementId,
+      tenantId,
+      name: 'Fire marshal',
+      validityMonths: 36,
+    });
+    await caller.fireSafety.settings.setMarshalRequirements({ requirementIds: [requirementId] });
+
+    const listed = (await caller.fireSafety.marshals.list({ buildingId: building.id }))[0];
+    expect(listed?.competenceSource).toBe('local');
+    expect(listed?.unbacked).toBe(true);
+    // It still counts toward cover — silently discounting it would flip
+    // live registers red overnight — but the coverage roll-up now says how
+    // many of the "in date" marshals nobody can corroborate.
+    const coverage = (await caller.fireSafety.marshals.coverage()).find(
+      (c) => c.buildingId === building.id,
+    );
+    expect(coverage?.inDateCount).toBe(1);
+    expect(coverage?.unbackedCount).toBe(1);
+
+    // And a NEW hand-typed date is refused outright — a value the system
+    // will immediately label unbacked is a lie with a footnote.
+    await expect(
+      caller.fireSafety.marshals.add({
+        buildingId: building.id,
+        userId: standardId,
+        trainingExpiresAt: new Date(Date.now() + 700 * 86_400_000),
+      }),
+    ).rejects.toThrow(/training-matrix-is-source/);
+    // Adding them without a date is fine — the matrix is where it goes now.
+    await expect(
+      caller.fireSafety.marshals.add({ buildingId: building.id, userId: standardId }),
+    ).resolves.toBeDefined();
+  });
+
+  it('FS-X01: a requirement from another tenant cannot be designated', async () => {
+    const caller = callerFor(adminId);
+    await expect(
+      caller.fireSafety.settings.setMarshalRequirements({ requirementIds: [newId()] }),
+    ).rejects.toThrow(/training-requirement-not-found/);
+  });
+
   it('FS-E30: fras.renderPdf refuses unwired and renders via the injected dep (HSE FS-5)', async () => {
     const caller = callerFor(adminId);
     const fra = await caller.fireSafety.fras.create({ title: 'Yard FRA' });

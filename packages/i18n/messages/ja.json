@@ -4941,7 +4941,10 @@
       "already-exited": "その人の退場は既に記録済みです。",
       "render-unavailable": "この環境ではPDF生成を利用できません。",
       "training-expired": "発行できません：この許可証に記載された人の研修が失効しています。",
-      "training-missing": "発行できません：記載された人が必要な研修を取得していません。"
+      "training-missing": "発行できません：記載された人が必要な研修を取得していません。",
+      "training-unverifiable-identity": "発行できません: この許可証に記載された人物にリンクされたアカウントがないため、教育訓練を確認できません。ユーザーとリンクするか、作業班から外してください。",
+      "already-inside": "その人物はすでに入退場記録に入場中として記録されています。",
+      "document-not-visible": "その文書へのアクセス権がありません。"
     },
     "competence": {
       "blockedTitle": "力量要件を満たしていません",

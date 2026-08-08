@@ -30,6 +30,7 @@ import {
   type HeadsUp,
 } from '@forma360/db/schema';
 import { user } from '@forma360/db/schema';
+import { appLink } from '@forma360/shared/app-link';
 import { newId } from '@forma360/shared/id';
 import { loadHeadsUpLibraryDocuments } from '../heads-up-documents';
 import { publishHeadsUp } from '../heads-up-publish';
@@ -888,6 +889,8 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             userId: headsUpRecipients.userId,
             userEmail: user.email,
             userName: user.name,
+            // DOC-A01: locale, so the reminder link follows the reader.
+            userLocale: user.locale,
           })
           .from(headsUpRecipients)
           .leftJoin(
@@ -909,7 +912,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             // pointed at the admin detail (no locale prefix, no access).
             const viewUrl =
               deps.appUrl !== undefined
-                ? `${deps.appUrl}/en/heads-up/${input.headsUpId}/view`
+                ? appLink(deps.appUrl, r.userLocale, `/heads-up/${input.headsUpId}/view`)
                 : undefined;
             await deps.sendEmail({
               to: r.userEmail,

@@ -4941,7 +4941,10 @@
       "already-exited": "A saída dessa pessoa já foi registada.",
       "render-unavailable": "A geração de PDF não está disponível neste ambiente.",
       "training-expired": "Não é possível emitir: alguém indicado nesta permissão tem formação expirada.",
-      "training-missing": "Não é possível emitir: alguém indicado nunca obteve a formação exigida."
+      "training-missing": "Não é possível emitir: alguém indicado nunca obteve a formação exigida.",
+      "training-unverifiable-identity": "Não é possível emitir: uma pessoa indicada nesta permissão não tem conta associada, pelo que a sua formação não pode ser verificada. Associe-a a um utilizador ou retire-a da equipa.",
+      "already-inside": "Essa pessoa já está registada como presente no registo de entradas.",
+      "document-not-visible": "Não tem acesso a esse documento."
     },
     "competence": {
       "blockedTitle": "Competência não cumprida",

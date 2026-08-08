@@ -311,7 +311,7 @@ export function AiChat() {
   }
 
   return (
-    <div className="flex h-[calc(100svh-4rem)] overflow-hidden">
+    <div className="flex h-[calc(100svh-4rem)] overflow-hidden bg-[#e1edfb] dark:bg-slate-900/40">
       {/* ── Center: chat ─────────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar — the desktop aside is hidden < lg, so New chat +

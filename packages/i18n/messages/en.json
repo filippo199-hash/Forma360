@@ -5175,7 +5175,10 @@
       "already-exited": "That person has already been logged out.",
       "render-unavailable": "PDF rendering is not available in this environment.",
       "training-expired": "Cannot issue: someone named on this permit has expired training.",
-      "training-missing": "Cannot issue: someone named on this permit has never held the required training."
+      "training-missing": "Cannot issue: someone named on this permit has never held the required training.",
+      "training-unverifiable-identity": "Cannot issue: someone named on this permit has no linked account, so their training cannot be verified. Link them to a user, or remove them from the gang.",
+      "already-inside": "That person is already logged in on the entry register.",
+      "document-not-visible": "You do not have access to that document."
     },
     "competence": {
       "blockedTitle": "Competence not met",

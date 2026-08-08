@@ -9,10 +9,22 @@
  *     rescue service (external wall system, compartmentation, means of
  *     escape, risers, secure information box) and attached plan
  *     documents (jsonb, Zod-validated at the boundary).
- *   - `fire_risk_assessments` — the FRA header. Reviewable rather than
- *     rewritable: publish stamps the record active, reviews append to
- *     `fire_fra_reviews`, and every content change lands in the event
- *     log. Significant findings are first-class child rows.
+ *   - `fire_risk_assessments` — the FRA header, and the WORKING copy.
+ *     Reviews append to `fire_fra_reviews` and every content change lands
+ *     in the event log. Significant findings are first-class child rows.
+ *   - `fire_fra_versions` — the SIGNED copy. FS-G05: this docblock used to
+ *     claim the FRA was "reviewable rather than rewritable" and the code
+ *     did not keep the promise — `publish` flipped a status flag and the
+ *     single mutable row remained fully rewritable, including its risk
+ *     rating, by a LOWER permission tier (`fireSafety.create`) than could
+ *     publish it (`fireSafety.manage`). `contentUpdatedAt` was added to
+ *     DETECT that (FS-7's amber banner) while still permitting it, so the
+ *     document a Responsible Person signed as "suitable and sufficient"
+ *     under Article 9 could be rewritten underneath them and no copy of
+ *     what they signed survived anywhere. Now every publish freezes a
+ *     full snapshot here, version rows are never UPDATEd for content, and
+ *     the working row stays editable — the model ADR 0011 §1 settled for
+ *     `risk_assessment_versions` and ADR 0015 repeated for RAMS.
  *   - `fire_significant_findings` — step-4 records. `requiresAction`
  *     findings generate actions on publish, exactly once (`actionId`).
  *   - `fire_fra_reviews` — append-only review log with the trigger that
@@ -60,6 +72,7 @@ import type {
   FraFindingPriority,
   FraMethodology,
   FraRiskRating,
+  FraVersionContent,
 } from '@forma360/shared/fire-safety';
 import { assets } from './assets';
 import { sites } from './sites';
@@ -195,6 +208,13 @@ export const fireRiskAssessments = pgTable(
     publishedAt: timestamp('published_at', { withTimezone: true, mode: 'date' }),
     /** Who attested "suitable and sufficient" on the latest publish. */
     publishedBy: text('published_by'),
+    /**
+     * FS-G05: pointer at the current row in `fire_fra_versions`. 0 means no
+     * frozen copy — either never published, or published BEFORE versioning
+     * existed, in which case the content it was signed against is
+     * unknowable and its next publish cuts version 1.
+     */
+    currentVersion: integer('current_version').notNull().default(0),
 
     reviewFrequencyMonths: integer('review_frequency_months'),
     nextReviewAt: timestamp('next_review_at', { withTimezone: true, mode: 'date' }),
@@ -298,6 +318,105 @@ export const fireFraReviews = pgTable(
 );
 
 export type FireFraReview = typeof fireFraReviews.$inferSelect;
+
+/**
+ * A frozen, signed fire risk assessment (FS-G05).
+ *
+ * Cut on every publish, because every publish is a distinct attestation by
+ * a possibly different Responsible Person and that is the fact FS-7 exists
+ * to record. (`risk_assessment_versions` skips the cut when content is
+ * unchanged, to avoid reopening acknowledgements — nothing acknowledges an
+ * FRA, so that cost does not exist here.)
+ *
+ * `content` is the whole assessment including its significant findings, so
+ * a version renders without touching the working rows. It is built by ONE
+ * named function with ONE call site: RS-A6 is on record as the bug where a
+ * snapshot builder silently omitted a field and shipped unusable versions.
+ */
+export const fireFraVersions = pgTable(
+  'fire_fra_versions',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    fraId: varchar('fra_id', { length: 26 })
+      .notNull()
+      .references(() => fireRiskAssessments.id, { onDelete: 'cascade' }),
+
+    versionNumber: integer('version_number').notNull(),
+    content: jsonb('content').notNull().$type<FraVersionContent>(),
+
+    /** The Responsible Person who attested this content. Name snapshotted. */
+    signedOffBy: text('signed_off_by').notNull(),
+    signedOffByName: text('signed_off_by_name'),
+    signedOffAt: timestamp('signed_off_at', { withTimezone: true, mode: 'date' }).notNull(),
+    /** How many actions this publish raised, for the audit trail. */
+    actionsCreated: integer('actions_created').notNull().default(0),
+
+    /** Stamped when a later publish superseded this version. */
+    supersededAt: timestamp('superseded_at', { withTimezone: true, mode: 'date' }),
+
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    uniqueIndex('fire_fra_versions_fra_version_idx').on(table.fraId, table.versionNumber),
+    /**
+     * "Exactly one current signed version" as a database fact rather than a
+     * router convention — the deliberate improvement on RA and RAMS, which
+     * both leave this invariant in application code. It forces the publish
+     * transaction to stamp `supersededAt` on n BEFORE inserting n+1.
+     */
+    uniqueIndex('fire_fra_versions_current_idx')
+      .on(table.fraId)
+      .where(sql`${table.supersededAt} IS NULL`),
+    index('fire_fra_versions_tenant_idx').on(table.tenantId),
+  ],
+);
+
+export type FireFraVersion = typeof fireFraVersions.$inferSelect;
+
+/**
+ * Per-tenant Fire Safety configuration (FS-X01).
+ *
+ * A table rather than a key in `tenants.settings`, following
+ * `tenant_risk_matrix_settings`: `tenants.updateSettings` does a
+ * non-atomic read-modify-write merge of that jsonb column, so a second
+ * writer widens a real lost-update window against branding and
+ * terminology — and a fire-safety key has no business in the tenants
+ * router.
+ */
+export const fireSafetySettings = pgTable('fire_safety_settings', {
+  tenantId: varchar('tenant_id', { length: 26 })
+    .primaryKey()
+    .references(() => tenants.id, { onDelete: 'restrict' }),
+  /**
+   * Which training requirements count as a fire-marshal ticket.
+   *
+   * A SET, not one id, mirroring `permit_types.required_training_ids`:
+   * tenants routinely run two qualifying tickets (a 3-year certificate
+   * plus an annual refresher), and with a single id a catalogue
+   * reorganisation flips every marshal to unbacked in the interval between
+   * retiring the old requirement and pointing at the new one.
+   *
+   * Semantics are ANY-OF — one competence with several possible evidences.
+   * (Permits use all-of because a permit type asserts several distinct
+   * competences.) Empty = no designation = the pre-FS-X01 behaviour, so
+   * this ships inert.
+   */
+  marshalRequirementIds: jsonb('marshal_requirement_ids')
+    .notNull()
+    .default(sql`'[]'::jsonb`)
+    .$type<string[]>(),
+  updatedBy: text('updated_by'),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' })
+    .notNull()
+    .default(sql`now()`),
+});
+
+export type FireSafetySettings = typeof fireSafetySettings.$inferSelect;
 
 /** Auto-seeded from the building profile vs added by hand. */
 export const FIRE_CHECK_SOURCES = ['auto', 'manual'] as const;

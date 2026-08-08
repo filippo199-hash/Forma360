@@ -94,6 +94,7 @@ describe('riskAssessments router', () => {
   let tenantId: string;
   let adminId: string;
   let standardId: string;
+  let standardSetId: string;
 
   function callerFor(userId: string) {
     return createCaller(
@@ -113,6 +114,7 @@ describe('riskAssessments router', () => {
       .insert(schema.tenants)
       .values({ id: tenantId, name: 'Acme', slug: `acme-${tenantId}` });
     const sets = await seedDefaultPermissionSets(db as never, tenantId);
+    standardSetId = sets.standard;
     adminId = `usr_${newId()}`;
     standardId = `usr_${newId()}`;
     await db.insert(schema.user).values([
@@ -1007,6 +1009,77 @@ describe('riskAssessments router', () => {
 
     const pending = await callerFor(standardId).riskAssessments.listMyPending();
     expect(pending[0]?.dueAt).not.toBeNull();
+  });
+
+  it('RA-D04: the distribution email follows the recipient, link and body', async () => {
+    // This module's own reminder worker already passed a locale and used
+    // appLink. `distribute` did neither — so the chase-up mail arrived in
+    // Polish and the ORIGINAL request, the one asking somebody to read and
+    // acknowledge a legal document, arrived in English and landed them on
+    // an English page.
+    const admin = callerFor(adminId);
+    await db.update(schema.user).set({ locale: 'pl' }).where(eq(schema.user.id, standardId));
+
+    const { assessmentId } = await createScoredAssessment(admin);
+    await publishOk(admin, assessmentId);
+    await admin.riskAssessments.distribute({ assessmentId, userIds: [standardId] });
+
+    const mail = __authStubMailbox.find((m) => m.templateKey === 'risk-assessment-distributed');
+    expect(mail?.locale).toBe('pl');
+    expect(mail?.variables['viewUrl']).toBe(
+      `http://localhost:3000/pl/risk-assessments/${assessmentId}`,
+    );
+    // And no English phrase interpolated into a translated body: with no
+    // deadline the placeholder is the house '—', not 'as soon as possible'.
+    expect(mail?.variables['dueDate']).toBe('—');
+  });
+
+  it('RA-D05: a leaver stops counting as outstanding but stays on the roll-call', async () => {
+    // The reminder worker filters `isNull(user.deactivatedAt)`, so a
+    // deactivated user was never chased — while the count included them.
+    // The assessment read "1 of 2 acknowledged" permanently: nobody
+    // nudged, the number unable to reach 100%, and a compliance figure
+    // wrong in the direction that makes a manager look bad for something
+    // they cannot fix.
+    const admin = callerFor(adminId);
+    const { assessmentId } = await createScoredAssessment(admin);
+    await publishOk(admin, assessmentId);
+    // A second recipient who will later leave the company.
+    const leaverId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: leaverId,
+      name: 'Leaver',
+      email: `leaver-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: standardSetId,
+    });
+    await admin.riskAssessments.distribute({
+      assessmentId,
+      userIds: [standardId, leaverId],
+    });
+
+    const before = (await admin.riskAssessments.list()).find((a) => a.id === assessmentId);
+    expect(before?.ackTotal).toBe(2);
+    expect(before?.ackDone).toBe(0);
+
+    await callerFor(standardId).riskAssessments.acknowledge({ assessmentId });
+    // The other recipient leaves the company.
+    await db
+      .update(schema.user)
+      .set({ deactivatedAt: new Date() })
+      .where(eq(schema.user.id, leaverId));
+
+    const after = (await admin.riskAssessments.list()).find((a) => a.id === assessmentId);
+    // 1 of 1 — reachable, and honest.
+    expect(after?.ackTotal).toBe(1);
+    expect(after?.ackDone).toBe(1);
+
+    // The roll-call KEEPS them: hiding the row would erase the evidence
+    // that they were distributed to, which is what the record is for.
+    const detail = await admin.riskAssessments.get({ assessmentId });
+    const leaver = detail.acknowledgements.find((a) => a.userId === leaverId);
+    expect(leaver).toBeDefined();
+    expect(leaver?.userDeactivatedAt).not.toBeNull();
   });
 
   it('RA-E30: variant drift is flagged once the parent changes after the fork (A-4)', async () => {

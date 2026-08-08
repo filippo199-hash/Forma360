@@ -4983,7 +4983,10 @@
       "already-exited": "L'uscita di quella persona è già stata registrata.",
       "render-unavailable": "La generazione PDF non è disponibile in questo ambiente.",
       "training-expired": "Impossibile emettere: una persona indicata sul permesso ha la formazione scaduta.",
-      "training-missing": "Impossibile emettere: una persona indicata non ha mai conseguito la formazione richiesta."
+      "training-missing": "Impossibile emettere: una persona indicata non ha mai conseguito la formazione richiesta.",
+      "training-unverifiable-identity": "Impossibile emettere: una persona indicata su questo permesso non ha un account collegato, quindi la sua formazione non può essere verificata. Collegala a un utente o rimuovila dalla squadra.",
+      "already-inside": "Questa persona risulta già presente nel registro degli ingressi.",
+      "document-not-visible": "Non hai accesso a questo documento."
     },
     "competence": {
       "blockedTitle": "Competenza non soddisfatta",

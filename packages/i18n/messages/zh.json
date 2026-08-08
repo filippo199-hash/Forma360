@@ -4937,7 +4937,10 @@
       "already-exited": "该人员已记录退出。",
       "render-unavailable": "当前环境不支持 PDF 生成。",
       "training-expired": "无法签发：许可证上列明的人员培训已过期。",
-      "training-missing": "无法签发：许可证上列明的人员从未取得所需培训。"
+      "training-missing": "无法签发：许可证上列明的人员从未取得所需培训。",
+      "training-unverifiable-identity": "无法签发：本许可证上的某人没有关联账户，因此无法核实其培训记录。请将其关联到用户，或将其从作业班组中移除。",
+      "already-inside": "该人员已在出入登记表中记录为在内。",
+      "document-not-visible": "您无权访问该文档。"
     },
     "competence": {
       "blockedTitle": "能力要求未满足",

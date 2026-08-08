@@ -12,8 +12,11 @@
  * via the context. That's the core invariant of our multi-tenancy model
  * (see ADR 0002).
  */
+import { tenants } from '@forma360/db/schema';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { grantsAdminAccess, type PermissionKey } from '@forma360/permissions/catalogue';
+import { settingsHaveEntitlement, type EntitlementKey } from '@forma360/shared/entitlements';
+import { eq } from 'drizzle-orm';
 import { middleware, procedure, TRPCError } from './trpc';
 
 /**
@@ -102,6 +105,44 @@ export function requirePermission(perm: PermissionKey) {
         auth: ctx.auth,
         tenantId: ctx.auth.tenantId,
         permissions: perms,
+      },
+    });
+  });
+}
+
+/**
+ * Paid-plan gate (ADR 0018), layered on top of `tenantProcedure` the same
+ * way `requirePermission` is. Refuses with `PAYMENT_REQUIRED` — a code no
+ * other guard uses — so the web client can render the upgrade surface
+ * instead of a generic error. Permissions answer "may this person do
+ * this"; entitlements answer "does this tenant's plan include this" —
+ * a procedure that needs both stacks both middlewares.
+ *
+ * The plan is read from `tenants.settings.plan` through
+ * `settingsHaveEntitlement`, so a corrupt settings row degrades to the
+ * free plan (locked out of paid features, never locked out of the app).
+ */
+export function requireEntitlement(key: EntitlementKey) {
+  return middleware(async ({ ctx, next }) => {
+    if (ctx.auth === null) {
+      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Authentication required' });
+    }
+    const rows = await ctx.db
+      .select({ settings: tenants.settings })
+      .from(tenants)
+      .where(eq(tenants.id, ctx.auth.tenantId))
+      .limit(1);
+    if (!settingsHaveEntitlement(rows[0]?.settings, key)) {
+      throw new TRPCError({
+        code: 'PAYMENT_REQUIRED',
+        message: `Plan does not include: ${key}`,
+      });
+    }
+    return next({
+      ctx: {
+        ...ctx,
+        auth: ctx.auth,
+        tenantId: ctx.auth.tenantId,
       },
     });
   });

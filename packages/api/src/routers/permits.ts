@@ -80,6 +80,8 @@ import {
   PERMIT_WORKER_ROLES,
   permitIsOverdue,
   ramsGateError,
+  riskAssessmentGateError,
+  trainingGateHeadline,
   trainingGateShortfalls,
   type TrainingGateFact,
   type TrainingGateShortfall,
@@ -104,6 +106,7 @@ import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
+import { isDocumentVisibleToUser } from './document-visibility';
 
 export interface PermitsRouterDeps {
   /** Wired from the brand module catalogue (ADR 0010). */
@@ -252,18 +255,65 @@ async function loadRiskAssessmentInTenant(db: Database, tenantId: string, id: st
   return found;
 }
 
-/** Load a document scoped to the tenant or throw (PW-7). */
-async function loadDocumentInTenant(db: Database, tenantId: string, id: string) {
-  const rows = await db
-    .select({ id: documents.id, name: documents.name })
+/**
+ * Load a method-statement document the caller may actually cite (PW-7).
+ *
+ * This checked tenant and existence and nothing else, which is two
+ * defects in one loader:
+ *
+ *   - PW-X01: no visibility check, so a document the issuer cannot open
+ *     could be linked, and `permits.get` then handed its name to every
+ *     `permits.view` holder. Milder than its predecessors — the bytes
+ *     stay behind the documents module's own check, so this is a name
+ *     disclosure plus an integrity gap, not a content leak.
+ *   - PW-X02: no archived filter, so a WITHDRAWN method statement could
+ *     be cited as the safe system of work. That is the sharper edge:
+ *     withdrawal is how the library says "do not work to this".
+ */
+async function loadDocumentInTenant(
+  ctx: {
+    db: Database;
+    tenantId: string;
+    auth: { userId: string };
+    permissions: readonly string[];
+  },
+  id: string,
+) {
+  const rows = await ctx.db
+    .select({
+      id: documents.id,
+      name: documents.name,
+      folderId: documents.folderId,
+      visibleToGroupIds: documents.visibleToGroupIds,
+      visibleToSiteIds: documents.visibleToSiteIds,
+    })
     .from(documents)
-    .where(and(eq(documents.id, id), eq(documents.tenantId, tenantId)))
+    .where(
+      and(
+        eq(documents.id, id),
+        eq(documents.tenantId, ctx.tenantId),
+        // PW-X02.
+        isNull(documents.archivedAt),
+      ),
+    )
     .limit(1);
   const found = rows[0];
   if (found === undefined) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'unknown-document' });
   }
-  return found;
+  // PW-X01. A `documents.manage` holder sees the whole library anyway.
+  if (!ctx.permissions.includes('documents.manage')) {
+    const visible = await isDocumentVisibleToUser(ctx.db, ctx.tenantId, ctx.auth.userId, {
+      id: found.id,
+      folderId: found.folderId,
+      visibleToGroupIds: found.visibleToGroupIds,
+      visibleToSiteIds: found.visibleToSiteIds,
+    });
+    if (!visible) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'document-not-visible' });
+    }
+  }
+  return { id: found.id, name: found.name };
 }
 
 /**
@@ -598,17 +648,20 @@ async function loadTrainingShortfalls(
   const facts: TrainingGateFact[] = [];
   for (const person of people) {
     for (const requirement of requirements) {
-      const held = records.filter(
-        (r) =>
-          r.requirementId === requirement.id &&
-          (person.userId !== null
-            ? r.userId === person.userId
-            : r.userId === null && r.personName.toLowerCase() === person.name.toLowerCase()),
-      );
+      // PW-X03: only a linked account can be matched. The name compare
+      // that used to sit in the `else` branch here is what let an
+      // untrained namesake inherit somebody else's ticket; the gate now
+      // refuses unlinked people outright (see `trainingGateShortfalls`),
+      // so there is nothing left for a name match to decide.
+      const held =
+        person.userId === null
+          ? []
+          : records.filter((r) => r.requirementId === requirement.id && r.userId === person.userId);
       facts.push({
         personLabel: person.name === '' ? (person.userId ?? '') : person.name,
         requirementId: requirement.id,
         requirementName: requirement.name,
+        linked: person.userId !== null,
         status: statusAsOf({
           required: true,
           records: held.map((h) => ({ achievedAt: h.achievedAt, expiresAt: h.expiresAt })),
@@ -1054,6 +1107,22 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
               now,
             })
           : null;
+        // RA-X03: and the same for the risk-assessment gate. Discovering
+        // at the job that the cited assessment was never signed off is the
+        // worst possible moment to find out.
+        const riskAssessmentGate = type.requiresRiskAssessment
+          ? riskAssessmentGateError({
+              requiresRiskAssessment: true,
+              assessment:
+                permit.riskAssessmentId === null
+                  ? null
+                  : await loadRiskAssessmentInTenant(
+                      ctx.db,
+                      ctx.tenantId,
+                      permit.riskAssessmentId,
+                    ).catch(() => null),
+            })
+          : null;
         // Same idea for the competence gate (FreeHS B7): the issuer sees
         // exactly who is short of what on the permit page, rather than
         // discovering it when Issue fails at the job. Every shortfall is
@@ -1072,6 +1141,7 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           riskAssessment,
           methodStatement,
           ramsGate,
+          riskAssessmentGate,
           trainingShortfalls,
           insideCount: openEntryCount(permit.entryLog),
           /** The caller's own id — lets the UI show "accept" only to the named acceptor. */
@@ -1291,7 +1361,7 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           await loadRiskAssessmentInTenant(ctx.db, ctx.tenantId, input.riskAssessmentId);
         }
         if (input.methodStatementDocumentId !== undefined) {
-          await loadDocumentInTenant(ctx.db, ctx.tenantId, input.methodStatementDocumentId);
+          await loadDocumentInTenant(ctx, input.methodStatementDocumentId);
         }
         const id = newId();
         const n = await nextReferenceValue(ctx.db, ctx.tenantId, 'permit');
@@ -1356,7 +1426,7 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           input.methodStatementDocumentId !== undefined &&
           input.methodStatementDocumentId !== null
         ) {
-          await loadDocumentInTenant(ctx.db, ctx.tenantId, input.methodStatementDocumentId);
+          await loadDocumentInTenant(ctx, input.methodStatementDocumentId);
         }
         await ctx.db
           .update(permits)
@@ -1660,6 +1730,24 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
         } else {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'name-required' });
         }
+        // PW-S01: one body, one open row. `logEntry` appended
+        // unconditionally, and the failure runs both ways — log someone in
+        // twice and the board says two people are inside when one is, so a
+        // rescue crew is told to find two; exit one of those rows and the
+        // register still claims somebody is in the space, so closure is
+        // blocked by a count nobody can reconcile. `openEntryCount` is the
+        // number the standby person reads and the closure check enforces,
+        // and it has to be countable.
+        const alreadyInside = permit.entryLog.some(
+          (r) =>
+            r.exitedAt === null &&
+            (userId !== null && r.userId !== null
+              ? r.userId === userId
+              : r.name.trim().toLowerCase() === name.trim().toLowerCase()),
+        );
+        if (alreadyInside) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'already-inside' });
+        }
         const row: PermitEntryLogRow = {
           id: newId(),
           name,
@@ -1827,9 +1915,23 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'authorisation-required' });
         }
         // The safe system of work must be on the permit where the type
-        // demands it (PW-7).
-        if (type.requiresRiskAssessment && permit.riskAssessmentId === null) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'risk-assessment-required' });
+        // demands it (PW-7) — and RA-X03: it must actually be IN FORCE.
+        // This checked presence only, so a permit could be issued citing a
+        // draft or a withdrawn assessment while printing its reference as
+        // though it were signed off. `loadRiskAssessmentInTenant` has
+        // always fetched `status`; nobody read it.
+        if (type.requiresRiskAssessment) {
+          const cited =
+            permit.riskAssessmentId === null
+              ? null
+              : await loadRiskAssessmentInTenant(ctx.db, ctx.tenantId, permit.riskAssessmentId);
+          const raError = riskAssessmentGateError({
+            requiresRiskAssessment: true,
+            assessment: cited,
+          });
+          if (raError !== null) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: raError });
+          }
         }
         // RAMS spec §10.2 / RS-E14: where the type demands an accepted
         // safe system of work, the permit must carry EITHER an issued
@@ -1855,15 +1957,13 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           type.requiredTrainingIds,
           now,
         );
-        if (trainingShortfalls.length > 0) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            // The headline names the worse of the two reasons; the
-            // preview procedure carries the per-person detail.
-            message: trainingShortfalls.some((s) => s.reason === 'training-expired')
-              ? 'training-expired'
-              : 'training-missing',
-          });
+        const trainingHeadline = trainingGateHeadline(trainingShortfalls);
+        if (trainingHeadline !== null) {
+          // The headline comes from the shared helper, not a second copy of
+          // the precedence inlined here — that copy is what made the page
+          // preview "identity unverifiable" while issue threw
+          // "training-missing" for the same permit (PW-X03).
+          throw new TRPCError({ code: 'BAD_REQUEST', message: trainingHeadline });
         }
 
         const conflicts = await findConflicts(ctx.db, ctx.tenantId, {
