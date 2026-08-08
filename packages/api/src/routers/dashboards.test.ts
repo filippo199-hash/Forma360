@@ -23,6 +23,7 @@ import { PGlite } from '@electric-sql/pglite';
 import * as schema from '@forma360/db/schema';
 import { isPermissionKey } from '@forma360/permissions/catalogue';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
+import { DASHBOARDS_FREE_FOR_EVERYONE } from '@forma360/shared/entitlements';
 import { dashboardSpecSchema, DASHBOARD_SPEC_VERSION } from '@forma360/shared/dashboard-spec';
 import {
   DASHBOARD_SOURCES,
@@ -228,12 +229,19 @@ describe('dashboards router', () => {
 
   // ─── DH-E11 entitlement ───────────────────────────────────────────────
 
-  it('DH-E11: free plan is refused with PAYMENT_REQUIRED; paid plan passes', async () => {
+  it('DH-E11: the entitlement gate follows the launch flag; paid always passes', async () => {
     // Only this suite's tenant exists in the booted DB — update it to free.
     await db.update(schema.tenants).set({ settings: {} });
-    await expect(callerFor(adminId).dashboards.list()).rejects.toMatchObject({
-      code: 'PAYMENT_REQUIRED',
-    });
+    if (DASHBOARDS_FREE_FOR_EVERYONE) {
+      // LAUNCH MODE: dashboards are free for everyone — a free tenant passes.
+      await expect(callerFor(adminId).dashboards.list()).resolves.toEqual([]);
+    } else {
+      // Re-gated: a free tenant is refused with PAYMENT_REQUIRED.
+      await expect(callerFor(adminId).dashboards.list()).rejects.toMatchObject({
+        code: 'PAYMENT_REQUIRED',
+      });
+    }
+    // Paid always has access, regardless of the launch flag.
     await db.update(schema.tenants).set({ settings: { plan: 'paid' } });
     await expect(callerFor(adminId).dashboards.list()).resolves.toEqual([]);
   });

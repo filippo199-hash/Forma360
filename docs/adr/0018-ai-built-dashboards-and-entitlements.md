@@ -58,6 +58,20 @@ every metric × widget kind × allowed dimension through the executor
 against pglite — a catalogue entry with no implementation fails CI (the
 sandbox-seed lesson, applied to analytics).
 
+## Launch decision (2026-08-08): dashboards free for everyone
+
+At launch, AI dashboards are **available to every tenant regardless of
+plan** — the paid gate is built and dormant, not enforced. This is a
+single flag, `DASHBOARDS_FREE_FOR_EVERYONE` in
+`packages/shared/src/entitlements.ts`, which adds `customDashboards` to
+the free plan; because an absent `settings.plan` degrades to free, this
+opens the feature to all existing and new tenants at once. Everything
+else — `requireEntitlement`, `PAYMENT_REQUIRED`, the nav gate, the
+upgrade panel — stays wired and tested. Re-gating to paid-only when
+billing goes live is flipping that one flag to `false`; the two
+launch-mode tests (`entitlements.test.ts`, dashboards `DH-E11`) are
+written to flip with it.
+
 ## Decision 2 — the entitlement gate
 
 `packages/shared/src/entitlements.ts` is ADR 0010's fourth place

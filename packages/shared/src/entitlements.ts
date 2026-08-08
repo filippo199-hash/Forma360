@@ -45,8 +45,22 @@ export function isEntitlementKey(value: unknown): value is EntitlementKey {
   return typeof value === 'string' && (ENTITLEMENT_KEYS as readonly string[]).includes(value);
 }
 
+/**
+ * LAUNCH FLAG (ADR 0018): AI dashboards are free for EVERYONE until billing
+ * goes live — every tenant defaults to the free plan (absent `settings.plan`
+ * ⇒ free), so putting `customDashboards` in the free plan opens it to all
+ * existing and new tenants through the single entitlement lever, leaving the
+ * whole gate (`requireEntitlement`, nav gating, the upgrade panel) intact.
+ *
+ * To re-gate to paid-only later: flip this to `false`. That is the ONLY
+ * change needed — the dormant PAYMENT_REQUIRED path wakes back up, the nav
+ * entry disappears for free tenants, and the two launch-mode tests
+ * (entitlements.test.ts, dashboards DH-E11) flip with it.
+ */
+export const DASHBOARDS_FREE_FOR_EVERYONE = true;
+
 export const PLAN_ENTITLEMENTS: Record<PlanId, ReadonlyArray<EntitlementKey>> = {
-  free: [],
+  free: DASHBOARDS_FREE_FOR_EVERYONE ? ['customDashboards'] : [],
   paid: ['customDashboards'],
 };
 

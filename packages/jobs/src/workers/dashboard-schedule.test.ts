@@ -23,6 +23,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import * as schema from '@forma360/db/schema';
+import { DASHBOARDS_FREE_FOR_EVERYONE } from '@forma360/shared/entitlements';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
@@ -332,22 +333,31 @@ describe('dashboard schedule workers', () => {
     expect(await loadLastSentAt(scheduleId)).toBeNull();
   });
 
-  it('DH-J01c: a downgraded tenant neither enqueues (tick) nor sends', async () => {
+  it('DH-J01c: delivery follows the entitlement — the tick/send skip an unentitled tenant', async () => {
     const dashboardId = await seedDashboard();
     const scheduleId = await seedSchedule(dashboardId);
+    // A free-plan (settings {}) tenant. Under the launch flag free IS
+    // entitled, so this test flips with DASHBOARDS_FREE_FOR_EVERYONE — it
+    // proves the gate is dormant now and wakes back up when re-gated.
     await db.update(schema.tenants).set({ settings: {} }).where(eq(schema.tenants.id, tenantId));
 
-    // Tick: nothing due.
     const due = await collectDueDashboardSends(db as never, NOW);
-    expect(due).toHaveLength(0);
-
-    // Send (a job already in flight from before the downgrade): skips.
     const result = await runDashboardScheduleSend(sendDeps(), {
       scheduleId,
       occurrenceAt: '2026-08-08T07:00:00.000Z',
     });
-    expect(result).toEqual({ sent: 0, skipped: 'not-entitled' });
-    expect(await loadLastSentAt(scheduleId)).toBeNull();
+
+    if (DASHBOARDS_FREE_FOR_EVERYONE) {
+      // Launch mode: free is entitled → the schedule is due and delivers.
+      expect(due).toHaveLength(1);
+      expect(result).toEqual({ sent: 2 });
+      expect(await loadLastSentAt(scheduleId)).toEqual(new Date('2026-08-08T07:00:00.000Z'));
+    } else {
+      // Re-gated: an unentitled tenant enqueues nothing and the send skips.
+      expect(due).toHaveLength(0);
+      expect(result).toEqual({ sent: 0, skipped: 'not-entitled' });
+      expect(await loadLastSentAt(scheduleId)).toBeNull();
+    }
   });
 
   it('names the attachment from the title, with a safe fallback', () => {
