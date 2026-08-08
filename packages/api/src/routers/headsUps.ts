@@ -31,7 +31,9 @@ import {
 } from '@forma360/db/schema';
 import { user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
+import { loadHeadsUpLibraryDocuments } from '../heads-up-documents';
 import { publishHeadsUp } from '../heads-up-publish';
+import { makeDocumentVisibilityFilter } from './document-visibility';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, inArray, isNull } from 'drizzle-orm';
@@ -66,6 +68,36 @@ async function loadHeadsUpOrThrow(
   const row = rows[0];
   if (row === undefined) {
     throw new TRPCError({ code: 'NOT_FOUND', message: 'heads-up-not-found' });
+  }
+  return row;
+}
+
+/**
+ * Load a briefing that is open to engagement.
+ *
+ * HU-R05 / HU-R06: recipient rows survive archival and `loadHeadsUpOrThrow`
+ * performs no status check, so a briefing the author had withdrawn kept
+ * accruing views, acknowledgements and — worst — signatures, and the
+ * engagement figures kept moving after they believed they had stopped it.
+ * A signature is the evidence that somebody was told something before they
+ * were asked to do it; one collected against a withdrawn briefing is
+ * evidence of nothing.
+ *
+ * The check lives here rather than in `loadHeadsUpOrThrow` because the
+ * authoring side legitimately reads and writes archived rows — `get`
+ * renders them and `archive` is how they got that way.
+ */
+async function loadEngageableHeadsUpOrThrow(
+  db: Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'],
+  tenantId: string,
+  headsUpId: string,
+): Promise<HeadsUp> {
+  const row = await loadHeadsUpOrThrow(db, tenantId, headsUpId);
+  if (row.status !== 'published') {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: row.status === 'archived' ? 'heads-up-archived' : 'heads-up-not-published',
+    });
   }
   return row;
 }
@@ -307,16 +339,14 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             .select()
             .from(headsUpAttachments)
             .where(eq(headsUpAttachments.headsUpId, headsUp.id)),
-          ctx.db
-            .select({
-              documentId: headsUpDocuments.documentId,
-              documentVersion: headsUpDocuments.documentVersion,
-              name: documents.name,
-              mimeType: documents.mimeType,
-            })
-            .from(headsUpDocuments)
-            .innerJoin(documents, eq(headsUpDocuments.documentId, documents.id))
-            .where(eq(headsUpDocuments.headsUpId, headsUp.id)),
+          // HU-D02: `headsUp.view` is a key every employee holds, because
+          // everybody receives briefings. Reading the attachment list must
+          // not hand them the title of a document Documents would refuse
+          // them.
+          loadHeadsUpLibraryDocuments(ctx.db, ctx.tenantId, headsUp.id, {
+            userId: ctx.auth.userId,
+            seesEveryDocument: ctx.permissions.includes('documents.manage'),
+          }),
         ]);
 
         return {
@@ -452,16 +482,13 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             .select()
             .from(headsUpAttachments)
             .where(eq(headsUpAttachments.headsUpId, headsUp.id)),
-          ctx.db
-            .select({
-              documentId: headsUpDocuments.documentId,
-              documentVersion: headsUpDocuments.documentVersion,
-              name: documents.name,
-              mimeType: documents.mimeType,
-            })
-            .from(headsUpDocuments)
-            .innerJoin(documents, eq(headsUpDocuments.documentId, documents.id))
-            .where(eq(headsUpDocuments.headsUpId, headsUp.id)),
+          // HU-D01: being sent a briefing is not entitlement to every
+          // document hung off it. A recipient in no group must not learn
+          // the title of one restricted to the night shift.
+          loadHeadsUpLibraryDocuments(ctx.db, ctx.tenantId, headsUp.id, {
+            userId: ctx.auth.userId,
+            seesEveryDocument: ctx.permissions.includes('documents.manage'),
+          }),
         ]);
 
         return {
@@ -498,6 +525,52 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
         for (const a of input.attachments ?? []) {
           assertStorageKeyInTenant(ctx.tenantId, a.storageKey);
         }
+
+        // Resolve the library documents BEFORE anything is written. There is
+        // no transaction around this mutation, so a refusal after the insert
+        // would leave an orphaned draft behind every rejected attempt.
+        const docRows =
+          input.documentIds.length > 0
+            ? await ctx.db
+                .select({
+                  id: documents.id,
+                  currentVersion: documents.currentVersion,
+                  folderId: documents.folderId,
+                  visibleToGroupIds: documents.visibleToGroupIds,
+                  visibleToSiteIds: documents.visibleToSiteIds,
+                })
+                .from(documents)
+                .where(
+                  and(
+                    eq(documents.tenantId, ctx.tenantId),
+                    inArray(documents.id, input.documentIds),
+                    isNull(documents.archivedAt),
+                  ),
+                )
+            : [];
+
+        // HU-D03: an author must not attach a document they cannot open.
+        // Refusing here is cheaper and safer than filtering it back out of
+        // every read path — the disclosure is never created, so it cannot be
+        // missed by a reader that forgets to filter. Missing and archived ids
+        // stay a silent no-op as before; only a visibility breach is worth
+        // failing the whole call over.
+        if (docRows.length > 0 && !ctx.permissions.includes('documents.manage')) {
+          const passes = await makeDocumentVisibilityFilter(ctx.db, ctx.tenantId, ctx.auth.userId);
+          const hidden = docRows.some(
+            (d) =>
+              !passes({
+                id: d.id,
+                folderId: d.folderId,
+                visibleToGroupIds: d.visibleToGroupIds,
+                visibleToSiteIds: d.visibleToSiteIds,
+              }),
+          );
+          if (hidden) {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'document-not-visible' });
+          }
+        }
+
         const id = newId();
         const now = new Date();
         await ctx.db.insert(headsUps).values({
@@ -537,28 +610,16 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
         }
 
         // Attach library documents (#4), version-anchored at send time.
-        if (input.documentIds.length > 0) {
-          const docRows = await ctx.db
-            .select({ id: documents.id, currentVersion: documents.currentVersion })
-            .from(documents)
-            .where(
-              and(
-                eq(documents.tenantId, ctx.tenantId),
-                inArray(documents.id, input.documentIds),
-                isNull(documents.archivedAt),
-              ),
-            );
-          if (docRows.length > 0) {
-            await ctx.db.insert(headsUpDocuments).values(
-              docRows.map((d) => ({
-                tenantId: ctx.tenantId,
-                headsUpId: id,
-                documentId: d.id,
-                documentVersion: d.currentVersion,
-                createdAt: now,
-              })),
-            );
-          }
+        if (docRows.length > 0) {
+          await ctx.db.insert(headsUpDocuments).values(
+            docRows.map((d) => ({
+              tenantId: ctx.tenantId,
+              headsUpId: id,
+              documentId: d.id,
+              documentVersion: d.currentVersion,
+              createdAt: now,
+            })),
+          );
         }
 
         return { headsUpId: id };
@@ -875,18 +936,26 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
       .use(requirePermission('headsUp.view'))
       .input(markViewedInput)
       .mutation(async ({ ctx, input }) => {
+        await loadEngageableHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
         const recipientRows = await ctx.db
           .select()
           .from(headsUpRecipients)
           .where(
             and(
+              eq(headsUpRecipients.tenantId, ctx.tenantId),
               eq(headsUpRecipients.headsUpId, input.headsUpId),
               eq(headsUpRecipients.userId, ctx.auth.userId),
             ),
           )
           .limit(1);
         const recipient = recipientRows[0];
-        if (recipient === undefined) return { ok: true as const }; // not a recipient
+        // HU-R07: this used to answer `{ ok: true }` to a non-recipient while
+        // its sibling `markAcknowledged` threw FORBIDDEN for exactly the same
+        // case. A UI that trusts the result then shows "viewed" for somebody
+        // who was never sent the briefing.
+        if (recipient === undefined) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'not-a-recipient' });
+        }
         if (recipient.viewedAt !== null) return { ok: true as const }; // already viewed
 
         await ctx.db
@@ -901,11 +970,14 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
       .use(requirePermission('headsUp.view'))
       .input(markAcknowledgedInput)
       .mutation(async ({ ctx, input }) => {
+        // HU-R06: an archived briefing must not keep collecting acknowledgements.
+        await loadEngageableHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
         const recipientRows = await ctx.db
           .select()
           .from(headsUpRecipients)
           .where(
             and(
+              eq(headsUpRecipients.tenantId, ctx.tenantId),
               eq(headsUpRecipients.headsUpId, input.headsUpId),
               eq(headsUpRecipients.userId, ctx.auth.userId),
             ),
@@ -932,7 +1004,8 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
       .use(requirePermission('headsUp.view'))
       .input(signInput)
       .mutation(async ({ ctx, input }) => {
-        const headsUp = await loadHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
+        // HU-R05: a withdrawn briefing must not keep accruing signatures.
+        const headsUp = await loadEngageableHeadsUpOrThrow(ctx.db, ctx.tenantId, input.headsUpId);
         if (!headsUp.requireSignature) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'signature-not-required' });
         }
@@ -942,6 +1015,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
           .from(headsUpRecipients)
           .where(
             and(
+              eq(headsUpRecipients.tenantId, ctx.tenantId),
               eq(headsUpRecipients.headsUpId, input.headsUpId),
               eq(headsUpRecipients.userId, ctx.auth.userId),
             ),
