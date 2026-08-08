@@ -131,6 +131,10 @@ export interface TenantWorld {
   trainingRecords: Record<string, string>;
   /** A group and the role string used for role-scoped assignment. */
   training: { groupId: string; roleName: string; roleFieldId: string };
+  /** Document folders, by the name the suite refers to them by. */
+  folders: Record<string, string>;
+  /** Documents planted against the visibility rules, by name. */
+  documents: Record<string, string>;
 }
 
 export interface World {
@@ -205,7 +209,14 @@ async function seedTenant(
     'training.view',
     'training.record',
   ]);
-  const trainViewSetId = await customSet(db, tenantId, 'Training Viewer', ['training.view']);
+  // Also holds `documents.view`: this actor doubles as the documents
+  // suite's "in the restricted group" reader, and a role that can read the
+  // competence matrix but not the document library would be an odd shape
+  // for a real customer to build anyway.
+  const trainViewSetId = await customSet(db, tenantId, 'Training Viewer', [
+    'training.view',
+    'documents.view',
+  ]);
 
   const e = (local: string) => `${local}@${opts.slug}.test`;
   const actors: Actors = {
@@ -711,6 +722,145 @@ async function seedTenant(
   });
   await db.insert(schema.trainingRecords).values(recRows);
 
+  // ─── Documents ────────────────────────────────────────────────────────
+  //
+  // The module's own access layer is the interesting surface: a folder or
+  // document is visible when its OWN group/site visibility passes AND every
+  // ancestor folder's does, with an explicit ACL grant able to admit on top.
+  // That is four interacting rules, so the fixture plants one document for
+  // each of them and one for the cascade, which is the rule most likely to
+  // be forgotten by a read path that filters only on the document row.
+  //
+  // Memberships already seeded above do the work: `trainingViewer` is in the
+  // Night shift group, `manager` is a member of the primary site, and
+  // `standard` is in neither — so "restricted" and "not restricted" are
+  // answerable for a real person rather than an abstract predicate.
+  const folders: Record<string, string> = {};
+  const folderRows: Array<typeof schema.documentFolders.$inferInsert> = [];
+  const addFolder = (
+    key: string,
+    row: Omit<typeof schema.documentFolders.$inferInsert, 'id' | 'tenantId' | 'createdByUserId'>,
+  ): string => {
+    const id = newId();
+    folders[key] = id;
+    folderRows.push({ id, tenantId, createdByUserId: actors.admin, ...row });
+    return id;
+  };
+
+  const publicFolder = addFolder('publicFolder', { name: 'Company policies' });
+  // Restricted to the Night shift group.
+  const groupFolder = addFolder('groupFolder', {
+    name: 'Night shift only',
+    visibleToGroupIds: [trainingGroupId],
+  });
+  // Nested INSIDE the restricted folder with no restriction of its own. The
+  // cascade is what must hide it; a read path filtering on the document row
+  // alone would leak everything in here.
+  const nestedOpenFolder = addFolder('nestedOpenFolder', {
+    name: 'Night shift — handovers',
+    parentId: groupFolder,
+  });
+  addFolder('siteFolder', {
+    name: 'North Yard only',
+    visibleToSiteIds: [primary],
+  });
+
+  await db.insert(schema.documentFolders).values(folderRows);
+
+  const documentIds: Record<string, string> = {};
+  const docRows: Array<typeof schema.documents.$inferInsert> = [];
+  const addDoc = (
+    key: string,
+    row: Omit<
+      typeof schema.documents.$inferInsert,
+      'id' | 'tenantId' | 'storageKey' | 'filename' | 'mimeType' | 'uploadedByUserId'
+    >,
+  ): string => {
+    const id = newId();
+    documentIds[key] = id;
+    docRows.push({
+      id,
+      tenantId,
+      storageKey: `${tenantId}/documents/${id}/file.pdf`,
+      filename: 'file.pdf',
+      mimeType: 'application/pdf',
+      uploadedByUserId: actors.admin,
+      ...row,
+    });
+    return id;
+  };
+
+  // No restriction anywhere: everyone with `documents.view` sees it.
+  addDoc('publicDoc', { name: 'Health and safety policy', folderId: publicFolder });
+  // Restricted on the document itself.
+  addDoc('groupRestrictedDoc', {
+    name: 'Night shift rota',
+    folderId: publicFolder,
+    visibleToGroupIds: [trainingGroupId],
+  });
+  addDoc('siteRestrictedDoc', {
+    name: 'North Yard evacuation plan',
+    folderId: publicFolder,
+    visibleToSiteIds: [primary],
+  });
+  // Unrestricted document in a restricted folder — the cascade case.
+  addDoc('inheritsFolderRestriction', {
+    name: 'Night shift handover notes',
+    folderId: groupFolder,
+  });
+  // Unrestricted document two levels down from the restriction.
+  addDoc('inheritsGrandparentRestriction', {
+    name: 'Handover — week 32',
+    folderId: nestedOpenFolder,
+  });
+  // For the ACL-grant path: restricted by group, then granted to a named
+  // user who is NOT in that group.
+  const grantedDoc = addDoc('grantedToOutsider', {
+    name: 'Night shift incident summary',
+    folderId: publicFolder,
+    visibleToGroupIds: [trainingGroupId],
+  });
+  addDoc('archivedDoc', {
+    name: 'Superseded fire policy',
+    folderId: publicFolder,
+    archivedAt: new Date(opts.now.getTime() - DAY_MS),
+  });
+  // Expiry boundaries for the reminder worker.
+  addDoc('expiredYesterdayDoc', {
+    name: 'Lapsed insurance certificate',
+    folderId: publicFolder,
+    expiresAt: new Date(opts.now.getTime() - DAY_MS),
+  });
+  addDoc('expiringSoonDoc', {
+    name: 'Expiring calibration certificate',
+    folderId: publicFolder,
+    expiresAt: new Date(opts.now.getTime() + 5 * DAY_MS),
+    reminderDays: [30, 7],
+  });
+
+  if (opts.volume) {
+    for (let i = 1; i <= 80; i++) {
+      addDoc(`bulk${pad(i)}`, {
+        name: `Procedure ${pad(i)}`,
+        folderId: publicFolder,
+      });
+    }
+  }
+
+  await db.insert(schema.documents).values(docRows);
+
+  // The explicit grant that admits an outsider to a group-restricted doc.
+  await db.insert(schema.documentAccess).values({
+    id: newId(),
+    tenantId,
+    documentId: grantedDoc,
+    folderId: null,
+    subjectType: 'user',
+    subjectId: actors.standard,
+    permission: 'view',
+    grantedByUserId: actors.admin,
+  });
+
   return {
     tenantId,
     actors,
@@ -721,6 +871,8 @@ async function seedTenant(
     requirements,
     trainingRecords: trainingRecordIds,
     training: { groupId: trainingGroupId, roleName, roleFieldId },
+    folders,
+    documents: documentIds,
   };
 }
 
