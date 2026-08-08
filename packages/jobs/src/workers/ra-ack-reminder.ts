@@ -9,6 +9,7 @@
  */
 import type { Database } from '@forma360/db/client';
 import { riskAssessmentAcknowledgements, riskAssessments, user } from '@forma360/db/schema';
+import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, eq, isNull, lte, or, sql } from 'drizzle-orm';
@@ -111,7 +112,7 @@ export async function runRaAckReminders(deps: RaAckReminderDeps): Promise<number
   const due = await findDueAckReminders(deps.db, now);
   let sent = 0;
   for (const r of due) {
-    const viewUrl = `${deps.appUrl}/en/risk-assessments/${r.assessmentId}`;
+    const viewUrl = appLink(deps.appUrl, r.locale, `/risk-assessments/${r.assessmentId}`);
     try {
       await deps.notify(r, viewUrl);
       await deps.db

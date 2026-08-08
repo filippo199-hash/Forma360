@@ -14,6 +14,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { cn } from '../../../../src/lib/cn';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
+import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -50,6 +51,8 @@ export default function DocumentNewPage() {
   const t = useTranslations('documents.upload');
   const { label: placeLabel, noneLabel: placeNone } = usePlaceTerms();
   const tCommon = useTranslations('common');
+  // The visibility copy already exists on the detail page's Access tab.
+  const tDetail = useTranslations('documents.detail');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -72,6 +75,12 @@ export default function DocumentNewPage() {
   const [responsibleType, setResponsibleType] = useState<ResponsibleType>('none');
   const [responsibleUserId, setResponsibleUserId] = useState('');
   const [responsibleGroupId, setResponsibleGroupId] = useState('');
+  // DC-S05: the schema default is `[]` = visible to everyone, and this form
+  // had no visibility control at all — so a restricted contract was readable
+  // by the whole tenant, and returned by search and the Heads-Up picker, from
+  // the moment it was uploaded until someone remembered the Access tab.
+  const [visGroupIds, setVisGroupIds] = useState<string[]>([]);
+  const [visSiteIds, setVisSiteIds] = useState<string[]>([]);
   const [reminderDays, setReminderDays] = useState<number[]>([]);
   const [freshnessDays, setFreshnessDays] = useState('');
 
@@ -209,6 +218,8 @@ export default function DocumentNewPage() {
         responsibleType === 'group' && responsibleGroupId.length > 0 ? responsibleGroupId : null,
       reminderDays,
       freshnessDays: parsed !== undefined && !isNaN(parsed) ? parsed : undefined,
+      visibleToGroupIds: visGroupIds,
+      visibleToSiteIds: visSiteIds,
     });
   }
 
@@ -339,6 +350,28 @@ export default function DocumentNewPage() {
                 multiple={false}
                 placeholder={placeNone}
               />
+            </div>
+
+            {/* DC-S05: restrict it now, not after it has been readable by
+                everyone for however long it takes to remember. */}
+            <div className="space-y-3">
+              <div>
+                <Label>{tDetail('visibilityHeading')}</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {visGroupIds.length === 0 && visSiteIds.length === 0
+                    ? tDetail('visibleToEveryone')
+                    : tDetail('visibilityHelp')}
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <GroupUserSelector
+                  value={visGroupIds}
+                  onChange={setVisGroupIds}
+                  mode="groups"
+                  label={tDetail('visGroupsLabel')}
+                />
+                <SiteSelector value={visSiteIds} onChange={setVisSiteIds} label={placeLabel} />
+              </div>
             </div>
 
             {/* Labels */}

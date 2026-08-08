@@ -19,6 +19,7 @@
 import type { Database } from '@forma360/db/client';
 import { incidentEvents, incidents, user } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
+import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
 import { usersHoldingPermission, type PermissionHolder } from '@forma360/permissions/holders';
 import type { Job } from 'bullmq';
@@ -192,9 +193,9 @@ async function processBucket(
   let processed = 0;
   for (const incident of due) {
     const recipients = await resolveRiddorRecipients(deps.db, incident);
-    const viewUrl = `${deps.appUrl}/en/incidents/${incident.incidentId}`;
     let delivered = 0;
     for (const recipient of recipients) {
+      const viewUrl = appLink(deps.appUrl, recipient.locale, `/incidents/${incident.incidentId}`);
       try {
         await deps.notify(kind, incident, recipient, viewUrl);
         delivered += 1;

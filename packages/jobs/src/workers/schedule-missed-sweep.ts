@@ -21,6 +21,7 @@ import {
   user,
 } from '@forma360/db/schema';
 import { notifyInApp } from '@forma360/api/notify';
+import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, eq, inArray, lte } from 'drizzle-orm';
@@ -148,7 +149,7 @@ export async function runScheduleMissedSweep(
       await deps.notify(
         { email: recipient.email, name: recipient.name, locale: recipient.locale },
         rows,
-        `${deps.appUrl.replace(/\/+$/, '')}/en/schedules`,
+        appLink(deps.appUrl, recipient.locale, '/schedules'),
       );
       emails += 1;
     } catch (err) {

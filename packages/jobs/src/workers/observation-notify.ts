@@ -21,6 +21,7 @@ import {
   siteMembers,
   user as userTable,
 } from '@forma360/db/schema';
+import { appLink } from '@forma360/shared/app-link';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
@@ -46,17 +47,30 @@ type RecipientSpec = {
  * `broadcastToAll` is true, returns every active admin user's email for the
  * tenant. Otherwise fans out group/site/user ids.
  */
+interface NotifyRecipient {
+  email: string;
+  /** Preferred email language (PF-20); null = English. */
+  locale: string | null;
+}
+
 async function resolveRecipients(
   db: Database,
   tenantId: string,
   spec: RecipientSpec,
-): Promise<Set<string>> {
-  const emails = new Set<string>();
+): Promise<Map<string, NotifyRecipient>> {
+  // DOC-A01: this returned a bare Set<string> of addresses, so neither the
+  // email BODY nor the link could be in the reader's language — the one
+  // worker of the ten where the locale was not merely discarded but never
+  // loaded. Keyed by email so the dedupe the Set gave us still holds.
+  const emails = new Map<string, NotifyRecipient>();
+  const add = (row: { email: string; locale: string | null }): void => {
+    if (row.email.length > 0 && !emails.has(row.email)) emails.set(row.email, row);
+  };
 
   if (spec === null || spec.broadcastToAll) {
     // Broadcast: all active administrators (permission set contains org.settings).
     const adminRows = await db
-      .select({ email: userTable.email })
+      .select({ email: userTable.email, locale: userTable.locale })
       .from(userTable)
       .innerJoin(permissionSets, eq(userTable.permissionSetId, permissionSets.id))
       .where(
@@ -66,14 +80,14 @@ async function resolveRecipients(
           sql`${permissionSets.permissions} @> '["org.settings"]'::jsonb`,
         ),
       );
-    for (const row of adminRows) emails.add(row.email);
+    for (const row of adminRows) add(row);
     return emails;
   }
 
   // Named users.
   if (spec.userIds.length > 0) {
     const namedRows = await db
-      .select({ email: userTable.email })
+      .select({ email: userTable.email, locale: userTable.locale })
       .from(userTable)
       .where(
         and(
@@ -82,13 +96,13 @@ async function resolveRecipients(
           inArray(userTable.id, spec.userIds),
         ),
       );
-    for (const row of namedRows) emails.add(row.email);
+    for (const row of namedRows) add(row);
   }
 
   // Group members.
   if (spec.groupIds.length > 0) {
     const groupRows = await db
-      .select({ email: userTable.email })
+      .select({ email: userTable.email, locale: userTable.locale })
       .from(groupMembers)
       .innerJoin(userTable, eq(groupMembers.userId, userTable.id))
       .where(
@@ -98,13 +112,13 @@ async function resolveRecipients(
           inArray(groupMembers.groupId, spec.groupIds),
         ),
       );
-    for (const row of groupRows) emails.add(row.email);
+    for (const row of groupRows) add(row);
   }
 
   // Site members.
   if (spec.siteIds.length > 0) {
     const siteRows = await db
-      .select({ email: userTable.email })
+      .select({ email: userTable.email, locale: userTable.locale })
       .from(siteMembers)
       .innerJoin(userTable, eq(siteMembers.userId, userTable.id))
       .where(
@@ -114,7 +128,7 @@ async function resolveRecipients(
           inArray(siteMembers.siteId, spec.siteIds),
         ),
       );
-    for (const row of siteRows) emails.add(row.email);
+    for (const row of siteRows) add(row);
   }
 
   return emails;
@@ -184,24 +198,25 @@ export function createObservationNotifyHandler(deps: ObservationNotifyDeps) {
 
     // PF-12: the first path segment is the LOCALE, not the tenant id —
     // every notification email built here 404ed.
-    const viewUrl = `${deps.appUrl}/en/observations/${issueId}`;
     const templateKey = isCritical ? 'observation-critical-alert' : 'observation-notification';
 
     let sent = 0;
-    for (const email of emails) {
+    for (const recipient of emails.values()) {
       try {
         await deps.sendTemplatedEmail({
-          to: email,
+          to: recipient.email,
+          // DOC-A01: the body AND the link now follow the reader.
+          ...(recipient.locale !== null ? { locale: recipient.locale } : {}),
           templateKey,
           variables: {
             issueTitle: issue.title,
             referenceNumber: issue.referenceNumber,
-            viewUrl,
+            viewUrl: appLink(deps.appUrl, recipient.locale, `/observations/${issueId}`),
           },
         });
         sent++;
       } catch (err) {
-        log.error({ err, email }, '[observation-notify] failed to send email');
+        log.error({ err, email: recipient.email }, '[observation-notify] failed to send email');
       }
     }
 
