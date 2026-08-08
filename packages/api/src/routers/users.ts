@@ -34,6 +34,7 @@ import {
   userCustomFieldValues,
 } from '@forma360/db/schema';
 import { wouldDropBelowMinAdmins } from '@forma360/permissions/admins';
+import { appLink } from '@forma360/shared/app-link';
 import { parseCsv, toCsv } from '@forma360/shared/csv';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
@@ -422,7 +423,8 @@ export const usersRouter = router({
             .from(user)
             .where(eq(user.id, ctx.auth.userId))
             .limit(1);
-          const inviteUrl = `${usersDeps.appUrl.replace(/\/$/, '')}/en/invite/${token}`;
+          // DOC-A01: an invitee has no account yet and therefore no locale.
+          const inviteUrl = appLink(usersDeps.appUrl, null, `/invite/${token}`);
           await usersDeps.sendEmail({
             to: emailLower,
             templateKey: 'invite',

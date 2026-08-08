@@ -6,6 +6,7 @@
  * not passed. Advisory requirements don't affect the status.
  */
 import { randomBytes } from 'node:crypto';
+import { appLink } from '@forma360/shared/app-link';
 import { DEFAULT_BRAND_ID, getBrand } from '@forma360/shared/brand';
 import type { Database } from '@forma360/db/client';
 import {
@@ -2214,7 +2215,9 @@ export const contractorsRouter = router({
               .from(tenants)
               .where(eq(tenants.id, ctx.tenantId))
               .limit(1);
-            const inviteUrl = `${contractorsDeps.appUrl.replace(/\/$/, '')}/en/invite/${token}`;
+            // DOC-A01: an invitee has no account yet and therefore no locale —
+            // the app default is the only honest answer here.
+            const inviteUrl = appLink(contractorsDeps.appUrl, null, `/invite/${token}`);
             const ACTIVITY_WORDS: Record<string, string> = {
               inspections: 'conduct inspections',
               observations: 'raise observations',

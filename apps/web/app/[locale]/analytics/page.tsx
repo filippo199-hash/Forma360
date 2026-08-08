@@ -166,7 +166,7 @@ export default function AnalyticsPage() {
         fire.data.marshalGaps;
 
   return (
-    <div className="space-y-6 px-4 py-6">
+    <div className="min-h-screen w-full space-y-6 bg-[#e1edfb] px-4 py-6 dark:bg-slate-900/40">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">{t('subtitle')}</p>

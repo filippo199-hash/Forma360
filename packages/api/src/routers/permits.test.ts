@@ -1273,6 +1273,81 @@ describe('permits router', () => {
     await admin.permits.types.update({ typeId: simple, requiresRiskAssessment: false });
   });
 
+  it('RA-X03: a permit cannot be issued citing a draft or withdrawn assessment', async () => {
+    // The gate enforced `requiresRiskAssessment` as PRESENCE and never
+    // looked at status, so a permit to work — the document that says the
+    // work has been assessed and controlled — could be issued against an
+    // assessment that was never signed off, printing its reference beside
+    // the permit number as though it were in force. The status was already
+    // being SELECTed for a check nobody wrote, and the RAMS gate ten lines
+    // below has always done the full job.
+    const admin = callerFor(adminId);
+    const simple = await simpleTypeId();
+    await admin.permits.types.update({ typeId: simple, requiresRiskAssessment: true });
+
+    const draftRaId = newId();
+    await db.insert(schema.riskAssessments).values({
+      id: draftRaId,
+      tenantId,
+      referenceNumber: 'RA-0900',
+      title: 'Unsigned hot works RA',
+      status: 'draft',
+      currentVersion: 0,
+      createdBy: adminId,
+    });
+    const withdrawnRaId = newId();
+    await db.insert(schema.riskAssessments).values({
+      id: withdrawnRaId,
+      tenantId,
+      referenceNumber: 'RA-0901',
+      title: 'Withdrawn hot works RA',
+      status: 'archived',
+      currentVersion: 2,
+      createdBy: adminId,
+    });
+
+    const draftPermit = await admin.permits.create({
+      permitTypeId: simple,
+      title: 'Hot works against a draft',
+      acceptorUserId: standardId,
+      ...window(0, 4),
+    });
+    await checkAll(draftPermit.permitId);
+    await admin.permits.update({ permitId: draftPermit.permitId, riskAssessmentId: draftRaId });
+    await expect(admin.permits.issue({ permitId: draftPermit.permitId })).rejects.toMatchObject({
+      message: 'risk-assessment-not-signed-off',
+    });
+    // RS-A11 shape: the page previews the blocker rather than the issuer
+    // discovering it when Issue fails, standing at the job.
+    expect((await admin.permits.get({ permitId: draftPermit.permitId })).riskAssessmentGate).toBe(
+      'risk-assessment-not-signed-off',
+    );
+
+    const withdrawnPermit = await admin.permits.create({
+      permitTypeId: simple,
+      title: 'Hot works against a withdrawal',
+      acceptorUserId: standardId,
+      ...window(0, 4),
+    });
+    await checkAll(withdrawnPermit.permitId);
+    await admin.permits.update({
+      permitId: withdrawnPermit.permitId,
+      riskAssessmentId: withdrawnRaId,
+    });
+    await expect(admin.permits.issue({ permitId: withdrawnPermit.permitId })).rejects.toMatchObject(
+      { message: 'risk-assessment-withdrawn' },
+    );
+
+    // Signing the assessment off unblocks it — a gate, not a wall.
+    await db
+      .update(schema.riskAssessments)
+      .set({ status: 'active' })
+      .where(eq(schema.riskAssessments.id, draftRaId));
+    expect((await admin.permits.issue({ permitId: draftPermit.permitId })).status).toBe('issued');
+
+    await admin.permits.types.update({ typeId: simple, requiresRiskAssessment: false });
+  });
+
   it('PW-E33: workers + entry/exit log; closure refuses while anyone is inside', async () => {
     const admin = callerFor(adminId);
     const permitId = await activePermit();

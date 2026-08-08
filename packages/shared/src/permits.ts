@@ -341,6 +341,53 @@ export function ramsGateError(args: {
   return null;
 }
 
+// ─── Risk-assessment gate (RA-X03) ─────────────────────────────────────────
+
+export type RiskAssessmentGateError =
+  | 'risk-assessment-required'
+  | 'risk-assessment-not-signed-off'
+  | 'risk-assessment-withdrawn';
+
+/**
+ * Is the risk assessment cited on this permit actually in force?
+ *
+ * RA-X03: the permit gate enforced `requiresRiskAssessment` as PRESENCE —
+ * `riskAssessmentId === null` — and never looked at status, so a permit to
+ * work could be issued citing an assessment that was still a **draft**, or
+ * one that had been **withdrawn**. The permit prints the RA reference
+ * beside its own number as though it were in force.
+ *
+ * A permit to work is the document that says the work has been assessed
+ * and controlled; issued against an unsigned assessment, its central
+ * assertion is unverified. And the status was already in hand —
+ * `loadRiskAssessmentInTenant` in the permits router has always SELECTed
+ * `status`, for a check nobody wrote.
+ *
+ * Pure, and shaped exactly like {@link ramsGateError} (RS-A11) so the
+ * permit page can preview the blocker before the issuer presses Issue,
+ * standing at the job. That asymmetry — RAMS gated properly ten lines
+ * below, RA gated on a null — is what made this a gap rather than a
+ * policy.
+ *
+ * Returns null when the gate is satisfied.
+ */
+export function riskAssessmentGateError(args: {
+  requiresRiskAssessment: boolean;
+  /** Null when no assessment is cited at all. */
+  assessment: { status: 'draft' | 'active' | 'archived' } | null;
+}): RiskAssessmentGateError | null {
+  if (!args.requiresRiskAssessment) return null;
+  if (args.assessment === null) return 'risk-assessment-required';
+  switch (args.assessment.status) {
+    case 'active':
+      return null;
+    case 'draft':
+      return 'risk-assessment-not-signed-off';
+    case 'archived':
+      return 'risk-assessment-withdrawn';
+  }
+}
+
 // ─── Competence gate (FreeHS B7 — the training matrix hook) ─────────────────
 
 export type TrainingGateError = 'training-missing' | 'training-expired';

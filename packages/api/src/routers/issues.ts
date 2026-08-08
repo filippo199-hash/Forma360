@@ -50,6 +50,7 @@ import {
   type DependentResolverDeps,
 } from '@forma360/permissions/dependents';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
+import { appLink } from '@forma360/shared/app-link';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
 import {
@@ -649,7 +650,9 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         if (cat.publicShareToken !== null) {
           return {
             token: cat.publicShareToken,
-            url: `${appUrl}/en/report/${cat.publicShareToken}`,
+            // DOC-A01: a public QR/share link goes to whoever scans it — the app
+            // default is correct, and now says so.
+            url: appLink(appUrl, null, `/report/${cat.publicShareToken}`),
           };
         }
         const token = crypto.randomBytes(32).toString('hex');
@@ -657,7 +660,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           .update(issueCategories)
           .set({ publicShareToken: token, updatedAt: new Date() })
           .where(eq(issueCategories.id, cat.id));
-        return { token, url: `${appUrl}/en/report/${token}` };
+        return { token, url: appLink(appUrl, null, `/report/${token}`) };
       }),
 
     rotateShareToken: tenantProcedure
@@ -670,7 +673,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           .update(issueCategories)
           .set({ publicShareToken: token, updatedAt: new Date() })
           .where(eq(issueCategories.id, cat.id));
-        return { token, url: `${appUrl}/en/report/${token}` };
+        return { token, url: appLink(appUrl, null, `/report/${token}`) };
       }),
 
     revokeShareToken: tenantProcedure
@@ -758,6 +761,8 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         userId: user.id,
         name: user.name,
         email: user.email,
+        // DOC-A01: locale, so the observation link follows the reader.
+        locale: user.locale,
         permissions: permissionSets.permissions,
       })
       .from(user)
@@ -782,7 +787,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
             reportedAt,
             // PF-12: the route is /observations — /issues never existed
             // as a page, so every one of these emails 404ed.
-            viewUrl: `${appUrl}/en/observations/${args.issue.id}`,
+            viewUrl: appLink(appUrl, r.locale, `/observations/${args.issue.id}`),
           },
         });
       } catch (err) {

@@ -23,6 +23,7 @@ import {
   firePeeps,
   fireRiskAssessments,
 } from '@forma360/db/schema';
+import { resolveMarshalCompetence } from '@forma360/api/marshal-competence';
 import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
 import {
@@ -127,6 +128,8 @@ export async function collectFireDigests(db: Database, now: Date): Promise<FireD
     db
       .select({
         tenantId: fireMarshals.tenantId,
+        // FS-X01: needed to look the person up in the training matrix.
+        userId: fireMarshals.userId,
         trainedAt: fireMarshals.trainedAt,
         trainingExpiresAt: fireMarshals.trainingExpiresAt,
       })
@@ -196,10 +199,24 @@ export async function collectFireDigests(db: Database, now: Date): Promise<FireD
   for (const row of peepRows) {
     forTenant(row.tenantId).peepReviewsDue += 1;
   }
+  // FS-X01: the digest chased the wrong people — nagging about marshals who
+  // had renewed, and silent about marshals whose real ticket had expired
+  // but whose register row said otherwise. It now runs on the same
+  // reconciled verdict the register does, from the same module, so the two
+  // cannot drift apart again.
+  const byTenant = new Map<string, typeof marshalRows>();
   for (const row of marshalRows) {
-    const status = marshalTrainingStatus(row, now);
-    if (status === 'expiring_soon' || status === 'expired') {
-      forTenant(row.tenantId).marshalsExpiring += 1;
+    const arr = byTenant.get(row.tenantId) ?? [];
+    arr.push(row);
+    byTenant.set(row.tenantId, arr);
+  }
+  for (const [tid, rows] of byTenant) {
+    const competence = await resolveMarshalCompetence(db, tid, rows, now);
+    for (const row of rows) {
+      const status = competence.get(row.userId)?.status ?? marshalTrainingStatus(row, now);
+      if (status === 'expiring_soon' || status === 'expired') {
+        forTenant(tid).marshalsExpiring += 1;
+      }
     }
   }
 

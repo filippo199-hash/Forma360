@@ -54,6 +54,7 @@ import {
   user,
 } from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
+import { appLink } from '@forma360/shared/app-link';
 import { newId } from '@forma360/shared/id';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import {
@@ -434,7 +435,30 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
                 versionNumber: riskAssessmentAcknowledgements.versionNumber,
               })
               .from(riskAssessmentAcknowledgements)
-              .where(inArray(riskAssessmentAcknowledgements.assessmentId, ids))
+              /**
+               * RA-D05: a leaver was counted as outstanding forever.
+               *
+               * The reminder worker filters `isNull(user.deactivatedAt)`,
+               * so a deactivated user is never chased — while this count
+               * included them. The assessment read "1 of 2 acknowledged"
+               * permanently: nobody nudged, the number unable to reach
+               * 100%, and a compliance figure wrong in the direction that
+               * makes a manager look bad for something they cannot fix.
+               *
+               * Neither half was wrong alone; together they produced a
+               * state nobody chose. Training already made this call —
+               * leavers drop out of the matrix without taking the evidence
+               * with them. The acknowledgement ROWS are untouched, so the
+               * record of who was asked and who confirmed survives; they
+               * simply stop counting toward a total nobody can move.
+               */
+              .innerJoin(user, eq(user.id, riskAssessmentAcknowledgements.userId))
+              .where(
+                and(
+                  inArray(riskAssessmentAcknowledgements.assessmentId, ids),
+                  isNull(user.deactivatedAt),
+                ),
+              )
           : [];
 
         const siteNames = await siteNamesById(
@@ -536,6 +560,14 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
             dueAt: riskAssessmentAcknowledgements.dueAt,
             userName: user.name,
             userEmail: user.email,
+            /**
+             * RA-D05, the other half. The roll-call KEEPS the leaver —
+             * hiding the row would erase the evidence that they were
+             * distributed to, which is the thing the record exists for —
+             * but flags them, so a reader can see why that line will never
+             * turn green. The `list` count excludes them; this does not.
+             */
+            userDeactivatedAt: user.deactivatedAt,
           })
           .from(riskAssessmentAcknowledgements)
           .leftJoin(user, eq(user.id, riskAssessmentAcknowledgements.userId))
@@ -1449,7 +1481,8 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'not-active' });
         }
         const tenantUsers = await ctx.db
-          .select({ id: user.id, name: user.name, email: user.email })
+          // DOC-A01: locale, so the link follows the reader.
+          .select({ id: user.id, name: user.name, email: user.email, locale: user.locale })
           .from(user)
           .where(and(eq(user.tenantId, ctx.tenantId), inArray(user.id, input.userIds)));
         if (tenantUsers.length !== input.userIds.length) {
@@ -1495,14 +1528,23 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
             try {
               await deps.sendEmail({
                 to: u.email,
+                /**
+                 * RA-D04: this module's own reminder worker already passed
+                 * a locale; `distribute` passed none. So the chase-up mail
+                 * arrived in Polish and the ORIGINAL request — the one
+                 * asking somebody to read and acknowledge a legal document
+                 * — arrived in English and landed them on an English page.
+                 */
+                ...(u.locale !== null ? { locale: u.locale } : {}),
                 templateKey: 'risk-assessment-distributed',
                 variables: {
                   recipientName: u.name,
                   title: assessment.title,
                   referenceNumber: assessment.referenceNumber ?? '',
-                  dueDate:
-                    dueAt !== null ? dueAt.toISOString().slice(0, 10) : 'as soon as possible',
-                  viewUrl: `${appUrl}/en/risk-assessments/${assessment.id}`,
+                  // A bare value or the house placeholder — never an
+                  // English phrase interpolated into a translated body.
+                  dueDate: dueAt !== null ? dueAt.toISOString().slice(0, 10) : '—',
+                  viewUrl: appLink(appUrl, u.locale, `/risk-assessments/${assessment.id}`),
                 },
               });
             } catch (err) {
