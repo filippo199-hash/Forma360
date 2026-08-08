@@ -34,6 +34,7 @@ import {
   user,
   fireBuildings,
   fireFraReviews,
+  fireFraVersions,
   fireRiskAssessments,
   fireSignificantFindings,
   ramsBriefings,
@@ -53,7 +54,7 @@ import type {
 import type { RiskMatrixConfig } from '@forma360/shared/risk-matrix';
 import type { RamsPackVersionContent } from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 
 export interface InspectionRenderSnapshot {
@@ -680,13 +681,39 @@ export async function loadFraSnapshot(
       ),
     )
     .limit(1);
-  const fra = fraRows[0];
-  if (fra === undefined) return null;
+  const fraRow = fraRows[0];
+  if (fraRow === undefined) return null;
 
-  const [findingRows, reviewRows] = await Promise.all([
+  /**
+   * FS-G05: a signed FRA renders the SIGNED content, not the live row.
+   *
+   * The PDF is the artefact that leaves the building — filed with the
+   * managing agent, emailed to the enforcing authority. Rendering the
+   * mutable working row under the original `publishedAt` / `publishedBy`
+   * header is the same defect the version table exists to close, wearing a
+   * different hat: the reader sees today's text above yesterday's
+   * signature and has no way to tell.
+   *
+   * A draft renders live (there is nothing signed yet), and an FRA signed
+   * before versioning existed has no snapshot to fall back on — it renders
+   * live too, which is the honest best available.
+   */
+  const versionRows =
+    fraRow.currentVersion > 0
+      ? await db
+          .select({ content: fireFraVersions.content })
+          .from(fireFraVersions)
+          .where(and(eq(fireFraVersions.fraId, fraRow.id), isNull(fireFraVersions.supersededAt)))
+          .limit(1)
+      : [];
+  const signed = versionRows[0]?.content ?? null;
+  const fra = fraRow;
+
+  const [liveFindings, reviewRows] = await Promise.all([
     db.select().from(fireSignificantFindings).where(eq(fireSignificantFindings.fraId, fra.id)),
     db.select().from(fireFraReviews).where(eq(fireFraReviews.fraId, fra.id)),
   ]);
+  const findingRows = liveFindings;
   findingRows.sort((a, b) => a.sortOrder - b.sortOrder || (a.createdAt < b.createdAt ? -1 : 1));
   reviewRows.sort((a, b) => (a.reviewedAt < b.reviewedAt ? 1 : -1));
 
@@ -723,20 +750,29 @@ export async function loadFraSnapshot(
       id: fra.id,
       tenantId: fra.tenantId,
       referenceNumber: fra.referenceNumber,
-      title: fra.title,
+      title: signed?.title ?? fra.title,
       status: fra.status,
-      methodology: fra.methodology,
-      premisesDescription: fra.premisesDescription,
-      responsiblePersonName: fra.responsiblePersonName,
-      assessorName: fra.assessorName,
-      personsAtRisk: fra.personsAtRisk,
-      maxOccupancy: fra.maxOccupancy,
-      sleepingOccupants: fra.sleepingOccupants,
-      ignitionSources: fra.ignitionSources,
-      fuelSources: fra.fuelSources,
-      oxygenSources: fra.oxygenSources,
-      evaluationNotes: fra.evaluationNotes,
-      riskRating: fra.riskRating,
+      methodology: signed?.methodology ?? fra.methodology,
+      // FS-G05: every content field prefers the SIGNED copy. The PDF is
+      // the artefact that leaves the building — filed with the managing
+      // agent, emailed to the enforcing authority — so rendering the
+      // mutable working row under the original sign-off header would be
+      // the same defect the version table exists to close, wearing a
+      // different hat: today's text above yesterday's signature, with no
+      // way for the reader to tell. A draft has nothing signed yet, and an
+      // FRA signed before versioning existed has no snapshot, so both fall
+      // back to live — the honest best available.
+      premisesDescription: signed?.premisesDescription ?? fra.premisesDescription,
+      responsiblePersonName: signed?.responsiblePersonName ?? fra.responsiblePersonName,
+      assessorName: signed?.assessorName ?? fra.assessorName,
+      personsAtRisk: signed?.personsAtRisk ?? fra.personsAtRisk,
+      maxOccupancy: signed?.maxOccupancy ?? fra.maxOccupancy,
+      sleepingOccupants: signed?.sleepingOccupants ?? fra.sleepingOccupants,
+      ignitionSources: signed?.ignitionSources ?? fra.ignitionSources,
+      fuelSources: signed?.fuelSources ?? fra.fuelSources,
+      oxygenSources: signed?.oxygenSources ?? fra.oxygenSources,
+      evaluationNotes: signed?.evaluationNotes ?? fra.evaluationNotes,
+      riskRating: signed?.riskRating ?? fra.riskRating,
       publishedAt: fra.publishedAt?.toISOString() ?? null,
       publishedByName: fra.publishedBy !== null ? (names.get(fra.publishedBy) ?? null) : null,
       nextReviewAt: fra.nextReviewAt?.toISOString() ?? null,
@@ -749,14 +785,20 @@ export async function loadFraSnapshot(
         fra.contentUpdatedAt.getTime() > fra.publishedAt.getTime(),
     },
     building,
-    findings: findingRows.map((f) => ({
+    // Findings are content too — the schema comment names them alongside
+    // the narrative and the rating — so the signed copy wins for them as
+    // well. `hasAction` is deliberately read from the LIVE row: whether a
+    // finding produced an action is a fact about the world after
+    // sign-off, not part of what was signed.
+    findings: (signed?.findings ?? findingRows).map((f) => ({
       id: f.id,
       category: f.category,
       priority: f.priority,
       description: f.description,
       requiresAction: f.requiresAction,
-      resolvedAt: f.resolvedAt?.toISOString() ?? null,
-      hasAction: f.actionId !== null,
+      resolvedAt:
+        typeof f.resolvedAt === 'string' ? f.resolvedAt : (f.resolvedAt?.toISOString() ?? null),
+      hasAction: findingRows.find((l) => l.id === f.id)?.actionId != null,
     })),
     reviews: reviewRows.map((r) => ({
       trigger: r.trigger,

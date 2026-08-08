@@ -443,6 +443,214 @@ export function marshalTrainingStatus(
   return status === 'not_held' || status === 'not_required' ? 'not_trained' : status;
 }
 
+/**
+ * Where a marshal's competence verdict came from (FS-X01).
+ *
+ * - `training` — a designated training record governs it. The training
+ *   matrix is the register that holds certificates, verification status and
+ *   evidence keys; when it has an answer, it IS the answer.
+ * - `local` — the fire register's own hand-typed dates, with nothing behind
+ *   them. Legitimate on a deployment without the Training module; a
+ *   liability on one with it, which is why it is labelled rather than
+ *   silently trusted.
+ * - `none` — no designation configured, so the local dates are all there is
+ *   and no claim about backing is being made. The pre-FS-X01 world.
+ */
+export type MarshalCompetenceSource = 'training' | 'local' | 'none';
+
+export interface MarshalCompetence {
+  status: MarshalTrainingStatus;
+  source: MarshalCompetenceSource;
+  /**
+   * True when the fire register is asserting competence that the training
+   * matrix cannot corroborate — a date somebody typed with no record behind
+   * it, on a tenant that HAS designated what a marshal ticket is.
+   *
+   * This is the direction that matters most. A renewed certificate that
+   * leaves the register red is a false alarm and self-corrects the moment
+   * anyone looks. A typed date with nothing behind it is a false all-clear
+   * on a statutory duty, it satisfies the building's marshal target, it
+   * closes the coverage gap that exists to force the training, and nothing
+   * in the product will ever contradict it.
+   */
+  unbacked: boolean;
+  /** Set when the record and the local dates disagree, so the UI can say so. */
+  conflictsWithLocal: boolean;
+}
+
+/**
+ * Reconcile a marshal's competence against the training matrix (FS-X01).
+ *
+ * `fire_marshals` carried its own `trainedAt` / `trainingExpiresAt` and
+ * {@link marshalTrainingStatus} read only that row, so one fact had two
+ * registers and they disagreed in both directions. The vocabulary
+ * consume-back happened at TR-A13 — this is the data one.
+ *
+ * The governing record WINS OUTRIGHT; this is deliberately not "best of the
+ * two". If the record says expired and the hand-typed date says in-date,
+ * rendering green is precisely the bug.
+ *
+ * `governing` is the most recently achieved non-superseded record the
+ * marshal holds against ANY designated requirement (any-of: holding the
+ * higher ticket must not be voided by lacking the lower). Resolving it
+ * needs the database, so it is passed in — this stays pure and unit-tested.
+ */
+export function marshalCompetence(
+  marshal: { trainedAt: Date | null; trainingExpiresAt: Date | null },
+  governing: { achievedAt: Date; expiresAt: Date | null } | null,
+  now: Date,
+  /** False on a tenant that has not said which requirement is the ticket. */
+  designated: boolean,
+): MarshalCompetence {
+  const localStatus = marshalTrainingStatus(marshal, now);
+
+  if (!designated) {
+    return { status: localStatus, source: 'none', unbacked: false, conflictsWithLocal: false };
+  }
+
+  if (governing !== null) {
+    const status = marshalTrainingStatus(
+      { trainedAt: governing.achievedAt, trainingExpiresAt: governing.expiresAt },
+      now,
+    );
+    return {
+      status,
+      source: 'training',
+      unbacked: false,
+      conflictsWithLocal: marshal.trainedAt !== null && status !== localStatus,
+    };
+  }
+
+  // Designated, and the matrix has nothing. A typed date is now visibly an
+  // assertion rather than a fact.
+  return {
+    status: localStatus,
+    source: 'local',
+    unbacked: marshal.trainedAt !== null,
+    conflictsWithLocal: false,
+  };
+}
+
+// ─── The signed FRA snapshot (FS-G05) ───────────────────────────────────────
+
+/** One significant finding, as it read at sign-off. */
+export interface FraVersionFinding {
+  id: string;
+  category: FraFindingCategory;
+  priority: FraFindingPriority;
+  description: string;
+  requiresAction: boolean;
+  /** Null when the finding was still open at sign-off. */
+  resolvedAt: string | null;
+  sortOrder: number;
+}
+
+/**
+ * The whole assessment, frozen at the moment a Responsible Person attested
+ * it as "suitable and sufficient".
+ *
+ * Every field the FRA PDF and the FRA page render must be here, or a
+ * version cannot be read back without touching the working rows — which
+ * would defeat the point. RS-A6 is the precedent: a snapshot builder that
+ * omitted one field (`hazards`) shipped versions that could not be used,
+ * and the omission had to be tolerated forever with an optional property.
+ * So: one interface, one builder, one call site.
+ */
+export interface FraVersionContent {
+  title: string;
+  referenceNumber: string | null;
+  buildingId: string | null;
+  buildingName: string | null;
+  premisesDescription: string;
+  methodology: FraMethodology;
+  responsiblePersonName: string;
+  assessorUserId: string | null;
+  assessorName: string | null;
+  personsAtRisk: readonly string[];
+  maxOccupancy: number | null;
+  sleepingOccupants: boolean;
+  ignitionSources: string;
+  fuelSources: string;
+  oxygenSources: string;
+  evaluationNotes: string;
+  riskRating: FraRiskRating;
+  reviewFrequencyMonths: number | null;
+  nextReviewAt: string | null;
+  findings: readonly FraVersionFinding[];
+}
+
+/**
+ * Build the frozen content. The ONLY place a version's content is
+ * constructed — see the RS-A6 note on {@link FraVersionContent}.
+ *
+ * Dates are ISO strings rather than `Date`: this lands in jsonb, and a
+ * `Date` round-trips as a string anyway. Being explicit about it stops a
+ * reader from believing they have a `Date` on the way back out.
+ */
+export function buildFraVersionContent(args: {
+  fra: {
+    title: string;
+    referenceNumber: string | null;
+    buildingId: string | null;
+    premisesDescription: string;
+    methodology: FraMethodology;
+    responsiblePersonName: string;
+    assessorUserId: string | null;
+    assessorName: string | null;
+    personsAtRisk: readonly string[];
+    maxOccupancy: number | null;
+    sleepingOccupants: boolean;
+    ignitionSources: string;
+    fuelSources: string;
+    oxygenSources: string;
+    evaluationNotes: string;
+    riskRating: FraRiskRating;
+    reviewFrequencyMonths: number | null;
+  };
+  buildingName: string | null;
+  nextReviewAt: Date | null;
+  findings: ReadonlyArray<{
+    id: string;
+    category: FraFindingCategory;
+    priority: FraFindingPriority;
+    description: string;
+    requiresAction: boolean;
+    resolvedAt: Date | null;
+    sortOrder: number;
+  }>;
+}): FraVersionContent {
+  return {
+    title: args.fra.title,
+    referenceNumber: args.fra.referenceNumber,
+    buildingId: args.fra.buildingId,
+    buildingName: args.buildingName,
+    premisesDescription: args.fra.premisesDescription,
+    methodology: args.fra.methodology,
+    responsiblePersonName: args.fra.responsiblePersonName,
+    assessorUserId: args.fra.assessorUserId,
+    assessorName: args.fra.assessorName,
+    personsAtRisk: [...args.fra.personsAtRisk],
+    maxOccupancy: args.fra.maxOccupancy,
+    sleepingOccupants: args.fra.sleepingOccupants,
+    ignitionSources: args.fra.ignitionSources,
+    fuelSources: args.fra.fuelSources,
+    oxygenSources: args.fra.oxygenSources,
+    evaluationNotes: args.fra.evaluationNotes,
+    riskRating: args.fra.riskRating,
+    reviewFrequencyMonths: args.fra.reviewFrequencyMonths,
+    nextReviewAt: args.nextReviewAt?.toISOString() ?? null,
+    findings: args.findings.map((f) => ({
+      id: f.id,
+      category: f.category,
+      priority: f.priority,
+      description: f.description,
+      requiresAction: f.requiresAction,
+      resolvedAt: f.resolvedAt?.toISOString() ?? null,
+      sortOrder: f.sortOrder,
+    })),
+  };
+}
+
 // ─── Building information documents ─────────────────────────────────────────
 
 export const BUILDING_DOCUMENT_KINDS = [

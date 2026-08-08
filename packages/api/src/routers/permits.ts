@@ -80,6 +80,7 @@ import {
   PERMIT_WORKER_ROLES,
   permitIsOverdue,
   ramsGateError,
+  riskAssessmentGateError,
   trainingGateShortfalls,
   type TrainingGateFact,
   type TrainingGateShortfall,
@@ -1054,6 +1055,22 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
               now,
             })
           : null;
+        // RA-X03: and the same for the risk-assessment gate. Discovering
+        // at the job that the cited assessment was never signed off is the
+        // worst possible moment to find out.
+        const riskAssessmentGate = type.requiresRiskAssessment
+          ? riskAssessmentGateError({
+              requiresRiskAssessment: true,
+              assessment:
+                permit.riskAssessmentId === null
+                  ? null
+                  : await loadRiskAssessmentInTenant(
+                      ctx.db,
+                      ctx.tenantId,
+                      permit.riskAssessmentId,
+                    ).catch(() => null),
+            })
+          : null;
         // Same idea for the competence gate (FreeHS B7): the issuer sees
         // exactly who is short of what on the permit page, rather than
         // discovering it when Issue fails at the job. Every shortfall is
@@ -1072,6 +1089,7 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           riskAssessment,
           methodStatement,
           ramsGate,
+          riskAssessmentGate,
           trainingShortfalls,
           insideCount: openEntryCount(permit.entryLog),
           /** The caller's own id — lets the UI show "accept" only to the named acceptor. */
@@ -1827,9 +1845,23 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'authorisation-required' });
         }
         // The safe system of work must be on the permit where the type
-        // demands it (PW-7).
-        if (type.requiresRiskAssessment && permit.riskAssessmentId === null) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'risk-assessment-required' });
+        // demands it (PW-7) — and RA-X03: it must actually be IN FORCE.
+        // This checked presence only, so a permit could be issued citing a
+        // draft or a withdrawn assessment while printing its reference as
+        // though it were signed off. `loadRiskAssessmentInTenant` has
+        // always fetched `status`; nobody read it.
+        if (type.requiresRiskAssessment) {
+          const cited =
+            permit.riskAssessmentId === null
+              ? null
+              : await loadRiskAssessmentInTenant(ctx.db, ctx.tenantId, permit.riskAssessmentId);
+          const raError = riskAssessmentGateError({
+            requiresRiskAssessment: true,
+            assessment: cited,
+          });
+          if (raError !== null) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: raError });
+          }
         }
         // RAMS spec §10.2 / RS-E14: where the type demands an accepted
         // safe system of work, the permit must carry EITHER an issued

@@ -222,6 +222,16 @@ export interface AuthStubMail {
   to: string;
   templateKey: string;
   variables: Record<string, string>;
+  /**
+   * RA-D04's test bug, fixed at the source: this mailbox recorded no
+   * locale, so an assertion like `localeOnEmail: null` was reading a
+   * property the stub never captured. It would have reported "no locale"
+   * whatever the router did — a test that agreed with the auditor for the
+   * wrong reason, and could never have gone green once the defect was
+   * fixed. A false red wastes an hour; a false green closes a question
+   * that was never asked.
+   */
+  locale: string | undefined;
 }
 export const __authStubMailbox: AuthStubMail[] = [];
 
@@ -235,6 +245,7 @@ export const stubAuthDeps: AuthRouterDeps = {
       to: mail.to,
       templateKey: mail.templateKey,
       variables: mail.variables,
+      locale: mail.locale,
     });
     return { delivery: 'console' };
   },
@@ -253,6 +264,7 @@ export const stubInspectionsDeps: InspectionsRouterDeps = {
       to: mail.to,
       templateKey: mail.templateKey,
       variables: mail.variables,
+      locale: mail.locale,
     });
     return { delivery: 'console' };
   },
@@ -271,6 +283,7 @@ export const stubIssuesDeps: IssuesRouterDeps = {
       to: mail.to,
       templateKey: mail.templateKey,
       variables: mail.variables,
+      locale: mail.locale,
     });
     return { delivery: 'console' };
   },
@@ -291,6 +304,7 @@ export const stubHeadsUpsDeps: HeadsUpsRouterDeps = {
       to: mail.to,
       templateKey: mail.templateKey,
       variables: mail.variables,
+      locale: mail.locale,
     });
     return { delivery: 'console' };
   },
@@ -307,6 +321,7 @@ export const stubRiskAssessmentsDeps: RiskAssessmentsRouterDeps = {
       to: mail.to,
       templateKey: mail.templateKey,
       variables: mail.variables,
+      locale: mail.locale,
     });
     return { delivery: 'console' };
   },

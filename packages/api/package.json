@@ -28,6 +28,10 @@
       "types": "./src/notify.ts",
       "default": "./src/notify.ts"
     },
+    "./marshal-competence": {
+      "types": "./src/marshal-competence.ts",
+      "default": "./src/marshal-competence.ts"
+    },
     "./heads-up-publish": {
       "types": "./src/heads-up-publish.ts",
       "default": "./src/heads-up-publish.ts"
