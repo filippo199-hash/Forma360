@@ -13,9 +13,10 @@ import { verifyRenderToken, loadInspectionSnapshot } from '@forma360/render';
 import { inspections } from '@forma360/db/schema';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
-import { PrintLayout } from '../../../../src/components/print-layout';
+import { PrintLayout, type PrintTenantBranding } from '../../../../src/components/print-layout';
 import { env } from '../../../../src/server/env';
 import { db } from '../../../../src/server/db';
+import { loadTenantBrandingById } from '../../../../src/server/load-branding';
 import { fetchLogoUrl } from '../../../../src/server/storage';
 
 interface Props {
@@ -65,6 +66,18 @@ export default async function RenderInspectionPage({ params, searchParams }: Pro
   )?.settings?.branding?.logoStorageKey;
   const logoUrl = await fetchLogoUrl(brandingKey);
 
+  // ADR 0018: tenant branding backs up the template's own (per-field).
+  const tenant = await loadTenantBrandingById(row.tenantId);
+  const tenantBranding: PrintTenantBranding = {
+    logoUrl: tenant.logoUrl,
+    ...(tenant.branding?.primaryColor !== undefined
+      ? { primaryColor: tenant.branding.primaryColor }
+      : {}),
+    ...(tenant.branding?.accentColor !== undefined
+      ? { accentColor: tenant.branding.accentColor }
+      : {}),
+  };
+
   // Pre-resolve signed URLs for instruction image attachments (the headless
   // browser has no session, so it can't hit the /api/files proxy). Only
   // instructions that show in the report, and only images, need a URL.
@@ -95,5 +108,12 @@ export default async function RenderInspectionPage({ params, searchParams }: Pro
     }
   }
 
-  return <PrintLayout snapshot={snapshot} logoUrl={logoUrl} mediaUrls={mediaUrls} />;
+  return (
+    <PrintLayout
+      snapshot={snapshot}
+      logoUrl={logoUrl}
+      mediaUrls={mediaUrls}
+      tenantBranding={tenantBranding}
+    />
+  );
 }

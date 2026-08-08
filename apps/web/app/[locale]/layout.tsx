@@ -18,6 +18,8 @@ import { SandboxBanner } from '../../src/components/sandbox/sandbox-banner';
 import { loadSandboxState } from '../../src/server/load-sandbox-state';
 import { SiteSidebar } from '../../src/components/site-sidebar';
 import { PermissionsProvider } from '../../src/lib/permissions-context';
+import { buildTenantThemeCss } from '../../src/lib/tenant-theme';
+import { loadTenantBranding } from '../../src/server/load-branding';
 import { loadCurrentUserPermissions } from '../../src/server/load-permissions';
 import { activeBrand } from '../../src/lib/brand';
 import { isPathAllowedForExternal, loadContractorUser } from '../../src/server/contractor-portal';
@@ -110,6 +112,11 @@ export default async function LocaleLayout({
   const showSidebar = isSignedIn && !isHomePage && !isExternal;
   const displayName = session?.user.name ?? '';
 
+  // ADR 0018: per-tenant theming. Resolved server-side; an empty CSS
+  // string (no palette / unusable palette) leaves the default theme.
+  const tenantBranding = isSignedIn ? await loadTenantBranding() : null;
+  const tenantThemeCss = buildTenantThemeCss(tenantBranding?.branding ?? null);
+
   return (
     <html
       lang={locale}
@@ -117,6 +124,12 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} ${hanken.variable}`}
     >
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+        {/* Inline + unlayered, so it beats the @layer theme defaults and the
+         * .dark block for both colour schemes. Values are hex-round-tripped
+         * by buildTenantThemeCss — no user input reaches this string raw. */}
+        {tenantThemeCss !== '' ? (
+          <style id="tenant-theme" dangerouslySetInnerHTML={{ __html: tenantThemeCss }} />
+        ) : null}
         <NextIntlClientProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <TRPCProvider>
@@ -136,7 +149,7 @@ export default async function LocaleLayout({
                     permissions={(await loadCurrentUserPermissions()).permissions}
                   >
                     <div className="flex min-h-screen">
-                      <SiteSidebar locale={locale} />
+                      <SiteSidebar locale={locale} logoUrl={tenantBranding?.logoUrl ?? null} />
                       <div className="flex min-w-0 flex-1 flex-col">
                         <SiteHeader showBrand={false} />
                         {/* ADR 0017: the save prompt, resolved server-side
