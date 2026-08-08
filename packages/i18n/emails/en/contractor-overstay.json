@@ -1,8 +1,8 @@
 {
-  "subject": "Still on site: {who} ({contractorName})",
+  "subject": "Still on site: {contractorName}",
   "preheader": "{contractorName} has been on site for over 24 hours.",
   "greeting": "Heads up,",
-  "body": "{who} from {contractorName} checked in on {checkedInAt} and still hasn't checked out — that's more than 24 hours. Visit: {title}{siteLine}. Please confirm they're still on site or check them out.",
+  "body": "A contractor visit has been open for more than 24 hours with no check-out.\n\nContractor: {contractorName}\nVisitor: {who}\nVisit: {title}\nSite: {siteName}\nChecked in: {checkedInAt}\n\nPlease confirm they're still on site or check them out.",
   "cta": "Open the on-site board",
   "footer": "You're receiving this because you scheduled this visit or you manage the gate."
 }

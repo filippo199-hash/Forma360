@@ -15,7 +15,7 @@
  * Brand-gated (ADR 0010) with `{ enabled }` like every other B-module.
  */
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Database } from '@forma360/db/client';
 import {
@@ -43,7 +43,17 @@ import {
   type TrainingStatus,
 } from '@forma360/shared/training';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { assertGroupsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
 import { router } from '../trpc';
+
+/**
+ * TR-V02: an unfiltered matrix serialises every person × requirement cell.
+ * The module is specified for 800 × 30 = 24,000 cells, which is unusable as a
+ * grid and expensive to build. Above this ceiling the caller must narrow by
+ * site or requirement — either filter bounds the grid. Both filters together
+ * would be even smaller; only the no-filter case is refused.
+ */
+const MATRIX_UNFILTERED_CELL_LIMIT = 5000;
 
 export interface TrainingRouterDeps {
   /** ADR 0010 brand gate. Omitting the router's deps disables the module. */
@@ -201,22 +211,39 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
     // Role comes from the tenant's own job-title vocabulary (a custom user
     // field), not from a permission set. Missing field = no role, which
     // simply means role-scoped assignments never match — not an error.
+    // TR-C07: a tenant can have more than one field matching the heuristic
+    // (e.g. a decoy "Roles and responsibilities" beside the real "Job
+    // title"). Collecting every match and writing all their values into one
+    // map last-wins is nondeterministic — whichever row the database returned
+    // last silently won, which could strip an operator of a statutory
+    // requirement and only make the gap list shorter. Choose exactly ONE
+    // field, deterministically: lowest display order, then oldest, then id.
     const roleByUser = new Map<string, string>();
     const roleFields = await db
-      .select({ id: customUserFields.id, name: customUserFields.name })
+      .select({
+        id: customUserFields.id,
+        name: customUserFields.name,
+        order: customUserFields.order,
+        createdAt: customUserFields.createdAt,
+      })
       .from(customUserFields)
       .where(eq(customUserFields.tenantId, tenantId));
-    const roleFieldIds = roleFields
+    const roleField = roleFields
       .filter((f) => /role|job title|position/i.test(f.name))
-      .map((f) => f.id);
-    if (roleFieldIds.length > 0) {
+      .sort(
+        (a, b) =>
+          a.order - b.order ||
+          a.createdAt.getTime() - b.createdAt.getTime() ||
+          a.id.localeCompare(b.id),
+      )[0];
+    if (roleField !== undefined) {
       const values = await db
         .select({ userId: userCustomFieldValues.userId, value: userCustomFieldValues.value })
         .from(userCustomFieldValues)
         .where(
           and(
             eq(userCustomFieldValues.tenantId, tenantId),
-            inArray(userCustomFieldValues.fieldId, roleFieldIds),
+            eq(userCustomFieldValues.fieldId, roleField.id),
           ),
         );
       for (const v of values) {
@@ -466,6 +493,20 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
         if (target === null) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'assignment-target-required' });
         }
+        // TR-T05: ground rule 4 — the scope target is a client-supplied FK
+        // and must belong to this tenant. A foreign-tenant id used to insert
+        // cleanly and then match nobody (resolveMatrix builds membership from
+        // THIS tenant's rows), a rule that looks set and silently does
+        // nothing — the exact failure the target-required check above guards
+        // against. The FK cascades, so the other tenant could also delete the
+        // rule. `role` is free text, not an FK, so it needs no check.
+        if (input.scope === 'group') {
+          await assertGroupsInTenant(ctx.db, ctx.tenantId, [input.groupId]);
+        } else if (input.scope === 'site') {
+          await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
+        } else if (input.scope === 'person') {
+          await assertUsersInTenant(ctx.db, ctx.tenantId, [input.userId]);
+        }
         const id = newId();
         await ctx.db.insert(trainingRequirementAssignments).values({
           id,
@@ -562,24 +603,37 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
               ? null
               : parseDay(input.expiresAt);
         const id = newId();
-        await ctx.db.insert(trainingRecords).values({
-          id,
-          tenantId: ctx.tenantId,
-          requirementId: input.requirementId,
-          userId: input.userId,
-          personName: input.personName,
-          personCategory: input.personCategory,
-          contractorId: input.contractorId,
-          achievedAt,
-          expiresAt,
-          awardingBody: input.awardingBody,
-          certificateNumber: input.certificateNumber,
-          evidenceKey: input.evidenceKey,
-          evidenceFilename: input.evidenceFilename,
-          source: input.source,
-          notes: input.notes,
-          recordedByUserId: ctx.auth.userId,
-        });
+        // TR-I06: the natural-key unique index (migration 0076) also guards
+        // manual entry — a person cannot hold two *active* records for the
+        // same requirement achieved on the same day (a renewal carries a
+        // later date; a correction supersedes first). Surface the collision
+        // as a clean BAD_REQUEST rather than letting the raw constraint
+        // bubble up as an INTERNAL_SERVER_ERROR.
+        const inserted = await ctx.db
+          .insert(trainingRecords)
+          .values({
+            id,
+            tenantId: ctx.tenantId,
+            requirementId: input.requirementId,
+            userId: input.userId,
+            personName: input.personName,
+            personCategory: input.personCategory,
+            contractorId: input.contractorId,
+            achievedAt,
+            expiresAt,
+            awardingBody: input.awardingBody,
+            certificateNumber: input.certificateNumber,
+            evidenceKey: input.evidenceKey,
+            evidenceFilename: input.evidenceFilename,
+            source: input.source,
+            notes: input.notes,
+            recordedByUserId: ctx.auth.userId,
+          })
+          .onConflictDoNothing()
+          .returning({ id: trainingRecords.id });
+        if (inserted[0] === undefined) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'duplicate-record' });
+        }
         return { id, expiresAt };
       }),
 
@@ -799,6 +853,43 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
       )
       .query(async ({ ctx, input }) => {
         assertEnabled();
+        // TR-V02: an unfiltered grid serialises every person × requirement
+        // cell. Refuse above the ceiling and ask for a site or requirement
+        // filter — either bounds the grid (a site narrows the people, a
+        // requirement narrows to one column). The estimate is a cheap
+        // upper-bound count, run only when no filter is present.
+        if (input?.siteId === undefined && input?.requirementId === undefined) {
+          const [users, reqs, nameOnly] = await Promise.all([
+            ctx.db
+              .select({ n: count() })
+              .from(user)
+              .where(and(eq(user.tenantId, ctx.tenantId), isNull(user.deactivatedAt))),
+            ctx.db
+              .select({ n: count() })
+              .from(trainingRequirements)
+              .where(
+                and(
+                  eq(trainingRequirements.tenantId, ctx.tenantId),
+                  isNull(trainingRequirements.archivedAt),
+                ),
+              ),
+            ctx.db
+              .select({ n: sql<number>`count(distinct lower(${trainingRecords.personName}))` })
+              .from(trainingRecords)
+              .where(
+                and(
+                  eq(trainingRecords.tenantId, ctx.tenantId),
+                  isNull(trainingRecords.userId),
+                  isNull(trainingRecords.supersededAt),
+                ),
+              ),
+          ]);
+          const population = Number(users[0]?.n ?? 0) + Number(nameOnly[0]?.n ?? 0);
+          const requirementCount = Number(reqs[0]?.n ?? 0);
+          if (population * requirementCount > MATRIX_UNFILTERED_CELL_LIMIT) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'matrix-too-large' });
+          }
+        }
         const asOf = input?.asOf !== undefined ? parseDay(input.asOf) : now();
         const { people, cells } = await resolveMatrix(ctx.db, ctx.tenantId, {
           asOf,
@@ -1084,12 +1175,24 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
             seen.add(key);
             return true;
           });
-          skippedDuplicates = values.length - fresh.length;
+          // TR-I06: the in-memory `seen` set catches re-runs and within-file
+          // dupes, but it is advisory — two imports running at once both read
+          // an empty set and both insert. The partial unique index on the
+          // natural key (migration 0076) is the real guard; onConflictDoNothing
+          // turns a racing insert into a skip rather than a crash, and
+          // RETURNING counts what actually landed so the report stays honest.
+          let insertedCount = 0;
           if (!input.dryRun && fresh.length > 0) {
-            await ctx.db.insert(trainingRecords).values(fresh);
+            const inserted = await ctx.db
+              .insert(trainingRecords)
+              .values(fresh)
+              .onConflictDoNothing()
+              .returning({ id: trainingRecords.id });
+            insertedCount = inserted.length;
           }
+          skippedDuplicates = values.length - (input.dryRun ? fresh.length : insertedCount);
           return {
-            imported: input.dryRun ? 0 : fresh.length,
+            imported: input.dryRun ? 0 : insertedCount,
             wouldImport: fresh.length,
             failed: errors.length,
             errors,

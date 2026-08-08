@@ -35,9 +35,28 @@ import {
 } from '@forma360/permissions/contractor-activities';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { aliasedTable, and, asc, between, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { wouldDropBelowMinAdmins } from '@forma360/permissions/admins';
+import {
+  complianceBarsEntry,
+  complianceOverridable,
+  effectiveComplianceStatus,
+  firstMissingGateField,
+  isCalendarDate,
+  todayIso,
+  validateDocumentPeriod,
+  visitTransitionError,
+  type ComplianceOverride,
+  type DerivedComplianceStatus,
+  type EffectiveComplianceStatus,
+} from '@forma360/shared/contractors';
+import { aliasedTable, and, asc, between, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
+import {
+  publicProcedure,
+  requireAnyPermission,
+  requirePermission,
+  tenantProcedure,
+} from '../procedures';
 import { assertSitesInTenant, assertStorageKeyInTenant } from '../tenant-guards';
 import { OPEN_PERMIT_STATUSES } from '@forma360/shared/permits';
 import { router } from '../trpc';
@@ -48,7 +67,24 @@ const dateStr = z
   .nullable()
   .optional();
 
-type ComplianceStatus = 'compliant' | 'non_compliant' | 'no_requirements';
+/**
+ * CT-O03: the primary contact's email language. Two-letter codes only —
+ * the same shape `users.setLocale` accepts and the only shape the email
+ * template loader looks up. Null (the default) means English.
+ */
+const contactLocale = z
+  .string()
+  .regex(/^[a-z]{2}$/)
+  .nullable()
+  .optional();
+
+/**
+ * CT-G08: this used to be the DERIVED type only, and the override — which
+ * can be `'suspended'` — was cast into it. The cast made the missing case
+ * invisible to the compiler, which is how `=== 'non_compliant'` passed
+ * review while suspended contractors walked through the gate.
+ */
+type ComplianceStatus = DerivedComplianceStatus;
 
 interface ReqRow {
   id: string;
@@ -57,6 +93,8 @@ interface ReqRow {
 interface DocRow {
   requirementId: string;
   status: string;
+  /** CT-C09: an as-at answer needs BOTH ends of the validity window. */
+  startDate: string | null;
   endDate: string | null;
 }
 
@@ -65,9 +103,67 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** A requirement is satisfied by a verified, unexpired document. */
+/**
+ * CT-C09: the calendar day a compliance question is asked about (ADR 0007).
+ *
+ * The register keeps every document's validity window precisely so it can
+ * answer "was their insurance in force on the day of the incident" — but
+ * nothing let a caller name the day, so the only question it could answer
+ * was "is it in force right now". Mirrors `training.ts`'s `asOf`.
+ *
+ * Gate procedures deliberately never accept this from the client: entry is
+ * decided now, not on a date the kiosk supplies. A client-chosen as-at at
+ * the gate would be a compliance bypass — pick the day the policy was
+ * still live and walk in.
+ */
+const asOfInput = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .optional();
+
+function asOfDay(asOf: string | undefined): string {
+  if (asOf === undefined) return today();
+  if (!isCalendarDate(asOf)) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'invalid-date' });
+  }
+  return asOf;
+}
+
+/**
+ * CT-V02: the register is paged and searched server-side.
+ *
+ * `list` had no `.input()` at all and fanned out unbounded `inArray`
+ * queries over every requirement and every document of every contractor —
+ * three unbounded queries, and four of its five callers only wanted to
+ * fill a dropdown. `search` is not polish: it is what stops a picker from
+ * silently stopping at the first page.
+ */
+const listContractorsInput = z
+  .object({
+    limit: z.number().int().min(1).max(200).default(50),
+    /** The last row's id — see the keyset comment in `list`. */
+    cursor: z.string().length(26).optional(),
+    search: z.string().trim().max(200).optional(),
+    asOf: asOfInput,
+  })
+  .default({});
+
+/**
+ * A requirement is satisfied by a verified document whose validity window
+ * contains `t`.
+ *
+ * Checking only `endDate` made a policy that had not started yet count as
+ * cover — invisible while `t` was always today, and plainly wrong the
+ * moment `t` can be a past date: "was the cover in force on 3 March" would
+ * have answered yes for a policy that incepted on 1 June.
+ */
 function requirementSatisfied(docs: DocRow[], t: string): boolean {
-  return docs.some((d) => d.status === 'verified' && (d.endDate === null || d.endDate >= t));
+  return docs.some(
+    (d) =>
+      d.status === 'verified' &&
+      (d.startDate === null || d.startDate <= t) &&
+      (d.endDate === null || d.endDate >= t),
+  );
 }
 
 /** Company-wide compliance from a contractor's requirements + documents. */
@@ -92,7 +188,7 @@ async function contractorComplianceStatus(
   db: Database,
   tenantId: string,
   contractorId: string,
-): Promise<ComplianceStatus> {
+): Promise<EffectiveComplianceStatus> {
   const rows = await db
     .select({ complianceOverride: contractors.complianceOverride })
     .from(contractors)
@@ -113,6 +209,7 @@ async function contractorComplianceStatus(
     .select({
       requirementId: contractorDocuments.requirementId,
       status: contractorDocuments.status,
+      startDate: contractorDocuments.startDate,
       endDate: contractorDocuments.endDate,
     })
     .from(contractorDocuments)
@@ -129,7 +226,12 @@ async function contractorComplianceStatus(
     docsByReq.set(d.requirementId, arr);
   }
   const derived = computeStatus(reqs, docsByReq, today());
-  return (contractor.complianceOverride as ComplianceStatus | null) ?? derived;
+  // No cast: the override genuinely may be 'suspended', and the return type
+  // now says so, which forces every caller to handle it.
+  return effectiveComplianceStatus({
+    override: contractor.complianceOverride as ComplianceOverride | null,
+    derived,
+  });
 }
 
 /**
@@ -178,14 +280,92 @@ async function applyTemplatesForCategory(
   return toAdd.length;
 }
 
+/**
+ * Every contractor column a reader may see. Deliberately enumerated rather
+ * than `select()`: the table also holds `uploadToken`, which is a working
+ * credential (CT-S01), and a bare select leaks it to anyone who can read
+ * the directory.
+ */
+const CONTRACTOR_PUBLIC_COLUMNS = {
+  id: contractors.id,
+  tenantId: contractors.tenantId,
+  name: contractors.name,
+  category: contractors.category,
+  status: contractors.status,
+  complianceOverride: contractors.complianceOverride,
+  complianceOverrideReason: contractors.complianceOverrideReason,
+  primaryContactName: contractors.primaryContactName,
+  primaryContactEmail: contractors.primaryContactEmail,
+  locale: contractors.locale,
+  notes: contractors.notes,
+  // `uploadToken` is deliberately absent — that is the whole point.
+  archivedAt: contractors.archivedAt,
+  createdAt: contractors.createdAt,
+  updatedAt: contractors.updatedAt,
+} as const;
+
+/**
+ * Resolve a kiosk token to its tenant and (optionally) its site.
+ *
+ * CT-G06: the token used to resolve to a tenant only, so any screen's
+ * token unlocked every screen. A row with `siteId: null` is the legacy
+ * tenant-wide kiosk and keeps its old, unscoped behaviour — that is what
+ * lets this ship without every reception desk in the field going dark.
+ *
+ * An archived site takes its kiosk offline. That is deliberate: a screen
+ * for a site nobody operates any more should not be admitting people.
+ */
+async function resolveKioskOrThrow(
+  db: Database,
+  token: string,
+): Promise<{ tenantId: string; siteId: string | null; siteName: string | null }> {
+  const rows = await db
+    .select({
+      tenantId: contractorGateConfig.tenantId,
+      siteId: contractorGateConfig.siteId,
+      siteName: sites.name,
+      siteArchivedAt: sites.archivedAt,
+    })
+    .from(contractorGateConfig)
+    .leftJoin(sites, eq(contractorGateConfig.siteId, sites.id))
+    .where(eq(contractorGateConfig.gateToken, token))
+    .limit(1);
+  const row = rows[0];
+  if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+  if (row.siteId !== null && row.siteArchivedAt !== null) {
+    throw new TRPCError({ code: 'NOT_FOUND' });
+  }
+  return { tenantId: row.tenantId, siteId: row.siteId, siteName: row.siteName };
+}
+
 async function loadContractorOrThrow(db: Database, tenantId: string, id: string) {
   const rows = await db
-    .select()
+    // CT-S01: projected, so `get` (a `contractors.view` read) cannot return
+    // `uploadToken`. No caller of this helper reads the token —
+    // `regenerateUploadLink` writes a fresh one and `publicByToken` has its
+    // own query — so narrowing here fixes the leak at its source.
+    .select(CONTRACTOR_PUBLIC_COLUMNS)
     .from(contractors)
     .where(and(eq(contractors.tenantId, tenantId), eq(contractors.id, id)))
     .limit(1);
   const row = rows[0];
   if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+  return row;
+}
+
+/**
+ * Same, but refuses an archived contractor.
+ *
+ * `contractors.list` hides archived rows while Cmd-K surfaced them, so the
+ * only door left to a retired company also rendered live "Add
+ * requirement" / "Upload" / "Schedule a visit" controls — new work piled
+ * onto a record the register says does not exist. Reads keep using the
+ * plain loader so historical visits and documents still resolve their
+ * company name.
+ */
+async function loadActiveContractorOrThrow(db: Database, tenantId: string, id: string) {
+  const row = await loadContractorOrThrow(db, tenantId, id);
+  if (row.archivedAt !== null) throw new TRPCError({ code: 'NOT_FOUND' });
   return row;
 }
 
@@ -267,76 +447,131 @@ async function insertVisitEvent(
 }
 
 export const contractorsRouter = router({
-  list: tenantProcedure.use(requirePermission('contractors.view')).query(async ({ ctx }) => {
-    const tid = ctx.tenantId;
-    const rows = await ctx.db
-      .select()
-      .from(contractors)
-      .where(and(eq(contractors.tenantId, tid), isNull(contractors.archivedAt)))
-      .orderBy(contractors.name);
-    if (rows.length === 0) return [];
+  list: tenantProcedure
+    .use(requirePermission('contractors.view'))
+    .input(listContractorsInput)
+    .query(async ({ ctx, input }) => {
+      const tid = ctx.tenantId;
+      // CT-C09: which day this answer is for. Today unless asked otherwise.
+      const t = asOfDay(input.asOf);
 
-    const ids = rows.map((r) => r.id);
-    const reqs = await ctx.db
-      .select({
-        id: contractorRequirements.id,
-        contractorId: contractorRequirements.contractorId,
-        blocking: contractorRequirements.blocking,
-      })
-      .from(contractorRequirements)
-      .where(
-        and(
-          eq(contractorRequirements.tenantId, tid),
-          inArray(contractorRequirements.contractorId, ids),
-        ),
-      );
-    const docs = await ctx.db
-      .select({
-        contractorId: contractorDocuments.contractorId,
-        requirementId: contractorDocuments.requirementId,
-        status: contractorDocuments.status,
-        endDate: contractorDocuments.endDate,
-      })
-      .from(contractorDocuments)
-      .where(
-        and(eq(contractorDocuments.tenantId, tid), inArray(contractorDocuments.contractorId, ids)),
-      );
+      const where = [eq(contractors.tenantId, tid), isNull(contractors.archivedAt)];
+      if (input.search !== undefined && input.search !== '') {
+        const term = `%${input.search.toLowerCase()}%`;
+        where.push(
+          sql`(lower(${contractors.name}) LIKE ${term} OR lower(coalesce(${contractors.category}, '')) LIKE ${term})`,
+        );
+      }
+      // CT-V02: keyset cursor over the list order (name, id). The cursor is
+      // the last row's id and is resolved INSIDE the tenant, so a cursor
+      // from another tenant leaks nothing — it simply restarts at page one.
+      if (input.cursor !== undefined) {
+        const anchorRows = await ctx.db
+          .select({ id: contractors.id, name: contractors.name })
+          .from(contractors)
+          .where(and(eq(contractors.tenantId, tid), eq(contractors.id, input.cursor)))
+          .limit(1);
+        const anchor = anchorRows[0];
+        if (anchor !== undefined) {
+          where.push(
+            sql`(${contractors.name} > ${anchor.name} OR (${contractors.name} = ${anchor.name} AND ${contractors.id} > ${anchor.id}))`,
+          );
+        }
+      }
 
-    const t = today();
-    const reqsByContractor = new Map<string, ReqRow[]>();
-    for (const r of reqs) {
-      const arr = reqsByContractor.get(r.contractorId) ?? [];
-      arr.push({ id: r.id, blocking: r.blocking });
-      reqsByContractor.set(r.contractorId, arr);
-    }
-    const docsByContractorReq = new Map<string, Map<string, DocRow[]>>();
-    for (const d of docs) {
-      const inner = docsByContractorReq.get(d.contractorId) ?? new Map<string, DocRow[]>();
-      const arr = inner.get(d.requirementId) ?? [];
-      arr.push({ requirementId: d.requirementId, status: d.status, endDate: d.endDate });
-      inner.set(d.requirementId, arr);
-      docsByContractorReq.set(d.contractorId, inner);
-    }
+      const page = await ctx.db
+        // CT-S01: explicit projection. A bare select() returned
+        // `uploadToken` — the bearer credential for the no-login upload
+        // portal — to every `contractors.view` holder, while MINTING one
+        // requires `contractors.manage`. The token now leaves the server
+        // only through `regenerateUploadLink`, to the person who minted it.
+        .select(CONTRACTOR_PUBLIC_COLUMNS)
+        .from(contractors)
+        .where(and(...where))
+        // The id tiebreaker is what makes the cursor stable: two contractors
+        // can share a name, and a page boundary between them would otherwise
+        // drop or repeat one.
+        .orderBy(asc(contractors.name), asc(contractors.id))
+        .limit(input.limit + 1);
+      const hasMore = page.length > input.limit;
+      const rows = hasMore ? page.slice(0, input.limit) : page;
+      const nextCursor = hasMore ? (rows[rows.length - 1]?.id ?? null) : null;
+      if (rows.length === 0) return { contractors: [], hasMore, nextCursor, asOf: t };
 
-    return rows.map((c) => {
-      const derived = computeStatus(
-        reqsByContractor.get(c.id) ?? [],
-        docsByContractorReq.get(c.id) ?? new Map(),
-        t,
-      );
+      const ids = rows.map((r) => r.id);
+      const reqs = await ctx.db
+        .select({
+          id: contractorRequirements.id,
+          contractorId: contractorRequirements.contractorId,
+          blocking: contractorRequirements.blocking,
+        })
+        .from(contractorRequirements)
+        .where(
+          and(
+            eq(contractorRequirements.tenantId, tid),
+            inArray(contractorRequirements.contractorId, ids),
+          ),
+        );
+      const docs = await ctx.db
+        .select({
+          contractorId: contractorDocuments.contractorId,
+          requirementId: contractorDocuments.requirementId,
+          status: contractorDocuments.status,
+          startDate: contractorDocuments.startDate,
+          endDate: contractorDocuments.endDate,
+        })
+        .from(contractorDocuments)
+        .where(
+          and(
+            eq(contractorDocuments.tenantId, tid),
+            inArray(contractorDocuments.contractorId, ids),
+          ),
+        );
+
+      const reqsByContractor = new Map<string, ReqRow[]>();
+      for (const r of reqs) {
+        const arr = reqsByContractor.get(r.contractorId) ?? [];
+        arr.push({ id: r.id, blocking: r.blocking });
+        reqsByContractor.set(r.contractorId, arr);
+      }
+      const docsByContractorReq = new Map<string, Map<string, DocRow[]>>();
+      for (const d of docs) {
+        const inner = docsByContractorReq.get(d.contractorId) ?? new Map<string, DocRow[]>();
+        const arr = inner.get(d.requirementId) ?? [];
+        arr.push({
+          requirementId: d.requirementId,
+          status: d.status,
+          startDate: d.startDate,
+          endDate: d.endDate,
+        });
+        inner.set(d.requirementId, arr);
+        docsByContractorReq.set(d.contractorId, inner);
+      }
+
       return {
-        ...c,
-        // A manual override wins over the derived status.
-        complianceStatus: c.complianceOverride ?? derived,
-        derivedComplianceStatus: derived,
-        requirementCount: (reqsByContractor.get(c.id) ?? []).length,
+        contractors: rows.map((c) => {
+          const derived = computeStatus(
+            reqsByContractor.get(c.id) ?? [],
+            docsByContractorReq.get(c.id) ?? new Map(),
+            t,
+          );
+          return {
+            ...c,
+            // A manual override wins over the derived status.
+            complianceStatus: c.complianceOverride ?? derived,
+            derivedComplianceStatus: derived,
+            requirementCount: (reqsByContractor.get(c.id) ?? []).length,
+          };
+        }),
+        hasMore,
+        nextCursor,
+        asOf: t,
       };
-    });
-  }),
+    }),
 
   get: tenantProcedure
     .use(requirePermission('contractors.view'))
-    .input(z.object({ id: z.string().length(26) }))
+    .input(z.object({ id: z.string().length(26), asOf: asOfInput }))
     .query(async ({ ctx, input }) => {
       const contractor = await loadContractorOrThrow(ctx.db, ctx.tenantId, input.id);
 
@@ -377,11 +612,18 @@ export const contractorsRouter = router({
         )
         .orderBy(desc(contractorDocuments.createdAt));
 
-      const t = today();
+      // CT-C09: "was their insurance in force on the day of the incident"
+      // is the question this register exists to answer.
+      const t = asOfDay(input.asOf);
       const docsByReq = new Map<string, DocRow[]>();
       for (const d of docs) {
         const arr = docsByReq.get(d.requirementId) ?? [];
-        arr.push({ requirementId: d.requirementId, status: d.status, endDate: d.endDate });
+        arr.push({
+          requirementId: d.requirementId,
+          status: d.status,
+          startDate: d.startDate,
+          endDate: d.endDate,
+        });
         docsByReq.set(d.requirementId, arr);
       }
 
@@ -401,6 +643,8 @@ export const contractorsRouter = router({
         requirements,
         complianceStatus: contractor.complianceOverride ?? derivedComplianceStatus,
         derivedComplianceStatus,
+        /** The day this answer is for — today unless asked otherwise. */
+        asOf: t,
       };
     }),
 
@@ -412,6 +656,7 @@ export const contractorsRouter = router({
         category: z.string().max(120).nullable().optional(),
         primaryContactName: z.string().max(200).nullable().optional(),
         primaryContactEmail: z.string().email().max(200).nullable().optional(),
+        locale: contactLocale,
         notes: z.string().max(5000).nullable().optional(),
       }),
     )
@@ -424,7 +669,14 @@ export const contractorsRouter = router({
         category: input.category ?? null,
         primaryContactName: input.primaryContactName ?? null,
         primaryContactEmail: input.primaryContactEmail ?? null,
+        locale: input.locale ?? null,
         notes: input.notes ?? null,
+        // CT-W01: mint the public upload capability up front. Without it the
+        // expiry reminder has no link to offer and degrades to the sign-in
+        // page — a dead end for an external contact who has no account.
+        // Same entropy and shape as `regenerateUploadLink`, which still
+        // rotates it on demand.
+        uploadToken: randomBytes(24).toString('hex'),
       });
       // Auto-apply trade templates matching the category.
       const category = input.category?.trim();
@@ -444,6 +696,7 @@ export const contractorsRouter = router({
         status: z.enum(['active', 'inactive']).optional(),
         primaryContactName: z.string().max(200).nullable().optional(),
         primaryContactEmail: z.string().email().max(200).nullable().optional(),
+        locale: contactLocale,
         notes: z.string().max(5000).nullable().optional(),
       }),
     )
@@ -457,6 +710,7 @@ export const contractorsRouter = router({
         updates.primaryContactName = input.primaryContactName;
       if (input.primaryContactEmail !== undefined)
         updates.primaryContactEmail = input.primaryContactEmail;
+      if (input.locale !== undefined) updates.locale = input.locale;
       if (input.notes !== undefined) updates.notes = input.notes;
       await ctx.db
         .update(contractors)
@@ -496,6 +750,10 @@ export const contractorsRouter = router({
     .use(requirePermission('contractors.manage'))
     .input(z.object({ id: z.string().length(26) }))
     .mutation(async ({ ctx, input }) => {
+      // CT-T03b: this was the one mutation that skipped the loader, so an
+      // unknown id — or another tenant's — returned ok:true and the UI
+      // toasted "Archived" for a contractor that is still live.
+      await loadContractorOrThrow(ctx.db, ctx.tenantId, input.id);
       await ctx.db
         .update(contractors)
         .set({ archivedAt: new Date(), updatedAt: new Date() })
@@ -515,7 +773,7 @@ export const contractorsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+      await loadActiveContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
       const id = newId();
       await ctx.db.insert(contractorRequirements).values({
         id,
@@ -555,12 +813,17 @@ export const contractorsRouter = router({
         sizeBytes: z.number().int().min(0),
         startDate: dateStr,
         endDate: dateStr,
+        /** CT-U01: an explicit "this document never expires" assertion. */
+        noExpiry: z.boolean().default(false),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       assertStorageKeyInTenant(ctx.tenantId, input.storageKey);
       const reqRows = await ctx.db
-        .select({ contractorId: contractorRequirements.contractorId })
+        .select({
+          contractorId: contractorRequirements.contractorId,
+          recurrenceMonths: contractorRequirements.recurrenceMonths,
+        })
         .from(contractorRequirements)
         .where(
           and(
@@ -569,8 +832,27 @@ export const contractorsRouter = router({
           ),
         )
         .limit(1);
-      const contractorId = reqRows[0]?.contractorId;
-      if (contractorId === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      const requirement = reqRows[0];
+      if (requirement === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      const contractorId = requirement.contractorId;
+
+      // CT-U01: the same rule the public portal route runs. A null expiry
+      // is read downstream as "valid forever" and is skipped by the chase
+      // worker, so leaving both date boxes blank must not be a way to
+      // reach it — here as much as on the contractor's own form.
+      const period = validateDocumentPeriod({
+        startDate: input.startDate ?? '',
+        endDate: input.endDate ?? '',
+        noExpiry: input.noExpiry,
+        recurrenceMonths: requirement.recurrenceMonths,
+        today: todayIso(),
+        // Staff may record evidence that has already lapsed; only the
+        // contractor's self-service portal refuses it.
+        rejectExpired: false,
+      });
+      if (!period.ok) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: period.error });
+      }
 
       const id = newId();
       await ctx.db.insert(contractorDocuments).values({
@@ -678,7 +960,7 @@ export const contractorsRouter = router({
     .use(requirePermission('contractors.manage'))
     .input(z.object({ id: z.string().length(26) }))
     .mutation(async ({ ctx, input }) => {
-      const c = await loadContractorOrThrow(ctx.db, ctx.tenantId, input.id);
+      const c = await loadActiveContractorOrThrow(ctx.db, ctx.tenantId, input.id);
       if (c.category === null || c.category === '') return { applied: 0 };
       const applied = await applyTemplatesForCategory(ctx.db, ctx.tenantId, input.id, c.category);
       return { applied };
@@ -690,7 +972,7 @@ export const contractorsRouter = router({
     .use(requirePermission('contractors.manage'))
     .input(z.object({ id: z.string().length(26) }))
     .mutation(async ({ ctx, input }) => {
-      await loadContractorOrThrow(ctx.db, ctx.tenantId, input.id);
+      await loadActiveContractorOrThrow(ctx.db, ctx.tenantId, input.id);
       const token = randomBytes(24).toString('hex');
       await ctx.db
         .update(contractors)
@@ -715,9 +997,17 @@ export const contractorsRouter = router({
           id: contractorRequirements.id,
           name: contractorRequirements.name,
           blocking: contractorRequirements.blocking,
+          // CT-U01: the portal cannot ask for an expiry — or refuse the
+          // "never expires" box — without knowing the renewal cycle.
+          recurrenceMonths: contractorRequirements.recurrenceMonths,
         })
         .from(contractorRequirements)
-        .where(eq(contractorRequirements.contractorId, c.id))
+        .where(
+          and(
+            eq(contractorRequirements.tenantId, c.tenantId),
+            eq(contractorRequirements.contractorId, c.id),
+          ),
+        )
         .orderBy(contractorRequirements.createdAt);
       return { contractorName: c.name, requirements: reqs };
     }),
@@ -733,6 +1023,12 @@ export const contractorsRouter = router({
           to: isoDateTime,
           contractorId: z.string().length(26).optional(),
           siteId: z.string().length(26).optional(),
+          /**
+           * CT-V02: a bound, not a cursor. Nobody pages a calendar — the
+           * grid is a fixed six weeks. What the caller needs is not to
+           * silently drop visits off the end of a busy month.
+           */
+          limit: z.number().int().min(1).max(2000).default(500),
         }),
       )
       .query(async ({ ctx, input }) => {
@@ -766,7 +1062,8 @@ export const contractorsRouter = router({
           .leftJoin(sites, eq(contractorVisits.siteId, sites.id))
           .leftJoin(authorizer, eq(contractorVisits.authorizedByUserId, authorizer.id))
           .where(and(...conds))
-          .orderBy(asc(contractorVisits.scheduledStart));
+          .orderBy(asc(contractorVisits.scheduledStart))
+          .limit(input.limit);
       }),
 
     /**
@@ -962,7 +1259,7 @@ export const contractorsRouter = router({
         }),
       )
       .mutation(async ({ ctx, input }) => {
-        await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+        await loadActiveContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
         await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
         const id = newId();
         await ctx.db.insert(contractorVisits).values({
@@ -983,7 +1280,12 @@ export const contractorsRouter = router({
 
     /** Log an unplanned arrival — created already checked-in at the gate. */
     createWalkIn: tenantProcedure
-      .use(requirePermission('contractors.manage'))
+      // CT-P03: reception operates the gate without holding the module's
+      // admin key. `contractors.gate` existed in the catalogue but gated no
+      // procedure — ticking it granted nothing, and the only way to let a
+      // receptionist check someone in was `contractors.manage`, which also
+      // authorises rename, archive, delete and token rotation.
+      .use(requireAnyPermission('contractors.manage', 'contractors.gate'))
       .input(
         z.object({
           contractorId: z.string().length(26),
@@ -995,7 +1297,7 @@ export const contractorsRouter = router({
         }),
       )
       .mutation(async ({ ctx, input }) => {
-        await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+        await loadActiveContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
         await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
         // PF-19: walk-ins pass the same compliance gate as staff check-in.
         const compliance = await contractorComplianceStatus(
@@ -1003,8 +1305,19 @@ export const contractorsRouter = router({
           ctx.tenantId,
           input.contractorId,
         );
-        if (compliance === 'non_compliant' && (input.overrideReason ?? '').trim() === '') {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'contractor_non_compliant' });
+        // CT-G08: a suspension is an explicit decision that this contractor
+        // does not come on site, so a desk override cannot waive it. Missing
+        // paperwork still can, with a recorded reason.
+        if (complianceBarsEntry(compliance)) {
+          const waived =
+            complianceOverridable(compliance) && (input.overrideReason ?? '').trim() !== '';
+          if (!waived) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message:
+                compliance === 'suspended' ? 'contractor_suspended' : 'contractor_non_compliant',
+            });
+          }
         }
         const now = new Date();
         const id = newId();
@@ -1083,7 +1396,12 @@ export const contractorsRouter = router({
       }),
 
     checkIn: tenantProcedure
-      .use(requirePermission('contractors.manage'))
+      // CT-P03: reception operates the gate without holding the module's
+      // admin key. `contractors.gate` existed in the catalogue but gated no
+      // procedure — ticking it granted nothing, and the only way to let a
+      // receptionist check someone in was `contractors.manage`, which also
+      // authorises rename, archive, delete and token rotation.
+      .use(requireAnyPermission('contractors.manage', 'contractors.gate'))
       .input(
         z.object({
           id: z.string().length(26),
@@ -1093,8 +1411,35 @@ export const contractorsRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const visit = await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
-        if (visit.status === 'cancelled')
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit is cancelled' });
+        // CT-L01..L05: one state machine, shared with the kiosk, instead of
+        // each procedure guarding one condition and none guarding status.
+        const transitionError = visitTransitionError({
+          status: visit.status,
+          transition: 'check_in',
+        });
+        if (transitionError !== null) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: transitionError });
+        }
+        // CT-L01: the kiosk refused a blank required question and the desk
+        // did not, so a staff-recorded arrival produced an event
+        // indistinguishable from one where the induction question was asked.
+        const requiredFields = await ctx.db
+          .select({
+            id: contractorGateFields.id,
+            label: contractorGateFields.label,
+            required: contractorGateFields.required,
+          })
+          .from(contractorGateFields)
+          .where(
+            and(
+              eq(contractorGateFields.tenantId, ctx.tenantId),
+              isNull(contractorGateFields.archivedAt),
+            ),
+          );
+        const missing = firstMissingGateField(requiredFields, input.capturedFields ?? {});
+        if (missing !== null) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'gate_field_required' });
+        }
         // PF-19: a non-compliant contractor does not walk through the gate.
         // Staff may override — with a recorded reason.
         const compliance = await contractorComplianceStatus(
@@ -1102,13 +1447,29 @@ export const contractorsRouter = router({
           ctx.tenantId,
           visit.contractorId,
         );
-        if (compliance === 'non_compliant' && (input.overrideReason ?? '').trim() === '') {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'contractor_non_compliant' });
+        // CT-G08: a suspension is an explicit decision that this contractor
+        // does not come on site, so a desk override cannot waive it. This
+        // read `=== 'non_compliant'`, and an override REPLACES the derived
+        // status — so suspending a contractor whose paperwork had also
+        // lapsed converted a refusal into an admission.
+        if (complianceBarsEntry(compliance)) {
+          const waived =
+            complianceOverridable(compliance) && (input.overrideReason ?? '').trim() !== '';
+          if (!waived) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message:
+                compliance === 'suspended' ? 'contractor_suspended' : 'contractor_non_compliant',
+            });
+          }
         }
         const now = new Date();
         await ctx.db
           .update(contractorVisits)
-          .set({ status: 'checked_in', checkedInAt: now, updatedAt: now })
+          // CT-L04: clear any previous departure. Re-entry used to leave a
+          // row reading `checked_in` while carrying a past `checkedOutAt` —
+          // unresolvable on the board.
+          .set({ status: 'checked_in', checkedInAt: now, checkedOutAt: null, updatedAt: now })
           .where(
             and(eq(contractorVisits.tenantId, ctx.tenantId), eq(contractorVisits.id, input.id)),
           );
@@ -1126,7 +1487,12 @@ export const contractorsRouter = router({
       }),
 
     checkOut: tenantProcedure
-      .use(requirePermission('contractors.manage'))
+      // CT-P03: reception operates the gate without holding the module's
+      // admin key. `contractors.gate` existed in the catalogue but gated no
+      // procedure — ticking it granted nothing, and the only way to let a
+      // receptionist check someone in was `contractors.manage`, which also
+      // authorises rename, archive, delete and token rotation.
+      .use(requireAnyPermission('contractors.manage', 'contractors.gate'))
       .input(
         z.object({
           id: z.string().length(26),
@@ -1135,8 +1501,16 @@ export const contractorsRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const visit = await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
-        if (visit.checkedInAt === null)
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit was never checked in' });
+        // CT-L03: guarding only "never checked in" let a second tap move
+        // `checkedOutAt` forward and overwrite the real departure time —
+        // the one fact this record exists to preserve.
+        const transitionError = visitTransitionError({
+          status: visit.status,
+          transition: 'check_out',
+        });
+        if (transitionError !== null) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: transitionError });
+        }
         const now = new Date();
         await ctx.db
           .update(contractorVisits)
@@ -1187,7 +1561,18 @@ export const contractorsRouter = router({
       .use(requirePermission('contractors.manage'))
       .input(z.object({ id: z.string().length(26), status: z.enum(['cancelled', 'no_show']) }))
       .mutation(async ({ ctx, input }) => {
-        await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
+        const visit = await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
+        // CT-L02: neither terminal status is reachable for someone standing
+        // on site. Cancelling leaves them on the on-site board with no
+        // departure, exactly like deleting them; and a person who scanned
+        // in is by definition not a no-show. Check them out first.
+        const transitionError = visitTransitionError({
+          status: visit.status,
+          transition: 'cancel',
+        });
+        if (transitionError !== null) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: transitionError });
+        }
         await ctx.db
           .update(contractorVisits)
           .set({ status: input.status, updatedAt: new Date() })
@@ -1201,6 +1586,17 @@ export const contractorsRouter = router({
       .use(requirePermission('contractors.manage'))
       .input(z.object({ id: z.string().length(26) }))
       .mutation(async ({ ctx, input }) => {
+        const visit = await loadVisitOrThrow(ctx.db, ctx.tenantId, input.id);
+        // CT-L02: the on-site board is what a fire marshal reads at the
+        // assembly point. Archiving a checked-in visit erased someone
+        // physically present, with no check-out and no record they left.
+        const transitionError = visitTransitionError({
+          status: visit.status,
+          transition: 'delete',
+        });
+        if (transitionError !== null) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: transitionError });
+        }
         await ctx.db
           .update(contractorVisits)
           .set({ archivedAt: new Date(), updatedAt: new Date() })
@@ -1304,40 +1700,107 @@ export const contractorsRouter = router({
 
   // ─── Gate: self-scan kiosk (Phase 2b) ──────────────────────────────────
   gate: router({
-    /** The tenant's kiosk token (null until first generated). */
+    /**
+     * Every kiosk token this tenant holds: the legacy tenant-wide one
+     * (`siteId: null`, if it still exists) plus one per site.
+     *
+     * CT-G06: this used to return a single tenant-wide token, which is the
+     * shape that made one screen's token unlock every screen.
+     */
     config: tenantProcedure.use(requirePermission('contractors.manage')).query(async ({ ctx }) => {
       const rows = await ctx.db
-        .select({ gateToken: contractorGateConfig.gateToken })
+        .select({
+          id: contractorGateConfig.id,
+          siteId: contractorGateConfig.siteId,
+          siteName: sites.name,
+          gateToken: contractorGateConfig.gateToken,
+          updatedAt: contractorGateConfig.updatedAt,
+        })
         .from(contractorGateConfig)
+        .leftJoin(sites, eq(contractorGateConfig.siteId, sites.id))
         .where(eq(contractorGateConfig.tenantId, ctx.tenantId))
-        .limit(1);
-      return { gateToken: rows[0]?.gateToken ?? null };
+        .orderBy(asc(sites.name));
+      return {
+        // Kept for the legacy single-token view; null once the tenant-wide
+        // row has been revoked in favour of per-site screens.
+        gateToken: rows.find((r) => r.siteId === null)?.gateToken ?? null,
+        kiosks: rows,
+      };
     }),
+    /**
+     * Mint (or rotate) the token for ONE kiosk. Omitting `siteId` targets
+     * the legacy tenant-wide row, so existing behaviour is unchanged until
+     * an administrator deliberately moves to per-site screens.
+     */
     regenerateToken: tenantProcedure
       .use(requirePermission('contractors.manage'))
-      .mutation(async ({ ctx }) => {
+      .input(z.object({ siteId: z.string().length(26).nullable().optional() }).optional())
+      .mutation(async ({ ctx, input }) => {
+        const siteId = input?.siteId ?? null;
+        if (siteId !== null) await assertSitesInTenant(ctx.db, ctx.tenantId, [siteId]);
         const token = randomBytes(24).toString('hex');
-        await ctx.db
-          .insert(contractorGateConfig)
-          .values({ tenantId: ctx.tenantId, gateToken: token })
-          .onConflictDoUpdate({
-            target: contractorGateConfig.tenantId,
-            set: { gateToken: token, updatedAt: new Date() },
+        const existing = await ctx.db
+          .select({ id: contractorGateConfig.id })
+          .from(contractorGateConfig)
+          .where(
+            and(
+              eq(contractorGateConfig.tenantId, ctx.tenantId),
+              siteId === null
+                ? isNull(contractorGateConfig.siteId)
+                : eq(contractorGateConfig.siteId, siteId),
+            ),
+          )
+          .limit(1);
+        const row = existing[0];
+        if (row === undefined) {
+          await ctx.db.insert(contractorGateConfig).values({
+            id: newId(),
+            tenantId: ctx.tenantId,
+            siteId,
+            gateToken: token,
           });
+        } else {
+          await ctx.db
+            .update(contractorGateConfig)
+            .set({ gateToken: token, updatedAt: new Date() })
+            .where(eq(contractorGateConfig.id, row.id));
+        }
         return { token };
+      }),
+    /**
+     * Take one kiosk offline. This is what makes per-site tokens worth
+     * having: revoking a compromised screen must not kill the rest, and
+     * retiring the legacy tenant-wide token is the last step of the
+     * migration to per-site screens.
+     */
+    revokeToken: tenantProcedure
+      .use(requirePermission('contractors.manage'))
+      .input(z.object({ siteId: z.string().length(26).nullable().optional() }).optional())
+      .mutation(async ({ ctx, input }) => {
+        const siteId = input?.siteId ?? null;
+        const deleted = await ctx.db
+          .delete(contractorGateConfig)
+          .where(
+            and(
+              eq(contractorGateConfig.tenantId, ctx.tenantId),
+              siteId === null
+                ? isNull(contractorGateConfig.siteId)
+                : eq(contractorGateConfig.siteId, siteId),
+            ),
+          )
+          .returning({ id: contractorGateConfig.id });
+        // Report honestly rather than toasting "revoked" for a token that
+        // was never there.
+        return { revoked: deleted.length };
       }),
 
     /** Public: resolve the kiosk by token — today's visits + capture fields. */
     publicByToken: publicProcedure
       .input(z.object({ token: z.string().min(10).max(200) }))
       .query(async ({ ctx, input }) => {
-        const cfg = await ctx.db
-          .select({ tenantId: contractorGateConfig.tenantId })
-          .from(contractorGateConfig)
-          .where(eq(contractorGateConfig.gateToken, input.token))
-          .limit(1);
-        const tenantId = cfg[0]?.tenantId;
-        if (tenantId === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        // CT-G06: a token now resolves to a tenant AND (optionally) a site.
+        const kiosk = await resolveKioskOrThrow(ctx.db, input.token);
+        const { tenantId, siteId } = kiosk;
 
         const now = Date.now();
         const from = new Date(now - 24 * 3_600_000);
@@ -1358,7 +1821,25 @@ export const contractorsRouter = router({
               eq(contractorVisits.tenantId, tenantId),
               isNull(contractorVisits.archivedAt),
               inArray(contractorVisits.status, ['scheduled', 'checked_in']),
-              between(contractorVisits.scheduledStart, from, to),
+              // CT-G06: a site-bound kiosk shows its own site's arrivals and
+              // the ones nobody assigned a site to. Hiding the un-sited ones
+              // would strand anybody already checked in under such a visit
+              // with no screen to check out from — `contractorVisits.siteId`
+              // is nullable and `visits.create` never required it, so most
+              // existing rows are exactly that shape.
+              ...(siteId === null
+                ? []
+                : [or(eq(contractorVisits.siteId, siteId), isNull(contractorVisits.siteId))]),
+              // CT-L05: anyone already ON SITE stays on the kiosk whatever
+              // their scheduled start. The ±24h window used to drop
+              // multi-day jobs and anyone who overran, so the only screen
+              // they had stopped offering them a way out — they sat on the
+              // on-site board indefinitely while the overstay alert fired
+              // hourly with no way for them to clear it.
+              or(
+                eq(contractorVisits.status, 'checked_in'),
+                between(contractorVisits.scheduledStart, from, to),
+              ),
             ),
           )
           .orderBy(asc(contractorVisits.scheduledStart));
@@ -1381,11 +1862,13 @@ export const contractorsRouter = router({
 
         // PF-19: the kiosk shows compliance so a blocked check-in is not a
         // surprise. One derivation per distinct contractor on today's list.
-        const complianceByContractor = new Map<string, ComplianceStatus>();
+        const complianceByContractor = new Map<string, EffectiveComplianceStatus>();
         for (const cid of new Set(visits.map((v) => v.contractorId))) {
           complianceByContractor.set(cid, await contractorComplianceStatus(ctx.db, tenantId, cid));
         }
         return {
+          siteId,
+          siteName: kiosk.siteName,
           visits: visits.map((v) => ({
             ...v,
             complianceStatus: complianceByContractor.get(v.contractorId) ?? 'no_requirements',
@@ -1405,44 +1888,58 @@ export const contractorsRouter = router({
         }),
       )
       .mutation(async ({ ctx, input }) => {
-        const cfg = await ctx.db
-          .select({ tenantId: contractorGateConfig.tenantId })
-          .from(contractorGateConfig)
-          .where(eq(contractorGateConfig.gateToken, input.token))
-          .limit(1);
-        const tenantId = cfg[0]?.tenantId;
-        if (tenantId === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        const kiosk = await resolveKioskOrThrow(ctx.db, input.token);
+        const { tenantId, siteId } = kiosk;
 
         const visit = await loadVisitOrThrow(ctx.db, tenantId, input.visitId);
+        // CT-G06: a site kiosk must not admit someone booked elsewhere.
+        // A visit with no site is admissible anywhere, matching the listing.
+        if (siteId !== null && visit.siteId !== null && visit.siteId !== siteId) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
 
         // Enforce required capture fields on check-in.
         if (input.eventType === 'check_in') {
+          // CT-L01: the same helper the desk runs, so the two paths cannot
+          // drift apart again.
           const required = await ctx.db
-            .select({ id: contractorGateFields.id })
+            .select({
+              id: contractorGateFields.id,
+              label: contractorGateFields.label,
+              required: contractorGateFields.required,
+            })
             .from(contractorGateFields)
             .where(
               and(
                 eq(contractorGateFields.tenantId, tenantId),
-                eq(contractorGateFields.required, true),
                 isNull(contractorGateFields.archivedAt),
               ),
             );
-          const answers = input.capturedFields ?? {};
-          for (const f of required) {
-            if ((answers[f.id] ?? '').trim() === '') {
-              throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing required field' });
-            }
+          const missing = firstMissingGateField(required, input.capturedFields ?? {});
+          if (missing !== null) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'gate_field_required' });
           }
-          if (visit.status === 'cancelled')
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit is cancelled' });
           // PF-19: the kiosk has no override — a non-compliant contractor is
           // sent to the site office.
           const compliance = await contractorComplianceStatus(ctx.db, tenantId, visit.contractorId);
-          if (compliance === 'non_compliant') {
-            throw new TRPCError({ code: 'FORBIDDEN', message: 'contractor_non_compliant' });
+          if (complianceBarsEntry(compliance)) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message:
+                compliance === 'suspended' ? 'contractor_suspended' : 'contractor_non_compliant',
+            });
           }
-        } else if (visit.checkedInAt === null) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Visit was never checked in' });
+        }
+        // CT-G05 / CT-L03: the same state machine the desk runs. A second
+        // scan used to re-stamp `checkedInAt`, and the overstay worker
+        // measures from that stamp — so a contractor could clear their own
+        // overstay alert simply by scanning again.
+        const kioskTransitionError = visitTransitionError({
+          status: visit.status,
+          transition: input.eventType === 'check_in' ? 'check_in' : 'check_out',
+        });
+        if (kioskTransitionError !== null) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: kioskTransitionError });
         }
 
         const now = new Date();
@@ -1450,7 +1947,8 @@ export const contractorsRouter = router({
           .update(contractorVisits)
           .set(
             input.eventType === 'check_in'
-              ? { status: 'checked_in', checkedInAt: now, updatedAt: now }
+              ? // CT-L04: clear any stale departure on re-entry.
+                { status: 'checked_in', checkedInAt: now, checkedOutAt: null, updatedAt: now }
               : { status: 'checked_out', checkedOutAt: now, updatedAt: now },
           )
           .where(
@@ -1534,7 +2032,7 @@ export const contractorsRouter = router({
         }),
       )
       .mutation(async ({ ctx, input }) => {
-        await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+        await loadActiveContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
         const assetRows = await ctx.db
           .select({ id: assets.id })
           .from(assets)
@@ -1631,7 +2129,11 @@ export const contractorsRouter = router({
         }),
       )
       .mutation(async ({ ctx, input }) => {
-        const contractor = await loadContractorOrThrow(ctx.db, ctx.tenantId, input.contractorId);
+        const contractor = await loadActiveContractorOrThrow(
+          ctx.db,
+          ctx.tenantId,
+          input.contractorId,
+        );
         const emailLower = input.email.trim().toLowerCase();
 
         const existingUser = await ctx.db
@@ -1642,7 +2144,10 @@ export const contractorsRouter = router({
         if (existingUser[0] !== undefined) {
           throw new TRPCError({
             code: 'CONFLICT',
-            message: 'A user with this email already exists',
+            // A slug, not prose: the web layer translates it (every other
+            // refusal in this module already arrived as English text in a
+            // Japanese toast).
+            message: 'contractor-user-email-taken',
           });
         }
 
@@ -1780,11 +2285,56 @@ export const contractorsRouter = router({
         return { ok: true as const };
       }),
 
-    /** Revoke portal access: unlink + deactivate the user (blocks login). */
+    /**
+     * Revoke portal access: unlink + deactivate the user (blocks login).
+     *
+     * CT-P06: this used to take a bare userId and UNCONDITIONALLY deactivate
+     * whoever it named. `contractors.manage` — held by every seeded Manager —
+     * therefore reached straight past `users.deactivate`, past the
+     * self-deactivation block, and past the last-admin guard that exists so a
+     * tenant cannot be left with nobody who can administer it. A Manager
+     * could lock the company out of its own settings through the contractors
+     * page.
+     *
+     * Now: the target must actually be a contractor portal user in this
+     * tenant, and the same guards `users.deactivate` applies are applied
+     * here. Deactivation is a strictly narrower power than it was.
+     */
     remove: tenantProcedure
       .use(requirePermission('contractors.manage'))
-      .input(z.object({ userId: z.string() }))
+      .input(z.object({ userId: z.string().min(1).max(64) }))
       .mutation(async ({ ctx, input }) => {
+        // Self first: "you cannot remove your own access" is the useful
+        // sentence, and it holds whether or not you are a portal user.
+        if (input.userId === ctx.auth.userId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'cannot_remove_self' });
+        }
+        const linked = await ctx.db
+          .select({ userId: contractorUsers.userId })
+          .from(contractorUsers)
+          .where(
+            and(
+              eq(contractorUsers.tenantId, ctx.tenantId),
+              eq(contractorUsers.userId, input.userId),
+            ),
+          )
+          .limit(1);
+        if (linked[0] === undefined) {
+          // Not a portal user of ours: refuse rather than deactivate a
+          // colleague who merely shares an id shape.
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'contractor_user_not_found' });
+        }
+        // Belt and braces: a portal user should never hold admin rights, but
+        // if one somehow does, the last-admin guard still applies.
+        const dropped = await wouldDropBelowMinAdmins(ctx.db, {
+          tenantId: ctx.tenantId,
+          targetUserId: input.userId,
+          afterPermissions: null,
+        });
+        if (dropped) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'cannot_remove_last_admin' });
+        }
+
         await ctx.db
           .delete(contractorUsers)
           .where(

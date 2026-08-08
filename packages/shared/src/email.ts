@@ -329,6 +329,28 @@ const resendResponseSchema = z.object({
   error: z.object({ name: z.string().optional(), message: z.string() }).nullable(),
 });
 
+/**
+ * Reserved domain (RFC 2606) used for the placeholder address a
+ * try-it-now visitor carries until they claim their workspace
+ * (ADR 0017). It can never resolve, so anything addressed to it is
+ * undeliverable by construction.
+ */
+const UNDELIVERABLE_TLD = '.invalid';
+
+/**
+ * True when this address can never receive mail.
+ *
+ * Enforced at the dispatcher rather than per-caller because the cost of
+ * missing one caller is not a bounced message: a worker that treats a
+ * failed send as "retry later" — as the permit expiry watch does, by
+ * withholding its stamp — will re-attempt the same undeliverable
+ * address on every tick, forever, and burn sender reputation doing it.
+ * One guard here covers every present and future notify path.
+ */
+export function isUndeliverableAddress(email: string): boolean {
+  return email.trim().toLowerCase().endsWith(UNDELIVERABLE_TLD);
+}
+
 export function createSendEmail(deps: EmailDeps): SendEmail {
   const {
     delivery,
@@ -351,6 +373,12 @@ export function createSendEmail(deps: EmailDeps): SendEmail {
   }
 
   return async function sendEmail(email): Promise<DeliveryResult> {
+    // Same guard as the templated dispatcher — see isUndeliverableAddress.
+    if (isUndeliverableAddress(email.to)) {
+      logger.debug({ email_delivery: 'skipped' }, '[email] skipped undeliverable recipient');
+      return { delivery: 'console' };
+    }
+
     const template = await loadTemplate(email.kind);
     const { subject, text } = renderEmail(template, email.url, productName);
 
@@ -451,6 +479,17 @@ export function createSendTemplatedEmail(deps: TemplatedEmailDeps): SendTemplate
   }
 
   return async function sendTemplatedEmail(email): Promise<DeliveryResult> {
+    // Never hand an unreachable address to the provider. Reported as a
+    // successful no-op so a caller that retries on failure does not
+    // loop on it forever.
+    if (isUndeliverableAddress(email.to)) {
+      logger.debug(
+        { email_delivery: 'skipped', template_key: email.templateKey },
+        '[email] skipped undeliverable recipient',
+      );
+      return { delivery: 'console' };
+    }
+
     const template = await loadTemplate(email.templateKey, email.locale);
     // productName is injected for every send; an explicit caller variable of
     // the same name wins (none exist today, but the spread order allows it).

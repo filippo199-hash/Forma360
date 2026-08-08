@@ -678,15 +678,23 @@ Forma360) — do not add a brand conditional anywhere else.
   content lives in `seed-data.ts` and is deliberately not i18n'd (it is
   the visitor's data, not chrome). **Each scenario leaves exactly one
   decision open** — keep that property when adding scenarios.
-  Two rules the QA pass turned into tests, so break them and the suite
-  fails: every seeded reference number is claimed through
-  `nextReferenceValue` (hand-stamping one leaves the counter at zero and
-  the visitor's first record collides — SB-Q01/Q02), and a tile only
-  seeds content into the module it *lands on* (SB-Q10/Q11). Seeded
-  today: risk assessments (general / manual handling), permits (all four
-  types), observations, incidents. Not yet seeded — they land on a
-  register furnished with the shared org context only: inspections,
-  RAMS, and the COSHH / fire refinements of the risk-assessment tile.
+  **Every tile declares a `goal`** on `SandboxScenario`, and
+  `provision.goals.test.ts` walks EVERY tile × refinement and asserts it
+  against the real database. The map is `Record<SandboxScenarioId, …>`,
+  so a new tile without a goal assertion is a type error. A tile that
+  ships an empty register is what this exists to prevent — it happened
+  once (inspections shipped as a no-op seed, with the gap written in a
+  comment; a comment cannot fail CI).
+  Three rules the tests enforce, so breaking them fails the suite:
+  every seeded reference is claimed through `nextReferenceValue`
+  (SB-Q01/Q02); a tile only seeds into the module it *lands on*
+  (SB-Q10/Q11); and each tile meets its declared goal (SB-G:*).
+  Non-obvious invariants the seeds must respect: an inspection template
+  needs `templates.status='published'` AND `templates.currentVersionId`
+  AND `templates.titleFormat` — `is_current` alone leaves a template
+  that looks published and cannot be started; an FRA left at `draft`
+  makes the fire register print "FRA missing"; a `nextReviewAt` in the
+  past lights an amber chip on a workspace seconds old.
 - **Session** at `packages/auth/src/sandbox-session.ts` — mints a real
   better-auth session. It reproduces better-auth's cookie signing and is
   pinned by a round-trip test. If that test fails after a better-auth

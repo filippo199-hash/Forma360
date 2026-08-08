@@ -25,20 +25,31 @@
 import type { Database } from '@forma360/db/client';
 import {
   contractors,
+  coshhAssessments,
+  coshhSubstances,
+  fireBuildings,
+  fireRiskAssessments,
   incidents,
+  inspections,
   issueCategories,
   issues,
+  permissionSets,
   permits,
   permitTypes,
   riskAssessmentControls,
   riskAssessmentHazards,
+  ramsPacks,
   riskAssessments,
   sites,
+  templateVersions,
+  templates,
   tenants,
   user,
+  type AccessSnapshot,
   type IssueAccessSnapshot,
   type IssueCategorySnapshot,
 } from '@forma360/db/schema';
+import { PERMISSION_KEYS, type PermissionKey } from '@forma360/permissions/catalogue';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import type { BrandId } from '@forma360/shared/brand';
 import { newId } from '@forma360/shared/id';
@@ -50,14 +61,22 @@ import {
 } from '@forma360/shared/sandbox-scenarios';
 import { and, eq } from 'drizzle-orm';
 import { ensureSeededTypes } from '../routers/permits';
+import { snapshotPreconditions } from '@forma360/shared/permits';
 import { nextReferenceValue } from '../reference-counter';
 import { formatIncidentReference } from '@forma360/shared/incidents';
+import { buildTemplateContentFromSpec } from '@forma360/shared/template-builder';
+import { methodStatementContentSchema } from '@forma360/shared/rams';
 import {
   SANDBOX_COLLEAGUE,
   SANDBOX_CONTRACTORS,
+  SANDBOX_COSHH,
+  SANDBOX_FIRE_BUILDING,
   SANDBOX_INCIDENT,
+  SANDBOX_INSPECTION_RUN,
+  SANDBOX_INSPECTION_SPECS,
   SANDBOX_OBSERVATIONS,
   SANDBOX_PERMITS,
+  SANDBOX_RAMS_PACK,
   SANDBOX_RISK_ASSESSMENTS,
   SANDBOX_SITES,
 } from './seed-data';
@@ -73,6 +92,36 @@ export const SANDBOX_EMAIL_DOMAIN = 'sandbox.invalid';
 /** True when this address is a placeholder rather than a real inbox. */
 export function isSandboxEmail(email: string): boolean {
   return email.toLowerCase().endsWith(`@${SANDBOX_EMAIL_DOMAIN}`);
+}
+
+/**
+ * Permission keys withheld from a try-it-now visitor.
+ *
+ * A sandbox hands an Administrator session to someone who has proven
+ * nothing — no email, no payment, no identity. Administrator holds
+ * every key in the catalogue, and a handful of those let the holder
+ * send domain-authenticated mail to an ARBITRARY external address with
+ * attacker-controlled text in it (`users.invite` composes a subject
+ * from the inviter's own name and the workspace name, both self-service
+ * editable). That turns a one-click anonymous workspace into an
+ * unmetered mailer on a verified sending domain, which costs us the
+ * domain's reputation rather than costing the attacker anything.
+ *
+ * Derived from the catalogue by subtraction so it cannot drift: a new
+ * key is granted by default, and only the ones named here are withheld.
+ * Everything the tiles actually need stays.
+ */
+const SANDBOX_WITHHELD_PERMISSIONS: readonly PermissionKey[] = [
+  // Invites an arbitrary address, with self-service text in the subject.
+  'users.invite',
+  // Contractor portal invites take an arbitrary address too.
+  'contractors.manage',
+];
+
+/** Administrator, minus the keys that can mail strangers. */
+function sandboxPermissionKeys(): PermissionKey[] {
+  const withheld = new Set<string>(SANDBOX_WITHHELD_PERMISSIONS);
+  return PERMISSION_KEYS.filter((k) => !withheld.has(k));
 }
 
 /** Default observation categories, mirroring `auth.signUpWithTenant`. */
@@ -134,6 +183,22 @@ export async function provisionSandbox(
 
     const sets = await seedDefaultPermissionSets(tx as unknown as Database, tenantId);
 
+    // The visitor is an administrator of their own workspace, minus the
+    // keys that could mail strangers from our sending domain. Claiming
+    // does not widen this — a claimed workspace is still a workspace an
+    // anonymous stranger created, and an admin can promote themselves
+    // through Settings once they are a known person.
+    const sandboxSetId = newId();
+    await tx.insert(permissionSets).values({
+      id: sandboxSetId,
+      tenantId,
+      name: 'Administrator (trial)',
+      description:
+        'Full access to this workspace. Sending invitations is enabled once you claim it.',
+      permissions: sandboxPermissionKeys(),
+      isSystem: false,
+    });
+
     await tx.insert(user).values([
       {
         id: userId,
@@ -142,7 +207,7 @@ export async function provisionSandbox(
         email: `${tenantId.toLowerCase()}@${SANDBOX_EMAIL_DOMAIN}`,
         emailVerified: false,
         tenantId,
-        permissionSetId: sets.administrator,
+        permissionSetId: sandboxSetId,
       },
       {
         id: colleagueId,
@@ -237,10 +302,10 @@ async function seedScenario(ctx: SeedContext): Promise<void> {
       await seedPermit(ctx);
       return;
     case 'inspection':
+      await seedInspection(ctx);
+      return;
     case 'rams':
-      // Inspections and RAMS land on a register furnished with the
-      // shared org context above; their own content is authored in the
-      // module, which is where their start screens already lead.
+      await seedRamsPack(ctx);
       return;
   }
 }
@@ -251,9 +316,19 @@ async function seedScenario(ctx: SeedContext): Promise<void> {
  * it is what puts their judgement into the document they then publish.
  */
 async function seedRiskAssessment(ctx: SeedContext): Promise<void> {
-  // No fallback. The COSHH and fire refinements land on their own
-  // modules, and seeding a warehouse loading-bay assessment there would
-  // promise one thing and deliver another.
+  // The COSHH and fire refinements land on their own modules, so they
+  // furnish THOSE registers instead — seeding a warehouse loading-bay
+  // assessment behind a COSHH tile would promise one thing and deliver
+  // another.
+  if (ctx.resolved.refinement.id === 'coshh') {
+    await seedCoshh(ctx);
+    return;
+  }
+  if (ctx.resolved.refinement.id === 'fire') {
+    await seedFireBuilding(ctx);
+    return;
+  }
+
   const content = SANDBOX_RISK_ASSESSMENTS[ctx.resolved.refinement.id];
   if (content === undefined) return;
 
@@ -299,7 +374,7 @@ async function seedRiskAssessment(ctx: SeedContext): Promise<void> {
       existingControls: hazard.existingControls,
       residualLikelihood: hazard.residualLikelihood,
       residualSeverity: hazard.residualSeverity,
-      residualJustification: '',
+      residualJustification: hazard.residualJustification ?? '',
     });
 
     for (const control of hazard.controls) {
@@ -404,12 +479,13 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
   await ensureSeededTypes(tx, ctx.tenantId, ctx.userId);
 
   const typeRows = await tx
-    .select({ id: permitTypes.id })
+    .select({ id: permitTypes.id, preconditions: permitTypes.preconditions })
     .from(permitTypes)
     .where(and(eq(permitTypes.tenantId, ctx.tenantId), eq(permitTypes.category, content.category)))
     .limit(1);
-  const permitTypeId = typeRows[0]?.id;
-  if (permitTypeId === undefined) return;
+  const permitType = typeRows[0];
+  if (permitType === undefined) return;
+  const permitTypeId = permitType.id;
 
   const validFrom = new Date();
   const validTo = new Date(validFrom.getTime() + 8 * 60 * 60 * 1000);
@@ -417,6 +493,22 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
   // Same contract as the permits router: PTW-, four digits, claimed
   // through the counter.
   const ref = await nextReferenceValue(tx, ctx.tenantId, 'permit');
+
+  // ISSUED, not draft. `permits.list` defaults to status 'open'
+  // (issued / active / suspended), so a draft is invisible on the
+  // register the visitor lands on — the row would exist and the page
+  // would be empty. Issued is also the honest state for "waiting on
+  // you": a colleague raised and issued it, the visitor is the named
+  // acceptor, and accepting it is their decision.
+  const preconditions = snapshotPreconditions(permitType.preconditions).map((pc) => ({
+    ...pc,
+    // Preconditions are a condition OF issue, so an issued permit has
+    // them confirmed by the issuer.
+    checked: true,
+    checkedBy: ctx.colleagueId,
+    checkedByName: `${SANDBOX_COLLEAGUE.firstName} ${SANDBOX_COLLEAGUE.lastName}`,
+    checkedAt: validFrom.toISOString(),
+  }));
 
   await ctx.tx.insert(permits).values({
     id: newId(),
@@ -429,9 +521,186 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
     ...(ctx.siteIds.get('northfield') !== undefined
       ? { siteId: ctx.siteIds.get('northfield') as string }
       : {}),
-    status: 'draft',
+    status: 'issued',
+    preconditions,
+    issuerUserId: ctx.colleagueId,
+    issuedAt: validFrom,
+    acceptorUserId: ctx.userId,
     validFrom,
     validTo,
+    createdBy: ctx.colleagueId,
+  });
+}
+
+/**
+ * Seed a published inspection template plus one inspection already
+ * running against it.
+ *
+ * The content is built by `buildTemplateContentFromSpec` — the same
+ * deterministic builder the AI import path uses — rather than a
+ * hand-written content blob. That guarantees the seeded template is
+ * schema-valid by construction and cannot drift from what the builder
+ * produces for everyone else.
+ *
+ * The template is PUBLISHED with a current version, because a draft is
+ * not runnable and the visitor's goal is to run it.
+ */
+async function seedInspection(ctx: SeedContext): Promise<void> {
+  const spec = SANDBOX_INSPECTION_SPECS[ctx.resolved.refinement.id];
+  if (spec === undefined) return;
+
+  const content = buildTemplateContentFromSpec(spec);
+  const templateId = newId();
+  const versionId = newId();
+  const now = new Date();
+
+  // Three columns must agree for the template to be startable, and
+  // nothing in the DB keeps them in sync: `templates.status` is what the
+  // start-inspection picker filters on, `templates.currentVersionId` is
+  // what `inspections.create` pins from (NOT `is_current`), and
+  // `templates.titleFormat` is the only store the title renderer reads.
+  // Setting only `is_current` leaves a template that looks published and
+  // cannot be run.
+  await ctx.tx.insert(templates).values({
+    id: templateId,
+    tenantId: ctx.tenantId,
+    name: spec.title,
+    description: spec.description ?? '',
+    status: 'published',
+    currentVersionId: versionId,
+    titleFormat: content.settings.titleFormat,
+    createdBy: ctx.userId,
+    updatedAt: now,
+  });
+
+  await ctx.tx.insert(templateVersions).values({
+    id: versionId,
+    tenantId: ctx.tenantId,
+    templateId,
+    versionNumber: 1,
+    content,
+    isCurrent: true,
+    publishedAt: now,
+    publishedBy: ctx.userId,
+  });
+
+  // One inspection in progress, so the register is not empty and the
+  // visitor can see what a run looks like before starting their own.
+  // ADR 0007: the access snapshot is frozen at start.
+  const accessSnapshot: AccessSnapshot = {
+    groups: [],
+    sites: [],
+    permissions: [],
+    snapshotAt: now.toISOString(),
+  };
+
+  await ctx.tx.insert(inspections).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    templateId,
+    templateVersionId: versionId,
+    title: `${spec.title} — ${SANDBOX_INSPECTION_RUN.titleSuffix}`,
+    status: 'in_progress',
+    ...(ctx.siteIds.get('eastgate') !== undefined
+      ? { siteId: ctx.siteIds.get('eastgate') as string }
+      : {}),
+    accessSnapshot,
+    createdBy: ctx.colleagueId,
+    startedAt: now,
+  });
+}
+
+/** Seed one hazardous substance with a COSHH assessment against it. */
+async function seedCoshh(ctx: SeedContext): Promise<void> {
+  const substanceId = newId();
+  const ref = await nextReferenceValue(
+    ctx.tx as unknown as Database,
+    ctx.tenantId,
+    'coshhSubstance',
+  );
+
+  await ctx.tx.insert(coshhSubstances).values({
+    id: substanceId,
+    tenantId: ctx.tenantId,
+    referenceNumber: `CS-${String(ref).padStart(4, '0')}`,
+    name: SANDBOX_COSHH.name,
+    supplier: SANDBOX_COSHH.supplier,
+    createdBy: ctx.userId,
+  });
+
+  const assessmentRef = await nextReferenceValue(
+    ctx.tx as unknown as Database,
+    ctx.tenantId,
+    'coshhAssessment',
+  );
+  await ctx.tx.insert(coshhAssessments).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    substanceId,
+    referenceNumber: `COSHH-${String(assessmentRef).padStart(4, '0')}`,
+    taskDescription: SANDBOX_COSHH.taskDescription,
+    status: 'active',
+    // In the future: a review already overdue would light the amber
+    // "assessments due" chip on a workspace seconds old.
+    nextReviewAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    createdBy: ctx.userId,
+  });
+}
+
+/** Seed one building with a fire risk assessment against it. */
+async function seedFireBuilding(ctx: SeedContext): Promise<void> {
+  const buildingId = newId();
+  await ctx.tx.insert(fireBuildings).values({
+    id: buildingId,
+    tenantId: ctx.tenantId,
+    name: SANDBOX_FIRE_BUILDING.name,
+    ...(ctx.siteIds.get('eastgate') !== undefined
+      ? { siteId: ctx.siteIds.get('eastgate') as string }
+      : {}),
+    createdBy: ctx.userId,
+  });
+
+  const ref = await nextReferenceValue(
+    ctx.tx as unknown as Database,
+    ctx.tenantId,
+    'fireRiskAssessment',
+  );
+  // Left at the default 'draft' the register prints "FRA missing", which
+  // reads as a broken workspace rather than a furnished one. Only an
+  // `active` FRA counts as in place.
+  const now = new Date();
+  await ctx.tx.insert(fireRiskAssessments).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    buildingId,
+    referenceNumber: `FRA-${String(ref).padStart(4, '0')}`,
+    title: SANDBOX_FIRE_BUILDING.fraTitle,
+    status: 'active',
+    riskRating: 'tolerable',
+    publishedAt: now,
+    publishedBy: ctx.userId,
+    nextReviewAt: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000),
+    createdBy: ctx.userId,
+  });
+}
+
+/** Seed one RAMS pack the visitor can open and build on. */
+async function seedRamsPack(ctx: SeedContext): Promise<void> {
+  const ref = await nextReferenceValue(ctx.tx as unknown as Database, ctx.tenantId, 'ramsPack');
+
+  await ctx.tx.insert(ramsPacks).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    referenceNumber: `RAMS-${String(ref).padStart(6, '0')}`,
+    title: SANDBOX_RAMS_PACK.title,
+    // Parsed through the real schema so defaults (schemaVersion,
+    // emergency, logistics) are filled in exactly as the builder would.
+    draftContent: methodStatementContentSchema.parse({
+      scopeOfWorks: SANDBOX_RAMS_PACK.description,
+    }),
+    ...(ctx.siteIds.get('northfield') !== undefined
+      ? { siteId: ctx.siteIds.get('northfield') as string }
+      : {}),
     createdBy: ctx.userId,
   });
 }

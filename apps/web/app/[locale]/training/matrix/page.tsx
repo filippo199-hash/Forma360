@@ -275,15 +275,27 @@ function MatrixInner() {
           </CardContent>
         </Card>
       ) : query.isError ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 p-10 text-center">
-            <FileWarning className="h-6 w-6 text-destructive" aria-hidden="true" />
-            <p className="font-medium">{tErr('loadFailed')}</p>
-            <Button size="sm" variant="outline" onClick={() => void query.refetch()}>
-              {tErr('retry')}
-            </Button>
-          </CardContent>
-        </Card>
+        query.error.message === 'matrix-too-large' ? (
+          /* TR-V02: an unfiltered grid over the ceiling is refused server-side.
+             Point the user at the site/requirement filters above rather than
+             showing a failure — the grid is fine once narrowed. */
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 p-10 text-center">
+              <FileWarning className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+              <p className="font-medium">{t('matrix.tooLarge')}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 p-10 text-center">
+              <FileWarning className="h-6 w-6 text-destructive" aria-hidden="true" />
+              <p className="font-medium">{tErr('loadFailed')}</p>
+              <Button size="sm" variant="outline" onClick={() => void query.refetch()}>
+                {tErr('retry')}
+              </Button>
+            </CardContent>
+          </Card>
+        )
       ) : rows.length === 0 ? (
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">

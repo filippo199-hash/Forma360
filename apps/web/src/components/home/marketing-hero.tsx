@@ -23,11 +23,7 @@ export function MarketingHero({
     : hasSandbox
       ? `/${locale}/try`
       : `/${locale}/sign-up`;
-  const primaryLabel = isSignedIn
-    ? HERO.appCta
-    : hasSandbox
-      ? HERO.tryCta
-      : HERO.primaryCta;
+  const primaryLabel = isSignedIn ? HERO.appCta : hasSandbox ? HERO.tryCta : HERO.primaryCta;
 
   return (
     <section className="relative overflow-hidden border-b">

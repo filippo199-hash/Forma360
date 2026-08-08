@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -14,7 +14,6 @@ import {
   settingsNavItem,
   type NavItem,
   type NavSection,
-  type NavSectionKey,
 } from '../lib/nav-model';
 import { usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
@@ -56,45 +55,6 @@ function useCollapsed(): readonly [boolean, () => void] {
   return [collapsed, toggle] as const;
 }
 
-/** localStorage key for the per-group fold state. */
-const GROUPS_KEY = 'forma360.nav.groups';
-
-/**
- * Which groups are folded (navigation review §2). Everything defaults to
- * open — Tom's fold-away is a preference, never a hiding place — and the
- * choice survives the session per group.
- */
-function useGroupState(): readonly [Record<string, boolean>, (key: NavSectionKey) => void] {
-  const [open, setOpen] = useState<Record<string, boolean>>({});
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(GROUPS_KEY);
-      if (raw === null) return;
-      const parsed: unknown = JSON.parse(raw);
-      if (typeof parsed !== 'object' || parsed === null) return;
-      const next: Record<string, boolean> = {};
-      for (const [key, value] of Object.entries(parsed)) {
-        if (typeof value === 'boolean') next[key] = value;
-      }
-      setOpen(next);
-    } catch {
-      // Private-mode storage or corrupt value — every group stays open.
-    }
-  }, []);
-  const toggle = useCallback((key: NavSectionKey) => {
-    setOpen((prev) => {
-      const next = { ...prev, [key]: prev[key] === false };
-      try {
-        window.localStorage.setItem(GROUPS_KEY, JSON.stringify(next));
-      } catch {
-        // Non-fatal: the preference just won't survive the session.
-      }
-      return next;
-    });
-  }, []);
-  return [open, toggle] as const;
-}
-
 function NavBadge({ value, collapsed }: { value: number; collapsed: boolean }) {
   if (value <= 0) return null;
   const label = value > 99 ? '99+' : String(value);
@@ -102,14 +62,11 @@ function NavBadge({ value, collapsed }: { value: number; collapsed: boolean }) {
     // On the rail there is no room for a number; a dot still says
     // "something is waiting here" without lying about how much.
     return (
-      <span
-        className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-slate-300"
-        aria-hidden="true"
-      />
+      <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
     );
   }
   return (
-    <span className="ml-auto min-w-5 rounded-full bg-slate-300 px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-slate-900">
+    <span className="ml-auto min-w-5 rounded-full bg-primary/10 px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-primary">
       {label}
     </span>
   );
@@ -135,7 +92,6 @@ export function SiteNavItems({
   const pathname = usePathname();
   const terminology = useTerminology();
   const counts = useNavCounts();
-  const [openGroups, toggleGroup] = useGroupState();
 
   const sections = buildNavSections({
     locale,
@@ -164,11 +120,11 @@ export function SiteNavItems({
         href={item.href}
         {...(onNavigate !== undefined ? { onClick: onNavigate } : {})}
         className={cn(
-          'relative flex items-center gap-2.5 rounded-md py-2 text-sm transition-colors',
-          collapsed ? 'justify-center px-2' : 'px-3',
+          'relative flex items-center gap-2.5 rounded-md py-1.5 text-[13px] transition-colors',
+          collapsed ? 'justify-center px-2' : 'px-2.5',
           isActive
             ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
-            : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
+            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
         )}
         aria-current={isActive ? 'page' : undefined}
         {...(collapsed ? { title: label, 'aria-label': label } : {})}
@@ -180,72 +136,42 @@ export function SiteNavItems({
     );
   }
 
+  /**
+   * A group is a hairline rule, not a heading. The headings ("Do the
+   * work", "Records & registers", "The organisation") named a grouping
+   * the icons and reading order already convey, and each one cost a row
+   * of vertical space plus a fold control on a menu whose whole job is
+   * to get out of the way. The rule keeps the seam; the words go.
+   *
+   * Sub-navigation does not live here either (ADR 0014 amendment): a
+   * module's sub-pages are tabs on the page (see ModuleTabs), so the
+   * sidebar is exactly the module list, expanded or collapsed.
+   */
   function renderSection(section: NavSection) {
-    const headingId = `nav-group-${section.key ?? 'top'}`;
-    // The group's own needs-attention total, so a folded group still
-    // says it wants opening (navigation review §1).
-    const groupTotal = section.items.reduce(
-      (sum, item) => sum + (item.badge === undefined ? 0 : (counts[item.badge] ?? 0)),
-      0,
-    );
-    const isOpen = section.key === null || openGroups[section.key] !== false;
-    // Sub-navigation no longer lives in the menu (ADR 0014 amendment): a
-    // module's sub-pages are tabs on the page now (see ModuleTabs), so the
-    // sidebar stays exactly the module list, expanded or collapsed.
-    const items = (
-      <ul className="flex list-none flex-col gap-0.5 p-0">
-        {section.items.map((item) => (
-          <li key={item.key}>{renderItem(item, counts)}</li>
-        ))}
-      </ul>
-    );
-
-    // The unlabelled top block, and the icon rail, have nothing to fold.
-    if (section.key === null || collapsed) {
-      return (
-        <div key={section.key ?? 'top'} className={cn(section.key === null ? '' : 'mt-4')}>
-          {section.key !== null && collapsed ? (
-            <div className="mx-2 mb-2 border-t border-sidebar-border" role="presentation" />
-          ) : null}
-          {items}
-        </div>
-      );
-    }
-
     return (
-      <section key={section.key} aria-labelledby={headingId} className="mt-4">
-        <h2 id={headingId} className="px-1">
-          <button
-            type="button"
-            onClick={() => toggleGroup(section.key as NavSectionKey)}
-            aria-expanded={isOpen}
-            className="flex w-full items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45 transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-foreground/70"
-          >
-            <ChevronDown
-              className={cn('h-3 w-3 shrink-0 transition-transform', isOpen ? '' : '-rotate-90')}
-              aria-hidden="true"
-            />
-            <span className="truncate">{t(section.key)}</span>
-            {/* Only while folded: open, the items carry their own numbers. */}
-            {!isOpen && groupTotal > 0 ? (
-              <span className="ml-auto min-w-5 rounded-full bg-slate-300 px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-slate-900">
-                {groupTotal > 99 ? '99+' : groupTotal}
-              </span>
-            ) : null}
-          </button>
-        </h2>
-        {isOpen ? items : null}
-      </section>
+      <div key={section.key ?? 'top'} className={section.key === null ? '' : 'mt-2 pt-2'}>
+        {section.key === null ? null : (
+          <div
+            className={cn('mb-2 border-t border-sidebar-border', collapsed ? 'mx-1.5' : 'mx-2.5')}
+            role="presentation"
+          />
+        )}
+        <ul className="flex list-none flex-col gap-0.5 p-0">
+          {section.items.map((item) => (
+            <li key={item.key}>{renderItem(item, counts)}</li>
+          ))}
+        </ul>
+      </div>
     );
   }
 
   return (
     <nav
       aria-label={t('primaryLabel')}
-      className={cn('flex flex-1 flex-col overflow-y-auto p-3', collapsed && 'px-2')}
+      className={cn('flex flex-1 flex-col overflow-y-auto p-2', collapsed && 'px-1.5')}
     >
       {sections.map(renderSection)}
-      <div className="mt-auto pt-3">{renderItem(settingsNavItem(locale), counts)}</div>
+      <div className="mt-auto pt-2">{renderItem(settingsNavItem(locale), counts)}</div>
     </nav>
   );
 }
@@ -274,14 +200,14 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
     <aside
       className={cn(
         'sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-150 md:flex',
-        collapsed ? 'w-14' : 'w-60',
+        collapsed ? 'w-12' : 'w-52',
       )}
     >
-      <div className="flex h-14 shrink-0 items-center gap-1 border-b border-sidebar-border px-2">
+      <div className="flex h-14 shrink-0 items-center gap-1 border-b border-sidebar-border px-1.5">
         {collapsed ? null : (
           <Link
             href={`/${locale}/my-work`}
-            className="flex-1 truncate px-2 font-semibold tracking-tight text-sidebar-foreground"
+            className="flex-1 truncate px-1.5 text-[15px] font-semibold tracking-tight text-sidebar-foreground"
           >
             {activeBrand.name}
           </Link>
@@ -293,7 +219,7 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
           aria-label={collapsed ? t('expandMenu') : t('collapseMenu')}
           title={collapsed ? t('expandMenu') : t('collapseMenu')}
           className={cn(
-            'inline-flex h-9 w-9 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
+            'inline-flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
             collapsed && 'mx-auto',
           )}
         >

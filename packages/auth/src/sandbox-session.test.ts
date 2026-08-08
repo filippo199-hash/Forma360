@@ -67,6 +67,7 @@ function cookieHeaderFrom(setCookie: string): string {
 
 describe('createSandboxSession', () => {
   let auth: Auth;
+  let prodAuth: Auth;
   let userId: string;
 
   beforeAll(async () => {
@@ -112,6 +113,22 @@ describe('createSandboxSession', () => {
       baseUrl: 'http://localhost:3000',
       nodeEnv: 'test',
     });
+
+    // A second instance in PRODUCTION mode over the same database.
+    // Production is where the cookie is hardened: better-auth switches
+    // to the `__Secure-` cookie-name prefix once `secure: true`, and a
+    // prefix mismatch would mean every visitor provisions a workspace
+    // and then is not signed in to it. Only exercising `nodeEnv: 'test'`
+    // left that path completely uncovered.
+    prodAuth = createAuth({
+      db: db as never,
+      redis: fakeRedis() as never,
+      sendEmail: () => Promise.resolve(),
+      sendTemplatedEmail: () => Promise.resolve({ delivery: 'console' as const }),
+      secret: SECRET,
+      baseUrl: 'https://freehs.software',
+      nodeEnv: 'production',
+    });
   });
 
   it('SB-E01 — mints a cookie better-auth resolves back to the same user', async () => {
@@ -156,5 +173,23 @@ describe('createSandboxSession', () => {
     expect(minted.setCookie).toContain('Path=/');
     // nodeEnv=test → cookies are not forced Secure, so localhost works.
     expect(minted.setCookie).not.toContain('Secure');
+  });
+
+  it('SB-E05 — the production cookie round-trips and carries the Secure prefix', async () => {
+    const minted = await createSandboxSession(prodAuth, userId, SECRET);
+
+    // Production hardening: Secure set, and better-auth's own cookie
+    // name (which carries the __Secure- prefix) is what we serialise.
+    expect(minted.setCookie).toContain('Secure');
+    expect(minted.setCookie).toContain('HttpOnly');
+    const name = cookieHeaderFrom(minted.setCookie).split('=')[0] ?? '';
+    expect(name.startsWith('__Secure-'), `production cookie name was "${name}"`).toBe(true);
+
+    // The part that actually matters: production better-auth reads it back.
+    const session = await prodAuth.api.getSession({
+      headers: new Headers({ cookie: cookieHeaderFrom(minted.setCookie) }),
+    });
+    expect(session, 'a production visitor must end up signed in').not.toBeNull();
+    expect(session?.user.id).toBe(userId);
   });
 });

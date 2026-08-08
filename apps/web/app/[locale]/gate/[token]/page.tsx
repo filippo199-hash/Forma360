@@ -10,6 +10,8 @@ import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { complianceBarsEntry, type EffectiveComplianceStatus } from '@forma360/shared/contractors';
+import { contractorErrorMessage } from '../../../../src/lib/contractor-errors';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type KioskVisit = {
@@ -43,11 +45,13 @@ export default function GateKioskPage() {
     },
     onError: (err) =>
       toast.error(
+        // The kiosk keeps its own wording for the compliance refusal — it
+        // is a full-screen message, not a one-liner. Everything else goes
+        // through the shared slug→sentence map, which is what stopped raw
+        // English reaching a contractor scanning in Warsaw.
         err.message === 'contractor_non_compliant'
           ? t('gate.blockedNonCompliant')
-          : err.message.length > 0
-            ? err.message
-            : t('error'),
+          : contractorErrorMessage(err.message, t),
       ),
   });
 
@@ -144,8 +148,11 @@ export default function GateKioskPage() {
                   ))}
                 </div>
               ) : null}
-              {selected.complianceStatus === 'non_compliant' ? (
-                /* PF-19: the kiosk has no override — direct to the office. */
+              {complianceBarsEntry(selected.complianceStatus as EffectiveComplianceStatus) ? (
+                /* PF-19: the kiosk has no override — direct to the office.
+                   CT-G08: `suspended` bars entry too. This read
+                   `=== 'non_compliant'`, so a contractor an administrator
+                   had deliberately suspended saw a live check-in button. */
                 <div
                   role="alert"
                   className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-center text-sm font-medium text-destructive"
@@ -177,7 +184,12 @@ export default function GateKioskPage() {
       ) : (
         <div className="space-y-5">
           <header>
-            <h1 className="text-2xl font-semibold tracking-tight">{t('gate.kioskTitle')}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {/* CT-G06: a screen bound to one site says so, otherwise the
+                  person scanning has no way to tell whether they are at the
+                  right gate. */}
+              {data.siteName ?? t('gate.kioskTitle')}
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">{t('gate.kioskPickVisit')}</p>
           </header>
           {data.visits.length === 0 ? (

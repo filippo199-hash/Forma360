@@ -25,9 +25,9 @@ export function NavDrawer({ locale, trigger }: { locale: string; trigger: ReactN
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side="left"
-        className="flex w-72 max-w-[85vw] flex-col gap-0 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground"
+        className="flex w-64 max-w-[85vw] flex-col gap-0 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground"
       >
-        <SheetTitle className="flex h-14 shrink-0 items-center border-b border-sidebar-border px-4 text-base font-semibold tracking-tight text-sidebar-foreground">
+        <SheetTitle className="flex h-14 shrink-0 items-center border-b border-sidebar-border px-3.5 text-[15px] font-semibold tracking-tight text-sidebar-foreground">
           {activeBrand.name}
         </SheetTitle>
         <SiteNavItems locale={locale} onNavigate={() => setOpen(false)} />

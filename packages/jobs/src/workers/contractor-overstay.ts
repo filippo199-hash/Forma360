@@ -8,7 +8,8 @@
  * overstay only fires once.
  */
 import type { Database } from '@forma360/db/client';
-import { contractorVisits, contractors, permissionSets, sites, user } from '@forma360/db/schema';
+import { contractorVisits, contractors, siteMembers, sites, user } from '@forma360/db/schema';
+import { usersHoldingPermission, type PermissionHolder } from '@forma360/permissions/holders';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { aliasedTable, and, eq, isNotNull, isNull, lte } from 'drizzle-orm';
@@ -16,16 +17,26 @@ import { aliasedTable, and, eq, isNotNull, isNull, lte } from 'drizzle-orm';
 export const CONTRACTOR_OVERSTAY_CRON = '0 * * * *'; // top of every hour
 export const OVERSTAY_THRESHOLD_HOURS = 24;
 
+/** One addressable person for the alert. CT-O03: the locale rides along. */
+export interface OverstayRecipient {
+  email: string;
+  name: string;
+  /** Preferred email language (PF-20); null = English. */
+  locale: string | null;
+}
+
 export interface OverstayVisit {
   visitId: string;
   tenantId: string;
   contractorName: string;
   visitorName: string | null;
   title: string;
+  /** CT-O04: needed to narrow the gate audience to the site's own team. */
+  siteId: string | null;
   siteName: string | null;
   checkedInAt: Date;
-  /** Emails of the people who scheduled / authorised the visit. */
-  inviterEmails: string[];
+  /** The people who scheduled / authorised the visit. */
+  inviters: OverstayRecipient[];
 }
 
 /**
@@ -47,10 +58,15 @@ export async function findOverstayVisits(
       contractorName: contractors.name,
       visitorName: contractorVisits.visitorName,
       title: contractorVisits.title,
+      siteId: contractorVisits.siteId,
       siteName: sites.name,
       checkedInAt: contractorVisits.checkedInAt,
       creatorEmail: creator.email,
+      creatorName: creator.name,
+      creatorLocale: creator.locale,
       authorizerEmail: authorizer.email,
+      authorizerName: authorizer.name,
+      authorizerLocale: authorizer.locale,
     })
     .from(contractorVisits)
     .innerJoin(contractors, eq(contractorVisits.contractorId, contractors.id))
@@ -69,34 +85,70 @@ export async function findOverstayVisits(
   return rows
     .filter((r): r is typeof r & { checkedInAt: Date } => r.checkedInAt !== null)
     .map((r) => {
-      const inviterEmails = [r.creatorEmail, r.authorizerEmail].filter(
-        (e): e is string => e !== null && e !== undefined,
-      );
+      const inviters: OverstayRecipient[] = [];
+      const seen = new Set<string>();
+      for (const cand of [
+        { email: r.creatorEmail, name: r.creatorName, locale: r.creatorLocale },
+        { email: r.authorizerEmail, name: r.authorizerName, locale: r.authorizerLocale },
+      ]) {
+        const email = cand.email;
+        if (email === null || email === undefined || email === '') continue;
+        if (seen.has(email)) continue;
+        seen.add(email);
+        inviters.push({ email, name: cand.name ?? email, locale: cand.locale ?? null });
+      }
       return {
         visitId: r.visitId,
         tenantId: r.tenantId,
         contractorName: r.contractorName,
         visitorName: r.visitorName,
         title: r.title,
+        siteId: r.siteId,
         siteName: r.siteName,
         checkedInAt: r.checkedInAt,
-        inviterEmails: [...new Set(inviterEmails)],
+        inviters,
       };
     });
 }
 
-/** Active users in the tenant who should watch the gate (contractors.gate or admins). */
-async function gateGuardEmails(db: Database, tenantId: string): Promise<string[]> {
-  const rows = await db
-    .select({ email: user.email, permissions: permissionSets.permissions })
-    .from(user)
-    .innerJoin(permissionSets, eq(user.permissionSetId, permissionSets.id))
-    .where(and(eq(user.tenantId, tenantId), isNull(user.deactivatedAt)));
-  return rows
-    .filter(
-      (r) => r.permissions.includes('contractors.gate') || r.permissions.includes('org.settings'),
-    )
-    .map((r) => r.email);
+/**
+ * The gate audience for ONE visit.
+ *
+ * CT-O04: this used to resolve every `contractors.gate` holder and every
+ * administrator in the tenant, cached by tenant alone — so a group with
+ * twenty sites mailed the whole company about one contractor overrunning
+ * at one of them, and told guards with no business at that site which
+ * contractor was where. It now narrows to the site's own team wherever
+ * `site_members` is curated. An empty intersection falls back to every
+ * holder: a mis-curated site must never swallow an overstay alert.
+ *
+ * Mirrors `resolveAlertRecipients` in incident-alert.ts, and uses
+ * `usersHoldingPermission` so the permission test is the same SQL
+ * containment check every other module runs (administrators qualify via
+ * `org.settings`) rather than a hand-rolled `.includes` — which is also
+ * what makes `user.locale` available for CT-O03.
+ */
+export async function resolveGateGuards(
+  db: Database,
+  tenantId: string,
+  siteId: string | null,
+): Promise<OverstayRecipient[]> {
+  const toRecipient = (h: PermissionHolder): OverstayRecipient => ({
+    email: h.email,
+    name: h.name,
+    locale: h.locale,
+  });
+  const holders = await usersHoldingPermission(db, tenantId, 'contractors.gate');
+  const addressable = holders.filter((h) => h.email !== '');
+  if (siteId === null || addressable.length === 0) return addressable.map(toRecipient);
+  const members = await db
+    .select({ userId: siteMembers.userId })
+    .from(siteMembers)
+    .where(and(eq(siteMembers.tenantId, tenantId), eq(siteMembers.siteId, siteId)));
+  if (members.length === 0) return addressable.map(toRecipient);
+  const memberIds = new Set(members.map((m) => m.userId));
+  const scoped = addressable.filter((h) => memberIds.has(h.userId));
+  return (scoped.length > 0 ? scoped : addressable).map(toRecipient);
 }
 
 export interface ContractorOverstayDeps {
@@ -104,7 +156,7 @@ export interface ContractorOverstayDeps {
   logger: Logger;
   appUrl: string;
   /** Send one overstay alert to one recipient. Injected so tests fake it. */
-  notify: (visit: OverstayVisit, email: string, boardUrl: string) => Promise<void>;
+  notify: (visit: OverstayVisit, recipient: OverstayRecipient, boardUrl: string) => Promise<void>;
   now?: () => Date;
 }
 
@@ -112,28 +164,69 @@ export interface ContractorOverstayDeps {
 export async function runContractorOverstayAlerts(deps: ContractorOverstayDeps): Promise<number> {
   const now = deps.now?.() ?? new Date();
   const overstays = await findOverstayVisits(deps.db, now, OVERSTAY_THRESHOLD_HOURS);
-  const boardUrl = `${deps.appUrl.replace(/\/$/, '')}/en/contractors`;
-  const guardCache = new Map<string, string[]>();
+  const base = deps.appUrl.replace(/\/$/, '');
+  // CT-O04: the audience depends on the SITE, not just the tenant.
+  const guardCache = new Map<string, OverstayRecipient[]>();
   let alerted = 0;
 
   for (const v of overstays) {
+    const cacheKey = `${v.tenantId}:${v.siteId ?? ''}`;
+    let guards = guardCache.get(cacheKey);
+    if (guards === undefined) {
+      try {
+        guards = await resolveGateGuards(deps.db, v.tenantId, v.siteId);
+      } catch (err) {
+        deps.logger.error(
+          { err, visitId: v.visitId },
+          '[contractor-overstay] gate-guard lookup failed',
+        );
+        continue;
+      }
+      guardCache.set(cacheKey, guards);
+    }
+    const recipients = new Map<string, OverstayRecipient>();
+    for (const r of [...v.inviters, ...guards]) {
+      if (!recipients.has(r.email)) recipients.set(r.email, r);
+    }
+
+    // CT-O02: one bad address must not abort the fan-out nor block the
+    // stamp. The per-recipient loop had no inner catch, so the first
+    // rejection threw past every remaining recipient AND past the stamp —
+    // and the next hourly tick then re-mailed everyone who had already
+    // received it, forever. Try each recipient; stamp when at least one
+    // landed (or there was genuinely nobody to tell). Total failure leaves
+    // the stamp clear so the next tick retries. Same rule as
+    // permit-expiry-watch and incident-alert (IN-A1).
+    let attempted = 0;
+    let delivered = 0;
+    for (const recipient of recipients.values()) {
+      attempted += 1;
+      try {
+        // CT-O03: the board link lands in the reader's own locale, not /en/.
+        await deps.notify(v, recipient, `${base}/${recipient.locale ?? 'en'}/contractors`);
+        delivered += 1;
+      } catch (err) {
+        deps.logger.error(
+          { err, visitId: v.visitId, to: recipient.email },
+          '[contractor-overstay] notify failed',
+        );
+      }
+    }
+    if (attempted > 0 && delivered === 0) {
+      deps.logger.error(
+        { visitId: v.visitId },
+        '[contractor-overstay] alert undelivered — stamp withheld for retry',
+      );
+      continue;
+    }
     try {
-      let guards = guardCache.get(v.tenantId);
-      if (guards === undefined) {
-        guards = await gateGuardEmails(deps.db, v.tenantId);
-        guardCache.set(v.tenantId, guards);
-      }
-      const recipients = [...new Set([...v.inviterEmails, ...guards])];
-      for (const email of recipients) {
-        await deps.notify(v, email, boardUrl);
-      }
       await deps.db
         .update(contractorVisits)
         .set({ overstayAlertedAt: now })
-        .where(eq(contractorVisits.id, v.visitId));
+        .where(and(eq(contractorVisits.tenantId, v.tenantId), eq(contractorVisits.id, v.visitId)));
       alerted += 1;
     } catch (err) {
-      deps.logger.error({ err, visitId: v.visitId }, '[contractor-overstay] alert failed');
+      deps.logger.error({ err, visitId: v.visitId }, '[contractor-overstay] stamp failed');
     }
   }
   deps.logger.info({ alerted, considered: overstays.length }, '[contractor-overstay] done');

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '../../lib/cn';
+import { contractorErrorMessage } from '../../lib/contractor-errors';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -115,8 +116,7 @@ export function ContractorUsersSection({
   const [editActivities, setEditActivities] = useState<Activity[]>([]);
 
   const refresh = () => void utils.contractors.users.list.invalidate({ contractorId });
-  const onErr = (err: { message: string }) =>
-    toast.error(err.message.length > 0 ? err.message : t('error'));
+  const onErr = (err: { message: string }) => toast.error(contractorErrorMessage(err.message, t));
 
   const invite = trpc.contractors.users.invite.useMutation({
     onSuccess: () => {
