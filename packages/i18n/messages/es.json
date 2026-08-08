@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "Color de acento",
+        "websiteUrl": "Sitio web de la empresa",
+        "websiteUrlPlaceholder": "https://tuempresa.com",
+        "derivePalette": "Derivar la paleta del sitio web",
+        "deriving": "Leyendo el sitio web…",
+        "deriveError": "No se pudo leer una paleta de ese sitio web. Comprueba la dirección e inténtalo de nuevo.",
+        "deriveRateLimited": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+        "palettePreview": "Vista previa de la paleta",
+        "chartColorsLabel": "Colores de gráficos",
+        "sampleButton": "Botón primario",
+        "sampleChip": "Etiqueta de acento"
       },
       "retention": {
         "title": "Retención y exportación de datos",

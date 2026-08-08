@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "Cor de destaque",
+        "websiteUrl": "Site da empresa",
+        "websiteUrlPlaceholder": "https://suaempresa.pt",
+        "derivePalette": "Derivar a paleta do site",
+        "deriving": "A ler o site…",
+        "deriveError": "Não foi possível ler uma paleta desse site. Verifique o endereço e tente novamente.",
+        "deriveRateLimited": "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.",
+        "palettePreview": "Pré-visualização da paleta",
+        "chartColorsLabel": "Cores dos gráficos",
+        "sampleButton": "Botão primário",
+        "sampleChip": "Etiqueta de destaque"
       },
       "retention": {
         "title": "Retenção e exportação de dados",

@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "Accentkleur",
+        "websiteUrl": "Bedrijfswebsite",
+        "websiteUrlPlaceholder": "https://jouwbedrijf.nl",
+        "derivePalette": "Palet afleiden van website",
+        "deriving": "Website wordt gelezen…",
+        "deriveError": "Kon geen palet van die website lezen. Controleer het adres en probeer het opnieuw.",
+        "deriveRateLimited": "Te veel pogingen. Wacht een paar minuten en probeer het opnieuw.",
+        "palettePreview": "Paletvoorbeeld",
+        "chartColorsLabel": "Grafiekkleuren",
+        "sampleButton": "Primaire knop",
+        "sampleChip": "Accentlabel"
       },
       "retention": {
         "title": "Databewaring & export",
