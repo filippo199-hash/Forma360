@@ -80,6 +80,9 @@ const dateRangeSchema = z.union([
     .refine((r) => r.from <= r.to, { message: 'Date range: from must not be after to' }),
 ]);
 
+/** Exported for the router's view-time filter overrides. */
+export const dashboardDateRangeSchema = dateRangeSchema;
+
 export type DashboardDateRange = z.infer<typeof dateRangeSchema>;
 
 /**

@@ -28,6 +28,7 @@ import { usersRouter } from './routers/users';
 import { actionsRouter } from './routers/actions';
 import { actionTypesRouter } from './routers/actionTypes';
 import { createAnalyticsRouter } from './routers/analytics';
+import { createDashboardsRouter } from './routers/dashboards';
 import { createMyWorkRouter } from './routers/myWork';
 import { notificationsRouter } from './routers/notifications';
 import { approvalsRouter } from './routers/approvals';
@@ -165,6 +166,20 @@ export function buildAppRouter(deps: {
         coshh: deps.coshh?.enabled ?? false,
         permits: deps.permits?.enabled ?? false,
         rams: deps.rams?.enabled ?? false,
+      },
+    }),
+    // ADR 0018: AI-built custom dashboards. Entitlement-gated (paid plan)
+    // inside the router; brand-module flags follow the same single source
+    // of truth as analytics and the module routers.
+    dashboards: createDashboardsRouter({
+      modules: {
+        riskAssessments: deps.riskAssessments?.enabled ?? false,
+        coshh: deps.coshh?.enabled ?? false,
+        permits: deps.permits?.enabled ?? false,
+        fireSafety: deps.fireSafety?.enabled ?? false,
+        incidents: deps.incidents?.enabled ?? false,
+        rams: deps.rams?.enabled ?? false,
+        training: deps.training?.enabled ?? false,
       },
     }),
     riskAssessments: createRiskAssessmentsRouter(deps.riskAssessments ?? { enabled: false }),
