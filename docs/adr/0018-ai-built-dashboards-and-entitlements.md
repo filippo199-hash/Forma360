@@ -143,8 +143,41 @@ fallback branding with no code behind it.
   must stay stable across refinements; the agent is instructed
   accordingly and the spec enforces the slug shape.
 
+## Post-build adversarial review
+
+A 5-dimension review (authz, correctness, workers, silent-failures,
+cross-module contracts) with per-finding adversarial verification ran
+over the whole branch and surfaced 23 confirmed defects, all fixed:
+
+- **The load-bearing one** — `renderPdf` (and scheduled delivery) had
+  bypassed the per-source viewer gate that the interactive grid applies,
+  so a tenant-visible dashboard could leak, via PDF, counts the viewer
+  was forbidden. The whole-dashboard render is now all-or-nothing on the
+  viewer's source permissions (DH-E23c), which also keeps the shared R2
+  artefact correct (its cache key is the spec hash, not a permission set).
+- The SSRF guard on the palette fetch was defeatable by DNS rebinding
+  (validate one address, connect to another); the connection is now
+  pinned to the validated addresses.
+- The send worker rethrew on the first failing recipient, which on retry
+  re-mailed everyone earlier in the list; it now isolates per recipient
+  and only an all-fail occurrence retries. A stub PDF (render engine
+  unconfigured) is never emailed. A downgraded tenant stops delivering
+  automatically (both tick and send re-check the entitlement).
+- Calendar-invalid custom dates, metric-disallowed widget filters, the
+  headsUp archived-draft miscount, and the silent 400-bucket truncation
+  were all closed; the web pages gained real error/retry states.
+
+**Known low-severity follow-ups** (tracked, not blocking): the dashboard
+PDF does not yet render the tenant palette/logo the inspection and FRA
+PDFs do (a symmetry gap against this ADR's "the whole app and the PDFs"
+claim); and `training.expiringSoon` uses a fixed 60-day lead where the
+matrix honours each requirement's `renewalLeadDays` — the widget is
+honestly labelled "within 60 days", so it is a divergence from the
+register, not a wrong number.
+
 ## Edge cases
 
-DH-E01..E10 (spec schema, `dashboard-spec.test.ts`), DH-E11..E22
-(router + executor, `dashboards.test.ts`), DH-J01..J03 (delivery
-workers), NAV-E16 (entitlement-gated nav). See `docs/edge-cases.html`.
+DH-E01..E10 (spec schema, `dashboard-spec.test.ts`), DH-E11..E22 +
+DH-E23a/b/c (router + executor + renderPdf gating, `dashboards.test.ts`),
+DH-J01..J03 + J01c/J03b/J03c (delivery workers), NAV-E16
+(entitlement-gated nav). See `docs/edge-cases.html`.
