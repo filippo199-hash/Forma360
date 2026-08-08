@@ -40,6 +40,8 @@ const dependentEntity = z.enum([
   'template',
   'inspection',
   'action',
+  // ADR 0018: dashboards register a delivery-schedule dependent resolver.
+  'dashboard',
 ]);
 
 const previewDependentsInput = z.object({

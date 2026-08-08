@@ -2,7 +2,12 @@
  * Content-hash stability tests for {@link hashInspectionSnapshot}.
  */
 import { describe, expect, it } from 'vitest';
-import { hashInspectionSnapshot, type InspectionRenderSnapshot } from './snapshot';
+import {
+  hashDashboardSnapshot,
+  hashInspectionSnapshot,
+  type DashboardRenderSnapshot,
+  type InspectionRenderSnapshot,
+} from './snapshot';
 
 function baseSnap(): InspectionRenderSnapshot {
   return {
@@ -81,5 +86,48 @@ describe('hashInspectionSnapshot', () => {
 
   it('produces a 64-char lowercase hex digest', () => {
     expect(hashInspectionSnapshot(baseSnap())).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+describe('hashDashboardSnapshot', () => {
+  function baseDashSnap(): DashboardRenderSnapshot {
+    return {
+      dashboard: {
+        id: 'D1',
+        tenantId: 'T1',
+        title: 'Weekly overview',
+        description: 'The Monday pack',
+        status: 'published',
+        spec: { version: '1', widgets: [{ id: 'w1' }] },
+        updatedAt: '2026-08-01T09:00:00.000Z',
+      },
+      tenantName: 'Acme',
+    };
+  }
+
+  it('produces the same hash for the same content', () => {
+    expect(hashDashboardSnapshot(baseDashSnap())).toBe(hashDashboardSnapshot(baseDashSnap()));
+  });
+
+  it('differs when the spec, title or updatedAt changes', () => {
+    const a = baseDashSnap();
+    const spec = baseDashSnap();
+    spec.dashboard.spec = { version: '1', widgets: [{ id: 'w2' }] };
+    const title = baseDashSnap();
+    title.dashboard.title = 'Renamed';
+    const updated = baseDashSnap();
+    updated.dashboard.updatedAt = '2026-08-02T09:00:00.000Z';
+    expect(hashDashboardSnapshot(spec)).not.toBe(hashDashboardSnapshot(a));
+    expect(hashDashboardSnapshot(title)).not.toBe(hashDashboardSnapshot(a));
+    expect(hashDashboardSnapshot(updated)).not.toBe(hashDashboardSnapshot(a));
+  });
+
+  it('ignores description, status and tenantName (not render-cache inputs)', () => {
+    const a = baseDashSnap();
+    const b = baseDashSnap();
+    b.dashboard.description = null;
+    b.dashboard.status = 'draft';
+    b.tenantName = 'Other Co';
+    expect(hashDashboardSnapshot(a)).toBe(hashDashboardSnapshot(b));
   });
 });

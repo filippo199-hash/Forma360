@@ -21,10 +21,11 @@ import { loadHeadsUpLibraryDocuments } from '@forma360/api/heads-up-documents';
 import { headsUpAttachments, headsUps, ramsClientLinks, user } from '@forma360/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
-import { PrintLayout } from '../../../src/components/print-layout';
+import { PrintLayout, type PrintTenantBranding } from '../../../src/components/print-layout';
 import { HeadsUpPublicView } from '../../../src/components/heads-up/public-view';
 import { RamsClientAcceptanceView } from '../../../src/components/rams/client-acceptance-view';
 import { db } from '../../../src/server/db';
+import { loadTenantBrandingById } from '../../../src/server/load-branding';
 import { fetchLogoUrl } from '../../../src/server/storage';
 
 interface Props {
@@ -48,9 +49,21 @@ export default async function SharedInspectionPage({ params }: Props) {
     )?.settings?.branding?.logoStorageKey;
     const logoUrl = await fetchLogoUrl(brandingKey);
 
+    // ADR 0018: tenant branding backs up the template's own (per-field).
+    const tenant = await loadTenantBrandingById(claims.tenantId);
+    const tenantBranding: PrintTenantBranding = {
+      logoUrl: tenant.logoUrl,
+      ...(tenant.branding?.primaryColor !== undefined
+        ? { primaryColor: tenant.branding.primaryColor }
+        : {}),
+      ...(tenant.branding?.accentColor !== undefined
+        ? { accentColor: tenant.branding.accentColor }
+        : {}),
+    };
+
     return (
       <div className="mx-auto max-w-3xl px-4 py-6">
-        <PrintLayout snapshot={snapshot} logoUrl={logoUrl} />
+        <PrintLayout snapshot={snapshot} logoUrl={logoUrl} tenantBranding={tenantBranding} />
       </div>
     );
   }

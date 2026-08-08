@@ -18,6 +18,8 @@
 import { execSync } from 'node:child_process';
 import { signRenderToken } from './hmac';
 import {
+  loadDashboardSnapshot,
+  hashDashboardSnapshot,
   loadFraSnapshot,
   hashFraSnapshot,
   loadIncidentSnapshot,
@@ -291,6 +293,41 @@ export async function renderRamsPdf(
   };
 }
 
+/**
+ * Render a custom dashboard to PDF (ADR 0018) — the artefact scheduled
+ * email delivery attaches and the toolbar download serves. The print
+ * route re-executes every widget live at render time, so the same
+ * cache key can carry fresher numbers on a later render; the key hashes
+ * (spec + updatedAt + title) so an unchanged dashboard overwrites one
+ * object instead of accreting a file per run. Same pipeline as the six
+ * module renderers, different print route.
+ */
+export async function renderDashboardPdf(
+  deps: RenderDeps,
+  input: { tenantId: string; dashboardId: string },
+): Promise<RenderResult> {
+  const snap = await loadDashboardSnapshot(deps.db, input);
+  if (snap === null) {
+    throw new Error(`Dashboard not found: ${input.dashboardId}`);
+  }
+  const hash = hashDashboardSnapshot(snap);
+  const key = `${input.tenantId}/dashboards/${input.dashboardId}/pdf-${hash}.pdf`;
+
+  const bytes = await renderPdfBytes(deps, {
+    url: buildRenderUrl(deps, 'dashboard', snap.dashboard.id),
+    stubTitle: snap.dashboard.title,
+  });
+
+  await uploadPdf(deps, { key, bytes });
+
+  return {
+    key,
+    bytes: bytes.length,
+    cached: false,
+    stub: isStub(bytes),
+  };
+}
+
 /** Build the R2 object key for a given inspection + content hash. */
 export function pdfObjectKey(tenantId: string, inspectionId: string, hash: string): string {
   return `${tenantId}/inspections/${inspectionId}/pdf-${hash}.pdf`;
@@ -456,7 +493,7 @@ function resolveSystemChromium(): string {
  */
 function buildRenderUrl(
   deps: RenderDeps,
-  kind: 'inspection' | 'risk-assessment' | 'permit' | 'fra' | 'incident' | 'rams',
+  kind: 'inspection' | 'risk-assessment' | 'permit' | 'fra' | 'incident' | 'rams' | 'dashboard',
   subjectId: string,
 ): string {
   const token = signRenderToken({

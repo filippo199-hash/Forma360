@@ -1,0 +1,8 @@
+{
+  "subject": "Scheduled report: {dashboardTitle}",
+  "preheader": "Your scheduled {productName} dashboard report is attached as a PDF.",
+  "greeting": "Hello,",
+  "body": "The scheduled report \"{dashboardTitle}\" from {productName} is attached to this email as a PDF.\n\nThe numbers were generated at send time; open the dashboard online for the live view.",
+  "cta": "Open the dashboard",
+  "footer": "You are receiving this because a {productName} user scheduled this dashboard report for you. Contact them to change or stop these emails."
+}

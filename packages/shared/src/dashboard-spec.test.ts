@@ -186,6 +186,26 @@ describe('dashboardSpecSchema — refusals', () => {
     expect(result.errors.join(' ')).toContain('unknown dimension "weather"');
   });
 
+  it('DH-E05b: a filter on a metric-disallowed dimension is rejected (not a silent zero)', () => {
+    // `missed` counts scheduled occurrences, which have no `status` — a
+    // filter on it would narrow the widget to a permanent zero.
+    const result = parseDashboardSpec(
+      validSpec([
+        {
+          id: 'missed-filtered',
+          kind: 'kpi',
+          title: 'Missed, filtered by status',
+          source: 'inspections',
+          metric: 'missed',
+          filters: [{ dimension: 'status', values: ['completed'] }],
+        },
+      ]),
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(' ')).toContain('cannot be filtered by');
+  });
+
   it('DH-E06: widget count is capped', () => {
     const widgets = Array.from({ length: DASHBOARD_LIMITS.MAX_WIDGETS + 1 }, (_, i) =>
       kpi({ id: `kpi-${i}` }),
@@ -211,6 +231,25 @@ describe('dashboardSpecSchema — refusals', () => {
       filterDefaults: { dateRange: { from: '2026-06-30', to: '2026-01-01' } },
     });
     expect(result.ok).toBe(false);
+  });
+
+  it('DH-E09b: calendar-invalid custom dates are rejected (no silent rollover / crash)', () => {
+    for (const bad of ['2026-06-31', '2026-13-01', '2026-02-30', '2026-00-10']) {
+      const result = parseDashboardSpec({
+        version: DASHBOARD_SPEC_VERSION,
+        widgets: [kpi()],
+        filterDefaults: { dateRange: { from: bad, to: '2026-12-31' } },
+      });
+      expect(result.ok, `${bad} must be rejected`).toBe(false);
+    }
+    // A real leap day still passes.
+    expect(
+      parseDashboardSpec({
+        version: DASHBOARD_SPEC_VERSION,
+        widgets: [kpi()],
+        filterDefaults: { dateRange: { from: '2028-02-29', to: '2028-03-01' } },
+      }).ok,
+    ).toBe(true);
   });
 
   it('DH-E10: version must match; an empty dashboard is rejected', () => {

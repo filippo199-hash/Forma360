@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { activeBrand } from '../../lib/brand';
 import { useHasPermission } from '../../lib/permissions-context';
+import { contrastRatio, parseHexColor } from '../../lib/tenant-theme';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -14,17 +15,36 @@ import { Label } from '../ui/label';
 export interface CompanyBranding {
   logoStorageKey?: string;
   primaryColor?: string;
+  websiteUrl?: string;
+  accentColor?: string;
+  chartColors?: string[];
+}
+
+interface ProposedPalette {
+  primaryColor: string;
+  accentColor: string;
+  chartColors: string[];
+  reasoning: string;
 }
 
 const DEFAULT_PRIMARY = '#0F766E';
+const DEFAULT_ACCENT = '#f97316';
+
+/** White text when it holds 4.5:1 on `hex`, else near-black — mirrors the
+ * server-side guard in lib/tenant-theme so the preview never lies. */
+function sampleForeground(hex: string): string {
+  const rgb = parseHexColor(hex);
+  if (rgb === null) return '#ffffff';
+  return contrastRatio({ r: 255, g: 255, b: 255 }, rgb) >= 4.5 ? '#ffffff' : '#181b20';
+}
 
 /**
  * Org-level branding editor rendered on the Company settings page. Uploads a
- * logo via /api/upload/company-logo, lets an admin pick a primary colour, and
- * persists both through tenants.updateBranding. Mirrors the template
- * BrandingForm in components/templates/settings-tab.tsx. Edit controls are
- * gated on `org.settings` — the server (tenants.updateBranding + the upload
- * route) is still the source of truth.
+ * logo via /api/upload/company-logo, lets an admin pick colours manually or
+ * derive a full palette from the company website (POST /api/ai/brand-palette,
+ * ADR 0018), and persists everything through tenants.updateBranding after the
+ * admin confirms. Edit controls are gated on `org.settings` — the server
+ * (tenants.updateBranding + both routes) is still the source of truth.
  */
 export function CompanyBranding({ branding }: { branding: CompanyBranding | null }) {
   const t = useTranslations('settings.company.branding');
@@ -38,16 +58,31 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
   const [primaryColor, setPrimaryColor] = useState<string>(
     branding?.primaryColor ?? DEFAULT_PRIMARY,
   );
+  const [accentColor, setAccentColor] = useState<string | undefined>(branding?.accentColor);
+  const [chartColors, setChartColors] = useState<string[]>(branding?.chartColors ?? []);
+  const [websiteUrl, setWebsiteUrl] = useState<string>(branding?.websiteUrl ?? '');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [deriving, setDeriving] = useState(false);
+  const [deriveError, setDeriveError] = useState<string | null>(null);
+  const [reasoning, setReasoning] = useState<string | null>(null);
 
   // Re-seed local state whenever the persisted branding changes (e.g. after a
   // successful save invalidates tenants.get).
   useEffect(() => {
     setLogoStorageKey(branding?.logoStorageKey);
     setPrimaryColor(branding?.primaryColor ?? DEFAULT_PRIMARY);
-  }, [branding?.logoStorageKey, branding?.primaryColor]);
+    setAccentColor(branding?.accentColor);
+    setChartColors(branding?.chartColors ?? []);
+    setWebsiteUrl(branding?.websiteUrl ?? '');
+  }, [
+    branding?.logoStorageKey,
+    branding?.primaryColor,
+    branding?.accentColor,
+    branding?.chartColors,
+    branding?.websiteUrl,
+  ]);
 
   const save = trpc.tenants.updateBranding.useMutation({
     onSuccess: () => {
@@ -113,10 +148,51 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
     }
   }
 
+  async function onDerivePalette(): Promise<void> {
+    const raw = websiteUrl.trim();
+    if (raw === '') return;
+    // Bare domains get the only scheme the endpoint accepts.
+    const url = raw.includes('://') ? raw : `https://${raw}`;
+    setWebsiteUrl(url);
+    setDeriveError(null);
+    setDeriving(true);
+    try {
+      const res = await fetch('/api/ai/brand-palette', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      if (res.status === 429) {
+        setDeriveError(t('deriveRateLimited'));
+        return;
+      }
+      if (!res.ok) {
+        setDeriveError(t('deriveError'));
+        return;
+      }
+      const data = (await res.json()) as { palette?: ProposedPalette };
+      if (data.palette === undefined) {
+        setDeriveError(t('deriveError'));
+        return;
+      }
+      setPrimaryColor(data.palette.primaryColor);
+      setAccentColor(data.palette.accentColor);
+      setChartColors(data.palette.chartColors);
+      setReasoning(data.palette.reasoning);
+    } catch {
+      setDeriveError(t('deriveError'));
+    } finally {
+      setDeriving(false);
+    }
+  }
+
   function onSave(): void {
     save.mutate({
-      logoStorageKey: logoStorageKey ?? undefined,
+      ...(logoStorageKey !== undefined && logoStorageKey !== '' ? { logoStorageKey } : {}),
       primaryColor,
+      ...(websiteUrl.trim() !== '' ? { websiteUrl: websiteUrl.trim() } : {}),
+      ...(accentColor !== undefined ? { accentColor } : {}),
+      ...(chartColors.length > 0 ? { chartColors } : {}),
     });
   }
 
@@ -160,34 +236,133 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
               ) : null}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="brand-primary">{t('primaryColor')}</Label>
-              <Input
-                id="brand-primary"
-                type="color"
-                value={primaryColor}
-                disabled={!canManage}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-                className="h-10 w-full max-w-[8rem]"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="brand-primary">{t('primaryColor')}</Label>
+                <Input
+                  id="brand-primary"
+                  type="color"
+                  value={primaryColor}
+                  disabled={!canManage}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="h-10 w-full max-w-[8rem]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="brand-accent">{t('accentColor')}</Label>
+                <Input
+                  id="brand-accent"
+                  type="color"
+                  value={accentColor ?? DEFAULT_ACCENT}
+                  disabled={!canManage}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="h-10 w-full max-w-[8rem]"
+                />
+              </div>
             </div>
           </div>
 
+          {/* ADR 0018: derive the palette from the company website. */}
           <div className="space-y-1.5">
-            <Label>{t('preview')}</Label>
-            <div className="overflow-hidden rounded-md border">
-              <div
-                className="flex items-center gap-3 px-3 py-2 text-white"
-                style={{ backgroundColor: primaryColor }}
+            <Label htmlFor="brand-website">{t('websiteUrl')}</Label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                id="brand-website"
+                type="url"
+                inputMode="url"
+                placeholder={t('websiteUrlPlaceholder')}
+                value={websiteUrl}
+                disabled={!canManage || deriving}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                className="sm:max-w-sm"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!canManage || deriving || websiteUrl.trim() === ''}
+                onClick={() => void onDerivePalette()}
               >
-                {previewUrl !== null ? (
-                  <img src={previewUrl} alt="logo" className="h-8 w-auto object-contain" />
-                ) : (
-                  <div className="flex h-8 items-center text-xs text-white/70" aria-hidden="true">
-                    {t('noLogo')}
+                {deriving ? t('deriving') : t('derivePalette')}
+              </Button>
+            </div>
+            {deriveError !== null ? <p className="text-xs text-red-600">{deriveError}</p> : null}
+            {reasoning !== null ? (
+              <p className="text-xs text-muted-foreground">{reasoning}</p>
+            ) : null}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>{t('palettePreview')}</Label>
+            <div className="space-y-3 rounded-md border p-3">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-8 w-8 rounded-md border"
+                    style={{ backgroundColor: primaryColor }}
+                    aria-hidden="true"
+                  />
+                  <span className="text-xs text-muted-foreground">{t('primaryColor')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-8 w-8 rounded-md border"
+                    style={{ backgroundColor: accentColor ?? DEFAULT_ACCENT }}
+                    aria-hidden="true"
+                  />
+                  <span className="text-xs text-muted-foreground">{t('accentColor')}</span>
+                </div>
+                {chartColors.length > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <span className="flex overflow-hidden rounded-md border" aria-hidden="true">
+                      {chartColors.map((hex, i) => (
+                        <span
+                          key={`${hex}-${i}`}
+                          className="h-8 w-5"
+                          style={{ backgroundColor: hex }}
+                        />
+                      ))}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{t('chartColorsLabel')}</span>
                   </div>
-                )}
-                <span className="text-sm font-medium">{activeBrand.name}</span>
+                ) : null}
+              </div>
+
+              {/* Sample controls so the admin sees the palette doing real work. */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className="inline-flex h-9 items-center rounded-md px-4 text-sm font-medium"
+                  style={{ backgroundColor: primaryColor, color: sampleForeground(primaryColor) }}
+                >
+                  {t('sampleButton')}
+                </span>
+                <span
+                  className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                  style={{
+                    borderColor: accentColor ?? DEFAULT_ACCENT,
+                    color: accentColor ?? DEFAULT_ACCENT,
+                  }}
+                >
+                  {t('sampleChip')}
+                </span>
+              </div>
+
+              <div className="overflow-hidden rounded-md border">
+                <div
+                  className="flex items-center gap-3 px-3 py-2"
+                  style={{
+                    backgroundColor: primaryColor,
+                    color: sampleForeground(primaryColor),
+                  }}
+                >
+                  {previewUrl !== null ? (
+                    <img src={previewUrl} alt="logo" className="h-8 w-auto object-contain" />
+                  ) : (
+                    <div className="flex h-8 items-center text-xs opacity-70" aria-hidden="true">
+                      {t('noLogo')}
+                    </div>
+                  )}
+                  <span className="text-sm font-medium">{activeBrand.name}</span>
+                </div>
               </div>
             </div>
           </div>

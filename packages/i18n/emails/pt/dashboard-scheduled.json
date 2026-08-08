@@ -1,0 +1,8 @@
+{
+  "subject": "Relatório agendado: {dashboardTitle}",
+  "preheader": "O seu relatório agendado do painel {productName} está anexado em PDF.",
+  "greeting": "Olá,",
+  "body": "O relatório agendado \"{dashboardTitle}\" de {productName} está anexado a este email em PDF.\n\nOs números foram gerados no momento do envio; abra o painel online para a vista em tempo real.",
+  "cta": "Abrir o painel",
+  "footer": "Está a receber este email porque um utilizador de {productName} agendou este relatório para si. Contacte essa pessoa para alterar ou parar estes envios."
+}

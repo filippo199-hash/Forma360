@@ -126,6 +126,21 @@ export const QUEUE_NAMES = {
    * deduped on `reminder_sent_at`, silent when nothing is due.
    */
   TRAINING_EXPIRY: 'forma360-training-expiry',
+  /**
+   * ADR 0018 — 15-minute scan of unpaused `dashboard_schedules` whose
+   * dashboard is published. Computes due RRULE occurrences over the
+   * window (max(lastSentAt, startAt, now − 24h), now] and enqueues one
+   * DASHBOARD_SCHEDULE_SEND per due schedule — latest occurrence only,
+   * so a catch-up after downtime sends ONE email, not a backlog.
+   */
+  DASHBOARD_SCHEDULE_TICK: 'forma360-dashboard-schedule-tick',
+  /**
+   * ADR 0018 — render one dashboard PDF and email it to every
+   * recipient of one schedule, then stamp `lastSentAt = occurrenceAt`
+   * (notify-then-stamp, the IN-A1 lesson: a failed send retries with
+   * the stamp unset).
+   */
+  DASHBOARD_SCHEDULE_SEND: 'forma360-dashboard-schedule-send',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -265,6 +280,20 @@ export type TrainingExpiryPayload = z.infer<typeof trainingExpiryPayloadSchema>;
 export const retentionSweepPayloadSchema = z.object({}).strict();
 export type RetentionSweepPayload = z.infer<typeof retentionSweepPayloadSchema>;
 
+/** Dashboard schedule tick — no payload; the worker scans every schedule. */
+export const dashboardScheduleTickPayloadSchema = z.object({}).strict();
+export type DashboardScheduleTickPayload = z.infer<typeof dashboardScheduleTickPayloadSchema>;
+
+/** Send one dashboard-schedule occurrence (render + email + stamp). */
+export const dashboardScheduleSendPayloadSchema = z
+  .object({
+    scheduleId: z.string().length(26),
+    /** ISO instant of the occurrence being delivered — the dedupe key. */
+    occurrenceAt: z.string().datetime(),
+  })
+  .strict();
+export type DashboardScheduleSendPayload = z.infer<typeof dashboardScheduleSendPayloadSchema>;
+
 /**
  * Type-level map from queue name to its payload type. Adding a new queue
  * adds a new key here; the enqueue helper uses this to type-check callers.
@@ -293,6 +322,8 @@ export interface QueuePayloads {
   [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: ScheduleMissedSweepPayload;
   [QUEUE_NAMES.RETENTION_SWEEP]: RetentionSweepPayload;
   [QUEUE_NAMES.TRAINING_EXPIRY]: TrainingExpiryPayload;
+  [QUEUE_NAMES.DASHBOARD_SCHEDULE_TICK]: DashboardScheduleTickPayload;
+  [QUEUE_NAMES.DASHBOARD_SCHEDULE_SEND]: DashboardScheduleSendPayload;
 }
 
 /** Runtime schema map mirroring QueuePayloads — used for validation at enqueue. */
@@ -320,6 +351,8 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: scheduleMissedSweepPayloadSchema,
   [QUEUE_NAMES.RETENTION_SWEEP]: retentionSweepPayloadSchema,
   [QUEUE_NAMES.TRAINING_EXPIRY]: trainingExpiryPayloadSchema,
+  [QUEUE_NAMES.DASHBOARD_SCHEDULE_TICK]: dashboardScheduleTickPayloadSchema,
+  [QUEUE_NAMES.DASHBOARD_SCHEDULE_SEND]: dashboardScheduleSendPayloadSchema,
 } as const;
 
 // ─── Lazy queue handles ─────────────────────────────────────────────────────

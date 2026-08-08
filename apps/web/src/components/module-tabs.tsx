@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
 import { activeBrand } from '../lib/brand';
 import { buildNavSections, moduleTabsForPath } from '../lib/nav-model';
-import { usePermissionList } from '../lib/permissions-context';
+import { useEntitlementList, usePermissionList } from '../lib/permissions-context';
 
 export function ModuleTabs() {
   const t = useTranslations('nav');
@@ -27,8 +27,9 @@ export function ModuleTabs() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const permissions = usePermissionList();
+  const entitlements = useEntitlementList();
 
-  const sections = buildNavSections({ locale, brandId: activeBrand.id, permissions });
+  const sections = buildNavSections({ locale, brandId: activeBrand.id, permissions, entitlements });
   const strip = moduleTabsForPath(sections, pathname);
   if (strip === undefined) return null;
 

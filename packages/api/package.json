@@ -43,6 +43,10 @@
     "./sandbox": {
       "types": "./src/sandbox/provision.ts",
       "default": "./src/sandbox/provision.ts"
+    },
+    "./dashboards/executor": {
+      "types": "./src/dashboards/executor.ts",
+      "default": "./src/dashboards/executor.ts"
     }
   },
   "scripts": {

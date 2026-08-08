@@ -96,10 +96,23 @@ function InstructionPrint({
   );
 }
 
+/**
+ * Tenant-level branding fallback (ADR 0018). The template schema always
+ * promised "templates without branding fall back to tenant defaults in
+ * rendered output" — this is that fallback. Per-field: the tenant value
+ * applies only where the template does not set its own.
+ */
+export interface PrintTenantBranding {
+  logoUrl?: string | null;
+  primaryColor?: string;
+  accentColor?: string;
+}
+
 export function PrintLayout({
   snapshot,
   logoUrl = null,
   mediaUrls = {},
+  tenantBranding = null,
 }: {
   snapshot: InspectionRenderSnapshot;
   /** Pre-resolved signed URL for `settings.branding.logoStorageKey`. Caller is responsible for fetching this. */
@@ -110,11 +123,14 @@ export function PrintLayout({
    * (same as `logoUrl`); unresolved keys simply don't render an image.
    */
   mediaUrls?: Record<string, string>;
+  /** Tenant branding used per-field when the template sets none. */
+  tenantBranding?: PrintTenantBranding | null;
 }) {
   const content = snapshot.template.content as TemplateContentLike | undefined;
   const branding = content?.settings?.branding;
-  const primary = branding?.primaryColor;
-  const accent = branding?.accentColor;
+  const primary = branding?.primaryColor ?? tenantBranding?.primaryColor;
+  const accent = branding?.accentColor ?? tenantBranding?.accentColor;
+  const coverLogoUrl = logoUrl ?? tenantBranding?.logoUrl ?? null;
 
   // Flagged-answer summary (shown at the very top of the report). Computed
   // from the same pure helper the conduct UI uses, so the two never disagree.
@@ -194,12 +210,12 @@ export function PrintLayout({
         }}
       />
       <div className="print-body">
-        {primary !== undefined || logoUrl !== null ? (
+        {primary !== undefined || coverLogoUrl !== null ? (
           <div
             className="print-cover"
             style={primary !== undefined ? { backgroundColor: primary } : undefined}
           >
-            {logoUrl !== null ? <img src={logoUrl} alt="logo" /> : null}
+            {coverLogoUrl !== null ? <img src={coverLogoUrl} alt="logo" /> : null}
             <h1>{snapshot.inspection.title}</h1>
           </div>
         ) : (

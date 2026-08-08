@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "Color de acento",
+        "websiteUrl": "Sitio web de la empresa",
+        "websiteUrlPlaceholder": "https://tuempresa.com",
+        "derivePalette": "Derivar la paleta del sitio web",
+        "deriving": "Leyendo el sitio web…",
+        "deriveError": "No se pudo leer una paleta de ese sitio web. Comprueba la dirección e inténtalo de nuevo.",
+        "deriveRateLimited": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+        "palettePreview": "Vista previa de la paleta",
+        "chartColorsLabel": "Colores de gráficos",
+        "sampleButton": "Botón primario",
+        "sampleChip": "Etiqueta de acento"
       },
       "retention": {
         "title": "Retención y exportación de datos",
@@ -1464,7 +1475,8 @@
     "coshh": "COSHH",
     "permits": "Permisos",
     "fireSafety": "Seguridad contra incendios",
-    "analytics": "Panel",
+    "analytics": "Resumen",
+    "dashboards": "Paneles",
     "incidents": "Incidentes",
     "more": "Más",
     "quickLabel": "Navegación rápida",
@@ -6750,5 +6762,154 @@
     "submit": "Guardar mi espacio",
     "success": "Guardado. Revisa tu bandeja de entrada para el código de acceso.",
     "title": "Guarda tu trabajo"
+  },
+  "dashboards": {
+    "list": {
+      "title": "Paneles",
+      "subtitle": "Paneles personalizados creados por IA — tantos como necesites.",
+      "new": "Nuevo panel",
+      "searchPlaceholder": "Buscar paneles…",
+      "emptyFirstRun": "Aún no hay paneles. Describe lo que quieres ver y la IA creará el primer borrador.",
+      "emptyFiltered": "Nada coincide con tu búsqueda.",
+      "emptyCta": "Crea tu primer panel",
+      "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
+      "updatedAt": "Actualizado {at}",
+      "byOwner": "Por {owner} · {at}",
+      "loadError": "No se pudieron cargar tus paneles."
+    },
+    "status": {
+      "all": "Todos",
+      "draft": "Borrador",
+      "published": "Publicado",
+      "archived": "Archivado"
+    },
+    "visibility": {
+      "private": "Solo yo",
+      "selected": "Personas seleccionadas",
+      "tenant": "Todos"
+    },
+    "new": {
+      "title": "Crear un panel",
+      "subtitle": "Describe lo que quieres seguir — escríbelo o díctalo. Podrás refinarlo todo después.",
+      "suggestionPermits": "Créame un panel sobre nuestros permisos de trabajo: qué está activo ahora y cómo evoluciona la emisión.",
+      "suggestionSite": "Crea un panel para un centro: acciones abiertas, observaciones e inspecciones allí.",
+      "suggestionActions": "Muestra nuestras acciones: cuántas están abiertas y vencidas, por centro y por responsable."
+    },
+    "detail": {
+      "updated": "Panel actualizado",
+      "published": "Panel publicado",
+      "notFound": "Este panel no existe o no tienes acceso.",
+      "specInvalid": "Este panel no se puede mostrar — su definición no es válida.",
+      "publish": "Publicar",
+      "unpublish": "Despublicar",
+      "restore": "Restaurar",
+      "share": "Compartir",
+      "schedule": "Programar",
+      "archive": "Archivar",
+      "archiveConfirm": "¿Archivar este panel? Los envíos programados se pausarán.",
+      "refine": "Refinar",
+      "dataError": "No se pudieron cargar los datos del panel.",
+      "retry": "Reintentar",
+      "downloadPdf": "Descargar PDF"
+    },
+    "chat": {
+      "requestFailed": "Algo salió mal. Inténtalo de nuevo.",
+      "proposalApplied": "Aquí está tu panel.",
+      "building": "Creando el panel…",
+      "applying": "Aplicando cambios…",
+      "suggestionsIntro": "Prueba una de estas ideas o describe lo que necesitas:",
+      "createPlaceholder": "Describe el panel que quieres…",
+      "refinePlaceholder": "Describe un cambio — p. ej. «usa columnas en vez de línea»…",
+      "refineTitle": "Refinar este panel",
+      "refineHint": "Pide cambios en lenguaje natural; el panel se actualiza al momento.",
+      "send": "Enviar",
+      "startRecording": "Dictar tu mensaje",
+      "stopRecording": "Detener grabación",
+      "transcribeFailed": "No se pudo transcribir la grabación.",
+      "micDenied": "Se denegó el acceso al micrófono."
+    },
+    "filters": {
+      "dateRange": "Periodo",
+      "from": "Desde",
+      "to": "Hasta",
+      "allSites": "Todos los centros",
+      "sitesSelected": "{count, plural, one {# centro} other {# centros}}",
+      "loadingSites": "Cargando centros…",
+      "noSites": "No hay centros configurados.",
+      "presets": {
+        "last7d": "Últimos 7 días",
+        "last30d": "Últimos 30 días",
+        "last90d": "Últimos 90 días",
+        "last12m": "Últimos 12 meses",
+        "thisMonth": "Este mes",
+        "thisQuarter": "Este trimestre",
+        "thisYear": "Este año",
+        "custom": "Rango personalizado…"
+      }
+    },
+    "widget": {
+      "menu": "Opciones del widget",
+      "downloadExcel": "Descargar Excel",
+      "openRegister": "Abrir el registro",
+      "forbidden": "No tienes permiso para ver estos datos.",
+      "moduleDisabled": "Este módulo no está disponible.",
+      "failed": "No se pudo cargar este widget.",
+      "noneBucket": "Sin asignar",
+      "otherBucket": "Otros",
+      "tableDimension": "Grupo",
+      "noData": "Sin datos en este periodo.",
+      "vsPrevious": "vs {value} periodo anterior",
+      "inRange": "Dentro del periodo seleccionado",
+      "liveCount": "Recuento en vivo — el periodo no aplica"
+    },
+    "share": {
+      "title": "Quién puede ver este panel",
+      "saved": "Uso compartido actualizado",
+      "failed": "No se pudo actualizar el uso compartido.",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "privateHint": "Solo tú (y los gestores de análisis) podéis abrirlo.",
+      "selectedHint": "Solo las personas elegidas, una vez publicado.",
+      "tenantHint": "Toda tu organización con acceso a análisis, una vez publicado.",
+      "loadingUsers": "Cargando personas…",
+      "noUsers": "No se encontraron más usuarios."
+    },
+    "scheduleDialog": {
+      "title": "Enviar este panel por correo como PDF",
+      "empty": "Aún no hay envíos programados.",
+      "newTitle": "Nuevo envío programado",
+      "frequency": "Frecuencia",
+      "daily": "Diario",
+      "weekly": "Semanal",
+      "monthly": "Mensual",
+      "weekday": "Día de la semana",
+      "monthday": "Día del mes",
+      "time": "Hora",
+      "recipients": "Destinatarios",
+      "recipientsPlaceholder": "Direcciones de correo separadas por comas — se permiten destinatarios externos",
+      "externalNote": "Los destinatarios reciben el panel como PDF adjunto. Cada envío queda registrado.",
+      "add": "Añadir programación",
+      "created": "Programación creada",
+      "failed": "No se pudo crear la programación.",
+      "noRecipients": "Añade al menos una dirección de correo.",
+      "paused": "Pausado",
+      "pause": "Pausar",
+      "resume": "Reanudar",
+      "delete": "Eliminar",
+      "weekdays": {
+        "MO": "Lunes",
+        "TU": "Martes",
+        "WE": "Miércoles",
+        "TH": "Jueves",
+        "FR": "Viernes",
+        "SA": "Sábado",
+        "SU": "Domingo"
+      }
+    },
+    "upgrade": {
+      "title": "Los paneles personalizados son una función de pago",
+      "body": "Crea paneles ilimitados diseñados por IA, programa envíos en PDF y exporta datos a Excel. Tu resumen fijo sigue siendo gratuito.",
+      "cta": "Habla con nosotros para mejorar tu plan"
+    }
   }
 }

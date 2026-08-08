@@ -26,4 +26,5 @@ export type { FireSafetyRouterDeps } from './routers/fireSafety';
 export type { IncidentsRouterDeps } from './routers/incidents';
 export type { RamsRouterDeps } from './routers/rams';
 export type { TrainingRouterDeps } from './routers/training';
+export type { DashboardsRouterDeps } from './routers/dashboards';
 export { notifyInApp, notifyInAppMany, type InAppNotification } from './notify';

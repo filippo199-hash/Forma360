@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "Accentkleur",
+        "websiteUrl": "Bedrijfswebsite",
+        "websiteUrlPlaceholder": "https://jouwbedrijf.nl",
+        "derivePalette": "Palet afleiden van website",
+        "deriving": "Website wordt gelezen…",
+        "deriveError": "Kon geen palet van die website lezen. Controleer het adres en probeer het opnieuw.",
+        "deriveRateLimited": "Te veel pogingen. Wacht een paar minuten en probeer het opnieuw.",
+        "palettePreview": "Paletvoorbeeld",
+        "chartColorsLabel": "Grafiekkleuren",
+        "sampleButton": "Primaire knop",
+        "sampleChip": "Accentlabel"
       },
       "retention": {
         "title": "Databewaring & export",
@@ -1457,7 +1468,8 @@
     "coshh": "Gevaarlijke stoffen",
     "permits": "Vergunningen",
     "fireSafety": "Brandveiligheid",
-    "analytics": "Dashboard",
+    "analytics": "Overzicht",
+    "dashboards": "Dashboards",
     "incidents": "Incidenten",
     "more": "Meer",
     "quickLabel": "Snelle navigatie",
@@ -6743,5 +6755,154 @@
     "submit": "Werkruimte bewaren",
     "success": "Bewaard. Check je inbox voor de code om terug te komen.",
     "title": "Bewaar je werk"
+  },
+  "dashboards": {
+    "list": {
+      "title": "Dashboards",
+      "subtitle": "Op maat gemaakte dashboards, gebouwd door AI — zoveel als je nodig hebt.",
+      "new": "Nieuw dashboard",
+      "searchPlaceholder": "Dashboards zoeken…",
+      "emptyFirstRun": "Nog geen dashboards. Beschrijf wat je wilt zien en de AI bouwt het eerste concept.",
+      "emptyFiltered": "Niets gevonden voor je zoekopdracht.",
+      "emptyCta": "Bouw je eerste dashboard",
+      "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
+      "updatedAt": "Bijgewerkt {at}",
+      "byOwner": "Door {owner} · {at}",
+      "loadError": "Je dashboards konden niet worden geladen."
+    },
+    "status": {
+      "all": "Alle",
+      "draft": "Concept",
+      "published": "Gepubliceerd",
+      "archived": "Gearchiveerd"
+    },
+    "visibility": {
+      "private": "Alleen ik",
+      "selected": "Geselecteerde personen",
+      "tenant": "Iedereen"
+    },
+    "new": {
+      "title": "Een dashboard bouwen",
+      "subtitle": "Beschrijf wat je wilt volgen — typ het of spreek het in. Alles is daarna te verfijnen.",
+      "suggestionPermits": "Bouw een dashboard over onze werkvergunningen: wat is nu actief en hoe ontwikkelt de uitgifte zich.",
+      "suggestionSite": "Bouw een dashboard voor één locatie: open acties, observaties en inspecties daar.",
+      "suggestionActions": "Toon onze acties: hoeveel open en te laat, per locatie en per verantwoordelijke."
+    },
+    "detail": {
+      "updated": "Dashboard bijgewerkt",
+      "published": "Dashboard gepubliceerd",
+      "notFound": "Dit dashboard bestaat niet of je hebt geen toegang.",
+      "specInvalid": "Dit dashboard kan niet worden weergegeven — de definitie is ongeldig.",
+      "publish": "Publiceren",
+      "unpublish": "Intrekken",
+      "restore": "Herstellen",
+      "share": "Delen",
+      "schedule": "Inplannen",
+      "archive": "Archiveren",
+      "archiveConfirm": "Dit dashboard archiveren? Geplande e-mails worden gepauzeerd.",
+      "refine": "Verfijnen",
+      "dataError": "De dashboardgegevens konden niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "downloadPdf": "PDF downloaden"
+    },
+    "chat": {
+      "requestFailed": "Er ging iets mis. Probeer het opnieuw.",
+      "proposalApplied": "Hier is je dashboard.",
+      "building": "Dashboard wordt gebouwd…",
+      "applying": "Wijzigingen toepassen…",
+      "suggestionsIntro": "Probeer een van deze, of beschrijf wat je nodig hebt:",
+      "createPlaceholder": "Beschrijf het dashboard dat je wilt…",
+      "refinePlaceholder": "Beschrijf een wijziging — bijv. “kolommen in plaats van een lijn”…",
+      "refineTitle": "Dit dashboard verfijnen",
+      "refineHint": "Vraag wijzigingen in gewone taal; het dashboard wordt direct bijgewerkt.",
+      "send": "Versturen",
+      "startRecording": "Bericht dicteren",
+      "stopRecording": "Opname stoppen",
+      "transcribeFailed": "Opname kon niet worden getranscribeerd.",
+      "micDenied": "Microfoontoegang geweigerd."
+    },
+    "filters": {
+      "dateRange": "Periode",
+      "from": "Van",
+      "to": "Tot",
+      "allSites": "Alle locaties",
+      "sitesSelected": "{count, plural, one {# locatie} other {# locaties}}",
+      "loadingSites": "Locaties laden…",
+      "noSites": "Geen locaties ingesteld.",
+      "presets": {
+        "last7d": "Laatste 7 dagen",
+        "last30d": "Laatste 30 dagen",
+        "last90d": "Laatste 90 dagen",
+        "last12m": "Laatste 12 maanden",
+        "thisMonth": "Deze maand",
+        "thisQuarter": "Dit kwartaal",
+        "thisYear": "Dit jaar",
+        "custom": "Aangepast bereik…"
+      }
+    },
+    "widget": {
+      "menu": "Widgetopties",
+      "downloadExcel": "Excel downloaden",
+      "openRegister": "Register openen",
+      "forbidden": "Je hebt geen toestemming om deze gegevens te zien.",
+      "moduleDisabled": "Deze module is niet beschikbaar.",
+      "failed": "Deze widget kon niet worden geladen.",
+      "noneBucket": "Niet toegewezen",
+      "otherBucket": "Overig",
+      "tableDimension": "Groep",
+      "noData": "Geen gegevens in deze periode.",
+      "vsPrevious": "vs {value} vorige periode",
+      "inRange": "Binnen de gekozen periode",
+      "liveCount": "Actuele telling — de periode is niet van toepassing"
+    },
+    "share": {
+      "title": "Wie dit dashboard kan zien",
+      "saved": "Delen bijgewerkt",
+      "failed": "Delen kon niet worden bijgewerkt.",
+      "cancel": "Annuleren",
+      "save": "Opslaan",
+      "privateHint": "Alleen jij (en analytics-beheerders) kunnen het openen.",
+      "selectedHint": "Alleen de gekozen personen, zodra gepubliceerd.",
+      "tenantHint": "Iedereen in je organisatie met analytics-toegang, zodra gepubliceerd.",
+      "loadingUsers": "Personen laden…",
+      "noUsers": "Geen andere gebruikers gevonden."
+    },
+    "scheduleDialog": {
+      "title": "Dit dashboard als PDF e-mailen",
+      "empty": "Nog geen geplande verzendingen.",
+      "newTitle": "Nieuwe geplande verzending",
+      "frequency": "Frequentie",
+      "daily": "Dagelijks",
+      "weekly": "Wekelijks",
+      "monthly": "Maandelijks",
+      "weekday": "Dag van de week",
+      "monthday": "Dag van de maand",
+      "time": "Tijd",
+      "recipients": "Ontvangers",
+      "recipientsPlaceholder": "E-mailadressen, gescheiden door komma's — externe ontvangers zijn toegestaan",
+      "externalNote": "Ontvangers krijgen het dashboard als PDF-bijlage. Elke verzending wordt gelogd.",
+      "add": "Planning toevoegen",
+      "created": "Planning aangemaakt",
+      "failed": "Planning kon niet worden aangemaakt.",
+      "noRecipients": "Voeg minstens één e-mailadres toe.",
+      "paused": "Gepauzeerd",
+      "pause": "Pauzeren",
+      "resume": "Hervatten",
+      "delete": "Verwijderen",
+      "weekdays": {
+        "MO": "Maandag",
+        "TU": "Dinsdag",
+        "WE": "Woensdag",
+        "TH": "Donderdag",
+        "FR": "Vrijdag",
+        "SA": "Zaterdag",
+        "SU": "Zondag"
+      }
+    },
+    "upgrade": {
+      "title": "Aangepaste dashboards zijn een betaalde functie",
+      "body": "Bouw onbeperkt AI-ontworpen dashboards, plan PDF-verzendingen en exporteer gegevens naar Excel. Je vaste overzicht blijft gratis.",
+      "cta": "Praat met ons over upgraden"
+    }
   }
 }

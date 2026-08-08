@@ -9,8 +9,9 @@ import { dirname, join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import * as schema from '@forma360/db/schema';
+import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { renderInspectionPdf, pdfObjectKey } from './pdf';
+import { renderDashboardPdf, renderInspectionPdf, pdfObjectKey } from './pdf';
 import type { Database } from '@forma360/db/client';
 import type { Storage } from '@forma360/shared/storage';
 
@@ -192,6 +193,93 @@ describe('renderInspectionPdf', () => {
     const a = await renderInspectionPdf(deps, { tenantId, inspectionId });
     const b = await renderInspectionPdf(deps, { tenantId, inspectionId });
     expect(a.key).toBe(b.key);
+  });
+});
+
+describe('renderDashboardPdf', () => {
+  let client: PGlite;
+  let db: PgliteDatabase<typeof schema>;
+  const tenantId = 'T1234567890123456789012345';
+  const dashboardId = 'D1234567890123456789012345';
+  const ownerId = 'usr_dashboard_pdf_owner';
+
+  const spec = {
+    version: '1',
+    widgets: [{ id: 'open-actions', kind: 'kpi', title: 'Open actions', source: 'actions', metric: 'open' }],
+  };
+
+  beforeEach(async () => {
+    ({ client, db } = await bootDb());
+    await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+    const permissionSetId = 'P1234567890123456789012345';
+    await db.insert(schema.permissionSets).values({
+      id: permissionSetId,
+      tenantId,
+      name: 'Viewer',
+      permissions: ['analytics.view'],
+    });
+    await db.insert(schema.user).values({
+      id: ownerId,
+      name: 'Olive Owner',
+      email: 'olive@acme.test',
+      tenantId,
+      permissionSetId,
+    });
+    await db.insert(schema.dashboards).values({
+      id: dashboardId,
+      tenantId,
+      ownerUserId: ownerId,
+      title: 'Weekly safety overview',
+      spec,
+      status: 'published',
+    });
+  });
+
+  afterEach(async () => {
+    await client.close();
+  });
+
+  function deps(storage: ReturnType<typeof memStorage>) {
+    return {
+      db: db as unknown as Database,
+      storage,
+      appUrl: 'https://app.test',
+      renderSharedSecret: 'x'.repeat(32),
+      puppeteerRender: async () => new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+    };
+  }
+
+  it('uploads to the documented key layout and returns it', async () => {
+    const storage = memStorage();
+    const { key, bytes } = await renderDashboardPdf(deps(storage), { tenantId, dashboardId });
+    expect(key).toMatch(
+      new RegExp(`^${tenantId}/dashboards/${dashboardId}/pdf-[0-9a-f]{64}\\.pdf$`),
+    );
+    expect(bytes).toBe(4);
+    expect(storage.uploads.has(key)).toBe(true);
+  });
+
+  it('keys on (spec + updatedAt + title): stable across renders, fresh on change', async () => {
+    const storage = memStorage();
+    const a = await renderDashboardPdf(deps(storage), { tenantId, dashboardId });
+    const b = await renderDashboardPdf(deps(storage), { tenantId, dashboardId });
+    expect(a.key).toBe(b.key);
+    await db
+      .update(schema.dashboards)
+      .set({ title: 'Renamed overview', updatedAt: new Date() })
+      .where(eq(schema.dashboards.id, dashboardId));
+    const c = await renderDashboardPdf(deps(storage), { tenantId, dashboardId });
+    expect(c.key).not.toBe(a.key);
+  });
+
+  it('throws a descriptive error when the dashboard is missing or cross-tenant', async () => {
+    const storage = memStorage();
+    await expect(() =>
+      renderDashboardPdf(deps(storage), { tenantId, dashboardId: 'D' + '0'.repeat(25) }),
+    ).rejects.toThrow(/Dashboard not found/);
+    await expect(() =>
+      renderDashboardPdf(deps(storage), { tenantId: 'T' + '9'.repeat(25), dashboardId }),
+    ).rejects.toThrow(/Dashboard not found/);
   });
 });
 

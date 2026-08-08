@@ -122,4 +122,69 @@ describe('tenants.updateBranding', () => {
     const caller = createCaller(ctxFor(memberUserId));
     await expect(caller.tenants.updateBranding({ primaryColor: '#123456' })).rejects.toThrow();
   });
+
+  it('stores the extended palette shape (websiteUrl, accentColor, chartColors)', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const res = await caller.tenants.updateBranding({
+      primaryColor: '#1d4ed8',
+      websiteUrl: 'https://acme.example.com',
+      accentColor: '#f97316',
+      chartColors: ['#1d4ed8', '#f97316', '#16a34a', '#9333ea'],
+    });
+    expect(res.settings.branding).toEqual({
+      primaryColor: '#1d4ed8',
+      websiteUrl: 'https://acme.example.com',
+      accentColor: '#f97316',
+      chartColors: ['#1d4ed8', '#f97316', '#16a34a', '#9333ea'],
+    });
+    expect(res.settings.terminology).toBe('both');
+
+    const [row] = await db
+      .select({ settings: schema.tenants.settings })
+      .from(schema.tenants)
+      .where(eq(schema.tenants.id, tenantId));
+    expect(row?.settings.branding?.chartColors).toHaveLength(4);
+    expect(row?.settings.branding?.websiteUrl).toBe('https://acme.example.com');
+  });
+
+  it('rejects a non-https websiteUrl', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    await expect(
+      caller.tenants.updateBranding({ websiteUrl: 'http://acme.example.com' }),
+    ).rejects.toThrow();
+    await expect(caller.tenants.updateBranding({ websiteUrl: 'not a url' })).rejects.toThrow();
+  });
+
+  it('rejects malformed or oversized chartColors', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    // 3-digit hex and rgb() strings are not the canonical #rrggbb form.
+    await expect(caller.tenants.updateBranding({ chartColors: ['#abc'] })).rejects.toThrow();
+    await expect(caller.tenants.updateBranding({ chartColors: ['rgb(1,2,3)'] })).rejects.toThrow();
+    // More than 8 entries is refused.
+    await expect(
+      caller.tenants.updateBranding({ chartColors: Array.from({ length: 9 }, () => '#123456') }),
+    ).rejects.toThrow();
+    await expect(caller.tenants.updateBranding({ accentColor: '#12345' })).rejects.toThrow();
+  });
+
+  it('rejects a near-white primary/accent the renderer would silently discard', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    // #fefefe is above the near-white luminance threshold — accepting it
+    // would toast "saved" and then be dropped by buildTenantThemeCss.
+    await expect(caller.tenants.updateBranding({ primaryColor: '#fefefe' })).rejects.toThrow();
+    await expect(caller.tenants.updateBranding({ accentColor: '#ffffff' })).rejects.toThrow();
+    // A usable mid-tone still saves.
+    await expect(caller.tenants.updateBranding({ primaryColor: '#1d4ed8' })).resolves.toBeDefined();
+  });
+
+  it('clears branding written with the extended shape when the patch is empty', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    await caller.tenants.updateBranding({
+      websiteUrl: 'https://acme.example.com',
+      chartColors: ['#123456'],
+    });
+    const cleared = await caller.tenants.updateBranding({});
+    expect(cleared.settings.branding).toBeUndefined();
+    expect(cleared.settings.terminology).toBe('both');
+  });
 });

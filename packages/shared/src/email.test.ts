@@ -165,6 +165,61 @@ describe('brand substitution — {productName} (ADR 0010)', () => {
   });
 });
 
+describe('templated attachments (ADR 0018 — scheduled dashboard PDFs)', () => {
+  it('console delivery logs attachment FILENAMES only, never the bytes', async () => {
+    const logger = silentLogger();
+    const infoSpy = vi.spyOn(logger, 'info');
+    const send = createSendTemplatedEmail({
+      delivery: 'console',
+      logger,
+      loadTemplate: async () => template,
+    });
+
+    const bytes = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+    await send({
+      to: 'a@b.c',
+      templateKey: 'verification',
+      variables: {},
+      attachments: [{ filename: 'weekly-overview.pdf', content: bytes }],
+    });
+
+    const call = infoSpy.mock.calls[0];
+    expect(call).toBeDefined();
+    const [payload] = call as [Record<string, unknown>, string];
+    // Filenames only — the log payload must not carry the bytes in any form.
+    expect(payload.attachments).toEqual(['weekly-overview.pdf']);
+    expect(JSON.stringify(payload)).not.toContain(JSON.stringify([...bytes]));
+  });
+
+  it('an email without attachments logs no attachments field at all', async () => {
+    const logger = silentLogger();
+    const infoSpy = vi.spyOn(logger, 'info');
+    const send = createSendTemplatedEmail({
+      delivery: 'console',
+      logger,
+      loadTemplate: async () => template,
+    });
+    await send({ to: 'a@b.c', templateKey: 'verification', variables: {} });
+    const call = infoSpy.mock.calls[0];
+    expect(call).toBeDefined();
+    const [payload] = call as [Record<string, unknown>, string];
+    expect('attachments' in payload).toBe(false);
+  });
+
+  it('toResendAttachments maps to the resend@4 shape (Buffer content)', async () => {
+    const { toResendAttachments } = await import('./email');
+    const asBuffer = Buffer.from('hello');
+    const asBytes = new Uint8Array([1, 2, 3]);
+    const mapped = toResendAttachments([
+      { filename: 'a.pdf', content: asBuffer },
+      { filename: 'b.pdf', content: asBytes },
+    ]);
+    expect(mapped[0]).toEqual({ filename: 'a.pdf', content: asBuffer });
+    expect(Buffer.isBuffer(mapped[1]?.content)).toBe(true);
+    expect([...(mapped[1]?.content ?? Buffer.alloc(0))]).toEqual([1, 2, 3]);
+  });
+});
+
 describe('createSendEmail — resend delivery', () => {
   it('throws if RESEND_API_KEY is missing', () => {
     expect(() =>

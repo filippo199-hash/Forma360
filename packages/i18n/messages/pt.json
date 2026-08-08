@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "Cor de destaque",
+        "websiteUrl": "Site da empresa",
+        "websiteUrlPlaceholder": "https://suaempresa.pt",
+        "derivePalette": "Derivar a paleta do site",
+        "deriving": "A ler o site…",
+        "deriveError": "Não foi possível ler uma paleta desse site. Verifique o endereço e tente novamente.",
+        "deriveRateLimited": "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.",
+        "palettePreview": "Pré-visualização da paleta",
+        "chartColorsLabel": "Cores dos gráficos",
+        "sampleButton": "Botão primário",
+        "sampleChip": "Etiqueta de destaque"
       },
       "retention": {
         "title": "Retenção e exportação de dados",
@@ -1457,7 +1468,8 @@
     "coshh": "COSHH",
     "permits": "Permissões",
     "fireSafety": "Segurança contra incêndio",
-    "analytics": "Painel",
+    "analytics": "Visão geral",
+    "dashboards": "Painéis",
     "incidents": "Incidentes",
     "more": "Mais",
     "quickLabel": "Navegação rápida",
@@ -6743,5 +6755,154 @@
     "submit": "Guardar o meu espaço",
     "success": "Guardado. Verifique a sua caixa de entrada para o código de acesso.",
     "title": "Guarde o seu trabalho"
+  },
+  "dashboards": {
+    "list": {
+      "title": "Painéis",
+      "subtitle": "Painéis personalizados criados por IA — quantos precisar.",
+      "new": "Novo painel",
+      "searchPlaceholder": "Pesquisar painéis…",
+      "emptyFirstRun": "Ainda não há painéis. Descreva o que quer ver e a IA cria o primeiro rascunho.",
+      "emptyFiltered": "Nada corresponde à sua pesquisa.",
+      "emptyCta": "Crie o seu primeiro painel",
+      "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
+      "updatedAt": "Atualizado {at}",
+      "byOwner": "Por {owner} · {at}",
+      "loadError": "Não foi possível carregar os seus painéis."
+    },
+    "status": {
+      "all": "Todos",
+      "draft": "Rascunho",
+      "published": "Publicado",
+      "archived": "Arquivado"
+    },
+    "visibility": {
+      "private": "Só eu",
+      "selected": "Pessoas selecionadas",
+      "tenant": "Todos"
+    },
+    "new": {
+      "title": "Criar um painel",
+      "subtitle": "Descreva o que quer acompanhar — escreva ou dite. Pode refinar tudo depois.",
+      "suggestionPermits": "Cria-me um painel sobre as nossas licenças de trabalho: o que está ativo e a tendência de emissão.",
+      "suggestionSite": "Cria um painel para um local: ações abertas, observações e inspeções.",
+      "suggestionActions": "Mostra as nossas ações: quantas estão abertas e em atraso, por local e por responsável."
+    },
+    "detail": {
+      "updated": "Painel atualizado",
+      "published": "Painel publicado",
+      "notFound": "Este painel não existe ou não tem acesso.",
+      "specInvalid": "Não é possível mostrar este painel — a definição é inválida.",
+      "publish": "Publicar",
+      "unpublish": "Despublicar",
+      "restore": "Restaurar",
+      "share": "Partilhar",
+      "schedule": "Agendar",
+      "archive": "Arquivar",
+      "archiveConfirm": "Arquivar este painel? Os envios agendados serão pausados.",
+      "refine": "Refinar",
+      "dataError": "Não foi possível carregar os dados do painel.",
+      "retry": "Tentar novamente",
+      "downloadPdf": "Transferir PDF"
+    },
+    "chat": {
+      "requestFailed": "Algo correu mal. Tente novamente.",
+      "proposalApplied": "Aqui está o seu painel.",
+      "building": "A criar o painel…",
+      "applying": "A aplicar alterações…",
+      "suggestionsIntro": "Experimente uma destas ideias ou descreva o que precisa:",
+      "createPlaceholder": "Descreva o painel que quer…",
+      "refinePlaceholder": "Descreva uma alteração — p. ex. «usa colunas em vez de linha»…",
+      "refineTitle": "Refinar este painel",
+      "refineHint": "Peça alterações em linguagem natural; o painel atualiza-se de imediato.",
+      "send": "Enviar",
+      "startRecording": "Ditar a mensagem",
+      "stopRecording": "Parar gravação",
+      "transcribeFailed": "Não foi possível transcrever a gravação.",
+      "micDenied": "Acesso ao microfone recusado."
+    },
+    "filters": {
+      "dateRange": "Período",
+      "from": "De",
+      "to": "Até",
+      "allSites": "Todos os locais",
+      "sitesSelected": "{count, plural, one {# local} other {# locais}}",
+      "loadingSites": "A carregar locais…",
+      "noSites": "Sem locais configurados.",
+      "presets": {
+        "last7d": "Últimos 7 dias",
+        "last30d": "Últimos 30 dias",
+        "last90d": "Últimos 90 dias",
+        "last12m": "Últimos 12 meses",
+        "thisMonth": "Este mês",
+        "thisQuarter": "Este trimestre",
+        "thisYear": "Este ano",
+        "custom": "Intervalo personalizado…"
+      }
+    },
+    "widget": {
+      "menu": "Opções do widget",
+      "downloadExcel": "Transferir Excel",
+      "openRegister": "Abrir o registo",
+      "forbidden": "Não tem permissão para ver estes dados.",
+      "moduleDisabled": "Este módulo não está disponível.",
+      "failed": "Não foi possível carregar este widget.",
+      "noneBucket": "Não atribuído",
+      "otherBucket": "Outros",
+      "tableDimension": "Grupo",
+      "noData": "Sem dados neste período.",
+      "vsPrevious": "vs {value} período anterior",
+      "inRange": "No período selecionado",
+      "liveCount": "Contagem em direto — o período não se aplica"
+    },
+    "share": {
+      "title": "Quem pode ver este painel",
+      "saved": "Partilha atualizada",
+      "failed": "Não foi possível atualizar a partilha.",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "privateHint": "Só você (e os gestores de analytics) podem abri-lo.",
+      "selectedHint": "Apenas as pessoas escolhidas, depois de publicado.",
+      "tenantHint": "Toda a organização com acesso a analytics, depois de publicado.",
+      "loadingUsers": "A carregar…",
+      "noUsers": "Não foram encontrados mais utilizadores."
+    },
+    "scheduleDialog": {
+      "title": "Enviar este painel por e-mail como PDF",
+      "empty": "Ainda não há envios agendados.",
+      "newTitle": "Novo envio agendado",
+      "frequency": "Frequência",
+      "daily": "Diário",
+      "weekly": "Semanal",
+      "monthly": "Mensal",
+      "weekday": "Dia da semana",
+      "monthday": "Dia do mês",
+      "time": "Hora",
+      "recipients": "Destinatários",
+      "recipientsPlaceholder": "Endereços de e-mail separados por vírgulas — destinatários externos permitidos",
+      "externalNote": "Os destinatários recebem o painel como PDF anexo. Cada envio fica registado.",
+      "add": "Adicionar agendamento",
+      "created": "Agendamento criado",
+      "failed": "Não foi possível criar o agendamento.",
+      "noRecipients": "Adicione pelo menos um endereço de e-mail.",
+      "paused": "Em pausa",
+      "pause": "Pausar",
+      "resume": "Retomar",
+      "delete": "Eliminar",
+      "weekdays": {
+        "MO": "Segunda",
+        "TU": "Terça",
+        "WE": "Quarta",
+        "TH": "Quinta",
+        "FR": "Sexta",
+        "SA": "Sábado",
+        "SU": "Domingo"
+      }
+    },
+    "upgrade": {
+      "title": "Os painéis personalizados são uma funcionalidade paga",
+      "body": "Crie painéis ilimitados desenhados por IA, agende envios em PDF e exporte dados para Excel. A sua visão geral fixa continua gratuita.",
+      "cta": "Fale connosco sobre o upgrade"
+    }
   }
 }

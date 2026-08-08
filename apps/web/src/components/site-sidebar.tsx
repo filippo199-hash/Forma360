@@ -15,12 +15,17 @@ import {
   type NavItem,
   type NavSection,
 } from '../lib/nav-model';
-import { usePermissionList } from '../lib/permissions-context';
+import { useEntitlementList, usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
 import { useNavCounts, type NavCounts } from './nav/use-nav-counts';
 
 interface SiteSidebarProps {
   locale: string;
+  /**
+   * Tenant logo URL (ADR 0018), resolved server-side by the layout.
+   * When set it replaces the brand wordmark in the header link.
+   */
+  logoUrl?: string | null;
 }
 
 /** localStorage key for the collapsed rail. */
@@ -40,6 +45,14 @@ function useCollapsed(): readonly [boolean, () => void] {
     } catch {
       // Private-mode storage refusal — stay expanded.
     }
+  }, []);
+  // ADR 0018: full-width surfaces (the dashboard) ask the rail to fold on
+  // entry. One-way and not persisted as a preference: the user can
+  // re-expand, and their stored choice is untouched.
+  useEffect(() => {
+    const onCollapse = (): void => setCollapsed(true);
+    window.addEventListener('forma360:nav-collapse', onCollapse);
+    return () => window.removeEventListener('forma360:nav-collapse', onCollapse);
   }, []);
   const toggle = useCallback(() => {
     setCollapsed((prev) => {
@@ -91,6 +104,7 @@ export function SiteNavItems({
 }) {
   const t = useTranslations('nav');
   const perms = usePermissionList();
+  const entitlements = useEntitlementList();
   const pathname = usePathname();
   const terminology = useTerminology();
   const counts = useNavCounts();
@@ -99,6 +113,7 @@ export function SiteNavItems({
     locale,
     brandId: activeBrand.id,
     permissions: perms,
+    entitlements,
   });
   // Which module the current route belongs to — used to light up the right
   // row even on a sub-page whose path lives outside the module's own prefix
@@ -197,7 +212,7 @@ export function SiteNavItems({
  * opens the same items in a drawer and the {@link MobileTabBar} pins the
  * few destinations that matter with a thumb.
  */
-export function SiteSidebar({ locale }: SiteSidebarProps) {
+export function SiteSidebar({ locale, logoUrl = null }: SiteSidebarProps) {
   const t = useTranslations('nav');
   const [collapsed, toggle] = useCollapsed();
 
@@ -212,9 +227,18 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
         {collapsed ? null : (
           <Link
             href={`/${locale}/my-work`}
-            className="flex-1 truncate px-1.5 text-[15px] font-semibold tracking-tight text-sidebar-foreground"
+            className="flex flex-1 items-center truncate px-1.5 text-[15px] font-semibold tracking-tight text-sidebar-foreground"
           >
-            {activeBrand.name}
+            {/* ADR 0018: the tenant's own logo replaces the wordmark when set. */}
+            {logoUrl !== null && logoUrl !== '' ? (
+              <img
+                src={logoUrl}
+                alt={activeBrand.name}
+                className="h-7 w-auto max-w-full object-contain"
+              />
+            ) : (
+              activeBrand.name
+            )}
           </Link>
         )}
         <button
