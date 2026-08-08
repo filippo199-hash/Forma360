@@ -66,7 +66,9 @@ function NavBadge({ value, collapsed }: { value: number; collapsed: boolean }) {
     );
   }
   return (
-    <span className="ml-auto min-w-5 rounded-full bg-primary/10 px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-primary">
+    // Neutral rather than blue: the selected row is itself a blue wash now,
+    // and a blue-on-blue chip disappears exactly when it is being looked at.
+    <span className="ml-auto min-w-5 rounded-full bg-sidebar-foreground/10 px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-sidebar-foreground">
       {label}
     </span>
   );
@@ -120,11 +122,14 @@ export function SiteNavItems({
         href={item.href}
         {...(onNavigate !== undefined ? { onClick: onNavigate } : {})}
         className={cn(
-          'relative flex items-center gap-2.5 rounded-md py-1.5 text-[13px] transition-colors',
+          'relative flex items-center gap-2.5 rounded-md py-1.5 text-sm transition-colors',
           collapsed ? 'justify-center px-2' : 'px-2.5',
           isActive
             ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
-            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
+            : // Full-strength foreground, not a dimmed tint: on a white rail
+              // the greyed-out label was the thing that read as unfinished,
+              // and the icon inherits currentColor so it darkens with it.
+              'text-sidebar-foreground hover:bg-sidebar-accent/60',
         )}
         aria-current={isActive ? 'page' : undefined}
         {...(collapsed ? { title: label, 'aria-label': label } : {})}
