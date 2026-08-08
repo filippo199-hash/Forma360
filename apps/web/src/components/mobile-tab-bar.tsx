@@ -22,7 +22,7 @@ import { usePathname } from 'next/navigation';
 import { activeBrand } from '../lib/brand';
 import { cn } from '../lib/cn';
 import { buildMobileTabs, buildNavSections, isNavItemActive } from '../lib/nav-model';
-import { usePermissionList } from '../lib/permissions-context';
+import { useEntitlementList, usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
 import { NavDrawer } from './mobile-nav';
 import { useNavCounts } from './nav/use-nav-counts';
@@ -30,11 +30,12 @@ import { useNavCounts } from './nav/use-nav-counts';
 export function MobileTabBar({ locale }: { locale: string }) {
   const t = useTranslations('nav');
   const perms = usePermissionList();
+  const entitlements = useEntitlementList();
   const pathname = usePathname();
   const terminology = useTerminology();
   const counts = useNavCounts();
 
-  const sections = buildNavSections({ locale, brandId: activeBrand.id, permissions: perms });
+  const sections = buildNavSections({ locale, brandId: activeBrand.id, permissions: perms, entitlements });
   const tabs = buildMobileTabs(sections);
 
   return (

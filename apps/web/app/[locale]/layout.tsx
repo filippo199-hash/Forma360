@@ -17,7 +17,8 @@ import { MobileTabBar } from '../../src/components/mobile-tab-bar';
 import { SandboxBanner } from '../../src/components/sandbox/sandbox-banner';
 import { loadSandboxState } from '../../src/server/load-sandbox-state';
 import { SiteSidebar } from '../../src/components/site-sidebar';
-import { PermissionsProvider } from '../../src/lib/permissions-context';
+import { EntitlementsProvider, PermissionsProvider } from '../../src/lib/permissions-context';
+import { loadCurrentTenantEntitlements } from '../../src/server/load-entitlements';
 import { loadCurrentUserPermissions } from '../../src/server/load-permissions';
 import { activeBrand } from '../../src/lib/brand';
 import { isPathAllowedForExternal, loadContractorUser } from '../../src/server/contractor-portal';
@@ -135,6 +136,10 @@ export default async function LocaleLayout({
                   <PermissionsProvider
                     permissions={(await loadCurrentUserPermissions()).permissions}
                   >
+                    {/* ADR 0018: plan entitlements gate paid nav entries. */}
+                    <EntitlementsProvider
+                      entitlements={await loadCurrentTenantEntitlements()}
+                    >
                     <div className="flex min-h-screen">
                       <SiteSidebar locale={locale} />
                       <div className="flex min-w-0 flex-1 flex-col">
@@ -153,6 +158,7 @@ export default async function LocaleLayout({
                       {/* ADR 0014: thumb-reachable navigation on phones. */}
                       <MobileTabBar locale={locale} />
                     </div>
+                    </EntitlementsProvider>
                   </PermissionsProvider>
                 ) : (
                   /* Public pages — header on top, marketing/legal footer below. */

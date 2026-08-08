@@ -15,7 +15,7 @@ import {
   type NavItem,
   type NavSection,
 } from '../lib/nav-model';
-import { usePermissionList } from '../lib/permissions-context';
+import { useEntitlementList, usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
 import { useNavCounts, type NavCounts } from './nav/use-nav-counts';
 
@@ -91,6 +91,7 @@ export function SiteNavItems({
 }) {
   const t = useTranslations('nav');
   const perms = usePermissionList();
+  const entitlements = useEntitlementList();
   const pathname = usePathname();
   const terminology = useTerminology();
   const counts = useNavCounts();
@@ -99,6 +100,7 @@ export function SiteNavItems({
     locale,
     brandId: activeBrand.id,
     permissions: perms,
+    entitlements,
   });
   // Which module the current route belongs to — used to light up the right
   // row even on a sub-page whose path lives outside the module's own prefix

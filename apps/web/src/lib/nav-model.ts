@@ -37,6 +37,7 @@ import {
   FolderOpen,
   GraduationCap,
   HardHat,
+  LayoutDashboard,
   ListChecks,
   ListTodo,
   QrCode,
@@ -48,11 +49,13 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { brandHasModule, type BrandId, type BrandOnlyModule } from '@forma360/shared/brand';
+import type { EntitlementKey } from '@forma360/shared/entitlements';
 import { grantsAdminAccess, type PermissionKey } from '@forma360/permissions/catalogue';
 
 /** Every top-level destination. The i18n key is `nav.<key>`. */
 export type NavItemKey =
   | 'analytics'
+  | 'dashboards'
   | 'ai'
   | 'forMe'
   | 'inspections'
@@ -140,6 +143,8 @@ export interface NavItem {
   readonly href: string;
   readonly icon: LucideIcon;
   readonly permission?: PermissionKey;
+  /** Paid-plan gate (ADR 0018): entry drops unless the tenant holds this. */
+  readonly entitlement?: EntitlementKey;
   readonly badge?: NavBadgeKey;
   /** Revealed inline while the parent is the active route. */
   readonly children?: readonly NavChild[];
@@ -185,6 +190,15 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           href: p('/analytics'),
           icon: ChartColumn,
           permission: 'analytics.view',
+        },
+        // ADR 0018: AI-built custom dashboards — paid plans only. The
+        // fixed /analytics overview above stays on every plan.
+        {
+          key: 'dashboards',
+          href: p('/dashboards'),
+          icon: LayoutDashboard,
+          permission: 'analytics.view',
+          entitlement: 'customDashboards',
         },
         { key: 'ai', href: p('/ai'), icon: Bot },
         { key: 'forMe', href: p('/my-work'), icon: ListTodo, badge: 'forMe' },
@@ -381,6 +395,12 @@ export interface NavModelInput {
   readonly locale: string;
   readonly brandId: BrandId;
   readonly permissions: readonly string[];
+  /**
+   * The tenant's entitlement keys (ADR 0018). Optional so existing
+   * callers compile; omitted = no entitlements = paid entries drop.
+   * Plain strings (the client context is untyped) — matching is exact.
+   */
+  readonly entitlements?: readonly string[];
 }
 
 /** The Settings entry, pinned to the foot of the menu in every renderer. */
@@ -403,6 +423,10 @@ export function buildNavSections(input: NavModelInput): readonly NavSection[] {
     for (const item of section.items) {
       const brandModule = BRAND_MODULE_FOR[item.key];
       if (brandModule !== undefined && !brandHasModule(input.brandId, brandModule)) continue;
+      // Entitlement gate (no admin bypass — the tenant's PLAN lacks the
+      // feature, not the person's permission set).
+      if (item.entitlement !== undefined && !(input.entitlements ?? []).includes(item.entitlement))
+        continue;
       if (!holds(item.permission)) continue;
       const children = item.children?.filter((child) => holds(child.permission ?? item.permission));
       items.push(

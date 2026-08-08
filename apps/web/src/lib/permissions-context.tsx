@@ -32,3 +32,30 @@ export function useHasPermission(key: string): boolean {
   // server so a pre-existing admin isn't locked out of newly-added modules.
   return perms.includes(key) || grantsAdminAccess(perms);
 }
+
+/**
+ * Client-side mirror of the tenant's plan entitlements (ADR 0018). Like
+ * permissions, this is UX-only — every paid surface re-checks server-side
+ * via `requireEntitlement`. No admin bypass: the PLAN lacks the feature,
+ * not the person.
+ */
+const EntitlementsContext = createContext<readonly string[]>([]);
+
+export function EntitlementsProvider({
+  entitlements,
+  children,
+}: {
+  entitlements: readonly string[];
+  children: ReactNode;
+}) {
+  const value = useMemo(() => entitlements, [entitlements]);
+  return <EntitlementsContext.Provider value={value}>{children}</EntitlementsContext.Provider>;
+}
+
+export function useEntitlementList(): readonly string[] {
+  return useContext(EntitlementsContext);
+}
+
+export function useHasEntitlement(key: string): boolean {
+  return useContext(EntitlementsContext).includes(key);
+}

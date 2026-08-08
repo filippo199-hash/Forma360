@@ -24,6 +24,8 @@
  *     hides the strip (list pages only, like Inspections/Training)
  *   - NAV-E15: a module without children has no strip; child tabs honour the
  *     same permission gate as the sidebar did
+ *   - NAV-E16: entitlement gating (ADR 0018) — the Dashboards entry exists
+ *     only when the tenant plan grants customDashboards; no admin bypass
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -309,5 +311,31 @@ describe('nav model (ADR 0014)', () => {
       '/en/permits',
     );
     expect(manager?.tabs.map((t) => t.key)).toEqual(['permits', 'permitsBoard', 'permitsTypes']);
+  });
+
+  it('NAV-E16: the Dashboards entry is entitlement-gated with no admin bypass', () => {
+    const base = {
+      locale: 'en',
+      brandId: 'freehs',
+      permissions: ['org.settings', 'analytics.view'],
+    } as const;
+    const keysOf = (sections: ReturnType<typeof buildNavSections>): string[] =>
+      flattenNavItems(sections).map((i) => i.key);
+
+    // No entitlements passed (free plan / legacy caller): entry absent —
+    // even for an administrator, because the PLAN lacks the feature.
+    expect(keysOf(buildNavSections(base))).not.toContain('dashboards');
+    expect(keysOf(buildNavSections({ ...base, entitlements: [] }))).not.toContain('dashboards');
+
+    // Paid plan: present, still permission-gated on analytics.view.
+    const paid = buildNavSections({ ...base, entitlements: ['customDashboards'] });
+    expect(keysOf(paid)).toContain('dashboards');
+    const noView = buildNavSections({
+      locale: 'en',
+      brandId: 'freehs',
+      permissions: ['inspections.view'],
+      entitlements: ['customDashboards'],
+    });
+    expect(keysOf(noView)).not.toContain('dashboards');
   });
 });
