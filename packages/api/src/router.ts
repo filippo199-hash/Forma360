@@ -28,7 +28,7 @@ import { usersRouter } from './routers/users';
 import { actionsRouter } from './routers/actions';
 import { actionTypesRouter } from './routers/actionTypes';
 import { createAnalyticsRouter } from './routers/analytics';
-import { createDashboardsRouter } from './routers/dashboards';
+import { createDashboardsRouter, type DashboardsRouterDeps } from './routers/dashboards';
 import { createMyWorkRouter } from './routers/myWork';
 import { notificationsRouter } from './routers/notifications';
 import { approvalsRouter } from './routers/approvals';
@@ -108,6 +108,14 @@ export function buildAppRouter(deps: {
    * omitting it DISABLES the module.
    */
   training?: TrainingRouterDeps;
+  /**
+   * ADR 0018 — optional PDF renderer for the dashboards router. Omitted
+   * in tests and non-web callers; `dashboards.renderPdf` then refuses
+   * with PRECONDITION_FAILED 'render-not-wired' (exports convention).
+   * Module flags are NOT taken from here — they follow the brand deps
+   * above, same single source of truth as analytics.
+   */
+  dashboards?: Pick<DashboardsRouterDeps, 'renderPdf'>;
 }) {
   return router({
     health: healthRouter,
@@ -181,6 +189,9 @@ export function buildAppRouter(deps: {
         rams: deps.rams?.enabled ?? false,
         training: deps.training?.enabled ?? false,
       },
+      ...(deps.dashboards?.renderPdf !== undefined
+        ? { renderPdf: deps.dashboards.renderPdf }
+        : {}),
     }),
     riskAssessments: createRiskAssessmentsRouter(deps.riskAssessments ?? { enabled: false }),
     coshh: createCoshhRouter(deps.coshh ?? { enabled: false }),

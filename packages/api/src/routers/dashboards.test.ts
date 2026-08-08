@@ -850,4 +850,62 @@ describe('dashboards router', () => {
     const forAdmin = await callerFor(adminId).dashboards.availableSources();
     expect(forAdmin.length).toBe(DASHBOARD_SOURCE_IDS.length);
   });
+
+  // ─── DH-E23 PDF export ────────────────────────────────────────────────
+
+  it('DH-E23a: renderPdf refuses when the renderer dep is not wired', async () => {
+    const id = await createDashboard(creatorId);
+    await expect(callerFor(creatorId).dashboards.renderPdf({ id })).rejects.toMatchObject({
+      code: 'PRECONDITION_FAILED',
+      message: 'render-not-wired',
+    });
+  });
+
+  it('DH-E23b: renderPdf calls the injected renderer tenant-scoped and returns the artefact', async () => {
+    const calls: Array<{ tenantId: string; dashboardId: string }> = [];
+    const wired = router({
+      dashboards: createDashboardsRouter({
+        modules: ALL_MODULES_ON,
+        now: () => FIXED_NOW,
+        renderPdf: async (input) => {
+          calls.push(input);
+          return { key: `${input.tenantId}/dashboards/${input.dashboardId}/pdf-x.pdf`, bytes: 4, stub: true };
+        },
+      }),
+    });
+    const wiredCaller = createCallerFactory(wired);
+    const call = (userId: string) =>
+      wiredCaller(
+        createTestContext({
+          db: db as never,
+          logger: silentLogger(),
+          auth: { userId, email: 'x@test.test', tenantId: tenantId as never },
+        }),
+      );
+
+    const id = await createDashboard(creatorId, kpiSpec(), 'Weekly Safety — Overview!');
+    const result = await call(creatorId).dashboards.renderPdf({ id });
+    expect(calls).toEqual([{ tenantId, dashboardId: id }]);
+    expect(result).toMatchObject({
+      storageKey: `${tenantId}/dashboards/${id}/pdf-x.pdf`,
+      filename: 'weekly-safety-overview.pdf',
+      sizeBytes: 4,
+      stub: true,
+    });
+
+    // The visibility matrix still applies: a plain viewer must not be
+    // able to export someone else's private draft — NOT_FOUND, and the
+    // renderer is never invoked for it.
+    calls.length = 0;
+    await expect(call(viewerId).dashboards.renderPdf({ id })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(calls).toEqual([]);
+
+    // Published + tenant-visible → the same viewer can export.
+    await call(creatorId).dashboards.setStatus({ id, status: 'published' });
+    await call(creatorId).dashboards.setVisibility({ id, visibility: 'tenant' });
+    const viewerResult = await call(viewerId).dashboards.renderPdf({ id });
+    expect(viewerResult.storageKey).toContain(id);
+  });
 });
