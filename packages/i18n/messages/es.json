@@ -4929,7 +4929,10 @@
       "already-exited": "La salida de esa persona ya fue registrada.",
       "render-unavailable": "La generación de PDF no está disponible en este entorno.",
       "training-expired": "No se puede emitir: alguien nombrado en el permiso tiene formación caducada.",
-      "training-missing": "No se puede emitir: alguien nombrado nunca ha obtenido la formación requerida."
+      "training-missing": "No se puede emitir: alguien nombrado nunca ha obtenido la formación requerida.",
+      "training-unverifiable-identity": "No se puede emitir: una persona nombrada en este permiso no tiene cuenta vinculada, por lo que no se puede verificar su formación. Vincúlela a un usuario o retírela del equipo.",
+      "already-inside": "Esa persona ya está registrada como presente en el registro de entradas.",
+      "document-not-visible": "No tiene acceso a ese documento."
     },
     "competence": {
       "blockedTitle": "Competencia no acreditada",
