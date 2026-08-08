@@ -106,6 +106,7 @@ import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
 import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
+import { isDocumentVisibleToUser } from './document-visibility';
 
 export interface RamsRouterDeps {
   /** Wired from the brand module catalogue (ADR 0010). */
@@ -1475,13 +1476,40 @@ export function createRamsRouter(deps: RamsRouterDeps) {
         if (input.documentId !== undefined) {
           // Documents are referenced, not copied — and must be ours.
           const rows = await ctx.db
-            .select({ id: documents.id, name: documents.name })
+            .select({
+              id: documents.id,
+              name: documents.name,
+              folderId: documents.folderId,
+              visibleToGroupIds: documents.visibleToGroupIds,
+              visibleToSiteIds: documents.visibleToSiteIds,
+            })
             .from(documents)
             .where(and(eq(documents.tenantId, ctx.tenantId), eq(documents.id, input.documentId)))
             .limit(1);
           const doc = rows[0];
           if (doc === undefined)
             throw new TRPCError({ code: 'NOT_FOUND', message: 'document-not-found' });
+          // RS-X01: being ours is not the same as being theirs to read. The
+          // author must be able to open the document they are attaching.
+          //
+          // Attach time is not merely the cheaper place to check here, it is
+          // the only one. A pack snapshots its documents into an immutable
+          // issued version and serves that version to an unauthenticated
+          // client over a share link, so there is no later render at which a
+          // filter could run — and the title is denormalised onto the pack
+          // row below, so even re-joining `documents` would not undo it. A
+          // `documents.manage` holder sees the whole library anyway.
+          if (!ctx.permissions.includes('documents.manage')) {
+            const visible = await isDocumentVisibleToUser(ctx.db, ctx.tenantId, ctx.auth.userId, {
+              id: doc.id,
+              folderId: doc.folderId,
+              visibleToGroupIds: doc.visibleToGroupIds,
+              visibleToSiteIds: doc.visibleToSiteIds,
+            });
+            if (!visible) {
+              throw new TRPCError({ code: 'FORBIDDEN', message: 'document-not-visible' });
+            }
+          }
           if (title.length === 0) title = doc.name;
         }
 
