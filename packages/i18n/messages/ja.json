@@ -3912,7 +3912,8 @@
       "reackTitle": "Previously acknowledged version {version}",
       "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
       "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
-      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically.",
+      "noEmailYet": "メールアドレス未設定"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -4865,7 +4866,10 @@
       "addGasLimit": "限界値を追加",
       "gasFreshness": "ガス測定の有効時間",
       "gasFreshnessUnit": "分",
-      "description": "説明"
+      "description": "説明",
+      "requiredTraining": "必要な研修",
+      "requiredTrainingHint": "記載された作業者全員が有効な状態で保有している必要があります。",
+      "requiredTrainingNone": "研修要件がまだ定義されていません。"
     },
     "errors": {
       "module-disabled": "このモジュールは利用できません。",
@@ -4928,10 +4932,7 @@
     },
     "signatures": {
       "competenceBlocked": "ブロック：力量要件未達"
-    },
-    "requiredTraining": "必要な研修",
-    "requiredTrainingHint": "記載された作業者全員が有効な状態で保有している必要があります。",
-    "requiredTrainingNone": "研修要件がまだ定義されていません。"
+    }
   },
   "fireSafety": {
     "title": "防火管理",
@@ -5834,6 +5835,7 @@
         "not_reportable": "報告不要",
         "death": "死亡",
         "specified_injury": "特定負傷",
+        "non_worker_hospital": "就業者以外の負傷者の搬送",
         "over_7_day": "7日超休業",
         "occupational_disease": "職業性疾病",
         "dangerous_occurrence": "危険事象",
@@ -5842,8 +5844,9 @@
       "help": {
         "not_reportable": "報告対象の区分に該当しません。理由を記録してください — 否定的判定こそが記録です。",
         "death": "労働災害により死亡。遅滞なく通報し、10日以内に報告。",
-        "specified_injury": "骨折（手足の指を除く）、切断、視力喪失、頭部・体幹の挟圧、重度熱傷、頭皮剥離、窒息による意識喪失、24時間超の入院。10日以内に報告。",
-        "over_7_day": "事故当日を除き7日を超える就業不能。事故から15日以内に報告。",
+        "specified_injury": "A worker suffered a Schedule 1 injury: any fracture other than to fingers, thumbs or toes; amputation; permanent or likely-permanent loss or reduction of sight; a crush injury to the head or torso causing damage to the brain or internal organs; a serious burn covering more than 10% of the body or damaging the eyes, respiratory system or other vital organs; scalping requiring hospital treatment; loss of consciousness caused by head injury or asphyxia; or, from working in an enclosed space, any injury leading to hypothermia, heat-induced illness or resuscitation, or requiring admission to hospital for more than 24 hours. Report within 10 days.",
+        "non_worker_hospital": "A person not at work (a visitor, a delivery driver, a member of the public) was injured by a work-related accident and taken from the scene to hospital for treatment. Reportable regardless of how serious the injury turns out to be. Report within 10 days.",
+        "over_7_day": "The worker is incapacitated for routine work for more than 7 consecutive days, not counting the day of the accident. Report within 15 days of the accident.",
         "occupational_disease": "業務に関連する診断された職業性疾病 — 手根管症候群、皮膚炎、職業性喘息、HAVS、腱炎、職業がん。",
         "dangerous_occurrence": "Schedule 2の事象 — 揚重設備の崩壊、足場倒壊、電気火災・爆発、圧力設備破損、偶発的放出。",
         "gas_incident": "ガスに関連する死亡・負傷、または危険なガス設備。"

@@ -210,8 +210,29 @@ describe('auth router', () => {
         .from(schema.issueCategories)
         .where(eq(schema.issueCategories.tenantId, tenantId));
       expect(cats.map((c) => c.name)).toEqual(
-        expect.arrayContaining(['Hazard', 'Near miss', 'Quality', 'Environmental']),
+        expect.arrayContaining([
+          'Hazard',
+          'Near miss',
+          // The one that is not a fault report. A register that can only
+          // ever collect bad news is one nobody keeps filling in.
+          'Good practice',
+          'Quality',
+          'Environmental',
+        ]),
       );
+
+      // Action types, seeded by the same helper. Every tenant used to
+      // open the "Action type" dropdown to exactly one entry — "No
+      // type", the NULL fallback — in a module whose subject is
+      // corrective action.
+      const types = await db
+        .select()
+        .from(schema.actionTypes)
+        .where(eq(schema.actionTypes.tenantId, tenantId));
+      expect(types.map((t) => t.name)).toEqual(
+        expect.arrayContaining(['Corrective', 'Preventive', 'Improvement', 'Maintenance']),
+      );
+      expect(types.filter((t) => t.isDefault).map((t) => t.name)).toEqual(['Corrective']);
 
       // User row — emailVerified=false until they complete OTP.
       const userRow = (await db.select().from(schema.user).where(eq(schema.user.id, userId)))[0];

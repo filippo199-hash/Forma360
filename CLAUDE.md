@@ -164,6 +164,16 @@ pnpm --filter @forma360/shared test:r2  # manual R2 smoke test
   `<tenantId>/<module>/<entityId>/<filename>` — validated by a Zod schema.
 - i18n lint rule at `tools/eslint-rules/no-hardcoded-strings.js` — enforced
   on `apps/web/app/**/*.tsx` + `packages/ui/src/**/*.tsx`.
+- **Date display** at `apps/web/src/lib/format-date.ts`. `formatDate` →
+  `16 Aug 2026`, `formatDateTime` → `16 Aug 2026, 17:00`. Use these, not
+  `toLocaleDateString`. Four conventions were coexisting on the same
+  records because `LOCALES` are bare language codes and ICU resolves
+  `'en'` to `en-US` — the actions board printed a due date as `8/9/2026`
+  while its own detail panel printed `09/08/2026`. On a RIDDOR deadline
+  that is not cosmetic: "8/6" reads as 8 June to the person whose
+  10-day clock depends on it. The helper maps the app locale to a
+  region-qualified display locale (`en` → `en-GB`) and pins one style;
+  minutes never seconds, because nothing is due at 52 seconds past.
 - Sentry configs at `apps/web/sentry.*.config.ts` + `packages/jobs/src/sentry.ts`.
   **Live since ADR 0016**: options are built once by
   `buildSentryOptions` in `packages/shared/src/sentry-options.ts` and
@@ -695,6 +705,24 @@ Forma360) — do not add a brand conditional anywhere else.
   that looks published and cannot be started; an FRA left at `draft`
   makes the fire register print "FRA missing"; a `nextReviewAt` in the
   past lights an amber chip on a workspace seconds old.
+  **A second rule, learned the same way: a seed must agree with
+  itself.** A practitioner walk-through found every tile technically
+  populated and half of them internally contradictory — an incident
+  badged "Minor / 0 days lost" against a description of a fractured
+  wrist and two weeks off (no `incident_persons` or `incident_absences`
+  row, `severity` left at its column default); an inspection promised
+  "already underway" with ten blank answers and no `conductedBy`, so the
+  report printed "Prepared by —"; three observations all stamped with
+  the build second, all at one site, all open against a tile promising
+  "two still open"; a `withActions` tile whose actions board read
+  0/0/0/0; a `reviewPack` tile that seeded our own pack and left the
+  contractor-review page reading "No contractor packs awaiting review";
+  a permit issued with zero gas readings against a type whose page says
+  "the gate evaluates readings against these". Each is now a goal
+  assertion (`provision.goals.test.ts`) or a real-procedure visibility
+  assertion (`provision.visibility.test.ts`, SB-V11..V13), because a
+  register that is populated but incoherent fails a practitioner faster
+  than an empty one.
 - **Session** at `packages/auth/src/sandbox-session.ts` — mints a real
   better-auth session. It reproduces better-auth's cookie signing and is
   pinned by a round-trip test. If that test fails after a better-auth
@@ -707,6 +735,13 @@ Forma360) — do not add a brand conditional anywhere else.
   `POST /api/sandbox/create`, and `SandboxBanner` mounted in the signed-in
   shell. Funnel copy is in `src/content/try.ts` (marketing convention,
   English); in-app copy is i18n'd under the `sandbox` namespace.
+- **Tenant defaults** at `packages/api/src/tenant-defaults.ts` —
+  observation categories (now including `Good practice`, so the register
+  is not only ever bad news) and the four default action types
+  (`Corrective` / `Preventive` / `Improvement` / `Maintenance`). Seeded
+  by BOTH `auth.signUpWithTenant` and sandbox provisioning; action types
+  were never seeded at all before, so every tenant's "Action type"
+  dropdown offered exactly one entry — "No type", the NULL fallback.
 - **Not yet built**: the TTL sweep for unclaimed sandboxes. The
   `claimedAt` marker exists so that worker can be added without a
   migration.

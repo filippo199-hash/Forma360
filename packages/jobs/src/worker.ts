@@ -473,6 +473,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   const riddorCategoryLabels: Record<string, string> = {
     death: 'death',
     specified_injury: 'specified injury',
+    non_worker_hospital: 'non-worker taken to hospital',
     over_7_day: 'over-7-day injury',
     occupational_disease: 'occupational disease',
     dangerous_occurrence: 'dangerous occurrence',

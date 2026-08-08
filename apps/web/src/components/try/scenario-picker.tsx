@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   defaultRefinement,
   type SandboxScenario,
   type SandboxScenarioId,
 } from '@forma360/shared/sandbox-scenarios';
-import { TRY_PAGE, TRY_TILES } from '../../content/try';
+import { buildingStepsFor, TRY_PAGE, TRY_TILES } from '../../content/try';
 
 /**
  * The two-tap door into a try-it-now workspace (ADR 0017).
@@ -22,17 +23,33 @@ import { TRY_PAGE, TRY_TILES } from '../../content/try';
  * narrates what is being created, because those few seconds are the
  * difference between feeling dropped somewhere random and feeling
  * served. The steps are honest — they describe rows we actually write.
+ *
+ * Which tile is open lives in the URL (`?tile=<id>`) and the level-1
+ * control is an anchor, not a button. That is not a routing preference:
+ * `/try` is every visitor's first cold load and it inherits the whole
+ * signed-in client runtime, so the tiles paint looking ready a few
+ * hundred milliseconds before their handlers exist — and React discards,
+ * without replaying, a discrete event that arrives before hydration. The
+ * first click on a tile did nothing and the second worked. A link needs
+ * no JavaScript to be right.
  */
 export function ScenarioPicker({
   locale,
   scenarios,
+  initialSelected = null,
 }: {
   locale: string;
   scenarios: readonly SandboxScenario[];
+  /** Server-resolved from `?tile=`, so the open tile survives no-JS. */
+  initialSelected?: SandboxScenarioId | null;
 }) {
   const router = useRouter();
-  const [selected, setSelected] = useState<SandboxScenarioId | null>(null);
-  const [refinementId, setRefinementId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<SandboxScenarioId | null>(initialSelected);
+  const [refinementId, setRefinementId] = useState<string | null>(() => {
+    if (initialSelected === null) return null;
+    const s = scenarios.find((x) => x.id === initialSelected);
+    return s === undefined ? null : (defaultRefinement(s)?.id ?? null);
+  });
   const [phase, setPhase] = useState<'choose' | 'building' | 'error'>('choose');
   const [errorMessage, setErrorMessage] = useState<string>(TRY_PAGE.errorBody);
   const [step, setStep] = useState(0);
@@ -67,8 +84,9 @@ export function ScenarioPicker({
     // Advance the narration on a timer. It is capped one short of the
     // final step so the list never claims to be finished before the
     // server says it is.
+    const stepCount = buildingStepsFor(copy, refinementId).length;
     const ticker = setInterval(() => {
-      setStep((s) => Math.min(s + 1, copy.buildingSteps.length - 1));
+      setStep((s) => Math.min(s + 1, stepCount - 1));
     }, 700);
 
     try {
@@ -102,7 +120,7 @@ export function ScenarioPicker({
           ? (body as { landingPath: unknown }).landingPath
           : null;
       clearInterval(ticker);
-      setStep(copy.buildingSteps.length);
+      setStep(stepCount);
 
       // Hard navigation: the session cookie was just set on this
       // response, and a full load is what makes every server component
@@ -125,7 +143,7 @@ export function ScenarioPicker({
           {copy.label} — {copy.refinements[refinementId ?? ''] ?? ''}
         </p>
         <ul className="mt-8 space-y-3">
-          {copy.buildingSteps.map((text, i) => {
+          {buildingStepsFor(copy, refinementId).map((text, i) => {
             const done = i < step;
             const active = i === step;
             return (
@@ -186,9 +204,22 @@ export function ScenarioPicker({
                 isOpen ? 'border-brand bg-accent/40 sm:col-span-2' : 'bg-background hover:bg-accent'
               }`}
             >
-              <button
-                type="button"
-                onClick={() => (isOpen ? reset() : choose(s.id))}
+              <Link
+                href={isOpen ? `/${locale}/try` : `/${locale}/try?tile=${s.id}`}
+                scroll={false}
+                onClick={(e) => {
+                  // Once hydrated, keep the in-place expand — going back
+                  // must cost nothing. Pre-hydration this handler does
+                  // not exist and the href does the work instead.
+                  e.preventDefault();
+                  if (isOpen) reset();
+                  else choose(s.id);
+                  window.history.replaceState(
+                    null,
+                    '',
+                    isOpen ? `/${locale}/try` : `/${locale}/try?tile=${s.id}`,
+                  );
+                }}
                 aria-expanded={isOpen}
                 className="flex w-full flex-col items-start gap-1 p-5 text-left"
               >
@@ -196,7 +227,7 @@ export function ScenarioPicker({
                   {tile.label}
                 </span>
                 <span className="text-sm text-muted-foreground">{tile.blurb}</span>
-              </button>
+              </Link>
 
               {isOpen && (
                 <div className="border-t px-5 pb-5 pt-4">

@@ -218,9 +218,17 @@ export const SANDBOX_PERMITS: Record<string, SeedPermit> = {
 };
 
 /**
- * Incident content. The injury figures matter: seven days lost puts
- * this over the RIDDOR over-7-day threshold, which is what makes the
- * reportability screening a real decision rather than a demo prop.
+ * Incident content. The injury figures matter: the facts have to carry
+ * two independent RIDDOR triggers — a fracture that is not to a finger,
+ * thumb or toe (specified injury) and an absence over seven days
+ * (over-7-day) — or the screening is a prop rather than a judgement.
+ *
+ * The seeded record has to *agree with itself*, which the first cut did
+ * not: it described a fractured wrist and two weeks off work while the
+ * register showed "Severity: Minor" and "0 day(s) lost", because the
+ * severity column kept its `minor` default and no person or absence row
+ * was written at all. A supervisor triaging on that badge would have
+ * skipped the report.
  */
 export const SANDBOX_INCIDENT = {
   title: 'Fall from step ladder while changing high-bay lamp',
@@ -228,31 +236,90 @@ export const SANDBOX_INCIDENT = {
   description:
     'Operative was changing a failed high-bay lamp from a step ladder when the ladder shifted on the sloped floor. Fell approximately 1.8 m, landing on the left side. Taken to hospital; fractured wrist confirmed. Expected to be off work for around two weeks.',
   locationText: 'Northfield Works — warehouse aisle 4',
-  daysLost: 9,
+  /** Hospital admission floors severity at `serious` (`provisionalSeverity`). */
+  severity: 'serious',
+  /** How long before now the accident happened. */
+  occurredDaysAgo: 6,
+  /** Reported the same shift — a bigger gap chips the record "late report". */
+  reportedHoursAfter: 2,
+  person: {
+    name: 'Tom Reilly',
+    category: 'employee',
+    injury: {
+      bodyParts: ['wrist'],
+      injuryKinds: ['fracture'],
+      firstAidGiven: true,
+      firstAidBy: 'Priya Shah',
+      hospitalisation: 'admitted',
+      treatmentNote:
+        'Taken to A&E by a colleague; left wrist fracture confirmed and cast applied. Signed off for an expected two weeks.',
+    },
+  },
+  /** Open absence from the day after the accident — still off, still counting. */
+  absenceFromDaysAfterAccident: 1,
 } as const;
 
-/** Hazard / near-miss content for the observations tile. */
+/**
+ * Hazard / near-miss content for the observations tile.
+ *
+ * Three properties the register has to have, none of which it had at
+ * first: a *history* (all three were stamped with the second the
+ * workspace was built, which reads as fake), a spread across both sites,
+ * and one already closed — because the tile's own promise is "three
+ * reports, two still open", and nothing demonstrates a resolved
+ * observation if all three are open.
+ */
 export const SANDBOX_OBSERVATIONS = [
   {
     title: 'Fire exit blocked by stacked pallets',
     description:
       'Two stacks of empty pallets left directly in front of the fire exit at the east end of the pick aisle. Exit could not be fully opened.',
     categoryName: 'Hazard',
-    needsAction: true,
+    siteRef: 'eastgate',
+    priority: 'high',
+    daysAgo: 9,
+    status: 'open',
+    /** Seeded only on the `withActions` refinement. */
+    action: {
+      title: 'Relocate the pallet stacks and mark a keep-clear zone at the east fire exit',
+      description:
+        'Empty pallets are being staged in front of the exit because the yard bay is full. Agree a new staging point with the shift manager and paint a hatched keep-clear zone in front of the door.',
+      priority: 'high',
+      /** Negative = already overdue, which is what an action board is for. */
+      dueInDays: -2,
+      assignTo: 'colleague',
+    },
   },
   {
     title: 'Near miss — pallet fell from racking',
     description:
       'A shrink-wrapped pallet slipped from the second beam level as a truck withdrew. No one was in the aisle at the time.',
     categoryName: 'Near miss',
-    needsAction: true,
+    siteRef: 'northfield',
+    priority: 'high',
+    daysAgo: 4,
+    status: 'open',
+    action: {
+      title: 'Inspect beam level 2 in aisle 7 and re-wrap the affected pallets',
+      description:
+        'Check the beam and the pallet condition before the aisle is re-opened to pick traffic. Report anything bent or displaced to the racking inspector.',
+      priority: 'medium',
+      dueInDays: 3,
+      assignTo: 'self',
+    },
   },
   {
     title: 'Damaged guard on shrink-wrap machine',
     description:
       'Interlock guard on the shrink-wrap machine is cracked and no longer sits flush. Machine still running.',
     categoryName: 'Hazard',
-    needsAction: false,
+    siteRef: 'eastgate',
+    priority: 'medium',
+    daysAgo: 12,
+    status: 'closed',
+    closedReason:
+      'Machine locked off the same afternoon. Replacement interlock guard fitted by Rossi Mechanical on the next visit and the interlock function proved before the machine went back into service.',
+    action: null,
   },
 ] as const;
 
@@ -289,7 +356,6 @@ export const SANDBOX_INSPECTION_SPECS: Record<string, TemplateSpec> = {
                     label: 'No',
                     color: 'red',
                     flag: true,
-                    requireEvidence: true,
                     requireAction: 'Clear the obstructed route',
                   },
                   { label: 'N/A', color: 'grey' },
@@ -318,9 +384,11 @@ export const SANDBOX_INSPECTION_SPECS: Record<string, TemplateSpec> = {
                     label: 'No',
                     color: 'red',
                     flag: true,
-                    requireEvidence: true,
                     requireAction: 'Repair or replace the damaged guard',
                   },
+                  // A distribution centre may have no guarded machinery.
+                  // Without N/A the only answers are untrue or a false issue.
+                  { label: 'N/A', color: 'grey' },
                 ],
               },
               { prompt: 'Photo of anything that needs attention', type: 'media' },
@@ -338,7 +406,7 @@ export const SANDBOX_INSPECTION_SPECS: Record<string, TemplateSpec> = {
                   { label: 'No', color: 'red', flag: true },
                 ],
               },
-              { prompt: 'Anything else worth noting?', type: 'text' },
+              { prompt: 'Anything else worth noting?', type: 'text', multiline: true },
             ],
           },
         ],
@@ -367,7 +435,6 @@ export const SANDBOX_INSPECTION_SPECS: Record<string, TemplateSpec> = {
                     label: 'No',
                     color: 'red',
                     flag: true,
-                    requireEvidence: true,
                     requireAction: 'Take the machine out of service and report the defect',
                   },
                 ],
@@ -424,7 +491,27 @@ export const SANDBOX_INSPECTION_SPECS: Record<string, TemplateSpec> = {
                 required: true,
                 options: [
                   { label: 'Yes', color: 'green' },
-                  { label: 'No', color: 'red', flag: true, requireEvidence: true },
+                  // No `requireEvidence` on any seeded template, for now.
+                  //
+                  // The endpoint bug that made the gate unsatisfiable is
+                  // fixed (`itemAcceptsEvidence`), but object storage is
+                  // still returning AccessDenied in production, so an
+                  // upload cannot succeed and the gate would trap a
+                  // visitor the same way — blocking Submit until they
+                  // change an honest "No" to something that does not
+                  // trigger. Put `requireEvidence: true` back on this
+                  // option, and on the fire-exit and machine-guard
+                  // questions in `siteWalk`, once a photo uploads
+                  // end-to-end. It is good product behaviour and worth
+                  // demonstrating; it just cannot be demonstrated while
+                  // the sink is down.
+                  {
+                    label: 'No',
+                    color: 'red',
+                    flag: true,
+                    requireAction:
+                      'Replace or repair the defective tyre before the vehicle is used',
+                  },
                 ],
               },
               {
@@ -483,7 +570,6 @@ export const SANDBOX_INSPECTION_SPECS: Record<string, TemplateSpec> = {
                     label: 'No',
                     color: 'red',
                     flag: true,
-                    requireEvidence: true,
                     requireAction: 'Clear the escape route immediately',
                   },
                 ],
@@ -527,10 +613,23 @@ export const SANDBOX_INSPECTION_SPECS: Record<string, TemplateSpec> = {
   }),
 };
 
-/** The in-progress inspection the visitor finds waiting in the register. */
+/**
+ * The in-progress inspection the visitor finds waiting in the register.
+ *
+ * `answeredSections` is how many of the template's sections a colleague
+ * got through before being called away. The first cut of this seed wrote
+ * the inspection row and nothing else, so the tile promised "one
+ * inspection already underway" and delivered a title, a date and a
+ * status badge with all ten answers blank. Nothing was underway. The
+ * answers are filled in by walking the built content, so they cannot
+ * drift from whatever the spec produces.
+ */
 export const SANDBOX_INSPECTION_RUN = {
-  /** Partially answered, so it reads as someone else's work in progress. */
   titleSuffix: 'Eastgate Distribution Centre',
+  /** Stop part-way — the unfinished part is what the visitor picks up. */
+  answeredSections: 2,
+  /** Free-text left by the colleague on any text question they reached. */
+  textAnswer: 'Aisle 7 racking inspection due next week — flagged to the shift manager.',
 } as const;
 
 /** COSHH substance for the COSHH refinement of the risk-assessment tile. */
@@ -547,9 +646,117 @@ export const SANDBOX_FIRE_BUILDING = {
   fraTitle: 'Fire risk assessment — Eastgate main warehouse',
 } as const;
 
-/** RAMS pack for the RAMS tile. */
+/**
+ * RAMS pack for the RAMS tile — the pack the visitor builds or issues.
+ *
+ * The steps are the point. A pack with a reference number, a title and
+ * nothing under it is an empty shell: there is nothing to read, nothing
+ * to judge, and the "before you can issue" gate has nothing to act on.
+ * Four sequenced steps with hazards, PPE and a hold point is a document
+ * a reviewer can actually form a view about.
+ */
 export const SANDBOX_RAMS_PACK = {
   title: 'Conveyor frame repair — hot works, Line 3',
   description:
     'Method statement and risk assessment covering the MIG welding repair to the Line 3 conveyor frame, including hot-work controls and fire watch.',
+  steps: [
+    {
+      title: 'Isolate and prepare the work area',
+      description:
+        'Line 3 stopped, locked off at the local isolator and the key retained by the supervisor. Barrier off the mezzanine bay and post a hot-work sign at each approach.',
+      controlNotes:
+        'Isolation proved dead at the point of work before any access. Permit to work raised and issued before tools are opened.',
+      ppe: ['safety_helmet', 'safety_footwear', 'hi_vis', 'gloves'],
+    },
+    {
+      title: 'Protect the sprinkler head and clear combustibles',
+      description:
+        'Fit a heat shield below the sprinkler head within 6 m of the weld position. Move stored cardboard packaging beyond 10 m or cover with a fire blanket.',
+      controlNotes:
+        'Sprinkler system stays in service — no isolation of detection or suppression without written authorisation from the responsible person.',
+      ppe: ['safety_helmet', 'safety_footwear', 'hi_vis', 'gloves'],
+      holdPoint: {
+        kind: 'supervisor_check',
+        description:
+          'Fire precautions verified in place — heat shield fitted, combustibles cleared, extinguisher and fire watch present — before any ignition source is used.',
+        responsibleRole: 'Permit issuer',
+      },
+    },
+    {
+      title: 'Weld the replacement bracket',
+      description:
+        'MIG weld the replacement support bracket to the conveyor frame in two passes, checking distortion between passes. Welding screens in position on both sides of the bay.',
+      controlNotes:
+        'Extinguisher at the point of work throughout. Local exhaust ventilation on the weld position for fume.',
+      ppe: ['welding_ppe', 'gloves', 'safety_footwear', 'coveralls', 'respiratory_protection'],
+    },
+    {
+      title: 'Fire watch, reinstate and hand back',
+      description:
+        'Maintain a fire watch on the bay and the deck below for 60 minutes after the last ignition source. Remove the heat shield, sweep the area and restore the guarding before de-isolating.',
+      controlNotes:
+        'Permit closed back to the issuer only after the fire watch has run its full hour and the area has been confirmed cool.',
+      ppe: ['safety_helmet', 'safety_footwear', 'hi_vis'],
+    },
+  ],
+  emergency: {
+    firstAid:
+      'Two first aiders on the Northfield shift; nearest kit is in the maintenance workshop. Burn kit held with the hot-work trolley.',
+    emergencyProcedure:
+      'Raise the alarm at the nearest call point, evacuate the mezzanine by the north stair and muster in the goods yard. The fire watch does not leave until relieved by the incident controller.',
+    nearestHospital: 'Nearest A&E is 4.5 miles; site ambulance access is via the north gate.',
+  },
+  logistics: {
+    permitsRequired:
+      'Hot work permit. A separate work-at-height permit is required if any part of the repair is carried out from the MEWP rather than the mezzanine deck.',
+    competence:
+      'Welders to hold current coded-welding certification. All operatives inducted to the site and briefed on this pack before starting.',
+    environmental:
+      'Weld fume extracted at source. No hot metal, slag or consumables to be swept into the yard drainage.',
+  },
 } as const;
+
+/**
+ * A contractor's pack sitting in the review queue — the `reviewPack`
+ * refinement's whole reason to exist.
+ *
+ * This is the tile that was most obviously broken: the visitor asked to
+ * "review a contractor's RAMS" and the review page said "No contractor
+ * packs awaiting review", because the seed built *our own* draft pack —
+ * which is what a different refinement produces. `rams_reviews` carries
+ * a nullable `contractorDocumentId` precisely for a pack logged from an
+ * email rather than uploaded through the portal, which is the honest
+ * shape for a seeded one.
+ */
+export const SANDBOX_RAMS_REVIEW = {
+  title: 'Halden Electrical — LV distribution board upgrade RAMS',
+  contractorRef: 'halden',
+  workDescription:
+    'Contractor-supplied RAMS covering the replacement of the main LV distribution board at Eastgate over a weekend shutdown, including temporary supplies, isolation and re-energisation.',
+  siteRef: 'eastgate',
+  /** Received last week — a queue with no age reads as staged. */
+  receivedDaysAgo: 5,
+} as const;
+
+/**
+ * Gas readings recorded before the seeded permit was issued.
+ *
+ * The hot-work and confined-space types both have "gas testing
+ * required" switched on, and the permit page states the acceptable
+ * limits and says the gate evaluates readings against them. Handing the
+ * visitor a permit that was issued with no readings at all made that
+ * sentence a lie — the register showed "No readings recorded yet"
+ * against a permit already issued and awaiting acceptance. Values are
+ * inside the seeded limits so the snapshotted verdict is a pass.
+ */
+export const SANDBOX_GAS_READINGS: Record<
+  string,
+  ReadonlyArray<{ limitId: string; value: number }>
+> = {
+  hot_work: [{ limitId: 'flammables_lel', value: 0 }],
+  confined_space: [
+    { limitId: 'oxygen', value: 20.9 },
+    { limitId: 'flammables_lel', value: 0 },
+    { limitId: 'carbon_monoxide', value: 2 },
+  ],
+};

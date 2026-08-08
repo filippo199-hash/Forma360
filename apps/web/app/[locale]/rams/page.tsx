@@ -25,15 +25,10 @@ import { Skeleton } from '../../../src/components/ui/skeleton';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
+import { formatDate } from '../../../src/lib/format-date';
 
 type StatusFilter = RamsPackStatus | 'all';
 const STATUS_FILTERS: ReadonlyArray<StatusFilter> = ['all', ...RAMS_PACK_STATUSES];
-
-function formatDate(value: Date | string | null): string {
-  if (value === null) return '—';
-  const d = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
-}
 
 export default function RamsRegisterPage() {
   const t = useTranslations('rams');

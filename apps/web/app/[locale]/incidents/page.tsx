@@ -33,6 +33,7 @@ import { Skeleton } from '../../../src/components/ui/skeleton';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
+import { formatDate } from '../../../src/lib/format-date';
 
 const STATUS_FILTERS = [
   'open',
@@ -396,7 +397,7 @@ export default function IncidentsPage() {
                     <td className="px-3 py-2 text-muted-foreground">{row.siteName ?? '—'}</td>
                     <td className="px-3 py-2 text-muted-foreground">
                       <span className="flex items-center gap-1.5">
-                        {new Date(row.occurredAt).toLocaleDateString(locale)}
+                        {formatDate(row.occurredAt, locale)}
                         {row.lateReport ? <LateReportChip /> : null}
                       </span>
                     </td>
@@ -447,7 +448,7 @@ export default function IncidentsPage() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {row.siteName ?? '—'} · {new Date(row.occurredAt).toLocaleDateString(locale)}
+                    {row.siteName ?? '—'} · {formatDate(row.occurredAt, locale)}
                   </p>
                 </CardContent>
               </Card>

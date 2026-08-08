@@ -45,6 +45,7 @@ import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-butto
 import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
+import { formatDate } from '../../../src/lib/format-date';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -1190,7 +1191,7 @@ function ListView({
                         }
                       >
                         {row.dueAt !== null
-                          ? new Date(row.dueAt).toLocaleDateString(locale)
+                          ? formatDate(row.dueAt, locale)
                           : t('noDueDate')}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
@@ -1456,7 +1457,7 @@ function BoardCardContent({
         ) : null}
         {row.dueAt !== null ? (
           <span className={overdue ? 'font-medium text-destructive' : 'text-muted-foreground'}>
-            {new Date(row.dueAt).toLocaleDateString(locale)}
+            {formatDate(row.dueAt, locale)}
           </span>
         ) : null}
         <span className="text-muted-foreground">{row.assigneeName ?? t('noAssignee')}</span>

@@ -14,7 +14,7 @@
  * call, as the provisioned visitor, with their real permission set.
  * If a filter would hide the seed, these fail.
  *
- * Edge-case IDs: SB-V01..V08.
+ * Edge-case IDs: SB-V01..V13.
  */
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
@@ -164,6 +164,51 @@ describe('sandbox content is visible through the real API', () => {
       issueListed.items.length,
       'the observation register would be empty',
     ).toBeGreaterThanOrEqual(3);
+  });
+
+  /**
+   * The `reviewPack` tile LANDS on the contractor-review workspace. A
+   * pack written into our own register does not put anything there, and
+   * the visitor who asked to review a contractor's RAMS was shown "No
+   * contractor packs awaiting review". This asserts through the exact
+   * query that page runs.
+   */
+  it('SB-V11 — the reviewPack tile puts a contractor pack in the review queue', async () => {
+    const { caller } = await visitorFor('rams', 'reviewPack');
+    const pending = await caller.rams.reviews.list({ outcome: 'pending' });
+    expect(
+      pending.length,
+      'the review page would read "No contractor packs awaiting review"',
+    ).toBeGreaterThanOrEqual(1);
+  });
+
+  /**
+   * The `withActions` refinement is named for corrective actions, and
+   * the actions board read 0 / 0 / 0 / 0 in the workspace built around
+   * them.
+   */
+  it('SB-V12 — the withActions tile fills the actions board', async () => {
+    const { caller } = await visitorFor('hazard', 'withActions');
+    const listed = await caller.actions.list({});
+    expect(listed.rows.length, 'the actions board would read 0/0/0/0').toBeGreaterThanOrEqual(2);
+    // Raised from an observation, and linked back to it — an action with
+    // no source is a to-do, not a corrective action.
+    expect(listed.rows.every((r) => r.sourceType === 'issue' && r.sourceId !== null)).toBe(true);
+  });
+
+  /**
+   * Every tenant opened the "Action type" dropdown to one entry — "No
+   * type" — which is the NULL fallback, not a choice. The field that
+   * classifies an action as corrective could classify nothing.
+   */
+  it('SB-V13 — the action-type dropdown is not empty', async () => {
+    const { caller } = await visitorFor('hazard', 'withActions');
+    const types = await caller.actionTypes.list({});
+    expect(types.length, 'the type dropdown would offer only "No type"').toBeGreaterThanOrEqual(3);
+    expect(
+      types.some((t) => t.name === 'Corrective'),
+      'the corrective-actions module needs a Corrective type',
+    ).toBe(true);
   });
 
   it('SB-V09 — the seeded risk assessment can actually be published', async () => {

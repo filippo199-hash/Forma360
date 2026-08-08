@@ -24,14 +24,16 @@
  */
 import type { Database } from '@forma360/db/client';
 import {
+  actions,
   contractors,
   coshhAssessments,
   coshhSubstances,
   fireBuildings,
   fireRiskAssessments,
+  incidentAbsences,
+  incidentPersons,
   incidents,
   inspections,
-  issueCategories,
   issues,
   permissionSets,
   permits,
@@ -39,6 +41,7 @@ import {
   riskAssessmentControls,
   riskAssessmentHazards,
   ramsPacks,
+  ramsReviews,
   riskAssessments,
   sites,
   templateVersions,
@@ -61,22 +64,30 @@ import {
 } from '@forma360/shared/sandbox-scenarios';
 import { and, eq } from 'drizzle-orm';
 import { ensureSeededTypes } from '../routers/permits';
-import { snapshotPreconditions } from '@forma360/shared/permits';
+import {
+  readingWithinLimit,
+  snapshotPreconditions,
+  type GasReading,
+} from '@forma360/shared/permits';
 import { nextReferenceValue } from '../reference-counter';
-import { formatIncidentReference } from '@forma360/shared/incidents';
+import { formatIncidentReference, personInjurySchema } from '@forma360/shared/incidents';
 import { buildTemplateContentFromSpec } from '@forma360/shared/template-builder';
-import { methodStatementContentSchema } from '@forma360/shared/rams';
+import { methodStatementContentSchema, snapshotReviewChecklist } from '@forma360/shared/rams';
+import { effectiveFlaggedOptionIds, type TemplateContent } from '@forma360/shared/template-schema';
+import { seedTenantDefaults } from '../tenant-defaults';
 import {
   SANDBOX_COLLEAGUE,
   SANDBOX_CONTRACTORS,
   SANDBOX_COSHH,
   SANDBOX_FIRE_BUILDING,
+  SANDBOX_GAS_READINGS,
   SANDBOX_INCIDENT,
   SANDBOX_INSPECTION_RUN,
   SANDBOX_INSPECTION_SPECS,
   SANDBOX_OBSERVATIONS,
   SANDBOX_PERMITS,
   SANDBOX_RAMS_PACK,
+  SANDBOX_RAMS_REVIEW,
   SANDBOX_RISK_ASSESSMENTS,
   SANDBOX_SITES,
 } from './seed-data';
@@ -123,9 +134,6 @@ function sandboxPermissionKeys(): PermissionKey[] {
   const withheld = new Set<string>(SANDBOX_WITHHELD_PERMISSIONS);
   return PERMISSION_KEYS.filter((k) => !withheld.has(k));
 }
-
-/** Default observation categories, mirroring `auth.signUpWithTenant`. */
-const OBSERVATION_CATEGORIES = ['Hazard', 'Near miss', 'Quality', 'Environmental'] as const;
 
 export interface ProvisionSandboxInput {
   readonly brand: BrandId;
@@ -235,20 +243,10 @@ export async function provisionSandbox(
       await tx.insert(contractors).values({ id, tenantId, name: c.name });
     }
 
-    const categoryIds = new Map<string, string>();
-    const now = new Date();
-    for (const name of OBSERVATION_CATEGORIES) {
-      const id = newId();
-      categoryIds.set(name, id);
-      await tx.insert(issueCategories).values({
-        id,
-        tenantId,
-        name,
-        createdBy: userId,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
+    // The same defaults sign-up seeds — observation categories AND the
+    // action types the actions module needs to be usable. One helper so
+    // the two tenant-creation paths cannot drift.
+    const { categoryIds } = await seedTenantDefaults(tx as unknown as Database, tenantId, userId);
 
     const ctx: SeedContext = {
       tx,
@@ -391,19 +389,39 @@ async function seedRiskAssessment(ctx: SeedContext): Promise<void> {
   }
 }
 
-/** Seed the observation register with two open items and one closed. */
+/**
+ * Seed the observation register: three reports, two open and one
+ * already closed out, spread across both sites and across the past
+ * fortnight — plus, on the `withActions` refinement, a corrective action
+ * against each open one.
+ *
+ * Every one of those properties is here because its absence was visible.
+ * The tile's own promise is "three reports, two still open", and the
+ * first cut left all three open; the `withActions` refinement is named
+ * for corrective actions and seeded none, so the actions board read
+ * 0/0/0/0 in the workspace built around them; and all three carried the
+ * same created-and-occurred second, which is what a register with no
+ * history looks like — staged.
+ */
 async function seedObservations(ctx: SeedContext): Promise<void> {
+  const now = new Date();
   const accessSnapshot: IssueAccessSnapshot = {
     groupIds: [],
     siteIds: [],
     permissions: [],
-    snapshotAt: new Date().toISOString(),
+    snapshotAt: now.toISOString(),
   };
+  const withActions = ctx.resolved.refinement.id === 'withActions';
+  // Only the `anonymous` refinement demonstrates the QR flow. Attributing
+  // a report to "Anonymous" on a tile the visitor did not pick made the
+  // register look broken rather than deliberate.
+  const anonymous = ctx.resolved.refinement.id === 'anonymous';
 
-  let n = 1;
+  let n = 0;
   for (const obs of SANDBOX_OBSERVATIONS) {
     const categoryId = ctx.categoryIds.get(obs.categoryName);
     if (categoryId === undefined) continue;
+    n++;
 
     // Same contract as the issues router: OBS-, six digits, claimed
     // through the counter so the visitor's next report cannot collide.
@@ -416,8 +434,18 @@ async function seedObservations(ctx: SeedContext): Promise<void> {
       customQuestions: [],
     };
 
+    const reportedAt = daysBefore(now, obs.daysAgo);
+    const siteId = ctx.siteIds.get(obs.siteRef);
+    // The QR-submitted one is the near miss: an anonymous report of
+    // something that nearly hit somebody is exactly what that channel is
+    // for, and it is the only report on the register with no name on it.
+    const isAnonymous = anonymous && n === 2;
+    const reporterId = n === 1 ? ctx.colleagueId : ctx.userId;
+    const closed = obs.status === 'closed';
+    const issueId = newId();
+
     await ctx.tx.insert(issues).values({
-      id: newId(),
+      id: issueId,
       tenantId: ctx.tenantId,
       categoryId,
       categorySnapshot,
@@ -425,14 +453,73 @@ async function seedObservations(ctx: SeedContext): Promise<void> {
       referenceNumber: `OBS-${String(ref).padStart(6, '0')}`,
       title: obs.title,
       description: obs.description,
-      ...(ctx.siteIds.get('northfield') !== undefined
-        ? { siteId: ctx.siteIds.get('northfield') as string }
+      status: obs.status,
+      ...(siteId !== undefined ? { siteId } : {}),
+      priority: obs.priority,
+      dateOccurred: reportedAt,
+      createdAt: reportedAt,
+      updatedAt: closed ? daysBefore(now, obs.daysAgo - 1) : reportedAt,
+      ...(isAnonymous
+        ? { reportedVia: 'qr' as const }
+        : {
+            reportedByUserId: reporterId,
+            reportedByName:
+              reporterId === ctx.colleagueId
+                ? `${SANDBOX_COLLEAGUE.firstName} ${SANDBOX_COLLEAGUE.lastName}`
+                : 'You',
+          }),
+      ...(closed
+        ? {
+            closedAt: daysBefore(now, obs.daysAgo - 1),
+            closedByUserId: ctx.colleagueId,
+            closedReason: obs.closedReason ?? '',
+          }
         : {}),
-      priority: obs.needsAction ? 'high' : 'low',
-      reportedByUserId: n === 1 ? ctx.colleagueId : ctx.userId,
     });
-    n++;
+
+    if (!withActions || obs.action === null) continue;
+
+    const actionRef = await nextReferenceValue(
+      ctx.tx as unknown as Database,
+      ctx.tenantId,
+      'action',
+    );
+    await ctx.tx.insert(actions).values({
+      id: newId(),
+      tenantId: ctx.tenantId,
+      sourceType: 'issue',
+      sourceId: issueId,
+      referenceNumber: `AC-${String(actionRef).padStart(6, '0')}`,
+      title: obs.action.title,
+      description: obs.action.description,
+      status: 'open',
+      priority: obs.action.priority,
+      assigneeUserId: obs.action.assignTo === 'colleague' ? ctx.colleagueId : ctx.userId,
+      // Actions inherit the site of the finding that raised them — an
+      // action floating with "No site" cannot be routed to anybody.
+      ...(siteId !== undefined ? { siteId } : {}),
+      dueAt: endOfDay(daysBefore(now, -obs.action.dueInDays)),
+      createdBy: ctx.colleagueId,
+      createdAt: reportedAt,
+      updatedAt: reportedAt,
+    });
   }
+}
+
+/** `n` days before `from` (negative `n` moves forward). */
+function daysBefore(from: Date, days: number): Date {
+  return new Date(from.getTime() - days * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * 17:00 on the given day. A due date carrying seconds ("due 12:28:52")
+ * is spurious precision — nothing in a safety manager's world is due at
+ * fifty-two seconds past.
+ */
+function endOfDay(day: Date): Date {
+  const d = new Date(day);
+  d.setHours(17, 0, 0, 0);
+  return d;
 }
 
 /**
@@ -443,23 +530,77 @@ async function seedObservations(ctx: SeedContext): Promise<void> {
  */
 async function seedIncident(ctx: SeedContext): Promise<void> {
   const ref = await nextReferenceValue(ctx.tx as unknown as Database, ctx.tenantId, 'incident');
-  const occurredAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const occurredAt = daysBefore(now, SANDBOX_INCIDENT.occurredDaysAgo);
+  // Reported the same shift. The register chips any gap over 24 h as a
+  // late report, and a workspace built seconds ago that opens with a
+  // late-report badge is telling the visitor off for someone else's
+  // delay — the seed had `reportedAt` defaulting to now against an
+  // accident two days old.
+  const reportedAt = new Date(
+    occurredAt.getTime() + SANDBOX_INCIDENT.reportedHoursAfter * 60 * 60 * 1000,
+  );
+  const incidentId = newId();
 
   await ctx.tx.insert(incidents).values({
-    id: newId(),
+    id: incidentId,
     tenantId: ctx.tenantId,
     referenceNumber: formatIncidentReference(ref),
     title: SANDBOX_INCIDENT.title,
     kind: SANDBOX_INCIDENT.kind,
     description: SANDBOX_INCIDENT.description,
     locationText: SANDBOX_INCIDENT.locationText,
+    // A hospital admission floors severity at `serious` — the same rule
+    // `provisionalSeverity` applies on the real report form. Left at the
+    // column default the record read "Severity: Minor" against a
+    // fractured wrist, a hospital visit and two weeks off.
+    severity: SANDBOX_INCIDENT.severity,
     ...(ctx.siteIds.get('northfield') !== undefined
       ? { siteId: ctx.siteIds.get('northfield') as string }
       : {}),
     occurredAt,
+    reportedAt,
     status: 'reported',
     reportedByUserId: ctx.colleagueId,
+    createdAt: reportedAt,
+    updatedAt: reportedAt,
   });
+
+  // The injured person and the open absence period. Without these the
+  // "People & lost time" panel read "0 day(s) lost" while the
+  // description said two weeks off — and the over-7-day RIDDOR test,
+  // which is one of the two triggers this scenario exists to present,
+  // had no figure to work from.
+  const personId = newId();
+  await ctx.tx.insert(incidentPersons).values({
+    id: personId,
+    tenantId: ctx.tenantId,
+    incidentId,
+    name: SANDBOX_INCIDENT.person.name,
+    category: SANDBOX_INCIDENT.person.category,
+    injury: personInjurySchema.parse(SANDBOX_INCIDENT.person.injury),
+    returnedToWork: false,
+    createdAt: reportedAt,
+    updatedAt: reportedAt,
+  });
+
+  await ctx.tx.insert(incidentAbsences).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    incidentId,
+    personId,
+    fromDate: isoDate(daysBefore(occurredAt, -SANDBOX_INCIDENT.absenceFromDaysAfterAccident)),
+    // Open period — still absent, so the count keeps climbing and the
+    // over-7-day threshold is crossed by the facts rather than by a
+    // number someone typed.
+    toDate: null,
+    createdAt: reportedAt,
+  });
+}
+
+/** `YYYY-MM-DD` in UTC — the `date` columns store calendar days. */
+function isoDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
 }
 
 /**
@@ -479,7 +620,13 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
   await ensureSeededTypes(tx, ctx.tenantId, ctx.userId);
 
   const typeRows = await tx
-    .select({ id: permitTypes.id, preconditions: permitTypes.preconditions })
+    .select({
+      id: permitTypes.id,
+      preconditions: permitTypes.preconditions,
+      requiresGasTesting: permitTypes.requiresGasTesting,
+      requiresAuthoriser: permitTypes.requiresAuthoriser,
+      gasLimits: permitTypes.gasLimits,
+    })
     .from(permitTypes)
     .where(and(eq(permitTypes.tenantId, ctx.tenantId), eq(permitTypes.category, content.category)))
     .limit(1);
@@ -510,6 +657,40 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
     checkedAt: validFrom.toISOString(),
   }));
 
+  // Gas readings taken before issue, where the type demands them.
+  //
+  // The seeded permit was written straight to `issued`, which is what
+  // let it skip the gate the router enforces on the real issue path. The
+  // page then stated the acceptable limits, said "the gate evaluates
+  // readings against these", and showed "No readings recorded yet"
+  // against an already-issued permit. Recording the readings the issuer
+  // would have taken makes the document coherent — and the verdict is
+  // snapshotted per reading exactly as `permits.recordGasReading` does.
+  const gasSpec = SANDBOX_GAS_READINGS[content.category] ?? [];
+  const takenAt = new Date(validFrom.getTime() - 15 * 60 * 1000);
+  const colleagueName = `${SANDBOX_COLLEAGUE.firstName} ${SANDBOX_COLLEAGUE.lastName}`;
+  const gasReadings: GasReading[] = permitType.requiresGasTesting
+    ? gasSpec.flatMap((r) => {
+        const limit = permitType.gasLimits.find((l) => l.id === r.limitId);
+        if (limit === undefined) return [];
+        const reading = { reading: r.value, unit: limit.unit };
+        return [
+          {
+            id: newId(),
+            substance: limit.label,
+            reading: r.value,
+            unit: limit.unit,
+            takenAt: takenAt.toISOString(),
+            takenBy: ctx.colleagueId,
+            takenByName: colleagueName,
+            note: '',
+            limitId: limit.id,
+            withinLimits: readingWithinLimit(reading, limit),
+          },
+        ];
+      })
+    : [];
+
   await ctx.tx.insert(permits).values({
     id: newId(),
     tenantId: ctx.tenantId,
@@ -523,8 +704,15 @@ async function seedPermit(ctx: SeedContext): Promise<void> {
       : {}),
     status: 'issued',
     preconditions,
+    gasReadings,
     issuerUserId: ctx.colleagueId,
     issuedAt: validFrom,
+    // A type that demands an authorising signature must carry one on an
+    // issued permit, or the record shows a permit in force that nobody
+    // authorised.
+    ...(permitType.requiresAuthoriser
+      ? { authoriserUserId: ctx.colleagueId, authorisedAt: takenAt }
+      : {}),
     acceptorUserId: ctx.userId,
     validFrom,
     validTo,
@@ -594,6 +782,11 @@ async function seedInspection(ctx: SeedContext): Promise<void> {
     snapshotAt: now.toISOString(),
   };
 
+  // Started yesterday morning — "in progress" implies elapsed time, and
+  // a run stamped with the second the workspace was built does not read
+  // as someone else's half-finished work.
+  const startedAt = daysBefore(now, 1);
+
   await ctx.tx.insert(inspections).values({
     id: newId(),
     tenantId: ctx.tenantId,
@@ -605,9 +798,55 @@ async function seedInspection(ctx: SeedContext): Promise<void> {
       ? { siteId: ctx.siteIds.get('eastgate') as string }
       : {}),
     accessSnapshot,
+    // The colleague who started it is the one whose name belongs on the
+    // record. Left unset, the conduct screen and the report both print
+    // an em dash where the author should be.
+    conductedBy: ctx.colleagueId,
+    responses: partialResponses(content),
     createdBy: ctx.colleagueId,
-    startedAt: now,
+    startedAt,
+    createdAt: startedAt,
+    updatedAt: startedAt,
   });
+}
+
+/**
+ * Answers for the first `answeredSections` sections of the seeded run,
+ * built by walking the content the builder produced.
+ *
+ * Derived rather than hand-written so it cannot drift from whichever
+ * spec the refinement picked: a hard-coded answer map keyed on item ids
+ * would be stale the moment a question moved, and a stale map fails
+ * silently — which is exactly how the tile came to promise "one
+ * inspection already underway" and hand over ten blank answers.
+ *
+ * Only non-flagging options are chosen. A seeded failure would raise a
+ * corrective action the visitor never agreed to, and the point of
+ * stopping part-way is that the *unfinished* part is theirs.
+ */
+function partialResponses(content: TemplateContent): Record<string, unknown> {
+  const sets = new Map(content.customResponseSets.map((s) => [s.id, s]));
+  const responses: Record<string, unknown> = {};
+  let sectionsDone = 0;
+
+  for (const page of content.pages) {
+    for (const section of page.sections) {
+      if (sectionsDone >= SANDBOX_INSPECTION_RUN.answeredSections) return responses;
+      for (const item of section.items) {
+        if (item.type === 'multipleChoice') {
+          const set = sets.get(item.responseSetId);
+          if (set === undefined) continue;
+          const flagged = new Set(effectiveFlaggedOptionIds(item, set));
+          const pick = set.options.find((o) => !flagged.has(o.id));
+          if (pick !== undefined) responses[item.id] = pick.id;
+        } else if (item.type === 'text') {
+          responses[item.id] = SANDBOX_INSPECTION_RUN.textAnswer;
+        }
+      }
+      sectionsDone++;
+    }
+  }
+  return responses;
 }
 
 /** Seed one hazardous substance with a COSHH assessment against it. */
@@ -684,8 +923,24 @@ async function seedFireBuilding(ctx: SeedContext): Promise<void> {
   });
 }
 
-/** Seed one RAMS pack the visitor can open and build on. */
+/**
+ * Seed the RAMS tile.
+ *
+ * `reviewPack` lands on the contractor-review workspace, so that is what
+ * it has to furnish. Seeding our own draft pack behind it — which is
+ * what `buildPack` produces — meant the visitor asked to review a
+ * contractor's RAMS and was shown "No contractor packs awaiting review".
+ * The other two refinements get the pack, and the pack now carries the
+ * method-statement steps that make it a document rather than a shell.
+ */
 async function seedRamsPack(ctx: SeedContext): Promise<void> {
+  await seedRamsOwnPack(ctx);
+  if (ctx.resolved.refinement.id === 'reviewPack') {
+    await seedRamsContractorReview(ctx);
+  }
+}
+
+async function seedRamsOwnPack(ctx: SeedContext): Promise<void> {
   const ref = await nextReferenceValue(ctx.tx as unknown as Database, ctx.tenantId, 'ramsPack');
 
   await ctx.tx.insert(ramsPacks).values({
@@ -693,14 +948,57 @@ async function seedRamsPack(ctx: SeedContext): Promise<void> {
     tenantId: ctx.tenantId,
     referenceNumber: `RAMS-${String(ref).padStart(6, '0')}`,
     title: SANDBOX_RAMS_PACK.title,
-    // Parsed through the real schema so defaults (schemaVersion,
-    // emergency, logistics) are filled in exactly as the builder would.
+    // Parsed through the real schema so defaults (schemaVersion, ids,
+    // dense sequencing) are filled in exactly as the builder would, and
+    // so a malformed seed fails here rather than at the first read.
     draftContent: methodStatementContentSchema.parse({
       scopeOfWorks: SANDBOX_RAMS_PACK.description,
+      steps: SANDBOX_RAMS_PACK.steps.map((step, i) => ({
+        id: `seed-step-${i + 1}`,
+        sequence: i + 1,
+        title: step.title,
+        description: step.description,
+        controlNotes: step.controlNotes,
+        ppe: [...step.ppe],
+        ...('holdPoint' in step ? { holdPoint: step.holdPoint } : {}),
+      })),
+      emergency: SANDBOX_RAMS_PACK.emergency,
+      logistics: SANDBOX_RAMS_PACK.logistics,
     }),
     ...(ctx.siteIds.get('northfield') !== undefined
       ? { siteId: ctx.siteIds.get('northfield') as string }
       : {}),
     createdBy: ctx.userId,
+  });
+}
+
+/**
+ * A contractor's pack logged into the review queue, pending a decision.
+ *
+ * `contractorDocumentId` stays null: that is the module's own shape for
+ * a pack that arrived by email and is being logged internally, and it is
+ * the honest one here — there is no uploaded file behind a seeded row,
+ * and inventing a storage key would produce a review whose "open the
+ * document" button 404s.
+ */
+async function seedRamsContractorReview(ctx: SeedContext): Promise<void> {
+  const contractorId = ctx.contractorIds.get(SANDBOX_RAMS_REVIEW.contractorRef);
+  if (contractorId === undefined) return;
+
+  const receivedAt = daysBefore(new Date(), SANDBOX_RAMS_REVIEW.receivedDaysAgo);
+  await ctx.tx.insert(ramsReviews).values({
+    id: newId(),
+    tenantId: ctx.tenantId,
+    contractorId,
+    title: SANDBOX_RAMS_REVIEW.title,
+    workDescription: SANDBOX_RAMS_REVIEW.workDescription,
+    ...(ctx.siteIds.get(SANDBOX_RAMS_REVIEW.siteRef) !== undefined
+      ? { siteId: ctx.siteIds.get(SANDBOX_RAMS_REVIEW.siteRef) as string }
+      : {}),
+    outcome: 'pending',
+    checklist: snapshotReviewChecklist(),
+    submittedBy: ctx.colleagueId,
+    createdAt: receivedAt,
+    updatedAt: receivedAt,
   });
 }

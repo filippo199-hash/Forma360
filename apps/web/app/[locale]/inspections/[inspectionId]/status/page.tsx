@@ -11,6 +11,7 @@ import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { ShareLinkDialog } from '../../../../../src/components/share-link-dialog';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
+import { formatDateTime } from '../../../../../src/lib/format-date';
 
 /**
  * Post-submit status view. Renders different content per inspection
@@ -178,7 +179,7 @@ export default function InspectionStatusPage() {
                       {s.signedAt !== null ? (
                         <p className="text-xs text-muted-foreground">
                           {t('workflowSignedAt', {
-                            time: new Date(s.signedAt).toLocaleString(),
+                            time: formatDateTime(s.signedAt),
                           })}
                         </p>
                       ) : null}
@@ -237,7 +238,7 @@ export default function InspectionStatusPage() {
               {inspection.completedAt !== null ? (
                 <p className="text-xs text-muted-foreground">
                   {t('completedAt', {
-                    time: new Date(inspection.completedAt).toLocaleString(),
+                    time: formatDateTime(inspection.completedAt),
                   })}
                 </p>
               ) : null}

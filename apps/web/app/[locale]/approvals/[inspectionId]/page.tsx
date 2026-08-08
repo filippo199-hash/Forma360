@@ -21,6 +21,7 @@ import {
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDateTime } from '../../../../src/lib/format-date';
 
 /**
  * Approval detail. Renders the inspection read-only, shows the collected
@@ -171,7 +172,7 @@ export default function ApprovalDetailPage() {
                     {sig.signerRole !== null ? ` — ${sig.signerRole}` : ''}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {t('signedAt', { time: new Date(sig.signedAt).toLocaleString() })}
+                    {t('signedAt', { time: formatDateTime(sig.signedAt) })}
                   </p>
                 </li>
               ))}

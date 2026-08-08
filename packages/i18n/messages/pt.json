@@ -3912,7 +3912,8 @@
       "reackTitle": "Previously acknowledged version {version}",
       "reacknowledgeBanner": "This assessment changed since you last read it (now version {version}). Please read it again and re-confirm.",
       "shareNeedsPublish": "Publish the assessment first — sharing sends the published record, it never publishes for you.",
-      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically."
+      "shareRecordsAcks": "Recipients of the Heads Up are added to the acknowledgement tracker automatically.",
+      "noEmailYet": "Sem endereço de e-mail"
     },
     "personSpecific": {
       "promptTitle": "Person-specific assessment recommended",
@@ -4865,7 +4866,10 @@
       "addGasLimit": "Adicionar limite",
       "gasFreshness": "Validade da medição de gases",
       "gasFreshnessUnit": "minutos",
-      "description": "Descrição"
+      "description": "Descrição",
+      "requiredTraining": "Formação exigida",
+      "requiredTrainingHint": "Cada operacional indicado tem de as deter válidas antes de este tipo poder ser emitido.",
+      "requiredTrainingNone": "Ainda não há requisitos de formação definidos."
     },
     "errors": {
       "module-disabled": "Este módulo não está disponível.",
@@ -4928,10 +4932,7 @@
     },
     "signatures": {
       "competenceBlocked": "Bloqueado: competência não cumprida"
-    },
-    "requiredTraining": "Formação exigida",
-    "requiredTrainingHint": "Cada operacional indicado tem de as deter válidas antes de este tipo poder ser emitido.",
-    "requiredTrainingNone": "Ainda não há requisitos de formação definidos."
+    }
   },
   "fireSafety": {
     "title": "Segurança contra incêndio",
@@ -5834,6 +5835,7 @@
         "not_reportable": "Não comunicável",
         "death": "Morte",
         "specified_injury": "Lesão especificada",
+        "non_worker_hospital": "Pessoa não trabalhadora levada ao hospital",
         "over_7_day": "Baixa superior a 7 dias",
         "occupational_disease": "Doença profissional",
         "dangerous_occurrence": "Ocorrência perigosa",
@@ -5842,8 +5844,9 @@
       "help": {
         "not_reportable": "Nenhuma categoria comunicável se aplica. Fundamente — a decisão negativa é o registo.",
         "death": "Uma pessoa morreu na sequência de acidente de trabalho. Notifique sem demora; relatório em 10 dias.",
-        "specified_injury": "Fratura (exceto dedos), amputação, perda de visão, esmagamento de cabeça/tronco, queimaduras graves, escalpe, inconsciência por asfixia ou internamento superior a 24 h. Relatório em 10 dias.",
-        "over_7_day": "Incapacidade superior a 7 dias, sem contar o dia do acidente. Relatório em 15 dias.",
+        "specified_injury": "A worker suffered a Schedule 1 injury: any fracture other than to fingers, thumbs or toes; amputation; permanent or likely-permanent loss or reduction of sight; a crush injury to the head or torso causing damage to the brain or internal organs; a serious burn covering more than 10% of the body or damaging the eyes, respiratory system or other vital organs; scalping requiring hospital treatment; loss of consciousness caused by head injury or asphyxia; or, from working in an enclosed space, any injury leading to hypothermia, heat-induced illness or resuscitation, or requiring admission to hospital for more than 24 hours. Report within 10 days.",
+        "non_worker_hospital": "A person not at work (a visitor, a delivery driver, a member of the public) was injured by a work-related accident and taken from the scene to hospital for treatment. Reportable regardless of how serious the injury turns out to be. Report within 10 days.",
+        "over_7_day": "The worker is incapacitated for routine work for more than 7 consecutive days, not counting the day of the accident. Report within 15 days of the accident.",
         "occupational_disease": "Doença profissional diagnosticada ligada ao trabalho — túnel cárpico, dermatite, asma ocupacional, HAVS, tendinite, cancro ocupacional.",
         "dangerous_occurrence": "Evento do anexo 2 — colapso de equipamento de elevação, de andaime, incêndio/explosão elétrica, falha sob pressão, libertação acidental.",
         "gas_incident": "Morte ou lesão relacionada com gás, ou instalação de gás perigosa."

@@ -587,7 +587,11 @@ const DEFAULT_PERMIT_TYPE_BASES: ReadonlyArray<
   {
     category: 'hot_work',
     name: 'Hot work',
-    requiresAuthoriser: false,
+    // Hot work is the permit every insurer expects to carry a named
+    // authorisation, and it was the one default shipping without one —
+    // an issued hot-work permit had an issuer and an acceptor and nobody
+    // who authorised the ignition source.
+    requiresAuthoriser: true,
     requiresGasTesting: true,
     requiresIsolationCertificate: false,
     requiresRescuePlan: false,
@@ -601,6 +605,16 @@ const DEFAULT_PERMIT_TYPE_BASES: ReadonlyArray<
       { id: 'fire_watch', label: 'Fire watch arranged during work and for 60 minutes after' },
       { id: 'atmosphere_tested', label: 'Flammable-atmosphere test completed where required' },
       { id: 'containment', label: 'Spark / flame containment (screens, blankets) in place' },
+      // Sprinklers and detection are the hot-work precondition most
+      // often missed and most often expensive: heat from a weld sets off
+      // the head above it, and the usual "fix" — isolating the system
+      // for the shift — is exactly the decision that must not be taken
+      // informally at the point of work.
+      {
+        id: 'detection_suppression',
+        label:
+          'Sprinkler heads and detectors within range protected from heat; any isolation authorised in writing and reinstated at closure',
+      },
       { id: 'competence_verified', label: 'Competence of all operatives verified' },
     ],
   },

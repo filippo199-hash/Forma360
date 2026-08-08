@@ -40,6 +40,7 @@ import { Skeleton } from '../../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../../src/lib/trpc/client';
+import { formatDate } from '../../../../../../src/lib/format-date';
 
 const ROUTES = ['inhalation', 'skin', 'eyes', 'ingestion', 'injection'] as const;
 const EXPOSED_PRESETS = [
@@ -985,7 +986,7 @@ function TierGroup({
                       ...(c.faceFitConfirmedAt !== null
                         ? [
                             t('rpe.faceFitValue', {
-                              date: new Date(c.faceFitConfirmedAt).toLocaleDateString(),
+                              date: formatDate(c.faceFitConfirmedAt),
                             }),
                           ]
                         : []),

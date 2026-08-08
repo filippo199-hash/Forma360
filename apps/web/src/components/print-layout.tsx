@@ -18,6 +18,7 @@ import {
   computeSkippedItemIds,
   multipleChoiceLabels,
 } from '@forma360/shared/inspection-eval';
+import { formatDate } from '../lib/format-date';
 
 /**
  * Narrow shape of the page-walk we do. Matches what @forma360/shared
@@ -130,7 +131,7 @@ export function PrintLayout({
   // inspection so the title page renders real text, not blanks/ids.
   const insp = snapshot.inspection;
   const fmtDate = (d: string | null): string =>
-    d === null ? '' : new Date(d).toLocaleDateString();
+    d === null ? '' : formatDate(d);
   const titleValues: Record<string, string> = {};
   for (const page of content?.pages ?? []) {
     if (page.type !== 'title') continue;

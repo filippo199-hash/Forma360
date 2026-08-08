@@ -735,12 +735,19 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
                 .where(and(eq(sites.tenantId, ctx.tenantId), eq(sites.id, insp.siteId)))
                 .limit(1)
             : [];
+        // Fall back to whoever created the run when `conductedBy` is
+        // null. A row without it is not a row without an author — the
+        // conduct screen shows a name (it has the creator to hand) while
+        // the finished report printed "Prepared by —", which is the one
+        // field on an inspection report that has to be filled in for the
+        // document to be worth anything.
+        const conductorId = insp.conductedBy ?? insp.createdBy;
         const [conductedByRow] =
-          insp.conductedBy !== null
+          conductorId !== null
             ? await ctx.db
                 .select({ name: user.name })
                 .from(user)
-                .where(eq(user.id, insp.conductedBy))
+                .where(eq(user.id, conductorId))
                 .limit(1)
             : [];
 

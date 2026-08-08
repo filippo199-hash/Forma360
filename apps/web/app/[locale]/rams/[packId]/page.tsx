@@ -29,12 +29,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
-
-function formatDateTime(value: Date | string | null): string {
-  if (value === null) return '—';
-  const d = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
-}
+import { formatDateTime } from '../../../../src/lib/format-date';
 
 export default function RamsPackPage() {
   const t = useTranslations('rams');

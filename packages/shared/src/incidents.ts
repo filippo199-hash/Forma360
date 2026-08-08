@@ -476,6 +476,15 @@ export const RIDDOR_CATEGORIES = [
   'not_reportable',
   'death',
   'specified_injury',
+  /**
+   * Regulation 5 — a person NOT at work injured by a work-related
+   * accident and taken from the scene to hospital for treatment. A
+   * distinct duty from the worker categories above, and the one this
+   * screening had no home for at all: a delivery driver or a visitor
+   * taken to hospital had to be forced into `specified_injury` (which
+   * applies to workers) or recorded as not reportable.
+   */
+  'non_worker_hospital',
   'over_7_day',
   'occupational_disease',
   'dangerous_occurrence',
@@ -496,6 +505,7 @@ export function isRiddorReportable(category: RiddorCategory): boolean {
 export const RIDDOR_REPORT_DAYS: Record<Exclude<RiddorCategory, 'not_reportable'>, number> = {
   death: 10,
   specified_injury: 10,
+  non_worker_hospital: 10,
   over_7_day: 15,
   occupational_disease: 10,
   dangerous_occurrence: 10,

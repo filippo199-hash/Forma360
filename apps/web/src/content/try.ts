@@ -19,7 +19,11 @@ import { activeBrand } from '../lib/brand';
 export const TRY_PAGE = {
   eyebrow: 'No account needed',
   title: 'What do you need to get done?',
-  subtitle: `Pick one and we'll build you a working ${activeBrand.name} workspace, set up around it. Takes about a minute.`,
+  // "About a minute" was never true — every build takes seconds, and the
+  // build screen said so on the next click. Promising slower than you
+  // deliver still costs you: the visitor reads the two screens as one
+  // product that does not know its own behaviour.
+  subtitle: `Pick one and we'll build you a working ${activeBrand.name} workspace, set up around it. Takes a few seconds.`,
   refineHeading: 'Which one?',
   continueCta: 'Build my workspace',
   backCta: 'Back',
@@ -41,6 +45,22 @@ export interface TryTileCopy {
   readonly refinements: Readonly<Record<string, string>>;
   /** Shown while the workspace is being built — quotes the choice back. */
   readonly buildingSteps: readonly string[];
+  /**
+   * A final step that is only true for some refinements, keyed by
+   * refinement id. The narration describes rows we actually write, so a
+   * line that holds for one fork must not be shown on the others —
+   * that is the same broken promise the seeds were just fixed for.
+   */
+  readonly refinementSteps?: Readonly<Record<string, string>>;
+}
+
+/** The steps to narrate for this tile and the fork the visitor picked. */
+export function buildingStepsFor(
+  copy: TryTileCopy,
+  refinementId: string | null,
+): readonly string[] {
+  const extra = refinementId === null ? undefined : copy.refinementSteps?.[refinementId];
+  return extra === undefined ? copy.buildingSteps : [...copy.buildingSteps, extra];
 }
 
 export const TRY_TILES: Readonly<Record<SandboxScenarioId, TryTileCopy>> = {
@@ -74,7 +94,8 @@ export const TRY_TILES: Readonly<Record<SandboxScenarioId, TryTileCopy>> = {
     buildingSteps: [
       'Creating your workspace',
       'Adding two sites and your team',
-      'Setting up your inspection register',
+      'Publishing a checklist you can run',
+      'Leaving one inspection part-finished for you',
     ],
   },
   hazard: {
@@ -91,6 +112,10 @@ export const TRY_TILES: Readonly<Record<SandboxScenarioId, TryTileCopy>> = {
       'Adding two sites and your team',
       'Logging three reports, two still open',
     ],
+    refinementSteps: {
+      withActions: 'Raising the corrective actions they need',
+      anonymous: 'Turning on anonymous QR reporting',
+    },
   },
   permit: {
     label: 'Permits to work',
@@ -121,7 +146,7 @@ export const TRY_TILES: Readonly<Record<SandboxScenarioId, TryTileCopy>> = {
     buildingSteps: [
       'Creating your workspace',
       'Adding two sites and your team',
-      'Setting up your incident register',
+      'Recording an injury with the facts RIDDOR turns on',
     ],
   },
   rams: {
@@ -136,7 +161,10 @@ export const TRY_TILES: Readonly<Record<SandboxScenarioId, TryTileCopy>> = {
     buildingSteps: [
       'Creating your workspace',
       'Adding two sites and your contractors',
-      'Setting up your RAMS register',
+      'Writing a method statement you can build on',
     ],
+    refinementSteps: {
+      reviewPack: "Putting a contractor's pack in your review queue",
+    },
   },
 };
