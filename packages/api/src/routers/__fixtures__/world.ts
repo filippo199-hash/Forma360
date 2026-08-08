@@ -135,6 +135,8 @@ export interface TenantWorld {
   folders: Record<string, string>;
   /** Documents planted against the visibility rules, by name. */
   documents: Record<string, string>;
+  /** Heads-Ups planted across the lifecycle, by name. */
+  headsUps: Record<string, string>;
 }
 
 export interface World {
@@ -205,9 +207,13 @@ async function seedTenant(
   ]);
   const viewSetId = await customSet(db, tenantId, 'Contractor Viewer', ['contractors.view']);
   const nobodySetId = await customSet(db, tenantId, 'No Access', []);
+  // Also holds `headsUp.view`: this actor doubles as the briefings suite's
+  // already-acknowledged recipient, and every employee receives briefings —
+  // a supervisor who could not open one would be an odd set to build.
   const trainRecordSetId = await customSet(db, tenantId, 'Training Recorder', [
     'training.view',
     'training.record',
+    'headsUp.view',
   ]);
   // Also holds `documents.view`: this actor doubles as the documents
   // suite's "in the restricted group" reader, and a role that can read the
@@ -216,6 +222,11 @@ async function seedTenant(
   const trainViewSetId = await customSet(db, tenantId, 'Training Viewer', [
     'training.view',
     'documents.view',
+    // And `headsUp.view`, so the briefings suite has a genuine NON-RECIPIENT
+    // who nonetheless holds the module's read key. Without it a
+    // "non-recipient is refused" test passes on the permission check and
+    // proves nothing about recipiency — which is the assertion it claims.
+    'headsUp.view',
   ]);
 
   const e = (local: string) => `${local}@${opts.slug}.test`;
@@ -861,6 +872,109 @@ async function seedTenant(
     grantedByUserId: actors.admin,
   });
 
+  // ─── Heads-Up / Briefings ─────────────────────────────────────────────
+  //
+  // The module distributes documents, which makes it the one place the
+  // Documents visibility layer can be routed around: a briefing carries a
+  // library document to a named list of people, and nothing in that path
+  // asks whether each recipient was entitled to the document.
+  //
+  // So the fixture attaches `groupRestrictedDoc` — restricted to the Night
+  // shift group — to a briefing sent to `standard`, who is in no group. Any
+  // read path that shows them that document is disclosing something the
+  // Documents module refuses to.
+  const headsUpIds: Record<string, string> = {};
+  const huRows: Array<typeof schema.headsUps.$inferInsert> = [];
+  const addHeadsUp = (
+    key: string,
+    row: Omit<typeof schema.headsUps.$inferInsert, 'id' | 'tenantId' | 'createdByUserId'>,
+  ): string => {
+    const id = newId();
+    headsUpIds[key] = id;
+    huRows.push({ id, tenantId, createdByUserId: actors.admin, ...row });
+    return id;
+  };
+
+  const publishedBriefing = addHeadsUp('published', {
+    title: 'Revised permit-to-work procedure',
+    description: 'Read and sign before your next shift.',
+    status: 'published',
+    engagementLevel: 'sign',
+    requireAcknowledgement: true,
+    requireSignature: true,
+  });
+  // Carries a document the recipient is not entitled to see.
+  const leakyBriefing = addHeadsUp('carriesRestrictedDoc', {
+    title: 'Night shift changes',
+    status: 'published',
+    engagementLevel: 'view',
+    shareToken: `seed-headsup-share-${opts.slug}`,
+  });
+  // Archived: recipients persist, so acknowledging or signing one is
+  // reachable unless the lifecycle refuses it.
+  const archivedBriefing = addHeadsUp('archived', {
+    title: 'Withdrawn winter driving notice',
+    status: 'archived',
+    engagementLevel: 'sign',
+    requireSignature: true,
+  });
+  addHeadsUp('draft', {
+    title: 'Unsent draft',
+    status: 'draft',
+    engagementLevel: 'view',
+  });
+
+  await db.insert(schema.headsUps).values(huRows);
+
+  const recipientRows: Array<typeof schema.headsUpRecipients.$inferInsert> = [];
+  const addRecipient = (headsUpId: string, userId: string, state: 'none' | 'viewed' | 'acked') => {
+    recipientRows.push({
+      id: newId(),
+      tenantId,
+      headsUpId,
+      userId,
+      viewedAt: state === 'none' ? null : new Date(opts.now.getTime() - 2 * DAY_MS),
+      acknowledgedAt: state === 'acked' ? new Date(opts.now.getTime() - DAY_MS) : null,
+    });
+  };
+  // `standard` is the untouched recipient the signing tests act as;
+  // `trainingRecorder` has already acknowledged, so the sign-after-ack path
+  // is reachable without mutating the first one.
+  addRecipient(publishedBriefing, actors.standard, 'viewed');
+  addRecipient(publishedBriefing, actors.trainingRecorder, 'acked');
+  addRecipient(leakyBriefing, actors.standard, 'none');
+  addRecipient(archivedBriefing, actors.standard, 'viewed');
+  if (opts.volume) {
+    // Fan-out: every seeded worker is on the published briefing, so the
+    // engagement roll-up and the recipient list are asked a real question.
+    const workers = await db
+      .select({ id: schema.user.id })
+      .from(schema.user)
+      .where(eq(schema.user.tenantId, tenantId));
+    for (const w of workers) {
+      // The two already added above, and `trainingViewer`, which the
+      // briefings suite needs as a genuine NON-recipient who nonetheless
+      // holds `headsUp.view`. A blanket fan-out would quietly enrol it and
+      // turn every "a non-recipient is refused" assertion into a tautology.
+      if (
+        w.id === actors.standard ||
+        w.id === actors.trainingRecorder ||
+        w.id === actors.trainingViewer
+      ) {
+        continue;
+      }
+      addRecipient(publishedBriefing, w.id, 'none');
+    }
+  }
+  await db.insert(schema.headsUpRecipients).values(recipientRows);
+
+  await db.insert(schema.headsUpDocuments).values({
+    tenantId,
+    headsUpId: leakyBriefing,
+    documentId: documentIds.groupRestrictedDoc as string,
+    documentVersion: 1,
+  });
+
   return {
     tenantId,
     actors,
@@ -873,6 +987,7 @@ async function seedTenant(
     training: { groupId: trainingGroupId, roleName, roleFieldId },
     folders,
     documents: documentIds,
+    headsUps: headsUpIds,
   };
 }
 
