@@ -746,6 +746,61 @@ Forma360) — do not add a brand conditional anywhere else.
   `claimedAt` marker exists so that worker can be added without a
   migration.
 
+## AI dashboards + entitlements (ADR 0018) — the first paid module
+
+A user chats ("build me a dashboard about permits", typed or dictated)
+and gets a saved, refinable dashboard. The fixed `/analytics` overview
+(nav label now **Overview**) stays free; custom dashboards are gated on
+the **`customDashboards` entitlement** — the first consumer of
+`packages/shared/src/entitlements.ts` (ADR 0010's fourth place):
+`tenants.settings.plan` (`free`|`paid`, absent ⇒ free) →
+`requireEntitlement(key)` in `packages/api/src/procedures.ts` →
+`PAYMENT_REQUIRED` (no other guard uses that code; no admin bypass —
+the PLAN lacks the feature, not the person). Gate features on an
+entitlement key, never on raw `settings.plan` comparisons.
+
+- **Spec, not queries**: `packages/shared/src/dashboard-spec.ts`
+  (versioned Zod, ADR 0009 pattern; DH-E01..E10) over the bounded
+  source catalogue `packages/shared/src/dashboard-sources.ts` (11
+  sources, flow vs stock metrics, per-metric allowed dimensions). The
+  AI composes references; `packages/api/src/dashboards/executor.ts` is
+  the only place they become SQL, every predicate copied from the
+  module's own register so numbers never disagree. Tables are grouped
+  aggregates, never record rows — per-record access control stays in
+  the registers. **DH-E21 walks the whole catalogue through the
+  executor**; a promised metric with no mapping fails CI. When a module
+  PR changes register semantics, update the executor in the same PR.
+- **Router** `packages/api/src/routers/dashboards.ts` (DH-E11..E22):
+  consumes the Phase 1 forward-declared `analytics.create` / `.manage`
+  / `.schedules.manage`; statuses draft/published/archived ⊥ visibility
+  private/selected/tenant (non-owners only ever see published); widget
+  DATA gated per source on the VIEWER (refused ⇒ marker, lock tile);
+  archive pauses schedules in the same tx (T-E05); updateSpec uses
+  expectedUpdatedAt (T-E18). Schedules: rrule (hourly floor), ≤ 20
+  free-text recipients (external allowed — a product decision),
+  ≤ 5/dashboard, `lastSentAt` stamped after send.
+- **Builder agent** `apps/web/src/server/dashboard-agent.ts`
+  (template-agent contract: SSE, forced `proposeDashboard`, Zod +
+  is_error correction loop, claude-opus-5) behind
+  `/api/ai/dashboard-chat`, which assembles the brand+permission-scoped
+  catalogue server-side. `/api/ai/transcribe` generalises the WhatsApp
+  Whisper pipeline for the mic button (GET reports availability).
+- **Web** `apps/web/app/[locale]/dashboards` (home / new / view):
+  filter bar (date range + sites) above every dashboard, Recharts grid
+  coloured by `--chart-N` CSS vars, per-widget Excel via
+  `/api/exports/widget-xlsx` (SheetJS write side), drill-down links via
+  `src/lib/dashboard-links.ts`, refine side chat, nav rail folds on
+  entry (`forma360:nav-collapse` event). Nav entry is
+  entitlement-gated in `nav-model.ts` (NAV-E16);
+  `EntitlementsProvider` beside `PermissionsProvider` mirrors the
+  plan client-side (UX only — the server re-checks).
+- **Delivery + theming**: dashboard PDF (`renderDashboardPdf`,
+  `/render/dashboard/[id]`, `/api/exports/dashboard-pdf`), email
+  attachments (first use), `forma360-dashboard-schedule-tick/send`
+  workers (DH-J01..J03); tenant theming from the customer website
+  (SSRF-guarded fetch + AI palette, WCAG contrast guard, whole-app CSS
+  vars + PDF branding) in company settings.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)
@@ -765,6 +820,7 @@ Forma360) — do not add a brand conditional anywhere else.
 - [0015 — Method-statement content model, RAMS pack versioning and briefing records](./docs/adr/0015-rams-method-statement-and-pack-model.md)
 - [0016 — Error reporting and PII scrubbing](./docs/adr/0016-error-reporting-and-pii-scrubbing.md)
 - [0017 — Try-it-now sandbox workspaces](./docs/adr/0017-try-it-now-sandbox.md)
+- [0018 — AI-built dashboards, entitlements and tenant theming](./docs/adr/0018-ai-built-dashboards-and-entitlements.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase
