@@ -6719,5 +6719,150 @@
     "submit": "Enregistrer mon espace",
     "success": "Enregistré. Consultez votre boîte de réception pour le code de retour.",
     "title": "Enregistrez votre travail"
+  },
+  "dashboards": {
+    "list": {
+      "title": "Tableaux de bord",
+      "subtitle": "Des tableaux de bord sur mesure créés par l'IA — autant que nécessaire.",
+      "new": "Nouveau tableau de bord",
+      "searchPlaceholder": "Rechercher…",
+      "emptyFirstRun": "Aucun tableau de bord pour l'instant. Décrivez ce que vous voulez voir et l'IA créera la première ébauche.",
+      "emptyFiltered": "Aucun résultat pour votre recherche.",
+      "emptyCta": "Créer votre premier tableau de bord",
+      "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
+      "updatedAt": "Mis à jour {at}",
+      "byOwner": "Par {owner} · {at}"
+    },
+    "status": {
+      "all": "Tous",
+      "draft": "Brouillon",
+      "published": "Publié",
+      "archived": "Archivé"
+    },
+    "visibility": {
+      "private": "Moi uniquement",
+      "selected": "Personnes choisies",
+      "tenant": "Tout le monde"
+    },
+    "new": {
+      "title": "Créer un tableau de bord",
+      "subtitle": "Décrivez ce que vous voulez suivre — à l'écrit ou à la voix. Tout est affinable ensuite.",
+      "suggestionPermits": "Crée-moi un tableau de bord sur nos permis de travail : ce qui est actif et la tendance des émissions.",
+      "suggestionSite": "Crée un tableau de bord pour un site : actions ouvertes, observations et inspections.",
+      "suggestionActions": "Montre nos actions : combien sont ouvertes et en retard, par site et par responsable."
+    },
+    "detail": {
+      "updated": "Tableau de bord mis à jour",
+      "published": "Tableau de bord publié",
+      "notFound": "Ce tableau de bord n'existe pas ou vous n'y avez pas accès.",
+      "specInvalid": "Impossible d'afficher ce tableau de bord — sa définition est invalide.",
+      "publish": "Publier",
+      "unpublish": "Dépublier",
+      "restore": "Restaurer",
+      "share": "Partager",
+      "schedule": "Programmer",
+      "archive": "Archiver",
+      "archiveConfirm": "Archiver ce tableau de bord ? Les envois programmés seront suspendus.",
+      "refine": "Affiner"
+    },
+    "chat": {
+      "requestFailed": "Une erreur est survenue. Réessayez.",
+      "proposalApplied": "Voici votre tableau de bord.",
+      "building": "Création du tableau de bord…",
+      "applying": "Application des modifications…",
+      "suggestionsIntro": "Essayez l'une de ces idées ou décrivez votre besoin :",
+      "createPlaceholder": "Décrivez le tableau de bord souhaité…",
+      "refinePlaceholder": "Décrivez un changement — p. ex. « des colonnes plutôt qu'une courbe »…",
+      "refineTitle": "Affiner ce tableau de bord",
+      "refineHint": "Demandez des changements en langage naturel ; le tableau se met à jour directement.",
+      "send": "Envoyer",
+      "startRecording": "Dicter votre message",
+      "stopRecording": "Arrêter l'enregistrement",
+      "transcribeFailed": "Impossible de transcrire l'enregistrement.",
+      "micDenied": "Accès au micro refusé."
+    },
+    "filters": {
+      "dateRange": "Période",
+      "from": "Du",
+      "to": "Au",
+      "allSites": "Tous les sites",
+      "sitesSelected": "{count, plural, one {# site} other {# sites}}",
+      "loadingSites": "Chargement des sites…",
+      "noSites": "Aucun site configuré.",
+      "presets": {
+        "last7d": "7 derniers jours",
+        "last30d": "30 derniers jours",
+        "last90d": "90 derniers jours",
+        "last12m": "12 derniers mois",
+        "thisMonth": "Ce mois-ci",
+        "thisQuarter": "Ce trimestre",
+        "thisYear": "Cette année",
+        "custom": "Période personnalisée…"
+      }
+    },
+    "widget": {
+      "menu": "Options du widget",
+      "downloadExcel": "Télécharger en Excel",
+      "openRegister": "Ouvrir le registre",
+      "forbidden": "Vous n'avez pas la permission de voir ces données.",
+      "moduleDisabled": "Ce module n'est pas disponible.",
+      "failed": "Impossible de charger ce widget.",
+      "noneBucket": "Non attribué",
+      "otherBucket": "Autres",
+      "tableDimension": "Groupe",
+      "noData": "Aucune donnée sur cette période.",
+      "vsPrevious": "vs {value} période précédente",
+      "inRange": "Sur la période sélectionnée",
+      "liveCount": "Comptage en direct — la période ne s'applique pas"
+    },
+    "share": {
+      "title": "Qui peut voir ce tableau de bord",
+      "saved": "Partage mis à jour",
+      "failed": "Impossible de mettre à jour le partage.",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "privateHint": "Vous seul (et les gestionnaires analytics) pouvez l'ouvrir.",
+      "selectedHint": "Uniquement les personnes choisies, une fois publié.",
+      "tenantHint": "Toute votre organisation avec accès analytics, une fois publié.",
+      "loadingUsers": "Chargement…",
+      "noUsers": "Aucun autre utilisateur trouvé."
+    },
+    "scheduleDialog": {
+      "title": "Envoyer ce tableau de bord en PDF par e-mail",
+      "empty": "Aucun envoi programmé pour l'instant.",
+      "newTitle": "Nouvel envoi programmé",
+      "frequency": "Fréquence",
+      "daily": "Quotidien",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel",
+      "weekday": "Jour de la semaine",
+      "monthday": "Jour du mois",
+      "time": "Heure",
+      "recipients": "Destinataires",
+      "recipientsPlaceholder": "Adresses e-mail séparées par des virgules — destinataires externes autorisés",
+      "externalNote": "Les destinataires reçoivent le tableau de bord en pièce jointe PDF. Chaque envoi est journalisé.",
+      "add": "Ajouter la programmation",
+      "created": "Programmation créée",
+      "failed": "Impossible de créer la programmation.",
+      "noRecipients": "Ajoutez au moins une adresse e-mail.",
+      "paused": "Suspendu",
+      "pause": "Suspendre",
+      "resume": "Reprendre",
+      "delete": "Supprimer",
+      "weekdays": {
+        "MO": "Lundi",
+        "TU": "Mardi",
+        "WE": "Mercredi",
+        "TH": "Jeudi",
+        "FR": "Vendredi",
+        "SA": "Samedi",
+        "SU": "Dimanche"
+      }
+    },
+    "upgrade": {
+      "title": "Les tableaux de bord personnalisés sont une fonctionnalité payante",
+      "body": "Créez des tableaux de bord illimités conçus par l'IA, programmez des envois PDF et exportez vers Excel. Votre vue d'ensemble fixe reste gratuite.",
+      "cta": "Parlez-nous d'une mise à niveau"
+    }
   }
 }

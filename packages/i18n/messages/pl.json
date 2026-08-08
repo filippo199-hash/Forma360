@@ -6712,5 +6712,150 @@
     "submit": "Zapisz przestrzeń roboczą",
     "success": "Zapisano. Sprawdź skrzynkę — wysłaliśmy kod powrotu.",
     "title": "Zapisz swoją pracę"
+  },
+  "dashboards": {
+    "list": {
+      "title": "Pulpity",
+      "subtitle": "Niestandardowe pulpity tworzone przez AI — tyle, ile potrzebujesz.",
+      "new": "Nowy pulpit",
+      "searchPlaceholder": "Szukaj pulpitów…",
+      "emptyFirstRun": "Brak pulpitów. Opisz, co chcesz widzieć, a AI przygotuje pierwszy szkic.",
+      "emptyFiltered": "Brak wyników wyszukiwania.",
+      "emptyCta": "Zbuduj pierwszy pulpit",
+      "widgetCount": "Widżety: {count}",
+      "updatedAt": "Zaktualizowano {at}",
+      "byOwner": "Autor: {owner} · {at}"
+    },
+    "status": {
+      "all": "Wszystkie",
+      "draft": "Szkic",
+      "published": "Opublikowany",
+      "archived": "Zarchiwizowany"
+    },
+    "visibility": {
+      "private": "Tylko ja",
+      "selected": "Wybrane osoby",
+      "tenant": "Wszyscy"
+    },
+    "new": {
+      "title": "Zbuduj pulpit",
+      "subtitle": "Opisz, co chcesz śledzić — napisz lub podyktuj. Wszystko można później doprecyzować.",
+      "suggestionPermits": "Zbuduj pulpit o naszych pozwoleniach na pracę — co jest aktywne i jaki jest trend wydawania.",
+      "suggestionSite": "Zbuduj pulpit dla jednej lokalizacji: otwarte działania, obserwacje i inspekcje.",
+      "suggestionActions": "Pokaż nasze działania: ile jest otwartych i po terminie, wg lokalizacji i osoby odpowiedzialnej."
+    },
+    "detail": {
+      "updated": "Pulpit zaktualizowany",
+      "published": "Pulpit opublikowany",
+      "notFound": "Ten pulpit nie istnieje lub nie masz dostępu.",
+      "specInvalid": "Nie można wyświetlić pulpitu — definicja jest nieprawidłowa.",
+      "publish": "Opublikuj",
+      "unpublish": "Cofnij publikację",
+      "restore": "Przywróć",
+      "share": "Udostępnij",
+      "schedule": "Harmonogram",
+      "archive": "Archiwizuj",
+      "archiveConfirm": "Zarchiwizować ten pulpit? Zaplanowane wysyłki zostaną wstrzymane.",
+      "refine": "Dopracuj"
+    },
+    "chat": {
+      "requestFailed": "Coś poszło nie tak. Spróbuj ponownie.",
+      "proposalApplied": "Oto Twój pulpit.",
+      "building": "Budowanie pulpitu…",
+      "applying": "Wprowadzanie zmian…",
+      "suggestionsIntro": "Wypróbuj jedną z propozycji albo opisz, czego potrzebujesz:",
+      "createPlaceholder": "Opisz pulpit, którego potrzebujesz…",
+      "refinePlaceholder": "Opisz zmianę — np. „kolumny zamiast linii”…",
+      "refineTitle": "Dopracuj ten pulpit",
+      "refineHint": "Poproś o zmiany zwykłym językiem; pulpit aktualizuje się od razu.",
+      "send": "Wyślij",
+      "startRecording": "Podyktuj wiadomość",
+      "stopRecording": "Zatrzymaj nagrywanie",
+      "transcribeFailed": "Nie udało się przetworzyć nagrania.",
+      "micDenied": "Odmówiono dostępu do mikrofonu."
+    },
+    "filters": {
+      "dateRange": "Zakres dat",
+      "from": "Od",
+      "to": "Do",
+      "allSites": "Wszystkie lokalizacje",
+      "sitesSelected": "Lokalizacje: {count}",
+      "loadingSites": "Wczytywanie lokalizacji…",
+      "noSites": "Brak skonfigurowanych lokalizacji.",
+      "presets": {
+        "last7d": "Ostatnie 7 dni",
+        "last30d": "Ostatnie 30 dni",
+        "last90d": "Ostatnie 90 dni",
+        "last12m": "Ostatnie 12 miesięcy",
+        "thisMonth": "Ten miesiąc",
+        "thisQuarter": "Ten kwartał",
+        "thisYear": "Ten rok",
+        "custom": "Zakres niestandardowy…"
+      }
+    },
+    "widget": {
+      "menu": "Opcje widżetu",
+      "downloadExcel": "Pobierz Excel",
+      "openRegister": "Otwórz rejestr",
+      "forbidden": "Nie masz uprawnień do tych danych.",
+      "moduleDisabled": "Ten moduł jest niedostępny.",
+      "failed": "Nie udało się wczytać widżetu.",
+      "noneBucket": "Nieprzypisane",
+      "otherBucket": "Inne",
+      "tableDimension": "Grupa",
+      "noData": "Brak danych w tym okresie.",
+      "vsPrevious": "vs {value} poprzedni okres",
+      "inRange": "W wybranym okresie",
+      "liveCount": "Stan bieżący — zakres dat nie ma zastosowania"
+    },
+    "share": {
+      "title": "Kto może widzieć ten pulpit",
+      "saved": "Udostępnianie zaktualizowane",
+      "failed": "Nie udało się zaktualizować udostępniania.",
+      "cancel": "Anuluj",
+      "save": "Zapisz",
+      "privateHint": "Tylko Ty (i menedżerowie analityki) możecie go otworzyć.",
+      "selectedHint": "Po opublikowaniu — tylko wybrane osoby.",
+      "tenantHint": "Po opublikowaniu — cała organizacja z dostępem do analityki.",
+      "loadingUsers": "Wczytywanie osób…",
+      "noUsers": "Nie znaleziono innych użytkowników."
+    },
+    "scheduleDialog": {
+      "title": "Wysyłaj ten pulpit e-mailem jako PDF",
+      "empty": "Brak zaplanowanych wysyłek.",
+      "newTitle": "Nowa zaplanowana wysyłka",
+      "frequency": "Częstotliwość",
+      "daily": "Codziennie",
+      "weekly": "Co tydzień",
+      "monthly": "Co miesiąc",
+      "weekday": "Dzień tygodnia",
+      "monthday": "Dzień miesiąca",
+      "time": "Godzina",
+      "recipients": "Odbiorcy",
+      "recipientsPlaceholder": "Adresy e-mail rozdzielone przecinkami — odbiorcy zewnętrzni są dozwoleni",
+      "externalNote": "Odbiorcy otrzymują pulpit jako załącznik PDF. Każda wysyłka jest rejestrowana.",
+      "add": "Dodaj harmonogram",
+      "created": "Harmonogram utworzony",
+      "failed": "Nie udało się utworzyć harmonogramu.",
+      "noRecipients": "Dodaj co najmniej jeden adres e-mail.",
+      "paused": "Wstrzymany",
+      "pause": "Wstrzymaj",
+      "resume": "Wznów",
+      "delete": "Usuń",
+      "weekdays": {
+        "MO": "Poniedziałek",
+        "TU": "Wtorek",
+        "WE": "Środa",
+        "TH": "Czwartek",
+        "FR": "Piątek",
+        "SA": "Sobota",
+        "SU": "Niedziela"
+      }
+    },
+    "upgrade": {
+      "title": "Niestandardowe pulpity to funkcja płatna",
+      "body": "Twórz nieograniczone pulpity projektowane przez AI, planuj wysyłki PDF i eksportuj dane do Excela. Stały przegląd pozostaje bezpłatny.",
+      "cta": "Porozmawiaj z nami o wyższym planie"
+    }
   }
 }

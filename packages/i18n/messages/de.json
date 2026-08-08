@@ -6719,5 +6719,150 @@
     "submit": "Arbeitsbereich sichern",
     "success": "Gesichert. Prüfen Sie Ihren Posteingang auf den Zugangscode.",
     "title": "Arbeit sichern"
+  },
+  "dashboards": {
+    "list": {
+      "title": "Dashboards",
+      "subtitle": "Individuelle Dashboards, von KI für Sie erstellt — so viele Sie brauchen.",
+      "new": "Neues Dashboard",
+      "searchPlaceholder": "Dashboards durchsuchen…",
+      "emptyFirstRun": "Noch keine Dashboards. Beschreiben Sie, was Sie sehen möchten — die KI erstellt den ersten Entwurf.",
+      "emptyFiltered": "Keine Treffer für Ihre Suche.",
+      "emptyCta": "Erstes Dashboard erstellen",
+      "widgetCount": "{count, plural, one {# Widget} other {# Widgets}}",
+      "updatedAt": "Aktualisiert {at}",
+      "byOwner": "Von {owner} · {at}"
+    },
+    "status": {
+      "all": "Alle",
+      "draft": "Entwurf",
+      "published": "Veröffentlicht",
+      "archived": "Archiviert"
+    },
+    "visibility": {
+      "private": "Nur ich",
+      "selected": "Ausgewählte Personen",
+      "tenant": "Alle"
+    },
+    "new": {
+      "title": "Dashboard erstellen",
+      "subtitle": "Beschreiben Sie, was Sie verfolgen möchten — tippen oder diktieren. Alles lässt sich später verfeinern.",
+      "suggestionPermits": "Erstelle mir ein Dashboard zu unseren Erlaubnisscheinen — was ist gerade aktiv und wie entwickelt sich die Ausstellung.",
+      "suggestionSite": "Erstelle ein Dashboard für einen Standort: offene Maßnahmen, Beobachtungen und Inspektionen dort.",
+      "suggestionActions": "Zeige unsere Maßnahmen: wie viele offen und überfällig sind, nach Standort und verantwortlicher Person."
+    },
+    "detail": {
+      "updated": "Dashboard aktualisiert",
+      "published": "Dashboard veröffentlicht",
+      "notFound": "Dieses Dashboard existiert nicht oder Sie haben keinen Zugriff.",
+      "specInvalid": "Dieses Dashboard kann nicht angezeigt werden — die Definition ist ungültig.",
+      "publish": "Veröffentlichen",
+      "unpublish": "Zurückziehen",
+      "restore": "Wiederherstellen",
+      "share": "Teilen",
+      "schedule": "Zeitplan",
+      "archive": "Archivieren",
+      "archiveConfirm": "Dieses Dashboard archivieren? Geplante E-Mails werden pausiert.",
+      "refine": "Verfeinern"
+    },
+    "chat": {
+      "requestFailed": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+      "proposalApplied": "Hier ist Ihr Dashboard.",
+      "building": "Dashboard wird erstellt…",
+      "applying": "Änderungen werden übernommen…",
+      "suggestionsIntro": "Probieren Sie eines davon oder beschreiben Sie, was Sie brauchen:",
+      "createPlaceholder": "Beschreiben Sie das gewünschte Dashboard…",
+      "refinePlaceholder": "Beschreiben Sie eine Änderung — z. B. „Säulen statt Linie“…",
+      "refineTitle": "Dashboard verfeinern",
+      "refineHint": "Änderungen in Alltagssprache anfordern; das Dashboard aktualisiert sich direkt.",
+      "send": "Senden",
+      "startRecording": "Nachricht diktieren",
+      "stopRecording": "Aufnahme beenden",
+      "transcribeFailed": "Aufnahme konnte nicht transkribiert werden.",
+      "micDenied": "Mikrofonzugriff wurde verweigert."
+    },
+    "filters": {
+      "dateRange": "Zeitraum",
+      "from": "Von",
+      "to": "Bis",
+      "allSites": "Alle Standorte",
+      "sitesSelected": "{count, plural, one {# Standort} other {# Standorte}}",
+      "loadingSites": "Standorte werden geladen…",
+      "noSites": "Keine Standorte angelegt.",
+      "presets": {
+        "last7d": "Letzte 7 Tage",
+        "last30d": "Letzte 30 Tage",
+        "last90d": "Letzte 90 Tage",
+        "last12m": "Letzte 12 Monate",
+        "thisMonth": "Dieser Monat",
+        "thisQuarter": "Dieses Quartal",
+        "thisYear": "Dieses Jahr",
+        "custom": "Benutzerdefiniert…"
+      }
+    },
+    "widget": {
+      "menu": "Widget-Optionen",
+      "downloadExcel": "Als Excel herunterladen",
+      "openRegister": "Register öffnen",
+      "forbidden": "Sie haben keine Berechtigung für diese Daten.",
+      "moduleDisabled": "Dieses Modul ist nicht verfügbar.",
+      "failed": "Dieses Widget konnte nicht geladen werden.",
+      "noneBucket": "Nicht zugewiesen",
+      "otherBucket": "Sonstige",
+      "tableDimension": "Gruppe",
+      "noData": "Keine Daten in diesem Zeitraum.",
+      "vsPrevious": "vs. {value} Vorperiode",
+      "inRange": "Im gewählten Zeitraum",
+      "liveCount": "Live-Zahl — der Zeitraum gilt hier nicht"
+    },
+    "share": {
+      "title": "Wer dieses Dashboard sehen kann",
+      "saved": "Freigabe aktualisiert",
+      "failed": "Freigabe konnte nicht aktualisiert werden.",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "privateHint": "Nur Sie (und Analytics-Manager) können es öffnen.",
+      "selectedHint": "Nach Veröffentlichung nur die ausgewählten Personen.",
+      "tenantHint": "Nach Veröffentlichung alle in Ihrer Organisation mit Analytics-Zugriff.",
+      "loadingUsers": "Personen werden geladen…",
+      "noUsers": "Keine weiteren Benutzer gefunden."
+    },
+    "scheduleDialog": {
+      "title": "Dashboard als PDF per E-Mail senden",
+      "empty": "Noch keine geplanten Zustellungen.",
+      "newTitle": "Neue geplante Zustellung",
+      "frequency": "Häufigkeit",
+      "daily": "Täglich",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich",
+      "weekday": "Wochentag",
+      "monthday": "Tag im Monat",
+      "time": "Uhrzeit",
+      "recipients": "Empfänger",
+      "recipientsPlaceholder": "E-Mail-Adressen, durch Kommas getrennt — externe Empfänger sind erlaubt",
+      "externalNote": "Empfänger erhalten das Dashboard als PDF-Anhang. Jeder Versand wird protokolliert.",
+      "add": "Zeitplan hinzufügen",
+      "created": "Zeitplan erstellt",
+      "failed": "Zeitplan konnte nicht erstellt werden.",
+      "noRecipients": "Mindestens eine E-Mail-Adresse angeben.",
+      "paused": "Pausiert",
+      "pause": "Pausieren",
+      "resume": "Fortsetzen",
+      "delete": "Löschen",
+      "weekdays": {
+        "MO": "Montag",
+        "TU": "Dienstag",
+        "WE": "Mittwoch",
+        "TH": "Donnerstag",
+        "FR": "Freitag",
+        "SA": "Samstag",
+        "SU": "Sonntag"
+      }
+    },
+    "upgrade": {
+      "title": "Individuelle Dashboards sind eine kostenpflichtige Funktion",
+      "body": "Erstellen Sie unbegrenzt KI-gestaltete Dashboards, planen Sie PDF-Zustellungen und exportieren Sie Daten nach Excel. Ihre feste Übersicht bleibt kostenlos.",
+      "cta": "Sprechen Sie mit uns über ein Upgrade"
+    }
   }
 }

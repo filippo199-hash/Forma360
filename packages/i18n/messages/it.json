@@ -6754,5 +6754,150 @@
     "submit": "Salva il mio spazio",
     "success": "Salvato. Controlla la posta per il codice di accesso.",
     "title": "Salva il tuo lavoro"
+  },
+  "dashboards": {
+    "list": {
+      "title": "Dashboard",
+      "subtitle": "Dashboard su misura create dall'IA — quante ne servono.",
+      "new": "Nuova dashboard",
+      "searchPlaceholder": "Cerca dashboard…",
+      "emptyFirstRun": "Nessuna dashboard ancora. Descrivi cosa vuoi vedere e l'IA creerà la prima bozza.",
+      "emptyFiltered": "Nessun risultato per la ricerca.",
+      "emptyCta": "Crea la tua prima dashboard",
+      "widgetCount": "{count, plural, one {# widget} other {# widget}}",
+      "updatedAt": "Aggiornata {at}",
+      "byOwner": "Di {owner} · {at}"
+    },
+    "status": {
+      "all": "Tutte",
+      "draft": "Bozza",
+      "published": "Pubblicata",
+      "archived": "Archiviata"
+    },
+    "visibility": {
+      "private": "Solo io",
+      "selected": "Persone selezionate",
+      "tenant": "Tutti"
+    },
+    "new": {
+      "title": "Crea una dashboard",
+      "subtitle": "Descrivi cosa vuoi monitorare — scrivilo o dettalo. Potrai rifinire tutto dopo.",
+      "suggestionPermits": "Creami una dashboard sui nostri permessi di lavoro: cosa è attivo ora e l'andamento delle emissioni.",
+      "suggestionSite": "Crea una dashboard per un sito: azioni aperte, osservazioni e ispezioni.",
+      "suggestionActions": "Mostra le nostre azioni: quante sono aperte e scadute, per sito e per assegnatario."
+    },
+    "detail": {
+      "updated": "Dashboard aggiornata",
+      "published": "Dashboard pubblicata",
+      "notFound": "Questa dashboard non esiste o non hai accesso.",
+      "specInvalid": "Impossibile mostrare questa dashboard — la definizione non è valida.",
+      "publish": "Pubblica",
+      "unpublish": "Ritira",
+      "restore": "Ripristina",
+      "share": "Condividi",
+      "schedule": "Pianifica",
+      "archive": "Archivia",
+      "archiveConfirm": "Archiviare questa dashboard? Gli invii pianificati saranno sospesi.",
+      "refine": "Rifinisci"
+    },
+    "chat": {
+      "requestFailed": "Qualcosa è andato storto. Riprova.",
+      "proposalApplied": "Ecco la tua dashboard.",
+      "building": "Creazione della dashboard…",
+      "applying": "Applicazione delle modifiche…",
+      "suggestionsIntro": "Prova una di queste idee o descrivi ciò che ti serve:",
+      "createPlaceholder": "Descrivi la dashboard che vuoi…",
+      "refinePlaceholder": "Descrivi una modifica — es. «usa colonne invece della linea»…",
+      "refineTitle": "Rifinisci questa dashboard",
+      "refineHint": "Chiedi modifiche in linguaggio naturale; la dashboard si aggiorna subito.",
+      "send": "Invia",
+      "startRecording": "Detta il tuo messaggio",
+      "stopRecording": "Ferma la registrazione",
+      "transcribeFailed": "Impossibile trascrivere la registrazione.",
+      "micDenied": "Accesso al microfono negato."
+    },
+    "filters": {
+      "dateRange": "Periodo",
+      "from": "Dal",
+      "to": "Al",
+      "allSites": "Tutti i siti",
+      "sitesSelected": "{count, plural, one {# sito} other {# siti}}",
+      "loadingSites": "Caricamento siti…",
+      "noSites": "Nessun sito configurato.",
+      "presets": {
+        "last7d": "Ultimi 7 giorni",
+        "last30d": "Ultimi 30 giorni",
+        "last90d": "Ultimi 90 giorni",
+        "last12m": "Ultimi 12 mesi",
+        "thisMonth": "Questo mese",
+        "thisQuarter": "Questo trimestre",
+        "thisYear": "Quest'anno",
+        "custom": "Intervallo personalizzato…"
+      }
+    },
+    "widget": {
+      "menu": "Opzioni widget",
+      "downloadExcel": "Scarica Excel",
+      "openRegister": "Apri il registro",
+      "forbidden": "Non hai i permessi per vedere questi dati.",
+      "moduleDisabled": "Questo modulo non è disponibile.",
+      "failed": "Impossibile caricare questo widget.",
+      "noneBucket": "Non assegnato",
+      "otherBucket": "Altri",
+      "tableDimension": "Gruppo",
+      "noData": "Nessun dato in questo periodo.",
+      "vsPrevious": "vs {value} periodo precedente",
+      "inRange": "Nel periodo selezionato",
+      "liveCount": "Conteggio attuale — il periodo non si applica"
+    },
+    "share": {
+      "title": "Chi può vedere questa dashboard",
+      "saved": "Condivisione aggiornata",
+      "failed": "Impossibile aggiornare la condivisione.",
+      "cancel": "Annulla",
+      "save": "Salva",
+      "privateHint": "Solo tu (e i responsabili analytics) potete aprirla.",
+      "selectedHint": "Solo le persone scelte, una volta pubblicata.",
+      "tenantHint": "Tutta l'organizzazione con accesso analytics, una volta pubblicata.",
+      "loadingUsers": "Caricamento…",
+      "noUsers": "Nessun altro utente trovato."
+    },
+    "scheduleDialog": {
+      "title": "Invia questa dashboard via e-mail come PDF",
+      "empty": "Nessun invio pianificato.",
+      "newTitle": "Nuovo invio pianificato",
+      "frequency": "Frequenza",
+      "daily": "Giornaliero",
+      "weekly": "Settimanale",
+      "monthly": "Mensile",
+      "weekday": "Giorno della settimana",
+      "monthday": "Giorno del mese",
+      "time": "Ora",
+      "recipients": "Destinatari",
+      "recipientsPlaceholder": "Indirizzi e-mail separati da virgole — destinatari esterni consentiti",
+      "externalNote": "I destinatari ricevono la dashboard come PDF allegato. Ogni invio è registrato.",
+      "add": "Aggiungi pianificazione",
+      "created": "Pianificazione creata",
+      "failed": "Impossibile creare la pianificazione.",
+      "noRecipients": "Aggiungi almeno un indirizzo e-mail.",
+      "paused": "In pausa",
+      "pause": "Pausa",
+      "resume": "Riprendi",
+      "delete": "Elimina",
+      "weekdays": {
+        "MO": "Lunedì",
+        "TU": "Martedì",
+        "WE": "Mercoledì",
+        "TH": "Giovedì",
+        "FR": "Venerdì",
+        "SA": "Sabato",
+        "SU": "Domenica"
+      }
+    },
+    "upgrade": {
+      "title": "Le dashboard personalizzate sono una funzione a pagamento",
+      "body": "Crea dashboard illimitate progettate dall'IA, pianifica invii PDF ed esporta i dati in Excel. La panoramica fissa resta gratuita.",
+      "cta": "Parla con noi per l'upgrade"
+    }
   }
 }

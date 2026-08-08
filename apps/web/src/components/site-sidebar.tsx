@@ -41,6 +41,14 @@ function useCollapsed(): readonly [boolean, () => void] {
       // Private-mode storage refusal — stay expanded.
     }
   }, []);
+  // ADR 0018: full-width surfaces (the dashboard) ask the rail to fold on
+  // entry. One-way and not persisted as a preference: the user can
+  // re-expand, and their stored choice is untouched.
+  useEffect(() => {
+    const onCollapse = (): void => setCollapsed(true);
+    window.addEventListener('forma360:nav-collapse', onCollapse);
+    return () => window.removeEventListener('forma360:nav-collapse', onCollapse);
+  }, []);
   const toggle = useCallback(() => {
     setCollapsed((prev) => {
       const next = !prev;
