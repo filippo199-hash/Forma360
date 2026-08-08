@@ -547,6 +547,13 @@
       "when": 1780000250000,
       "tag": "0077_fire_safety_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1780000260000,
+      "tag": "0078_dashboards",
+      "breakpoints": true
     }
   ]
 }
