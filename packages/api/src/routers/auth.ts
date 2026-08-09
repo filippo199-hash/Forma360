@@ -99,6 +99,9 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       const lookupRl = await ctx.rateLimit(`auth:lookup:${ctx.clientIp}`, {
         limit: 20,
         windowSec: 60,
+        // RL-F02: unauthenticated, and this limiter is the only brake on a
+        // cross-tenant account-existence oracle.
+        failClosed: true,
       });
       if (!lookupRl.ok) {
         throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'rate-limited' });
@@ -176,6 +179,9 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       const signUpRl = await ctx.rateLimit(`auth:signup:${ctx.clientIp}`, {
         limit: 5,
         windowSec: 3600,
+        // RL-F02: anonymous tenant creation. Failing open here is an
+        // unbounded write path, not graceful degradation.
+        failClosed: true,
       });
       if (!signUpRl.ok) {
         throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'rate-limited' });

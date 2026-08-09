@@ -55,6 +55,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import { loadContractorScope } from '../contractor-scope';
+import { loadIssueForCallerOrThrow } from './issues';
 import {
   coshhAssessments,
   coshhSubstances,
@@ -1313,6 +1314,14 @@ export const actionsRouter = router({
     .use(requirePermission('actions.create'))
     .input(createFromIssueInput)
     .mutation(async ({ ctx, input }) => {
+      // XM-C: the source observation was never loaded at all — not for
+      // visibility, not even for tenancy. `actions.create` is granted
+      // tenant-wide by the contractor activity, so a portal user could
+      // raise an action citing an observation `issues.get` refuses them,
+      // and the action then carries its id as `sourceId` into the hub.
+      // Same canonical read the Observations fix routed its own siblings
+      // through, so the two cannot drift apart.
+      await loadIssueForCallerOrThrow(ctx, input.issueId);
       await assertUsersInTenant(ctx.db, ctx.tenantId, [input.assigneeUserId]);
       await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
 

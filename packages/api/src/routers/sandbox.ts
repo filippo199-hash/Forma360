@@ -75,7 +75,12 @@ export const sandboxRouter = router({
 
     // One claim per IP-ish window: this mutation sends the visitor down
     // a path that ends in an outbound email, so it is abuse-prone.
-    const rl = await ctx.rateLimit(`sandbox:claim:${ctx.clientIp}`, { limit: 10, windowSec: 3600 });
+    const rl = await ctx.rateLimit(`sandbox:claim:${ctx.clientIp}`, {
+      limit: 10,
+      windowSec: 3600,
+      // RL-F02: unauthenticated, and it ends in an outbound email.
+      failClosed: true,
+    });
     if (!rl.ok) {
       throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'rate-limited' });
     }
