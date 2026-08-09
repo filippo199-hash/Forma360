@@ -18,10 +18,12 @@ import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import {
   DashboardPrintLayout,
+  type DashboardPrintBranding,
   type DashboardPrintWidget,
 } from '../../../../src/components/dashboard-print-layout';
 import { env } from '../../../../src/server/env';
 import { db } from '../../../../src/server/db';
+import { loadTenantBrandingById } from '../../../../src/server/load-branding';
 
 interface Props {
   params: Promise<{ dashboardId: string }>;
@@ -87,6 +89,20 @@ export default async function RenderDashboardPage({ params, searchParams }: Prop
 
   const range = resolveDateRange(filters.dateRange, now);
 
+  // ADR 0018: the tenant palette + logo re-skin the whole app AND its PDFs.
+  // The dashboard grid reads `--chart-N` from the injected tenant theme; the
+  // sessionless print has no CSS vars, so we hand the palette + logo in here.
+  const tenant = await loadTenantBrandingById(row.tenantId);
+  const branding: DashboardPrintBranding = {
+    logoUrl: tenant.logoUrl,
+    ...(tenant.branding?.primaryColor !== undefined
+      ? { primaryColor: tenant.branding.primaryColor }
+      : {}),
+    ...(tenant.branding?.chartColors !== undefined
+      ? { chartColors: tenant.branding.chartColors }
+      : {}),
+  };
+
   return (
     <DashboardPrintLayout
       title={snapshot.dashboard.title}
@@ -97,6 +113,7 @@ export default async function RenderDashboardPage({ params, searchParams }: Prop
       range={{ from: range.from.toISOString(), to: range.to.toISOString() }}
       siteCount={filters.siteIds.length}
       widgets={widgets}
+      branding={branding}
     />
   );
 }

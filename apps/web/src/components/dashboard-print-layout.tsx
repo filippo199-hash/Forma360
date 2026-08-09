@@ -34,6 +34,23 @@ export interface DashboardPrintWidget {
   data: WidgetData | null;
 }
 
+/**
+ * Tenant branding applied to the print (ADR 0018). The palette + logo
+ * re-skin the app AND its PDFs; this is the PDF side for custom
+ * dashboards, mirroring `PrintTenantBranding` on the inspection print.
+ * The web dashboard grid colours its series from `--chart-N` (which the
+ * tenant theme overrides); the static print has no CSS vars, so the
+ * caller hands the palette in directly.
+ */
+export interface DashboardPrintBranding {
+  /** Pre-resolved logo URL; `null` when unset / unresolvable. */
+  logoUrl: string | null;
+  /** Header cover colour (`#rrggbb`), when the tenant set one. */
+  primaryColor?: string;
+  /** Series ramp (`#rrggbb`), preferred over the default when non-empty. */
+  chartColors?: readonly string[];
+}
+
 export interface DashboardPrintProps {
   title: string;
   description: string | null;
@@ -46,10 +63,13 @@ export interface DashboardPrintProps {
   /** How many sites the global site filter narrowed to (0 = all). */
   siteCount: number;
   widgets: DashboardPrintWidget[];
+  /** Tenant branding; `null` re-uses the default palette + plain header. */
+  branding?: DashboardPrintBranding | null;
 }
 
 // Print-safe series palette (distinct at grayscale-ish print densities).
-const SERIES_COLORS = [
+// Used when the tenant has set no `chartColors` of their own.
+const DEFAULT_SERIES_COLORS: readonly string[] = [
   '#2563eb',
   '#059669',
   '#d97706',
@@ -65,9 +85,22 @@ const GRID_COLOR = '#e5e7eb';
 const INK = '#111';
 const MUTED = '#6b7280';
 
-function colorAt(i: number, key?: string): string {
+/** Only canonical `#rrggbb` reaches an inline style / SVG fill. */
+const HEX6 = /^#[0-9a-fA-F]{6}$/;
+
+function validHex(color: string | undefined): string | undefined {
+  return color !== undefined && HEX6.test(color) ? color : undefined;
+}
+
+/** Tenant `chartColors` (validated, non-empty) win over the default ramp. */
+function resolvePalette(chartColors: readonly string[] | undefined): readonly string[] {
+  const valid = (chartColors ?? []).filter((c) => HEX6.test(c));
+  return valid.length > 0 ? valid : DEFAULT_SERIES_COLORS;
+}
+
+function colorAt(colors: readonly string[], i: number, key?: string): string {
   if (key === '__other') return OTHER_COLOR;
-  return SERIES_COLORS[i % SERIES_COLORS.length] ?? '#2563eb';
+  return colors[i % colors.length] ?? '#2563eb';
 }
 
 function fmt(n: number): string {
@@ -119,7 +152,13 @@ function tsMax(data: TimeseriesResult): number {
   return max;
 }
 
-function Legend({ series }: { series: TimeseriesResult['series'] }) {
+function Legend({
+  colors,
+  series,
+}: {
+  colors: readonly string[];
+  series: TimeseriesResult['series'];
+}) {
   if (series.length <= 1) return null;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', marginTop: 4 }}>
@@ -130,7 +169,7 @@ function Legend({ series }: { series: TimeseriesResult['series'] }) {
               display: 'inline-block',
               width: 8,
               height: 8,
-              background: colorAt(i, s.key),
+              background: colorAt(colors, i, s.key),
               marginRight: 4,
               borderRadius: 2,
             }}
@@ -153,7 +192,14 @@ function TimeseriesAxes({ data, max }: { data: TimeseriesResult; max: number }) 
         const yPos = TS.top + ih - t * ih;
         return (
           <g key={t}>
-            <line x1={TS.left} x2={TS.w - TS.right} y1={yPos} y2={yPos} stroke={GRID_COLOR} strokeWidth={1} />
+            <line
+              x1={TS.left}
+              x2={TS.w - TS.right}
+              y1={yPos}
+              y2={yPos}
+              stroke={GRID_COLOR}
+              strokeWidth={1}
+            />
             <text x={TS.left - 5} y={yPos + 3} fontSize={8} fill={MUTED} textAnchor="end">
               {fmt(Math.round(t * max))}
             </text>
@@ -183,9 +229,11 @@ function TimeseriesAxes({ data, max }: { data: TimeseriesResult; max: number }) 
 }
 
 function TimeseriesChart({
+  colors,
   data,
   chart,
 }: {
+  colors: readonly string[];
   data: TimeseriesResult;
   chart: 'line' | 'bar' | 'area';
 }) {
@@ -213,7 +261,7 @@ function TimeseriesChart({
                 y={y(v)}
                 width={barW}
                 height={Math.max(0, TS.top + ih - y(v))}
-                fill={colorAt(si, s.key)}
+                fill={colorAt(colors, si, s.key)}
               />
               {showValues && v > 0 ? (
                 <text x={xPos + barW / 2} y={y(v) - 2} fontSize={7} fill={INK} textAnchor="middle">
@@ -229,7 +277,7 @@ function TimeseriesChart({
     const x = (i: number): number => (n <= 1 ? TS.left + iw / 2 : TS.left + (i * iw) / (n - 1));
     marks = data.series.map((s, si) => {
       const pts = s.values.map((v, i) => `${x(i)},${y(v)}`).join(' ');
-      const color = colorAt(si, s.key);
+      const color = colorAt(colors, si, s.key);
       return (
         <g key={s.key}>
           {chart === 'area' ? (
@@ -260,14 +308,20 @@ function TimeseriesChart({
         <TimeseriesAxes data={data} max={max} />
         {marks}
       </svg>
-      <Legend series={data.series} />
+      <Legend colors={colors} series={data.series} />
     </div>
   );
 }
 
 // ─── Breakdown ──────────────────────────────────────────────────────────────
 
-function ColumnChart({ rows }: { rows: BreakdownResult['rows'] }) {
+function ColumnChart({
+  colors,
+  rows,
+}: {
+  colors: readonly string[];
+  rows: BreakdownResult['rows'];
+}) {
   const w = 620;
   const top = 14;
   const bottom = 18;
@@ -286,7 +340,7 @@ function ColumnChart({ rows }: { rows: BreakdownResult['rows'] }) {
         const yPos = top + chartH - barH;
         return (
           <g key={r.key}>
-            <rect x={xPos} y={yPos} width={barW} height={barH} fill={colorAt(i, r.key)} />
+            <rect x={xPos} y={yPos} width={barW} height={barH} fill={colorAt(colors, i, r.key)} />
             <text x={i * slot + slot / 2} y={yPos - 3} fontSize={8} fill={INK} textAnchor="middle">
               {fmt(r.value)}
             </text>
@@ -306,7 +360,7 @@ function ColumnChart({ rows }: { rows: BreakdownResult['rows'] }) {
   );
 }
 
-function BarChart({ rows }: { rows: BreakdownResult['rows'] }) {
+function BarChart({ colors, rows }: { colors: readonly string[]; rows: BreakdownResult['rows'] }) {
   const w = 620;
   const rowH = 22;
   const labelW = 150;
@@ -324,7 +378,13 @@ function BarChart({ rows }: { rows: BreakdownResult['rows'] }) {
             <text x={labelW - 6} y={yPos + rowH / 2 + 3} fontSize={9} fill={INK} textAnchor="end">
               {truncate(displayLabel(r.label, r.key), 26)}
             </text>
-            <rect x={labelW} y={yPos + 4} width={barLen} height={rowH - 9} fill={colorAt(i, r.key)} />
+            <rect
+              x={labelW}
+              y={yPos + 4}
+              width={barLen}
+              height={rowH - 9}
+              fill={colorAt(colors, i, r.key)}
+            />
             <text x={labelW + barLen + 4} y={yPos + rowH / 2 + 3} fontSize={9} fill={INK}>
               {fmt(r.value)}
             </text>
@@ -336,7 +396,14 @@ function BarChart({ rows }: { rows: BreakdownResult['rows'] }) {
 }
 
 /** SVG arc path from angle a0 to a1 (radians, 12 o'clock = -π/2). */
-function donutArc(cx: number, cy: number, rOut: number, rIn: number, a0: number, a1: number): string {
+function donutArc(
+  cx: number,
+  cy: number,
+  rOut: number,
+  rIn: number,
+  a0: number,
+  a1: number,
+): string {
   const large = a1 - a0 > Math.PI ? 1 : 0;
   const p = (r: number, a: number): string => `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
   return [
@@ -348,7 +415,13 @@ function donutArc(cx: number, cy: number, rOut: number, rIn: number, a0: number,
   ].join(' ');
 }
 
-function DonutChart({ rows }: { rows: BreakdownResult['rows'] }) {
+function DonutChart({
+  colors,
+  rows,
+}: {
+  colors: readonly string[];
+  rows: BreakdownResult['rows'];
+}) {
   const total = rows.reduce((sum, r) => sum + r.value, 0);
   if (total === 0) return <NoData />;
   const size = 150;
@@ -361,7 +434,7 @@ function DonutChart({ rows }: { rows: BreakdownResult['rows'] }) {
     const a1 = angle + Math.min(sweep, Math.PI * 2 - 0.0001);
     const path = donutArc(cx, cy, 66, 38, angle, a1);
     angle = angle + sweep;
-    return { key: r.key, path, color: colorAt(i, r.key) };
+    return { key: r.key, path, color: colorAt(colors, i, r.key) };
   });
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -387,7 +460,7 @@ function DonutChart({ rows }: { rows: BreakdownResult['rows'] }) {
                 display: 'inline-block',
                 width: 8,
                 height: 8,
-                background: colorAt(i, r.key),
+                background: colorAt(colors, i, r.key),
                 marginRight: 4,
                 borderRadius: 2,
               }}
@@ -401,16 +474,18 @@ function DonutChart({ rows }: { rows: BreakdownResult['rows'] }) {
 }
 
 function BreakdownChart({
+  colors,
   data,
   chart,
 }: {
+  colors: readonly string[];
   data: BreakdownResult;
   chart: 'column' | 'bar' | 'donut';
 }) {
   if (data.rows.length === 0) return <NoData />;
-  if (chart === 'donut') return <DonutChart rows={data.rows} />;
-  if (chart === 'bar') return <BarChart rows={data.rows} />;
-  return <ColumnChart rows={data.rows} />;
+  if (chart === 'donut') return <DonutChart colors={colors} rows={data.rows} />;
+  if (chart === 'bar') return <BarChart colors={colors} rows={data.rows} />;
+  return <ColumnChart colors={colors} rows={data.rows} />;
 }
 
 // ─── Table ──────────────────────────────────────────────────────────────────
@@ -454,7 +529,11 @@ function WidgetTable({ data, dimensionLabel }: { data: TableResult; dimensionLab
 
 // ─── Widget dispatch ────────────────────────────────────────────────────────
 
-function WidgetBody({ widget, data }: DashboardPrintWidget) {
+function WidgetBody({
+  colors,
+  widget,
+  data,
+}: DashboardPrintWidget & { colors: readonly string[] }) {
   if (data === null) {
     return (
       <div
@@ -475,10 +554,10 @@ function WidgetBody({ widget, data }: DashboardPrintWidget) {
     return <KpiTile data={data} compare={widget.compare} />;
   }
   if (data.kind === 'timeseries' && widget.kind === 'timeseries') {
-    return <TimeseriesChart data={data} chart={widget.chart} />;
+    return <TimeseriesChart colors={colors} data={data} chart={widget.chart} />;
   }
   if (data.kind === 'breakdown' && widget.kind === 'breakdown') {
-    return <BreakdownChart data={data} chart={widget.chart} />;
+    return <BreakdownChart colors={colors} data={data} chart={widget.chart} />;
   }
   if (data.kind === 'table' && widget.kind === 'table') {
     const source = DASHBOARD_SOURCES[widget.source as DashboardSourceId];
@@ -494,6 +573,17 @@ function WidgetBody({ widget, data }: DashboardPrintWidget) {
 export function DashboardPrintLayout(props: DashboardPrintProps) {
   const sourceLabel = (widget: DashboardWidget): string =>
     DASHBOARD_SOURCES[widget.source as DashboardSourceId]?.label ?? widget.source;
+
+  const branding = props.branding ?? null;
+  const colors = resolvePalette(branding?.chartColors);
+  const primary = validHex(branding?.primaryColor);
+  const logoUrl = branding?.logoUrl ?? null;
+  // Mirror `PrintTenantBranding` on the inspection print: a coloured cover
+  // band carrying the logo + title in white. Falls back to the plain
+  // ink-ruled header when the tenant has set neither logo nor primary.
+  const branded = primary !== undefined || logoUrl !== null;
+  const coverColor = primary ?? INK;
+
   return (
     <main
       style={{
@@ -504,11 +594,59 @@ export function DashboardPrintLayout(props: DashboardPrintProps) {
         maxWidth: 820,
       }}
     >
-      <header style={{ borderBottom: `2px solid ${INK}`, paddingBottom: 10, marginBottom: 12 }}>
-        <div style={{ fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>
-          Dashboard · {props.tenantName}
-        </div>
-        <h1 style={{ fontSize: 20, margin: '2px 0 4px' }}>{props.title}</h1>
+      <header style={{ marginBottom: 12 }}>
+        {branded ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '10px 14px',
+              borderRadius: 6,
+              marginBottom: 10,
+              backgroundColor: coverColor,
+              color: '#fff',
+            }}
+          >
+            {logoUrl !== null ? (
+              // Sessionless Puppeteer resolves the logo via a signed R2 URL in
+              // prod; in dev the company-logo route is session-gated, so the
+              // image simply won't load (documented in load-branding.ts).
+              <img
+                src={logoUrl}
+                alt="logo"
+                style={{
+                  height: 34,
+                  width: 'auto',
+                  objectFit: 'contain',
+                  background: 'rgba(255,255,255,0.15)',
+                  padding: 3,
+                  borderRadius: 4,
+                }}
+              />
+            ) : null}
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1,
+                  textTransform: 'uppercase',
+                  opacity: 0.85,
+                }}
+              >
+                Dashboard · {props.tenantName}
+              </div>
+              <h1 style={{ fontSize: 20, margin: '2px 0 0', color: '#fff' }}>{props.title}</h1>
+            </div>
+          </div>
+        ) : (
+          <div style={{ borderBottom: `2px solid ${INK}`, paddingBottom: 10, marginBottom: 10 }}>
+            <div style={{ fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Dashboard · {props.tenantName}
+            </div>
+            <h1 style={{ fontSize: 20, margin: '2px 0 4px' }}>{props.title}</h1>
+          </div>
+        )}
         {props.description !== null && props.description.length > 0 ? (
           <div style={{ fontSize: 11, color: '#444', marginBottom: 2 }}>{props.description}</div>
         ) : null}
@@ -546,7 +684,7 @@ export function DashboardPrintLayout(props: DashboardPrintProps) {
                 {sourceLabel(widget)}
               </span>
             </div>
-            <WidgetBody widget={widget} data={data} />
+            <WidgetBody colors={colors} widget={widget} data={data} />
           </section>
         ))}
       </div>
