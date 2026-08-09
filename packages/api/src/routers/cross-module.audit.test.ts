@@ -286,7 +286,17 @@ describe('cross-module — the generated access-boundary sweep', () => {
       'incidents.manage',
       'actions.view',
     ]);
-    outsiderId = await mk('XM document outsider', ['documents.view', 'headsUp.view']);
+    // Holds the READ permission for every module that can reference a
+    // document, but is in none of the groups the document is restricted
+    // to. Without `permits.view`/`rams.view` here the indirect half of
+    // XM-D01 is unreachable and the axis passes without testing anything.
+    outsiderId = await mk('XM document outsider', [
+      'documents.view',
+      'headsUp.view',
+      'permits.view',
+      'rams.view',
+      'inspections.view',
+    ]);
 
     const admin = asAdmin();
 
@@ -368,6 +378,32 @@ describe('cross-module — the generated access-boundary sweep', () => {
     // ── The restricted document from the fixture (Night shift group only).
     ids.documentId = world.a.documents.groupRestrictedDoc ?? '';
     ids.folderId = world.a.folders.groupFolder ?? '';
+
+    // ── And entities that REFERENCE it, linked by the administrator, who
+    //    can legitimately see it. This is the indirect route: a document
+    //    the outsider cannot open, reached THROUGH a permit or a heads-up
+    //    they can. A sweep keyed only on documentId never sees it.
+    const permitType = await admin.permits.types.create({
+      category: 'hot_work',
+      name: `XM doc-linking type ${newId().slice(-6)}`,
+    });
+    const permit = await admin.permits.create({
+      permitTypeId: permitType.typeId,
+      title: 'XM permit citing a restricted method statement',
+      validFrom: world.now,
+      validTo: new Date(world.now.getTime() + 6 * 3_600_000),
+      acceptorUserId: world.a.actors.standard,
+      methodStatementDocumentId: ids.documentId,
+    });
+    ids.permitId = permit.permitId;
+
+    const headsUp = await admin.headsUps.create({
+      title: 'XM heads-up citing a restricted document',
+      description: 'Please read the attached.',
+      documentIds: [ids.documentId],
+    });
+    await admin.headsUps.publish({ headsUpId: headsUp.headsUpId, userIds: [outsiderId] });
+    ids.headsUpId = headsUp.headsUpId;
 
     // ── Tenant B mirror records, for the tenancy sweep.
     const otherAdmin = createCaller(world.ctxFor(world.b.tenantId, world.b.actors.admin));
@@ -633,8 +669,17 @@ describe('cross-module — the generated access-boundary sweep', () => {
       // to Documents four times, RAMS once, Permits twice.
       const outsider = asOutsider();
       const bag: Record<string, unknown> = {
+        // Direct: procedures keyed on the document itself.
         documentId: ids.documentId,
         folderId: ids.folderId,
+        // INDIRECT: entities that merely REFERENCE the document. This half
+        // was added after the sweep's first run passed while
+        // `permits.get` was projecting the restricted document's name —
+        // a blind spot of exactly the shape this file exists to find. A
+        // document-keyed sweep cannot see a document reached through a
+        // permit, a heads-up or a pack.
+        permitId: ids.permitId,
+        headsUpId: ids.headsUpId,
         limit: 50,
       };
       const found: Array<{ path: string }> = [];
