@@ -11,7 +11,8 @@
  * surface entities the module itself would hide). Documents further honour
  * per-document / per-folder visibility for non-managers.
  */
-import { and, desc, eq, ilike, isNull, ne, or } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, isNull, ne, or, type SQL } from 'drizzle-orm';
+import type { PgColumn } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 import {
   actions,
@@ -36,6 +37,7 @@ import {
 } from '@forma360/db/schema';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import type { PermissionKey } from '@forma360/permissions/catalogue';
+import { loadContractorScope } from '../contractor-scope';
 import { tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 import {
@@ -56,6 +58,30 @@ export const searchRouter = router({
       const perms = await loadUserPermissions(ctx.db, tid, ctx.auth.userId);
       const has = (p: PermissionKey): boolean => perms.includes(p);
       const empty = <T>(): Promise<T[]> => Promise.resolve([]);
+
+      /**
+       * XM-S: the widest-reach break in the cross-module sweep, and the one
+       * the id-keyed axes structurally could not find — they enumerate
+       * procedures by the entity id they accept, and search accepts a
+       * STRING.
+       *
+       * Every category here was gated on the module's `.view` permission,
+       * which a contractor portal activity grants tenant-wide. So a portal
+       * user refused by `inspections.get`, `issues.get` AND `actions.get`
+       * retrieved all three by typing their titles into Cmd-K. A record you
+       * cannot open by id is not protected if you can retrieve it by name,
+       * and a name is a far wider door than an id anyone would have to
+       * guess.
+       *
+       * The predicate mirrors each module's canonical read exactly:
+       * inspections by `createdBy`, observations by `reportedByUserId`
+       * (nullable, so anonymous QR reports never match — correctly hidden),
+       * actions by `createdBy` OR `assigneeUserId`. Internal users resolve
+       * to `null` here and are unrestricted, as everywhere else.
+       */
+      const scope = await loadContractorScope(ctx.db, tid, ctx.auth.userId);
+      const scopedTo = (column: PgColumn): SQL | undefined =>
+        scope === null ? undefined : inArray(column, scope.userIds);
 
       // PF-6 (platform review): the box used to cover six entities and
       // none of the four brand modules, contractors, sites or templates —
@@ -107,6 +133,7 @@ export const searchRouter = router({
                   eq(inspections.tenantId, tid),
                   isNull(inspections.archivedAt),
                   or(ilike(inspections.title, q), ilike(inspections.documentNumber, q)),
+                  scopedTo(inspections.createdBy),
                 ),
               )
               .orderBy(desc(inspections.createdAt))
@@ -133,6 +160,9 @@ export const searchRouter = router({
                   eq(issues.tenantId, tid),
                   isNull(issues.archivedAt),
                   or(ilike(issues.title, q), ilike(issues.referenceNumber, q)),
+                  // Nullable column: an anonymous QR report matches no
+                  // contractor and stays hidden, which is correct.
+                  scope === null ? undefined : inArray(issues.reportedByUserId, scope.userIds),
                 ),
               )
               .orderBy(desc(issues.createdAt))
@@ -154,6 +184,12 @@ export const searchRouter = router({
                   eq(actions.tenantId, tid),
                   isNull(actions.archivedAt),
                   or(ilike(actions.title, q), ilike(actions.referenceNumber, q)),
+                  scope === null
+                    ? undefined
+                    : or(
+                        inArray(actions.createdBy, scope.userIds),
+                        inArray(actions.assigneeUserId, scope.userIds),
+                      ),
                 ),
               )
               .orderBy(desc(actions.createdAt))

@@ -321,7 +321,10 @@ const METRIC_EXECS: Record<DashboardSourceId, Record<string, MetricExec>> = {
     open: {
       from: actions,
       tenantCol: actions.tenantId,
-      where: () => [isNull(actions.archivedAt), notInArray(actions.status, [...OPEN_ACTION_EXCLUDED])],
+      where: () => [
+        isNull(actions.archivedAt),
+        notInArray(actions.status, [...OPEN_ACTION_EXCLUDED]),
+      ],
       siteCol: actions.siteId,
       dims: actionDims,
     },
@@ -813,8 +816,7 @@ export async function executeWidget(args: ExecuteWidgetArgs): Promise<WidgetData
   const anyFlow = metricIds.some((id) => sourceMetric(source, id)?.kind === 'flow');
   const meta: WidgetMeta = {
     dateRangeApplied: anyFlow,
-    siteFilterApplied:
-      filters.siteIds.length > 0 && execs.some((e) => e.siteCol !== undefined),
+    siteFilterApplied: filters.siteIds.length > 0 && execs.some((e) => e.siteCol !== undefined),
     range: rangeIso,
   };
 
@@ -893,7 +895,8 @@ export async function executeWidget(args: ExecuteWidgetArgs): Promise<WidgetData
     }
 
     const dim = exec.dims?.[widget.splitBy];
-    if (!dim) throw new Error(`Metric ${widget.source}.${metricId} has no dimension ${widget.splitBy}`);
+    if (!dim)
+      throw new Error(`Metric ${widget.source}.${metricId} has no dimension ${widget.splitBy}`);
     const rows = await db
       .select({ bucket: bucketExpr, key: sql<string | null>`${dim.expr}`, n: count() })
       .from(exec.from)
@@ -940,14 +943,24 @@ export async function executeWidget(args: ExecuteWidgetArgs): Promise<WidgetData
   if (widget.kind === 'breakdown') {
     const { exec, metricId } = primary();
     const dim = exec.dims?.[widget.dimension];
-    if (!dim) throw new Error(`Metric ${widget.source}.${metricId} has no dimension ${widget.dimension}`);
+    if (!dim)
+      throw new Error(`Metric ${widget.source}.${metricId} has no dimension ${widget.dimension}`);
     const grouped = await groupedCount(db, exec, dim.expr, conditionsFor(exec, metricId, range));
     grouped.sort((a, b) => b.n - a.n);
     const top = grouped.slice(0, widget.limit);
-    const resolved = await resolveLabels(db, tenantId, dim.labels, top.map((g) => g.key));
+    const resolved = await resolveLabels(
+      db,
+      tenantId,
+      dim.labels,
+      top.map((g) => g.key),
+    );
     return {
       kind: 'breakdown',
-      rows: top.map((g) => ({ key: g.key, label: labelFor(dim.labels, g.key, resolved), value: g.n })),
+      rows: top.map((g) => ({
+        key: g.key,
+        label: labelFor(dim.labels, g.key, resolved),
+        value: g.n,
+      })),
       meta,
     };
   }
@@ -957,7 +970,9 @@ export async function executeWidget(args: ExecuteWidgetArgs): Promise<WidgetData
     const metricId = metricIds[i];
     const dim = exec.dims?.[widget.dimension];
     if (metricId === undefined || !dim) {
-      throw new Error(`Metric ${widget.source}.${metricIds[i]} has no dimension ${widget.dimension}`);
+      throw new Error(
+        `Metric ${widget.source}.${metricIds[i]} has no dimension ${widget.dimension}`,
+      );
     }
     return { exec, metricId, dim };
   });
@@ -984,7 +999,12 @@ export async function executeWidget(args: ExecuteWidgetArgs): Promise<WidgetData
   const sorted = [...rowsByKey.entries()].sort((a, b) => (b[1][0] ?? 0) - (a[1][0] ?? 0));
   const top = sorted.slice(0, widget.limit);
   const labelKind = firstPlan.dim.labels;
-  const resolved = await resolveLabels(db, tenantId, labelKind, top.map(([k]) => k));
+  const resolved = await resolveLabels(
+    db,
+    tenantId,
+    labelKind,
+    top.map(([k]) => k),
+  );
   return {
     kind: 'table',
     metrics: metricIds.map((id) => ({

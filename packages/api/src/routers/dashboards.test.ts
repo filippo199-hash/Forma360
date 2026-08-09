@@ -160,7 +160,10 @@ describe('dashboards router', () => {
       'Sam Scheduler',
     );
     noAnalyticsId = await seedUser(['inspections.view'], 'Otto Outsider');
-    managerId = await seedUser(['analytics.view', 'analytics.manage', 'actions.view'], 'Mia Manager');
+    managerId = await seedUser(
+      ['analytics.view', 'analytics.manage', 'actions.view'],
+      'Mia Manager',
+    );
   });
 
   afterEach(async () => {
@@ -316,7 +319,13 @@ describe('dashboards router', () => {
     const spec = {
       version: DASHBOARD_SPEC_VERSION,
       widgets: [
-        { id: 'open-actions', kind: 'kpi', title: 'Open actions', source: 'actions', metric: 'open' },
+        {
+          id: 'open-actions',
+          kind: 'kpi',
+          title: 'Open actions',
+          source: 'actions',
+          metric: 'open',
+        },
         {
           id: 'open-incidents',
           kind: 'kpi',
@@ -413,12 +422,12 @@ describe('dashboards router', () => {
   // ─── DH-E16 spec boundary ─────────────────────────────────────────────
 
   it('DH-E16: invalid specs are refused with the error list in the message', async () => {
-    await expect(
-      createDashboard(creatorId, kpiSpec({ metric: 'velocity' })),
-    ).rejects.toMatchObject({
-      code: 'BAD_REQUEST',
-      message: expect.stringContaining('no metric "velocity"'),
-    });
+    await expect(createDashboard(creatorId, kpiSpec({ metric: 'velocity' }))).rejects.toMatchObject(
+      {
+        code: 'BAD_REQUEST',
+        message: expect.stringContaining('no metric "velocity"'),
+      },
+    );
   });
 
   // ─── DH-E17 optimistic concurrency ────────────────────────────────────
@@ -670,7 +679,8 @@ describe('dashboards router', () => {
     expect(trendSeries.values).toContain(0);
 
     const bySite = result.widgets['by-site'];
-    if (!bySite || 'error' in bySite || bySite.kind !== 'breakdown') throw new Error('bad breakdown');
+    if (!bySite || 'error' in bySite || bySite.kind !== 'breakdown')
+      throw new Error('bad breakdown');
     const labels = bySite.rows.map((r) => r.label);
     expect(labels).toContain('Alpha yard');
     expect(labels).toContain('Bravo depot');
@@ -877,7 +887,11 @@ describe('dashboards router', () => {
         now: () => FIXED_NOW,
         renderPdf: async (input) => {
           calls.push(input);
-          return { key: `${input.tenantId}/dashboards/${input.dashboardId}/pdf-x.pdf`, bytes: 4, stub: true };
+          return {
+            key: `${input.tenantId}/dashboards/${input.dashboardId}/pdf-x.pdf`,
+            bytes: 4,
+            stub: true,
+          };
         },
       }),
     });
@@ -925,7 +939,11 @@ describe('dashboards router', () => {
         now: () => FIXED_NOW,
         renderPdf: async (input) => {
           calls.push(input);
-          return { key: `${input.tenantId}/dashboards/${input.dashboardId}/pdf-x.pdf`, bytes: 4, stub: false };
+          return {
+            key: `${input.tenantId}/dashboards/${input.dashboardId}/pdf-x.pdf`,
+            bytes: 4,
+            stub: false,
+          };
         },
       }),
     });
@@ -943,7 +961,13 @@ describe('dashboards router', () => {
     const spec = {
       version: DASHBOARD_SPEC_VERSION,
       widgets: [
-        { id: 'open-incidents', kind: 'kpi', title: 'Open incidents', source: 'incidents', metric: 'open' },
+        {
+          id: 'open-incidents',
+          kind: 'kpi',
+          title: 'Open incidents',
+          source: 'incidents',
+          metric: 'open',
+        },
       ],
     };
     const { id } = await call(adminId).dashboards.create({ title: 'Incidents', spec });

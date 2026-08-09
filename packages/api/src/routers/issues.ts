@@ -396,7 +396,7 @@ async function loadIssueOrThrow(db: Db, tenantId: string, issueId: string): Prom
  * NOT_FOUND rather than FORBIDDEN, matching `get`: a portal user must not
  * learn that an observation they cannot see exists.
  */
-async function loadIssueForCallerOrThrow(
+export async function loadIssueForCallerOrThrow(
   ctx: { db: Db; tenantId: string; auth: { userId: string } },
   issueId: string,
 ): Promise<Issue> {
@@ -1275,7 +1275,10 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .mutation(async ({ ctx, input }) => {
         // Throttle anonymous QR submissions (spam + manager-email flood).
         for (const key of [`issue:qr:ip:${ctx.clientIp}`, `issue:qr:token:${input.token}`]) {
-          const qrRl = await ctx.rateLimit(key, { limit: 10, windowSec: 60 });
+          // RL-F02: anonymous observation write. The token-keyed limit
+          // partly mitigates the IP one, but both are this endpoint's only
+          // brake, so neither may wave everything through on a store error.
+          const qrRl = await ctx.rateLimit(key, { limit: 10, windowSec: 60, failClosed: true });
           if (!qrRl.ok) {
             throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'rate-limited' });
           }

@@ -55,6 +55,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import { loadContractorScope } from '../contractor-scope';
+import { loadIssueForCallerOrThrow } from './issues';
 import {
   coshhAssessments,
   coshhSubstances,
@@ -100,6 +101,46 @@ async function loadActionOrThrow(db: Db, tenantId: string, actionId: string): Pr
     throw new TRPCError({ code: 'NOT_FOUND', message: 'action-not-found' });
   }
   return row;
+}
+
+/**
+ * Resolve an action for the CALLER, applying the contractor predicate the
+ * canonical read applies.
+ *
+ * The Inspections audit named `actions` as the third router with the
+ * identical shape and an unexamined answer: `loadContractorScope` called
+ * at `list` and `get`, and every other door resolving by tenant + id. It
+ * was right. A portal contractor's `actions` activity grants
+ * `actions.view` + `actions.create` tenant-wide, and `actions.view` is the
+ * gate on the whole activity/comments surface — so `get` returned
+ * NOT_FOUND on another company's action while the same caller could read
+ * its activity timeline and its comment thread, and post, edit and delete
+ * comments on it.
+ *
+ * The scope condition mirrors `get` exactly, including the assignee leg:
+ * an action ASSIGNED to a contractor is theirs to work even though
+ * somebody internal created it.
+ *
+ * One helper rather than eight copies of a predicate — eight siblings can
+ * dissent from `get`; eight call sites of the same helper cannot. It also
+ * restores PF-19's server-side induction gate on those paths, since a path
+ * that never called `loadContractorScope` never checked induction either.
+ */
+async function loadActionForCallerOrThrow(
+  ctx: { db: Db; tenantId: string; auth: { userId: string } },
+  actionId: string,
+): Promise<Action> {
+  const action = await loadActionOrThrow(ctx.db, ctx.tenantId, actionId);
+  const scope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+  if (scope !== null) {
+    const mine =
+      scope.userIds.includes(action.createdBy) ||
+      (action.assigneeUserId !== null && scope.userIds.includes(action.assigneeUserId));
+    // NOT_FOUND rather than FORBIDDEN, matching `get`: a portal user must
+    // not learn that an action they cannot see exists.
+    if (!mine) throw new TRPCError({ code: 'NOT_FOUND', message: 'action-not-found' });
+  }
+  return action;
 }
 
 async function writeActivity(
@@ -793,7 +834,10 @@ export const actionsRouter = router({
         const mine =
           getScope.userIds.includes(action.createdBy) ||
           (action.assigneeUserId !== null && getScope.userIds.includes(action.assigneeUserId));
-        if (!mine) throw new TRPCError({ code: 'NOT_FOUND' });
+        // Identical to `loadActionOrThrow`'s refusal, deliberately: a
+        // portal user must not be able to tell "does not exist" from "not
+        // yours".
+        if (!mine) throw new TRPCError({ code: 'NOT_FOUND', message: 'action-not-found' });
       }
       const assigneeRows =
         action.assigneeUserId !== null
@@ -1270,6 +1314,14 @@ export const actionsRouter = router({
     .use(requirePermission('actions.create'))
     .input(createFromIssueInput)
     .mutation(async ({ ctx, input }) => {
+      // XM-C: the source observation was never loaded at all — not for
+      // visibility, not even for tenancy. `actions.create` is granted
+      // tenant-wide by the contractor activity, so a portal user could
+      // raise an action citing an observation `issues.get` refuses them,
+      // and the action then carries its id as `sourceId` into the hub.
+      // Same canonical read the Observations fix routed its own siblings
+      // through, so the two cannot drift apart.
+      await loadIssueForCallerOrThrow(ctx, input.issueId);
       await assertUsersInTenant(ctx.db, ctx.tenantId, [input.assigneeUserId]);
       await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
 
@@ -1348,7 +1400,7 @@ export const actionsRouter = router({
     .use(requirePermission('actions.manage'))
     .input(updateInput)
     .mutation(async ({ ctx, input }) => {
-      const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      const action = await loadActionForCallerOrThrow(ctx, input.actionId);
       await assertUsersInTenant(ctx.db, ctx.tenantId, [input.assigneeUserId]);
       await assertSitesInTenant(ctx.db, ctx.tenantId, [input.siteId]);
       await assertAssetsInTenant(ctx.db, ctx.tenantId, input.assetIds ?? []);
@@ -1546,7 +1598,7 @@ export const actionsRouter = router({
     .use(requirePermission('actions.manage'))
     .input(setStatusInput)
     .mutation(async ({ ctx, input }) => {
-      const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      const action = await loadActionForCallerOrThrow(ctx, input.actionId);
       if (action.status === input.status) return { ok: true as const };
 
       const now = new Date();
@@ -1652,7 +1704,7 @@ export const actionsRouter = router({
     .use(requirePermission('actions.manage'))
     .input(actionIdInput)
     .mutation(async ({ ctx, input }) => {
-      const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      const action = await loadActionForCallerOrThrow(ctx, input.actionId);
       if (action.archivedAt !== null) return { ok: true as const };
       const now = new Date();
       await ctx.db
@@ -1673,7 +1725,7 @@ export const actionsRouter = router({
     .use(requirePermission('actions.manage'))
     .input(actionIdInput)
     .mutation(async ({ ctx, input }) => {
-      const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+      const action = await loadActionForCallerOrThrow(ctx, input.actionId);
       if (action.archivedAt === null) return { ok: true as const };
       const now = new Date();
       await ctx.db
@@ -1695,7 +1747,7 @@ export const actionsRouter = router({
       .use(requirePermission('actions.view'))
       .input(listActivityInput)
       .query(async ({ ctx, input }) => {
-        await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+        await loadActionForCallerOrThrow(ctx, input.actionId);
         const rows = await ctx.db
           .select({
             id: actionActivity.id,
@@ -1720,7 +1772,7 @@ export const actionsRouter = router({
       .use(requirePermission('actions.view'))
       .input(listCommentsInput)
       .query(async ({ ctx, input }) => {
-        await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+        await loadActionForCallerOrThrow(ctx, input.actionId);
         const rows = await ctx.db
           .select({
             id: actionComments.id,
@@ -1743,7 +1795,7 @@ export const actionsRouter = router({
       .use(requirePermission('actions.view'))
       .input(createCommentInput)
       .mutation(async ({ ctx, input }) => {
-        const action = await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+        const action = await loadActionForCallerOrThrow(ctx, input.actionId);
         const id = newId();
         await ctx.db.insert(actionComments).values({
           id,

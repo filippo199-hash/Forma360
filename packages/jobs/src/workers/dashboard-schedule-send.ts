@@ -162,7 +162,10 @@ export async function runDashboardScheduleSend(
       sent += 1;
     } catch (err) {
       failed += 1;
-      log.error({ err, recipientFailures: failed }, '[dashboard-schedule-send] recipient send failed');
+      log.error(
+        { err, recipientFailures: failed },
+        '[dashboard-schedule-send] recipient send failed',
+      );
     }
   }
 
@@ -175,7 +178,10 @@ export async function runDashboardScheduleSend(
     .update(dashboardSchedules)
     .set({ lastSentAt: occurrenceAt, updatedAt: now })
     .where(
-      and(eq(dashboardSchedules.id, schedule.id), eq(dashboardSchedules.tenantId, schedule.tenantId)),
+      and(
+        eq(dashboardSchedules.id, schedule.id),
+        eq(dashboardSchedules.tenantId, schedule.tenantId),
+      ),
     );
 
   log.info({ sent, failed, stub: rendered.stub }, '[dashboard-schedule-send] delivered');

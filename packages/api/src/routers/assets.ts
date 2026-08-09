@@ -376,10 +376,27 @@ export const assetsRouter = router({
     return parents.map((p) => ({ ...p, children: childMap.get(p.id) ?? [] }));
   }),
 
+  /**
+   * XM-S. These three were gated on `assets.view` ALONE, so a caller who
+   * may browse the plant register — and whom `issues.get` refuses — was
+   * handed the linked observation's title, reference and status. The
+   * sweep's fixture titles that observation "Brake failure — operator
+   * named in report", which is the point: an observation title routinely
+   * names a person.
+   *
+   * Missing key returns an empty list rather than throwing. The asset page
+   * runs all three of these in parallel, so a refusal would break the
+   * whole page for someone who simply may not see one of the three; and it
+   * matches `search.global`, which already drops a category the caller
+   * cannot read instead of failing the query.
+   */
   listLinkedInspections: tenantProcedure
     .use(requirePermission('assets.view'))
     .input(assetIdInput)
     .query(async ({ ctx, input }) => {
+      // XM-S: browsing the plant register is not entitlement to the linked
+      // inspection record. See the note above `listLinkedInspections`.
+      if (!ctx.permissions.includes('inspections.view')) return [];
       const rows = await ctx.db
         .select({
           id: inspections.id,
@@ -408,6 +425,9 @@ export const assetsRouter = router({
     .use(requirePermission('assets.view'))
     .input(assetIdInput)
     .query(async ({ ctx, input }) => {
+      // XM-S: browsing the plant register is not entitlement to the linked
+      // action record. See the note above `listLinkedInspections`.
+      if (!ctx.permissions.includes('actions.view')) return [];
       const rows = await ctx.db
         .select({
           id: actions.id,
@@ -436,6 +456,9 @@ export const assetsRouter = router({
     .use(requirePermission('assets.view'))
     .input(assetIdInput)
     .query(async ({ ctx, input }) => {
+      // XM-S: browsing the plant register is not entitlement to the linked
+      // observation record. See the note above `listLinkedInspections`.
+      if (!ctx.permissions.includes('issues.view')) return [];
       const rows = await ctx.db
         .select({
           id: issues.id,

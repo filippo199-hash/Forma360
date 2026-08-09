@@ -1086,15 +1086,47 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
                 .limit(1)
                 .then((rows) => rows[0] ?? null)
             : null;
-        const methodStatement =
-          permit.methodStatementDocumentId !== null
-            ? await ctx.db
-                .select({ id: documents.id, name: documents.name })
-                .from(documents)
-                .where(eq(documents.id, permit.methodStatementDocumentId))
-                .limit(1)
-                .then((rows) => rows[0] ?? null)
-            : null;
+        /**
+         * XM-D. The PW-X01 fix hardened the WRITE side — `loadDocumentInTenant`
+         * now checks visibility at link time — and left this, the read.
+         * So the door the audit knocked on was closed and the window was
+         * not: a document linked *legitimately* by somebody who can see it
+         * was then disclosed by name to every `permits.view` holder,
+         * including those the restriction exists to exclude.
+         */
+        const methodStatement = await (async () => {
+          if (permit.methodStatementDocumentId === null) return null;
+          const row = await ctx.db
+            .select({
+              id: documents.id,
+              name: documents.name,
+              folderId: documents.folderId,
+              visibleToGroupIds: documents.visibleToGroupIds,
+              visibleToSiteIds: documents.visibleToSiteIds,
+            })
+            .from(documents)
+            .where(
+              and(
+                eq(documents.tenantId, ctx.tenantId),
+                eq(documents.id, permit.methodStatementDocumentId),
+              ),
+            )
+            .limit(1)
+            .then((rows) => rows[0] ?? null);
+          if (row === null) return null;
+          if (!ctx.permissions.includes('documents.manage')) {
+            const visible = await isDocumentVisibleToUser(ctx.db, ctx.tenantId, ctx.auth.userId, {
+              id: row.id,
+              folderId: row.folderId,
+              visibleToGroupIds: row.visibleToGroupIds,
+              visibleToSiteIds: row.visibleToSiteIds,
+            });
+            // Null, not a refusal: the permit itself is readable, and the
+            // reader simply does not learn which document is attached.
+            if (!visible) return null;
+          }
+          return { id: row.id, name: row.name };
+        })();
 
         const now = new Date();
         // RS-A11: preview the RS-E14 RAMS blocker here, using the same pure

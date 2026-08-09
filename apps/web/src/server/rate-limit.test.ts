@@ -1,88 +1,66 @@
 /**
- * Rate-limiter fail-open (found by the cross-module sweep's XM-P axis).
+ * RL-F02 — the limiter's failure mode is now a per-call decision.
  *
- * The module comment on `rate-limit.ts` documents the fail-open as a
- * deliberate decision, and gives its justification:
- *
- *   > every gated endpoint is already authenticated/signature-checked, so
- *   > this is a spend/DoS control, not an authorization control.
- *
- * That was true when it was written. It is not true now. Since then the
- * product has grown endpoints whose ONLY brake is this limiter, with no
- * session, no signature and no account behind them:
- *
- *   issues.issues.createFromShareToken   anonymous observation write (QR code)
- *   auth.signUpWithTenant                anonymous tenant creation
- *   POST /api/sandbox/create             anonymous seeded-tenant provisioning
- *
- * So the finding is not "fail-open is wrong" — it is that the premise the
- * fail-open was justified on has expired, and nothing re-examined it when
- * the unauthenticated surface appeared.
- *
- * A limiter that returns `ok: true` on a backing-store error means a Redis
- * blip silently converts three anonymous write endpoints into unmetered
- * ones — and the incident looks like a Redis incident, not an abuse one.
- *
- * These tests describe CORRECT behaviour for the endpoints that now depend
- * on it. `RL-F02` is the one that fails today.
+ * The fail-open default was justified in the module comment on the premise
+ * that "every gated endpoint is already authenticated/signature-checked".
+ * That premise expired when the unauthenticated surface appeared, and
+ * nothing re-examined it. These tests pin both halves of the resolution:
+ * the default still degrades gracefully, and a caller that asks to fail
+ * closed actually does.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const incr = vi.fn();
-const expire = vi.fn();
-const ttl = vi.fn();
-
-vi.mock('./redis', () => ({
-  redis: {
-    incr: (...a: unknown[]) => incr(...a),
-    expire: (...a: unknown[]) => expire(...a),
-    ttl: (...a: unknown[]) => ttl(...a),
-  },
+const redisMock = vi.hoisted(() => ({
+  incr: vi.fn(),
+  expire: vi.fn(),
+  ttl: vi.fn(),
 }));
+
+vi.mock('./redis', () => ({ redis: redisMock }));
 
 const { rateLimit } = await import('./rate-limit');
 
-describe('rate limiter · behaviour under a failing store', () => {
+describe('rateLimit (RL-F02)', () => {
   beforeEach(() => {
-    incr.mockReset();
-    expire.mockReset();
-    ttl.mockReset();
+    vi.clearAllMocks();
   });
 
-  it('RL-F01 · control · a healthy store still allows and still refuses', async () => {
-    incr.mockResolvedValueOnce(1);
-    const first = await rateLimit('probe:healthy', { limit: 2, windowSec: 60 });
+  it('allows under the limit and refuses over it', async () => {
+    redisMock.incr.mockResolvedValueOnce(1);
+    redisMock.expire.mockResolvedValueOnce(1);
+    await expect(rateLimit('k', { limit: 2, windowSec: 60 })).resolves.toMatchObject({ ok: true });
 
-    incr.mockResolvedValueOnce(3);
-    ttl.mockResolvedValueOnce(42);
-    const overLimit = await rateLimit('probe:healthy', { limit: 2, windowSec: 60 });
-
-    expect({ firstAllowed: first.ok, thirdRefused: overLimit.ok }).toEqual({
-      firstAllowed: true,
-      thirdRefused: false,
+    redisMock.incr.mockResolvedValueOnce(3);
+    redisMock.ttl.mockResolvedValueOnce(42);
+    await expect(rateLimit('k', { limit: 2, windowSec: 60 })).resolves.toMatchObject({
+      ok: false,
+      retryAfterSec: 42,
     });
   });
 
-  it('RL-F02 · a store failure does not silently unmeter an anonymous write path', async () => {
-    // Today: `catch { return { ok: true, … } }`. Every caller is told the
-    // request is within its allowance, including the three endpoints above
-    // that have no other control at all.
-    //
-    // The fix is not "fail closed everywhere" — that would take sign-up
-    // down with Redis. It is to let the CALLER choose, so an endpoint
-    // behind a session can keep failing open while an anonymous write
-    // fails closed.
-    incr.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+  it('fails OPEN by default when the store is unreachable', async () => {
+    // Unchanged, and deliberately so: an authenticated endpoint should not
+    // go down because Redis blinked.
+    redisMock.incr.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+    await expect(rateLimit('k', { limit: 5, windowSec: 60 })).resolves.toMatchObject({ ok: true });
+  });
 
-    const result = await rateLimit('issue:qr:ip:203.0.113.7', {
-      limit: 10,
-      windowSec: 60,
-      // The knob this test is asking for.
-      failClosed: true,
-    } as never);
+  it('fails CLOSED when the caller asks, because it is the only brake', async () => {
+    // `issues.createFromShareToken`, `auth.signUpWithTenant` and
+    // `POST /api/sandbox/create` are unauthenticated writes. "Allow
+    // everything while Redis is down" is an unbounded write path there,
+    // not a graceful degradation.
+    redisMock.incr.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+    await expect(
+      rateLimit('k', { limit: 5, windowSec: 3600, failClosed: true }),
+    ).resolves.toMatchObject({ ok: false, retryAfterSec: 3600 });
+  });
 
-    expect({ allowedDespiteStoreFailure: result.ok }).toEqual({
-      allowedDespiteStoreFailure: false,
-    });
+  it('failClosed changes nothing while the store is healthy', async () => {
+    redisMock.incr.mockResolvedValueOnce(1);
+    redisMock.expire.mockResolvedValueOnce(1);
+    await expect(
+      rateLimit('k', { limit: 5, windowSec: 60, failClosed: true }),
+    ).resolves.toMatchObject({ ok: true });
   });
 });

@@ -24,6 +24,10 @@
       "types": "./src/app-link.ts",
       "default": "./src/app-link.ts"
     },
+    "./client-ip": {
+      "types": "./src/client-ip.ts",
+      "default": "./src/client-ip.ts"
+    },
     "./sandbox-scenarios": {
       "types": "./src/sandbox-scenarios.ts",
       "default": "./src/sandbox-scenarios.ts"

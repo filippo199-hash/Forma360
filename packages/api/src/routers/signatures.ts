@@ -23,6 +23,7 @@ import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { loadInspectionForCallerOrThrow } from './inspections';
 import { router } from '../trpc';
 
 const listSlotsInput = z.object({ inspectionId: z.string().length(26) });
@@ -60,16 +61,10 @@ export const signaturesRouter = router({
     .use(requirePermission('inspections.view'))
     .input(listSlotsInput)
     .query(async ({ ctx, input }) => {
-      const insp = (
-        await ctx.db
-          .select()
-          .from(inspections)
-          .where(
-            and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)),
-          )
-          .limit(1)
-      )[0];
-      if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      // IS-S01: this resolved by tenant + id, so a portal contractor could
+      // read the signature sheet — slots, assignees and the signatures
+      // already collected — of an inspection `get` refuses them.
+      const insp = await loadInspectionForCallerOrThrow(ctx, input.inspectionId);
 
       const version = (
         await ctx.db
@@ -121,16 +116,11 @@ export const signaturesRouter = router({
     .use(requirePermission('inspections.sign'))
     .input(signInput)
     .mutation(async ({ ctx, input }) => {
-      const insp = (
-        await ctx.db
-          .select()
-          .from(inspections)
-          .where(
-            and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)),
-          )
-          .limit(1)
-      )[0];
-      if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      // IS-S04: a signature is an attestation by a named person that they
+      // carried out a check. This resolved by tenant + id, so a portal
+      // contractor — granted `inspections.sign` tenant-wide — could sign
+      // another company's inspection.
+      const insp = await loadInspectionForCallerOrThrow(ctx, input.inspectionId);
       if (insp.status !== 'awaiting_signatures' && insp.status !== 'in_progress') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
