@@ -505,7 +505,7 @@ describe('coshh router', () => {
     });
     list = await caller.coshh.lev.list({});
     const expected = new Date(tested);
-    expected.setMonth(expected.getMonth() + 14);
+    expected.setUTCMonth(expected.getUTCMonth() + 14);
     expect(list[0]?.nextTestDueAt?.getTime()).toBe(expected.getTime());
     expect(list[0]?.overdue).toBe(false);
 
