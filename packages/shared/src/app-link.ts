@@ -54,3 +54,28 @@ export function appLink(appUrl: string, locale: string | null | undefined, path:
   const rest = path.replace(/^\/+/, '');
   return rest === '' ? `${base}/${segment}` : `${base}/${segment}/${rest}`;
 }
+
+/**
+ * `unlocalisedAppLink(appUrl, path)` → `<appUrl>/<path>`, with no locale
+ * segment at all.
+ *
+ * A handful of routes sit OUTSIDE `app/[locale]` on purpose, because the
+ * person opening them has no session and therefore no locale we could
+ * honour: `/scan/<token>` (the QR reporting form), `/s/<token>` (public
+ * share links). Passing one of those through {@link appLink} produces a
+ * URL that does not resolve, and the failure is quiet — `appLink` cannot
+ * tell a localised path from an unlocalised one, so it dutifully prefixes
+ * `/en/` and returns something that looks right.
+ *
+ * That is OB-Q07: `issues.categories.generateShareToken` handed back
+ * `/en/report/<token>`, where the real landing page is `/scan/<token>`
+ * and `/[locale]/report` is a different, signed-in page with no `[token]`
+ * segment. Nothing consumed the field — the QR page builds its own URL —
+ * so no printed code was dead, but the next consumer to trust the
+ * router's own answer would have printed a dead QR code onto a wall.
+ */
+export function unlocalisedAppLink(appUrl: string, path: string): string {
+  const base = appUrl.replace(/\/+$/, '');
+  const rest = path.replace(/^\/+/, '');
+  return rest === '' ? base : `${base}/${rest}`;
+}
