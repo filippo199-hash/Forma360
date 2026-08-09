@@ -49,7 +49,9 @@ function catalogueBlock(sources: readonly DashboardSource[]): string {
       const metrics = source.metrics
         .map((m) => {
           const dims =
-            m.dimensions !== undefined ? ` (dimensions limited to: ${m.dimensions.join(', ')})` : '';
+            m.dimensions !== undefined
+              ? ` (dimensions limited to: ${m.dimensions.join(', ')})`
+              : '';
           return `    - ${m.id} [${m.kind}]: ${m.label}${dims}`;
         })
         .join('\n');
@@ -183,7 +185,10 @@ function proposeDashboardTool(context: DashboardAgentContext): Anthropic.Tool {
                 type: 'boolean',
                 description: 'KPI + flow metric only: show delta vs the previous period.',
               },
-              limit: { type: 'number', description: 'Breakdown/table: top-N rows (default 10/20).' },
+              limit: {
+                type: 'number',
+                description: 'Breakdown/table: top-N rows (default 10/20).',
+              },
               span: { type: 'number', enum: [1, 2, 3], description: 'Grid columns (of 3).' },
               filters: {
                 type: 'array',
@@ -245,7 +250,13 @@ export type DashboardAgentEvent =
   | { type: 'text'; delta: string }
   | { type: 'assistant_done'; text: string }
   | { type: 'building_started' }
-  | { type: 'proposal'; spec: DashboardSpec; title: string; description: string | null; note: string };
+  | {
+      type: 'proposal';
+      spec: DashboardSpec;
+      title: string;
+      description: string | null;
+      note: string;
+    };
 
 export interface DashboardAgentMessage {
   role: 'user' | 'assistant';

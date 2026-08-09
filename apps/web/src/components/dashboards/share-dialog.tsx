@@ -11,13 +11,7 @@ import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 
 type Visibility = 'private' | 'selected' | 'tenant';
 
@@ -44,7 +38,10 @@ export function ShareDialog({
     setUserIds(shares.map((s) => s.userId));
   }, [visibility, shares, open]);
 
-  const users = trpc.users.list.useQuery({ limit: 200 }, { enabled: open && choice === 'selected' });
+  const users = trpc.users.list.useQuery(
+    { limit: 200 },
+    { enabled: open && choice === 'selected' },
+  );
   const setVisibility = trpc.dashboards.setVisibility.useMutation();
 
   const save = async () => {
@@ -110,9 +107,7 @@ export function ShareDialog({
                         checked={checked}
                         onCheckedChange={(next) =>
                           setUserIds((prev) =>
-                            next === true
-                              ? [...prev, row.id]
-                              : prev.filter((id) => id !== row.id),
+                            next === true ? [...prev, row.id] : prev.filter((id) => id !== row.id),
                           )
                         }
                       />

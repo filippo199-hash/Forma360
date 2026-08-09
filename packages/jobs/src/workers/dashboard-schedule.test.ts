@@ -168,9 +168,7 @@ describe('dashboard schedule workers', () => {
     });
 
     expect(result.due).toBe(1);
-    expect(sent).toEqual([
-      { scheduleId: dueId, occurrenceAt: '2026-08-08T07:00:00.000Z' },
-    ]);
+    expect(sent).toEqual([{ scheduleId: dueId, occurrenceAt: '2026-08-08T07:00:00.000Z' }]);
   });
 
   it('DH-J01b: a catch-up window with several missed occurrences yields ONE send — the latest', async () => {
@@ -194,7 +192,13 @@ describe('dashboard schedule workers', () => {
   // ─── DH-J02 send ──────────────────────────────────────────────────────
 
   function sendDeps(over: Partial<DashboardScheduleSendDeps> = {}): DashboardScheduleSendDeps & {
-    notified: Array<{ to: string; dashboardTitle: string; viewUrl: string; filename: string; bytes: Uint8Array }>;
+    notified: Array<{
+      to: string;
+      dashboardTitle: string;
+      viewUrl: string;
+      filename: string;
+      bytes: Uint8Array;
+    }>;
   } {
     const notified: Array<{
       to: string;
@@ -290,9 +294,9 @@ describe('dashboard schedule workers', () => {
         throw new Error('smtp down');
       },
     });
-    await expect(
-      runDashboardScheduleSend(deps, { scheduleId, occurrenceAt }),
-    ).rejects.toThrow(/all \d+ recipient sends failed/);
+    await expect(runDashboardScheduleSend(deps, { scheduleId, occurrenceAt })).rejects.toThrow(
+      /all \d+ recipient sends failed/,
+    );
 
     // The stamp never ran — the next tick / BullMQ retry still owes
     // this occurrence, and re-sends nobody who already got it.
@@ -326,9 +330,9 @@ describe('dashboard schedule workers', () => {
     const deps = sendDeps({
       renderPdf: async () => ({ bytes: new Uint8Array([0x25]), stub: true }),
     });
-    await expect(
-      runDashboardScheduleSend(deps, { scheduleId, occurrenceAt }),
-    ).rejects.toThrow(/stub/);
+    await expect(runDashboardScheduleSend(deps, { scheduleId, occurrenceAt })).rejects.toThrow(
+      /stub/,
+    );
     expect(deps.notified).toHaveLength(0);
     expect(await loadLastSentAt(scheduleId)).toBeNull();
   });

@@ -45,11 +45,7 @@ import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import { RRule, rrulestr } from 'rrule';
 import { z } from 'zod';
 import type { Context } from '../context';
-import {
-  requireEntitlement,
-  requirePermission,
-  tenantProcedure,
-} from '../procedures';
+import { requireEntitlement, requirePermission, tenantProcedure } from '../procedures';
 import { router, TRPCError } from '../trpc';
 import {
   executeWidget,
@@ -143,10 +139,7 @@ async function assertCanView(ctx: Ctx, row: typeof dashboards.$inferSelect): Pro
       .select({ id: dashboardShares.id })
       .from(dashboardShares)
       .where(
-        and(
-          eq(dashboardShares.dashboardId, row.id),
-          eq(dashboardShares.userId, ctx.auth.userId),
-        ),
+        and(eq(dashboardShares.dashboardId, row.id), eq(dashboardShares.userId, ctx.auth.userId)),
       )
       .limit(1);
     if (share[0] !== undefined) return;
@@ -330,7 +323,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
       isMine: row.ownerUserId === ctx.auth.userId,
       // Cheap structural peek for the card — full validation happens on get.
       widgetCount: Array.isArray((row.spec as { widgets?: unknown[] } | null)?.widgets)
-        ? ((row.spec as { widgets: unknown[] }).widgets.length)
+        ? (row.spec as { widgets: unknown[] }).widgets.length
         : 0,
       updatedAt: row.updatedAt,
       createdAt: row.createdAt,
@@ -373,15 +366,13 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
       };
     });
 
-  const availableSources = entitled
-    .use(requirePermission('analytics.view'))
-    .query(({ ctx }) =>
-      availableDashboardSources({
-        brandModules: enabledBrandModules(),
-        permissions: ctx.permissions,
-        grantsAdmin: grantsAdminAccess(ctx.permissions),
-      }),
-    );
+  const availableSources = entitled.use(requirePermission('analytics.view')).query(({ ctx }) =>
+    availableDashboardSources({
+      brandModules: enabledBrandModules(),
+      permissions: ctx.permissions,
+      grantsAdmin: grantsAdminAccess(ctx.permissions),
+    }),
+  );
 
   // ─── Widget data ──────────────────────────────────────────────────────
 
@@ -408,9 +399,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
       siteIds: overrides?.siteIds ?? spec.filterDefaults.siteIds,
     };
     const at = now();
-    const widgets = onlyWidgetId
-      ? spec.widgets.filter((w) => w.id === onlyWidgetId)
-      : spec.widgets;
+    const widgets = onlyWidgetId ? spec.widgets.filter((w) => w.id === onlyWidgetId) : spec.widgets;
     if (onlyWidgetId && widgets.length === 0) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Widget not found' });
     }
@@ -609,10 +598,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
       const spec = parseSpecOrThrow(input.spec);
       assertSpecSourcesAvailable(spec, ctx.permissions);
       const at = now();
-      await ctx.db
-        .update(dashboards)
-        .set({ spec, updatedAt: at })
-        .where(eq(dashboards.id, row.id));
+      await ctx.db.update(dashboards).set({ spec, updatedAt: at }).where(eq(dashboards.id, row.id));
       return { updatedAt: at };
     });
 
@@ -691,9 +677,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
           .set({ visibility: input.visibility, updatedAt: at })
           .where(eq(dashboards.id, row.id));
         if (input.visibility === 'selected') {
-          const userIds = [...new Set(input.userIds ?? [])].filter(
-            (id) => id !== row.ownerUserId,
-          );
+          const userIds = [...new Set(input.userIds ?? [])].filter((id) => id !== row.ownerUserId);
           if (userIds.length === 0) {
             throw new TRPCError({
               code: 'BAD_REQUEST',

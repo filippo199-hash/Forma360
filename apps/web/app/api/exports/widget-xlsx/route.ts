@@ -47,9 +47,7 @@ export async function GET(request: Request) {
       ? { from: query.from, to: query.to }
       : undefined);
   const siteIds =
-    query.sites !== undefined
-      ? query.sites.split(',').filter((s) => s.length === 26)
-      : undefined;
+    query.sites !== undefined ? query.sites.split(',').filter((s) => s.length === 26) : undefined;
 
   const caller = await createServerCaller({
     tenantId: session.user.tenantId,
