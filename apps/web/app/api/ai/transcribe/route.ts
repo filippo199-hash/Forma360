@@ -20,10 +20,7 @@ import { z } from 'zod';
 import { auth } from '../../../../src/server/auth';
 import { db } from '../../../../src/server/db';
 import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
-import {
-  isTranscriptionConfigured,
-  transcribeAudio,
-} from '../../../../src/server/transcribe';
+import { isTranscriptionConfigured, transcribeAudio } from '../../../../src/server/transcribe';
 
 /** ~7.5 MB of audio (10 MB base64) — minutes of speech, far beyond a prompt. */
 const MAX_BASE64_LENGTH = 10_000_000;
@@ -46,10 +43,7 @@ function jsonResponse(status: number, body: unknown): Response {
  * admin). Returns whether the caller may transcribe — the mic button
  * hides on false, so a non-entitled tenant never sees it.
  */
-async function canTranscribe(
-  tenantId: string,
-  userId: string,
-): Promise<boolean> {
+async function canTranscribe(tenantId: string, userId: string): Promise<boolean> {
   const rows = await db
     .select({ settings: tenants.settings })
     .from(tenants)
@@ -64,8 +58,7 @@ export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
   if (!session) return jsonResponse(401, { error: 'Unauthorized' });
   const tenantId = (session.user as Record<string, unknown>)['tenantId'];
-  const allowed =
-    typeof tenantId === 'string' && (await canTranscribe(tenantId, session.user.id));
+  const allowed = typeof tenantId === 'string' && (await canTranscribe(tenantId, session.user.id));
   return jsonResponse(200, { available: allowed && isTranscriptionConfigured() });
 }
 

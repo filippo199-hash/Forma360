@@ -205,7 +205,9 @@ describe('renderDashboardPdf', () => {
 
   const spec = {
     version: '1',
-    widgets: [{ id: 'open-actions', kind: 'kpi', title: 'Open actions', source: 'actions', metric: 'open' }],
+    widgets: [
+      { id: 'open-actions', kind: 'kpi', title: 'Open actions', source: 'actions', metric: 'open' },
+    ],
   };
 
   beforeEach(async () => {

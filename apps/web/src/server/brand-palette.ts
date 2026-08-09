@@ -49,11 +49,7 @@ export interface FetchDeps {
    * private one to the socket (check/connect TOCTOU). A test fake may
    * ignore `pin`.
    */
-  fetch: (
-    url: string,
-    init: RequestInit,
-    pin: readonly ResolvedAddress[],
-  ) => Promise<Response>;
+  fetch: (url: string, init: RequestInit, pin: readonly ResolvedAddress[]) => Promise<Response>;
   /** DNS resolution for a hostname — `node:dns/promises` `lookup(host, { all: true })`. */
   lookup: (hostname: string) => Promise<ResolvedAddress[]>;
 }

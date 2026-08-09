@@ -12,12 +12,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 
 type Frequency = 'daily' | 'weekly' | 'monthly';
 const WEEKDAYS = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const;
@@ -122,23 +117,27 @@ export function ScheduleDialog({
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7"
-                      aria-label={schedule.paused ? t('scheduleDialog.resume') : t('scheduleDialog.pause')}
+                      aria-label={
+                        schedule.paused ? t('scheduleDialog.resume') : t('scheduleDialog.pause')
+                      }
                       onClick={() =>
                         void setPaused
                           .mutateAsync({ id: schedule.id, paused: !schedule.paused })
                           .then(refresh)
                       }
                     >
-                      {schedule.paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                      {schedule.paused ? (
+                        <Play className="h-4 w-4" />
+                      ) : (
+                        <Pause className="h-4 w-4" />
+                      )}
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7 text-destructive"
                       aria-label={t('scheduleDialog.delete')}
-                      onClick={() =>
-                        void remove.mutateAsync({ id: schedule.id }).then(refresh)
-                      }
+                      onClick={() => void remove.mutateAsync({ id: schedule.id }).then(refresh)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
